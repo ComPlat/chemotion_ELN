@@ -24,3 +24,9 @@ services:
 
   webpacker:
     volumes: *common-volumes
+
+  # docker-compose.dev.yml is copied into .devcontainer/, so ./mof_service would
+  # resolve to .devcontainer/mof_service; point at the repo root instead.
+  mof_service:
+    build:
+      context: ../mof_service

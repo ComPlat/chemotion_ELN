@@ -21,6 +21,10 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
+import MofGenerator from 'src/components/mof/MofGenerator';
+import MofDetails from 'src/components/mof/MofDetails';
+import { mofResultFromAnalysis, resolveFragments } from 'src/components/mof/mofUtils';
+import Sample from 'src/models/Sample';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
@@ -59,6 +63,9 @@ export default class SampleForm extends React.Component {
     this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
+    this.handleMofResult = this.handleMofResult.bind(this);
+    this.handleMofDetailsChanged = this.handleMofDetailsChanged.bind(this);
+    this.fetchMofPreviewSvg = this.fetchMofPreviewSvg.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
@@ -130,6 +137,7 @@ export default class SampleForm extends React.Component {
   handleSampleTypeChanged(sampleType) {
     const { sample, handleSampleChanged } = this.props;
 
+    const wasMof = sample.isMof();
     // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
     this.setState({ selectedSampleType: sampleType });
@@ -137,6 +145,12 @@ export default class SampleForm extends React.Component {
     // If switching to Mixture, create component(s) from the current sample
     if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
       this.createComponentsFromCurrentSample(sample);
+    }
+
+    // Leaving MOF: discard the CIF-derived identifiers so they do not linger on
+    // a Micromolecule/Mixture sample.
+    if (wasMof && !sample.isMof() && sample.sample_details) {
+      delete sample.sample_details.mof;
     }
 
     handleSampleChanged(sample);
@@ -195,6 +209,172 @@ export default class SampleForm extends React.Component {
 
   handleMixtureComponentChanged(sample) {
     this.props.handleSampleChanged(sample);
+  }
+
+  /**
+   * Handles a CIF analysis result from MofGenerator: structures it into the
+   * (SUR)MOF configuration (Format ID / Format Key / Topology / Catenation and
+   * fragments are retrieved from the CIF output) and persists it onto
+   * sample_details.mof, preserving any user-entered configuration flags.
+   * A null result (Clear) removes the mof block.
+   * @param {{ result: Object|null }} payload
+   */
+  handleMofResult({ result }) {
+    const { sample, handleSampleChanged } = this.props;
+    const nextDetails = { ...(sample.sample_details || {}) };
+
+    if (!result) {
+      delete nextDetails.mof;
+    } else {
+      const prev = sample.sample_details?.mof || {};
+      nextDetails.mof = {
+        ...mofResultFromAnalysis(result),
+        // keep configuration the user set that the CIF cannot provide
+        format_comments: prev.format_comments || '',
+        defects: prev.defects || [],
+      };
+    }
+
+    sample.sample_details = nextDetails;
+    sample.changed = true;
+    handleSampleChanged(sample);
+
+    // Fetch a read-only structure preview from the building-block SMILES.
+    if (result) {
+      this.fetchMofPreviewSvg(sample);
+      this.resolveMofFragments(sample);
+      this.attachMofMolecule(sample);
+    }
+  }
+
+  /**
+   * Resolve each MOF fragment's SMILES into IUPAC / InChI / canonical SMILES /
+   * molfile via the molecule service, then persist the enriched fragments.
+   * @param {Sample} sample
+   */
+  resolveMofFragments(sample) {
+    const { handleSampleChanged } = this.props;
+    const mof = sample.sample_details?.mof;
+    if (!mof?.fragments?.length) return;
+
+    resolveFragments(mof.fragments)
+      .then((fragments) => {
+        // Merge into the CURRENT mof, not the snapshot captured above: the
+        // concurrent attachMofMolecule / fetchMofPreviewSvg calls also write to
+        // sample_details.mof, and reusing the stale snapshot would clobber the
+        // identifiers / preview they stored.
+        const currentMof = sample.sample_details?.mof || mof;
+        sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments } };
+        sample.changed = true;
+        handleSampleChanged(sample);
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Build a single combined molecule from the MOF fragment SMILES (the same way
+   * a mixture builds its combined molecule) and attach it as sample.molecule.
+   * This gives the MOF real chemical identifiers (InChI / SMILES / molfile) and
+   * lets it save, since the backend requires a molecule. No-op when the building
+   * -block SMILES set is unchanged, so it is safe to call on every edit.
+   * @param {Sample} sample
+   */
+  attachMofMolecule(sample) {
+    const { handleSampleChanged } = this.props;
+    const fragments = sample.sample_details?.mof?.fragments || [];
+    const combinedSmiles = [...new Set(
+      fragments
+        .flatMap((frag) => `${frag.smiles ?? ''}`.split('.'))
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )].join('.');
+
+    if (!combinedSmiles) return;
+    // Skip the network call when the building blocks have not changed.
+    if (Sample.sameSmilesSet(combinedSmiles, sample.molecule_cano_smiles)) return;
+
+    MoleculeFetcher.fetchBySmi(combinedSmiles, null, sample.molfile, 'ketcher')
+      .then((molecule) => {
+        if (!molecule || !molecule.id) return;
+        sample.molecule = molecule;
+        sample.molecule_id = molecule.id;
+        sample.molfile = molecule.molfile;
+        sample.changed = true;
+        handleSampleChanged(sample);
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Persists edits made in the (SUR)MOF details modal onto sample_details.mof.
+   * @param {Object} mof - the updated mof configuration
+   */
+  handleMofDetailsChanged(mof) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.sample_details = { ...(sample.sample_details || {}), mof };
+    sample.changed = true;
+    handleSampleChanged(sample);
+    // Rebuild the attached molecule if the fragment SMILES changed (no-op otherwise).
+    this.attachMofMolecule(sample);
+  }
+
+  /**
+   * Renders the MOF's building-block SMILES to an SVG (server-side, same path
+   * mixtures use) and stores the file name on sample_details.mof.svg for a
+   * read-only structure preview. Best-effort: failures leave no preview.
+   * @param {Sample} sample
+   */
+  fetchMofPreviewSvg(sample) {
+    const smiles = sample.sample_details?.mof?.smiles;
+    if (!smiles) return;
+
+    MoleculeFetcher.fetchBySmi(smiles, null, null, 'ketcher')
+      .then((molecule) => {
+        const currentMof = sample.sample_details?.mof;
+        // ignore a stale response (cleared or re-analyzed meanwhile)
+        if (!molecule?.molecule_svg_file || !currentMof || currentMof.smiles !== smiles) return;
+        sample.sample_details = {
+          ...sample.sample_details,
+          mof: { ...currentMof, svg: molecule.molecule_svg_file },
+        };
+        sample.changed = true;
+        this.props.handleSampleChanged(sample);
+      })
+      .catch(() => { /* preview is best-effort */ });
+  }
+
+  /**
+   * Shared name / label fields used by Mixture and MOF sample types
+   * (no molecule structure editor).
+   */
+  simplifiedIdentityFields(sample) {
+    return (
+      <>
+        <Row className="align-items-end mb-4">
+          <Col md={4}>
+            {this.textInput(sample, 'name', 'Name')}
+          </Col>
+          <Col md={4}>
+            {this.textInput(sample, 'external_label', 'External label')}
+          </Col>
+          <Col md={4} className="d-flex align-items-end">
+            {this.inventoryLabelSection(sample)}
+            {this.nextInventoryLabel(sample)}
+          </Col>
+        </Row>
+        <Row className="align-items-end mb-4">
+          <Col md={4}>
+            {this.textInput(sample, 'short_label', 'Short label', true)}
+          </Col>
+          <Col md={4}>
+            {this.textInput(sample, 'location', 'Location')}
+          </Col>
+          <Col md={4}>
+            {this.drySolventCheckbox(sample)}
+          </Col>
+        </Row>
+      </>
+    );
   }
 
   structureEditorButton(isDisabled) {
@@ -363,7 +543,7 @@ export default class SampleForm extends React.Component {
     const { isMolNameLoading, moleculeNameInputValue } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    const newMolecule = !mno || sample._molecule.id !== mno.mid;
+    const newMolecule = !mno || sample._molecule?.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 
@@ -439,6 +619,35 @@ export default class SampleForm extends React.Component {
             </Form.Control.Feedback>
           )}
         </InputGroup>
+      </Form.Group>
+    );
+  }
+
+  /**
+   * Plain molecule-name input for MOF samples. Unlike the micromolecule selector,
+   * the MOF name is user-given (not generated from the structure) and stored as a
+   * plain string on sample_details.mof.name so it is always kept.
+   */
+  mofNameInput() {
+    const { sample, handleSampleChanged } = this.props;
+    const value = sample.sample_details?.mof?.name || '';
+
+    return (
+      <Form.Group className="w-100">
+        <Form.Label>Molecule name</Form.Label>
+        <Form.Control
+          id="txinput_mof_name"
+          type="text"
+          value={value}
+          placeholder="Enter a molecule name"
+          disabled={!sample.can_update}
+          onChange={(e) => {
+            const mof = { ...(sample.sample_details?.mof || {}), name: e.target.value };
+            sample.sample_details = { ...(sample.sample_details || {}), mof };
+            sample.changed = true;
+            handleSampleChanged(sample);
+          }}
+        />
       </Form.Group>
     );
   }
@@ -1243,11 +1452,16 @@ export default class SampleForm extends React.Component {
   /**
    * Renders the sample type selection input.
    * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
+   * MOF is only offered when the MOF sidecar is enabled (unless the sample is already MOF).
    * @returns {JSX.Element} The rendered sample type selects input
    */
   sampleTypeInput() {
     const { sample } = this.props;
     const { selectedSampleType } = this.state;
+    const { hasMof } = UIStore.getState();
+    const options = SampleTypesOptions.filter((option) => (
+      option.value !== 'MOF' || hasMof || sample.sample_type === 'MOF'
+    ));
 
     return (
       <Form.Group>
@@ -1258,7 +1472,7 @@ export default class SampleForm extends React.Component {
           isDisabled={!sample.can_update}
           value={selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
-          options={SampleTypesOptions}
+          options={options}
         />
       </Form.Group>
     );
@@ -1298,14 +1512,22 @@ export default class SampleForm extends React.Component {
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const { selectedSampleType } = this.state;
+    const isMixture = selectedSampleType?.value === 'Mixture';
+    const isMof = selectedSampleType?.value === 'MOF';
+    const isMicromolecule = Sample.typeHasMoleculeStructure(selectedSampleType?.value);
 
     return (
       <Form>
         <Row className="align-items-end mb-4">
           {this.sampleTypeInput()}
         </Row>
+        {isMof && (
+          <Row className="align-items-end mb-4">
+            <Col>{this.mofNameInput()}</Col>
+          </Row>
+        )}
         {
-          selectedSampleType?.value !== 'Mixture' ? (
+          isMicromolecule ? (
             <>
               <Row className="align-items-end mb-4">
                 <Col>{this.moleculeInput()}</Col>
@@ -1407,35 +1629,11 @@ export default class SampleForm extends React.Component {
               </Row>
             </>
           ) : (
-            <>
-              <Row className="align-items-end mb-4">
-                <Col md={4}>
-                  {this.textInput(sample, 'name', 'Name')}
-                </Col>
-                <Col md={4}>
-                  {this.textInput(sample, 'external_label', 'External label')}
-                </Col>
-                <Col md={4} className="d-flex align-items-end">
-                  {this.inventoryLabelSection(sample)}
-                  {this.nextInventoryLabel(sample)}
-                </Col>
-              </Row>
-              <Row className="align-items-end mb-4">
-                <Col md={4}>
-                  {this.textInput(sample, 'short_label', 'Short label', true)}
-                </Col>
-                <Col md={4}>
-                  {this.textInput(sample, 'location', 'Location')}
-                </Col>
-                <Col md={4}>
-                  {this.drySolventCheckbox(sample)}
-                </Col>
-              </Row>
-            </>
+            this.simplifiedIdentityFields(sample)
           )
         }
 
-        {selectedSampleType?.value === 'Mixture' && (
+        {isMixture && (
           <>
             <br />
             <h5>Mixture components:</h5>
@@ -1464,6 +1662,24 @@ export default class SampleForm extends React.Component {
               </Col>
             </Row>
           </>
+        )}
+
+        {isMof && (
+          <Row className="mb-4">
+            <Col>
+              <h5>MOF structure (CIF)</h5>
+              <MofGenerator
+                onResult={this.handleMofResult}
+                initialResult={sample.sample_details?.mof}
+                disabled={!sample.can_update}
+              />
+              <MofDetails
+                mof={sample.sample_details?.mof}
+                onChange={this.handleMofDetailsChanged}
+                disabled={!sample.can_update}
+              />
+            </Col>
+          </Row>
         )}
 
         <Row>
