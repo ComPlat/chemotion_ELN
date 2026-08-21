@@ -6,9 +6,11 @@ Rails.application.routes.draw do
 
   get 'users/sign_in' => redirect('sign_in')
   get 'users/sign_up' => redirect('sign_up')
+  get 'users/password' => redirect('password')
+  get 'users/password/edit' => redirect(path: 'edit_password')
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations' }, skip: [:registrations]
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations', passwords: 'users/passwords' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
@@ -17,7 +19,7 @@ Rails.application.routes.draw do
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations' }
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations', passwords: 'users/passwords' }
   end
 
   authenticated :user, ->(u) { u.type == 'Admin' } do
@@ -77,6 +79,7 @@ Rails.application.routes.draw do
   get 'sign_in', to: 'pages#home'
   get 'sign_up', to: 'pages#home'
   get 'password', to: 'pages#home'
+  get 'edit_password', to: 'pages#home'
   get 'new_confirmation', to: 'pages#home'
 
   get 'admin', to: 'pages#home'

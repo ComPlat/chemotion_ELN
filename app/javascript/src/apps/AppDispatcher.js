@@ -9,11 +9,13 @@ import CnC from 'src/apps/commandAndControl/CnC';
 import Confirmation from 'src/apps/home/devise/Confirmation';
 import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
 import Editor from 'src/apps/editor/Editor';
+import EditPassword from 'src/apps/home/devise/EditPassword';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
 import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import Home from 'src/apps/home/Home';
 import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
+import Password from 'src/apps/home/devise/Password';
 import SignIn from 'src/apps/home/devise/SignIn';
 import SignUp from 'src/apps/home/devise/SignUp';
 
@@ -70,6 +72,7 @@ const PUBLIC_PATHS = [
   '/sign_in',
   '/sign_up',
   '/password',
+  '/edit_password',
   '/new_confirmation',
   '/chemspectra',
   '/chemspectra-editor',
@@ -145,8 +148,14 @@ const AppDispatcher = () => {
     console.debug('rendering sign in');
     app = (<SignUp />);
   }
-  if (role === 'Guest' && currentRoute === '/new_confirmation') {
+  if (role === 'Guest' && currentRoute.startsWith('/new_confirmation')) {
     app = (<Confirmation />);
+  }
+  if (role === 'Guest' && currentRoute === '/password') {
+    app = (<Password />);
+  }
+  if (role === 'Guest' && currentRoute.startsWith('/edit_password')) {
+    app = (<EditPassword />);
   }
   if (currentRoute === '/chemspectra') {
     app = (<ChemSpectraClient />);
