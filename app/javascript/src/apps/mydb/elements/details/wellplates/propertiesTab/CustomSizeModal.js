@@ -7,40 +7,47 @@ import Wellplate from 'src/models/Wellplate';
 import AppModal from 'src/components/common/AppModal';
 
 const isInteger = (value) => {
-  if (Number.isNaN(value)) return false
+  if (Number.isNaN(value)) return false;
 
-  return Number.isInteger(Number(value))
-}
+  return Number.isInteger(Number(value));
+};
 
 const dimensionIsValid = (value) => {
-  if (value <= 0) return false
-  if (value > Wellplate.MAX_DIMENSION) return false
+  if (value <= 0) return false;
+  if (value > Wellplate.MAX_DIMENSION) return false;
 
-  return true
-}
+  return true;
+};
 
-const errorMessage = (label) => {
-  return (
-    <div class="invalid-wellplate-size-text">
+const errorMessage = (label) => (
+    <div className="invalid-wellplate-size-text">
       {label} must be between 1 and 100
     </div>
-  )
-}
+  );
 
 const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
-  const [width, setWidth] = useState(wellplate.width)
-  const [height, setHeight] = useState(wellplate.height)
+  const [width, setWidth] = useState(wellplate.width);
+  const [height, setHeight] = useState(wellplate.height);
+  const [wasShown, setWasShown] = useState(show);
 
-  const widthIsValid = dimensionIsValid(width)
-  const heightIsValid = dimensionIsValid(height)
-  const widthChanged = width != wellplate.width
-  const heightChanged = height != wellplate.height
-  const canSubmit = widthIsValid && heightIsValid && (widthChanged || heightChanged)
+  if (show !== wasShown) {
+    setWasShown(show);
+    if (show) {
+      setWidth(wellplate.width);
+      setHeight(wellplate.height);
+    }
+  }
+
+  const widthIsValid = dimensionIsValid(width);
+  const heightIsValid = dimensionIsValid(height);
+  const widthChanged = width != wellplate.width;
+  const heightChanged = height != wellplate.height;
+  const canSubmit = widthIsValid && heightIsValid && (widthChanged || heightChanged);
 
   const handleApply = () => {
-    updateWellplate({ type: 'size', value: { width, height } })
-    handleClose()
-  }
+    updateWellplate({ type: 'size', value: { width, height } });
+    handleClose();
+  };
 
   return (
     <AppModal
@@ -84,13 +91,13 @@ const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
         </Col>
       </Row>
     </AppModal>
-  )
-}
+  );
+};
 
 CustomSizeModal.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
   show: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-}
+};
 
-export default CustomSizeModal
+export default CustomSizeModal;
