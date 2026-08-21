@@ -13,7 +13,9 @@ import QuillViewer from 'src/components/QuillViewer';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
-import AnalysisEditor from 'src/components/container/AnalysisEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
+import ToolbarIcon from 'src/components/reactQuill/ToolbarIcon';
+import { formatAnalysisContent } from 'src/utilities/ElementUtils';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 let includeDescriptionIdCounter = 0;
@@ -32,7 +34,10 @@ export default class ContainerComponent extends Component {
     includeDescriptionIdCounter += 1;
     this.includeDescriptionIdSuffix = includeDescriptionIdCounter;
 
+    this.editorRef = React.createRef();
+
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.autoFormatContent = this.autoFormatContent.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
@@ -155,6 +160,15 @@ export default class ContainerComponent extends Component {
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
+  autoFormatContent() {
+    if (this.editorRef.current == null) return;
+
+    const { container } = this.state;
+    const quill = this.editorRef.current.getEditor();
+    quill.setContents(formatAnalysisContent(container));
+    this.handleInputChange('content', quill.getContents());
+  }
+
   render() {
     const { container, textTemplate, includeDescription } = this.state;
     const {
@@ -169,12 +183,19 @@ export default class ContainerComponent extends Component {
       );
     } else {
       quill = (
-        <AnalysisEditor
-          height="12em"
+        <RichTextEditor
+          innerRef={this.editorRef}
+          value={container.extended_metadata.content}
           template={textTemplate}
-          analysis={container}
           updateTextTemplates={this.updateTextTemplates}
-          onChangeContent={(e) => this.handleInputChange('content', e)}
+          onChange={(e) => this.handleInputChange('content', e)}
+          toolbarExtras={(
+            <ToolbarIcon
+              icon={<span className="fa fa-magic" />}
+              onClick={this.autoFormatContent}
+              title="Auto Format"
+            />
+          )}
         />
       );
     }

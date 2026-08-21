@@ -4,7 +4,7 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 
 import Wellplate from 'src/models/Wellplate';
@@ -133,10 +133,14 @@ export default class WellplateProperties extends Component {
           <Row className="mt-3">
             <Form.Group>
               <Form.Label>Description</Form.Label>
-              <QuillEditor
+              <RichTextEditor
+                templateType="free_text"
+                specialCharacters
+                indent
+                height="230px"
                 value={description}
                 onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-                disabled={wellplate.isReadOnly || description === '***'}
+                readOnly={wellplate.isReadOnly || description === '***'}
               />
             </Form.Group>
           </Row>
