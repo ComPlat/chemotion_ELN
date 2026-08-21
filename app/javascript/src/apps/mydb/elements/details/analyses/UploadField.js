@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip
+  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip, Collapse
 } from 'react-bootstrap';
 import JSZip from 'jszip';
 import {
@@ -280,6 +280,7 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   const [show, setShow] = useState(false);
   const [ontology, setOntology] = useState('');
   const [isAdvanced, setIsAdvanced] = useState(false);
+  const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
   const handleClose = useCallback(() => {
     setListedFiles([]);
@@ -322,16 +323,30 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     if (isAdvanced && listedFiles.length > 0) {
       return (
         <Container>
-          <Row>
+          <Row className="mb-2">
             <Col>
-              <p>
-                Add and name new analyses with as many datasets as needed.
-                Drag and drop files or folders from the file list on the left-hand side into the datasets.
-                Folder can be expanded to see their contents, and files can be selected individually.
-                Multiple files and/or folders in a dataset will be zipped together.
-                A single file in a dataset is uploaded as it is.
-                Do not forget to press Execute to apply your settings.
-              </p>
+              <Button
+                variant="link"
+                className="p-0"
+                aria-expanded={showAdvancedHelp}
+                aria-controls="advanced-mode-help"
+                onClick={() => setShowAdvancedHelp((prev) => !prev)}
+              >
+                <i className={`fa me-1 ${showAdvancedHelp ? 'fa-caret-down' : 'fa-caret-right'}`} />
+                How does advanced mode work?
+              </Button>
+              <Collapse in={showAdvancedHelp}>
+                <div id="advanced-mode-help">
+                  <p className="mt-2">
+                    Add and name new analyses with as many datasets as needed.
+                    Drag and drop files or folders from the file list on the left-hand side into the datasets.
+                    Folders can be expanded to see their contents, and files can be selected individually.
+                    Multiple files and/or folders in a dataset will be zipped together.
+                    A single file in a dataset is uploaded as it is.
+                    Do not forget to press Execute to apply your settings.
+                  </p>
+                </div>
+              </Collapse>
             </Col>
           </Row>
           <Row className="justify-content-md-center">
@@ -352,16 +367,6 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
     return (
       <Container>
-        <Row className="justify-content-end mb-2">
-          <Col xs="auto">
-            <ToggleSwitch
-              disabled={listedFiles.length === 0}
-              isChecked={isAdvanced}
-              setIsChecked={setIsAdvanced}
-              label="Advanced mode"
-            />
-          </Col>
-        </Row>
         <Row>
           <Col>
             <p>
@@ -425,7 +430,17 @@ const UploadField = ({ disabled = false, element, setElement }) => {
         size="xl"
         show={show}
         onHide={handleClose}
+        className="analyses-upload-modal"
+        centered={false}
         title="Create Analyses from files or folders"
+        extendedFooter={(
+          <ToggleSwitch
+            disabled={listedFiles.length === 0}
+            isChecked={isAdvanced}
+            setIsChecked={setIsAdvanced}
+            label="Advanced mode"
+          />
+        )}
       >
         {content()}
       </AppModal>
