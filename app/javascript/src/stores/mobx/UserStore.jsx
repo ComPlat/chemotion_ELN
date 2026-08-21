@@ -239,13 +239,6 @@ const MatrixConfiguration = types.model(
   }
 );
 
-const OmniauthProvider = types.model(
-  'OmniauthProvider',
-  {
-    icon: types.string,
-    label: types.string
-  }
-);
 const ExtraRule = types.model(
   'ExtraRule',
   {
@@ -275,7 +268,7 @@ const UserStore = types.model(
     dsAdminKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
     unitsSystem: types.optional(UnitSystem, { fields: [] }),
     matriceConfigs: types.array(MatrixConfiguration),
-    omniauthProviders: types.map(OmniauthProvider),
+    omniauthProviders: types.frozen({}),
     extraRules: types.optional(ExtraRule, {}),
     bao: types.array(BaoOrHeader),
     loginStatus: types.optional(types.string, ''),
@@ -398,7 +391,7 @@ const UserStore = types.model(
   fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
     const result = yield UsersFetcher.fetchOmniauthProviders();
     if (result && Object.keys(result?.omniauth_providers).length >= 1) {
-      self.omniauthProviders = result?.omniauth_providers.map((provider) => OmniauthProvider.create(provider));
+      self.omniauthProviders = result.omniauth_providers;
     }
     self.extraRules = ExtraRule.create(result?.extraRules);
   }),

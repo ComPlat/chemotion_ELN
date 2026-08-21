@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {  Container, Modal } from 'react-bootstrap';
 import ScifinderCredential from 'src/components/userSettings/ScifinderCredential';
-import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
+import OmniauthCredential from 'src/components/omniauthCredential/OmniauthCredential';
 import TreeViewItem from 'src/components/common/TreeViewItem';
 import AuthToken from 'src/components/userSettings/AuthToken';
 import { TwoFactorSettings } from 'src/components/userSettings/TwoFA';

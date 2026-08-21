@@ -11,7 +11,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const Navigation = () => {
   const { userStore } = useContext(StoreContext);
-  const { currentUser, currentRoute } = userStore;
+  const { currentUser, currentRoute, role } = userStore;
   const devicePaths = [
     '/sign_in',
     '/sign_up',
@@ -19,7 +19,9 @@ const Navigation = () => {
     '/new_confirmation',
   ];
 
-  const linkToChemotion = currentUser ? '/mydb/collection/all' : '/home';
+  const linkToChemotion = currentUser && role === 'Person'
+    ? '/mydb/collection/all'
+    : (role === 'Admin' ? '/admin' : '/home');
 
   return (
     <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
