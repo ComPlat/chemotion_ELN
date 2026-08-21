@@ -60,12 +60,12 @@ const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
       <hr />
       <div className="d-flex align-items-start flex-column">
         {currentRoute !== '/sign_in' && (
-          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_in')}>Sign up</Button>
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_in')}>Sign in</Button>
         )}
         {currentRoute !== '/sign_up' && deviseMappings?.registerable && !extraRules.disable_signup === true && (
           <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_up')}>Sign up</Button>
         )}
-        {!['/sign_up', '/password'].includes(currentRoute) && deviseMappings?.recoverable
+        {!['/sign_up', '/password', '/edit_password'].includes(currentRoute) && deviseMappings?.recoverable
           && !extraRules.disable_signup === true && (
           <Button variant="neat" onClick={() => aviatorNavigationToApp('/password')}>
             Forgot your password?
