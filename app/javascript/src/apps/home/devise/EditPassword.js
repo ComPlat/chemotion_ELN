@@ -9,16 +9,16 @@ import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
-const Password = () => {
+const EditPassword = () => {
   const { userStore, notifications } = useContext(StoreContext);
   const { currentRoute, extraRules, deviseMappings } = userStore;
 
   const tokenParams = new URLSearchParams(location.search);
-  const token = tokenParams.get('reset_password_token');
+  const resetPasswordToken = tokenParams.get('reset_password_token');
 
   const [errors, setErrors] = useState({});
   const [form, setForm] = useFormValues({
-    reset_password_token: token, // aus params füllen
+    reset_password_token: resetPasswordToken, // aus params füllen
     password: '',
     password_confirmation: '',
   });
@@ -65,7 +65,7 @@ const Password = () => {
     } else if (status === 400) {
       setErrors(message);
     }
-  }, [form, userStore]);
+  }, [form, userStore, notifications]);
 
   if (!deviseMappings) { return null; }
 
@@ -124,4 +124,4 @@ const Password = () => {
   );
 };
 
-export default observer(Password);
+export default observer(EditPassword);
