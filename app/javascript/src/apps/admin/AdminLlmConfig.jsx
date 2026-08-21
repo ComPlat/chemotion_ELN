@@ -451,8 +451,7 @@ const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
                 onChange={(e) => setDefaultModel(e.target.value)}
               />
               <Form.Text className="text-muted">
-                Required — every request carries a model name, and a provider saved without
-                one fails for every user with an error that never mentions the model.
+                Required — every request needs to carry a model name.
               </Form.Text>
             </Col>
           </Row>
