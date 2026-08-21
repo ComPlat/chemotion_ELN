@@ -4,7 +4,8 @@ import {
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild,
   updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange,
   updateVariationsRowOnConcentrationMaterialChange,
-  cellIsEditable, getReactionMaterialsHashes, computeCombinedReactionVolume
+  cellIsEditable, getReactionMaterialsHashes, computeCombinedReactionVolume,
+  getReactionMaterialsIDsToLabels
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -12,6 +13,7 @@ import {
 import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
+import SampleFactory from 'factories/SampleFactory';
 import {
   materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -477,5 +479,31 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumns = removeObsoleteMaterialColumns(materials, columns);
 
     expect(updatedColumns.products.length).toEqual(1);
+  });
+  it('labels materials that have no assigned molecule', async () => {
+    const withStructure = await SampleFactory.build('SampleFactory.water_100g');
+    withStructure.id = 1;
+    withStructure.external_label = 'Sample A';
+    withStructure.name = 'Water';
+    withStructure.molecule.sum_formular = 'H2O';
+
+    const withoutStructure = await SampleFactory.build('SampleFactory.water_100g');
+    withoutStructure.id = 2;
+    withoutStructure.external_label = 'Sample B';
+    withoutStructure.name = 'No structure';
+    // `Sample`'s setter stores `null`, which destructuring defaults would not cover.
+    withoutStructure.molecule = null;
+
+    // SBMM materials are plain objects without `molecule` and `molecule_name_hash`.
+    const sbmmMaterial = { id: 'sbmm-3', short_label: 'R1', name: 'MyProtein' };
+
+    const labels = getReactionMaterialsIDsToLabels({
+      startingMaterials: [cloneDeep(withStructure), cloneDeep(withoutStructure)],
+      reactants: [sbmmMaterial],
+    });
+
+    expect(labels.startingMaterials[1]).toEqual('Sample A: Water (H2O)');
+    expect(labels.startingMaterials[2]).toEqual('Sample B: No structure');
+    expect(labels.reactants['sbmm-3']).toEqual('R1: MyProtein');
   });
 });

@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, {
-  useState, useEffect, useMemo, useRef, useCallback
+  useState, useEffect, useMemo, useRef
 } from 'react';
 import Select from 'react-select';
 import {
@@ -156,7 +156,7 @@ const SegmentSelectEditor = ({
 }) => {
   const { entry } = colDef;
   const entryData = cellData?.[entry];
-  const { value: selected, options = [] } = entryData ?? {};
+  const { value: selected, options = [] } = entryData || {};
 
   const optionElements = useMemo(
     () => options.map((option) => <option key={option} value={option} selected={option === selected}>{option}</option>),
@@ -166,7 +166,6 @@ const SegmentSelectEditor = ({
   useEffect(() => stopEditing, [stopEditing]);
 
   if (!entryData) return null;
-
   const handleChange = (event) => {
     const updatedEntryData = { ...entryData, value: event.target.value };
     onValueChange({ ...cellData, [entry]: updatedEntryData });
@@ -231,7 +230,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 }
 
 const GroupCellEditor = ({
-  value, onValueChange, stopEditing, onKeyDown
+  value, onValueChange, stopEditing
 }) => {
   const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
@@ -240,50 +239,49 @@ const GroupCellEditor = ({
   });
 
   const inputRef = useRef(null);
-
-  const focusInput = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-      }
-    });
-  }, []);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
-    // Focus on mount
-    focusInput();
-  }, [focusInput]);
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
 
-  const commitValue = () => {
-    const parts = currentValue.split('.');
-
-    const groupStr = parts[0] || '';
-    const subGroupStr = parts[1] || '';
-
+  // Push the parsed value to ag-grid on every change so it's
+  // already in sync when stopEditing fires (avoids v33 race).
+  useEffect(() => {
+    const [groupStr = '', subGroupStr = ''] = currentValue.split('.');
     let group = parseInt(groupStr, 10);
     let subgroup = parseInt(subGroupStr, 10);
-
-    if (Number.isNaN(group) || group <= 0) {
-      group = 1;
-    }
-
-    if (Number.isNaN(subgroup) || subgroup <= 0) {
-      subgroup = 1;
-    }
-
+    if (Number.isNaN(group) || group <= 0) group = 1;
+    if (Number.isNaN(subgroup) || subgroup <= 0) subgroup = 1;
     onValueChange({ group, subgroup });
-    stopEditing();
-  };
+  }, [currentValue]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      commitValue();
-    } else if (e.key === 'Escape') {
       stopEditing();
+    } else if (e.key === 'Escape') {
+      /*
+      ag-grid cancels the edit itself and discards the value pushed via `onValueChange`;
+      calling `preventDefault()` here would suppress that. Remember that Escape triggered
+      the close so `handleBlur` below - which also fires once ag-grid removes this input
+      from the DOM - doesn't commit the value instead of leaving the cancel in place.
+      */
+      cancelledRef.current = true;
     }
-    if (onKeyDown) onKeyDown(e);
+  };
+
+  const handleBlur = () => {
+    /*
+    Losing focus for any other reason (e.g. clicking a toolbar button) commits the edit,
+    same as Enter. This is handled here rather than via ag-grid's grid-wide
+    `stopEditingWhenCellsLoseFocus` option because this table also has cell editors
+    (Note, Analyses) that render a react-bootstrap modal into a portal outside the grid's
+    DOM - a grid-wide option would treat opening those modals as the cell losing focus
+    and close them immediately.
+    */
+    if (!cancelledRef.current) stopEditing();
   };
 
   return (
@@ -292,8 +290,8 @@ const GroupCellEditor = ({
       type="text"
       value={currentValue}
       onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
-      onBlurCapture={commitValue}
-      onKeyDownCapture={handleKeyDown}
+      onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
     />
   );
 };
@@ -304,13 +302,10 @@ GroupCellEditor.propTypes = {
     subgroup: PropTypes.number,
   }).isRequired,
   onValueChange: PropTypes.func.isRequired,
-  onKeyDown: PropTypes.func.isRequired,
-  stopEditing: PropTypes.bool.isRequired,
+  stopEditing: PropTypes.func.isRequired,
 };
 
-const GroupCellRenderer = ({ value: cellData }) => {
-  return `${cellData.group}.${cellData.subgroup}`;
-};
+const GroupCellRenderer = ({ value: cellData }) => `${cellData.group}.${cellData.subgroup}`;
 
 GroupCellRenderer.propTypes = {
   value: PropTypes.shape({
@@ -1028,6 +1023,80 @@ UnitToggleHeader.propTypes = {
   }).isRequired,
 };
 
+/*
+ag-grid only renders a horizontal scrollbar at the very bottom of the grid. For wide tables,
+this component adds a second scrollbar above the grid and keeps both of them in sync (in either
+direction), so that the table can be scrolled horizontally without scrolling down first.
+`gridToken` changes whenever the grid has been (re-)initialized, i.e., whenever ag-grid's
+DOM nodes need to be looked up again.
+*/
+const TopHorizontalScrollbar = ({ gridWrapperRef, gridToken }) => {
+  const scrollbarRef = useRef(null);
+  const spacerRef = useRef(null);
+
+  useEffect(() => {
+    const wrapper = gridWrapperRef.current;
+    const scrollbar = scrollbarRef.current;
+    const spacer = spacerRef.current;
+    if (!wrapper || !scrollbar || !spacer) { return undefined; }
+
+    const viewport = wrapper.querySelector('.ag-body-horizontal-scroll-viewport');
+    const container = wrapper.querySelector('.ag-body-horizontal-scroll-container');
+    if (!viewport || !container) { return undefined; }
+
+    const leftSpacer = wrapper.querySelector('.ag-horizontal-left-spacer');
+    const rightSpacer = wrapper.querySelector('.ag-horizontal-right-spacer');
+
+    /*
+    Assigning identical scroll positions is skipped, which breaks the feedback loop
+    between both scrollbars (each one reacting to the scroll event of the other one).
+    */
+    const sync = (source, target) => {
+      if (target.scrollLeft !== source.scrollLeft) {
+        target.scrollLeft = source.scrollLeft;
+      }
+    };
+    const syncToGrid = () => sync(scrollbar, viewport);
+    const syncFromGrid = () => sync(viewport, scrollbar);
+
+    // Mirror ag-grid's scrollbar, including the offsets caused by pinned columns.
+    const syncDimensions = () => {
+      scrollbar.style.height = `${viewport.offsetHeight}px`;
+      scrollbar.style.marginLeft = `${leftSpacer ? leftSpacer.offsetWidth : 0}px`;
+      scrollbar.style.marginRight = `${rightSpacer ? rightSpacer.offsetWidth : 0}px`;
+      spacer.style.width = `${container.offsetWidth}px`;
+      syncFromGrid();
+    };
+    syncDimensions();
+
+    scrollbar.addEventListener('scroll', syncToGrid, { passive: true });
+    viewport.addEventListener('scroll', syncFromGrid, { passive: true });
+
+    const resizeObserver = new ResizeObserver(syncDimensions);
+    [viewport, container, leftSpacer, rightSpacer]
+      .filter(Boolean)
+      .forEach((element) => resizeObserver.observe(element));
+
+    return () => {
+      scrollbar.removeEventListener('scroll', syncToGrid);
+      viewport.removeEventListener('scroll', syncFromGrid);
+      resizeObserver.disconnect();
+    };
+  }, [gridWrapperRef, gridToken]);
+
+  return (
+    <div className="ag-top-horizontal-scroll" ref={scrollbarRef}>
+      <div className="ag-top-horizontal-scroll-spacer" ref={spacerRef} />
+    </div>
+  );
+};
+
+TopHorizontalScrollbar.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  gridWrapperRef: PropTypes.object.isRequired,
+  gridToken: PropTypes.number.isRequired,
+};
+
 export {
   RowToolsCellRenderer,
   EquivalentParser,
@@ -1049,4 +1118,5 @@ export {
   GroupCellRenderer,
   EntrySelectionHeader,
   UnitToggleHeader,
+  TopHorizontalScrollbar,
 };
