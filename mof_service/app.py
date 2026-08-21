@@ -78,6 +78,22 @@ def _fragment_structure(text, in_format):
     metal-to-non-metal bond (the coordination bonds that hold nodes and linkers
     together), then classify each fragment: metal-containing -> node, otherwise
     -> linker. Returns (nodes, linkers) as canonical-SMILES lists.
+
+    LIMITATION: this classifies purely by the two endpoint atoms' metal status,
+    so it cannot tell a coordination bond (metal -> organic donor, which should
+    break) from a bond inside a metal-oxo secondary building unit (metal -> a
+    bare bridging/terminal oxo or hydroxo, which should NOT break). Both are
+    metal-oxygen bonds. As a result metal-oxo SBUs are over-fragmented: e.g.
+    [Cu][O] is split into a [Cu] node and an [O] "linker", whereas the periodic
+    /analyze path (real mofid) correctly keeps [Cu][O] as a single node. The two
+    endpoints therefore disagree on identical chemistry.
+
+    This is accepted on purpose: /fragment runs on drawn, non-periodic
+    structures, and mofid's decomposition needs a periodic cell (Systre), so it
+    cannot be reused here. The output is a best-effort starting point and the
+    resulting rows are user-editable in the MOF details UI. A coordination-aware
+    heuristic (keep metal bonds to non-metals whose only non-metal neighbours are
+    hydrogens) would fix the common metal-oxo case if higher fidelity is needed.
     """
     conv = ob.OBConversion()
     if not conv.SetInFormat(in_format):
