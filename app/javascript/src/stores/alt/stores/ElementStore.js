@@ -804,7 +804,6 @@ class ElementStore {
   }
 
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
-    // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
 
     // Components are already saved and initialized in the action before dispatch
