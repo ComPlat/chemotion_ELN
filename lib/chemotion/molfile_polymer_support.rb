@@ -27,14 +27,36 @@ module Chemotion
     def has_polymer_or_textnode_blocks?(molfile)
       has_polymers_list_tag?(molfile) || has_text_node_tag?(molfile)
     end
+
+    def has_polymer_content?(molfile)
+      polymers_list_payload(molfile).present?
+    end
     # rubocop:enable Naming/PredicatePrefix
+
+    def polymers_list_payload(molfile)
+      return nil if molfile.blank?
+
+      body = molfile.to_s.dup.force_encoding('UTF-8')[
+        />\s*<\s*PolymersList\s*>[^\S\n]*\n([\s\S]*?)(?=\n\s*>\s*<\s|\z)/i, 1
+      ]
+      return nil if body.nil?
+
+      body.lines.map(&:strip).reject { |line| line.empty? || line == '$$$$' }.join(' ').presence
+    end
+
+    def normalize_for_open_babel(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s
+      molfile.end_with?("\n") ? molfile : "#{molfile}\n"
+    end
 
     # Strip PolymersList and TextNode blocks, then keep only CTAB (up to and including M  END).
     # Use for Open Babel / inchikey so it does not see custom blocks.
     def clean_molfile_for_inchikey(raw_molfile)
       return nil if raw_molfile.blank?
 
-      s = raw_molfile.to_s.force_encoding('UTF-8')
+      s = raw_molfile.to_s.dup.force_encoding('UTF-8')
       s = s.gsub(/>\s*<\s*PolymersList\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
       s = s.gsub(/>\s*<\s*TextNode\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
       keep_only_ctab(s)
@@ -44,7 +66,7 @@ module Chemotion
     def keep_only_ctab(molfile)
       return molfile if molfile.blank?
 
-      molfile = molfile.to_s.force_encoding('UTF-8')
+      molfile = molfile.to_s.dup.force_encoding('UTF-8')
       lines = molfile.lines
       m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
       if m_end_index

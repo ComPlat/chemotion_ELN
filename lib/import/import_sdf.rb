@@ -364,7 +364,7 @@ class Import::ImportSdf < Import::ImportSamples
 
     babel_info_array.map.with_index do |babel_info, i|
       mf = molfiles[i]
-      if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
+      if Chemotion::MolfilePolymerSupport.has_polymer_content?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
       elsif babel_info && babel_info[:inchikey].present?
         m = Molecule.find_or_create_by_molfile(mf, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)
@@ -407,7 +407,7 @@ class Import::ImportSdf < Import::ImportSamples
   # keeps full molfile and uses polymer find/create + SVG reprocess; otherwise sanitizes and finds by inchikey.
   def molecule_and_molfile_for_row(molfile)
     raw = molfile.to_s.strip
-    if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
+    if Chemotion::MolfilePolymerSupport.has_polymer_content?(raw)
       result = Import::PolymerMoleculeResolver.call(raw, defer_pubchem_lookup: @defer_pubchem_lookup)
       [result.molecule, result.raw_molfile, result.babel_info]
     else

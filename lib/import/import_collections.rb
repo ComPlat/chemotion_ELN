@@ -291,8 +291,7 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
+        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile)
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
