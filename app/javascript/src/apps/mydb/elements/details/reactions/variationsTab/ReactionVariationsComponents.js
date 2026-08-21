@@ -239,6 +239,7 @@ const GroupCellEditor = ({
   });
 
   const inputRef = useRef(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -260,13 +261,27 @@ const GroupCellEditor = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       stopEditing();
+    } else if (e.key === 'Escape') {
+      /*
+      ag-grid cancels the edit itself and discards the value pushed via `onValueChange`;
+      calling `preventDefault()` here would suppress that. Remember that Escape triggered
+      the close so `handleBlur` below - which also fires once ag-grid removes this input
+      from the DOM - doesn't commit the value instead of leaving the cancel in place.
+      */
+      cancelledRef.current = true;
     }
+  };
+
+  const handleBlur = () => {
     /*
-    `Escape` is deliberately not handled here: ag-grid cancels the edit itself and discards the
-    value pushed via `onValueChange`. Calling `stopEditing()` would commit that value instead
-    (its argument is `suppressNavigateAfterEdit`, not `cancel`), and `preventDefault()` would
-    suppress ag-grid's own key handler.
+    Losing focus for any other reason (e.g. clicking a toolbar button) commits the edit,
+    same as Enter. This is handled here rather than via ag-grid's grid-wide
+    `stopEditingWhenCellsLoseFocus` option because this table also has cell editors
+    (Note, Analyses) that render a react-bootstrap modal into a portal outside the grid's
+    DOM - a grid-wide option would treat opening those modals as the cell losing focus
+    and close them immediately.
     */
+    if (!cancelledRef.current) stopEditing();
   };
 
   return (
@@ -276,6 +291,7 @@ const GroupCellEditor = ({
       value={currentValue}
       onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
       onKeyDown={handleKeyDown}
+      onBlur={handleBlur}
     />
   );
 };

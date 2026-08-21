@@ -1,7 +1,17 @@
 
 .ag-theme-reaction-variations {
-  .ag-body-horizontal-scroll {
-    bottom: 0 !important;
+  /*
+  ag-grid's own horizontal scrollbar stays functionally in place - it still drives
+  ag-grid's internal scroll sync, and `TopHorizontalScrollbar` mirrors it - but its
+  native track/thumb is hidden so users only see the single proxy scrollbar rendered
+  above the grid.
+  */
+  .ag-body-horizontal-scroll-viewport {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   // Proxy scrollbar rendered above the grid, kept in sync with ag-grid's own one.

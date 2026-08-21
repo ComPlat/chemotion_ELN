@@ -633,6 +633,17 @@ describe('ReactionVariationsComponents', async () => {
         expect(preventDefault.called).toBe(false);
         expect(stopEditing.called).toBe(false);
       });
+      it('commits the edit when focus moves away without Enter or Escape', () => {
+        wrapper.find('input').simulate('blur');
+
+        expect(stopEditing.calledOnce).toBe(true);
+      });
+      it('does not commit on the blur that follows an Escape cancel', () => {
+        wrapper.find('input').simulate('keydown', { key: 'Escape', preventDefault: sinon.spy() });
+        wrapper.find('input').simulate('blur');
+
+        expect(stopEditing.called).toBe(false);
+      });
     });
   });
 });
