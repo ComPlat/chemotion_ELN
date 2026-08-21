@@ -9,7 +9,7 @@ module Users
       if successfully_sent?(resource)
         message = warden_message(
           :send_instructions,
-          'You will receive an email with instructions on how to reset your password in a few minutes.'
+          'You will receive an email with instructions on how to reset your password in a few minutes.',
         )
 
         respond_to do |format|
@@ -29,6 +29,8 @@ module Users
     end
 
     # PUT /resource/password
+
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def update
       self.resource = resource_class.reset_password_by_token(resource_params)
 
@@ -72,6 +74,7 @@ module Users
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     protected
 
