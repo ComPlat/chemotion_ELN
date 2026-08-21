@@ -1868,6 +1868,46 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  create_table "llm_providers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "provider_type"
+    t.string "base_url"
+    t.text "api_key_enc"
+    t.string "default_model"
+    t.string "api_protocol", default: "openai", null: false
+    t.string "scope", default: "global", null: false
+    t.bigint "user_id"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["scope"], name: "index_llm_providers_on_scope"
+    t.index ["user_id", "scope"], name: "index_llm_providers_on_user_id_and_scope"
+    t.index ["user_id"], name: "index_llm_providers_on_user_id"
+  end
+
+  create_table "user_llm_settings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "provider_type", default: "global", null: false
+    t.bigint "default_llm_provider_id"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["default_llm_provider_id"], name: "index_user_llm_settings_on_default_llm_provider_id"
+    t.index ["user_id"], name: "index_user_llm_settings_on_user_id", unique: true
+  end
+  
+  create_table "user_task_model_mappings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "task_name", null: false
+    t.string "model"
+    t.bigint "llm_provider_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["llm_provider_id"], name: "index_user_task_model_mappings_on_llm_provider_id"
+    t.index ["user_id", "task_name"], name: "index_user_task_model_mappings_on_user_id_and_task_name", unique: true
+    t.index ["user_id"], name: "index_user_task_model_mappings_on_user_id"
+  end
+
   add_foreign_key "api_tokens", "users"
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"
@@ -1886,6 +1926,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
   add_foreign_key "sequence_based_macromolecule_samples", "users"
+  add_foreign_key "llm_providers", "users", on_delete: :cascade
+  add_foreign_key "user_llm_settings", "llm_providers", column: "default_llm_provider_id", on_delete: :nullify
+  add_foreign_key "user_llm_settings", "users", on_delete: :cascade
+  add_foreign_key "user_task_model_mappings", "llm_providers", on_delete: :cascade
+	add_foreign_key "user_task_model_mappings", "users", on_delete: :cascade
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)

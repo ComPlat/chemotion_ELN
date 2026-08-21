@@ -1,8 +1,22 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength -- one Grape resource class per domain object is
+  # this API layer's convention; it was already over the limit before the SDS
+  # extraction endpoint below was added.
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
+
+    helpers do
+      # True when the current user has an LLM provider configured for SDS extraction.
+      def llm_provider_available?
+        LlmProviderResolver.resolve(user: current_user, task_name: 'sds_extraction')
+        true
+      rescue Errors::LlmNotConfiguredError
+        false
+      end
+    end
+
     resource :chemicals do
       desc 'update chemicals'
       params do
@@ -87,7 +101,6 @@ module Chemotion
             Chemotion::ChemicalsService.handle_exceptions do
               data = params[:data]
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
-              vendor = data[:vendor]
               language = data[:language]
               case data[:option]
               when 'Common Name'
@@ -95,17 +108,14 @@ module Chemotion
               when 'CAS'
                 name = data[:searchStr] || molecule.cas[0]
               end
-              case vendor
-              when 'Merck'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
-              when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
-              else
-                {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
-                }
-              end
+              # Merck (Sigma-Aldrich) is the only vendor whose SDS lookup still
+              # works, and the only one the UI offers, so `vendor` no longer
+              # selects anything — see the retirement note on
+              # ChemicalsService.alfa. Restoring a second vendor means bringing
+              # back a `case vendor` here:
+              #   when 'Thermofisher'
+              #     { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+              { merck_link: Chemotion::ChemicalsService.merck(name, language) }
             end
           end
         end
@@ -177,6 +187,44 @@ module Chemotion
         end
       end
 
+      resource :extract_sds do
+        desc 'Extract safety data from an SDS PDF using the configured LLM provider'
+
+        params do
+          requires :sample_id, type: Integer, desc: 'Sample ID'
+        end
+
+        post do
+          Chemotion::ChemicalsService.handle_exceptions do
+            # Require a configured LLM provider (SF-05). The legacy ai4chemotion
+            # microservice check is re-enabled in a separate commit:
+            #   unless Chemotion::Ai4ChemotionService.available? || llm_provider_available?
+            unless llm_provider_available?
+              error!({ error: 'No LLM extraction service is configured. ' \
+                              'Set up an LLM provider in Profile → AI Settings, ' \
+                              'or ask your admin to configure the institution provider.' }, 503)
+            end
+
+            chemical = Chemical.find_by(sample_id: params[:sample_id])
+            error!({ error: 'Chemical not found for this sample' }, 404) unless chemical
+
+            ExtractSdsJob.perform_later(
+              sample_id: params[:sample_id],
+              user_id: current_user.id,
+            )
+
+            status 202
+            { message: 'SDS extraction job submitted', sample_id: params[:sample_id] }
+          end
+        end
+
+        # Legacy ai4chemotion health endpoint (re-enabled in a separate commit):
+        # desc 'Check ai4chemotion service health'
+        # get :health do
+        #   Chemotion::Ai4ChemotionService.health
+        # end
+      end
+
       resources :safety_phrases do
         desc 'H and P safety phrases'
 
@@ -227,3 +275,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

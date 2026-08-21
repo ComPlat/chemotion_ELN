@@ -177,6 +177,10 @@ class API < Grape::API
     'sequence_based_macromolecule_sample' => SequenceBasedMacromoleculeSample,
   }.freeze
 
+  mount Chemotion::LlmSettingsAPI
+  mount Chemotion::LlmProvidersAPI
+  mount Chemotion::AdminLlmAPI
+  mount Chemotion::LlmTasksAPI
   mount Chemotion::LiteratureAPI
   mount Chemotion::CasLookupAPI
   mount Chemotion::ContainerAPI
