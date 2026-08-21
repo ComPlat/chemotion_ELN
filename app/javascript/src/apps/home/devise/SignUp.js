@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
+import LoginOptions from 'src/components/omniauthCredential/LoginOptions';
 import { LinksForDeviseForm } from 'src/components/navigation/NavNewSession';
 import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
@@ -97,7 +98,9 @@ const SignUp = () => {
         )}
 
         {deviseMappings.omniauthable && (
-          <div id="LoginOptions" className="mb-3"></div>
+          <div id="LoginOptions" className="mb-3">
+            <LoginOptions />
+          </div>
         )}
 
         <h3 className="mb-3">Sign up</h3>
