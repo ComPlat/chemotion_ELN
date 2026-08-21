@@ -1,0 +1,13 @@
+// The "Create Analyses from files or folders" modal manages its own scrolling:
+// in advanced mode the analyses list on the right scrolls inside its own 70vh
+// box, so it is the single scrollbar. The shared AppModal adds a body-level
+// scroll (`.modal-body { max-height: 70vh; overflow-y: auto }`, introduced in
+// PR #3146), which produced a second scroll region and let a long file list
+// drag the file tree out of view. Restore the pre-#3146 behaviour for just
+// this modal so the body never scrolls on its own.
+.app-modal.analyses-upload-modal .modal-body {
+  max-height: none;
+  // `!important` is required: AppModal's body `@extend`s the `.overflow-y-auto`
+  // utility, which Bootstrap emits with `!important`.
+  overflow-y: visible !important;
+}
