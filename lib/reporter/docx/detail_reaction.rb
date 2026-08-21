@@ -332,7 +332,7 @@ module Reporter
         when 'ml'
           vessel_size['amount'] * 0.001
         when 'l'
-          vessel_size['amount']
+          vessel_size['amount'].to_f
         else
           0
         end
