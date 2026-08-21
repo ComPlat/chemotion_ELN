@@ -5,12 +5,12 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Export
   class ExportSdf < ExportTable
-    EMPTY_MOLFILE = <<~MOLFILE.freeze
-      noname
+    # The same empty V2000 molfile the structure editors default to (see StructureEditorModal.js). An
+    # MDL header is three lines -- title, program, comment -- before the counts line, so a reader that
+    # indexes by line number rejects a shorter one. Already frozen by the magic comment above.
+    EMPTY_MOLFILE = "\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n"
 
-        0  0  0  0  0  0  0  0  0  0999 V2000
-      M  END
-    MOLFILE
+    MOLFILE_END_TAG = 'M  END'
 
     EXCLUDED_COLUMNS = [
       'image', 'description', 'r description', 'molfile'
@@ -21,7 +21,7 @@ module Export
       @xfile = {}
     end
 
-    def generate_sheet_with_samples(table, samples = nil)
+    def generate_sheet_with_samples(table, samples = nil, _columns_params = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
 
@@ -66,7 +66,7 @@ module Export
       data
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       molfile = sdf_molfile_for(sample)
 
@@ -102,11 +102,12 @@ module Export
       end
       data.concat("$$$$\n")
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def sdf_molfile_for(sample)
       return sample['molfile'] if sample['molfile'].present?
       return EMPTY_MOLFILE if sample['source_type'] == 'sbmm'
+      return EMPTY_MOLFILE if sample['decoupled'].in?(['t', true])
 
       nil
     end
@@ -141,12 +142,10 @@ module Export
       s = molfile.to_s
       return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
 
-      return s unless s.include?('M  END')
-
-      idx = s.index('M  END')
+      idx = s.index(MOLFILE_END_TAG)
       return s unless idx
 
-      s[0..(idx + 'M  END'.length - 1)].rstrip
+      s[0..(idx + MOLFILE_END_TAG.length - 1)].rstrip
     end
 
     def validate_value(value)

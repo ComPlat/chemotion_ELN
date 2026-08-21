@@ -7,6 +7,16 @@
   @extend .p-0;
   @extend .m-0;
   @extend .d-block;
+
+  // Allow this flex item to shrink, and if the text is still too long, allow the browser to break the text anywhere necessary.
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// The title carries a sender name and a timestamp, which can be just as long as the message.
+.notification-headline strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .notification-headline {
