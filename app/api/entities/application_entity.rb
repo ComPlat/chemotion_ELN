@@ -24,11 +24,7 @@ module Entities
       Array(fields).each do |field|
         expose(field, options) do |represented_object, _options|
           if detail_levels[represented_object.class] < anonymize_below
-            # Deep-duped so a Hash/Array anonymize_with literal (captured once,
-            # per field, in this closure) can't be mutated in place by one
-            # response and leak that mutation into every other anonymized
-            # instance of this field for the lifetime of the process.
-            anonymize_with.deep_dup
+            anonymization_placeholder(anonymize_with)
           elsif respond_to?(field, true) # Entity has a method with the same name
             send(field)
           elsif represented_object.respond_to?(field)
@@ -74,6 +70,22 @@ module Entities
       end
 
       options[:current_user]
+    end
+
+    # Value handed to a sharee below a field's anonymization threshold.
+    #
+    # A mutable placeholder is deep-duped because the literal is captured once, per field, in the
+    # expose closure — without this, one response mutating it in place would leak that mutation
+    # into every other anonymized instance of the field for the lifetime of the process. Immutable
+    # placeholders are handed out as-is: that covers the '***' default (frozen_string_literal),
+    # nil and booleans, i.e. the large majority of anonymized fields on a list response, so the
+    # common path allocates nothing. Note +column_defaults+ only shallow-freezes its outer Hash,
+    # so the jsonb values read out of it are mutable and do get duped.
+    #
+    # @param anonymize_with [Object] the configured placeholder for the field
+    # @return [Object] the placeholder itself when immutable, otherwise a deep copy of it
+    def anonymization_placeholder(anonymize_with)
+      anonymize_with.frozen? ? anonymize_with : anonymize_with.deep_dup
     end
 
     def detail_levels
