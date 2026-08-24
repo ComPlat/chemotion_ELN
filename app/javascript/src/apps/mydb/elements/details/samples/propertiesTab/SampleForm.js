@@ -388,9 +388,12 @@ export default class SampleForm extends React.Component {
     });
 
     const molNameInvalid = moleculeNameInputValue !== '' && !isValidMoleculeName(moleculeNameInputValue);
-    // Bail out on a structure redraw (newMolecule): mno still holds the previous
-    // molecule's name, which must not be shown as selected for the new one.
-    const selectedMoleculeName = !newMolecule && mno && mno.label
+    // Bail out on a structure redraw: mno still holds the previous molecule's name,
+    // which must not be shown as selected for the new one. Only a name that carries a
+    // `mid` for a *different* molecule is stale -- a name just picked from the dropdown
+    // is stored raw by updateMolName and has no `mid` at all, and must stay selected.
+    const staleMoleculeName = !mno || (mno.mid != null && sample._molecule?.id !== mno.mid);
+    const selectedMoleculeName = !staleMoleculeName && mno.label
       ? { value: mno.value, label: mno.label, type: mno.desc || mno.type || '' }
       : null;
 

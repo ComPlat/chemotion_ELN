@@ -106,6 +106,17 @@ describe('SampleForm new property inputs', () => {
       expect(findMoleculeSelect(wrapper).props().value).toBeNull();
     });
 
+    it('keeps the value for a name just picked from the dropdown (option carries no mid)', () => {
+      // updateMolName stores the raw react-select option, which has no `mid`;
+      // that must not be mistaken for a structure redraw.
+      sample.molecule = { id: 42 };
+      sample.molecule_name = { label: 'Water', value: 5, type: 'iupac_name' };
+      const wrapper = shallow(instance.moleculeInput());
+      expect(findMoleculeSelect(wrapper).props().value).toEqual({
+        value: 5, label: 'Water', type: 'iupac_name',
+      });
+    });
+
     it('shows no selected value when the sample has no assigned molecule name', () => {
       sample.molecule = { id: 42 };
       sample.molecule_name = {};
