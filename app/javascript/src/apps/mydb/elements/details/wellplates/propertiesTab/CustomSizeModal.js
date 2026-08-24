@@ -10,9 +10,15 @@ import AppModal from 'src/components/common/AppModal';
 const DEFAULT_WIDTH = 12;
 const DEFAULT_HEIGHT = 8;
 
+// How many blocking positions the message names before it elides the rest;
+// mirrors Usecases::Wellplates::Resize::POSITIONS_IN_ERROR.
+const POSITIONS_IN_MESSAGE = 5;
+
+// Number('') and Number(null) are both 0, which would pass the integer test,
+// so the blank cases have to be rejected first. Number(anything else
+// unparseable) is NaN, which Number.isInteger already rejects.
 const isInteger = (value) => {
   if (value === '' || value === null || value === undefined) return false;
-  if (Number.isNaN(value)) return false;
 
   return Number.isInteger(Number(value));
 };
@@ -45,8 +51,8 @@ const blockedMessage = (blockedWells) => (
     {blockedWells.length === 1 ? ' holds' : ' hold'}
     {' '}
     data (
-    {blockedWells.slice(0, 5).map((well) => well.alphanumericPosition).join(', ')}
-    {blockedWells.length > 5 ? ', ...' : ''}
+    {blockedWells.slice(0, POSITIONS_IN_MESSAGE).map((well) => well.alphanumericPosition).join(', ')}
+    {blockedWells.length > POSITIONS_IN_MESSAGE ? ', ...' : ''}
     ). Empty them and save before resizing.
   </div>
 );

@@ -22,6 +22,11 @@ module Usecases
       # is elided; the full count is always reported.
       POSITIONS_IN_ERROR = 5
 
+      # Rows per INSERT when materialising the grid. A 100x100 plate is 10_000
+      # wells; one statement per well would put 10_000 round trips (each firing
+      # the logidze trigger) inside a single request.
+      INSERT_BATCH_SIZE = 1_000
+
       attr_reader :wellplate, :width, :height
 
       # @param wellplate [Wellplate]
@@ -40,11 +45,15 @@ module Usecases
       #   holding data lies outside the requested grid
       def execute!
         validate_dimensions!
-        return wellplate if unchanged?
-
-        guard_occupied_wells!
 
         ActiveRecord::Base.transaction do
+          # Serialise against a concurrent well edit. guard_occupied_wells!
+          # decides what may be destroyed; without the lock a sample placed
+          # between that check and the delete below would go with it.
+          wellplate.lock!
+          next if unchanged?
+
+          guard_occupied_wells!
           wells_outside_new_grid.destroy_all
           # destroy_all leaves the has_many cache holding the rows it just
           # removed, and a loaded association answers pluck from that cache.
@@ -58,8 +67,13 @@ module Usecases
 
       private
 
+      # Only a request that neither moves the grid nor leaves a well outside it
+      # is a genuine no-op. Matching dimensions alone are not enough: a plate
+      # whose rows drifted out of the grid (a null position, a row beyond the
+      # edge) would otherwise be unrepairable, since no size can be asked for
+      # that both reconciles it and differs from what it already claims.
       def unchanged?
-        wellplate.width == width && wellplate.height == height
+        wellplate.width == width && wellplate.height == height && !wells_outside_new_grid.exists?
       end
 
       def validate_dimensions!
@@ -77,14 +91,17 @@ module Usecases
               'A wellplate size of 0 requires both width and height to be 0.'
       end
 
-      # Wells the requested grid has no room for. A null position counts as
-      # outside: such a well cannot be placed on any grid and would break
-      # rendering.
+      # Wells the requested grid has no room for. A null or below-one position
+      # counts as outside: such a well cannot be placed on any grid, and the
+      # designer indexes its row array by position, so a 0 would overwrite the
+      # row header and a negative would land off the end.
       #
       # @return [ActiveRecord::Relation]
       def wells_outside_new_grid
         wellplate.wells.where(
-          'position_x IS NULL OR position_y IS NULL OR position_x > ? OR position_y > ?',
+          'position_x IS NULL OR position_y IS NULL ' \
+          'OR position_x < 1 OR position_y < 1 ' \
+          'OR position_x > ? OR position_y > ?',
           width,
           height,
         )
@@ -112,15 +129,45 @@ module Usecases
       # Materialises the full grid. The designer tab builds its cells from the
       # well list, so positions without a row are simply not there to drop a
       # sample onto.
+      #
+      # Inserted in batches rather than one {Well} at a time: the largest grid
+      # this allows is 100x100, and a row-at-a-time create would be 10_000
+      # statements in one request.
       def create_missing_wells
         taken = wellplate.wells.pluck(:position_x, :position_y).to_set
+        now = Time.current
 
-        (1..height).each do |pos_y|
-          (1..width).each do |pos_x|
-            next if taken.include?([pos_x, pos_y])
+        rows = WellPosition.from_dimension(width, height).filter_map do |position|
+          next if taken.include?([position.x, position.y])
 
-            wellplate.wells.create!(position_x: pos_x, position_y: pos_y)
-          end
+          {
+            wellplate_id: wellplate.id,
+            position_x: position.x,
+            position_y: position.y,
+            readouts: blank_readouts,
+            created_at: now,
+            updated_at: now,
+          }
+        end
+
+        # Well's only validation is the hex format of color_code, which these
+        # rows do not set; logidze is a database trigger and still fires.
+        rows.each_slice(INSERT_BATCH_SIZE) do |batch|
+          Well.insert_all(batch) # rubocop:disable Rails/SkipsModelValidations
+        end
+      end
+
+      # One blank readout per readout title, matching what the wells already on
+      # the plate carry — the list tab pairs +readout_titles[i]+ with
+      # +readouts[i]+ and writes through without a bounds check, so a well that
+      # is short of entries raises there. The +wells.readouts+ column default is
+      # a single blank entry, which is only right for a plate with at most one
+      # title.
+      #
+      # @return [Array<Hash>]
+      def blank_readouts
+        @blank_readouts ||= Array.new([Array(wellplate.readout_titles).size, 1].max) do
+          { 'value' => '', 'unit' => '' }
         end
       end
     end

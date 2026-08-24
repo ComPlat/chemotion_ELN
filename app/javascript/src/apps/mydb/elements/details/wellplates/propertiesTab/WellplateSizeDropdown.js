@@ -30,13 +30,20 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   // this one, so ANY unsaved edit would be discarded by it - not just an edit
   // to the wells. A wellplate that is not saved yet resizes in memory, with
   // nothing to lose.
-  const hasUnsavedChanges = !wellplate.isNew && (wellplate.isEdited || wellplate.changed === true);
+  const hasUnsavedChanges = !wellplate.isNew && wellplate.isPendingToSave;
   const shouldBeDisabled = wellplate.isReadOnly || hasUnsavedChanges;
 
-  const unsavedReason = wellplate.hasPendingWellChanges
-    ? 'Save your changes to the wells before changing the size.'
-    : 'Save your changes before changing the size.';
-  const disabledReason = wellplate.isReadOnly ? 'You cannot edit this wellplate.' : unsavedReason;
+  // Deliberately a function, not a value: hasPendingWellChanges re-serializes
+  // and re-hashes every well (building a Sample per occupied one), and the
+  // answer is only ever needed for the tooltip below - which only renders while
+  // the control is locked.
+  const disabledReason = () => {
+    if (wellplate.isReadOnly) return 'You cannot edit this wellplate.';
+
+    return wellplate.hasPendingWellChanges
+      ? 'Save your changes to the wells before changing the size.'
+      : 'Save your changes before changing the size.';
+  };
 
   const onChange = (event) => {
     if (shouldBeDisabled) { return; }
@@ -92,7 +99,7 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
           placement="bottom"
           overlay={(
             <Tooltip id={`wellplate-${wellplate.id}-size-locked-tooltip`}>
-              {disabledReason}
+              {disabledReason()}
             </Tooltip>
           )}
         >

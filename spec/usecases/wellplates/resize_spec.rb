@@ -156,6 +156,90 @@ RSpec.describe Usecases::Wellplates::Resize do
     end
   end
 
+  describe 'readouts on newly created wells' do
+    # The list tab pairs readout_titles[i] with readouts[i] and writes through
+    # without a bounds check, so a well short of entries raises there.
+    let(:wellplate) { create(:wellplate, width: 0, height: 0) }
+    let(:width) { 2 }
+    let(:height) { 1 }
+
+    it 'gives each new well one blank readout per readout title' do
+      expect(resize.wells.map { |well| well.readouts.size }.uniq).to eq [wellplate.readout_titles.size]
+    end
+
+    it 'leaves those readouts blank, so they do not block a later shrink' do
+      expect(resize.wells.none?(&:content?)).to be true
+    end
+
+    context 'when the wellplate has no readout titles' do
+      let(:wellplate) { create(:wellplate, width: 0, height: 0, readout_titles: []) }
+
+      it 'still gives each well one blank readout' do
+        expect(resize.wells.map { |well| well.readouts.size }.uniq).to eq [1]
+      end
+    end
+  end
+
+  describe 'wells that drifted outside the declared grid' do
+    let(:wellplate) { create(:wellplate, width: 2, height: 2) }
+
+    before do
+      fill_grid(wellplate)
+      wellplate.wells.create!(position_x: 1, position_y: 3) # a row beyond the edge
+      wellplate.wells.reset
+    end
+
+    # Matching dimensions alone are not a no-op: no size could otherwise be
+    # asked for that both repairs the plate and differs from what it claims.
+    context 'when the requested size matches the current one' do
+      let(:width) { 2 }
+      let(:height) { 2 }
+
+      it 'still reconciles the grid' do
+        expect(resize.wells.count).to eq 4
+      end
+
+      it 'removes the drifted well' do
+        positions = resize.wells.pluck(:position_x, :position_y)
+        expect(positions).not_to include([1, 3])
+      end
+    end
+
+    context 'when a drifted well holds data' do
+      let(:width) { 2 }
+      let(:height) { 2 }
+
+      before { wellplate.wells.find_by(position_y: 3).update!(additive: 'DMSO') }
+
+      it 'refuses to reconcile it away' do
+        expect { resize }.to raise_error(Usecases::Wellplates::Errors::ResizeNotAllowedError)
+      end
+    end
+  end
+
+  describe 'wells at an impossible position' do
+    let(:wellplate) { create(:wellplate, width: 2, height: 2) }
+    let(:width) { 3 }
+    let(:height) { 2 }
+
+    before do
+      fill_grid(wellplate)
+      # The designer indexes its row array by position: a 0 would overwrite the
+      # row header and a negative would land off the end.
+      wellplate.wells.create!(position_x: 0, position_y: 1)
+      wellplate.wells.create!(position_x: -1, position_y: 1)
+      wellplate.wells.reset
+    end
+
+    it 'treats them as outside the grid and removes them' do
+      expect(resize.wells.where('position_x < 1')).to be_empty
+    end
+
+    it 'leaves exactly the wells the new grid calls for' do
+      expect(resize.wells.count).to eq 6
+    end
+  end
+
   describe 'no-op' do
     let(:wellplate) { create(:wellplate, :with_transient_wells, width: 2, height: 2) }
     let(:width) { 2 }

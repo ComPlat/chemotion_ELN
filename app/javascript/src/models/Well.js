@@ -50,12 +50,17 @@ export default class Well extends Element {
    * and `readouts` have non-null column defaults, so a bare presence check
    * would report every untouched well as occupied and make shrinking a
    * wellplate impossible.
+   *
+   * `additive`, `color_code` and `label` are exposed at detail level 10, so
+   * below that WellEntity hands back the '***' placeholder for them. Counting
+   * a placeholder as content would mark every well of such a plate occupied -
+   * `label` alone would do it - and grey out every smaller size.
    */
   get hasContent() {
     if (this.sample) return true;
-    if (this.additive) return true;
-    if (this.color_code) return true;
-    if (this.label && this.label !== Well.DEFAULT_LABEL) return true;
+    if (this.additive && !this.isMethodDisabled('additive')) return true;
+    if (this.color_code && !this.isMethodDisabled('color_code')) return true;
+    if (this.label && this.label !== Well.DEFAULT_LABEL && !this.isMethodDisabled('label')) return true;
 
     return (this.readouts || []).some((readout) => readout && (readout.value || readout.unit));
   }

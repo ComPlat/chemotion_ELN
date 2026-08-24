@@ -74,6 +74,15 @@ class Well < ApplicationRecord
     "#{row}#{position_x}"
   end
 
+  def sortable_alphanumeric_position
+    return 'n/a' if position_x.nil? || position_y.nil?
+
+    row = ('A'..'ZZ').to_a[position_y - 1]
+    "#{row}#{format('%02i', position_x)}"
+  end
+
+  private
+
   # @param readout [Object] one entry of {#readouts}; jsonb yields string keys
   #   when loaded from the DB and symbol keys when built in memory
   # @return [Boolean] whether the entry carries a value or a unit
@@ -82,12 +91,5 @@ class Well < ApplicationRecord
 
     entry = readout.with_indifferent_access
     entry[:value].present? || entry[:unit].present?
-  end
-
-  def sortable_alphanumeric_position
-    return 'n/a' if position_x.nil? || position_y.nil?
-
-    row = ('A'..'ZZ').to_a[position_y - 1]
-    "#{row}#{format('%02i', position_x)}"
   end
 end

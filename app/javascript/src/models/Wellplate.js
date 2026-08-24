@@ -8,11 +8,12 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
-    this.#initEmptyWells();
-    // #initEmptyWells may have built the grid after Element's constructor
-    // already hashed the element, so re-baseline both checksums here. Nothing
-    // else may reset them: a resize has to register as a real change.
-    this.updateChecksum();
+    // When #initEmptyWells builds a grid it does so after Element's constructor
+    // already hashed the element, so both checksums have to be re-baselined.
+    // Only then: Element's constructor has already hashed a wellplate whose
+    // wells were left alone, and hashing the well list is not cheap. Nothing
+    // else may reset them either - a resize has to register as a real change.
+    if (this.#initEmptyWells()) this.updateChecksum();
   }
 
   static buildEmpty(collectionId, width = 0, height = 0) {
@@ -207,14 +208,20 @@ export default class Wellplate extends Element {
     });
   }
 
+  /**
+   * @returns {boolean} whether the grid was (re)built, i.e. whether the
+   *   checksums the constructor took before this ran are now stale
+   */
   #initEmptyWells() {
     // A persisted wellplate keeps whatever wells the server sent, including
     // none at all: re-initialising here would discard them, and saving the
     // emptied list makes the server destroy every sample they held.
-    if (!this.isNew) return;
+    if (!this.isNew) return false;
 
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
+
+    return true;
   }
 
   #initWellWithPositionByIndex(well, i) {

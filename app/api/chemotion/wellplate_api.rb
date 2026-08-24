@@ -16,7 +16,12 @@ module Chemotion
     end
 
     # Wellplate.find in the before blocks below would otherwise surface as a 500.
-    rescue_from ActiveRecord::RecordNotFound do
+    # Scoped to the wellplate itself on purpose: a RecordNotFound raised deeper in
+    # (User.find in Update, Well.find in WellplateUpdater, the collection lookup in
+    # Create) is a genuine server error and must not be disguised as a 404.
+    rescue_from ActiveRecord::RecordNotFound do |error|
+      raise error unless error.model == 'Wellplate'
+
       error!('Resource not found', 404)
     end
 

@@ -878,9 +878,18 @@ class ElementActions {
     return (dispatch) => {
       WellplatesFetcher.resize(wellplateId, width, height)
         .then((result) => {
-          // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
-          // reconciled wellplate coming back from the server.
-          if (!result.error) { result.updated_at = new Date(); }
+          if (!result.error) {
+            // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
+            // reconciled wellplate coming back from the server: eln_timestamp has
+            // second resolution, so the server's own value can be byte-identical
+            // to the one already on screen.
+            result.updated_at = new Date();
+            // The stamp lands after WellplatesFetcher baselined the checksum, and
+            // a Date drops out of the hash where the string did not - without
+            // this the freshly persisted wellplate reads as edited and locks the
+            // size control it just came out of.
+            result.updateChecksum();
+          }
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
