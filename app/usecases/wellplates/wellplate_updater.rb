@@ -48,7 +48,13 @@ module Usecases
           if well[:is_new]
             wellplate.wells.create(well_attributes)
           else
-            Well.find(well[:id]).update(well_attributes)
+            # Scoped to this wellplate, and tolerant of a well that is no longer
+            # on it. A concurrent resize soft-deletes the wells outside the new
+            # grid, and an unscoped Well.find would then raise RecordNotFound
+            # and roll back the whole save, losing every other edit in it. The
+            # scope also keeps a payload from reaching a well that belongs to a
+            # different wellplate.
+            wellplate.wells.find_by(id: well[:id])&.update(well_attributes)
           end
         end
 
