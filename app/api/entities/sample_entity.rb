@@ -72,7 +72,7 @@ module Entities
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
-      expose! :stereo,                                                anonymize_with: nil
+      expose! :stereo,                                              anonymize_with: nil
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
