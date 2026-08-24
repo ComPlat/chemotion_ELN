@@ -218,7 +218,8 @@ export default class NMRiumDisplayer extends React.Component {
     LoadingActions.start.defer();
 
     const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
-    const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
+    const jdxList = fetchedSpectra.filter((s) => s.kind === 'jcamp');
+    const jdx = jdxList[0];
     const zip = fetchedSpectra.find((s) => s.kind === 'zip');
     const molfile = sample?.molfile || null;
 
@@ -230,18 +231,18 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     // Fallback: only .jdx/.zip file available
-    if (jdx?.url) {
-      // get file extension from jdx.label
-      const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
-      const jdxUrlWithFile = `${jdx.url}/file.${fileExtension}`;
+    if (jdxList.length) {
       const payload = {
         type: 'nmrium',
         data: {
-          spectra: [{
-            id: crypto.randomUUID(),
-            source: { jcampURL: jdxUrlWithFile },
-            display: { name: jdx.label || 'spectrum' },
-          }],
+          spectra: jdxList.map((item) => {
+            const fileExtension = item.label?.split('.').pop()?.toLowerCase() || 'jdx';
+            return {
+              id: crypto.randomUUID(),
+              source: { jcampURL: `${item.url}/file.${fileExtension}` },
+              display: { name: item.label || 'spectrum' },
+            };
+          }),
           molecules: molfile ? [{ molfile }] : [],
         },
       };
