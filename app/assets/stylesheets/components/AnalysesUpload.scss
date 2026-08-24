@@ -2,23 +2,27 @@
 //
 // Two fixes that must work together:
 //
-// 1. The analyses ListGroup (right) and the file tree (left) each own a 70vh
-//    scroll region. The modal body must NOT add its own scroll on top, or
-//    scrolling to a lower dataset drags the file list out of view (the original
-//    reported bug). AppModal's shared rule caps .modal-body at 70vh and @extends
-//    the .overflow-y-auto utility (emitted with !important), so both are overridden
-//    here to keep the body from scrolling - the panes are the only scroll regions.
+// 1. The analyses ListGroup (right) and the file tree (left) each own their own
+//    scroll region. The modal body must NOT add a second one on top, or scrolling
+//    to a lower dataset drags the file list - the drag source - out of view (the
+//    original reported bug). AppModal's shared rule caps .modal-body at 70vh and
+//    @extends the .overflow-y-auto utility (emitted with !important), so both are
+//    overridden here. The override is scoped to the advanced view: the simple view
+//    has no inner scroll pane and still wants AppModal's body scroll.
 //
-// 2. Because the body no longer scrolls, an unbounded file tree would instead grow
-//    the whole dialog past the viewport and make .modal the scroll region. Capping
-//    the file tree at the same 70vh as the ListGroup keeps the dialog within the
-//    viewport, so neither the body nor the modal scrolls the file list away.
-.app-modal.analyses-upload-modal .modal-body {
+// 2. Because the body no longer scrolls, the panes must be short enough that the
+//    whole dialog still fits the viewport - otherwise `.modal` (overflow-y: auto)
+//    becomes the scroll region and the same bug returns on any screen where
+//    70vh + chrome > 100vh, i.e. most laptops. The subtracted 20rem is the chrome
+//    around the panes: dialog margins, header, body padding, the help row, the
+//    analyses toolbar and the footer.
+.app-modal.analyses-upload-modal--advanced .modal-body {
   max-height: none;
   overflow-y: visible !important;
 }
 
-.analyses-upload__file-tree {
-  max-height: 70vh;
+.analyses-upload__file-tree,
+.analyses-upload__analyses-list {
+  max-height: calc(100vh - 20rem);
   overflow-y: auto;
 }

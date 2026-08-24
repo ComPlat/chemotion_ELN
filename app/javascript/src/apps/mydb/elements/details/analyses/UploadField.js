@@ -297,10 +297,15 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   const handleShow = useCallback(() => setShow(true), []);
 
   const handleChange = useCallback((items) => {
+    // A new selection replaces `listedFiles`, so any advanced-mode analyses built from
+    // the previous selection now hold dataset paths that no longer resolve - executing
+    // them would walk into an unrelated (or missing) file container.
+    setAnalContainer([]);
+
     if (items.length === 1) {
       if (items[0].isFile) {
         createAnalsesForSingelFiles(element, [items[0].file], items[0].name, ontology);
-        setShow(false);
+        handleClose();
         setElement(element, () => {
         });
 
@@ -313,7 +318,7 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
 
     setListedFiles(items);
-  }, [ontology]);
+  }, [ontology, handleClose]);
 
   const handlesSetOntology = useCallback((ev) => {
     let kind = (ev || '');
@@ -327,8 +332,10 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     setConsumedPaths(paths);
   }, [listedFiles]);
 
+  const isAdvancedView = isAdvanced && listedFiles.length > 0;
+
   const content = () => {
-    if (isAdvanced && listedFiles.length > 0) {
+    if (isAdvancedView) {
       return (
         <Container>
           <Row className="mb-2">
@@ -440,7 +447,7 @@ const UploadField = ({ disabled = false, element, setElement }) => {
         size="xl"
         show={show}
         onHide={handleClose}
-        className="analyses-upload-modal"
+        className={`analyses-upload-modal${isAdvancedView ? ' analyses-upload-modal--advanced' : ''}`}
         centered={false}
         title="Create Analyses from files or folders"
         extendedFooter={(
