@@ -169,11 +169,33 @@ export default class WellplateDetails extends Component {
     if (type === 'description') wellplate.description = value;
     if (type === 'readoutTitles') wellplate.readout_titles = value;
     if (type === 'size') {
-      wellplate.changeSize(value.width, value.height);
-      wellplate.changed = true;
+      this.handleSizeChange(value.width, value.height);
+      return;
     }
 
     this.setState({ wellplate });
+  }
+
+  /**
+   * A resize is its own persisted operation rather than part of the next save.
+   *
+   * The server reconciles the well rows and refuses a size that would drop a
+   * well still holding data, so it has to act on what is actually stored. A
+   * wellplate that does not exist yet has nothing stored, so its grid is just
+   * rebuilt in memory and goes out with the create request.
+   */
+  handleSizeChange(width, height) {
+    const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
+    if (wellplate.isNew) {
+      wellplate.changeSize(width, height);
+      this.setState({ wellplate });
+      return;
+    }
+
+    LoadingActions.start();
+    ElementActions.resizeWellplate(wellplate.id, width, height);
   }
 
   handleTabChange(eventKey) {

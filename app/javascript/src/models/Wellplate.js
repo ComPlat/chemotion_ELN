@@ -1,4 +1,5 @@
 /* eslint-disable no-underscore-dangle */
+import sha256 from 'sha256';
 import Element from 'src/models/Element';
 import Well from 'src/models/Well';
 import Container from 'src/models/Container';
@@ -7,8 +8,11 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
-    this.originalSize = this.width * this.height;
     this.#initEmptyWells();
+    // #initEmptyWells may have built the grid after Element's constructor
+    // already hashed the element, so re-baseline both checksums here. Nothing
+    // else may reset them: a resize has to register as a real change.
+    this.updateChecksum();
   }
 
   static buildEmpty(collectionId, width = 0, height = 0) {
@@ -115,7 +119,39 @@ export default class Wellplate extends Element {
   }
 
   checksum(fieldsToOmit = []) {
-    return super.checksum(['attachments', ...fieldsToOmit]);
+    return super.checksum(['attachments', '_wellsChecksum', ...fieldsToOmit]);
+  }
+
+  /**
+   * Hash of the wells alone, so an unsaved well edit can be told apart from any
+   * other unsaved edit. The size control keys off this: resizing is refused
+   * while well changes are pending, because the two must be persisted as
+   * separate steps.
+   */
+  wellsChecksum() {
+    return sha256(JSON.stringify(this.wells.map((well) => well.serialize())));
+  }
+
+  get hasPendingWellChanges() {
+    return this._wellsChecksum !== this.wellsChecksum();
+  }
+
+  updateChecksum(cs) {
+    this._wellsChecksum = this.wellsChecksum();
+    super.updateChecksum(cs);
+  }
+
+  /**
+   * Wells holding data that a grid of `width` x `height` would have no room
+   * for. Non-empty means the resize must be refused; the server enforces the
+   * same rule in Usecases::Wellplates::Resize.
+   */
+  occupiedWellsOutside(width, height) {
+    return this.wells.filter((well) => (
+      well.position
+      && (well.position.x > width || well.position.y > height)
+      && well.hasContent
+    ));
   }
 
   title() {
@@ -139,37 +175,46 @@ export default class Wellplate extends Element {
     });
   }
 
+  /**
+   * Rebuilds the grid, keeping every well whose position still fits and
+   * dropping the rest.
+   *
+   * Wells are matched by position, not by index: indexing against the *new*
+   * width used to wrap an out-of-range well into the next row instead of
+   * dropping it, and left the survivors carrying stale positions that the
+   * server then persisted verbatim.
+   *
+   * On a persisted wellplate the server owns this reconciliation
+   * (Usecases::Wellplates::Resize); this runs for wellplates that have not been
+   * created yet, where the grid only exists in memory.
+   */
   changeSize(width, height) {
-    // change actual dimensions
     this.width = Number(width);
     this.height = Number(height);
 
-    // copy wells, so that we can set a new size for the wells while keeping the old positions
-    const oldWells = this.wells.map((well) => well);
+    const keptByPosition = new Map();
+    this.wells.forEach((well) => {
+      if (!well.position) return;
+      if (well.position.x > this.width || well.position.y > this.height) return;
 
-    // initalize wells with new size
-    this.#initEmptyWells();
-
-    // calculate new index from old position and set well at new index if it is within the new size
-    this.#moveWellsToNewIndexWhileKeepingOldPosition(oldWells);
-  }
-
-  #moveWellsToNewIndexWhileKeepingOldPosition(oldWells) {
-    oldWells.forEach((well) => {
-      const index = this.#calculateIndexFromPosition(well.position);
-      if (index < this.size) {
-        this.wells[index] = well;
-      }
+      keptByPosition.set(`${well.position.x}:${well.position.y}`, well);
     });
-    this._checksum = this.checksum();
+
+    this.wells = Array.from({ length: this.size }, (_, index) => {
+      const position = this.#calculatePositionFromIndex(index);
+
+      return keptByPosition.get(`${position.x}:${position.y}`) || { position, readouts: [] };
+    });
   }
 
   #initEmptyWells() {
-    if (!this.isNew && this.originalSize > 0) return;
+    // A persisted wellplate keeps whatever wells the server sent, including
+    // none at all: re-initialising here would discard them, and saving the
+    // emptied list makes the server destroy every sample they held.
+    if (!this.isNew) return;
 
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));
-    this._checksum = this.checksum();
   }
 
   #initWellWithPositionByIndex(well, i) {
@@ -187,9 +232,5 @@ export default class Wellplate extends Element {
     const y = Math.floor(i / this.width) + 1;
 
     return { x, y };
-  }
-
-  #calculateIndexFromPosition(position) {
-    return (position.y - 1) * this.width + position.x - 1;
   }
 }

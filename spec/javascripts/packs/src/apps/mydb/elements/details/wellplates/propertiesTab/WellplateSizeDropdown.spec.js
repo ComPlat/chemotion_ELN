@@ -92,6 +92,21 @@ describe.skip('WellplateSizeDropdown', () => {
 });
 
 describe('WellplateSizeDropdown (functional component)', () => {
+  // A saved wellplate keeps whatever wells the server sent rather than
+  // fabricating a grid, so a realistic one has to carry them.
+  function savedWellplate(attrs = {}) {
+    const wells = [];
+    for (let y = 1; y <= 8; y += 1) {
+      for (let x = 1; x <= 12; x += 1) {
+        wells.push({ id: `well-${x}-${y}`, position: { x, y }, readouts: [] });
+      }
+    }
+
+    return new Wellplate({
+      ...wellplate8x12EmptyJson, is_new: false, wells, ...attrs
+    });
+  }
+
   function selectedOption(wrapper) {
     return wrapper.find('option').filterWhere((o) => o.props().value === wrapper.find('select').props().value);
   }
@@ -117,17 +132,101 @@ describe('WellplateSizeDropdown (functional component)', () => {
     expect(selectedOption(wrapper).props().label).toEqual('96 (12x8)');
   });
 
-  it('shows a plain read-only field with an explanatory tooltip once the size is locked', () => {
-    const wellplate = new Wellplate({ ...wellplate8x12EmptyJson, is_new: false });
+  // A saved wellplate can be resized now; what locks the control is an unsaved
+  // well edit, because a resize is persisted separately and must not race one.
+  it('stays editable on a saved wellplate with no pending well changes', () => {
+    const wellplate = savedWellplate();
     const wrapper = mount(
       <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
     );
 
-    expect(wrapper.find('select').length).toEqual(0);
-    expect(wrapper.find('input').first().props().value).toEqual('96 (12x8)');
-    expect(wrapper.find('input').first().props().disabled).toEqual(true);
+    expect(wrapper.find('select').props().disabled).toEqual(false);
+    expect(wrapper.find('button.create-own-size-button').props().disabled).toEqual(false);
+  });
+
+  // The resize round-trip replaces the whole element, so any unsaved edit
+  // would go with it - not only an edit to the wells.
+  it('locks the size while an unrelated edit is unsaved', () => {
+    const wellplate = savedWellplate();
+    wellplate.name = 'Renamed but not saved';
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wellplate.hasPendingWellChanges).toEqual(false);
+    expect(wrapper.find('select').props().disabled).toEqual(true);
+    const overlay = wrapper.find('OverlayTrigger').props().overlay;
+    expect(shallow(overlay).text()).toEqual('Save your changes before changing the size.');
+  });
+
+  it('does not lock a wellplate that has not been saved yet', () => {
+    // Nothing is persisted, so changeSize runs in memory and loses nothing.
+    const wellplate = Wellplate.buildEmpty(1, 4, 3);
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find('select').props().disabled).toEqual(false);
+  });
+
+  it('locks the size while well changes are unsaved, and explains why', () => {
+    const wellplate = savedWellplate();
+    wellplate.wells[0].readouts = [{ value: '42', unit: 'nM' }];
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wellplate.hasPendingWellChanges).toEqual(true);
+    expect(wrapper.find('select').props().disabled).toEqual(true);
     expect(wrapper.find('button.create-own-size-button').props().disabled).toEqual(true);
     const overlay = wrapper.find('OverlayTrigger').props().overlay;
-    expect(shallow(overlay).text()).toEqual('The size cannot be changed.');
+    expect(shallow(overlay).text()).toEqual('Save your changes to the wells before changing the size.');
+  });
+
+  // A disabled control dispatches no mouse events and they do not bubble, so
+  // the trigger has to sit on a wrapper that is not itself disabled.
+  it('puts the tooltip on a wrapper that can actually receive the hover', () => {
+    const wellplate = savedWellplate();
+    wellplate.wells[0].readouts = [{ value: '42', unit: 'nM' }];
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    const trigger = wrapper.find('OverlayTrigger');
+    expect(trigger.find('span').first().props().tabIndex).toEqual(0);
+    expect(trigger.find('InputGroup').props().style).toEqual({ pointerEvents: 'none' });
+  });
+
+  it('locks the size on a read-only wellplate', () => {
+    const wellplate = savedWellplate({ can_update: false });
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find('select').props().disabled).toEqual(true);
+    const overlay = wrapper.find('OverlayTrigger').props().overlay;
+    expect(shallow(overlay).text()).toEqual('You cannot edit this wellplate.');
+  });
+
+  // "Define later" (0x0) used to be offered unconditionally and wiped every
+  // placed sample without a word.
+  it('disables sizes that would delete wells holding data', () => {
+    const wellplate = savedWellplate();
+    wellplate.wells[95].readouts = [{ value: '42', unit: 'nM' }]; // H12, the far corner
+    wellplate.updateChecksum(); // treat that as the saved state
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    const optionFor = (value) => wrapper.find('option').filterWhere((o) => o.props().value === value);
+    expect(optionFor('0 0').props().disabled).toEqual(true);
+    expect(optionFor('4 3').props().disabled).toEqual(true);
+    expect(optionFor('24 16').props().disabled).toEqual(false);
+    expect(optionFor('0 0').props().label).toContain('would delete filled wells');
   });
 });

@@ -4,6 +4,11 @@ import Sample from 'src/models/Sample';
 import Wellplate from 'src/models/Wellplate';
 
 export default class Well extends Element {
+  // Mirrors the wells.label column default; see `hasContent`.
+  static get DEFAULT_LABEL() {
+    return 'Molecular structure';
+  }
+
   serialize() {
     return super.serialize({
       position: this.position,
@@ -36,6 +41,23 @@ export default class Well extends Element {
 
   set label(label) {
     this._label = label;
+  }
+
+  /**
+   * Whether the well holds anything a user put there.
+   *
+   * Mirrors Well#content? on the server, which is the authority. Both `label`
+   * and `readouts` have non-null column defaults, so a bare presence check
+   * would report every untouched well as occupied and make shrinking a
+   * wellplate impossible.
+   */
+  get hasContent() {
+    if (this.sample) return true;
+    if (this.additive) return true;
+    if (this.color_code) return true;
+    if (this.label && this.label !== Well.DEFAULT_LABEL) return true;
+
+    return (this.readouts || []).some((readout) => readout && (readout.value || readout.unit));
   }
 
   get alphanumericPosition() {

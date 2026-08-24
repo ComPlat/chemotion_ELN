@@ -874,6 +874,21 @@ class ElementActions {
     };
   }
 
+  resizeWellplate(wellplateId, width, height) {
+    return (dispatch) => {
+      WellplatesFetcher.resize(wellplateId, width, height)
+        .then((result) => {
+          // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
+          // reconciled wellplate coming back from the server.
+          if (!result.error) { result.updated_at = new Date(); }
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
+        });
+    };
+  }
+
   importWellplateSpreadsheet(wellplateId, attachmentId) {
     return (dispatch) => {
       WellplatesFetcher.importWellplateSpreadsheet(wellplateId, attachmentId)

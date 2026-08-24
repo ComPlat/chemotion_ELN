@@ -9,23 +9,39 @@ import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertie
 
 const STANDARD_SIZES = [[0, 0], [24, 16], [12, 8], [6, 4], [4, 3]];
 
-const Option = (width, height) => {
+const Option = (width, height, wellplate) => {
   const size = height * width;
-  const label = size === 0 ? 'Define later' : `${size} (${width}x${height})`;
+  const baseLabel = size === 0 ? 'Define later' : `${size} (${width}x${height})`;
   const value = `${width} ${height}`;
+  // Offering a size that would silently delete filled wells is the whole
+  // hazard here - "Define later" in particular used to wipe every placed
+  // sample without a word.
+  const wouldDropData = wellplate.occupiedWellsOutside(width, height).length > 0;
+  const label = wouldDropData ? `${baseLabel} - would delete filled wells` : baseLabel;
 
-  return (<option key={`${label}-${value}`} label={label} value={value} />);
+  return (<option key={`${label}-${value}`} label={label} value={value} disabled={wouldDropData} />);
 };
 
 const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   const size = `${wellplate.width} ${wellplate.height}`;
   const [showCustomSizeModal, setShowCustomSizeModal] = useState(false);
-  const shouldBeDisabled = wellplate.isReadOnly || (!wellplate.is_new && wellplate.originalSize > 0);
+  // Resizing a saved wellplate is its own persisted step: the server
+  // reconciles the well rows and hands back a fresh wellplate that replaces
+  // this one, so ANY unsaved edit would be discarded by it - not just an edit
+  // to the wells. A wellplate that is not saved yet resizes in memory, with
+  // nothing to lose.
+  const hasUnsavedChanges = !wellplate.isNew && (wellplate.isEdited || wellplate.changed === true);
+  const shouldBeDisabled = wellplate.isReadOnly || hasUnsavedChanges;
+
+  const unsavedReason = wellplate.hasPendingWellChanges
+    ? 'Save your changes to the wells before changing the size.'
+    : 'Save your changes before changing the size.';
+  const disabledReason = wellplate.isReadOnly ? 'You cannot edit this wellplate.' : unsavedReason;
 
   const onChange = (event) => {
-    if (wellplate.isReadOnly) { return; }
+    if (shouldBeDisabled) { return; }
 
-    const values = event.target.value.split(' ').map(x => parseInt(x, 10));
+    const values = event.target.value.split(' ').map((x) => parseInt(x, 10));
     const width = values[0];
     const height = values[1];
 
@@ -34,24 +50,24 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
 
   const isStandardSize = STANDARD_SIZES.some(([w, h]) => w === wellplate.width && h === wellplate.height);
 
-  const options = STANDARD_SIZES.map(([w, h]) => Option(w, h));
+  const options = STANDARD_SIZES.map(([w, h]) => Option(w, h, wellplate));
   if (!isStandardSize) {
-    options.push(Option(wellplate.width, wellplate.height));
+    options.push(Option(wellplate.width, wellplate.height, wellplate));
   }
 
   const inputGroup = (
-    <InputGroup>
-      {shouldBeDisabled ? (
-        <Form.Control type="text" disabled value={`${wellplate.size} (${wellplate.width}x${wellplate.height})`} />
-      ) : (
-        <Form.Select
-          required={true}
-          value={size}
-          onChange={onChange}
-        >
-          {options}
-        </Form.Select>
-      )}
+    // A disabled control emits no mouse events and they do not bubble, so the
+    // OverlayTrigger below would never fire on it. Muting pointer events here
+    // lets the hover land on the wrapper span instead.
+    <InputGroup style={shouldBeDisabled ? { pointerEvents: 'none' } : undefined}>
+      <Form.Select
+        required
+        value={size}
+        onChange={onChange}
+        disabled={shouldBeDisabled}
+      >
+        {options}
+      </Form.Select>
       <Button
         className="create-own-size-button"
         disabled={shouldBeDisabled}
@@ -76,11 +92,18 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
           placement="bottom"
           overlay={(
             <Tooltip id={`wellplate-${wellplate.id}-size-locked-tooltip`}>
-              The size cannot be changed.
+              {disabledReason}
             </Tooltip>
           )}
         >
-          {inputGroup}
+          {/* The wrapper has to be focusable so keyboard users can reach the
+              explanation too; the control it describes is disabled and cannot
+              take focus itself. This is the standard recipe for a tooltip on a
+              disabled control. */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+          <span className="d-inline-block w-100" tabIndex={0}>
+            {inputGroup}
+          </span>
         </OverlayTrigger>
       ) : inputGroup}
     </>

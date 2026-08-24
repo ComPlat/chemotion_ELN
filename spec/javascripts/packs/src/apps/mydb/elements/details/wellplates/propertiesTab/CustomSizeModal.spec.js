@@ -193,6 +193,68 @@ describe('CustomSizeModal (functional component)', () => {
     expect(applyButton.props().disabled).toEqual(false);
     applyButton.simulate('click');
 
-    expect(updateWellplate.calledWith({ type: 'size', value: { width: '5', height: '7' } })).toEqual(true);
+    // Numbers, not the raw input strings: the model and the API both want integers.
+    expect(updateWellplate.calledWith({ type: 'size', value: { width: 5, height: 7 } })).toEqual(true);
+  });
+
+  // These are the boundary cases the old (skipped) updateDimension() block
+  // covered. Without the integer check, 'abc' and '5.5' validated and
+  // changeSize handed Array() a NaN length, throwing a RangeError out of a
+  // React handler and taking the detail view down with it.
+  describe('rejects a dimension that is not a positive integer', () => {
+    [
+      ['a non-numeric string', 'abc'],
+      ['a decimal', '5.5'],
+      ['zero', '0'],
+      ['a negative number', '-5'],
+      ['an empty value', ''],
+      ['a value above the maximum', '101'],
+    ].forEach(([description, value]) => {
+      it(`keeps Apply disabled for ${description}`, () => {
+        const wellplate = Wellplate.buildEmpty(1);
+        const wrapper = mountModal({ wellplate });
+
+        widthInput(wrapper).simulate('change', { target: { value } });
+        wrapper.update();
+
+        const applyButton = wrapper.find('button').filterWhere((b) => b.text() === 'Apply');
+        expect(applyButton.props().disabled).toEqual(true);
+      });
+    });
+  });
+
+  it('accepts the maximum dimension', () => {
+    const wellplate = Wellplate.buildEmpty(1);
+    const wrapper = mountModal({ wellplate });
+
+    widthInput(wrapper).simulate('change', { target: { value: '100' } });
+    wrapper.update();
+
+    const applyButton = wrapper.find('button').filterWhere((b) => b.text() === 'Apply');
+    expect(applyButton.props().disabled).toEqual(false);
+  });
+
+  it('seeds a default size instead of 0 so an unsized wellplate opens without errors', () => {
+    const wellplate = Wellplate.buildEmpty(1); // 0x0
+    const wrapper = mountModal({ wellplate });
+
+    expect(widthInput(wrapper).props().value).toEqual(12);
+    expect(wrapper.find('.invalid-wellplate-size-text').length).toEqual(0);
+  });
+
+  it('refuses a size that would delete wells holding data', () => {
+    const wellplate = new Wellplate({ ...wellplate2x3EmptyJson, is_new: false });
+    wellplate.changeSize(2, 3);
+    // C2 sits outside a 1x1 grid and carries a readout.
+    wellplate.wells[5].readouts = [{ value: '42', unit: 'nM' }];
+
+    const wrapper = mountModal({ wellplate });
+    widthInput(wrapper).simulate('change', { target: { value: '1' } });
+    wrapper.find('input').at(1).simulate('change', { target: { value: '1' } });
+    wrapper.update();
+
+    const applyButton = wrapper.find('button').filterWhere((b) => b.text() === 'Apply');
+    expect(applyButton.props().disabled).toEqual(true);
+    expect(wrapper.text()).toContain('Empty them and save before resizing');
   });
 });

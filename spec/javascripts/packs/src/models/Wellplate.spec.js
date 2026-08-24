@@ -267,6 +267,143 @@ describe('Wellplate', () => {
         expect(wellplate.wells[6].sample).not.toBeUndefined();
       });
     });
+
+    // Wells used to be re-keyed by index against the NEW width, which quietly
+    // moved an out-of-range well into the next row instead of dropping it, and
+    // left the survivors carrying stale positions.
+    context('shrinking past a filled well', () => {
+      const buildFive = () => {
+        const wellplate = Wellplate.buildEmpty(1, 5, 4);
+        wellplate.wells[4].sample = sampleMock; // index 4 = position 5x1
+        return wellplate;
+      };
+
+      it('drops the out-of-range well instead of wrapping it into the next row', () => {
+        const wellplate = buildFive();
+        wellplate.changeSize(4, 4);
+
+        const carriesSample = wellplate.wells.filter((well) => well.sample);
+        expect(carriesSample.length).toEqual(0);
+      });
+
+      it('leaves every surviving well at a position inside the new grid', () => {
+        const wellplate = buildFive();
+        wellplate.changeSize(4, 4);
+
+        const outside = wellplate.wells.filter((w) => w.position.x > 4 || w.position.y > 4);
+        expect(outside.length).toEqual(0);
+      });
+
+      it('keeps positions and wells consistent after the resize', () => {
+        const wellplate = buildFive();
+        wellplate.changeSize(4, 4);
+
+        expect(wellplate.wells.length).toEqual(16);
+        expect(wellplate.wells[4].position).toEqual({ x: 1, y: 2 });
+      });
+    });
+
+    it('registers as an unsaved change instead of resetting the baseline', () => {
+      // changeSize used to rewrite _checksum, so a resize looked saved already.
+      const wellplate = Wellplate.buildEmpty(1, 2, 2);
+      wellplate.updateChecksum();
+
+      wellplate.changeSize(4, 4);
+
+      expect(wellplate.isEdited).toEqual(true);
+    });
+  });
+
+  describe('wells the server sent', () => {
+    const serverWells = [
+      { id: 'w1', position: { x: 1, y: 1 }, readouts: [] },
+      { id: 'w2', position: { x: 2, y: 1 }, readouts: [] },
+    ];
+
+    it('keeps them on a saved wellplate that has no size yet', () => {
+      // These used to be discarded, and saving the emptied list made the server
+      // destroy every sample they held.
+      const wellplate = new Wellplate({
+        id: 1, name: 'WP', type: 'wellplate', width: 0, height: 0, wells: serverWells, is_new: false
+      });
+
+      expect(wellplate.wells.length).toEqual(2);
+    });
+
+    it('still builds an empty grid for a wellplate that is not saved yet', () => {
+      const wellplate = Wellplate.buildEmpty(1, 2, 2);
+
+      expect(wellplate.wells.length).toEqual(4);
+    });
+  });
+
+  describe('hasPendingWellChanges', () => {
+    const build = () => new Wellplate({
+      id: 1,
+      name: 'WP',
+      type: 'wellplate',
+      width: 2,
+      height: 1,
+      is_new: false,
+      wells: [
+        { id: 'w1', position: { x: 1, y: 1 }, readouts: [] },
+        { id: 'w2', position: { x: 2, y: 1 }, readouts: [] },
+      ],
+    });
+
+    it('is false for a freshly loaded wellplate', () => {
+      expect(build().hasPendingWellChanges).toEqual(false);
+    });
+
+    it('is true once a well is edited', () => {
+      const wellplate = build();
+      wellplate.wells[0].readouts = [{ value: '42', unit: 'nM' }];
+
+      expect(wellplate.hasPendingWellChanges).toEqual(true);
+    });
+
+    it('is false again after the wellplate is saved', () => {
+      const wellplate = build();
+      wellplate.wells[0].readouts = [{ value: '42', unit: 'nM' }];
+      wellplate.updateChecksum();
+
+      expect(wellplate.hasPendingWellChanges).toEqual(false);
+    });
+
+    it('ignores a change to a field that is not a well', () => {
+      const wellplate = build();
+      wellplate.name = 'Renamed';
+
+      expect(wellplate.hasPendingWellChanges).toEqual(false);
+    });
+  });
+
+  describe('occupiedWellsOutside()', () => {
+    const wellplate = new Wellplate({
+      id: 1,
+      name: 'WP',
+      type: 'wellplate',
+      width: 2,
+      height: 2,
+      is_new: false,
+      wells: [
+        { id: 'w1', position: { x: 1, y: 1 }, readouts: [] },
+        { id: 'w2', position: { x: 2, y: 2 }, readouts: [{ value: '42', unit: 'nM' }] },
+      ],
+    });
+
+    it('reports a filled well that the smaller grid has no room for', () => {
+      expect(wellplate.occupiedWellsOutside(1, 1).length).toEqual(1);
+    });
+
+    it('ignores untouched wells outside the grid', () => {
+      // w1 is empty, so shrinking onto it destroys nothing.
+      expect(wellplate.occupiedWellsOutside(2, 2).length).toEqual(0);
+    });
+
+    it('reports nothing when the grid grows', () => {
+      expect(wellplate.occupiedWellsOutside(4, 4).length).toEqual(0);
+    });
   });
 
   describe('can_update', () => {

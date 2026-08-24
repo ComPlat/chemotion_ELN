@@ -21,7 +21,9 @@ module Usecases
       private
 
       def check_wellplate_bounds
-        max = 100
+        # Shared with the resize guard and the API param bounds so the two
+        # cannot drift apart again.
+        max = Resize::MAX_DIMENSION
 
         value = @wellplate.width > max ? @wellplate.width : @wellplate.height
         parameter = @wellplate.width > max ? 'width' : 'height'

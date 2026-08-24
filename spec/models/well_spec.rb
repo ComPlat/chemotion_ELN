@@ -84,6 +84,59 @@ RSpec.describe Well do
     end
   end
 
+  describe '#content?' do
+    # A well straight from the column defaults: no sample, the default label and
+    # the default blank readout. Both label and readouts are non-null columns,
+    # so this is the case that must NOT read as occupied - otherwise a wellplate
+    # could never be shrunk.
+    let(:untouched) { wellplate.wells.create!(position_x: 1, position_y: 1) }
+
+    it 'is false for an untouched well' do
+      expect(untouched.content?).to be false
+    end
+
+    it 'is true when a sample is placed' do
+      untouched.update!(sample: create(:sample, collections: [collection]))
+      expect(untouched.content?).to be true
+    end
+
+    it 'is false when the sample was soft-deleted but the id still dangles' do
+      sample = create(:sample, collections: [collection])
+      untouched.update!(sample: sample)
+      sample.destroy
+
+      expect(untouched.reload.content?).to be false
+    end
+
+    it 'is false for the default label' do
+      untouched.update!(label: described_class::DEFAULT_LABEL)
+      expect(untouched.content?).to be false
+    end
+
+    it 'is false for readouts that are present but blank' do
+      untouched.update!(readouts: [{ 'value' => '', 'unit' => '' }])
+      expect(untouched.content?).to be false
+    end
+
+    {
+      'a readout value' => { readouts: [{ 'value' => '42', 'unit' => '' }] },
+      'a readout unit' => { readouts: [{ 'value' => '', 'unit' => 'nM' }] },
+      'a user label' => { label: 'my label' },
+      'a colour code' => { color_code: '#aabbcc' },
+      'an additive' => { additive: 'DMSO' },
+    }.each do |description, attributes|
+      it "is true for #{description}" do
+        untouched.update!(attributes)
+        expect(untouched.content?).to be true
+      end
+    end
+
+    it 'is true for symbol-keyed readouts built in memory' do
+      well = wellplate.wells.new(position_x: 1, position_y: 1, readouts: [{ value: '42', unit: 'nM' }])
+      expect(well.content?).to be true
+    end
+  end
+
   describe '.get_samples_in_wellplates()' do
     context 'when no sample is attached' do
       it 'empty array is returned' do
