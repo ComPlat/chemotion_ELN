@@ -62,7 +62,13 @@ export default class Well extends Element {
     if (this.color_code && !this.isMethodDisabled('color_code')) return true;
     if (this.label && this.label !== Well.DEFAULT_LABEL && !this.isMethodDisabled('label')) return true;
 
-    return (this.readouts || []).some((readout) => readout && (readout.value || readout.unit));
+    // Array.isArray, not a truthiness check: readouts is exposed at
+    // anonymize_below 1, so below that detail level the entity hands back the
+    // '***' placeholder string and `.some` would not exist. Any non-array is
+    // treated as "no readouts we can read", which is the safe reading.
+    if (!Array.isArray(this.readouts)) return false;
+
+    return this.readouts.some((readout) => readout && (readout.value || readout.unit));
   }
 
   get alphanumericPosition() {

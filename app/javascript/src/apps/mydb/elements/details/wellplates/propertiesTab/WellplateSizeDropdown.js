@@ -9,14 +9,18 @@ import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertie
 
 const STANDARD_SIZES = [[0, 0], [24, 16], [12, 8], [6, 4], [4, 3]];
 
-const Option = (width, height, wellplate) => {
+// `filledWells` is the plate's occupied wells, computed once for the whole
+// option list: asking the model per option re-scans every well (and re-runs
+// `hasContent` on each) five or six times per render, which on a 100x100 plate
+// is 50_000 evaluations for an answer that never varies within a render.
+const Option = (width, height, filledWells) => {
   const size = height * width;
   const baseLabel = size === 0 ? 'Define later' : `${size} (${width}x${height})`;
   const value = `${width} ${height}`;
   // Offering a size that would silently delete filled wells is the whole
   // hazard here - "Define later" in particular used to wipe every placed
   // sample without a word.
-  const wouldDropData = wellplate.occupiedWellsOutside(width, height).length > 0;
+  const wouldDropData = filledWells.some((well) => Wellplate.positionOutside(well.position, width, height));
   const label = wouldDropData ? `${baseLabel} - would delete filled wells` : baseLabel;
 
   return (<option key={`${label}-${value}`} label={label} value={value} disabled={wouldDropData} />);
@@ -57,9 +61,10 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
 
   const isStandardSize = STANDARD_SIZES.some(([w, h]) => w === wellplate.width && h === wellplate.height);
 
-  const options = STANDARD_SIZES.map(([w, h]) => Option(w, h, wellplate));
+  const filledWells = wellplate.wells.filter((well) => well.hasContent);
+  const options = STANDARD_SIZES.map(([w, h]) => Option(w, h, filledWells));
   if (!isStandardSize) {
-    options.push(Option(wellplate.width, wellplate.height, wellplate));
+    options.push(Option(wellplate.width, wellplate.height, filledWells));
   }
 
   const inputGroup = (

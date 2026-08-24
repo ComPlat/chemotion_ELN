@@ -378,6 +378,33 @@ describe('Wellplate', () => {
     });
   });
 
+  describe('anonymized wellplates', () => {
+    // Below detail level 1 the entity replaces readouts with the '***'
+    // placeholder string. hasContent used to call .some on it, which threw from
+    // the render path and took the whole detail view down.
+    const anonymized = () => new Wellplate({
+      id: 1,
+      name: 'WP',
+      type: 'wellplate',
+      width: 2,
+      height: 1,
+      is_new: false,
+      can_update: false,
+      wells: [
+        { id: 'w1', position: { x: 1, y: 1 }, readouts: '***', label: '***', color_code: '***', additive: '***' },
+        { id: 'w2', position: { x: 2, y: 1 }, readouts: '***', label: '***', color_code: '***', additive: '***' },
+      ],
+    });
+
+    it('does not throw when asked which wells a smaller grid would drop', () => {
+      expect(() => anonymized().occupiedWellsOutside(1, 1)).not.toThrow();
+    });
+
+    it('does not mistake the placeholder for well content', () => {
+      expect(anonymized().occupiedWellsOutside(1, 1).length).toEqual(0);
+    });
+  });
+
   describe('occupiedWellsOutside()', () => {
     const wellplate = new Wellplate({
       id: 1,

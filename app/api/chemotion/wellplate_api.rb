@@ -18,7 +18,10 @@ module Chemotion
     # Wellplate.find in the before blocks below would otherwise surface as a 500.
     # Scoped to the wellplate itself on purpose: a RecordNotFound raised deeper in
     # (User.find in Update, Well.find in WellplateUpdater, the collection lookup in
-    # Create) is a genuine server error and must not be disguised as a 404.
+    # Create) is a genuine fault, so it is deliberately not answered here. Re-raising
+    # takes it out of Grape's error middleware and leaves it to Rails, which keeps it
+    # visible to error reporting rather than reporting a tidy 404 as if the wellplate
+    # were simply missing.
     rescue_from ActiveRecord::RecordNotFound do |error|
       raise error unless error.model == 'Wellplate'
 

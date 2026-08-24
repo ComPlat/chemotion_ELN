@@ -146,13 +146,33 @@ export default class Wellplate extends Element {
    * Wells holding data that a grid of `width` x `height` would have no room
    * for. Non-empty means the resize must be refused; the server enforces the
    * same rule in Usecases::Wellplates::Resize.
+   *
+   * The predicate mirrors that use case exactly, down to counting a missing or
+   * below-one position as outside: such a well fits no grid at all, and if the
+   * client left it out the server would refuse every size on offer without the
+   * UI being able to say which well was in the way.
    */
   occupiedWellsOutside(width, height) {
-    return this.wells.filter((well) => (
-      well.position
-      && (well.position.x > width || well.position.y > height)
-      && well.hasContent
-    ));
+    return this.wells.filter((well) => Wellplate.positionOutside(well.position, width, height)
+      && well.hasContent);
+  }
+
+  static positionOutside(position, width, height) {
+    if (!position || position.x == null || position.y == null) return true;
+
+    return position.x < 1 || position.y < 1 || position.x > width || position.y > height;
+  }
+
+  /**
+   * One blank readout per readout title, matching what
+   * Usecases::Wellplates::Resize#blank_readouts gives a well it materialises.
+   * The list tab pairs `readout_titles[i]` with `readouts[i]` and writes
+   * through without a bounds check, so a well short of entries throws there.
+   */
+  blankReadouts() {
+    const count = Math.max((this.readout_titles || []).length, 1);
+
+    return Array.from({ length: count }, () => ({ value: '', unit: '' }));
   }
 
   title() {
@@ -195,8 +215,7 @@ export default class Wellplate extends Element {
 
     const keptByPosition = new Map();
     this.wells.forEach((well) => {
-      if (!well.position) return;
-      if (well.position.x > this.width || well.position.y > this.height) return;
+      if (Wellplate.positionOutside(well.position, this.width, this.height)) return;
 
       keptByPosition.set(`${well.position.x}:${well.position.y}`, well);
     });
@@ -204,7 +223,8 @@ export default class Wellplate extends Element {
     this.wells = Array.from({ length: this.size }, (_, index) => {
       const position = this.#calculatePositionFromIndex(index);
 
-      return keptByPosition.get(`${position.x}:${position.y}`) || { position, readouts: [] };
+      return keptByPosition.get(`${position.x}:${position.y}`)
+        || { position, readouts: this.blankReadouts() };
     });
   }
 
@@ -228,7 +248,7 @@ export default class Wellplate extends Element {
     return {
       ...well,
       position: this.#calculatePositionFromIndex(i),
-      readouts: well.readouts || []
+      readouts: well.readouts || this.blankReadouts()
     };
   }
 

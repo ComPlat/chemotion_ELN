@@ -50,16 +50,26 @@ module Usecases
           # Serialise against a concurrent well edit. guard_occupied_wells!
           # decides what may be destroyed; without the lock a sample placed
           # between that check and the delete below would go with it.
+          # Usecases::Wellplates::Update takes the same lock, which is what
+          # makes that window closed rather than merely narrow.
           wellplate.lock!
-          next if unchanged?
 
-          guard_occupied_wells!
-          wells_outside_new_grid.destroy_all
-          # destroy_all leaves the has_many cache holding the rows it just
+          # Loaded once and reused: the no-op check, the guard and the delete
+          # all ask the same question, and the rows carry the samples the guard
+          # needs anyway.
+          outside = wells_outside_new_grid.includes(:sample).to_a
+          next if unchanged?(outside)
+
+          guard_occupied_wells!(outside)
+          outside.each(&:destroy)
+          # The destroys leave the has_many cache holding the rows they just
           # removed, and a loaded association answers pluck from that cache.
           wellplate.wells.reset
           create_missing_wells
-          wellplate.update!(width: width, height: height)
+          # updated_at is set explicitly: a reconciliation that only repaired
+          # drifted wells leaves width/height untouched, so Rails would skip the
+          # UPDATE and no other client would ever learn the grid had changed.
+          wellplate.update!(width: width, height: height, updated_at: Time.current)
         end
 
         wellplate.reload
@@ -72,8 +82,11 @@ module Usecases
       # whose rows drifted out of the grid (a null position, a row beyond the
       # edge) would otherwise be unrepairable, since no size can be asked for
       # that both reconciles it and differs from what it already claims.
-      def unchanged?
-        wellplate.width == width && wellplate.height == height && !wells_outside_new_grid.exists?
+      #
+      # @param outside [Array<Well>] the wells the requested grid has no room for
+      # @return [Boolean]
+      def unchanged?(outside)
+        wellplate.width == width && wellplate.height == height && outside.empty?
       end
 
       def validate_dimensions!
@@ -96,6 +109,9 @@ module Usecases
       # designer indexes its row array by position, so a 0 would overwrite the
       # row header and a negative would land off the end.
       #
+      # Ordered so the positions named in the error message are stable between
+      # requests and read in the same order as the designer grid.
+      #
       # @return [ActiveRecord::Relation]
       def wells_outside_new_grid
         wellplate.wells.where(
@@ -104,11 +120,13 @@ module Usecases
           'OR position_x > ? OR position_y > ?',
           width,
           height,
-        )
+        ).order(:position_y, :position_x)
       end
 
-      def guard_occupied_wells!
-        blocking = wells_outside_new_grid.includes(:sample).select(&:content?)
+      # @param outside [Array<Well>] the wells the requested grid has no room for
+      # @raise [Usecases::Wellplates::Errors::ResizeNotAllowedError]
+      def guard_occupied_wells!(outside)
+        blocking = outside.select(&:content?)
         return if blocking.empty?
 
         raise Errors::ResizeNotAllowedError, blocking_message(blocking)

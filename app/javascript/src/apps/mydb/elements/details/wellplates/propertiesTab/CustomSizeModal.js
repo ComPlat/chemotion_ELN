@@ -35,10 +35,14 @@ const dimensionIsValid = (value) => {
 };
 
 const errorMessage = (label) => (
-    <div className="invalid-wellplate-size-text">
-      {label} must be between 1 and {Wellplate.MAX_DIMENSION}
-    </div>
-  );
+  <div className="invalid-wellplate-size-text">
+    {label}
+    {' '}
+    must be between 1 and
+    {' '}
+    {Wellplate.MAX_DIMENSION}
+  </div>
+);
 
 const blockedMessage = (blockedWells) => (
   <div className="invalid-wellplate-size-text">
@@ -110,7 +114,7 @@ const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
               type="text"
               value={width}
               className={widthIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
-              onChange={event => setWidth(event.target.value)}
+              onChange={(event) => setWidth(event.target.value)}
             />
             {!widthIsValid && errorMessage('Width')}
           </Form.Group>
@@ -122,7 +126,7 @@ const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
               type="text"
               value={height}
               className={heightIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
-              onChange={event => setHeight(event.target.value)}
+              onChange={(event) => setHeight(event.target.value)}
             />
             {!heightIsValid && errorMessage('Height')}
           </Form.Group>
@@ -130,7 +134,13 @@ const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
         <Col xs={2}>
           <Form.Group>
             <Form.Label>Size</Form.Label>
-            <Form.Control type="text" disabled value={height * width} />
+            {/* Both fields hand back strings; multiplying them while one is
+                still being typed (or invalid) would render "NaN". */}
+            <Form.Control
+              type="text"
+              disabled
+              value={widthIsValid && heightIsValid ? Number(width) * Number(height) : ''}
+            />
           </Form.Group>
         </Col>
       </Row>
