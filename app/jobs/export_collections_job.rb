@@ -4,6 +4,8 @@ class ExportCollectionsJob < ApplicationJob
   queue_as :export_collections
 
   after_perform do |job|
+    next unless @success
+
     begin
       # Sweep file in 24h
       CleanExportFilesJob.set(queue: "remove_files_#{job.job_id}", wait: 24.hours)
@@ -14,7 +16,8 @@ class ExportCollectionsJob < ApplicationJob
         channel_subject: Channel::COLLECTION_ZIP,
         data_args: { expires_at: @expires_at, operation: 'Export', col_labels: @labels },
         message_from: @user_id,
-        url: @link
+        url: @link,
+        urlTitle: 'Download export archive',
       )
 
       # Email ELNer
@@ -26,7 +29,7 @@ class ExportCollectionsJob < ApplicationJob
       ).deliver_now
     rescue StandardError => e
       Delayed::Worker.logger.error e
-    end if @success
+    end
   end
 
   def perform(collection_ids, extname, nested, user_id)
