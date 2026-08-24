@@ -14,10 +14,6 @@ module Usecases
     # This is the only write path for +width+/+height+ on a persisted wellplate;
     # +PUT /api/v1/wellplates/:id+ deliberately does not accept them.
     class Resize
-      # Largest grid dimension, matching {WellPosition}'s own bound and
-      # {Usecases::Wellplates::TemplateCreation}'s +max+.
-      MAX_DIMENSION = 100
-
       # Number of blocking well positions named in the error message before it
       # is elided; the full count is always reported.
       POSITIONS_IN_ERROR = 5
@@ -90,18 +86,7 @@ module Usecases
       end
 
       def validate_dimensions!
-        %w[width height].each do |dimension|
-          value = public_send(dimension)
-          next if value.between?(0, MAX_DIMENSION)
-
-          raise Errors::InvalidDimensionsError,
-                "Wellplate #{dimension} of #{value} must be between 0 and #{MAX_DIMENSION}."
-        end
-
-        return unless width.zero? ^ height.zero?
-
-        raise Errors::InvalidDimensionsError,
-              'A wellplate size of 0 requires both width and height to be 0.'
+        Dimensions.validate!(width: width, height: height)
       end
 
       # Wells the requested grid has no room for. A null or below-one position

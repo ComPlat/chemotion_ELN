@@ -254,6 +254,8 @@ RSpec.describe Usecases::Wellplates::Resize do
     end
   end
 
+  # The rule lives in Usecases::Wellplates::Dimensions so that create and resize
+  # cannot disagree about what a valid grid is.
   describe 'invalid dimensions' do
     let(:wellplate) { create(:wellplate, width: 2, height: 2) }
 
@@ -267,7 +269,7 @@ RSpec.describe Usecases::Wellplates::Resize do
     end
 
     context 'with a dimension above the maximum' do
-      let(:width) { described_class::MAX_DIMENSION + 1 }
+      let(:width) { Usecases::Wellplates::Dimensions::MAX_DIMENSION + 1 }
       let(:height) { 8 }
 
       it 'is rejected' do

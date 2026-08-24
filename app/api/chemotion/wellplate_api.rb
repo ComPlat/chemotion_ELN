@@ -198,8 +198,8 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
-        optional :height, type: Integer, default: 8, values: 0..Usecases::Wellplates::Resize::MAX_DIMENSION
-        optional :width, type: Integer, default: 12, values: 0..Usecases::Wellplates::Resize::MAX_DIMENSION
+        optional :height, type: Integer, default: 8, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+        optional :width, type: Integer, default: 12, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
         optional :segments, type: Array, desc: 'Segments'
         optional :user_labels, type: Array
       end
@@ -297,8 +297,8 @@ module Chemotion
         # impose `requires :container` on this route too.
         params do
           requires :id, type: Integer, desc: 'Wellplate id'
-          requires :width, type: Integer, values: 0..Usecases::Wellplates::Resize::MAX_DIMENSION
-          requires :height, type: Integer, values: 0..Usecases::Wellplates::Resize::MAX_DIMENSION
+          requires :width, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+          requires :height, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
         end
         route_param :id do
           before do

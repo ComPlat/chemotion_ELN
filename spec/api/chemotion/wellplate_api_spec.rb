@@ -365,6 +365,35 @@ describe Chemotion::WellplateAPI do
       end
     end
 
+    context 'with only one dimension zero' do
+      # A wellplate must be either fully sized or unsized (0x0). One dimension
+      # alone at zero produced a plate with no wells but a non-zero edge, which
+      # no resize could later repair.
+      let(:width) { 0 }
+      let(:height) { 8 }
+
+      it 'returns 422 unprocessable entity' do
+        expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it 'explains the rule' do
+        expect(response.parsed_body['error']).to include('both width and height')
+      end
+
+      it 'does not create the wellplate' do
+        expect(Wellplate.find_by(name: name)).to be_nil
+      end
+    end
+
+    context 'with both dimensions zero' do
+      let(:width) { 0 }
+      let(:height) { 0 }
+
+      it 'is accepted as an unsized wellplate' do
+        expect(Wellplate.find_by(name: name).size).to eq 0
+      end
+    end
+
     context 'with wellplate width 200' do
       let(:width) { 200 }
 
