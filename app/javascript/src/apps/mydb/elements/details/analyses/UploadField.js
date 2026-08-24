@@ -282,8 +282,13 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   const [isAdvanced, setIsAdvanced] = useState(false);
   const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
+  // Advanced-mode analyses live here, not inside AdvancedAnalysesList, so toggling
+  // Advanced mode off (which unmounts that component) does not destroy the user's
+  // configured analyses and datasets.
+  const [analContainerList, setAnalContainer] = useState([]);
   const handleClose = useCallback(() => {
     setListedFiles([]);
+    setAnalContainer([]);
     setShow(false);
   }, []);
   const handleShow = useCallback(() => setShow(true), []);
@@ -357,6 +362,8 @@ const UploadField = ({ disabled = false, element, setElement }) => {
               <AdvancedAnalysesList
                 handleClose={handleClose}
                 listedFiles={listedFiles}
+                analContainerList={analContainerList}
+                setAnalContainer={setAnalContainer}
                 setConsumedPaths={handleSetConsumedPaths}
                 setElement={wrappedSetElement}
               />

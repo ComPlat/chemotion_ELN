@@ -58,7 +58,7 @@ const TreeNode = ({ node }) => {
 };
 
 const FileTree = ({ treeData }) => (
-  <ul style={{ overflow: 'auto' }}>
+  <ul className="analyses-upload__file-tree">
     {treeData.map((node, idx) => (
       <TreeNode key={idx} node={node} />
     ))}

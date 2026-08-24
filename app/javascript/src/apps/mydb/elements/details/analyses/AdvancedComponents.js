@@ -1,7 +1,7 @@
 import {
   ListGroup, Button, ButtonToolbar, Form
 } from 'react-bootstrap';
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { DatasetDropZone } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { FileContainer, ZipFileContainer } from 'src/apps/mydb/elements/details/analyses/FileManager';
@@ -180,9 +180,8 @@ DatasetListItem.propTypes = {
 };
 
 function AdvancedAnalysesList({
-  handleClose, setConsumedPaths, listedFiles, setElement
+  handleClose, setConsumedPaths, listedFiles, setElement, analContainerList, setAnalContainer
 }) {
-  const [analContainerList, setAnalContainer] = useState([]);
   const wrapperSetAnaContainer = (val) => {
     const changedVal = typeof val === 'function' ? val(analContainerList) : val;
     setAnalContainer(changedVal);
@@ -343,6 +342,8 @@ AdvancedAnalysesList.propTypes = {
   handleClose: PropTypes.func.isRequired,
   setConsumedPaths: PropTypes.func.isRequired,
   listedFiles: PropTypes.arrayOf(FileContainer).isRequired,
+  analContainerList: PropTypes.arrayOf(PropTypes.instanceOf(ContainerWrapper)).isRequired,
+  setAnalContainer: PropTypes.func.isRequired,
   setElement: PropTypes.func.isRequired
 };
 

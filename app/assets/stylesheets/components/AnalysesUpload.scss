@@ -1,13 +1,24 @@
-// The "Create Analyses from files or folders" modal manages its own scrolling:
-// in advanced mode the analyses list on the right scrolls inside its own 70vh
-// box, so it is the single scrollbar. The shared AppModal adds a body-level
-// scroll (`.modal-body { max-height: 70vh; overflow-y: auto }`, introduced in
-// PR #3146), which produced a second scroll region and let a long file list
-// drag the file tree out of view. Restore the pre-#3146 behaviour for just
-// this modal so the body never scrolls on its own.
+// "Create Analyses from files or folders" modal, advanced mode.
+//
+// Two fixes that must work together:
+//
+// 1. The analyses ListGroup (right) and the file tree (left) each own a 70vh
+//    scroll region. The modal body must NOT add its own scroll on top, or
+//    scrolling to a lower dataset drags the file list out of view (the original
+//    reported bug). AppModal's shared rule caps .modal-body at 70vh and @extends
+//    the .overflow-y-auto utility (emitted with !important), so both are overridden
+//    here to keep the body from scrolling - the panes are the only scroll regions.
+//
+// 2. Because the body no longer scrolls, an unbounded file tree would instead grow
+//    the whole dialog past the viewport and make .modal the scroll region. Capping
+//    the file tree at the same 70vh as the ListGroup keeps the dialog within the
+//    viewport, so neither the body nor the modal scrolls the file list away.
 .app-modal.analyses-upload-modal .modal-body {
   max-height: none;
-  // `!important` is required: AppModal's body `@extend`s the `.overflow-y-auto`
-  // utility, which Bootstrap emits with `!important`.
   overflow-y: visible !important;
+}
+
+.analyses-upload__file-tree {
+  max-height: 70vh;
+  overflow-y: auto;
 }
