@@ -542,6 +542,46 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.svgPath', () => {
+    it('uses the sample-specific svg file when present and not anonymized', () => {
+      const sample = new Sample();
+      sample.sample_svg_file = 'sample.svg';
+      sample.molecule = { molecule_svg_file: 'molecule.svg' };
+      expect(sample.svgPath).toBe('/images/samples/sample.svg');
+    });
+
+    it('falls back to the molecule svg when sample_svg_file is anonymized', () => {
+      // A collaborator shared at a detail level below 10 receives '***' for
+      // sample_svg_file, but the molecule (and its svg) is already visible
+      // from detail level 1 onward.
+      const sample = new Sample();
+      sample.sample_svg_file = '***';
+      sample.molecule = { molecule_svg_file: 'molecule.svg' };
+      expect(sample.svgPath).toBe('/images/molecules/molecule.svg');
+    });
+
+    it('falls back to the molecule svg when there is no sample-specific svg file', () => {
+      const sample = new Sample();
+      sample.sample_svg_file = null;
+      sample.molecule = { molecule_svg_file: 'molecule.svg' };
+      expect(sample.svgPath).toBe('/images/molecules/molecule.svg');
+    });
+
+    it('shows the no-image wildcard when anonymized and no molecule svg is available', () => {
+      const sample = new Sample();
+      sample.sample_svg_file = '***';
+      sample.molecule = null;
+      expect(sample.svgPath).toBe('/images/wild_card/no_image_180.svg');
+    });
+
+    it('returns an empty string when neither svg is available', () => {
+      const sample = new Sample();
+      sample.sample_svg_file = null;
+      sample.molecule = null;
+      expect(sample.svgPath).toBe('');
+    });
+  });
+
   describe('Sample.deleteMixtureComponent()', () => {
     it('removes the specified component from components array', () => {
       const sample = new Sample();

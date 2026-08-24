@@ -32,7 +32,7 @@ module Entities
       expose! :dangerous_products,    anonymize_with: [],   unless: :displayed_in_list
       expose! :duration,                                    unless: :displayed_in_list
       expose! :name
-      expose! :origin
+      expose! :origin,                anonymize_with: nil
       expose! :purification,          anonymize_with: [],   unless: :displayed_in_list
       expose! :reaction_svg_file
       expose! :rf_value,                                    unless: :displayed_in_list
@@ -46,18 +46,20 @@ module Entities
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
       expose! :tag,                   anonymize_with: nil,                              using: 'Entities::ElementTagEntity'
-      expose! :temperature,                                 unless: :displayed_in_list
+      expose! :temperature,           anonymize_with: -> { Reaction.column_defaults['temperature'] }, unless: :displayed_in_list
       expose! :timestamp_start,                             unless: :displayed_in_list
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
-      expose! :vessel_size
+      expose! :vessel_size,           anonymize_with: -> { Reaction.column_defaults['vessel_size'] }
       expose! :volume
-      expose! :use_reaction_volume
-      expose! :lock_reaction_volume
-      expose! :gaseous
-      expose! :weight_percentage
+      # Boolean columns: '***' is truthy, so the string default would make every reaction below
+      # detail level 10 render as a gas-phase reaction with a locked/derived volume.
+      expose! :use_reaction_volume,   anonymize_with: false
+      expose! :lock_reaction_volume,  anonymize_with: false
+      expose! :gaseous,               anonymize_with: false
+      expose! :weight_percentage,     anonymize_with: false
     end
     # rubocop:enable Metrics/BlockLength
 

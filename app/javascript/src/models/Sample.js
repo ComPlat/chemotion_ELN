@@ -1786,14 +1786,13 @@ export default class Sample extends Element {
       return `svg_text/${this.labelText}`;
     }
 
-    if (this.sample_svg_file) {
-      if (this.sample_svg_file === '***') {
-        return '/images/wild_card/no_image_180.svg';
-      }
+    if (this.sample_svg_file && this.sample_svg_file !== '***') {
       return `/images/samples/${this.sample_svg_file}`;
     }
-    return this.molecule && this.molecule.molecule_svg_file
-      ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    if (this.molecule && this.molecule.molecule_svg_file) {
+      return `/images/molecules/${this.molecule.molecule_svg_file}`;
+    }
+    return this.sample_svg_file === '***' ? '/images/wild_card/no_image_180.svg' : '';
   }
   // todo: have a dedicated Material Sample subclass
 
