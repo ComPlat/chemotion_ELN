@@ -206,35 +206,14 @@ module Chemotion
       }
     end
 
+    # Delegates to {Chemotion::MolfilePolymerSupport.polymers_list_payload}, which owns the
+    # block-scanning rules (stop at the next "> <Tag>" header or "$$$$"; prefer the full-format
+    # block over a redundant indices-only one) shared with the importers' polymer detection.
+    #
+    # @param source [String, nil] full molfile
+    # @return [String] space-joined PolymersList payload, or +''+ when there is none
     def self.extract_polymers_line(source)
-      lines = source.to_s.lines
-      # When there are multiple "> <PolymersList>" blocks (e.g. redundant indices-only then full format), prefer the one with full format (contains "/") so we get correct template_id.
-      blocks = []
-      idx = 0
-      while idx < lines.length
-        start_idx = lines[idx..].find_index { |line| line.strip == '> <PolymersList>' }
-        break unless start_idx
-
-        start_idx += idx
-        data = []
-        i = start_idx + 1
-        while i < lines.length
-          line = lines[i].strip
-          break if line.start_with?('> <') || line == '$$$$'
-
-          data << line unless line.empty?
-          i += 1
-        end
-        content = data.join(' ').strip
-        blocks << content unless content.empty?
-        idx = start_idx + 1
-      end
-
-      return '' if blocks.empty?
-
-      # Prefer block that contains full format (e.g. "0/95/1.00-1.00") over indices-only ("0 1 2")
-      full_format_block = blocks.find { |content| content.include?('/') }
-      full_format_block.presence || blocks.first.to_s
+      Chemotion::MolfilePolymerSupport.polymers_list_payload(source)
     end
 
     def self.parse_polymers_line(polymers_line)

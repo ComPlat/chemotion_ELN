@@ -291,6 +291,8 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
+        # A non-empty "> <PolymersList>" block means keep the full molfile and let
+        # Molecule.svg_reprocess run, so polymers render via SvgRenderer.
         if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile)
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end

@@ -164,8 +164,10 @@ module Import
         molecule, raw_molfile = get_data_from_molfile(row)
         if molecule.present?
           [molecule, raw_molfile]
-        elsif raw_molfile.to_s.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
+        elsif Chemotion::MolfilePolymerSupport.has_polymer_content?(raw_molfile)
           # Polymer molfile but molecule not created (e.g. inchikey blank); do not fall back to smiles or we get same dummy molecule for every row.
+          # Must use the same predicate as #get_data_from_molfile: an *empty* "> <PolymersList>"
+          # block is not a polymer, so those rows keep the ordinary smiles fallback.
           nil
         elsif smiles?(row)
           m, _molfile_coord, go_to_next = get_data_from_smiles(row, index)
@@ -267,8 +269,11 @@ module Import
     end
 
     def get_data_from_molfile(row)
-      @polymer_svg_file_after_reprocess = nil
-      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
+      # rstrip, not strip: MOL line 1 is the title and is empty for Ketcher/ISIS molfiles.
+      # Stripping it away shifts every CTAB line up by one and Open Babel returns a blank inchikey.
+      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.rstrip
+      # A non-empty "> <PolymersList>" block means keep the full molfile and let
+      # Import::PolymerMoleculeResolver run Molecule.svg_reprocess, so polymers render via SvgRenderer.
       if Chemotion::MolfilePolymerSupport.has_polymer_content?(raw_molfile)
         result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
         return [result.molecule, result.raw_molfile]
