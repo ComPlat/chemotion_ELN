@@ -40,7 +40,35 @@ RSpec.describe Well do
     end
   end
 
+  describe '#content? with a numeric zero readout' do
+    # A spreadsheet import stores raw cell values, so a 0 in a _Value column is
+    # a real readout. ActiveSupport counts 0 as present; the client must agree.
+    it 'counts a zero value as content' do
+      well = wellplate.wells.create!(position_x: 1, position_y: 1, readouts: [{ 'value' => 0, 'unit' => '' }])
+      expect(well.content?).to be true
+    end
+  end
+
   describe '.alphanumeric_position()' do
+    context 'when the row is not positive' do
+      # ('A'..'ZZ').to_a[-1] is "ZZ", so a drifted well used to be reported as
+      # blocking a cell that does not exist.
+      it 'returns n/a for row 0 rather than wrapping to ZZ' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 3, position_y: 0)
+                 .alphanumeric_position).to eq('n/a')
+      end
+
+      it 'returns n/a for a negative row' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 3, position_y: -1)
+                 .alphanumeric_position).to eq('n/a')
+      end
+
+      it 'sorts such a well as n/a too' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 0, position_y: 1)
+                 .sortable_alphanumeric_position).to eq('n/a')
+      end
+    end
+
     context 'when position is [nil,nil]' do
       let(:well) { create(:well, wellplate_id: wellplate.id, position_x: nil, position_y: nil) }
 

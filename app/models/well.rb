@@ -68,17 +68,28 @@ class Well < ApplicationRecord
 
   # translates well position within wellplate: X=2 Y=3 -> C2
   def alphanumeric_position
-    return 'n/a' if position_x.nil? || position_y.nil?
+    # A non-positive row would index the label table from the end (y=0 -> "ZZ"),
+    # naming a cell that does not exist. Reachable since Resize reports wells
+    # with a below-one position as blocking a shrink.
+    return 'n/a' unless placeable?
 
     row = ('A'..'ZZ').to_a[position_y - 1]
     "#{row}#{position_x}"
   end
 
   def sortable_alphanumeric_position
-    return 'n/a' if position_x.nil? || position_y.nil?
+    return 'n/a' unless placeable?
 
     row = ('A'..'ZZ').to_a[position_y - 1]
     "#{row}#{format('%02i', position_x)}"
+  end
+
+  # Whether the well sits at a position any grid could hold. Mirrors
+  # Wellplate.positionOutside on the client.
+  #
+  # @return [Boolean]
+  def placeable?
+    position_x.present? && position_y.present? && position_x.positive? && position_y.positive?
   end
 
   private

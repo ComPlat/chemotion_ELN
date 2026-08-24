@@ -3,10 +3,29 @@ import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
 import Wellplate from 'src/models/Wellplate';
 
+// Mirrors ActiveSupport's `.present?`, which the server's Well#content? uses.
+// A plain truthiness test disagrees with it on a numeric 0 - and a spreadsheet
+// import stores raw cell values, so `{ value: 0 }` is a real readout. The
+// server would call that well occupied and refuse a shrink while the client
+// called it empty and offered the size as safe.
+const isPresent = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+
 export default class Well extends Element {
   // Mirrors the wells.label column default; see `hasContent`.
   static get DEFAULT_LABEL() {
     return 'Molecular structure';
+  }
+
+  /**
+   * Whether a position is one some grid could actually hold. A non-positive
+   * row is not: rowLabel(0) is '' here and indexes the label table from the end
+   * on the server, so the same well would be named two different
+   * non-existent cells.
+   */
+  static isPlaceable(position) {
+    if (!position || position.x == null || position.y == null) return false;
+
+    return position.x > 0 && position.y > 0;
   }
 
   serialize() {
@@ -68,7 +87,7 @@ export default class Well extends Element {
     // treated as "no readouts we can read", which is the safe reading.
     if (!Array.isArray(this.readouts)) return false;
 
-    return this.readouts.some((readout) => readout && (readout.value || readout.unit));
+    return this.readouts.some((readout) => readout && (isPresent(readout.value) || isPresent(readout.unit)));
   }
 
   get alphanumericPosition() {
@@ -77,7 +96,7 @@ export default class Well extends Element {
     // outside any grid, so it can reach the "these wells block the resize"
     // message. Without this, rowLabel(null) is undefined and the position
     // renders as NaN - or throws outright when position itself is absent.
-    if (!this.position || this.position.x == null || this.position.y == null) return 'n/a';
+    if (!Well.isPlaceable(this.position)) return 'n/a';
 
     const positionY = Wellplate.rowLabel(this.position.y)
     const position = positionY + this.position.x;

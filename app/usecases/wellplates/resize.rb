@@ -79,6 +79,10 @@ module Usecases
       # edge) would otherwise be unrepairable, since no size can be asked for
       # that both reconciles it and differs from what it already claims.
       #
+      # Note this covers drift *outside* the grid only. A plate short of wells
+      # *inside* its grid still short-circuits here and is not repaired, because
+      # create_missing_wells runs after this check.
+      #
       # @param outside [Array<Well>] the wells the requested grid has no room for
       # @return [Boolean]
       def unchanged?(outside)

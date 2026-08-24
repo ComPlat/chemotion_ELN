@@ -431,6 +431,47 @@ describe('Wellplate', () => {
     it('still labels a real position', () => {
       expect(wellFrom({ x: 2, y: 1 }).alphanumericPosition).toEqual('A2');
     });
+
+    // rowLabel(0) is '' here while the server's label table indexes from the
+    // end, so the same well used to be named two different cells that do not
+    // exist. Both sides now say n/a.
+    it('reports n/a for a non-positive row instead of an empty label', () => {
+      expect(wellFrom({ x: 3, y: 0 }).alphanumericPosition).toEqual('n/a');
+    });
+
+    it('reports n/a for a non-positive column', () => {
+      expect(wellFrom({ x: 0, y: 1 }).alphanumericPosition).toEqual('n/a');
+    });
+  });
+
+  describe('a readout of numeric zero', () => {
+    // ActiveSupport counts 0 as present, so the server calls such a well
+    // occupied. A plain truthiness test here disagreed, and the UI offered a
+    // size the server then refused with a 422.
+    const plate = () => new Wellplate({
+      id: 1,
+      name: 'WP',
+      type: 'wellplate',
+      width: 2,
+      height: 1,
+      is_new: false,
+      wells: [
+        { id: 'w1', position: { x: 1, y: 1 }, readouts: [] },
+        { id: 'w2', position: { x: 2, y: 1 }, readouts: [{ value: 0, unit: '' }] },
+      ],
+    });
+
+    it('counts as well content', () => {
+      expect(plate().wells[1].hasContent).toEqual(true);
+    });
+
+    it('blocks a shrink that would drop it, as the server would', () => {
+      expect(plate().occupiedWellsOutside(1, 1).length).toEqual(1);
+    });
+
+    it('does not count a genuinely blank readout', () => {
+      expect(plate().wells[0].hasContent).toEqual(false);
+    });
   });
 
   describe('occupiedWellsOutside()', () => {
