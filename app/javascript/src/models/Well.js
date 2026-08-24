@@ -72,6 +72,13 @@ export default class Well extends Element {
   }
 
   get alphanumericPosition() {
+    // Mirrors Well#alphanumeric_position on the server. A well with no usable
+    // position is reachable here: positionOutside deliberately counts one as
+    // outside any grid, so it can reach the "these wells block the resize"
+    // message. Without this, rowLabel(null) is undefined and the position
+    // renders as NaN - or throws outright when position itself is absent.
+    if (!this.position || this.position.x == null || this.position.y == null) return 'n/a';
+
     const positionY = Wellplate.rowLabel(this.position.y)
     const position = positionY + this.position.x;
 

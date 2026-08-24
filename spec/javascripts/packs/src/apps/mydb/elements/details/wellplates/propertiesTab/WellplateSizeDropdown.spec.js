@@ -157,7 +157,7 @@ describe('WellplateSizeDropdown (functional component)', () => {
     expect(wellplate.hasPendingWellChanges).toEqual(false);
     expect(wrapper.find('select').props().disabled).toEqual(true);
     const overlay = wrapper.find('OverlayTrigger').props().overlay;
-    expect(shallow(overlay).text()).toEqual('Save your changes before changing the size.');
+    expect(shallow(overlay({})).text()).toEqual('Save your changes before changing the size.');
   });
 
   it('does not lock a wellplate that has not been saved yet', () => {
@@ -183,7 +183,7 @@ describe('WellplateSizeDropdown (functional component)', () => {
     expect(wrapper.find('select').props().disabled).toEqual(true);
     expect(wrapper.find('button.create-own-size-button').props().disabled).toEqual(true);
     const overlay = wrapper.find('OverlayTrigger').props().overlay;
-    expect(shallow(overlay).text()).toEqual('Save your changes to the wells before changing the size.');
+    expect(shallow(overlay({})).text()).toEqual('Save your changes to the wells before changing the size.');
   });
 
   // A disabled control dispatches no mouse events and they do not bubble, so
@@ -209,7 +209,30 @@ describe('WellplateSizeDropdown (functional component)', () => {
 
     expect(wrapper.find('select').props().disabled).toEqual(true);
     const overlay = wrapper.find('OverlayTrigger').props().overlay;
-    expect(shallow(overlay).text()).toEqual('You cannot edit this wellplate.');
+    expect(shallow(overlay({})).text()).toEqual('You cannot edit this wellplate.');
+  });
+
+  // The reason is worked out by hashing every well, so it must not be computed
+  // while merely rendering - only when a tooltip is actually shown.
+  it('does not compute the lock reason until the tooltip is rendered', () => {
+    const wellplate = savedWellplate();
+    wellplate.name = 'Renamed but not saved';
+
+    let reasonComputed = 0;
+    Object.defineProperty(wellplate, 'hasPendingWellChanges', {
+      get() { reasonComputed += 1; return false; },
+    });
+
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(reasonComputed).toEqual(0);
+
+    const overlay = wrapper.find('OverlayTrigger').props().overlay;
+    expect(typeof overlay).toEqual('function');
+    shallow(overlay({}));
+    expect(reasonComputed).toEqual(1);
   });
 
   // "Define later" (0x0) used to be offered unconditionally and wiped every

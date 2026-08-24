@@ -405,6 +405,34 @@ describe('Wellplate', () => {
     });
   });
 
+  describe('alphanumericPosition on an unplaceable well', () => {
+    // positionOutside counts a well with no usable position as outside any
+    // grid, so one can reach the "these wells block the resize" message. The
+    // label used to come out as NaN, or throw when position was absent.
+    const wellFrom = (position) => new Wellplate({
+      id: 1,
+      name: 'WP',
+      type: 'wellplate',
+      width: 1,
+      height: 1,
+      is_new: false,
+      wells: [{ id: 'w1', position, readouts: [] }],
+    }).wells[0];
+
+    it('reports n/a for a null coordinate instead of NaN', () => {
+      expect(wellFrom({ x: null, y: null }).alphanumericPosition).toEqual('n/a');
+    });
+
+    it('reports n/a rather than throwing when the position is missing', () => {
+      expect(() => wellFrom(undefined).alphanumericPosition).not.toThrow();
+      expect(wellFrom(undefined).alphanumericPosition).toEqual('n/a');
+    });
+
+    it('still labels a real position', () => {
+      expect(wellFrom({ x: 2, y: 1 }).alphanumericPosition).toEqual('A2');
+    });
+  });
+
   describe('occupiedWellsOutside()', () => {
     const wellplate = new Wellplate({
       id: 1,

@@ -37,10 +37,10 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
   const hasUnsavedChanges = !wellplate.isNew && wellplate.isPendingToSave;
   const shouldBeDisabled = wellplate.isReadOnly || hasUnsavedChanges;
 
-  // Deliberately a function, not a value: hasPendingWellChanges re-serializes
-  // and re-hashes every well (building a Sample per occupied one), and the
-  // answer is only ever needed for the tooltip below - which only renders while
-  // the control is locked.
+  // Deliberately a function, and called from a function overlay below, so that
+  // hasPendingWellChanges - which re-serializes and re-hashes every well,
+  // building a Sample per occupied one - runs only when a tooltip is actually
+  // shown.
   const disabledReason = () => {
     if (wellplate.isReadOnly) return 'You cannot edit this wellplate.';
 
@@ -48,6 +48,16 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
       ? 'Save your changes to the wells before changing the size.'
       : 'Save your changes before changing the size.';
   };
+
+  // Passed to OverlayTrigger as a function rather than a ready-made element: an
+  // `overlay={<Tooltip>…</Tooltip>}` prop is built on every render, and the
+  // control is locked exactly while the user is typing in the fields beside it.
+  // The injected props carry the positioning and have to reach the Tooltip.
+  const renderReasonTooltip = (overlayProps) => (
+    <Tooltip id={`wellplate-${wellplate.id}-size-locked-tooltip`} {...overlayProps}>
+      {disabledReason()}
+    </Tooltip>
+  );
 
   const onChange = (event) => {
     if (shouldBeDisabled) { return; }
@@ -100,14 +110,7 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
         key={`${wellplate.id}-custom-size-modal`}
       />
       {shouldBeDisabled ? (
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id={`wellplate-${wellplate.id}-size-locked-tooltip`}>
-              {disabledReason()}
-            </Tooltip>
-          )}
-        >
+        <OverlayTrigger placement="bottom" overlay={renderReasonTooltip}>
           {/* The wrapper has to be focusable so keyboard users can reach the
               explanation too; the control it describes is disabled and cannot
               take focus itself. This is the standard recipe for a tooltip on a
