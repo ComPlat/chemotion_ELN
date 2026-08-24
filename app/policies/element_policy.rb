@@ -26,9 +26,18 @@ class ElementPolicy
   # way to tell an echoed placeholder from a genuine edit — saving would overwrite the owner's
   # real data with those placeholders. Gating the whole write on full detail closes every such
   # path at once, mirroring how #copy? already combines the permission and detail-level axes.
-  # This is the ONLY real gate against that: frontend heuristics like Element#isMethodDisabled
+  # This is the only real gate against that: frontend heuristics like Element#isMethodDisabled
   # / Element#serialize's '***' filter (app/javascript/src/models/Element.js) are best-effort
   # UI hints that can't reliably detect Hash/Array-shaped placeholders, not a security boundary.
+  #
+  # Scope, though: #record_shared_with_minimum_detail_level? below derives its column from
+  # record.class, so this gates writes to *this record type's own* fields only. Detail levels are
+  # per element type and independent, and ApplicationEntity anonymizes each nested entity against
+  # detail_levels[nested_object.class] — so a collection shared at reaction_detail_level 10 with
+  # sample_detail_level 1 passes this check for the Reaction while its nested samples still arrive
+  # anonymized, and Usecases::Reactions::UpdateMaterials assigns them unconditionally. Nested
+  # elements of a different type therefore need their own check; do not read this method as
+  # covering them.
   def update?
     return false unless user_and_record_present?
 

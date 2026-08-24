@@ -18,8 +18,11 @@ export default class Element {
   // to a Hash/Array shape (see ApplicationEntity#expose_fields_with_anonymization!)
   // — those can't be told apart from a genuinely empty/default value client-side
   // anyway. The actual gate against writing back an anonymized value is
-  // ElementPolicy#update?, which requires full detail level for ANY write, so
-  // no field is ever anonymized whenever an update is actually permitted.
+  // ElementPolicy#update?, which requires full detail level for ANY write to
+  // this element's own fields. That guarantee does NOT extend to nested elements
+  // of a different type: detail levels are per type and independent, so a
+  // reaction shared at detail level 10 can still carry samples anonymized at
+  // sample_detail_level 1. See the scope note on ElementPolicy#update?.
   isMethodDisabled(m) {
     return this[m] == '***'
   }
