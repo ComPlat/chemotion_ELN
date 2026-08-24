@@ -780,7 +780,10 @@ module AttachmentJcampProcess
 
     lineage_root = root_id || id
     atts = Attachment.where(attachable_id: attachable_id)
-    valid_name = filename_parts[0]
+    # Strip a trailing .edit/.peak addon but keep the "N_bagit" curve token, so a jcamp
+    # attachment mid edit_process (e.g. "x.1_bagit.peak.jdx") still matches its own
+    # nmrium sibling ("x.1_bagit.nmrium") without matching other curves ("x.2_bagit...").
+    valid_name = fname_wo_ext(self).sub(/\.(edit|peak)\z/, '')
     atts.each do |att|
       is_delete = att.nmrium? &&
                   att.id != nmrium_att.id &&

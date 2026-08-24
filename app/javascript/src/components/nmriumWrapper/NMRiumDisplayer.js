@@ -455,6 +455,14 @@ export default class NMRiumDisplayer extends React.Component {
     return i < 0 ? '' : name.slice(i + 1).toLowerCase();
   }
 
+  // Keeps the "N_bagit" curve token (e.g. "x.1_bagit.peak.jdx" -> "x.1_bagit") so that
+  // sibling curves from the same bagit dataset don't collapse onto the same .nmrium/.svg basename.
+  getCurveAwareBaseName(label) {
+    if (!label) return 'spectrum';
+    const bagitMatch = label.match(/^(.*_bagit)\./);
+    return bagitMatch ? bagitMatch[1] : label.split('.')[0];
+  }
+
   buildPatchedNmriumFile(label, contentObj) {
     const blob = new Blob([JSON.stringify(contentObj)], { type: 'application/json' });
     return new File([blob], label || 'spectrum.nmrium');
@@ -469,7 +477,7 @@ export default class NMRiumDisplayer extends React.Component {
     const specInfo = this.getSpcInfo();
     if (!specInfo) return;
 
-    const baseName = specInfo.label?.split('.')[0] || 'spectrum';
+    const baseName = this.getCurveAwareBaseName(specInfo.label) || 'spectrum';
 
     const imageAttachment = this.prepareImageAttachment(imageBlobData, baseName);
     const nmriumAttachment = this.prepareNMRiumDataAttachment(nmriumData, baseName);
