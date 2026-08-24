@@ -83,16 +83,19 @@ module Entities
     #
     # A mutable placeholder is deep-duped because the literal is captured once, per field, in the
     # expose closure — without this, one response mutating it in place would leak that mutation
-    # into every other anonymized instance of the field for the lifetime of the process. Immutable
-    # placeholders are handed out as-is: that covers the '***' default (frozen_string_literal),
-    # nil and booleans, i.e. the large majority of anonymized fields on a list response, so the
-    # common path allocates nothing.
+    # into every other anonymized instance of the field for the lifetime of the process. Frozen
+    # scalars are handed out as-is: that covers the '***' default (frozen_string_literal), nil and
+    # booleans, i.e. the large majority of anonymized fields on a list response, so the common path
+    # allocates nothing. Containers are duped even when frozen, because +freeze+ is shallow — this
+    # is exactly the shape +column_defaults+ returns, an immutable outer Hash over mutable values.
     #
     # @param anonymize_with [Object, #call] the configured placeholder, or a callable returning it
-    # @return [Object] the placeholder itself when immutable, otherwise a deep copy of it
+    # @return [Object] the placeholder itself when deeply immutable, otherwise a deep copy of it
     def anonymization_placeholder(anonymize_with)
       placeholder = anonymize_with.respond_to?(:call) ? anonymize_with.call : anonymize_with
-      placeholder.frozen? ? placeholder : placeholder.deep_dup
+      return placeholder if placeholder.frozen? && !placeholder.is_a?(Enumerable)
+
+      placeholder.deep_dup
     end
 
     def detail_levels
