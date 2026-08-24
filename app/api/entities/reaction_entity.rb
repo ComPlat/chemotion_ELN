@@ -54,10 +54,12 @@ module Entities
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
       expose! :vessel_size,           anonymize_with: -> { Reaction.column_defaults['vessel_size'] }
       expose! :volume
-      expose! :use_reaction_volume
-      expose! :lock_reaction_volume
-      expose! :gaseous
-      expose! :weight_percentage
+      # Boolean columns: '***' is truthy, so the string default would make every reaction below
+      # detail level 10 render as a gas-phase reaction with a locked/derived volume.
+      expose! :use_reaction_volume,   anonymize_with: false
+      expose! :lock_reaction_volume,  anonymize_with: false
+      expose! :gaseous,               anonymize_with: false
+      expose! :weight_percentage,     anonymize_with: false
     end
     # rubocop:enable Metrics/BlockLength
 

@@ -152,10 +152,10 @@ describe Entities::ReactionEntity do
           tlc_solvents: '***',
           variations: [],
           vessel_size: { 'unit' => 'ml', 'amount' => nil },
-          gaseous: '***',
+          gaseous: false,
           volume: '***',
-          use_reaction_volume: '***',
-          weight_percentage: '***',
+          use_reaction_volume: false,
+          weight_percentage: false,
         )
       end
 
