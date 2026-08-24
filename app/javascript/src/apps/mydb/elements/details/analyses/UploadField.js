@@ -19,6 +19,7 @@ import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
 import AppModal from 'src/components/common/AppModal';
 import ChevronIcon from 'src/components/common/ChevronIcon';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
@@ -287,19 +288,22 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   // Advanced mode off (which unmounts that component) does not destroy the user's
   // configured analyses and datasets.
   const [analContainerList, setAnalContainer] = useState([]);
+  // A file selection held back while the user confirms discarding the analyses above.
+  const [pendingSelection, setPendingSelection] = useState(null);
   const handleClose = useCallback(() => {
     setListedFiles([]);
     setAnalContainer([]);
+    setPendingSelection(null);
     setIsAdvanced(false);
     setShowAdvancedHelp(false);
     setShow(false);
   }, []);
   const handleShow = useCallback(() => setShow(true), []);
 
-  const handleChange = useCallback((items) => {
-    // A new selection replaces `listedFiles`, so any advanced-mode analyses built from
-    // the previous selection now hold dataset paths that no longer resolve - executing
-    // them would walk into an unrelated (or missing) file container.
+  // A new selection replaces `listedFiles`, so any advanced-mode analyses built from the
+  // previous selection now hold dataset paths that no longer resolve - executing them
+  // would walk into an unrelated (or missing) file container. They have to go.
+  const applySelection = useCallback((items) => {
     setAnalContainer([]);
 
     if (items.length === 1) {
@@ -318,7 +322,26 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
 
     setListedFiles(items);
-  }, [ontology, handleClose]);
+  }, [element, ontology, handleClose, setElement]);
+
+  // Discarding configured analyses is not something to do behind the user's back, so a
+  // non-empty list parks the new selection until they confirm.
+  const handleChange = useCallback((items) => {
+    if (analContainerList.length > 0) {
+      setPendingSelection(items);
+      return;
+    }
+
+    applySelection(items);
+  }, [analContainerList, applySelection]);
+
+  const handleDiscardConfirmation = useCallback((confirmed) => {
+    if (confirmed && pendingSelection) {
+      applySelection(pendingSelection);
+    }
+
+    setPendingSelection(null);
+  }, [pendingSelection, applySelection]);
 
   const handlesSetOntology = useCallback((ev) => {
     let kind = (ev || '');
@@ -461,6 +484,20 @@ const UploadField = ({ disabled = false, element, setElement }) => {
       >
         {content()}
       </AppModal>
+
+      <ConfirmModal
+        showModal={pendingSelection !== null}
+        onClick={handleDiscardConfirmation}
+        title="Discard the analyses you configured?"
+        content={(
+          <p>
+            {`You have ${analContainerList.length} `}
+            {analContainerList.length === 1 ? 'analysis' : 'analyses'}
+            {' set up in advanced mode. They reference the files you selected before, so'}
+            {' choosing a new selection discards them. This cannot be undone.'}
+          </p>
+        )}
+      />
     </>
   );
 };
