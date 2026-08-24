@@ -105,6 +105,13 @@ describe Entities::WellplateEntity do
         )
       end
 
+      # Consumers (e.g. EmbeddedWellplate) zip titles against readouts by index, so the two
+      # placeholders must stay the same length however they are each derived.
+      it 'anonymizes readout_titles and readouts to the same length' do
+        expect(grape_entity_as_hash[:readout_titles].length)
+          .to eq(grape_entity_as_hash[:wells].first[:readouts].length)
+      end
+
       it 'returns a wellplate without a code_log' do
         expect(grape_entity_as_hash[:code_log]).to be_nil
       end
