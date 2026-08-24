@@ -18,6 +18,7 @@ import {
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
 import AppModal from 'src/components/common/AppModal';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
@@ -289,6 +290,8 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   const handleClose = useCallback(() => {
     setListedFiles([]);
     setAnalContainer([]);
+    setIsAdvanced(false);
+    setShowAdvancedHelp(false);
     setShow(false);
   }, []);
   const handleShow = useCallback(() => setShow(true), []);
@@ -337,7 +340,7 @@ const UploadField = ({ disabled = false, element, setElement }) => {
                 aria-controls="advanced-mode-help"
                 onClick={() => setShowAdvancedHelp((prev) => !prev)}
               >
-                <i className={`fa me-1 ${showAdvancedHelp ? 'fa-caret-down' : 'fa-caret-right'}`} />
+                <ChevronIcon direction={showAdvancedHelp ? 'down' : 'right'} className="me-1" />
                 How does advanced mode work?
               </Button>
               <Collapse in={showAdvancedHelp}>
