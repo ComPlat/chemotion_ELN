@@ -1,14 +1,14 @@
 import {
   ListGroup, Button, ButtonToolbar, Form
 } from 'react-bootstrap';
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { DatasetDropZone } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { FileContainer, ZipFileContainer } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import ElementContainer from 'src/models/Container';
 import { addNewAnalyses, createDataset, createAttachements } from 'src/apps/mydb/elements/details/analyses/utils';
 import PropTypes from 'prop-types';
-import OlsTreeSelect from '../../../../../components/OlsComponent';
+import OlsTreeSelect from 'src/components/OlsComponent';
 
 class ContainerWrapper {
   static newWrapper(name = 'New', kind = '') {
@@ -180,27 +180,30 @@ DatasetListItem.propTypes = {
 };
 
 function AdvancedAnalysesList({
-  handleClose, setConsumedPaths, listedFiles, setElement
+  handleClose, setConsumedPaths, listedFiles, setElement, analContainerList, setAnalContainer
 }) {
-  const [analContainerList, setAnalContainer] = useState([]);
-  const wrapperSetAnaContainer = (val) => {
+  // Recreated whenever the list changes, so every callback below must depend on it -
+  // memoising them on [] would freeze the first render's `analContainerList` and make
+  // e.g. "Remove Analysis" filter an empty snapshot, wiping the whole list.
+  const wrapperSetAnaContainer = useCallback((val) => {
     const changedVal = typeof val === 'function' ? val(analContainerList) : val;
     setAnalContainer(changedVal);
     setConsumedPaths(changedVal.map((ana) => ana.children.map((ds) => ds.files)).flat(Infinity));
-  };
+  }, [analContainerList, setAnalContainer, setConsumedPaths]);
+
   const addAnalyses = useCallback(() => {
     const newWrapper = ContainerWrapper.newWrapper();
     newWrapper.children.push(ContainerWrapper.newWrapper('Dataset #1'));
     wrapperSetAnaContainer((x) => [...x, newWrapper]);
-  }, [analContainerList]);
+  }, [wrapperSetAnaContainer]);
 
   const emptyAnalyses = useCallback(() => {
     wrapperSetAnaContainer(() => []);
-  }, []);
+  }, [wrapperSetAnaContainer]);
 
   const removeContainer = useCallback((toRemoveId) => {
     wrapperSetAnaContainer((x) => x.filter((container) => container.id !== toRemoveId));
-  }, []);
+  }, [wrapperSetAnaContainer]);
 
   const execute = useCallback(() => {
     setElement((element) => {
@@ -262,7 +265,9 @@ function AdvancedAnalysesList({
         return { anaContainer, newDsObj };
       });
 
-      preprocessAnaContainer.forEach(({ newDsObj }) => {
+      // `preprocessAnaContainer` holds a null for every analysis whose datasets are all
+      // empty; Execute is enabled in exactly that state, so they must be dropped here.
+      preprocessAnaContainer.filter(Boolean).forEach(({ newDsObj }) => {
         newDsObj.forEach(async ({ datasetContainer, fileObjs }) => {
           let file = null;
 
@@ -280,7 +285,7 @@ function AdvancedAnalysesList({
       return element;
     });
     handleClose();
-  }, [analContainerList]);
+  }, [analContainerList, listedFiles, setElement, handleClose]);
 
   return (
     <>
@@ -301,12 +306,7 @@ function AdvancedAnalysesList({
           Reset
         </Button>
       </ButtonToolbar>
-      <ListGroup
-        style={{
-          maxHeight: '70vh',
-          overflowY: 'auto',
-        }}
-      >
+      <ListGroup className="analyses-upload__analyses-list">
         {analContainerList.map((anaContainer, index) => {
           const setContainer = (changedX) => {
             wrapperSetAnaContainer((x) => {
@@ -343,6 +343,8 @@ AdvancedAnalysesList.propTypes = {
   handleClose: PropTypes.func.isRequired,
   setConsumedPaths: PropTypes.func.isRequired,
   listedFiles: PropTypes.arrayOf(FileContainer).isRequired,
+  analContainerList: PropTypes.arrayOf(PropTypes.instanceOf(ContainerWrapper)).isRequired,
+  setAnalContainer: PropTypes.func.isRequired,
   setElement: PropTypes.func.isRequired
 };
 
