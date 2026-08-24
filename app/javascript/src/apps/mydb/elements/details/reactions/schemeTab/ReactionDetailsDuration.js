@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import { permitOn } from 'src/components/common/uis';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -139,18 +139,13 @@ export default class ReactionDetailsDuration extends Component {
             <Form.Label>Duration</Form.Label>
             <InputGroup>
               <Form.Control type="text" value={durationCalc || ''} disabled placeholder="Duration" />
-              <OverlayTrigger
+              <CopyButton
+                text={durationCalc || ' '}
                 placement="bottom"
-                overlay={<Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>}
-              >
-                <Button
-                  disabled={!permitOn(reaction) || reaction.gaseous}
-                  variant="light"
-                  onClick={() => copyToClipboard(durationCalc || ' ')}
-                >
-                  <i className="fa fa-clipboard" aria-hidden="true" />
-                </Button>
-              </OverlayTrigger>
+                variant="light"
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                tooltipId="copy_duration_to_clipboard"
+              />
               <OverlayTrigger
                 placement="bottom"
                 overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
