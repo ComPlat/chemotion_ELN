@@ -33,11 +33,11 @@ module AttachmentJcampAasm
       end
 
       event :set_force_peaked do
-        transitions from: %i[idle queueing regenerating nmrium], to: :peaked
+        transitions from: %i[idle queueing regenerating nmrium peaked], to: :peaked
       end
 
       event :set_edited do
-        transitions from: %i[peaked queueing regenerating nmrium], to: :edited
+        transitions from: %i[peaked queueing regenerating nmrium edited], to: :edited
       end
 
       event :set_backup do
@@ -61,11 +61,11 @@ module AttachmentJcampAasm
       end
 
       event :set_csv do
-        transitions from: %i[idle peaked non_jcamp], to: :csv
+        transitions from: %i[idle peaked non_jcamp csv], to: :csv
       end
 
       event :set_nmrium do
-        transitions from: %i[idle peaked edited non_jcamp queueing regenerating], to: :nmrium
+        transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium], to: :nmrium
       end
 
       event :set_failure do
@@ -178,16 +178,23 @@ module AttachmentJcampProcess
     return unless meta_tmp
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
+    # Look up the canonical row for this filename across the whole dataset (not just
+    # self's own children): re-editing an already-edited file, or editing a curve whose
+    # dataset still holds both a .peak. and .edit. lineage, must reuse that single row -
+    # scoping to children_of(self) would miss it (self isn't its own child) and mint a
+    # duplicate .edit.jdx attachment on every save.
+    att = Attachment
+          .where(attachable_id: attachable_id, attachable_type: 'Container')
+          .find_by(filename: meta_filename)
 
     att ||= Attachment.children_of(self[:id]).new(
       filename: meta_filename,
       con_state: Labimotion::ConState::READ,
-      file_path: meta_tmp.path,
       created_by: created_by,
       created_for: created_for,
       key: SecureRandom.uuid,
     )
+    att.file_path = meta_tmp.path
     att.save!
 
     if ext == 'png'

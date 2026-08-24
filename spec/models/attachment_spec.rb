@@ -585,6 +585,24 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when the dataset already holds a matching .edit.jdx attachment' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:existing_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable, aasm_state: 'edited'
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the existing attachment instead of minting a duplicate row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns the existing attachment, updated in place' do
+          expect(new_attachment.id).to eq existing_edit.id
+        end
+      end
+
       context 'with ext = png' do
         let(:attachment) { create(:attachment, :with_png_image) }
         let(:ext) { 'png' }
