@@ -16,7 +16,7 @@ module Entities
     # readouts[index].value for each title — so a shorter readouts array is not a
     # smaller payload, it is an out-of-bounds read.
     with_options(anonymize_below: 1) do
-      expose! :readouts, anonymize_with: Well.column_defaults['readouts']
+      expose! :readouts, anonymize_with: -> { Well.column_defaults['readouts'] }
     end
 
     with_options(anonymize_below: 10) do

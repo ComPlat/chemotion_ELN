@@ -74,18 +74,25 @@ module Entities
 
     # Value handed to a sharee below a field's anonymization threshold.
     #
+    # +anonymize_with+ may be a callable, which is resolved here rather than in the entity class
+    # body. Deriving a placeholder from a model's +column_defaults+ loads that model's schema, and
+    # doing that at class-definition time would make eager loading (production boot,
+    # +assets:precompile+, any RAILS_ENV=production rake task) require an already-migrated
+    # database. Resolving lazily keeps the schema read on the first request instead; ActiveRecord
+    # memoizes +column_defaults+, so later calls are free.
+    #
     # A mutable placeholder is deep-duped because the literal is captured once, per field, in the
     # expose closure — without this, one response mutating it in place would leak that mutation
     # into every other anonymized instance of the field for the lifetime of the process. Immutable
     # placeholders are handed out as-is: that covers the '***' default (frozen_string_literal),
     # nil and booleans, i.e. the large majority of anonymized fields on a list response, so the
-    # common path allocates nothing. Note +column_defaults+ only shallow-freezes its outer Hash,
-    # so the jsonb values read out of it are mutable and do get duped.
+    # common path allocates nothing.
     #
-    # @param anonymize_with [Object] the configured placeholder for the field
+    # @param anonymize_with [Object, #call] the configured placeholder, or a callable returning it
     # @return [Object] the placeholder itself when immutable, otherwise a deep copy of it
     def anonymization_placeholder(anonymize_with)
-      anonymize_with.frozen? ? anonymize_with : anonymize_with.deep_dup
+      placeholder = anonymize_with.respond_to?(:call) ? anonymize_with.call : anonymize_with
+      placeholder.frozen? ? placeholder : placeholder.deep_dup
     end
 
     def detail_levels
