@@ -111,6 +111,39 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
+    # Regression: the per-row molecule resolve is native OpenBabel work that has been
+    # measured at ~12s on an organometallic structure. The loop has to let go of its DB connection
+    # before doing it -- a connection dropped or reaped during that window would otherwise poison
+    # the rest of the import with PG::ConnectionBad. The release also has to stay *outside* the
+    # write transaction, so the depth is asserted against whatever RSpec's transactional fixtures
+    # already hold open around the example rather than against zero.
+    #
+    # Only releases made by this file are counted: has_closure_tree releases the connection once
+    # when Container is first autoloaded, which happens mid-save here and is not ours.
+    it 'releases the DB connection before resolving each row, never inside the write transaction' do
+      baseline_depth = ActiveRecord::Base.connection.open_transactions
+      order = []
+      depths = []
+
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
+        origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
+        if origin&.include?('lib/import/import_sdf.rb')
+          order << :release
+          depths << ActiveRecord::Base.connection.open_transactions
+        end
+        orig.call(*args)
+      end
+      allow(sdf_import).to receive(:resolve_molecule_for_row).and_wrap_original do |orig, *args|
+        order << :resolve
+        orig.call(*args)
+      end
+
+      expect { sdf_import.create_samples }.to change(Sample, :count).by(1)
+
+      expect(order).to eq(%i[release resolve])
+      expect(depths).to all(eq(baseline_depth))
+    end
+
     context 'when an amount cell carries no readable value and unit' do
       before { sdf_import.rows.first['real_amount'] = 'quite a lot' }
 
@@ -372,6 +405,35 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
+    # Regression, phase 1 -- the half the first pass at this fix missed. One
+    # molecule_info_from_molfiles call covers a whole batch (50 records by default), each of
+    # which can burn up to Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in
+    # native code with no SQL in between, so this is the *longest* window in the import in which
+    # a connection can be dropped or reaped.
+    #
+    # Verified against a real killed backend: with the release removed, terminating the backend
+    # during this call loses the entire import (0/40 records, PG::ConnectionBad "PQsocket() can't
+    # get socket descriptor" -- the exact production symptom), because the per-record rescue in
+    # #find_or_create_by_molfiles cannot help a connection that is never re-verified.
+    it 'releases the DB connection before the batch OpenBabel call' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+      order = []
+
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
+        origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
+        order << :release if origin&.include?('lib/import/import_sdf.rb')
+        orig.call(*args)
+      end
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_wrap_original do |orig, *args|
+        order << :openbabel
+        orig.call(*args)
+      end
+
+      batch_import.find_or_create_mol_by_batch
+
+      expect(order.first(2)).to eq(%i[release openbabel])
+    end
+
     it 'schedules PubchemLookupJob covering every new molecule, via a created_after timestamp' do
       started_at = Time.current
       allow(PubchemLookupJob).to receive(:perform_later)
@@ -451,6 +513,27 @@ RSpec.describe Import::ImportSdf do
       # (no duplicate, no aborted import). If the bug regressed, this block would raise.
       expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(1)
       expect(batch_import.inchi_array).to include(raced_inchikey)
+    end
+
+    # Regression: molecule_info_from_molfiles already guards the OpenBabel work per
+    # record, but the Molecule find-or-create that follows it had no guard of its own -- a
+    # dropped/reaped DB connection there (or any other StandardError) used to escape
+    # find_or_create_by_molfiles, process_molecule_batches and find_or_create_mol_by_batch
+    # entirely, aborting the whole import instead of just the one record.
+    it 'survives a DB-level failure resolving one molecule and still imports the rest' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      failing_inchikey = "MOL#{Digest::SHA256.hexdigest(new_molfiles.first.to_s)[0..10]}-UHFFFAOYSA-N"
+      allow(Molecule).to receive(:find_or_create_by_molfile).and_wrap_original do |orig, *args, **kwargs|
+        raise ActiveRecord::StatementInvalid, 'PG::ConnectionBad' if kwargs[:inchikey] == failing_inchikey
+
+        orig.call(*args, **kwargs)
+      end
+
+      # Only the water molecule is created; the failing record is skipped rather than aborting
+      # the whole batch.
+      expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(1)
+      expect(batch_import.inchi_array).not_to include(failing_inchikey)
     end
   end
 

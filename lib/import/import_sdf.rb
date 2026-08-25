@@ -313,66 +313,72 @@ class Import::ImportSdf < Import::ImportSamples
     # rows.empty?, not inchi_array.empty?: this branch ignores rows, and a file that resolved no
     # structure at all has no inchikeys yet every row to import.
     if !raw_data.empty? && rows.empty?
-      ActiveRecord::Base.transaction do
-        raw_data.each_with_index do |molfile, index|
-          ActiveRecord::Base.transaction(requires_new: true) do
-            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
-            inchikey = babel_info[:inchikey]
-            is_partial = babel_info[:is_partial]
-            next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
-            next unless (i = inchi_array.index(inchikey))
+      raw_data.each_with_index do |molfile, index|
+        # Native OpenBabel work, seconds per record: run it with the connection released and outside
+        # any transaction, so a reaped connection is re-checked-out rather than failing every query
+        # that follows. The transaction below wraps only the writes.
+        ActiveRecord::Base.connection_pool.release_connection
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
+        inchikey = babel_info[:inchikey]
+        is_partial = babel_info[:is_partial]
+        next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
+        next unless (i = inchi_array.index(inchikey))
 
-            @inchi_array[i] = nil
-            sample = Sample.new(
-              created_by: current_user_id,
-              molfile: molfile,
-              molfile_version: babel_info[:molfile_version],
-              molecule_id: molecule.id,
-            )
-            sample.collections << collection_for_import
-            sample.collections << all_collections_for_user
-            sample.save!
-            ids << sample.id
-          end
-        rescue StandardError => e
-          Rails.logger.error("SDF import: molecule #{index + 1} could not be imported: #{e.class}: #{e.message}")
-          @unprocessable_samples << (index + 1)
+        ActiveRecord::Base.transaction(requires_new: true) do
+          @inchi_array[i] = nil
+          sample = Sample.new(
+            created_by: current_user_id,
+            molfile: molfile,
+            molfile_version: babel_info[:molfile_version],
+            molecule_id: molecule.id,
+          )
+          sample.collections << collection_for_import
+          sample.collections << all_collections_for_user
+          sample.save!
+          ids << sample.id
         end
+      rescue StandardError => e
+        Rails.logger.error("SDF import: molecule #{index + 1} could not be imported: #{e.class}: #{e.message}")
+        @unprocessable_samples << (index + 1)
       end
     elsif !rows.empty?
       begin
-        ActiveRecord::Base.transaction do
-          attribs = Sample.attribute_names & @mapped_keys.keys
-          error_messages = []
-          rows.each_with_index do |row, i|
-            next unless row
+        attribs = Sample.attribute_names & @mapped_keys.keys
+        error_messages = []
+        rows.each_with_index do |row, i|
+          next unless row
 
-            @current_import_row_index = i
+          @current_import_row_index = i
 
-            # Savepoint per row: without it a DB-level failure (e.g. from the chemical save below)
-            # leaves PostgreSQL's transaction aborted, so the rescue below cannot contain it -- every
-            # later row then fails and the outer transaction rolls back the rows that did succeed.
-            # Mirrors the raw-data branch above.
-            ActiveRecord::Base.transaction(requires_new: true) do
-              sample = build_sample_from_row(row, attribs, error_messages)
-              next if sample.nil?
+          # Same reasoning as the raw-data branch above: resolve the molecule (native OpenBabel
+          # work) with the DB connection released, before opening the transaction that does the
+          # actual writes.
+          ActiveRecord::Base.connection_pool.release_connection
+          resolved = resolve_molecule_for_row(row)
+          next if resolved.first.blank?
 
-              sample.collections << collection_for_import
-              sample.collections << all_collections_for_user
-              sample.save!
-              save_chemical_for_row(sample, row) if @import_type == 'chemical'
-              ids << sample.id
-            end
-          rescue StandardError => e
-            Rails.logger.error("SDF import: row #{i + 1} could not be imported: #{e.class}: #{e.message}")
-            @unprocessable_samples << (i + 1)
-            error_messages << "Sample #{i + 1} could not be imported: #{e.message}"
+          # Savepoint per row: without it a DB-level failure (e.g. from the chemical save below)
+          # leaves PostgreSQL's transaction aborted, so the rescue below cannot contain it -- every
+          # later row then fails. Each row is now its own top-level transaction rather than a
+          # savepoint nested in one enclosing transaction, so no earlier row's connection/lock is
+          # held across a later row's native work either.
+          ActiveRecord::Base.transaction(requires_new: true) do
+            sample = build_sample_from_row(resolved, row, attribs, error_messages)
+            sample.collections << collection_for_import
+            sample.collections << all_collections_for_user
+            sample.save!
+            save_chemical_for_row(sample, row) if @import_type == 'chemical'
+            ids << sample.id
           end
-          if error_messages.empty? && @unprocessable_samples.any?
-            error_messages << "Following samples could not be imported #{@unprocessable_samples}."
-          end
-          @message[:error_messages] = error_messages if error_messages.present?
+        rescue StandardError => e
+          Rails.logger.error("SDF import: row #{i + 1} could not be imported: #{e.class}: #{e.message}")
+          @unprocessable_samples << (i + 1)
+          error_messages << "Sample #{i + 1} could not be imported: #{e.message}"
         end
+        if @unprocessable_samples.any?
+          error_messages << "Following samples could not be imported #{@unprocessable_samples}."
+        end
+        @message[:error_messages] = error_messages if error_messages.present?
       rescue StandardError => e
         Rails.logger.error("SDF import: aborted: #{e.class}: #{e.message}")
         @message[:error] << "The import could not be completed: #{e.message}"
@@ -399,11 +405,11 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   # Extracted from #create_samples' row loop so each step is separately readable -- the loop itself
-  # only decides whether the row becomes a sample and how failures are reported.
-  def build_sample_from_row(row, attribs, error_messages)
-    molecule, molfile_for_sample, babel_info = resolve_molecule_for_row(row)
-    return nil if molecule.blank?
-
+  # only decides whether the row becomes a sample and how failures are reported. +resolved+ is the
+  # [molecule, molfile_for_sample, babel_info] tuple the caller resolves with the connection released,
+  # before the transaction this runs inside of.
+  def build_sample_from_row(resolved, row, attribs, error_messages)
+    molecule, molfile_for_sample, babel_info = resolved
     sample = new_sample_for_row(row, molecule, molfile_for_sample, babel_info)
 
     attribs.each { |attrib| sample[attrib] = row[attrib] if is_number?(row[attrib]) }
@@ -623,6 +629,16 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def find_or_create_by_molfiles(molfiles)
+    # Same reasoning as #create_samples, and this is the larger of the two windows: one call
+    # covers a whole batch of records, each of which can spend up to
+    # Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in native canonical-SMILES
+    # work -- minutes of wall clock for a 50-record batch of organometallics, with no SQL in
+    # between. Holding a checked-out connection across that is the whole bug, and
+    # the per-record rescue below does not help: once the server has hung up, the connection is
+    # never re-verified, so every remaining record in the import fails too. Releasing here puts
+    # it back through ConnectionPool#checkout_and_verify, which reconnects transparently.
+    ActiveRecord::Base.connection_pool.release_connection
+
     # render_svg: false — Molecule#assign_molecule_data discards OpenBabel's SVG and re-renders
     # via Chemotion::SvgRenderer, so rendering it per record is the largest avoidable cost on
     # this path: it is the only timeout-bounded operation in molecule_info_from_molfile, and on
@@ -631,18 +647,32 @@ class Import::ImportSdf < Import::ImportSamples
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles, render_svg: false)
 
     babel_info_array.map.with_index do |babel_info, i|
-      mf = molfiles[i]
-      if Chemotion::MolfilePolymerSupport.has_polymer_content?(mf.to_s)
-        # rstrip, not strip: MOL line 1 (title) may legitimately be empty for Ketcher/ISIS
-        # molfiles; a full strip would delete that blank line and shift the CTAB up by one,
-        # corrupting the header the same way this PR fixes on the xlsx import path (see
-        # Chemotion::MolfilePolymerSupport.normalize_for_open_babel, which only ever appends).
-        find_or_create_polymer_molfile_entry(mf.to_s.rstrip, babel_info)
-      elsif babel_info && babel_info[:inchikey].present?
-        molfile_entry_with_inchikey(mf, babel_info)
-      else
-        molfile_entry_without_inchikey(mf)
-      end
+      # Per-record rescue: unlike the OpenBabel work above (already guarded inside
+      # molecule_info_from_molfiles), the Molecule find-or-create below is a real DB write with
+      # no guard of its own. Before this, one dropped/reaped connection here escaped
+      # this method, process_molecule_batches, and find_or_create_mol_by_batch entirely --
+      # aborting the whole import uncaught, rather than just the one record.
+      find_or_create_molecule_entry(molfiles[i], babel_info)
+    rescue StandardError => e
+      Rails.logger.error("SDF import: molecule entry #{i + 1} could not be resolved: #{e.class}: #{e.message}")
+      nil
+    end
+  end
+
+  # @return [Hash, nil] a preview entry for one record, or nil if none of the strategies below
+  #   resolved a molecule
+  def find_or_create_molecule_entry(molfile, babel_info)
+    # has_polymer_content?, not has_polymers_list_tag?: an *empty* "> <PolymersList>" block is not
+    # a polymer, and those records keep the ordinary resolution path.
+    if Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile.to_s)
+      # rstrip, not strip: MOL line 1 (title) may legitimately be empty for Ketcher/ISIS molfiles;
+      # a full strip would delete that blank line and shift the CTAB up by one, corrupting the
+      # header (see Chemotion::MolfilePolymerSupport.normalize_for_open_babel, which only appends).
+      find_or_create_polymer_molfile_entry(molfile.to_s.rstrip, babel_info)
+    elsif babel_info && babel_info[:inchikey].present?
+      molfile_entry_with_inchikey(molfile, babel_info)
+    else
+      molfile_entry_without_inchikey(molfile)
     end
   end
 
