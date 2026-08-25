@@ -142,7 +142,7 @@ describe ImportSamplesJob, :active_job do
       allow(Import::ImportSdf).to receive(:new).and_return(import_samples_instance)
       allow(import_samples_instance).to receive_messages(
         import_from_file: nil, message: result_message, status: 'ok',
-        error_messages: nil, unprocessable_samples: []
+        error_messages: nil, unprocessable_samples: [], decoupled_records: []
       )
     end
 
@@ -190,6 +190,18 @@ describe ImportSamplesJob, :active_job do
           .with(hash_including(level: 'warning', autoDismiss: 0))
       end
 
+      # Same kind of outcome as unprocessable rows: it worked, but not as asked.
+      it 'notifies an import with decoupled records as a warning that stays on screen' do
+        allow(import_samples_instance).to receive(:decoupled_records)
+          .and_return([{ record: 1, reason: 'no structure could be resolved from the molfile' }])
+        allow(Message).to receive(:create_msg_notification)
+
+        described_class.perform_now(parameters)
+
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(level: 'warning', autoDismiss: 0))
+      end
+
       it 'notifies a failed import as an error' do
         allow(import_samples_instance).to receive(:status).and_return('error')
         allow(Message).to receive(:create_msg_notification)
@@ -208,7 +220,8 @@ describe ImportSamplesJob, :active_job do
     end
     let(:import_sdf_instance) do
       instance_double(Import::ImportSdf, import_from_file: nil, message: '', status: 'ok',
-                                         error_messages: nil, unprocessable_samples: [])
+                                         error_messages: nil, unprocessable_samples: [],
+                                         decoupled_records: [])
     end
     let(:parameters) do
       {

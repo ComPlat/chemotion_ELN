@@ -112,8 +112,9 @@ RSpec.describe Import::ImportSamples do
 
       it 'records the parse failure as the reason' do
         result = importer.process
+        # The class is part of the reason, so a bug in the call chain is not read as a bad cell.
         expect(result[:decoupled_fallbacks].pluck(:reason).uniq)
-          .to eq(['structure could not be parsed: open babel exploded'])
+          .to eq(['structure could not be parsed: RuntimeError: open babel exploded'])
       end
 
       it 'does not present the import as clean' do
@@ -462,7 +463,7 @@ RSpec.describe Import::ImportSamples do
     # imported with none of its components actually persisted.
     it 'raises instead of silently swallowing a component save failure' do
       sample = create(:sample)
-      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil), # rubocop:disable RSpec/VerifiedDoubles
+      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil),
                                           process_component_row_data: create(:molecule))
       allow(Import::ImportComponents).to receive(:component_save).and_raise(ActiveRecord::RecordInvalid)
 
@@ -472,7 +473,7 @@ RSpec.describe Import::ImportSamples do
 
     it 'logs the underlying error rather than discarding it' do
       sample = create(:sample)
-      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil), # rubocop:disable RSpec/VerifiedDoubles
+      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil),
                                           process_component_row_data: create(:molecule))
       allow(Import::ImportComponents).to receive(:component_save).and_raise(StandardError, 'boom')
       allow(Rails.logger).to receive(:error)

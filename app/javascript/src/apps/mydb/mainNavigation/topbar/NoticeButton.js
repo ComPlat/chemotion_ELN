@@ -85,11 +85,14 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       // throttled by — the toast-spam cap below. Counting them here is exactly what made the
       // "You have N more notifications" summary overcount: it included notifications the user
       // never saw a toast for in the first place, with nothing to find when they went looking.
+      //
+      // The cap suppresses the toast only. Returning here would also skip the refreshes and the action
+      // switch below, so a report arriving behind three notifications would never surface. count still
+      // counts every non-silent one, so the summary below is unaffected.
+      let suppressToast = false;
       if (!n.content.silent) {
         count += 1;
-        if (count > 3) {
-          return;
-        }
+        suppressToast = count > 3;
       }
       const infoTimeString = formatDate(n.created_at);
       const convertedData = convertCalendarNotificationToLocal(n.content.data);
@@ -110,7 +113,7 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       // CollectionShareNotifier on the backend) are delivered so the switch below and the tree-refresh
       // check can act on them, but must not interrupt the user with a dismiss-required popup; the
       // backend auto-acknowledges them on delivery instead (see MessageAPI's list endpoint).
-      if (!n.content.silent) {
+      if (!n.content.silent && !suppressToast) {
         const notification = {
           title: `From ${n.sender_name} on ${infoTimeString}`,
           message: newText,

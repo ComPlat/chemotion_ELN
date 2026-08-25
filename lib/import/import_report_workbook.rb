@@ -2,7 +2,7 @@
 
 require 'caxlsx'
 
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 module Import
   # Builds the workbook an import hands back to the user: their own sheet, with every row marked for
   # what became of it and every cell marked that could not be used as written.
@@ -287,15 +287,25 @@ module Import
       end
     end
 
+    # sample_id: whatever the row named. The source column is pruned as one of the report's own, so this
+    # is where it survives -- without it a corrected update row re-imports as a create and duplicates.
     def not_imported_entry(number, values, entry, notes)
       {
-        sample_id: nil,
+        sample_id: entry[:sample_id].presence || original_sample_id(values),
         values: @header.each_index.map { |index| values[index] },
         notes: row_notes(entry, notes),
         fill: entry[:status] == STATUS_FAILED ? @style[:red] : @style[:grey],
         wrapped: entry[:status] == STATUS_FAILED ? :red : :grey,
         number: number,
       }
+    end
+
+    # The sample id the source sheet carried for this row, if it had that column at all.
+    def original_sample_id(values)
+      index = @header.index { |name| name.to_s.strip.casecmp(SAMPLE_ID_HEADER).zero? }
+      return nil if index.nil?
+
+      values[index].presence
     end
 
     def unusable_values_entry(number, values, entry, notes)
@@ -362,4 +372,3 @@ module Import
     end
   end
 end
-# rubocop:enable Metrics/ClassLength

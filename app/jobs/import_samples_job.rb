@@ -71,7 +71,9 @@ class ImportSamplesJob < ApplicationJob
   # it could not process, and has to stay on screen as a warning.
   def sdf_status(sdf_import)
     return 'invalid' unless sdf_import.status == 'ok'
-    return 'warning' if sdf_import.error_messages.present? || sdf_import.unprocessable_samples.present?
+    # A structureless record is the same kind of outcome: it worked, but not as asked.
+    return 'warning' if sdf_import.error_messages.present? || sdf_import.unprocessable_samples.present? ||
+                        sdf_import.decoupled_records.present?
 
     'ok'
   end
