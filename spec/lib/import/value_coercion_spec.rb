@@ -32,12 +32,20 @@ RSpec.describe Import::ValueCoercion do
       ['purity', '95', 0.95, reported],
       ['purity', '99%', 0.99, reported],
       ['purity', '150', nil, reported],
+      # '0%' is a purity the column can hold, so it is converted like any other percentage rather than
+      # dropped as out of range.
+      ['purity', '0%', 0.0, reported],
+      ['purity', '0', 0.0, silent],
       ['purity', 'pure-ish', nil, reported],
 
       # Density is stored in g/mL, so a bare number is unambiguous and was being discarded.
       ['density', '0.789', 0.789, silent],
       ['density', '0.789 g/mL', 0.789, silent],
       ['density', '1.2 g/cm3', 1.2, silent],
+      # The unit is matched case-insensitively, as it was before this coercer existed: 'G/mL' used to
+      # match and must not start being dropped.
+      ['density', '0.9 G/mL', 0.9, silent],
+      ['density', '1.2 G/CM3', 1.2, silent],
       ['density', '1.2 kg/m3', nil, reported],
       ['density', 'not measured', nil, reported],
       # 'g/cm' without the cubic exponent is not a density unit -- its number means something else.

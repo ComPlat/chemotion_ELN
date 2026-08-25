@@ -28,10 +28,11 @@ module Import
     # unreadable one is recorded the same way -- "unknown" -- rather than as a wrong number.
     UNKNOWN_RANGE = "[#{-Float::INFINITY}, #{Float::INFINITY}]"
 
-    # g/cm3 is the same number as g/mL, so it is accepted rather than discarded. The cubic exponent is
+    # g/cm3 is the same number as g/mL, so it is accepted. The cubic exponent is
     # required: 'g/cm' is not a density and its number means something else, so it has to be reported
     # rather than stored as if it were g/mL.
-    DENSITY_UNIT = %r{g\s*/\s*(?:m[lL]|cm[3³])}.freeze
+    # Case-insensitive: a cell written 'G/mL' or 'G/CM3' matches
+    DENSITY_UNIT = %r{g\s*/\s*(?:ml|cm[3³])}i.freeze
 
     # NUMBER supports:
     # [-+]?                  - Allows an optional '+' or '-' sign.
@@ -105,8 +106,7 @@ module Import
       def fraction(number, text)
         percentage = text.include?('%')
         return [number, residual_note(text, [number])] if !percentage && number >= 0 && number <= 1
-        return [number / 100, "read as the fraction #{number / 100} (#{text.inspect})"] if number.positive? &&
-                                                                                           number <= 100
+        return [number / 100, "read as the fraction #{number / 100} (#{text.inspect})"] if number.between?(0, 100)
 
         [nil, "purity has to be between 0 and 1, value not used (#{text.inspect})"]
       end

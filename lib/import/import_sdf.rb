@@ -5,10 +5,11 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 # Same disable as its parent Import::ImportSamples: this importer was already far past the 200-line
 # limit before any of the recent work, and splitting it up is a refactor in its own right.
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
-               :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples
+               :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples,
+               :decoupled_records
 
   SIZE_LIMIT = 40 # MB
   MOLFILE_BLOCK_END_LINE = 'M  END'
@@ -61,6 +62,7 @@ class Import::ImportSdf < Import::ImportSamples
     @custom_data_keys = {}
     @mapped_keys = keys_to_map || {}
     @unprocessable_samples = []
+    @decoupled_records = []
     read_data
 
     @count = (@raw_data.empty? && @rows.size) || @raw_data.size
@@ -89,6 +91,8 @@ class Import::ImportSdf < Import::ImportSamples
       melting_point: { field: 'melting_point', displayName: 'Melting Point' },
       boiling_point: { field: 'boiling_point', displayName: 'Boiling Point' },
       cas: { field: 'cas', displayName: 'Cas' },
+      # Mapped so a record that declares itself structureless is taken at its word.
+      decoupled: { field: 'decoupled', displayName: 'Decoupled' },
       solvent: { field: 'solvent', displayName: 'Solvent' },
       dry_solvent: { field: 'dry_solvent', displayName: 'Dry Solvent' },
       refractive_index: { field: 'refractive_index', displayName: 'Refractive index' },
@@ -170,7 +174,8 @@ class Import::ImportSdf < Import::ImportSamples
     @defer_pubchem_lookup = true
     inchikeys = process_molecule_batches(raw_data.dup, batch_size, started_at)
 
-    count = inchikeys.compact.size
+    # Every record that produced an entry: one imported without a structure was processed too.
+    count = processed_mol.compact.size
     if count.positive?
       @message[:info] << "#{count} Molecule#{(count > 1 && 's') || ''} processed. "
     else
@@ -242,19 +247,54 @@ class Import::ImportSdf < Import::ImportSamples
       memo[field.upcase] = field
     end
 
-    processed_mol.filter_map do |mol|
-      next if mol.nil? || mol[:inchikey].blank?
+    processed_mol.each_with_index.filter_map do |mol, index|
+      # Only a record with no entry at all has nothing to import; an unresolved one goes in decoupled.
+      next note_unimportable_record(index) if mol.nil?
 
-      row = { 'molfile' => mol[:molfile] }
-      mol.each do |key, value|
-        # SDF property tags are String keys; skip the merged :inchikey/:svg/:name/:molfile symbols
-        next unless key.is_a?(String) && value.present?
+      row = row_from_mol(mol, field_by_upcase)
+      next unless importable_record?(row, mol, index)
 
-        field = field_by_upcase[key.upcase]
-        row[field] = value if field
-      end
       row
     end
+  end
+
+  # A record with no structure and no values is a blank form, not data. Cf. ImportSamples#importable_row?.
+  def importable_record?(row, mol, index)
+    return true if mol[:inchikey].present?
+    return false if row.except('molfile').values.all? { |value| value.to_s.strip.empty? }
+
+    note_decoupled_record(index, mol[:decoupled_reason]) unless asked_for_decoupling?(row, mol)
+    true
+  end
+
+  # Declaring itself decoupled excuses the report only if nothing was offered to resolve from: anything
+  # offered and unusable stays reportable. Cf. ImportSamples#process_row_data.
+  def asked_for_decoupling?(row, mol)
+    assign_boolean_value(row['decoupled']) && !mol[:structure_offered]
+  end
+
+  def row_from_mol(mol, field_by_upcase)
+    mol.each_with_object({ 'molfile' => mol[:molfile] }) do |(key, value), row|
+      # SDF property tags are String keys; skip the merged :inchikey/:svg/:name/:molfile symbols
+      next unless key.is_a?(String) && value.present?
+
+      field = field_by_upcase[key.upcase]
+      row[field] = value if field
+    end
+  end
+
+  # 1-based, as #create_samples numbers its rows. nil drops the record from the caller's filter_map.
+  def note_unimportable_record(index)
+    @unprocessable_samples << (index + 1)
+    nil
+  end
+
+  # A structureless sample is indistinguishable from a clean import unless the downgrade is recorded.
+  def note_decoupled_record(index, reason)
+    @decoupled_records << {
+      record: index + 1,
+      reason: reason.presence || 'no structure could be resolved',
+    }
   end
 
   def is_number?(string)
@@ -268,7 +308,9 @@ class Import::ImportSdf < Import::ImportSamples
     @defer_pubchem_lookup = true
     ids = []
     read_data if raw_data.empty? && rows.empty?
-    if !raw_data.empty? && inchi_array.empty?
+    # rows.empty?, not inchi_array.empty?: this branch ignores rows, and a file that resolved no
+    # structure at all has no inchikeys yet every row to import.
+    if !raw_data.empty? && rows.empty?
       ActiveRecord::Base.transaction do
         raw_data.each_with_index do |molfile, index|
           ActiveRecord::Base.transaction(requires_new: true) do
@@ -340,6 +382,7 @@ class Import::ImportSdf < Import::ImportSamples
     s = ids.size
     @message[:error] << 'Could not create the samples! ' if samples.empty?
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
+    @message[:info] << decoupled_summary if @decoupled_records.any?
     @message[:info] << 'Import successful! ' if ids.size == @count
 
     # Keep the upload unless there is genuinely nothing to follow up on
@@ -356,14 +399,7 @@ class Import::ImportSdf < Import::ImportSamples
     molecule, molfile_for_sample, babel_info = resolve_molecule_for_row(row)
     return nil if molecule.blank?
 
-    sample = Sample.new(
-      created_by: current_user_id,
-      molfile: molfile_for_sample,
-      molfile_version: babel_info[:molfile_version],
-      molecule_id: molecule.id,
-    )
-    sample.decoupled = true if molfile_for_sample.nil?
-    sample.inventory_sample = true if @import_type == 'chemical'
+    sample = new_sample_for_row(row, molecule, molfile_for_sample, babel_info)
 
     attribs.each { |attrib| sample[attrib] = row[attrib] if is_number?(row[attrib]) }
     assign_molecule_name(sample, molecule, row['molecule_name'])
@@ -378,21 +414,44 @@ class Import::ImportSdf < Import::ImportSamples
     sample
   end
 
+  # decoupled: no molfile to store, or the record asked for it -- even when its structure did resolve.
+  def new_sample_for_row(row, molecule, molfile_for_sample, babel_info)
+    sample = Sample.new(
+      created_by: current_user_id,
+      molfile: molfile_for_sample,
+      molfile_version: babel_info[:molfile_version],
+      molecule_id: molecule.id,
+    )
+    sample.decoupled = true if molfile_for_sample.nil? || assign_boolean_value(row['decoupled'])
+    sample.inventory_sample = true if @import_type == 'chemical'
+    sample
+  end
+
   # Columns copied across as-is, plus the xref sub-hash ones.
   def assign_plain_columns(sample, row)
     %w[description location external_label name short_label dry_solvent].each do |key|
       sample[key] = row[key] if row[key].present?
     end
-    %w[cas refractive_index form color solubility inventory_label].each do |key|
+    %w[cas form color solubility inventory_label].each do |key|
       sample['xref'][key] = row[key] if row[key].present?
     end
+    assign_coerced_xref(sample, 'refractive_index', row['refractive_index'])
+  end
+
+  # An xref key the coercer still handles, so the value reads the same from an SDF as from a sheet.
+  def assign_coerced_xref(sample, key, raw)
+    return if raw.blank?
+
+    value = Import::ValueCoercion.coerce(key, raw)&.first
+    sample['xref'][key] = value unless value.nil?
   end
 
   # Columns that need a unit or a range parsed out of the cell before they can be assigned.
   def assign_measurement_columns(sample, row)
     sample['melting_point'] = interval_from(row['melting_point']) if row['melting_point'].present?
     sample['boiling_point'] = interval_from(row['boiling_point']) if row['boiling_point'].present?
-    sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
+    # Side effect only: the method assigns sample['solvent'] itself and returns nil on no match.
+    handle_sample_solvent_column(sample, row) if row['solvent'].present?
     # Purity through the shared coercer: a cell written as a percentage ('95', '99%') is what the
     # samples table rejects outright, and assigning it raw here cost the whole row.
     assign_coerced(sample, 'purity', row['purity'])
@@ -479,8 +538,20 @@ class Import::ImportSdf < Import::ImportSamples
     [value, unit]
   end
 
+  # Numbered by position in the file: an SDF has no row to point at.
+  def decoupled_summary
+    count = @decoupled_records.size
+    numbers = @decoupled_records.pluck(:record).join(', ')
+    reasons = @decoupled_records.pluck(:reason).uniq.join('; ')
+
+    "#{count} sample#{'s' if count > 1} imported without a structure (#{reasons}): " \
+      "record#{'s' if count > 1} #{numbers}. "
+  end
+
+  # A structureless import is something to follow up on, and the upload is the only copy to correct.
   def keep_attachment_unnecessary?
-    @message[:error].empty? && @unprocessable_samples.empty? && @attachment.present?
+    @message[:error].empty? && @unprocessable_samples.empty? && @decoupled_records.empty? &&
+      @attachment.present?
   end
 
   # Links the sample to the molecule's name.
@@ -499,6 +570,9 @@ class Import::ImportSdf < Import::ImportSamples
 
   def assign_molecule_name(sample, molecule, raw_names)
     return if raw_names.blank?
+    # DUMMY is shared instance-wide, so a name filed against it would surface on every decoupled
+    # sample. The sample's own name column still gets the tag.
+    return if molecule.inchikey == 'DUMMY'
 
     molecule.create_molecule_name_by_user(raw_names, current_user_id)
     first_name = raw_names.to_s.split(';').first.to_s.strip
@@ -547,12 +621,16 @@ class Import::ImportSdf < Import::ImportSamples
     )
   end
 
-  # Build a preview entry when no structure resolved: try CAS lookup, else mark the entry decoupled.
+  # Entry for a molfile that resolved nothing. Falls back the way the spreadsheet importer does --
+  # SMILES, then CAS, then decoupled -- and carries the reason so the import can report it.
   def molfile_entry_without_inchikey(molfile)
     props = process_molfile_opt_data(molfile)
-    cas_nr = props['CAS'].to_s.strip
-    molecule = cas_nr.match?(/^\d+-\d+-\d+$/) ? find_molecule_by_cas(cas_nr) : nil
-    return props.merge(name: nil, inchikey: nil, svg: 'no_image_180.svg', decoupled: true) unless molecule
+    molecule = molecule_from_smiles_tag(props) || molecule_from_cas_tag(props)
+    unless molecule
+      return props.merge(name: nil, inchikey: nil, svg: 'no_image_180.svg', decoupled: true,
+                         decoupled_reason: decoupled_reason(props, molfile),
+                         structure_offered: structure_offered?(props, molfile))
+    end
 
     props.merge(
       inchikey: molecule.inchikey,
@@ -562,10 +640,69 @@ class Import::ImportSdf < Import::ImportSamples
     )
   end
 
+  # The spellings ImportSamples accepts as headers, most specific first, as #process_molfile_opt_data
+  # normalises tag names: upcased, whitespace underscored.
+  SMILES_TAGS = %w[CANONICAL_SMILES CANO_SMILES SMILES].freeze
+
+  def smiles_tag(props)
+    SMILES_TAGS.filter_map { |tag| props[tag].presence }.first
+  end
+
+  def cas_tag(props)
+    cas_nr = props['CAS'].to_s.strip
+    cas_nr.match?(/^\d+-\d+-\d+$/) ? cas_nr : nil
+  end
+
+  # Anything Open Babel refuses counts as "no structure here", so the CAS fallback still gets its turn.
+  def molecule_from_smiles_tag(props)
+    smiles = sanitize_smiles_for_ob(smiles_tag(props))
+    return nil if smiles.blank?
+
+    molecule = Molecule.find_or_create_by_cano_smiles(smiles, defer_pubchem_lookup: @defer_pubchem_lookup)
+    molecule if molecule&.inchikey.present?
+  rescue StandardError => e
+    Rails.logger.warn("SDF import: SMILES tag #{smiles.inspect} could not be resolved: #{e.class}: #{e.message}")
+    nil
+  end
+
+  def molecule_from_cas_tag(props)
+    cas_nr = cas_tag(props)
+    return nil if cas_nr.nil?
+
+    find_molecule_by_cas(cas_nr)
+  end
+
+  # Whether the record offered anything to resolve from. A molfile block is always present, so only its
+  # atom count distinguishes an empty form from a broken structure.
+  def structure_offered?(props, molfile)
+    smiles_tag(props).present? || cas_tag(props).present? || molfile_atom_count(molfile).positive?
+  end
+
+  def molfile_atom_count(molfile)
+    text = molfile.to_s
+    v3000 = text[/^M\s+V30\s+COUNTS\s+(\d+)/, 1]
+    return v3000.to_i if v3000
+
+    counts_line = text.lines.find { |line| line.match?(COUNTS_LINE) }
+    counts_line.to_s.strip.split(/\s+/).first.to_i
+  end
+
+  # Names what was tried: nothing to resolve from and a CAS that resolved to nothing are different fixes.
+  def decoupled_reason(props, molfile)
+    tried = []
+    tried << 'the molfile' if molfile_atom_count(molfile).positive?
+    tried << 'a SMILES tag' if smiles_tag(props).present?
+    tried << "CAS #{cas_tag(props)}" if cas_tag(props).present?
+    return 'the record carries no structure and no CAS number' if tried.empty?
+
+    "no structure could be resolved from #{tried.to_sentence}"
+  end
+
   # When molfile has PolymersList/TextNode: keep full molfile, clean for babel, find/create molecule, reprocess SVG.
   def find_or_create_polymer_molfile_entry(raw_molfile, _babel_info_from_batch)
     result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
-    return { name: nil, inchikey: nil, svg: 'no_image_180.svg' } if result.molecule.blank?
+    # A polymer record has as much to fall back on as any other.
+    return molfile_entry_without_inchikey(raw_molfile) if result.molecule.blank?
 
     process_molfile_opt_data(result.raw_molfile).merge(
       inchikey: result.molecule.inchikey,
@@ -623,4 +760,3 @@ class Import::ImportSdf < Import::ImportSamples
     mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
   end
 end
-# rubocop:enable Metrics/ClassLength

@@ -46,6 +46,10 @@ module Import
     # everything.
     BATCH_SIZE = 100
 
+    # Not a data problem: nothing in the row caused it and no correction avoids it.
+    CONNECTION_LOST_REASON = 'the database connection was lost during the import, this row was not ' \
+                             'written -- run the import again'
+
     def initialize(attachment, collection_id, user_id, file_name, import_type)
       @attachment = attachment
       @collection_id = collection_id
@@ -407,7 +411,8 @@ module Import
     rescue ActiveRecord::ActiveRecordError
       raise
     rescue StandardError => e
-      @structure_errors[index] = "structure could not be parsed: #{e.message}"
+      # The class is part of the reason: this rescue is broad enough to catch a bug in the call chain.
+      @structure_errors[index] = "structure could not be parsed: #{e.class}: #{e.message}"
       Rails.logger.warn(
         "Import #{@file_name}: structure on row #{sheet_row(index)} could not be parsed: #{e.class}: #{e.message}",
       )
@@ -480,6 +485,9 @@ module Import
       @processed.reject! { |entry| numbers.include?(entry[:row]) }
       @updated_rows.reject! { |number| numbers.include?(number) }
       @decoupled_fallbacks.reject! { |fallback| indexes.include?(fallback[:index]) }
+      # Per-cell notes too: kept on a rolled-back row they blame a cell that caused nothing.
+      numbers.each { |number| @field_notes.delete(number) }
+      indexes.each { |index| @structure_errors.delete(index) }
     end
 
     # Flags every not-yet-reported row in a batch as unprocessable; returns how many were added.
@@ -602,8 +610,17 @@ module Import
     # Postgres messages are the only description of most row failures, but they are written for
     # whoever wrote the SQL. Trim the parts that mean nothing to the person holding the spreadsheet.
     def failure_reason(error)
+      # A lost connection is not a problem with the row.
+      return CONNECTION_LOST_REASON if connection_error?(error)
+
       first_line = error.message.to_s.split("\n").first.to_s
       first_line.sub(/\A[^\n]*?\bERROR:\s*/, '').strip.presence || error.class.name
+    end
+
+    def connection_error?(error)
+      return true if error.is_a?(ActiveRecord::ConnectionNotEstablished)
+
+      error.is_a?(ActiveRecord::StatementInvalid) && error.cause.is_a?(PG::ConnectionBad)
     end
 
     # Resolves every distinct CAS number in the file once, outside a transaction, so the lookups are
@@ -1063,7 +1080,8 @@ module Import
     def create_components(sample, sample_components_data)
       xlsx.default_sheet = 'sample_components'
 
-      ActiveRecord::Base.transaction do
+      # requires_new: this runs nested inside write_row's own savepoint.
+      ActiveRecord::Base.transaction(requires_new: true) do
         sample_components_data.each_with_index do |component_data, index|
           molecule = process_component_row_data(component_data, index)
           next if molecule_not_exist(molecule, component_data, index)
@@ -1078,6 +1096,10 @@ module Import
       # write_row's caller went on to report the sample itself as successfully imported.
       Rails.logger.error("Import #{@file_name}: sample components could not be imported: #{e.class}: #{e.message}")
       raise 'More than 1 row can not be processed'
+    ensure
+      # One selected sheet per spreadsheet, shared by @sheet/@xlsx/@component_sheet: leaving the
+      # components sheet selected classifies every later row against the wrong header.
+      xlsx.default_sheet = @main_sheet_name
     end
 
     def determine_sheet(xlsx)

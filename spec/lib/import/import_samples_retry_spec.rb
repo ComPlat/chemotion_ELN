@@ -228,6 +228,36 @@ RSpec.describe Import::ImportSamples do
     end
   end
 
+  # A failed update has to stay an update on the way back, or correcting it creates a second sample.
+  describe 'the retry sheet for an update row that failed' do
+    let(:sample) do
+      import(write_sheet('retry_target', ['sample name', 'canonical smiles'], [%w[Target CCO]]))
+      collection.samples.order(:id).last
+    end
+    let(:failed_update) do
+      import(write_sheet('retry_bad_update',
+                         ['sample id', 'sample name', 'density'],
+                         [[sample.id.to_s, 'Renamed', 'not measured'],
+                          ['999999999', 'Missing', '0.85']]))
+    end
+
+    it 'keeps the sample id of a row that could not be updated' do
+      report_book(failed_update, 'sample') do |book|
+        row = (2..book.last_row).map { |n| book.row(n) }
+                                .find { |r| r[book.row(1).index('sample name')] == 'Missing' }
+        expect(row.first.to_s).to eq('999999999')
+      end
+    end
+
+    it 'keeps the sample id of a row that updated but lost a value' do
+      report_book(failed_update, 'sample') do |book|
+        row = (2..book.last_row).map { |n| book.row(n) }
+                                .find { |r| r.first.to_s == sample.id.to_s }
+        expect(row).to be_present
+      end
+    end
+  end
+
   describe 'a sample id the importer must not accept' do
     let(:other_user) { create(:user) }
     let(:other_collection) { create(:collection, user_id: other_user.id) }

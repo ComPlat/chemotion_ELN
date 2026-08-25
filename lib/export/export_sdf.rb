@@ -66,7 +66,7 @@ module Export
       data
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:disable-next Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       molfile = sdf_molfile_for(sample)
 
@@ -102,7 +102,6 @@ module Export
       end
       data.concat("$$$$\n")
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def sdf_molfile_for(sample)
       return sample['molfile'] if sample['molfile'].present?
