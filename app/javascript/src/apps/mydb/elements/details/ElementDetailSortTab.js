@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
-import { Popover } from 'react-bootstrap';
+import { CloseButton, Popover } from 'react-bootstrap';
 import { List } from 'immutable';
 import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -148,9 +148,12 @@ export default function ElementDetailSortTab({
   const allCollection = isAllCollection(currentCollection);
   if (!isOwnCollection && !allCollection) { return null; }
 
-  const popoverSettings = (
+  const popoverSettings = ({ close }) => (
     <Popover>
-      <Popover.Header>Tab Layout</Popover.Header>
+      <Popover.Header className="d-flex justify-content-between align-items-center">
+        Tab Layout
+        <CloseButton onClick={close} />
+      </Popover.Header>
       <Popover.Body>
         <TabLayoutEditor
           visible={visible}
@@ -165,9 +168,7 @@ export default function ElementDetailSortTab({
   return (
     <ConfigOverlayButton
       popoverSettings={popoverSettings}
-      onToggle={(show) => {
-        if (!show) updateLayout();
-      }}
+      onClose={updateLayout}
     />
   );
 }
