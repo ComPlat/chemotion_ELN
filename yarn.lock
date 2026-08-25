@@ -1186,10 +1186,9 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-spectra-editor@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.8.0.tgz#36b80e60393cba9aab3aba35d58ad1d95e3f33b5"
-  integrity sha512-SLpjN125lI3Fyl1hsaiOcvhC+LHQNKZZ0YekFRv9Al4BFv4ldqkELM2zrnhgc5/bhCxnr6TDEcxrNqGOOduYsQ==
+"@complat/react-spectra-editor@ComPlat/react-spectra-editor#fix/lcms-stack-host-hooks":
+  version "1.8.1"
+  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/52de775b823d5126d15f8e205e8ea525f44d3a9f"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.5"
     "@emotion/react" "^11.11.1"
