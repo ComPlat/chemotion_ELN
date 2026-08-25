@@ -453,6 +453,25 @@ export default class ModalImport extends React.Component {
         return;
       }
 
+      // The importer needs one column it can identify a sample by: a structure, a CAS, an explicit
+      // decoupled flag, or a sample id naming an existing row. Checking it here fails in the
+      // mapping step, where the user can still fix it, instead of asynchronously in the job -- which
+      // reported it minutes later under an 'Import Samples Completed' heading.
+      const identifyingColumns = [
+        'molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'decoupled', 'cas', 'sample id'
+      ];
+      if (!importingColumns.some((value) => identifyingColumns.includes(value))) {
+        message = 'Map at least one column the importer can identify a sample by: '
+          + 'molfile, canonical smiles, CAS, decoupled, or sample id.';
+        this.setState({ isProcessing: false });
+        this.context.notifications.add({
+          title: 'Validation Error',
+          message,
+          level: 'error',
+        });
+        return;
+      }
+
       // Check for duplicate mapped columns
       const { hasDuplicates, duplicateKeys } = this.checkForDuplicateMappedColumns(mappedColumns);
       if (hasDuplicates) {

@@ -19,8 +19,11 @@ function ColumnMappingComponent({
   const [modelKeys, setModelKeys] = useState([]);
 
   // Sample and chemical keys for mapping options
+  // 'sample id' is spelled with a space because that is the header the importer matches on
+  // (Import::ImportSamples::SAMPLE_ID_HEADER). It is how the import report's correction round trip
+  // names the rows to update, so without it here a report re-import silently loses its only key.
   const sampleKeys = [
-    'name', 'cas', 'molecule_name', 'external_label', 'short_label', 'description', 'decoupled',
+    'name', 'cas', 'sample id', 'molecule_name', 'external_label', 'short_label', 'description', 'decoupled',
     'real_amount_value', 'real_amount_unit', 'target_amount_value', 'target_amount_unit',
     'molarity', 'density', 'molfile', 'purity', 'solvent', 'location', 'is_top_secret', 'melting_point',
     'boiling_point', 'refractive_index', 'flash_point', 'molecular_mass', 'canonical_smiles',
@@ -72,6 +75,7 @@ function ColumnMappingComponent({
       sample_external_label: 'external_label',
       external_label: 'external_label',
       cas: 'cas',
+      sample_id: 'sample id',
       inventory_label: 'inventory_label',
       form: 'form',
       color: 'color',
