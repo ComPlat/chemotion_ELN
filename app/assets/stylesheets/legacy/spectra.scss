@@ -10,13 +10,24 @@
   height: 100%;
   min-height: 0;
 
-  // the single bare <div> LayerPrism/MultiJcampsViewer render (CmdBar + .react-spectrum-editor)
+  // the single bare <div> LayerPrism/MultiJcampsViewer/HPLCViewer render
+  // (CmdBar + .react-spectrum-editor)
   > div {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    overflow: hidden;
+    // Deliberately NOT `overflow: hidden`. The CmdBar is a sibling *above*
+    // .react-spectrum-editor, and its outlined selects (Submit, Write Peaks,
+    // Write Intensity, Decimal) are compressed well under MUI's outlined
+    // geometry, so their shrunk InputLabel floats above the toolbar's own box.
+    // Clipping here truncated those labels. The chart region is still bounded —
+    // .react-spectrum-editor below clips it.
+  }
+
+  // The toolbar is fixed furniture; only the chart region below it flexes.
+  .rse-cmd-bar {
+    flex: 0 0 auto;
   }
 
   .react-spectrum-editor {
@@ -69,6 +80,33 @@
     .d3Svg, .d3SvgRect, .d3SvgMulti {
       width: 100%;
       height: 100%;
+    }
+
+    // LC/MS is the one layout that mounts three charts stacked in this pane —
+    // .d3Line (UV/VIS), .d3Multi (TIC) and .d3Rect (m/z) — where every other
+    // layout mounts exactly one. The `height: 100%` above is written for that
+    // single-chart case; applied to three siblings it makes each as tall as the
+    // whole pane, so the TIC and m/z graphs end up below the clip and the editor
+    // appears to render the chromatogram alone. Give the three an equal share of
+    // whatever the toolbar rows between them leave over instead.
+    .lcms-stack {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+
+      > .d3Line, > .d3Multi, > .lcms-graph-panel {
+        flex: 1 1 0;
+        min-height: 0;
+        height: auto;
+      }
+
+      // .lcms-graph-panel wraps the m/z chart plus its loading overlay, so it —
+      // not .d3Rect — is the flex item; the chart then fills it.
+      > .lcms-graph-panel > .d3Rect {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+      }
     }
   }
 }
