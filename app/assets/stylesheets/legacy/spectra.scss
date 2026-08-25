@@ -89,20 +89,26 @@
     // whole pane, so the TIC and m/z graphs end up below the clip and the editor
     // appears to render the chromatogram alone. Give the three an equal share of
     // whatever the toolbar rows between them leave over instead.
-    .lcms-stack {
+    //
+    // The package handles this on its own as of react-spectra-editor#325, so this
+    // block is belt-and-braces: it pins the intent on our side and keeps the split
+    // exact if the package's own sizing is ever relaxed. It is NOT a substitute —
+    // it keys on hook classes only that release emits, so on an older package it
+    // matches nothing at all.
+    .rse-lcms-stack {
       display: flex;
       flex-direction: column;
       min-height: 0;
 
-      > .d3Line, > .d3Multi, > .lcms-graph-panel {
+      > .d3Line, > .d3Multi, > .rse-lcms-graph-panel {
         flex: 1 1 0;
         min-height: 0;
         height: auto;
       }
 
-      // .lcms-graph-panel wraps the m/z chart plus its loading overlay, so it —
+      // .rse-lcms-graph-panel wraps the m/z chart plus its loading overlay, so it —
       // not .d3Rect — is the flex item; the chart then fills it.
-      > .lcms-graph-panel > .d3Rect {
+      > .rse-lcms-graph-panel > .d3Rect {
         flex: 1 1 auto;
         min-height: 0;
         height: 100%;
