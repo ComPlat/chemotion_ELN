@@ -88,18 +88,11 @@ RSpec.describe Chemotion::OpenBabelService do
     end
 
     it 'returns empty canonical smiles when canonical generation raises SystemStackError' do
-      call_count = 0
-      allow(conversion).to receive(:write_string) do
-        call_count += 1
-        case call_count
-        when 1
-          "CC smiles-meta\n"
-        when 2
-          raise SystemStackError
-        else
-          "molfile-v2000\n"
-        end
-      end
+      # The canonical-smiles writer now runs in its own ForkedTimeout child, so a
+      # SystemStackError there no longer shares this describe block's single sequential
+      # write_string counter -- stub it directly instead.
+      allow(conversion).to receive(:write_string).and_return("CC smiles-meta\n", "molfile-v2000\n")
+      allow(described_class).to receive(:canonical_smiles_from_source_unsafe).and_raise(SystemStackError)
 
       info = described_class.molecule_info_from_structure('CC', 'smi')
 
@@ -145,21 +138,23 @@ RSpec.describe Chemotion::OpenBabelService do
       )
     end
 
-    # The SVG render is the only timeout-bounded operation in this method and, on the paths that
-    # feed Molecule#assign_molecule_data, its output is discarded unconditionally — svg_reprocess
-    # re-renders through Chemotion::SvgRenderer because OpenBabel's SVG always carries the
-    # 'Open Babel' marker. render_svg: false is how those callers stop paying for it.
+    # The SVG render's output is discarded unconditionally on the paths that feed
+    # Molecule#assign_molecule_data — svg_reprocess re-renders through Chemotion::SvgRenderer
+    # because OpenBabel's SVG always carries the 'Open Babel' marker. render_svg: false is how
+    # those callers stop paying for it. The canonical-smiles writer is timeout-bounded too (see
+    # the canonical-smiles bound) but runs unconditionally either way, so it is excluded from the "no fork" assertion
+    # below by matching on SVG_RENDER_TIMEOUT_SECONDS specifically.
     describe 'render_svg: false' do
       before do
         allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
       end
 
       it 'does not fork a render at all' do
-        allow(Chemotion::ForkedTimeout).to receive(:run)
+        allow(Chemotion::ForkedTimeout).to receive(:run).and_call_original
 
         described_class.molecule_info_from_molfile('C', render_svg: false)
 
-        expect(Chemotion::ForkedTimeout).not_to have_received(:run)
+        expect(Chemotion::ForkedTimeout).not_to have_received(:run).with(described_class::SVG_RENDER_TIMEOUT_SECONDS)
       end
 
       it 'returns a nil svg without claiming a timeout', :aggregate_failures do
