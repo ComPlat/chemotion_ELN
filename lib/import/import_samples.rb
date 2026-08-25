@@ -250,10 +250,13 @@ module Import
           # Polymer molfile but molecule not created (e.g. inchikey blank); do not fall back to smiles or we get same dummy molecule for every row.
           nil
         elsif smiles?(row)
-          m, _molfile_coord, go_to_next = get_data_from_smiles(row, index)
+          m, molfile_coord, go_to_next = get_data_from_smiles(row, index)
           if m.present? && !go_to_next
             note_unusable_molfile(row)
-            return [m, raw_molfile]
+            # molfile_coord, not raw_molfile: the molfile column's own value is exactly what
+            # OpenBabel just failed to parse, so storing it here would leave the sample with a
+            # molecule resolved from SMILES paired with a molfile that does not describe it.
+            return [m, molfile_coord]
           end
           nil
         else
@@ -605,18 +608,33 @@ module Import
 
     # Resolves every distinct CAS number in the file once, outside a transaction, so the lookups are
     # neither repeated per row nor performed while holding one open.
+    #
+    # A row that also carries a structure is only prefetched if that structure fails to resolve --
+    # mirroring #molecule_and_molfile_with_cas_fallback's own guard exactly, which only reaches the
+    # CAS fallback when `molfile.nil? || molecule.nil?`. Skipping this check entirely (prefetching
+    # every CAS-bearing row regardless of structure) looked safer but was not: it fires a real,
+    # unnecessary network lookup for every ordinary row whose structure resolves fine on its own,
+    # which is both wasted work and reachable from a live PubChem/CAS-service call that a row's own
+    # structure never asked for. Resolving the structure here is local (no network, no open
+    # transaction) and cheap next to that, and is the only way to know in advance which rows
+    # genuinely need the CAS fallback.
     def prefetch_cas_molecules
       return unless mandatory_check.is_a?(Hash) && mandatory_check['cas']
 
       rows.each_with_index do |row, index|
-        next unless cas?(row)
-        # Only rows that need the fallback: a row with a usable structure never hits CAS lookup.
-        next if structure?(row)
+        next unless cas?(row) && !structure_resolves?(row, index)
 
         find_molecule_by_cas(cas_value(row))
       rescue StandardError => e
         Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{sheet_row(index)}: #{e.message}")
       end
+    end
+
+    # Whether a row's own structure column, on its own, resolves to a usable molecule -- the same
+    # condition #molecule_and_molfile_with_cas_fallback checks before it would reach for CAS.
+    def structure_resolves?(row, index)
+      molecule, molfile = resolve_structure(row, index)
+      molecule.present? && molfile.present?
     end
 
     def structure?(row)
@@ -806,9 +824,17 @@ module Import
     end
 
     def assign_molecule_name_id(sample, value)
-      split_names = value.split(';')
-      molecule_name_id = MoleculeName.find_by(name: split_names[0]).id
-      sample['molecule_name_id'] = molecule_name_id
+      # Stripped to match Molecule#create_molecule_name_by_user, which strips before creating --
+      # process_fields calls that with this same raw cell value first. Without stripping here too,
+      # a whitespace-padded cell creates a name this lookup then never finds.
+      first_name = value.split(';').first.to_s.strip
+      molecule_name = MoleculeName.find_by(name: first_name)
+      unless molecule_name
+        note_field_issue('mn.name', value, "molecule name #{first_name.inspect} is not known, molecule_name_id not set")
+        return
+      end
+
+      sample['molecule_name_id'] = molecule_name.id
     end
 
     def handle_sample_fields(sample, db_column, value)
@@ -1035,25 +1061,23 @@ module Import
     # component's molecule creation is deferred the same way as the outer
     # row's, and both flush together via #write_to_db's own Molecule.schedule_pubchem_lookup_since.
     def create_components(sample, sample_components_data)
-      unprocessable_count = 0
       xlsx.default_sheet = 'sample_components'
 
-      begin
-        ActiveRecord::Base.transaction do
-          sample_components_data.each_with_index do |component_data, index|
-            molecule = process_component_row_data(component_data, index)
+      ActiveRecord::Base.transaction do
+        sample_components_data.each_with_index do |component_data, index|
+          molecule = process_component_row_data(component_data, index)
+          next if molecule_not_exist(molecule, component_data, index)
 
-            if molecule_not_exist(molecule, component_data, index)
-              unprocessable_count += 1
-              next
-            end
-
-            ImportComponents.component_save(component_data, sample, molecule, index)
-          end
+          ImportComponents.component_save(component_data, sample, molecule, index)
         end
-      rescue StandardError => _e
-        raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
+    rescue StandardError => e
+      # A real save failure from ImportComponents.component_save used to be swallowed here
+      # whenever it was the transaction's first failure: the transaction rolled back every
+      # component already saved for this sample, with no log entry and no error raised, while
+      # write_row's caller went on to report the sample itself as successfully imported.
+      Rails.logger.error("Import #{@file_name}: sample components could not be imported: #{e.class}: #{e.message}")
+      raise 'More than 1 row can not be processed'
     end
 
     def determine_sheet(xlsx)
@@ -1160,10 +1184,13 @@ module Import
         data: [] }
     end
 
+    # The message is what the user sees; +error+ already names every accepted header. Hard-coding
+    # 'molfile or Canonical Smiles' here told people importing by CAS -- or re-importing a report
+    # keyed on sample id -- that they needed a structure column they do not need.
     def error_required_fields(error)
       { status: 'invalid',
         error: error,
-        message: 'Column headers should have: molfile or Canonical Smiles.',
+        message: error.to_s.presence || 'Column headers should have: molfile or Canonical Smiles.',
         data: [] }
     end
 

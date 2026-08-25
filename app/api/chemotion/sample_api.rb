@@ -126,11 +126,13 @@ module Chemotion
             params[:file] = { tempfile: tempfile, filename: 'validated_data.csv' }
             tempfile.binmode
             CSV.open(tempfile, 'wb') do |csv|
-              # Add headers - get keys from the first row
-              first_row = params[:data].first
-              error!('Invalid data format: rows must be objects', 400) unless first_row.is_a?(Hash)
+              error!('Invalid data format: rows must be objects', 400) unless params[:data].all?(Hash)
 
-              headers = first_row.keys
+              # Union of every row's keys, in first-seen order. Taking them from the first row alone
+              # silently dropped every column that row happened not to carry -- for the whole file,
+              # not just that row -- so a mapping whose first row had no structure or sample id
+              # produced a CSV the importer then rejected with "Column headers should have: ...".
+              headers = params[:data].flat_map(&:keys).uniq
               csv << headers
               # Add data rows
               params[:data].each { |row| csv << headers.map { |header| row[header] } }

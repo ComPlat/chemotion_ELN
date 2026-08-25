@@ -359,8 +359,12 @@ RSpec.describe Import::ImportSamples do
     end
 
     it 'resolves CAS numbers without holding an import transaction open' do
+      # resolve_structure (not structure?, which prefetch no longer consults -- see the next
+      # example) is what actually decides whether a row's own structure resolves; stubbing it to
+      # fail is what makes every row genuinely need the CAS fallback, matching the real condition
+      # #molecule_and_molfile_with_cas_fallback checks before ever reaching for CAS.
       allow(importer).to receive_messages(
-        cas?: true, structure?: false, cas_value: '64-17-5', mandatory_check: { 'cas' => true },
+        cas?: true, cas_value: '64-17-5', mandatory_check: { 'cas' => true }, resolve_structure: nil,
       )
 
       # RSpec wraps each example in its own transaction, so transaction_open? is always true here.
@@ -376,6 +380,35 @@ RSpec.describe Import::ImportSamples do
       importer.process
       expect(depths).not_to be_empty
       expect(depths).to all(eq(baseline))
+    end
+
+    # Before this, prefetch fired a CAS lookup for every CAS-bearing row regardless of whether its
+    # structure would resolve on its own -- wasted work, and a real HTTP call a row's own structure
+    # never needed (this is what silently broke Chemotion::SampleAPI's chemical-data import spec:
+    # an unstubbed PubChem call fired for a row whose structure resolved just fine).
+    it 'does not prefetch a CAS lookup for a row whose own structure already resolves' do
+      molecule = create(:molecule)
+      allow(importer).to receive_messages(
+        rows: [{ 'cas' => '64-17-5' }], mandatory_check: { 'cas' => true },
+        cas?: true, cas_value: '64-17-5', resolve_structure: [molecule, molecule.molfile]
+      )
+      allow(importer).to receive(:find_molecule_by_cas)
+
+      importer.send(:prefetch_cas_molecules)
+
+      expect(importer).not_to have_received(:find_molecule_by_cas)
+    end
+
+    it 'prefetches a CAS lookup for a row whose structure does not resolve' do
+      allow(importer).to receive_messages(
+        rows: [{ 'cas' => '64-17-5' }], mandatory_check: { 'cas' => true },
+        cas?: true, cas_value: '64-17-5', resolve_structure: nil
+      )
+      allow(importer).to receive(:find_molecule_by_cas)
+
+      importer.send(:prefetch_cas_molecules)
+
+      expect(importer).to have_received(:find_molecule_by_cas).with('64-17-5')
     end
   end
 
@@ -397,6 +430,70 @@ RSpec.describe Import::ImportSamples do
       result = importer.process
       expect(result[:decoupled_fallbacks].pluck(:reason).uniq)
         .to eq(['structure could not be interpreted'])
+    end
+  end
+
+  describe '#extract_molfile_and_molecule' do
+    # A molfile column OpenBabel could not parse, with a SMILES column that does resolve, is
+    # exactly the case the "structure was taken from the SMILES column instead" note claims to
+    # handle. The sample must actually get the SMILES-derived molfile paired with its molecule --
+    # not the original unparseable text next to a molecule that text was never resolved from.
+    it 'returns the SMILES-derived molfile when the molfile column fails to resolve' do
+      molecule = create(:molecule)
+      smiles_molfile = "smiles-derived molfile\n"
+      row = { 'molfile' => 'garbage that will not parse', 'smiles' => 'c1ccccc1' }
+      allow(importer).to receive_messages(
+        molfile?: true, smiles?: true, header: %w[molfile smiles],
+        get_data_from_molfile: [nil, row['molfile']],
+        get_data_from_smiles: [molecule, smiles_molfile, false]
+      )
+
+      result = importer.send(:extract_molfile_and_molecule, row, 0)
+
+      expect(result).to eq([molecule, smiles_molfile])
+    end
+  end
+
+  describe '#create_components' do
+    # A real save failure used to be swallowed silently whenever it was the transaction's first
+    # failure (the raise was gated on a counter that only tracked "molecule not found" skips): the
+    # transaction rolled back every component already saved for the sample, with no log entry and
+    # no error surfaced to write_row's caller, which went on to report the sample as successfully
+    # imported with none of its components actually persisted.
+    it 'raises instead of silently swallowing a component save failure' do
+      sample = create(:sample)
+      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil), # rubocop:disable RSpec/VerifiedDoubles
+                                          process_component_row_data: create(:molecule))
+      allow(Import::ImportComponents).to receive(:component_save).and_raise(ActiveRecord::RecordInvalid)
+
+      expect { importer.send(:create_components, sample, [{ name: 'comp1' }]) }
+        .to raise_error('More than 1 row can not be processed')
+    end
+
+    it 'logs the underlying error rather than discarding it' do
+      sample = create(:sample)
+      allow(importer).to receive_messages(xlsx: double('default_sheet=': nil), # rubocop:disable RSpec/VerifiedDoubles
+                                          process_component_row_data: create(:molecule))
+      allow(Import::ImportComponents).to receive(:component_save).and_raise(StandardError, 'boom')
+      allow(Rails.logger).to receive(:error)
+
+      expect { importer.send(:create_components, sample, [{ name: 'comp1' }]) }.to raise_error(StandardError)
+      expect(Rails.logger).to have_received(:error).with(a_string_matching(/components.*could not be imported.*boom/))
+    end
+  end
+
+  describe '#assign_molecule_name_id' do
+    # process_fields creates the MoleculeName via Molecule#create_molecule_name_by_user (which
+    # strips) from the same raw, unstripped cell this method also receives. Without stripping
+    # here too, a whitespace-padded 'mn.name' cell creates a name this lookup then never finds.
+    it 'strips the value so a padded cell still finds the name just created for it' do
+      molecule = create(:molecule)
+      molecule.create_molecule_name_by_user(' Ethanol ', user_id)
+      sample = Sample.new
+
+      importer.send(:assign_molecule_name_id, sample, ' Ethanol ')
+
+      expect(sample['molecule_name_id']).to eq(molecule.molecule_names.find_by(name: 'Ethanol').id)
     end
   end
 end

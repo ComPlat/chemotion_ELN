@@ -101,7 +101,11 @@ export default class SamplesFetcher {
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
-    return ApiClient.postFormData('/api/v1/samples/import', { body: data });
+    return ApiClient.postFormData('/api/v1/samples/import', { body: data })
+      .then((json) => {
+        rootStore.notificationsStore.notifyImportSamplesFromFile(json);
+        return json;
+      });
   }
 
   static batchRefreshSvg(svgs) {

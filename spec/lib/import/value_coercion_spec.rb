@@ -52,6 +52,18 @@ RSpec.describe Import::ValueCoercion do
       ['refractive_index', '.5', 0.5, silent],
       ['molecular_mass', '1.5e3', 1500.0, silent],
       ['melting_point', '1e-3', '[0.001, Infinity]', silent],
+      ['molecular_mass', '6.022e23', 6.022e23, silent],
+      # A comma-grouped thousands separator must not read as a decimal point: "1,234.5" is one
+      # thousand two hundred thirty-four, not 1.234.
+      ['molecular_mass', '1,234.5', 1234.5, silent],
+      ['molecular_mass', '1,234,567', 1_234_567.0, silent],
+      # A single bare comma-group is ambiguous between a thousands separator and a decimal comma
+      # -- unlike "1,234.5" or "1,234,567", which are unambiguous. It falls to the same
+      # decimal-comma convention "120,5" already relies on, reading as 1.234, not 1234.
+      ['molecular_mass', '1,234', 1.234, silent],
+      # A cell that overflows to Infinity is not a faithful reading of anything the user wrote, so
+      # it is dropped like any other unreadable number instead of being stored silently.
+      ['molecular_mass', '9' * 400, nil, reported],
 
       ['real_amount_unit', 'g', 'g', silent],
       ['real_amount_unit', 'G', 'g', reported],
