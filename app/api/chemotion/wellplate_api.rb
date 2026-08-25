@@ -10,6 +10,24 @@ module Chemotion
     helpers ProfileHelpers
     helpers UserLabelHelpers
 
+    rescue_from Usecases::Wellplates::Errors::ResizeNotAllowedError,
+                Usecases::Wellplates::Errors::InvalidDimensionsError do |error|
+      error!(error.message, 422)
+    end
+
+    # Wellplate.find in the before blocks below would otherwise surface as a 500.
+    # Scoped to the wellplate itself on purpose: a RecordNotFound raised deeper in
+    # (User.find in Update, Well.find in WellplateUpdater, the collection lookup in
+    # Create) is a genuine fault, so it is deliberately not answered here. Re-raising
+    # takes it out of Grape's error middleware and leaves it to Rails, which keeps it
+    # visible to error reporting rather than reporting a tidy 404 as if the wellplate
+    # were simply missing.
+    rescue_from ActiveRecord::RecordNotFound do |error|
+      raise error unless error.model == 'Wellplate'
+
+      error!('Resource not found', 404)
+    end
+
     resource :wellplates do
       namespace :bulk do
         desc 'Bulk create wellplates'
@@ -138,6 +156,10 @@ module Chemotion
         optional :user_labels, type: Array
         optional :readout_titles, type: Array
         requires :container, type: Hash
+        # width/height are deliberately absent: the grid is resized only through
+        # PUT /api/v1/wellplates/resize/:id, which reconciles the well rows and
+        # refuses to drop wells that hold data. Accepting them here would let a
+        # stale tab silently revert someone else's resize.
         optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
@@ -176,8 +198,8 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
-        optional :height, type: Integer, default: 8, values: 1..100
-        optional :width, type: Integer, default: 12, values: 1..100
+        optional :height, type: Integer, default: 8, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+        optional :width, type: Integer, default: 12, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
         optional :segments, type: Array, desc: 'Segments'
         optional :user_labels, type: Array
       end
@@ -264,6 +286,41 @@ module Chemotion
             rescue StandardError => e
               error!(e, 500)
             end
+          end
+        end
+      end
+
+      namespace :resize do
+        desc 'Change the grid dimensions of a wellplate'
+        # Declared inside this namespace on purpose: the params block preceding
+        # the PUT route_param above is namespace-scoped and would otherwise
+        # impose `requires :container` on this route too.
+        params do
+          requires :id, type: Integer, desc: 'Wellplate id'
+          requires :width, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+          requires :height, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+        end
+        route_param :id do
+          before do
+            @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:id]))
+            error!('401 Unauthorized', 401) unless @element_policy.update?
+          end
+
+          put do
+            wellplate = Usecases::Wellplates::Resize.new(
+              wellplate: Wellplate.find(params[:id]),
+              width: params[:width],
+              height: params[:height],
+            ).execute!
+
+            present(
+              wellplate,
+              with: Entities::WellplateEntity,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+              root: :wellplate,
+              policy: @element_policy,
+            )
+            present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
           end
         end
       end

@@ -23,11 +23,13 @@ import {
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
-  getReactionMaterialsHashes, SAMPLE_LABELS_WITH_SUM
+  getReactionMaterialsHashes, resolveReactionVolumeFromContext, getValidReactionVolume,
+  SAMPLE_LABELS_WITH_SUM
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
-  RemoveVariationsModal
+  RemoveVariationsModal,
+  TopHorizontalScrollbar
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
@@ -41,6 +43,19 @@ const initializeGridStore = (initialVariations = []) => ({
   asyncDataLoaded: false,
   gridVersion: 0,
 });
+
+const initializeReactionVolumeByRowId = (rows = [], reactionVolume = null) => {
+  const validReactionVolume = getValidReactionVolume(reactionVolume);
+  if (!validReactionVolume) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    rows
+      .filter((row) => row?.id !== undefined && row?.id !== null)
+      .map((row) => [row.id, validReactionVolume])
+  );
+};
 
 const ReactionVariations = ({ reaction, onReactionChange }) => {
   const reactionHasPolymers = reaction.hasPolymers();
@@ -56,8 +71,21 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+  const defaultReactionVolume = getValidReactionVolume(reaction.volume);
+  const reactionVolumeByRowIdRef = useRef(
+    initializeReactionVolumeByRowId(reaction.variations ?? [], defaultReactionVolume)
+  );
+  const [useReactionVolumeOverride, setUseReactionVolumeOverride] = useState(null);
+  const useReactionVolume = useReactionVolumeOverride ?? !!reaction.use_reaction_volume;
+  const concentrationContext = useMemo(() => ({
+    useReactionVolume,
+    lockReactionVolume: reaction.lock_reaction_volume,
+    reactionVolumeByRowIdRef,
+  }), [reaction.lock_reaction_volume, useReactionVolume]);
 
   const gridRef = useRef(null);
+  const gridWrapperRef = useRef(null);
+  const [gridToken, setGridToken] = useState(0);
   const pendingReactionVariations = useRef(null);
   const previousReactionMaterialsHashes = useRef(reactionMaterialsHashes);
   const previousGasMode = useRef(gasMode);
@@ -82,7 +110,10 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // Fetch grid state on every re-mount.
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id, gridVersion]);
+  const initialGridState = useMemo(
+    () => getInitialGridState(reaction.id),
+    [reaction.id]
+  );
 
   useEffect(() => {
     /*
@@ -104,6 +135,11 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     let isSubscribed = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGridStore(initializeGridStore(reaction.variations ?? []));
+    reactionVolumeByRowIdRef.current = initializeReactionVolumeByRowId(
+      reaction.variations ?? [],
+      defaultReactionVolume
+    );
+    setUseReactionVolumeOverride(null);
     pendingReactionVariations.current = null;
     previousReactionMaterialsHashes.current = reactionMaterialsHashes;
     previousGasMode.current = gasMode;
@@ -153,7 +189,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       isSubscribed = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reaction]);
+  }, [defaultReactionVolume, reaction]);
 
   useEffect(() => {
     /*
@@ -326,16 +362,21 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }, []);
 
   const copyRow = useCallback((data) => {
-    setGridStore((previousGridStore) => {
-      const copiedRow = copyVariationsRow(data, previousGridStore.reactionVariations);
-      return {
-        ...previousGridStore,
-        reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
-      };
-    });
-  }, []);
+    const copiedRow = copyVariationsRow(data, reactionVariations);
+    const copiedRowReactionVolume = getValidReactionVolume(reactionVolumeByRowIdRef.current?.[data.id])
+      ?? defaultReactionVolume;
+    if (copiedRowReactionVolume) {
+      reactionVolumeByRowIdRef.current[copiedRow.id] = copiedRowReactionVolume;
+    }
+
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
+    }));
+  }, [defaultReactionVolume, reactionVariations]);
 
   const removeRow = useCallback((data) => {
+    delete reactionVolumeByRowIdRef.current[data.id];
     setGridStore((previousGridStore) => ({
       ...previousGridStore,
       reactionVariations: previousGridStore.reactionVariations.filter((row) => row.id !== data.id)
@@ -344,13 +385,52 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
+    const baseConcentrationContext = {
+      ...concentrationContext,
+      reactionVolumeByRowId: reactionVolumeByRowIdRef.current,
+    };
+    const shouldUseEditScopedVolume = colDef.entry === 'concentration'
+      && concentrationContext.lockReactionVolume
+      && !concentrationContext.useReactionVolume;
+
+    const editScopedReactionVolume = shouldUseEditScopedVolume
+      ? getValidReactionVolume(resolveReactionVolumeFromContext(baseConcentrationContext, oldRow))
+      : null;
+
+    const concentrationContextForEdit = editScopedReactionVolume
+      ? { ...baseConcentrationContext, editScopedReactionVolume }
+      : baseConcentrationContext;
+
+    const updatedRow = updateVariationsRow(
+      oldRow,
+      field,
+      newValue,
+      reactionHasPolymers,
+      {
+        changedEntry: colDef.entry,
+        concentrationContext: concentrationContextForEdit,
+        onConcentrationContextUpdate: (contextUpdate) => {
+          if (typeof contextUpdate?.useReactionVolume === 'boolean') {
+            setUseReactionVolumeOverride(contextUpdate.useReactionVolume);
+          }
+
+          const rowVolumePatch = contextUpdate?.reactionVolumeByRowIdPatch;
+          if (rowVolumePatch && typeof rowVolumePatch === 'object') {
+            reactionVolumeByRowIdRef.current = {
+              ...reactionVolumeByRowIdRef.current,
+              ...rowVolumePatch,
+            };
+          }
+        }
+      }
+    );
+
     const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
     pendingReactionVariations.current = updatedPendingReactionVariations.map(
       (row) => (row.id === oldRow.id ? updatedRow : row)
     );
     gridRef.current.api.applyTransaction({ update: [updatedRow] });
-  }, [reactionVariations, reactionHasPolymers]);
+  }, [concentrationContext, reactionVariations, reactionHasPolymers]);
 
   /*
   Defer setReactionVariations until all cell editing has stopped.
@@ -504,26 +584,37 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   };
 
   const addRow = () => {
+    const newRow = createVariationsRow(
+      {
+        materials: reactionMaterials,
+        segments: reactionSegments,
+        selectedColumns,
+        variations: reactionVariations,
+        reactionHasPolymers,
+        durationValue,
+        durationUnit,
+        temperatureValue,
+        temperatureUnit,
+        gasMode,
+        vesselVolume
+      }
+    );
+
+    if (defaultReactionVolume) {
+      reactionVolumeByRowIdRef.current[newRow.id] = defaultReactionVolume;
+    }
+
     setGridStore((previousGridStore) => ({
       ...previousGridStore,
-      reactionVariations: [
-        ...previousGridStore.reactionVariations,
-        createVariationsRow(
-          {
-            materials: reactionMaterials,
-            segments: previousGridStore.reactionSegments,
-            selectedColumns: previousGridStore.selectedColumns,
-            variations: previousGridStore.reactionVariations,
-            reactionHasPolymers,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit,
-            gasMode,
-            vesselVolume
-          }
-        )
-      ]
+      reactionVariations: [...previousGridStore.reactionVariations, newRow],
+    }));
+  };
+
+  const removeAllRows = () => {
+    reactionVolumeByRowIdRef.current = {};
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: []
     }));
   };
 
@@ -599,9 +690,14 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   if (!asyncDataLoaded) {
     return null;
   }
+  const gridOptions = {
+    alwaysShowHorizontalScroll: true,
+    alwaysShowVerticalScroll: true,
+  };
 
   const context = {
     reactionHasPolymers,
+    concentrationContext,
     reactionShortLabel,
     allReactionAnalyses,
     copyRow,
@@ -635,21 +731,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           onApply={applyColumnSelection}
         />
         <RemoveVariationsModal
-          onRemoveAll={() => setGridStore((previousGridStore) => ({
-            ...previousGridStore,
-            reactionVariations: []
-          }))}
+          onRemoveAll={removeAllRows}
         />
       </ButtonGroup>
-      <div className="ag-theme-alpine ag-theme-reaction-variations">
+      <div className="ag-theme-alpine ag-theme-reaction-variations" ref={gridWrapperRef}>
+        <TopHorizontalScrollbar gridWrapperRef={gridWrapperRef} gridToken={gridToken} />
         <AgGridReact
           // Re-mount grid on version change
           key={`${reaction.id}-schema-${gridVersion}`}
+          gridOptions={gridOptions}
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
           getRowId={(params) => params.data.id}
           rowDragManaged
+          rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
+          selectionColumnDef={{ pinned: 'left', width: 50 }}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
@@ -692,6 +789,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
            When the event fires, the grid has already mutated the row order, we just need to persist it.
            */
           onRowDragEnd={(event) => handleRowDrag(event)}
+          // Signal to `TopHorizontalScrollbar` that ag-grid's DOM nodes have been (re-)created.
+          onGridReady={() => setGridToken((token) => token + 1)}
         />
       </div>
       <AutofillVariationSamplesModal

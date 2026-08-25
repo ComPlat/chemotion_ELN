@@ -144,6 +144,38 @@ RSpec.describe Import::ImportSdf do
         .with(nil, created_after: be >= started_at).at_least(:once)
     end
 
+    # Enrichment must start while the import is still running, not only after every batch is
+    # done — on a real 529-record file the ensure-only version left every molecule nameless for
+    # ~80 minutes.
+    it 'schedules enrichment after the first batch, before the import has finished' do
+      scheduled_calls = 0
+      scheduled_before_last_batch = nil
+      batches_seen = 0
+      allow(PubchemLookupJob).to receive(:perform_later) { scheduled_calls += 1 }
+      allow(batch_import).to receive(:find_or_create_by_molfiles).and_wrap_original do |orig, *args|
+        batches_seen += 1
+        # Sampled at the start of the *last* batch: enrichment must already be queued by then.
+        scheduled_before_last_batch = scheduled_calls if batches_seen == 2
+        orig.call(*args)
+      end
+
+      batch_import.find_or_create_mol_by_batch(1)
+
+      expect(batches_seen).to eq(2)
+      expect(scheduled_before_last_batch).to eq(1)
+    end
+
+    # Regression guard for the per-chunk fan-out defect fixed earlier in this work: enqueueing
+    # once per batch would put 1000 jobs in the queue for a 50k-molecule import. The count must
+    # be bounded (first-batch kick + the ensure flush), not proportional to batch count.
+    it 'schedules a bounded number of jobs however many chunks the import splits into' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      batch_import.find_or_create_mol_by_batch(1) # 2 molfiles, batch_size 1 => 2 batches
+
+      expect(PubchemLookupJob).to have_received(:perform_later).twice
+    end
+
     # Regression for the reported bug: one molecule losing the create race must not abort the
     # whole import with PG::UniqueViolation (index_molecules_on_formula_and_inchikey_and_is_partial).
     it 'survives a concurrent-create RecordNotUnique on one molecule and still imports the rest (C1)' do

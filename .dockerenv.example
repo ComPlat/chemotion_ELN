@@ -55,6 +55,17 @@ IMG_CONVERTER=${SERVICE_REPO}:converter-${ELN_VERSION}
 IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
 IMG_INDIGO=epmlsop/indigo-service:1.34.0-rc.1
 
+## Image the nmrium-assets service in docker-compose.services.yml copies the
+## precompiled NMRium wrapper build out of, into public/nmrium/<tag>/ (served by
+## Rails at /nmrium/default/). Installing it is opt-in — see that service's
+## comment for the command. .service-dependencies stays the source of truth
+## for the version — keep the tag here in sync with its NMRIUMWRAPPER entry.
+IMG_NMRIUMWRAPPER=nfdi4chem/nmrium-react-wrapper:v1.1.0
+## Keep the wrapper's sourcemaps, which are dropped by default: they multiply
+## the installed size several times over and are only useful when debugging the
+## wrapper itself, which this setup does not support.
+#NMRIUM_SOURCEMAPS=1
+
 ## Map ports to host
 #HOST_PORT_PG=5432
 #HOST_PORT_APP=3000

@@ -1,7 +1,10 @@
 import React, { useCallback, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
-const ToggleSwitch = ({ isChecked, setIsChecked, label }) => {
+const ToggleSwitch = ({
+  isChecked, setIsChecked, label, disabled = false
+}) => {
   const handleChange = useCallback(() => {
     setIsChecked(!isChecked);
   }, [isChecked, setIsChecked]);
@@ -13,10 +16,18 @@ const ToggleSwitch = ({ isChecked, setIsChecked, label }) => {
         id="custom-switch"
         label={label}
         checked={isChecked}
+        disabled={disabled}
         onChange={handleChange}
       />
     </Form>
   );
+};
+
+ToggleSwitch.propTypes = {
+  isChecked: PropTypes.bool.isRequired,
+  setIsChecked: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired,
+  disabled: PropTypes.bool,
 };
 
 const TreeNode = ({ node }) => {
@@ -58,7 +69,7 @@ const TreeNode = ({ node }) => {
 };
 
 const FileTree = ({ treeData }) => (
-  <ul style={{ overflow: 'auto' }}>
+  <ul className="analyses-upload__file-tree">
     {treeData.map((node, idx) => (
       <TreeNode key={idx} node={node} />
     ))}

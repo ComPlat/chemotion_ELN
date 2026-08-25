@@ -107,6 +107,12 @@
 
 /public/workshop/*
 !/public/workshop/.keep
+
+# NMRium wrapper build, installed by the nmrium-assets compose service. The
+# .keep also guarantees the bind-mount target exists, so docker does not create
+# it root-owned.
+/public/nmrium/*
+!/public/nmrium/.keep
 /public/favicon.ico
 
 # written by Labimotion gem

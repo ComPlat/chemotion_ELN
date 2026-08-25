@@ -66,7 +66,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
@@ -110,10 +110,15 @@ const sampleTitle = (sample) => {
   return inventoryLabel || sample.title();
 };
 
+// Split around the collection badge so the header reads in the same order as the list row
+// (SampleGroupItem): reaction, collection, analyses.
+const sampleTitleAppendixLeading = (sample) => (
+  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+);
+
 const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-    <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
@@ -1017,14 +1022,12 @@ export default class SampleDetails extends React.Component {
               allowCreateWhileLoading
               formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
             />
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button
-                variant="light"
-                onClick={() => copyToClipboard(cas)}
-              >
-                <i className="fa fa-clipboard" />
-              </Button>
-            </OverlayTrigger>
+            <CopyButton
+              text={cas}
+              placement="bottom"
+              variant="light"
+              tooltipId="copy_cas"
+            />
           </div>
         </InputGroup>
         {!validCas && errorMessage}
@@ -1073,10 +1076,25 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+    return (
+      <>
+        {decoupleCb}
+        {inventorySample}
+      </>
+    );
+  }
+
+  // Full-width banner content for the panel header (structure/redirect alerts).
+  // Kept out of sampleHeader()'s icon-button toolbar row: an Alert is a tall,
+  // multi-line block, and rendering it as a flex item alongside small icon
+  // buttons (see DetailCard.js's headerToolbar row) stretched the whole header
+  // row to the alert's height and squeezed the alert's own width down to
+  // whatever was left over next to the buttons.
+  sampleHeaderBanner() {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px' }}>
           <strong>Structure Alert</strong>
           <Button
             size="sm"
@@ -1101,7 +1119,7 @@ export default class SampleDetails extends React.Component {
 
     // warning message for redirection
     const redirectWarningBlock = this.state.showRedirectWarning ? (
-      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+      <Alert variant="warning" className={`d-flex flex-column gap-2 mb-0 p-2${messageBlock ? ' mt-2' : ''}`}>
         <div>
           <strong>Notice:</strong>
           <p className="mb-1">
@@ -1125,10 +1143,10 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
+    if (!messageBlock && !redirectWarningBlock) return null;
+
     return (
       <>
-        {decoupleCb}
-        {inventorySample}
         {messageBlock}
         {redirectWarningBlock}
       </>
@@ -1196,26 +1214,13 @@ export default class SampleDetails extends React.Component {
           disabled
           readOnly
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(
-              (this.state.showInchikey
-                ? sample.molecule_inchikey
-                : this.state.inchiString)
-              || ' '
-            )}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={(this.state.showInchikey ? sample.molecule_inchikey : this.state.inchiString) || ' '}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_inchi"
+        />
       </InputGroup>
-    );
-  }
-
-  clipboardTooltip() {
-    return (
-      <Tooltip id="assign_button">copy to clipboard</Tooltip>
     );
   }
 
@@ -1241,14 +1246,12 @@ export default class SampleDetails extends React.Component {
             }
           }}
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(sample.molecule_cano_smiles || '')}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={sample.molecule_cano_smiles || ''}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_smiles"
+        />
         <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
           <Button
             variant="light"
@@ -1275,14 +1278,12 @@ export default class SampleDetails extends React.Component {
           disabled
           readOnly
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(sample.molfile || '')}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={sample.molfile || ''}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_molfile"
+        />
         <Button
           variant="light"
           onClick={this.handleMolfileShow}
@@ -1582,9 +1583,11 @@ export default class SampleDetails extends React.Component {
         element={sample}
         isPendingToSave={pendingToSave}
         headerToolbar={this.sampleHeader(sample)}
+        headerBanner={this.sampleHeaderBanner()}
         footerToolbar={this.sampleFooter()}
         title={sampleTitle(sample)}
         titleTooltip={formatTimeStampsOfElement(sample || {})}
+        titleAppendixLeading={sampleTitleAppendixLeading(sample)}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrChemical()}
         saveDisabled={saveDisabled}

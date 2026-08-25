@@ -34,4 +34,16 @@
 
 .notification-body {
   @extend .p-3;
+  // Long unbreakable tokens (e.g. an import-log URL made only of underscores and
+  // digits) have no soft break opportunity, so force them to wrap rather than
+  // overflow the toast's maxWidth. overflow-wrap is inherited, so it reaches the
+  // message text.
+  overflow-wrap: anywhere;
+
+  // The message sits in a flex row as div[role="status"]; a flex item defaults to
+  // min-width: auto and refuses to shrink below its widest content, pushing past
+  // the 420px cap. min-width: 0 lets it shrink so the text wraps inside the toast.
+  .d-flex > div[role="status"] {
+    min-width: 0;
+  }
 }

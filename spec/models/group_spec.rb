@@ -66,8 +66,11 @@ RSpec.describe 'Group', type: :model do
       expect(group.type).to eq 'Group'
     end
 
-    it 'creates an All collection' do
-      expect(group.collections.pluck(:label)).to match_array ['All']
+    # A group gets no collections at all: the "All" collection backs the MyDB element paths, and
+    # config/routes.rb routes a Group session to the command-and-control view for /mydb, so it can
+    # never be used. Same reasoning as the repository collection, which has always been Person-only.
+    it 'creates no collections' do
+      expect(group.collections).to be_empty
     end
   end
 

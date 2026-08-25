@@ -69,20 +69,33 @@ const formatReactionTypeOption = (option, { context }) => (
     : option.label
 );
 
-const productLink = (product, active) => (
-  <span>
-    {active && 'Sample Analysis:'}
-    <span
-      aria-hidden="true"
-      className="pseudo-link"
-      onClick={() => aviatorNavigation('sample', product.id, true, true)}
-      title="Open sample window"
-    >
-      <i className="icon-sample mx-1" />
-      {product.title()}
+const productLink = (product, active) => {
+  const icon = <i className="icon-sample mx-1" />;
+
+  if (!active) {
+    return (
+      <span>
+        {icon}
+        {product.title()}
+      </span>
+    );
+  }
+
+  return (
+    <span>
+      Sample Analysis:
+      <span
+        aria-hidden="true"
+        className="pseudo-link"
+        onClick={() => aviatorNavigation('sample', product.id, true, true)}
+        title="Open sample window"
+      >
+        {icon}
+        {product.title()}
+      </span>
     </span>
-  </span>
-);
+  );
+};
 
 export default class ReactionDetails extends Component {
   constructor(props) {

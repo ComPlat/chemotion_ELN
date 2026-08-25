@@ -116,6 +116,7 @@ describe Entities::SampleEntity do
           sum_formula: sample.sum_formula,
           type: 'sample',
           molfile: sample.molfile,
+          molecule_name_hash: sample.molecule_name_hash,
           _contains_residues: false,
           ancestor_ids: [],
           boiling_point: '***',
@@ -129,23 +130,22 @@ describe Entities::SampleEntity do
           metrics: '***',
           molarity_unit: '***',
           molarity_value: '***',
-          molecule_name_hash: {},
           name: '***',
           parent_id: '***',
-          pubchem_tag: '***',
+          pubchem_tag: nil,
           purity: '***',
           reaction_description: '***',
           real_amount_unit: '***',
           real_amount_value: '***',
           sample_svg_file: '***',
           short_label: '***',
-          showed_name: '***',
+          showed_name: sample.showed_name,
           solvent: [],
-          stereo: '***',
+          stereo: nil,
           target_amount_unit: '***',
           target_amount_value: '***',
           # user_labels: '***',
-          xref: '***',
+          xref: {},
           created_at: I18n.l(sample.created_at, format: :eln_timestamp),
           updated_at: I18n.l(sample.updated_at, format: :eln_timestamp),
         )
@@ -184,9 +184,36 @@ describe Entities::SampleEntity do
 
     context 'when detail level for Sample is 1' do
       let(:sample_detail_level) { 1 }
+      let(:sample) do
+        create(:sample, :with_residues, force_attributes: { sample_svg_file: 'sample.svg' }).tap do |s|
+          s.update!(molecule_name: create(:molecule_name, molecule: s.molecule))
+        end
+      end
 
       it 'returns a sample with an anonymized container' do
         expect(grape_entity_as_hash[:container]).to eq(nil)
+      end
+
+      it 'returns a sample with an unanonymized molfile' do
+        expect(grape_entity_as_hash[:molfile]).to eq(sample.molfile)
+      end
+
+      it 'anonymizes the sample-specific svg file, but exposes the molecule and its svg for fallback' do
+        expect(grape_entity_as_hash[:sample_svg_file]).to eq('***')
+        expect(grape_entity_as_hash[:molecule]).to include(
+          id: sample.molecule.id,
+          molecule_svg_file: sample.molecule.molecule_svg_file,
+        )
+      end
+
+      it 'returns the real molecule_name_hash instead of anonymizing it' do
+        expect(grape_entity_as_hash[:molecule_name_hash]).to eq(sample.molecule_name_hash)
+        expect(grape_entity_as_hash[:molecule_name_hash][:label]).to eq(sample.molecule_name.name)
+      end
+
+      it 'returns the real showed_name instead of anonymizing it' do
+        expect(grape_entity_as_hash[:showed_name]).to eq(sample.showed_name)
+        expect(grape_entity_as_hash[:showed_name]).to eq(sample.molecule_name.name)
       end
     end
 
@@ -196,6 +223,13 @@ describe Entities::SampleEntity do
       it 'returns a sample an anonymized molfile' do
         expect(grape_entity_as_hash).to include(
           molfile: '***',
+        )
+      end
+
+      it 'returns a sample with an anonymized molecule_name_hash and showed_name' do
+        expect(grape_entity_as_hash).to include(
+          molecule_name_hash: {},
+          showed_name: '***',
         )
       end
 

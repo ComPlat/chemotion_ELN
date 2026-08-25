@@ -61,7 +61,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # SequenceBasedMacromoleculeSample.includes_for_list_display) is counted
+      # in memory, avoiding an N+1 COUNT(*) query per sample in the list endpoint.
+      object.comments.size
     end
 
     # The UI needs this field to track changes

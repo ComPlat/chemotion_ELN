@@ -2,7 +2,10 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild,
-  updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange, cellIsEditable, getReactionMaterialsHashes
+  updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange,
+  updateVariationsRowOnConcentrationMaterialChange,
+  cellIsEditable, getReactionMaterialsHashes, computeCombinedReactionVolume,
+  getReactionMaterialsIDsToLabels
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -10,12 +13,150 @@ import {
 import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
+import SampleFactory from 'factories/SampleFactory';
 import {
   materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
 describe('ReactionVariationsMaterials', () => {
+  it('applies concentration edit rules across every combination of lock mode, calculation mode, reference material, and feedstock', async () => {
+    const nonGaseousReaction = await setUpReaction();
+    const gaseousReaction = await setUpGaseousReaction();
+
+    const nonGaseousBaseRow = cloneDeep(nonGaseousReaction.variations[0]);
+    const gaseousBaseRow = cloneDeep(gaseousReaction.variations[0]);
+
+    const nonReferenceID = Object.keys(nonGaseousBaseRow.reactants)[0];
+    const referenceID = Object.keys(nonGaseousBaseRow.startingMaterials).find(
+      (materialID) => nonGaseousBaseRow.startingMaterials[materialID].aux.isReference
+    );
+    const feedstockID = Object.keys(gaseousBaseRow.reactants)[0];
+
+    const cases = [];
+    let caseID = 1;
+    [false, true].forEach((volumeLocked) => {
+      [false, true].forEach((calculateConcentration) => {
+        [false, true].forEach((isReference) => {
+          [false, true].forEach((isFeedstock) => {
+            cases.push({
+              caseID,
+              volumeLocked,
+              calculateConcentration,
+              isReference,
+              isFeedstock,
+            });
+            caseID += 1;
+          });
+        });
+      });
+    });
+
+    cases.forEach(({ caseID: id, volumeLocked, calculateConcentration, isReference, isFeedstock }) => {
+      const row = cloneDeep(isFeedstock ? gaseousBaseRow : nonGaseousBaseRow);
+      const materialType = isFeedstock ? 'reactants' : (isReference ? 'startingMaterials' : 'reactants');
+      const materialID = isFeedstock ? feedstockID : (isReference ? referenceID : nonReferenceID);
+      const field = `${materialType}.${materialID}`;
+
+      const selectedMaterial = row[materialType][materialID];
+      selectedMaterial.aux.isReference = isReference;
+      selectedMaterial.concentration.value = 2;
+
+      const firstStartingMaterial = Object.values(row.startingMaterials)[0];
+      const firstReactant = Object.values(row.reactants)[0];
+      firstStartingMaterial.volume.value = 2;
+      firstReactant.volume.value = 3;
+
+      const combinedReactionVolume = computeCombinedReactionVolume(row);
+      const derivedReactionVolume = selectedMaterial.amount.value / selectedMaterial.concentration.value;
+
+      const before = cloneDeep(row);
+      const { row: updatedRow, contextUpdate } = updateVariationsRowOnConcentrationMaterialChange(
+        row,
+        field,
+        'concentration',
+        {
+          useReactionVolume: calculateConcentration,
+          lockReactionVolume: volumeLocked,
+          reactionVolumeByRowId: { [row.id]: 99 },
+        }
+      );
+
+      const shouldPropagate = !isFeedstock && (volumeLocked !== calculateConcentration || !volumeLocked);
+      const expectsDerivedVolume = !isFeedstock && !volumeLocked;
+      const expectsCombinedVolume = !isFeedstock && volumeLocked && !calculateConcentration;
+      const expectsNoPropagation = isFeedstock || (volumeLocked && calculateConcentration);
+      const expectsAutoEnable = !isFeedstock && !volumeLocked && !calculateConcentration;
+
+      if (expectsNoPropagation) {
+        expect(updatedRow).toEqual(before);
+        expect(contextUpdate).toBe(null);
+        return;
+      }
+
+      expect(shouldPropagate).toBe(true);
+
+      const expectedReactionVolume = expectsDerivedVolume ? derivedReactionVolume : combinedReactionVolume;
+      Object.entries(updatedRow.startingMaterials).forEach(([id, material]) => {
+        if (material.aux.gasType !== 'feedstock' && id.toString() !== materialID.toString()) {
+          expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+        }
+      });
+      Object.entries(updatedRow.reactants).forEach(([id, material]) => {
+        if (material.aux.gasType !== 'feedstock' && id.toString() !== materialID.toString()) {
+          expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+        }
+      });
+      expect(updatedRow[materialType][materialID].concentration.value)
+        .toBe(selectedMaterial.concentration.value);
+
+      if (expectsDerivedVolume) {
+        expect(contextUpdate.useReactionVolume).toBe(true);
+        expect(contextUpdate.reactionVolumeByRowIdPatch[row.id]).toBeCloseTo(derivedReactionVolume);
+      }
+
+      if (expectsCombinedVolume) {
+        expect(contextUpdate).toBe(null);
+      }
+
+      if (expectsAutoEnable) {
+        expect(contextUpdate.useReactionVolume).toBe(true);
+      }
+
+      expect(id).toBeGreaterThanOrEqual(1);
+      expect(id).toBeLessThanOrEqual(16);
+    });
+  });
+
+  it('does not fall back to stored reaction volume when locked mode requires combined volume', async () => {
+    const reaction = await setUpReaction();
+    const row = cloneDeep(reaction.variations[0]);
+    const reactantID = reaction.reactants[0].id;
+
+    Object.values(row.startingMaterials).forEach((material) => {
+      material.volume.value = 0;
+    });
+    Object.values(row.reactants).forEach((material) => {
+      material.volume.value = 0;
+    });
+
+    row.reactants[reactantID].concentration.value = 2;
+
+    const before = cloneDeep(row);
+    const { row: updatedRow } = updateVariationsRowOnConcentrationMaterialChange(
+      row,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: false,
+        lockReactionVolume: true,
+        reactionVolumeByRowId: { [row.id]: 42 },
+      }
+    );
+
+    expect(updatedRow).toEqual(before);
+  });
+
   it('updates yield when product mass changes', async () => {
     const reaction = await setUpReaction();
     const productID = reaction.products[0].id;
@@ -185,6 +326,140 @@ describe('ReactionVariationsMaterials', () => {
     expect(updatedVariationsRow.products[productID].turnoverNumber.value).toBe(initialTurnoverNumber * 2);
     expect(updatedVariationsRow.products[productID].turnoverFrequency.value).toBe(initialTurnoverFrequency * 2);
   });
+  it('updates non-feedstock concentrations when concentration propagation is enabled', async () => {
+    const reaction = await setUpReaction();
+    const variationsRow = reaction.variations[0];
+    const reactantID = reaction.reactants[0].id;
+
+    variationsRow.reactants[reactantID].concentration.value = 2;
+    const expectedReactionVolume = variationsRow.reactants[reactantID].amount.value / 2;
+
+    const { row: updatedVariationsRow } = updateVariationsRowOnConcentrationMaterialChange(
+      variationsRow,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: true,
+        lockReactionVolume: false,
+        reactionVolumeByRowId: { [variationsRow.id]: 42 },
+      }
+    );
+
+    Object.values(updatedVariationsRow.startingMaterials).forEach((material) => {
+      if (material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+      }
+    });
+    Object.entries(updatedVariationsRow.reactants).forEach(([materialId, material]) => {
+      if (materialId.toString() !== reactantID.toString()) {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+      }
+    });
+    expect(updatedVariationsRow.reactants[reactantID].concentration.value).toBe(2);
+  });
+  it('derives reaction volume and returns context update on unlocked concentration edit', async () => {
+    const reaction = await setUpReaction();
+    const variationsRow = reaction.variations[0];
+    const reactantID = reaction.reactants[0].id;
+
+    variationsRow.reactants[reactantID].concentration.value = 2;
+
+    const { contextUpdate } = updateVariationsRowOnConcentrationMaterialChange(
+      variationsRow,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: false,
+        lockReactionVolume: false,
+        reactionVolumeByRowId: {},
+      }
+    );
+
+    expect(contextUpdate.useReactionVolume).toBe(true);
+    expect(contextUpdate.reactionVolumeByRowIdPatch[variationsRow.id]).toBeCloseTo(
+      variationsRow.reactants[reactantID].amount.value / 2
+    );
+  });
+  it('uses row-computed combined reaction volume when explicit combined volume is unavailable', async () => {
+    const reaction = await setUpReaction();
+    const variationsRow = reaction.variations[0];
+    const reactantID = reaction.reactants[0].id;
+
+    const firstStartingMaterial = Object.values(variationsRow.startingMaterials)[0];
+    const firstReactant = Object.values(variationsRow.reactants)[0];
+    firstStartingMaterial.volume.value = 2;
+    firstReactant.volume.value = 3;
+
+    const expectedReactionVolume = computeCombinedReactionVolume(variationsRow);
+
+    const { row: updatedVariationsRow } = updateVariationsRowOnConcentrationMaterialChange(
+      variationsRow,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: false,
+        lockReactionVolume: true,
+        reactionVolumeByRowId: {},
+      }
+    );
+
+    Object.values(updatedVariationsRow.startingMaterials).forEach((material) => {
+      if (material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+      }
+    });
+    Object.entries(updatedVariationsRow.reactants).forEach(([materialId, material]) => {
+      if (materialId.toString() !== reactantID.toString()) {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / expectedReactionVolume);
+      }
+    });
+    expect(updatedVariationsRow.reactants[reactantID].concentration.value).toBe(
+      variationsRow.reactants[reactantID].concentration.value
+    );
+  });
+  it('uses edit-scoped reaction volume for locked concentration propagation when edited volume changes', async () => {
+    const reaction = await setUpReaction();
+    const variationsRow = cloneDeep(reaction.variations[0]);
+    const reactantID = reaction.reactants[0].id;
+    const editedReactant = variationsRow.reactants[reactantID];
+
+    const firstStartingMaterial = Object.values(variationsRow.startingMaterials)[0];
+    firstStartingMaterial.volume.value = 2;
+    editedReactant.volume.value = 3;
+
+    const preEditReactionVolume = computeCombinedReactionVolume(variationsRow);
+
+    editedReactant.concentration.value = 2;
+    editedReactant.amount.value = 2 * preEditReactionVolume;
+    editedReactant.volume.value = 7;
+
+    const postEditReactionVolume = computeCombinedReactionVolume(variationsRow);
+    expect(postEditReactionVolume).not.toBe(preEditReactionVolume);
+
+    const { row: updatedVariationsRow } = updateVariationsRowOnConcentrationMaterialChange(
+      variationsRow,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: false,
+        lockReactionVolume: true,
+        reactionVolumeByRowId: {},
+        editScopedReactionVolume: preEditReactionVolume,
+      }
+    );
+
+    Object.values(updatedVariationsRow.startingMaterials).forEach((material) => {
+      if (material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / preEditReactionVolume);
+      }
+    });
+
+    Object.entries(updatedVariationsRow.reactants).forEach(([materialId, material]) => {
+      if (materialId.toString() !== reactantID.toString() && material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / preEditReactionVolume);
+      }
+    });
+  });
   it('initializes gas product yield', async () => {
     const reaction = await setUpGaseousReaction();
     const productID = reaction.products[0].id;
@@ -204,5 +479,31 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumns = removeObsoleteMaterialColumns(materials, columns);
 
     expect(updatedColumns.products.length).toEqual(1);
+  });
+  it('labels materials that have no assigned molecule', async () => {
+    const withStructure = await SampleFactory.build('SampleFactory.water_100g');
+    withStructure.id = 1;
+    withStructure.external_label = 'Sample A';
+    withStructure.name = 'Water';
+    withStructure.molecule.sum_formular = 'H2O';
+
+    const withoutStructure = await SampleFactory.build('SampleFactory.water_100g');
+    withoutStructure.id = 2;
+    withoutStructure.external_label = 'Sample B';
+    withoutStructure.name = 'No structure';
+    // `Sample`'s setter stores `null`, which destructuring defaults would not cover.
+    withoutStructure.molecule = null;
+
+    // SBMM materials are plain objects without `molecule` and `molecule_name_hash`.
+    const sbmmMaterial = { id: 'sbmm-3', short_label: 'R1', name: 'MyProtein' };
+
+    const labels = getReactionMaterialsIDsToLabels({
+      startingMaterials: [cloneDeep(withStructure), cloneDeep(withoutStructure)],
+      reactants: [sbmmMaterial],
+    });
+
+    expect(labels.startingMaterials[1]).toEqual('Sample A: Water (H2O)');
+    expect(labels.startingMaterials[2]).toEqual('Sample B: No structure');
+    expect(labels.reactants['sbmm-3']).toEqual('R1: MyProtein');
   });
 });

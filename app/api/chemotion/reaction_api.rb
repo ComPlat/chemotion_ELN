@@ -290,7 +290,8 @@ module Chemotion
         # (reaction_id, collection_id) index when the chosen collection is the
         # user's "All" collection (both inserts would otherwise be identical).
         CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
-        CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection)
+        # nil when the owning account has no "All" collection — a Group never gets one.
+        CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection) if all_collection
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
 
         if reaction

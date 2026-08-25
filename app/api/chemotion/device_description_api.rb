@@ -218,8 +218,10 @@ module Chemotion
 
         before do
           collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @device_descriptions =
-            DeviceDescription.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          @device_descriptions = DeviceDescription.includes_for_list_display
+                                                  .by_collection_id(collection.id)
+                                                  .by_ui_state(params[:ui_state])
+                                                  .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read_all?
         end
 

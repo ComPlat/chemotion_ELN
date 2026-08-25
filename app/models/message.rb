@@ -35,9 +35,14 @@ class Message < ApplicationRecord
   end
 
   def self.bulk_create_notifications(channel_id, message_id, user_id, receiver_ids)
-    receiver_ids = "ARRAY#{receiver_ids || []}::int[]"
-    sql = "select generate_notifications(#{channel_id}, #{message_id},
-           #{user_id}, #{receiver_ids}) as message_id"
+    # Integer(...) rather than to_i: any id that is not a clean integer raises here instead of
+    # silently truncating into the query, so no caller-supplied value ever reaches the SQL text
+    # unvalidated. sanitize_sql then does the actual quoting (repo convention, see OlsTerm).
+    ids_literal = "{#{Array(receiver_ids).map { |id| Integer(id) }.join(',')}}"
+    sql = sanitize_sql(
+      ['select generate_notifications(?, ?, ?, ?::int[]) as message_id',
+       Integer(channel_id), Integer(message_id), Integer(user_id), ids_literal],
+    )
     ApplicationRecord.connection.exec_query(sql)
   end
 
