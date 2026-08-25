@@ -585,11 +585,12 @@ RSpec.describe Attachment do
         end
       end
 
-      context 'when the dataset already holds a matching .edit.jdx attachment' do
+      context 'when the dataset already holds a matching .edit.jdx attachment in the same lineage' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
         let!(:existing_edit) do
           create(
-            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable, aasm_state: 'edited'
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+            aasm_state: 'edited', parent: attachment
           )
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
@@ -600,6 +601,41 @@ RSpec.describe Attachment do
 
         it 'returns the existing attachment, updated in place' do
           expect(new_attachment.id).to eq existing_edit.id
+        end
+      end
+
+      context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:unrelated_source) do
+          create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+        end
+        let!(:unrelated_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+            aasm_state: 'edited', parent: unrelated_source
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it "does not overwrite the unrelated lineage's attachment" do
+          expect(new_attachment.id).not_to eq unrelated_edit.id
+        end
+
+        it 'creates its own attachment instead' do
+          expect { new_attachment }.to change(described_class, :count).by(1)
+        end
+      end
+
+      context 'when attachable is not a Container' do
+        let!(:attachment) { create(:attachment, :attached_to_research_plan, :with_spectra_file) }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not create or reuse any attachment' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns nil' do
+          expect(new_attachment).to be_nil
         end
       end
 

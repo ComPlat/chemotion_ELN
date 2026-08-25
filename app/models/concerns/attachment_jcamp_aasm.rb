@@ -176,16 +176,26 @@ module AttachmentJcampProcess
   # rubocop:disable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
+    # generate_att only makes sense for dataset (Container) attachments; require_peaks_generation?
+    # already guarantees this for the callback path (belong_to_analysis? is false otherwise), but
+    # save_spectrum lets a caller pass an arbitrary attachment_id, so guard here too - otherwise
+    # the dataset-wide lookup below could pair a foreign attachable_id with the literal 'Container'
+    # and match a wholly unrelated Container's row.
+    return unless attachable_type == 'Container'
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    # Look up the canonical row for this filename across the whole dataset (not just
-    # self's own children): re-editing an already-edited file, or editing a curve whose
-    # dataset still holds both a .peak. and .edit. lineage, must reuse that single row -
-    # scoping to children_of(self) would miss it (self isn't its own child) and mint a
-    # duplicate .edit.jdx attachment on every save.
-    att = Attachment
-          .where(attachable_id: attachable_id, attachable_type: 'Container')
-          .find_by(filename: meta_filename)
+    # Look up the canonical row for this filename within self's own lineage (not just self's own
+    # direct children): re-editing an already-edited file, or editing a curve whose dataset still
+    # holds both a .peak. and .edit. lineage, must reuse that single row - scoping to
+    # children_of(self) would miss it (self isn't its own child) and mint a duplicate .edit.jdx
+    # attachment on every save. Narrowed to self's ancestry root so two independently uploaded
+    # curves that happen to derive the same target filename (e.g. foo.dx and foo.jdx both ->
+    # foo.peak.jdx) don't collapse onto each other.
+    lineage_root = root_id || id
+    att = Attachment.where_container(attachable_id)
+                    .where(filename: meta_filename)
+                    .order(:id)
+                    .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
 
     att ||= Attachment.children_of(self[:id]).new(
       filename: meta_filename,
@@ -222,7 +232,7 @@ module AttachmentJcampProcess
     att.set_nmrium if ext == 'nmrium'
     att.thumb = false if ext == 'json'
 
-    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
+    att.update!(attachable_id: attachable_id, attachable_type: attachable_type)
     att
   end
   # rubocop:enable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
