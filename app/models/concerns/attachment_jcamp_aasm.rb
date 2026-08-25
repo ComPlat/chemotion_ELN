@@ -173,7 +173,7 @@ module AttachmentJcampProcess
     addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Style/IfInsideElse
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
     # generate_att only makes sense for dataset (Container) attachments; require_peaks_generation?
@@ -208,11 +208,11 @@ module AttachmentJcampProcess
     att.save!
 
     if ext == 'png'
-      att.set_image
+      att.set_image if att.may_set_image?
     elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
-      att.set_edited
+      att.set_edited if att.may_set_edited?
     elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
-      att.set_force_peaked
+      att.set_force_peaked if att.may_set_force_peaked?
     else
       filename_lower = att.filename.to_s.downcase
       if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
@@ -227,15 +227,15 @@ module AttachmentJcampProcess
         end
       end
     end
-    att.set_json  if ext == 'json'
-    att.set_csv   if ext == 'csv'
-    att.set_nmrium if ext == 'nmrium'
+    att.set_json  if ext == 'json' && att.may_set_json?
+    att.set_csv   if ext == 'csv' && att.may_set_csv?
+    att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
     att.thumb = false if ext == 'json'
 
     att.update!(attachable_id: attachable_id, attachable_type: attachable_type)
     att
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Style/IfInsideElse
 
   # rubocop:disable Style/OptionalBooleanParameter
   def generate_img_att(img_tmp, addon, to_edit = false)

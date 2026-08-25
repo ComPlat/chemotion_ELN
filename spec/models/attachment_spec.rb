@@ -590,7 +590,7 @@ RSpec.describe Attachment do
         let!(:existing_edit) do
           create(
             :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
-            aasm_state: 'edited', parent: attachment
+                         aasm_state: 'edited', parent: attachment
           )
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
@@ -612,7 +612,7 @@ RSpec.describe Attachment do
         let!(:unrelated_edit) do
           create(
             :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
-            aasm_state: 'edited', parent: unrelated_source
+                         aasm_state: 'edited', parent: unrelated_source
           )
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
@@ -623,6 +623,22 @@ RSpec.describe Attachment do
 
         it 'creates its own attachment instead' do
           expect { new_attachment }.to change(described_class, :count).by(1)
+        end
+      end
+
+      context 'when the matching attachment in the same lineage is stuck in a failure state' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:failed_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'failure', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the row without raising an invalid transition error' do
+          expect { new_attachment }.not_to raise_error
+          expect(new_attachment.id).to eq failed_edit.id
         end
       end
 
