@@ -45,6 +45,14 @@ module Import
     RANGE_SEPARATOR = /\s*(?:\.\.\.|\.\.|–|—|~|\bto\b|\bbis\b)\s*/i.freeze
     # Characters a numeric column cannot store but which carry no information either.
     DECORATION = %r{[\s°ºCFK℃/³^.,;:()\[\]+-]}.freeze
+    # A comma-grouped thousands separator ("1,234.5", "1,234,567") has to be stripped before the
+    # decimal-comma rule in #normalize runs, or it reads as a decimal point and silently truncates
+    # the number by three orders of magnitude per group. Only an *unambiguous* thousands grouping
+    # counts: two or more ",ddd" groups, or one such group followed by a decimal point. A single
+    # bare group ("1,234") is indistinguishable from a decimal comma at three places and is left
+    # for the decimal-comma rule below, which reads it as 1.234 -- the same convention "120,5"
+    # already relies on.
+    THOUSANDS_GROUP = /\d{1,3}(?:,\d{3})+\.\d+|\d{1,3}(?:,\d{3}){2,}/.freeze
 
     class << self
       # Returns nil when this column needs no coercion; the caller then keeps its existing handling.
@@ -151,8 +159,11 @@ module Import
         "[#{low}, #{high}]"
       end
 
+      # Non-finite results (an all-9s cell overflowing to Infinity, say) are dropped rather than
+      # stored: every caller already treats an empty array as "value not used", so this reuses that
+      # path instead of writing a non-finite float into a typed column silently.
       def numbers_in(text)
-        normalize(text).scan(NUMBER).map(&:to_f)
+        normalize(text).scan(NUMBER).map(&:to_f).select(&:finite?)
       end
 
       # Decimal commas become dots, so "120,5" reads as 120.5 and not as 120. A hyphen sitting between
@@ -161,7 +172,8 @@ module Import
       # point. A hyphen that is not between digits keeps its meaning as a sign, so "-114" and
       # "-5 - -10" still read correctly.
       def normalize(text)
-        text.gsub(/(\d),(\d)/, '\1.\2')
+        text.gsub(THOUSANDS_GROUP) { |match| match.delete(',') }
+            .gsub(/(\d),(\d)/, '\1.\2')
             .gsub(MINUS_SIGN, '-')
             .gsub(/(\d)\s*-\s*(?=-?\d)/, '\1 ')
             .gsub(RANGE_SEPARATOR, ' ')

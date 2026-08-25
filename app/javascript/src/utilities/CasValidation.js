@@ -20,9 +20,10 @@ const checkCasDigit = (digits) => {
   return final;
 };
 
-const validateCas = (cas, boolean) => {
+const validateCas = (rawCas, boolean) => {
+  const cas = rawCas.trim();
   const filterCas = cas.replace(/-/g, '');
-  if (cas && cas.trim() !== '') {
+  if (cas !== '') {
     const isNum = /^[0-9-]+$/.test(cas) && !(/^[-]+$/.test(cas));
     let match;
     let result;
@@ -41,7 +42,7 @@ const validateCas = (cas, boolean) => {
     }
     return match ? match[0] : 'smile';
   }
-  return cas;
+  return rawCas;
 };
 
 export {
