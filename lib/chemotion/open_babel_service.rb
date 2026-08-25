@@ -27,6 +27,15 @@ module Chemotion::OpenBabelService
   # for a given deployment.
   SVG_RENDER_TIMEOUT_SECONDS = Integer(ENV.fetch('OPENBABEL_SVG_TIMEOUT_SECONDS', 5))
 
+  # Wall-clock bound for the canonical-SMILES ('can') writer in molecule_info_from_structure.
+  # Unlike the SVG writer this one is not merely slow to time out -- on metal clusters its
+  # symmetry-detection cost is combinatorial, not size-driven (see #626: a 17-atom record took
+  # 6s while a 92-atom one took 11.3s), and it runs in-process on every import row with no bound
+  # at all before this. Set well above the measured 12.06s worst case (across 6,355 records of a
+  # metal-heavy stress file) so it only fires on a genuine outlier/hang, not on ordinary slow
+  # structures.
+  CANONICAL_SMILES_TIMEOUT_SECONDS = Integer(ENV.fetch('OPENBABEL_CANONICAL_SMILES_TIMEOUT_SECONDS', 20))
+
   # mdl V3000
   MOLFILE_COUNT_LINE_START      = 'M  V30 COUNTS '
   MOLFILE_BEGIN_CTAB_BLOCK_LINE = 'M  V30 BEGIN CTAB'
@@ -125,13 +134,7 @@ M  END
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
-    c.set_out_format 'can'
-    ca_smiles = begin
-      str = c.write_string(m, false).to_s
-      str.lines.first.to_s.gsub(/\s.*/m, "").strip
-    rescue StandardError, SystemStackError
-      ''
-    end
+    ca_smiles = canonical_smiles_from_source(mf || structure, format)
 
     unless format == 'mol'
       c.set_out_format 'mol'
@@ -480,6 +483,36 @@ M  END
     Rails.logger.error("Chemotion::OpenBabelService.svg_from_molfile aborted: #{e.message}")
     nil
   end
+
+  # Process-isolated, timeout-bounded wrapper around OpenBabel's canonical-SMILES writer. See
+  # CANONICAL_SMILES_TIMEOUT_SECONDS. Falls back to '' on timeout or any other failure, matching
+  # the blank-on-failure contract molecule_info_from_structure's callers already expect from this
+  # field.
+  def self.canonical_smiles_from_source(source, in_format)
+    Chemotion::ForkedTimeout.run(CANONICAL_SMILES_TIMEOUT_SECONDS) do
+      canonical_smiles_from_source_unsafe(source, in_format)
+    end
+  rescue StandardError => e
+    # Covers both Chemotion::ForkedTimeout::TimedOut (deadline overrun or a crashed child, e.g.
+    # from SystemStackError, which the child's own StandardError rescue does not catch) and any
+    # error the writer itself raised and the child re-raised in this process.
+    Rails.logger.error("Chemotion::OpenBabelService.canonical_smiles_from_source failed: #{e.message}")
+    ''
+  end
+
+  def self.canonical_smiles_from_source_unsafe(source, in_format)
+    c = OpenBabel::OBConversion.new
+    c.set_in_format in_format
+    m = OpenBabel::OBMol.new
+    c.read_string m, source
+
+    c.set_out_format 'can'
+    c.write_string(m, false).to_s.lines.first.to_s.gsub(/\s.*/m, '').strip
+  end
+
+  # The bare `private` above this section does not apply to singleton methods, so these two are
+  # closed off explicitly.
+  private_class_method :canonical_smiles_from_source, :canonical_smiles_from_source_unsafe
 
   def self.svg_from_molfile_unsafe(molfile, options = {})
     c = OpenBabel::OBConversion.new

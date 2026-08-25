@@ -308,18 +308,32 @@ RSpec.describe Molecule, type: :model do
       expect(persisted_molfile_sha).to eq(molfile_sha)
     end
 
-    it 'updates LCSS when molecule.pubchem_lcss is requested' do
+    # Previously asserted `be_nil` against a molecule with no pubchem_cid at all, which passes
+    # vacuously: #pubchem_lcss returns early on a blank cid without touching taggable_data, so the
+    # assertion held regardless of what PubChem would have said. Stubs the network call instead of
+    # relying on a real request, and asserts the actual `false`-not-nil storage convention
+    # documented at #pubchem_lcss (a stored JSON null reads back as SQL NULL through `->>`, so it
+    # would never leave PubchemLookupJob's pending scope -- see #627).
+    it 'stores false, not nil, when PubChem has no LCSS data for the cid' do
       molecule.save!
       persisted_molecule = described_class.last
+      persisted_molecule.tag.taggable_data['pubchem_cid'] = 123_456_789
+      allow(Chemotion::PubchemService).to receive(:lcss_from_cid).with(123_456_789).and_return(nil)
 
-      # lcss is updated as nil because cid 123456789 has no PubChem lcss
       persisted_molecule.pubchem_lcss
-      expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).to be_nil
 
-      # lcss is updated with value because cid 643785 has PubChem lcss
+      expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).to be(false)
+    end
+
+    it 'stores the LCSS data PubChem returns for the cid' do
+      molecule.save!
+      persisted_molecule = described_class.last
       persisted_molecule.tag.taggable_data['pubchem_cid'] = 643_785
+      allow(Chemotion::PubchemService).to receive(:lcss_from_cid).with(643_785).and_return({ 'ghs' => 'data' })
+
       persisted_molecule.pubchem_lcss
-      expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
+
+      expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).to eq({ 'ghs' => 'data' })
     end
   end
 

@@ -230,7 +230,16 @@ class PubchemLookupJob < ApplicationJob
 
   # Spaces outbound PubChem requests. Extracted so the pacing is per *request*, which is what
   # PubChem's policy counts.
+  #
+  # Also where this job releases its AR connection. Called immediately before every HTTP round
+  # trip (see #enrich_and_fetch_lcss), so together the sleep and the request that follows can
+  # leave the connection idle for 21s+ per molecule, for up to this job's whole run budget (see
+  # RUN_BUDGET_RATIO) -- worst case tens of minutes on one checked-out connection doing nothing.
+  # Releasing it here means a connection dropped/reaped during that idle window is simply
+  # re-checked-out on the next query instead of poisoning the worker with PG::ConnectionBad. See
+  # #626.
   def throttle
+    ActiveRecord::Base.connection_pool.release_connection
     sleep SLEEP_BETWEEN_REQUESTS
   end
 

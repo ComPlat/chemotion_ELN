@@ -59,9 +59,12 @@ module Chemotion::PubchemService
         log_p: nil        # optional
       }
 
-      result[:cid] = rec['id']['id']['cid']
+      # dig, not chained [], and Array(...) below: a malformed PC_Compounds record (empty id,
+      # missing props) must degrade to the same nil-filled result a Fault produces, not raise
+      # NoMethodError up through PubchemLookupJob. See #627.
+      result[:cid] = rec.dig('id', 'id', 'cid')
 
-      rec['props'].each do |prop|
+      Array(rec['props']).each do |prop|
         if (prop['urn']['label'] == 'IUPAC Name' && prop['urn']['name'] == 'Preferred')
           result[:iupac_name] = prop['value']['sval'].to_s
         end

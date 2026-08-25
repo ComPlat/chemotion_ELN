@@ -11,12 +11,21 @@ module PubChem
     (Rails.env.test? && 'http://') || 'https://'
   end
 
+  # A 200 carrying a Fault body is PubChem's way of answering "no" for several of these endpoints
+  # (get_lcss_from_cid's PUGVIEW.NotFound is the one with live user impact -- see #627); success?
+  # alone does not catch it. Centralizes the "genuinely usable response" check every raw-body
+  # method below needs, so a future change to what counts as safe only has to be made once.
+  # @return [HTTParty::Response, nil] +resp+ unchanged, or nil if it failed or carried a Fault
+  def self.safe_response(resp)
+    resp if resp.success? && !fault_response?(resp.parsed_response)
+  end
+
   def self.get_record_from_molfile(molfile)
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
                 body: { 'sdf' => molfile } }
 
-    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/sdf/record/JSON', options)
+    safe_response(HTTParty.post("#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/sdf/record/JSON", options))
   rescue StandardError => e
     Rails.logger.error ["with molfile: #{molfile}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -74,7 +83,8 @@ module PubChem
       headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
       body: { 'inchikey' => "#{inchikeys.join(',')}" },
     }
-    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/property/InChIKey/JSON', options).body
+    resp = HTTParty.post("#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/inchikey/property/InChIKey/JSON", options)
+    safe_response(resp)&.body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikeys}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -84,32 +94,19 @@ module PubChem
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
 
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/record/SDF', options).body
+    resp = HTTParty.get("#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/inchikey/#{inchikey}/record/SDF", options)
+    safe_response(resp)&.body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-    nil
-  end
-
-  def self.get_molfiles_by_inchikeys(inchikeys)
-    options = {
-      timeout: 10,
-      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
-      body: { 'inchikey' => "#{inchikeys.join(',')}" },
-    }
-    HTTParty.post(http_s + '/rest/pug/compound/inchikey/record/SDF', options).body
-  rescue StandardError => e
-    Rails.logger.error "[PubChemError] of [get_molfiles_by_inchikeys] with inchikey [#{inchikeys}], exception [#{e.backtrace}]"
     nil
   end
 
   def self.get_molfile_by_smiles(smiles)
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
-    encoded_smiles = URI.encode(smiles, '[]/()+-.@#=\\')
+    encoded_smiles = URI::DEFAULT_PARSER.escape(smiles, %r{[\[\]/()+.@#=\\-]})
     response = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/' + encoded_smiles + '/record/SDF', options)
-    return nil unless response.success?
-
-    response.body
+    safe_response(response)&.body
   rescue StandardError => e
     Rails.logger.error ["with smiles: #{smiles}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -119,7 +116,8 @@ module PubChem
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
 
-    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/xrefs/RN/JSON', options).body
+    resp = HTTParty.get("#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/inchikey/#{inchikey}/xrefs/RN/JSON", options)
+    safe_response(resp)&.body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -181,10 +179,16 @@ module PubChem
     extract_smiles_property(result)
   end
 
+  # Accepts either string- or symbol-keyed JSON (JSON.parse without and with symbolize_names:
+  # respectively -- both are in use across this module's callers), and anything that is not a
+  # Hash at all (a raw SDF/molfile body, say), which is never a Fault.
   def self.fault_response?(result)
-    return false unless result['Fault']
+    return false unless result.is_a?(Hash)
 
-    Rails.logger.warn "PubChem API error: #{result['Fault']['Code']} - #{result['Fault']['Message']}"
+    fault = result['Fault'] || result[:Fault]
+    return false unless fault
+
+    Rails.logger.warn "PubChem API error: #{fault['Code'] || fault[:Code]} - #{fault['Message'] || fault[:Message]}"
     true
   end
 
@@ -200,7 +204,9 @@ module PubChem
   #   the cid arrives from +element_tags.taggable_data+, where a value written as a JSON string
   #   deserialises to a String — under the old +is_a? Integer+ guard that silently disabled LCSS
   #   for the molecule, with nothing to show for it.
-  # @return [Hash, nil] parsed GHS classification, or nil when there is none or the fetch fails
+  # @return [Hash, nil] parsed GHS classification, or nil when there is none, the cid does not
+  #   resolve (PubChem answers a 200 with a Fault body for this endpoint, not a 404 -- see #627),
+  #   or the fetch fails
   def self.get_lcss_from_cid(cid)
     cid = Integer(cid, exception: false) unless cid.is_a?(Integer)
     return nil unless cid
@@ -211,7 +217,10 @@ module PubChem
       resp = HTTParty.get(page, options)
       return nil unless resp.success?
 
-      JSON.parse resp, symbolize_names: true
+      result = JSON.parse(resp.body, symbolize_names: true)
+      return nil if fault_response?(result)
+
+      result
     rescue StandardError => e
       Rails.logger.error ["with cid: #{cid}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
       nil

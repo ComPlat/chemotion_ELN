@@ -107,7 +107,7 @@ RSpec.configure do |config|
         )
     end
 
-    error_body = "<<~BODY
+    error_body = <<~BODY
       Status: 400
       Code: PUGREST.BadRequest
       Message: Unable to standardize the given structure - perhaps some special characters need to be escaped or data
@@ -120,7 +120,7 @@ RSpec.configure do |config|
       Detail: Record 1: Error: Unable to convert input into a compound object
       Detail:
       Detail:
-    BODY"
+    BODY
 
     bad_smiles.each_value do |entry|
       smiles_end_point = "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/#{entry['smiles']}/record/SDF"
