@@ -192,8 +192,11 @@ module AttachmentJcampProcess
     # already guarantees this for the callback path (belong_to_analysis? is false otherwise), but
     # save_spectrum lets a caller pass an arbitrary attachment_id, so guard here too - otherwise
     # the dataset-wide lookup below could pair a foreign attachable_id with the literal 'Container'
-    # and match a wholly unrelated Container's row.
-    return unless attachable_type == 'Container'
+    # and match a wholly unrelated Container's row. attachable_id.nil? is guarded separately:
+    # where(attachable_id: nil, ...) is a real "IS NULL" match, not a no-op, so a nil id here
+    # would let the lookup (and the write below) pair with - or create - an orphaned row sharing
+    # that same nil id, the same confusable-pairing class of bug with a different trigger.
+    return if attachable_id.nil? || attachable_type != 'Container'
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     # Look up the canonical row for this filename within self's own lineage (not just self's own
@@ -430,7 +433,14 @@ module AttachmentJcampProcess
       delete_related_nmrium(nmrium_att)
     end
 
-    set_backup
+    # Skip when jcamp_att is this same row (self re-edited in place, reused by generate_att's
+    # lineage lookup): self and jcamp_att are two AR instances of one record, and jcamp_att's
+    # own save already persisted it as :edited. AASM's non-bang event is persist: false, so
+    # marking self :backup here is inert today (nothing saves self afterwards) - but it would
+    # leave self's in-memory state wrongly claiming :backup, ready to overwrite the correct
+    # :edited state on any future self.save/touch/autosave, which extractJcampFiles.js filters
+    # out of the viewer: the exact "spectrum disappeared" symptom this PR set out to fix.
+    set_backup unless jcamp_att&.id == id
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att) if img_att
     delete_related_edit_peak(jcamp_att) if new_jcamp_created

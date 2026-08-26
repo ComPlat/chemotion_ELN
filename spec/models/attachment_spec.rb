@@ -800,6 +800,21 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when attachable_id is nil despite attachable_type being Container' do
+        let!(:attachment) do
+          create(:attachment, :with_spectra_file, attachable_id: nil, attachable_type: 'Container')
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not create or reuse any attachment' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns nil' do
+          expect(new_attachment).to be_nil
+        end
+      end
+
       context 'with ext = png' do
         let(:attachment) { create(:attachment, :with_png_image) }
         let(:ext) { 'png' }
@@ -1016,6 +1031,31 @@ RSpec.describe Attachment do
 
   describe '#create_process' do
     pending 'not yet implemented'
+  end
+
+  describe '#edit_process' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let(:tmp_jcamp) do
+      Tempfile.new('jcamp').tap do |f|
+        f.write('##TITLE=test')
+        f.rewind
+      end
+    end
+
+    before do
+      # spc_type 'NMR' (neither MS nor CYCLIC VOLTAMMETRY) keeps update_prediction on its
+      # local-only write_infer_to_file path, avoiding any external chem-spectra HTTP call.
+      allow(attachment).to receive(:generate_spectrum_data)
+        .and_return([tmp_jcamp, nil, nil, nil, nil, nil, 'NMR', false])
+    end
+
+    context 'when self is re-edited in place (generate_att reuses self as jcamp_att)' do
+      it 'does not leave self claiming backup in memory' do
+        attachment.send(:edit_process, false, {})
+
+        expect(attachment.aasm_state).to eq('edited')
+      end
+    end
   end
 
   describe '#upload_file' do
