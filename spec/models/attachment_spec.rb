@@ -603,6 +603,15 @@ RSpec.describe Attachment do
           expect(new_attachment.id).to eq existing_edit.id
         end
 
+        it "replaces the reused row's stored content, not just its identity" do
+          tempfile.write('new-jcamp-content')
+          tempfile.flush
+          original_checksum = existing_edit.checksum
+
+          expect(new_attachment.checksum).not_to eq(original_checksum)
+          expect(new_attachment.read_file).to eq('new-jcamp-content')
+        end
+
         it 'uploads the new content exactly once, not once per internal save' do
           # existing_edit (let!) is already created and uploaded by this point, so this
           # only sees calls made during generate_att itself: the initial att.save! should
@@ -611,6 +620,62 @@ RSpec.describe Attachment do
           expect_any_instance_of(AttachmentUploader::Attacher).to receive(:attach).once.and_call_original # rubocop:disable RSpec/AnyInstance
 
           new_attachment
+        end
+      end
+
+      context 'when self is already the canonical row being re-edited (edited -> edited)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the edited state' do
+          expect(new_attachment.edited?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row being re-peaked (peaked -> peaked)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.peak.jdx', aasm_state: 'peaked') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'peak', false, 'jdx') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the peaked state' do
+          expect(new_attachment.peaked?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row for a re-generated csv (csv -> csv)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.edit.csv', aasm_state: 'csv') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', false, 'csv') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the csv state' do
+          expect(new_attachment.csv?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row for a re-generated nmrium (nmrium -> nmrium)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.nmrium', aasm_state: 'nmrium') }
+        let(:new_attachment) { attachment.generate_att(tempfile, '', false, 'nmrium') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the nmrium state' do
+          expect(new_attachment.nmrium?).to be true
         end
       end
 
