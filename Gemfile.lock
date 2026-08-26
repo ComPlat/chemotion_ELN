@@ -370,7 +370,7 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.3.0.rc6)
+    labimotion (2.3.0)
       caxlsx (~> 4.0)
       rails (>= 6.1, < 8.0)
       roo (~> 2.10)
@@ -875,7 +875,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.3.0.rc6)
+  labimotion (= 2.3.0)
   launchy
   listen
   logidze
