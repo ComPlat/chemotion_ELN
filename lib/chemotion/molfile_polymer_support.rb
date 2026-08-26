@@ -16,15 +16,17 @@ module Chemotion
 
     # rubocop:disable Naming/PredicatePrefix
     def has_polymers_list_tag?(molfile)
-      return false if molfile.blank?
+      return false if molfile.nil?
 
-      molfile.to_s.include?(POLYMERS_LIST_TAG)
+      # Scrub before the substring check: molfile.blank? (used prior to this guard) is a regex
+      # match under the hood and raises ArgumentError on non-UTF-8 bytes -- see #to_utf8.
+      to_utf8(molfile).include?(POLYMERS_LIST_TAG)
     end
 
     def has_text_node_tag?(molfile)
-      return false if molfile.blank?
+      return false if molfile.nil?
 
-      molfile.to_s.include?(TEXT_NODE_TAG)
+      to_utf8(molfile).include?(TEXT_NODE_TAG)
     end
 
     def has_polymer_or_textnode_blocks?(molfile)
@@ -101,18 +103,25 @@ module Chemotion
     # @param molfile [String, nil]
     # @return [String] the padded molfile, never nil
     def normalize_for_open_babel(molfile)
+      # Scrub before the blank? check: ActiveSupport's #blank? is a regex match and raises
+      # ArgumentError on non-UTF-8 bytes (see #to_utf8) -- this method's own callers are not all
+      # guaranteed to have scrubbed already.
+      molfile = to_utf8(molfile)
       return "\n" if molfile.blank?
 
-      molfile = molfile.to_s
       molfile.end_with?("\n") ? molfile : "#{molfile}\n"
     end
 
     # Strip PolymersList and TextNode blocks, then keep only CTAB (up to and including M  END).
     # Use for Open Babel / inchikey so it does not see custom blocks.
     def clean_molfile_for_inchikey(raw_molfile)
-      return nil if raw_molfile.blank?
+      return nil if raw_molfile.nil?
 
+      # Scrub before the blank? check: ActiveSupport's #blank? raises ArgumentError on non-UTF-8
+      # bytes (see #to_utf8) -- checking on the raw argument would reintroduce that crash here.
       s = to_utf8(raw_molfile)
+      return nil if s.blank?
+
       # NB: the `<\s` in the lookahead is deliberate — it does not match a following `> <Tag>`
       # header, so each block is deleted through to end-of-string. That is what this method wants
       # (only the CTAB survives #keep_only_ctab anyway), unlike .polymers_list_payload, which has
@@ -124,9 +133,13 @@ module Chemotion
 
     # Keep only the CTAB (up to and including first M  END). Safe for Open Babel.
     def keep_only_ctab(molfile)
+      return molfile if molfile.nil?
+
+      # Scrub before the blank? check: ActiveSupport's #blank? raises ArgumentError on non-UTF-8
+      # bytes (see #to_utf8) -- this is on the hot path for every plain (non-polymer) import row.
+      molfile = to_utf8(molfile)
       return molfile if molfile.blank?
 
-      molfile = to_utf8(molfile)
       lines = molfile.lines
       m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
       if m_end_index

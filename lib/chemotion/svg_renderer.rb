@@ -17,14 +17,18 @@ module Chemotion
     #
     # @param struct [String] The molfile structure to render
     # @param service [String, Symbol, nil] Preferred service: :indigo, :ketcher, or :open_babel. When nil, uses
-    #   Indigo first if molfile contains a PolymersList tag, otherwise Ketcher first; then falls back to OpenBabel.
+    #   Indigo first if molfile has an actual PolymersList payload, otherwise Ketcher first; then falls back to OpenBabel.
     # @return [String, nil] The rendered SVG, or nil if all services fail
     def self.render_svg_from_molfile(struct, service: nil)
-      has_polymer = has_polymers_list_tag?(struct)
       polymer_data = parse_polymer_payload(struct)
+      # has_polymer_list? reflects actual PolymersList *payload* (parsed from polymer_data),
+      # not merely the tag's presence: Ketcher also emits an empty "> <PolymersList>" block for
+      # ordinary, non-polymer structures (see Chemotion::MolfilePolymerSupport.has_polymer_content?),
+      # and those must not get polymer-specific Indigo options/service ordering.
+      has_polymer = has_polymer_list?(polymer_data)
       # Use cleaned_struct only for rendering (Indigo/Ketcher/OpenBabel may not handle > <PolymersList>). The full struct is passed to finalize_svg for injection.
       render_struct = polymer_data[:cleaned_struct]
-      chain = service_chain(service, struct)
+      chain = service_chain(service, has_polymer)
       indigo_options = has_polymer ? { scale_factor: 90, label_font_size: 5 } : {}
 
       chain.each do |name|
@@ -45,8 +49,12 @@ module Chemotion
     end
 
     # Returns the ordered list of service names to try (e.g. %i[indigo ketcher open_babel]).
-    # When service is nil: if molfile has PolymersList tag use Indigo first, else Ketcher first; then fallback to OpenBabel.
-    def self.service_chain(service, struct)
+    # When service is nil: if the molfile has an actual PolymersList payload use Indigo first,
+    # else Ketcher first; then fallback to OpenBabel.
+    #
+    # @param has_polymer [Boolean] from {.render_svg_from_molfile}'s has_polymer_list? check --
+    #   NOT raw tag presence, which Ketcher also emits (empty) for ordinary structures.
+    def self.service_chain(service, has_polymer)
       case service.to_s.presence&.downcase
       when 'indigo'
         %i[indigo ketcher open_babel]
@@ -55,8 +63,8 @@ module Chemotion
       when 'open_babel'
         %i[open_babel]
       else
-        # Default: PolymersList present -> Indigo first; else Ketcher first
-        has_polymers_list_tag?(struct) ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
+        # Default: real PolymersList payload present -> Indigo first; else Ketcher first
+        has_polymer ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
       end
     end
 
