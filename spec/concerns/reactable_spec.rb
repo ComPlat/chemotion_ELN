@@ -112,6 +112,21 @@ RSpec.describe Reactable, type: :module do
         result = reactable.calculate_mole_gas_product(nil, { 'value' => 25, 'unit' => '°C' }, 1.0)
         expect(result).to be_nil
       end
+
+      it 'returns nil instead of raising if ppm is an empty string' do
+        result = reactable.calculate_mole_gas_product('', { 'value' => 25, 'unit' => '°C' }, 1.0)
+        expect(result).to be_nil
+      end
+
+      it 'returns nil instead of raising if ppm is an empty string and vessel volume is an integer' do
+        result = reactable.calculate_mole_gas_product('', { 'value' => 25, 'unit' => '°C' }, 2)
+        expect(result).to be_nil
+      end
+
+      it 'calculates correctly when ppm is a numeric string' do
+        result = reactable.calculate_mole_gas_product('100', { 'value' => 25, 'unit' => '°C' }, 1.0)
+        expect(result).to eq(4.085281893642546e-06)
+      end
     end
 
     describe '#calculate_feedstock_moles' do
