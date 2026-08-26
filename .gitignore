@@ -249,3 +249,7 @@ public/sprite.png
 storybook-static
 public/units_system/units_system.json
 CLAUDE.md
+
+# Large SDF stress-test files fetched by test_data/sdf_import/download_test_files.sh
+/test_data/sdf_import/*.sdf
+/test_data/sdf_import/*.sdf.gz
