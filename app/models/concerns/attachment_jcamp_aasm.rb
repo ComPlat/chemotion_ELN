@@ -225,12 +225,20 @@ module AttachmentJcampProcess
       created_for: created_for,
       key: SecureRandom.uuid,
     )
+    att.attachable_id = attachable_id
+    att.attachable_type = attachable_type
     att.file_path = meta_tmp.path
     # See require_peaks_generation? - only matters when att is a found, persisted row (an
     # update); harmless to set on a freshly-built one, which goes through before_create
     # :init_aasm instead.
     att.reattaching_derivative = true
     att.save!
+    # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
+    # attr_accessor that stays set on the object otherwise, so every subsequent save below
+    # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
+    # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
+    # same blob - clear it so those saves are plain state/column updates instead.
+    att.file_path = nil
 
     if ext == 'png'
       att.set_image if att.may_set_image?
@@ -256,8 +264,7 @@ module AttachmentJcampProcess
     att.set_csv   if ext == 'csv' && att.may_set_csv?
     att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
     att.thumb = false if ext == 'json'
-
-    att.update!(attachable_id: attachable_id, attachable_type: attachable_type)
+    att.save!
     att
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Style/IfInsideElse

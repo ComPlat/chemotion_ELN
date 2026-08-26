@@ -602,6 +602,16 @@ RSpec.describe Attachment do
         it 'returns the existing attachment, updated in place' do
           expect(new_attachment.id).to eq existing_edit.id
         end
+
+        it 'uploads the new content exactly once, not once per internal save' do
+          # existing_edit (let!) is already created and uploaded by this point, so this
+          # only sees calls made during generate_att itself: the initial att.save! should
+          # upload once; the AASM state-transition save and the final save (for att.thumb)
+          # must not re-run the full attach/create_derivatives/update_column pipeline.
+          expect_any_instance_of(AttachmentUploader::Attacher).to receive(:attach).once.and_call_original # rubocop:disable RSpec/AnyInstance
+
+          new_attachment
+        end
       end
 
       context 'when the same lineage holds duplicate rows for the target filename (pre-fix corruption)' do
