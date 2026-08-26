@@ -604,6 +604,28 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when the same lineage holds duplicate rows for the target filename (pre-fix corruption)' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:older_duplicate) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: attachment
+          )
+        end
+        let!(:newer_duplicate) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the most recently created duplicate, matching what the frontend last showed' do
+          expect(new_attachment.id).to eq newer_duplicate.id
+          expect(new_attachment.id).not_to eq older_duplicate.id
+        end
+      end
+
       context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
         let!(:unrelated_source) do

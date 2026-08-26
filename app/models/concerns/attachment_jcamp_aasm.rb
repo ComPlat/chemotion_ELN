@@ -192,9 +192,12 @@ module AttachmentJcampProcess
     # curves that happen to derive the same target filename (e.g. foo.dx and foo.jdx both ->
     # foo.peak.jdx) don't collapse onto each other.
     lineage_root = root_id || id
+    # Descending so that, if a dataset still holds duplicate rows from before this fix,
+    # the row picked matches the one handleLoadSpectra already showed the user (it sorts
+    # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
     att = Attachment.where_container(attachable_id)
                     .where(filename: meta_filename)
-                    .order(:id)
+                    .order(id: :desc)
                     .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
 
     att ||= Attachment.children_of(self[:id]).new(
