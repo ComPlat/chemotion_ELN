@@ -626,6 +626,24 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when the matching attachment in the same lineage has not been processed yet' do
+        let(:analysis_container) { create(:container, container_type: 'analysis') }
+        let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:attachment) { create(:attachment, :with_spectra_file, attachable: dataset_container) }
+        let!(:queueing_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: dataset_container,
+                         aasm_state: 'queueing', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not process the stale pre-save content instead of the new one' do
+          expect(Chemotion::Jcamp::CreateImg).not_to receive(:spectrum_img_gene)
+          expect(new_attachment.id).to eq queueing_edit.id
+        end
+      end
+
       context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
         let!(:unrelated_source) do

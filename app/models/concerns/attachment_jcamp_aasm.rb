@@ -8,6 +8,12 @@ module AttachmentJcampAasm
   FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip gz tar nmrium].freeze
   LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.(peak|edit))?\.jdx$/i.freeze
 
+  # Set by generate_att right before it re-saves a reused row with fresh content pending
+  # attachment (see require_peaks_generation? below) - not a stand-in for "file_path is
+  # set", since file_path stays populated on the in-memory object long after its original
+  # attach, independent of any later, unrelated save.
+  attr_accessor :reattaching_derivative
+
   extend ActiveSupport::Concern
 
   # rubocop:disable Metrics/BlockLength
@@ -105,6 +111,12 @@ module AttachmentJcampAasm
   # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Style/IfUnlessModifier
   def require_peaks_generation?
     return if transferred?
+    # generate_att reusing an existing row: the new blob only lands in after_save
+    # :attach_file, which hasn't run yet, so any content-dependent processing here (e.g.
+    # generate_img_only reading abs_path) would render from the stale, pre-save file.
+    # generate_att drives its own state transition right after this save completes, so
+    # there's nothing for this callback to do.
+    return if reattaching_derivative
     return unless belong_to_analysis?
 
     filename_lower = filename.to_s.downcase
@@ -208,6 +220,10 @@ module AttachmentJcampProcess
       key: SecureRandom.uuid,
     )
     att.file_path = meta_tmp.path
+    # See require_peaks_generation? - only matters when att is a found, persisted row (an
+    # update); harmless to set on a freshly-built one, which goes through before_create
+    # :init_aasm instead.
+    att.reattaching_derivative = true
     att.save!
 
     if ext == 'png'
