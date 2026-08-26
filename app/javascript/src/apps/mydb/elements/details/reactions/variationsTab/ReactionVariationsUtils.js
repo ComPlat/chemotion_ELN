@@ -28,7 +28,7 @@ const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
 const massUnits = ['g', 'mg', 'μg'];
 const volumeUnits = ['l', 'ml', 'μl'];
-const amountUnits = ['mol', 'mmol'];
+const amountUnits = ['mol', 'mmol', 'μmol'];
 const concentrationUnits = ['mol/l'];
 const gasConcentrationUnits = ['ppm'];
 const yieldUnits = ['%'];
@@ -109,7 +109,7 @@ function convertUnit(value, fromUnit, toUnit) {
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
+    const amountUnitPrefixes = { mol: 'n', mmol: 'm', μmol: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
 
