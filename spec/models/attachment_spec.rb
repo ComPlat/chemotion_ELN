@@ -644,6 +644,36 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when a reused row is currently parented under a different lineage member' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:peak_node) do
+          create(
+            :attachment, filename: 'spectra_file.peak.jdx', attachable: attachment.attachable,
+                         aasm_state: 'peaked', parent: attachment
+          )
+        end
+        let!(:edit_node) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: peak_node
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the row and re-parents it onto self' do
+          expect(new_attachment.id).to eq edit_node.id
+          edit_node.reload
+
+          expect(edit_node.parent_id).to eq attachment.id
+        end
+
+        it 'makes the reused row discoverable via children_of(self) again' do
+          new_attachment
+
+          expect(described_class.children_of(attachment.id).pluck(:id)).to include(edit_node.id)
+        end
+      end
+
       context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
         let!(:unrelated_source) do

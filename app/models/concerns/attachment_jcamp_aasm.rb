@@ -211,6 +211,12 @@ module AttachmentJcampProcess
                     .where(filename: meta_filename)
                     .order(id: :desc)
                     .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+    # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
+    # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
+    # row gets parented - without this, a row reused from a different lineage member keeps
+    # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
+    # attachment_api.rb) stops finding it on later regenerate_spectrum calls.
+    att.parent = self if att && att.id != id
 
     att ||= Attachment.children_of(self[:id]).new(
       filename: meta_filename,
