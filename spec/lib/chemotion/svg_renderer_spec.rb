@@ -345,4 +345,45 @@ RSpec.describe Chemotion::SvgRenderer do
       expect(result).not_to be_nil
     end
   end
+
+  describe '.parse_polymers_line' do
+    it 'parses the current full format' do
+      expect(described_class.parse_polymers_line('0/95/1.00-1.00'))
+        .to eq([{ atom_index: 0, template_id: 95, height: 1.0, width: 1.0 }])
+    end
+
+    it 'parses the indices-only legacy format' do
+      result = described_class.parse_polymers_line('0 10 12')
+
+      expect(result.map { |p| p[:atom_index] }).to eq([0, 10, 12])
+    end
+
+    # ketcher-rails also wrote "<index><shapeLetter>" ("s" = Surface); 63 such samples exist.
+    # The letter distinguishes Surface from Bead, not a template id, so these keep the default
+    # template -- but the *index* must survive, or no shape is injected at all.
+    it 'parses the index+letter legacy format (sample 14956 shape)' do
+      expect(described_class.parse_polymers_line('0s'))
+        .to eq([{ atom_index: 0, template_id: 1, height: 2.0, width: 2.0 }])
+    end
+
+    it 'parses several index+letter tokens' do
+      result = described_class.parse_polymers_line('0s 7s')
+
+      expect(result.map { |p| p[:atom_index] }).to eq([0, 7])
+    end
+
+    it 'parses the transitional index+letter+size format (sample 388803 shape)' do
+      expect(described_class.parse_polymers_line('0s/1.00-2.00'))
+        .to eq([{ atom_index: 0, template_id: 1, height: 2.0, width: 2.0 }])
+    end
+
+    it 'drops tokens with no leading index' do
+      expect(described_class.parse_polymers_line('M END')).to eq([])
+    end
+
+    it 'returns an empty array for a blank line' do
+      expect(described_class.parse_polymers_line('')).to eq([])
+      expect(described_class.parse_polymers_line(nil)).to eq([])
+    end
+  end
 end

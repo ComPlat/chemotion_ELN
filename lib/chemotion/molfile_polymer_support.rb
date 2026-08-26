@@ -8,7 +8,8 @@ module Chemotion
     TEXT_NODE_TAG = '> <TextNode>'
     TEXT_NODE_CLOSE_TAG = '> </TextNode>'
     M_END_MARKER = 'M  END'
-    # An SDF data block ends at the next data header ("> <Tag>") or at the record separator.
+    # An SDF data block ends at the next data header ("> <Tag>"), at the record separator, or --
+    # for the malformed-but-real legacy layout described in .data_block_body -- at "M  END".
     SDF_DATA_HEADER_PREFIX = '> <'
     SDF_RECORD_SEPARATOR = '$$$$'
 
@@ -79,6 +80,14 @@ module Chemotion
 
     # Collects the payload lines that follow the data header at +header_index+.
     #
+    # Terminates on "M  END" as well as on the next data header / "$$$$". A well-formed SDF never
+    # needs that: data blocks follow the CTAB, so "M  END" is already behind us. But ketcher-rails
+    # (2016-2024) wrote "> <PolymersList>" *inside* the CTAB, ahead of "M  END", and ~130 such
+    # samples are still stored. Without this guard the marker is swallowed into the payload
+    # ("0" becomes "0 M  END"), and -- worse -- an *empty* legacy block yields the payload
+    # "M  END", which is +present?+ and so makes .has_polymer_content? report a polymer for an
+    # ordinary molecule: exactly the false positive this module exists to prevent.
+    #
     # @param lines [Array<String>] all molfile lines
     # @param header_index [Integer] index of the "> <Tag>" line
     # @return [String] space-joined, blank-stripped payload (+''+ when the block is empty)
@@ -86,11 +95,20 @@ module Chemotion
       body = []
       lines[(header_index + 1)..].to_a.each do |raw|
         line = raw.strip
-        break if line.start_with?(SDF_DATA_HEADER_PREFIX) || line == SDF_RECORD_SEPARATOR
+        break if data_block_terminator?(line)
 
         body << line unless line.empty?
       end
       body.join(' ')
+    end
+
+    # @param line [String] an already-stripped molfile line
+    # @return [Boolean] whether the line ends the data block that precedes it
+    def data_block_terminator?(line)
+      line.start_with?(SDF_DATA_HEADER_PREFIX) ||
+        line == SDF_RECORD_SEPARATOR ||
+        # Loose match, matching #keep_only_ctab: writers vary the inner spacing of "M  END".
+        line.match?(/\AM\s+END\z/i)
     end
 
     # Appends the trailing newline Open Babel needs. Deliberately does NOT touch the front of the

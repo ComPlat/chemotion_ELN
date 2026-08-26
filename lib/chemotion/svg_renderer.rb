@@ -243,10 +243,17 @@ module Chemotion
 
       return full_format if full_format.any?
 
-      # Fallback: PolymersList content is indices-only (e.g. "0 1 2" or "0") — build default polymer entries so injection runs.
+      # Fallback for the pre-full-format grammars, all of which start with the atom index:
+      #   "0 1 2"          indices only            (ketcher-rails, 2016+)
+      #   "0s" / "7s"      index + shape letter    (ketcher-rails, 2017+; "s" = Surface)
+      #   "0s/1.00-2.00"   index + letter + size   (transitional)
+      # Only the leading digits are read: the shape letter cannot be mapped to a template id
+      # (it distinguishes Surface from Bead, not one of the ~100 template ids), so these still
+      # fall back to the default template below. Parsing the index is what matters -- without it
+      # the token is dropped, no polymer entry is built, and the sample renders with polymer
+      # service ordering but no shape injected at all.
       indices = polymers_line.split(/\s+/).filter_map do |token|
-        n = Integer(token, exception: false)
-        n if n.is_a?(Integer) && n >= 0
+        Integer(token[/\A\d+/].to_s, exception: false)
       end
       indices.map { |atom_index| { atom_index: atom_index, template_id: 1, height: 2.0, width: 2.0 } }
     end

@@ -105,4 +105,55 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       expect(described_class.normalize_for_open_babel('')).to eq("\n")
     end
   end
+
+  # ketcher-rails (2016-2024) wrote "> <PolymersList>" *inside* the CTAB, ahead of "M  END".
+  # ~130 such samples are still stored; these fixtures are reduced from real ones.
+  describe 'legacy in-CTAB PolymersList blocks' do
+    let(:legacy_ctab_head) do
+      <<~HEAD
+        #{' '}
+          Ketcher 09231611312D 1   1.00000     0.00000     0
+
+          3  2  0     0  0            999 V2000
+            9.5920   -3.1000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+           10.4580   -2.6000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+        M  RGP  1   1   1
+      HEAD
+    end
+
+    it 'does not swallow the end-of-CTAB marker into the payload (sample 13207 shape)' do
+      molfile = "#{legacy_ctab_head}> <PolymersList>\n0\nM  END\n\n$$$$\n"
+
+      expect(described_class.polymers_list_payload(molfile)).to eq('0')
+    end
+
+    it 'keeps every index of a multi-index legacy block (sample 13210 shape)' do
+      molfile = "#{legacy_ctab_head}> <PolymersList>\n0 10 12\nM  END\n\n$$$$\n"
+
+      expect(described_class.polymers_list_payload(molfile)).to eq('0 10 12')
+    end
+
+    it 'reports no polymer content for an empty in-CTAB block' do
+      # Before "M  END" terminated a data block this yielded the payload "M  END", which is
+      # present? -- so an ordinary molecule was misreported as a polymer.
+      molfile = "#{legacy_ctab_head}> <PolymersList>\nM  END\n\n$$$$\n"
+
+      expect(described_class.polymers_list_payload(molfile)).to eq('')
+      expect(described_class.has_polymer_content?(molfile)).to be(false)
+    end
+
+    it 'prefers the post-M-END full-format block over legacy in-CTAB ones (sample 440603 shape)' do
+      molfile = "#{legacy_ctab_head}> <PolymersList>\n0\n> <PolymersList>\n0\n" \
+                "M  END\n\n> <PolymersList>\n0/95/1.00-1.00\n$$$$\n"
+
+      expect(described_class.polymers_list_payload(molfile)).to eq('0/95/1.00-1.00')
+      expect(described_class.has_polymer_content?(molfile)).to be(true)
+    end
+
+    it 'tolerates non-canonical spacing in the end-of-CTAB marker' do
+      molfile = "#{legacy_ctab_head}> <PolymersList>\n0\nM END\n\n$$$$\n"
+
+      expect(described_class.polymers_list_payload(molfile)).to eq('0')
+    end
+  end
 end
