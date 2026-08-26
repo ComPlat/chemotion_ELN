@@ -2,6 +2,11 @@
 
 module Chemotion
   class PublicAPI < Grape::API
+    # Candidate filenames for an instance-provided logo under public/logos, in preference
+    # order. Fixed list rather than a glob: the path is echoed back to the browser, so it
+    # must never be influenced by request input.
+    ALTERNATE_LOGO_FILES = %w[chemotion-alternate.svg chemotion-alternate.png].freeze
+
     helpers do
       def send_notification(attachment, user, status, has_error = false)
         data_args = { filename: attachment.filename, comment: 'the file has been updated' }
@@ -46,6 +51,15 @@ module Chemotion
         desc 'Whether workshop wiki content has been synced (see `rake workshop_guide:sync`)'
         get 'available' do
           { available: Rails.public_path.join('workshop', 'home.md').file? }
+        end
+      end
+
+      namespace :logo do
+        desc 'Path of the instance-provided logo under public/logos, or null when there is none. ' \
+             'Resolved server-side so stock instances do not log a 404 for the absent file.'
+        get 'alternate' do
+          name = ALTERNATE_LOGO_FILES.find { |file| Rails.public_path.join('logos', file).file? }
+          { src: name && "/logos/#{name}" }
         end
       end
 
