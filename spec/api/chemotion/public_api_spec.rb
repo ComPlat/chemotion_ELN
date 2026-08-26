@@ -66,15 +66,23 @@ describe Chemotion::PublicAPI do
       end
     end
 
+    # The title is read from the process environment at request time, so an ambient
+    # WORKSHOP_GUIDE_TITLE -- the dev container sets one -- would otherwise leak into the
+    # default-title expectations below. The configured context overrides this stub.
+    before do
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with('WORKSHOP_GUIDE_TITLE', 'Workshop Guide').and_return('Workshop Guide')
+    end
+
     context 'when workshop content has not been synced' do
       before do
         FileUtils.rm_f(home_md)
         execute_request
       end
 
-      it 'responds 200 with available: false' do
+      it 'responds 200 with available: false and the default title' do
         expect(response).to have_http_status :ok
-        expect(parsed_json_response).to eq({ 'available' => false })
+        expect(parsed_json_response).to eq({ 'available' => false, 'title' => 'Workshop Guide' })
       end
     end
 
@@ -87,9 +95,23 @@ describe Chemotion::PublicAPI do
 
       after { FileUtils.rm_f(home_md) }
 
-      it 'responds 200 with available: true' do
+      it 'responds 200 with available: true and the default title' do
         expect(response).to have_http_status :ok
-        expect(parsed_json_response).to eq({ 'available' => true })
+        expect(parsed_json_response).to eq({ 'available' => true, 'title' => 'Workshop Guide' })
+      end
+    end
+
+    context 'when WORKSHOP_GUIDE_TITLE is configured' do
+      before do
+        FileUtils.rm_f(home_md)
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('WORKSHOP_GUIDE_TITLE', 'Workshop Guide').and_return('Summer School Guide')
+        execute_request
+      end
+
+      it 'responds 200 with the configured title' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'available' => false, 'title' => 'Summer School Guide' })
       end
     end
   end
@@ -103,7 +125,7 @@ describe Chemotion::PublicAPI do
     # public/logos also holds committed assets, so every candidate is moved aside for the
     # duration of the example and put back afterwards -- never simply deleted.
     around do |example|
-      backups = candidates.select(&:exist?).to_h { |path| [path, Rails.root.join("tmp/#{path.basename}.bak")] }
+      backups = candidates.select(&:exist?).index_with { |path| Rails.root.join("tmp/#{path.basename}.bak") }
       backups.each { |path, backup| FileUtils.mv(path, backup) }
       begin
         example.run

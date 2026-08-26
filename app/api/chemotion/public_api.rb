@@ -48,9 +48,13 @@ module Chemotion
       end
 
       namespace :workshop_guide do
-        desc 'Whether workshop wiki content has been synced (see `rake workshop_guide:sync`)'
+        desc 'Whether workshop wiki content has been synced (see `rake workshop_guide:sync`), ' \
+             'and the display title configured via WORKSHOP_GUIDE_TITLE'
         get 'available' do
-          { available: Rails.public_path.join('workshop', 'home.md').file? }
+          {
+            available: Rails.public_path.join('workshop', 'home.md').file?,
+            title: ENV.fetch('WORKSHOP_GUIDE_TITLE', 'Workshop Guide'),
+          }
         end
       end
 
