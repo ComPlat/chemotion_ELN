@@ -71,6 +71,18 @@ RSpec.describe 'PubChem' do
 
       expect(HTTParty).not_to have_received(:get)
     end
+
+    # PubChem answers an unknown cid with HTTP 200 and a Fault body, not a 404 -- so success?
+    # alone does not catch it, and the caller (Molecule#pubchem_lcss) used to store the Fault
+    # hash itself as if it were real GHS data.
+    it 'returns nil for a 200 response carrying a Fault body' do
+      fault_body = { Fault: { Code: 'PUGVIEW.NotFound', Message: 'No data found' } }.to_json
+      allow(HTTParty).to receive(:get).and_return(
+        instance_double(HTTParty::Response, success?: true, body: fault_body),
+      )
+
+      expect(PubChem.get_lcss_from_cid(962)).to be_nil
+    end
   end
 
   describe 'most_occurance' do
