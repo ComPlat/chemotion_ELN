@@ -41,7 +41,9 @@ module Import
 
       # render_svg: false — the polymer SVG is rendered separately through Indigo in
       # #reattach_svg_if_present; OpenBabel's would be discarded either way.
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(pad(cleaned), render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(
+        Chemotion::MolfilePolymerSupport.normalize_for_open_babel(cleaned), render_svg: false
+      )
       molecule = if babel_info[:inchikey].present?
                    Molecule.find_or_create_by_molfile(raw, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)
                  else
@@ -55,12 +57,6 @@ module Import
     end
 
     private
-
-    def pad(molfile)
-      m = molfile.dup
-      m = "\n#{m}" unless m.start_with?("\n")
-      m.end_with?("\n") ? m : "#{m}\n"
-    end
 
     def reattach_svg_if_present(molecule, raw)
       reprocessed_svg = Molecule.svg_reprocess(nil, raw, service: :indigo)
