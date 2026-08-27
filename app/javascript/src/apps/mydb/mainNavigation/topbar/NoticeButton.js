@@ -85,22 +85,27 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       // throttled by — the toast-spam cap below. Counting them here is exactly what made the
       // "You have N more notifications" summary overcount: it included notifications the user
       // never saw a toast for in the first place, with nothing to find when they went looking.
+      //
+      // The cap suppresses the toast only. Returning here would also skip the refreshes and the action
+      // switch below, so a report arriving behind three notifications would never surface. count still
+      // counts every non-silent one, so the summary below is unaffected.
+      let suppressToast = false;
       if (!n.content.silent) {
         count += 1;
-        if (count > 3) {
-          return;
-        }
+        suppressToast = count > 3;
       }
       const infoTimeString = formatDate(n.created_at);
       const convertedData = convertCalendarNotificationToLocal(n.content.data);
 
+      // mb-1: a message that arrives as a headline plus
+      // bulleted notes reads as one block, and a full 1rem gap between each line pulls it apart.
       const newText = convertedData
         .split('\n')
-        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+        .map((i) => <p className="mb-1" key={`${infoTimeString}-${i}`}>{i}</p>);
       const { url, urlTitle } = n.content;
       if (url) {
         newText[newText.length] = (
-          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+          <p className="mb-1" key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
         );
       }
 
@@ -108,12 +113,12 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       // CollectionShareNotifier on the backend) are delivered so the switch below and the tree-refresh
       // check can act on them, but must not interrupt the user with a dismiss-required popup; the
       // backend auto-acknowledges them on delivery instead (see MessageAPI's list endpoint).
-      if (!n.content.silent) {
+      if (!n.content.silent && !suppressToast) {
         const notification = {
           title: `From ${n.sender_name} on ${infoTimeString}`,
           message: newText,
           level: n.content.level || 'warning',
-          autoDismiss: n.content.autoDismiss || 5,
+          autoDismiss: n.content.autoDismiss ?? 5,
           position: n.content.position || 'tr',
           uid: n.id,
           action: {
@@ -139,9 +144,50 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       const { currentCollection } = UIStore.getState();
       const currentCollectionId = currentCollection?.id;
 
+      // Number(): the two ids reach here from different places and are not reliably the same type --
+      // UIStore itself compares currentCollection.id loosely for that reason.
+      const notificationCollectionId = Number(n.content?.collection_id);
+      const isOpenCollection = Number.isFinite(notificationCollectionId)
+        && Number(currentCollectionId) === notificationCollectionId;
+
+      // refreshElements re-reads the current page, sort and search from the stores, so the list comes
+      // back the way the user left it. Fetching by collection id directly would reset all three.
+      //
+      // Guarded because both paths below can ask for it on the same notification -- the report branch
+      // always, and the RefreshSampleList case on instances whose channel template carries that action.
+      let samplesRefreshed = false;
+      const refreshOpenCollectionSamples = () => {
+        if (samplesRefreshed || !isOpenCollection) return;
+
+        samplesRefreshed = true;
+        ElementActions.refreshElements('sample');
+      };
+
+      // Guarded the same way: the report branch below and the switch's own
+      // 'InboxActions.fetchInbox' case can both fire for the same notification.
+      let inboxRefreshed = false;
+      const refreshInbox = () => {
+        if (inboxRefreshed) return;
+
+        inboxRefreshed = true;
+        InboxActions.fetchInbox({ currentPage, itemsPerPage });
+      };
+
+      // A sample import changes three things at once, and content.action can only ask for one of them.
+      // Which one it asks for also differs between instances, depending on whether the migration that
+      // rewrote this channel's template actually ran - so none of this is keyed on the action.
+      if (n.content.report_attachment_id) {
+        // the report, which the import just put there
+        refreshInbox();
+        // the samples it created, which otherwise only appear after a manual re-render
+        refreshOpenCollectionSamples();
+        // and the tree, whose per-collection counts are now out of date
+        context.collections.fetchCollections();
+      }
+
       switch (n.content.action) {
         case 'InboxActions.fetchInbox':
-          InboxActions.fetchInbox({ currentPage, itemsPerPage });
+          refreshInbox();
           break;
         case 'ReportActions.updateProcessQueue':
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
@@ -161,11 +207,7 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
           );
           break;
         case 'RefreshSampleList':
-          if (currentCollectionId != null && currentCollectionId === n.content?.collection_id) {
-            ElementActions.fetchSamplesByCollectionId(
-              parseInt(currentCollectionId, 10)
-            );
-          }
+          refreshOpenCollectionSamples();
           break;
         default:
       }

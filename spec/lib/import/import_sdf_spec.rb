@@ -65,6 +65,65 @@ RSpec.describe Import::ImportSdf do
       expect { sdf_import.create_samples }.to change(Sample, :count).by(1)
       expect(sdf_import.message.scan('Import successful!').size).to eq(1)
     end
+
+    # Covers the column assignment extracted out of the row loop into #build_sample_from_row and its
+    # helpers: plain columns, xref columns, ranges, and the value-and-unit-in-one-cell amounts.
+    it 'assigns the mapped columns onto the created sample' do
+      sdf_import.create_samples
+      sample = Sample.last
+
+      expect(sample).to have_attributes(
+        short_label: 'C9H12ClNO2',
+        name: 'name',
+        location: 'location',
+        external_label: 'external_label',
+        target_amount_value: 10.0,
+        target_amount_unit: 'g',
+        real_amount_value: 15.0,
+        real_amount_unit: 'mg',
+      )
+      expect([sample.boiling_point.first.to_f, sample.boiling_point.last.to_f]).to eq([150.0, 160.0])
+    end
+
+    it 'assigns the ranged and xref columns onto the created sample' do
+      sdf_import.create_samples
+      sample = Sample.last
+
+      expect(sample.melting_point.first.to_f).to eq(50.0)
+      expect(sample.xref['refractive_index']).to eq(1.0)
+    end
+
+    # Both importers store the same value for the same cell: a percentage purity and a unit-less
+    # density used to cost the value (or the row) when they arrived through an SDF.
+    context 'with a percentage purity and a unit-less density' do
+      before { sdf_import.rows.first.merge!('purity' => '95', 'density' => '0.85') }
+
+      it 'reads the purity as a fraction, as the spreadsheet importer does' do
+        sdf_import.create_samples
+
+        expect(Sample.last.purity).to eq(0.95)
+      end
+
+      it 'keeps the density instead of dropping it for having no unit' do
+        sdf_import.create_samples
+
+        expect(Sample.last.density).to eq(0.85)
+      end
+    end
+
+    context 'when an amount cell carries no readable value and unit' do
+      before { sdf_import.rows.first['real_amount'] = 'quite a lot' }
+
+      # The columns are named after the amount that actually failed: the real-amount branch used to
+      # report 'target amount' when the cell had no unit at all, pointing at the wrong column.
+      it 'falls back to 0 g and names the real amount columns in the message' do
+        sdf_import.create_samples
+        sample = Sample.last
+
+        expect(sample).to have_attributes(real_amount_value: 0.0, real_amount_unit: 'g')
+        expect(sdf_import.error_messages.join).to include('real amount, real amount unit')
+      end
+    end
   end
 
   describe '#rows_from_processed_mol' do
@@ -72,19 +131,107 @@ RSpec.describe Import::ImportSdf do
       described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
     end
 
-    it 'maps SDF property tags onto field names, keeps molfile, and drops unmatched tags / failed mols' do
+    before do
       mapper.instance_variable_set(:@processed_mol, [
                                      { 'NAME' => 'Acetone', 'DESCRIPTION' => 'a ketone', 'UNKNOWN_TAG' => 'x',
                                        inchikey: 'CSCPPACGZOOCGX-UHFFFAOYSA-N', molfile: 'molfile-1',
                                        name: 'iupac', svg: 'molecules/x.svg' },
-                                     { name: nil, inchikey: nil, svg: 'no_image_180.svg' }, # failed record
+                                     # A record whose structure could not be resolved at all.
+                                     { 'NAME' => 'Mystery', name: nil, inchikey: nil, svg: 'no_image_180.svg',
+                                       decoupled: true, decoupled_reason: 'no structure could be resolved' },
                                    ])
+    end
 
-      rows = mapper.rows_from_processed_mol
+    it 'maps SDF property tags onto field names, keeps molfile, and drops unmatched tags' do
+      expect(mapper.rows_from_processed_mol.first)
+        .to eq({ 'molfile' => 'molfile-1', 'name' => 'Acetone', 'description' => 'a ketone' })
+    end
 
-      expect(rows).to eq([
-                           { 'molfile' => 'molfile-1', 'name' => 'Acetone', 'description' => 'a ketone' },
-                         ])
+    # Imported without a structure rather than dropped, as the spreadsheet importer does.
+    it 'keeps a record whose structure could not be resolved, as a row with no molfile' do
+      expect(mapper.rows_from_processed_mol.last).to eq({ 'molfile' => nil, 'name' => 'Mystery' })
+    end
+
+    it 'records it as decoupled, with the reason and the record number' do
+      mapper.rows_from_processed_mol
+      expect(mapper.decoupled_records)
+        .to eq([{ record: 2, reason: 'no structure could be resolved' }])
+    end
+  end
+
+  # The spreadsheet importer's fallbacks, in its order: structure, SMILES, CAS, then decoupled.
+  describe 'resolving a record whose molfile gives no structure' do
+    let(:importer) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
+    end
+    let(:smiles_molecule) { create(:molecule, inchikey: 'LFQSCWFLJHTTHZ-UHFFFAOYSA-N') }
+    let(:cas_molecule) { create(:molecule, inchikey: 'QTBSBXVTEAMEQO-UHFFFAOYSA-N') }
+
+    def record(tags)
+      tags.map { |tag, value| "> <#{tag}>\n#{value}\n\n" }.join
+    end
+
+    it 'resolves the structure from a SMILES tag when the molfile could not give one' do
+      allow(Molecule).to receive(:find_or_create_by_cano_smiles).and_return(smiles_molecule)
+
+      entry = importer.send(:molfile_entry_without_inchikey, record('SMILES' => 'CCO'))
+
+      expect(entry[:inchikey]).to eq(smiles_molecule.inchikey)
+    end
+
+    it 'prefers the SMILES tag over the CAS number, which costs a network lookup' do
+      allow(Molecule).to receive(:find_or_create_by_cano_smiles).and_return(smiles_molecule)
+      allow(importer).to receive(:find_molecule_by_cas)
+
+      importer.send(:molfile_entry_without_inchikey, record('SMILES' => 'CCO', 'CAS' => '64-17-5'))
+
+      expect(importer).not_to have_received(:find_molecule_by_cas)
+    end
+
+    it 'falls back to the CAS number when there is no SMILES tag' do
+      allow(importer).to receive(:find_molecule_by_cas).with('64-17-5').and_return(cas_molecule)
+
+      entry = importer.send(:molfile_entry_without_inchikey, record('CAS' => '64-17-5'))
+
+      expect(entry[:inchikey]).to eq(cas_molecule.inchikey)
+    end
+
+    it 'falls back to the CAS number when the SMILES tag itself cannot be read' do
+      allow(Molecule).to receive(:find_or_create_by_cano_smiles).and_raise(StandardError, 'not a smiles')
+      allow(importer).to receive(:find_molecule_by_cas).with('64-17-5').and_return(cas_molecule)
+
+      entry = importer.send(:molfile_entry_without_inchikey, record('SMILES' => '!!', 'CAS' => '64-17-5'))
+
+      expect(entry[:inchikey]).to eq(cas_molecule.inchikey)
+    end
+
+    it 'marks the record decoupled when nothing resolves' do
+      entry = importer.send(:molfile_entry_without_inchikey, record('NAME' => 'Mystery'))
+
+      expect(entry).to include(inchikey: nil, decoupled: true)
+    end
+
+    # A molfile block is always present, so only its atom count says whether anything was offered.
+    it 'says the record carried nothing to resolve from when its CTAB is empty' do
+      entry = importer.send(:molfile_entry_without_inchikey, record('NAME' => 'Mystery'))
+
+      expect(entry[:decoupled_reason]).to eq('the record carries no structure and no CAS number')
+    end
+
+    it 'names the molfile when its CTAB had atoms that could not be read' do
+      ctab = "\n  x\n\n  3  2  0  0  0  0  0  0  0  0999 V2000\nM  END\n"
+      entry = importer.send(:molfile_entry_without_inchikey, ctab + record('NAME' => 'Mystery'))
+
+      expect(entry[:decoupled_reason]).to eq('no structure could be resolved from the molfile')
+    end
+
+    # A different fix from having nothing to resolve from.
+    it 'names the CAS number that resolved to nothing' do
+      allow(importer).to receive(:find_molecule_by_cas).and_return(nil)
+
+      entry = importer.send(:molfile_entry_without_inchikey, record('CAS' => '99999-99-9'))
+
+      expect(entry[:decoupled_reason]).to include('CAS 99999-99-9')
     end
   end
 
@@ -103,6 +250,98 @@ RSpec.describe Import::ImportSdf do
       expect(one_shot).to have_received(:find_or_create_mol_by_batch).ordered
       expect(one_shot).to have_received(:create_samples).ordered
       expect(one_shot.rows).to eq([{ 'molfile' => 'm' }])
+    end
+  end
+
+  # End to end over the path the job uses: the record still becomes a sample, and the import says why.
+  describe 'importing a file whose record resolves no structure at all' do
+    let(:unresolvable) { "\n\n\n  0  0\nM  END\n> <NAME>\nMystery\n\n" }
+    let(:importer) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id,
+                          raw_data: [unresolvable])
+    end
+
+    before do
+      allow(Molecule).to receive(:find_by).and_call_original
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_return([nil])
+    end
+
+    it 'creates the sample instead of dropping the record' do
+      expect { importer.import_from_file }.to change(Sample, :count).by(1)
+    end
+
+    it 'imports it decoupled' do
+      importer.import_from_file
+      expect(Sample.last.decoupled).to be(true)
+    end
+
+    it 'keeps the tags the record did carry' do
+      importer.import_from_file
+      expect(Sample.last.name).to eq('Mystery')
+    end
+
+    it 'does not report the record as unprocessable, because it was imported' do
+      importer.import_from_file
+      expect(importer.unprocessable_samples).to be_empty
+    end
+
+    it 'says in the message that the record was imported without a structure, and why' do
+      importer.import_from_file
+      expect(importer.message)
+        .to include('imported without a structure', 'carries no structure and no CAS number', 'record 1')
+    end
+
+    # Counting inchikeys made a wholly decoupled file report an error status.
+    it 'does not claim that no molecule was processed' do
+      importer.import_from_file
+      expect(importer.status).to eq('ok')
+    end
+  end
+
+  # Not a fallback but a declaration, so nothing to report. Cf. ImportSamples#process_row_data.
+  describe 'importing a record that says it is decoupled' do
+    let(:tagged) { "\n\n\n  0  0\nM  END\n> <DECOUPLED>\nyes\n\n> <NAME>\nIntentional\n\n" }
+    let(:importer) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id,
+                          raw_data: [tagged])
+    end
+
+    before do
+      allow(Molecule).to receive(:find_by).and_call_original
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_return([nil])
+    end
+
+    it 'imports it' do
+      expect { importer.import_from_file }.to change(Sample, :count).by(1)
+    end
+
+    it 'honours the tag, which used to be mapped to nothing' do
+      importer.import_from_file
+      expect(Sample.last.decoupled).to be(true)
+    end
+
+    it 'does not report it as having lost a structure' do
+      importer.import_from_file
+      expect(importer.decoupled_records).to be_empty
+    end
+
+    it 'reports a clean import rather than a warning' do
+      importer.import_from_file
+      expect(importer.message).not_to include('imported without a structure')
+    end
+
+    # Something was offered and could not be used, which stays the user's to fix.
+    context 'when it also carries a CAS number that resolves to nothing' do
+      let(:tagged) do
+        "\n\n\n  0  0\nM  END\n> <DECOUPLED>\nyes\n\n> <CAS>\n99999-99-9\n\n"
+      end
+
+      before { allow(importer).to receive(:find_molecule_by_cas).and_return(nil) }
+
+      it 'is still reported' do
+        importer.import_from_file
+        expect(importer.decoupled_records.first[:reason]).to include('CAS 99999-99-9')
+      end
     end
   end
 
@@ -243,14 +482,15 @@ RSpec.describe Import::ImportSdf do
         )
       end
 
-      it 'returns the no_image_180.svg placeholder when the resolver could not create a molecule' do
+      # A polymer record has as much to fall back on as any other.
+      it 'falls back to the SMILES/CAS/decoupled chain when the resolver could not create a molecule' do
         allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(
           Import::PolymerMoleculeResolver::Result.new(molecule: nil, raw_molfile: polymer_molfile, babel_info: nil),
         )
 
         row = mapper.find_or_create_polymer_molfile_entry(polymer_molfile, nil)
 
-        expect(row).to eq({ name: nil, inchikey: nil, svg: 'no_image_180.svg' })
+        expect(row).to include(name: nil, inchikey: nil, svg: 'no_image_180.svg', decoupled: true)
       end
     end
 
