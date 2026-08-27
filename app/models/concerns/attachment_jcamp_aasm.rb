@@ -244,14 +244,19 @@ module AttachmentJcampProcess
       # duplicate .edit.jdx attachment on every save. Narrowed to self's ancestry root so two
       # independently uploaded curves that happen to derive the same target filename (e.g.
       # foo.dx and foo.jdx both -> foo.peak.jdx) don't collapse onto each other.
-      lineage_root = root_id || id
+      # root_id already returns id for a root node (never nil) - see the ancestry gem.
+      lineage_root = root_id
+      # Composes ancestry's own subtree_of (descendants of lineage_root, plus lineage_root
+      # itself) rather than loading every same-filename row in the dataset and re-deriving
+      # "same lineage" by hand: the lineage scoping lives in the query, not a Ruby block.
       # Descending so that, if a dataset still holds duplicate rows from before this fix,
       # the row picked matches the one handleLoadSpectra already showed the user (it sorts
       # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
       att = Attachment.where_container(attachable_id)
                       .where(filename: meta_filename)
+                      .merge(Attachment.subtree_of(lineage_root))
                       .order(id: :desc)
-                      .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+                      .first
       # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
       # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
       # row gets parented - without this, a row reused from a different lineage member keeps
@@ -455,7 +460,9 @@ module AttachmentJcampProcess
 
     tmp_jcamp ||= arr_jcamp&.first
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    new_jcamp_created = !jcamp_att.nil?
+    # generate_att may return a reused row, not only a freshly minted one - this just gates
+    # delete_related_edit_peak on "was a jcamp attachment resolved at all" below.
+    jcamp_att_resolved = !jcamp_att.nil?
     jcamp_att&.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true) if tmp_img
 
@@ -486,7 +493,7 @@ module AttachmentJcampProcess
     set_backup unless jcamp_att&.id == id
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att) if img_att
-    delete_related_edit_peak(jcamp_att) if new_jcamp_created
+    delete_related_edit_peak(jcamp_att) if jcamp_att_resolved
     jcamp_att || self
   end
 
@@ -582,10 +589,11 @@ module AttachmentJcampProcess
   # first so generate_att's lookup finds and reuses it; the underscore-style rename below
   # then restores the final name exactly as before.
   def reconnect_dot_style_name(final_filename, addon, ext)
-    lineage_root = root_id || id
+    lineage_root = root_id
     existing = Attachment.where_container(attachable_id)
                          .where(filename: final_filename)
-                         .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+                         .merge(Attachment.subtree_of(lineage_root))
+                         .first
     return unless existing
 
     existing.reattaching_derivative = true
@@ -749,7 +757,7 @@ module AttachmentJcampProcess
     # Restricted to self's own lineage (see generate_att) - matching by filename stem alone,
     # across the whole dataset, would also catch an independently-uploaded curve that happens
     # to derive the same target name, deleting it as collateral of an unrelated edit.
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
@@ -757,7 +765,7 @@ module AttachmentJcampProcess
       should_del = (att.edited? || att.peaked? || is_peak_file) &&
                    att.id != jcamp_att.id &&
                    valid_name == fname_wo_ext(att) &&
-                   (att.root_id || att.id) == lineage_root
+                   att.root_id == lineage_root
       att.delete if should_del
     end
   end
@@ -774,14 +782,14 @@ module AttachmentJcampProcess
   def delete_related_imgs(img_att)
     return unless img_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.image? &&
                   att.id != img_att.id &&
                   valid_name == fname_wo_ext(att) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end
@@ -809,14 +817,14 @@ module AttachmentJcampProcess
   def delete_related_csv(csv_att)
     return unless csv_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.csv? &&
                   att.id != csv_att.id &&
                   valid_name == fname_wo_ext(att) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end
@@ -824,7 +832,7 @@ module AttachmentJcampProcess
   def delete_related_nmrium(nmrium_att)
     return unless nmrium_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     # Strip a trailing .edit/.peak addon but keep the "N_bagit" curve token, so a jcamp
     # attachment mid edit_process (e.g. "x.1_bagit.peak.jdx") still matches its own
@@ -834,7 +842,7 @@ module AttachmentJcampProcess
       is_delete = att.nmrium? &&
                   att.id != nmrium_att.id &&
                   (valid_name == fname_wo_ext(att) || fname_wo_ext(self) == fname_wo_ext(att)) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end
