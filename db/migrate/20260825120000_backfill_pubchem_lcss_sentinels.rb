@@ -10,8 +10,17 @@ class BackfillPubchemLcssSentinels < ActiveRecord::Migration[6.1]
   #    selects on -- matches a JSON null exactly as it matches a missing key. So the molecule never
   #    left the pending scope and was re-asked on every sweep, indefinitely. The convention the code
   #    uses now is `false`, meaning "asked, PubChem has none": it reads back through `->>` as the
-  #    string 'false' and clears the scope. Rewriting these needs no network call, because the
-  #    answer is already known.
+  #    string 'false' and clears the scope. Rewriting these needs no network call.
+  #
+  #    A JSON null does not only mean "PubChem has none", though: get_lcss_from_cid also returns
+  #    nil on a timeout, a 5xx or any rescued exception, and Molecule#pubchem_lcss stored that
+  #    verbatim too. Those molecules are marked answered here without ever having been answered.
+  #    That is deliberate, because it is what the fixed code already does at runtime -- `lcss ||
+  #    false` collapses a transient failure to the same sentinel -- so the migration matches
+  #    application behaviour rather than introducing a new loss. Distinguishing the two would
+  #    need the :not_found/:unavailable outcome split that fetch_record_from_inchikey already
+  #    carries for the inchikey path, extended to LCSS; until then a molecule whose lookup
+  #    merely failed is recoverable by clearing its key, exactly as branch 2 below does.
   #
   # 2. A Fault body stored as GHS data. PubChem answers an unknown cid on the pug_view endpoint with
   #    HTTP 200 and a `{"Fault": ...}` body, and get_lcss_from_cid stored that body as if it were a

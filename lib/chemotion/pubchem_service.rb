@@ -34,66 +34,91 @@ module Chemotion::PubchemService
   end
 
   def self.interpret_record(record, as_array = false)
+    compounds = compounds_in(record)
+    return as_array ? [] : empty_result if compounds.nil?
+
+    results = compounds.filter_map { |rec| compound_result(rec) }
+
+    as_array ? results : results[0]
+  end
+
+  # @param record [Object] a parsed record, a JSON string, or an HTTParty response
+  # @return [Array, nil] the PC_Compounds entries, or nil when the record carries none
+  def self.compounds_in(record)
     record = JSON.parse(record) if record.is_a?(String)
-    result = {
+    return nil unless record && record['PC_Compounds']
+
+    Array(record['PC_Compounds'])
+  end
+
+  # A malformed entry -- one that is not a Hash at all, an absent or wrongly typed id, missing
+  # props, a props entry with no urn -- must degrade to the same nil-filled result a Fault
+  # produces, not raise up through PubchemLookupJob. Every read goes through dig_hash for that
+  # reason; see its note on why Hash#dig alone is not enough.
+  #
+  # @param rec [Object] one PC_Compounds entry
+  # @return [Hash, nil] the interpreted result, or nil for an entry that is not a Hash
+  def self.compound_result(rec)
+    return unless rec.is_a?(Hash)
+
+    result = empty_result
+    result[:cid] = dig_hash(rec, 'id', 'id', 'cid')
+    Array(rec['props']).each { |prop| apply_prop(result, prop) }
+    result
+  end
+
+  # Built fresh per call rather than shared: apply_prop mutates +names+ in place.
+  #
+  # @return [Hash] the nil-filled shape every caller sees when PubChem has nothing to say
+  def self.empty_result
+    {
       cid: nil,         # optional
       iupac_name: nil,
       names: [],
       topological: nil, # optional
-      log_p: nil        # optional
+      log_p: nil,       # optional
     }
+  end
 
-    results=[]
+  # Walks +keys+ only while each level is genuinely a Hash.
+  #
+  # Hash#dig guards a *missing* key but still raises TypeError when an intermediate value is
+  # present and not diggable (+{'id' => 'unknown'}.dig('id', 'id')+), which is exactly the shape
+  # a malformed PubChem record arrives in.
+  #
+  # @param hash [Object] any value; a non-Hash yields nil rather than raising
+  # @return [Object, nil] the nested value, or nil if any level is absent or not a Hash
+  def self.dig_hash(hash, *keys)
+    keys.reduce(hash) do |node, key|
+      return nil unless node.is_a?(Hash)
 
-    unless record && record['PC_Compounds']
-      return result unless as_array
-      return results
+      node[key]
     end
+  end
 
-    record['PC_Compounds'].each do |rec|
-      result = {
-        cid: nil,         # optional
-        iupac_name: nil,
-        names: [],
-        topological: nil, # optional
-        log_p: nil        # optional
-      }
+  # Folds one PC_Compounds property into +result+, in place. A property whose urn carries no
+  # label is skipped: it identifies nothing, and PubChem sends no such entry for a well-formed
+  # record.
+  #
+  # @param result [Hash] mutated in place
+  # @param prop [Object] one entry of the record's +props+; anything malformed is ignored
+  # @return [void]
+  def self.apply_prop(result, prop)
+    label = dig_hash(prop, 'urn', 'label')
+    return if label.nil?
 
-      # dig, not chained [], and Array(...) below: a malformed PC_Compounds record (empty id,
-      # missing props) must degrade to the same nil-filled result a Fault produces, not raise
-      # NoMethodError up through PubchemLookupJob.
-      result[:cid] = rec.dig('id', 'id', 'cid')
-
-      Array(rec['props']).each do |prop|
-        if (prop['urn']['label'] == 'IUPAC Name' && prop['urn']['name'] == 'Preferred')
-          result[:iupac_name] = prop['value']['sval'].to_s
-        end
-
-        if (prop['urn']['label'] == 'IUPAC Name')
-          result[:names] << prop['value']['sval'].to_s
-          result[:names].uniq!
-        end
-
-        if (prop['urn']['label'] == 'Topoligical')
-          result[:topological] = prop['value']['fval'].to_s
-        end
-
-        if (prop['urn']['label'] == 'Log P')
-          result[:log_p] = prop['value']['fval'].to_s
-        end
-
-        if (prop['urn']['label'] == 'InChIKey')
-          result[:inchikey] = prop['value']['sval'].to_s
-        end
-      end
-
-      results << result
-    end
-
-    if !as_array
-      results[0]
-    else
-      results
+    case label
+    when 'IUPAC Name'
+      sval = dig_hash(prop, 'value', 'sval').to_s
+      result[:iupac_name] = sval if dig_hash(prop, 'urn', 'name') == 'Preferred'
+      result[:names] << sval
+      result[:names].uniq!
+    when 'Topoligical'
+      result[:topological] = dig_hash(prop, 'value', 'fval').to_s
+    when 'Log P'
+      result[:log_p] = dig_hash(prop, 'value', 'fval').to_s
+    when 'InChIKey'
+      result[:inchikey] = dig_hash(prop, 'value', 'sval').to_s
     end
   end
 

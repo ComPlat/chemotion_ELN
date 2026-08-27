@@ -66,5 +66,48 @@ RSpec.describe Chemotion::PubchemService do
 
       expect(described_class.interpret_record(fault_record, true)).to eq([])
     end
+
+    # Hash#dig guards a missing key but still raises TypeError on an intermediate value that is
+    # present and not diggable, so the id is type-checked and not merely dug.
+    it 'does not raise on a record whose id is not a hash' do
+      malformed = { 'PC_Compounds' => [{ 'id' => 'unknown', 'props' => [] }] }
+
+      expect { described_class.interpret_record(malformed) }.not_to raise_error
+      expect(described_class.interpret_record(malformed)[:cid]).to be_nil
+    end
+
+    # The realistic malformed shape: the record resolves, but one property carries no urn.
+    it 'skips a props entry with no urn instead of raising' do
+      malformed = {
+        'PC_Compounds' => [{
+          'id' => { 'id' => { 'cid' => 962 } },
+          'props' => [
+            { 'value' => { 'sval' => 'orphan' } },
+            { 'urn' => { 'label' => 'InChIKey' }, 'value' => { 'sval' => 'XLYOFNOQVPJJNP-UHFFFAOYSA-N' } },
+          ],
+        }],
+      }
+
+      result = described_class.interpret_record(malformed)
+
+      expect(result[:inchikey]).to eq('XLYOFNOQVPJJNP-UHFFFAOYSA-N')
+    end
+
+    it 'reads a labelled props entry with no value as an empty string rather than raising' do
+      malformed = {
+        'PC_Compounds' => [{
+          'id' => { 'id' => { 'cid' => 962 } },
+          'props' => [{ 'urn' => { 'label' => 'IUPAC Name', 'name' => 'Preferred' } }],
+        }],
+      }
+
+      expect(described_class.interpret_record(malformed)[:iupac_name]).to eq('')
+    end
+
+    it 'skips a PC_Compounds entry that is not a hash' do
+      malformed = { 'PC_Compounds' => ['nonsense', { 'id' => { 'id' => { 'cid' => 7 } }, 'props' => [] }] }
+
+      expect(described_class.interpret_record(malformed, true).map { |r| r[:cid] }).to eq([7])
+    end
   end
 end

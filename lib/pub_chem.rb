@@ -188,8 +188,26 @@ module PubChem
     fault = result['Fault'] || result[:Fault]
     return false unless fault
 
-    Rails.logger.warn "PubChem API error: #{fault['Code'] || fault[:Code]} - #{fault['Message'] || fault[:Message]}"
+    code = fault['Code'] || fault[:Code]
+    message = fault['Message'] || fault[:Message]
+    log_fault(code, message)
     true
+  end
+
+  # "Not found" is PubChem's routine answer, not an error: for the pug_view endpoint it is the
+  # only way it says "no data for this cid", and a PubchemLookupJob sweep asks about in-house
+  # compounds PubChem has never heard of. Logging one warn per molecule per sweep for that
+  # buries the faults that do warrant attention (throttling, server errors), so the expected
+  # codes drop to info and everything else keeps warn.
+  BENIGN_FAULT_CODES = %w[PUGVIEW.NotFound PUGREST.NotFound].freeze
+
+  def self.log_fault(code, message)
+    line = "PubChem API error: #{code} - #{message}"
+    if BENIGN_FAULT_CODES.include?(code)
+      Rails.logger.info line
+    else
+      Rails.logger.warn line
+    end
   end
 
   def self.extract_smiles_property(result)
