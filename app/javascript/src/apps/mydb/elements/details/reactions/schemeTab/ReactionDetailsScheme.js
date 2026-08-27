@@ -709,6 +709,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
+    // Snapshot the reference amount before any mutation so solvent volumes can be scaled by
+    // the reference ratio under locked equivalents (see scaleSolventVolumesForReferenceChange).
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
     // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
     // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
     // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
@@ -730,6 +733,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
       // locked-equivalent propagation has updated the dependent sample amounts.
+      updatedReaction.scaleSolventVolumesForReferenceChange(previousReferenceAmountMol);
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
@@ -754,6 +758,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
+    // Snapshot the reference amount before any mutation so solvent volumes can be scaled by
+    // the reference ratio under locked equivalents (see scaleSolventVolumesForReferenceChange).
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
@@ -792,6 +799,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
       // Running this earlier would use stale amount_mol values for the other samples.
+      updatedReaction.scaleSolventVolumesForReferenceChange(previousReferenceAmountMol);
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
@@ -1774,19 +1782,23 @@ export default class ReactionDetailsScheme extends React.Component {
             }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
+            // Solvents are scaled by volume ratio (Reaction#scaleSolventVolumesForReferenceChange),
+            // not through moles, so they are excluded from the mole-based locked scale-up here.
+            if (referenceMaterial && referenceMaterial.amount_value
+              && updatedSample.gas_type !== 'feedstock'
+              && sample.gas_type !== 'gas'
+              && materialGroup !== 'solvents') {
               const newAmountMol = sample.equivalent * referenceMaterial.amount_mol;
               this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
             }
           }
         }
 
-        // Solvents are included here so that editing a solvent volume (Eq unlocked) derives
-        // its equivalent from the real amount (amount_mol / reference.amount_mol). Otherwise
-        // the updated-sample branch above leaves it as amount_g / maxAmount, which is NaN for
-        // a solvent (no maxAmount); the next locked scale-up then multiplies NaN by the
-        // reference and shows the volume as "n.d.". This block is skipped while Eq is locked,
-        // so the solvent still scales from its (now valid) equivalent under lock.
+        // A solvent volume edit (Eq unlocked) derives the solvent's equivalent from its real
+        // amount (amount_mol / reference.amount_mol). Without this the updated-sample branch
+        // above leaves it as amount_g / maxAmount, which is NaN for a solvent (no maxAmount).
+        // The equivalent is display-only for solvents; under lock the solvent volume is scaled
+        // by reference ratio in Reaction#scaleSolventVolumesForReferenceChange, not from here.
         if ((materialGroup === 'starting_materials'
           || materialGroup === 'reactants'
           || materialGroup === 'solvents') && !sample.reference && !lockEquivColumn) {
