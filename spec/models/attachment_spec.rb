@@ -749,6 +749,26 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when the resolved match is an ancestor of self, not a descendant' do
+        # An nmrium upload whose edited jcamp child derives, on a re-edit that also produces
+        # an nmrium output, a filename identical to the root's own ('<base>.nmrium') - the
+        # lineage lookup then resolves att to that ancestor, not a descendant of self.
+        let!(:nmrium_root) { create(:attachment, filename: 'spectra_file.nmrium', aasm_state: 'nmrium') }
+        let!(:attachment) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: nmrium_root.attachable,
+                         aasm_state: 'edited', parent: nmrium_root
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, '', false, 'nmrium') }
+
+        it 'reuses the ancestor without raising or reparenting it onto its own descendant' do
+          expect { new_attachment }.not_to raise_error
+          expect(new_attachment.id).to eq nmrium_root.id
+          expect(new_attachment.parent_id).to be_nil
+        end
+      end
+
       context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
         let(:attachment) { create(:attachment, :with_spectra_file) }
         let!(:unrelated_source) do
@@ -1055,6 +1075,93 @@ RSpec.describe Attachment do
 
         expect(attachment.aasm_state).to eq('edited')
       end
+    end
+  end
+
+  describe '#delete_related_edit_peak' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_edit) do
+      create(
+        :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                     aasm_state: 'edited', parent: unrelated_source
+      )
+    end
+
+    it "does not delete an unrelated lineage's row that happens to share the same filename stem" do
+      attachment.send(:delete_related_edit_peak, attachment)
+
+      expect(described_class.exists?(unrelated_edit.id)).to be true
+    end
+  end
+
+  describe '#delete_related_imgs' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_img) do
+      create(
+        :attachment, filename: 'spectra_file.edit.png', attachable: attachment.attachable,
+                     aasm_state: 'image', parent: unrelated_source
+      )
+    end
+    let(:kept_img) do
+      create(:attachment, filename: 'spectra_file.edit.png', attachable: attachment.attachable, aasm_state: 'image')
+    end
+
+    it "does not delete an unrelated lineage's image that happens to share the same filename stem" do
+      attachment.send(:delete_related_imgs, kept_img)
+
+      expect(described_class.exists?(unrelated_img.id)).to be true
+    end
+  end
+
+  describe '#delete_related_csv' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_csv) do
+      create(
+        :attachment, filename: 'spectra_file.edit.csv', attachable: attachment.attachable,
+                     aasm_state: 'csv', parent: unrelated_source
+      )
+    end
+    let(:kept_csv) do
+      create(:attachment, filename: 'spectra_file.edit.csv', attachable: attachment.attachable, aasm_state: 'csv')
+    end
+
+    it "does not delete an unrelated lineage's csv that happens to share the same filename stem" do
+      attachment.send(:delete_related_csv, kept_csv)
+
+      expect(described_class.exists?(unrelated_csv.id)).to be true
+    end
+  end
+
+  describe '#delete_related_nmrium' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_nmrium) do
+      create(
+        :attachment, filename: 'spectra_file.edit.nmrium', attachable: attachment.attachable,
+                     aasm_state: 'nmrium', parent: unrelated_source
+      )
+    end
+    let(:kept_nmrium) do
+      create(
+        :attachment, filename: 'spectra_file.edit.nmrium', attachable: attachment.attachable, aasm_state: 'nmrium'
+      )
+    end
+
+    it "does not delete an unrelated lineage's nmrium file that happens to share the same filename stem" do
+      attachment.send(:delete_related_nmrium, kept_nmrium)
+
+      expect(described_class.exists?(unrelated_nmrium.id)).to be true
     end
   end
 
