@@ -205,7 +205,8 @@ class Import::ImportSdf < Import::ImportSamples
   # per 50 molecules — 1000 of them for a 50k import, the shape of a defect already fixed once.
   #
   # This works only because phase 1 has no surrounding transaction and each molecule commits on
-  # its own, so a worker on another connection can see them. The xlsx/csv path cannot do this —
+  # its own, so a worker on another connection can see them. The xlsx/csv path now commits per row
+  # too and could schedule earlier; it deliberately keeps one job for the whole file instead —
   # see the note on {Import::ImportSamples#write_to_db}.
   #
   # @param data [Array<String>] raw molfile records, consumed destructively

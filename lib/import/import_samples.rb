@@ -442,77 +442,40 @@ module Import
       molecule.nil?
     end
 
-    # Enrichment is scheduled once, in the ensure below, and cannot be started earlier here the
-    # way Import::ImportSdf#find_or_create_mol_by_batch does.
+    # One row is the atomic unit: #validate_sample_and_save writes the sample, its two collection
+    # joins, the chemical, the components and the polymer residue, and nothing spans rows. Each row
+    # therefore gets its own transaction in #write_row, and there is deliberately no transaction
+    # wider than that -- a failing row costs that row and is reported on its own, which is what the
+    # import report promises. BATCH_SIZE is iteration only, so a large file is not held in memory
+    # all at once.
     #
-    # The reason is the transaction below: every row is written inside one transaction, so no
-    # molecule is visible to another connection until the whole import commits. A job enqueued
-    # mid-loop would find nothing — and could not even run, since its delayed_jobs row would be
-    # written inside the same uncommitted transaction. Starting enrichment early here would mean
-    # committing in chunks, which would change this import from all-or-nothing to partially
-    # applied on failure. That is a deliberate trade not made.
-    # Rows are written in batches, each in its own transaction, and each row inside a savepoint.
+    # Enrichment is still scheduled once, in the ensure below, rather than per batch the way
+    # Import::ImportSdf#find_or_create_mol_by_batch does it: rows commit as they go now, so an
+    # earlier schedule would work, but one job for the whole file is cheaper than one per batch and
+    # the timestamp window covers everything either way.
     def write_to_db
       started_at = Time.current
       @defer_pubchem_lookup = true
-      unprocessable_count = 0
 
-      # Resolve CAS numbers before opening any transaction
+      # Resolve CAS numbers once up front rather than per row.
       prefetch_cas_molecules
 
       rows.each_slice(BATCH_SIZE).with_index do |batch, batch_index|
-        unprocessable_count += write_batch(batch, batch_index * BATCH_SIZE, batch_index)
+        write_batch(batch, batch_index * BATCH_SIZE)
       end
-
-      unprocessable_count
     ensure
       Molecule.schedule_pubchem_lookup_since(started_at)
     end
 
-    # One transaction per batch. Returns how many of its rows could not be imported.
-    def write_batch(batch, offset, batch_index)
-      failed = 0
-      ActiveRecord::Base.transaction do
-        batch.each_with_index do |row, position|
-          failed += 1 unless write_row(row, offset + position)
-        end
-      end
-      failed
-    rescue StandardError => e
-      # The batch transaction itself failed rather than an individual row. Report this batch and
-      # carry on with the next one instead of discarding the whole import.
-      Rails.logger.error("Import #{@file_name}: batch #{batch_index} failed: #{e.class}: #{e.message}")
-      discard_batch_results(batch, offset)
-      mark_batch_unprocessable(batch, offset)
-    end
-
-    # Every savepoint in the batch rolled back with the batch transaction, so what its rows recorded on
-    # the way through has to go with them -- otherwise the import counts samples, and hands back sample
-    # ids, for records that no longer exist.
-    def discard_batch_results(batch, offset)
-      indexes = (offset...(offset + batch.size))
-      numbers = indexes.map { |index| sheet_row(index) }
-
-      @processed.reject! { |entry| numbers.include?(entry[:row]) }
-      @updated_rows.reject! { |number| numbers.include?(number) }
-      @decoupled_fallbacks.reject! { |fallback| indexes.include?(fallback[:index]) }
-      # Per-cell notes too: kept on a rolled-back row they blame a cell that caused nothing.
-      numbers.each { |number| @field_notes.delete(number) }
-      indexes.each { |index| @structure_errors.delete(index) }
-    end
-
-    # Flags every not-yet-reported row in a batch as unprocessable; returns how many were added.
-    def mark_batch_unprocessable(batch, offset)
-      batch.each_with_index.count do |row, position|
-        index = offset + position
-        next false if @unprocessable.any? { |u| u[:index] == index }
-
-        @unprocessable << { row: row, index: index }
-        true
+    # Writes one slice of rows. Every row contains its own failure (see #write_row), so this neither
+    # opens a transaction nor rescues: there is nothing left for a batch-level rescue to contain.
+    def write_batch(batch, offset)
+      batch.each_with_index do |row, position|
+        write_row(row, offset + position)
       end
     end
 
-    # Writes one row inside a savepoint. Returns true when the sample was saved
+    # Writes one row in its own transaction. Returns true when the sample was saved.
     def write_row(row, index)
       saved = false
       @current_row_number = sheet_row(index)
@@ -520,11 +483,12 @@ module Import
         update_row(row, index)
         saved = true
       else
-        # Native OpenBabel work in process_row_data can run seconds per row: run it with the
-        # connection released and outside any transaction, so a reaped connection is
-        # re-checked-out rather than failing every query that follows. The transaction below
-        # wraps only the write. Same reasoning as Import::ImportSdf#create_samples.
-        ActiveRecord::Base.connection_pool.release_connection
+        # process_row_data's native OpenBabel work can run seconds per row and runs before the
+        # transaction opens, so no connection is held in an open transaction across it. The
+        # transaction below wraps only the write.
+        #
+        # requires_new: nothing wraps this today (see #write_batch), so it opens a real
+        # transaction; it is kept so the row stays atomic if a caller ever does wrap it.
         molecule, molfile = process_row_data(row, index)
         ActiveRecord::Base.transaction(requires_new: true) do
           unless molecule_not_exist(molecule, row, index)
@@ -552,10 +516,8 @@ module Import
     # which is what lets the retry sheet ship a row with two fields filled in and everything else empty.
     def update_row(row, index)
       sample = updatable_sample(sample_id_value(row))
-      # recouple_structure's native OpenBabel work can run seconds per row: resolve it with the
-      # connection released and outside the transaction below, same reasoning as write_row's
-      # create path.
-      ActiveRecord::Base.connection_pool.release_connection
+      # recouple_structure's native OpenBabel work can run seconds per row and, like write_row's
+      # create path, runs before the transaction opens rather than inside it.
       apply_present_fields(sample, row)
       recouple_structure(sample, row, index)
       sample.validate_stereo(stereo_from_row(row))
@@ -1114,7 +1076,9 @@ module Import
     def create_components(sample, sample_components_data)
       xlsx.default_sheet = 'sample_components'
 
-      # requires_new: this runs nested inside write_row's own savepoint.
+      # requires_new: this runs nested inside write_row's own per-row transaction, so it is a
+      # savepoint -- a component failure rolls back this sample's components without aborting
+      # the row's transaction.
       ActiveRecord::Base.transaction(requires_new: true) do
         sample_components_data.each_with_index do |component_data, index|
           molecule = process_component_row_data(component_data, index)

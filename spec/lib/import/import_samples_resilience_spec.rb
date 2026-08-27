@@ -192,10 +192,11 @@ RSpec.describe Import::ImportSamples do
     end
   end
 
+  # BATCH_SIZE is iteration only: there is no transaction wider than a single row, so a batch is not
+  # a unit of atomicity and slicing must not change what gets written.
   describe 'batching' do
-    it 'commits in batches of BATCH_SIZE instead of one transaction for the file' do
+    it 'slices the file into BATCH_SIZE chunks without changing how often rows are written' do
       stub_const('Import::ImportSamples::BATCH_SIZE', 2)
-      # 6 rows / 2 = 3 batch transactions, each with one savepoint per row.
       allow(importer).to receive(:write_row).and_return(true)
       importer.process
       expect(importer).to have_received(:write_row).exactly(6).times
@@ -206,39 +207,39 @@ RSpec.describe Import::ImportSamples do
       expect { importer.process }.to change(Sample, :count).by(6)
     end
 
-    it 'keeps earlier batches when a later batch fails wholesale' do
-      stub_const('Import::ImportSamples::BATCH_SIZE', 2)
-      calls = 0
-      allow(importer).to receive(:write_row).and_wrap_original do |original, *args|
-        calls += 1
-        raise ActiveRecord::StatementInvalid, 'batch blew up' if calls == 5
-
-        original.call(*args)
-      end
-      result = importer.process
-      # First two batches (4 rows) survive; the third is reported instead of discarding everything.
-      expect(Sample.count).to eq(4)
-      expect(result[:status]).to eq('warning')
-    end
-
-    # The failing batch's savepoints roll back with it. Its first row had already been written and
-    # recorded, so without discarding that record the result counted a sample -- and handed back its
-    # id -- for a row the database no longer holds.
-    it 'counts only the rows that survived the failed batch' do
+    it 'commits each row rather than a batch, so a row never takes its batch-mates with it' do
       stub_const('Import::ImportSamples::BATCH_SIZE', 3)
       calls = 0
       allow(importer).to receive(:write_row).and_wrap_original do |original, *args|
         calls += 1
-        # Second row of the second batch, so its first row has already been recorded.
-        raise ActiveRecord::StatementInvalid, 'batch blew up' if calls == 5
+        # Second row of the second batch, so its first row has already been written and committed.
+        raise ActiveRecord::StatementInvalid, 'row blew up' if calls == 5
 
         original.call(*args)
       end
       result = importer.process
 
-      expect(Sample.count).to eq(3)
-      expect(result[:imported_count]).to eq(3)
-      expect(Sample.where(id: result[:data].pluck(:id)).count).to eq(3)
+      # 4, not 3: row 4 committed on its own and is not rolled back by row 5 failing beside it.
+      expect(Sample.count).to eq(4)
+      expect(result[:imported_count]).to eq(4)
+      expect(Sample.where(id: result[:data].pluck(:id)).count).to eq(4)
+    end
+
+    # #write_row contains every StandardError itself, so nothing is left for a batch-level rescue to
+    # catch. This stubs past that rescue to prove that even then, what already committed stays.
+    it 'keeps every row committed before an error escapes write_row entirely' do
+      stub_const('Import::ImportSamples::BATCH_SIZE', 2)
+      calls = 0
+      allow(importer).to receive(:write_row).and_wrap_original do |original, *args|
+        calls += 1
+        raise ActiveRecord::StatementInvalid, 'row blew up' if calls == 5
+
+        original.call(*args)
+      end
+      result = importer.process
+
+      expect(Sample.count).to eq(4)
+      expect(result[:status]).to eq('warning')
     end
   end
 
