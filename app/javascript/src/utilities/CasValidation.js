@@ -42,7 +42,7 @@ const validateCas = (rawCas, boolean) => {
     }
     return match ? match[0] : 'smile';
   }
-  return rawCas;
+  return cas;
 };
 
 export {
