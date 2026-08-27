@@ -22,7 +22,28 @@ module Import
     FLOAT_COLUMNS = %w[purity refractive_index molecular_mass real_amount_value target_amount_value].freeze
     UNIT_COLUMNS = %w[real_amount_unit target_amount_unit].freeze
 
-    VALID_UNITS = %w[g mg µg ug kg l ml µl ul mol mmol].freeze
+    # The only units the application actually converts: Sample#convertToGram and #amount_l
+    # (app/javascript/src/models/Sample.js) switch on exactly these and read anything else as the
+    # base unit through their +default+ branch.
+    CONVERTIBLE_UNITS = %w[g mg l mol].freeze
+
+    # Unit spellings a spreadsheet may reasonably carry that the application cannot convert, and how
+    # to rescale an amount written in one onto a unit it can. Without this a "5 kg" cell stored its
+    # unit verbatim and was then read as 5 g -- wrong by three orders of magnitude, silently.
+    # Keyed by the canonical spelling #unit returns.
+    UNIT_RESCALE = {
+      'kg' => ['g', 1_000.0],
+      'µg' => ['mg', 0.001],
+      'ug' => ['mg', 0.001],
+      'ml' => ['l', 0.001],
+      'µl' => ['l', 0.000_001],
+      'ul' => ['l', 0.000_001],
+      'mmol' => ['mol', 0.001],
+    }.freeze
+
+    # Derived, not written out again: the accepted spellings are exactly what the app converts plus
+    # what #normalize_amount knows how to rescale, so the two cannot drift apart.
+    VALID_UNITS = (CONVERTIBLE_UNITS + UNIT_RESCALE.keys).freeze
 
     # What the samples table already holds for a melting or boiling point. An
     # unreadable one is recorded the same way -- "unknown" -- rather than as a wrong number.
@@ -70,6 +91,26 @@ module Import
       def handles?(db_column)
         RANGE_COLUMNS.include?(db_column) || FLOAT_COLUMNS.include?(db_column) ||
           UNIT_COLUMNS.include?(db_column) || db_column == 'density'
+      end
+
+      # Rescales an amount written in a unit the application cannot convert onto one it can.
+      #
+      # #coerce works a cell at a time and so cannot do this: the value and the unit live in two
+      # columns, and rescaling needs both. The caller applies it once the whole row is assigned.
+      #
+      # @param value [Numeric, nil] the amount, already coerced by {.float}
+      # @param unit [String, nil] the unit, already canonicalised by {.unit}
+      # @return [Array(Numeric, String, String)] +[value, unit, note]+ when the pair was rescaled
+      # @return [Array(Numeric, String, nil)] +[value, unit, nil]+ when nothing had to change
+      def normalize_amount(value, unit)
+        target, factor = UNIT_RESCALE[unit.to_s]
+        return [value, unit, nil] if target.nil?
+        # The unit is still canonicalised with no value to rescale, so a value added later is not
+        # read against a unit the application does not understand.
+        return [value, target, nil] if value.nil?
+
+        rescaled = value.to_f * factor
+        [rescaled, target, "#{unit} is not a unit the ELN calculates with, read as #{rescaled} #{target}"]
       end
 
       # A melting or boiling point, as a numrange literal.

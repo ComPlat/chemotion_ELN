@@ -117,4 +117,51 @@ RSpec.describe Import::ValueCoercion do
       expect(described_class).not_to be_handles('description')
     end
   end
+
+  # Sample#convertToGram switches on g/mg/l/mol and reads anything else as the base unit through its
+  # default branch, so an accepted-but-unconvertible unit has to be rescaled before it is stored.
+  describe '.normalize_amount' do
+    [
+      [5.0, 'kg', 5000.0, 'g'],
+      [250.0, 'µg', 0.25, 'mg'],
+      [250.0, 'ug', 0.25, 'mg'],
+      [500.0, 'ml', 0.5, 'l'],
+      [500.0, 'µl', 0.0005, 'l'],
+      [500.0, 'ul', 0.0005, 'l'],
+      [20.0, 'mmol', 0.02, 'mol'],
+    ].each do |value, unit, expected_value, expected_unit|
+      it "reads #{value} #{unit} as #{expected_value} #{expected_unit}" do
+        got_value, got_unit, note = described_class.normalize_amount(value, unit)
+
+        expect([got_value, got_unit]).to eq([expected_value, expected_unit])
+        expect(note).to include(unit)
+      end
+    end
+
+    Import::ValueCoercion::CONVERTIBLE_UNITS.each do |unit|
+      it "leaves #{unit} alone, since the application converts it" do
+        expect(described_class.normalize_amount(5.0, unit)).to eq([5.0, unit, nil])
+      end
+    end
+
+    it 'leaves a unit it does not know how to rescale alone' do
+      expect(described_class.normalize_amount(5.0, nil)).to eq([5.0, nil, nil])
+    end
+
+    it 'canonicalises the unit without a note when there is no value to rescale' do
+      expect(described_class.normalize_amount(nil, 'kg')).to eq([nil, 'g', nil])
+    end
+
+    it 'accepts exactly the units the application converts plus the ones it can rescale' do
+      expect(Import::ValueCoercion::VALID_UNITS).to match_array(
+        Import::ValueCoercion::CONVERTIBLE_UNITS + Import::ValueCoercion::UNIT_RESCALE.keys,
+      )
+    end
+
+    it 'only ever rescales onto a unit the application converts' do
+      targets = Import::ValueCoercion::UNIT_RESCALE.values.map(&:first)
+
+      expect(targets.uniq).to all(be_in(Import::ValueCoercion::CONVERTIBLE_UNITS))
+    end
+  end
 end

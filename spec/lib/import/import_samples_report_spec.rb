@@ -197,6 +197,54 @@ RSpec.describe Import::ImportSamples do
     end
   end
 
+  # 'kg' and 'ml' are units a spreadsheet may reasonably carry, but Sample#convertToGram switches on
+  # g/mg/l/mol only and reads anything else as the base unit through its default branch. Stored
+  # verbatim, 5 kg would compute as 5 g.
+  describe 'an amount in a unit the application cannot convert' do
+    let(:rows) do
+      [
+        ['Kilograms', 'CCO', nil, nil, nil, nil, '5', 'kg'],
+        ['Millilitres', 'CCN', nil, nil, nil, nil, '500', 'ml'],
+        ['Already grams', 'CCC', nil, nil, nil, nil, '10', 'g'],
+      ]
+    end
+
+    it 'rescales the amount onto a unit the application converts' do
+      result
+      expect(Sample.find_by(name: 'Kilograms')).to have_attributes(
+        real_amount_value: 5000.0, real_amount_unit: 'g'
+      )
+    end
+
+    it 'rescales a volume the same way' do
+      result
+      expect(Sample.find_by(name: 'Millilitres')).to have_attributes(
+        real_amount_value: 0.5, real_amount_unit: 'l'
+      )
+    end
+
+    it 'leaves an amount already in a convertible unit alone' do
+      result
+      expect(Sample.find_by(name: 'Already grams')).to have_attributes(
+        real_amount_value: 10.0, real_amount_unit: 'g'
+      )
+    end
+
+    it 'says so rather than rescaling in silence' do
+      result
+      report_sheet(result[:report_attachment_id]) do |book|
+        expect(book.row(2)[-2]).to include('real unit', 'kg')
+      end
+    end
+
+    it 'says nothing about the row that needed no rescaling' do
+      result
+      report_sheet(result[:report_attachment_id]) do |book|
+        expect(book.row(4)[-2].to_s).not_to include('real unit')
+      end
+    end
+  end
+
   # The report holds the same values plus the verdict, so the uploaded file no longer has a reason to
   # stay in the Inbox next to it.
   describe 'the uploaded file' do

@@ -544,8 +544,7 @@ module Import
         next if row[field].to_s.strip.empty?
         next if report_only_header?(field)
 
-        map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
-        process_fields(sample, map_column, field, row, sample.molecule)
+        process_fields(sample, map_column_for(field), field, row, sample.molecule)
       end
       handle_sample_solvent_column(sample, row) if row['solvent'].present?
     end
@@ -900,17 +899,42 @@ module Import
       sample[db_column] = value || ''
     end
 
-    # rubocop:disable Style/StringLiterals
     def process_fields(sample, map_column, field, row, molecule)
-      array = ["\"cas\""]
-      conditions = map_column.nil? || array.include?(map_column[1])
-      db_column = conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
+      db_column = db_column_for(field, map_column)
       if field == 'molecule name' && row[field].present?
         molecule.create_molecule_name_by_user(row[field], current_user_id)
       end
       process_sample_fields(sample, db_column, field, row)
     end
+
+    # The samples column a spreadsheet header writes to. Single place this mapping is spelled out, so
+    # #header_for can invert it without the two drifting.
+    #
+    # @param field [String] the header as written in the sheet
+    # @param map_column [Array, nil] the ReportHelpers::EXP_MAP_ATTR entry for it, if any
+    # @return [String] the samples column name
+    # rubocop:disable Style/StringLiterals
+    def db_column_for(field, map_column)
+      array = ["\"cas\""]
+      conditions = map_column.nil? || array.include?(map_column[1])
+      conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
+    end
     # rubocop:enable Style/StringLiterals
+
+    # The ReportHelpers::EXP_MAP_ATTR entry for a sheet header, as #process_all_rows looks it up.
+    def map_column_for(field)
+      ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
+    end
+
+    # Inverse of #db_column_for: the header the user actually wrote for a samples column, so a note
+    # about 'real_amount_unit' names the 'real unit' column they can go and correct. Falls back to
+    # the column name when this sheet has no header mapping to it.
+    def header_for(db_column)
+      @header_by_db_column ||= header.reverse_each.to_h do |field|
+        [db_column_for(field, map_column_for(field)), field]
+      end
+      @header_by_db_column[db_column] || db_column
+    end
 
     # Returns [value, note]. The note is nil when the cell was usable as written, and otherwise says
     # what had to be done to it -- see Import::ValueCoercion.
@@ -1022,6 +1046,7 @@ module Import
 
     def validate_sample_and_save(sample, stereo, row, index = nil)
       handle_sample_solvent_column(sample, row)
+      normalize_amount_units(sample, row)
       sample.validate_stereo(stereo)
       sample.collections << @collection
       sample.collections << @all_collection
@@ -1034,6 +1059,24 @@ module Import
       create_polymer_residue_if_needed(sample, row)
       processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
                      row: sheet_row(index))
+    end
+
+    # An amount is a value and a unit in two columns, and the importer coerces one cell at a time, so
+    # the pair can only be reconciled once the whole row has been assigned. Runs before the save so
+    # what reaches the database is already in a unit Sample#convertToGram understands.
+    def normalize_amount_units(sample, row)
+      ValueCoercion::UNIT_COLUMNS.each do |unit_column|
+        value_column = unit_column.sub(/_unit\z/, '_value')
+        value, unit, note = ValueCoercion.normalize_amount(sample[value_column], sample[unit_column])
+        next if unit == sample[unit_column]
+
+        sample[value_column] = value
+        sample[unit_column] = unit
+        next if note.nil?
+
+        unit_header = header_for(unit_column)
+        note_field_issue(unit_header, row_value_case_insensitive(row, unit_header), note)
+      end
     end
 
     def create_polymer_residue_if_needed(sample, row)
@@ -1139,8 +1182,7 @@ module Import
     def sample_save(row, molfile, molecule, index = nil, force_decoupled: false)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       header.each do |field|
-        map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
-        process_fields(sample, map_column, field, row, molecule)
+        process_fields(sample, map_column_for(field), field, row, molecule)
       end
       sample.decoupled = true if force_decoupled
       validate_sample_and_save(sample, stereo_from_row(row), row, index)
