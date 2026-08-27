@@ -47,12 +47,11 @@ describe('ReactionUpdateHandler#onChangeRole', () => {
   });
 });
 
-describe('ReactionUpdateHandler#resolveReactionVolumeForConcentrationOrWarn', () => {
 // Regression tests for Bug 7:
 // Yield corrupted when a non-reference reactant amount changes in a polymer surface-chemistry reaction.
 // Fix: updatedSamplesForAmountChange() now routes polymer products through checkMassPolymer
 //      instead of the MW-based maxAmount formula when the product is NOT the updated sample.
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer product guard', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — polymer product guard', () => {
   let gasStoreStub;
 
   // Polymer reference: surface-loaded starting material (is_partial=true)
@@ -140,7 +139,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const product = makePolymerProduct();
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       reactant,
@@ -156,7 +155,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const product = makePolymerProduct();
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       reactant,
@@ -178,7 +177,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     });
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [normalProduct],
       reactant,
@@ -194,7 +193,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const ctx = buildCtx(ref);
     const product = makePolymerProduct();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       product,  // updatedSample IS the polymer product
@@ -213,7 +212,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
 // the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
 // The correction block now includes solvents, so the equivalent is always a valid
 // amount_mol / reference.amount_mol ratio before it is used to scale.
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — solvent volume', () => {
   let gasStoreStub;
 
   const buildCtx = ({ lockEquivColumn = false } = {}) => ({
@@ -223,7 +222,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
         updateReferenceAmountForLockedEquivalents: sinon.stub(),
       },
     },
-    state: { lockEquivColumn },
+    lockEquivColumn,
   });
 
   const makeSolvent = (overrides = {}) => ({
@@ -254,7 +253,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: true });
     const solvent = makeSolvent({ equivalent: 0.5 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       updatedReference,
@@ -272,7 +271,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: false });
     const solvent = makeSolvent({ equivalent: 999 });
 
-    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    const result = ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       updatedReference,
@@ -292,7 +291,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: false });
     const solvent = makeSolvent({ equivalent: NaN, maxAmount: undefined });
 
-    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    const result = ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       solvent, // the solvent itself is the updated sample (its own volume was edited)
@@ -310,7 +309,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
-describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard', () => {
+describe('ReactionUpdateHandler#calculateEquivalentForProduct — polymer guard', () => {
   let gasStoreStub;
 
   const makeRef = () => ({
@@ -358,7 +357,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
       purity: 1,
     };
 
-    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
       ctx,
       polymerProduct,
       ref,
@@ -381,7 +380,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
       purity: 1,
     };
 
-    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
       ctx,
       normalProduct,
       ref,
@@ -393,7 +392,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
 });
 
 // B3 regression: checkMassPolymer must not write Infinity/NaN when product has no mass
-describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () => {
+describe('ReactionUpdateHandler#checkMassPolymer — zero amount_g guard', () => {
   const makeRef = () => ({
     amount_mol: 0.025,
     amount_g: 50,
@@ -417,7 +416,7 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
       calculateEquivalent: sinon.stub().returns(0.0),
     };
 
-    ReactionDetailsScheme.prototype.checkMassPolymer.call(ctx, ref, product, {});
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
 
     const loading = product.residues[0].custom_info.loading;
     expect(loading === null || loading === undefined || Number.isFinite(loading)).toBe(true);
@@ -437,14 +436,14 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
       calculateEquivalent: sinon.stub().returns(0.0),
     };
 
-    ReactionDetailsScheme.prototype.checkMassPolymer.call(ctx, ref, product, {});
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
 
     expect(product.equivalent).toBe(0.0);
   });
 });
 
 // B4 regression: yield clamp must not push to 100% when reference has no amount
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
   let gasStoreStub;
 
   beforeEach(() => {
@@ -521,7 +520,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
       contains_residues: false,
     };
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx, [product], reactant, 'products'
     );
 
@@ -562,7 +561,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
       contains_residues: false,
     };
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx, [product], reactant, 'products'
     );
 
@@ -570,7 +569,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
   });
 });
 
-describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', () => {
+describe('ReactionUpdateHandler#resolveReactionVolumeForConcentrationOrWarn', () => {
   it('warns and returns null when no reaction volume can be resolved', () => {
     // Locked volume + use_reaction_volume off + all-solid materials =>
     // reactionVolumeForConcentration() is null. The edit must surface a

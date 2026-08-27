@@ -256,97 +256,16 @@ const NumeralInputWithUnitsCompo = ({
               /> }
               {prefixSwitch}
               {showInfoTooltipRequiredVol && (
-                <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
-                  <Button
-                    variant="light"
-                    size={size}
-                    onClick={() => copyToClipboard(displayValue)}
-                    className="ms-1"
-                  >
-                    <i className="fa fa-clipboard" />
-                  </Button>
-                </OverlayTrigger>
+                <CopyButton
+                  text={displayValue}
+                  placement="bottom"
+                  variant="light"
+                  size={size}
+                  className="ms-1"
+                />
               )}
             </InputGroup>
           );
-      return (
-        <div className={[className, 'numeral-input-with-units'].join(' ')}>
-          {label && <Form.Label className="me-2">{label}</Form.Label>}
-          {showInfoTooltipTotalVol && (
-            <OverlayTrigger
-              placement="top"
-              delay={{ show: 500, hide: 1000 }} // in milliseconds
-              overlay={(
-                <Tooltip id="info-total-volume">
-                  <div>
-                    <p className="mb-2">
-                      It is only a value given manually, i.e. volume by definition — not (re)calculated.
-                    </p>
-                    <p className="mb-2">
-                      Recalculation occurs only when the attributes of a component with a locked total concentration are
-                      modified.
-                    </p>
-                    <a
-                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#-total-volume-and-solvent-addition"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Learn more
-                    </a>
-                  </div>
-                </Tooltip>
-              )}
-            >
-              <i className="ms-1 fa fa-info-circle" />
-            </OverlayTrigger>
-          )}
-          {showInfoTooltipRequiredVol && (
-            <OverlayTrigger
-              placement="top"
-              overlay={(
-                <Tooltip id="info-required-volume">
-                  <p className="mb-2">
-                    It gives the expected total volume without considering eventually given additional solvent volumes
-                    coming from the solvents' table or the stock solution.
-                  </p>
-                  <p>
-                    The required total volume is therefore not the volume to be added but the volume to be reached
-                    referring to the reference compound.
-                  </p>
-                </Tooltip>
-              )}
-            >
-              <i className="ms-1 fa fa-info-circle" />
-            </OverlayTrigger>
-          )}
-          {(() => {
-            const inputGroup = (
-              <InputGroup className="w-100">
-                <Form.Control
-                  type="text"
-                  disabled={inputDisabled}
-                  variant={hasErrorState ? 'danger' : undefined}
-                  size={size}
-                  value={displayValue || ''}
-                  onChange={event => this._handleInputValueChange(event)}
-                  onFocus={event => this._handleInputValueFocus(event)}
-                  onBlur={event => this._handleInputValueBlur(event)}
-                  name={name}
-                  className="flex-grow-1"
-                />
-                {prefixSwitch}
-                {showInfoTooltipRequiredVol && (
-                  <CopyButton
-                    text={displayValue}
-                    placement="bottom"
-                    variant="light"
-                    size={size}
-                    className="ms-1"
-                  />
-                )}
-              </InputGroup>
-            );
-
           return overlayMessage ? (
             <OverlayTrigger
               placement="top"

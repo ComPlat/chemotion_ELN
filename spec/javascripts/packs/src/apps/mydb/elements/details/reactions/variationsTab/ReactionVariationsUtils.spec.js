@@ -1,5 +1,4 @@
 import expect from 'expect';
-import sinon from 'sinon';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import ReactionFactory from 'factories/ReactionFactory';

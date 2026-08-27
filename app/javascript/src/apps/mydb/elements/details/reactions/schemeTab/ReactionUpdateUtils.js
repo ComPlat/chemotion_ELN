@@ -1698,9 +1698,15 @@ export default class ReactionUpdateHandler {
           }
         }
 
-        if ((materialGroup === 'starting_materials' ||
-          materialGroup === 'reactants') &&
-          !sample.reference && !this.lockEquivColumn) {
+        // Solvents are included here so that editing a solvent volume (Eq unlocked) derives
+        // its equivalent from the real amount (amount_mol / reference.amount_mol). Otherwise
+        // the updated-sample branch above leaves it as amount_g / maxAmount, which is NaN for
+        // a solvent (no maxAmount); the next locked scale-up then multiplies NaN by the
+        // reference and shows the volume as "n.d.". This block is skipped while Eq is locked,
+        // so the solvent still scales from its (now valid) equivalent under lock.
+        if ((materialGroup === 'starting_materials'
+          || materialGroup === 'reactants'
+          || materialGroup === 'solvents') && !sample.reference && !this.lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
           if (referenceMaterial.amount_mol > 0) {
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
