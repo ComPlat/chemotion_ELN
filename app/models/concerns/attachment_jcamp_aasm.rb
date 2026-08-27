@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# Whole-file directives rather than per-method disable/enable pairs, deliberately: this repo's
+# pinned rubocop (1.78.0, see Gemfile.lock) predates the disable-next directive (added in
+# 1.90.0), so a newer rubocop run locally or in CI can flag narrow pairs with
+# Style/DirectiveScope and suggest disable-next syntax that the pinned version can't parse -
+# see this file's PR history for the version-mismatch discussion.
+# rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/MethodLength, Metrics/ModuleLength, Metrics/ParameterLists
+# rubocop:disable Metrics/PerceivedComplexity, Naming/AccessorMethodName, Style/GuardClause
+# rubocop:disable Style/IfInsideElse, Style/OptionalBooleanParameter
+# rubocop:disable Style/ReturnNilInPredicateMethodDefinition
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
@@ -15,7 +24,6 @@ module AttachmentJcampAasm
 
   extend ActiveSupport::Concern
 
-  # rubocop:disable Metrics/BlockLength
   included do
     before_create :init_aasm
     before_update :require_peaks_generation?
@@ -85,7 +93,6 @@ module AttachmentJcampAasm
       end
     end
   end
-  # rubocop:enable Metrics/BlockLength
 
   def filename_parts
     @filename_parts = filename.to_s.split('.')
@@ -113,7 +120,6 @@ module AttachmentJcampAasm
     end
   end
 
-  # rubocop:disable Style/ReturnNilInPredicateMethodDefinition, Metrics/AbcSize
   def require_peaks_generation?
     return if transferred?
     # generate_att reusing an existing row: the new blob only lands in after_save
@@ -146,7 +152,6 @@ module AttachmentJcampAasm
     generate_spectrum(true, true) if regenerating?
   end
 
-  # rubocop:enable Style/ReturnNilInPredicateMethodDefinition, Metrics/AbcSize
   def belong_to_analysis?
     container&.parent&.container_type == 'analysis'
   end
@@ -160,7 +165,6 @@ end
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Process for attachment Jcamp handle
-# rubocop:disable Metrics/ModuleLength
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
@@ -188,7 +192,6 @@ module AttachmentJcampProcess
     addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter, Style/IfInsideElse
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
     # generate_att only makes sense for dataset (Container) attachments; require_peaks_generation?
@@ -279,9 +282,7 @@ module AttachmentJcampProcess
     att.save!
     att
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter, Style/IfInsideElse
 
-  # rubocop:disable Style/OptionalBooleanParameter
   def generate_img_att(img_tmp, addon, to_edit = false)
     ext = 'png'
     generate_att(img_tmp, addon, to_edit, ext)
@@ -325,10 +326,8 @@ module AttachmentJcampProcess
   def generate_nmrium_att(nmrium_tmp, addon, to_edit = false)
     generate_att(nmrium_tmp, addon, to_edit, 'nmrium')
   end
-  # rubocop:enable Style/OptionalBooleanParameter
 
   # app/models/concerns/attachment_jcamp_process.rb
-  # rubocop:disable Metrics/AbcSize
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = 0.0
@@ -347,10 +346,8 @@ module AttachmentJcampProcess
 
     params
   end
-  # rubocop:enable Metrics/AbcSize
 
   # TODO: Fix bugs and improve code
-  # rubocop:disable Naming/AccessorMethodName
   def get_infer_json_content
     atts = Attachment.where(attachable_id: attachable_id)
 
@@ -362,7 +359,6 @@ module AttachmentJcampProcess
     content = infers.empty? ? '{}' : infers[0].read_file
     content.presence || '{}'
   end
-  # rubocop:enable Naming/AccessorMethodName
 
   def update_prediction(params, spc_type, is_regen)
     return auto_infer_n_clear_json(spc_type, is_regen) if ['MS', 'CYCLIC VOLTAMMETRY'].include?(spc_type)
@@ -411,7 +407,6 @@ module AttachmentJcampProcess
     end
   end
 
-  # rubocop:disable Metrics/AbcSize
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
     data = generate_spectrum_data(params, is_regen)
@@ -455,9 +450,7 @@ module AttachmentJcampProcess
     delete_related_edit_peak(jcamp_att) if new_jcamp_created
     jcamp_att || self
   end
-  # rubocop:enable Metrics/AbcSize
 
-  # rubocop:disable Style/OptionalBooleanParameter, Style/GuardClause
   def check_invalid_molfile(invalid_molfile = false)
     if invalid_molfile == true
       # add message when invalid molfile
@@ -468,7 +461,6 @@ module AttachmentJcampProcess
       )
     end
   end
-  # rubocop:enable Style/OptionalBooleanParameter, Style/GuardClause
 
   def generate_spectrum_data(params, is_regen)
     return if params[:ext] == 'nmrium'
@@ -491,7 +483,6 @@ module AttachmentJcampProcess
     end
   end
 
-  # rubocop:disable Metrics/AbcSize
   def lcms_related_file_paths
     filename_lower = filename.to_s.downcase
     return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
@@ -520,9 +511,7 @@ module AttachmentJcampProcess
 
     file_paths
   end
-  # rubocop:enable Metrics/AbcSize
 
-  # rubocop:disable Style/OptionalBooleanParameter
   def generate_spectrum(is_create = false, is_regen = false, params = {})
     return if is_create && !is_regen && jcamp_files_already_present?
 
@@ -533,7 +522,6 @@ module AttachmentJcampProcess
     Rails.logger.error(e)
     nil
   end
-  # rubocop:enable Style/OptionalBooleanParameter
 
   def file_match(attachments, num)
     attachments.select do |att|
@@ -599,7 +587,6 @@ module AttachmentJcampProcess
     stem
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists
   def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     jcamp_att = nil
     tmp_to_be_deleted = []
@@ -632,7 +619,6 @@ module AttachmentJcampProcess
     delete_edit_peak_after_done
     jcamp_att
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/ParameterLists
 
   def generate_spectrum_from_nmrium
     tmp_jcamp = Chemotion::Jcamp::CreateFromNMRium.jcamp_from_nmrium(abs_path)
@@ -867,7 +853,8 @@ module AttachmentJcampProcess
 
   def infer_spectrum(params)
     decision = infer_with_molfile(params)
-    return until decision
+    return unless decision
+
     write_infer_to_file(decision.to_json)
     decision
   end
@@ -885,5 +872,8 @@ module AttachmentJcampProcess
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength
-# rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ModuleLength, Metrics/ParameterLists
+# rubocop:enable Metrics/PerceivedComplexity, Naming/AccessorMethodName, Style/GuardClause
+# rubocop:enable Style/IfInsideElse, Style/OptionalBooleanParameter
+# rubocop:enable Style/ReturnNilInPredicateMethodDefinition
