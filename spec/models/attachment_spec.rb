@@ -1108,6 +1108,30 @@ RSpec.describe Attachment do
     pending 'not yet implemented'
   end
 
+  describe '#read_processed_data' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file_lcms.jdx', aasm_state: 'idle') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'reuses the same curve row on a later regenerate instead of minting a duplicate' do
+      tmp1 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+      attachment.send(:read_processed_data, [tmp1], [nil], 'NMR', false)
+
+      expect do
+        attachment.set_regenerating
+        attachment.save!
+        tmp2 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+        attachment.send(:read_processed_data, [tmp2], [nil], 'NMR', true)
+      end.not_to change(described_class, :count)
+    end
+  end
+
   describe '#edit_process' do
     let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
     let(:tmp_jcamp) do

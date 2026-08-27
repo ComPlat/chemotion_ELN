@@ -548,6 +548,24 @@ module AttachmentJcampProcess
     end
   end
 
+  # generate_att's dedup lookup matches by the dot-style name it derives from `addon`
+  # (Chemotion::Jcamp::Gen.filename), but read_processed_data immediately renames the
+  # resolved row to an underscore-style stem below - which means that same dot-style name
+  # matches nothing on the next call (e.g. a later regenerate), and generate_att mints a
+  # duplicate instead of reusing it. Rename any existing row back to its dot-style name
+  # first so generate_att's lookup finds and reuses it; the underscore-style rename below
+  # then restores the final name exactly as before.
+  def reconnect_dot_style_name(final_filename, addon, ext)
+    lineage_root = root_id || id
+    existing = Attachment.where_container(attachable_id)
+                         .where(filename: final_filename)
+                         .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+    return unless existing
+
+    existing.reattaching_derivative = true
+    existing.update!(filename: Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext))
+  end
+
   def read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     jcamp_att = nil
     tmp_to_be_deleted = []
@@ -559,6 +577,7 @@ module AttachmentJcampProcess
       stem = original_stem(jcamp, base) || "#{base}_processed_#{idx}"
       addon = stem.sub(/^#{base}_/, '')
 
+      reconnect_dot_style_name("#{stem}.jdx", addon, 'jdx')
       curr_jcamp_att = generate_jcamp_att(jcamp, addon)
       curr_jcamp_att.update!(filename: "#{stem}.jdx")
       curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
@@ -567,6 +586,7 @@ module AttachmentJcampProcess
       curr_tmp_img = arr_img[idx]
       if curr_tmp_img
         img_stem = original_stem(curr_tmp_img, base) || stem
+        reconnect_dot_style_name("#{img_stem}.png", addon, 'png')
         img_att = generate_img_att(curr_tmp_img, addon)
         img_att.update!(filename: "#{img_stem}.png")
         tmp_img_to_deleted << img_att
