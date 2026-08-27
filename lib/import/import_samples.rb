@@ -406,7 +406,16 @@ module Import
     # silently defeats both fallbacks for exactly the input they exist to handle.
     #
     # Database failures are deliberately re-raised
+    # Memoized by row index: #prefetch_cas_molecules resolves each row's structure once to decide
+    # whether it needs the CAS fallback, and #write_row resolves the same row again a moment later
+    # -- without caching that is the native OpenBabel work doubled for every row.
     def resolve_structure(row, index)
+      return @resolved_structures[index] if @resolved_structures&.key?(index)
+
+      (@resolved_structures ||= {})[index] = resolve_structure_uncached(row, index)
+    end
+
+    def resolve_structure_uncached(row, index)
       extract_molfile_and_molecule(row, index)
     rescue ActiveRecord::ActiveRecordError
       raise
@@ -505,12 +514,17 @@ module Import
     def write_row(row, index)
       saved = false
       @current_row_number = sheet_row(index)
-      ActiveRecord::Base.transaction(requires_new: true) do
-        if sample_id_value(row).present?
-          update_row(row, index)
-          saved = true
-        else
-          molecule, molfile = process_row_data(row, index)
+      if sample_id_value(row).present?
+        update_row(row, index)
+        saved = true
+      else
+        # Native OpenBabel work in process_row_data can run seconds per row: run it with the
+        # connection released and outside any transaction, so a reaped connection is
+        # re-checked-out rather than failing every query that follows. The transaction below
+        # wraps only the write. Same reasoning as Import::ImportSdf#create_samples.
+        ActiveRecord::Base.connection_pool.release_connection
+        molecule, molfile = process_row_data(row, index)
+        ActiveRecord::Base.transaction(requires_new: true) do
           unless molecule_not_exist(molecule, row, index)
             sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
             saved = true
@@ -536,12 +550,29 @@ module Import
     # which is what lets the retry sheet ship a row with two fields filled in and everything else empty.
     def update_row(row, index)
       sample = updatable_sample(sample_id_value(row))
+      # recouple_structure's native OpenBabel work can run seconds per row: resolve it with the
+      # connection released and outside the transaction below, same reasoning as write_row's
+      # create path.
+      ActiveRecord::Base.connection_pool.release_connection
       apply_present_fields(sample, row)
       recouple_structure(sample, row, index)
-      sample.save!
-      @updated_rows << sheet_row(index)
-      processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
-                     row: sheet_row(index), updated: true)
+      sample.validate_stereo(stereo_from_row(row))
+      ActiveRecord::Base.transaction(requires_new: true) do
+        sample.save!
+        @updated_rows << sheet_row(index)
+        processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
+                       row: sheet_row(index), updated: true)
+      end
+    end
+
+    # stereo_abs/stereo_rel are not sample attributes and never flow through EXP_MAP_ATTR, so both
+    # the create path (sample_save) and this retry-sheet update path extract them the same way.
+    def stereo_from_row(row)
+      stereo = {}
+      header.each do |field|
+        stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
+      end
+      stereo
     end
 
     def apply_present_fields(sample, row)
@@ -589,7 +620,9 @@ module Import
     # Deliberately one message for "does not exist" and "not yours": telling them apart would confirm
     # the existence of other people's samples to anyone willing to put ids in a spreadsheet.
     def updatable_sample(raw_id)
-      raise "sample id #{raw_id.inspect} is not a number" unless raw_id.match?(/\A\d+\z/)
+      # roo can hand back a decimal-formatted numeric cell as e.g. "123.0" rather than "123";
+      # accept a whole-number float spelling without accepting a genuinely fractional one.
+      raise "sample id #{raw_id.inspect} is not a number" unless raw_id.match?(/\A\d+(\.0+)?\z/)
 
       sample = Sample.find_by(id: raw_id.to_i)
       raise "there is no sample with id #{raw_id} that you can change" unless updatable?(sample)
@@ -1140,14 +1173,12 @@ module Import
 
     def sample_save(row, molfile, molecule, index = nil, force_decoupled: false)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
-      stereo = {}
       header.each do |field|
-        stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
         process_fields(sample, map_column, field, row, molecule)
       end
       sample.decoupled = true if force_decoupled
-      validate_sample_and_save(sample, stereo, row, index)
+      validate_sample_and_save(sample, stereo_from_row(row), row, index)
     end
 
     def process_all_rows
