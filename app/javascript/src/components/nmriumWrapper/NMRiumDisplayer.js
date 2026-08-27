@@ -252,9 +252,13 @@ export default class NMRiumDisplayer extends React.Component {
         return;
       }
 
+      // Rename before cleaning, not after: cleaningNMRiumData derives each spectrum's sources[] id
+      // from its name, so renaming afterwards would leave selector.root pointing at an id the next
+      // save no longer mints.
+      if (zip?.label) this.patchZipName(nmriumState, zip?.label);
+
       const cleaned = cleaningNMRiumData(nmriumState);
 
-      if (zip?.label) this.patchZipName(cleaned, zip?.label);
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
       this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');

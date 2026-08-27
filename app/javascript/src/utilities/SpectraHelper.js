@@ -213,6 +213,27 @@ const isSpectrum2D = (spc) => (
   || spc?.meta?.dimension === 2
 );
 
+const SOURCE_ID_PREFIX = 'nmrium-src-';
+const ARCHIVE_MARKER = '/file.zip/';
+const isAbsoluteUrl = (value) => typeof value === 'string' && /^https?:\/\//.test(value);
+
+// Splits `<archive>/file.zip/exp1/pdata/1/2rr` into the archive itself and the path of the member
+// inside it. Both halves matter and they go to different places: a `sources[]` entry must address
+// the archive (the server serves the whole zip), while the member path is what NMRium filters the
+// fetched file collection down to, via the spectrum's own selector.files.
+const splitArchiveRef = (value) => {
+  const idx = typeof value === 'string' ? value.indexOf(ARCHIVE_MARKER) : -1;
+  if (idx < 0) return { archive: value, member: null };
+  return {
+    archive: value.slice(0, idx + ARCHIVE_MARKER.length - 1),
+    member: value.slice(idx + ARCHIVE_MARKER.length),
+  };
+};
+
+const entryUrl = (entry) => (
+  (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null
+);
+
 // A JCAMP/zip file's own filename is a stable, already-trusted key in this file (patchZipName,
 // findMatchingZip, findMatchingJcamp in NMRiumDisplayer.js all match spectra by it) — unlike the
 // token URLs, which are re-minted (and change) on every viewer open. Use it to derive a `sources[]`
@@ -220,52 +241,90 @@ const isSpectrum2D = (spc) => (
 const buildSourceId = (label) => {
   if (!label) return null;
   const slug = label.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return slug ? `nmrium-src-${slug}` : null;
+  return slug ? `${SOURCE_ID_PREFIX}${slug}` : null;
 };
 
-// Resolves the best currently-known absolute URL for a spectrum's source, whichever form it's
-// currently in: the ad hoc source/sourceSelector fields (first-time migration), the legacy global
-// root.source.entries[0] (very old saves), or an already-migrated sources[] entry matched by the
-// spectrum's own selector.root (subsequent saves, once NMRium has echoed it back).
+// Resolves the best currently-known absolute URL for a spectrum's source, whichever form it's in.
+// Order matters: the download URLs carry short-lived, per-open tokens (48h, counter-limited), so a
+// freshly re-minted reference always wins over one persisted by an earlier save. Only
+// `source.jcampURL`, `sourceSelector.files` and the legacy global `root.source.entries[0]` are
+// refreshed on open (patchZipAndJcampReference); a `sources[]` entry is not, so it is the last
+// resort — better than nothing for a spectrum whose `data` a previous save already dropped.
 const resolveSpectrumSourceUrl = (spc, root) => {
-  const localUrl = spc?.source?.jcampURL
-    || spc?.sourceSelector?.files?.find((file) => typeof file === 'string' && /^https?:\/\//.test(file));
-  if (localUrl) return localUrl;
+  if (spc?.source?.jcampURL) return splitArchiveRef(spc.source.jcampURL).archive;
+
+  const fileUrl = spc?.sourceSelector?.files?.find(isAbsoluteUrl);
+  if (fileUrl) return splitArchiveRef(fileUrl).archive;
+
+  const fromGlobal = entryUrl(root?.source?.entries?.[0]);
+  if (fromGlobal) return fromGlobal;
 
   const existingSource = Array.isArray(root?.sources)
     ? root.sources.find((source) => source.id === spc?.selector?.root)
     : null;
-  const entry = existingSource?.entries?.[0] || root?.source?.entries?.[0];
-  return (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null;
+  return entryUrl(existingSource?.entries?.[0]);
 };
 
-// Finds or creates root.sources[]'s entry for `id`, always refreshing it to `url`: NMRium's own
-// reader (readNMRiumObject) re-fetches a spectrum's data only when its selector.root matches an id
-// here, so this is what actually lets us stop embedding `data` for a source-backed spectrum.
-const ensureSource = (root, id, url) => {
-  if (!id || !url || !/^https?:\/\//.test(url)) return;
-  const parsed = new URL(url);
+// Registers `url` in root.sources[] and returns the id that addresses it, or null when it can't be
+// registered. NMRium's own reader (readNMRiumObject) re-fetches a spectrum's data only when its
+// selector.root matches an id here, so this is what actually lets us stop embedding `data` for a
+// source-backed spectrum. `claimed` maps url -> id for this cleaning pass: two spectra backed by
+// the same file share one entry, while two backed by *different* files never collapse onto one id
+// (the preferred id is suffixed instead of being repointed at the second file).
+const ensureSource = (root, preferredId, url, claimed) => {
+  if (!preferredId || !isAbsoluteUrl(url)) return null;
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (err) {
+    return null;
+  }
   const entry = { relativePath: parsed.pathname, baseURL: parsed.origin };
   if (!Array.isArray(root.sources)) root.sources = [];
+
+  const alreadyClaimed = claimed.get(url);
+  if (alreadyClaimed) return alreadyClaimed;
+
+  let id = preferredId;
+  let suffix = 1;
+  const taken = new Set(claimed.values());
+  while (taken.has(id)) {
+    suffix += 1;
+    id = `${preferredId}-${suffix}`;
+  }
+
   const existing = root.sources.find((source) => source.id === id);
   if (existing) {
     existing.entries = [entry];
   } else {
     root.sources.push({ id, entries: [entry] });
   }
+  claimed.set(url, id);
+  return id;
 };
 
 const cleaningNMRiumData = (nmriumData) => {
   if (!nmriumData) return null;
   const cleanedNMRiumData = { ...nmriumData };
 
+  // Copy the wrapped root too: without this `root` is the caller's own object, so the deletes and
+  // the sources[] registry below would leak back into the live NMRium state this was cleaned from.
   const wasWrapped = !!cleanedNMRiumData.data;
+  // Copy the wrapper so the mutations below don't reach the caller's object - but only when it
+  // really is one: `data` can legitimately be a non-object (a bare string), and spreading that
+  // would turn it into a char-indexed object and change the returned payload.
+  if (wasWrapped && typeof cleanedNMRiumData.data === 'object') {
+    cleanedNMRiumData.data = { ...cleanedNMRiumData.data };
+  }
   const root = wasWrapped ? cleanedNMRiumData.data : cleanedNMRiumData;
   const { spectra } = root;
   if (!Array.isArray(spectra)) return cleanedNMRiumData;
 
   delete root.actionType;
-  const hasGlobalSource = !!root.source || !!(Array.isArray(root.sources) && root.sources.length);
+  if (Array.isArray(root.sources)) root.sources = root.sources.map((source) => ({ ...source }));
+  const hasGlobalSource = !!root.source || root.sources?.length > 0;
+  const claimedSources = new Map();
 
   const newSpectra = spectra.map((spc) => {
     const tmpSpc = { ...spc };
@@ -291,8 +350,15 @@ const cleaningNMRiumData = (nmriumData) => {
         tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
       }
       // info may be sparse on legacy spectra where dimension/isFid were only ever mirrored into
-      // originalInfo/meta; backfill it before dropping the originalInfo duplicate.
-      tmpSpc.info = { ...tmpSpc.meta, ...tmpSpc.originalInfo, ...tmpSpc.info };
+      // originalInfo/meta; backfill it before dropping the originalInfo duplicate. Only the two
+      // known load-bearing keys are taken from `meta` — it is a raw JCAMP header dictionary, not an
+      // info-shaped object, and it stays on the spectrum anyway.
+      tmpSpc.info = { ...tmpSpc.originalInfo, ...tmpSpc.info };
+      ['dimension', 'isFid'].forEach((key) => {
+        if (tmpSpc.info[key] === undefined && tmpSpc.meta?.[key] !== undefined) {
+          tmpSpc.info[key] = tmpSpc.meta[key];
+        }
+      });
       delete tmpSpc.originalInfo;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
@@ -306,18 +372,24 @@ const cleaningNMRiumData = (nmriumData) => {
       // real reference so `data` can finally be dropped instead of duplicated into the saved JSON.
       // If no URL can be resolved, leave `data` embedded: that's the same safe fallback this file
       // relied on before this was wired up, not a regression.
-      const sourceId = buildSourceId(spectrumName);
       const sourceUrl = resolveSpectrumSourceUrl(tmpSpc, root);
-      if (sourceId && sourceUrl) {
-        ensureSource(root, sourceId, sourceUrl);
-        // sourceSelector.files may hold relative paths *within* a shared source (e.g. one entry per
+      const sourceId = ensureSource(root, buildSourceId(spectrumName), sourceUrl, claimedSources);
+      if (sourceId) {
+        // sourceSelector.files may address individual members *within* a shared source (e.g. one
         // experiment inside a multi-spectrum zip, all sharing one sources[] id); NMRium's reader
         // filters the fetched file collection down to selector.files before parsing, so without
-        // this a shared zip source can't tell spectra apart. Absolute URLs there aren't paths within
-        // the source, so they're excluded.
-        const filesWithinSource = tmpSpc.sourceSelector?.files?.filter(
-          (file) => typeof file === 'string' && !/^https?:\/\//.test(file)
-        );
+        // this a shared zip source can't tell spectra apart. Entries arrive either as a full
+        // URL/server path through the archive (`.../file.zip/exp1/...`, which has to be reduced to
+        // the member path) or already as a bare member path. Anything else does not address a
+        // member and is dropped.
+        const filesWithinSource = tmpSpc.sourceSelector?.files
+          ?.map((file) => {
+            if (typeof file !== 'string') return null;
+            const { member } = splitArchiveRef(file);
+            if (member) return member;
+            return (isAbsoluteUrl(file) || file.startsWith('/')) ? null : file;
+          })
+          .filter(Boolean);
         tmpSpc.selector = {
           ...tmpSpc.selector,
           root: sourceId,
@@ -331,6 +403,16 @@ const cleaningNMRiumData = (nmriumData) => {
   });
 
   root.spectra = [...newSpectra];
+
+  // Drop our own now-unreferenced entries: their URLs carry per-open download tokens that nothing
+  // refreshes, so leaving one behind after a rename only accumulates dead references. Entries we
+  // did not mint are left alone.
+  if (Array.isArray(root.sources)) {
+    const referenced = new Set(newSpectra.map((spc) => spc?.selector?.root).filter(Boolean));
+    root.sources = root.sources.filter(
+      (source) => referenced.has(source?.id) || !`${source?.id}`.startsWith(SOURCE_ID_PREFIX)
+    );
+  }
 
   // Deliberately not forcing a {version, data} wrap or an explicit version, even though a spectrum
   // here may now depend on sources[] actually being processed on load: a real, working .nmrium
@@ -432,5 +514,4 @@ const inlineNotation = (layout, data, metadata) => {
 
 export {
   BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, cleaningNMRiumData, inlineNotation,
-  buildSourceId, ensureSource,
 }; // eslint-disable-line
