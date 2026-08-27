@@ -197,6 +197,44 @@ RSpec.describe Import::ImportSamples do
     end
   end
 
+  # A CAS column makes #prefetch_cas_molecules resolve every row's structure up front to decide which
+  # rows need the CAS fallback, and #resolve_structure memoizes that, so it is the only time the work
+  # runs for the row. Notes produced during it have to be filed against the row there or they are
+  # lost for good.
+  describe 'a row with a CAS number and a molfile that cannot be read' do
+    let(:header) { ['sample name', 'cas', 'molfile', 'canonical smiles'] }
+
+    let(:rows) do
+      [
+        ['Broken molfile', '64-17-5', 'this is not a molfile', 'CCO'],
+        ['Clean', '71-43-2', nil, 'c1ccccc1'],
+      ]
+    end
+
+    before do
+      allow(Chemotion::CasLookupService).to receive(:fetch_by_cas).and_return({ smiles: nil })
+    end
+
+    it 'still imports the row from its SMILES column' do
+      result
+      expect(Sample.find_by(name: 'Broken molfile')).to be_present
+    end
+
+    it 'marks the molfile cell rather than reporting the row as a clean import' do
+      result
+      report_sheet(result[:report_attachment_id]) do |book|
+        expect(book.row(2)[-2]).to include('molfile', 'taken from the SMILES column')
+      end
+    end
+
+    it 'says nothing about the row whose structure needed no fallback' do
+      result
+      report_sheet(result[:report_attachment_id]) do |book|
+        expect(book.row(3)[-2].to_s).not_to include('molfile')
+      end
+    end
+  end
+
   # 'kg' and 'ml' are units a spreadsheet may reasonably carry, but Sample#convertToGram switches on
   # g/mg/l/mol only and reads anything else as the base unit through its default branch. Stored
   # verbatim, 5 kg would compute as 5 g.

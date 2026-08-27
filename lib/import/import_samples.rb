@@ -635,11 +635,20 @@ module Import
       return unless mandatory_check.is_a?(Hash) && mandatory_check['cas']
 
       rows.each_with_index do |row, index|
+        # This pass resolves the row's structure to decide whether it needs the CAS fallback, and
+        # #resolve_structure memoizes the result, so it is the only time that work runs for the row.
+        # Without naming the row here, every per-cell note it produces is dropped by
+        # #note_field_issue's nil guard and #write_row's memoized call never re-runs the branch to
+        # produce it again -- a broken molfile alongside a usable CAS would then import while
+        # reporting as clean.
+        @current_row_number = sheet_row(index)
         next unless cas?(row) && !structure_resolves?(row, index)
 
         find_molecule_by_cas(cas_value(row))
       rescue StandardError => e
         Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{sheet_row(index)}: #{e.message}")
+      ensure
+        @current_row_number = nil
       end
     end
 
