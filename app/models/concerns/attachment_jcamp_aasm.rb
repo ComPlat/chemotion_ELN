@@ -211,89 +211,98 @@ module AttachmentJcampProcess
     return if attachable_id.nil? || attachable_type != 'Container'
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    # Look up the canonical row for this filename within self's own lineage (not just self's own
-    # direct children): re-editing an already-edited file, or editing a curve whose dataset still
-    # holds both a .peak. and .edit. lineage, must reuse that single row - scoping to
-    # children_of(self) would miss it (self isn't its own child) and mint a duplicate .edit.jdx
-    # attachment on every save. Narrowed to self's ancestry root so two independently uploaded
-    # curves that happen to derive the same target filename (e.g. foo.dx and foo.jdx both ->
-    # foo.peak.jdx) don't collapse onto each other.
-    lineage_root = root_id || id
-    # Descending so that, if a dataset still holds duplicate rows from before this fix,
-    # the row picked matches the one handleLoadSpectra already showed the user (it sorts
-    # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
-    att = Attachment.where_container(attachable_id)
-                    .where(filename: meta_filename)
-                    .order(id: :desc)
-                    .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
-    # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
-    # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
-    # row gets parented - without this, a row reused from a different lineage member keeps
-    # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
-    # attachment_api.rb) stops finding it on later regenerate_spectrum calls. Guarded against
-    # the reverse direction: the lookup matches by (lineage, filename) alone, so when self is a
-    # non-root member and the derived filename happens to collide with an ancestor's own (e.g.
-    # an nmrium re-edit deriving the root's own '<base>.nmrium' filename), att can resolve to
-    # that ancestor. Reparenting an ancestor onto its own descendant is a cycle - ancestry's
-    # ancestry_exclude_self validation would reject the save - so skip it in that direction;
-    # the two rows are already correctly related the other way.
-    att.parent = self if att && att.id != id && !att.ancestor_of?(self)
 
-    att ||= Attachment.children_of(self[:id]).new(
-      filename: meta_filename,
-      con_state: Labimotion::ConState::READ,
-      created_by: created_by,
-      created_for: created_for,
-      key: SecureRandom.uuid,
-    )
-    att.attachable_id = attachable_id
-    att.attachable_type = attachable_type
-    att.file_path = meta_tmp.path
-    # See require_peaks_generation? - only matters when att is a found, persisted row (an
-    # update); harmless to set on a freshly-built one, which goes through before_create
-    # :init_aasm instead.
-    att.reattaching_derivative = true
-    att.save!
-    # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
-    # attr_accessor that stays set on the object otherwise, so every subsequent save below
-    # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
-    # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
-    # same blob - clear it so those saves are plain state/column updates instead.
-    att.file_path = nil
-    # Same reason, same scope: the flag guarded *this* save only. It is a plain
-    # attr_accessor, so leaving it set would suppress require_peaks_generation? for every
-    # later save on this object too - including the final save! below, which is exactly
-    # where a freshly derived jcamp (a bagit curve, say) transitions out of :queueing and
-    # asks for its peak table. Left set, such a curve keeps the content it was created
-    # with, stays in :queueing, and is filtered out of the viewer entirely.
-    att.reattaching_derivative = false
+    # The lookup-then-create below has no DB-level uniqueness to fall back on (a plain
+    # unique index on attachable_id+filename would be wrong: B2 above deliberately allows
+    # two different lineages to share a filename), so two concurrent saves deriving the
+    # same meta_filename could both pass the lookup before either commits its insert and
+    # mint a duplicate - the same bug this method exists to prevent, just under
+    # concurrency. An advisory lock keyed by (attachable_id, meta_filename), held for the
+    # transaction's lifetime, serializes that instead. It's coarser than the real identity
+    # (lineage isn't part of the key, since it isn't a stored column to lock on), so it
+    # also serializes the legitimate B2 case, but that's a minor concurrency cost, not a
+    # correctness issue - each call still resolves its own correct row once it has the lock.
+    Attachment.transaction do
+      lock_key = "Attachment#generate_att:#{attachable_id}:#{meta_filename}"
+      Attachment.connection.execute("SELECT pg_advisory_xact_lock(hashtext(#{Attachment.connection.quote(lock_key)}))")
 
-    if ext == 'png'
-      att.set_image if att.may_set_image?
-    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
-      att.set_edited if att.may_set_edited?
-    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
-      att.set_force_peaked if att.may_set_force_peaked?
-    else
-      filename_lower = att.filename.to_s.downcase
-      if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
+      # Look up the canonical row for this filename within self's own lineage (not just self's
+      # own direct children): re-editing an already-edited file, or editing a curve whose
+      # dataset still holds both a .peak. and .edit. lineage, must reuse that single row -
+      # scoping to children_of(self) would miss it (self isn't its own child) and mint a
+      # duplicate .edit.jdx attachment on every save. Narrowed to self's ancestry root so two
+      # independently uploaded curves that happen to derive the same target filename (e.g.
+      # foo.dx and foo.jdx both -> foo.peak.jdx) don't collapse onto each other.
+      lineage_root = root_id || id
+      # Descending so that, if a dataset still holds duplicate rows from before this fix,
+      # the row picked matches the one handleLoadSpectra already showed the user (it sorts
+      # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
+      att = Attachment.where_container(attachable_id)
+                      .where(filename: meta_filename)
+                      .order(id: :desc)
+                      .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+      # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
+      # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
+      # row gets parented - without this, a row reused from a different lineage member keeps
+      # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
+      # attachment_api.rb) stops finding it on later regenerate_spectrum calls. Guarded against
+      # the reverse direction: the lookup matches by (lineage, filename) alone, so when self is a
+      # non-root member and the derived filename happens to collide with an ancestor's own (e.g.
+      # an nmrium re-edit deriving the root's own '<base>.nmrium' filename), att can resolve to
+      # that ancestor. Reparenting an ancestor onto its own descendant is a cycle - ancestry's
+      # ancestry_exclude_self validation would reject the save - so skip it in that direction;
+      # the two rows are already correctly related the other way.
+      att.parent = self if att && att.id != id && !att.ancestor_of?(self)
+
+      att ||= Attachment.children_of(self[:id]).new(
+        filename: meta_filename,
+        con_state: Labimotion::ConState::READ,
+        created_by: created_by,
+        created_for: created_for,
+        key: SecureRandom.uuid,
+      )
+      att.attachable_id = attachable_id
+      att.attachable_type = attachable_type
+      att.file_path = meta_tmp.path
+      # See require_peaks_generation? - only matters when att is a found, persisted row (an
+      # update); harmless to set on a freshly-built one, which goes through before_create
+      # :init_aasm instead.
+      att.reattaching_derivative = true
+      att.save!
+      # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
+      # attr_accessor that stays set on the object otherwise, so every subsequent save below
+      # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
+      # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
+      # same blob - clear it so those saves are plain state/column updates instead.
+      att.file_path = nil
+
+      if ext == 'png'
+        att.set_image if att.may_set_image?
+      elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
         att.set_edited if att.may_set_edited?
-      elsif filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
+      elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
         att.set_force_peaked if att.may_set_force_peaked?
-      elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
-        if lcms_uvvis_raw?(filename_lower)
-          att.set_non_jcamp if att.may_set_non_jcamp?
-        else
+      else
+        filename_lower = att.filename.to_s.downcase
+        if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
+          att.set_edited if att.may_set_edited?
+        elsif filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
           att.set_force_peaked if att.may_set_force_peaked?
+        elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
+          if lcms_uvvis_raw?(filename_lower)
+            att.set_non_jcamp if att.may_set_non_jcamp?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
         end
       end
+      att.set_json  if ext == 'json' && att.may_set_json?
+      att.set_csv   if ext == 'csv' && att.may_set_csv?
+      att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
+      att.thumb = false if ext == 'json'
+      att.save!
+      att
     end
-    att.set_json  if ext == 'json' && att.may_set_json?
-    att.set_csv   if ext == 'csv' && att.may_set_csv?
-    att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
-    att.thumb = false if ext == 'json'
-    att.save!
-    att
   end
 
   def generate_img_att(img_tmp, addon, to_edit = false)

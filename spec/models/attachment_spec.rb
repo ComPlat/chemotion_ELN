@@ -1132,6 +1132,90 @@ RSpec.describe Attachment do
     end
   end
 
+  describe '#generate_att concurrency (S9 advisory lock)', :js do
+    # js: true switches DatabaseCleaner to :truncation (see spec/support/database_cleaner.rb)
+    # instead of the suite's default :transaction strategy - a second, independent DB
+    # connection needs to actually see this example's data, which an uncommitted
+    # transaction on the main connection would hide from it.
+    let(:attachment) { create(:attachment, :with_spectra_file) }
+
+    it 'takes a Postgres advisory lock keyed by (attachable_id, meta_filename) for the ' \
+       "transaction's lifetime, so a concurrent generate_att for the same target serializes " \
+       'instead of racing' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        holder_conn.begin_transaction
+        holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+        other_conn = ActiveRecord::Base.connection_pool.checkout
+        begin
+          available = other_conn.select_value(
+            "SELECT pg_try_advisory_xact_lock(hashtext(#{other_conn.quote(lock_key)}))",
+          )
+          expect(available).to be(false)
+        ensure
+          ActiveRecord::Base.connection_pool.checkin(other_conn)
+        end
+      ensure
+        holder_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(holder_conn)
+      end
+
+      fresh_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        fresh_conn.begin_transaction
+        available_after_release = fresh_conn.select_value(
+          "SELECT pg_try_advisory_xact_lock(hashtext(#{fresh_conn.quote(lock_key)}))",
+        )
+        expect(available_after_release).to be(true)
+      ensure
+        fresh_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(fresh_conn)
+      end
+    end
+
+    it 'blocks generate_att itself on that same key, rather than just an independently computed one' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+      tmp = Tempfile.new('jcamp').tap do |f|
+        f.write('##TITLE=x')
+        f.rewind
+      end
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      holder_conn.begin_transaction
+      holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+      thread = Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          attachment.generate_att(tmp, 'edit', true, 'jdx')
+        end
+      end
+
+      # Poll instead of a fixed sleep: give generate_att up to 2s to reach the blocking
+      # DB call and go to sleep waiting on it - that status change happening at all, this
+      # early, is the proof it actually took the lock we're holding, not some other path.
+      blocked = false
+      10.times do
+        blocked = thread.status == 'sleep'
+        break if blocked
+
+        sleep 0.2
+      end
+      expect(blocked).to be(true)
+
+      holder_conn.rollback_transaction
+      ActiveRecord::Base.connection_pool.checkin(holder_conn)
+
+      thread.join(5)
+      expect(thread.status).to be(false)
+      expect(thread.value).to be_a(described_class)
+    end
+  end
+
   describe '#edit_process' do
     let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
     let(:tmp_jcamp) do
