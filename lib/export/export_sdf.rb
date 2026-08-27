@@ -84,8 +84,9 @@ module Export
         # withhold top-secret samples that reach us only through a share (owner-set flag)
         return nil if sample['ts'].in?(['t', true])
 
-        # return no data if molfile not allowed
-        return nil if sample['dl_s'].zero?
+        # return no data if molfile not allowed. dl_s is a MAX() over collection_shares and comes
+        # back nil, not 0, when a share record never had its sample_detail_level set.
+        return nil if sample['dl_s'].to_i.zero?
 
         data = validate_molfile(sdf_molfile_for(sample))
         return nil unless data.presence
