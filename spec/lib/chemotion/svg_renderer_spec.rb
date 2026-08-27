@@ -355,7 +355,7 @@ RSpec.describe Chemotion::SvgRenderer do
     it 'parses the indices-only legacy format' do
       result = described_class.parse_polymers_line('0 10 12')
 
-      expect(result.map { |p| p[:atom_index] }).to eq([0, 10, 12])
+      expect(result.pluck(:atom_index)).to eq([0, 10, 12])
     end
 
     # ketcher-rails also wrote "<index><shapeLetter>" ("s" = Surface); 63 such samples exist.
@@ -369,7 +369,7 @@ RSpec.describe Chemotion::SvgRenderer do
     it 'parses several index+letter tokens' do
       result = described_class.parse_polymers_line('0s 7s')
 
-      expect(result.map { |p| p[:atom_index] }).to eq([0, 7])
+      expect(result.pluck(:atom_index)).to eq([0, 7])
     end
 
     it 'parses the transitional index+letter+size format (sample 388803 shape)' do
