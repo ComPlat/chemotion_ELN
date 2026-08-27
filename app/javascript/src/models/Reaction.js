@@ -1551,6 +1551,38 @@ export default class Reaction extends Element {
     }
   }
 
+  /**
+   * Scales every solvent volume when the reference amount changes under locked equivalents.
+   *
+   * The solvent is scaled by volume rather than through moles, so it works even for a solvent
+   * with neither a density nor a molarity (whose volume cannot be converted to moles at all):
+   *
+   *   new volume = current volume * (new reference amount / previous reference amount)
+   *
+   * Callers must snapshot the reference amount BEFORE the amount edit mutates it and pass it
+   * here; the new reference amount is read from the (already updated) reference material.
+   *
+   * @param {number} previousReferenceAmountMol - reference amount in mol before the change.
+   * @returns {void}
+   */
+  scaleSolventVolumesForReferenceChange(previousReferenceAmountMol) {
+    const prev = Number(previousReferenceAmountMol);
+    const next = Number(this.referenceMaterial?.amount_mol);
+    // Only scale when both amounts are positive; leave volumes untouched otherwise so a
+    // cleared reference does not silently wipe the user's solvent volumes.
+    if (!(prev > 0) || !(next > 0) || prev === next) return;
+
+    const factor = next / prev;
+    (this.solvents || []).forEach((solvent) => {
+      const currentVolumeL = Number(solvent.amount_l);
+      if (!Number.isFinite(currentVolumeL) || currentVolumeL <= 0) return;
+      solvent.setAmount({ value: currentVolumeL * factor, unit: 'l' });
+      if (solvent.isMixture && solvent.isMixture() && solvent.hasComponents && solvent.hasComponents()) {
+        solvent.updateMixtureComponentAmounts();
+      }
+    });
+  }
+
   isFeedstockMaterialPresent() {
     const materials = [...this.starting_materials, ...this.reactants];
     return materials.some((material) => material.gas_type === 'feedstock');
