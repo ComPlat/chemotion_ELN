@@ -9,7 +9,7 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples,
-               :decoupled_records
+               :decoupled_records, :coercion_notes
 
   SIZE_LIMIT = 40 # MB
   MOLFILE_BLOCK_END_LINE = 'M  END'
@@ -63,6 +63,7 @@ class Import::ImportSdf < Import::ImportSamples
     @mapped_keys = keys_to_map || {}
     @unprocessable_samples = []
     @decoupled_records = []
+    @coercion_notes = []
     read_data
 
     @count = (@raw_data.empty? && @rows.size) || @raw_data.size
@@ -345,6 +346,8 @@ class Import::ImportSdf < Import::ImportSamples
           rows.each_with_index do |row, i|
             next unless row
 
+            @current_import_row_index = i
+
             # Savepoint per row: without it a DB-level failure (e.g. from the chemical save below)
             # leaves PostgreSQL's transaction aborted, so the rescue below cannot contain it -- every
             # later row then fails and the outer transaction rolls back the rows that did succeed.
@@ -383,6 +386,7 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:error] << 'Could not create the samples! ' if samples.empty?
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << decoupled_summary if @decoupled_records.any?
+    @message[:info] << "Some values were adjusted while importing: #{coercion_summary}. " if @coercion_notes.any?
     @message[:info] << 'Import successful! ' if ids.size == @count
 
     # Keep the upload unless there is genuinely nothing to follow up on
@@ -442,14 +446,15 @@ class Import::ImportSdf < Import::ImportSamples
   def assign_coerced_xref(sample, key, raw)
     return if raw.blank?
 
-    value = Import::ValueCoercion.coerce(key, raw)&.first
+    value, note = Import::ValueCoercion.coerce(key, raw)
+    note_coercion_issue(key, note) if note
     sample['xref'][key] = value unless value.nil?
   end
 
   # Columns that need a unit or a range parsed out of the cell before they can be assigned.
   def assign_measurement_columns(sample, row)
-    sample['melting_point'] = interval_from(row['melting_point']) if row['melting_point'].present?
-    sample['boiling_point'] = interval_from(row['boiling_point']) if row['boiling_point'].present?
+    sample['melting_point'] = interval_from(row['melting_point'], 'melting_point') if row['melting_point'].present?
+    sample['boiling_point'] = interval_from(row['boiling_point'], 'boiling_point') if row['boiling_point'].present?
     # Side effect only: the method assigns sample['solvent'] itself and returns nil on no match.
     handle_sample_solvent_column(sample, row) if row['solvent'].present?
     # Purity through the shared coercer: a cell written as a percentage ('95', '99%') is what the
@@ -520,7 +525,8 @@ class Import::ImportSdf < Import::ImportSamples
   def assign_coerced(sample, column, raw)
     return if raw.blank?
 
-    value = Import::ValueCoercion.coerce(column, raw)&.first
+    value, note = Import::ValueCoercion.coerce(column, raw)
+    note_coercion_issue(column, note) if note
     sample[column] = value unless value.nil?
   end
 
@@ -538,6 +544,19 @@ class Import::ImportSdf < Import::ImportSamples
     [value, unit]
   end
 
+  # SDF has no per-cell report to attach a note to the way the spreadsheet import's field_notes
+  # does; record against the record's position in the file instead, the same convention
+  # #note_decoupled_record uses.
+  def note_coercion_issue(header, note)
+    return if @current_import_row_index.nil?
+
+    @coercion_notes << { record: @current_import_row_index + 1, header: header, note: note }
+  end
+
+  def coercion_summary
+    @coercion_notes.map { |n| "record #{n[:record]} #{n[:header]}: #{n[:note]}" }.join('; ')
+  end
+
   # Numbered by position in the file: an SDF has no row to point at.
   def decoupled_summary
     count = @decoupled_records.size
@@ -551,7 +570,7 @@ class Import::ImportSdf < Import::ImportSamples
   # A structureless import is something to follow up on, and the upload is the only copy to correct.
   def keep_attachment_unnecessary?
     @message[:error].empty? && @unprocessable_samples.empty? && @decoupled_records.empty? &&
-      @attachment.present?
+      @coercion_notes.empty? && @attachment.present?
   end
 
   # Links the sample to the molecule's name.
@@ -561,11 +580,13 @@ class Import::ImportSdf < Import::ImportSamples
   # "undefined method `id' for [\"1-chloro-2-iodoethane\"]:Array" and lost the row, so every SDF
   # carrying a MOLECULE_NAME tag failed to import. Resolve the record by name instead, which also
   # covers the case where the name already existed and nothing new was created.
-  # SDF has no per-cell report to attach a note to, so only the value is taken -- but it is taken from
-  # the same coercion the spreadsheet import uses, so a reversed range is normalised here too instead
-  # of being handed to Postgres and losing the record.
-  def interval_from(value)
-    Import::ValueCoercion.range(value).first
+  # Taken from the same coercion the spreadsheet import uses, so a reversed range is normalised here
+  # too instead of being handed to Postgres and losing the record; the note goes to #coercion_notes,
+  # SDF's equivalent of the spreadsheet import's per-cell field notes.
+  def interval_from(value, header)
+    result, note = Import::ValueCoercion.range(value)
+    note_coercion_issue(header, note) if note
+    result
   end
 
   def assign_molecule_name(sample, molecule, raw_names)
