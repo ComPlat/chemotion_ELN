@@ -50,6 +50,11 @@ RSpec.describe Import::ValueCoercion do
       ['density', 'not measured', nil, reported],
       # 'g/cm' without the cubic exponent is not a density unit -- its number means something else.
       ['density', '1.2 g/cm', nil, reported],
+      # A cell holding only a unit label carries no number. The digit belongs to the unit spelling,
+      # so it must not become the density: 'g/cm3' used to be stored as 3.0 g/mL with no note.
+      ['density', 'g/cm3', nil, reported],
+      ['density', 'G/CM3', nil, reported],
+      ['density', 'g/mL', nil, reported],
 
       # A blank numeric cell means "not given", not zero.
       ['refractive_index', nil, nil, silent],

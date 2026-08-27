@@ -140,15 +140,19 @@ module Import
 
       # Density is stored in g/mL, so a unit-less number is unambiguous and is taken as given. A cell
       # carrying some other unit is dropped whole, because its number means something else.
+      #
+      # Both the number scan and the residual check run on the *unit-stripped* text. Scanning the raw
+      # cell instead let the digit in a unit spelling become the value: "g/cm3" scanned as 3.0 while
+      # the residual check, which did strip the unit, saw nothing left to complain about -- so a
+      # density cell holding only a stray unit label was stored as 3.0 g/mL with no note at all.
       def density(raw)
         text = raw.to_s.strip
         return [nil, nil] if text.empty?
 
-        numbers = numbers_in(text)
+        stripped = text.gsub(DENSITY_UNIT, '')
+        numbers = numbers_in(stripped)
         return [nil, "density expects a number, value not used (#{text.inspect})"] if numbers.empty?
-
-        residual = strip_numbers(text.gsub(DENSITY_UNIT, ''))
-        return [nil, "density is stored in g/mL, value not used (#{text.inspect})"] unless residual.empty?
+        return [nil, "density is stored in g/mL, value not used (#{text.inspect})"] unless strip_numbers(stripped).empty?
 
         [numbers.first, nil]
       end
