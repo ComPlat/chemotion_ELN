@@ -248,6 +248,25 @@ RSpec.describe 'Import::ImportSamples' do
         expect(raw_molfile).to eq(polymer_molfile)
       end
     end
+
+    context 'when the PolymersList block is empty' do
+      # Ketcher emits an empty "> <PolymersList>" block for structures with no polymer at all.
+      # Those must take the ordinary molecule path -- routing them through the resolver gives every
+      # such row a synthetic POLYMER_<sha> inchikey. The following "> <TextNode>" block is the
+      # regression case: it must not be read as PolymersList payload.
+      let(:empty_polymer_molfile) do
+        "some ctab\nM  END\n> <PolymersList>\n> <TextNode>\n0#0ce7f3#t_95_0#label\n> </TextNode>\n$$$$\n"
+      end
+
+      it 'does not delegate to Import::PolymerMoleculeResolver' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call)
+        allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return({ inchikey: nil })
+
+        importer.get_data_from_molfile({ 'molfile' => empty_polymer_molfile })
+
+        expect(Import::PolymerMoleculeResolver).not_to have_received(:call)
+      end
+    end
   end
 
   describe '#assign_molecule_data' do

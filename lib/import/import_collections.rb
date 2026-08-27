@@ -291,13 +291,21 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
+        # A non-empty "> <PolymersList>" block means keep the full molfile and let
+        # Molecule.svg_reprocess run, so polymers render via SvgRenderer.
+        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile)
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
         if molfile.present?
-          molecule ||= Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
+          # CTAB-only for the Molecule lookup/store: molfile may still carry a (possibly-empty)
+          # "> <PolymersList>"/"> <TextNode>" tag here (has_polymer_content? above decided this row
+          # is NOT a polymer), and SvgRenderer must never see it or it re-triggers Indigo-first
+          # rendering with polymer-specific options for an ordinary molecule. The Sample's own
+          # molfile column is unaffected -- it is sliced from `fields` directly, further below.
+          molecule ||= Molecule.find_or_create_by_molfile(
+            Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile), defer_pubchem_lookup: @defer_pubchem_lookup
+          )
         end
 
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available

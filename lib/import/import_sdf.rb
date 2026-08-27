@@ -631,8 +631,12 @@ class Import::ImportSdf < Import::ImportSamples
 
     babel_info_array.map.with_index do |babel_info, i|
       mf = molfiles[i]
-      if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
-        find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
+      if Chemotion::MolfilePolymerSupport.has_polymer_content?(mf.to_s)
+        # rstrip, not strip: MOL line 1 (title) may legitimately be empty for Ketcher/ISIS
+        # molfiles; a full strip would delete that blank line and shift the CTAB up by one,
+        # corrupting the header the same way this PR fixes on the xlsx import path (see
+        # Chemotion::MolfilePolymerSupport.normalize_for_open_babel, which only ever appends).
+        find_or_create_polymer_molfile_entry(mf.to_s.rstrip, babel_info)
       elsif babel_info && babel_info[:inchikey].present?
         molfile_entry_with_inchikey(mf, babel_info)
       else
@@ -642,13 +646,25 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   # Build a preview entry for a molfile whose structure resolved to an inchikey.
+  #
+  # +molfile+ is the raw SDF record: #process_molfile_opt_data needs its data block to read the
+  # tags. What is stored and rendered is the CTAB-only sanitized copy — the raw record still
+  # carries the data block (including a possibly-empty "> <PolymersList>"/"> <TextNode>" tag,
+  # since has_polymer_content? has already decided this record is NOT a polymer), which
+  # SvgRenderer must never see or it re-triggers Indigo-first rendering with polymer-specific
+  # options for an ordinary molecule.
+  #
+  # @param molfile [String] the raw SDF record, data block included
+  # @param babel_info [Hash] Open Babel info for the record
+  # @return [Hash] preview entry — tags from the raw record, structure from the sanitized one
   def molfile_entry_with_inchikey(molfile, babel_info)
-    molecule = Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)
+    sanitized = sanitize_molfile(molfile)
+    molecule = Molecule.find_or_create_by_molfile(sanitized, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)
     process_molfile_opt_data(molfile).merge(
       inchikey: molecule.inchikey,
       svg: "molecules/#{molecule.molecule_svg_file}",
       name: molecule.iupac_name,
-      molfile: molfile,
+      molfile: sanitized,
     )
   end
 
@@ -770,10 +786,13 @@ class Import::ImportSdf < Import::ImportSamples
   # Returns [molecule, molfile_for_sample, babel_info]. When molfile has PolymersList/TextNode,
   # keeps full molfile and uses polymer find/create + SVG reprocess; otherwise sanitizes and finds by inchikey.
   def molecule_and_molfile_for_row(molfile)
-    raw = molfile.to_s.strip
+    # rstrip, not strip: MOL line 1 (title) may legitimately be empty for Ketcher/ISIS molfiles; a
+    # full strip deletes that blank line and shifts the CTAB up by one before PolymerMoleculeResolver
+    # ever sees it (its normalize_for_open_babel only ever appends, per its own doc comment).
+    raw = molfile.to_s.rstrip
     return [nil, nil, {}] if raw.blank?
 
-    if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
+    if Chemotion::MolfilePolymerSupport.has_polymer_content?(raw)
       result = Import::PolymerMoleculeResolver.call(raw, defer_pubchem_lookup: @defer_pubchem_lookup)
       [result.molecule, result.raw_molfile, result.babel_info]
     else

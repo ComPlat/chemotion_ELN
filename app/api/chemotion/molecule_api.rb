@@ -250,8 +250,11 @@ module Chemotion
           svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
-          # Molfile has PolymersList tag -> use Indigo first; else Ketcher first; fallback to OpenBabel.
-          svg_service = Chemotion::SvgRenderer.has_polymers_list_tag?(molfile) ? 'indigo' : 'ketcher'
+          # Molfile has an actual PolymersList payload -> use Indigo first; else Ketcher first; fallback to OpenBabel.
+          # NB: has_polymer_content? (not has_polymers_list_tag?) -- Ketcher also emits an empty
+          # "> <PolymersList>" tag for ordinary, non-polymer structures, which must not be forced
+          # through Indigo with polymer-specific rendering options.
+          svg_service = Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile) ? 'indigo' : 'ketcher'
           svg = Molecule.svg_reprocess(nil, molfile, service: svg_service)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 

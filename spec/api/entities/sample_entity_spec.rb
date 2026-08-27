@@ -291,8 +291,6 @@ describe Entities::SampleEntity do
           :imported_readout,
           :location,
           :melting_point,
-          :molarity_unit,
-          :molarity_value,
           :parent_id,
           :reaction_description,
           :real_amount_unit,
@@ -302,6 +300,15 @@ describe Entities::SampleEntity do
           :solvent,
           :target_amount_unit,
           :target_amount_value,
+        )
+      end
+
+      # molarity is kept in list mode (like density) so a sample dragged from the
+      # list into a mixture propagates its stock concentration to the component.
+      it 'still exposes molarity so mixture drops carry the stock concentration' do
+        expect(grape_entity_as_hash).to include(
+          molarity_unit: sample.molarity_unit,
+          molarity_value: sample.molarity_value,
         )
       end
     end

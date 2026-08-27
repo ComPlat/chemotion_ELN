@@ -250,8 +250,10 @@ module Import
         molecule, raw_molfile = get_data_from_molfile(row)
         if molecule.present?
           [molecule, raw_molfile]
-        elsif raw_molfile.to_s.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
+        elsif Chemotion::MolfilePolymerSupport.has_polymer_content?(raw_molfile)
           # Polymer molfile but molecule not created (e.g. inchikey blank); do not fall back to smiles or we get same dummy molecule for every row.
+          # Must use the same predicate as #get_data_from_molfile: an *empty* "> <PolymersList>"
+          # block is not a polymer, so those rows keep the ordinary smiles fallback.
           nil
         elsif smiles?(row)
           m, molfile_coord, go_to_next = get_data_from_smiles(row, index)
@@ -760,18 +762,18 @@ module Import
     end
 
     def get_data_from_molfile(row)
-      @polymer_svg_file_after_reprocess = nil
-      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
-      # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-      if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
+      # rstrip, not strip: MOL line 1 is the title and is empty for Ketcher/ISIS molfiles.
+      # Stripping it away shifts every CTAB line up by one and Open Babel returns a blank inchikey.
+      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.rstrip
+      # A non-empty "> <PolymersList>" block means keep the full molfile and let
+      # Import::PolymerMoleculeResolver run Molecule.svg_reprocess, so polymers render via SvgRenderer.
+      if Chemotion::MolfilePolymerSupport.has_polymer_content?(raw_molfile)
         result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
         return [result.molecule, result.raw_molfile]
       end
 
       sanitized = sanitize_molfile_for_import(raw_molfile)
-      molfile_for_babel = sanitized.dup
-      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
+      molfile_for_babel = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(sanitized)
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
@@ -826,8 +828,7 @@ module Import
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile(smiles)
       return nil if ori_molf.blank?
 
-      ori_molf = "\n#{ori_molf}" unless ori_molf.start_with?("\n")
-      ori_molf = "#{ori_molf}\n" unless ori_molf.end_with?("\n")
+      ori_molf = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(ori_molf)
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
       inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
