@@ -1,20 +1,40 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/OneClassPerFile
+# Whole-file directives rather than per-method disable/enable pairs, deliberately: this repo's
+# pinned rubocop (1.78.0, see Gemfile.lock) predates the disable-next directive (added in
+# 1.90.0), so a newer rubocop run locally or in CI can flag narrow pairs with
+# Style/DirectiveScope and suggest disable-next syntax that the pinned version can't parse -
+# see this file's PR history for the version-mismatch discussion.
+# rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/MethodLength, Metrics/ModuleLength, Metrics/ParameterLists
+# rubocop:disable Metrics/PerceivedComplexity, Naming/AccessorMethodName, Style/GuardClause
+# rubocop:disable Style/IfInsideElse, Style/OptionalBooleanParameter
+# rubocop:disable Style/ReturnNilInPredicateMethodDefinition
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
-# rubocop:disable Metrics/ModuleLength
 module AttachmentJcampAasm
   FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip gz tar nmrium].freeze
   LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.(peak|edit))?\.jdx$/i.freeze
 
+  # Set by generate_att right before it re-saves a reused row with fresh content pending
+  # attachment (see require_peaks_generation? below) - not a stand-in for "file_path is
+  # set", since file_path stays populated on the in-memory object long after its original
+  # attach, independent of any later, unrelated save.
+  attr_accessor :reattaching_derivative
+
   extend ActiveSupport::Concern
 
-  # rubocop:disable Metrics/BlockLength
   included do
     before_create :init_aasm
     before_update :require_peaks_generation?
 
+    # failure is included in every terminal event's from: list below (matching set_queueing/
+    # set_regenerating/set_backup, which already treated it as recoverable): generate_att's
+    # may_set_*? guards mean a row stuck in failure would otherwise silently stay there even
+    # after a save that just replaced its content with fresh, correct data - state and content
+    # would disagree, and the frontend filters failure out of the viewer, reproducing this
+    # PR's own "edited spectrum disappeared" symptom via the recovery path instead of the
+    # duplication path it was written to fix.
     aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
@@ -33,11 +53,11 @@ module AttachmentJcampAasm
       end
 
       event :set_force_peaked do
-        transitions from: %i[idle queueing regenerating nmrium], to: :peaked
+        transitions from: %i[idle queueing regenerating nmrium peaked failure], to: :peaked
       end
 
       event :set_edited do
-        transitions from: %i[peaked queueing regenerating nmrium], to: :edited
+        transitions from: %i[peaked queueing regenerating nmrium edited failure], to: :edited
       end
 
       event :set_backup do
@@ -53,19 +73,19 @@ module AttachmentJcampAasm
       end
 
       event :set_image do
-        transitions from: %i[idle peaked non_jcamp image], to: :image
+        transitions from: %i[idle peaked non_jcamp image failure], to: :image
       end
 
       event :set_json do
-        transitions from: %i[idle peaked non_jcamp json], to: :json
+        transitions from: %i[idle peaked non_jcamp json failure], to: :json
       end
 
       event :set_csv do
-        transitions from: %i[idle peaked non_jcamp], to: :csv
+        transitions from: %i[idle peaked non_jcamp csv failure], to: :csv
       end
 
       event :set_nmrium do
-        transitions from: %i[idle peaked edited non_jcamp queueing regenerating], to: :nmrium
+        transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium failure], to: :nmrium
       end
 
       event :set_failure do
@@ -73,7 +93,6 @@ module AttachmentJcampAasm
       end
     end
   end
-  # rubocop:enable Metrics/BlockLength
 
   def filename_parts
     @filename_parts = filename.to_s.split('.')
@@ -101,10 +120,14 @@ module AttachmentJcampAasm
     end
   end
 
-  # rubocop:disable Style/ReturnNilInPredicateMethodDefinition, Metrics/AbcSize, Metrics/CyclomaticComplexity
-  # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Style/IfUnlessModifier
   def require_peaks_generation?
     return if transferred?
+    # generate_att reusing an existing row: the new blob only lands in after_save
+    # :attach_file, which hasn't run yet, so any content-dependent processing here (e.g.
+    # generate_img_only reading abs_path) would render from the stale, pre-save file.
+    # generate_att drives its own state transition right after this save completes, so
+    # there's nothing for this callback to do.
+    return if reattaching_derivative
     return unless belong_to_analysis?
 
     filename_lower = filename.to_s.downcase
@@ -128,8 +151,6 @@ module AttachmentJcampAasm
     generate_spectrum(true, false) if queueing?
     generate_spectrum(true, true) if regenerating?
   end
-  # rubocop:enable Style/ReturnNilInPredicateMethodDefinition, Metrics/AbcSize, Metrics/CyclomaticComplexity
-  # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Style/IfUnlessModifier
 
   def belong_to_analysis?
     container&.parent&.container_type == 'analysis'
@@ -141,11 +162,9 @@ module AttachmentJcampAasm
       filename_lower.exclude?('edit')
   end
 end
-# rubocop:enable Metrics/ModuleLength
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Process for attachment Jcamp handle
-# rubocop:disable Metrics/ModuleLength
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
@@ -173,29 +192,75 @@ module AttachmentJcampProcess
     addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
+    # generate_att only makes sense for dataset (Container) attachments; require_peaks_generation?
+    # already guarantees this for the callback path (belong_to_analysis? is false otherwise), but
+    # save_spectrum lets a caller pass an arbitrary attachment_id, so guard here too - otherwise
+    # the dataset-wide lookup below could pair a foreign attachable_id with the literal 'Container'
+    # and match a wholly unrelated Container's row. attachable_id.nil? is guarded separately:
+    # where(attachable_id: nil, ...) is a real "IS NULL" match, not a no-op, so a nil id here
+    # would let the lookup (and the write below) pair with - or create - an orphaned row sharing
+    # that same nil id, the same confusable-pairing class of bug with a different trigger.
+    return if attachable_id.nil? || attachable_type != 'Container'
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
+    # Look up the canonical row for this filename within self's own lineage (not just self's own
+    # direct children): re-editing an already-edited file, or editing a curve whose dataset still
+    # holds both a .peak. and .edit. lineage, must reuse that single row - scoping to
+    # children_of(self) would miss it (self isn't its own child) and mint a duplicate .edit.jdx
+    # attachment on every save. Narrowed to self's ancestry root so two independently uploaded
+    # curves that happen to derive the same target filename (e.g. foo.dx and foo.jdx both ->
+    # foo.peak.jdx) don't collapse onto each other.
+    lineage_root = root_id || id
+    # Descending so that, if a dataset still holds duplicate rows from before this fix,
+    # the row picked matches the one handleLoadSpectra already showed the user (it sorts
+    # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
+    att = Attachment.where_container(attachable_id)
+                    .where(filename: meta_filename)
+                    .order(id: :desc)
+                    .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
+    # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
+    # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
+    # row gets parented - without this, a row reused from a different lineage member keeps
+    # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
+    # attachment_api.rb) stops finding it on later regenerate_spectrum calls. Guarded against
+    # the reverse direction: the lookup matches by (lineage, filename) alone, so when self is a
+    # non-root member and the derived filename happens to collide with an ancestor's own (e.g.
+    # an nmrium re-edit deriving the root's own '<base>.nmrium' filename), att can resolve to
+    # that ancestor. Reparenting an ancestor onto its own descendant is a cycle - ancestry's
+    # ancestry_exclude_self validation would reject the save - so skip it in that direction;
+    # the two rows are already correctly related the other way.
+    att.parent = self if att && att.id != id && !att.ancestor_of?(self)
 
     att ||= Attachment.children_of(self[:id]).new(
       filename: meta_filename,
       con_state: Labimotion::ConState::READ,
-      file_path: meta_tmp.path,
       created_by: created_by,
       created_for: created_for,
       key: SecureRandom.uuid,
     )
+    att.attachable_id = attachable_id
+    att.attachable_type = attachable_type
+    att.file_path = meta_tmp.path
+    # See require_peaks_generation? - only matters when att is a found, persisted row (an
+    # update); harmless to set on a freshly-built one, which goes through before_create
+    # :init_aasm instead.
+    att.reattaching_derivative = true
     att.save!
+    # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
+    # attr_accessor that stays set on the object otherwise, so every subsequent save below
+    # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
+    # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
+    # same blob - clear it so those saves are plain state/column updates instead.
+    att.file_path = nil
 
     if ext == 'png'
-      att.set_image
+      att.set_image if att.may_set_image?
     elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
-      att.set_edited
+      att.set_edited if att.may_set_edited?
     elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
-      att.set_force_peaked
+      att.set_force_peaked if att.may_set_force_peaked?
     else
       filename_lower = att.filename.to_s.downcase
       if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
@@ -210,17 +275,14 @@ module AttachmentJcampProcess
         end
       end
     end
-    att.set_json  if ext == 'json'
-    att.set_csv   if ext == 'csv'
-    att.set_nmrium if ext == 'nmrium'
+    att.set_json  if ext == 'json' && att.may_set_json?
+    att.set_csv   if ext == 'csv' && att.may_set_csv?
+    att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
     att.thumb = false if ext == 'json'
-
-    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
+    att.save!
     att
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
 
-  # rubocop:disable Style/OptionalBooleanParameter
   def generate_img_att(img_tmp, addon, to_edit = false)
     ext = 'png'
     generate_att(img_tmp, addon, to_edit, ext)
@@ -234,7 +296,7 @@ module AttachmentJcampProcess
     generate_att(json_tmp, addon, to_edit, 'json')
   end
 
-  def generate_csv_att(csv_tmp, addon, to_edit = false, params={})
+  def generate_csv_att(csv_tmp, addon, to_edit = false, params = {})
     csv_reader = CSV.new(csv_tmp)
     csv_data = csv_reader.read
     sample_id_field = csv_data[2]
@@ -264,10 +326,8 @@ module AttachmentJcampProcess
   def generate_nmrium_att(nmrium_tmp, addon, to_edit = false)
     generate_att(nmrium_tmp, addon, to_edit, 'nmrium')
   end
-  # rubocop:enable Style/OptionalBooleanParameter
 
   # app/models/concerns/attachment_jcamp_process.rb
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = 0.0
@@ -286,10 +346,8 @@ module AttachmentJcampProcess
 
     params
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   # TODO: Fix bugs and improve code
-  # rubocop:disable Layout/LineLength, Naming/AccessorMethodName, Style/IfUnlessModifier
   def get_infer_json_content
     atts = Attachment.where(attachable_id: attachable_id)
 
@@ -301,7 +359,6 @@ module AttachmentJcampProcess
     content = infers.empty? ? '{}' : infers[0].read_file
     content.presence || '{}'
   end
-  # rubocop:enable Layout/LineLength, Naming/AccessorMethodName, Style/IfUnlessModifier
 
   def update_prediction(params, spc_type, is_regen)
     return auto_infer_n_clear_json(spc_type, is_regen) if ['MS', 'CYCLIC VOLTAMMETRY'].include?(spc_type)
@@ -350,7 +407,6 @@ module AttachmentJcampProcess
     end
   end
 
-  # rubocop:disable Layout/LineLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
     data = generate_spectrum_data(params, is_regen)
@@ -381,15 +437,20 @@ module AttachmentJcampProcess
       delete_related_nmrium(nmrium_att)
     end
 
-    set_backup
+    # Skip when jcamp_att is this same row (self re-edited in place, reused by generate_att's
+    # lineage lookup): self and jcamp_att are two AR instances of one record, and jcamp_att's
+    # own save already persisted it as :edited. AASM's non-bang event is persist: false, so
+    # marking self :backup here is inert today (nothing saves self afterwards) - but it would
+    # leave self's in-memory state wrongly claiming :backup, ready to overwrite the correct
+    # :edited state on any future self.save/touch/autosave, which extractJcampFiles.js filters
+    # out of the viewer: the exact "spectrum disappeared" symptom this PR set out to fix.
+    set_backup unless jcamp_att&.id == id
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att) if img_att
     delete_related_edit_peak(jcamp_att) if new_jcamp_created
     jcamp_att || self
   end
-  # rubocop:enable Layout/LineLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-  # rubocop:disable Style/OptionalBooleanParameter, Style/GuardClause
   def check_invalid_molfile(invalid_molfile = false)
     if invalid_molfile == true
       # add message when invalid molfile
@@ -400,9 +461,7 @@ module AttachmentJcampProcess
       )
     end
   end
-  # rubocop:enable Style/OptionalBooleanParameter, Style/GuardClause
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def generate_spectrum_data(params, is_regen)
     return if params[:ext] == 'nmrium'
 
@@ -423,9 +482,7 @@ module AttachmentJcampProcess
       )
     end
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def lcms_related_file_paths
     filename_lower = filename.to_s.downcase
     return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
@@ -454,9 +511,7 @@ module AttachmentJcampProcess
 
     file_paths
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-  # rubocop:disable Style/OptionalBooleanParameter
   def generate_spectrum(is_create = false, is_regen = false, params = {})
     return if is_create && !is_regen && jcamp_files_already_present?
 
@@ -467,13 +522,12 @@ module AttachmentJcampProcess
     Rails.logger.error(e)
     nil
   end
-  # rubocop:enable Style/OptionalBooleanParameter
 
   def file_match(attachments, num)
     attachments.select do |att|
       if num
-        att.filename == filename || att.filename == "#{filename[0..-2]}#{num}_bagit.peak.jdx" ||
-          att.filename == "#{filename[0..-2]}#{num}_bagit.edit.jdx"
+        att.filename == filename || ["#{filename[0..-2]}#{num}_bagit.peak.jdx",
+                                     "#{filename[0..-2]}#{num}_bagit.edit.jdx"].include?(att.filename)
       else
         att.extension_parts[-1] == 'jdx' || att.extension_parts[0] == 'peak' ||
           att.extension_parts[0] == 'edit'
@@ -533,7 +587,6 @@ module AttachmentJcampProcess
     stem
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists
   def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     jcamp_att = nil
     tmp_to_be_deleted = []
@@ -566,7 +619,6 @@ module AttachmentJcampProcess
     delete_edit_peak_after_done
     jcamp_att
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/ParameterLists
 
   def generate_spectrum_from_nmrium
     tmp_jcamp = Chemotion::Jcamp::CreateFromNMRium.jcamp_from_nmrium(abs_path)
@@ -621,21 +673,24 @@ module AttachmentJcampProcess
     destroy if %w[edit peak].include?(typname)
   end
 
-  # rubocop:disable Metrics/CyclomaticComplexity
   def delete_related_edit_peak(jcamp_att)
     return unless jcamp_att
 
+    # Restricted to self's own lineage (see generate_att) - matching by filename stem alone,
+    # across the whole dataset, would also catch an independently-uploaded curve that happens
+    # to derive the same target name, deleting it as collateral of an unrelated edit.
+    lineage_root = root_id || id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_peak_file = att.filename_parts.include?('peak')
       should_del = (att.edited? || att.peaked? || is_peak_file) &&
                    att.id != jcamp_att.id &&
-                   valid_name == fname_wo_ext(att)
+                   valid_name == fname_wo_ext(att) &&
+                   (att.root_id || att.id) == lineage_root
       att.delete if should_del
     end
   end
-  # rubocop:enable Metrics/CyclomaticComplexity
 
   def fname_wo_ext(target)
     parts = target.filename_parts
@@ -649,14 +704,14 @@ module AttachmentJcampProcess
   def delete_related_imgs(img_att)
     return unless img_att
 
+    lineage_root = root_id || id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
-      is_delete = (
-        att.image? &&
-          att.id != img_att.id &&
-          valid_name == fname_wo_ext(att)
-      )
+      is_delete = att.image? &&
+                  att.id != img_att.id &&
+                  valid_name == fname_wo_ext(att) &&
+                  (att.root_id || att.id) == lineage_root
       att.delete if is_delete
     end
   end
@@ -684,14 +739,14 @@ module AttachmentJcampProcess
   def delete_related_csv(csv_att)
     return unless csv_att
 
+    lineage_root = root_id || id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
-      is_delete = (
-        att.csv? &&
-          att.id != csv_att.id &&
-          valid_name == fname_wo_ext(att)
-      )
+      is_delete = att.csv? &&
+                  att.id != csv_att.id &&
+                  valid_name == fname_wo_ext(att) &&
+                  (att.root_id || att.id) == lineage_root
       att.delete if is_delete
     end
   end
@@ -699,12 +754,14 @@ module AttachmentJcampProcess
   def delete_related_nmrium(nmrium_att)
     return unless nmrium_att
 
+    lineage_root = root_id || id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = filename_parts[0]
     atts.each do |att|
       is_delete = att.nmrium? &&
                   att.id != nmrium_att.id &&
-                  (valid_name == fname_wo_ext(att) || fname_wo_ext(self) == fname_wo_ext(att))
+                  (valid_name == fname_wo_ext(att) || fname_wo_ext(self) == fname_wo_ext(att)) &&
+                  (att.root_id || att.id) == lineage_root
       att.delete if is_delete
     end
   end
@@ -715,11 +772,9 @@ module AttachmentJcampProcess
     atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
-      is_delete = (
-        att.edited? &&
-          att.id != jcamp_att.id &&
-          valid_name == att.filename_parts[0]
-      )
+      is_delete = att.edited? &&
+                  att.id != jcamp_att.id &&
+                  valid_name == att.filename_parts[0]
       att.delete if is_delete
     end
   end
@@ -780,11 +835,9 @@ module AttachmentJcampProcess
     atts = Attachment.where(attachable_id: attachable_id)
 
     atts.each do |att|
-      is_delete = (
-        att.json? &&
-          att.id != target.id &&
-          (att.filename == target.filename || is_reg)
-      )
+      is_delete = att.json? &&
+                  att.id != target.id &&
+                  (att.filename == target.filename || is_reg)
       att.delete if is_delete
     end
   end
@@ -800,7 +853,8 @@ module AttachmentJcampProcess
 
   def infer_spectrum(params)
     decision = infer_with_molfile(params)
-    return until decision
+    return unless decision
+
     write_infer_to_file(decision.to_json)
     decision
   end
@@ -818,5 +872,8 @@ module AttachmentJcampProcess
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength
-# rubocop:enable Style/OneClassPerFile
+# rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ModuleLength, Metrics/ParameterLists
+# rubocop:enable Metrics/PerceivedComplexity, Naming/AccessorMethodName, Style/GuardClause
+# rubocop:enable Style/IfInsideElse, Style/OptionalBooleanParameter
+# rubocop:enable Style/ReturnNilInPredicateMethodDefinition
