@@ -193,7 +193,10 @@ module Import
         stripped = text.gsub(DENSITY_UNIT, '')
         numbers = numbers_in(stripped)
         return [nil, "density expects a number, value not used (#{text.inspect})"] if numbers.empty?
-        return [nil, "density is stored in g/mL, value not used (#{text.inspect})"] unless strip_numbers(stripped).empty?
+
+        unless strip_numbers(stripped).empty?
+          return [nil, "density is stored in g/mL, value not used (#{text.inspect})"]
+        end
 
         [numbers.first, nil]
       end

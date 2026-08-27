@@ -15,6 +15,7 @@ require 'roo'
 # Note the distinction between the two kinds of shipped file: `*_template.*` are blank forms with
 # headers/property tags and no structures, so importing one is expected to create nothing. Only
 # `*_example.*` carry real molfiles.
+# Spans ImportSamplesJob, ImportSamples and ImportSdf, so there is no single class to describe.
 # rubocop:disable-next RSpec/DescribeClass -- spans ImportSamplesJob, ImportSamples and ImportSdf
 RSpec.describe 'Import of the shipped template files' do
   let(:user) { create(:user) }

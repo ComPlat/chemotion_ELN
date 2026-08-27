@@ -250,21 +250,21 @@ RSpec.describe Import::ImportSamples do
     it 'rescales the amount onto a unit the application converts' do
       result
       expect(Sample.find_by(name: 'Kilograms')).to have_attributes(
-        real_amount_value: 5000.0, real_amount_unit: 'g'
+        real_amount_value: 5000.0, real_amount_unit: 'g',
       )
     end
 
     it 'rescales a volume the same way' do
       result
       expect(Sample.find_by(name: 'Millilitres')).to have_attributes(
-        real_amount_value: 0.5, real_amount_unit: 'l'
+        real_amount_value: 0.5, real_amount_unit: 'l',
       )
     end
 
     it 'leaves an amount already in a convertible unit alone' do
       result
       expect(Sample.find_by(name: 'Already grams')).to have_attributes(
-        real_amount_value: 10.0, real_amount_unit: 'g'
+        real_amount_value: 10.0, real_amount_unit: 'g',
       )
     end
 

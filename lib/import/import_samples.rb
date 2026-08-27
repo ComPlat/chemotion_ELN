@@ -922,13 +922,11 @@ module Import
     # @param field [String] the header as written in the sheet
     # @param map_column [Array, nil] the ReportHelpers::EXP_MAP_ATTR entry for it, if any
     # @return [String] the samples column name
-    # rubocop:disable Style/StringLiterals
     def db_column_for(field, map_column)
-      array = ["\"cas\""]
+      array = ['"cas"']
       conditions = map_column.nil? || array.include?(map_column[1])
       conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
     end
-    # rubocop:enable Style/StringLiterals
 
     # The ReportHelpers::EXP_MAP_ATTR entry for a sheet header, as #process_all_rows looks it up.
     def map_column_for(field)
@@ -939,8 +937,9 @@ module Import
     # about 'real_amount_unit' names the 'real unit' column they can go and correct. Falls back to
     # the column name when this sheet has no header mapping to it.
     def header_for(db_column)
-      @header_by_db_column ||= header.reverse_each.to_h do |field|
-        [db_column_for(field, map_column_for(field)), field]
+      # reverse_each so the first header wins when two map to the same column.
+      @header_by_db_column ||= header.reverse_each.index_by do |field|
+        db_column_for(field, map_column_for(field))
       end
       @header_by_db_column[db_column] || db_column
     end
