@@ -107,7 +107,7 @@ RSpec.describe Chemotion::PubchemService do
     it 'skips a PC_Compounds entry that is not a hash' do
       malformed = { 'PC_Compounds' => ['nonsense', { 'id' => { 'id' => { 'cid' => 7 } }, 'props' => [] }] }
 
-      expect(described_class.interpret_record(malformed, true).map { |r| r[:cid] }).to eq([7])
+      expect(described_class.interpret_record(malformed, true).pluck(:cid)).to eq([7])
     end
   end
 end

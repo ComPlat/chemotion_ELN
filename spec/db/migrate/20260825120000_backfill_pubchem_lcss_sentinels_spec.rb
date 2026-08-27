@@ -4,7 +4,7 @@ require 'rails_helper'
 
 load Rails.root.join('db/migrate/20260825120000_backfill_pubchem_lcss_sentinels.rb').to_s
 
-# rubocop:disable-next-line RSpec/DescribeClass
+# rubocop:disable-next RSpec/DescribeClass
 RSpec.describe 'migration 20260825120000: BackfillPubchemLcssSentinels' do
   # Writes taggable_data straight through update_column: the point of each example is the raw JSON
   # shape on the row, which Molecule#pubchem_lcss would normalise away if it were involved.
