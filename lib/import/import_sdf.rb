@@ -314,10 +314,8 @@ class Import::ImportSdf < Import::ImportSamples
     # structure at all has no inchikeys yet every row to import.
     if !raw_data.empty? && rows.empty?
       raw_data.each_with_index do |molfile, index|
-        # Native OpenBabel work, seconds per record: run it with the connection released and outside
-        # any transaction, so a reaped connection is re-checked-out rather than failing every query
-        # that follows. The transaction below wraps only the writes.
-        ActiveRecord::Base.connection_pool.release_connection
+        # See #release_connection_for_native_work. The transaction below wraps only the writes.
+        release_connection_for_native_work
         babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
         inchikey = babel_info[:inchikey]
         is_partial = babel_info[:is_partial]
@@ -350,10 +348,9 @@ class Import::ImportSdf < Import::ImportSamples
 
           @current_import_row_index = i
 
-          # Same reasoning as the raw-data branch above: resolve the molecule (native OpenBabel
-          # work) with the DB connection released, before opening the transaction that does the
-          # actual writes.
-          ActiveRecord::Base.connection_pool.release_connection
+          # See #release_connection_for_native_work, called here before resolving the molecule
+          # (native OpenBabel work) and opening the transaction that does the actual writes.
+          release_connection_for_native_work
           resolved = resolve_molecule_for_row(row)
           next if resolved.first.blank?
 
@@ -628,16 +625,23 @@ class Import::ImportSdf < Import::ImportSamples
     @all_collections_for_user ||= Collection.get_all_collection_for_user(current_user_id)
   end
 
-  def find_or_create_by_molfiles(molfiles)
-    # Same reasoning as #create_samples, and this is the larger of the two windows: one call
-    # covers a whole batch of records, each of which can spend up to
-    # Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in native canonical-SMILES
-    # work -- minutes of wall clock for a 50-record batch of organometallics, with no SQL in
-    # between. Holding a checked-out connection across that is the whole bug, and
-    # the per-record rescue below does not help: once the server has hung up, the connection is
-    # never re-verified, so every remaining record in the import fails too. Releasing here puts
-    # it back through ConnectionPool#checkout_and_verify, which reconnects transparently.
+  # Releases the DB connection immediately before native OpenBabel work that can run seconds --
+  # batched, minutes -- per call. Without this, a connection reaped for inactivity mid-call fails
+  # every query that follows it instead of being transparently re-checked-out through
+  # ActiveRecord::ConnectionPool#checkout_and_verify once the native call returns. Call this
+  # immediately before the native call, with no transaction open around it.
+  def release_connection_for_native_work
     ActiveRecord::Base.connection_pool.release_connection
+  end
+
+  def find_or_create_by_molfiles(molfiles)
+    # See #release_connection_for_native_work. This is the larger of this file's three windows: one
+    # call covers a whole batch of records, each of which can spend up to
+    # Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in native canonical-SMILES work --
+    # minutes of wall clock for a 50-record batch of organometallics, with no SQL in between. The
+    # per-record rescue below does not substitute for it: once the server has hung up, the connection
+    # is never re-verified, so every remaining record in the import fails too.
+    release_connection_for_native_work
 
     # render_svg: false — Molecule#assign_molecule_data discards OpenBabel's SVG and re-renders
     # via Chemotion::SvgRenderer, so rendering it per record is the largest avoidable cost on
