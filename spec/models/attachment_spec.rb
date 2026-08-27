@@ -623,6 +623,16 @@ RSpec.describe Attachment do
         end
       end
 
+      it 'leaves the reuse guard cleared, so later saves still generate peaks' do
+        # reattaching_derivative suppresses require_peaks_generation? for the one save it
+        # guards. It is a plain attr_accessor, so if generate_att leaves it set, every
+        # later save on the same object skips that callback too - including the final
+        # save! that a freshly derived jcamp relies on to leave :queueing and get its peak
+        # table. A curve stuck in :queueing is filtered out of the viewer, which reads as
+        # "the spectrum will not open".
+        expect(new_attachment.reattaching_derivative).to be_falsey
+      end
+
       context 'when self is already the canonical row being re-edited (edited -> edited)' do
         let!(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }

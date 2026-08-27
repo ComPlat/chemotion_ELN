@@ -254,6 +254,13 @@ module AttachmentJcampProcess
     # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
     # same blob - clear it so those saves are plain state/column updates instead.
     att.file_path = nil
+    # Same reason, same scope: the flag guarded *this* save only. It is a plain
+    # attr_accessor, so leaving it set would suppress require_peaks_generation? for every
+    # later save on this object too - including the final save! below, which is exactly
+    # where a freshly derived jcamp (a bagit curve, say) transitions out of :queueing and
+    # asks for its peak table. Left set, such a curve keeps the content it was created
+    # with, stays in :queueing, and is filtered out of the viewer entirely.
+    att.reattaching_derivative = false
 
     if ext == 'png'
       att.set_image if att.may_set_image?
