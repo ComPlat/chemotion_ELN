@@ -805,6 +805,10 @@ RSpec.describe Attachment do
           expect { new_attachment }.not_to raise_error
           expect(new_attachment.id).to eq failed_edit.id
         end
+
+        it 'recovers the row to edited instead of leaving it stuck in failure' do
+          expect(new_attachment.edited?).to be true
+        end
       end
 
       context 'when attachable is not a Container' do

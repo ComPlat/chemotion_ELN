@@ -20,6 +20,13 @@ module AttachmentJcampAasm
     before_create :init_aasm
     before_update :require_peaks_generation?
 
+    # failure is included in every terminal event's from: list below (matching set_queueing/
+    # set_regenerating/set_backup, which already treated it as recoverable): generate_att's
+    # may_set_*? guards mean a row stuck in failure would otherwise silently stay there even
+    # after a save that just replaced its content with fresh, correct data - state and content
+    # would disagree, and the frontend filters failure out of the viewer, reproducing this
+    # PR's own "edited spectrum disappeared" symptom via the recovery path instead of the
+    # duplication path it was written to fix.
     aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
@@ -38,11 +45,11 @@ module AttachmentJcampAasm
       end
 
       event :set_force_peaked do
-        transitions from: %i[idle queueing regenerating nmrium peaked], to: :peaked
+        transitions from: %i[idle queueing regenerating nmrium peaked failure], to: :peaked
       end
 
       event :set_edited do
-        transitions from: %i[peaked queueing regenerating nmrium edited], to: :edited
+        transitions from: %i[peaked queueing regenerating nmrium edited failure], to: :edited
       end
 
       event :set_backup do
@@ -58,19 +65,19 @@ module AttachmentJcampAasm
       end
 
       event :set_image do
-        transitions from: %i[idle peaked non_jcamp image], to: :image
+        transitions from: %i[idle peaked non_jcamp image failure], to: :image
       end
 
       event :set_json do
-        transitions from: %i[idle peaked non_jcamp json], to: :json
+        transitions from: %i[idle peaked non_jcamp json failure], to: :json
       end
 
       event :set_csv do
-        transitions from: %i[idle peaked non_jcamp csv], to: :csv
+        transitions from: %i[idle peaked non_jcamp csv failure], to: :csv
       end
 
       event :set_nmrium do
-        transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium], to: :nmrium
+        transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium failure], to: :nmrium
       end
 
       event :set_failure do
