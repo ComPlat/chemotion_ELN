@@ -579,7 +579,7 @@ export default class Sample extends Element {
     if (parts.length === 1) return parts[0];
 
     return (
-      <span className="d-flex gap-1 align-items-center">
+      <span className="d-inline-flex gap-1 align-items-center">
         {parts.map((part, i) => (
           <React.Fragment key={i}>
             {i > 0 && <span className="text-muted">|</span>}
