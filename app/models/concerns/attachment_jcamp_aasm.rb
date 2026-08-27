@@ -52,10 +52,17 @@ module AttachmentJcampAasm
                     to: :regenerating
       end
 
+      # peaked self-loop: generate_att's reuse path (see its lineage lookup) can re-run this
+      # on a row that's already peaked - not a first-time creation - and needs that to
+      # succeed rather than raise. This widens the event for every caller in the class, not
+      # just generate_att: don't narrow the from: list back without checking the reuse path
+      # still needs it.
       event :set_force_peaked do
         transitions from: %i[idle queueing regenerating nmrium peaked failure], to: :peaked
       end
 
+      # edited self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-edited row, not just on first-time creation.
       event :set_edited do
         transitions from: %i[peaked queueing regenerating nmrium edited failure], to: :edited
       end
@@ -80,10 +87,14 @@ module AttachmentJcampAasm
         transitions from: %i[idle peaked non_jcamp json failure], to: :json
       end
 
+      # csv self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-csv row, not just on first-time creation.
       event :set_csv do
         transitions from: %i[idle peaked non_jcamp csv failure], to: :csv
       end
 
+      # nmrium self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-nmrium row, not just on first-time creation.
       event :set_nmrium do
         transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium failure], to: :nmrium
       end
@@ -275,6 +286,12 @@ module AttachmentJcampProcess
       # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
       # same blob - clear it so those saves are plain state/column updates instead.
       att.file_path = nil
+      # Reset now too: att is generate_att's return value, so it can outlive this method in
+      # caller code (edit_process/create_process/save_spectrum all hold onto it). Leaving
+      # this true forever would silently no-op require_peaks_generation? on any future
+      # save/touch of this same in-memory object that isn't already guarded by one of
+      # require_peaks_generation?'s own incidental checks (peaked?/edited?/extension).
+      att.reattaching_derivative = false
 
       if ext == 'png'
         att.set_image if att.may_set_image?

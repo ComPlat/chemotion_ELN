@@ -757,10 +757,18 @@ RSpec.describe Attachment do
         let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
         let(:attachment) { create(:attachment, :with_spectra_file, attachable: dataset_container) }
         let!(:queueing_edit) do
-          create(
+          # Created edited (a state require_peaks_generation? always short-circuits on, via
+          # peaked?/edited?) and only afterwards flipped to queueing via update_column, which
+          # bypasses callbacks entirely - unlike passing aasm_state: 'queueing' straight to
+          # create, which risks require_peaks_generation? itself firing mid-setup in this
+          # analysis/dataset hierarchy (belong_to_analysis? true) and kicking off real
+          # chem-spectra processing for this fixture, independent of generate_att below.
+          att = create(
             :attachment, filename: 'spectra_file.edit.jdx', attachable: dataset_container,
-                         aasm_state: 'queueing', parent: attachment
+                         aasm_state: 'edited', parent: attachment
           )
+          att.update_column(:aasm_state, 'queueing') # rubocop:disable Rails/SkipsModelValidations
+          att
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
 
