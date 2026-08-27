@@ -58,8 +58,8 @@ module Entities
       expose! :location,                unless: :displayed_in_list
       expose! :melting_point,           unless: :displayed_in_list
       expose! :metrics
-      expose! :molarity_unit,           unless: :displayed_in_list
-      expose! :molarity_value,          unless: :displayed_in_list
+      expose! :molarity_unit
+      expose! :molarity_value
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
       expose! :pubchem_tag,                                         anonymize_with: nil
