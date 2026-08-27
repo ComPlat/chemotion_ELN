@@ -135,8 +135,10 @@ module Export
       ">  <#{field}>\n#{value}\n\n"
     end
 
-    # Keep only the CTAB (up to and including "M  END") when molfile has no PolymersList/TextNode.
-    # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
+    # Keep only the CTAB (up to and including "M  END") unless the molfile carries a populated
+    # PolymersList block or a TextNode block, in which case the full molfile is kept including
+    # those blocks and $$$$. An *empty* "> <PolymersList>" block is not preserved: Ketcher emits
+    # one for ordinary structures, and exporting it would carry the tag to the importing instance.
     def validate_molfile(molfile)
       s = molfile.to_s
       return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)

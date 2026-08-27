@@ -168,4 +168,40 @@ describe('canvasOperations — arrangePolymers', () => {
     assert.ok(Array.isArray(result));
     assert.ok(result.includes(KET_TAGS.polymerIdentifier));
   });
+
+  // An image on the canvas is not enough to make the structure a polymer. When nothing resolves
+  // to a template, the tag must be omitted entirely -- writing it with an empty payload leaves
+  // "> <PolymersList>" in samples.molfile, which the backend then has to treat as "not a polymer"
+  // and which survives collection export/import.
+  describe('empty payload', () => {
+    it('omits the tag when an image is present but no atom carries a polymer alias', async () => {
+      imagesListSetter([makeImageEntry()]);
+      const atoms = [{ alias: null }, { alias: 'not-a-polymer-alias' }];
+
+      const result = await arrangePolymers(CANVAS_DATA, makeEditor(atoms));
+
+      assert.deepStrictEqual(result, CANVAS_DATA.split('\n'));
+      assert.ok(!result.includes(KET_TAGS.polymerIdentifier), 'PolymersList header must be absent');
+    });
+
+    it('omits the tag when every alias parses to a falsy templateId', async () => {
+      imagesListSetter([makeImageEntry()]);
+      // "t_0_0" matches the three-part pattern but parseInt('0') is falsy, so
+      // templateAliasesPrepare skips it and returns ''.
+      const result = await arrangePolymers(CANVAS_DATA, makeEditor([{ alias: alias(0, 0) }]));
+
+      assert.deepStrictEqual(result, CANVAS_DATA.split('\n'));
+      assert.ok(!result.includes(KET_TAGS.polymerIdentifier), 'PolymersList header must be absent');
+    });
+
+    it('still appends the tag when at least one alias resolves', async () => {
+      imagesListSetter([makeImageEntry(), makeImageEntry()]);
+      const atoms = [{ alias: alias(0, 0) }, { alias: alias(95, 1) }];
+
+      const result = await arrangePolymers(CANVAS_DATA, makeEditor(atoms));
+
+      assert.ok(result.includes(KET_TAGS.polymerIdentifier), 'PolymersList header appended');
+      assert.ok(result[result.length - 1].includes('/95/'), `expected the resolved entry: ${result[result.length - 1]}`);
+    });
+  });
 });

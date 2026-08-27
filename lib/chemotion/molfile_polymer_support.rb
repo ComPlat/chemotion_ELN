@@ -30,8 +30,18 @@ module Chemotion
       to_utf8(molfile).include?(TEXT_NODE_TAG)
     end
 
+    # True when the molfile carries a block that must survive CTAB trimming.
+    #
+    # The PolymersList half tests for *payload*, not the tag: Ketcher writes an empty
+    # "> <PolymersList>" block for ordinary structures, and preserving that on export would
+    # re-emit the empty tag into the SDF and carry it to whatever instance imports it. The
+    # TextNode half stays on tag presence -- TextNode blocks are written with an explicit
+    # "> </TextNode>" close and have no known empty-block emitter.
+    #
+    # @param molfile [String, nil]
+    # @return [Boolean]
     def has_polymer_or_textnode_blocks?(molfile)
-      has_polymers_list_tag?(molfile) || has_text_node_tag?(molfile)
+      has_polymer_content?(molfile) || has_text_node_tag?(molfile)
     end
 
     # True only when a PolymersList block carries a payload. Ketcher writes an empty
