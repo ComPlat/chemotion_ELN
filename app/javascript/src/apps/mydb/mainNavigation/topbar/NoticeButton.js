@@ -163,12 +163,22 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
         ElementActions.refreshElements('sample');
       };
 
+      // Guarded the same way: the report branch below and the switch's own
+      // 'InboxActions.fetchInbox' case can both fire for the same notification.
+      let inboxRefreshed = false;
+      const refreshInbox = () => {
+        if (inboxRefreshed) return;
+
+        inboxRefreshed = true;
+        InboxActions.fetchInbox({ currentPage, itemsPerPage });
+      };
+
       // A sample import changes three things at once, and content.action can only ask for one of them.
       // Which one it asks for also differs between instances, depending on whether the migration that
       // rewrote this channel's template actually ran - so none of this is keyed on the action.
       if (n.content.report_attachment_id) {
         // the report, which the import just put there
-        InboxActions.fetchInbox({ currentPage, itemsPerPage });
+        refreshInbox();
         // the samples it created, which otherwise only appear after a manual re-render
         refreshOpenCollectionSamples();
         // and the tree, whose per-collection counts are now out of date
@@ -177,7 +187,7 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
 
       switch (n.content.action) {
         case 'InboxActions.fetchInbox':
-          InboxActions.fetchInbox({ currentPage, itemsPerPage });
+          refreshInbox();
           break;
         case 'ReportActions.updateProcessQueue':
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
