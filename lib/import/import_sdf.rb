@@ -327,8 +327,8 @@ class Import::ImportSdf < Import::ImportSamples
               molfile_version: babel_info[:molfile_version],
               molecule_id: molecule.id,
             )
-            sample.collections << Collection.find(collection_id)
-            sample.collections << Collection.get_all_collection_for_user(current_user_id)
+            sample.collections << collection_for_import
+            sample.collections << all_collections_for_user
             sample.save!
             ids << sample.id
           end
@@ -353,8 +353,8 @@ class Import::ImportSdf < Import::ImportSamples
               sample = build_sample_from_row(row, attribs, error_messages)
               next if sample.nil?
 
-              sample.collections << Collection.find(collection_id)
-              sample.collections << Collection.get_all_collection_for_user(current_user_id)
+              sample.collections << collection_for_import
+              sample.collections << all_collections_for_user
               sample.save!
               save_chemical_for_row(sample, row) if @import_type == 'chemical'
               ids << sample.id
@@ -588,6 +588,16 @@ class Import::ImportSdf < Import::ImportSamples
     chemical = Import::ImportChemicals.build_chemical(row, row.keys)
     chemical.sample_id = sample.id
     chemical.save!
+  end
+
+  # Memoized: every imported sample joins the same two collections, so this only needs to run once
+  # per import rather than once per record.
+  def collection_for_import
+    @collection_for_import ||= Collection.find(collection_id)
+  end
+
+  def all_collections_for_user
+    @all_collections_for_user ||= Collection.get_all_collection_for_user(current_user_id)
   end
 
   def find_or_create_by_molfiles(molfiles)
