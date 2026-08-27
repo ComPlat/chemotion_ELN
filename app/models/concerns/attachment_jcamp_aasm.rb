@@ -270,15 +270,18 @@ module AttachmentJcampProcess
       # the two rows are already correctly related the other way.
       att.parent = self if att && att.id != id && !att.ancestor_of?(self)
 
+      # attachable_id/attachable_type only need setting here, on the not-found branch: a
+      # found att was already resolved via where_container(attachable_id), which filters on
+      # exactly these two values, so reassigning them on that branch would be a no-op write.
       att ||= Attachment.children_of(self[:id]).new(
         filename: meta_filename,
         con_state: Labimotion::ConState::READ,
         created_by: created_by,
         created_for: created_for,
         key: SecureRandom.uuid,
+        attachable_id: attachable_id,
+        attachable_type: attachable_type,
       )
-      att.attachable_id = attachable_id
-      att.attachable_type = attachable_type
       att.file_path = meta_tmp.path
       # See require_peaks_generation? - only matters when att is a found, persisted row (an
       # update); harmless to set on a freshly-built one, which goes through before_create
@@ -286,10 +289,12 @@ module AttachmentJcampProcess
       att.reattaching_derivative = true
       att.save!
       # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
-      # attr_accessor that stays set on the object otherwise, so every subsequent save below
-      # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
-      # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
-      # same blob - clear it so those saves are plain state/column updates instead.
+      # attr_accessor that stays set on the object otherwise, so the final att.save! below
+      # (after the AASM set_* calls - non-bang, so persist: false: they only mutate
+      # aasm_state in memory and don't themselves trigger a save, see edit_process's
+      # set_backup comment) would re-run the full attach/create_derivatives/update_column
+      # pipeline and re-upload the same blob - clear it so that save is a plain
+      # state/column update instead.
       att.file_path = nil
       # Reset now too: att is generate_att's return value, so it can outlive this method in
       # caller code (edit_process/create_process/save_spectrum all hold onto it). Leaving
