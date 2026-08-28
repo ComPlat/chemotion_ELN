@@ -407,6 +407,20 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
+    # The bound only exists if the importer asks for it: molecule_info_from_* defaults
+    # bound_native_work to false so the request path -- above all Sample's before_save -- does not
+    # fork per call. Drop the flag here and the canonical writer silently goes back to being
+    # unbounded on exactly the metal-heavy files it was measured on, with nothing failing.
+    it 'asks for the canonical-SMILES bound, which the request path does not get by default' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_return([])
+
+      batch_import.find_or_create_mol_by_batch
+
+      expect(Chemotion::OpenBabelService).to have_received(:molecule_info_from_molfiles)
+        .with(anything, render_svg: false, bound_native_work: true)
+    end
+
     # Regression, phase 1 -- the half the first pass at this fix missed. One
     # molecule_info_from_molfiles call covers a whole batch (50 records by default), each of
     # which can burn up to Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in

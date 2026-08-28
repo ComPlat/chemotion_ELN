@@ -94,8 +94,9 @@ M  END
   #   structures roughly one record in ten spends the entire {SVG_RENDER_TIMEOUT_SECONDS} budget
   #   only to be SIGKILLed and return
   #   nil. See {.molecule_info_from_structure} for who should be passing false.
-  def self.molecule_info_from_molfile(molfile, render_svg: true)
-    molecule_info_from_structure(molfile, 'mol', render_svg: render_svg)
+  def self.molecule_info_from_molfile(molfile, render_svg: true, bound_native_work: false)
+    molecule_info_from_structure(molfile, 'mol', render_svg: render_svg,
+                                                 bound_native_work: bound_native_work)
   end
 
   # @param render_svg [Boolean] when false, +svg:+ comes back nil and no fork is taken.
@@ -108,21 +109,28 @@ M  END
   #
   #   The renderer chain is unaffected — {Chemotion::SvgRenderer.open_babel_service} calls
   #   {.svg_from_molfile} directly as its last resort, independently of this method.
-  def self.molecule_info_from_structure(structure, format = 'mol', render_svg: true)
-    is_partial = false
-    mf = nil
-    if format == 'mol'
-      version = molfile_version(structure)
-      is_partial = molfile_has_R(structure, version)
-      molfile = structure
-      molfile = molfile_skip_R(structure, version) if is_partial
-      mf = mofile_clear_coord_bonds(molfile, version)
-      if mf
-        version += ' T9'
-      else
-        mf = molfile
-      end
-    end
+  #
+  # @param bound_native_work [Boolean] whether to bound the canonical-SMILES writer in a forked
+  #   child ({CANONICAL_SMILES_TIMEOUT_SECONDS}). Defaults to **false**: only callers running off
+  #   the request path should pass true.
+  #
+  #   The writer's symmetry detection is combinatorial rather than size-driven (measured: a 17-atom
+  #   record 6 s, a 92-atom one 11.3 s), so on a metal-heavy import it is worth bounding — a hung
+  #   record there takes the worker with it, and nobody is waiting on the response. On the request
+  #   path the trade reverses: forking a multi-threaded Puma worker to guard against a rare
+  #   pathological structure is the larger risk, since a child that inherits a malloc arena lock
+  #   held by another thread deadlocks until the deadline. {Sample#find_or_create_molecule_based_on_inchikey}
+  #   is a +before_save+, so that would be one fork per sample save, inside the save transaction.
+  #
+  #   Ruby's Timeout cannot interrupt a hang inside native OpenBabel code, which is why bounding
+  #   means forking and not something cheaper.
+  # Long and branchy because it is the single funnel every structure conversion goes through;
+  # #prepared_molfile takes the molfile-variant resolution out of it, and the rest is a
+  # sequence of writes with no shared seam left to extract.
+  # rubocop:disable-next Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+  def self.molecule_info_from_structure(structure, format = 'mol', render_svg: true,
+                                        bound_native_work: false)
+    mf, molfile, version, is_partial = prepared_molfile(structure, format)
     OpenBabel.obErrorLog.clear_log
 
     c = OpenBabel::OBConversion.new
@@ -137,7 +145,15 @@ M  END
     # nil, not '': the bounded writer distinguishes "failed or overran its deadline" from
     # "canonicalised to nothing". Molecule#assign_molecule_data persists cano_smiles, so the
     # first case has to leave a trace in ob_log instead of silently storing a blank.
-    ca_smiles_or_nil = canonical_smiles_from_source(mf || structure, format)
+    #
+    # Both branches write from +m+, the OBMol parsed just above. The bounded one reads it inside a
+    # forked child, which inherits it — so bounding costs a fork but never a second parse, and both
+    # branches see the same aromaticity/kekulisation perception the 'smi' write already ran.
+    ca_smiles_or_nil = if bound_native_work
+                         bounded_canonical_smiles(c, m)
+                       else
+                         canonical_smiles_from(c, m)
+                       end
     ca_smiles = ca_smiles_or_nil || ''
 
     unless format == 'mol'
@@ -243,9 +259,9 @@ M  END
   end
 
   # @param render_svg [Boolean] forwarded per record — see {.molecule_info_from_structure}
-  def self.molecule_info_from_molfiles(molfile_array, render_svg: true)
+  def self.molecule_info_from_molfiles(molfile_array, render_svg: true, bound_native_work: false)
     molfile_array.map do |molfile|
-      molecule_info_from_molfile(molfile, render_svg: render_svg)
+      molecule_info_from_molfile(molfile, render_svg: render_svg, bound_native_work: bound_native_work)
     rescue StandardError => e
       Rails.logger.error("Chemotion::OpenBabelService.molecule_info_from_molfiles: failed for one record: #{e.message}")
       nil
@@ -505,41 +521,73 @@ M  END
     nil
   end
 
-  # Process-isolated, timeout-bounded wrapper around OpenBabel's canonical-SMILES writer. See
-  # CANONICAL_SMILES_TIMEOUT_SECONDS.
+  # Resolves the molfile variant Open Babel should actually read, for a 'mol' input.
+  #
+  # An R-group structure is read with its R atoms skipped, and type-9 (coordination) bonds are
+  # cleared when present — which is what the +' T9'+ version suffix records, so a caller can tell
+  # the stored molfile was rewritten rather than taken verbatim.
+  #
+  # @return [Array(String, String, String, Boolean)] +[mf, molfile, version, is_partial]+ — the
+  #   molfile to read, the original (R-skipped) molfile, its version, and whether it is partial.
+  #   For a non-'mol' format, +[nil, nil, nil, false]+: the caller reads +structure+ directly.
+  def self.prepared_molfile(structure, format)
+    return [nil, nil, nil, false] unless format == 'mol'
+
+    version = molfile_version(structure)
+    is_partial = molfile_has_R(structure, version)
+    molfile = is_partial ? molfile_skip_R(structure, version) : structure
+
+    cleared = mofile_clear_coord_bonds(molfile, version)
+    version += ' T9' if cleared
+
+    [cleared || molfile, molfile, version, is_partial]
+  end
+  private_class_method :prepared_molfile
+
+  # Process-isolated, timeout-bounded canonical-SMILES write. See
+  # CANONICAL_SMILES_TIMEOUT_SECONDS, and {.molecule_info_from_structure}'s +bound_native_work+ for
+  # who should be asking for this and who should not.
+  #
+  # The child inherits +mol+ from the parent, so bounding costs a fork but not a second parse.
   #
   # Returns nil rather than '' on failure, the same way {.svg_from_molfile} does: the caller turns
   # it into the blank the +cano_smiles+ contract expects *and* records a warning, which a bare ''
   # here could not be distinguished from a structure that legitimately canonicalises to nothing.
   #
+  # @param conv [OpenBabel::OBConversion] the conversion +mol+ was read with
+  # @param mol [OpenBabel::OBMol] the already-parsed structure
   # @return [String] the canonical SMILES
   # @return [nil] on timeout, a crashed child, a failed fork, or any error the writer raised
-  def self.canonical_smiles_from_source(source, in_format)
+  def self.bounded_canonical_smiles(conv, mol)
     Chemotion::ForkedTimeout.run(CANONICAL_SMILES_TIMEOUT_SECONDS) do
-      canonical_smiles_from_source_unsafe(source, in_format)
+      canonical_smiles_from(conv, mol)
     end
   rescue StandardError => e
     # Covers Chemotion::ForkedTimeout::TimedOut (deadline overrun or a crashed child, e.g. from
     # SystemStackError, which the child's own StandardError rescue does not catch), a fork that
-    # could not be taken at all (Errno::EAGAIN/ENOMEM under memory pressure -- reachable now that
-    # this runs once per imported record), and any error the writer raised and the child re-raised.
-    Rails.logger.error("Chemotion::OpenBabelService.canonical_smiles_from_source failed: #{e.message}")
+    # could not be taken at all (Errno::EAGAIN/ENOMEM under memory pressure), and any error the
+    # writer raised and the child re-raised.
+    Rails.logger.error("Chemotion::OpenBabelService.bounded_canonical_smiles failed: #{e.message}")
     nil
   end
 
-  def self.canonical_smiles_from_source_unsafe(source, in_format)
-    c = OpenBabel::OBConversion.new
-    c.set_in_format in_format
-    m = OpenBabel::OBMol.new
-    c.read_string m, source
-
-    c.set_out_format 'can'
-    c.write_string(m, false).to_s.lines.first.to_s.gsub(/\s.*/m, '').strip
+  # Writes canonical SMILES from an already-parsed OBMol, in-process. Kept separate from
+  # {.bounded_canonical_smiles} so the unbounded request path and the bounded import path share one
+  # writer and cannot drift in what they produce.
+  #
+  # @return [String] the canonical SMILES
+  # @return [nil] if the writer raised — the caller reports it rather than storing a blank
+  def self.canonical_smiles_from(conv, mol)
+    conv.set_out_format 'can'
+    conv.write_string(mol, false).to_s.lines.first.to_s.gsub(/\s.*/m, '').strip
+  rescue StandardError, SystemStackError => e
+    Rails.logger.error("Chemotion::OpenBabelService.canonical_smiles_from failed: #{e.message}")
+    nil
   end
 
   # The bare `private` above this section does not apply to singleton methods, so these two are
   # closed off explicitly.
-  private_class_method :canonical_smiles_from_source, :canonical_smiles_from_source_unsafe
+  private_class_method :bounded_canonical_smiles, :canonical_smiles_from
 
   def self.svg_from_molfile_unsafe(molfile, options = {})
     c = OpenBabel::OBConversion.new

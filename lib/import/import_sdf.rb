@@ -319,7 +319,8 @@ class Import::ImportSdf < Import::ImportSamples
       raw_data.each_with_index do |molfile, index|
         # See #release_connection_for_native_work. The transaction below wraps only the writes.
         release_connection_for_native_work
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false,
+                                                                                     bound_native_work: true)
         inchikey = babel_info[:inchikey]
         is_partial = babel_info[:is_partial]
         next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
@@ -647,7 +648,8 @@ class Import::ImportSdf < Import::ImportSamples
     # this path: it is the only timeout-bounded operation in molecule_info_from_molfile, and on
     # organometallic files ~1 record in 10 burns the whole SVG render timeout before being
     # killed (measured at the 20 s default then in force; it is now 5 s and env-configurable).
-    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles, render_svg: false)
+    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles, render_svg: false,
+                                                                                         bound_native_work: true)
 
     babel_info_array.map.with_index do |babel_info, i|
       # Per-record rescue: unlike the OpenBabel work above (already guarded inside
@@ -835,7 +837,8 @@ class Import::ImportSdf < Import::ImportSamples
       [result.molecule, result.raw_molfile, result.babel_info]
     else
       san_molfile = sanitize_molfile(molfile)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile, render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile, render_svg: false,
+                                                                                       bound_native_work: true)
       inchikey = babel_info[:inchikey]
       is_partial = babel_info[:is_partial]
       molecule = inchikey.present? ? Molecule.find_by(inchikey: inchikey, is_partial: is_partial) : nil

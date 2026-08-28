@@ -762,7 +762,8 @@ module Import
 
       sanitized = sanitize_molfile_for_import(raw_molfile)
       molfile_for_babel = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(sanitized)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false,
+                                                                                             bound_native_work: true)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
         molecule = Molecule.find_or_create_by_molfile(molfile_for_babel,
@@ -817,7 +818,8 @@ module Import
       return nil if ori_molf.blank?
 
       ori_molf = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(ori_molf)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false,
+                                                                                    bound_native_work: true)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
       inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
       return nil if inchikey.blank?
