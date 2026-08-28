@@ -18,6 +18,10 @@
 # endpoint), and caching that would leave the dropdown empty for the whole TTL
 # even after the user fixes their config.
 #
+# What a provider offers is read from the provider, not from configuration. A
+# `models:` list in config/llm_provider_profiles.yml is a last resort for an
+# endpoint that lists nothing — see LlmProviderProfiles#models_for.
+#
 # The browser keeps its own short-lived copy (see
 # app/javascript/src/utilities/llmModelCache.js) so that merely toggling between
 # providers in the form costs no request at all; this cache is what protects the
@@ -51,7 +55,13 @@ class LlmModelCatalog
       ).list_models
 
       store.write(key, models, expires_in: CACHE_TTL) if models.present?
-      models
+      return models if models.present?
+
+      # The provider lists nothing (no models endpoint, or unreachable). A
+      # deployment may have named its models in config/llm_provider_profiles.yml
+      # — a last resort, never cached: what a provider offers changes, and the
+      # live answer must take over the moment there is one.
+      LlmProviderProfiles.models_for(base_url: base_url, protocol: protocol)
     end
 
     # Drop the cached catalogue for one provider identity — call after changing a

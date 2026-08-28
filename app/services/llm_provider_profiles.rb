@@ -29,7 +29,28 @@ class LlmProviderProfiles
       profiles.filter_map { |entry| normalize(entry) }
     end
 
+    # The curated model list a deployment configured for this endpoint, or [].
+    # Identity is protocol + base_url: the endpoint decides which models exist,
+    # and the key that reaches it does not.
+    #
+    # @return [Array<String>]
+    def models_for(base_url:, protocol: 'openai')
+      target = normalize_url(base_url)
+      wanted = protocol.presence || 'openai'
+
+      profile = all.find do |p|
+        p[:models].present? && p[:protocol] == wanted && normalize_url(p[:base_url]) == target
+      end
+      profile ? profile[:models] : []
+    end
+
     private
+
+    # Trailing slashes are insignificant to the provider, so they must not
+    # decide whether a profile matches either. Cf. LlmModelCatalog#normalize_url.
+    def normalize_url(base_url)
+      base_url.to_s.strip.chomp('/').downcase
+    end
 
     def read_file
       return nil unless File.exist?(CONFIG_PATH)

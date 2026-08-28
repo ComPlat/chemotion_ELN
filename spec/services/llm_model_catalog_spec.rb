@@ -58,7 +58,7 @@ RSpec.describe LlmModelCatalog do
     end
 
     it 'keeps catalogues of different endpoints apart' do
-      other_url = 'https://api.openai.com'
+      other_url = 'https://vllm.example.org'
       stub_request(:get, "#{other_url}/v1/models")
         .to_return(status: 200,
                    body: { 'data' => [{ 'id' => 'gpt-4o' }] }.to_json,
@@ -78,6 +78,40 @@ RSpec.describe LlmModelCatalog do
 
       expect(described_class.fetch(base_url: base_url, api_key: 'bad'))
         .to contain_exactly('kit.qwen3.5-397b-A17b', 'kit.llama3')
+    end
+
+    context 'when the config names models for the endpoint' do
+      # config/llm_provider_profiles.yml ships a list for api.openai.com.
+      let(:configured_url) { 'https://api.openai.com' }
+
+      it 'prefers what the provider itself lists' do
+        stub_request(:get, "#{configured_url}/v1/models").to_return(
+          status: 200,
+          body: { 'data' => [{ 'id' => 'gpt-5-live' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        expect(described_class.fetch(base_url: configured_url, api_key: api_key)).to eq(['gpt-5-live'])
+      end
+
+      it 'falls back to the configured list when the provider lists nothing' do
+        stub_request(:get, "#{configured_url}/v1/models").to_return(status: 404, body: '{}')
+
+        expect(described_class.fetch(base_url: configured_url, api_key: api_key)).to include('gpt-4o', 'o3')
+      end
+
+      it 'does not cache the fallback, so a provider that starts listing takes over' do
+        stub_request(:get, "#{configured_url}/v1/models").to_return(status: 404, body: '{}')
+        described_class.fetch(base_url: configured_url, api_key: api_key)
+
+        stub_request(:get, "#{configured_url}/v1/models").to_return(
+          status: 200,
+          body: { 'data' => [{ 'id' => 'gpt-5-live' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        expect(described_class.fetch(base_url: configured_url, api_key: api_key)).to eq(['gpt-5-live'])
+      end
     end
   end
 

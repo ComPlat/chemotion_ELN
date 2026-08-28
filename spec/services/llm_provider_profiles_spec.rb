@@ -50,5 +50,30 @@ RSpec.describe LlmProviderProfiles do
       # rubocop:enable Rails/RedundantActiveRecordAllMethod
     end
   end
+
+  describe '.models_for' do
+    it 'returns the curated list configured for that endpoint' do
+      models = described_class.models_for(base_url: 'https://api.openai.com', protocol: 'openai')
+      expect(models).to include('gpt-4o', 'o3')
+    end
+
+    it 'ignores an insignificant trailing slash' do
+      expect(described_class.models_for(base_url: 'https://api.openai.com/', protocol: 'openai'))
+        .to eq(described_class.models_for(base_url: 'https://api.openai.com', protocol: 'openai'))
+    end
+
+    it 'returns [] for an endpoint the config says nothing about' do
+      expect(described_class.models_for(base_url: 'https://unknown.example/api', protocol: 'openai')).to eq([])
+    end
+
+    it 'returns [] when the protocol does not match the profile' do
+      expect(described_class.models_for(base_url: 'https://api.openai.com', protocol: 'anthropic')).to eq([])
+    end
+
+    it 'returns [] for a profile that curates no models' do
+      # kit_toolbox ships without a `models:` list, so its live catalogue is used.
+      expect(described_class.models_for(base_url: 'https://ki-toolbox.scc.kit.edu/api')).to eq([])
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleExpectations
