@@ -206,7 +206,14 @@ module AttachmentJcampProcess
   end
 
   def jcamp_peak_addon?(addon)
-    addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
+    return false unless addon.is_a?(String)
+
+    # read_bagit_data names each curve "<n>_bagit" (no "peak" substring) - those rows already
+    # hold peak-picked data from chem-spectra's zip_jcamp_n_img, so without this they match
+    # neither this predicate nor jcamp_edit_addon?, generate_att's dispatch fires no AASM
+    # event, and the row is stuck in :queueing forever - which extractJcampFiles.js filters
+    # out of the viewer, disabling the spectra editor for the whole dataset.
+    addon == 'peak' || addon.include?('peak') || addon.match?(/\A\d+_bagit\z/)
   end
 
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
