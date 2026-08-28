@@ -140,6 +140,56 @@ describe('NoticeButton#handleNotification', () => {
     });
   });
 
+  // The toast-spam cap used to `return` out of the loop, which skipped everything after it: an import
+  // notification carrying a report is the one that has to refresh the Inbox, and behind three other
+  // notifications it never did, so the report silently never surfaced.
+  describe('a notification past the toast cap', () => {
+    const batchWithReportLast = () => [
+      ...Array.from({ length: 4 }, (unused, i) => buildNotification({ id: i, subject: 'Shared Collection With Me' })),
+      buildNotification({ id: 300, content: { report_attachment_id: 42 } }),
+    ];
+
+    it('still refreshes the Inbox for the report it carries', () => {
+      const context = buildContext();
+      const fetchInboxSpy = sinon.stub(InboxActions, 'fetchInbox');
+
+      try {
+        handleNotification(batchWithReportLast(), 'add', context);
+
+        expect(fetchInboxSpy.called).toBe(true);
+      } finally {
+        fetchInboxSpy.restore();
+      }
+    });
+
+    it('still refreshes the collections tree, whose counts the import changed', () => {
+      const context = buildContext();
+      const fetchInboxSpy = sinon.stub(InboxActions, 'fetchInbox');
+
+      try {
+        handleNotification(batchWithReportLast(), 'add', context);
+
+        expect(context.collections.fetchCollections.called).toBe(true);
+      } finally {
+        fetchInboxSpy.restore();
+      }
+    });
+
+    it('still shows no toast for it, which is what the cap is for', () => {
+      const context = buildContext();
+      const fetchInboxSpy = sinon.stub(InboxActions, 'fetchInbox');
+
+      try {
+        handleNotification(batchWithReportLast(), 'add', context);
+
+        // Three individual toasts plus the one summary toast, exactly as before.
+        expect(addCallCount()).toBe(4);
+      } finally {
+        fetchInboxSpy.restore();
+      }
+    });
+  });
+
   describe('refreshing sharee-facing permission info alongside the tree', () => {
     // fetchCollections() never touches the my_collection_shares cache SharedToMeInfosTooltip reads
     // from, so a permission-level change refreshed the tree but left the tooltip stale — this must

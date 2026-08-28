@@ -199,6 +199,108 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
   });
 });
 
+// Regression tests for the solvent volume calculation:
+// - Eq unlocked: a solvent's volume stays fixed; only its (derived) equivalent updates.
+// - Eq locked: a solvent's volume scales with the reference (equivalent * ref.amount_mol).
+// The historical glitch: editing a solvent volume set its equivalent via amount_g / maxAmount
+// (NaN, because a solvent has no maxAmount), and the correction block excluded solvents, so
+// the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
+// The correction block now includes solvents, so the equivalent is always a valid
+// amount_mol / reference.amount_mol ratio before it is used to scale.
+describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
+  let gasStoreStub;
+
+  const buildCtx = ({ lockEquivColumn = false } = {}) => ({
+    props: {
+      reaction: {
+        referenceMaterial: { amount_value: 200, amount_mol: 0.1, coefficient: 1 },
+        updateReferenceAmountForLockedEquivalents: sinon.stub(),
+      },
+    },
+    state: { lockEquivColumn },
+  });
+
+  const makeSolvent = (overrides = {}) => ({
+    id: 'solv-1',
+    amount_value: 0.01,
+    amount_unit: 'l',
+    amount_l: 0.01,
+    amount_g: 1.58,
+    amount_mol: 0.02,
+    coefficient: 1,
+    gas_type: 'off',
+    reference: false,
+    setAmountAndNormalizeToGram: sinon.spy(),
+    ...overrides,
+  });
+
+  const updatedReference = { id: 'ref-1', gas_type: 'off', amount_mol: 0.1 };
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({ reactionVesselSizeValue: 0 });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  it('scales a solvent volume from its equivalent when Eq is locked and the reference changes', () => {
+    const ctx = buildCtx({ lockEquivColumn: true });
+    const solvent = makeSolvent({ equivalent: 0.5 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [solvent],
+      updatedReference,
+      'solvents'
+    );
+
+    // equivalent (0.5) * reference amount_mol (0.1) = 0.05 mol
+    expect(solvent.setAmountAndNormalizeToGram.calledOnce).toBe(true);
+    const arg = solvent.setAmountAndNormalizeToGram.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.05) < 1e-9).toBe(true);
+  });
+
+  it('keeps a solvent volume fixed but refreshes its equivalent when Eq is unlocked and the reference changes', () => {
+    const ctx = buildCtx({ lockEquivColumn: false });
+    const solvent = makeSolvent({ equivalent: 999 });
+
+    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [solvent],
+      updatedReference,
+      'solvents'
+    );
+
+    expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(result[0].amount_value).toBe(0.01);
+    // amount_mol (0.02) / reference amount_mol (0.1) = 0.2
+    expect(Math.abs(result[0].equivalent - 0.2) < 1e-9).toBe(true);
+  });
+
+  it('derives a valid equivalent (not NaN) when a solvent volume is edited while Eq is unlocked', () => {
+    // Reproduces the "n.d." glitch at its source: without the fix the equivalent is set to
+    // amount_g / maxAmount = NaN (a solvent has no maxAmount), which the next locked
+    // scale-up turns into "n.d.".
+    const ctx = buildCtx({ lockEquivColumn: false });
+    const solvent = makeSolvent({ equivalent: NaN, maxAmount: undefined });
+
+    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [solvent],
+      solvent, // the solvent itself is the updated sample (its own volume was edited)
+      'solvents'
+    );
+
+    expect(Number.isNaN(result[0].equivalent)).toBe(false);
+    expect(Math.abs(result[0].equivalent - 0.2) < 1e-9).toBe(true);
+    // Volume stays fixed while unlocked.
+    expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(result[0].amount_value).toBe(0.01);
+  });
+});
+
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).

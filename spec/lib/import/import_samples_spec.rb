@@ -26,13 +26,16 @@ RSpec.describe 'Import::ImportSamples' do
     stub_rest_request('KWMALILVJYNFKE-UHFFFAOYSA-N')
   end
 
-  describe '.format_to_interval_syntax' do
-    let(:processed_row) { importer.send(:format_to_interval_syntax, unprocessed_row) }
+  # Melting and boiling point cells are coerced by Import::ValueCoercion, which the SDF import shares.
+  # Two of the cases this used to cover asserted a reversed range -- '[1.234, 1.0]' -- which Postgres
+  # rejects outright, so the row carrying it was lost. They are now normalised instead.
+  describe 'melting and boiling point cells' do
+    let(:processed_row) { Import::ValueCoercion.range(unprocessed_row).first }
 
     context 'with single integer number' do
       let(:unprocessed_row) { '1' }
 
-      it 'returns single number' do
+      it 'keeps the open upper bound the sample form renders as a bare number' do
         expect(processed_row).to eq '[1.0, Infinity]'
       end
     end
@@ -56,24 +59,24 @@ RSpec.describe 'Import::ImportSamples' do
     context 'with range float/int number' do
       let(:unprocessed_row) { '1.234-1' }
 
-      it 'returns interval' do
-        expect(processed_row).to eq '[1.234, 1.0]'
+      it 'orders the bounds so the row can be stored' do
+        expect(processed_row).to eq '[1.0, 1.234]'
       end
     end
 
     context 'with invalide format' do
       let(:unprocessed_row) { '1.23.4-1' }
 
-      it 'returns infinity interval' do
-        expect(processed_row).to eq '[-Infinity, Infinity]'
+      it 'reports that the cell does not read as a number' do
+        expect(Import::ValueCoercion.range(unprocessed_row).last).to include('does not read as a number')
       end
     end
 
     context 'with range float/negative int number' do
       let(:unprocessed_row) { '1.234--1' }
 
-      it 'returns interval' do
-        expect(processed_row).to eq '[1.234, -1.0]'
+      it 'orders the bounds so the row can be stored' do
+        expect(processed_row).to eq '[-1.0, 1.234]'
       end
     end
   end
@@ -217,8 +220,9 @@ RSpec.describe 'Import::ImportSamples' do
       expect(sample['xref']['refractive_index']).to eq(0.85)
     end
 
+    # Density arrives already parsed from Import::ValueCoercion, which also accepts a unit-less cell.
     it 'update sample density attribute with expected values' do
-      importer.handle_sample_fields(sample, 'density', { value: 2.24, unit: 'g/mL' })
+      importer.handle_sample_fields(sample, 'density', 2.24)
       expect(sample['density']).to eq(2.24)
     end
   end
@@ -242,6 +246,25 @@ RSpec.describe 'Import::ImportSamples' do
           .with(polymer_molfile, defer_pubchem_lookup: importer.instance_variable_get(:@defer_pubchem_lookup))
         expect(molecule).to eq(resolved_molecule)
         expect(raw_molfile).to eq(polymer_molfile)
+      end
+    end
+
+    context 'when the PolymersList block is empty' do
+      # Ketcher emits an empty "> <PolymersList>" block for structures with no polymer at all.
+      # Those must take the ordinary molecule path -- routing them through the resolver gives every
+      # such row a synthetic POLYMER_<sha> inchikey. The following "> <TextNode>" block is the
+      # regression case: it must not be read as PolymersList payload.
+      let(:empty_polymer_molfile) do
+        "some ctab\nM  END\n> <PolymersList>\n> <TextNode>\n0#0ce7f3#t_95_0#label\n> </TextNode>\n$$$$\n"
+      end
+
+      it 'does not delegate to Import::PolymerMoleculeResolver' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call)
+        allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return({ inchikey: nil })
+
+        importer.get_data_from_molfile({ 'molfile' => empty_polymer_molfile })
+
+        expect(Import::PolymerMoleculeResolver).not_to have_received(:call)
       end
     end
   end

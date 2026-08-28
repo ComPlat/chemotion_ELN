@@ -208,6 +208,25 @@ describe Chemotion::ReportAPI do
         expect(response.body).to include('>  <SHORT_LABEL>')
         expect(response.body).to include('SBMM-SDF-1')
       end
+
+      it 'exports chemical columns as SDF when only chemicals columns are selected (report_api.rb chemicals guard)' do
+        chemical = create(:chemical, sample: samples[0], chemical_data: [{ 'status' => 'ordered' }])
+
+        chem_params = params.deep_dup
+        chem_params[:uiState][:sample][:checkedIds] = [chemical.sample_id]
+        chem_params[:columns][:sample] = []
+        chem_params[:columns][:chemicals] = ['status']
+
+        post(
+          '/api/v1/reports/export_samples_from_selections',
+          params: chem_params.to_json,
+          headers: { 'CONTENT-TYPE' => 'application/json' },
+        )
+
+        expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+        expect(response.body).to include('>  <STATUS>')
+        expect(response.body).to include('ordered')
+      end
     end
 
     describe 'POST /api/v1/reports/export_samples_from_selections' do

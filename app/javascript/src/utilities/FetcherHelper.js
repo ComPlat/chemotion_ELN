@@ -74,8 +74,19 @@ const classifyString = (str) => upperFirst(camelCase(str));
 const filteredSearchParams = (params) => new URLSearchParams(omitBy(params, isNil));
 
 const preparedCollectionParams = (id, params) => {
+  // Re-inject the pagination defaults the removed BaseFetcher.fetchByCollectionId used to
+  // supply, so callers passing {} (e.g. split-as-subsamples/subwellplates, vessel-template
+  // mutations) still get the configured page size instead of the endpoints' small defaults.
+  // Loaded at call-time (not a static import) to avoid a module-init import
+  // cycle: FetcherHelper is pulled in by every fetcher, and UIStore transitively
+  // imports those fetchers. Same pattern as VesselUtilities.js.
+  const UIStore = require('src/stores/alt/stores/UIStore').default;
+  const page = params?.page ?? 1;
+  const perPage = params?.perPage ?? params?.per_page ?? UIStore.getState().number_of_results;
   const collectionParams = {
     ...params,
+    page,
+    per_page: perPage,
     collection_id: id,
     from_date: (params?.fromDate ? dateToUnixTimestamp(params.fromDate) : null),
     to_date: (params?.toDate ? dateToUnixTimestamp(params.toDate) : null)

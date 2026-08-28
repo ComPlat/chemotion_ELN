@@ -277,10 +277,11 @@ export default class ModalExport extends React.Component {
   }
 
   buttonBar() {
-    const chemicalColumns = this.filteredColumns();
-    const hasNoSdfExportData = chemicalColumns.chemicals.length !== 0
-      || chemicalColumns.components.length !== 0;
-
+    const filteredColumns = this.filteredColumns();
+    // Component columns are not part of an SDF export: the backend only writes them for exportType 1
+    // (see export_samples_from_selections in report_api.rb), so a components-only selection would
+    // produce a file holding nothing but the forced base molfile.
+    const hasNoSdfExportData = filteredColumns.sample.length === 0 && filteredColumns.chemicals.length === 0;
     return (
       <Button
         variant="primary"
