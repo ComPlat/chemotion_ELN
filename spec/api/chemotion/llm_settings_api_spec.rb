@@ -53,6 +53,54 @@ describe Chemotion::LlmSettingsAPI do
     end
   end
 
+  describe 'GET /api/v1/users/llm_settings institution providers' do
+    let!(:first)  { create(:llm_provider) }
+    let!(:second) { create(:llm_provider, base_url: 'https://second.example/api') }
+
+    it 'lists every institution provider, without their keys' do
+      get '/api/v1/users/llm_settings', headers: headers
+
+      body = JSON.parse(response.body)
+      expect(body['institution_providers'].pluck('id')).to eq([first.id, second.id])
+      expect(body['institution_providers'].first).not_to have_key('api_key_masked')
+    end
+
+    it 'returns the institution provider the user picked' do
+      create(:user_llm_setting, :global, user: user, institution_llm_provider: second)
+
+      get '/api/v1/users/llm_settings', headers: headers
+
+      expect(JSON.parse(response.body)['setting']['institution_llm_provider_id']).to eq(second.id)
+    end
+
+    it 'hides an institution provider whose rule shuts the user out' do
+      create(:llm_provider_grant, llm_provider: first, enabled: false, include_ids: [])
+
+      get '/api/v1/users/llm_settings', headers: headers
+
+      expect(JSON.parse(response.body)['institution_providers'].pluck('id')).to eq([second.id])
+    end
+
+    it 'saves a new institution choice' do
+      put '/api/v1/users/llm_settings',
+          params: { provider_type: 'global', institution_llm_provider_id: second.id }.to_json,
+          headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.user_llm_setting.institution_llm_provider_id).to eq(second.id)
+    end
+
+    it 'refuses another user’s personal provider as the institution choice' do
+      theirs = create(:llm_provider, :personal, user: create(:person))
+
+      put '/api/v1/users/llm_settings',
+          params: { provider_type: 'global', institution_llm_provider_id: theirs.id }.to_json,
+          headers: headers
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
   describe 'PUT /api/v1/users/llm_settings' do
     context 'when creating new settings' do
       let(:payload) do

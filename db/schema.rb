@@ -929,6 +929,18 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
+  create_table "llm_provider_grants", force: :cascade do |t|
+    t.bigint "llm_provider_id", null: false
+    t.string "model"
+    t.boolean "enabled", default: true, null: false
+    t.integer "include_ids", default: [], array: true
+    t.integer "exclude_ids", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["llm_provider_id", "model"], name: "index_llm_provider_grants_on_model", unique: true, where: "(model IS NOT NULL)"
+    t.index ["llm_provider_id"], name: "index_llm_provider_grants_on_provider", unique: true, where: "(model IS NULL)"
+  end
+
   create_table "llm_providers", force: :cascade do |t|
     t.string "name", null: false
     t.string "provider_type"
@@ -939,6 +951,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.string "scope", default: "global", null: false
     t.bigint "user_id"
     t.boolean "enabled", default: true, null: false
+    t.boolean "restrict_models", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["scope"], name: "index_llm_providers_on_scope"
@@ -1735,10 +1748,12 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.bigint "user_id", null: false
     t.string "provider_type", default: "global", null: false
     t.bigint "default_llm_provider_id"
+    t.bigint "institution_llm_provider_id"
     t.boolean "enabled", default: true, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["default_llm_provider_id"], name: "index_user_llm_settings_on_default_llm_provider_id"
+    t.index ["institution_llm_provider_id"], name: "index_user_llm_settings_on_institution_llm_provider_id"
     t.index ["user_id"], name: "index_user_llm_settings_on_user_id", unique: true
   end
 
@@ -1920,6 +1935,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
+  add_foreign_key "llm_provider_grants", "llm_providers", on_delete: :cascade
   add_foreign_key "llm_providers", "users", on_delete: :cascade
   add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
   add_foreign_key "reactions_reactant_sbmm_samples", "sequence_based_macromolecule_samples"
@@ -1929,6 +1945,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
   add_foreign_key "sequence_based_macromolecule_samples", "users"
   add_foreign_key "user_llm_settings", "llm_providers", column: "default_llm_provider_id", on_delete: :nullify
+  add_foreign_key "user_llm_settings", "llm_providers", column: "institution_llm_provider_id", on_delete: :nullify
   add_foreign_key "user_llm_settings", "users", on_delete: :cascade
   add_foreign_key "user_task_model_mappings", "llm_providers", on_delete: :cascade
   add_foreign_key "user_task_model_mappings", "users", on_delete: :cascade
