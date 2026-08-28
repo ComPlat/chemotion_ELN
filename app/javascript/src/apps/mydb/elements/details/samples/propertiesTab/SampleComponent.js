@@ -15,6 +15,7 @@ import { permitCls, permitOn } from 'src/components/common/uis';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import DeleteButton from 'src/components/common/DeleteButton';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -550,6 +551,25 @@ class SampleComponent extends Component {
   }
 
   /**
+   * Renders the delete button cell for a component row.
+   * @param {Object} material - The material object
+   * @returns {JSX.Element} The delete button cell
+   */
+  renderDeleteButton(material) {
+    const { sample, deleteMaterial } = this.props;
+
+    return (
+      <td className="component-delete-cell">
+        <DeleteButton
+          className="component-delete-btn"
+          disabled={!permitOn(sample)}
+          onClick={() => deleteMaterial(material)}
+        />
+      </td>
+    );
+  }
+
+  /**
    * Renders the ratio input for a component.
    * @param {Object} material - The material object
    * @returns {JSX.Element} The ratio input cell
@@ -713,7 +733,7 @@ class SampleComponent extends Component {
    */
   mixtureComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
+      sample, material, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
     const metricMol = getMetricMol(material);
     const metricMolConc = getMetricMolConc(material);
@@ -729,17 +749,6 @@ class SampleComponent extends Component {
 
         <td style={{ width: '10%', maxWidth: '50px', cursor: 'pointer' }}>
           {this.materialNameWithIupac(material)}
-        </td>
-
-        <td style={{ verticalAlign: 'top' }}>
-          <Button
-            disabled={!permitOn(sample)}
-            variant="danger"
-            size="sm"
-            onClick={() => deleteMaterial(material)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
         </td>
 
         {activeTab === 'concentration' && this.componentStartingConc(material, metricMolConc, metricPrefixesMolConc)}
@@ -767,6 +776,8 @@ class SampleComponent extends Component {
             </td>
           )
         }
+
+        {this.renderDeleteButton(material)}
       </tr>
     );
   }
@@ -779,7 +790,7 @@ class SampleComponent extends Component {
    */
   solidComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget, enableComponentPurity
+      sample, material, connectDragSource, connectDropTarget, enableComponentPurity
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
@@ -799,16 +810,6 @@ class SampleComponent extends Component {
           {this.materialNameWithIupac(material)}
         </td>
 
-        <td style={{ verticalAlign: 'top' }}>
-          <Button
-            disabled={!permitOn(sample)}
-            variant="danger"
-            size="sm"
-            onClick={() => deleteMaterial(material)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </td>
         <td />
 
         <td
@@ -837,6 +838,8 @@ class SampleComponent extends Component {
             </td>
           )
         }
+
+        {this.renderDeleteButton(material)}
       </tr>
     );
   }
