@@ -218,6 +218,30 @@ const isSpectrum2D = (spc) => (
   || spc?.display?.dimension === 2
 );
 
+// The raw JCAMP header keeps the source file's stem in TITLE, as a string or as an array of
+// repeats. It is the last place a spectrum's real name survives.
+const metaTitle = (spc) => {
+  const title = spc?.meta?.TITLE;
+  const value = Array.isArray(title)
+    ? title.find((entry) => typeof entry === 'string' && entry.trim())
+    : title;
+  return (typeof value === 'string' && value.trim()) ? value.trim() : null;
+};
+
+// The name to identify a spectrum by. NMRium defaults display.name to the spectrum's own id when
+// nothing set it - which is what a spectrum loaded straight from a jcamp ends up with - so a
+// display.name equal to the id names no file and must not be treated as one: buildSourceId would
+// key on a uuid, and findMatchingJcamp could not match the spectrum back to its attachment.
+const spectrumName = (spc) => {
+  const named = (spc?.display?.name && spc.display.name !== spc?.id) ? spc.display.name : null;
+  return named
+    || spc?.info?.name
+    || spc?.originalInfo?.name
+    || spc?.meta?.name
+    || metaTitle(spc)
+    || null;
+};
+
 const SOURCE_ID_PREFIX = 'nmrium-src-';
 const ARCHIVE_MARKER = '/file.zip/';
 const isAbsoluteUrl = (value) => typeof value === 'string' && /^https?:\/\//.test(value);
@@ -347,12 +371,9 @@ const cleaningNMRiumData = (nmriumData) => {
     // it, so we can't assume it's safe to lose. `info` itself must stay fully intact; NMRium relies
     // on it (e.g. dimension, isFid) to read `data`.
     if (is2DWithSource) {
-      const spectrumName = tmpSpc?.display?.name
-        || tmpSpc?.info?.name
-        || tmpSpc?.originalInfo?.name
-        || tmpSpc?.meta?.name;
-      if (spectrumName) {
-        tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
+      const resolvedName = spectrumName(tmpSpc);
+      if (resolvedName) {
+        tmpSpc.display = { ...tmpSpc.display, name: resolvedName };
       }
       // info may be sparse on legacy spectra where dimension/isFid were only ever mirrored into
       // originalInfo/meta; backfill it before dropping the originalInfo duplicate. Only the two
@@ -386,7 +407,7 @@ const cleaningNMRiumData = (nmriumData) => {
       // If no URL can be resolved, leave `data` embedded: that's the same safe fallback this file
       // relied on before this was wired up, not a regression.
       const sourceUrl = resolveSpectrumSourceUrl(tmpSpc, root);
-      const sourceId = ensureSource(root, buildSourceId(spectrumName), sourceUrl, claimedSources);
+      const sourceId = ensureSource(root, buildSourceId(resolvedName), sourceUrl, claimedSources);
       if (sourceId) {
         // sourceSelector.files may address individual members *within* a shared source (e.g. one
         // experiment inside a multi-spectrum zip, all sharing one sources[] id); NMRium's reader
@@ -526,5 +547,6 @@ const inlineNotation = (layout, data, metadata) => {
 };
 
 export {
-  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, cleaningNMRiumData, inlineNotation,
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
+  cleaningNMRiumData, inlineNotation,
 }; // eslint-disable-line

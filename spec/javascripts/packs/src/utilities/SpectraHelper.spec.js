@@ -2,7 +2,7 @@ import expect from 'expect';
 import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
-  JcampIds, BuildSpcInfos, cleaningNMRiumData,
+  JcampIds, BuildSpcInfos, cleaningNMRiumData, spectrumName,
   inlineNotation,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
@@ -671,6 +671,29 @@ describe('SpectraHelper', () => {
         expect('info' in spectrum).toEqual(false);
       });
 
+      it('names a 2D spectrum from meta.TITLE when display.name is only its own uuid', () => {
+        // Real shape of a spectrum NMRium loaded straight from a jcamp: display.name defaults to
+        // the spectrum id, info carries no name, and the source file's stem survives only in the
+        // raw JCAMP TITLE - as an array of repeats.
+        const nmriumData = {
+          spectra: [{
+            id: '985335b4-3535-4098-b92c-fe4b20692cd1',
+            display: { name: '985335b4-3535-4098-b92c-fe4b20692cd1', dimension: 2 },
+            info: { dimension: 2, isFid: false },
+            meta: { TITLE: ['X23827_10.processed_1', 'X23827_10.processed_1'] },
+            source: { jcampURL: 'https://example.com/file.jdx' },
+            data: { rr: { z: [[1.0]] } },
+          }],
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.spectra;
+        expect(spectrum.display.name).toEqual('X23827_10.processed_1');
+        expect(cleanedNMRiumData.sources).toEqual([
+          { id: 'nmrium-src-x23827-10-processed-1', entries: [{ relativePath: '/file.jdx', baseURL: 'https://example.com' }] },
+        ]);
+        expect(spectrum.selector).toEqual({ root: 'nmrium-src-x23827-10-processed-1' });
+      });
+
       it('does not drop the data matrix of a display-only 2D spectrum that has no source', () => {
         const nmriumData = {
           spectra: [{
@@ -683,6 +706,36 @@ describe('SpectraHelper', () => {
         expect(spectrum.data).toEqual({ rr: { z: [[1.0]] } });
         expect(spectrum.selector).toEqual(undefined);
       });
+    });
+  });
+
+  describe('.spectrumName()', () => {
+    it('prefers a real display.name', () => {
+      expect(spectrumName({ id: 'abc', display: { name: 'cosy.jdx' } })).toEqual('cosy.jdx');
+    });
+
+    it('ignores a display.name that is only the spectrum id', () => {
+      const uuid = '985335b4-3535-4098-b92c-fe4b20692cd1';
+      expect(spectrumName({ id: uuid, display: { name: uuid }, info: { name: 'cosy.jdx' } })).toEqual('cosy.jdx');
+    });
+
+    it('falls back to meta.TITLE, taking the first usable entry of an array', () => {
+      const uuid = '985335b4-3535-4098-b92c-fe4b20692cd1';
+      expect(spectrumName({
+        id: uuid,
+        display: { name: uuid },
+        meta: { TITLE: ['  ', 'X23827_10.processed_1'] },
+      })).toEqual('X23827_10.processed_1');
+    });
+
+    it('accepts a plain string meta.TITLE', () => {
+      expect(spectrumName({ meta: { TITLE: 'hsqc' } })).toEqual('hsqc');
+    });
+
+    it('returns null when nothing names the spectrum', () => {
+      const uuid = '985335b4-3535-4098-b92c-fe4b20692cd1';
+      expect(spectrumName({ id: uuid, display: { name: uuid }, meta: { TITLE: [] } })).toEqual(null);
+      expect(spectrumName(undefined)).toEqual(null);
     });
   });
 
