@@ -423,7 +423,7 @@ module AttachmentJcampProcess
     return generate_spectrum_from_nmrium if params[:ext] == 'nmrium'
 
     spectrum_data = generate_spectrum_data(params, is_regen)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = spectrum_data
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, _arr_nmrium, spc_type, invalid_molfile = spectrum_data
 
     check_invalid_molfile(invalid_molfile)
 
@@ -438,7 +438,7 @@ module AttachmentJcampProcess
     if spc_type == 'lcms'
       read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     elsif spc_type == 'bagit' || arr_jcamp.length > 1
-      read_bagit_data(arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, is_regen, params)
+      read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     else
       img_att = generate_img_att(tmp_img, 'peak')
       jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
@@ -659,7 +659,7 @@ module AttachmentJcampProcess
     stem
   end
 
-  def read_bagit_data(arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, is_regen, params)
+  def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     jcamp_att = nil
     tmp_to_be_deleted = []
     tmp_img_to_deleted = []
@@ -677,8 +677,6 @@ module AttachmentJcampProcess
         tmp_to_be_deleted.push(curr_tmp_csv)
       end
 
-      curr_tmp_nmrium = generate_bagit_nmrium_att(arr_nmrium, idx)
-      tmp_to_be_deleted.push(curr_tmp_nmrium) if curr_tmp_nmrium
       jcamp_att = curr_jcamp_att if idx.zero?
     end
 
@@ -693,14 +691,6 @@ module AttachmentJcampProcess
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
     jcamp_att
-  end
-
-  def generate_bagit_nmrium_att(arr_nmrium, idx)
-    curr_tmp_nmrium = arr_nmrium[idx]
-    return unless curr_tmp_nmrium
-
-    generate_nmrium_att(curr_tmp_nmrium, "#{idx + 1}_bagit")
-    curr_tmp_nmrium
   end
 
   def generate_spectrum_from_nmrium
