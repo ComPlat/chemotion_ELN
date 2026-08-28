@@ -2,19 +2,28 @@ import React, { useEffect, useState } from 'react';
 
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import WorkshopContent from 'src/components/workshopGuide/WorkshopContent';
-import { fetchWorkshopAvailability } from 'src/components/workshopGuide/workshopGuideFetch';
+import {
+  fetchWorkshopAvailability,
+  workshopDefaultTitle,
+} from 'src/components/workshopGuide/workshopGuideFetch';
 
 // The drawer auto-hides itself if no workshop content is checked out, so the
 // feature is implicitly off on non-workshop instances (just don't run the rake
 // sync task).
 export default function WorkshopGuideDrawer() {
   const [available, setAvailable] = useState(false);
+  const [title, setTitle] = useState(workshopDefaultTitle);
   const [open, setOpen] = useState(false);
   const [openedOnce, setOpenedOnce] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetchWorkshopAvailability().then((ok) => { if (!cancelled) setAvailable(ok); });
+    fetchWorkshopAvailability().then(({ available: ok, title: t }) => {
+      if (!cancelled) {
+        setAvailable(ok);
+        setTitle(t);
+      }
+    });
     return () => { cancelled = true; };
   }, []);
 
@@ -32,22 +41,22 @@ export default function WorkshopGuideDrawer() {
       <button
         type="button"
         className="workshop-guide-fab"
-        title={open ? 'Hide Workshop Guide' : 'Show Workshop Guide'}
-        aria-label="Workshop Guide"
+        title={open ? `Hide ${title}` : `Show ${title}`}
+        aria-label={title}
         onClick={toggle}
       >
         <ChemotionLogo collapsed />
-        <span className="workshop-guide-fab__label">Workshop&nbsp;Guide</span>
+        <span className="workshop-guide-fab__label">{title}</span>
       </button>
       {openedOnce && (
         <div
           className={`workshop-guide-drawer${open ? '' : ' workshop-guide-drawer--hidden'}`}
           role="dialog"
-          aria-label="Workshop Guide"
+          aria-label={title}
           aria-hidden={!open}
         >
           <div className="workshop-guide-drawer__header">
-            <strong>Workshop Guide</strong>
+            <strong>{title}</strong>
             <button
               type="button"
               className="workshop-guide-drawer__close"

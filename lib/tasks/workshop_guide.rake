@@ -7,6 +7,10 @@
 #               With no content present both widgets render nothing, so the
 #               app is the usual ELN.
 # public/workshop is gitignored, so the content is a runtime checkout only.
+#
+# The drawer's title defaults to "Workshop Guide" and can be rebranded per
+# instance via the WORKSHOP_GUIDE_TITLE env var on the app server (read at
+# request time by the public workshop_guide/available API, not by this task).
 namespace :workshop_guide do
   desc 'Clone or update the Chemotion workshop wiki into public/workshop. ' \
        'Configure via env: WORKSHOP_GUIDE_REPO (required, the git URL of a ' \
