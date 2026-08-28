@@ -629,6 +629,60 @@ describe('SpectraHelper', () => {
         expect(spectrum.data).toEqual({ x: [1.0, 2.0], y: [1.0, 2.0] });
         expect(spectrum.info).toEqual({ dimension: 1, name: 'proton' });
       });
+
+      it('still recognises a 2D spectrum whose info/originalInfo/meta an earlier cleaner deleted', () => {
+        // Shape of a real .nmrium written by a cleaner that dropped info/originalInfo/meta from a
+        // source-backed 2D spectrum. display.dimension is the only surviving record that it is 2D;
+        // without honouring it the migration is skipped and the stale sources[] URL and the dead
+        // full-server-path selector.files below are both left in place, with no data to fall back on.
+        const nmriumData = {
+          source: { entries: [{ baseURL: 'https://example.com', relativePath: '/tpa/fresh/file.zip' }] },
+          sources: [{
+            id: 'nmrium-src-hsqc-zip',
+            entries: [{ baseURL: 'https://example.com', relativePath: '/tpa/expired/file.zip' }],
+          }],
+          spectra: [{
+            display: { name: 'hsqc.zip', dimension: 2 },
+            selector: { root: 'nmrium-src-hsqc-zip', files: ['/tpa/expired/file.zip/exp1/pdata/1/2rr'] },
+            sourceSelector: { files: ['/tpa/fresh/file.zip/exp1/pdata/1/2rr', '/tpa/fresh/file.zip/exp1/acqus'] },
+          }],
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.spectra;
+        expect(cleanedNMRiumData.sources).toEqual([
+          { id: 'nmrium-src-hsqc-zip', entries: [{ relativePath: '/tpa/fresh/file.zip', baseURL: 'https://example.com' }] },
+        ]);
+        expect(spectrum.selector).toEqual({
+          root: 'nmrium-src-hsqc-zip',
+          files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+        });
+      });
+
+      it('leaves info absent rather than empty when there is nothing to backfill it from', () => {
+        const nmriumData = {
+          spectra: [{
+            source: { jcampURL: 'https://example.com/file.jdx' },
+            display: { name: 'hsqc.jdx', dimension: 2 },
+          }],
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.spectra;
+        expect(spectrum.selector).toEqual({ root: 'nmrium-src-hsqc-jdx' });
+        expect('info' in spectrum).toEqual(false);
+      });
+
+      it('does not drop the data matrix of a display-only 2D spectrum that has no source', () => {
+        const nmriumData = {
+          spectra: [{
+            display: { name: 'hsqc', dimension: 2 },
+            data: { rr: { z: [[1.0]] } },
+          }],
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.spectra;
+        expect(spectrum.data).toEqual({ rr: { z: [[1.0]] } });
+        expect(spectrum.selector).toEqual(undefined);
+      });
     });
   });
 

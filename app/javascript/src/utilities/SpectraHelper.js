@@ -205,12 +205,17 @@ const isNMRKind = (container, chmos = []) => {
   return filtered.length > 0;
 };
 
-// A spectrum's dimension may be recorded on info, originalInfo, or meta depending on how/when it
-// was populated; check all three so 2D detection agrees everywhere it's needed.
+// A spectrum's dimension may be recorded on info, originalInfo, meta or display depending on
+// how/when it was populated; check all four so 2D detection agrees everywhere it's needed.
+// display is what makes a *previously saved* spectrum still recognisable: an older cleaner deleted
+// info/originalInfo/meta from a source-backed 2D spectrum before writing it out, so on reopen
+// display.dimension is the only surviving record that it was 2D — and without that this whole
+// migration is skipped for exactly the files that most need it.
 const isSpectrum2D = (spc) => (
   spc?.info?.dimension === 2
   || spc?.originalInfo?.dimension === 2
   || spc?.meta?.dimension === 2
+  || spc?.display?.dimension === 2
 );
 
 const SOURCE_ID_PREFIX = 'nmrium-src-';
@@ -353,12 +358,20 @@ const cleaningNMRiumData = (nmriumData) => {
       // originalInfo/meta; backfill it before dropping the originalInfo duplicate. Only the two
       // known load-bearing keys are taken from `meta` — it is a raw JCAMP header dictionary, not an
       // info-shaped object, and it stays on the spectrum anyway.
-      tmpSpc.info = { ...tmpSpc.originalInfo, ...tmpSpc.info };
+      // Nothing may be recoverable at all (a spectrum written by the cleaner that deleted all
+      // three): leave `info` absent rather than writing an empty object, so NMRium sees a spectrum
+      // with no info and rebuilds it from the source instead of one that claims to have none.
+      const backfilledInfo = { ...tmpSpc.originalInfo, ...tmpSpc.info };
       ['dimension', 'isFid'].forEach((key) => {
-        if (tmpSpc.info[key] === undefined && tmpSpc.meta?.[key] !== undefined) {
-          tmpSpc.info[key] = tmpSpc.meta[key];
+        if (backfilledInfo[key] === undefined && tmpSpc.meta?.[key] !== undefined) {
+          backfilledInfo[key] = tmpSpc.meta[key];
         }
       });
+      if (Object.keys(backfilledInfo).length) {
+        tmpSpc.info = backfilledInfo;
+      } else {
+        delete tmpSpc.info;
+      }
       delete tmpSpc.originalInfo;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
