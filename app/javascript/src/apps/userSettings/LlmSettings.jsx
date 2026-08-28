@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState, useEffect, useCallback, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import {
-  Card, Form, Row, Col, Button, Alert, Spinner,
+  Card, Form, Row, Col, Button, Alert, Spinner, Badge,
 } from 'react-bootstrap';
 import { CreatableSelect } from 'src/components/common/Select';
 import CopyableAlert from 'src/components/common/CopyableAlert';
-import LlmProviderList from 'src/apps/userSettings/LlmProviderList';
+import LlmProviderList from 'src/components/llm/LlmProviderList';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import { llmProtocolShortLabel } from 'src/utilities/llmProtocols';
 import {
   institutionModelsKey, providerModelsKey, peekModels,
   fetchProviderModels, fetchInstitutionModels, subscribe, scopeToUser,
@@ -18,11 +21,17 @@ const PROVIDER_OPTIONS = [
 ];
 
 // The value the per-task Provider select carries for "whatever my default is".
-// A blank string, because that is what an unselected <option> gives back.
+// A blank string, because that is what an unselected <option> gives back. Every
+// other value is a provider id, which is unique across both lists.
 const INHERIT = '';
-// The per-task Provider select's value for the institution service. Prefixed so
-// it can never collide with one of the user's own numeric provider ids.
-const INSTITUTION = 'institution';
+
+const KEY_HELP = {
+  hint: 'Encrypted at rest. Never returned by the API. Leave blank for endpoints '
+    + 'that need no key (e.g. a local Ollama).',
+  deleteConfirm: 'Remove this provider’s saved API key? It stops working until a new key is entered.',
+};
+
+const DELETE_HINT = 'Its API key is removed, and any task routed to it falls back to your default provider.';
 
 // Normalise task overrides for change detection: drop the empty ones (they mean
 // "no override"), and sort, so a reordering is not a change.
@@ -49,6 +58,73 @@ const FALLBACK_TASKS = [
   { taskName: 'sds_extraction', label: 'SDS Extraction' },
 ];
 
+// ── One institution provider, read-only ──────────────────────────────────────
+
+const InstitutionProviderRow = ({
+  provider, isDefault, selectable, onSelect, onTest, testing,
+}) => (
+  <div className="border rounded p-2 mb-2">
+    <div className="d-flex align-items-start gap-2">
+      {selectable && (
+        <Form.Check
+          type="radio"
+          name="institution-provider"
+          id={`institution-provider-${provider.id}`}
+          checked={isDefault}
+          onChange={() => onSelect(provider.id)}
+          className="mt-1"
+          title="Use this institution provider for tasks that name none"
+        />
+      )}
+      <div className="flex-grow-1 text-break">
+        <div>
+          <strong>{provider.name}</strong>
+          {isDefault && selectable && <Badge bg="primary" className="ms-2">Default</Badge>}
+          <span className="text-muted small ms-2">{llmProtocolShortLabel(provider.api_protocol)}</span>
+        </div>
+        <div className="small text-muted">
+          {provider.base_url && (
+            <>
+              Endpoint:
+              {' '}
+              <code>{provider.base_url}</code>
+              {' · '}
+            </>
+          )}
+          Default model:
+          {' '}
+          <code>{provider.default_model}</code>
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="outline-primary"
+        onClick={() => onTest(provider.id)}
+        disabled={testing}
+        title="Test this provider with the key your administrator stored"
+      >
+        {testing ? <Spinner size="sm" animation="border" /> : 'Test'}
+      </Button>
+    </div>
+  </div>
+);
+
+InstitutionProviderRow.propTypes = {
+  provider: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    api_protocol: PropTypes.string,
+    base_url: PropTypes.string,
+    default_model: PropTypes.string,
+  }).isRequired,
+  isDefault: PropTypes.bool.isRequired,
+  // False when the institution runs a single provider: there is nothing to pick.
+  selectable: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  onTest: PropTypes.func.isRequired,
+  testing: PropTypes.bool.isRequired,
+};
+
 const LlmSettings = ({ userId }) => {
   const [providerType, setProviderType] = useState('global');
   const [profiles, setProfiles]         = useState([]);
@@ -56,17 +132,20 @@ const LlmSettings = ({ userId }) => {
   const [providers, setProviders]       = useState([]);
   const [defaultProviderId, setDefaultProviderId] = useState(null);
   const [taskMappings, setTaskMappings] = useState([]);
-  const [adminProvider, setAdminProvider] = useState(null);
+  // Every provider the admin set up, and which of them serves this user.
+  const [institutionProviders, setInstitutionProviders] = useState([]);
+  const [institutionProviderId, setInstitutionProviderId] = useState(null);
   const [customKeyAllowed, setCustomKeyAllowed] = useState(false);
   const [institutionAllowed, setInstitutionAllowed] = useState(false);
   const [legacyCustomNotice, setLegacyCustomNotice] = useState(false);
   // Snapshots of the saved state — used to detect meaningful (dirty) changes.
   const [savedProviderType, setSavedProviderType] = useState('global');
   const [savedDefaultProviderId, setSavedDefaultProviderId] = useState(null);
+  const [savedInstitutionProviderId, setSavedInstitutionProviderId] = useState(null);
   const [savedTaskMappings, setSavedTaskMappings] = useState([]);
   const [status, setStatus]             = useState(null); // save result { variant, message }
   const [verifyStatus, setVerifyStatus] = useState(null); // institution test result
-  const [verifying, setVerifying]       = useState(false);
+  const [verifyingId, setVerifyingId]   = useState(null);
   const [loading, setLoading]           = useState(true);
   const [knownTasks, setKnownTasks]     = useState(FALLBACK_TASKS);
   // Counts of in-flight lookups, not booleans: several provider lists can be
@@ -88,6 +167,13 @@ const LlmSettings = ({ userId }) => {
 
   const isCustomMode = providerType === 'custom';
 
+  // Which ids belong to the institution: the same select lists both kinds, and
+  // only the institution's are read through the institution endpoint.
+  const institutionIds = useMemo(
+    () => new Set(institutionProviders.map((p) => p.id)),
+    [institutionProviders],
+  );
+
   const countLoad = useCallback((promise) => {
     setModelLoads((n) => n + 1);
     return promise.finally(() => setModelLoads((n) => n - 1));
@@ -98,7 +184,7 @@ const LlmSettings = ({ userId }) => {
     [countLoad],
   );
   const loadInstitutionModels = useCallback(
-    (opts) => countLoad(fetchInstitutionModels(opts)),
+    (id, opts) => countLoad(fetchInstitutionModels(id, opts)),
     [countLoad],
   );
 
@@ -107,46 +193,44 @@ const LlmSettings = ({ userId }) => {
       setting = {},
       providers: ownProviders,
       task_mappings: mappings,
-      admin_provider: adminProv,
+      institution_providers: institution,
       ai_user_api_key_allowed: keyAllowed,
       ai_global_provider_allowed: instAllowed,
     } = data;
 
     const personal = !!keyAllowed;
-    const institution = !!instAllowed;
+    const institutionOk = !!instAllowed;
 
     // Choose a valid initial provider mode given the user's granted gates.
     let type = setting.provider_type || 'global';
     if (setting.provider_type === 'custom' && !personal) setLegacyCustomNotice(true);
-    if (type === 'custom' && !personal) type = institution ? 'global' : 'custom';
-    if (type === 'global' && !institution) type = personal ? 'custom' : 'global';
+    if (type === 'custom' && !personal) type = institutionOk ? 'global' : 'custom';
+    if (type === 'global' && !institutionOk) type = personal ? 'custom' : 'global';
 
     setProviderType(type);
     setProviders(ownProviders || []);
     setDefaultProviderId(setting.default_llm_provider_id || null);
+    setInstitutionProviderId(setting.institution_llm_provider_id || null);
     setTaskMappings(mappings || []);
-    setAdminProvider(adminProv || null);
+    setInstitutionProviders(institution || []);
     setCustomKeyAllowed(personal);
-    setInstitutionAllowed(institution);
+    setInstitutionAllowed(institutionOk);
     setSavedProviderType(type);
     setSavedDefaultProviderId(setting.default_llm_provider_id || null);
+    setSavedInstitutionProviderId(setting.institution_llm_provider_id || null);
     setSavedTaskMappings(mappings || []);
-    return { type, institution, providers: ownProviders || [] };
+    return { type, institution: institution || [], providers: ownProviders || [] };
   }, []);
 
   useEffect(() => {
     UsersFetcher.fetchLlmSettings()
       .then((data) => {
-        const { type, institution, providers: own } = applySettings(data);
+        const { institution, providers: own } = applySettings(data);
 
         // Warm the cache for the provider contexts this user can actually reach.
         // Each is a no-op once the cache holds a fresh list, so re-mounting the
         // settings tab costs no provider calls at all.
-        //
-        // `type` is checked as well as the gate: when neither gate is granted the
-        // mode resolution above still leaves `type` at 'global', and that renders
-        // the institution dropdown — which must not be left permanently empty.
-        if (institution || type === 'global') loadInstitutionModels();
+        institution.forEach((p) => loadInstitutionModels(p.id));
         own.forEach((p) => loadProviderModels(p.id));
       })
       .catch(() => setStatus({ variant: 'danger', message: 'Failed to load AI settings.' }))
@@ -189,6 +273,19 @@ const LlmSettings = ({ userId }) => {
       .catch(() => setStatus({ variant: 'danger', message: 'Failed to reload your providers.' }))
   ), [applySettings, loadProviderModels]);
 
+  const providerApi = useMemo(() => ({
+    create:    (params)     => UsersFetcher.createLlmProvider(params),
+    update:    (id, params) => UsersFetcher.updateLlmProvider(id, params),
+    remove:    (id)         => UsersFetcher.deleteLlmProvider(id),
+    verify:    (id)         => UsersFetcher.verifyLlmProvider(id),
+    testDraft: (draft)      => UsersFetcher.verifyLlmApiKey({
+      protocol: draft.api_protocol,
+      base_url: draft.base_url,
+      model:    draft.default_model,
+      api_key:  draft.api_key,
+    }),
+  }), []);
+
   const getMapping = useCallback(
     (taskName) => taskMappings.find((m) => m.task_name === taskName) || {},
     [taskMappings],
@@ -204,17 +301,23 @@ const LlmSettings = ({ userId }) => {
     });
   }, []);
 
+  // Which institution provider serves a task that names none: the one picked, or
+  // the first — the same fallback the server applies.
+  const effectiveInstitutionId = institutionProviderId
+    || (institutionProviders[0] || {}).id
+    || null;
+
   // Which provider actually serves a task: the one the row names, or — for a row
-  // that names none — whichever the "LLM Provider" choice above points at.
+  // that names none — whichever the "Default provider" choice above points at.
   const effectiveProviderKey = useCallback((mapping) => {
     if (mapping.llm_provider_id) {
-      return mapping.llm_provider_id === (adminProvider || {}).id
-        ? institutionModelsKey()
+      return institutionIds.has(mapping.llm_provider_id)
+        ? institutionModelsKey(mapping.llm_provider_id)
         : providerModelsKey(mapping.llm_provider_id);
     }
     if (isCustomMode && defaultProviderId) return providerModelsKey(defaultProviderId);
-    return institutionModelsKey();
-  }, [adminProvider, isCustomMode, defaultProviderId]);
+    return institutionModelsKey(effectiveInstitutionId);
+  }, [institutionIds, isCustomMode, defaultProviderId, effectiveInstitutionId]);
 
   const handleSave = useCallback((e) => {
     e.preventDefault();
@@ -222,6 +325,7 @@ const LlmSettings = ({ userId }) => {
 
     const dirty = providerType !== savedProviderType
       || defaultProviderId !== savedDefaultProviderId
+      || institutionProviderId !== savedInstitutionProviderId
       || normalizeMappings(taskMappings) !== normalizeMappings(savedTaskMappings);
 
     if (!dirty) {
@@ -239,6 +343,7 @@ const LlmSettings = ({ userId }) => {
     UsersFetcher.updateLlmSettings({
       provider_type: providerType,
       default_llm_provider_id: providerType === 'custom' ? defaultProviderId : null,
+      institution_llm_provider_id: institutionProviderId,
       task_mappings: taskMappings.map((m) => ({
         task_name: m.task_name,
         model: m.model || '',
@@ -249,30 +354,31 @@ const LlmSettings = ({ userId }) => {
         setStatus({ variant: 'success', message: 'AI settings saved.' });
         setSavedProviderType(providerType);
         setSavedDefaultProviderId(defaultProviderId);
+        setSavedInstitutionProviderId(institutionProviderId);
         setSavedTaskMappings(taskMappings);
       })
       .catch((err) => setStatus({ variant: 'danger', message: err.message || 'Failed to save settings.' }));
   }, [
-    providerType, defaultProviderId, taskMappings,
-    savedProviderType, savedDefaultProviderId, savedTaskMappings,
+    providerType, defaultProviderId, institutionProviderId, taskMappings,
+    savedProviderType, savedDefaultProviderId, savedInstitutionProviderId, savedTaskMappings,
   ]);
 
   // Institution-provider test. Personal providers are tested from their own row
   // in the list, which uses their stored key.
-  const handleVerify = useCallback(() => {
-    setVerifying(true);
+  const handleVerify = useCallback((id) => {
+    setVerifyingId(id);
     setVerifyStatus(null);
 
-    UsersFetcher.verifyLlmApiKey({})
+    UsersFetcher.verifyLlmApiKey({ institution_provider_id: id })
       .then((res) => {
         setVerifyStatus({ variant: 'success', message: res.message || 'Connection verified.' });
-        loadInstitutionModels({ force: true });
+        loadInstitutionModels(id, { force: true });
       })
       .catch((err) => setVerifyStatus({
         variant: 'danger',
         message: err.message || 'Verification failed. Ask your administrator to check the provider.',
       }))
-      .finally(() => setVerifying(false));
+      .finally(() => setVerifyingId(null));
   }, [loadInstitutionModels]);
 
   if (loading) {
@@ -293,13 +399,14 @@ const LlmSettings = ({ userId }) => {
     || (opt.value === 'custom' && customKeyAllowed)
   ));
 
-  // Everything a task can be routed to: the institution service (when the user
-  // is allowed it) and each of the user's own providers.
+  // Everything a task can be routed to: each institution provider the user is
+  // allowed, and each of their own. Provider ids are unique across both lists,
+  // so the id alone identifies the option.
   const routableProviders = [
-    ...(institutionAllowed && adminProvider
-      ? [{ value: INSTITUTION, id: adminProvider.id, label: `Institution: ${adminProvider.name}` }]
+    ...(institutionAllowed
+      ? institutionProviders.map((p) => ({ id: p.id, label: `Institution: ${p.name}` }))
       : []),
-    ...providers.map((p) => ({ value: String(p.id), id: p.id, label: p.name })),
+    ...providers.map((p) => ({ id: p.id, label: p.name })),
   ];
 
   const modelsLoading = modelLoads > 0;
@@ -346,49 +453,36 @@ const LlmSettings = ({ userId }) => {
             </Col>
           </Row>
 
-          {/* Institution provider info (read-only) */}
+          {/* The institution's providers (read-only) */}
           {institutionAllowed && (
             <Row className="mb-3">
-              <Col className="col-7 offset-4">
-                {adminProvider ? (
-                  <CopyableAlert variant="info" className="mb-2">
-                    <div>
-                      <strong>Institution provider:</strong>
-                      {' '}
-                      {adminProvider.name}
-                    </div>
-                    {adminProvider.base_url && (
-                      <div className="small">
-                        Endpoint:
-                        {' '}
-                        <code>{adminProvider.base_url}</code>
-                      </div>
-                    )}
-                    {adminProvider.default_model && (
-                      <div className="small">
-                        Default model:
-                        {' '}
-                        <code>{adminProvider.default_model}</code>
-                      </div>
-                    )}
-                    <div className="text-muted small mt-1">Configured by your institution administrator.</div>
-                  </CopyableAlert>
-                ) : (
+              <Form.Label column className="col-form-label col-3 offset-1">
+                {institutionProviders.length > 1 ? 'Institution providers' : 'Institution provider'}
+              </Form.Label>
+              <Col className="col-7">
+                {institutionProviders.length === 0 ? (
                   <Alert variant="warning" className="mb-2">
                     No institution provider is configured yet. Please contact your administrator.
                   </Alert>
+                ) : (
+                  institutionProviders.map((p) => (
+                    <InstitutionProviderRow
+                      key={p.id}
+                      provider={p}
+                      isDefault={p.id === effectiveInstitutionId}
+                      selectable={institutionProviders.length > 1}
+                      onSelect={setInstitutionProviderId}
+                      onTest={handleVerify}
+                      testing={verifyingId === p.id}
+                    />
+                  ))
                 )}
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={handleVerify}
-                  disabled={verifying || !adminProvider}
-                  className="d-inline-flex align-items-center justify-content-center"
-                  style={{ minWidth: '9.5rem' }}
-                >
-                  {verifying && <Spinner size="sm" animation="border" className="me-2" />}
-                  {verifying ? 'Testing…' : 'Test connection'}
-                </Button>
+                <Form.Text className="text-muted d-block">
+                  {institutionProviders.length > 1
+                    ? 'Configured by your institution administrator. Pick the one your tasks use by default —'
+                      + ' any of them can still be named per task below.'
+                    : 'Configured by your institution administrator.'}
+                </Form.Text>
                 {verifyStatus && (
                   <CopyableAlert
                     variant={verifyStatus.variant}
@@ -409,6 +503,13 @@ const LlmSettings = ({ userId }) => {
                 <LlmProviderList
                   providers={providers}
                   profiles={profiles}
+                  api={providerApi}
+                  title="My providers"
+                  addLabel="Add provider"
+                  emptyText="No providers yet. Add one to use your own API key — you can keep several
+                    and send different tasks to different ones."
+                  deleteHint={DELETE_HINT}
+                  keyHelp={KEY_HELP}
                   defaultProviderId={defaultProviderId}
                   onMakeDefault={(id) => {
                     setDefaultProviderId(id);
@@ -449,14 +550,8 @@ const LlmSettings = ({ userId }) => {
                     const currentModel = mapping.model || '';
                     const selected = currentModel ? { value: currentModel, label: currentModel } : null;
                     // The row's models come from the provider the row resolves to,
-                    // so the institution's models and a personal provider's are
-                    // never offered in the same dropdown.
+                    // so two providers' models are never offered in one dropdown.
                     const options = toModelOptions(peekModels(effectiveProviderKey(mapping)));
-                    const providerValue = (() => {
-                      if (!mapping.llm_provider_id) return INHERIT;
-                      if (mapping.llm_provider_id === (adminProvider || {}).id) return INSTITUTION;
-                      return String(mapping.llm_provider_id);
-                    })();
 
                     return (
                       <tr key={taskName}>
@@ -464,18 +559,19 @@ const LlmSettings = ({ userId }) => {
                         <td>
                           <Form.Select
                             size="sm"
-                            value={providerValue}
+                            value={mapping.llm_provider_id ? String(mapping.llm_provider_id) : INHERIT}
                             onChange={(e) => {
-                              const choice = routableProviders.find((p) => p.value === e.target.value);
+                              const id = e.target.value ? Number(e.target.value) : null;
                               // Changing provider clears the model: a model name
                               // belongs to the provider that offers it.
-                              patchMapping(taskName, { llm_provider_id: choice ? choice.id : null, model: '' });
-                              if (choice && choice.value !== INSTITUTION) loadProviderModels(choice.id);
+                              patchMapping(taskName, { llm_provider_id: id, model: '' });
+                              if (id && institutionIds.has(id)) loadInstitutionModels(id);
+                              else if (id) loadProviderModels(id);
                             }}
                           >
                             <option value={INHERIT}>(my default provider)</option>
                             {routableProviders.map((p) => (
-                              <option key={p.value} value={p.value}>{p.label}</option>
+                              <option key={p.id} value={String(p.id)}>{p.label}</option>
                             ))}
                           </Form.Select>
                         </td>

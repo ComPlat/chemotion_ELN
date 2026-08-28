@@ -4,18 +4,19 @@
 #
 # Table name: llm_providers
 #
-#  id            :bigint           not null, primary key
-#  api_key_enc   :text
-#  api_protocol  :string           default("openai"), not null
-#  base_url      :string
-#  default_model :string
-#  enabled       :boolean          default(TRUE), not null
-#  name          :string           not null
-#  provider_type :string
-#  scope         :string           default("global"), not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  user_id       :bigint
+#  id              :bigint           not null, primary key
+#  api_key_enc     :text
+#  api_protocol    :string           default("openai"), not null
+#  base_url        :string
+#  default_model   :string
+#  enabled         :boolean          default(TRUE), not null
+#  name            :string           not null
+#  provider_type   :string
+#  restrict_models :boolean          default(FALSE), not null
+#  scope           :string           default("global"), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  user_id         :bigint
 #
 # Indexes
 #
@@ -42,6 +43,9 @@ class LlmProvider < ApplicationRecord
   SCOPES = %w[global user].freeze
 
   belongs_to :user, optional: true
+  # Who may use this provider, and which of its models. Institution providers
+  # only — a personal one is private to its owner and has nobody to grant it to.
+  has_many :llm_provider_grants, dependent: :destroy
 
   validates :name, presence: true
   validates :api_protocol, inclusion: { in: API_PROTOCOLS }
@@ -69,5 +73,31 @@ class LlmProvider < ApplicationRecord
 
   def personal?
     scope == 'user'
+  end
+
+  # Whether the provider itself is open to this user. The aiGlobalProvider gate
+  # is checked separately, by LlmProviderResolver; this is the per-provider rule
+  # on top of it, and its absence means "no extra restriction".
+  def grants_access_to?(user)
+    rule = llm_provider_grants.detect(&:provider_rule?)
+    rule.nil? || rule.allows?(user)
+  end
+
+  # The subset of +models+ this user may pick here. On a provider marked
+  # restrict_models, only models with a rule are offered at all; otherwise a
+  # model without a rule is open.
+  def models_for(user, models)
+    rules = llm_provider_grants.reject(&:provider_rule?).index_by(&:model)
+
+    models.select do |name|
+      rule = rules[name]
+      rule ? rule.allows?(user) : !restrict_models
+    end
+  end
+
+  def model_allowed?(user, name)
+    return false if name.blank?
+
+    models_for(user, [name]).any?
   end
 end

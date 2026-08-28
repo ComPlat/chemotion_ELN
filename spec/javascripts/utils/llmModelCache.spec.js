@@ -32,9 +32,9 @@ describe('llmModelCache', () => {
       customCalls.push(config);
       return Promise.resolve(customResponse);
     };
-    UsersFetcher.fetchInstitutionLlmModels = (opts) => {
-      institutionCalls.push(opts);
-      return Promise.resolve(['kit.qwen3.5-397b-A17b']);
+    UsersFetcher.fetchInstitutionLlmModels = (id, opts) => {
+      institutionCalls.push({ id, ...opts });
+      return Promise.resolve([`kit.model-of-${id}`]);
     };
     providerCalls = [];
     UsersFetcher.fetchLlmProviderModels = (id, opts) => {
@@ -178,16 +178,25 @@ describe('llmModelCache', () => {
     });
 
     it('keeps the institution list separate from any custom provider', async () => {
-      await fetchInstitutionModels();
+      await fetchInstitutionModels(7);
       await fetchCustomModels(openai);
 
-      expect(peekModels(institutionModelsKey())).toEqual(['kit.qwen3.5-397b-A17b']);
+      expect(peekModels(institutionModelsKey(7))).toEqual(['kit.model-of-7']);
       expect(peekModels(customModelsKey(openai))).toEqual(['gpt-4o', 'gpt-4o-mini']);
     });
 
-    it('fetches the institution list once per session', async () => {
-      await fetchInstitutionModels();
-      await fetchInstitutionModels();
+    it('caches per institution provider, so two of them never share a list', async () => {
+      await fetchInstitutionModels(7);
+      await fetchInstitutionModels(8);
+
+      expect(peekModels(institutionModelsKey(7))).toEqual(['kit.model-of-7']);
+      expect(peekModels(institutionModelsKey(8))).toEqual(['kit.model-of-8']);
+      expect(institutionCalls.map((c) => c.id)).toEqual([7, 8]);
+    });
+
+    it('fetches one institution provider’s list once per session', async () => {
+      await fetchInstitutionModels(7);
+      await fetchInstitutionModels(7);
 
       expect(institutionCalls.length).toEqual(1);
     });
@@ -204,7 +213,7 @@ describe('llmModelCache', () => {
 
     it('does not ask the server to re-read the catalogue on an ordinary lookup', async () => {
       await fetchCustomModels(config);
-      await fetchInstitutionModels();
+      await fetchInstitutionModels(7);
 
       expect(customCalls[0].refresh).toEqual(false);
       expect(institutionCalls[0].refresh).toEqual(false);
@@ -212,7 +221,7 @@ describe('llmModelCache', () => {
 
     it('asks the server to re-read the catalogue when forced', async () => {
       await fetchCustomModels(config, { force: true });
-      await fetchInstitutionModels({ force: true });
+      await fetchInstitutionModels(7, { force: true });
 
       // Without this the server would keep serving its own 30-minute cache entry
       // for an unchanged provider identity, and "Test connection" could never
@@ -263,7 +272,7 @@ describe('llmModelCache', () => {
       expect(notifications).toEqual(1);
 
       unsubscribe();
-      await fetchInstitutionModels();
+      await fetchInstitutionModels(7);
       expect(notifications).toEqual(1);
     });
 

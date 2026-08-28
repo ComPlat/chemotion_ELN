@@ -4,18 +4,19 @@
 #
 # Table name: llm_providers
 #
-#  id            :bigint           not null, primary key
-#  api_key_enc   :text
-#  api_protocol  :string           default("openai"), not null
-#  base_url      :string
-#  default_model :string
-#  enabled       :boolean          default(TRUE), not null
-#  name          :string           not null
-#  provider_type :string
-#  scope         :string           default("global"), not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  user_id       :bigint
+#  id              :bigint           not null, primary key
+#  api_key_enc     :text
+#  api_protocol    :string           default("openai"), not null
+#  base_url        :string
+#  default_model   :string
+#  enabled         :boolean          default(TRUE), not null
+#  name            :string           not null
+#  provider_type   :string
+#  restrict_models :boolean          default(FALSE), not null
+#  scope           :string           default("global"), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  user_id         :bigint
 #
 # Indexes
 #

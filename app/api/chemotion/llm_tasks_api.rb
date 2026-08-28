@@ -64,29 +64,31 @@ module Chemotion
       end
 
       resource :institution_models do
-        desc "List the institution (global) provider's models for the Task→Model dropdown"
+        desc "List one institution provider's models for the Task→Model dropdown"
         params do
+          optional :provider_id, type: Integer,
+                                 desc: 'Which institution provider; blank = the one that serves me'
           optional :refresh, type: Boolean, default: false,
                              desc: 'Re-read the catalogue from the provider instead of serving the cached one'
         end
         get do
-          return { models: [] } unless LlmProviderResolver.institution_provider_allowed?(current_user)
+          # Looked up through the global scope: an id belonging to a personal
+          # provider must read as "no such institution provider", never as one
+          # whose key we then spend on a catalogue lookup.
+          provider = if params[:provider_id].present?
+                       LlmProvider.global_providers.find_by(id: params[:provider_id])
+                     else
+                       LlmProviderResolver.institution_provider_for(current_user)
+                     end
 
-          provider = LlmProvider.global_providers.first
-          return { models: [] } unless provider
-
-          # Cached (LlmModelCatalog): every user who opens the AI settings tab asks
-          # for this same list, and it is the institution provider that would be hit.
+          # Filtered to what this user's grants admit — the catalogue itself is
+          # cached and shared, the filter is per user.
           #
-          # `refresh` evicts a cache entry shared by all users of the institution
-          # provider, which is why it is only reachable by users the gate already
-          # admits, and why the UI only sends it right after a successful Test
+          # `refresh` evicts a cache entry shared by all users of the provider,
+          # which is why the UI only sends it right after a successful Test
           # connection — an action that hits the provider anyway.
-          models = LlmModelCatalog.fetch(
-            base_url: provider.base_url,
-            api_key:  provider.api_key,
-            protocol: provider.api_protocol.presence || 'openai',
-            force:    params[:refresh],
+          models = LlmProviderResolver.institution_models_for(
+            current_user, provider, force: params[:refresh]
           )
           { models: models }
         rescue StandardError
