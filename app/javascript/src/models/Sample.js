@@ -2441,15 +2441,71 @@ export default class Sample extends Element {
 
     // Set equivalent for each component
     this.components.forEach((component, index) => {
-      if (!referenceMol || Number.isNaN(referenceMol)) {
-        component.equivalent = index === referenceIndex ? 1 : 'n.d';
-      } else if (index === referenceIndex) {
+      if (index === referenceIndex) {
         component.equivalent = 1;
+      } else if (!referenceMol || Number.isNaN(referenceMol)) {
+        // The reference has no amount, so the ratio cannot be derived from amounts.
+        // Preserve a user-entered numeric ratio; only fall back to 'n.d' when the
+        // component has no meaningful ratio yet.
+        const currentEq = component.equivalent;
+        const hasNumericEq = typeof currentEq === 'number' && !Number.isNaN(currentEq);
+        component.equivalent = hasNumericEq ? currentEq : 'n.d';
       } else {
         const currentMol = component.amount_mol ?? 0;
         component.equivalent = currentMol && !Number.isNaN(currentMol)
           ? currentMol / referenceMol
           : 0;
+      }
+    });
+  }
+
+  /**
+   * Recomputes non-reference components after the reference component's own amount
+   * changes.
+   *
+   * Per non-reference component:
+   * - has a typed ratio (numeric equivalent > 0) but NO amount yet → fill the amount
+   *   from the ratio: amount_mol = ratio * referenceAmount, ratio kept. This is the
+   *   case where a ratio was typed while the reference had no amount.
+   * - already has an amount → keep the amount fixed and re-derive the ratio from it
+   *   (matching updateMixtureComponentEquivalent), so a later reference change updates
+   *   the ratio rather than the amount the user already established.
+   *
+   * Falls back to updateMixtureComponentEquivalent when there is no usable reference
+   * amount to scale from.
+   */
+  updateMixtureComponentsFromReferenceAmount() {
+    if (!this.hasComponents()) return;
+
+    const referenceComponent = this.reference_component;
+    const referenceMol = referenceComponent?.amount_mol ?? 0;
+
+    // Without a reference amount, ratios cannot be scaled into amounts; defer to the
+    // ratio-preserving path.
+    if (!referenceComponent || !referenceMol || Number.isNaN(referenceMol)) {
+      this.updateMixtureComponentEquivalent();
+      return;
+    }
+
+    const totalVolume = this.amount_l;
+
+    this.components.forEach((component) => {
+      if (component.id === referenceComponent.id) {
+        component.equivalent = 1;
+        return;
+      }
+
+      const eq = component.equivalent;
+      const hasTypedRatio = typeof eq === 'number' && !Number.isNaN(eq) && eq > 0;
+      const currentMol = component.amount_mol ?? 0;
+      // Fill the amount from the ratio only when the component has a typed ratio and no
+      // amount yet. Once it has an amount, keep the amount and re-derive the ratio.
+      const isRatioDriven = hasTypedRatio && !currentMol;
+
+      if (isRatioDriven) {
+        component.updateAmountFromRatio(eq, referenceMol, totalVolume);
+      } else {
+        component.updateRatioFromReference(referenceComponent);
       }
     });
   }

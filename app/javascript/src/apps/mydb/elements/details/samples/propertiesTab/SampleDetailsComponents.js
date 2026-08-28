@@ -333,8 +333,9 @@ export default class SampleDetailsComponents extends React.Component {
     const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
 
     if (isReferenceComponent) {
-      // Reference changed → refresh every component ratio
-      sample.updateMixtureComponentEquivalent();
+      // Reference amount changed → fill/scale the other components from it. The amount
+      // input is debounced (SampleComponent), so this fires once with the settled value.
+      sample.updateMixtureComponentsFromReferenceAmount();
     } else if (referenceComponent) {
       // Non-reference changed → only update its own equivalent against the reference
       currentComponent.updateRatioFromReference(referenceComponent);
