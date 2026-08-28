@@ -677,7 +677,7 @@ export default class NMRiumDisplayer extends React.Component {
     return (
       <>
         <AppModal
-          size="xxxl"
+          fullscreen
           show={showModalNMRDisplayer}
           onHide={this.hideCloseOverlay}
           onRequestClose={this.handleCloseRequest}
