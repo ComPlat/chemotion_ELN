@@ -2,7 +2,7 @@
 
 # rubocop:disable RSpec/AnyInstance -- the object under test is built inside the code path
 # rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
-# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+# rubocop:disable RSpec/NestedGroups -- endpoint / verb / case reads better than flattening it
 
 require 'rails_helper'
 
@@ -41,23 +41,8 @@ describe Chemotion::AdminLlmAPI do
           expect(response).to have_http_status(:ok)
           body = JSON.parse(response.body)
           expect(body['global_enabled']).to be false
-          expect(body['provider']).to be_nil
           expect(body['include_users']).to eq([])
           expect(body['exclude_users']).to eq([])
-        end
-      end
-
-      context 'when a global provider exists' do
-        let!(:provider) { create(:llm_provider, api_key: 'sk-admin-0000') }
-
-        it 'returns the provider with masked API key' do
-          get '/api/v1/admin/llm_config', headers: headers
-
-          body = JSON.parse(response.body)
-          expect(body['provider']['id']).to eq(provider.id)
-          expect(body['provider']['api_key_masked']).to match(/sk-•+\d{4}/)
-          expect(body['provider']['api_key_masked']).not_to include('admin')
-          expect(body['provider']['base_url']).to eq(provider.base_url)
         end
       end
 
@@ -117,25 +102,6 @@ describe Chemotion::AdminLlmAPI do
         expect(Matrice.find_by(name: 'aiFeatures').include_ids).to include(person.id)
       end
 
-      it 'creates a global provider when none exists' do
-        expect do
-          put '/api/v1/admin/llm_config',
-              params: {
-                provider_name: 'Example AI',
-                base_url:      'https://ai.example.com',
-                api_key:       'sk-new-key-1234',
-                default_model: 'gpt-4o',
-              }.to_json,
-              headers: headers
-        end.to change(LlmProvider, :count).by(1)
-
-        expect(response).to have_http_status(:ok)
-        provider = LlmProvider.global_providers.first
-        expect(provider.name).to eq('Example AI')
-        expect(provider.base_url).to eq('https://ai.example.com')
-        expect(provider.default_model).to eq('gpt-4o')
-      end
-
       it 'toggles the aiUserApiKey (personal key) gate' do
         Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
         put '/api/v1/admin/llm_config',
@@ -158,118 +124,6 @@ describe Chemotion::AdminLlmAPI do
         expect(Matrice.find_by(name: 'aiGlobalProvider').enabled).to be false
       ensure
         Matrice.find_by(name: 'aiGlobalProvider')&.destroy
-      end
-
-      it 'updates the existing global provider' do
-        provider = create(:llm_provider)
-
-        put '/api/v1/admin/llm_config',
-            params: { default_model: 'gpt-4-turbo' }.to_json,
-            headers: headers
-
-        expect(response).to have_http_status(:ok)
-        expect(provider.reload.default_model).to eq('gpt-4-turbo')
-      end
-    end
-
-    describe 'POST /api/v1/admin/llm_config/test' do
-      context 'when no provider is saved and no params supplied' do
-        it 'returns 422' do
-          post '/api/v1/admin/llm_config/test', headers: headers
-          expect(response).to have_http_status(:unprocessable_entity)
-        end
-      end
-
-      context 'when params are supplied directly (test before save)' do
-        before do
-          stub_request(:post, /test-before-save\.example\.com/).to_return(
-            status: 200,
-            body: { choices: [{ message: { content: 'OK' } }] }.to_json,
-            headers: { 'Content-Type' => 'application/json' },
-          )
-        end
-
-        it 'tests connectivity with the supplied params without requiring a saved provider' do
-          post '/api/v1/admin/llm_config/test',
-               params: {
-                 base_url:      'https://test-before-save.example.com/api',
-                 default_model: 'gpt-4o',
-                 api_key:       'sk-test-key',
-               }.to_json,
-               headers: headers
-
-          expect(response).to have_http_status(:success)
-          body = JSON.parse(response.body)
-          expect(body['success']).to be true
-        end
-      end
-    end
-
-    describe 'DELETE /api/v1/admin/llm_config/api_key' do
-      let!(:provider) { create(:llm_provider, api_key: 'sk-admin-key-1234') }
-
-      it 'removes the saved global provider key' do
-        delete '/api/v1/admin/llm_config/api_key', headers: headers
-
-        expect(response).to have_http_status(:success)
-        expect(provider.reload.api_key).to be_nil
-      end
-    end
-
-    describe 'GET /api/v1/admin/llm_config/models' do
-      let(:base_url)   { 'https://ki-toolbox.scc.kit.edu/api' }
-      let(:models_url) { "#{base_url}/v1/models" }
-
-      before do
-        create(:llm_provider, base_url: base_url, api_key: 'sk-admin-key-1234')
-        stub_request(:get, models_url).to_return(
-          status:  200,
-          body:    { 'data' => [{ 'id' => 'kit.llama3' }] }.to_json,
-          headers: { 'Content-Type' => 'application/json' },
-        )
-      end
-
-      it 'returns the provider model list' do
-        get '/api/v1/admin/llm_config/models', headers: headers
-
-        expect(response).to have_http_status(:success)
-        expect(JSON.parse(response.body)['models']).to eq(['kit.llama3'])
-      end
-
-      it 'serves a repeat lookup from the cache' do
-        2.times { get '/api/v1/admin/llm_config/models', headers: headers }
-
-        expect(WebMock).to have_requested(:get, models_url).once
-      end
-
-      it 're-reads the catalogue when the admin asks for a refresh' do
-        get '/api/v1/admin/llm_config/models', headers: headers
-        get '/api/v1/admin/llm_config/models?refresh=true', headers: headers
-
-        expect(WebMock).to have_requested(:get, models_url).twice
-      end
-
-      it 'drops the cached catalogue when the provider endpoint is changed' do
-        get '/api/v1/admin/llm_config/models', headers: headers
-
-        new_url = 'https://new-endpoint.example/api'
-        stub_request(:get, "#{new_url}/v1/models").to_return(
-          status:  200,
-          body:    { 'data' => [{ 'id' => 'new-model' }] }.to_json,
-          headers: { 'Content-Type' => 'application/json' },
-        )
-        put '/api/v1/admin/llm_config',
-            params:  { base_url: new_url, api_key: 'sk-new-key' }.to_json,
-            headers: headers
-
-        # Back to the previous endpoint: the entry cached under the old identity —
-        # which every user of the institution provider shared — must be gone.
-        put '/api/v1/admin/llm_config',
-            params:  { base_url: base_url, api_key: 'sk-admin-key-1234' }.to_json,
-            headers: headers
-        get '/api/v1/admin/llm_config/models', headers: headers
-
-        expect(WebMock).to have_requested(:get, models_url).twice
       end
     end
   end

@@ -326,14 +326,18 @@ export default class UsersFetcher {
       .catch(() => ({ models: [] }));
   }
 
-  // Models offered by the institution (global) provider — for the Task→Model
-  // dropdown when the user is on the institution service. Returns [] if the
-  // provider exposes no list (caller falls back to free-text / default model).
-  // `refresh` asks the server to re-read the catalogue instead of serving its
-  // cached copy (LlmModelCatalog).
-  static fetchInstitutionLlmModels({ refresh = false } = {}) {
-    const query = refresh ? '?refresh=true' : '';
-    return fetch(`/api/v1/llm/institution_models${query}`, { credentials: 'same-origin' })
+  // Models offered by one institution provider — for the Task→Model dropdown of
+  // any task routed to it. A blank id means whichever institution provider
+  // serves this user. Returns [] if the provider exposes no list (caller falls
+  // back to free-text / default model). `refresh` asks the server to re-read the
+  // catalogue instead of serving its cached copy (LlmModelCatalog).
+  static fetchInstitutionLlmModels(id, { refresh = false } = {}) {
+    const query = new URLSearchParams();
+    if (id) query.set('provider_id', id);
+    if (refresh) query.set('refresh', 'true');
+    const suffix = query.toString() ? `?${query}` : '';
+
+    return fetch(`/api/v1/llm/institution_models${suffix}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : { models: [] }))
       .then((d) => d.models || [])
       .catch(() => []);

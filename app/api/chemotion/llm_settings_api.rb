@@ -38,20 +38,53 @@ module Chemotion
           rec.llm_provider_id = provider_id
           rec.save!
         end
+
+        # Display-only details of one institution provider. The API key is never
+        # exposed — users are shown where their requests go, not how to spend it.
+        def present_institution_provider(provider)
+          {
+            id:            provider.id,
+            name:          provider.name,
+            api_protocol:  provider.api_protocol,
+            base_url:      provider.base_url,
+            default_model: provider.default_model,
+            enabled:       provider.enabled,
+          }
+        end
+
+        # The institution provider a user may test / read models from: any of the
+        # ones open to them when they name one, otherwise whichever serves them
+        # by default.
+        def institution_provider_for_user(id = nil)
+          return LlmProviderResolver.institution_provider_for(current_user) if id.blank?
+
+          provider = LlmProvider.global_providers.find_by(id: id)
+          provider if provider&.grants_access_to?(current_user)
+        end
+
+        # The institution providers this user may actually reach — the gate, then
+        # each provider's own rule. A provider they may not use has no business
+        # in their settings form, let alone in the Task → Provider dropdown.
+        def institution_providers_for_user
+          return [] unless LlmProviderResolver.institution_provider_allowed?(current_user)
+
+          LlmProvider.global_providers.select { |p| p.grants_access_to?(current_user) }
+        end
       end
 
       namespace :llm_settings do
         desc 'Return current user LLM settings (API key masked)'
         get do
-          setting        = current_user.user_llm_setting
-          task_mappings  = current_user.user_task_model_mappings.order(:task_name)
-          admin_provider = LlmProvider.global_providers.first
+          setting       = current_user.user_llm_setting
+          task_mappings = current_user.user_task_model_mappings.order(:task_name)
+          institution   = institution_providers_for_user
 
           {
             setting: {
-              provider_type:           setting&.provider_type || 'global',
-              default_llm_provider_id: setting&.default_llm_provider_id,
-              enabled:                 setting.nil? || setting.enabled,
+              provider_type:               setting&.provider_type || 'global',
+              default_llm_provider_id:     setting&.default_llm_provider_id,
+              institution_llm_provider_id: setting&.institution_llm_provider_id,
+              enabled:                     setting.nil? || setting.enabled,
             },
             # The user's own providers — the list they can add to, edit and route
             # individual tasks at.
@@ -63,18 +96,9 @@ module Chemotion
             ai_features_enabled: LlmProviderResolver.ai_features_enabled?(current_user),
             ai_user_api_key_allowed: LlmProviderResolver.user_api_key_allowed?(current_user),
             ai_global_provider_allowed: LlmProviderResolver.institution_provider_allowed?(current_user),
-            # Display-only details of the admin provider for the "use institution
-            # provider" mode. The API key is never exposed.
-            admin_provider: if admin_provider
-                              {
-                                id: admin_provider.id,
-                                name: admin_provider.name,
-                                api_protocol: admin_provider.api_protocol,
-                                base_url: admin_provider.base_url,
-                                default_model: admin_provider.default_model,
-                                enabled: admin_provider.enabled,
-                              }
-                            end,
+            # Every provider the admin has set up. A task may name any of them,
+            # and one of them answers a task that names none.
+            institution_providers: institution.map { |p| present_institution_provider(p) },
           }
         end
 
@@ -83,6 +107,8 @@ module Chemotion
           optional :provider_type,           type: String, values: UserLlmSetting::PROVIDER_TYPES
           optional :default_llm_provider_id, type: Integer,
                                              desc: 'Which of my own providers answers a task that names none'
+          optional :institution_llm_provider_id, type: Integer,
+                                                 desc: 'Which institution provider answers a task that names none'
           optional :task_mappings,           type: Array do
             requires :task_name,       type: String
             optional :model,           type: String
@@ -119,6 +145,8 @@ module Chemotion
             optional :base_url, type: String
             optional :model,    type: String
             optional :protocol, type: String, values: LlmProvider::API_PROTOCOLS
+            optional :institution_provider_id, type: Integer,
+                                               desc: 'Which institution provider to test; blank = the one I use'
           end
           post do
             # If the caller supplies any custom field, treat it as a direct
@@ -136,7 +164,7 @@ module Chemotion
               model    = params[:model].presence
               api_key  = params[:api_key].presence
             else
-              provider = LlmProvider.global_providers.first
+              provider = institution_provider_for_user(params[:institution_provider_id])
               unless provider
                 error!({ error: 'No institution provider is configured. Contact your administrator.' },
                        422)

@@ -7,9 +7,9 @@
 # them plus a model, first match wins:
 #
 #   1. The task's own override  — UserTaskModelMapping (provider and/or model)
-#   2. The user's default       — UserLlmSetting: the institution provider, or
-#                                 the personal provider it points at
-#   3. The institution provider — when the user is allowed it
+#   2. The user's default       — UserLlmSetting: the institution provider it
+#                                 points at, or the personal provider it does
+#   3. The institution provider — the first one, when the user is allowed it
 #
 # Each step is checked against the gate for the KIND of provider it resolves to,
 # so a revoked permission degrades to the next step instead of failing the task.
@@ -34,7 +34,7 @@ class LlmProviderResolver
 
       resolution = resolve_task_override(user, task_name)
       resolution ||= resolve_user_default(user)
-      resolution ||= resolve_global if institution_provider_allowed?(user)
+      resolution ||= resolve_institution(user)
 
       unless resolution
         raise Errors::LlmNotConfiguredError,
@@ -82,7 +82,46 @@ class LlmProviderResolver
       feature_gate_allows?(user, 'aiGlobalProvider')
     end
 
+    # Which of the institution's providers serves this user: the one they picked,
+    # or the first one open to them. Nil when the gate denies them or no
+    # institution provider admits them.
+    #
+    # The pick is re-checked on every call — a provider can be disabled, deleted,
+    # or have its access rules narrowed long after it was chosen.
+    def institution_provider_for(user)
+      return nil unless institution_provider_allowed?(user)
+
+      chosen_institution_provider(user) ||
+        LlmProvider.global_providers.find { |provider| provider.grants_access_to?(user) }
+    end
+
+    # The models of +provider+ this user may pick, filtered from what the
+    # provider itself lists. The catalogue is shared across users; the filter is
+    # not, which is why it is applied here rather than cached.
+    def institution_models_for(user, provider, force: false)
+      return [] unless provider && institution_provider_allowed?(user) && provider.grants_access_to?(user)
+
+      catalogue = LlmModelCatalog.fetch(
+        base_url: provider.base_url,
+        api_key:  provider.api_key,
+        protocol: provider.api_protocol.presence || 'openai',
+        force:    force,
+      )
+      provider.models_for(user, catalogue)
+    end
+
     private
+
+    # The institution provider this user picked, when it is still one they may
+    # use. Nil for anything else, so the caller falls back to the list.
+    def chosen_institution_provider(user)
+      provider = UserLlmSetting.find_by(user_id: user.id)&.institution_llm_provider
+      return nil unless provider&.enabled && provider.scope == 'global'
+
+      provider.grants_access_to?(user) ? provider : nil
+    rescue StandardError
+      nil
+    end
 
     # ── Feature-flag gate (SF-03) ──────────────────────────────────────────────
 
@@ -150,21 +189,39 @@ class LlmProviderResolver
     end
 
     # The named provider still has to be one this user may use *now*: a gate can
-    # be revoked, and a provider can be deleted, long after the override was set.
+    # be revoked, a provider deleted, and a model's access rule narrowed, long
+    # after the override was set.
     def resolve_mapped_provider(user, mapping)
       provider = mapping.llm_provider
       return nil unless provider && usable_by?(user, provider)
+      return resolution_for(provider, mapping.model) if provider.scope == 'user'
 
-      resolution_for(provider, mapping.model)
+      model = institution_model_for(user, provider, mapping.model)
+      model.present? ? resolution_for(provider, model) : nil
+    end
+
+    # The model an institution provider runs for this user: the one asked for
+    # when its rules admit them, otherwise the provider's default, otherwise the
+    # first model they may use. Blank when the rules leave them none — the
+    # caller falls through rather than spending a request on a refusal.
+    def institution_model_for(user, provider, asked = nil)
+      return asked if asked.present? && provider.model_allowed?(user, asked)
+      return provider.default_model if provider.model_allowed?(user, provider.default_model)
+
+      # Only a provider whose rules actually deny the default gets this far, so
+      # the (cached) catalogue lookup stays off the common path.
+      institution_models_for(user, provider).first
     end
 
     def model_only_override(user, mapping)
-      base = resolve_user_default(user) || (resolve_global if institution_provider_allowed?(user))
+      base = resolve_user_default(user) || resolve_institution(user)
       return nil unless base
 
+      asked = mapping.model
+      asked = institution_model_for(user, base.provider, asked) if base.provider&.scope == 'global'
       LlmResolution.new(
         provider: base.provider,
-        model:    mapping.model.presence || base.model,
+        model:    asked.presence || base.model,
         api_key:  base.api_key,
         base_url: base.base_url,
         protocol: base.protocol,
@@ -177,7 +234,7 @@ class LlmProviderResolver
       if provider.scope == 'user'
         provider.user_id == user.id && user_api_key_allowed?(user)
       else
-        institution_provider_allowed?(user)
+        provider.enabled && institution_provider_allowed?(user) && provider.grants_access_to?(user)
       end
     end
 
@@ -220,13 +277,14 @@ class LlmProviderResolver
       setting.default_llm_provider || LlmProvider.for_user(user).where(enabled: true).first
     end
 
-    # ── Level 3: Admin-configured global fallback ─────────────────────────────
+    # ── Level 3: Admin-configured institution provider ────────────────────────
 
-    def resolve_global
-      provider = LlmProvider.global_providers.first
+    def resolve_institution(user)
+      provider = institution_provider_for(user)
       return nil unless provider
 
-      resolution_for(provider)
+      model = institution_model_for(user, provider)
+      model.present? ? resolution_for(provider, model) : nil
     end
   end
 end

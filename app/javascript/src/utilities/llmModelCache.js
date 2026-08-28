@@ -28,7 +28,6 @@ const TTL_MS = 30 * 60 * 1000;
 // one is refreshed — but not immediately, so flipping back and forth between an
 // unreachable provider and a working one cannot turn into a request per click.
 const MISS_TTL_MS = 60 * 1000;
-const INSTITUTION_KEY = 'institution';
 
 // key -> { models: string[], fetchedAt: number } — successful lookups only
 const entries = new Map();
@@ -69,8 +68,13 @@ export function customModelsKey({ protocol, baseUrl } = {}) {
   return ['custom', protocol || 'openai', (baseUrl || '').trim().replace(/\/+$/, '')].join('|');
 }
 
-export function institutionModelsKey() {
-  return INSTITUTION_KEY;
+/**
+ * Stable cache identity for one institution provider. Keyed by id like a saved
+ * personal provider — an institution may run several, and each offers its own
+ * models. A blank id is the provider that serves this user, whichever it is.
+ */
+export function institutionModelsKey(id) {
+  return id ? `institution|${id}` : 'institution';
 }
 
 /**
@@ -152,11 +156,11 @@ function loadCached(key, loader, { force = false } = {}) {
   return request;
 }
 
-/** Models offered by the institution (global) provider. */
-export function fetchInstitutionModels({ force = false } = {}) {
+/** Models offered by one institution provider. */
+export function fetchInstitutionModels(id, { force = false } = {}) {
   return loadCached(
-    INSTITUTION_KEY,
-    (opts) => UsersFetcher.fetchInstitutionLlmModels(opts),
+    institutionModelsKey(id),
+    (opts) => UsersFetcher.fetchInstitutionLlmModels(id, opts),
     { force },
   );
 }
