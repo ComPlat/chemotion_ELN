@@ -467,6 +467,15 @@ module Import
       Molecule.schedule_pubchem_lookup_since(started_at)
     end
 
+    # Releases the DB connection immediately before native OpenBabel work that can run seconds per
+    # call. Without this, a connection reaped for inactivity mid-call fails every query that follows
+    # it instead of being transparently re-checked-out through
+    # ActiveRecord::ConnectionPool#checkout_and_verify once the native call returns. Call this
+    # immediately before the native call, with no transaction open around it.
+    def release_connection_for_native_work
+      ActiveRecord::Base.connection_pool.release_connection
+    end
+
     # Writes one slice of rows. Every row contains its own failure (see #write_row), so this neither
     # opens a transaction nor rescues: there is nothing left for a batch-level rescue to contain.
     def write_batch(batch, offset)
@@ -489,6 +498,10 @@ module Import
         #
         # requires_new: nothing wraps this today (see #write_batch), so it opens a real
         # transaction; it is kept so the row stays atomic if a caller ever does wrap it.
+        #
+        # See #release_connection_for_native_work: running the native work outside the transaction
+        # is not enough on its own, because a connection is only re-verified when it is checked out.
+        release_connection_for_native_work
         molecule, molfile = process_row_data(row, index)
         ActiveRecord::Base.transaction(requires_new: true) do
           unless molecule_not_exist(molecule, row, index)
@@ -518,7 +531,12 @@ module Import
       sample = updatable_sample(sample_id_value(row))
       # recouple_structure's native OpenBabel work can run seconds per row and, like write_row's
       # create path, runs before the transaction opens rather than inside it.
+      #
+      # Released after #updatable_sample, which is the query this path needs first, and before the
+      # native work -- see #release_connection_for_native_work. The retry-sheet path holds the
+      # connection across exactly the same window the create path does.
       apply_present_fields(sample, row)
+      release_connection_for_native_work
       recouple_structure(sample, row, index)
       sample.validate_stereo(stereo_from_row(row))
       ActiveRecord::Base.transaction(requires_new: true) do
@@ -744,7 +762,8 @@ module Import
 
       sanitized = sanitize_molfile_for_import(raw_molfile)
       molfile_for_babel = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(sanitized)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false,
+                                                                                             bound_native_work: true)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
         molecule = Molecule.find_or_create_by_molfile(molfile_for_babel,
@@ -799,7 +818,8 @@ module Import
       return nil if ori_molf.blank?
 
       ori_molf = Chemotion::MolfilePolymerSupport.normalize_for_open_babel(ori_molf)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false,
+                                                                                    bound_native_work: true)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
       inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
       return nil if inchikey.blank?

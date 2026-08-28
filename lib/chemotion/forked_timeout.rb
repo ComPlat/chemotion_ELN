@@ -31,6 +31,11 @@ module Chemotion
       read_result(reader, pid, seconds)
     ensure
       reader&.close
+      # Also in the ensure, not only on the happy path above: when fork itself fails
+      # (Errno::EAGAIN/ENOMEM under memory or process-table pressure) spawn_child raises before
+      # the explicit close, and the write end would leak a descriptor per call. IO#close is a
+      # no-op on an already-closed stream, so the happy path is unaffected.
+      writer&.close
     end
 
     def self.spawn_child(writer)
