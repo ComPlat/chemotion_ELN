@@ -134,7 +134,13 @@ module AttachmentJcampAasm
     return if lcms_uvvis_raw?(filename_lower)
 
     typname, extname = extension_parts
-    return if peaked? || edited?
+    # :backup and :done are terminal for this callback. Since #3494 a reused row can be
+    # resolved in either state, and no AASM event fires for it in generate_att's dispatch
+    # block, so the trailing save! re-enters here. A peak/edit row would then fall through
+    # to generate_img_only, whose set_force_peaked is illegal from both states - and whose
+    # rescue calls set_failure, which is *also* illegal from them. The rescue would raise,
+    # aborting the save and rolling back the enclosing transaction. Return early instead.
+    return if peaked? || edited? || backup? || done?
     return unless FILE_EXT_SPECTRA.include?(extname.downcase)
 
     is_peak_edit = %w[peak edit].include?(typname)
