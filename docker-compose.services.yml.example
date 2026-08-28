@@ -85,11 +85,15 @@ services:
   #    which covers the initial load but not a later user action. The install
   #    below repoints the wrapper at a list we write ourselves, so the origins
   #    that may drive it are ours to declare and no egress to GitHub is needed.
-  #    Hostnames are matched exactly and wildcards are not supported, so a
-  #    multi-tenant deployment must list every subdomain it serves. An empty
-  #    list means the wrapper skips the check altogether.
+  #    Each entry must be a full origin, scheme included: the wrapper parses it
+  #    with `new URL()` and silently drops whatever fails, so a bare hostname
+  #    never makes it onto the list. It then compares hostnames only - scheme
+  #    and port are ignored, one entry covers every port on that host - and
+  #    wildcards are not supported, so a multi-tenant deployment must list every
+  #    subdomain it serves. An empty list means the wrapper skips the check
+  #    altogether.
   nmrium-assets:
-    image: ${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+    image: ${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.2.0}
     # Write as the invoking user so public/nmrium is not left root-owned on the
     # host. Matches the uid/gid the dev image is built with.
     user: "${uid:-1000}:${gid:-1000}"
@@ -102,10 +106,11 @@ services:
     environment:
       # The version subdirectory is derived from the image tag, so there is a
       # single variable to keep in sync with .service-dependencies.
-      - IMG=${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+      - IMG=${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.2.0}
       - NMRIUM_SOURCEMAPS=${NMRIUM_SOURCEMAPS:-0}
-      # Space- or comma-separated origins allowed to drive the wrapper, e.g.
-      # "https://eln.example.org https://1.eln.example.org". Leaving it empty
+      # Space- or comma-separated origins allowed to drive the wrapper, each
+      # with its scheme, e.g. "https://eln.example.org https://1.eln.example.org"
+      # - a scheme-less hostname is dropped on the wrapper side. Leaving it empty
       # writes an empty list, which the wrapper reads as "no check" - fine for
       # development, and the same effective behaviour a deployment already gets
       # today whenever the GitHub fetch fails. Set it in production.
