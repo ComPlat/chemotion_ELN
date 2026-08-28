@@ -134,7 +134,13 @@ module AttachmentJcampAasm
     return if lcms_uvvis_raw?(filename_lower)
 
     typname, extname = extension_parts
-    return if peaked? || edited?
+    # :backup and :done are terminal for this callback. Since #3494 a reused row can be
+    # resolved in either state, and no AASM event fires for it in generate_att's dispatch
+    # block, so the trailing save! re-enters here. A peak/edit row would then fall through
+    # to generate_img_only, whose set_force_peaked is illegal from both states - and whose
+    # rescue calls set_failure, which is *also* illegal from them. The rescue would raise,
+    # aborting the save and rolling back the enclosing transaction. Return early instead.
+    return if peaked? || edited? || backup? || done?
     return unless FILE_EXT_SPECTRA.include?(extname.downcase)
 
     is_peak_edit = %w[peak edit].include?(typname)
@@ -254,6 +260,13 @@ module AttachmentJcampProcess
     # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
     # same blob - clear it so those saves are plain state/column updates instead.
     att.file_path = nil
+    # Same reason, same scope: the flag guarded *this* save only. It is a plain
+    # attr_accessor, so leaving it set would suppress require_peaks_generation? for every
+    # later save on this object too - including the final save! below, which is exactly
+    # where a freshly derived jcamp (a bagit curve, say) transitions out of :queueing and
+    # asks for its peak table. Left set, such a curve keeps the content it was created
+    # with, stays in :queueing, and is filtered out of the viewer entirely.
+    att.reattaching_derivative = false
 
     if ext == 'png'
       att.set_image if att.may_set_image?

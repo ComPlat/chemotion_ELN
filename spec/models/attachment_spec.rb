@@ -444,6 +444,47 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when aasm_state is backup' do
+        it 'returns nil' do
+          attachment.aasm_state = :backup
+
+          expect(attachment.require_peaks_generation?).to be_nil
+        end
+      end
+
+      context 'when aasm_state is done' do
+        it 'returns nil' do
+          attachment.aasm_state = :done
+
+          expect(attachment.require_peaks_generation?).to be_nil
+        end
+      end
+
+      # Since #3494 generate_att can resolve a *reused* row that is already in :backup or
+      # :done. No AASM event fires for it in the dispatch block, so the trailing save!
+      # re-enters this callback with that state intact. Without the early return a peak row
+      # reaches generate_img_only, whose set_force_peaked is illegal from both states - and
+      # whose rescue calls set_failure, which is illegal from them too, so the rescue itself
+      # raises and takes the save (and the enclosing transaction) down with it.
+      %i[backup done].each do |reused_state|
+        context "when a .peak. row is reused in the #{reused_state} state" do
+          before do
+            attachment.filename = 'whatever.peak.jdx'
+            attachment.aasm_state = reused_state
+          end
+
+          it 'does not generate an image' do
+            expect(attachment).not_to receive(:generate_img_only)
+
+            attachment.require_peaks_generation?
+          end
+
+          it 'does not raise an illegal AASM transition' do
+            expect { attachment.require_peaks_generation? }.not_to raise_error
+          end
+        end
+      end
+
       context 'when filename has no spectra file extension' do
         it 'returns nil' do
           expect(attachment.require_peaks_generation?).to be_nil
@@ -621,6 +662,16 @@ RSpec.describe Attachment do
 
           new_attachment
         end
+      end
+
+      it 'leaves the reuse guard cleared, so later saves still generate peaks' do
+        # reattaching_derivative suppresses require_peaks_generation? for the one save it
+        # guards. It is a plain attr_accessor, so if generate_att leaves it set, every
+        # later save on the same object skips that callback too - including the final
+        # save! that a freshly derived jcamp relies on to leave :queueing and get its peak
+        # table. A curve stuck in :queueing is filtered out of the viewer, which reads as
+        # "the spectrum will not open".
+        expect(new_attachment.reattaching_derivative).to be_falsey
       end
 
       context 'when self is already the canonical row being re-edited (edited -> edited)' do
