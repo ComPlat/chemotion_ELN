@@ -8,7 +8,7 @@ import UIFetcher from 'src/fetchers/UIFetcher';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
-import { cleaningNMRiumData } from 'src/utilities/SpectraHelper';
+import { cleaningNMRiumData, isSpectrum2D } from 'src/utilities/SpectraHelper';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -155,11 +155,7 @@ export default class NMRiumDisplayer extends React.Component {
       if (!rawState) return;
 
       const spectra = rawState?.spectra || rawState?.data?.spectra || [];
-      const is2D = this.state.is2D || spectra.some((spc) => (
-        spc?.info?.dimension === 2
-        || spc?.originalInfo?.dimension === 2
-        || spc?.meta?.dimension === 2
-      ));
+      const is2D = this.state.is2D || spectra.some(isSpectrum2D);
       const version = rawState?.version ?? rawState?.data?.version ?? 1;
       const nmriumData = version > 3 && rawState.data ? rawState.data : rawState;
 
@@ -260,9 +256,13 @@ export default class NMRiumDisplayer extends React.Component {
         return;
       }
 
+      // Rename before cleaning, not after: cleaningNMRiumData derives each spectrum's sources[] id
+      // from its name, so renaming afterwards would leave selector.root pointing at an id the next
+      // save no longer mints.
+      if (zip?.label) this.patchZipName(nmriumState, zip?.label);
+
       const cleaned = cleaningNMRiumData(nmriumState);
 
-      if (zip?.label) this.patchZipName(cleaned, zip?.label);
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
       this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');
@@ -534,14 +534,11 @@ export default class NMRiumDisplayer extends React.Component {
     const root = hasDataProp ? cleanedNMRiumData.data : cleanedNMRiumData;
     const spectra = root?.spectra || [];
     const originalSpectra = nmriumData?.data?.spectra || nmriumData?.spectra || [];
-    const has2D = this.state.is2D || originalSpectra.some((spc) => (
-      spc?.info?.dimension === 2
-      || spc?.originalInfo?.dimension === 2
-      || spc?.meta?.dimension === 2
-    ));
+    const has2D = this.state.is2D || originalSpectra.some(isSpectrum2D);
     const hasAnySource =
       !!root?.source
-      || spectra.some((spc) => spc?.source || spc?.sourceSelector);
+      || !!root?.sources?.length
+      || spectra.some((spc) => spc?.source || spc?.sourceSelector || spc?.selector?.root);
     const needsWrapper = has2D && !hasAnySource && !hasDataProp && !nmriumData.version;
 
     const toSerialize = needsWrapper
