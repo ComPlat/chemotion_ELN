@@ -81,6 +81,14 @@ const arrangePolymers = async (canvasData, editor) => {
   const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
   const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
+  // Same guard as reAttachPolymerList (PolymersTemplates.js): an image on the canvas is not
+  // enough. When no atom resolves to a polymer template — no three-part alias, or a falsy
+  // templateId — templateAliasesPrepare returns ''. Appending the tag anyway writes an empty
+  // "> <PolymersList>" block that every backend reader then has to special-case as "not a
+  // polymer", and it persists in samples.molfile through collection export/import.
+  if (!processString.length) {
+    return canvasData.split('\n');
+  }
   return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
 };
 

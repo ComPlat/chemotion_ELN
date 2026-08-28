@@ -78,6 +78,30 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
     end
   end
 
+  describe '.has_polymer_or_textnode_blocks?' do
+    # Drives Export::ExportSdf#validate_molfile: true keeps the full molfile, false trims to CTAB.
+    # The PolymersList half must key on payload, or an exported SDF re-emits Ketcher's empty tag.
+    it 'is true for a populated PolymersList block' do
+      expect(described_class.has_polymer_or_textnode_blocks?("#{ctab}> <PolymersList>\n0/95/1.00-1.00\n$$$$\n"))
+        .to be(true)
+    end
+
+    it 'is false for an empty PolymersList block' do
+      expect(described_class.has_polymer_or_textnode_blocks?("#{ctab}> <PolymersList>\n$$$$\n")).to be(false)
+    end
+
+    it 'is true for a TextNode block regardless of PolymersList payload' do
+      molfile = "#{ctab}> <PolymersList>\n> <TextNode>\n0#0ce7f3#t_95_0#label\n> </TextNode>\n$$$$\n"
+
+      expect(described_class.has_polymer_or_textnode_blocks?(molfile)).to be(true)
+    end
+
+    it 'is false for a plain molfile' do
+      expect(described_class.has_polymer_or_textnode_blocks?(ctab)).to be(false)
+      expect(described_class.has_polymer_or_textnode_blocks?(nil)).to be(false)
+    end
+  end
+
   describe '.normalize_for_open_babel' do
     # MOL is positional: line 1 is the title and may be empty. Padding must only ever append,
     # never prepend -- prepending corrupts a titled molfile, and the untitled case is preserved
