@@ -164,7 +164,6 @@ class SampleComponentsGroup extends React.Component {
           <colgroup>
             <col className="col-drag" />
             <col className="col-name" />
-            <col className="col-delete" />
             <col className="col-stock-density" />
             <col className="col-volume" />
             <col className="col-amount" />
@@ -172,12 +171,12 @@ class SampleComponentsGroup extends React.Component {
             <col className="col-ref" />
             <col className="col-total-conc" />
             {enableComponentPurity && <col className="col-purity" />}
+            <col className="col-delete" />
           </colgroup>
           <thead>
           <tr>
             <th/>
             <th>{headers.group}</th>
-            <th/>
             {materialGroup === 'solid' && <th/>}
             {materialGroup === 'solid' && (
               <th style={{padding: '3px 3px'}}>
@@ -216,6 +215,7 @@ class SampleComponentsGroup extends React.Component {
               </OverlayTrigger>
             </th>
             {enableComponentPurity && <th>{headers.purity}</th>}
+            <th/>
           </tr>
           </thead>
           <tbody>
