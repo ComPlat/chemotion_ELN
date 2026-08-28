@@ -217,6 +217,103 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateMixtureComponentEquivalent()', () => {
+    const buildMixture = () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      const ref = new Component({});
+      ref.reference = true;
+      ref.component_properties = {};
+      const other = new Component({});
+      other.reference = false;
+      other.component_properties = {};
+      s.initialComponents([ref, other]);
+      return { s, ref, other };
+    };
+
+    it('keeps a user-entered ratio when the reference has no amount', () => {
+      const { s, other } = buildMixture();
+      // Reference has amount_mol 0 (no values entered anywhere).
+      other.equivalent = 2;
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBe(2);
+    });
+
+    it("marks a non-reference component with no ratio as 'n.d' when the reference has no amount", () => {
+      const { s, other } = buildMixture();
+      other.equivalent = 'n.d';
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBe('n.d');
+    });
+
+    it('derives the ratio from amounts when the reference has an amount', () => {
+      const { s, ref, other } = buildMixture();
+      ref.amount_mol = 2;
+      other.amount_mol = 1;
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBeCloseTo(0.5, 6);
+    });
+  });
+
+  describe('Sample.updateMixtureComponentsFromReferenceAmount()', () => {
+    const buildMixture = () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      const ref = new Component({});
+      ref.reference = true;
+      ref.material_group = 'liquid';
+      ref.component_properties = {};
+      const other = new Component({});
+      other.reference = false;
+      other.material_group = 'liquid';
+      other.component_properties = {};
+      s.initialComponents([ref, other]);
+      return { s, ref, other };
+    };
+
+    it('fills in the amount from the ratio when the component has no amount yet', () => {
+      const { s, ref, other } = buildMixture();
+      // User typed a ratio while the reference had no amount; component amount is 0.
+      other.equivalent = 2;
+      other.amount_mol = 0;
+      // Now the reference amount is entered.
+      ref.amount_mol = 10;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(2);
+      expect(other.amount_mol).toBeCloseTo(20, 6);
+    });
+
+    it('keeps an existing amount fixed and re-derives its ratio when the reference amount changes', () => {
+      const { s, ref, other } = buildMixture();
+      // Component already has its own amount (20 mmol) and ratio 2 vs reference 10 mmol.
+      other.equivalent = 2;
+      other.amount_mol = 20;
+      // Change reference 10 -> 20 mmol; amount stays 20, ratio re-derived (20/20 = 1).
+      ref.amount_mol = 20;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.amount_mol).toBeCloseTo(20, 6);
+      expect(other.equivalent).toBeCloseTo(1, 6);
+    });
+
+    it('re-derives the ratio (and keeps the amount) for a component with no ratio yet', () => {
+      const { s, ref, other } = buildMixture();
+      other.equivalent = 'n.d';
+      other.amount_mol = 4;
+      ref.amount_mol = 8;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.amount_mol).toBeCloseTo(4, 6);
+      expect(other.equivalent).toBeCloseTo(0.5, 6);
+    });
+
+    it('preserves a typed ratio when the reference still has no amount', () => {
+      const { s, ref, other } = buildMixture();
+      other.equivalent = 3;
+      ref.amount_mol = 0;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(3);
+    });
+  });
+
   describe('Sample.calculateRequiredTotalVolume()', () => {
     let sample;
     let referenceComponent;
