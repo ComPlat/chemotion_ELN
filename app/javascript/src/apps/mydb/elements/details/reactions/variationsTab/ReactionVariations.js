@@ -24,7 +24,7 @@ import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
   getReactionMaterialsHashes, resolveReactionVolumeFromContext, getValidReactionVolume,
-  SAMPLE_LABELS_WITH_SUM
+  cellIsEditable, SAMPLE_LABELS_WITH_SUM
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
@@ -449,11 +449,21 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     }
   }, []);
 
-  const findAutofillVariationSampleFromAnalysis = useCallback(({ sampleIdentifier }) =>
-    Object.entries(reactionMaterials)
-      .flatMap(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
-      .find(({ matItem: mat }) => SAMPLE_LABELS_WITH_SUM
-        .some((labelKey) => mat[labelKey] === sampleIdentifier )), [reactionMaterials]);
+  /*
+  Resolve the material a `reaction_variation.json` sample identifier refers to.
+  Labels are tried in `SAMPLE_LABELS_WITH_SUM` order rather than material order, so an
+  identifier that is one material's `short_label` and another's `molecule_formula`
+  resolves to the former instead of to whichever material happens to come first.
+  */
+  const findAutofillVariationSampleFromAnalysis = useCallback(({ sampleIdentifier }) => {
+    const flatMaterials = Object.entries(reactionMaterials)
+      .flatMap(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })));
+
+    return SAMPLE_LABELS_WITH_SUM.reduce(
+      (found, labelKey) => found ?? flatMaterials.find(({ matItem }) => matItem[labelKey] === sampleIdentifier),
+      undefined
+    );
+  }, [reactionMaterials]);
 
   /*
   Autofill a variation row from an analysis dataset: locate the material matching the
@@ -462,12 +472,11 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   concurrent column/row updates.
   */
   const handleAutofillVariationSampleFromAnalysis = useCallback(({
-                                                                   foundMat: { matType, matItem },
-                                                                   value,
-                                                                   unit,
-                                                                   variationRow
+    foundMat: { matType, matItem },
+    value,
+    unit,
+    variationRow
   }) => {
-
     setGridStore((previousGridStore) => {
       const {
         selectedColumns: previousSelectedColumns,
@@ -478,7 +487,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
       let updatedSelectedColumns = previousSelectedColumns;
       let updatedReactionVariations = previousReactionVariations;
-      let updatedColumnDefinitions = previousColumnDefinitions.map((x) => ({ ...x }));
+      let updatedColumnDefinitions = previousColumnDefinitions;
 
       if (!previousSelectedColumns[matType].some((x) => x === `${matItem.id}`)) {
         updatedSelectedColumns = {
@@ -510,47 +519,78 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         );
       }
 
-      const newVariationRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
-      const colDef = updatedColumnDefinitions
+      const targetRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
+      /*
+      Only entries that the grid itself would let a user edit are eligible: an entry
+      without a `valueParser` (e.g. `yield`) or one `cellIsEditable` rejects (a product's
+      `amount`, the reference material's `equivalent`) cannot be written, and silently
+      un-hiding its column while writing nothing is worse than skipping the value.
+      An absent unit is not a wildcard either - `equivalent`'s `units` is `[null]`, so an
+      unguarded `includes` would route any unitless value into the equivalent column.
+      */
+      const matchedColDef = unit == null ? undefined : updatedColumnDefinitions
         .find((matGroup) => matGroup.groupId === matType)?.children
-        .find((matCd) => matCd.groupId === `${matItem.id}`)?.children
-        .find((child) => {
-          if (unit === '%' && ['equivalent', 'yield'].includes(child.entry)) return true;
-          return child.units.includes(unit);
+        ?.find((matCd) => matCd.groupId === `${matItem.id}`)?.children
+        ?.find((child) => {
+          if (!cellDataTypes[child.cellDataType]?.valueParser) return false;
+          if (unit === '%' && child.entry === 'equivalent') return true;
+          return (child.units ?? []).includes(unit);
         });
-      if (!newVariationRow || !colDef) {
+      if (!targetRow || !matchedColDef) {
         return previousGridStore;
       }
-      colDef.hide = false;
-      colDef.displayUnit = unit;
+
+      const colDef = { ...matchedColDef, hide: false, displayUnit: unit };
+      if (!cellIsEditable({ data: targetRow, colDef })) {
+        return previousGridStore;
+      }
 
       const { valueParser } = cellDataTypes[colDef.cellDataType];
-      if (valueParser) {
-        const cellData = newVariationRow[matType][`${matItem.id}`];
+      const updatedRow = {
+        ...targetRow,
+        [matType]: {
+          ...targetRow[matType],
+          [`${matItem.id}`]: valueParser({
+            data: targetRow,
+            oldValue: targetRow[matType][`${matItem.id}`],
+            newValue: `${value}`,
+            colDef,
+            context: { reactionHasPolymers }
+          }),
+        },
+      };
 
-        newVariationRow[matType][`${matItem.id}`] = valueParser({
-          data: newVariationRow,
-          oldValue: cellData,
-          newValue: `${value}`,
-          colDef,
-          context: { reactionHasPolymers }
-        });
-      }
-      reaction.variations = updatedReactionVariations;
-      onReactionChange(reaction);
+      updatedColumnDefinitions = updatedColumnDefinitions.map((matGroup) => {
+        if (matGroup.groupId !== matType) return matGroup;
+        return {
+          ...matGroup,
+          children: matGroup.children.map((matCd) => {
+            if (matCd.groupId !== `${matItem.id}`) return matCd;
+            return {
+              ...matCd,
+              children: matCd.children.map((child) => (child.colId === colDef.colId ? colDef : child)),
+            };
+          }),
+        };
+      });
 
+      /*
+      Return a new `reactionVariations` array instead of mutating the row in place: the
+      "propagate updates to parent" effect only fires on an identity change, and calling
+      `onReactionChange` from inside this updater would set state on <ReactionDetails>
+      during this component's render.
+      */
       return {
         ...previousGridStore,
-        reactionVariations: updatedReactionVariations,
+        reactionVariations: updatedReactionVariations.map(
+          (row) => (row.id === targetRow.id ? updatedRow : row)
+        ),
         columnDefinitions: updatedColumnDefinitions,
         selectedColumns: updatedSelectedColumns,
         gridVersion: previousGridStore.gridVersion + 1,
       };
     });
-    return true;
   }, [
-    onReactionChange,
-    reaction,
     reactionMaterials,
     reactionHasPolymers,
     durationValue,
