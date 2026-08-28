@@ -91,7 +91,17 @@ jobs:
           cache-dependency-path: 'yarn.lock'
           package-manager-cache: false
 
-      - run: corepack enable
+      - run: |
+          corepack enable
+          corepack install
+          yarn -v
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          cache: 'yarn' # disable default caching since yarn is missing there
+          cache-dependency-path: 'yarn.lock'
 
       - uses: actions/checkout@v5
         with:
