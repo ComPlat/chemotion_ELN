@@ -2520,12 +2520,11 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
 
-    if (displayYieldField === null) {
-      const allHaveNoConversion = reaction.products.every(
+    const effectiveDisplayYieldField = displayYieldField === null
+      ? reaction.products.every(
         (material) => !(material.conversion_rate && material.conversion_rate !== 0)
-      );
-      this.switchYield(allHaveNoConversion);
-    }
+      )
+      : displayYieldField;
 
     return (
       <>
@@ -2588,7 +2587,7 @@ export default class ReactionDetailsScheme extends React.Component {
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
             switchYield={this.switchYield}
-            displayYieldField={displayYieldField}
+            displayYieldField={effectiveDisplayYieldField}
           />
           {!isInteractionReaction && (
             <ReactionConditions

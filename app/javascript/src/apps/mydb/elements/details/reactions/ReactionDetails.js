@@ -1101,7 +1101,7 @@ export default class ReactionDetails extends Component {
           }
           <DetailsTabLiteratures
             element={reaction}
-            literatures={reaction.isNew ? reaction.literatures : null}
+            literatures={reaction.isNew && Array.isArray(reaction.literatures) ? reaction.literatures : null}
             onElementChange={(r) => this.handleReactionChange(r)}
           />
         </Tab>

@@ -17,7 +17,7 @@ export default class ScreenDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { screen } = props;
-    const hasComment = screen.container?.description && screen.container.description.trim() !== '';
+    const hasComment = Boolean(screen.container?.description?.trim());
     this.state = {
       screen,
       activeContainer: 0,
@@ -232,7 +232,7 @@ export default class ScreenDetailsContainers extends Component {
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
-              value={screen.container.description}
+              value={screen.container?.description || ''}
               handleCommentTextChange={this.handleCommentTextChange}
             />
             {mode === 'order' ? (
@@ -285,7 +285,7 @@ export default class ScreenDetailsContainers extends Component {
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
-              value={screen.container.description}
+              value={screen.container?.description || ''}
               handleCommentTextChange={this.handleCommentTextChange}
             />
           </div>
