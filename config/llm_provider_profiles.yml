@@ -20,11 +20,11 @@
 #                           blank value just moves the work to whoever picks the
 #                           preset. Fill it in wherever the deployment knows a
 #                           model that its users are entitled to.
-#   models        optional  explicit list of selectable model ids for this
-#                           provider (offered in the Task→Model dropdowns). Use
-#                           this when the provider's live model-list endpoint is
-#                           unavailable or you want to curate the choices — no
-#                           code change needed.
+#   models        optional  LAST-RESORT list of selectable model ids, used only
+#                           when the provider's own model-list endpoint answers
+#                           with nothing. What a provider offers changes, so the
+#                           live list always wins; leave this blank unless the
+#                           endpoint lists no models at all.
 #   notes         optional  short hint shown under the picker
 profiles:
   - key: kit_toolbox
