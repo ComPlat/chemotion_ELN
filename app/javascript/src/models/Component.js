@@ -543,6 +543,33 @@ export default class Component extends Sample {
     this.calculateTargetConcentration(totalVolume);
   }
 
+  /**
+   * Re-applies an already-set ratio after the reference amount changes, deriving
+   * amount = ratio * referenceMoles and refreshing volume/mass and concentration.
+   *
+   * Unlike updateRatio, there is no early return when the ratio is unchanged: the
+   * caller is reacting to a reference-amount change, so the amount must be
+   * recomputed even though the equivalent stays the same (e.g. a ratio typed while
+   * the reference had no amount must now produce a real amount).
+   * @param {number} ratio - The existing equivalent ratio to keep.
+   * @param {number} referenceMoles - Amount in mol of the reference component.
+   * @param {number} totalVolume - Total mixture volume.
+   */
+  updateAmountFromRatio(ratio, referenceMoles, totalVolume) {
+    const purity = this.purity || 1.0;
+
+    this.amount_mol = ratio * referenceMoles;
+    this.equivalent = ratio;
+
+    if (this.material_group === 'liquid') {
+      this.calculateVolumeForLiquid(purity);
+    } else if (this.material_group === 'solid') {
+      this.calculateMassFromAmount(purity);
+    }
+
+    this.calculateTargetConcentration(totalVolume);
+  }
+
   // Case 1(Solids): Mass given -> Calculate Amount
 
   /**

@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
+import { debounce } from 'lodash';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import Sample from 'src/models/Sample';
@@ -156,6 +157,10 @@ class SampleComponent extends Component {
 
     this.onComponentStoreChange = this.onComponentStoreChange.bind(this);
     this.handleAmountChange = this.handleAmountChange.bind(this);
+    // Debounce amount/volume/mass edits so multi-digit typing (e.g. "10") settles before
+    // the value propagates to the model, matching the reaction scheme (Material.js).
+    // The input shows the typed text immediately; only the model update waits.
+    this.debounceHandleAmountChange = debounce(this.handleAmountChange, 500);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleDensityChange = this.handleDensityChange.bind(this);
     this.handlePurityChange = this.handlePurityChange.bind(this);
@@ -461,7 +466,7 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixes}
           precision={3}
           disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
+          onChange={(e) => this.debounceHandleAmountChange(e, material.amount_l, '', false)}
           onMetricsChange={this.handleMetricsChange}
           variant="light"
           active={material.amount_unit === 'l'}
@@ -498,7 +503,7 @@ class SampleComponent extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={!permitOn(sample) || lockAmountColumnSolids}
-            onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
+            onChange={(e) => this.debounceHandleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
             active={material.amount_unit === 'g'}
             isError={material.error_mass}
@@ -539,7 +544,7 @@ class SampleComponent extends Component {
               metricPrefixes={metricPrefixesMol}
               precision={4}
               disabled={!permitOn(sample)}
-              onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
+              onChange={(e) => this.debounceHandleAmountChange(e, material.amount_mol, '', false)}
               onMetricsChange={this.handleMetricsChange}
               variant="light"
               active={material.amount_unit === 'mol'}
