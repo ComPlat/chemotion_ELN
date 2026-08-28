@@ -87,7 +87,8 @@ RSpec.describe Chemotion::OpenBabelService do
       expect(info[:cano_smiles]).to eq('N#N')
     end
 
-    it 'returns empty canonical smiles when canonical generation raises SystemStackError' do
+    it 'returns empty canonical smiles when canonical generation raises SystemStackError',
+       :aggregate_failures do
       # The canonical-smiles writer now runs in its own ForkedTimeout child, so a
       # SystemStackError there no longer shares this describe block's single sequential
       # write_string counter -- stub it directly instead.
@@ -97,6 +98,10 @@ RSpec.describe Chemotion::OpenBabelService do
       info = described_class.molecule_info_from_structure('CC', 'smi')
 
       expect(info[:cano_smiles]).to eq('')
+      # Molecule#assign_molecule_data persists cano_smiles, so a failed write has to be
+      # distinguishable from a structure that canonicalises to nothing.
+      timeout = Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS
+      expect(info[:ob_log][:warning]).to include("Canonical SMILES generation failed or timed out after #{timeout}s")
     end
 
     it 'returns empty canonical smiles for multiple_R molfile when can conversion fails' do
@@ -141,20 +146,21 @@ RSpec.describe Chemotion::OpenBabelService do
     # The SVG render's output is discarded unconditionally on the paths that feed
     # Molecule#assign_molecule_data — svg_reprocess re-renders through Chemotion::SvgRenderer
     # because OpenBabel's SVG always carries the 'Open Babel' marker. render_svg: false is how
-    # those callers stop paying for it. The canonical-smiles writer is timeout-bounded too (see
-    # the canonical-smiles bound) but runs unconditionally either way, so it is excluded from the "no fork" assertion
-    # below by matching on SVG_RENDER_TIMEOUT_SECONDS specifically.
+    # those callers stop paying for it. The canonical-smiles writer is timeout-bounded too and
+    # runs unconditionally either way, so the assertion below is on the render itself rather than
+    # on ForkedTimeout.run — the two bounds are independently env-configurable and can be set to
+    # the same number, which would make a .with(SVG_RENDER_TIMEOUT_SECONDS) match ambiguous.
     describe 'render_svg: false' do
       before do
         allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
       end
 
       it 'does not fork a render at all' do
-        allow(Chemotion::ForkedTimeout).to receive(:run).and_call_original
-
         described_class.molecule_info_from_molfile('C', render_svg: false)
 
-        expect(Chemotion::ForkedTimeout).not_to have_received(:run).with(described_class::SVG_RENDER_TIMEOUT_SECONDS)
+        # svg_from_molfile is the only forked render on this path (see .svg_from_molfile), so not
+        # reaching it is exactly "no render fork was taken".
+        expect(described_class).not_to have_received(:svg_from_molfile)
       end
 
       it 'returns a nil svg without claiming a timeout', :aggregate_failures do

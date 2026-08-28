@@ -134,7 +134,11 @@ M  END
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
-    ca_smiles = canonical_smiles_from_source(mf || structure, format)
+    # nil, not '': the bounded writer distinguishes "failed or overran its deadline" from
+    # "canonicalised to nothing". Molecule#assign_molecule_data persists cano_smiles, so the
+    # first case has to leave a trace in ob_log instead of silently storing a blank.
+    ca_smiles_or_nil = canonical_smiles_from_source(mf || structure, format)
+    ca_smiles = ca_smiles_or_nil || ''
 
     unless format == 'mol'
       c.set_out_format 'mol'
@@ -161,10 +165,12 @@ M  END
     fp = fingerprint_from_molfile(mf || molfile)
     # Snapshot both log levels together, after every in-process OpenBabel call above, so
     # ob_log[:error] and ob_log[:warning] stay mutually consistent (fingerprint can log too).
-    # NB: svg_from_molfile runs in a forked child, so its own obErrorLog never reaches here.
+    # NB: svg_from_molfile and canonical_smiles_from_source both run in a forked child, so their
+    # own obErrorLog never reaches here -- hence the explicit warnings appended below.
     ob_errors = OpenBabel.obErrorLog.get_messages_of_level(0)
     warnings = OpenBabel.obErrorLog.get_messages_of_level(1)
     warnings += svg_timeout_warnings(render_svg, svg)
+    warnings += canonical_smiles_failure_warnings(ca_smiles_or_nil)
 
     {
       charge: m.get_total_charge,
@@ -221,6 +227,19 @@ M  END
     return [] unless render_svg && svg.nil?
 
     ["SVG rendering timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s"]
+  end
+
+  # A blank canonical SMILES and a failed one are not the same fault: the first is a structure
+  # OpenBabel canonicalised to nothing, the second is the bounded writer overrunning its deadline,
+  # crashing, or failing to fork at all. {Molecule#assign_molecule_data} persists this field, so
+  # without a warning the second silently overwrites a good +cano_smiles+ with an empty string.
+  #
+  # @param ca_smiles [String, nil] nil when {.canonical_smiles_from_source} failed
+  # @return [Array<String>] the failure warning, or empty
+  def self.canonical_smiles_failure_warnings(ca_smiles)
+    return [] unless ca_smiles.nil?
+
+    ["Canonical SMILES generation failed or timed out after #{CANONICAL_SMILES_TIMEOUT_SECONDS}s"]
   end
 
   # @param render_svg [Boolean] forwarded per record — see {.molecule_info_from_structure}
@@ -487,19 +506,25 @@ M  END
   end
 
   # Process-isolated, timeout-bounded wrapper around OpenBabel's canonical-SMILES writer. See
-  # CANONICAL_SMILES_TIMEOUT_SECONDS. Falls back to '' on timeout or any other failure, matching
-  # the blank-on-failure contract molecule_info_from_structure's callers already expect from this
-  # field.
+  # CANONICAL_SMILES_TIMEOUT_SECONDS.
+  #
+  # Returns nil rather than '' on failure, the same way {.svg_from_molfile} does: the caller turns
+  # it into the blank the +cano_smiles+ contract expects *and* records a warning, which a bare ''
+  # here could not be distinguished from a structure that legitimately canonicalises to nothing.
+  #
+  # @return [String] the canonical SMILES
+  # @return [nil] on timeout, a crashed child, a failed fork, or any error the writer raised
   def self.canonical_smiles_from_source(source, in_format)
     Chemotion::ForkedTimeout.run(CANONICAL_SMILES_TIMEOUT_SECONDS) do
       canonical_smiles_from_source_unsafe(source, in_format)
     end
   rescue StandardError => e
-    # Covers both Chemotion::ForkedTimeout::TimedOut (deadline overrun or a crashed child, e.g.
-    # from SystemStackError, which the child's own StandardError rescue does not catch) and any
-    # error the writer itself raised and the child re-raised in this process.
+    # Covers Chemotion::ForkedTimeout::TimedOut (deadline overrun or a crashed child, e.g. from
+    # SystemStackError, which the child's own StandardError rescue does not catch), a fork that
+    # could not be taken at all (Errno::EAGAIN/ENOMEM under memory pressure -- reachable now that
+    # this runs once per imported record), and any error the writer raised and the child re-raised.
     Rails.logger.error("Chemotion::OpenBabelService.canonical_smiles_from_source failed: #{e.message}")
-    ''
+    nil
   end
 
   def self.canonical_smiles_from_source_unsafe(source, in_format)
