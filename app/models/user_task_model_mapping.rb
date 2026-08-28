@@ -23,8 +23,6 @@
 #  fk_rails_...  (llm_provider_id => llm_providers.id) ON DELETE => cascade
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #
-# One task's routing override: send this task to this provider, on this model.
-#
 # Both parts are optional on their own:
 #   provider + model → run the task there, on that model
 #   provider only    → run it there, on that provider's own default model

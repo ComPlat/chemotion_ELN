@@ -19,5 +19,20 @@ FactoryBot.define do
     trait :disabled do
       enabled { false }
     end
+
+    # Only the models an access rule names may be used here.
+    trait :restricted do
+      restrict_models { true }
+    end
+  end
+
+  # One access rule about an institution provider, or about one of its models.
+  factory :llm_provider_grant do
+    association :llm_provider
+
+    model       { nil } # nil = the rule for the provider itself
+    enabled     { true }
+    include_ids { [] }
+    exclude_ids { [] }
   end
 end

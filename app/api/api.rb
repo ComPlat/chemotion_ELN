@@ -180,6 +180,7 @@ class API < Grape::API
   mount Chemotion::LlmSettingsAPI
   mount Chemotion::LlmProvidersAPI
   mount Chemotion::AdminLlmAPI
+  mount Chemotion::AdminLlmProvidersAPI
   mount Chemotion::LlmTasksAPI
   mount Chemotion::LiteratureAPI
   mount Chemotion::CasLookupAPI

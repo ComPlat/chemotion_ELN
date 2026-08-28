@@ -26,6 +26,9 @@ class CreateLlmProviders < ActiveRecord::Migration[6.1]
       t.string   :scope, null: false, default: 'global'
       t.bigint   :user_id
       t.boolean  :enabled, null: false, default: true
+      # Whether only the models named in llm_provider_grants may be used here.
+      # false = every model the provider lists, minus whatever a grant excludes.
+      t.boolean  :restrict_models, null: false, default: false
       t.timestamps null: false
     end
 

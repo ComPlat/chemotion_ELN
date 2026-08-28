@@ -41,14 +41,111 @@ RSpec.describe LlmProviderResolver do
     end
 
     context 'when multiple global providers exist' do
-      let!(:first_global) { create(:llm_provider, enabled: true) }
+      let!(:first_global)  { create(:llm_provider, enabled: true) }
+      let!(:second_global) { create(:llm_provider, enabled: true) }
 
-      # A second candidate, so "uses the first" is actually a choice.
-      before { create(:llm_provider, enabled: true) }
-
-      it 'uses the first (lowest id) global provider' do
+      it 'uses the first (lowest id) global provider when the user picked none' do
         resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
         expect(resolution.provider).to eq(first_global)
+      end
+
+      it 'uses the institution provider the user picked' do
+        create(:user_llm_setting, :global, user: user, institution_llm_provider: second_global)
+
+        resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+        expect(resolution.provider).to eq(second_global)
+      end
+
+      it 'falls back to the first when the picked one is disabled' do
+        create(:user_llm_setting, :global, user: user, institution_llm_provider: second_global)
+        second_global.update!(enabled: false)
+
+        resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+        expect(resolution.provider).to eq(first_global)
+      end
+
+      it 'routes one task to an institution provider that is not the default' do
+        create(:user_llm_setting, :global, user: user, institution_llm_provider: first_global)
+        create(:user_task_model_mapping, user: user, task_name: 'sds_extraction',
+                                         model: nil, llm_provider: second_global)
+
+        expect(described_class.resolve(user: user, task_name: 'sds_extraction').provider).to eq(second_global)
+        expect(described_class.resolve(user: user, task_name: 'other_task').provider).to eq(first_global)
+      end
+    end
+
+    context 'when access rules narrow the institution providers' do
+      let!(:open_provider)   { create(:llm_provider) }
+      let!(:closed_provider) { create(:llm_provider, base_url: 'https://closed.example/api') }
+
+      it 'skips a provider whose rule shuts the user out' do
+        create(:llm_provider_grant, llm_provider: open_provider, exclude_ids: [user.id])
+
+        expect(described_class.institution_provider_for(user)).to eq(closed_provider)
+      end
+
+      it 'refuses a task override that names a provider the user may not use' do
+        create(:llm_provider_grant, llm_provider: closed_provider, enabled: false, include_ids: [])
+        create(:user_task_model_mapping, user: user, task_name: 'sds_extraction',
+                                         model: nil, llm_provider: closed_provider)
+
+        expect(described_class.resolve(user: user, task_name: 'sds_extraction').provider).to eq(open_provider)
+      end
+
+      it 'refuses a model the user was not granted and runs the provider default' do
+        create(:llm_provider_grant, llm_provider: open_provider, model: 'kit.secret', exclude_ids: [user.id])
+        create(:user_task_model_mapping, user: user, task_name: 'sds_extraction',
+                                         model: 'kit.secret', llm_provider: open_provider)
+
+        resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+        expect(resolution.provider).to eq(open_provider)
+        expect(resolution.model).to eq(open_provider.default_model)
+      end
+
+      it 'keeps a model the user was granted' do
+        create(:llm_provider_grant, llm_provider: open_provider, model: 'kit.secret', exclude_ids: [])
+        create(:user_task_model_mapping, user: user, task_name: 'sds_extraction',
+                                         model: 'kit.secret', llm_provider: open_provider)
+
+        expect(described_class.resolve(user: user, task_name: 'sds_extraction').model).to eq('kit.secret')
+      end
+    end
+
+    describe '.institution_models_for' do
+      let!(:provider) { create(:llm_provider) }
+
+      before do
+        allow(LlmModelCatalog).to receive(:fetch).and_return(%w[kit.qwen kit.llama3])
+      end
+
+      it 'returns only the models this user’s rules admit' do
+        create(:llm_provider_grant, llm_provider: provider, model: 'kit.llama3', exclude_ids: [user.id])
+
+        expect(described_class.institution_models_for(user, provider.reload)).to eq(['kit.qwen'])
+      end
+
+      it 'returns nothing for a provider the user may not reach' do
+        create(:llm_provider_grant, llm_provider: provider, enabled: false, include_ids: [])
+
+        expect(described_class.institution_models_for(user, provider.reload)).to eq([])
+      end
+    end
+
+    describe '.institution_provider_for' do
+      let!(:first_global)  { create(:llm_provider, enabled: true) }
+      let!(:second_global) { create(:llm_provider, enabled: true) }
+
+      it 'returns the picked provider, or the first when none was picked' do
+        expect(described_class.institution_provider_for(user)).to eq(first_global)
+
+        create(:user_llm_setting, :global, user: user, institution_llm_provider: second_global)
+        expect(described_class.institution_provider_for(user)).to eq(second_global)
+      end
+
+      it 'returns nil when the institution gate denies the user' do
+        allow(described_class).to receive(:institution_provider_allowed?).with(user).and_return(false)
+
+        expect(described_class.institution_provider_for(user)).to be_nil
       end
     end
 

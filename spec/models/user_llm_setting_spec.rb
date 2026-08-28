@@ -4,22 +4,25 @@
 #
 # Table name: user_llm_settings
 #
-#  id                      :bigint           not null, primary key
-#  enabled                 :boolean          default(TRUE), not null
-#  provider_type           :string           default("global"), not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  default_llm_provider_id :bigint
-#  user_id                 :bigint           not null
+#  id                          :bigint           not null, primary key
+#  enabled                     :boolean          default(TRUE), not null
+#  provider_type               :string           default("global"), not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  default_llm_provider_id     :bigint
+#  institution_llm_provider_id :bigint
+#  user_id                     :bigint           not null
 #
 # Indexes
 #
-#  index_user_llm_settings_on_default_llm_provider_id  (default_llm_provider_id)
-#  index_user_llm_settings_on_user_id                  (user_id) UNIQUE
+#  index_user_llm_settings_on_default_llm_provider_id      (default_llm_provider_id)
+#  index_user_llm_settings_on_institution_llm_provider_id  (institution_llm_provider_id)
+#  index_user_llm_settings_on_user_id                      (user_id) UNIQUE
 #
 # Foreign Keys
 #
 #  fk_rails_...  (default_llm_provider_id => llm_providers.id) ON DELETE => nullify
+#  fk_rails_...  (institution_llm_provider_id => llm_providers.id) ON DELETE => nullify
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #
 require 'rails_helper'
@@ -60,6 +63,17 @@ RSpec.describe UserLlmSetting, type: :model do
       setting.provider_type = 'unknown_provider'
       expect(setting).not_to be_valid
       expect(setting.errors[:provider_type]).to be_present
+    end
+
+    it 'accepts an institution provider as the institution choice' do
+      setting.institution_llm_provider = create(:llm_provider)
+      expect(setting).to be_valid
+    end
+
+    it 'rejects a personal provider as the institution choice' do
+      setting.institution_llm_provider = create(:llm_provider, :personal, user: create(:user))
+      expect(setting).not_to be_valid
+      expect(setting.errors[:institution_llm_provider]).to be_present
     end
   end
 
