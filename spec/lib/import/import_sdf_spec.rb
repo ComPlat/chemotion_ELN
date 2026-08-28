@@ -118,8 +118,10 @@ RSpec.describe Import::ImportSdf do
     # write transaction, so the depth is asserted against whatever RSpec's transactional fixtures
     # already hold open around the example rather than against zero.
     #
-    # Only releases made by this file are counted: has_closure_tree releases the connection once
-    # when Container is first autoloaded, which happens mid-save here and is not ours.
+    # Only releases made by the importer's own helper are counted, matched on the frame's method
+    # name rather than its file (the helper lives on Import::ImportSamples, shared with the xlsx
+    # path): has_closure_tree releases the connection once when Container is first autoloaded,
+    # which happens mid-save here and is not ours.
     it 'releases the DB connection before resolving each row, never inside the write transaction' do
       baseline_depth = ActiveRecord::Base.connection.open_transactions
       order = []
@@ -127,7 +129,7 @@ RSpec.describe Import::ImportSdf do
 
       allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
         origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
-        if origin&.include?('lib/import/import_sdf.rb')
+        if origin&.include?('release_connection_for_native_work')
           order << :release
           depths << ActiveRecord::Base.connection.open_transactions
         end
@@ -421,7 +423,7 @@ RSpec.describe Import::ImportSdf do
 
       allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
         origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
-        order << :release if origin&.include?('lib/import/import_sdf.rb')
+        order << :release if origin&.include?('release_connection_for_native_work')
         orig.call(*args)
       end
       allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_wrap_original do |orig, *args|

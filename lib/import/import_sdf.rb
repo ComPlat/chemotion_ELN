@@ -216,7 +216,10 @@ class Import::ImportSdf < Import::ImportSamples
     inchikeys = []
     first_batch = true
     until data.empty?
-      molecules = find_or_create_by_molfiles(data.slice!(0...batch_size))
+      batch = data.slice!(0...batch_size)
+      # inchikeys.size is the number of records already consumed, i.e. this batch's offset in the
+      # file -- what the per-record log line has to number by, not the index within the batch.
+      molecules = find_or_create_by_molfiles(batch, inchikeys.size)
       inchikeys += molecules.map { |m| (m && m[:inchikey]) || nil }
       @processed_mol += molecules
       Molecule.schedule_pubchem_lookup_since(started_at) if first_batch
@@ -372,7 +375,10 @@ class Import::ImportSdf < Import::ImportSamples
           @unprocessable_samples << (i + 1)
           error_messages << "Sample #{i + 1} could not be imported: #{e.message}"
         end
-        if @unprocessable_samples.any?
+        # error_messages.empty?: #message already appends the same list unconditionally, so adding
+        # it here on top of the per-row "Sample N could not be imported" lines reports the same
+        # records three times. The summary is the fallback for when there is nothing more specific.
+        if error_messages.empty? && @unprocessable_samples.any?
           error_messages << "Following samples could not be imported #{@unprocessable_samples}."
         end
         @message[:error_messages] = error_messages if error_messages.present?
@@ -625,16 +631,9 @@ class Import::ImportSdf < Import::ImportSamples
     @all_collections_for_user ||= Collection.get_all_collection_for_user(current_user_id)
   end
 
-  # Releases the DB connection immediately before native OpenBabel work that can run seconds --
-  # batched, minutes -- per call. Without this, a connection reaped for inactivity mid-call fails
-  # every query that follows it instead of being transparently re-checked-out through
-  # ActiveRecord::ConnectionPool#checkout_and_verify once the native call returns. Call this
-  # immediately before the native call, with no transaction open around it.
-  def release_connection_for_native_work
-    ActiveRecord::Base.connection_pool.release_connection
-  end
-
-  def find_or_create_by_molfiles(molfiles)
+  # @param offset [Integer] index of this batch's first record within the file, so failures are
+  #   reported by their position in the file rather than within the batch
+  def find_or_create_by_molfiles(molfiles, offset = 0)
     # See #release_connection_for_native_work. This is the larger of this file's three windows: one
     # call covers a whole batch of records, each of which can spend up to
     # Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS in native canonical-SMILES work --
@@ -658,13 +657,17 @@ class Import::ImportSdf < Import::ImportSamples
       # aborting the whole import uncaught, rather than just the one record.
       find_or_create_molecule_entry(molfiles[i], babel_info)
     rescue StandardError => e
-      Rails.logger.error("SDF import: molecule entry #{i + 1} could not be resolved: #{e.class}: #{e.message}")
+      Rails.logger.error(
+        "SDF import: molecule entry #{offset + i + 1} could not be resolved: #{e.class}: #{e.message}",
+      )
       nil
     end
   end
 
-  # @return [Hash, nil] a preview entry for one record, or nil if none of the strategies below
-  #   resolved a molecule
+  # Always returns an entry: #molfile_entry_without_inchikey is the last resort and builds a
+  # decoupled one rather than giving up. Only the caller's rescue turns a record into nil.
+  #
+  # @return [Hash] a preview entry for one record
   def find_or_create_molecule_entry(molfile, babel_info)
     # has_polymer_content?, not has_polymers_list_tag?: an *empty* "> <PolymersList>" block is not
     # a polymer, and those records keep the ordinary resolution path.
