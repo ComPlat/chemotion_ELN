@@ -16,7 +16,7 @@ import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reaction
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
-import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 
 import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/schemeTab/GeneralProcedureDnD';
 import { rolesOptions } from 'src/components/staticDropdownOptions/options';
@@ -2650,9 +2650,8 @@ export default class ReactionDetailsScheme extends React.Component {
               {
                 permitOn(reaction)
                   ? (
-                    <ReactionDescriptionEditor
-                      height="100%"
-                      reactQuillRef={this.reactQuillRef}
+                    <RichTextEditor
+                      innerRef={this.reactQuillRef}
                       template={reactionDescTemplate}
                       value={reaction.description}
                       updateTextTemplates={this.updateTextTemplates}
