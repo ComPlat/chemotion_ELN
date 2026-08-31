@@ -1140,6 +1140,22 @@ RSpec.describe Attachment do
     end
   end
 
+  describe '#set_regenerating' do
+    # A bagit curve's filename never gains a .peak./.edit. addon (jcamp_peak_addon?), so
+    # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware its
+    # aasm_state is already :peaked - and regenerate_spectrum (attachment_api.rb) calls
+    # set_regenerating on every "orig" id. Before :peaked was added to this event's from:
+    # list, that raised AASM::InvalidTransition and 500'd the whole Reprocess request.
+    let(:attachment) { create(:attachment, filename: '740.1_bagit.jdx', aasm_state: 'peaked') }
+
+    it 'allows a peaked bagit curve to be regenerated' do
+      expect(attachment.may_set_regenerating?).to be true
+
+      attachment.set_regenerating
+      expect(attachment.aasm_state).to eq('regenerating')
+    end
+  end
+
   describe '#generate_att concurrency (S9 advisory lock)', :js do
     # js: true switches DatabaseCleaner to :truncation (see spec/support/database_cleaner.rb)
     # instead of the suite's default :transaction strategy - a second, independent DB

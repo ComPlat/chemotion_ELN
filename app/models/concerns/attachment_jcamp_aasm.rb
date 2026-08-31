@@ -47,8 +47,14 @@ module AttachmentJcampAasm
                     to: :queueing
       end
 
+      # :peaked is included alongside the other resting states below: a bagit curve's
+      # filename never gains a .peak./.edit. addon (see jcamp_peak_addon?), so
+      # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware
+      # that its aasm_state is already :peaked - and regenerate_spectrum (attachment_api.rb)
+      # calls set_regenerating on every "orig" id. Without :peaked here that raised
+      # AASM::InvalidTransition and 500'd the whole Reprocess request.
       event :set_regenerating do
-        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium],
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium peaked],
                     to: :regenerating
       end
 
