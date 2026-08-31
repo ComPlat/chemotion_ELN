@@ -314,6 +314,59 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateComponentAmounts()', () => {
+    // icosane (ref, ratio 1, MW 282.55) + octane (ratio 2, MW 114.23)
+    const buildMixture = (totalMassG) => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+
+      const ref = new Component({});
+      ref.reference = true;
+      ref.material_group = 'solid';
+      ref.molecule = { molecular_weight: 282.55 };
+      ref.equivalent = 1;
+      ref.component_properties = {};
+
+      const other = new Component({});
+      other.reference = false;
+      other.material_group = 'solid';
+      other.molecule = { molecular_weight: 114.23 };
+      other.equivalent = 2;
+      other.component_properties = {};
+
+      s.initialComponents([ref, other]);
+      s.amount_value = totalMassG;
+      s.amount_unit = 'g';
+      return { s, ref, other };
+    };
+
+    it('distributes the total mass into component amounts by ratio and molar mass', () => {
+      const { s, ref, other } = buildMixture(1); // 1 g total
+      const denom = (1 * 282.55) + (2 * 114.23); // Σ ratio * molar mass
+      s.updateComponentAmounts();
+      expect(ref.amount_mol).toBeCloseTo(1 / denom, 9);
+      expect(other.amount_mol).toBeCloseTo(2 / denom, 9);
+    });
+
+    it('conserves the total mass across the components', () => {
+      const { s, ref, other } = buildMixture(0.5); // 0.5 g total
+      s.updateComponentAmounts();
+      const massBack = (ref.amount_mol * 282.55) + (other.amount_mol * 114.23);
+      expect(massBack).toBeCloseTo(0.5, 9);
+    });
+
+    it('works from zero prior amounts (no dependence on relative_molecular_weight)', () => {
+      const { s, ref, other } = buildMixture(1);
+      // Components start with no amounts / no relative MW, as when a mass is first
+      // entered on a mixture reaction material.
+      expect(ref.amount_mol == null || ref.amount_mol === 0).toBe(true);
+      s.updateComponentAmounts();
+      expect(ref.amount_mol).toBeGreaterThan(0);
+      expect(other.amount_mol).toBeGreaterThan(0);
+      expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 9);
+    });
+  });
+
   describe('Sample.calculateRequiredTotalVolume()', () => {
     let sample;
     let referenceComponent;
