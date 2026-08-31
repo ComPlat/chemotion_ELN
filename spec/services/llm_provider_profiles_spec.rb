@@ -44,10 +44,8 @@ RSpec.describe LlmProviderProfiles do
       allow(File).to receive(:read).with(described_class::CONFIG_PATH)
                                    .and_return({ 'profiles' => [{ 'key' => 'x', 'label' => 'X',
                                                                   'protocol' => 'bogus' }] }.to_yaml)
-      # .all reads the YAML config; it is not an ActiveRecord relation.
-      # rubocop:disable Rails/RedundantActiveRecordAllMethod
-      expect(described_class.all.first[:protocol]).to eq('openai')
-      # rubocop:enable Rails/RedundantActiveRecordAllMethod
+      profile = described_class.all.first # rubocop:disable Rails/RedundantActiveRecordAllMethod -- YAML, not a relation
+      expect(profile[:protocol]).to eq('openai')
     end
   end
 

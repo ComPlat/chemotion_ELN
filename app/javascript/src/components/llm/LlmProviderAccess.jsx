@@ -163,15 +163,25 @@ const ProviderAccessCard = ({ provider, expanded, onToggle, onChanged }) => {
     (prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)),
   );
 
-  const addRule = () => setRules((prev) => [
-    ...prev,
-    {
-      model: prev.some((r) => !r.model) ? (models[0] || null) : null,
-      enabled: true,
-      include_users: [],
-      exclude_users: [],
-    },
-  ]);
+  // Each target — the provider as a whole (model null) or one named model — takes
+  // at most one rule, so a new row goes to the first target still free.
+  const takenTargets = new Set(rules.map((r) => r.model || ''));
+  const freeModel = models.find((m) => !takenTargets.has(m));
+  const nextRuleTarget = takenTargets.has('') ? freeModel : null;
+  const canAddRule = nextRuleTarget !== undefined;
+
+  const addRule = () => {
+    if (!canAddRule) return;
+    setRules((prev) => [
+      ...prev,
+      {
+        model: nextRuleTarget,
+        enabled: true,
+        include_users: [],
+        exclude_users: [],
+      },
+    ]);
+  };
 
   const handleSave = () => {
     if (!dirty) {
@@ -270,7 +280,7 @@ const ProviderAccessCard = ({ provider, expanded, onToggle, onChanged }) => {
                   Reading the provider’s model list…
                 </span>
               )}
-              <Button size="sm" variant="outline-primary" onClick={addRule}>
+              <Button size="sm" variant="outline-primary" onClick={addRule} disabled={!canAddRule}>
                 <i className="fa fa-plus me-1" />
                 Add rule
               </Button>

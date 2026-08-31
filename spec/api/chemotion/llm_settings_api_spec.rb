@@ -337,9 +337,7 @@ describe Chemotion::LlmSettingsAPI do
         # update_column, deliberately: a provider this broken can no longer be
         # *saved*, but rows predating that validation exist in the wild — which is
         # exactly the case under test.
-        # rubocop:disable Rails/SkipsModelValidations
-        create(:llm_provider).update_column(:default_model, '')
-        # rubocop:enable Rails/SkipsModelValidations
+        create(:llm_provider).update_column(:default_model, '') # rubocop:disable Rails/SkipsModelValidations
       end
 
       it 'returns 422 naming the missing model, without calling the provider' do
