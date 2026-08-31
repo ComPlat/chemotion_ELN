@@ -271,10 +271,13 @@ class LlmProviderResolver
     end
 
     # The preference points at one provider, but that FK is nullified when the
-    # provider is deleted. Rather than dropping the user to the institution
-    # provider without a word, fall back to their oldest remaining one.
+    # provider is deleted, and the record may since have been disabled. Either
+    # way, fall back to the user's oldest usable one.
     def default_personal_provider(user, setting)
-      setting.default_llm_provider || LlmProvider.for_user(user).where(enabled: true).first
+      preferred = setting.default_llm_provider
+      return preferred if preferred&.enabled
+
+      LlmProvider.for_user(user).where(enabled: true).first
     end
 
     # ── Level 3: Admin-configured institution provider ────────────────────────

@@ -181,6 +181,12 @@ const LlmProviderList = ({
       .finally(() => setTestingId(null));
   };
 
+  // A saved provider whose key was not retyped has none to send: the form leaves
+  // the field blank to mean "keep the stored one", so test that key instead.
+  const handleTestDraft = (candidate) => (
+    candidate.id && !candidate.api_key ? api.verify(candidate.id) : api.testDraft(candidate)
+  );
+
   const handleDelete = (id) => {
     setStatus(null);
     api.remove(id)
@@ -240,7 +246,7 @@ const LlmProviderList = ({
           onChange={patchDraft}
           onCancel={() => setDraft(null)}
           onSave={handleSave}
-          onTest={api.testDraft}
+          onTest={handleTestDraft}
           onDeleteKey={handleDeleteKey}
           saving={saving}
           keyHelp={keyHelp}

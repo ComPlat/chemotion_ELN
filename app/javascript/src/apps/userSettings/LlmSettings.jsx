@@ -342,7 +342,9 @@ const LlmSettings = ({ userId }) => {
 
     UsersFetcher.updateLlmSettings({
       provider_type: providerType,
-      default_llm_provider_id: providerType === 'custom' ? defaultProviderId : null,
+      // Sent whatever the mode is: provider_type decides which pointer is read, and
+      // nulling it here would lose the choice on the way back to 'custom'.
+      default_llm_provider_id: defaultProviderId,
       institution_llm_provider_id: institutionProviderId,
       task_mappings: taskMappings.map((m) => ({
         task_name: m.task_name,
