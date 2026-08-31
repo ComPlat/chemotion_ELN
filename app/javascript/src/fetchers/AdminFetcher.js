@@ -220,32 +220,6 @@ export default class AdminFetcher {
       });
   }
 
-  static fetchLlmUsers() {
-    return fetch('/api/v1/admin/llm_users', {
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-    }).then((response) => {
-      if (!response.ok) {
-        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
-      }
-      return response.json();
-    });
-  }
-
-  static setUserLlmEnabled(params) {
-    return fetch('/api/v1/admin/llm_users', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    }).then((response) => {
-      if (!response.ok) {
-        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
-      }
-      return response.json();
-    });
-  }
-
   // Configurable provider presets (config/llm_provider_profiles.yml). Resolves to
   // [] on error so the preset picker just hides.
   static fetchLlmProviderProfiles() {

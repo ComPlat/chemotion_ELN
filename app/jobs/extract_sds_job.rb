@@ -72,6 +72,9 @@ class ExtractSdsJob < ApplicationJob
   # Vendor product-info keys that may carry a locally stored SDS.
   VENDOR_INFO_KEYS = %w[merckProductInfo alfaProductInfo].freeze
 
+  # The only directory under public/ an SDS may be read from.
+  SAFETY_SHEET_DIR = 'safety_sheets'
+
   def perform(sample_id:, user_id:)
     self.priority = self.class.default_priority
     start_notification(sample_id, user_id)
@@ -249,11 +252,16 @@ class ExtractSdsJob < ApplicationJob
     nil
   end
 
-  # Absolute path under public/ for a stored relative path, or nil if it is gone.
+  # Absolute path for a stored relative path, or nil if it is gone.
+  # The path comes from user-writable chemical_data, so anything resolving
+  # outside public/safety_sheets is refused rather than read.
   def existing_public_file(relative_path)
     return nil if relative_path.blank?
 
-    abs_path = Rails.public_path.join(relative_path.sub(%r{^/}, '')).to_s
+    root     = Rails.public_path.join(SAFETY_SHEET_DIR).to_s
+    abs_path = File.expand_path(relative_path.sub(%r{^/}, ''), Rails.public_path.to_s)
+    return nil unless abs_path.start_with?("#{root}/")
+
     abs_path if File.exist?(abs_path)
   end
 

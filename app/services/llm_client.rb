@@ -47,7 +47,9 @@ class LlmClient
   def initialize(base_url:, api_key:, model:, timeout: 120, protocol: 'openai')
     @protocol = PROTOCOLS.include?(protocol.to_s) ? protocol.to_s : 'openai'
     resolved  = base_url.presence || DEFAULT_BASE_URLS[@protocol]
-    @uri      = URI.parse(resolved.to_s.chomp('/'))
+    # A malformed URL is left hostless so #chat reports it as a configuration
+    # problem instead of raising URI::InvalidURIError out of the constructor.
+    @uri      = parse_endpoint(resolved)
     @api_key  = api_key
     @model    = model
     @timeout  = timeout
@@ -72,6 +74,7 @@ class LlmClient
   # @raise [Errors::LlmTimeoutError]        on connection/read timeout
   # @raise [Errors::LlmProviderError]       on any other HTTP/network error
   def chat(messages:, temperature: 0.1, max_tokens: nil, json_mode: false)
+    ensure_endpoint_present!
     ensure_api_key_present!
     ensure_model_present!
     request  = build_chat_request(messages, temperature, max_tokens, json_mode)
@@ -98,6 +101,22 @@ class LlmClient
   end
 
   private
+
+  def parse_endpoint(base_url)
+    URI.parse(base_url.to_s.chomp('/'))
+  rescue URI::InvalidURIError
+    URI.parse('')
+  end
+
+  # The Chat Completions protocol has no default endpoint, so a blank or hostless
+  # base_url is a configuration mistake, not a transport failure.
+  def ensure_endpoint_present!
+    return if @uri.host.present?
+
+    raise Errors::LlmNotConfiguredError,
+          'No API endpoint is set for this provider. Enter the base URL ' \
+          '(for example https://api.openai.com), then test the connection again.'
+  end
 
   # Fail fast with a clear message when a key is required but missing, rather than
   # letting the provider return an opaque 401 for an empty "Bearer " header.

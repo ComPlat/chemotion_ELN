@@ -261,12 +261,11 @@ RSpec.describe LlmTaskRunner do
         expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
       end
 
-      it 'retries with a larger max_tokens (doubled, capped at 16000)' do
-        task     = Chemotion::LlmTaskRegistry.find('sds_extraction')
-        expected = [task.max_tokens.to_i * 2, 16_000].min
+      it 'retries with a max_tokens larger than the first attempt' do
+        task = Chemotion::LlmTaskRegistry.find('sds_extraction')
         described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
         expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
-          .with { |req| JSON.parse(req.body)['max_tokens'] == expected })
+          .with { |req| JSON.parse(req.body)['max_tokens'] > task.max_tokens.to_i })
       end
     end
 

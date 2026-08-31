@@ -35,6 +35,10 @@
 #   LlmTaskValidators::ValidationError — model output failed validation (wrapped in LlmProviderError)
 #
 class LlmTaskRunner
+  # Floor for the retry cap, so a task that sets a small (or no) max_tokens still
+  # gets room for a JSON answer on the second attempt.
+  RETRY_MIN_MAX_TOKENS = 16_000
+
   # Convenience class-level entry point.
   #
   # @param task_name [String]
@@ -167,8 +171,7 @@ class LlmTaskRunner
     )
 
     if task.json_output? && raw_output.to_s.strip.empty?
-      bumped = [task.max_tokens.to_i * 2, 16_000].min
-      bumped = 16_000 if bumped <= task.max_tokens.to_i
+      bumped = [task.max_tokens.to_i * 2, RETRY_MIN_MAX_TOKENS].max
       Rails.logger.warn(
         "[LlmTaskRunner] Empty output for '#{@task_name}' " \
         "(finish_reason=#{client.last_finish_reason.inspect}); retrying once with max_tokens=#{bumped}.",
@@ -269,15 +272,24 @@ class LlmTaskRunner
   # @return [Hash, Array]
   # @raise [Errors::LlmProviderError] wrapping ValidationError
   def apply_validator!(task, data)
-    task.validator_class.constantize.validate!(data)
+    validator = resolve_validator(task)
+    return data if validator.nil?
+
+    validator.validate!(data)
+  rescue LlmTaskValidators::ValidationError => e
+    raise Errors::LlmProviderError,
+          "LLM output for task '#{@task_name}' failed validation: #{e.message}"
+  end
+
+  # nil when the task names a class that does not exist. Kept apart from the call
+  # itself so a NoMethodError inside the validator is not read as a missing class.
+  def resolve_validator(task)
+    task.validator_class.constantize
   rescue NameError
     Rails.logger.warn(
       "[LlmTaskRunner] Validator class '#{task.validator_class}' not found for task " \
       "'#{@task_name}'. Skipping validation.",
     )
-    data
-  rescue LlmTaskValidators::ValidationError => e
-    raise Errors::LlmProviderError,
-          "LLM output for task '#{@task_name}' failed validation: #{e.message}"
+    nil
   end
 end

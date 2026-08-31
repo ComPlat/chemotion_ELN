@@ -913,15 +913,25 @@ export default class ChemicalTab extends React.Component {
     const properties = chemical?._chemical_data?.[0]?.extractedProperties;
     if (!properties || Object.keys(properties).length === 0) return;
 
-    // Range properties (boiling_point, melting_point) — same parsing as vendor flow
+    // Range properties (boiling_point, melting_point).
     const updateSampleRange = (propertyName, propertyValue) => {
       if (!propertyValue) return;
-      const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
-      const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
-      const upperBound = rangeValues.length === 2
-        ? parseFloat(rangeValues[1].replace('−', '-'))
-        : Number.POSITIVE_INFINITY;
-      sample.updateRange(propertyName, lowerBound, upperBound);
+      // Only a hyphen that follows a digit separates a range; one before a digit is
+      // the sign of a negative temperature, which SDS values regularly carry.
+      const parts = String(propertyValue)
+        .replace(/°\s*C?/gi, '')
+        .replace(/[\u2212\u2013\u2014]/g, '-')
+        .trim()
+        .replace(/(\d)\s*-\s*/g, '$1|')
+        .split('|');
+      const lowerBound = parseFloat(parts[0]);
+      if (Number.isNaN(lowerBound)) return;
+      const upperBound = parts.length > 1 ? parseFloat(parts[1]) : Number.POSITIVE_INFINITY;
+      sample.updateRange(
+        propertyName,
+        lowerBound,
+        Number.isNaN(upperBound) ? Number.POSITIVE_INFINITY : upperBound,
+      );
     };
 
     updateSampleRange('boiling_point', properties.boiling_point);

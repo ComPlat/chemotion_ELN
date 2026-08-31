@@ -52,10 +52,11 @@ module Chemotion
           }
         end
 
-        # The institution provider a user may test / read models from: any of the
-        # ones open to them when they name one, otherwise whichever serves them
-        # by default.
+        # The institution provider a user may test / read models from: the gate
+        # first, then any of the ones open to them when they name one, otherwise
+        # whichever serves them by default.
         def institution_provider_for_user(id = nil)
+          return nil unless LlmProviderResolver.institution_provider_allowed?(current_user)
           return LlmProviderResolver.institution_provider_for(current_user) if id.blank?
 
           provider = LlmProvider.global_providers.find_by(id: id)
