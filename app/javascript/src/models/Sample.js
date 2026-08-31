@@ -817,25 +817,44 @@ export default class Sample extends Element {
   }
 
   /**
-   * Updates each component's amount (in mol) based on total mixture mass.
-   * Uses the component's relative molecular weight (relMw) and equivalent (eq) values.
+   * Updates each component's amount (in mol) from the mixture's total mass, using
+   * each component's ratio (equivalent) and its own molar mass.
+   *
+   * The total mass is split across components in proportion to their ratios:
+   *   amount_mol_i = (ratio_i * totalMass) / Σ_j (ratio_j * molar_mass_j)
+   * which keeps the component mole ratios equal to their ratios and conserves the
+   * total mass (Σ amount_mol_i * molar_mass_i === totalMass).
+   *
+   * This is self-contained (ratios + molar masses only), so it also works when the
+   * components have no prior amounts, i.e. when a mass is first entered on a mixture
+   * used as a reaction material.
    * @returns {void}
    */
   updateComponentAmounts() {
     const totalMassG = Number(this.amount_g);
     if (!Number.isFinite(totalMassG) || totalMassG < 0) return;
 
-    (this.components || []).forEach((component) => {
-      const relMw = Number(component.relative_molecular_weight);
-      if (!Number.isFinite(relMw) || relMw <= 0) return;
+    const components = this.components || [];
 
+    const ratioOf = (component) => {
       const isRef = !!component.reference;
-      const eq = Number.isFinite(component.equivalent)
-        ? component.equivalent
-        : (isRef ? 1 : 0);
+      return Number.isFinite(component.equivalent) ? component.equivalent : (isRef ? 1 : 0);
+    };
 
-      const totalMoles = totalMassG / relMw;
-      component.amount_mol = isRef ? totalMoles : totalMoles * eq;
+    // Weighted molar-mass sum: Σ (ratio_j * molar_mass_j).
+    const weightedMolarMass = components.reduce((sum, component) => {
+      const molarMass = Number(component.molecule_molecular_weight);
+      if (!Number.isFinite(molarMass) || molarMass <= 0) return sum;
+      return sum + (ratioOf(component) * molarMass);
+    }, 0);
+
+    if (!(weightedMolarMass > 0)) return;
+
+    components.forEach((component) => {
+      const molarMass = Number(component.molecule_molecular_weight);
+      if (!Number.isFinite(molarMass) || molarMass <= 0) return;
+
+      component.amount_mol = (ratioOf(component) * totalMassG) / weightedMolarMass;
     });
   }
 
