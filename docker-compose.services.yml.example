@@ -74,8 +74,26 @@ services:
   #  - The first run pulls ~500 MB, but only ~75 MB lands in public/: the copy
   #    drops the nested per-release archives and the sourcemaps (the latter are
   #    kept with NMRIUM_SOURCEMAPS=1).
+  #  - NMRIUM_ALLOWED_ORIGINS is not optional for a self-hosted wrapper. The
+  #    wrapper validates the origin of every postMessage its parent sends against
+  #    an allowlist it fetches at runtime from
+  #    raw.githubusercontent.com/NFDI4Chem/nmrium-react-wrapper, and throws
+  #    "Invalid Origin <your eln>" for anything not on it. That list enumerates
+  #    other institutions' public ELNs, so a self-hosted instance is rejected by
+  #    default - and rejected specifically on save, because the list is empty
+  #    (and the check therefore skipped) for as long as that fetch is in flight,
+  #    which covers the initial load but not a later user action. The install
+  #    below repoints the wrapper at a list we write ourselves, so the origins
+  #    that may drive it are ours to declare and no egress to GitHub is needed.
+  #    Each entry must be a full origin, scheme included: the wrapper parses it
+  #    with `new URL()` and silently drops whatever fails, so a bare hostname
+  #    never makes it onto the list. It then compares hostnames only - scheme
+  #    and port are ignored, one entry covers every port on that host - and
+  #    wildcards are not supported, so a multi-tenant deployment must list every
+  #    subdomain it serves. An empty list means the wrapper skips the check
+  #    altogether.
   nmrium-assets:
-    image: ${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+    image: ${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.2.0}
     # Write as the invoking user so public/nmrium is not left root-owned on the
     # host. Matches the uid/gid the dev image is built with.
     user: "${uid:-1000}:${gid:-1000}"
@@ -88,8 +106,15 @@ services:
     environment:
       # The version subdirectory is derived from the image tag, so there is a
       # single variable to keep in sync with .service-dependencies.
-      - IMG=${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+      - IMG=${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.2.0}
       - NMRIUM_SOURCEMAPS=${NMRIUM_SOURCEMAPS:-0}
+      # Space- or comma-separated origins allowed to drive the wrapper, each
+      # with its scheme, e.g. "https://eln.example.org https://1.eln.example.org"
+      # - a scheme-less hostname is dropped on the wrapper side. Leaving it empty
+      # writes an empty list, which the wrapper reads as "no check" - fine for
+      # development, and the same effective behaviour a deployment already gets
+      # today whenever the GitHub fetch fails. Set it in production.
+      - NMRIUM_ALLOWED_ORIGINS=${NMRIUM_ALLOWED_ORIGINS:-}
     entrypoint: ["/bin/sh", "-c"]
     # A list, not a string: compose shell-splits a string command, which would
     # tear this script into separate arguments. `$$` escapes compose's own
@@ -117,6 +142,39 @@ services:
           # pattern cannot match the staging directory itself.
           find "$$tmp" -mindepth 1 -maxdepth 1 -type d -name 'v[0-9]*' -exec rm -rf {} +
           [ "$$NMRIUM_SOURCEMAPS" = "1" ] || find "$$tmp" -name '*.map' -delete
+
+          # Repoint the wrapper's origin allowlist at one we ship beside it (see
+          # the NMRIUM_ALLOWED_ORIGINS caveat above). A relative url resolves
+          # against the iframe's own origin, which for a self-hosted wrapper is
+          # the ELN's, so the list travels with the instance and no egress to
+          # GitHub is needed to open a spectrum.
+          #
+          # An empty list disables the check wrapper-side, so say so rather than
+          # letting a production deployment discover it later.
+          origins=$$(printf '%s' "$$NMRIUM_ALLOWED_ORIGINS" | tr ', ' '\n\n' | sed '/^$$/d' \
+            | sed 's/.*/"&"/' | paste -sd, -)
+          printf '[%s]' "$$origins" > "$$tmp/allowed-origins.json"
+          if [ -z "$$origins" ]; then
+            echo ">>> WARNING: NMRIUM_ALLOWED_ORIGINS is empty - the wrapper will accept"
+            echo ">>>          messages from any origin. Set it for a production deployment."
+          fi
+
+          # Fail the install rather than ship a wrapper that still reaches for
+          # GitHub: a future bundle may rename or inline this constant, and a
+          # silent no-op here would look like a working install right up until
+          # saving breaks in production.
+          hits=$$(grep -rl 'raw\.githubusercontent\.com/NFDI4Chem/nmrium-react-wrapper[^"'"'"']*allowed-origins\.json' "$$tmp/assets" | wc -l)
+          if [ "$$hits" -eq 0 ]; then
+            echo >&2 ">>> ERROR: allowed-origins url not found in the $$v bundle."
+            echo >&2 ">>> The wrapper changed how it loads its origin allowlist."
+            echo >&2 ">>> Re-check nmrium-assets in docker-compose.services.yml before deploying."
+            rm -rf "$$tmp"
+            exit 1
+          fi
+          find "$$tmp/assets" -type f -name '*.js' -exec sed -i \
+            's#https://raw\.githubusercontent\.com/NFDI4Chem/nmrium-react-wrapper/[^"'"'"'`]*allowed-origins\.json#./allowed-origins.json#g' {} +
+          echo ">>> Origin allowlist pinned to $$tmp/allowed-origins.json ($$hits file(s) patched)"
+
           mv "$$tmp" "/out/$$v"
         fi
         ln -sfn "$$v" /out/default
