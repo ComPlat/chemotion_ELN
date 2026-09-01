@@ -164,6 +164,8 @@ module Chemotion
               base_url = params[:base_url].presence
               model    = params[:model].presence
               api_key  = params[:api_key].presence
+              violation = LlmEndpointPolicy.violation(base_url)
+              error!({ error: "The endpoint #{violation}." }, 422) if violation
             else
               provider = institution_provider_for_user(params[:institution_provider_id])
               unless provider
@@ -235,12 +237,18 @@ module Chemotion
             # `refresh` only ever evicts this caller's own cache entry: the identity
             # includes a digest of their key, so one user cannot force a re-read of
             # another user's (or the institution's) catalogue through here.
-            models = LlmModelCatalog.fetch(
-              base_url: params[:base_url].presence,
-              api_key:  params[:api_key].presence,
-              protocol: protocol,
-              force:    params[:refresh],
-            )
+            # An endpoint the user may not save is not one we call for a listing either.
+            base_url = params[:base_url].presence
+            models = if LlmEndpointPolicy.violation(base_url)
+                       []
+                     else
+                       LlmModelCatalog.fetch(
+                         base_url: base_url,
+                         api_key:  params[:api_key].presence,
+                         protocol: protocol,
+                         force:    params[:refresh],
+                       )
+                     end
             { models: models }
           rescue StandardError
             { models: [] }
