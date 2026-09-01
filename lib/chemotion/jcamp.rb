@@ -188,7 +188,16 @@ module Chemotion
         else
           File.open(paths.first, 'rb') do |file|
             File.open(mol_path, 'rb') do |molfile|
-              body = build_body(file, molfile, is_regen, params)
+              # .compact matters here: HTTParty's multipart encoding sends a nil-valued
+              # field as an empty form part - wire-identical to an explicit "". chem-spectra-app
+              # relies on that distinction (peaks_str present-but-empty means "explicitly
+              # cleared" vs. absent means "not specified, e.g. a plain reprocess") via
+              # request.form.get('peaks_str', default=None). Without compacting nil keys out
+              # of the body first, every param we don't set (peaks_str included) still arrives
+              # as an empty field, so a plain reprocess/regenerate call - which never sets
+              # peaks_str at all - was indistinguishable from the user having cleared every
+              # peak, wiping the EDIT_PEAK table on every reprocess.
+              body = build_body(file, molfile, is_regen, params).compact
               response = HTTParty.post(
                 api_endpoint,
                 body: body,

@@ -1140,6 +1140,35 @@ RSpec.describe Attachment do
     end
   end
 
+  describe '#read_bagit_data' do
+    # Unlike create_process's plain (non-bagit) branch, read_bagit_data never
+    # transitioned self out of :queueing/:regenerating - so a bagit archive's own
+    # attachment (e.g. "740.zip") got permanently stuck there after every upload or
+    # Reprocess. :regenerating in particular isn't excluded by
+    # SpectraHelper.js#extractJcampFiles's isApp check, so the stuck .zip (a jcamp-like
+    # extension) got fed to the spectra editor as if it were a JCAMP file instead of
+    # being filtered out, producing garbage (NaN frequency, blank graph) even though
+    # the actual curve attachments it generated were entirely correct.
+    let(:attachment) { create(:attachment, filename: '740.zip', aasm_state: 'regenerating') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'transitions self to :done instead of leaving it stuck in :regenerating' do
+      tmp1 = make_tmp_jcamp('740.1_bagit.dx')
+      tmp2 = make_tmp_jcamp('740.2_bagit.dx')
+
+      attachment.send(:read_bagit_data, [tmp1, tmp2], [nil, nil], [nil, nil], 'NMR', true, {})
+
+      expect(attachment.aasm_state).to eq('done')
+    end
+  end
+
   describe '#set_regenerating' do
     # A bagit curve's filename never gains a .peak./.edit. addon (jcamp_peak_addon?), so
     # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware its

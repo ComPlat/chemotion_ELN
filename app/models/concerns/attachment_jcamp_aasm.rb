@@ -700,6 +700,7 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
     end
 
+    set_done
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
