@@ -57,6 +57,10 @@ class LlmProvider < ApplicationRecord
   # endpoint could be anyone's, so it has to be given.
   validates :base_url, presence: true, if: -> { api_protocol == 'openai' }
 
+  # A personal endpoint is fetched by the server on its owner's behalf, so it may
+  # not address the deployment's own network. Cf. LlmEndpointPolicy.
+  validate :base_url_reachable_by_users, if: :personal?
+
   validates :scope, inclusion: { in: SCOPES }
   validates :user_id, presence: true, if: -> { scope == 'user' }
   validates :user_id, absence: true,  if: -> { scope == 'global' }
@@ -99,5 +103,12 @@ class LlmProvider < ApplicationRecord
     return false if name.blank?
 
     models_for(user, [name]).any?
+  end
+
+  private
+
+  def base_url_reachable_by_users
+    violation = LlmEndpointPolicy.violation(base_url)
+    errors.add(:base_url, violation) if violation
   end
 end

@@ -83,7 +83,7 @@ module LlmTaskValidators
     def keep_only_hashes!(data, key)
       return unless data[key].is_a?(Array)
 
-      kept = data[key].select { |entry| entry.is_a?(Hash) }
+      kept = data[key].grep(Hash)
       if kept.size < data[key].size
         Rails.logger.warn(
           "[#{self.class.name}] dropped #{data[key].size - kept.size} non-object " \

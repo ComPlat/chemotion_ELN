@@ -39,6 +39,10 @@ const inflight = new Map();
 // carrying an outdated generation is discarded instead of being written, so a slow
 // request cannot overwrite the result of the forced refetch that replaced it.
 const generations = new Map();
+// Bumped by clearModelCache. Clearing resets the per-key generations to 0, so on
+// its own a generation can no longer tell a request started before the clear from
+// one started after it — this survives the clear and does.
+let epoch = 0;
 // The user the cached lists belong to (see scopeToUser).
 let scopedUserId = null;
 // Notified whenever a stored list changes, so components reading through
@@ -128,12 +132,14 @@ function loadCached(key, loader, { force = false } = {}) {
   }
 
   const generation = generationOf(key);
+  const startedEpoch = epoch;
   const request = loader({ refresh: force })
     .then((models) => {
       const list = Array.isArray(models) ? models : [];
-      // A newer lookup for this key has since been started — that one owns the
-      // entry now, so this answer is returned to our caller but not stored.
-      if (generation !== generationOf(key)) return list;
+      // A newer lookup for this key has since been started, or the cache was
+      // cleared (a user switch) — that answer is returned to our caller but not
+      // stored, so it cannot land in another user's cache.
+      if (startedEpoch !== epoch || generation !== generationOf(key)) return list;
       // An empty list means "unreachable / wrong key / provider lists nothing".
       // It is not stored as an answer — that would keep the dropdown empty even
       // after the user fixes the config — only noted, so it isn't retried at
@@ -192,6 +198,7 @@ export function clearModelCache() {
   misses.clear();
   inflight.clear();
   generations.clear();
+  epoch += 1;
   scopedUserId = null;
   notify();
 }
