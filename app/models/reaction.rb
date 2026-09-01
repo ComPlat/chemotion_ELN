@@ -161,6 +161,8 @@ class Reaction < ApplicationRecord
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
 
+  has_many :sample_merges, dependent: :destroy
+
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
 
