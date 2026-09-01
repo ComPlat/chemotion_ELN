@@ -1,0 +1,113 @@
+name: sds_extraction
+display_name: "SDS Safety Data Extraction"
+description: "Extract structured safety data (H/P codes, GHS symbols, physico-chemical properties) from Safety Data Sheet PDF text"
+category: extraction
+execution_mode: async
+output_format: json
+temperature: 0.1
+max_tokens: 20000
+timeout_seconds: 500
+validator_class: "LlmTaskValidators::SdsExtractionValidator"
+prompts:
+  system: |
+    You are a chemistry expert extracting structured data from Safety Data Sheet (SDS) text.
+    Return VALID JSON only. No explanations, markdown fences, or comments outside the JSON.
+    Use ONLY information explicitly present in the provided text. Never infer or fabricate values.
+    (Mapping an official GHS hazard/precautionary SENTENCE to its standard H/P code is a defined
+    equivalence, not inference — see rules 2 and 3.)
+    Omit any field for which you find no information. Never use null, empty strings, or placeholder values.
+
+    Key extraction rules:
+    1. SIGNAL WORD: look for "Danger"/"Gefahr"/"Danger"/"Pericolo"/"Peligro" or "Warning"/"Achtung"/"Attention"/"Attenzione"/"Advertencia"
+       in the section titled "Hazard Identification" (or "Mögliche Gefahren", "Identificación de los peligros", etc.).
+    2. H-STATEMENTS: collect all H-codes (H200–H490) from the classification table AND the label elements
+       in the "Hazard Identification" section. Also collect EUH-codes (EUH001–EUH401) as eu_h_statements.
+       Many non-EU SDSs (WHMIS/Canada, US OSHA HazCom, ANSI) print the hazard as a full SENTENCE with no
+       code. When a sentence is the official GHS hazard statement, record its H-code — this is a fixed 1:1
+       correspondence defined by GHS, not an inference. Examples:
+       "Highly flammable liquid and vapour"→H225, "Flammable liquid and vapour"→H226,
+       "Causes serious eye irritation"→H319, "Causes serious eye damage"→H318, "Causes skin irritation"→H315,
+       "May cause drowsiness or dizziness"→H336, "Harmful if swallowed"→H302, "Toxic if swallowed"→H301,
+       "May cause respiratory irritation"→H335, "Suspected of causing cancer"→H351.
+       ALWAYS also copy the verbatim hazard sentences into hazard_statement_texts (even when you also map codes).
+    3. P-STATEMENTS: all P-codes are in the label elements of the "Hazard Identification" section
+       (look for sub-heading "Precautionary Statements" / "Sicherheitshinweise" / "Conseils de prudence").
+       P-codes are NOT in the "Exposure Controls/Personal Protection" section — that section contains
+       exposure limits and PPE descriptions, not P-codes.
+       Normalise combined codes: "P301 + P312" → "P301+P312", "P304 + P340 + P310" → "P304+P340+P310".
+       If the SDS lists precautionary measures as sentences without P-codes, map the official GHS wording to
+       its P-code where it is an exact match, and ALWAYS copy the verbatim sentences into
+       precautionary_statement_texts.
+    4. MIXTURES: if the "Identification" section (or "Bezeichnung des Stoffs/Gemischs") says "mixture"
+       (or "Gemisch", "mélange", "miscela", "mezcla"), set is_mixture to true, omit cas_number,
+       and populate mixture_components from the "Composition/Information on Ingredients" section
+       (or "Zusammensetzung/Angaben zu Bestandteilen", etc.).
+    5. SINGLE SUBSTANCES: extract cas_number from the "Identification" section (format digits-digits-digits)
+       or from the "Composition" section when it lists only one component.
+    6. PHYSICAL PROPERTIES: extract from the section titled "Physical and Chemical Properties"
+       (or "Physikalische und chemische Eigenschaften", "Propriétés physiques et chimiques", etc.).
+       Use the value exactly as written (include units). If a property says "No data available",
+       "Nicht zutreffend", or similar, omit that field entirely.
+       Properties to extract: boiling_point, melting_point, flash_point, density, vapour_pressure,
+       solubility, viscosity, ph, explosive_limits, form (physical state), color (colour/appearance),
+       refractive_index, purity (assay/purity percentage from the Identification or Composition section).
+    7. GHS PICTOGRAM CODES: pictograms are embedded as images and rarely appear as GHS codes in the text.
+       Infer them from hazard classifications only if you are certain
+       (e.g. skull-and-crossbones = GHS06 for H300/H310/H330; flame = GHS02 for H224/H225/H226;
+       corrosion = GHS05 for H314; exclamation = GHS07 for H302/H312/H315/H319/H332;
+       health hazard = GHS08 for H340/H341/H350/H351/H360/H370; environment = GHS09 for H400/H410).
+       If uncertain, omit ghs_codes entirely rather than guessing.
+    8. WIDE-SPACED TEXT: some PDFs render labels and values with many spaces between them —
+       treat consecutive non-empty tokens on the same line as a label/value pair.
+    9. SECTION NUMBERS ARE VARIABLE: do not rely solely on section numbers (1–16) to locate data.
+       Use the section title to identify the correct block of text.
+    10. REGIONAL FORMATS: the text may be an EU/CLP, UK, WHMIS (Canada), US OSHA HazCom, or other regional
+        SDS — extract regardless of format. When hazards are given only as classification categories
+        (e.g. "Flammable liquids Category 2", "Serious Eye Damage/Eye Irritation Category 2", WHMIS classes),
+        also record them verbatim in classification_categories. If the Signal Word field is blank or absent,
+        omit signal_word rather than guessing.
+
+  user_template: |
+    Here is the Safety Data Sheet text. Sections are separated by "---".
+    The text comes from the sections titled:
+    "Identification", "Hazard Identification", "Composition/Ingredients",
+    "Exposure Controls/Personal Protection", and "Physical and Chemical Properties"
+    (exact titles may vary by vendor and language):
+
+    {{context}}
+
+    Extract the data as a single JSON object. Include only fields where you found actual values:
+    {
+      "chemical_name": "primary chemical/product name from Section 1",
+      "cas_number": "CAS registry number e.g. xxx-xx-x (omit for mixtures)",
+      "molecular_formula": "e.g. CxHxO (omit for mixtures)",
+      "molecular_weight": "e.g. xx.xx g/mol (omit for mixtures)",
+      "is_mixture": false,
+      "mixture_components": [
+        {"name": "Formaldehyde", "cas_number": "xx-xx-x", "concentration": "xx-xx %"},
+        {"name": "Methanol", "cas_number": "xx-xx-x", "concentration": "xx-xx %"}
+      ],
+      "signal_word": "Danger or Warning",
+      "hazard_statements": ["Hxxx", "Hxxx", "Hxxx"],
+      "hazard_statement_texts": ["Highly flammable liquid and vapor", "Causes serious eye irritation"],
+      "eu_h_statements": ["EUHxxx"],
+      "precautionary_statements": ["Pxxx", "Pxxx+Pxxx"],
+      "precautionary_statement_texts": ["Keep away from heat, sparks and open flames."],
+      "classification_categories": ["Flammable liquids Category 2", "Serious Eye Damage/Eye Irritation Category 2"],
+      "ghs_codes": ["GHS06", "GHS08"],
+      "properties": {
+        "boiling_point": "xx.x °C",
+        "melting_point": "xxx.x °C",
+        "flash_point": "xx °C",
+        "density": "x.xx g/cm³ at xx °C",
+        "vapour_pressure": "xx hPa at xx °C",
+        "solubility": "miscible with water",
+        "viscosity": "x.x mPa·s at xx °C",
+        "ph": "x.x (xx g/L at xx °C)",
+        "explosive_limits": "x–xx % (V)",
+        "form": "liquid",
+        "color": "colourless",
+        "refractive_index": "x.xxx",
+        "purity": "≥xx.x %"
+      }
+    }

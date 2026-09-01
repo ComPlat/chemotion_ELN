@@ -436,44 +436,42 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
-  describe 'GET fetch_safetysheet unknown vendor triggers both' do
+  describe 'GET fetch_safetysheet' do
     let(:molecule) { create(:molecule, names: ['Water'], cas: ['7732-18-5']) }
 
     before do
       allow(Molecule).to receive(:find).and_return(molecule)
-      allow(Chemotion::ChemicalsService).to receive_messages(alfa: { alfa_link: 'alfa' },
-                                                             merck: { merck_link: 'merck' })
-      get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=Unknown&data[option]=CAS&data[language]=en"
-    end
-
-    it 'returns both vendor links' do
-      body = JSON.parse(response.body)
-      expect(body).to have_key('alfa_link')
-      expect(body).to have_key('merck_link')
-    end
-  end
-
-  describe 'GET fetch_safetysheet vendor branches' do
-    let(:molecule) { create(:molecule, names: ['Water'], cas: ['7732-18-5']) }
-
-    before { allow(Molecule).to receive(:find).and_return(molecule) }
-
-    it 'returns merck_link only for Merck vendor' do
       allow(Chemotion::ChemicalsService).to receive(:merck).and_return('merck_link_val')
-      get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=Merck&data[option]=CAS&data[language]=en"
+    end
+
+    def fetch(vendor)
+      get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}" \
+          "?data[vendor]=#{vendor}&data[option]=CAS&data[language]=en"
+    end
+
+    it 'returns merck_link for the Merck vendor' do
+      fetch('Merck')
+
       expect(response.status).to eq 200
       expect(response.body).to include('merck_link')
-      expect(response.body).not_to include('alfa_link')
     end
 
-    it 'returns alfa_link only for Thermofisher vendor' do
-      allow(Chemotion::ChemicalsService).to receive(:alfa).and_return('alfa_link_val')
-      path = "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}" \
-             '?data[vendor]=Thermofisher&data[option]=CAS&data[language]=en'
-      get path
+    # Thermofisher/Alfa is retired (see the note on ChemicalsService.alfa): its
+    # product search no longer exists and alfa.com is not in ALLOWED_DOMAINS, so
+    # no vendor value may resurrect that lookup.
+    it 'never returns an alfa_link, whatever vendor is asked for' do
+      ['Merck', 'Thermofisher', 'Unknown', ''].each do |vendor|
+        fetch(vendor)
+
+        expect(response.body).not_to include('alfa_link')
+      end
+    end
+
+    it 'falls back to Merck for an unrecognised vendor rather than failing' do
+      fetch('Unknown')
+
       expect(response.status).to eq 200
-      expect(response.body).to include('alfa_link')
-      expect(response.body).not_to include('merck_link')
+      expect(response.body).to include('merck_link')
     end
   end
 
@@ -695,6 +693,35 @@ describe Chemotion::ChemicalAPI do
         chem = Chemical.new(sequence_based_macromolecule_sample_id: sbmm_sample.id, chemical_data: [{}])
         expect(chem).to be_valid
       end
+    end
+  end
+
+  describe 'POST extract SDS /api/v1/chemicals/extract_sds' do
+    let(:own_sample) { create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)]) }
+
+    before { create(:chemical, sample_id: own_sample.id) }
+
+    it 'refuses a sample the caller may not edit, without queueing a job' do
+      expect do
+        post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id }.to_json,
+                                              headers: { 'CONTENT_TYPE' => 'application/json' }
+      end.not_to change(ExtractSdsJob.queue_adapter.enqueued_jobs, :size)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns 404 for a sample that does not exist' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id + 100_000 }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'reports the missing provider only once the caller is allowed the sample' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:service_unavailable)
     end
   end
 end

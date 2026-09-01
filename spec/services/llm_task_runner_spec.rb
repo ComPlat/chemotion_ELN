@@ -1,0 +1,459 @@
+# frozen_string_literal: true
+
+# rubocop:disable RSpec/MessageSpies -- reads better as an expectation set before the call
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+
+require 'rails_helper'
+
+RSpec.describe LlmTaskRunner do
+  let(:user)          { create(:person) }
+  let(:base_url)      { 'https://ki-toolbox.scc.kit.edu/api' }
+  let(:api_key)       { 'sk-test-runner-key' }
+  let(:default_model) { 'kit.qwen3.5-397b-A17b' }
+
+  let!(:provider) do
+    create(:llm_provider,
+           enabled:       true,
+           base_url:      base_url,
+           api_key:       api_key,
+           default_model: default_model)
+  end
+
+  # Give the user access to AI features
+  before do
+    Matrice.find_or_create_by(name: 'aiFeatures')
+           .update!(enabled: true, exclude_ids: [])
+  end
+
+  after { Matrice.find_by(name: 'aiFeatures')&.destroy }
+
+  # ── JSON-output task: sds_extraction ──────────────────────────────────────
+
+  describe '.run with sds_extraction (json output)' do
+    let(:sds_text) { 'Phenol CAS 108-95-2. H301 H311. GHS06 GHS08. Signal word: Danger.' }
+
+    let(:llm_json_response) do
+      {
+        'choices' => [{
+          'message' => {
+            'content' => {
+              'chemical_name' => 'Phenol',
+              'cas_number' => '108-95-2',
+              'signal_word' => 'Danger',
+              'hazard_statements' => %w[H301 H311],
+              'ghs_codes' => %w[GHS06 GHS08],
+            }.to_json,
+          },
+        }],
+      }.to_json
+    end
+
+    before do
+      stub_request(:post, "#{base_url}/v1/chat/completions")
+        .to_return(status: 200, body: llm_json_response,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    it 'returns a validated Hash with extracted chemical data' do
+      result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+      expect(result).to be_a(Hash)
+      expect(result['chemical_name']).to eq('Phenol')
+      expect(result['cas_number']).to eq('108-95-2')
+      expect(result['hazard_statements']).to include('H301')
+    end
+
+    it 'exposes the model that served the task via #model_used' do
+      runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+      runner.run
+      expect(runner.model_used).to eq(default_model)
+      expect(runner.resolution.model).to eq(default_model)
+    end
+
+    context 'when the user has a task-specific model mapping' do
+      before do
+        UserTaskModelMapping.create!(user_id: user.id, task_name: 'sds_extraction', model: 'gemini-3.5-flash')
+        # The user's own provider (same endpoint, different default model) — the
+        # model-only mapping above rides on top of whatever provider is default.
+        personal = create(:llm_provider, :personal, user: user, base_url: base_url,
+                                                    api_key: api_key, api_protocol: 'openai',
+                                                    default_model: 'gemini-3.1-flash-lite')
+        UserLlmSetting.find_or_create_by(user_id: user.id).update!(
+          enabled: true, provider_type: 'custom', default_llm_provider: personal,
+        )
+      end
+
+      it 'uses the mapped model (not the default) and reports it via #model_used' do
+        runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+        runner.run
+        expect(runner.model_used).to eq('gemini-3.5-flash')
+      end
+
+      context 'when the mapped model is unavailable (HTTP 503)' do
+        before do
+          # First call (mapped model) 503s; second call (default model) succeeds.
+          stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+            { status: 503, body: 'This model is currently experiencing high demand.' },
+            { status: 200, body: llm_json_response, headers: { 'Content-Type' => 'application/json' } },
+          )
+        end
+
+        it 'falls back to the default model and still returns a result' do
+          runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+          result = runner.run
+          expect(result['chemical_name']).to eq('Phenol')
+          expect(runner.fell_back?).to be true
+          expect(runner.requested_model).to eq('gemini-3.5-flash')
+          expect(runner.model_used).to eq('gemini-3.1-flash-lite')
+          expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
+        end
+      end
+    end
+
+    context 'when there is no task-specific model and the default model fails (503)' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 503, body: 'This model is currently experiencing high demand.')
+      end
+
+      it 'does not loop on the same model — raises the provider error' do
+        runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect { runner.run }.to raise_error(Errors::LlmProviderError)
+        expect(runner.fell_back?).to be false
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").once
+      end
+    end
+
+    it 'passes json_mode: true to LlmClient' do
+      described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)['response_format'] == { 'type' => 'json_object' } })
+    end
+
+    it 'sends a non-blank user prompt containing the context text' do
+      described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)['messages'].any? { |m| m['content'].include?(sds_text) } })
+    end
+
+    it 'uses the task timeout for the LlmClient' do
+      task = Chemotion::LlmTaskRegistry.find('sds_extraction')
+      expect(LlmClient).to receive(:new).with(
+        hash_including(timeout: task.timeout_seconds),
+      ).and_call_original
+      described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+    end
+
+    context 'when the model returns mixture SDS data with spaced P-statement codes' do
+      let(:mixture_response) do
+        {
+          'choices' => [{
+            'message' => {
+              'content' => {
+                'chemical_name' => 'Formaldehydlösung',
+                'is_mixture' => true,
+                'mixture_components' => [
+                  { 'name' => 'Formaldehyde', 'cas_number' => '50-00-0', 'concentration' => '37 %' },
+                  { 'name' => 'Methanol', 'cas_number' => '67-56-1', 'concentration' => '< 1 %' },
+                ],
+                'signal_word' => 'Danger',
+                'hazard_statements' => %w[H226 H302 H314 H330 H350],
+                'eu_h_statements' => ['EUH071'],
+                # LLM may return P-codes with spaces around "+" — validator normalises these
+                'precautionary_statements' => ['P210', 'P280', 'P301 + P312', 'P304 + P340 + P310'],
+                'ghs_codes' => %w[GHS02 GHS06 GHS08],
+              }.to_json,
+            },
+          }],
+        }.to_json
+      end
+
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 200, body: mixture_response,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'normalises combined P-statement codes (removes spaces around +)' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['precautionary_statements']).to include('P301+P312')
+        expect(result['precautionary_statements']).to include('P304+P340+P310')
+        expect(result['precautionary_statements']).not_to include('P301 + P312')
+      end
+
+      it 'returns mixture_components array' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['mixture_components']).to be_an(Array)
+        expect(result['mixture_components'].pluck('cas_number')).to include('50-00-0')
+      end
+
+      it 'returns eu_h_statements' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['eu_h_statements']).to include('EUH071')
+      end
+
+      it 'passes validation even though cas_number is absent (mixture)' do
+        expect do
+          described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        end.not_to raise_error
+      end
+    end
+
+    context 'when the model wraps JSON in markdown fences' do
+      let(:fenced_response) do
+        {
+          'choices' => [{
+            'message' => {
+              'content' => "```json\n{\"chemical_name\":\"Phenol\",\"cas_number\":\"108-95-2\"}\n```",
+            },
+          }],
+        }.to_json
+      end
+
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 200, body: fenced_response,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'strips markdown fences and parses JSON correctly' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result).to be_a(Hash)
+        expect(result['chemical_name']).to eq('Phenol')
+      end
+    end
+
+    context 'when the model returns invalid JSON' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 200,
+                     body: { 'choices' => [{ 'message' => { 'content' => 'Not JSON at all.' } }] }.to_json,
+                     headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'raises Errors::LlmProviderError' do
+        expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
+          .to raise_error(Errors::LlmProviderError, /invalid JSON/)
+      end
+    end
+
+    context 'when the first attempt is truncated to empty output (finish_reason length)' do
+      let(:empty_resp) do
+        { 'choices' => [{ 'finish_reason' => 'length', 'message' => { 'content' => '' } }] }.to_json
+      end
+      let(:recovered_resp) do
+        { 'choices' => [{ 'finish_reason' => 'stop',
+                          'message' => {
+                            'content' => '{"chemical_name":"Acetone","hazard_statements":["H225"]}',
+                          } }] }.to_json
+      end
+
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          { status: 200, body: empty_resp,     headers: { 'Content-Type' => 'application/json' } },
+          { status: 200, body: recovered_resp, headers: { 'Content-Type' => 'application/json' } },
+        )
+      end
+
+      it 'retries once and returns the recovered result' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['chemical_name']).to eq('Acetone')
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
+      end
+
+      it 'retries with a max_tokens larger than the first attempt' do
+        task = Chemotion::LlmTaskRegistry.find('sds_extraction')
+        described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+          .with { |req| JSON.parse(req.body)['max_tokens'] > task.max_tokens.to_i })
+      end
+    end
+
+    context 'when the model returns empty output on every attempt' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          status: 200,
+          body: { 'choices' => [{ 'finish_reason' => 'length', 'message' => { 'content' => '' } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'raises a clear empty-response error (not a cryptic JSON error)' do
+        expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
+          .to raise_error(Errors::LlmProviderError, /empty response.*token limit/m)
+      end
+    end
+
+    context 'when the model wraps the JSON object in prose (no code fences)' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          status: 200,
+          body: { 'choices' => [{ 'message' => {
+            'content' => 'Sure — here is the extracted data: ' \
+                         '{"chemical_name":"Phenol","cas_number":"108-95-2"} Hope this helps!',
+          } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'extracts the JSON object from the surrounding prose' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['chemical_name']).to eq('Phenol')
+        expect(result['cas_number']).to eq('108-95-2')
+      end
+    end
+  end
+
+  # ── Text-output task ──────────────────────────────────────────────────────
+  #
+  # These two groups exercise runner behaviour that no *shipped* task currently
+  # needs (text output, and template variables beyond {{context}}). They define
+  # their own task rather than naming one from config/llm_tasks, so they keep
+  # testing the runner instead of breaking whenever the shipped set changes.
+
+  describe '.run with a text-output task' do
+    let(:experiment_data) { 'Reaction of benzene with HNO3/H2SO4. Yield 72%.' }
+    let(:report_text)     { '## Nitration of Benzene\n\nObjective: ...' }
+
+    let(:text_task) do
+      Chemotion::LlmTaskDefinition.new(
+        'name'          => 'report_generation',
+        'output_format' => 'text',
+        'prompts'       => {
+          'system'        => 'You write concise experiment reports.',
+          'user_template' => "Write a report for the following experiment:\n\n{{context}}",
+        },
+      )
+    end
+
+    before do
+      allow(Chemotion::LlmTaskRegistry).to receive(:find).with('report_generation').and_return(text_task)
+      stub_request(:post, "#{base_url}/v1/chat/completions")
+        .to_return(
+          status:  200,
+          body:    { 'choices' => [{ 'message' => { 'content' => report_text } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+    end
+
+    it 'returns raw text (not parsed as JSON)' do
+      result = described_class.run(task_name: 'report_generation', user: user, context: experiment_data)
+      expect(result).to be_a(String)
+      expect(result).to eq(report_text)
+    end
+
+    it 'does NOT set json_mode on the request' do
+      described_class.run(task_name: 'report_generation', user: user, context: experiment_data)
+      expect(WebMock).not_to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body).key?('response_format') })
+    end
+  end
+
+  # ── Extra template variables ───────────────────────────────────────────────
+
+  describe '.run with an extra template variable' do
+    let(:question) { 'What protecting group should I use for an amine?' }
+
+    let(:assistant_task) do
+      Chemotion::LlmTaskDefinition.new(
+        'name'          => 'research_assistant',
+        'output_format' => 'text',
+        'prompts'       => {
+          'system'        => 'You are a synthesis assistant.',
+          'user_template' => "Experiment context:\n{{context}}\n\nQuestion:\n{{question}}",
+        },
+      )
+    end
+
+    before do
+      allow(Chemotion::LlmTaskRegistry).to receive(:find).with('research_assistant').and_return(assistant_task)
+      stub_request(:post, "#{base_url}/v1/chat/completions")
+        .to_return(
+          status:  200,
+          body:    { 'choices' => [{ 'message' => { 'content' => 'Use Boc protection.' } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+    end
+
+    it 'substitutes both context and question in the user prompt' do
+      described_class.run(
+        task_name: 'research_assistant',
+        user:      user,
+        context:   'Amine synthesis experiment',
+        question:  question,
+      )
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with do |req|
+          msgs     = JSON.parse(req.body)['messages']
+          user_msg = msgs.find { |m| m['role'] == 'user' }
+          user_msg['content'].include?('Amine synthesis experiment') &&
+            user_msg['content'].include?(question)
+        end)
+    end
+  end
+
+  # ── Error propagation ──────────────────────────────────────────────────────
+
+  describe 'error handling' do
+    it 'raises ArgumentError for unknown task name' do
+      expect { described_class.run(task_name: 'nonexistent', user: user, context: 'x') }
+        .to raise_error(ArgumentError, /Unknown LLM task/)
+    end
+
+    it 'raises LlmNotConfiguredError when no provider is configured' do
+      provider.update!(enabled: false)
+      expect do
+        described_class.run(task_name: 'sds_extraction', user: user, context: 'x')
+      end.to raise_error(Errors::LlmNotConfiguredError)
+    end
+
+    context 'when provider returns 401' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 401, body: '{"error":"Unauthorized"}')
+      end
+
+      it 'raises LlmAuthenticationError' do
+        expect do
+          described_class.run(task_name: 'sds_extraction', user: user, context: 'x')
+        end.to raise_error(Errors::LlmAuthenticationError)
+      end
+    end
+  end
+
+  # ── Audit logging ──────────────────────────────────────────────────────────
+
+  describe 'audit logging' do
+    let(:success_body) do
+      { 'choices' => [{ 'message' => { 'content' => '{"chemical_name":"Phenol"}' } }] }.to_json
+    end
+
+    before do
+      stub_request(:post, "#{base_url}/v1/chat/completions")
+        .to_return(status: 200, body: success_body,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    it 'calls LlmAuditLogger.log with success: true on success' do
+      expect(LlmAuditLogger).to receive(:log).with(
+        hash_including(user: user, task: 'sds_extraction', success: true),
+      )
+      described_class.run(task_name: 'sds_extraction', user: user, context: 'test')
+    end
+
+    it 'calls LlmAuditLogger.log with success: false on error' do
+      stub_request(:post, "#{base_url}/v1/chat/completions")
+        .to_return(status: 500, body: 'error')
+
+      expect(LlmAuditLogger).to receive(:log).with(
+        hash_including(success: false, error: an_instance_of(Errors::LlmProviderError)),
+      )
+      expect do
+        described_class.run(task_name: 'sds_extraction', user: user, context: 'test')
+      end.to raise_error(Errors::LlmProviderError)
+    end
+  end
+end
+# rubocop:enable RSpec/MessageSpies
+# rubocop:enable RSpec/MultipleExpectations
+# rubocop:enable RSpec/NestedGroups
