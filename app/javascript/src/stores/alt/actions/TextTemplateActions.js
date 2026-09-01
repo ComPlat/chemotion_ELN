@@ -6,7 +6,7 @@ class TextTemplateActions {
   fetchTextTemplates(elementName) {
     return (dispatch) => {
       TextTemplatesFetcher.fetchTextTemplates(elementName)
-        .then(result => dispatch(result))
+        .then(result => dispatch(result || {}))
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -14,7 +14,7 @@ class TextTemplateActions {
   fetchPredefinedTemplateNames() {
     return (dispatch) => {
       TextTemplatesFetcher.fetchPredefinedTemplateNames()
-        .then(result => dispatch(result))
+        .then(result => dispatch(result || []))
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -22,7 +22,7 @@ class TextTemplateActions {
   fetchPredefinedTemplateByNames(names) {
     return (dispatch) => {
       TextTemplatesFetcher.fetchPredefinedTemplateByNames(names)
-        .then(result => dispatch(result))
+        .then(result => dispatch(result || []))
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }

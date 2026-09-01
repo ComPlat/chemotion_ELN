@@ -12,6 +12,7 @@
 #  description            :text
 #  duration               :string
 #  gaseous                :boolean          default(FALSE)
+#  lock_reaction_volume   :boolean          default(FALSE), not null
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
