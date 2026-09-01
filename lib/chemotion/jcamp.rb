@@ -160,7 +160,7 @@ module Chemotion
         ''
       end
 
-      # rubocop:disable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
+      # rubocop:disable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength, Metrics/AbcSize
       def self.stub_http(
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
@@ -209,7 +209,7 @@ module Chemotion
         end
         response
       end
-      # rubocop:enable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
+      # rubocop:enable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength, Metrics/AbcSize
 
       # rubocop:disable Style/OptionalBooleanParameter
       def self.spectrum(
