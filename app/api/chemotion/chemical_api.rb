@@ -196,6 +196,12 @@ module Chemotion
 
         post do
           Chemotion::ChemicalsService.handle_exceptions do
+            # The job writes back to the sample's chemical record, so reaching it
+            # takes the same permission as editing the sample itself.
+            sample = Sample.find_by(id: params[:sample_id])
+            error!({ error: 'Sample not found' }, 404) unless sample
+            error!({ error: '403 Forbidden' }, 403) unless ElementPolicy.new(current_user, sample).update?
+
             # Require a configured LLM provider (SF-05). The legacy ai4chemotion
             # microservice check is re-enabled in a separate commit:
             #   unless Chemotion::Ai4ChemotionService.available? || llm_provider_available?
@@ -205,7 +211,7 @@ module Chemotion
                               'or ask your admin to configure the institution provider.' }, 503)
             end
 
-            chemical = Chemical.find_by(sample_id: params[:sample_id])
+            chemical = Chemical.find_by(sample_id: sample.id)
             error!({ error: 'Chemical not found for this sample' }, 404) unless chemical
 
             ExtractSdsJob.perform_later(

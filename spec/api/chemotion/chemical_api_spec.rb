@@ -695,4 +695,33 @@ describe Chemotion::ChemicalAPI do
       end
     end
   end
+
+  describe 'POST extract SDS /api/v1/chemicals/extract_sds' do
+    let(:own_sample) { create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)]) }
+
+    before { create(:chemical, sample_id: own_sample.id) }
+
+    it 'refuses a sample the caller may not edit, without queueing a job' do
+      expect do
+        post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id }.to_json,
+                                              headers: { 'CONTENT_TYPE' => 'application/json' }
+      end.not_to change(ExtractSdsJob.queue_adapter.enqueued_jobs, :size)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns 404 for a sample that does not exist' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id + 100_000 }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'reports the missing provider only once the caller is allowed the sample' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:service_unavailable)
+    end
+  end
 end

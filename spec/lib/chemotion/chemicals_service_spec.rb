@@ -34,19 +34,19 @@ describe Chemotion::ChemicalsService do
       stub_request(:get, search_url).to_return(status: 429, body: '{}')
 
       expect(described_class.merck('Phenol', 'de'))
-        .to match(/rate-limiting automated SDS lookups \(HTTP 429\)/)
+        .to include('rate-limiting automated SDS lookups (HTTP 429)')
     end
 
     it 'reports a refusal on HTTP 403' do
       stub_request(:get, search_url).to_return(status: 403, body: '')
 
-      expect(described_class.merck('Phenol', 'de')).to match(/refused the automated SDS lookup \(HTTP 403\)/)
+      expect(described_class.merck('Phenol', 'de')).to include('refused the automated SDS lookup (HTTP 403)')
     end
 
     it 'reports a moved search endpoint on a redirect' do
       stub_request(:get, search_url).to_return(status: 301, body: '', headers: { 'Location' => 'https://x' })
 
-      expect(described_class.merck('Phenol', 'de')).to match(/moved its product search \(HTTP 301\)/)
+      expect(described_class.merck('Phenol', 'de')).to include('moved its product search (HTTP 301)')
     end
 
     it 'names the search term when the page loads but holds no product' do
