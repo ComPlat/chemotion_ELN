@@ -13,11 +13,21 @@ const JcampIds = (container) => {
         const ext = fns[fns.length - 1];
         const isJcamp = acceptables.indexOf(ext.toLowerCase()) >= 0;
         const typ = fns.length > 1 ? fns[fns.length - 2] : false;
-        const notOrig = typ === 'peak' || typ === 'edit';
+        // A bagit curve's own addon is "<n>_bagit" (see jcamp_peak_addon? on the Rails
+        // side) - it never gains a .peak./.edit. addon, so by filename shape alone it
+        // looks just like a genuine original upload. But it IS a generated/derived
+        // per-curve output of the archive, not something that should be independently
+        // resubmitted to regenerate_spectrum: doing so races the archive's own full
+        // reprocessing within the same request (both touching the same curve rows),
+        // spawning duplicate generations and can even leave the curve rows deleted
+        // entirely if the race's last writer is a cleanup/destroy call. Confirmed via
+        // real regenerate_spectrum traces on #616's 740.zip - not archive-specific.
+        const isBagitCurve = typeof typ === 'string' && /^\d+_bagit$/.test(typ);
+        const notOrig = typ === 'peak' || typ === 'edit' || isBagitCurve;
         if (isJcamp) {
           if (notOrig) {
             geneJcampIds = [...geneJcampIds, att.id];
-            editedJcampsIds = [...editedJcampsIds, att.id];
+            if (!isBagitCurve) editedJcampsIds = [...editedJcampsIds, att.id];
           } else {
             origJcampIds = [...origJcampIds, att.id];
           }

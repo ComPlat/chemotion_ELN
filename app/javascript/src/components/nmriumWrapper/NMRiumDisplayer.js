@@ -218,7 +218,8 @@ export default class NMRiumDisplayer extends React.Component {
     LoadingActions.start.defer();
 
     const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
-    const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
+    const jdxList = fetchedSpectra.filter((s) => s.kind === 'jcamp');
+    const jdx = jdxList[0];
     const zip = fetchedSpectra.find((s) => s.kind === 'zip');
     const molfile = sample?.molfile || null;
 
@@ -230,18 +231,18 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     // Fallback: only .jdx/.zip file available
-    if (jdx?.url) {
-      // get file extension from jdx.label
-      const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
-      const jdxUrlWithFile = `${jdx.url}/file.${fileExtension}`;
+    if (jdxList.length) {
       const payload = {
         type: 'nmrium',
         data: {
-          spectra: [{
-            id: crypto.randomUUID(),
-            source: { jcampURL: jdxUrlWithFile },
-            display: { name: jdx.label || 'spectrum' },
-          }],
+          spectra: jdxList.map((item) => {
+            const fileExtension = item.label?.split('.').pop()?.toLowerCase() || 'jdx';
+            return {
+              id: crypto.randomUUID(),
+              source: { jcampURL: `${item.url}/file.${fileExtension}` },
+              display: { name: item.label || 'spectrum' },
+            };
+          }),
           molecules: molfile ? [{ molfile }] : [],
         },
       };
@@ -454,6 +455,14 @@ export default class NMRiumDisplayer extends React.Component {
     return i < 0 ? '' : name.slice(i + 1).toLowerCase();
   }
 
+  // Keeps the "N_bagit" curve token (e.g. "x.1_bagit.peak.jdx" -> "x.1_bagit") so that
+  // sibling curves from the same bagit dataset don't collapse onto the same .nmrium/.svg basename.
+  getCurveAwareBaseName(label) {
+    if (!label) return 'spectrum';
+    const bagitMatch = label.match(/^(.*_bagit)\./);
+    return bagitMatch ? bagitMatch[1] : label.split('.')[0];
+  }
+
   buildPatchedNmriumFile(label, contentObj) {
     const blob = new Blob([JSON.stringify(contentObj)], { type: 'application/json' });
     return new File([blob], label || 'spectrum.nmrium');
@@ -468,7 +477,7 @@ export default class NMRiumDisplayer extends React.Component {
     const specInfo = this.getSpcInfo();
     if (!specInfo) return;
 
-    const baseName = specInfo.label?.split('.')[0] || 'spectrum';
+    const baseName = this.getCurveAwareBaseName(specInfo.label) || 'spectrum';
 
     const imageAttachment = this.prepareImageAttachment(imageBlobData, baseName);
     const nmriumAttachment = this.prepareNMRiumDataAttachment(nmriumData, baseName);
