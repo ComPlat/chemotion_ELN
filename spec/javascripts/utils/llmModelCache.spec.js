@@ -309,6 +309,21 @@ describe('llmModelCache', () => {
       expect(peekModels(customModelsKey(config))).toEqual(['gpt-4o', 'gpt-4o-mini']);
     });
 
+    it('does not store a request that was in flight when the user switched', async () => {
+      let releaseSlow;
+      UsersFetcher.fetchLlmModelsForConfig = () => new Promise((resolve) => {
+        releaseSlow = () => resolve(['user-1-model']);
+      });
+      scopeToUser(1);
+      const slow = fetchCustomModels(config);
+
+      scopeToUser(2);
+      releaseSlow();
+      await slow;
+
+      expect(peekModels(customModelsKey(config))).toEqual(null);
+    });
+
     it('keeps the cache when the user is not known yet', async () => {
       scopeToUser(1);
       await fetchCustomModels(config);
