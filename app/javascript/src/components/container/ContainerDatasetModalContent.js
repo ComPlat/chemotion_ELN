@@ -75,6 +75,24 @@ export function classifyAttachments(attachments) {
   return groups;
 }
 
+// Processed group names are "<archive>.<curveIndex>" (from the "N_bagit" filename token), e.g.
+// "results.1" / "results.2" for a two-curve archive. Label each series by its position among its
+// siblings so they read as "Experiment 1 / 2 of results" rather than as near-identical duplicates.
+export function getProcessedGroupTitle(groupName, allGroupNames) {
+  const match = groupName.match(/^(.*)\.(\d+)$/);
+  if (!match) return `Processed: ${groupName}`;
+
+  const [, archiveName, curveIndex] = match;
+  const siblingCount = allGroupNames.filter((name) => {
+    const siblingMatch = name.match(/^(.*)\.(\d+)$/);
+    return siblingMatch && siblingMatch[1] === archiveName;
+  }).length;
+
+  return siblingCount > 1
+    ? `Experiment ${curveIndex} / ${siblingCount} of ${archiveName}`
+    : `Experiment ${curveIndex} of ${archiveName}`;
+}
+
 export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
@@ -515,7 +533,8 @@ export class ContainerDatasetModalContent extends Component {
       </div>
     );
 
-    const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
+    const processedGroupNames = Object.keys(attachmentGroups.Processed);
+    const hasProcessedAttachments = processedGroupNames.some(
       (groupName) => attachmentGroups.Processed[groupName].length > 0
     );
 
@@ -548,9 +567,13 @@ export class ContainerDatasetModalContent extends Component {
                 && renderGroup(attachmentGroups.Pending, 'Pending')}
               {attachmentGroups.Original.length > 0 && renderGroup(attachmentGroups.Original, 'Original')}
               {attachmentGroups.BagitZip.length > 0 && renderGroup(attachmentGroups.BagitZip, 'Bagit / Zip')}
-              {hasProcessedAttachments && Object.keys(attachmentGroups.Processed)
+              {hasProcessedAttachments && processedGroupNames
                 .map((groupName) => attachmentGroups.Processed[groupName].length > 0
-                  && renderGroup(attachmentGroups.Processed[groupName], `Processed: ${groupName}`, groupName))}
+                  && renderGroup(
+                    attachmentGroups.Processed[groupName],
+                    getProcessedGroupTitle(groupName, processedGroupNames),
+                    groupName
+                  ))}
               {attachmentGroups.Combined.length > 0 && renderGroup(attachmentGroups.Combined, 'Combined')}
             </div>
             <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
