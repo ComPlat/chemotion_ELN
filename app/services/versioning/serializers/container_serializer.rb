@@ -26,69 +26,83 @@ class Versioning::Serializers::ContainerSerializer < Versioning::Serializers::Ba
         label: 'Description',
         revert: %i[description],
       },
-      extended_metadata: [
-        {
-          name: 'extended_metadata.content',
-          label: 'Content',
-          kind: :quill,
-          formatter: lambda { |key, value|
-            value = fix_malformed_value_formatter.call(key, value)
-            parsed = JSON.parse(jsonb_formatter('content').call(key, value) || '{}')
-            # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]},
-            # which isn't the same JSON value as nil/{} but is visually just as empty - normalize
-            # it so it doesn't get treated as a real content change in the history view.
-            Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
-          },
-          revert: %i[extended_metadata.content],
-          revertible_value_formatter: lambda { |key, value|
-            value = fix_malformed_value_formatter.call(key, value)
-            jsonb_formatter('content').call(key, value) || '{}'
-          },
-        },
-        # buggy
-        # {
-        #   name: 'extended_metadata.index',
-        #   label: 'Position',
-        #   formatter: jsonb_formatter('index'),
-        # },
-        {
-          name: 'extended_metadata.report',
-          label: 'Add to Report',
-          kind: :boolean,
-          revert: %i[extended_metadata.report],
-          formatter: ->(key, value) { jsonb_formatter('report').call(key, value) == 'true' },
-        },
-        {
-          name: 'extended_metadata.status',
-          label: 'Status',
-          revert: %i[extended_metadata.status],
-          formatter: jsonb_formatter('status'),
-        },
-        {
-          name: 'extended_metadata.kind',
-          label: 'Type',
-          revert: %i[extended_metadata.kind],
-          formatter: jsonb_formatter('kind'),
-        },
-        {
-          name: 'extended_metadata.hyperlinks',
-          label: 'Hyperlinks',
-          formatter: lambda { |key, value|
-            result = jsonb_formatter('hyperlinks').call(key, value)
-            return '' if result.blank?
-
-            JSON.parse(result).join("\n")
-          },
-          revert: %i[extended_metadata.hyperlinks],
-          revertible_value_formatter: ->(key, value) { JSON.parse(jsonb_formatter('hyperlinks').call(key, value) || '[]') },
-        },
-        {
-          name: 'extended_metadata.instrument',
-          label: 'Instrument',
-          revert: %i[extended_metadata.instrument],
-          formatter: jsonb_formatter('instrument'),
-        },
-      ],
+      extended_metadata: extended_metadata_field_definitions,
     }.with_indifferent_access
+  end
+
+  private
+
+  def extended_metadata_field_definitions
+    [
+      content_field_definition,
+      # buggy
+      # {
+      #   name: 'extended_metadata.index',
+      #   label: 'Position',
+      #   formatter: jsonb_formatter('index'),
+      # },
+      {
+        name: 'extended_metadata.report',
+        label: 'Add to Report',
+        kind: :boolean,
+        revert: %i[extended_metadata.report],
+        formatter: ->(key, value) { jsonb_formatter('report').call(key, value) == 'true' },
+      },
+      {
+        name: 'extended_metadata.status',
+        label: 'Status',
+        revert: %i[extended_metadata.status],
+        formatter: jsonb_formatter('status'),
+      },
+      {
+        name: 'extended_metadata.kind',
+        label: 'Type',
+        revert: %i[extended_metadata.kind],
+        formatter: jsonb_formatter('kind'),
+      },
+      hyperlinks_field_definition,
+      {
+        name: 'extended_metadata.instrument',
+        label: 'Instrument',
+        revert: %i[extended_metadata.instrument],
+        formatter: jsonb_formatter('instrument'),
+      },
+    ]
+  end
+
+  def content_field_definition
+    {
+      name: 'extended_metadata.content',
+      label: 'Content',
+      kind: :quill,
+      formatter: lambda { |key, value|
+        value = fix_malformed_value_formatter.call(key, value)
+        parsed = JSON.parse(jsonb_formatter('content').call(key, value) || '{}')
+        # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]},
+        # which isn't the same JSON value as nil/{} but is visually just as empty - normalize
+        # it so it doesn't get treated as a real content change in the history view.
+        Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
+      },
+      revert: %i[extended_metadata.content],
+      revertible_value_formatter: lambda { |key, value|
+        value = fix_malformed_value_formatter.call(key, value)
+        jsonb_formatter('content').call(key, value) || '{}'
+      },
+    }
+  end
+
+  def hyperlinks_field_definition
+    {
+      name: 'extended_metadata.hyperlinks',
+      label: 'Hyperlinks',
+      formatter: lambda { |key, value|
+        result = jsonb_formatter('hyperlinks').call(key, value)
+        return '' if result.blank?
+
+        JSON.parse(result).join("\n")
+      },
+      revert: %i[extended_metadata.hyperlinks],
+      revertible_value_formatter: ->(key, value) { JSON.parse(jsonb_formatter('hyperlinks').call(key, value) || '[]') },
+    }
   end
 end
