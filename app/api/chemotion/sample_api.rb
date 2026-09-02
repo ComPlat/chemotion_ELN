@@ -214,10 +214,11 @@ module Chemotion
                            .where(id: (sample_scope.pluck :molecule_id))
                            .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                            .order(:sum_formular)
+                           .order(:id)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
-            samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
+            samples_group = samples_group.sort { |x, y| [y.updated_at, y.id] <=> [x.updated_at, x.id] }
             samples_group.each do |sample|
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
@@ -227,7 +228,7 @@ module Chemotion
           sample_count = sample_scope.size
         else
           sample_count = reset_pagination_page(sample_scope)
-          sample_scope = sample_scope.order('samples.updated_at DESC')
+          sample_scope = sample_scope.order('samples.updated_at DESC, samples.id DESC')
           paginate(sample_scope).each do |sample|
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
