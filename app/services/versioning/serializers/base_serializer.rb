@@ -132,6 +132,16 @@ module Versioning
         ->(_key, value) { value }
       end
 
+      # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]}, which
+      # isn't the same value as nil/{} but is visually just as empty - normalize it so it doesn't
+      # get treated as a real content change in the history view.
+      def quill_formatter
+        lambda do |key, value|
+          parsed = default_formatter.call(key, value)
+          Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
+        end
+      end
+
       def fix_malformed_value_formatter
         lambda do |key, value|
           if value.is_a?(String) && value.start_with?('{')
