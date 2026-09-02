@@ -50,4 +50,23 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
       ],
     )
   end
+
+  it 'does not surface a diff when the editor autosaves its empty-delta placeholder' do
+    # A Quill editor that nobody typed into still autosaves {"ops":[{"insert":"\n"}]} - visually
+    # empty, but not the same JSON value as the nil the container started with.
+    container = create(:container, extended_metadata: {})
+    as_request { edit_metadata(container, 'content' => '{"ops":[{"insert":"\n"}]}') }
+
+    expect(content_changes(container)).to be_empty
+  end
+
+  it 'still surfaces a diff when real content is cleared back to the empty-delta placeholder' do
+    container = create(:container, extended_metadata: { 'content' => content_before })
+    as_request { edit_metadata(container, 'content' => '{"ops":[{"insert":"\n"}]}') }
+
+    changes = content_changes(container)
+    expect(changes.size).to eq 2 # creation (blank -> content_before), then content_before -> blank
+    expect(changes.last[:old_value]).to eq JSON.parse(content_before)
+    expect(changes.last[:new_value]).to eq({})
+  end
 end

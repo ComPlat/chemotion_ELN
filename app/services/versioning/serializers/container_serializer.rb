@@ -33,7 +33,11 @@ class Versioning::Serializers::ContainerSerializer < Versioning::Serializers::Ba
           kind: :quill,
           formatter: lambda { |key, value|
             value = fix_malformed_value_formatter.call(key, value)
-            JSON.parse(jsonb_formatter('content').call(key, value) || '{}')
+            parsed = JSON.parse(jsonb_formatter('content').call(key, value) || '{}')
+            # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]},
+            # which isn't the same JSON value as nil/{} but is visually just as empty - normalize
+            # it so it doesn't get treated as a real content change in the history view.
+            Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
           },
           revert: %i[extended_metadata.content],
           revertible_value_formatter: lambda { |key, value|
