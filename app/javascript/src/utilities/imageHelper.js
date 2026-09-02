@@ -54,8 +54,8 @@ const getAttachmentFromContainer = (container) => {
  * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
  * all viewers, so it must reference a persisted attachment.
  *
- * Candidates are previewable saved attachments — images and PDFs (plus anything that already
- * has a thumbnail) — so PDFs are selectable even when their thumbnail wasn't generated.
+ * Candidates are previewable saved attachments — images and PDFs, i.e. what GET image/:id can
+ * serve — so PDFs are selectable even when their thumbnail wasn't generated.
  *
  * @param {Object} container - The analysis container with children[].attachments[].
  * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
@@ -65,10 +65,11 @@ const getAttachmentFromContainer = (container) => {
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
-const isPreviewableAttachment = (att) => att.thumb === true
-  || (att.content_type || '').startsWith('image/')
-  || att.content_type === 'application/pdf'
-  || /\.pdf$/i.test(att.filename || '');
+// Mirrors Usecases::Attachments::LoadImage (type_image? || type_pdf?), which is what serves
+// GET image/:id. content_type is the stored mime_type. Don't treat thumb as a signal: the
+// thumbnailer also renders office, video and 3D files, and image/:id raises for those.
+const isPreviewableAttachment = (att) => (att?.content_type || '').startsWith('image')
+  || att?.content_type === 'application/pdf';
 
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);
@@ -132,4 +133,5 @@ export {
   fetchImageSrcByAttachmentId,
   getAttachmentFromContainer,
   getContainerImageData,
+  isPreviewableAttachment,
 };
