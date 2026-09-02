@@ -18,7 +18,7 @@ const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
 const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
 // Font-awesome icon for an attachment that has no rendered thumbnail, by extension.
-const fileIconClass = (filename) => {
+export const fileIconClass = (filename) => {
   const ext = (filename || '').split('.').pop().toLowerCase();
   if (ext === 'pdf') return 'fa-file-pdf-o';
   if (['doc', 'docx', 'odt'].includes(ext)) return 'fa-file-word-o';

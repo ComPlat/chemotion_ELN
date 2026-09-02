@@ -132,4 +132,5 @@ export {
   fetchImageSrcByAttachmentId,
   getAttachmentFromContainer,
   getContainerImageData,
+  isPreviewableAttachment,
 };
