@@ -17,13 +17,14 @@ function reorderItems(items, fromIndex, toIndex) {
   return newItems;
 }
 
-export default function ReorderableList({
+const ReorderableList = ({
   items,
   getItemId,
   onReorder,
   renderItem,
   isDisabled,
-}) {
+  horizontal,
+}) => {
   const [scope] = useState(uuid.v4());
   const [[fromIndex, toIndex], setTargetIndexes] = useState([null, null]);
 
@@ -34,27 +35,37 @@ export default function ReorderableList({
     onReorder(reorderItems(items, fromIdx, toIdx));
   };
 
+  const content = renderedItems.map((item, index) => {
+    const id = getItemId(item);
+    return (
+      <ReorderableItem
+        key={id}
+        id={id}
+        scope={scope}
+        index={index}
+        setTargetIndexes={setTargetIndexes}
+        onReorder={handleReorder}
+        isDisabled={isDisabled}
+        horizontal={horizontal}
+      >
+        {renderItem(item, index)}
+      </ReorderableItem>
+    );
+  });
+
+  // The horizontal variant renders bare <td>s, so no wrapper is allowed around them.
+  if (horizontal) {
+    return content;
+  }
+
   return (
     <div className="reorderable-list">
-      {renderedItems.map((item, index) => {
-        const id = getItemId(item);
-        return (
-          <ReorderableItem
-            key={id}
-            id={id}
-            scope={scope}
-            index={index}
-            setTargetIndexes={setTargetIndexes}
-            onReorder={handleReorder}
-            isDisabled={isDisabled}
-          >
-            {renderItem(item, index)}
-          </ReorderableItem>
-        );
-      })}
+      {content}
     </div>
   );
-}
+};
+
+export default ReorderableList;
 
 ReorderableList.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
@@ -63,22 +74,26 @@ ReorderableList.propTypes = {
   onReorder: PropTypes.func.isRequired,
   renderItem: PropTypes.func.isRequired,
   isDisabled: PropTypes.bool,
+  /** Render the items as table cells (<td>) instead of stacked rows; the list must sit in a <tr> */
+  horizontal: PropTypes.bool,
 };
 
 ReorderableList.defaultProps = {
   getItemId: (item) => item.id,
   isDisabled: false,
+  horizontal: false,
 };
 
-function ReorderableItem({
+const ReorderableItem = ({
   id,
   scope,
   index,
   setTargetIndexes,
   onReorder,
   isDisabled,
+  horizontal,
   children
-}) {
+}) => {
   const [{ isDragging }, drag, preview] = useDrag({
     type: scope,
     item: { id, index },
@@ -104,11 +119,26 @@ function ReorderableItem({
     }
   });
 
-  const className = cs('reorderable-list__item pseudo-table__row', {
+  const className = cs('reorderable-list__item', {
+    'reorderable-list__item--cell': horizontal,
+    'pseudo-table__row': !horizontal,
     'draggable-list-item--is-dragging': isDragging,
     'draggable-list-item--is-over': isOver,
     'draggable-list-item--can-drop': canDrop,
   });
+
+  // A cell must keep its table display, so the flex layout moves to an inner wrapper. The item id
+  // is stamped on the cell for callers that need to find an item's cell in the DOM.
+  if (horizontal) {
+    return (
+      <td ref={(ref) => drop(preview(ref))} className={className} data-item-id={id}>
+        <div className="d-flex align-items-center">
+          <DragHandle ref={isDisabled ? null : drag} enabled={!isDisabled} />
+          {children}
+        </div>
+      </td>
+    );
+  }
 
   return (
     <div ref={(ref) => drop(preview(ref))} className={className}>
@@ -116,7 +146,7 @@ function ReorderableItem({
       {children}
     </div>
   );
-}
+};
 
 ReorderableItem.propTypes = {
   id: PropTypes.string.isRequired,
@@ -125,5 +155,6 @@ ReorderableItem.propTypes = {
   setTargetIndexes: PropTypes.func.isRequired,
   onReorder: PropTypes.func.isRequired,
   isDisabled: PropTypes.bool.isRequired,
+  horizontal: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
 };

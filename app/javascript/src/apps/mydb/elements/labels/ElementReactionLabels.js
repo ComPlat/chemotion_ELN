@@ -4,8 +4,7 @@ import { Button } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementNoAccessTrigger from 'src/apps/mydb/elements/labels/ElementNoAccessTrigger';
 
-function ElementReactionLabels({ element }) {
-  return (
+const ElementReactionLabels = ({ element }) => (
     <ElementNoAccessTrigger
       element={element}
       isAvailable={(currentElement) => Boolean(currentElement.tag?.taggable_data?.reaction_id)}
@@ -20,8 +19,9 @@ function ElementReactionLabels({ element }) {
       warningMessage="Sorry, you cannot access this Reaction."
     />
   );
-}
 
-ElementReactionLabels.propTypes = ElementNoAccessTrigger.propTypes;
+ElementReactionLabels.propTypes = {
+  element: ElementNoAccessTrigger.propTypes.element
+};
 
 export default ElementReactionLabels;
