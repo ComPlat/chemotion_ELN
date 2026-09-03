@@ -176,6 +176,9 @@ class SampleComponent extends Component {
 
   componentWillUnmount() {
     ComponentStore.unlisten(this.onComponentStoreChange);
+    // Drop any pending debounced amount edit so it can't fire after unmount.
+    // Blur already flushes real edits, so cancelling here loses nothing.
+    this.debounceHandleAmountChange.cancel();
   }
 
   /**
@@ -467,6 +470,7 @@ class SampleComponent extends Component {
           precision={3}
           disabled={!permitOn(sample)}
           onChange={(e) => this.debounceHandleAmountChange(e, material.amount_l, '', false)}
+          onBlur={() => this.debounceHandleAmountChange.flush()}
           onMetricsChange={this.handleMetricsChange}
           variant="light"
           active={material.amount_unit === 'l'}
@@ -504,6 +508,7 @@ class SampleComponent extends Component {
             precision={4}
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.debounceHandleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
+            onBlur={() => this.debounceHandleAmountChange.flush()}
             onMetricsChange={this.handleMetricsChange}
             active={material.amount_unit === 'g'}
             isError={material.error_mass}
@@ -545,6 +550,7 @@ class SampleComponent extends Component {
               precision={4}
               disabled={!permitOn(sample)}
               onChange={(e) => this.debounceHandleAmountChange(e, material.amount_mol, '', false)}
+              onBlur={() => this.debounceHandleAmountChange.flush()}
               onMetricsChange={this.handleMetricsChange}
               variant="light"
               active={material.amount_unit === 'mol'}
