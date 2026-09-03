@@ -506,7 +506,30 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/sample_analyses/{sample_id}' do
-    pending 'not yet implemented'
+    let(:sample) { create(:sample_with_image_in_analysis, collections: [collection]) }
+    let(:execute) { get "/api/v1/attachments/sample_analyses/#{sample.id}" }
+
+    context 'when the sample is in the current user\'s own collection' do
+      let(:collection) { create(:collection, user: user) }
+
+      before { execute }
+
+      it 'returns the zip file of analytical attachments' do
+        expect(response).to have_http_status(:ok)
+        expect(response.header['Content-Type']).to include('application/zip')
+      end
+    end
+
+    context 'when the sample belongs to another user' do
+      let(:other_user) { create(:person) }
+      let(:collection) { create(:collection, user: other_user) }
+
+      before { execute }
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/image/{attachment_id}' do
@@ -553,15 +576,84 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/thumbnail/{attachment_id}' do
-    pending 'not yet implemented'
+    let(:sample) { create(:sample_with_image_in_analysis, collections: [collection]) }
+    let(:attachment) { sample.container.children[0].children[0].attachments.first }
+
+    before { get "/api/v1/attachments/thumbnail/#{attachment.id}" }
+
+    context 'when the sample is in the current user\'s own collection' do
+      let(:collection) { create(:collection, user: user) }
+
+      it 'returns the thumbnail' do
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to eq(attachment.thumbnail_base64.to_json)
+      end
+    end
+
+    context 'when the sample belongs to another user' do
+      let(:other_user) { create(:person) }
+      let(:collection) { create(:collection, user: other_user) }
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/thumbnails' do
-    pending
+    let(:collection) { create(:collection, user: user) }
+    let(:own_sample) { create(:sample_with_image_in_analysis, collections: [collection]) }
+    let(:own_attachment) { own_sample.container.children[0].children[0].attachments.first }
+
+    let(:other_user) { create(:person) }
+    let(:other_collection) { create(:collection, user: other_user) }
+    let(:foreign_sample) { create(:sample_with_image_in_analysis, collections: [other_collection]) }
+    let(:foreign_attachment) { foreign_sample.container.children[0].children[0].attachments.first }
+
+    before do
+      post '/api/v1/attachments/thumbnails', params: { ids: [own_attachment.id, foreign_attachment.id] }
+    end
+
+    it 'returns the thumbnail for the accessible attachment and nil for the inaccessible one' do
+      thumbnails = parsed_json_response['thumbnails']
+      expect(thumbnails.length).to eq(2)
+      expect(thumbnails[0]['id']).to eq(own_attachment.id)
+      expect(thumbnails[1]).to be_nil
+    end
   end
 
   describe 'POST /api/v1/attachments/files' do
-    pending 'not yet implemented'
+    let(:collection) { create(:collection, user: user) }
+    let(:own_sample) { create(:sample_with_image_in_analysis, collections: [collection]) }
+    let(:own_attachment) { own_sample.container.children[0].children[0].attachments.first }
+
+    let(:other_user) { create(:person) }
+    let(:other_collection) { create(:collection, user: other_user) }
+    let(:foreign_sample) { create(:sample_with_image_in_analysis, collections: [other_collection]) }
+    let(:foreign_attachment) { foreign_sample.container.children[0].children[0].attachments.first }
+
+    context 'when at least one attachment is accessible' do
+      before do
+        post '/api/v1/attachments/files', params: { ids: [own_attachment.id, foreign_attachment.id] }
+      end
+
+      it 'returns the file for the accessible attachment and nil for the inaccessible one' do
+        files = parsed_json_response['files']
+        expect(files.length).to eq(2)
+        expect(files[0]['id']).to eq(own_attachment.id)
+        expect(files[1]).to be_nil
+      end
+    end
+
+    context 'when no attachment is accessible' do
+      before do
+        post '/api/v1/attachments/files', params: { ids: [foreign_attachment.id] }
+      end
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
@@ -602,7 +694,10 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'POST /api/v1/attachments/save_spectrum' do
-    let(:attachment) { create(:attachment, :with_spectra_file) }
+    let(:collection) { create(:collection, user: user) }
+    let(:sample) { create(:sample, collections: [collection]) }
+    let(:container) { create(:container, containable: sample) }
+    let(:attachment) { create(:attachment, :with_spectra_file, attachable: container) }
 
     context 'when parameters are correct' do
       let(:spectrum_params) { JSON.parse(File.read('spec/fixtures/spectrum_param_chloroform_d.json')) }
@@ -632,6 +727,19 @@ describe Chemotion::AttachmentAPI do
 
       it 'new attachment was created' do
         expect(Attachment.find(generated_attachment_id)).not_to be_nil
+      end
+    end
+
+    # Regression: this endpoint used to run with no authorization check at all, letting any
+    # authenticated user regenerate/overwrite spectrum data for an attachment they don't own.
+    context 'when the attachment belongs to another user' do
+      let(:attachment) { create(:attachment, :with_spectra_file) }
+      let(:spectrum_params) { { attachment_id: attachment.id } }
+
+      before { post '/api/v1/attachments/save_spectrum', params: spectrum_params }
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -687,12 +795,55 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when attachment is no image' do
-      pending 'not yet implemented'
+      let(:attachment) { create(:attachment, created_for: user.id, attachable_type: '') }
+      let(:attachment_id) { attachment.id }
+
+      it('returning status 200') do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it('ignores the annotated param and returns the original file') do
+        expect(response.header['Content-Length'].to_i).to eq(attachment.attachment_attacher.file.size)
+      end
     end
   end
 
   describe 'POST /api/v1/attachments/infer' do
-    pending 'not yet implemented'
+    let(:attachment) { create(:attachment, :with_spectra_file, created_for: user.id, attachable_type: '') }
+    let(:infer_params) { { attachment_id: attachment.id, layout: 'IR' } }
+
+    context 'when parameters are correct' do
+      let(:generated_attachment) { create(:attachment, :with_spectra_file) }
+
+      before do
+        allow_any_instance_of(Attachment).to receive(:infer_spectrum).and_return('shift' => [])
+        allow_any_instance_of(Attachment).to receive(:generate_spectrum).and_return(generated_attachment)
+
+        post '/api/v1/attachments/infer', params: infer_params
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'returns the inferred prediction and generated attachment' do
+        expect(parsed_json_response['predict']).to eq('shift' => [])
+        expect(parsed_json_response['files'].first['id']).to eq(generated_attachment.id)
+      end
+    end
+
+    # Regression: this endpoint used to run with no authorization check at all, letting any
+    # authenticated user run spectrum inference against - and read the raw file content of -
+    # an attachment they don't own.
+    context 'when the attachment belongs to another user' do
+      let(:attachment) { create(:attachment, :with_spectra_file) }
+
+      before { post '/api/v1/attachments/infer', params: infer_params }
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/lcms_page' do
@@ -735,8 +886,46 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  describe 'GET /api/v1/attachments/svgs' do
-    pending 'not yet implemented'
+  # GET /api/v1/attachments/svgs (QR code SVG) has no frontend caller left, and the shared
+  # `before` block above only grants can_dwnld for zip/*_analyses/plain-attachment URLs - any
+  # request to /svgs falls through with can_dwnld staying false, so it unconditionally 401s.
+  # Dead and already unreachable; not worth a spec pretending it works.
+
+  describe 'POST /api/v1/attachments/:attachment_id/annotation' do
+    let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
+    let(:annotation_params) do
+      image_tag = "<image id=\"original_image\" href=\"/api/v1/attachments/image/#{attachment.id}\"/>"
+      # width/height are required: rsvg-convert (used by create_annotated_flat_image) errors
+      # with "The SVG has no dimensions" otherwise.
+      svg_tag = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\">#{image_tag}</svg>"
+      { updated_svg_string: svg_tag }
+    end
+
+    context 'when the attachment belongs to the current user' do
+      before do
+        # Thumbnail regeneration depends on real image-processing tooling and whether a thumbnail
+        # derivative already exists; irrelevant to the authorization check under test here.
+        allow_any_instance_of(Usecases::Attachments::Annotation::AnnotationUpdater).to receive(:update_thumbnail)
+
+        post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+    end
+
+    # Regression: this endpoint used to run with no authorization check at all, letting any
+    # authenticated user overwrite the annotation SVG of an attachment they don't own.
+    context 'when the attachment belongs to another user' do
+      let(:attachment) { create(:attachment, :with_image) }
+
+      before { post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params }
+
+      it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   # TODO: Check these specs and remove everything that is already covered by the specs above
