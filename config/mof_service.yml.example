@@ -1,0 +1,5 @@
+development:
+  :mof_service_url: 'http://mof_service:5000/'
+
+production:
+  :mof_service_url: 'http://mof_service:5000/'
