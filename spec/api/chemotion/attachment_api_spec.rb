@@ -901,7 +901,13 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when the attachment belongs to the current user' do
-      before { post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params }
+      before do
+        # Thumbnail regeneration depends on real image-processing tooling and whether a thumbnail
+        # derivative already exists; irrelevant to the authorization check under test here.
+        allow_any_instance_of(Usecases::Attachments::Annotation::AnnotationUpdater).to receive(:update_thumbnail)
+
+        post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params
+      end
 
       it 'returns statuscode 201' do
         expect(response).to have_http_status(:created)
