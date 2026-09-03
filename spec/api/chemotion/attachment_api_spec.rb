@@ -895,9 +895,10 @@ describe Chemotion::AttachmentAPI do
     let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
     let(:annotation_params) do
       image_tag = "<image id=\"original_image\" href=\"/api/v1/attachments/image/#{attachment.id}\"/>"
-      {
-        updated_svg_string: "<svg xmlns=\"http://www.w3.org/2000/svg\">#{image_tag}</svg>",
-      }
+      # width/height are required: rsvg-convert (used by create_annotated_flat_image) errors
+      # with "The SVG has no dimensions" otherwise.
+      svg_tag = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\">#{image_tag}</svg>"
+      { updated_svg_string: svg_tag }
     end
 
     context 'when the attachment belongs to the current user' do
