@@ -106,6 +106,11 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   _handleInputValueBlur() {
+    // Let the parent flush any pending (e.g. debounced) onChange before we reset the
+    // display to props.value below. This runs first so a value still sitting in a
+    // debounce is committed to the model on blur instead of being dropped.
+    if (this.props.onBlur) this.props.onBlur();
+
     const { value } = this.props;
     const { metricPrefix } = this.state;
     this.setState({
@@ -312,6 +317,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 NumeralInputWithUnitsCompo.propTypes = {
   className: PropTypes.string,
   onChange: PropTypes.func,
+  onBlur: PropTypes.func,
   onMetricsChange: PropTypes.func,
   unit: PropTypes.string,
   units: PropTypes.array,
@@ -332,6 +338,7 @@ NumeralInputWithUnitsCompo.propTypes = {
 
 NumeralInputWithUnitsCompo.defaultProps = {
   className: '',
+  onBlur: null,
   unit: 'n',
   value: 0,
   units: [],
