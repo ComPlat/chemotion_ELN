@@ -312,6 +312,26 @@ describe('Sample', async () => {
       s.updateMixtureComponentsFromReferenceAmount();
       expect(other.equivalent).toBe(3);
     });
+
+    it('materialises a ratio-driven amount when the reference amount appears via a density edit', () => {
+      const { s, ref, other } = buildMixture();
+      // Reference is a liquid with a volume but no amount yet; the other component has a
+      // typed ratio and no amount.
+      ref.material_group = 'liquid';
+      ref.molecule = { molecular_weight: 100 };
+      ref.amount_l = 0.001; // 1 mL
+      ref.amount_mol = 0;
+      other.equivalent = 2;
+      other.amount_mol = 0;
+
+      // Density edit derives the reference amount from volume + density.
+      ref.handleDensityChange({ value: 0.8, unit: 'g/ml' }, false);
+      expect(ref.amount_mol).toBeGreaterThan(0);
+
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(2);
+      expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 9);
+    });
   });
 
   describe('Sample.updateComponentAmounts()', () => {
@@ -364,6 +384,14 @@ describe('Sample', async () => {
       expect(ref.amount_mol).toBeGreaterThan(0);
       expect(other.amount_mol).toBeGreaterThan(0);
       expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 9);
+    });
+
+    it('does not mutate amounts when a ratio is unknown (n.d)', () => {
+      const { s, ref, other } = buildMixture(1);
+      other.equivalent = 'n.d'; // composition unknown, not zero
+      s.updateComponentAmounts();
+      expect(ref.amount_mol == null || ref.amount_mol === 0).toBe(true);
+      expect(other.amount_mol == null || other.amount_mol === 0).toBe(true);
     });
   });
 
