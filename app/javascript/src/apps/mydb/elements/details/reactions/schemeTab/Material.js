@@ -144,6 +144,12 @@ class Material extends Component {
     }
   }
 
+  componentWillUnmount() {
+    // Drop any pending debounced amount edit so it can't fire after unmount.
+    // Blur already flushes real edits, so cancelling here loses nothing.
+    this.debounceHandleAmountUnitChange.cancel();
+  }
+
   handleMaterialClick(sample) {
     const { reaction } = this.props;
     const isSbmm = isSbmmSample(sample);
@@ -1160,6 +1166,7 @@ class Material extends Component {
               || material.gas_type === 'gas'
             }
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g, material.amountType)}
+            onBlur={() => this.debounceHandleAmountUnitChange.flush()}
             onMetricsChange={this.handleMetricsChange}
             active={material.amount_unit === 'g'}
             isError={material.error_mass}
