@@ -360,8 +360,18 @@ export default class SampleDetailsComponents extends React.Component {
 
     currentComponent.handleDensityChange(amount, lockColumn);
 
-    // update components ratio
-    sample.updateMixtureComponentEquivalent();
+    const referenceComponent = sample.reference_component;
+    const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
+
+    if (isReferenceComponent) {
+      // A density edit can give the reference an amount (volume + density), just like a
+      // reference amount change → fill/scale the other components from it so a typed ratio
+      // on an amount-less component fills in its amount instead of collapsing to 0.
+      sample.updateMixtureComponentsFromReferenceAmount();
+    } else {
+      // Non-reference (or no reference set) → recompute ratios from amounts.
+      sample.updateMixtureComponentEquivalent();
+    }
 
     // update sample total mass for the reaction scheme
     sample.calculateTotalMixtureMass();
