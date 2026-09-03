@@ -1853,9 +1853,19 @@ export default class ReactionDetailsScheme extends React.Component {
       // For mixture samples with a valid reference component, calculate mass from mol amount
       const newAmountG = newAmountMol * sample.reference_component.relative_molecular_weight;
       sample.setAmount({ value: newAmountG, unit: 'g' });
-    } else {
-      // For regular samples or mixtures without reference MW, fall back to standard method
+    } else if (sample.isGas() || sample.isMixture()) {
+      // Gas amounts are derived from the reaction vessel, and mixtures without a usable
+      // reference MW track their amount as total mass; keep the gram-normalized behavior
+      // for these so their existing calculations are unchanged.
       sample.setAmountAndNormalizeToGram({
+        value: newAmountMol,
+        unit: 'mol',
+      });
+    } else {
+      // For regular samples, set the mol amount directly. Equivalents are derived from the
+      // molar amount, so keep 'mol' as amount_unit here (rather than normalizing to grams)
+      // so the Amount field is highlighted as the recalculated field instead of Mass.
+      sample.setAmount({
         value: newAmountMol,
         unit: 'mol',
       });
@@ -1875,10 +1885,16 @@ export default class ReactionDetailsScheme extends React.Component {
           const newAmountMol = Number(updatedSample.equivalent) * referenceAmountMol;
           this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
         } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
-          sample.setAmountAndNormalizeToGram({
-            value: updatedSample.equivalent * sample.amount_mol,
-            unit: 'mol'
-          });
+          const newAmountMol = updatedSample.equivalent * sample.amount_mol;
+          if (sample.isGas() || sample.isMixture()) {
+            // Preserve the gram-normalized behavior for gas/mixture samples (see
+            // handleEquivalentBasedAmountUpdate) so their calculations are unchanged.
+            sample.setAmountAndNormalizeToGram({ value: newAmountMol, unit: 'mol' });
+          } else {
+            // Keep 'mol' as amount_unit so the Amount field (not Mass) is highlighted as the
+            // recalculated field, since equivalents are derived from the molar amount.
+            sample.setAmount({ value: newAmountMol, unit: 'mol' });
+          }
         }
         // Validate resulting mass against available mixture mass and warn if exceeded
         this.warnIfMixtureMassExceeded(sample, sample.amount_g);
