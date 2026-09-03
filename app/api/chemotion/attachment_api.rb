@@ -250,6 +250,8 @@ module Chemotion
         params do
           require :updated_svg_string, type: String
         end
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
         updater.update_annotation(
           params['updated_svg_string'],
@@ -599,6 +601,8 @@ module Chemotion
         optional :lcms_integrals_str, type: String
       end
       post 'save_spectrum' do
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         lcms_data = params[:lcms_mz_page_data]
         if lcms_data.respond_to?(:read)
           params[:lcms_mz_page_data] = lcms_data.read
@@ -677,6 +681,8 @@ module Chemotion
         optional :layout, type: String
       end
       post 'infer' do
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         predict = @attachment.infer_spectrum(params)
         params[:predict] = predict.to_json
         jcamp_att = @attachment.generate_spectrum(
