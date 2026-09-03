@@ -32,7 +32,8 @@ module Chemotion
           }
           label = nil
           if params[:id].present?
-            label = UserLabel.find(params[:id])
+            label = UserLabel.find_by(id: params[:id], user_id: current_user.id)
+            error!('404 Not Found', 404) if label.nil?
             label.update!(attr)
           else
             label = UserLabel.create!(attr)
