@@ -50,10 +50,11 @@ class LlmProviderResolver
       resolution = resolve(user: user, task_name: task_name, skip_feature_flags: skip_feature_flags)
       LlmClient.new(
         base_url: resolution.base_url,
-        api_key:  resolution.api_key,
-        model:    resolution.model,
-        timeout:  timeout,
+        api_key: resolution.api_key,
+        model: resolution.model,
+        timeout: timeout,
         protocol: resolution.protocol || 'openai',
+        restrict_endpoint: resolution.provider&.personal?,
       )
     end
 
@@ -147,11 +148,12 @@ class LlmProviderResolver
       matrice = Matrice.find_by(name: matrice_name)
       return true if matrice.nil?
 
-      if matrice.enabled
-        (matrice.exclude_ids || []).exclude?(user.id)
-      else
-        (matrice.include_ids || []).include?(user.id)
-      end
+      # Mirrors generate_users_matrix in db/schema.rb: a gate reaches the user
+      # directly or through one of their groups, and an exclusion always wins.
+      ids = [user.id, *user.group_ids]
+      return false if ((matrice.exclude_ids || []) & ids).any?
+
+      matrice.enabled || ((matrice.include_ids || []) & ids).any?
     rescue NameError
       true
     end
@@ -232,7 +234,7 @@ class LlmProviderResolver
     # shared, behind its own gate.
     def usable_by?(user, provider)
       if provider.scope == 'user'
-        provider.user_id == user.id && user_api_key_allowed?(user)
+        provider.enabled && provider.user_id == user.id && user_api_key_allowed?(user)
       else
         provider.enabled && institution_provider_allowed?(user) && provider.grants_access_to?(user)
       end

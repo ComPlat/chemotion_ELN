@@ -118,11 +118,17 @@ class LlmTaskRunner
     primary = @resolution
     client  = build_client(task, primary)
     [client, call_model(task, client)]
+  rescue Errors::LlmAuthenticationError
+    # A rejected key is a configuration problem, not a busy model: retrying
+    # solves nothing and the fallback would only spend a second key.
+    raise
   rescue Errors::LlmProviderError, Errors::LlmTimeoutError, Errors::LlmRateLimitError => e
     fallback = default_fallback_resolution
-    # No point retrying the same model (e.g. when there is no task-specific
-    # override, primary already IS the default) — re-raise the original error.
+    # Only another model on the SAME provider. No point retrying the same one
+    # (without a task override, primary already IS the default), and the content
+    # of a task routed at one endpoint is not sent to a second one uninvited.
     raise if fallback.nil? || fallback.model == primary.model
+    raise if fallback.provider&.id != primary.provider&.id
 
     Rails.logger.warn(
       "[LlmTaskRunner] task '#{@task_name}' model '#{primary.model}' failed " \
@@ -152,6 +158,7 @@ class LlmTaskRunner
       model: resolution.model,
       timeout: task.timeout_seconds,
       protocol: resolution.protocol || 'openai',
+      restrict_endpoint: resolution.provider&.personal?,
     )
   end
 
@@ -240,9 +247,11 @@ class LlmTaskRunner
         # fall through to the error below
       end
     end
+    # The output is not quoted here: it is SDS-derived and this message reaches
+    # the audit log and the user's job notification. Length locates the problem.
     raise Errors::LlmProviderError,
-          "LLM returned invalid JSON for task '#{@task_name}': #{e.message}. " \
-          "Raw output (first 300 chars): #{text.to_s[0, 300]}"
+          "LLM returned invalid JSON for task '#{@task_name}': #{e.message} " \
+          "(#{text.to_s.length} chars returned)"
   end
 
   # Strip surrounding whitespace and a single ```json / ``` fence pair.

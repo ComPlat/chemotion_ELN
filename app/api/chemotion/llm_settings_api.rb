@@ -3,6 +3,8 @@
 module Chemotion
   class LlmSettingsAPI < Grape::API
     resource :users do
+      helpers LlmAccessHelpers
+
       helpers do
         # Everything about a provider EXCEPT its key, which never leaves the
         # server in readable form.
@@ -129,10 +131,14 @@ module Chemotion
           setting = current_user.user_llm_setting ||
                     UserLlmSetting.new(user: current_user)
 
-          setting.assign_attributes(declared(params, include_missing: false).except('task_mappings'))
-          setting.save!
+          # One transaction: a mapping that fails validation must not leave the
+          # preference, or the mappings before it, already changed.
+          ActiveRecord::Base.transaction do
+            setting.assign_attributes(declared(params, include_missing: false).except('task_mappings'))
+            setting.save!
 
-          params[:task_mappings]&.each { |mapping| apply_task_mapping(mapping) }
+            params[:task_mappings]&.each { |mapping| apply_task_mapping(mapping) }
+          end
 
           { success: true }
         rescue ActiveRecord::RecordInvalid => e
@@ -160,6 +166,9 @@ module Chemotion
                        params[:base_url].present? || params[:api_key].present?
 
             if supplied
+              # Testing a supplied endpoint IS configuring a personal provider,
+              # so it takes the same permission the CRUD routes require.
+              ensure_personal_providers_allowed!
               protocol = params[:protocol].presence || 'openai'
               base_url = params[:base_url].presence
               model    = params[:model].presence
@@ -178,7 +187,8 @@ module Chemotion
               model    = provider.default_model
               api_key  = provider.api_key
             end
-            client = LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol)
+            client = LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol,
+                                   restrict_endpoint: supplied)
             client.chat(
               messages:   [{ role: 'user', content: 'Reply with a single word: OK' }],
               max_tokens: 64,
@@ -227,6 +237,7 @@ module Chemotion
                                 desc: 'Re-read the catalogue from the provider instead of serving the cached one'
           end
           post do
+            ensure_personal_providers_allowed!
             protocol = params[:protocol].presence || 'openai'
             # Cached per protocol+endpoint+key (LlmModelCatalog) — the settings form
             # asks for this list every time the user lands on a different provider.
@@ -244,9 +255,10 @@ module Chemotion
                      else
                        LlmModelCatalog.fetch(
                          base_url: base_url,
-                         api_key:  params[:api_key].presence,
+                         api_key: params[:api_key].presence,
                          protocol: protocol,
-                         force:    params[:refresh],
+                         force: params[:refresh],
+                         restrict_endpoint: true,
                        )
                      end
             { models: models }

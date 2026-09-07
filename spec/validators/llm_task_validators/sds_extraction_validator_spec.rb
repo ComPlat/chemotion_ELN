@@ -7,6 +7,42 @@ RSpec.describe LlmTaskValidators::SdsExtractionValidator do
     described_class.validate!(data)
   end
 
+  describe 'suffixed and combined hazard codes' do
+    it 'keeps a suffix and its case, which name different phrases' do
+      %w[H350i H360F H360FD H360Fd H360Df H361fd EUH201A].each do |code|
+        result = described_class.validate!({ 'hazard_statements' => ["#{code} some statement text"] })
+        expect(result['hazard_statements']).to eq([code])
+      end
+    end
+
+    it 'resolves a lower-cased code to a real one, since the suffix case is lost' do
+      result = described_class.validate!({ 'hazard_statements' => ['h350i'] })
+
+      expect(result['hazard_statements']).to eq(['H350i'])
+    end
+
+    it 'keeps a combined hazard code whole' do
+      result = described_class.validate!({ 'hazard_statements' => ['h300 + h310 + h330'] })
+
+      expect(result['hazard_statements']).to eq(['H300+H310+H330'])
+    end
+
+    it 'still strips the statement text that follows a suffixed code' do
+      result = described_class.validate!(
+        { 'hazard_statements' => ['H360FD May damage fertility or the unborn child'] },
+      )
+
+      expect(result['hazard_statements']).to eq(['H360FD'])
+    end
+  end
+
+  describe 'output emptied by normalisation' do
+    it 'rejects an object whose only core field was dropped for being the wrong type' do
+      expect { described_class.validate!({ 'properties' => 'not an object' }) }
+        .to raise_error(LlmTaskValidators::ValidationError)
+    end
+  end
+
   describe 'rejecting unusable output' do
     it 'rejects a non-object' do
       expect { validate(['H225']) }.to raise_error(LlmTaskValidators::ValidationError, /Hash/)

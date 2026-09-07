@@ -40,7 +40,7 @@ class LlmModelCatalog
     # @param protocol [String]      'openai' | 'anthropic' | 'gemini'
     # @param force    [Boolean]     ignore (and replace) any cached entry
     # @return [Array<String>]       model IDs, [] when the provider offers none
-    def fetch(base_url:, api_key:, protocol: 'openai', force: false)
+    def fetch(base_url:, api_key:, protocol: 'openai', force: false, restrict_endpoint: false)
       key = cache_key(base_url: base_url, api_key: api_key, protocol: protocol)
       store.delete(key) if force
 
@@ -49,9 +49,10 @@ class LlmModelCatalog
 
       models = LlmClient.new(
         base_url: base_url,
-        api_key:  api_key,
-        model:    '', # irrelevant to a models listing
+        api_key: api_key,
+        model: '', # irrelevant to a models listing
         protocol: protocol.presence || 'openai',
+        restrict_endpoint: restrict_endpoint,
       ).list_models
 
       store.write(key, models, expires_in: CACHE_TTL) if models.present?

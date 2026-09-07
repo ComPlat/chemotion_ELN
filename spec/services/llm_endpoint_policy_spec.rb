@@ -10,7 +10,7 @@ describe LlmEndpointPolicy do
 
     it 'accepts a blank endpoint, which means the protocol default' do
       expect(described_class.violation('')).to be_nil
-    ends
+    end
 
     it 'refuses a scheme the client cannot speak' do
       expect(described_class.violation('file:///etc/passwd')).to include('http')
@@ -51,6 +51,16 @@ describe LlmEndpointPolicy do
       expect(described_class.violation('http://metadata.google.internal')).to include('private')
     end
 
+    context 'when a name resolves into the private space' do
+      before { allow(Resolv).to receive(:getaddresses).with('sneaky.example.com').and_return(['127.0.0.1']) }
+
+      it 'passes the name check but is refused at connect time' do
+        expect(described_class.violation('http://sneaky.example.com')).to be_nil
+        expect { described_class.pinned_address!('sneaky.example.com') }
+          .to raise_error(Errors::LlmNotConfiguredError, /private or loopback/)
+      end
+    end
+
     context 'when the deployment allows private endpoints' do
       before { allow(described_class).to receive(:private_allowed?).and_return(true) }
 
@@ -61,6 +71,40 @@ describe LlmEndpointPolicy do
       it 'still refuses an unusable URL' do
         expect(described_class.violation('ftp://example.com')).to include('http')
       end
+    end
+  end
+
+  describe '.pinned_address!' do
+    it 'pins the connection to the address it checked' do
+      allow(Resolv).to receive(:getaddresses).with('api.example.com').and_return(['93.184.216.34'])
+
+      expect(described_class.pinned_address!('api.example.com')).to eq('93.184.216.34')
+    end
+
+    it 'refuses a public name whose second address is private' do
+      allow(Resolv).to receive(:getaddresses).with('mixed.example.com')
+                                             .and_return(['93.184.216.34', '10.0.0.1'])
+
+      expect { described_class.pinned_address!('mixed.example.com') }
+        .to raise_error(Errors::LlmNotConfiguredError)
+    end
+
+    it 'leaves an unresolvable name to the client' do
+      allow(Resolv).to receive(:getaddresses).with('nowhere.invalid').and_return([])
+
+      expect(described_class.pinned_address!('nowhere.invalid')).to be_nil
+    end
+
+    it 'refuses a reserved literal and pins nothing for a public one' do
+      expect { described_class.pinned_address!('169.254.169.254') }
+        .to raise_error(Errors::LlmNotConfiguredError)
+      expect(described_class.pinned_address!('93.184.216.34')).to be_nil
+    end
+
+    it 'checks nothing when the deployment allows private endpoints' do
+      allow(described_class).to receive(:private_allowed?).and_return(true)
+
+      expect(described_class.pinned_address!('127.0.0.1')).to be_nil
     end
   end
 end
