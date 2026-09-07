@@ -476,17 +476,17 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'POST /api/v1/chemicals/save_manual_sds' do
-    let(:vendor_info) { { productNumber: 'ABC123', vendor: 'testVendor' }.to_json }
-    let(:vendor_name) { 'TestVendor' }
-    let(:vendor_product) { 'testVendorProductInfo' }
     let(:chemical_data) { { cas: 64_197 }.to_json }
 
+    # The endpoint rewrites the sample's chemical record, so the caller has to be
+    # allowed to edit that sample.
+    let(:own_sample) { create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)]) }
     let(:params) do
       {
-        sample_id: s.id,
-        vendor_info: vendor_info,
-        vendor_name: vendor_name,
-        vendor_product: vendor_product,
+        sample_id: own_sample.id,
+        vendor_info: { productNumber: 'ABC123', vendor: 'testVendor' }.to_json,
+        vendor_name: 'TestVendor',
+        vendor_product: 'testVendorProductInfo',
       }
     end
     let(:mock_file) { fixture_file_upload('spec/fixtures/upload.pdf', 'application/pdf') }
@@ -518,6 +518,16 @@ describe Chemotion::ChemicalAPI do
           chemical_data: chemical_data,
         )
         expect(response.status).to eq 201
+      end
+    end
+
+    context 'when the sample belongs to someone else' do
+      it 'refuses without calling the service' do
+        post '/api/v1/chemicals/save_manual_sds',
+             params: params.merge(sample_id: s.id, attached_file: mock_file)
+
+        expect(response).to have_http_status(:forbidden)
+        expect(Chemotion::ManualSdsService).not_to have_received(:create_manual_sds)
       end
     end
 

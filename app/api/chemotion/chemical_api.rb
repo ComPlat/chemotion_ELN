@@ -165,6 +165,12 @@ module Chemotion
         end
 
         post do
+          # Writes the sample's chemical record, so it takes the same permission
+          # as editing the sample. Cf. the extract_sds endpoint below.
+          sample = Sample.find_by(id: params[:sample_id])
+          error!({ error: 'Sample not found' }, 404) unless sample
+          error!({ error: '403 Forbidden' }, 403) unless ElementPolicy.new(current_user, sample).update?
+
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],

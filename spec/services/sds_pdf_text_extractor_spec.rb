@@ -85,6 +85,16 @@ RSpec.describe SdsPdfTextExtractor do
     TEXT
   end
 
+  # Open3.popen3 is used rather than capture3 so the subprocess can be bounded;
+  # this hands the block the same four values with in-memory streams.
+  def stub_ghostscript(stdout: '', stderr: '', success: true, exitstatus: 0)
+    status = instance_double(Process::Status, success?: success, exitstatus: exitstatus)
+    wait_thread = instance_double(Process::Waiter, pid: 4321, value: status)
+    allow(Open3).to receive(:popen3) do |*_args, &block|
+      block.call(StringIO.new, StringIO.new(stdout), StringIO.new(stderr), wait_thread)
+    end
+  end
+
   describe '.extract' do
     subject(:extract) { described_class.extract(file_path) }
 
@@ -98,7 +108,7 @@ RSpec.describe SdsPdfTextExtractor do
     context 'when ghostscript returns empty output' do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_return(['', '', instance_double(Process::Status, success?: true)])
+        stub_ghostscript
       end
 
       it 'raises ExtractionError' do
@@ -109,8 +119,7 @@ RSpec.describe SdsPdfTextExtractor do
     context 'when ghostscript fails' do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        failed = instance_double(Process::Status, success?: false, exitstatus: 1)
-        allow(Open3).to receive(:capture3).and_return(['', 'rangecheck error', failed])
+        stub_ghostscript(stderr: 'rangecheck error', success: false, exitstatus: 1)
       end
 
       it 'raises ExtractionError with gs error message' do
@@ -118,10 +127,29 @@ RSpec.describe SdsPdfTextExtractor do
       end
     end
 
+    context 'when ghostscript never finishes' do
+      before do
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        stub_const("#{described_class}::GHOSTSCRIPT_TIMEOUT", 0.1)
+        wait_thread = instance_double(Process::Waiter, pid: 4321, value: nil)
+        blocking = instance_double(IO)
+        allow(blocking).to receive(:eof?) { sleep 5 }
+        allow(Open3).to receive(:popen3) do |*_args, &block|
+          block.call(StringIO.new, blocking, StringIO.new, wait_thread)
+        end
+        allow(Process).to receive(:kill)
+      end
+
+      it 'kills the subprocess and raises rather than holding the worker' do
+        expect { extract }.to raise_error(SdsPdfTextExtractor::ExtractionError, /timed out/)
+        expect(Process).to have_received(:kill).with('TERM', 4321)
+      end
+    end
+
     context 'when gs binary is not found' do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_raise(Errno::ENOENT)
+        allow(Open3).to receive(:popen3).and_raise(Errno::ENOENT)
       end
 
       it 'raises ExtractionError mentioning gs not in PATH' do
@@ -134,13 +162,13 @@ RSpec.describe SdsPdfTextExtractor do
 
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_return([pdf_text, '', instance_double(Process::Status, success?: true)])
+        stub_ghostscript(stdout: pdf_text)
       end
 
       it 'calls gs with the correct arguments' do
         extract
 
-        expect(Open3).to have_received(:capture3).with(
+        expect(Open3).to have_received(:popen3).with(
           'gs', '-dBATCH', '-dNOPAUSE', '-dSAFER',
           '-sDEVICE=txtwrite', '-sOutputFile=%stdout', '-q', '--', file_path
         )

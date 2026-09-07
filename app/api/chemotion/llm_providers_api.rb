@@ -7,6 +7,8 @@ module Chemotion
   # they are two resources, not one.
   class LlmProvidersAPI < Grape::API
     resource :users do
+      helpers LlmAccessHelpers
+
       helpers do
         # Everything about a provider EXCEPT its key, which never leaves the
         # server in readable form.
@@ -39,13 +41,6 @@ module Chemotion
           provider = LlmProvider.for_user(current_user).find_by(id: id)
           error!({ error: 'Provider not found.' }, 404) unless provider
           provider
-        end
-
-        def ensure_personal_providers_allowed!
-          return if LlmProviderResolver.user_api_key_allowed?(current_user)
-
-          error!({ error: 'You are not permitted to configure your own AI provider. Contact your administrator.' },
-                 403)
         end
       end
 
@@ -147,9 +142,10 @@ module Chemotion
 
             LlmClient.new(
               base_url: provider.base_url,
-              api_key:  provider.api_key,
-              model:    provider.default_model,
+              api_key: provider.api_key,
+              model: provider.default_model,
               protocol: provider.api_protocol,
+              restrict_endpoint: true,
             ).chat(messages: [{ role: 'user', content: 'Reply with a single word: OK' }], max_tokens: 64)
 
             { success: true, message: 'Connection verified successfully.' }
@@ -166,8 +162,10 @@ module Chemotion
             optional :refresh, type: Boolean, default: false
           end
           post :models do
+            ensure_personal_providers_allowed!
             provider = find_own_llm_provider!(params[:id])
-            models = LlmModelCatalog.fetch(**llm_catalog_identity(provider), force: params[:refresh])
+            models = LlmModelCatalog.fetch(**llm_catalog_identity(provider), force: params[:refresh],
+                                                                             restrict_endpoint: true)
             { models: models }
           rescue StandardError
             # An unreachable provider is an empty dropdown, not an error the
