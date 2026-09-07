@@ -29,12 +29,16 @@ module LlmTaskValidators
                    precautionary_statements precautionary_statement_texts
                    classification_categories ghs_codes mixture_components].freeze
 
-    # key => matcher for the canonical code at the start of the value.
-    CODE_PATTERNS = {
-      'hazard_statements' => /\A(EUH\d{3}|H\d{3})/i,
-      'eu_h_statements' => /\A(EUH\d{3})/i,
-      'precautionary_statements' => /\A(P\d{3}(?:\+P\d{3})*)/i,
-      'ghs_codes' => /\A(GHS\d{2})/i,
+    # key => [fallback matcher, phrase file holding the canonical spellings].
+    # The file is consulted first: a suffix carries meaning and its case is
+    # significant (H360Fd and H360Df are different phrases, H361fd is a third),
+    # and combined codes such as H300+H310+H330 are single entries, so neither
+    # survives a bare /H\d{3}/ match followed by upcase.
+    CODE_SPECS = {
+      'hazard_statements' => [/\A(EUH\d{3}|H\d{3})/i, 'hazardPhrases.json'],
+      'eu_h_statements' => [/\A(EUH\d{3})/i, 'hazardPhrases.json'],
+      'precautionary_statements' => [/\A(P\d{3}(?:\+P\d{3})*)/i, 'precautionaryPhrases.json'],
+      'ghs_codes' => [/\A(GHS\d{2})/i, nil],
     }.freeze
 
     def validate!(data)
@@ -42,12 +46,20 @@ module LlmTaskValidators
       require_any_of!(data, *CORE_KEYS)
 
       LIST_KEYS.each { |key| coerce_array!(data, key) }
-      CODE_PATTERNS.each { |key, pattern| normalise_codes!(data, key, pattern) }
+      CODE_SPECS.each { |key, (pattern, file)| normalise_codes!(data, key, pattern, file) }
       normalise_boolean!(data, 'is_mixture')
       drop_unless_type!(data, 'properties', Hash)
       keep_only_hashes!(data, 'mixture_components')
 
+      # Again, on what survived: normalisation drops fields of the wrong type,
+      # and an extraction left with none of the core fields is not worth saving.
+      require_any_of!(data, *CORE_KEYS)
+
       data
+    end
+
+    def self.known_codes_cache
+      @known_codes_cache ||= {}
     end
 
     private
@@ -56,16 +68,40 @@ module LlmTaskValidators
     # and "P301 + P312" both resolve) and upcase the match. Entries that do not
     # look like a code at all are left untouched — better to hand a consumer an
     # unexpected string it can ignore than to discard real data here.
-    def normalise_codes!(data, key, pattern)
+    def normalise_codes!(data, key, pattern, phrase_file)
       return unless data[key].is_a?(Array)
 
+      known = known_codes(phrase_file)
       data[key] = data[key].filter_map do |entry|
         next if entry.blank?
 
         compact = entry.to_s.gsub(/\s+/, '')
         match = compact.match(pattern)
-        match ? match[1].upcase : entry.to_s.strip
+        known_code_prefix(compact, known) || (match ? match[1].upcase : entry.to_s.strip)
       end.uniq
+    end
+
+    # The longest code in +known+ that +compact+ starts with. Longest wins so
+    # H360FD is not reduced to H360, and an exact-case match wins over an
+    # insensitive one: a lower-cased suffix cannot distinguish H360FD from
+    # H360Fd, so a model that spelled the case correctly keeps its spelling.
+    def known_code_prefix(compact, known)
+      known.find { |code| compact.start_with?(code) } ||
+        known.find { |code| compact.downcase.start_with?(code.downcase) }
+    end
+
+    # Codes from one of the public/json phrase files, longest first. An
+    # unreadable file leaves the regex fallback in charge.
+    def known_codes(phrase_file)
+      return [] if phrase_file.blank?
+
+      self.class.known_codes_cache[phrase_file] ||= begin
+        path = Rails.public_path.join('json', phrase_file)
+        JSON.parse(path.read).keys.sort_by { |code| -code.length }
+      rescue StandardError => e
+        Rails.logger.warn("[#{self.class.name}] could not read #{phrase_file}: #{e.message}")
+        []
+      end
     end
 
     # Models sometimes answer a JSON boolean as the string "false"/"true".

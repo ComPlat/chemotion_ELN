@@ -54,12 +54,26 @@ class MatriceAiGates < ActiveRecord::Migration[6.1]
     regenerate_matrix_artifacts
   end
 
+  # Removes only gates still exactly as #up seeded them. One an admin has since
+  # configured is their setting, not this migration's row, and survives.
+  # really_destroy! because Matrice is paranoid: a soft delete keeps the unique
+  # name and a later #up would fail on it.
   def down
-    GATES.each_key { |name| Matrice.find_by(name: name)&.destroy }
+    GATES.each do |name, meta|
+      matrice = Matrice.find_by(name: name)
+      next unless matrice && as_seeded?(matrice, meta)
+
+      matrice.really_destroy!
+    end
+
     regenerate_matrix_artifacts
   end
 
   private
+
+  def as_seeded?(matrice, meta)
+    matrice.enabled == meta[:enabled] && matrice.include_ids.blank? && matrice.exclude_ids.blank?
+  end
 
   # Rewrite config/matrices.json (frontend name→id map) and rematerialise every
   # user's matrix bitmask so the gates are reflected immediately.
