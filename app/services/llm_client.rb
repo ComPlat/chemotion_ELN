@@ -44,7 +44,12 @@ class LlmClient
   # token limit — the caller can retry with a larger max_tokens.
   attr_reader :last_finish_reason
 
-  def initialize(base_url:, api_key:, model:, timeout: 120, protocol: 'openai')
+  # +restrict_endpoint+ marks a request whose endpoint the *user* chose: the host
+  # is then checked against LlmEndpointPolicy at connect time and the connection
+  # is pinned to the address checked. Admin-configured providers pass false.
+  # rubocop:disable Metrics/ParameterLists -- all keyword args, one per provider field
+  def initialize(base_url:, api_key:, model:, timeout: 120, protocol: 'openai', restrict_endpoint: false)
+    # rubocop:enable Metrics/ParameterLists
     @protocol = PROTOCOLS.include?(protocol.to_s) ? protocol.to_s : 'openai'
     resolved  = base_url.presence || DEFAULT_BASE_URLS[@protocol]
     # A malformed URL is left hostless so #chat reports it as a configuration
@@ -53,6 +58,7 @@ class LlmClient
     @api_key  = api_key
     @model    = model
     @timeout  = timeout
+    @restrict_endpoint = restrict_endpoint
     @last_finish_reason = nil
   end
 
@@ -326,6 +332,13 @@ class LlmClient
     http.use_ssl      = (@uri.scheme == 'https')
     http.read_timeout = @timeout
     http.open_timeout = 10
+    # ipaddr= sets only where the socket connects; Host and SNI still come from
+    # the URI, so the request is unchanged and the name cannot resolve again.
+    http.ipaddr = pinned_address if @restrict_endpoint
     http
+  end
+
+  def pinned_address
+    LlmEndpointPolicy.pinned_address!(@uri.hostname)
   end
 end

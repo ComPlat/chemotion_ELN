@@ -44,6 +44,12 @@ class SdsPdfTextExtractor
   # Fallback cap used when section headers cannot be detected in the document.
   MAX_FALLBACK_CHARS = 50_000
 
+  # Bounds on the Ghostscript subprocess: it reads a user-supplied file.
+  GHOSTSCRIPT_TIMEOUT = 120
+  MAX_RAW_BYTES = 4_000_000
+  MAX_STDERR_BYTES = 4_000
+  READ_CHUNK_BYTES = 64 * 1024
+
   # Matches GHS section headers across the most common SDS languages.
   # Captured group 1 is the section number (1–16).
   #
@@ -120,7 +126,8 @@ class SdsPdfTextExtractor
   private
 
   # Run gs with the txtwrite device, writing output to stdout.
-  # No character limit is applied here; trimming happens afterwards.
+  # Bounded by GHOSTSCRIPT_TIMEOUT and MAX_RAW_BYTES: the file is user-supplied,
+  # and one pathological PDF must not hold a worker or its memory indefinitely.
   def run_ghostscript
     cmd = %W[
       gs
@@ -134,7 +141,7 @@ class SdsPdfTextExtractor
       #{@file_path}
     ]
 
-    stdout, stderr, status = Open3.capture3(*cmd)
+    stdout, stderr, status = capture_bounded(cmd)
 
     unless status.success?
       truncated_err = stderr.to_s.strip.slice(0, 300)
@@ -145,6 +152,41 @@ class SdsPdfTextExtractor
     stdout.strip
   rescue Errno::ENOENT
     raise ExtractionError, 'Ghostscript (gs) is not installed or not in PATH'
+  end
+
+  # popen3 rather than capture3: a deadline needs a handle on the child, and the
+  # output has to be capped as it arrives rather than after it is all in memory.
+  def capture_bounded(cmd)
+    Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
+      stdin.close
+      err_thread = Thread.new { read_capped(stderr, MAX_STDERR_BYTES) }
+      reader     = Thread.new { read_capped(stdout, MAX_RAW_BYTES) }
+
+      unless reader.join(GHOSTSCRIPT_TIMEOUT)
+        terminate(wait_thread.pid)
+        reader.kill
+        raise ExtractionError, "Ghostscript timed out after #{GHOSTSCRIPT_TIMEOUT}s"
+      end
+
+      [reader.value, err_thread.value, wait_thread.value]
+    end
+  end
+
+  # Read until EOF or +limit+ bytes, whichever comes first. Chunked reads come
+  # back binary and the cap can land mid-character, hence the scrub.
+  def read_capped(io, limit)
+    buffer = String.new(encoding: Encoding::BINARY)
+    buffer << io.read(READ_CHUNK_BYTES).to_s while buffer.bytesize < limit && !io.eof?
+    buffer.force_encoding(Encoding::UTF_8).scrub
+  end
+
+  # TERM first, KILL if it is still there: gs cleans up temporary files on TERM.
+  def terminate(pid)
+    Process.kill('TERM', pid)
+    sleep 0.5
+    Process.kill('KILL', pid)
+  rescue Errno::ESRCH
+    nil
   end
 
   # Collapse runs of 2+ spaces on each line to 2 spaces and remove blank lines.

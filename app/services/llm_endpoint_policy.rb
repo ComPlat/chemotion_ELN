@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ipaddr'
+require 'resolv'
 
 # Whether a user-supplied LLM endpoint may be reached on the server's behalf.
 #
@@ -47,7 +48,53 @@ class LlmEndpointPolicy
       ActiveModel::Type::Boolean.new.cast(ENV.fetch(ENV_ALLOW_PRIVATE, nil)).present?
     end
 
+    # The address a restricted request may connect to, checked at connect time
+    # so a name that resolves into the private space is refused even though the
+    # name itself looked fine. Returning the address lets the caller pin the
+    # connection to it, closing the window between this lookup and the client's.
+    #
+    # @return [String, nil] address to connect to, or nil to leave it to the client
+    # @raise [Errors::LlmNotConfiguredError] when the name resolves somewhere private
+    def pinned_address!(host)
+      return nil if host.blank? || private_allowed?
+
+      literal = ip_literal(host)
+      return check_literal!(host, literal) if literal
+
+      check_resolved!(host)
+    end
+
     private
+
+    # A literal is its own answer; nothing to pin.
+    def check_literal!(host, literal)
+      raise_private(host) if reserved?(literal)
+      nil
+    end
+
+    # Every address the name resolves to must be public. The connection is then
+    # pinned to the one checked here, so the client does not look it up again
+    # and get a different answer. An unresolvable name is left to the client,
+    # whose own lookup fails the request in the ordinary way.
+    def check_resolved!(host)
+      addresses = resolve(host)
+      return nil if addresses.empty?
+
+      raise_private(host) if addresses.any? { |address| reserved?(address) }
+      addresses.first.to_s
+    end
+
+    def raise_private(host)
+      raise Errors::LlmNotConfiguredError,
+            "The endpoint #{host} resolves to a private or loopback address, which is " \
+            'reachable only through an institution provider.'
+    end
+
+    def resolve(host)
+      Resolv.getaddresses(host).filter_map { |address| ip_literal(address) }
+    rescue StandardError
+      []
+    end
 
     def usable?(uri)
       uri.present? && ALLOWED_SCHEMES.include?(uri.scheme) && uri.hostname.present?

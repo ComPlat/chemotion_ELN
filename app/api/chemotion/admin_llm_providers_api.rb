@@ -80,7 +80,10 @@ module Chemotion
       namespace :llm_providers do
         desc 'List the institution providers (keys masked)'
         get do
-          { providers: LlmProvider.global_providers.map { |p| present_llm_provider(p) } }
+          # Every institution provider, disabled ones included: the admin list is
+          # where a disabled provider is inspected and re-enabled. global_providers
+          # filters on enabled and belongs to runtime resolution only.
+          { providers: LlmProvider.where(scope: 'global').order(:id).map { |p| present_llm_provider(p) } }
         end
 
         desc 'Add an institution provider'
