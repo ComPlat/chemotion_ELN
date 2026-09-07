@@ -69,4 +69,21 @@ class Matrice < ApplicationRecord
   def clean_invalid_ids
     self.class.where('id > 31').find_each(&:really_destroy!)
   end
+
+  # Replaces the SequenceUtilities callback of the same name (that one is defined
+  # on this class by `included do`, so there is no super to call).
+  #
+  # users.matrix is a 32-bit bitmask of sum(2^id), so an id past 30 overflows it.
+  # SequenceUtilities will not compact from an empty table (last_id 0), which is
+  # what a rolled-back test run leaves behind, so ids climb until the bitmask
+  # breaks. Restart from 1 when there is nothing left to collide with.
+  def reset_sequence
+    return unless self.class.column_type(:id) == :integer
+
+    if self.class.with_deleted.exists?
+      self.class.reset_sequence unless self.class.sequence_val <= self.class.last_id
+    else
+      self.class.connection.execute("SELECT setval('#{self.class.sequence_name}', 1, false);")
+    end
+  end
 end
