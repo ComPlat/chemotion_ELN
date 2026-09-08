@@ -437,8 +437,46 @@ module Export
 
     private
 
-    # Renders all rows (component rows + totals row) for one sample into the composition sheet.
-    def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/MethodLength
+    # Column keys pulled from the SQL result row for each sample.
+    COMPOSITION_SAMPLE_KEYS = [
+      'sample external label',
+      'sample name',
+      'short label',
+      'sample uuid',
+    ].freeze
+
+    # Headers for the calculated composition columns, matching the UI table.
+    COMPOSITION_COMP_HEADERS = [
+      'Source',
+      'Weight ratio exp.',
+      'Molar Mass (g/mol)',
+      'Weight ratio calc./%',
+      'Weight ratio (calc)/MM',
+      'Molar ratio (calc)/MM',
+      'Molar ratio exp/%',
+      'Molar ratio calc/%',
+    ].freeze
+
+    # Generates a composition table sheet replicating all calculations from the frontend
+    # sampleHierarchicalCompositions.js utility. Columns: sample identity + 8 per-component
+    # calculation columns. A bold totals row is appended after each sample's component rows.
+    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
+      @samples = samples
+      return if samples.nil?
+
+      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
+      sheet = @xfile.workbook.add_worksheet(name: table)
+      grey = sheet.styles.add_style(
+        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] },
+      )
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+      sheet.add_row(headers, style: grey)
+      samples.each { |sample| render_composition_sample_rows(sheet, sample, light_grey) }
+      @samples = nil
+    end
+
+    # Renders one sample's rows (component rows + totals row) into the composition sheet.
+    def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/AbcSize
       sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
       components = begin
         JSON.parse(sample['components'] || '[]')
@@ -506,7 +544,8 @@ module Export
     # Accepts an array of HierarchicalMaterial component hashes and returns
     #   { rows: [...], total_molar_calc: Float, total_molar_exp: Float }
     # Each row hash contains the keys consumed by generate_composition_table_components_sheet_with_samples.
-    def build_composition_rows(components) # rubocop:disable Metrics/MethodLength
+    # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def build_composition_rows(components)
       rows_data        = []
       total_molar_calc = 0.0
       total_molar_exp  = 0.0
@@ -536,9 +575,17 @@ module Export
       end
 
       rows_with_percentages = rows_data.map do |row|
-        molar_ratio_calc_percent  = total_molar_calc.positive? ? (row[:molar_ratio_calc_mm] / total_molar_calc).round(3) : '-'
-        molar_ratio_exp_percent   = total_molar_exp.positive?  ? (row[:molar_ratio_exp_mm]  / total_molar_exp).round(3)  : '-'
-        weight_ratio_calc_mm_col9 = row[:molar_mass].positive? ? (row[:weight_ratio_exp] / row[:molar_mass]).round(3) : nil
+        molar_ratio_calc_percent = if total_molar_calc.positive?
+                                     (row[:molar_ratio_calc_mm] / total_molar_calc).round(3)
+                                   else
+                                     '-'
+                                   end
+        molar_ratio_exp_percent = if total_molar_exp.positive?
+                                    (row[:molar_ratio_exp_mm] / total_molar_exp).round(3)
+                                  else
+                                    '-'
+                                  end
+        weight_ratio_calc_mm_col9 = (row[:weight_ratio_exp] / row[:molar_mass]).round(3) if row[:molar_mass].positive?
 
         row.merge(
           molar_ratio_calc_mm: row[:molar_ratio_calc_mm].round(3),
@@ -551,6 +598,7 @@ module Export
       sorted = rows_with_percentages.sort_by { |r| r[:weight_ratio_calc_processed].to_f }
       { rows: sorted, total_molar_calc: total_molar_calc.round(3), total_molar_exp: total_molar_exp.round(3) }
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   end
 end
 # rubocop:enable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

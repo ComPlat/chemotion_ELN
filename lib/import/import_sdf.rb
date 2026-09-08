@@ -460,6 +460,38 @@ class Import::ImportSdf < Import::ImportSamples
     sample
   end
 
+  # HierarchicalMaterial subtype columns. Float dimensions are routed through the shared
+  # coercer so a cell like '12,5' or '12 mm' reads the same from an SDF as from a
+  # spreadsheet -- an unreadable value is reported by the coercer instead of falling silently
+  # to 0.0. String columns and the mirrored xref/color pair are copied as-is.
+  HM_FLOAT_COLUMNS = %w[height width length diameter].freeze
+  HM_STRING_COLUMNS = %w[
+    storage_condition material cspi particle_size shape sieve_fraction
+    layer_thickness liquid_medium stabilizer
+  ].freeze
+  # Columns that surface in the sample form's "additional properties" picker. Kept out of the
+  # required-columns set: what the user chose to fill on export is what re-appears on import.
+  HM_ADDITIONAL_PROPERTY_KEYS = %w[
+    sieve_fraction height diameter width length material cspi particle_size shape
+    layer_thickness liquid_medium stabilizer
+  ].freeze
+
+  def assign_hierarchical_material_columns(sample, row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
+    HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
+    sample['state'] = row['state'] if row['state'].present?
+    if row['color'].present?
+      sample['color'] = row['color']
+      sample['xref']['color'] = row['color']
+    end
+
+    selected_props = HM_ADDITIONAL_PROPERTY_KEYS.select { |k| row[k].to_s.strip.present? }
+    return if selected_props.empty?
+
+    sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
+  end
+
+
   # Columns copied across as-is, plus the xref sub-hash ones.
   def assign_plain_columns(sample, row)
     %w[description location external_label name short_label dry_solvent].each do |key|
