@@ -219,6 +219,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
       },
     },
     state: { lockEquivColumn },
+    computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
   });
 
   const makeSolvent = (overrides = {}) => ({

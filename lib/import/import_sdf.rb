@@ -475,7 +475,7 @@ class Import::ImportSdf < Import::ImportSamples
     layer_thickness liquid_medium stabilizer
   ].freeze
 
-  def assign_hierarchical_material_columns(sample, row)
+  def assign_hierarchical_material_columns(sample, row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
     HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
     sample['state'] = row['state'] if row['state'].present?

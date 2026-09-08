@@ -26,7 +26,7 @@ POLYMER_TEXTNODE_MOLFILE = Rails.root.join('spec/fixtures/files/polymer_with_tex
 # Plain (non-polymer) CTAB. Ketcher will sometimes append an empty
 # "> <PolymersList>" block to this shape; PR #3533 on main guards against
 # writing/keeping that empty block. Used by the empty-tag regression spec.
-PLAIN_CTAB_MOLFILE = <<~MOL.freeze
+PLAIN_CTAB_MOLFILE = <<~MOL
 
 
     Ketcher 01010100002D
@@ -452,13 +452,13 @@ describe 'Polymer Surface Chemistry' do
       end
     end
 
-    describe 'Legacy layout: "> <PolymersList>" ahead of "M  END"' do
+    describe 'Legacy layout: "> <PolymersList>" ahead of "M END"' do
       before do
         skip 'requires main: MolfilePolymerSupport.polymers_list_payload' unless
           Chemotion::MolfilePolymerSupport.respond_to?(:polymers_list_payload)
       end
 
-      it 'extracts the payload without swallowing the M  END marker' do
+      it 'extracts the payload without swallowing the M END marker' do
         payload = Chemotion::MolfilePolymerSupport.polymers_list_payload(POLYMER_LEGACY_MOLFILE)
         expect(payload).not_to be_empty
         expect(payload).not_to include('M  END')
@@ -500,7 +500,7 @@ describe 'Polymer Surface Chemistry' do
       expect(sample.sample_type).to eq('HierarchicalMaterial')
     end
 
-    it 'persists the hierarchical property columns through save + reload' do
+    it 'persists the hierarchical property columns through save + reload' do # rubocop:disable RSpec/MultipleExpectations
       sample = create(:sample, name: 'HM props', creator: user, molecule: molecule)
       sample.sample_type = 'HierarchicalMaterial'
       sample.assign_attributes(

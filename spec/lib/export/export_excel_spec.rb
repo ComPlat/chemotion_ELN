@@ -118,7 +118,7 @@ RSpec.describe 'Export::ExportExcel' do
         expect(result[:total_molar_exp]).to eq(0.0)
       end
 
-      it 'builds one row and totals for a single component with % and molar_mass' do
+      it 'builds one row and totals for a single component with % and molar_mass' do # rubocop:disable RSpec/MultipleExpectations
         comps = [{ 'source' => '60% Pd', 'weight_ratio_exp' => 60.0, 'molar_mass' => 106.4 }]
         result = exporter.send(:build_composition_rows, comps)
         expect(result[:rows].size).to eq(1)
@@ -153,14 +153,17 @@ RSpec.describe 'Export::ExportExcel' do
 
     describe '#generate_composition_table_components_sheet_with_samples' do
       it 'does nothing when samples is nil' do
-        expect { exporter.generate_composition_table_components_sheet_with_samples('composition_table', nil) }.not_to raise_error
+        expect do
+          exporter.generate_composition_table_components_sheet_with_samples('composition_table', nil)
+        end.not_to raise_error
         xfile = exporter.instance_variable_get(:@xfile)
         expect(xfile.workbook.worksheets.map(&:name)).not_to include('composition_table')
       end
 
       it 'adds one row per sample when samples have no HierarchicalMaterial components' do
         samples = [
-          { 'sample uuid' => 'uuid-1', 'sample name' => 'S1', 'short label' => 'S1', 'sample external label' => 'E1', 'components' => '[]' },
+          { 'sample uuid' => 'uuid-1', 'sample name' => 'S1', 'short label' => 'S1', 'sample external label' => 'E1',
+            'components' => '[]' },
         ]
         exporter.generate_composition_table_components_sheet_with_samples('sample_composition_table', samples)
         xfile = exporter.instance_variable_get(:@xfile)
@@ -178,8 +181,10 @@ RSpec.describe 'Export::ExportExcel' do
             'short label' => 'S1',
             'sample external label' => 'E1',
             'components' => [
-              { 'name' => 'HierarchicalMaterial', 'source' => '50% Pd', 'weight_ratio_exp' => 50.0, 'molar_mass' => 106.4 },
-              { 'name' => 'HierarchicalMaterial', 'source' => '50% support', 'weight_ratio_exp' => 50.0, 'molar_mass' => 200.0 },
+              { 'name' => 'HierarchicalMaterial', 'source' => '50% Pd', 'weight_ratio_exp' => 50.0,
+                'molar_mass' => 106.4 },
+              { 'name' => 'HierarchicalMaterial', 'source' => '50% support', 'weight_ratio_exp' => 50.0,
+                'molar_mass' => 200.0 },
             ].to_json,
           },
         ]

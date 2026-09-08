@@ -264,6 +264,7 @@ module Import
     # Parses the sample_composition_table sheet (when present) into @composition_table_data.
     # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
     # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
     def parse_composition_table_data
       return unless xlsx.sheets.include?('sample_composition_table')
 
@@ -300,6 +301,7 @@ module Import
         }
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
 
     def valid_component_data?(component_attributes)
       component_attributes.values.any? { |v| !v.nil? && v != '' } && structure?(component_attributes)
@@ -1158,7 +1160,7 @@ module Import
       chemical.save!
     end
 
-    def validate_sample_and_save(sample, stereo, row, _index = nil)
+    def validate_sample_and_save(sample, stereo, row, index = nil)
       handle_sample_solvent_column(sample, row)
       normalize_amount_units(sample, row)
       sample.validate_stereo(stereo)
@@ -1244,7 +1246,7 @@ module Import
     # NB: always called nested inside #write_to_db's row loop (via
     # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
     # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
-    def apply_composition_table_data(sample, sample_row)
+    def apply_composition_table_data(sample, sample_row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
       return if sample_uuid.blank?
 
