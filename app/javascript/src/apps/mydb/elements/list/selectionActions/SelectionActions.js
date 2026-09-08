@@ -144,6 +144,7 @@ export default class SelectionActions extends React.Component {
           title="Move to Collection"
           action="move"
           withShared={true}
+          withRepository={true}
           onHide={this.hideModal}
         />;
 
@@ -152,6 +153,7 @@ export default class SelectionActions extends React.Component {
           title="Assign to Collection"
           action="assign"
           withShared={false}
+          withRepository={true}
           onHide={this.hideModal}
         />;
 

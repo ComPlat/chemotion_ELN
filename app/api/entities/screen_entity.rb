@@ -2,8 +2,11 @@
 
 module Entities
   class ScreenEntity < ApplicationEntity
+    include NestedElementPolicy
+
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
+      expose! :can_update,                          unless: :displayed_in_list
       expose! :id
       expose! :type
       expose! :name
@@ -61,7 +64,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # Screen.includes_for_list_display) is counted in memory, avoiding an
+      # N+1 COUNT(*) query per screen in the list endpoint.
+      object.comments.size
     end
   end
 end

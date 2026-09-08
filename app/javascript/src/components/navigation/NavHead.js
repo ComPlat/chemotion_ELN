@@ -12,7 +12,7 @@ function NavHead() {
           Documentation
           <i className="fa fa-external-link float-end" aria-hidden="true" />
         </NavDropdown.Item>
-        <NavDropdown.Item as="a" eventKey="14" href="https://chemotion.net/search" target="_blank">
+        <NavDropdown.Item as="a" eventKey="14" href="https://chemotion.net/docs/search" target="_blank">
           Search documentation
           <i className="fa fa-external-link float-end" aria-hidden="true" />
         </NavDropdown.Item>

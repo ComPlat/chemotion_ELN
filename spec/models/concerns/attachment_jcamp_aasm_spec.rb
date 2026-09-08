@@ -75,10 +75,22 @@ RSpec.describe AttachmentJcampAasm do
         expect(extension_parts.count).to eq(2)
       end
 
-      it 'extension parts are nil' do
+      it 'extension parts are blank' do
         extension_parts = att_jcamp_aasm.extension_parts
-        expect(extension_parts[0]).to be_nil
-        expect(extension_parts[1]).to be_nil
+        expect(extension_parts[0]).to eq('')
+        expect(extension_parts[1]).to eq('')
+      end
+    end
+
+    context 'when file name is nil' do
+      before do
+        att_jcamp_aasm.instance_variable_set(:@filename, nil)
+      end
+
+      it 'returns blank extension parts instead of raising' do
+        extension_parts = att_jcamp_aasm.extension_parts
+        expect(extension_parts[0]).to eq('')
+        expect(extension_parts[1]).to eq('')
       end
     end
 
@@ -94,7 +106,7 @@ RSpec.describe AttachmentJcampAasm do
 
       it 'extension parts' do
         extension_parts = att_jcamp_aasm.extension_parts
-        expect(extension_parts[0]).to be_nil
+        expect(extension_parts[0]).to eq('')
         expect(extension_parts[1]).to eq(filename_1_part)
       end
     end

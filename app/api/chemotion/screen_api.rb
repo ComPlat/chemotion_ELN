@@ -10,7 +10,7 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :screens do
-      desc 'Return serialized screens'
+      desc "Return serialized screens. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -23,17 +23,8 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        screen_scope = Screen.none
-        if params[:collection_id]
-          begin
-            screen_scope = Collection.accessible_for(current_user).find(params[:collection_id]).screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        else
-          # All collection of current_user
-          screen_scope = Screen.for_user(current_user.id).distinct
-        end
+        resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
+        screen_scope = screen_scope.includes_for_list_display
 
         from = params[:from_date]
         to = params[:to_date]
@@ -48,10 +39,14 @@ module Chemotion
 
         reset_pagination_page(screen_scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         screens = paginate(screen_scope).map do |screen|
           Entities::ScreenEntity.represent(
             screen,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            detail_levels: detail_levels,
             displayed_in_list: true,
           )
         end
@@ -74,6 +69,7 @@ module Chemotion
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
+            policy: policy,
           )
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
@@ -86,6 +82,7 @@ module Chemotion
 
           post do
             screen = Screen.find(params[:id])
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, screen).update?
             collection = current_user.collections.find(params[:collection_id])
             number = screen.research_plans.size + 1
             screen.research_plans << ResearchPlan.new(
@@ -95,7 +92,9 @@ module Chemotion
               name: "New Research Plan #{number} for #{screen.name}",
             )
 
-            present screen, with: Entities::ScreenEntity, root: :screen
+            present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
+          rescue ActiveRecord::RecordNotFound
+            error!('404 Not Found', 404)
           end
         end
       end
@@ -121,7 +120,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Screen.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Screen.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -151,6 +151,7 @@ module Chemotion
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
+            policy: @element_policy,
           )
         end
       end
@@ -208,7 +209,7 @@ module Chemotion
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
 
-        present screen, with: Entities::ScreenEntity, root: :screen
+        present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
       end
     end
   end

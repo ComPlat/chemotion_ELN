@@ -12,7 +12,7 @@ module Chemotion
     helpers LiteratureHelpers
 
     namespace :research_plans do
-      desc 'Return serialized research plans of current user'
+      desc "Return serialized research plans of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -22,16 +22,8 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        if params[:collection_id]
-          begin
-            scope = Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            scope = ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-        end.order('research_plans.created_at DESC')
+        resolved_collection, scope = collection_scope_for(params[:collection_id], ResearchPlan, :research_plans)
+        scope = scope.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -47,11 +39,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         research_plans = paginate(scope).map do |research_plan|
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 
@@ -100,7 +96,8 @@ module Chemotion
         research_plan.collections << all_coll if all_coll && research_plan.collections.exclude?(all_coll)
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
-        present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan
+        @element_policy = ElementPolicy.new(current_user, research_plan)
+        present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan, policy: @element_policy
       end
 
       namespace :table_schemas do
@@ -158,8 +155,8 @@ module Chemotion
       route_param :id do
         get do
           research_plan = ResearchPlan.find(params[:id])
-          policy = ElementPolicy.new(current_user, research_plan)
-          error!('401 Unauthorized', 401) unless policy.read?
+          @element_policy = ElementPolicy.new(current_user, research_plan)
+          error!('401 Unauthorized', 401) unless @element_policy.read?
           # TODO: Refactor this massively ugly fallback to be in a more convenient place
           # (i.e. the entity or maybe return a null element from the model)
           if research_plan.research_plan_metadata.nil?
@@ -198,7 +195,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, ResearchPlan.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -216,7 +214,11 @@ module Chemotion
           research_plan.reload
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
           {
-            research_plan: Entities::ResearchPlanEntity.represent(research_plan, detail_levels: detail_levels),
+            research_plan: Entities::ResearchPlanEntity.represent(
+              research_plan,
+              detail_levels: detail_levels,
+              policy: @element_policy,
+            ),
             attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             literatures: Entities::LiteratureEntity.represent(
               citation_for_elements(research_plan.id, 'ResearchPlan'),
@@ -339,7 +341,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, ResearchPlan.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
           error!('401 Unauthorized', 401) unless ElementPolicy.new(
             current_user, Wellplate.find(params[:wellplate_id])
           ).read?
@@ -358,6 +361,7 @@ module Chemotion
                 detail_levels: ElementDetailLevelCalculator.new(
                   user: current_user, element: research_plan,
                 ).detail_levels,
+                policy: @element_policy,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
@@ -375,7 +379,8 @@ module Chemotion
       route_param :id do
         before do
           research_plan = ResearchPlan.find(params[:id])
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, research_plan).update?
+          @element_policy = ElementPolicy.new(current_user, research_plan)
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         post 'import_table/:attachment_id' do
@@ -391,6 +396,7 @@ module Chemotion
                 detail_levels: ElementDetailLevelCalculator.new(
                   user: current_user, element: research_plan,
                 ).detail_levels,
+                policy: @element_policy,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }

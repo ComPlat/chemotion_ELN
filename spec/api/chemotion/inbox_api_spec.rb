@@ -129,6 +129,34 @@ describe Chemotion::InboxAPI do
         end
       end
 
+      describe 'get reactions by a filename with an upper-case variation suffix' do
+        let(:search_string) { 'R23-V2.pdf' }
+
+        before { get "/api/v1/inbox/reactions?search_string=#{search_string}" }
+
+        it 'strips the suffix consistently with the case-insensitive variation extraction' do
+          json = JSON.parse(response.body)
+          expect(json['reactions'].size).to eq(2)
+          expect(json['reactions'].first['variation']).to eq('2')
+        end
+      end
+
+      describe 'get reactions by a filename with a variation suffix followed by more text' do
+        let!(:reaction_with_suffix) { create(:reaction, name: 'JB-R99-old', creator: user) }
+        let(:search_string) { 'R99-v5-old.pdf' }
+
+        before do
+          CollectionsReaction.create!(reaction: reaction_with_suffix, collection: collection)
+          get "/api/v1/inbox/reactions?search_string=#{search_string}"
+        end
+
+        it 'strips only the variation marker, not the trailing text, and still finds the reaction' do
+          json = JSON.parse(response.body)
+          expect(json['reactions'].size).to eq(1)
+          expect(json['reactions'].first['variation']).to eq('5')
+        end
+      end
+
       # /api/v1/inbox/reactions/:reaction_id?analyses_id=:analyses_id
       describe 'assign attachment to to reaction' do
         let(:inbox_container) { create(:inbox_container_with_attachments) }

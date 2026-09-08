@@ -6,9 +6,12 @@ module Chemotion
     resource :messages do
       desc 'Get message configuration'
       get 'config' do
+        # Floors protect every client from a misconfigured .env driving a runaway polling loop —
+        # regardless of what MESSAGE_AUTO_INTERNAL/MESSAGE_IDLE_TIME are set to (including non-numeric
+        # garbage, which .to_i coerces to 0), the served values can never go below these.
         { messageEnable: ENV['MESSAGE_ENABLE'] || 'true',
-          messageAutoInterval: (ENV['MESSAGE_AUTO_INTERNAL'] || 6000).to_i,
-          idleTimeout: (ENV['MESSAGE_IDLE_TIME'] || 12).to_i }
+          messageAutoInterval: [(ENV['MESSAGE_AUTO_INTERNAL'] || 6000).to_i, 500].max,
+          idleTimeout: [(ENV['MESSAGE_IDLE_TIME'] || 12).to_i, 5].max }
       end
 
       desc 'Return messages of the current user'
@@ -21,11 +24,20 @@ module Chemotion
         message_list = present(messages, with: Entities::MessageEntity, root: 'messages')
         message_list[:version] = ENV['VERSION_ASSETS'] if ENV['VERSION_ASSETS']
 
-        # .ids does not work here as it uses the primary key which the database view notify_messages does not have
-        channel_5_ids = messages.where(channel_type: 5).pluck(:id)
-        Notification.where(id: channel_5_ids).find_each do |notification|
-          notification.update!(is_ack: 1)
-        end
+        # .ids does not work here as it uses the primary key which the database view notify_messages does not have.
+        # A notification whose content is flagged silent (see CollectionShareNotifier) is delivered so
+        # the frontend can act on it, but must not sit "unread" waiting for a toast dismiss that will
+        # never come — auto-ack it the same way channel 5 already is. update_all (unlike update!)
+        # doesn't auto-touch updated_at, so it's set explicitly to keep that parity.
+        auto_ack_ids = messages.where(channel_type: 5)
+                               .or(messages.where("content ->> 'silent' = 'true'"))
+                               .pluck(:id)
+        # Notification has no validations/callbacks (belongs_to :message/:user only), so update_all
+        # is behaviorally identical to a per-row update! here — see the identical justification on
+        # Usecases::Collections::UpdateTree's own Rails/SkipsModelValidations disable.
+        # rubocop:disable Rails/SkipsModelValidations
+        Notification.where(id: auto_ack_ids).update_all(is_ack: 1, updated_at: Time.current) if auto_ack_ids.any?
+        # rubocop:enable Rails/SkipsModelValidations
       end
 
       desc 'Return spectra messages of the current user'

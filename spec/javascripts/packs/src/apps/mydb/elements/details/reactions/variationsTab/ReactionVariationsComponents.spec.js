@@ -1,10 +1,19 @@
+import React from 'react';
 import expect from 'expect';
+import sinon from 'sinon';
+import { configure, mount } from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { sanitizeGroupEntry } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
-  SegmentParser, SegmentFormatter
+  SegmentParser, SegmentFormatter, GroupCellEditor
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import {
+  computeCombinedReactionVolume
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
+
+configure({ adapter: new Adapter() });
 
 describe('ReactionVariationsComponents', async () => {
   describe('FormatterComponents', () => {
@@ -19,6 +28,12 @@ describe('ReactionVariationsComponents', async () => {
       const colDef = { entry: 'amount', displayUnit: 'mmol' };
 
       expect(MaterialFormatter({ value: cellData, colDef })).toEqual(1235);
+    });
+    it('MaterialFormatter returns placeholder for missing legacy entries', () => {
+      const cellData = { amount: { value: 1.2345, unit: 'mol' } };
+      const colDef = { entry: 'concentration', displayUnit: 'mol/l' };
+
+      expect(MaterialFormatter({ value: cellData, colDef })).toEqual('_');
     });
     it('SegmentFormatter returns number string with correct precision', () => {
       const entryName = 'layer<foo>field<bar>';
@@ -235,6 +250,117 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.yield.value).toBeCloseTo(9.455);
     });
+    it('adapts amount, mass and volume when updating concentration', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBe(20);
+      expect(updatedCellData.mass.value).toBeGreaterThan(0);
+      expect(updatedCellData.volume.value).toBeDefined();
+    });
+    it('keeps amount, mass and volume unchanged when concentration updates while volume is unlocked', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: false,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const baseCellData = {
+        ...cellData,
+        concentration: { value: 1, unit: 'mol/l' }
+      };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: baseCellData,
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBe(baseCellData.amount.value);
+      expect(updatedCellData.mass.value).toBe(baseCellData.mass.value);
+      expect(updatedCellData.volume.value).toBe(baseCellData.volume.value);
+    });
+    it('derives amount from row combined volume when reaction volume is locked and not explicitly used', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: false,
+          reactionVolumeByRowId: {},
+        }
+      };
+      const firstStartingMaterial = Object.values(variationsRow.startingMaterials)[0];
+      const firstReactant = Object.values(variationsRow.reactants)[0];
+      firstStartingMaterial.volume.value = 2;
+      firstReactant.volume.value = 3;
+
+      const rowCombinedReactionVolume = computeCombinedReactionVolume(variationsRow);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBeCloseTo(2 * rowCombinedReactionVolume);
+      expect(updatedCellData.mass.value).toBeGreaterThan(0);
+      expect(updatedCellData.volume.value).toBeDefined();
+    });
+    it('backfills missing legacy concentration entry when editing concentration', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 2, unit: 'mol/l' });
+      expect(updatedCellData.amount.value).toBe(20);
+    });
   });
   describe('FeedstockParser', async () => {
     let variationsRow;
@@ -290,6 +416,40 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
       expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
     });
+    it('adapts mass, amount, volume and equivalent when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const updatedCellData = FeedstockParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.amount.value).toBe(20);
+      expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
+      expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
+      expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
+    });
+    it('backfills missing legacy concentration entry when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = FeedstockParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '2',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 2, unit: 'mol/l' });
+      expect(updatedCellData.amount.value).toBe(20);
+    });
   });
   describe('GasParser', async () => {
     let variationsRow;
@@ -336,6 +496,22 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
       expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
       expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
+    });
+    it('backfills missing legacy concentration entry when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'ppm' };
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = GasParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '20000',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 20000, unit: 'ppm' });
+      expect(updatedCellData.amount.value).toBeGreaterThan(0);
     });
     it('adapts other entries when updating temperature', () => {
       const colDef = { field: 'foo.bar', entry: 'temperature', displayUnit: 'K' };
@@ -418,6 +594,56 @@ describe('ReactionVariationsComponents', async () => {
       expect(sanitizeGroupEntry('1..')).toBe('1.');
       expect(sanitizeGroupEntry('01.1')).toBe('1.1');
       expect(sanitizeGroupEntry('1.01')).toBe('1.1');
+    });
+    describe('key handling', () => {
+      let onValueChange;
+      let stopEditing;
+      let wrapper;
+
+      beforeEach(() => {
+        onValueChange = sinon.spy();
+        stopEditing = sinon.spy();
+        wrapper = mount(
+          React.createElement(GroupCellEditor, {
+            value: { group: 1, subgroup: 1 },
+            onValueChange,
+            stopEditing,
+          })
+        );
+        wrapper.find('input').simulate('change', { target: { value: '9.1' } });
+      });
+
+      afterEach(() => {
+        wrapper.unmount();
+      });
+
+      it('commits the edit on Enter', () => {
+        const preventDefault = sinon.spy();
+        wrapper.find('input').simulate('keydown', { key: 'Enter', preventDefault });
+
+        expect(preventDefault.calledOnce).toBe(true);
+        expect(stopEditing.calledOnce).toBe(true);
+      });
+      it('leaves Escape to ag-grid, which cancels rather than commits the edit', () => {
+        const preventDefault = sinon.spy();
+        wrapper.find('input').simulate('keydown', { key: 'Escape', preventDefault });
+
+        // Calling `stopEditing()` would commit the in-progress value, and `preventDefault()`
+        // would keep ag-grid's own handler from ever seeing the key.
+        expect(preventDefault.called).toBe(false);
+        expect(stopEditing.called).toBe(false);
+      });
+      it('commits the edit when focus moves away without Enter or Escape', () => {
+        wrapper.find('input').simulate('blur');
+
+        expect(stopEditing.calledOnce).toBe(true);
+      });
+      it('does not commit on the blur that follows an Escape cancel', () => {
+        wrapper.find('input').simulate('keydown', { key: 'Escape', preventDefault: sinon.spy() });
+        wrapper.find('input').simulate('blur');
+
+        expect(stopEditing.called).toBe(false);
+      });
     });
   });
 });

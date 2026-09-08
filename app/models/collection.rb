@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/HasManyOrHasOneDependent
+# rubocop:disable Rails/HasManyOrHasOneDependent, Metrics/ClassLength
 
 # == Schema Information
 #
@@ -65,9 +65,12 @@ class Collection < ApplicationRecord
 
   delegate :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
 
+  # +is_locked+ is nullable with no NOT NULL constraint, and a NULL there is as unlocked as a
+  # false, so the two scopes are written to partition every row between them: +where(is_locked:
+  # false)+ would silently drop the NULL rows from both.
   scope :locked, -> { where(is_locked: true) }
   scope :ordered, -> { order('position ASC') }
-  scope :unlocked, -> { where(is_locked: false) }
+  scope :unlocked, -> { where('collections.is_locked IS NOT TRUE') }
 
   scope(
     :shared_with_more_than_one_user,
@@ -85,11 +88,10 @@ class Collection < ApplicationRecord
   scope(
     :accessible_for,
     lambda do |user|
-      user_and_group_ids = [user.id, *user.group_ids]
       left_joins(:collection_shares)
       .left_joins(:inventory)
-      .where(user_id: user_and_group_ids)
-      .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
+      .where(user_id: user.id)
+      .or(where(collection_shares: { shared_with_id: [user.id, *user.group_ids] }))
       .distinct
     end,
   )
@@ -101,14 +103,13 @@ class Collection < ApplicationRecord
   scope(
     :writable_by,
     lambda do |user|
-      user_and_group_ids = [user.id, *user.group_ids]
       left_joins(:collection_shares)
       .left_joins(:inventory)
-      .where(user_id: user_and_group_ids)
+      .where(user_id: user.id)
       .or(
         where(
           collection_shares: {
-            shared_with_id: user_and_group_ids,
+            shared_with_id: [user.id, *user.group_ids],
             permission_level: CollectionShare.permission_level(:add_elements)..,
           },
         ),
@@ -117,20 +118,25 @@ class Collection < ApplicationRecord
     end,
   )
 
-  # temp for labimotion
+  # temp for labimotion — no caller in this app or in the labimotion gem; kept in step with
+  # +accessible_for+ so it cannot become the one place where a group still counts as an owner.
   scope(
     :belongs_to_or_shared_by,
     lambda do |user_ids, group_ids|
-      user_and_group_ids = [user_ids, group_ids]
       left_joins(:collection_shares)
       .left_joins(:inventory)
-      .where(user_id: user_and_group_ids)
-      .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
+      .where(user_id: user_ids)
+      .or(where(collection_shares: { shared_with_id: [user_ids, group_ids] }))
       .distinct
     end,
   )
 
-  scope :own_collections_for, ->(user) { left_joins(:inventory).where(user_id: [user.id, *user.group_ids]) }
+  # Ownership is personal. A collection owned by a *group* is not owned by its members: they reach
+  # it, like anyone else, through a CollectionShare addressed to them or to one of their groups
+  # (+shared_collections_for+, +CollectionShare.shared_with+). Widening this to the user's groups
+  # would make every member able to rename, delete, re-parent and re-share the group's collections,
+  # and would pull the group's system-locked rows into each member's tree payload.
+  scope :own_collections_for, ->(user) { left_joins(:inventory).where(user_id: user.id) }
   scope(
     :serialized_own_collections_for,
     lambda do |user|
@@ -256,6 +262,23 @@ class Collection < ApplicationRecord
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
 
+  # Resolves +collection_id+ against +user+'s access under +scope+ (e.g. :writable_by,
+  # :accessible_for — any class-level scope that takes a user and returns a Collection
+  # relation). Consolidates what were two near-identical Grape helpers
+  # (writable_collection_for/readable_collection_for in CollectionHelpers) that differed only
+  # in which scope they queried — a real permission-level difference between the two scopes,
+  # not incidental duplication, so keep the distinction but share the lookup.
+  #
+  # @param user [User]
+  # @param collection_id [Integer, nil]
+  # @param scope [Symbol] a Collection class method/scope name
+  # @return [Collection, nil]
+  def self.resolve_for(user, collection_id, scope:)
+    return nil if collection_id.blank?
+
+    public_send(scope, user).find_by(id: collection_id)
+  end
+
   # The keys {#detail_levels_for_user} resolves. Extend when a new element type gains a detail level.
   DETAIL_LEVEL_KEYS = %i[
     permission_level
@@ -273,10 +296,10 @@ class Collection < ApplicationRecord
   # The level granted to an owner. Above every real rung, so an owner passes any threshold.
   OWNER_LEVEL = 10
 
-  # A collection owned by a group belongs to each of its members, which is how +own_collections_for+,
-  # +accessible_for+ and +writable_by+ all read it.
+  # Owned means owned by this user personally, matching +own_collections_for+. A group's collection
+  # is the group's; a member reaches it through a share, not through membership.
   def owned_by?(user)
-    user_id.in?([user.id, *user.group_ids])
+    user_id == user.id
   end
 
   # What +user+ effectively gets on this collection.
@@ -322,4 +345,4 @@ class Collection < ApplicationRecord
                    .pluck(:collection_id)
   end
 end
-# rubocop:enable Rails/HasManyOrHasOneDependent
+# rubocop:enable Rails/HasManyOrHasOneDependent, Metrics/ClassLength

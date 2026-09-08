@@ -219,7 +219,14 @@ module ParamsHelpers
     end
   end
 
-  # Back to page one if the clicked page number > total page number
+  # Back to page one if the clicked page number > total page number.
+  #
+  # Returns scope.size (the total record count computed to decide the page
+  # reset). sample_api.rb's default sort branch relies on this return value
+  # as its samples_count, to avoid recomputing the count with a second
+  # query (see 31c9bcc75) -- every other caller invokes this as a bare
+  # statement and ignores it, so keep computing/returning the same
+  # total_recs even if the reset logic above changes.
   def reset_pagination_page(scope)
     your_page = params[:page]
     per_page_recs = params[:per_page]
@@ -230,6 +237,7 @@ module ParamsHelpers
     your_page = 1 if total_recs.positive? && your_page > total_page
 
     params[:page] = your_page
+    total_recs
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/BlockLength

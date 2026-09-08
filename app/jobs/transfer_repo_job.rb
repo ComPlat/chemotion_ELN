@@ -28,6 +28,9 @@ class TransferRepoJob < ApplicationJob
   end
 
   def payload(collection_id)
+    # No current_user_id, intentionally: gate: true skips fetch_research_plans entirely (see
+    # Export::ExportCollections#prepare_data), so no research plan body ever gets processed here
+    # and there is nothing for an exporting user to gate sample/reaction link conversion on.
     export = Export::ExportCollections.new(job_id, [collection_id], 'zip', false, true)
     export.prepare_data
     data_file_path = export.to_file

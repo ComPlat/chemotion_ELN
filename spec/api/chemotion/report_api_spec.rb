@@ -44,6 +44,43 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'GET /api/v1/reports/docx authorization' do
+      let!(:foreign_collection) { create(:collection, user_id: other.id) }
+      let!(:foreign_reaction) { create(:reaction, collections: [foreign_collection]) }
+
+      it 'rejects a reaction the user may not read (no share / not owned)' do
+        get '/api/v1/reports/docx', params: { id: foreign_reaction.id.to_s }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'still serves a reaction the user owns' do
+        get '/api/v1/reports/docx', params: { id: r1.id.to_s }
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    describe 'POST /api/v1/reports authorization' do
+      let!(:foreign_collection) { create(:collection, user_id: other.id) }
+      let!(:foreign_reaction) { create(:reaction, collections: [foreign_collection]) }
+      let(:report_params) do
+        {
+          objTags: [{ id: foreign_reaction.id, type: 'reaction' }],
+          splSettings: [], rxnSettings: [], siRxnSettings: [], configs: [],
+          molSerials: [], prdAtts: [], imgFormat: 'png',
+          fileName: 'ELN', templateId: 'standard'
+        }
+      end
+
+      it 'rejects objTags the user may not read and creates no report' do
+        expect { post '/api/v1/reports', params: report_params, as: :json }
+          .not_to change(Report, :count)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     describe 'export_samples_from_selections as SDfiles' do
       let(:c) { create(:collection, user_id: user.id) }
       let(:molfiles) do
@@ -170,6 +207,25 @@ describe Chemotion::ReportAPI do
         expect(response.body).to include('SBMM SDF sample')
         expect(response.body).to include('>  <SHORT_LABEL>')
         expect(response.body).to include('SBMM-SDF-1')
+      end
+
+      it 'exports chemical columns as SDF when only chemicals columns are selected (report_api.rb chemicals guard)' do
+        chemical = create(:chemical, sample: samples[0], chemical_data: [{ 'status' => 'ordered' }])
+
+        chem_params = params.deep_dup
+        chem_params[:uiState][:sample][:checkedIds] = [chemical.sample_id]
+        chem_params[:columns][:sample] = []
+        chem_params[:columns][:chemicals] = ['status']
+
+        post(
+          '/api/v1/reports/export_samples_from_selections',
+          params: chem_params.to_json,
+          headers: { 'CONTENT-TYPE' => 'application/json' },
+        )
+
+        expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+        expect(response.body).to include('>  <STATUS>')
+        expect(response.body).to include('ordered')
       end
     end
 

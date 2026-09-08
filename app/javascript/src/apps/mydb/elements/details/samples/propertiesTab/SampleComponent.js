@@ -585,24 +585,27 @@ class SampleComponent extends Component {
     const isConcentrationLocked = lockedComponents.includes(material.id);
 
     return (
-      <td style={{ verticalAlign: 'top', display: 'flex', alignItems: 'center' }}>
-        {this.renderLockButton(
-          material,
-          isConcentrationLocked,
-          () => this.handleConcentrationLockToggle(material, isConcentrationLocked)
-        )}
+      <td className="total-conc-cell">
+        <div className="total-conc-input">
+          {this.renderLockButton(
+            material,
+            isConcentrationLocked,
+            () => this.handleConcentrationLockToggle(material, isConcentrationLocked)
+          )}
 
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.concn}
-          unit="mol/l"
-          metricPrefix={metricMolConc}
-          metricPrefixes={metricPrefixesMolConc}
-          precision={4}
-          disabled={!permitOn(sample) || isConcentrationLocked}
-          onChange={(e) => this.handleAmountChange(e, material.concn, 'targetConc', isConcentrationLocked)}
-          onMetricsChange={this.handleMetricsChange}
-        />
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            className="flex-grow-1"
+            value={material.concn}
+            unit="mol/l"
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
+            precision={4}
+            disabled={!permitOn(sample) || isConcentrationLocked}
+            onChange={(e) => this.handleAmountChange(e, material.concn, 'targetConc', isConcentrationLocked)}
+            onMetricsChange={this.handleMetricsChange}
+          />
+        </div>
       </td>
     );
   }

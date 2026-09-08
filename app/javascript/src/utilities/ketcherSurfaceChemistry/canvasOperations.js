@@ -92,7 +92,15 @@ const arrangePolymers = async (canvasData, editor, ketData = null) => {
   const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
   const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
+  // ctabLinesOnly drops any pre-existing PolymersList/TextNode blocks so a re-save of an
+  // already-loaded polymer doesn't duplicate the tag. Empty-processString guard from main
+  // (#3533): when no atom resolves to a polymer template, templateAliasesPrepare returns
+  // '', and appending the tag would write an empty "> <PolymersList>" block that persists
+  // through collection export/import.
   const ctabLines = ctabLinesOnly(canvasData);
+  if (!processString.length) {
+    return ctabLines;
+  }
   return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 

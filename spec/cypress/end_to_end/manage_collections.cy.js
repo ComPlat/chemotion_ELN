@@ -12,13 +12,13 @@ describe('Manage Collections', () => {
   it('creates an unshared collection', () => {
     cy.get('#add-new-collection-button').click();
     cy.get('input[value="New Collection"]').clear().type('Bar');
-    cy.get('#save-collections-button').click();
+    cy.contains('button', 'Save').click();
     cy.get('.collection-node').find('input[value="Bar"]');
   });
 
   it('renames an unshared collection', () => {
     cy.get('input[value="Foo"]').clear().type('Bar');
-    cy.get('#save-collections-button').click();
+    cy.contains('button', 'Save').click();
     cy.get('.collection-node').find('input[value="Bar"]');
   });
 

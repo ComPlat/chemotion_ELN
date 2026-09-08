@@ -25,6 +25,29 @@ describe Chemotion::DeviceDescriptionAPI do
 
       expect(parsed_json_response['device_descriptions'].size).to be(1)
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let(:shared_collection) do
+        create(:collection, user: create(:person)).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let(:shared_device_description) do
+        create(:device_description, :with_ontologies, creator: shared_collection.user)
+      end
+
+      before do
+        create(:collections_device_description,
+               device_description: shared_device_description, collection: shared_collection)
+      end
+
+      it 'returns the device descriptions from the shared collection' do
+        get '/api/v1/device_descriptions/', params: { collection_id: shared_collection.id }
+
+        expect(parsed_json_response['device_descriptions'].pluck('id')).to include(shared_device_description.id)
+      end
+    end
   end
 
   describe 'POST /api/v1/device_descriptions' do

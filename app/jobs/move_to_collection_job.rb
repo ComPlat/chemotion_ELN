@@ -9,7 +9,13 @@ class MoveToCollectionJob < ApplicationJob
 
   def perform(id, msg = nil)
     col = Collection.find(id)
-    tr_col = col.children.find_or_create_by(user_id: col.user_id, label: 'transferred')
+    # is_locked goes in the block, not in the argument hash: that hash doubles as the lookup
+    # criteria, so passing it there would miss the existing (pre-lock) row and create a second one.
+    # The "transferred" node is system-managed like the "All" and repository roots it sits beside,
+    # and locking it is what keeps a collection-tree update from moving it out of that subtree.
+    tr_col = col.children.find_or_create_by(user_id: col.user_id, label: 'transferred') do |collection|
+      collection.is_locked = true
+    end
     move_col(col, tr_col)
     send_message(col.user_id, "operation completed. #{msg}", 'success')
   rescue StandardError => e
@@ -18,7 +24,9 @@ class MoveToCollectionJob < ApplicationJob
       message:  #{e.message}
       --------- gate move collection FAIL error message.END ---------------
     TXT
-    send_message(col.user_id, e.message, 'error')
+    # col is nil when Collection.find above is what raised; dereferencing it there would replace the
+    # real error with a NoMethodError and, since max_attempts is 1, lose it entirely.
+    send_message(col.user_id, e.message, 'error') if col
   end
 
   def move_col(col, tr_col)

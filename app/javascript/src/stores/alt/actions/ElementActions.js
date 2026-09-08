@@ -38,6 +38,7 @@ import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Report from 'src/models/Report';
+import Explorer from 'src/models/Explorer';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
@@ -48,6 +49,7 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 
@@ -872,6 +874,30 @@ class ElementActions {
     };
   }
 
+  resizeWellplate(wellplateId, width, height) {
+    return (dispatch) => {
+      WellplatesFetcher.resize(wellplateId, width, height)
+        .then((result) => {
+          if (!result.error) {
+            // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
+            // reconciled wellplate coming back from the server: eln_timestamp has
+            // second resolution, so the server's own value can be byte-identical
+            // to the one already on screen.
+            result.updated_at = new Date();
+            // The stamp lands after WellplatesFetcher baselined the checksum, and
+            // a Date drops out of the hash where the string did not - without
+            // this the freshly persisted wellplate reads as edited and locks the
+            // size control it just came out of.
+            result.updateChecksum();
+          }
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
+        });
+    };
+  }
+
   importWellplateSpreadsheet(wellplateId, attachmentId) {
     return (dispatch) => {
       WellplatesFetcher.importWellplateSpreadsheet(wellplateId, attachmentId)
@@ -1274,8 +1300,13 @@ class ElementActions {
       return MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
+          return result;
+        }).catch((error) => {
+          // The spinner is stopped by LoadingStore listening for this action's dispatch, which
+          // does not happen on failure — and the rejection has to reach handleSave, or the tab
+          // clears its dirty flag and the user believes a refused save succeeded.
+          LoadingActions.stop();
+          throw error;
         });
     };
   }
@@ -1299,6 +1330,11 @@ class ElementActions {
 
   showLiteratureDetail() {
     return LiteratureMap.buildEmpty();
+  }
+
+  // -- Explorer --
+  showExplorerDetails() {
+    return Explorer.buildEmpty();
   }
 
   // -- Prediction --
@@ -1337,7 +1373,14 @@ class ElementActions {
   deleteElementsByUIState(params) {
     return (dispatch) => {
       UIFetcher.deleteElementsByUIState(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => {
+          if (result && result.locked_sample_ids && result.locked_sample_ids.length > 0) {
+            rootStore.notificationsStore.add(
+              sampleAssociationLockNotification(result.locked_sample_ids.length)
+            );
+          }
+          dispatch(result);
+        })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }

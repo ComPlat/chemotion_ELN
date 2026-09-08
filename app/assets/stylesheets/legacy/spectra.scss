@@ -6,6 +6,117 @@
   max-width: 22vw;
 }
 
+.spectra-editor-modal-body__editor {
+  height: 100%;
+  min-height: 0;
+
+  // the single bare <div> LayerPrism/MultiJcampsViewer/HPLCViewer render
+  // (CmdBar + .react-spectrum-editor)
+  > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    // Deliberately NOT `overflow: hidden`. The CmdBar is a sibling *above*
+    // .react-spectrum-editor, and its outlined selects (Submit, Write Peaks,
+    // Write Intensity, Decimal) are compressed well under MUI's outlined
+    // geometry, so their shrunk InputLabel floats above the toolbar's own box.
+    // Clipping here truncated those labels. The chart region is still bounded —
+    // .react-spectrum-editor below clips it.
+  }
+
+  // The toolbar is fixed furniture; only the chart region below it flexes.
+  .rse-cmd-bar {
+    flex: 0 0 auto;
+  }
+
+  .react-spectrum-editor {
+    // Flex-participation only on THIS node — never add a literal `height:`
+    // here. This node is shared with the Cyclic Voltammetry layout's working
+    // `cvEditor` JSS rule (height: calc(90vh - 220px)); a competing height
+    // here would silently override it since this stylesheet loads after the
+    // package's injectFirst JSS. Descendants below are safe to give an
+    // explicit `height: 100%` — MUI's row-direction Grid doesn't reliably
+    // stretch its items' height from flex alone (content-based flex-basis
+    // wins the shrink negotiation), so percentage-height chains are used
+    // instead once this node's own height is bounded.
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .MuiGrid-container {
+      height: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3 {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      // LayerContent/Panel render an unstyled wrapper <div> here before the
+      // d3-mounted / InfoPanel content; without this it's a block box with
+      // auto height, which breaks the percentage-height chain below it.
+      > div {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+    }
+
+    .d3Line, .d3Rect, .d3Multi, .d3Svg, .d3SvgRect, .d3SvgMulti {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+    }
+
+    // Scoped to the d3-mounted chart svg only — a bare `svg { ... }` here
+    // would also match small MUI icon svgs elsewhere in the panel (e.g. the
+    // accordion expand chevrons) and blow them up to fill their wrapper.
+    .d3Line svg, .d3Rect svg, .d3Multi svg,
+    .d3Svg, .d3SvgRect, .d3SvgMulti {
+      width: 100%;
+      height: 100%;
+    }
+
+    // LC/MS is the one layout that mounts three charts stacked in this pane —
+    // .d3Line (UV/VIS), .d3Multi (TIC) and .d3Rect (m/z) — where every other
+    // layout mounts exactly one. The `height: 100%` above is written for that
+    // single-chart case; applied to three siblings it makes each as tall as the
+    // whole pane, so the TIC and m/z graphs end up below the clip and the editor
+    // appears to render the chromatogram alone. Give the three an equal share of
+    // whatever the toolbar rows between them leave over instead.
+    //
+    // The package handles this on its own as of react-spectra-editor#325, so this
+    // block is belt-and-braces: it pins the intent on our side and keeps the split
+    // exact if the package's own sizing is ever relaxed. It is NOT a substitute —
+    // it keys on hook classes only that release emits, so on an older package it
+    // matches nothing at all.
+    .rse-lcms-stack {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+
+      > .d3Line, > .d3Multi, > .rse-lcms-graph-panel {
+        flex: 1 1 0;
+        min-height: 0;
+        height: auto;
+      }
+
+      // .rse-lcms-graph-panel wraps the m/z chart plus its loading overlay, so it —
+      // not .d3Rect — is the flex item; the chart then fills it.
+      > .rse-lcms-graph-panel > .d3Rect {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+      }
+    }
+  }
+}
+
 #ChemSpectra,
 #ChemSpectraEditor {
   display: block;

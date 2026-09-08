@@ -20,6 +20,9 @@ function CollectionSubtree({
   sharedWithMe,
   isExpanded,
   level,
+  hasRadar,
+  onAddShare,
+  onManageShares,
 }) {
   const { collections: collectionsStore } = useContext(StoreContext);
   const uiState = UIStore.getState();
@@ -89,12 +92,24 @@ function CollectionSubtree({
       UIActions.toggleCollectionManagement();
     }
 
+    // A locked node still toggles, since the locked containers are the ones worth folding away,
+    // but it must navigate too: "transferred" is locked and has no sub-collections, so toggling
+    // alone would leave the elements a gate transfer moved there unreachable. Expand on the way in
+    // and never collapse — folding the subtree shut on the node being selected reads as a failed
+    // click, and the chevron already has its own handler.
     if (node.is_locked) {
-      toggleExpansion(e, node);
+      if (!visible) toggleExpansion(e, node);
     } else {
       setVisible(visible || isVisible(node, uiState.currentCollection));
-      aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
     }
+
+    // The shared-with-me tree's owner rows are synthetic grouping nodes with no collection behind
+    // them (CollectionsStore.setSharedWithMeCollections gives them id 0). Keyed on the id rather
+    // than on is_locked, which is only incidentally true of them: navigating one would request
+    // /collections/0, 404, and clear the current collection.
+    if (!node.id) return;
+
+    aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
   };
 
   const handleTakeOwnershipKeyDown = (e) => {
@@ -103,6 +118,15 @@ function CollectionSubtree({
       handleTakeOwnership();
     }
   };
+
+  const handleAddShare = onAddShare ? () => onAddShare(root) : null;
+  // Own collections: manage only when there is something shared (root.shared).
+  // Shared-with-me: a delegate can manage existing shares regardless of root.shared;
+  // visibility is gated by permission_level in CollectionSubtreeFunctions, matching
+  // the management modal (which offers Add + Manage together).
+  const handleManageShares = ((sharedWithMe || root.shared) && onManageShares)
+    ? () => onManageShares(root)
+    : null;
 
   return (
     <TreeViewItem
@@ -139,17 +163,27 @@ function CollectionSubtree({
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
-          {sharedWithMe && !root.is_locked && (
+          {/* Suppressed on the synthetic owner-grouping row (id 0), which has no share behind it —
+              not on is_locked, which a genuinely shared system collection also carries. */}
+          {sharedWithMe && root.id !== 0 && (
             <OverlayTrigger
               placement="top"
               overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
             >
-              <i className="fa fa-info-circle" />
+              <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
         </>
       )}
-      actions={<CollectionSubtreeFunctions collection={root} />}
+      actions={(
+        <CollectionSubtreeFunctions
+          collection={root}
+          sharedWithMe={sharedWithMe}
+          hasRadar={hasRadar}
+          onAddShare={handleAddShare}
+          onManageShares={handleManageShares}
+        />
+      )}
     >
       {children.map((child) => (
         <CollectionSubtree
@@ -158,6 +192,9 @@ function CollectionSubtree({
           sharedWithMe={sharedWithMe}
           isExpanded={isExpanded}
           level={level + 1}
+          hasRadar={hasRadar}
+          onAddShare={onAddShare}
+          onManageShares={onManageShares}
         />
       ))}
     </TreeViewItem>
@@ -169,6 +206,9 @@ export default observer(CollectionSubtree);
 CollectionSubtree.propTypes = {
   sharedWithMe: PropTypes.bool.isRequired,
   isExpanded: PropTypes.bool.isRequired,
+  hasRadar: PropTypes.bool,
+  onAddShare: PropTypes.func,
+  onManageShares: PropTypes.func,
   root: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     label: PropTypes.string.isRequired,
@@ -183,4 +223,10 @@ CollectionSubtree.propTypes = {
     permission_level: PropTypes.number,
   }).isRequired,
   level: PropTypes.number.isRequired,
+};
+
+CollectionSubtree.defaultProps = {
+  hasRadar: false,
+  onAddShare: null,
+  onManageShares: null,
 };

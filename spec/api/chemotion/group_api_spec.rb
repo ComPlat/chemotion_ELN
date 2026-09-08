@@ -40,6 +40,19 @@ describe Chemotion::GroupAPI do
       expect(new_group.admins.first).to eq(user)
       expect(user.administrated_accounts.where(name_abbreviation: 'JFC')).not_to be_empty
     end
+
+    context 'when a group id is passed in users' do
+      let(:params) do
+        {
+          first_name: 'My', last_name: 'Fanclub', email: 'jane.s@fan.club',
+          name_abbreviation: 'JFC', users: [group_admin.id, group.id]
+        }
+      end
+
+      it 'does not nest the other group as a member' do
+        expect(new_group.users.pluck(:id)).to contain_exactly(user.id, group_admin.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/groups' do
@@ -306,6 +319,18 @@ describe Chemotion::GroupAPI do
       it 'promotes the member to admin' do
         execute_request
         expect(group.reload.admins.pluck(:id)).to include(member.id)
+      end
+    end
+
+    context 'when the target id is another group' do
+      subject(:execute_request) { post "/api/v1/groups/#{group.id}/admins/#{other_group.id}" }
+
+      let(:other_group) { create(:group, admins: [non_member], users: [non_member]) }
+      let(:user) { group_admin }
+
+      it 'does not promote the other group to admin' do
+        execute_request
+        expect(group.reload.admins.pluck(:id)).not_to include(other_group.id)
       end
     end
   end

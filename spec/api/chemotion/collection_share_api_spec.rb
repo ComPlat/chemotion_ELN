@@ -8,6 +8,10 @@ describe Chemotion::CollectionShareAPI do
   let(:collection) { create(:collection, user: user) }
   let(:collection_share) { create(:collection_share, shared_with: other_user, collection: collection) }
 
+  # Notifying a sharee (see POST/PUT/DELETE below) reuses this channel — seeded in production by a
+  # data migration that db:schema:load never runs, so specs that exercise it seed it themselves too.
+  before { create(:channel, subject: Channel::SHARED_COLLECTION_WITH_ME, channel_type: 8) }
+
   describe 'POST /api/v1/collection_shares' do
     let(:create_params) do
       {
@@ -32,6 +36,25 @@ describe Chemotion::CollectionShareAPI do
         collection.reload
       end.to change(CollectionShare, :count).by(create_params[:user_ids].length)
          .and change(collection, :shared?).from(false).to(true)
+    end
+
+    # Emitted server-side so it fires regardless of which client created the share, unlike the old
+    # client-side createSharingMessage this replaces.
+    it 'notifies every recipient so their collection tree refreshes' do
+      expect do
+        post '/api/v1/collection_shares/', params: create_params
+      end.to change(Notification, :count).by(create_params[:user_ids].length)
+
+      expect(Notification.where(user_id: other_user.id)).to exist
+      expect(Notification.where(user_id: third_user.id)).to exist
+    end
+
+    # A new share is the one event a sharee should be interrupted for — unlike an update/revoke/rename,
+    # which are delivered silently (see the PUT/DELETE specs below).
+    it 'notifies verbosely, not silently' do
+      post '/api/v1/collection_shares/', params: create_params
+
+      expect(Message.last.content['silent']).to be(false)
     end
 
     context 'with apply_to_subcollections' do
@@ -111,6 +134,22 @@ describe Chemotion::CollectionShareAPI do
       expect(result).to include(expected_result)
     end
 
+    # Without this, the sharee's "Shared with me" tree only ever reflects a permission change after
+    # a manual reload — their poll only refetches on seeing a new notification (see NoticeButton.js).
+    it 'notifies the sharee so their collection tree refreshes' do
+      expect do
+        put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
+      end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    # A permission change is housekeeping, not something worth interrupting the sharee for — the
+    # tree still refreshes (see the spec above), it just doesn't pop a dismiss-required toast.
+    it 'notifies silently' do
+      put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
+
+      expect(Message.last.content['silent']).to be(true)
+    end
+
     context 'with apply_to_subcollections' do
       let(:child) { create(:collection, user: user, parent: collection) }
 
@@ -128,14 +167,66 @@ describe Chemotion::CollectionShareAPI do
         expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
       end
 
-      # An edit propagates to existing sub-collection shares only — it never grants NEW access to a
-      # sub-collection the sharee was not already on (that would be a silent over-grant).
+      # By default an edit propagates to existing sub-collection shares only — it never grants NEW
+      # access to a sub-collection the sharee was not already on (that would be a silent over-grant).
       it 'does not mint a new share on a descendant that was not already shared with the sharee' do
         put "/api/v1/collection_shares/#{collection_share.id}",
             params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
                                         apply_to_subcollections: true)
 
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # include_new_subcollections is the explicit opt-in out of that default: it makes the edit
+      # cascade mint shares too, mirroring the create cascade.
+      it 'mints a new share on a descendant that was not already shared, when include_new_subcollections is set' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share).not_to be_nil
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+      end
+
+      # Mirrors the create-path pass_ownership test: an offer is never cascaded, whatever the
+      # cascade flags say — include_new_subcollections does not override that guard.
+      it 'does not cascade a pass_ownership offer to descendants even with include_new_subcollections' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:pass_ownership),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # cascade_requested? used to compare permission_level != pass_ownership, so omitting the
+      # (optional) param entirely — nil — read as "not pass_ownership" even when the share being
+      # edited already IS pass_ownership (as the factory default is here), letting the offer cascade
+      # after all and mint a new one on a descendant that never had any share for this recipient.
+      it 'does not cascade an existing pass_ownership share when permission_level is omitted from the request' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { apply_to_subcollections: true, include_new_subcollections: true }
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # write_shares! is a partial-update writer (include_missing: false) — safe for an existing
+      # share, whose unset columns keep their current value, but a genuinely new one has no current
+      # value to keep. Without a backfill it would fall back to the schema default (0) for every
+      # column this partial request doesn't mention, rather than mirroring the root share.
+      it 'backfills a newly minted descendant share from the root, not the schema default, on a partial edit' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { permission_level: CollectionShare.permission_level(:manage_shares),
+                      apply_to_subcollections: true,
+                      include_new_subcollections: true }
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+        # sample_detail_level was never part of this request — it must mirror the root share's actual
+        # value (10, from the factory), not the schema default (0).
+        expect(child_share.sample_detail_level).to eq(10)
       end
     end
   end
@@ -165,6 +256,21 @@ describe Chemotion::CollectionShareAPI do
         collection.reload
       end.to change(CollectionShare, :count).by(-1)
          .and change(collection, :shared?).from(true).to(false)
+    end
+
+    # Revoking is the case a stale sharee tree hurts most: the collection stays visible on their
+    # side yet the server no longer serves it. Without a notification here, only a page reload would
+    # ever tell them.
+    it 'notifies the revoked sharee so their collection tree refreshes' do
+      expect do
+        delete "/api/v1/collection_shares/#{collection_share.id}"
+      end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    it 'notifies silently' do
+      delete "/api/v1/collection_shares/#{collection_share.id}"
+
+      expect(Message.last.content['silent']).to be(true)
     end
 
     context 'when the share belongs to one of the requesters groups' do
@@ -216,6 +322,39 @@ describe Chemotion::CollectionShareAPI do
 
         expect(response).to have_http_status(:no_content)
       end
+
+      it 'does not notify the requester about their own action' do
+        expect { delete "/api/v1/collection_shares/#{own_share.id}" }
+          .not_to change(Notification, :count)
+      end
+    end
+  end
+
+  # Nothing purges collection_shares when an account is deleted, and collections.shared stays
+  # true, so the owner keeps seeing the share icon. Listing the share must survive the sharee
+  # being gone — hovering that icon used to 500 on the entity dereferencing a nil association.
+  describe 'GET /api/v1/collection_shares with a deleted sharee' do
+    subject(:list) do
+      get "/api/v1/collection_shares?collection_id=#{collection.id}"
+      response
+    end
+
+    before { collection_share }
+
+    context 'when the sharee account is soft-deleted' do
+      before { other_user.destroy }
+
+      it 'still lists the share, naming the deleted user' do
+        expect(list).to have_http_status(:ok)
+        expect(parsed_json_response['collection_shares']).to contain_exactly(
+          include('shared_with' => "#{other_user.name} (#{other_user.name_abbreviation})",
+                  'shared_with_type' => 'Person'),
+        )
+      end
+    end
+
+    it 'cannot be reached by a hard destroy — the FK to users forbids it' do
+      expect { other_user.really_destroy! }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end
 

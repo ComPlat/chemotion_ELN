@@ -143,13 +143,13 @@ module Reactable
 
   def calculate_mole_gas_product(ppm, temperature, vessel_volume)
     ##  Mol Value = ppm*pressure*V/(0.0821*temp_in_K*1000000)
-    return nil if vessel_volume.nil? || ppm.nil? || temperature.nil?
+    return nil if vessel_volume.blank? || ppm.blank? || temperature.blank?
 
     temperature_in_kelvin = convert_temperature_to_kelvin(temperature)
 
     return nil if temperature_in_kelvin.nil?
 
-    ppm * vessel_volume / (IDEAL_GAS_CONSTANT * temperature_in_kelvin * PARTS_PER_MILLION_FACTOR)
+    ppm.to_f * vessel_volume.to_f / (IDEAL_GAS_CONSTANT * temperature_in_kelvin * PARTS_PER_MILLION_FACTOR)
   end
 
   def calculate_feedstock_moles(amount_liter, purity)

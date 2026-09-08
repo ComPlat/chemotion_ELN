@@ -10,8 +10,13 @@ module Entities
       expose! :type
     end
 
+    # Must come from column_defaults, not a bare [], to stay length-matched with
+    # WellplateEntity#readout_titles' placeholder (also column_defaults, one entry).
+    # Consumers zip the two positionally — EmbeddedWellplate reads
+    # readouts[index].value for each title — so a shorter readouts array is not a
+    # smaller payload, it is an out-of-bounds read.
     with_options(anonymize_below: 1) do
-      expose! :readouts
+      expose! :readouts, anonymize_with: -> { Well.column_defaults['readouts'] }
     end
 
     with_options(anonymize_below: 10) do

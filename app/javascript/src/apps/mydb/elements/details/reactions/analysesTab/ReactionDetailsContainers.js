@@ -121,8 +121,11 @@ export default class ReactionDetailsContainers extends Component {
     }
   }
 
-  handleChange = () => {
+  handleChange = (container, variations = null) => {
     const { reaction, handleReactionChange } = this.props;
+    if (variations) {
+      reaction.variations = variations;
+    }
     handleReactionChange(reaction);
   };
 
@@ -462,7 +465,7 @@ export default class ReactionDetailsContainers extends Component {
                               templateType="reaction"
                               element={reaction}
                               container={container}
-                              onChange={() => this.handleChange(container)}
+                              onChange={(_, variations) => this.handleChange(container, variations)}
                               rootContainer={reaction.container}
                               index={key}
                             />

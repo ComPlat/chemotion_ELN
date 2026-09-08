@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+module Chemotion
+  class ExplorerAPI < Grape::API
+    helpers CollectionHelpers
+
+    # Disabled unless the Sample Explorer UI component is turned on in
+    # config/ui_components.yml (kept in sync with the frontend). Respond with a
+    # generic 404 so a disabled feature is indistinguishable from a route that
+    # does not exist.
+    before do
+      error!('404 Not Found', 404) unless UiComponents.enabled?(:sample_explorer)
+    end
+
+    resource :explorer do
+      desc 'Fetch samples, reactions, and molecules belonging to a collection'
+
+      params do
+        requires :collection_id, type: Integer, desc: 'ID of the collection to explore'
+      end
+
+      after_validation do
+        @collection = readable_collection_for(params[:collection_id])
+
+        error!({ error: 'Collection not found' }, 404) unless @collection
+      end
+
+      get do
+        samples = @collection
+                    .samples
+                    .select(:id, :ancestry, :molecule_id, :name, :short_label, :sample_svg_file)
+
+        # reactions = @collection
+        #               .reactions
+        #               .select(:id, :name, :short_label)
+        reactions = @collection.reactions.includes(:starting_materials, :reactants, :products).map do |r|
+          {
+            id: r.id,
+            name: r.name,
+            short_label: r.short_label,
+            starting_material_ids: r.starting_materials.pluck(:id),
+            reactant_ids: r.reactants.pluck(:id),
+            product_ids:  r.products.pluck(:id),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            reaction_svg_file: r.reaction_svg_file
+          }
+        end
+
+
+        molecule_ids = samples.pluck(:molecule_id).compact.uniq
+        molecules = Molecule
+                      .where(id: molecule_ids)
+                      .select(:id, :cano_smiles, :inchikey, :iupac_name)
+
+        {
+          samples: samples.as_json,
+          reactions: reactions.as_json,
+          molecules: molecules.as_json
+        }
+      end
+    end
+  end
+end

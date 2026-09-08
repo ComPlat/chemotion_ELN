@@ -9,11 +9,13 @@ describe Entities::WellplateEntity do
         wellplate,
         detail_levels: detail_levels,
         displayed_in_list: displayed_in_list,
+        policy: policy,
       )
     end
 
     let(:detail_levels) { { Wellplate => detail_level, Well => detail_level, Sample => detail_level } }
     let(:displayed_in_list) { false }
+    let(:policy) { nil }
     let(:wellplate) { create(:wellplate) }
     let(:sample) { build(:valid_sample) }
 
@@ -75,6 +77,15 @@ describe Entities::WellplateEntity do
       end
     end
 
+    context 'when detail level for Well is 1' do
+      let(:detail_level) { 1 }
+
+      it 'returns the real readout_titles instead of anonymizing them, matching the real per-well readouts' do
+        expect(grape_entity_as_hash[:readout_titles]).to eq(wellplate.readout_titles)
+        expect(grape_entity_as_hash[:wells].first[:readouts]).to eq(wells.first.readouts)
+      end
+    end
+
     context 'when detail level for Well is 0' do
       let(:detail_level) { 0 }
 
@@ -87,11 +98,18 @@ describe Entities::WellplateEntity do
           type: 'wellplate',
           description: '***',
           name: '***',
-          readout_titles: '***',
+          readout_titles: ['Readout'],
           short_label: '***',
           created_at: I18n.l(wellplate.created_at, format: :eln_timestamp),
           updated_at: I18n.l(wellplate.updated_at, format: :eln_timestamp),
         )
+      end
+
+      # Consumers (e.g. EmbeddedWellplate) zip titles against readouts by index, so the two
+      # placeholders must stay the same length however they are each derived.
+      it 'anonymizes readout_titles and readouts to the same length' do
+        expect(grape_entity_as_hash[:readout_titles].length)
+          .to eq(grape_entity_as_hash[:wells].first[:readouts].length)
       end
 
       it 'returns a wellplate without a code_log' do
@@ -113,9 +131,39 @@ describe Entities::WellplateEntity do
       end
     end
 
+    context 'when represented without a policy' do
+      let(:detail_level) { 10 }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
+    context 'when represented with a policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(true) }
+
+      it 'returns the policy related attributes' do
+        expect(grape_entity_as_hash).to include(can_update: true)
+      end
+    end
+
+    context 'when represented with a read-only policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(false) }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
     context 'when entity is displayed in list' do
       let(:displayed_in_list) { true }
       let(:detail_level) { 10 }
+
+      it 'omits can_update' do
+        expect(grape_entity_as_hash).not_to have_key(:can_update)
+      end
 
       it 'returns a wellplate without a code_log' do
         expect(grape_entity_as_hash[:code_log]).to be_nil

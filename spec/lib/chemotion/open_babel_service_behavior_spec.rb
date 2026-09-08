@@ -148,15 +148,17 @@ RSpec.describe Chemotion::OpenBabelService do
   describe 'hang protection on pathological organometallic input' do
     around do |example|
       # Outer safety net for the *test suite itself*: if the fork-based mechanism ever
-      # regresses back to an in-process hang, fail this example in 30s instead of hanging
-      # CI for the real SVG_RENDER_TIMEOUT_SECONDS default (or worse). This is not a claim
-      # that Timeout.timeout is what fixes the underlying bug -- see forked_timeout_spec.rb
-      # and open_babel_service_spec.rb for that; this is just a CI-safety belt-and-suspenders.
-      # 30s (not 10s): even with SVG rendering stubbed to a 2s deadline below, the *other*
-      # still-unbounded steps for this reproducer (OpenBabel's own internal canonical-labeling
-      # time-box, dual InChI attempts, fingerprinting) legitimately take ~10-12s each on their
-      # own for this pathological molfile.
-      Timeout.timeout(30) { example.run }
+      # regresses back to an in-process hang, fail this example instead of hanging CI for the
+      # real SVG_RENDER_TIMEOUT_SECONDS default (or worse). This is not a claim that
+      # Timeout.timeout is what fixes the underlying bug -- see forked_timeout_spec.rb and
+      # open_babel_service_spec.rb for that; this is just a CI-safety belt-and-suspenders.
+      # 60s (not 10s or 30s): even with SVG rendering stubbed to a 2s deadline below, the
+      # *other* still-unbounded steps for this reproducer (OpenBabel's own internal
+      # canonical-labeling time-box, dual InChI attempts, fingerprinting) legitimately take
+      # ~10-12s each on their own for this pathological molfile -- measured at 26-27s total
+      # before the canonical-SMILES writer was also moved into its own ForkedTimeout child
+      # (the canonical-smiles bound), and fork/Marshal overhead on top of that pushed a real run to 37s.
+      Timeout.timeout(60) { example.run }
     end
 
     before { stub_const('Chemotion::OpenBabelService::SVG_RENDER_TIMEOUT_SECONDS', 2) }

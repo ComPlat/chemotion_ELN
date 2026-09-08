@@ -250,6 +250,35 @@ describe Chemotion::CollectionAPI do
         expect(response).to have_http_status(:forbidden)
         expect(locked_collection.reload.label).to eq 'All'
       end
+
+      # LockedCollectionGuard fixes label/position/ancestry/is_locked and deliberately leaves
+      # tabs_segment editable, so the tab layout of a system collection is configurable like any
+      # other. Refusing every update to a locked collection would take that away.
+      it 'accepts a tab-layout update' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      # The tab editor always sends the label alongside the layout, so an unchanged label must not
+      # be mistaken for a rename attempt.
+      it 'accepts a tab-layout update that repeats the unchanged label' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'All', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      it 'refuses a rename bundled with a tab-layout update, saving neither' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'Renamed', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload).to have_attributes(label: 'All', tabs_segment: {})
+      end
     end
   end
 
@@ -324,6 +353,55 @@ describe Chemotion::CollectionAPI do
         post '/api/v1/collections/export', params: { collection_ids: [partially_shared.id] }
 
         expect(response.status).to eq 401
+      end
+    end
+  end
+
+  describe 'GET /api/v1/collections/:id/metadata' do
+    # the :metadata factory always assigns its own fresh collection in a before_create callback,
+    # so the target collection has to be attached afterwards rather than passed in as an attribute
+    context 'when the collection is owned by the user' do
+      let!(:metadata) { create(:metadata).tap { |m| m.update!(collection_id: collection.id) } }
+
+      it 'returns the metadata' do
+        get "/api/v1/collections/#{collection.id}/metadata"
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['id']).to eq metadata.id
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      before { create(:metadata).tap { |m| m.update!(collection_id: collection_shared_with_user.id) } }
+
+      it 'does not leak the owner collection metadata to the sharee' do
+        get "/api/v1/collections/#{collection_shared_with_user.id}/metadata"
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+  end
+
+  describe 'POST /api/v1/collections/metadata' do
+    let(:metadata_params) { { collection_id: collection.id, metadata: { title: 'Updated title' } } }
+
+    context 'when the collection is owned by the user' do
+      it 'creates the metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :created
+        expect(Metadata.find_by(collection_id: collection.id).metadata['title']).to eq 'Updated title'
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      let(:metadata_params) { { collection_id: collection_shared_with_user.id, metadata: { title: 'Hijacked' } } }
+
+      it 'rejects the write instead of letting a sharee edit the owner collection metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :not_found
+        expect(Metadata.find_by(collection_id: collection_shared_with_user.id)).to be_nil
       end
     end
   end

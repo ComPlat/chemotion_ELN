@@ -66,15 +66,23 @@ describe Chemotion::PublicAPI do
       end
     end
 
+    # The title is read from the process environment at request time, so an ambient
+    # WORKSHOP_GUIDE_TITLE -- the dev container sets one -- would otherwise leak into the
+    # default-title expectations below. The configured context overrides this stub.
+    before do
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with('WORKSHOP_GUIDE_TITLE', 'Workshop Guide').and_return('Workshop Guide')
+    end
+
     context 'when workshop content has not been synced' do
       before do
         FileUtils.rm_f(home_md)
         execute_request
       end
 
-      it 'responds 200 with available: false' do
+      it 'responds 200 with available: false and the default title' do
         expect(response).to have_http_status :ok
-        expect(parsed_json_response).to eq({ 'available' => false })
+        expect(parsed_json_response).to eq({ 'available' => false, 'title' => 'Workshop Guide' })
       end
     end
 
@@ -87,9 +95,83 @@ describe Chemotion::PublicAPI do
 
       after { FileUtils.rm_f(home_md) }
 
-      it 'responds 200 with available: true' do
+      it 'responds 200 with available: true and the default title' do
         expect(response).to have_http_status :ok
-        expect(parsed_json_response).to eq({ 'available' => true })
+        expect(parsed_json_response).to eq({ 'available' => true, 'title' => 'Workshop Guide' })
+      end
+    end
+
+    context 'when WORKSHOP_GUIDE_TITLE is configured' do
+      before do
+        FileUtils.rm_f(home_md)
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('WORKSHOP_GUIDE_TITLE', 'Workshop Guide').and_return('Summer School Guide')
+        execute_request
+      end
+
+      it 'responds 200 with the configured title' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'available' => false, 'title' => 'Summer School Guide' })
+      end
+    end
+  end
+
+  describe 'GET /api/v1/public/logo/alternate' do
+    subject(:execute_request) { get('/api/v1/public/logo/alternate') }
+
+    let(:logos_dir) { Rails.public_path.join('logos') }
+    let(:candidates) { Chemotion::PublicAPI::ALTERNATE_LOGO_FILES.map { |name| logos_dir.join(name) } }
+
+    # public/logos also holds committed assets, so every candidate is moved aside for the
+    # duration of the example and put back afterwards -- never simply deleted.
+    around do |example|
+      backups = candidates.select(&:exist?).index_with { |path| Rails.root.join("tmp/#{path.basename}.bak") }
+      backups.each { |path, backup| FileUtils.mv(path, backup) }
+      begin
+        example.run
+      ensure
+        candidates.each { |path| FileUtils.rm_f(path) }
+        backups.each { |path, backup| FileUtils.mv(backup, path) }
+      end
+    end
+
+    def write_logo(name)
+      FileUtils.mkdir_p(logos_dir)
+      FileUtils.touch(logos_dir.join(name))
+    end
+
+    context 'when no alternate logo is present' do
+      before { execute_request }
+
+      # 200 with a null src, not a 404: the client must be able to ask without the browser
+      # logging a failed resource load on every stock instance.
+      it 'responds 200 with a null src' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'src' => nil })
+      end
+    end
+
+    context 'when a PNG alternate logo is present' do
+      before do
+        write_logo('chemotion-alternate.png')
+        execute_request
+      end
+
+      it 'responds 200 with the public path of the file' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'src' => '/logos/chemotion-alternate.png' })
+      end
+    end
+
+    context 'when both an SVG and a PNG are present' do
+      before do
+        write_logo('chemotion-alternate.svg')
+        write_logo('chemotion-alternate.png')
+        execute_request
+      end
+
+      it 'prefers the SVG' do
+        expect(parsed_json_response).to eq({ 'src' => '/logos/chemotion-alternate.svg' })
       end
     end
   end

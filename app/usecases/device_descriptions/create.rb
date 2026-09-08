@@ -25,10 +25,14 @@ module Usecases
           # (device_description_id, collection_id) index when the chosen
           # collection is already the user's "All" collection.
           CollectionsDeviceDescription.find_or_create_by(device_description: device_description, collection: collection)
-          CollectionsDeviceDescription.find_or_create_by(
-            device_description: device_description,
-            collection: all_collection,
-          )
+          # all_collection is nil when the owning account has no "All" collection — a Group never
+          # gets one — so there is no owner-side membership to add.
+          if all_collection
+            CollectionsDeviceDescription.find_or_create_by(
+              device_description: device_description,
+              collection: all_collection,
+            )
+          end
 
           device_description
         end

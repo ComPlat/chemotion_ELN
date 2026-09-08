@@ -62,6 +62,7 @@ FactoryBot.define do
               amount: { unit: 'mol', value: 42 },
               equivalent: { unit: nil, value: 42 },
               volume: { unit: 'ml', value: 42 },
+              concentration: { unit: 'mol/l', value: 1 },
             }
           end
 
@@ -72,6 +73,7 @@ FactoryBot.define do
               amount: { unit: 'mol', value: 42 },
               equivalent: { unit: nil, value: 42 },
               volume: { unit: 'ml', value: 42 },
+              concentration: { unit: 'mol/l', value: 1 },
             }
           end
 

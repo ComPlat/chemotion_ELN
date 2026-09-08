@@ -10,6 +10,7 @@ import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/mainNavigation/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 import GatePushButton from 'src/apps/mydb/collections/GatePushButton';
+import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
 
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
@@ -24,6 +25,12 @@ function CollectionTree({ isCollapsed }) {
 
   const [activeCollectionType, setActiveCollectionType] = useState(ALL_COLLECTIONS_KEY);
   const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
+  const [hasRadar, setHasRadar] = useState(!!UIStore.getState().hasRadar);
+
+  // Single-instance share modals, lifted out of every CollectionSubtree so the
+  // tree does not carry O(N) unused modal slots. Wiring is shared with the
+  // management-modal trees via useCollectionShares.
+  const { openAddShare, openManageShares, shareModals } = useCollectionShares(collectionsStore);
 
   const toggleCollection = (collectionType) => {
     setExpandedCollection((prev) => ((prev === collectionType) ? null : collectionType));
@@ -36,7 +43,9 @@ function CollectionTree({ isCollapsed }) {
 
   const changeActiveCollectionType = (collectionType) => {
     expandCollection(collectionType);
-    if (collectionType !== activeCollectionType) setActiveCollectionType(collectionType);
+    // setState no-ops when the value is unchanged, so no need to read
+    // activeCollectionType here (reading it would make listener closures stale).
+    setActiveCollectionType(collectionType);
   }
 
   const containsCollection = (collections, collectionId) => {
@@ -78,16 +87,30 @@ function CollectionTree({ isCollapsed }) {
   }, []);
 
   useEffect(() => {
-    const onUiStoreChange = ({ currentCollection }) => {
+    setHasRadar(!!UIStore.getState().hasRadar);
+
+    const onUiStoreChange = ({ currentCollection, hasRadar: storeHasRadar }) => {
+      setHasRadar(!!storeHasRadar);
       if (!currentCollection) return;
 
-      const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
-      if (group) changeActiveCollectionType(group.collectionType);
+      // Read the trees fresh from the store on each event. MobX can keep array
+      // identity across in-place mutation, so a snapshot captured at subscribe
+      // time could miss a just-loaded/moved collection and leave the wrong group
+      // highlighted.
+      const groups = [
+        [ALL_COLLECTIONS_KEY, collectionsStore.ownCollections],
+        ['sharedWithMe', collectionsStore.sharedWithMeCollections],
+        [CHEMOTION_REPOSITORY_KEY, collectionsStore.chemotion_repository_collection?.children],
+      ];
+      const match = groups.find(([, collections]) => containsCollection(collections, currentCollection.id));
+      if (match) changeActiveCollectionType(match[0]);
     };
 
     UIStore.listen(onUiStoreChange);
     return () => UIStore.unlisten(onUiStoreChange);
-  }, [collectionGroups]);
+    // Intentionally no onUiStoreChange() on subscribe: syncing currentCollection here
+    // would snap back to My Collections when opening Shared with me without navigating.
+  }, [collectionsStore, isCollapsed]);
 
   return (
     <div className="mh-100 d-flex flex-column">
@@ -98,7 +121,7 @@ function CollectionTree({ isCollapsed }) {
         }) => {
           const isActive = activeCollectionType === collectionType;
           const isExpanded = expandedCollection === collectionType;
-          const sharedWithMe = activeCollectionType === 'sharedWithMe';
+          const sharedWithMe = collectionType === 'sharedWithMe';
           return (
             <Fragment key={collectionType}>
               <SidebarButton
@@ -130,6 +153,9 @@ function CollectionTree({ isCollapsed }) {
                         sharedWithMe={sharedWithMe}
                         isExpanded={isExpanded}
                         level={1}
+                        hasRadar={hasRadar}
+                        onAddShare={openAddShare}
+                        onManageShares={openManageShares}
                       />
                     ))}
                 </div>
@@ -138,6 +164,8 @@ function CollectionTree({ isCollapsed }) {
           );
         })}
       </div>
+
+      {shareModals}
     </div>
   );
 }

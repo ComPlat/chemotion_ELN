@@ -13,6 +13,7 @@ class ImportCollectionsJob < ApplicationJob
         message_from: @user_id,
         data_args: { col_labels: col_labels, operation: 'import', expires_at: nil },
         url: @log_file_path,
+        urlTitle: 'Download import log',
         autoDismiss: 5,
       )
     end

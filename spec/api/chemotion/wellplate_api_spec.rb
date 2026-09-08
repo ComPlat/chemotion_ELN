@@ -82,6 +82,11 @@ describe Chemotion::WellplateAPI do
         get '/api/v1/wellplates/'
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
+
+      it 'omits can_update for listed wellplates' do
+        get '/api/v1/wellplates/'
+        expect(JSON.parse(response.body)['wellplates']).to all(satisfy { |w| !w.key?('can_update') })
+      end
     end
 
     context 'when collection_id is given' do
@@ -103,6 +108,15 @@ describe Chemotion::WellplateAPI do
         expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
       end
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let!(:shared_wellplate) { create(:wellplate, collections: [collection_shared_with_user]) }
+
+      it 'returns the wellplates from the shared collection' do
+        get '/api/v1/wellplates/', params: { collection_id: collection_shared_with_user.id }
+        expect(JSON.parse(response.body)['wellplates'].pluck('id')).to include(shared_wellplate.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/wellplates/:id' do
@@ -118,11 +132,45 @@ describe Chemotion::WellplateAPI do
       expect(JSON.parse(response.body)['wellplate']['name']).to eq(wellplate.name)
     end
 
+    it 'returns can_update as true for the owner' do
+      expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+    end
+
     context 'when permissions are inappropriate' do
       let(:collection) { other_user_collection }
 
       it 'returns 401 unauthorized status code' do
         expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as false' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be false
+      end
+    end
+
+    context 'when the wellplate is in a writable shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as true' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
       end
     end
   end
@@ -168,17 +216,74 @@ describe Chemotion::WellplateAPI do
       }
     end
 
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
-      put "/api/v1/wellplates/#{wellplate.id}", params: params
+    context 'when the user can update the wellplate' do
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'is able to change a wellplate by id' do
+        expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+      end
+
+      it 'returns the wellplate attachments' do
+        expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+      end
+
+      it 'returns can_update as true after a successful update' do
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+      end
     end
 
-    it 'is able to change a wellplate by id' do
-      expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+    context 'when the payload carries a different size' do
+      # The grid is resized only through PUT /wellplates/resize/:id. A stale tab
+      # echoing cached dimensions must not silently revert someone else's resize.
+      let(:params) do
+        {
+          id: wellplate.id,
+          name: 'Another Testname',
+          wells: [attributes_for(:well).merge(position: { x: 1, y: 1 }, is_new: true)],
+          height: 1,
+          width: 1,
+          container: { id: container.id },
+        }
+      end
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'succeeds' do
+        expect(response).to have_http_status :success
+      end
+
+      it 'ignores the dimensions' do
+        expect([wellplate.reload.width, wellplate.height]).to eq [12, 8]
+      end
     end
 
-    it 'returns the wellplate attachments' do
-      expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: read_only_collection)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not update the wellplate' do
+        expect(wellplate.reload.name).to eq('Testname')
+      end
     end
   end
 
@@ -257,6 +362,35 @@ describe Chemotion::WellplateAPI do
       it 'four wells were created' do
         loaded_wells = Wellplate.find_by(name: name).wells
         expect(loaded_wells.length).to eq 4
+      end
+    end
+
+    context 'with only one dimension zero' do
+      # A wellplate must be either fully sized or unsized (0x0). One dimension
+      # alone at zero produced a plate with no wells but a non-zero edge, which
+      # no resize could later repair.
+      let(:width) { 0 }
+      let(:height) { 8 }
+
+      it 'returns 422 unprocessable entity' do
+        expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it 'explains the rule' do
+        expect(response.parsed_body['error']).to include('both width and height')
+      end
+
+      it 'does not create the wellplate' do
+        expect(Wellplate.find_by(name: name)).to be_nil
+      end
+    end
+
+    context 'with both dimensions zero' do
+      let(:width) { 0 }
+      let(:height) { 0 }
+
+      it 'is accepted as an unsized wellplate' do
+        expect(Wellplate.find_by(name: name).size).to eq 0
       end
     end
 
@@ -387,6 +521,113 @@ describe Chemotion::WellplateAPI do
 
       it 'response data not empty' do
         expect(response.body.length).to satisfy('not empty') { |n| n > 0 }
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/wellplates/resize/:id' do
+    let(:wellplate) { create(:wellplate, width: 4, height: 3) }
+    let(:params) { { width: width, height: height } }
+    let(:width) { 2 }
+    let(:height) { 2 }
+
+    before do
+      (1..wellplate.height).each do |pos_y|
+        (1..wellplate.width).each { |pos_x| wellplate.wells.create!(position_x: pos_x, position_y: pos_y) }
+      end
+      wellplate.wells.reset
+    end
+
+    context 'when the user can update the wellplate and no well holds data' do
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/resize/#{wellplate.id}", params: params
+      end
+
+      it 'succeeds' do
+        expect(response).to have_http_status :success
+      end
+
+      it 'applies the new dimensions' do
+        expect([wellplate.reload.width, wellplate.height]).to eq [2, 2]
+      end
+
+      it 'returns the reconciled wellplate' do
+        expect(response.parsed_body['wellplate']['wells'].size).to eq 4
+      end
+    end
+
+    context 'when a dropped well still holds data' do
+      before do
+        wellplate.wells.find_by(position_x: 4, position_y: 3).update!(sample: create(:sample))
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/resize/#{wellplate.id}", params: params
+      end
+
+      it 'returns 422 unprocessable entity' do
+        expect(response).to have_http_status :unprocessable_entity
+      end
+
+      it 'explains which well blocks the resize' do
+        expect(response.parsed_body['error']).to include('C4')
+      end
+
+      it 'does not resize the wellplate' do
+        expect([wellplate.reload.width, wellplate.height]).to eq [4, 3]
+      end
+    end
+
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: read_only_collection)
+        put "/api/v1/wellplates/resize/#{wellplate.id}", params: params
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not resize the wellplate' do
+        expect([wellplate.reload.width, wellplate.height]).to eq [4, 3]
+      end
+    end
+
+    context 'with a dimension above the maximum' do
+      let(:width) { 101 }
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/resize/#{wellplate.id}", params: params
+      end
+
+      it 'status code 400 was returned' do
+        expect(response).to have_http_status :bad_request
+      end
+
+      it 'correct error message was returned' do
+        expect(response.parsed_body).to eq({ 'error' => 'width does not have a valid value' })
+      end
+    end
+
+    context 'with only one dimension zero' do
+      let(:width) { 0 }
+      let(:height) { 3 }
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/resize/#{wellplate.id}", params: params
+      end
+
+      it 'returns 422 unprocessable entity' do
+        expect(response).to have_http_status :unprocessable_entity
       end
     end
   end

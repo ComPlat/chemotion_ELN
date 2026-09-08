@@ -123,7 +123,7 @@ class DeviceDescription < ApplicationRecord
     name short_label vendor_device_name vendor_device_id serial_number vendor_company_name general_tags ontologies
   ], using: { trigram: { threshold: 0.0001 } }
 
-  scope :includes_for_list_display, -> { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   after_create :set_short_label
 

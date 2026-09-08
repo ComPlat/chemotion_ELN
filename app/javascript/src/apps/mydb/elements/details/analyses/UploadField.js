@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip
+  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip, Collapse
 } from 'react-bootstrap';
 import JSZip from 'jszip';
 import {
@@ -18,6 +18,8 @@ import {
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
 import AppModal from 'src/components/common/AppModal';
+import ChevronIcon from 'src/components/common/ChevronIcon';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
@@ -280,18 +282,34 @@ const UploadField = ({ disabled = false, element, setElement }) => {
   const [show, setShow] = useState(false);
   const [ontology, setOntology] = useState('');
   const [isAdvanced, setIsAdvanced] = useState(false);
+  const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
+  // Advanced-mode analyses live here, not inside AdvancedAnalysesList, so toggling
+  // Advanced mode off (which unmounts that component) does not destroy the user's
+  // configured analyses and datasets.
+  const [analContainerList, setAnalContainer] = useState([]);
+  // A file selection held back while the user confirms discarding the analyses above.
+  const [pendingSelection, setPendingSelection] = useState(null);
   const handleClose = useCallback(() => {
     setListedFiles([]);
+    setAnalContainer([]);
+    setPendingSelection(null);
+    setIsAdvanced(false);
+    setShowAdvancedHelp(false);
     setShow(false);
   }, []);
   const handleShow = useCallback(() => setShow(true), []);
 
-  const handleChange = useCallback((items) => {
+  // A new selection replaces `listedFiles`, so any advanced-mode analyses built from the
+  // previous selection now hold dataset paths that no longer resolve - executing them
+  // would walk into an unrelated (or missing) file container. They have to go.
+  const applySelection = useCallback((items) => {
+    setAnalContainer([]);
+
     if (items.length === 1) {
       if (items[0].isFile) {
         createAnalsesForSingelFiles(element, [items[0].file], items[0].name, ontology);
-        setShow(false);
+        handleClose();
         setElement(element, () => {
         });
 
@@ -304,7 +322,26 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
 
     setListedFiles(items);
-  }, [ontology]);
+  }, [element, ontology, handleClose, setElement]);
+
+  // Discarding configured analyses is not something to do behind the user's back, so a
+  // non-empty list parks the new selection until they confirm.
+  const handleChange = useCallback((items) => {
+    if (analContainerList.length > 0) {
+      setPendingSelection(items);
+      return;
+    }
+
+    applySelection(items);
+  }, [analContainerList, applySelection]);
+
+  const handleDiscardConfirmation = useCallback((confirmed) => {
+    if (confirmed && pendingSelection) {
+      applySelection(pendingSelection);
+    }
+
+    setPendingSelection(null);
+  }, [pendingSelection, applySelection]);
 
   const handlesSetOntology = useCallback((ev) => {
     let kind = (ev || '');
@@ -318,20 +355,36 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     setConsumedPaths(paths);
   }, [listedFiles]);
 
+  const isAdvancedView = isAdvanced && listedFiles.length > 0;
+
   const content = () => {
-    if (isAdvanced && listedFiles.length > 0) {
+    if (isAdvancedView) {
       return (
         <Container>
-          <Row>
+          <Row className="mb-2">
             <Col>
-              <p>
-                Add and name new analyses with as many datasets as needed.
-                Drag and drop files or folders from the file list on the left-hand side into the datasets.
-                Folder can be expanded to see their contents, and files can be selected individually.
-                Multiple files and/or folders in a dataset will be zipped together.
-                A single file in a dataset is uploaded as it is.
-                Do not forget to press Execute to apply your settings.
-              </p>
+              <Button
+                variant="link"
+                className="p-0"
+                aria-expanded={showAdvancedHelp}
+                aria-controls="advanced-mode-help"
+                onClick={() => setShowAdvancedHelp((prev) => !prev)}
+              >
+                <ChevronIcon direction={showAdvancedHelp ? 'down' : 'right'} className="me-1" />
+                How does advanced mode work?
+              </Button>
+              <Collapse in={showAdvancedHelp}>
+                <div id="advanced-mode-help">
+                  <p className="mt-2">
+                    Add and name new analyses with as many datasets as needed.
+                    Drag and drop files or folders from the file list on the left-hand side into the datasets.
+                    Folders can be expanded to see their contents, and files can be selected individually.
+                    Multiple files and/or folders in a dataset will be zipped together.
+                    A single file in a dataset is uploaded as it is.
+                    Do not forget to press Execute to apply your settings.
+                  </p>
+                </div>
+              </Collapse>
             </Col>
           </Row>
           <Row className="justify-content-md-center">
@@ -342,6 +395,8 @@ const UploadField = ({ disabled = false, element, setElement }) => {
               <AdvancedAnalysesList
                 handleClose={handleClose}
                 listedFiles={listedFiles}
+                analContainerList={analContainerList}
+                setAnalContainer={setAnalContainer}
                 setConsumedPaths={handleSetConsumedPaths}
                 setElement={wrappedSetElement}
               />
@@ -352,16 +407,6 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
     return (
       <Container>
-        <Row className="justify-content-end mb-2">
-          <Col xs="auto">
-            <ToggleSwitch
-              disabled={listedFiles.length === 0}
-              isChecked={isAdvanced}
-              setIsChecked={setIsAdvanced}
-              label="Advanced mode"
-            />
-          </Col>
-        </Row>
         <Row>
           <Col>
             <p>
@@ -425,10 +470,34 @@ const UploadField = ({ disabled = false, element, setElement }) => {
         size="xl"
         show={show}
         onHide={handleClose}
+        className={`analyses-upload-modal${isAdvancedView ? ' analyses-upload-modal--advanced' : ''}`}
+        centered={false}
         title="Create Analyses from files or folders"
+        extendedFooter={(
+          <ToggleSwitch
+            disabled={listedFiles.length === 0}
+            isChecked={isAdvanced}
+            setIsChecked={setIsAdvanced}
+            label="Advanced mode"
+          />
+        )}
       >
         {content()}
       </AppModal>
+
+      <ConfirmModal
+        showModal={pendingSelection !== null}
+        onClick={handleDiscardConfirmation}
+        title="Discard the analyses you configured?"
+        content={(
+          <p>
+            {`You have ${analContainerList.length} `}
+            {analContainerList.length === 1 ? 'analysis' : 'analyses'}
+            {' set up in advanced mode. They reference the files you selected before, so'}
+            {' choosing a new selection discards them. This cannot be undone.'}
+          </p>
+        )}
+      />
     </>
   );
 };

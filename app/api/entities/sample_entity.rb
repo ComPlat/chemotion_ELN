@@ -30,7 +30,12 @@ module Entities
     end
 
     # Level 1 attributes
-    expose! :molfile, anonymize_below: 1
+    expose! :molfile,            anonymize_below: 1
+    expose! :molecule_name_hash, anonymize_below: 1, anonymize_with: {}
+    # showed_name (app/models/sample.rb) derives only from molecule_name and
+    # molecule_iupac_name, both already unanonymized at this level — gating it
+    # any higher protects nothing.
+    expose! :showed_name,        anonymize_below: 1
 
     # Level 2 attributes and relations
     with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
@@ -54,12 +59,11 @@ module Entities
       expose! :location,                unless: :displayed_in_list
       expose! :melting_point,           unless: :displayed_in_list
       expose! :metrics
-      expose! :molarity_unit,           unless: :displayed_in_list
-      expose! :molarity_value,          unless: :displayed_in_list
-      expose! :molecule_name_hash,                                  anonymize_with: {}
+      expose! :molarity_unit
+      expose! :molarity_value
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
-      expose! :pubchem_tag
+      expose! :pubchem_tag,                                         anonymize_with: nil
       expose! :purity
       expose! :reaction_description,    unless: :displayed_in_list
       expose! :real_amount_unit,        unless: :displayed_in_list
@@ -68,15 +72,14 @@ module Entities
       expose! :sample_svg_file
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
-      expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
-      expose! :stereo
+      expose! :stereo,                                              anonymize_with: nil
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
-      expose! :xref
+      expose! :xref,                                                anonymize_with: {}
       expose! :sample_type
-      expose! :sample_details
+      expose! :sample_details,                                      anonymize_with: nil
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
       # Hierarchical material physical properties
       # (color, state, particle_size stay in xref — main's storage — already exposed via :xref)
@@ -103,12 +106,8 @@ module Entities
       object.residues.any?
     end
 
-    def can_update
-      options[:policy].try(:update?) || false
-    end
-
     def can_publish
-      options[:policy].try(:destroy?) || false
+      element_policy.try(:destroy?) || false
     end
 
     def children_count
@@ -158,19 +157,32 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # Sample.includes_for_list_display) is counted in memory, avoiding an
+      # N+1 COUNT(*) query per sample in the list endpoint.
+      object.comments.size
     end
 
     def gas_type
-      object.reactions_samples.pick(:gas_type)
+      reactions_sample&.gas_type
     end
 
     def gas_phase_data
-      object.reactions_samples.pick(:gas_phase_data)
+      reactions_sample&.gas_phase_data
     end
 
     def weight_percentage
-      object.reactions_samples.pick(:weight_percentage)
+      reactions_sample&.weight_percentage
+    end
+
+    # Memoized so gas_type/gas_phase_data/weight_percentage share one lookup instead of
+    # each re-running .reactions_samples.first -- a no-op when the association is preloaded,
+    # but three redundant queries per sample instead of one when it isn't (see element_api.rb's
+    # load_report, which doesn't preload :reactions_samples).
+    def reactions_sample
+      return @reactions_sample if defined?(@reactions_sample)
+
+      @reactions_sample = object.reactions_samples.first
     end
   end
 end

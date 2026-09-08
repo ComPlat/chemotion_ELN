@@ -132,6 +132,9 @@ module Usecases
       end
 
       def serialized_result_by_id_for_sample(sample, serialized_scope)
+        # Per-element (not for_collection like #serialized_result_by_id): a sample reached via a
+        # restrictive share still shows its true level if the user owns/better-shares it in another
+        # collection. Keep this deliberate divergence when editing.
         detail_levels = ElementDetailLevelCalculator.new(user: @user, element: sample).detail_levels
         serialized = Entities::SampleEntity.represent(
           sample,
@@ -146,8 +149,19 @@ module Usecases
         entities =
           @model_name == Labimotion::Element ? Labimotion::ElementEntity : "Entities::#{model}Entity".constantize
         serialized =
-          entities.represent(element, displayed_in_list: true).serializable_hash
+          entities.represent(element, detail_levels: collection_detail_levels, displayed_in_list: true)
+                  .serializable_hash
         serialized_scope.push(serialized)
+      end
+
+      # Per-class detail levels for the single collection this search is scoped to. Without them the
+      # entities render fail-open (full access), leaking fields a restrictive collection share hides.
+      def collection_detail_levels
+        @collection_detail_levels ||=
+          ElementDetailLevelCalculator.for_collection(
+            collection: Collection.accessible_for(@user).find(@collection_id),
+            user: @user,
+          )
       end
     end
   end

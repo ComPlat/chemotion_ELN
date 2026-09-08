@@ -99,5 +99,33 @@ describe Chemotion::ComponentAPI do
       expect(response).to have_http_status(:success)
       expect(Component.count).to eq(1)
     end
+
+    # Regression: relative_molecular_weight was undeclared, so a client-sent string persisted
+    # verbatim and later crashed report generation and the mixture-weight write path
+    # (ComPlat/chemotion_ELN#3170). Declaring it Float makes Grape coerce it at the boundary.
+    it 'coerces a numeric-string relative_molecular_weight to a Float' do
+      params = {
+        sample_id: sample.id,
+        components: [
+          {
+            id: component.id,
+            name: 'Updated Component',
+            position: 1,
+            component_properties: {
+              molecule_id: molecule.id,
+              amount_mol: 0.5,
+              relative_molecular_weight: '150.0',
+            },
+          },
+        ],
+      }
+
+      put '/api/v1/components', params: params, as: :json
+
+      expect(response).to have_http_status(:success)
+      stored = Component.find(component.id).component_properties['relative_molecular_weight']
+      expect(stored).to eq(150.0)
+      expect(stored).to be_a(Float)
+    end
   end
 end

@@ -87,23 +87,20 @@ RSpec.describe Chemotion::OpenBabelService do
       expect(info[:cano_smiles]).to eq('N#N')
     end
 
-    it 'returns empty canonical smiles when canonical generation raises SystemStackError' do
-      call_count = 0
-      allow(conversion).to receive(:write_string) do
-        call_count += 1
-        case call_count
-        when 1
-          "CC smiles-meta\n"
-        when 2
-          raise SystemStackError
-        else
-          "molfile-v2000\n"
-        end
-      end
+    it 'returns empty canonical smiles when canonical generation raises SystemStackError',
+       :aggregate_failures do
+      # The canonical write shares this describe block's sequential write_string counter again
+      # now it runs in-process by default, so raise from the writer itself.
+      allow(conversion).to receive(:write_string).and_return("CC smiles-meta\n", "molfile-v2000\n")
+      allow(described_class).to receive(:canonical_smiles_from).and_return(nil)
 
       info = described_class.molecule_info_from_structure('CC', 'smi')
 
       expect(info[:cano_smiles]).to eq('')
+      # Molecule#assign_molecule_data persists cano_smiles, so a failed write has to be
+      # distinguishable from a structure that canonicalises to nothing.
+      timeout = Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS
+      expect(info[:ob_log][:warning]).to include("Canonical SMILES generation failed or timed out after #{timeout}s")
     end
 
     it 'returns empty canonical smiles for multiple_R molfile when can conversion fails' do
@@ -144,6 +141,73 @@ RSpec.describe Chemotion::OpenBabelService do
         "SVG rendering timed out after #{Chemotion::OpenBabelService::SVG_RENDER_TIMEOUT_SECONDS}s",
       )
     end
+
+    # The SVG render's output is discarded unconditionally on the paths that feed
+    # Molecule#assign_molecule_data — svg_reprocess re-renders through Chemotion::SvgRenderer
+    # because OpenBabel's SVG always carries the 'Open Babel' marker. render_svg: false is how
+    # those callers stop paying for it.
+    describe 'render_svg: false' do
+      before do
+        allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
+      end
+
+      it 'does not fork at all' do
+        allow(Chemotion::ForkedTimeout).to receive(:run)
+
+        described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        # Both forks on this path go through ForkedTimeout: the SVG render, and the canonical
+        # write when bound_native_work is asked for. Neither is, so nothing forks -- which is the
+        # contract the request path depends on (see .molecule_info_from_structure).
+        expect(Chemotion::ForkedTimeout).not_to have_received(:run)
+        expect(described_class).not_to have_received(:svg_from_molfile)
+      end
+
+      it 'bounds the canonical write in a fork only when asked to' do
+        allow(Chemotion::ForkedTimeout).to receive(:run).and_return('C')
+
+        described_class.molecule_info_from_molfile('C', render_svg: false, bound_native_work: true)
+
+        expect(Chemotion::ForkedTimeout).to have_received(:run)
+          .with(Chemotion::OpenBabelService::CANONICAL_SMILES_TIMEOUT_SECONDS)
+      end
+
+      it 'returns a nil svg without claiming a timeout', :aggregate_failures do
+        info = described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        expect(info[:svg]).to be_nil
+        # A skipped render also leaves svg nil; reporting that as a timeout would put a false
+        # warning in every importer's ob_log.
+        expect(info[:ob_log][:warning].to_a.join).not_to include('SVG rendering timed out')
+      end
+
+      it 'leaves every other field intact', :aggregate_failures do
+        # The sequential stub in the outer `before` is one-shot, and this example calls the method
+        # twice. Reset the position between the two so the second invocation sees the same inputs
+        # as the first — otherwise the diff shows a difference in :smiles that has nothing to do
+        # with render_svg.
+        values = ["C smiles-meta\n", "C can-meta\n"]
+        call = 0
+        allow(conversion).to receive(:write_string) do
+          value = values[call] || values.last
+          call += 1
+          value
+        end
+
+        with_svg = described_class.molecule_info_from_molfile('C')
+        call = 0
+        without = described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        expect(without.except(:svg, :ob_log)).to eq(with_svg.except(:svg, :ob_log))
+        expect(without[:inchikey]).to eq(with_svg[:inchikey])
+      end
+
+      it 'still renders by default, so untraced callers are unaffected' do
+        allow(described_class).to receive(:svg_from_molfile).and_return('<svg/>')
+
+        expect(described_class.molecule_info_from_molfile('C')[:svg]).to eq('<svg/>')
+      end
+    end
   end
 
   describe '.svg_from_molfile' do
@@ -183,6 +247,39 @@ RSpec.describe Chemotion::OpenBabelService do
       result = described_class.molecule_info_from_molfiles(%w[only])
 
       expect(result).to eq([nil])
+    end
+
+    # The batch entry point is what the SDF importer uses, so both flags have to reach every
+    # record or the saving only applies to callers that go one at a time.
+    it 'forwards render_svg to every record', :aggregate_failures do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_return({})
+
+      described_class.molecule_info_from_molfiles(%w[a b], render_svg: false)
+
+      expect(described_class).to have_received(:molecule_info_from_molfile)
+        .with('a', render_svg: false, bound_native_work: false)
+      expect(described_class).to have_received(:molecule_info_from_molfile)
+        .with('b', render_svg: false, bound_native_work: false)
+    end
+
+    it 'forwards bound_native_work to every record', :aggregate_failures do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_return({})
+
+      described_class.molecule_info_from_molfiles(%w[a b], render_svg: false, bound_native_work: true)
+
+      expect(described_class).to have_received(:molecule_info_from_molfile)
+        .with('a', render_svg: false, bound_native_work: true)
+      expect(described_class).to have_received(:molecule_info_from_molfile)
+        .with('b', render_svg: false, bound_native_work: true)
+    end
+
+    it 'renders, and does not bound, by default' do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_return({})
+
+      described_class.molecule_info_from_molfiles(%w[a])
+
+      expect(described_class).to have_received(:molecule_info_from_molfile)
+        .with('a', render_svg: true, bound_native_work: false)
     end
   end
 end

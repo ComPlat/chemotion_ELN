@@ -69,6 +69,111 @@ describe Chemotion::MessageAPI do
       end
     end
 
+    # No memoized helpers here (this group's ancestors are already at the RSpec/MultipleMemoizedHelpers
+    # cap) — message/notification are plain locals inside the one example that needs them.
+    describe 'a message flagged content.silent' do
+      # It must still be delivered on the first fetch — silent only means "no toast", not "hidden" —
+      # but is auto-acknowledged as a side effect of that same fetch (see MessageAPI's list endpoint),
+      # so it never sits "unread" waiting for a dismiss that will never come (there is no toast to
+      # dismiss it with), while staying visible under is_ack=1 like any other acknowledged message.
+      it 'is delivered once as unread, then auto-acknowledged on that fetch' do
+        message = create(:message, channel_id: c_nosys.id, content: { data: 'permission updated', silent: true },
+                                   created_by: u2.id)
+        # MessageEntity#id is the notify_messages view's id, which is the Notification id, not the
+        # Message id (see MessageEntity's separate `message_id` field) — assert against this one.
+        notification = Notification.create!(message: message, user: u1, is_ack: false)
+
+        get '/api/v1/messages/list.json?is_ack=0'
+        first_fetch_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        get '/api/v1/messages/list.json?is_ack=0'
+        second_fetch_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        get '/api/v1/messages/list.json?is_ack=1'
+        acked_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        expect(first_fetch_ids).to include(notification.id)
+        expect(second_fetch_ids).not_to include(notification.id)
+        expect(acked_ids).to include(notification.id)
+      end
+
+      # Pins the combined channel_type-5-OR-silent auto-ack query: both categories must still be
+      # acked together in one request, not just each in isolation.
+      it 'auto-acks a channel-5 notification and a silent one together, in a single request' do
+        channel_with_type_five = create(:channel, channel_type: 5)
+        channel_5_message = create(:message, channel_id: channel_with_type_five.id, content: { data: 'chan 5' },
+                                             created_by: u2.id)
+        channel_5_notification = Notification.create!(message: channel_5_message, user: u1, is_ack: false)
+        silent_message = create(:message, channel_id: c_nosys.id, content: { data: 'silent', silent: true },
+                                          created_by: u2.id)
+        silent_notification = Notification.create!(message: silent_message, user: u1, is_ack: false)
+
+        get '/api/v1/messages/list.json?is_ack=0'
+
+        get '/api/v1/messages/list.json?is_ack=1'
+        acked_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        expect(acked_ids).to include(channel_5_notification.id, silent_notification.id)
+      end
+    end
+
+    describe 'GET config' do
+      # Isolates each example's ENV stub instead of a shared `around`, since only two keys ever
+      # need overriding here and different examples override different subsets.
+      def fetch_config
+        get '/api/v1/messages/config'
+        JSON.parse(response.body)
+      end
+
+      it 'defaults to messageAutoInterval 6000 and idleTimeout 12 when unset' do
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('MESSAGE_AUTO_INTERNAL').and_return(nil)
+        allow(ENV).to receive(:[]).with('MESSAGE_IDLE_TIME').and_return(nil)
+
+        config = fetch_config
+
+        expect(config['messageAutoInterval']).to eq(6000)
+        expect(config['idleTimeout']).to eq(12)
+      end
+
+      # A misconfigured .env must not be able to drive every client into a runaway polling loop —
+      # the served value is floored regardless of what the deployment sets it to.
+      it 'floors messageAutoInterval at 500 and idleTimeout at 5 when set below that' do
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('MESSAGE_AUTO_INTERNAL').and_return('1')
+        allow(ENV).to receive(:[]).with('MESSAGE_IDLE_TIME').and_return('0')
+
+        config = fetch_config
+
+        expect(config['messageAutoInterval']).to eq(500)
+        expect(config['idleTimeout']).to eq(5)
+      end
+
+      # .to_i coerces non-numeric garbage to 0, which then hits the same floor as an explicit
+      # too-low value — no separate guard needed for a malformed (as opposed to merely small) var.
+      it 'floors non-numeric garbage the same way' do
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('MESSAGE_AUTO_INTERNAL').and_return('not-a-number')
+        allow(ENV).to receive(:[]).with('MESSAGE_IDLE_TIME').and_return('also-not-a-number')
+
+        config = fetch_config
+
+        expect(config['messageAutoInterval']).to eq(500)
+        expect(config['idleTimeout']).to eq(5)
+      end
+
+      it 'passes through a value already above the floor unchanged' do
+        allow(ENV).to receive(:[]).and_call_original
+        allow(ENV).to receive(:[]).with('MESSAGE_AUTO_INTERNAL').and_return('8000')
+        allow(ENV).to receive(:[]).with('MESSAGE_IDLE_TIME').and_return('20')
+
+        config = fetch_config
+
+        expect(config['messageAutoInterval']).to eq(8000)
+        expect(config['idleTimeout']).to eq(20)
+      end
+    end
+
     describe 'publish a message' do
       before do
         post '/api/v1/messages/new', params: { channel_id: m_sys.channel_id, content: m_sys.content[:data] }.to_json,

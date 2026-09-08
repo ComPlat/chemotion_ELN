@@ -5,24 +5,30 @@
 const BASE = '/workshop';
 const SIDEBAR = `${BASE}/_sidebar.md`;
 const DEFAULT_SLUG = 'home';
+const DEFAULT_TITLE = 'Workshop Guide';
 
 const cacheBust = () => `?_=${Date.now()}`;
 
 export const workshopBase = BASE;
 export const workshopDefaultSlug = DEFAULT_SLUG;
+export const workshopDefaultTitle = DEFAULT_TITLE;
 
 // Availability must not be probed by requesting the (expectedly missing) static
 // file directly: a 404 fetch response doesn't throw, but the browser still logs
 // the failed resource load to the console on every non-workshop instance. This
 // endpoint always answers 200, so the "feature disabled" case stays silent.
+//
+// Also carries the display title (server-configured via WORKSHOP_GUIDE_TITLE,
+// see `rake workshop_guide:sync`) so instances can rebrand the guide without
+// touching frontend code.
 export async function fetchWorkshopAvailability() {
   try {
     const res = await fetch('/api/v1/public/workshop_guide/available');
-    if (!res.ok) return false;
-    const { available } = await res.json();
-    return !!available;
+    if (!res.ok) return { available: false, title: DEFAULT_TITLE };
+    const { available, title } = await res.json();
+    return { available: !!available, title: title || DEFAULT_TITLE };
   } catch (e) {
-    return false;
+    return { available: false, title: DEFAULT_TITLE };
   }
 }
 

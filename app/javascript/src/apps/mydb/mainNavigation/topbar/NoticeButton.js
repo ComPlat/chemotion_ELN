@@ -19,6 +19,22 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 
 import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
 
+const MAX_VISIBLE_PAGES = 5;
+
+const getPaginationRange = (currentPage, totalPages, maxVisible) => {
+  if (totalPages <= maxVisible) {
+    return Array.from({ length: totalPages }, (unused, i) => i + 1);
+  }
+  const half = Math.floor(maxVisible / 2);
+  let start = Math.max(currentPage - half, 1);
+  let end = start + maxVisible - 1;
+  if (end > totalPages) {
+    end = totalPages;
+    start = end - maxVisible + 1;
+  }
+  return Array.from({ length: end - start + 1 }, (unused, i) => start + i);
+};
+
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
     {urlTitle || url}
@@ -27,72 +43,151 @@ const changeUrl = (url, urlTitle) => (url ? (
   <span />
 ));
 
-const handleNotification = (nots, act, context, needCallback = true) => {
+// Any notification on one of these subjects means the recipient's collection visibility changed
+// server-side (a share was created/updated/revoked, or an ownership offer was accepted) — refetch
+// so their tree reflects it without waiting for a page reload.
+const refreshCollectionSubjects = ['Shared Collection With Me', 'Collection Take Ownership'];
+// Legacy action names, predating the subject-based check above, still seeded into Channel.msg_template
+// by old migrations for channels no later migration ever re-pointed at the new subject list: Gate
+// Transfer (db/migrate/20181207100526_add_gate_transfer_notification.rb), Collection Zip import/export
+// and Samples Import (db/migrate/20190617144801_add_collection_zip_notification.rb,
+// db/migrate/20230531142756_add_samples_import_channel.rb). PR #2783 deliberately re-pointed these same
+// strings at the (then-new) MobX fetchCollections() call rather than dropping them — this branch has to
+// stay independently of the subject check above, or those three channels silently stop refreshing the
+// tree.
+const refreshCollectionActions = [
+  'CollectionActions.fetchRemoteCollectionRoots',
+  'CollectionActions.fetchSyncInCollectionRoots',
+  'RefreshChemotionCollection',
+  'CollectionActions.fetchUnsharedCollectionRoots',
+];
+
+const matchesCollectionRefresh = (n) => refreshCollectionSubjects.includes(n.subject)
+  || refreshCollectionActions.includes(n.content.action);
+
+const handleNotification = (nots, act, context, needCallback = true, isFirstBatch = false) => {
   let count = 0;
+
+  // Computed once over the full, uncapped batch — decoupled from the count>3 toast-spam cap below (a
+  // notification past the cap still needs the tree to refresh, it just doesn't get its own toast) — and
+  // skipped entirely for the very first batch after mount: CollectionTree.js already fetches the tree
+  // fresh on its own mount effect, well before this component's first poll can fire, so refetching again
+  // here for a backlog of notifications accumulated since the user's last login is redundant. Any
+  // notification that arrives too early to benefit from that self-heals on the next poll cycle.
+  const shouldRefreshCollections = act === 'add' && !isFirstBatch && nots.some(matchesCollectionRefresh);
+
   nots.forEach((n) => {
     if (act === 'rem') {
       rootStore.notificationsStore.removeByUid(n.id);
     }
     if (act === 'add') {
-      count += 1;
-      if (count > 3) {
-        return;
+      // Silent notifications never produce a toast, so they must not count toward — or be
+      // throttled by — the toast-spam cap below. Counting them here is exactly what made the
+      // "You have N more notifications" summary overcount: it included notifications the user
+      // never saw a toast for in the first place, with nothing to find when they went looking.
+      //
+      // The cap suppresses the toast only. Returning here would also skip the refreshes and the action
+      // switch below, so a report arriving behind three notifications would never surface. count still
+      // counts every non-silent one, so the summary below is unaffected.
+      let suppressToast = false;
+      if (!n.content.silent) {
+        count += 1;
+        suppressToast = count > 3;
       }
       const infoTimeString = formatDate(n.created_at);
       const convertedData = convertCalendarNotificationToLocal(n.content.data);
 
+      // mb-1: a message that arrives as a headline plus
+      // bulleted notes reads as one block, and a full 1rem gap between each line pulls it apart.
       const newText = convertedData
         .split('\n')
-        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+        .map((i) => <p className="mb-1" key={`${infoTimeString}-${i}`}>{i}</p>);
       const { url, urlTitle } = n.content;
       if (url) {
         newText[newText.length] = (
-          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+          <p className="mb-1" key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
         );
       }
 
-      const notification = {
-        title: `From ${n.sender_name} on ${infoTimeString}`,
-        message: newText,
-        level: n.content.level || 'warning',
-        autoDismiss: n.content.autoDismiss || 5,
-        position: n.content.position || 'tr',
-        uid: n.id,
-        action: {
-          label: (
-            <span>
-              <i className="fa fa-check" aria-hidden="true" />
-              &nbsp;&nbsp;Got it
-            </span>
-          ),
-          callback() {
-            if (needCallback) {
-              const params = { ids: [] };
-              params.ids[0] = n.id;
-              MessagesFetcher.acknowledgedMessage(params);
-            }
+      // Silent notifications (e.g. a share permission update/revoke, or a rename — see
+      // CollectionShareNotifier on the backend) are delivered so the switch below and the tree-refresh
+      // check can act on them, but must not interrupt the user with a dismiss-required popup; the
+      // backend auto-acknowledges them on delivery instead (see MessageAPI's list endpoint).
+      if (!n.content.silent && !suppressToast) {
+        const notification = {
+          title: `From ${n.sender_name} on ${infoTimeString}`,
+          message: newText,
+          level: n.content.level || 'warning',
+          autoDismiss: n.content.autoDismiss ?? 5,
+          position: n.content.position || 'tr',
+          uid: n.id,
+          action: {
+            label: (
+              <span>
+                <i className="fa fa-check" aria-hidden="true" />
+                &nbsp;&nbsp;Got it
+              </span>
+            ),
+            callback() {
+              if (needCallback) {
+                const params = { ids: [] };
+                params.ids[0] = n.id;
+                MessagesFetcher.acknowledgedMessage(params);
+              }
+            },
           },
-        },
-      };
-      rootStore.notificationsStore.add(notification);
+        };
+        rootStore.notificationsStore.add(notification);
+      }
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
       const { currentCollection } = UIStore.getState();
       const currentCollectionId = currentCollection?.id;
 
-      const refreshCollectionActions = [
-        'CollectionActions.fetchRemoteCollectionRoots',
-        'CollectionActions.fetchSyncInCollectionRoots',
-        'RefreshChemotionCollection',
-        'CollectionActions.fetchUnsharedCollectionRoots',
-      ];
-      if (refreshCollectionActions.includes(n.content.action) || n.subject === 'Shared Collection With Me') {
+      // Number(): the two ids reach here from different places and are not reliably the same type --
+      // UIStore itself compares currentCollection.id loosely for that reason.
+      const notificationCollectionId = Number(n.content?.collection_id);
+      const isOpenCollection = Number.isFinite(notificationCollectionId)
+        && Number(currentCollectionId) === notificationCollectionId;
+
+      // refreshElements re-reads the current page, sort and search from the stores, so the list comes
+      // back the way the user left it. Fetching by collection id directly would reset all three.
+      //
+      // Guarded because both paths below can ask for it on the same notification -- the report branch
+      // always, and the RefreshSampleList case on instances whose channel template carries that action.
+      let samplesRefreshed = false;
+      const refreshOpenCollectionSamples = () => {
+        if (samplesRefreshed || !isOpenCollection) return;
+
+        samplesRefreshed = true;
+        ElementActions.refreshElements('sample');
+      };
+
+      // Guarded the same way: the report branch below and the switch's own
+      // 'InboxActions.fetchInbox' case can both fire for the same notification.
+      let inboxRefreshed = false;
+      const refreshInbox = () => {
+        if (inboxRefreshed) return;
+
+        inboxRefreshed = true;
+        InboxActions.fetchInbox({ currentPage, itemsPerPage });
+      };
+
+      // A sample import changes three things at once, and content.action can only ask for one of them.
+      // Which one it asks for also differs between instances, depending on whether the migration that
+      // rewrote this channel's template actually ran - so none of this is keyed on the action.
+      if (n.content.report_attachment_id) {
+        // the report, which the import just put there
+        refreshInbox();
+        // the samples it created, which otherwise only appear after a manual re-render
+        refreshOpenCollectionSamples();
+        // and the tree, whose per-collection counts are now out of date
         context.collections.fetchCollections();
       }
 
       switch (n.content.action) {
         case 'InboxActions.fetchInbox':
-          InboxActions.fetchInbox({ currentPage, itemsPerPage });
+          refreshInbox();
           break;
         case 'ReportActions.updateProcessQueue':
           ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
@@ -112,16 +207,20 @@ const handleNotification = (nots, act, context, needCallback = true) => {
           );
           break;
         case 'RefreshSampleList':
-          if (currentCollectionId != null && currentCollectionId === n.content?.collection_id) {
-            ElementActions.fetchSamplesByCollectionId(
-              parseInt(currentCollectionId, 10)
-            );
-          }
+          refreshOpenCollectionSamples();
           break;
         default:
       }
     }
   });
+
+  if (shouldRefreshCollections) {
+    context.collections.fetchCollections();
+    // Sharee-facing permission-level display (e.g. SharedToMeInfosTooltip) reads a separate,
+    // once-fetched-then-cached store slice that fetchCollections() never touches — refresh it too,
+    // bounded to whatever's already cached (i.e. actually being displayed somewhere).
+    context.collections.refreshMySharedCollectionShares();
+  }
 
   if (count > 3) {
     const notification = {
@@ -165,6 +264,13 @@ const NoticeButton = () => {
   const intervalRef = useRef(null);
   const prevDbNoticesRef = useRef([]);
   const prevServerVersionRef = useRef('');
+  // Captured at the point each real fetch resolves (messageFetch/handleShow below), not in the
+  // diff effect: the effect's own initial mount-time run always sees an empty diff before any real
+  // fetch has happened, so it can't tell "no fetch yet" apart from "fetch found nothing new" on its
+  // own. hasFetchedNoticesRef latches permanently true on the first real fetch; the pre-flip value
+  // is what handleNotification's isFirstBatch actually needs.
+  const hasFetchedNoticesRef = useRef(false);
+  const isFirstNotificationBatchRef = useRef(true);
 
   // Use refs for values needed inside the polling interval to avoid
   // stale closures and prevent useCallback/useEffect churn that would
@@ -211,6 +317,8 @@ const NoticeButton = () => {
           }
         });
         messages.sort((a, b) => b.id - a.id);
+        isFirstNotificationBatchRef.current = !hasFetchedNoticesRef.current;
+        hasFetchedNoticesRef.current = true;
         setNewNotices(messages);
         setServerVersion(result.version);
       });
@@ -279,6 +387,8 @@ const NoticeButton = () => {
       const unreadMessages = unreadResult.messages.sort((a, b) => b.id - a.id);
 
       setAckNotices(ackMessages);
+      isFirstNotificationBatchRef.current = !hasFetchedNoticesRef.current;
+      hasFetchedNoticesRef.current = true;
       setNewNotices(unreadMessages);
       setShowModal(true);
     });
@@ -435,27 +545,40 @@ const NoticeButton = () => {
             </Card>
           );
         })}
-        {totalPages > 1 && (
-          <Pagination className="justify-content-center mt-3">
-            <Pagination.Prev
-              disabled={effectivePage === 1}
-              onClick={() => setCurrentPage(effectivePage - 1)}
-            />
-            {[...Array(totalPages).keys()].map((key, i) => (
-              <Pagination.Item
-                key={`page_${key}`}
-                active={i + 1 === effectivePage}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              disabled={effectivePage === totalPages}
-              onClick={() => setCurrentPage(effectivePage + 1)}
-            />
-          </Pagination>
-        )}
+        {totalPages > 1 && (() => {
+          const pageRange = getPaginationRange(effectivePage, totalPages, MAX_VISIBLE_PAGES);
+          return (
+            <Pagination className="justify-content-center mt-3">
+              <Pagination.First
+                disabled={effectivePage === 1}
+                onClick={() => setCurrentPage(1)}
+              />
+              <Pagination.Prev
+                disabled={effectivePage === 1}
+                onClick={() => setCurrentPage(effectivePage - 1)}
+              />
+              {pageRange[0] > 1 && <Pagination.Ellipsis disabled />}
+              {pageRange.map((page) => (
+                <Pagination.Item
+                  key={`page_${page}`}
+                  active={page === effectivePage}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Pagination.Item>
+              ))}
+              {pageRange[pageRange.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
+              <Pagination.Next
+                disabled={effectivePage === totalPages}
+                onClick={() => setCurrentPage(effectivePage + 1)}
+              />
+              <Pagination.Last
+                disabled={effectivePage === totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+              />
+            </Pagination>
+          );
+        })()}
       </>
     );
   };
@@ -510,7 +633,7 @@ const NoticeButton = () => {
     const remMessages = _.filter(prevNots, (o) => !_.includes(currentNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
-      handleNotification(newMessages, 'add', context, true);
+      handleNotification(newMessages, 'add', context, true, isFirstNotificationBatchRef.current);
     }
     if (Object.keys(remMessages).length > 0) {
       handleNotification(remMessages, 'rem', context, true);
@@ -557,3 +680,5 @@ const NoticeButton = () => {
 };
 
 export default NoticeButton;
+// Exported for unit testing only — see spec/javascripts/apps/mydb/mainNavigation/topbar/NoticeButton.spec.js.
+export { handleNotification };

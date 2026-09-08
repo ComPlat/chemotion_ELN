@@ -2,9 +2,12 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
+    include NestedElementPolicy
+
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
       expose! :can_copy,                                     unless: :displayed_in_list
+      expose! :can_update,                                   unless: :displayed_in_list
       expose! :body
       expose! :container,                                    using: 'Entities::ContainerEntity'
       expose! :id
@@ -55,7 +58,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # ResearchPlan.includes_for_list_display) is counted in memory,
+      # avoiding an N+1 COUNT(*) query per research plan in the list endpoint.
+      object.comments.size
     end
   end
 end

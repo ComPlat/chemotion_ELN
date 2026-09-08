@@ -41,13 +41,20 @@ function SelectionShareModal({
   const [newCollectionLabel, setNewCollectionLabel] = useState('');
   const [parentCollection, setParentCollection] = useState(null);
   const [applyToSubcollections, setApplyToSubcollections] = useState(false);
+  const [includeNewSubcollections, setIncludeNewSubcollections] = useState(false);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
   const displayWarning = Number(permissions.permissionLevel) === PermissionConst.PassOwnership;
-  const canSubmit = !showUserSelect || (selectedUsers != null && selectedUsers.length > 0);
+  // Ownership is an offer to a single person; the backend rejects a group (or multiple recipients)
+  // at level 5 with a 422 (see prevent_invalid_ownership_offer! in collection_share_api.rb). Flag it
+  // here so the user gets an explanation instead of a bare error, and block the submit.
+  const invalidOwnershipOffer = displayWarning && showUserSelect
+    && ((selectedUsers || []).some((u) => u.type === 'Group') || (selectedUsers || []).length > 1);
+  const canSubmit = (!showUserSelect || (selectedUsers != null && selectedUsers.length > 0))
+    && !invalidOwnershipOffer;
   const submitTitle = shareType === 'edit' ? 'Edit Permissions' : 'Create Shared Collection';
 
   const handleSharing = () => {
@@ -72,7 +79,6 @@ function SelectionShareModal({
         permissions: permissionsParams,
         label: newCollectionLabel.trim(),
         parentId: parentCollection?.id ?? null,
-        currentUser,
       };
       collectionsStore.collectionShareForElements(params);
     } else if (shareType === 'create') {
@@ -83,12 +89,13 @@ function SelectionShareModal({
         apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
-      collectionsStore.addCollectionShare(params, currentUser, false);
+      collectionsStore.addCollectionShare(params);
     } else if (shareType === 'edit') {
       // edit permissions of collection share
       const params = {
         id: collectionShareId,
         apply_to_subcollections: applyToSubcollections,
+        include_new_subcollections: includeNewSubcollections,
         ...permissionsParams
       };
       collectionsStore.updateCollectionShare(collectionShareId, params);
@@ -179,6 +186,7 @@ function SelectionShareModal({
       primaryActionLabel={submitTitle}
       onPrimaryAction={handleSharing}
       primaryActionDisabled={!canSubmit}
+      enforceFocus={false}
     >
       <Form>
         {shareType === 'new' && (
@@ -241,6 +249,12 @@ function SelectionShareModal({
               Transferring ownership applies to all sub-collections.
             </Form.Text>
           )}
+          {invalidOwnershipOffer && (
+            <Form.Text className="d-block text-danger">
+              <i className="fa fa-exclamation-triangle ms-1" aria-hidden="true" />
+              Ownership can only be transferred to a single person, not a group or several users.
+            </Form.Text>
+          )}
         </Form.Group>
         {(shareType === 'create' || shareType === 'edit') && (
           <Form.Group className="mb-3" controlId="applyToSubcollections">
@@ -248,8 +262,21 @@ function SelectionShareModal({
               type="checkbox"
               label="Apply these share settings to all sub-collections"
               checked={applyToSubcollections}
-              onChange={(e) => setApplyToSubcollections(e.target.checked)}
+              onChange={(e) => {
+                setApplyToSubcollections(e.target.checked);
+                if (!e.target.checked) { setIncludeNewSubcollections(false); }
+              }}
             />
+            {shareType === 'edit' && applyToSubcollections && (
+              <Form.Check
+                className="ms-4 mt-1"
+                type="checkbox"
+                id="includeNewSubcollections"
+                label="Also include sub-collections not already shared with this user (by default, only sub-collections already shared with them are updated)"
+                checked={includeNewSubcollections}
+                onChange={(e) => setIncludeNewSubcollections(e.target.checked)}
+              />
+            )}
           </Form.Group>
         )}
         <Form.Group className="mb-3" controlId="sampleDetailLevelSelect">

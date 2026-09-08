@@ -8,7 +8,7 @@ import UIFetcher from 'src/fetchers/UIFetcher';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
-import { cleaningNMRiumData } from 'src/utilities/SpectraHelper';
+import { cleaningNMRiumData, isSpectrum2D, spectrumName } from 'src/utilities/SpectraHelper';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -46,6 +46,7 @@ export default class NMRiumDisplayer extends React.Component {
     this.prepareAnalysisMetadata = this.prepareAnalysisMetadata.bind(this);
     this.prepareImageAttachment = this.prepareImageAttachment.bind(this);
     this.prepareNMRiumDataAttachment = this.prepareNMRiumDataAttachment.bind(this);
+    this.postToNMRium = this.postToNMRium.bind(this);
   }
 
   componentDidMount() {
@@ -131,7 +132,11 @@ export default class NMRiumDisplayer extends React.Component {
   loadWrapperHost() {
     UIFetcher.fetchNMRDisplayerHost().then(({ nmrium_url }) => {
       if (!nmrium_url) return;
-      const origin = new URL(nmrium_url).origin;
+      // The configured url may be a path rather than an absolute url, when the
+      // wrapper assets are self-hosted out of public/ (see spectra.yml.example).
+      // Resolving against our own origin then yields the origin the same-origin
+      // iframe will post messages from, so receiveMessage's check still holds.
+      const { origin } = new URL(nmrium_url, window.location.origin);
       this.setState({ nmriumWrapperHost: nmrium_url, nmriumOrigin: origin });
     });
   }
@@ -151,11 +156,7 @@ export default class NMRiumDisplayer extends React.Component {
       if (!rawState) return;
 
       const spectra = rawState?.spectra || rawState?.data?.spectra || [];
-      const is2D = this.state.is2D || spectra.some((spc) => (
-        spc?.info?.dimension === 2
-        || spc?.originalInfo?.dimension === 2
-        || spc?.meta?.dimension === 2
-      ));
+      const is2D = this.state.is2D || spectra.some(isSpectrum2D);
       const version = rawState?.version ?? rawState?.data?.version ?? 1;
       const nmriumData = version > 3 && rawState.data ? rawState.data : rawState;
 
@@ -170,17 +171,24 @@ export default class NMRiumDisplayer extends React.Component {
     }
   }
 
-  requestDataToBeSaved() {
+  // receiveMessage already refuses anything not from nmriumOrigin; this is the same
+  // check in the outbound direction, so the payload is only ever delivered to the frame
+  // we resolved from the configured wrapper url. Silently doing nothing without an
+  // origin is deliberate: it means loadWrapperHost has not resolved yet, and the caller
+  // is about to be re-run once the iframe loads.
+  postToNMRium(message) {
+    const { nmriumOrigin } = this.state;
     const iframe = this.iframeRef.current;
-    if (!iframe) return;
+    if (!iframe?.contentWindow || !nmriumOrigin) return;
 
-    iframe.contentWindow.postMessage(
-      {
-        type: 'nmr-wrapper:action-request',
-        data: { type: 'exportSpectraViewerAsBlob' },
-      },
-      '*'
-    );
+    iframe.contentWindow.postMessage(message, nmriumOrigin);
+  }
+
+  requestDataToBeSaved() {
+    this.postToNMRium({
+      type: 'nmr-wrapper:action-request',
+      data: { type: 'exportSpectraViewerAsBlob' },
+    });
   }
 
   handleCloseRequest(event, source) {
@@ -245,10 +253,10 @@ export default class NMRiumDisplayer extends React.Component {
           molecules: molfile ? [{ molfile }] : [],
         },
       };
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: payload });
     } else if (zip?.url) {
 
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } });
 
       const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
       if (!nmriumState) {
@@ -256,12 +264,16 @@ export default class NMRiumDisplayer extends React.Component {
         return;
       }
 
+      // Rename before cleaning, not after: cleaningNMRiumData derives each spectrum's sources[] id
+      // from its name, so renaming afterwards would leave selector.root pointing at an id the next
+      // save no longer mints.
+      if (zip?.label) this.patchZipName(nmriumState, zip?.label);
+
       const cleaned = cleaningNMRiumData(nmriumState);
 
-      if (zip?.label) this.patchZipName(cleaned, zip?.label);
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } });
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
@@ -317,7 +329,7 @@ export default class NMRiumDisplayer extends React.Component {
       this.setState({ fetchedSpectra: updatedSpectra });
 
       const payload = { type: 'file', data: fileList };
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: payload });
     } catch (err) {
       console.error('Failed to parse/patch .nmrium:', err);
     }
@@ -338,9 +350,17 @@ export default class NMRiumDisplayer extends React.Component {
       || spectrum?.sourceSelector?.files?.find((file) => typeof file === 'string');
     const baseFromUrl = this.getFileBaseName(oldUrl);
     const baseFromInfo = this.getFileBaseName(spectrum?.info?.name);
+    // Last resort for a spectrum carrying neither a source url nor an info.name - the jcamp-loaded
+    // shape, where display.name is only the spectrum's uuid. spectrumName falls through to the raw
+    // JCAMP TITLE, which is already a stem ("X23827_10.processed_1"): it must not be run through
+    // getFileBaseName, which would read ".processed_1" as an extension and strip the curve away.
+    const nameFromSpectrum = spectrumName(spectrum);
+    const baseFromName = nameFromSpectrum ? nameFromSpectrum.toLowerCase() : '';
     const extFromUrl = this.getFileExtension(oldUrl);
     const extFromInfo = this.getFileExtension(spectrum?.info?.name);
-    const targetBase = baseFromUrl || baseFromInfo;
+    const targetBase = baseFromUrl || baseFromInfo || baseFromName;
+    // No extension is derived from the stem: it has none, and guessing one would only narrow the
+    // match away from the very attachment being looked for.
     const targetExt = extFromUrl || extFromInfo;
     if (!targetBase) return null;
 
@@ -530,14 +550,11 @@ export default class NMRiumDisplayer extends React.Component {
     const root = hasDataProp ? cleanedNMRiumData.data : cleanedNMRiumData;
     const spectra = root?.spectra || [];
     const originalSpectra = nmriumData?.data?.spectra || nmriumData?.spectra || [];
-    const has2D = this.state.is2D || originalSpectra.some((spc) => (
-      spc?.info?.dimension === 2
-      || spc?.originalInfo?.dimension === 2
-      || spc?.meta?.dimension === 2
-    ));
+    const has2D = this.state.is2D || originalSpectra.some(isSpectrum2D);
     const hasAnySource =
       !!root?.source
-      || spectra.some((spc) => spc?.source || spc?.sourceSelector);
+      || !!root?.sources?.length
+      || spectra.some((spc) => spc?.source || spc?.sourceSelector || spc?.selector?.root);
     const needsWrapper = has2D && !hasAnySource && !hasDataProp && !nmriumData.version;
 
     const toSerialize = needsWrapper
@@ -676,7 +693,7 @@ export default class NMRiumDisplayer extends React.Component {
     return (
       <>
         <AppModal
-          size="xxxl"
+          fullscreen
           show={showModalNMRDisplayer}
           onHide={this.hideCloseOverlay}
           onRequestClose={this.handleCloseRequest}

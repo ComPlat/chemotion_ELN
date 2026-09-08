@@ -53,14 +53,26 @@ export default class LiteraturesFetcher {
   }
 
   static fetchReferencesByCollection(params) {
-    return ApiClient.getJson(`/api/v1/literatures/collection?id=${params.id}`)
+    // The default handlers skip the status check and swallow rejections, so a failed request
+    // resolves `undefined` and the destructuring below throws a TypeError that nobody catches —
+    // which is how a 404 here used to surface as "Cannot destructure property 'collectionRefs'".
+    // Both are overridden so the caller sees a rejected promise it can report on.
+    return ApiClient.getJson(`/api/v1/literatures/collection?id=${params.id}`, {
+      handleResponseSuccess: (response) => {
+        if (!response.ok) {
+          throw new Error(`Could not load the references for this collection (${response.status})`);
+        }
+        return response.json();
+      },
+      handleResponseError: (error) => { throw error; },
+    })
       .then((json) => {
         const {
-          collectionRefs,
-          sampleRefs,
-          reactionRefs,
-          researchPlanRefs,
-        } = json;
+          collectionRefs = [],
+          sampleRefs = [],
+          reactionRefs = [],
+          researchPlanRefs = [],
+        } = json || {};
         return {
           collectionRefs: List(collectionRefs.map((lit) => new Literature(lit))),
           sampleRefs: List(sampleRefs.map((lit) => new Literature(lit))),

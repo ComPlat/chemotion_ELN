@@ -85,6 +85,14 @@ module Import
     end
 
     def check_wells
+      # WellPosition.from_dimension(0, 0) is an empty list, so on an unsized
+      # plate the loop below would validate nothing and let any sheet through.
+      # import_data would then create wells at positions no grid can hold.
+      if @wellplate.width.to_i.zero? || @wellplate.height.to_i.zero?
+        error_messages << 'Set the wellplate size before importing data.'
+        fail!
+      end
+
       expected_positions = WellPosition.from_dimension(@wellplate.width, @wellplate.height)
       wells = xlsx.column(1).drop(1)
 

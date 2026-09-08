@@ -42,7 +42,17 @@ export default function TreeViewItem({
         ) : (<i className="fa fa-fw" />)}
         <span className="tree-view__title">{title}</span>
         {meta}
-        {actions}
+        {actions && (
+          <span
+            className="tree-view__actions"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="presentation"
+          >
+            {actions}
+          </span>
+        )}
       </div>
       {expanded && hasChildren && (
         <div className="tree-view">

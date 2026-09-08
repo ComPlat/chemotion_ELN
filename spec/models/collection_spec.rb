@@ -221,6 +221,68 @@ RSpec.describe Collection do
     end
   end
 
+  # Ownership is personal; group membership reaches a collection only through a share. These pin
+  # the rule at the scope level, where every API path picks it up.
+  # `.reorder(nil)` on the .distinct scopes below: Collection's default_scope orders by position,
+  # and Postgres rejects SELECT DISTINCT with an ORDER BY column that is not selected. The API
+  # callers use find/find_by rather than .ids, so they never meet it.
+  describe 'ownership versus group membership' do
+    let(:user) { create(:person) }
+    let(:group) { create(:group, users: [user]) }
+    let!(:own_collection) { create(:collection, user: user) }
+    let!(:group_collection) { create(:collection, user: group) }
+
+    describe '.own_collections_for' do
+      it "returns the user's own collections" do
+        expect(described_class.own_collections_for(user).ids).to include(own_collection.id)
+      end
+
+      it "excludes a collection owned by the user's group" do
+        expect(described_class.own_collections_for(user).ids).not_to include(group_collection.id)
+      end
+    end
+
+    describe '.accessible_for' do
+      it 'excludes a group-owned collection that is not shared' do
+        expect(described_class.accessible_for(user).reorder(nil).ids).not_to include(group_collection.id)
+      end
+
+      it 'includes it once it is shared to the group' do
+        create(:collection_share, collection: group_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+
+        expect(described_class.accessible_for(user).reorder(nil).ids).to include(group_collection.id)
+      end
+    end
+
+    describe '.writable_by' do
+      it 'excludes a group-owned collection shared below add_elements' do
+        create(:collection_share, collection: group_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+
+        expect(described_class.writable_by(user).reorder(nil).ids).not_to include(group_collection.id)
+      end
+
+      it 'includes it when shared to the group at add_elements' do
+        create(:collection_share, collection: group_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:add_elements))
+
+        expect(described_class.writable_by(user).reorder(nil).ids).to include(group_collection.id)
+      end
+    end
+
+    describe '.shared_collections_for' do
+      it 'still resolves a share addressed to the group' do
+        create(:collection_share, collection: own_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+        other_member = create(:person)
+        group.users << other_member
+
+        expect(described_class.shared_collections_for(other_member).reorder(nil).ids).to include(own_collection.id)
+      end
+    end
+  end
+
   describe '#detail_levels_for_user' do
     let(:owner) { create(:person) }
     let(:user) { create(:person) }
@@ -236,13 +298,22 @@ RSpec.describe Collection do
       expect(own_collection.detail_levels_for_user(user)).to eq(all_owner_levels)
     end
 
-    # own_collections_for / accessible_for / writable_by all treat a group's collection as its
-    # members'. This used to compare `collection.user != current_user` and fall through to zeros.
-    it 'grants a group member every level on a collection owned by that group' do
+    # A group's collection is the group's. Membership is not ownership: a member reaches it the way
+    # anyone else does, through a share addressed to them or to one of their groups.
+    it 'grants a group member nothing on a collection owned by that group' do
       group_collection = create(:collection, user: group)
 
-      expect(group_collection.detail_levels_for_user(user)).to eq(all_owner_levels)
-      expect(group_collection.owned_by?(user)).to be true
+      expect(group_collection.detail_levels_for_user(user)).to eq(all_zero)
+      expect(group_collection.owned_by?(user)).to be false
+    end
+
+    it 'grants a group member the shared levels once that collection is shared to the group' do
+      group_collection = create(:collection, user: group)
+      create(:collection_share, collection: group_collection, shared_with: group,
+                                permission_level: CollectionShare.permission_level(:read_elements),
+                                sample_detail_level: 3)
+
+      expect(group_collection.detail_levels_for_user(user)[:sample_detail_level]).to eq(3)
     end
 
     it 'returns zeros when the user has neither ownership nor a share' do

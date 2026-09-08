@@ -14,10 +14,12 @@ const VerticalHeaderField = ({ label }) => {
   );
 }
 
-const Wellplate = ({ wellplate, handleWellsChange }) => {
+const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
   const [selectedWell, setSelectedWell] = useState(null)
 
   const swapWells = (firstWell, secondWell) => {
+    if (readOnly) { return; }
+
     const wells = wellplate.wells
     const firstWellId = wells.indexOf(firstWell);
     const secondWellId = wells.indexOf(secondWell);
@@ -28,6 +30,8 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
   }
 
   const dropSample = (droppedSample, well) => {
+    if (readOnly) { return; }
+
     const wells = wellplate.wells
     const wellId = wells.indexOf(well);
     const sample = droppedSample.buildChild();
@@ -49,6 +53,8 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
   }
 
   const updateSelectedWell = (updatedWell) => {
+    if (readOnly) { return; }
+
     const wells = wellplate.wells
     const wellIndex = wells.findIndex(well => well.id == updatedWell.id)
     if (wellIndex == -1) return;
@@ -82,6 +88,7 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
             swapWells={swapWells}
             dropSample={dropSample}
             active={isWellActive(well)}
+            readOnly={readOnly}
             key={`${well.id}-container`}
           />
         </div>
@@ -103,6 +110,7 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
           readoutTitles={wellplate.readout_titles}
           handleClose={hideDetails}
           onChange={updateSelectedWell}
+          readOnly={readOnly}
         />
       }
     </div>
@@ -111,7 +119,12 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
 
 Wellplate.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel),
-  handleWellsChange: PropTypes.func.isRequired
+  handleWellsChange: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+Wellplate.defaultProps = {
+  readOnly: false,
 };
 
 export default Wellplate;

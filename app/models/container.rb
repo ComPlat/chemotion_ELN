@@ -80,6 +80,18 @@ class Container < ApplicationRecord
     end
   end
 
+  # Returns the [variation_id, analysis_id] pair to link this attachment to, without
+  # touching the root element - callers batch these across a whole request and resolve
+  # the root element once, instead of paying a lookup + save per attachment.
+  def variation_link_for(attachment)
+    return unless container_type == 'dataset'
+
+    variation = Attachment.variation_id_from(attachment.filename)
+    return if variation.blank?
+
+    [variation, parent_id]
+  end
+
   private
 
   def delete_attachment

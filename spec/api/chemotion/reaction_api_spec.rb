@@ -49,12 +49,40 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'without params, when a reaction is only in a group-owned collection' do
+      let(:group) { create(:group, users: [user]) }
+      let(:group_collection) { create(:collection, user: group) }
+      let!(:group_reaction) { create(:reaction, name: 'group reaction', collections: [group_collection]) }
+
+      it 'does not return it -- the "All" view is owner-only, not group-aware' do
+        get '/api/v1/reactions'
+        reactions = parsed_json_response['reactions']
+        expect(reactions.pluck('id')).not_to include(group_reaction.id)
+      end
+    end
+
     context 'with ID of collection' do
       before { get '/api/v1/reactions', params: { collection_id: collection1.id } }
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.pluck('id')).to eq([reaction2.id, reaction1.id])
+      end
+    end
+
+    context 'with ID of a collection shared with the user' do
+      let(:shared_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let!(:shared_reaction) { create(:reaction, name: 'shared reaction', collections: [shared_collection]) }
+
+      it 'returns the reaction from the shared collection' do
+        get '/api/v1/reactions', params: { collection_id: shared_collection.id }
+        reactions = JSON.parse(response.body)['reactions']
+        expect(reactions.pluck('id')).to include(shared_reaction.id)
       end
     end
 

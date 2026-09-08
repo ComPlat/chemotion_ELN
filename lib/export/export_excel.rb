@@ -4,7 +4,7 @@ require 'base64'
 
 # rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module Export
-  class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
+  class ExportExcel < ExportTable
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
     # Default pixel size for SVG→PNG export (Inkscape); kept in line with ImageMagick’s natural SVG size.
@@ -21,7 +21,7 @@ module Export
         style: :thick,
         color: 'FF777777',
         edges: [:bottom],
-      },
+      }
     }
 
     def initialize(**args)
@@ -50,6 +50,8 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       decouple_idx = @headers.find_index('decoupled')
       samples.each_with_index do |sample, row|
+        next if hide_top_secret_sample?(sample)
+
         filtered_sample = filter_with_permission_and_detail_level(sample)
         if @image_index && (svg_path = filtered_sample[@image_index].presence)
           image_data = process_and_add_image(sheet, svg_path, row)
@@ -63,8 +65,8 @@ module Export
           filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == true ? 'yes' : 'No'
         end
 
-        size = sheet.styles.add_style(sz: 12)
-        sheet.add_row filtered_sample, height: row_height * 3 / 4, style: [size]
+        size = sheet.styles.add_style :sz => 12
+        sheet.add_row filtered_sample, :height => row_height * 3 / 4, :style=>[size]
       end
       sheet.column_info[@image_index].width = image_width / 8 if @image_index
       @samples = nil
@@ -96,6 +98,8 @@ module Export
       row_length = @headers.size
 
       samples.each do |sample|
+        next if withhold_shared_sample?(sample)
+
         # Add the sample's ID row (if components exist)
         sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
         sample_id_row[row_length - 1] = nil
@@ -114,57 +118,15 @@ module Export
       @samples = nil
     end
 
-    # Column keys pulled from the SQL result row for each sample.
-    COMPOSITION_SAMPLE_KEYS = [
-      'sample external label',
-      'sample name',
-      'short label',
-      'sample uuid',
-    ].freeze
-
-    # Headers for the calculated composition columns, matching the UI table.
-    COMPOSITION_COMP_HEADERS = [
-      'Source',
-      'Weight ratio exp.',
-      'Molar Mass (g/mol)',
-      'Weight ratio calc./%',
-      'Weight ratio (calc)/MM',
-      'Molar ratio (calc)/MM',
-      'Molar ratio exp/%',
-      'Molar ratio calc/%',
-    ].freeze
-
-    # Generates a composition table sheet replicating all calculations from
-    # the frontend sampleHierarchicalCompositions.js utility.
-    #
-    # Columns: sample identification + HierarchicalMaterial properties,
-    # followed by 8 composition calculation columns per component.
-    # A bold totals row is appended after each sample's component rows.
-    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
-      @samples = samples
-      return if samples.nil?
-
-      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
-      sheet = @xfile.workbook.add_worksheet(name: table)
-      grey = sheet.styles.add_style(
-        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] }
-      )
-      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
-      sheet.add_row(headers, style: grey)
-      samples.each { |sample| render_composition_sample_rows(sheet, sample, light_grey) }
-      @samples = nil
-    end
-
-    # TODO: implement better detail level filter
+    #TODO: implement better detail level filter
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def generate_analyses_sheet_with_samples(table, samples = nil, selected_columns)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
-
       generate_headers(table, [], selected_columns)
       sheet = @xfile.workbook.add_worksheet(name: table.to_s)
-      grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
-      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
+      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
       sheet.add_row(@headers, style: grey) # Add header
       decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
       ['sample uuid'].each do |e|
@@ -176,7 +138,7 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        next unless sample['is_shared'].in?(['f', false]) || sample['dl_s'] == 10
+        next if withhold_shared_sample?(sample)
 
         data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
         data[row_length - 1] = nil
@@ -203,6 +165,34 @@ module Export
       @xfile.to_stream.read
     end
 
+    # A sample row drawn from one of the caller's own collections (no share involved) — always
+    # exported in full. +is_shared+ is +bool_and(collections.shared)+ from the export SQL and
+    # comes back as the string 'f'/'t' or a boolean.
+    def owned_sample?(sample)
+      sample['is_shared'].in?(['f', false])
+    end
+
+    # Owner-set "hide even from those I share with" flag (+s.is_top_secret as ts+), 't'/'f' or boolean.
+    def top_secret_sample?(sample)
+      sample['ts'].in?(['t', true])
+    end
+
+    # True when a shared row must be omitted entirely: its detail level hides it (only dl 0 and
+    # 10 are implemented, so anything but 10 is withheld), or it is top-secret. Owned rows never
+    # match. Used by the analyses and components sheets, which drop the whole row rather than
+    # showing a reduced column set.
+    def withhold_shared_sample?(sample)
+      return false if owned_sample?(sample)
+
+      sample['dl_s'] != 10 || top_secret_sample?(sample)
+    end
+
+    # Top-secret masking only, independent of detail level — for the main sheet, whose detail-level
+    # handling is the reduced column set in {#filter_with_permission_and_detail_level}.
+    def hide_top_secret_sample?(sample)
+      !owned_sample?(sample) && top_secret_sample?(sample)
+    end
+
     def prepare_sample_analysis_data(sample)
       JSON.parse(sample['analyses'].presence || '[]').map do |an|
         an['content'] = quill_to_html_to_string(an['content'])
@@ -210,8 +200,7 @@ module Export
       end
     end
 
-    # Prepares component data for a sample by parsing JSON and converting
-    # rich text content to plain HTML string.
+    # Prepares the component data for a given sample by parsing JSON and converting rich text content to plain HTML string.
     #
     # @param sample [Hash] A hash representing a sample, expected to contain a JSON string under the 'components' key.
     # @return [Array<Hash>] An array of component hashes with 'content' converted to HTML string.
@@ -241,7 +230,7 @@ module Export
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample/chemical in own collection
-      if sample['is_shared'].in?(['f', false])
+      if owned_sample?(sample)
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|
@@ -261,8 +250,6 @@ module Export
             "#{sample['molarity_value']} #{sample['molarity_unit']}"
           elsif column == 'density'
             "#{sample['density']} g/ml"
-          elsif column == 'molfile'
-            sample[column]
           else
             sample[column]
           end
@@ -276,7 +263,6 @@ module Export
         headers = instance_variable_get("@headers#{sample['dl_s']}#{dl}")
         data = headers.map do |column|
           next nil unless column
-
           sample[column]
         end
         data[@image_index] = svg_path(sample) if headers.include?('image')
@@ -289,7 +275,6 @@ module Export
       sample_svg_path = sample['image'].presence
       molecule_svg_path = sample['m_image'].presence
       return nil unless (svg_file_name = sample_svg_path || molecule_svg_path)
-
       file_path = File.join(
         Rails.root, 'public', 'images', sample_svg_path ? 'samples' : 'molecules', svg_file_name
       )
@@ -359,9 +344,7 @@ module Export
       [tmp_svg.path, tmp_svg, temp_images]
     end
 
-    def convert_svg_to_png_with_inkscape(
-      svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT
-    )
+    def convert_svg_to_png_with_inkscape(svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT)
       require 'reporter/img/conv'
       width, height = svg_export_dimensions(svg_path, max_width, max_height)
       scale = INKSCAPE_EXPORT_SCALE
@@ -377,8 +360,8 @@ module Export
       [nil, nil, nil]
     end
 
-    # Resizes a PNG to target dimensions; returns [path, width, height].
-    # Uses Lanczos filter for sharper downscaling (e.g. orbs, diagrams).
+    # Resizes a PNG file to target dimensions; returns [path_to_resized_file, width, height].
+    # Uses Lanczos filter for sharper downscaling and smoother gradients (e.g. orbs, diagrams).
     def downscale_png_to(png_path, target_width, target_height)
       image = Magick::Image.read(png_path).first
       resized = image.resize(target_width, target_height, Magick::LanczosFilter, 1.0)
@@ -386,32 +369,13 @@ module Export
       [file.path, target_width, target_height]
     end
 
-    # Returns [width, height] for Inkscape export, fitting within max_width×max_height
-    # while preserving the SVG aspect ratio.
+    # Returns [width, height] for Inkscape export so the image fits within
+    # max_width×max_height while preserving SVG aspect ratio. Delegates to the
+    # shared Reporter::Img::Conv helper so xlsx and docx (research-plan) exports
+    # read SVG page dimensions identically — from the root <svg> width/height
+    # (viewBox fallback), ignoring nested layout viewBoxes.
     def svg_export_dimensions(svg_path, max_width, max_height)
-      w, h = svg_natural_dimensions(svg_path)
-      return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
-
-      scale = [max_width.to_f / w, max_height.to_f / h].min
-      [(w * scale).round, (h * scale).round]
-    end
-
-    # Parses SVG for viewBox or width/height; returns [width, height] in pixels or [nil, nil].
-    def svg_natural_dimensions(svg_path)
-      return [nil, nil] unless File.file?(svg_path)
-
-      content = File.read(svg_path, encoding: 'UTF-8')
-      # viewBox="minX minY width height"
-      if content =~ /viewBox\s*=\s*["']?\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/
-        return [Regexp.last_match(1).to_f.ceil, Regexp.last_match(2).to_f.ceil]
-      end
-
-      # width and height attributes (e.g. width="200" or width="200px")
-      w = content[/width\s*=\s*["']?\s*([\d.]+)/, 1]
-      h = content[/height\s*=\s*["']?\s*([\d.]+)/, 1]
-      return [w.to_f.ceil, h.to_f.ceil] if w && h
-
-      [nil, nil]
+      Reporter::Img::Conv.export_size_for(svg_path, max_width: max_width, max_height: max_height)
     end
 
     def create_file(png_blob)
@@ -422,9 +386,47 @@ module Export
       file
     end
 
-    private
+    # --- HierarchicalMaterial composition table export -------------------------------------
 
-    # Renders all rows (component rows + totals row) for one sample into the composition sheet.
+    # Column keys pulled from the SQL result row for each sample.
+    COMPOSITION_SAMPLE_KEYS = [
+      'sample external label',
+      'sample name',
+      'short label',
+      'sample uuid',
+    ].freeze
+
+    # Headers for the calculated composition columns, matching the UI table.
+    COMPOSITION_COMP_HEADERS = [
+      'Source',
+      'Weight ratio exp.',
+      'Molar Mass (g/mol)',
+      'Weight ratio calc./%',
+      'Weight ratio (calc)/MM',
+      'Molar ratio (calc)/MM',
+      'Molar ratio exp/%',
+      'Molar ratio calc/%',
+    ].freeze
+
+    # Generates a composition table sheet replicating all calculations from the frontend
+    # sampleHierarchicalCompositions.js utility. Columns: sample identity + 8 per-component
+    # calculation columns. A bold totals row is appended after each sample's component rows.
+    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
+      @samples = samples
+      return if samples.nil?
+
+      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
+      sheet = @xfile.workbook.add_worksheet(name: table)
+      grey = sheet.styles.add_style(
+        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] }
+      )
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+      sheet.add_row(headers, style: grey)
+      samples.each { |sample| render_composition_sample_rows(sheet, sample, light_grey) }
+      @samples = nil
+    end
+
+    # Renders one sample's rows (component rows + totals row) into the composition sheet.
     def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/MethodLength
       sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
       components = begin
@@ -455,21 +457,11 @@ module Export
         sheet.add_row(sample_values + comp_values, style: light_grey)
       end
 
-      totals_values = [
-        'Total',
-        nil,
-        nil,
-        result[:total_molar_calc],
-        nil,
-        nil,
-        nil,
-        result[:total_molar_exp],
-      ]
+      totals_values = ['Total', nil, nil, result[:total_molar_calc], nil, nil, nil, result[:total_molar_exp]]
       sheet.add_row(sample_values + totals_values, style: bold_style)
     end
 
     # Translates Component#parseComponentSource from the JS frontend model.
-    # Returns a hash with :source, :component, :weight_ratio_calc.
     def parse_component_source(source)
       return { source: source, component: nil, weight_ratio_calc: 0.0 } if source.blank?
 
@@ -482,17 +474,14 @@ module Export
       end
     end
 
-    # Returns the weight ratio for a component whose source does not encode a
-    # percentage — equivalent to Component#calcWeightRatioWithoutWeight.
+    # Weight ratio for a component whose source does not encode a percentage.
+    # Equivalent to Component#calcWeightRatioWithoutWeight.
     def calc_weight_ratio_without_weight(components)
       sum = components.sum { |item| parse_component_source(item['source'].to_s)[:weight_ratio_calc] }
       100.0 - sum
     end
 
     # Replicates buildHierarchicalMaterialRows from sampleHierarchicalCompositions.js.
-    # Accepts an array of HierarchicalMaterial component hashes and returns
-    #   { rows: [...], total_molar_calc: Float, total_molar_exp: Float }
-    # Each row hash contains the keys consumed by generate_composition_table_components_sheet_with_samples.
     def build_composition_rows(components) # rubocop:disable Metrics/MethodLength
       rows_data        = []
       total_molar_calc = 0.0
