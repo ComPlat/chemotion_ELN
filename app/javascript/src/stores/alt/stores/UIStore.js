@@ -361,12 +361,17 @@ class UIStore {
   }
 
   handleSelectCollection(collection, hasChanged = false) {
+    if (!collection) return;
+
     const state = this.state;
     const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
+      const wasShared = !!(state.currentCollection?.collection_share_id);
+      const isShared = !!(collection.collection_share_id);
+      hasChanged = hasChanged || wasShared !== isShared;
       hasChanged = hasChanged || state.currentSearchSelection != null;
       hasChanged = hasChanged || state.currentSearchByID != null;
     }
