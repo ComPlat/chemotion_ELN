@@ -324,7 +324,7 @@ class Sample < ApplicationRecord
             numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0, allow_nil: true }
   validate :has_collections
 
-  delegate :computed_props, to: :molecule, prefix: true
+  delegate :computed_props, to: :molecule, prefix: true, allow_nil: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
@@ -859,6 +859,9 @@ class Sample < ApplicationRecord
   end
 
   def assign_molecule_name
+    # HM / decoupled / structure-less samples have no molecule to derive a name from.
+    return if molecule.nil?
+
     if molecule_name&.new_record? && molecule.persisted? && molecule_name.name.present?
       att = molecule_name.attributes.slice('user_id', 'description', 'name')
       att['molecule_id'] = molecule.id

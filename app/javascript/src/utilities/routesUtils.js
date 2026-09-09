@@ -333,6 +333,9 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
   const { currentCollection } = UIStore.getState();
   const withType = type ? `/${type}` : '';
   const withId = id ? `/${id}` : '';
+  // currentCollection can be null right after saving a new element that closes the last open tab.
+  // In that case there is nothing meaningful to navigate to; bail out instead of crashing.
+  if (type !== 'collection' && !currentCollection) return undefined;
   const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
 
   Aviator.navigate(url, { silent });
@@ -345,6 +348,7 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
     }
     return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
   }
+  return undefined;
 };
 
 const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
