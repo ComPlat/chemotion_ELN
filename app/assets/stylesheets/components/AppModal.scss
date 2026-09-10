@@ -26,4 +26,15 @@
       max-height: none;
     }
   }
+
+  &.spectra-editor-modal {
+    .modal-content {
+      height: 85vh;
+    }
+
+    .modal-body {
+      max-height: none;
+      overflow: hidden;
+    }
+  }
 }
