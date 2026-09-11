@@ -453,6 +453,41 @@ RSpec.describe LlmTaskRunner do
       end.to raise_error(Errors::LlmProviderError)
     end
   end
+
+  # A connection held idle for the task's timeout is closed at the far end, and the
+  # next query then fails with PG::ConnectionBad, taking the extraction with it.
+  describe 'the database connection during the provider call' do
+    let(:runner) { described_class.new(task_name: 'sds_extraction', user: user, context: 'text') }
+    let(:pool) { instance_double(ActiveRecord::ConnectionAdapters::ConnectionPool) }
+
+    before do
+      allow(runner).to receive(:connection_pool).and_return(pool)
+      allow(pool).to receive_messages(
+        active_connection?: true,
+        connection: instance_double(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter,
+                                    transaction_open?: transaction_open),
+      )
+      allow(pool).to receive(:release_connection)
+    end
+
+    context 'with no transaction open' do
+      let(:transaction_open) { false }
+
+      it 'hands the connection back for the duration of the call' do
+        expect(runner.send(:without_database_connection) { :answer }).to eq(:answer)
+        expect(pool).to have_received(:release_connection)
+      end
+    end
+
+    context 'with a transaction open' do
+      let(:transaction_open) { true }
+
+      it 'keeps the connection, since releasing it would abandon the transaction' do
+        expect(runner.send(:without_database_connection) { :answer }).to eq(:answer)
+        expect(pool).not_to have_received(:release_connection)
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/MessageSpies
 # rubocop:enable RSpec/MultipleExpectations
