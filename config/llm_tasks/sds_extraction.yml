@@ -6,7 +6,9 @@ execution_mode: async
 output_format: json
 temperature: 0.1
 max_tokens: 20000
-timeout_seconds: 500
+# Bounds one provider call. A single SDS may cost several: the default model it
+# falls back to, and one retry when a model returns nothing.
+timeout_seconds: 180
 validator_class: "LlmTaskValidators::SdsExtractionValidator"
 prompts:
   system: |
