@@ -109,6 +109,36 @@ RSpec.describe ExtractSdsJob do
         expect(entry['extractedProperties']['boiling_point']).to eq('181.7 °C')
       end
 
+      it 'extracts once and notifies once when the same job is executed twice' do
+        first  = described_class.new(sample_id: sample.id, user_id: user.id)
+        second = described_class.new(sample_id: sample.id, user_id: user.id)
+        second.job_id = first.job_id
+
+        expect do
+          first.perform_now
+          second.perform_now
+        end.to change(Message, :count).by(1)
+        expect(LlmTaskRunner).to have_received(:new).once
+      end
+
+      # Checked while the run is in flight, not afterwards: the success path drops
+      # the marker too, so only a mid-run read shows that the claim did it.
+      it 'clears an earlier failure marker when it claims the extraction' do
+        data = chemical.chemical_data.deep_dup
+        data[0]['extraction_error'] = { 'message' => 'old failure', 'failed_at' => '2026-01-01T00:00:00Z' }
+        chemical.update!(chemical_data: data)
+
+        marker_during_run = 'unread'
+        allow(runner).to receive(:run) do
+          marker_during_run = chemical.reload.chemical_data[0]['extraction_error']
+          extraction_result
+        end
+
+        described_class.new.perform(sample_id: sample.id, user_id: user.id)
+
+        expect(marker_during_run).to be_nil
+      end
+
       it 'sets success notification' do
         job = described_class.new
         job.perform(sample_id: sample.id, user_id: user.id)
@@ -193,6 +223,26 @@ RSpec.describe ExtractSdsJob do
       end
     end
 
+    context 'when a newer extraction claims the sample mid-run' do
+      before do
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
+        allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+        allow(runner).to receive(:run) do
+          data = chemical.reload.chemical_data.deep_dup
+          data[0]['extraction_run'] = { 'token' => 'newer-run', 'started_at' => Time.current.iso8601 }
+          chemical.update_columns(chemical_data: data) # rubocop:disable Rails/SkipsModelValidations
+          raise Errors::LlmProviderError, 'API timeout'
+        end
+      end
+
+      it 'notifies nobody and leaves no failure marker' do
+        expect { described_class.perform_now(sample_id: sample.id, user_id: user.id) }
+          .not_to change(Message, :count)
+        expect(chemical.reload.chemical_data[0]).not_to have_key('extraction_error')
+      end
+    end
+
     context 'when LlmTaskRunner raises LlmProviderError' do
       before do
         allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
@@ -207,6 +257,21 @@ RSpec.describe ExtractSdsJob do
         expect(job.instance_variable_get(:@notification_level)).to eq('error')
         expect(job.instance_variable_get(:@notification_message)).to include('API timeout')
       end
+
+      it 'notifies the user and records the failure marker' do
+        expect { described_class.perform_now(sample_id: sample.id, user_id: user.id) }
+          .to change(Message, :count).by(1)
+        expect(chemical.reload.chemical_data[0]['extraction_error']['message']).to include('API timeout')
+      end
+    end
+  end
+
+  describe 'notification state' do
+    it 'starts as a failure, so a run that ends early cannot report success' do
+      job = described_class.new
+      job.send(:start_notification, sample.id, user.id)
+
+      expect(job.instance_variable_get(:@notification_level)).to eq('error')
     end
   end
 
