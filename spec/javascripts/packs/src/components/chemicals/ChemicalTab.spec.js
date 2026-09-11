@@ -479,3 +479,128 @@ describe('Manual SDS attachment functionality', () => {
     expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
   });
 });
+
+describe('ChemicalTab LLM property mapping', () => {
+  // Verbatim from an extraction of a p-Xylene sheet: every quantity carries the
+  // sheet's wording, and the decimals are written with a comma.
+  const extractedProperties = {
+    boiling_point: '138 °C - lit.',
+    melting_point: '12 - 13 °C - lit.',
+    flash_point: '27 °C - closed cup',
+    density: '0,861 g/cm3 at 20 °C - lit.',
+    form: 'liquid',
+    solubility: '146 g/l at 25 °C - partly soluble',
+  };
+
+  let llmSample = null;
+
+  const mapProperties = () => {
+    llmSample = Sample.buildEmpty(2);
+    const wrapper = shallow(
+      React.createElement(
+        ChemicalTab,
+        {
+          sample: llmSample,
+          type: 'sample',
+          saveInventory: false,
+          setSaveInventory: sinon.spy(),
+          handleUpdateSample: sinon.spy(),
+          editChemical: sinon.spy(),
+          key: 'ChemicalTabLlm',
+        }
+      )
+    );
+    wrapper.instance().mapLlmPropertiesToSample(
+      new Chemical({ _chemical_data: [{ extractedProperties }] })
+    );
+  };
+
+  beforeEach(() => {
+    mapProperties();
+  });
+
+  it('writes the density as a number, without the unit and reference temperature', () => {
+    expect(llmSample.density).toBe(0.861);
+  });
+
+  it('writes the flash point as a value and a unit, without the method', () => {
+    expect(llmSample.xref.flash_point).toEqual({ unit: '°C', value: 27 });
+  });
+
+  it('writes the melting point as the range the sheet states', () => {
+    expect(llmSample.melting_point_lowerbound).toBe(12);
+    expect(llmSample.melting_point_upperbound).toBe(13);
+  });
+
+  it('writes a single-valued boiling point open-ended', () => {
+    expect(llmSample.boiling_point_lowerbound).toBe(138);
+    expect(llmSample.boiling_point_upperbound).toBeFalsy();
+  });
+
+  it('writes the free-text fields as the sheet words them', () => {
+    expect(llmSample.xref.form).toBe('liquid');
+    expect(llmSample.xref.solubility).toBe('146 g/l at 25 °C - partly soluble');
+  });
+});
+
+describe('ChemicalTab extraction polling', () => {
+  // Driven on a bare instance rather than a rendered one: the polling chain is
+  // plain instance state and timers, and a renderer would replace the context
+  // the toast goes through on every setState.
+  let instance = null;
+
+  const buildInstance = () => {
+    const component = new ChemicalTab({
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    });
+    component.setState = (patch) => {
+      component.state = { ...component.state, ...patch };
+    };
+    component.context = { notifications: { add: sinon.spy() } };
+    return component;
+  };
+
+  beforeEach(() => {
+    instance = buildInstance();
+    instance.setState({ loadingExtractSds: true });
+  });
+
+  afterEach(() => {
+    clearTimeout(instance._extractionPollTimer);
+  });
+
+  const toasts = () => instance.context.notifications.add;
+
+  it('keeps the button waiting while the extraction is still within the usual time', () => {
+    instance.startExtractionPolling(1, null, null, 5);
+
+    expect(instance.state.loadingExtractSds).toBe(true);
+    expect(toasts().called).toBe(false);
+  });
+
+  it('stops the button and says a notification will follow once it runs long', () => {
+    instance.startExtractionPolling(1, null, null, 30);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(toasts().calledOnce).toBe(true);
+    expect(toasts().firstCall.args[0].message).toEqual(expect.stringContaining('notification'));
+  });
+
+  it('keeps polling after it has said so', () => {
+    instance.startExtractionPolling(1, null, null, 30);
+
+    expect(instance._extractionPollTimer).toBeTruthy();
+  });
+
+  it('gives up silently at the ceiling', () => {
+    instance.startExtractionPolling(1, null, null, 140);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(toasts().called).toBe(false);
+  });
+});

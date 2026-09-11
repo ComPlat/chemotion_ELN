@@ -11,6 +11,7 @@ import AiActionButton from 'src/components/common/AiActionButton';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import { parseSdsNumber, parseSdsRange, parseSdsTemperature } from 'src/utilities/sdsValueParser';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
@@ -472,26 +473,41 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
+  // The success/failure markers polling then watches for a change. Read from the
+  // server, since a state copy that is stale or still loading makes the previous
+  // run's markers look like this run's result.
+  extractionBaseline = () => {
+    const { sample, type } = this.props;
+    const { chemical } = this.state;
+    const stateData = chemical?._chemical_data?.[0];
+
+    return ChemicalFetcher.fetchChemical(sample.id, type)
+      .then((fresh) => fresh?._chemical_data?.[0] ?? null)
+      .catch(() => stateData ?? null)
+      .then((data) => ({
+        extractedAt: data?.ai4chemotion?.extracted_at ?? null,
+        failedAt: data?.extraction_error?.failed_at ?? null,
+      }));
+  };
+
   handleExtractSds = () => {
     const { sample } = this.props;
-    const { chemical } = this.state;
-    // Remember the previous success/failure markers so polling can detect a change
-    const prevExtractedAt = chemical?._chemical_data?.[0]?.ai4chemotion?.extracted_at ?? null;
-    const prevFailedAt = chemical?._chemical_data?.[0]?.extraction_error?.failed_at ?? null;
 
     this.setState({ loadingExtractSds: true });
 
-    ChemicalFetcher.extractSds(sample.id).then(() => {
-      // Job submitted — keep spinner active and poll until results (or an error) arrive
-      this.context.notifications.add({
-        title: 'SDS Extraction Running',
-        message: 'Extracting safety data using AI. Results will appear automatically when done.',
-        level: 'info',
-        position: 'tc',
-        autoDismiss: 5,
-      });
-      this.startExtractionPolling(sample.id, prevExtractedAt, prevFailedAt, 0);
-    }).catch((error) => {
+    this.extractionBaseline().then(({ extractedAt: prevExtractedAt, failedAt: prevFailedAt }) => (
+      ChemicalFetcher.extractSds(sample.id).then(() => {
+        // Job submitted — keep spinner active and poll until results (or an error) arrive
+        this.context.notifications.add({
+          title: 'SDS Extraction Running',
+          message: 'Extracting safety data using AI. Results will appear automatically when done.',
+          level: 'info',
+          position: 'tc',
+          autoDismiss: 5,
+        });
+        this.startExtractionPolling(sample.id, prevExtractedAt, prevFailedAt, 0);
+      })
+    )).catch((error) => {
       this.setState({ loadingExtractSds: false });
       this.context.notifications.add({
         title: 'SDS Extraction Failed',
@@ -503,23 +519,32 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
-  // Poll fetchChemical every 3 s until the extraction succeeds (extracted_at
-  // changes) OR fails (extraction_error.failed_at changes), max 3 minutes.
-  // This is the primary refresh mechanism — independent of the notification system.
+  // Poll fetchChemical until the extraction succeeds (extracted_at changes) or
+  // fails (extraction_error.failed_at changes). The button stops waiting at
+  // SLOW_AFTER_ATTEMPTS and the job's notification takes over; polling continues
+  // quietly to MAX_ATTEMPTS so an open tab still updates on its own.
   startExtractionPolling = (sampleId, prevExtractedAt, prevFailedAt, attempt) => {
-    const MAX_ATTEMPTS = 60; // 60 × 3 s = 3 min
     const POLL_INTERVAL = 3000;
+    const SLOW_AFTER_ATTEMPTS = 30; // 90 s
+    // Both models the job may try at config/llm_tasks/sds_extraction.yml's
+    // timeout_seconds, plus room for the PDF and the queue.
+    const MAX_ATTEMPTS = 140; // 7 min
 
     if (attempt >= MAX_ATTEMPTS) {
       this.setState({ loadingExtractSds: false });
+      return;
+    }
+
+    if (attempt === SLOW_AFTER_ATTEMPTS) {
+      this.setState({ loadingExtractSds: false });
       this.context.notifications.add({
-        title: 'SDS Extraction',
-        message: 'Extraction is taking longer than expected. Please check back later.',
+        title: 'SDS Extraction Still Running',
+        message: 'This is taking longer than usual. Carry on working: a notification arrives when it completes, '
+          + 'and the safety data appears here on its own.',
         level: 'warning',
         position: 'tc',
         autoDismiss: 8,
       });
-      return;
     }
 
     this._extractionPollTimer = setTimeout(() => {
@@ -913,39 +938,29 @@ export default class ChemicalTab extends React.Component {
     const properties = chemical?._chemical_data?.[0]?.extractedProperties;
     if (!properties || Object.keys(properties).length === 0) return;
 
-    // Range properties (boiling_point, melting_point).
+    sample.xref ||= {};
+
     const updateSampleRange = (propertyName, propertyValue) => {
-      if (!propertyValue) return;
-      // Only a hyphen that follows a digit separates a range; one before a digit is
-      // the sign of a negative temperature, which SDS values regularly carry.
-      const parts = String(propertyValue)
-        .replace(/°\s*C?/gi, '')
-        .replace(/[\u2212\u2013\u2014]/g, '-')
-        .trim()
-        .replace(/(\d)\s*-\s*/g, '$1|')
-        .split('|');
-      const lowerBound = parseFloat(parts[0]);
-      if (Number.isNaN(lowerBound)) return;
-      const upperBound = parts.length > 1 ? parseFloat(parts[1]) : Number.POSITIVE_INFINITY;
-      sample.updateRange(
-        propertyName,
-        lowerBound,
-        Number.isNaN(upperBound) ? Number.POSITIVE_INFINITY : upperBound,
-      );
+      const range = parseSdsRange(propertyValue);
+      if (!range) return;
+      sample.updateRange(propertyName, range.lower, range.upper);
     };
 
     updateSampleRange('boiling_point', properties.boiling_point);
     updateSampleRange('melting_point', properties.melting_point);
 
-    if (properties.flash_point) {
-      sample.xref.flash_point = { unit: '°C', value: properties.flash_point };
+    const flashPoint = parseSdsTemperature(properties.flash_point);
+    if (flashPoint) {
+      sample.xref.flash_point = { unit: flashPoint.unit, value: flashPoint.value };
     }
 
-    const densityNumber = properties.density?.match(/[0-9.]+/g);
-    if (densityNumber) {
-      sample.density = densityNumber[0];
+    const density = parseSdsNumber(properties.density);
+    if (density !== null) {
+      sample.density = density;
     }
 
+    // Form, colour, solubility and refractive index are free-text sample fields:
+    // the sheet's wording ("146 g/l at 25 °C - partly soluble") is the value.
     if (properties.form) sample.xref.form = properties.form;
     if (properties.color) sample.xref.color = properties.color;
     if (properties.refractive_index) sample.xref.refractive_index = properties.refractive_index;
