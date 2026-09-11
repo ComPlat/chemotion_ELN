@@ -169,13 +169,15 @@ class LlmTaskRunner
   # budget before emitting JSON, especially on long SDS documents. Retry once with
   # a larger cap (same model) before giving up.
   def call_model(task, client)
-    messages   = build_messages(task)
-    raw_output = client.chat(
-      messages:    messages,
-      temperature: task.temperature,
-      max_tokens:  task.max_tokens,
-      json_mode:   task.json_output?,
-    )
+    messages = build_messages(task)
+    raw_output = without_database_connection do
+      client.chat(
+        messages:    messages,
+        temperature: task.temperature,
+        max_tokens:  task.max_tokens,
+        json_mode:   task.json_output?,
+      )
+    end
 
     if task.json_output? && raw_output.to_s.strip.empty?
       bumped = [task.max_tokens.to_i * 2, RETRY_MIN_MAX_TOKENS].max
@@ -183,15 +185,32 @@ class LlmTaskRunner
         "[LlmTaskRunner] Empty output for '#{@task_name}' " \
         "(finish_reason=#{client.last_finish_reason.inspect}); retrying once with max_tokens=#{bumped}.",
       )
-      raw_output = client.chat(
-        messages:    messages,
-        temperature: task.temperature,
-        max_tokens:  bumped,
-        json_mode:   task.json_output?,
-      )
+      raw_output = without_database_connection do
+        client.chat(
+          messages:    messages,
+          temperature: task.temperature,
+          max_tokens:  bumped,
+          json_mode:   task.json_output?,
+        )
+      end
     end
 
     raw_output
+  end
+
+  # Run the provider call without holding a database connection: a connection held
+  # idle for the task's timeout is closed at the far end, and the next query then
+  # raises PG::ConnectionBad. An open transaction keeps its connection.
+  def without_database_connection
+    return yield unless connection_pool.active_connection?
+    return yield if connection_pool.connection.transaction_open?
+
+    connection_pool.release_connection
+    yield
+  end
+
+  def connection_pool
+    ActiveRecord::Base.connection_pool
   end
 
   # Build the messages array for LlmClient#chat.
