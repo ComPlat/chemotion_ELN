@@ -1248,13 +1248,14 @@ class ViewSpectra extends React.Component {
     const treePopupContainer = createRef();
 
     return (
-      <div className="d-flex align-items-center gap-2" ref={treePopupContainer}>
+      <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }} ref={treePopupContainer}>
         <Select
           options={dsOptions}
           value={dsOptions.find(({ value }) => value === si.idDt)}
           isClearable={false}
           styles={{
-            container: (baseStyles) => ({ ...baseStyles, width: 200 }),
+            container: (baseStyles) => ({ ...baseStyles, width: 200, minWidth: 90 }),
+            control: (baseStyles) => ({ ...baseStyles, minHeight: 32, height: 32 }),
           }}
           onChange={(e) => this.onDSSelectChange(e)}
           size="sm"
@@ -1267,7 +1268,7 @@ class ViewSpectra extends React.Component {
           maxTagCount={1}
           onChange={onSelectChange}
           getPopupContainer={() => treePopupContainer.current}
-          style={{ width: 'min(45vw, 500px)', minWidth: 220 }}
+          style={{ width: 'min(45vw, 500px)', minWidth: 0 }}
         />
       </div>
     );
@@ -1303,8 +1304,8 @@ class ViewSpectra extends React.Component {
       <AppModal
         title={<span className="fs-5">{modalTitle}</span>}
         headerExtra={this.renderControls(idx)}
-        size="xxxl"
-        className="spectra-editor-modal"
+        scrollable
+        fullscreen
         bodyClassName="p-0 h-100 overflow-hidden"
         show={showModal}
         animation
