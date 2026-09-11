@@ -5,6 +5,8 @@ import { onAction } from 'mobx-state-tree';
 import { handleNotification } from 'src/apps/mydb/mainNavigation/topbar/NoticeButton';
 import { rootStore } from 'src/stores/mobx/RootStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 // Minimal notification shape handleNotification actually reads: id, sender_name, created_at,
 // subject, and content (data/action/silent). Anything else in a real payload is irrelevant here.
@@ -262,6 +264,40 @@ describe('NoticeButton#handleNotification', () => {
       handleNotification([n], 'add', context, true, false);
 
       expect(context.collections.fetchCollections.callCount).toBe(1);
+    });
+  });
+
+  describe('the SDS extraction refresh action', () => {
+    const sdsNotification = (sampleId) => buildNotification({
+      id: 300,
+      content: { action: 'ElementActions.fetchSampleById', sample_id: sampleId },
+    });
+
+    const withCurrentElement = (currentElement, run) => {
+      const getState = sinon.stub(ElementStore, 'getState').returns({ currentElement });
+      const fetchSampleById = sinon.stub(ElementActions, 'fetchSampleById');
+      try {
+        run(fetchSampleById);
+      } finally {
+        fetchSampleById.restore();
+        getState.restore();
+      }
+    };
+
+    it('refetches the sample the extraction wrote to when it is the open element', () => {
+      withCurrentElement({ type: 'sample', id: 7797 }, (fetchSampleById) => {
+        handleNotification([sdsNotification(7797)], 'add', buildContext());
+
+        expect(fetchSampleById.calledWith(7797)).toBe(true);
+      });
+    });
+
+    it('leaves another open element alone', () => {
+      withCurrentElement({ type: 'sample', id: 12 }, (fetchSampleById) => {
+        handleNotification([sdsNotification(7797)], 'add', buildContext());
+
+        expect(fetchSampleById.called).toBe(false);
+      });
     });
   });
 
