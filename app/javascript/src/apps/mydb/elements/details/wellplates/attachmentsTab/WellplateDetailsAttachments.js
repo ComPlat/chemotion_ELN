@@ -91,11 +91,15 @@ export class WellplateDetailsAttachments extends Component {
     }
   }
 
-  handleTemplateDownload() { // eslint-disable-line class-methods-use-this
+  handleTemplateDownload() {
     const { wellplate } = this.props;
+    if (!wellplate || wellplate.isNew) {
+      this.context.notifications.notifyMustSave('Wellplate', 'downloading the import template');
+      return;
+    }
     Utils.downloadFile({
       contents: `/api/v1/wellplates/template/${wellplate.id}`,
-      name: 'wellplate_import_template.xlsx'
+      name: 'wellplate_import_template.xlsx',
     });
   }
 
