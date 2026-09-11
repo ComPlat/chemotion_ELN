@@ -38,6 +38,9 @@ class ExtractSdsJob < ApplicationJob
   end
 
   after_perform do
+    # Only the run that owns the sample's extraction reports; see #superseded?.
+    next if superseded?
+
     # Persist a failure marker so the frontend polling can stop the spinner and
     # surface the error promptly, instead of waiting out the 3-minute poll window.
     persist_extraction_failure if @notification_level == 'error'
@@ -85,6 +88,10 @@ class ExtractSdsJob < ApplicationJob
     file_path = resolve_sds_path(chemical)
     return fail_with('SDS extraction failed: no SDS file found for this chemical.') unless file_path
 
+    # A second execution of this same job is doing the work already; bail out
+    # before spending an LLM call on it.
+    return unless claim_extraction(chemical)
+
     # SF-05: use the user's configured LLM provider.
     # Legacy ai4chemotion fallback (re-enabled in a separate commit):
     #   run_with_ai4chemotion(chemical, file_path, sample_id)
@@ -102,13 +109,67 @@ class ExtractSdsJob < ApplicationJob
 
   private
 
-  # Assume success; every failure path below overwrites this via #fail_with.
+  # Failure is the default state: only #run_with_provider, once the record is
+  # written, may report that the extraction completed.
   def start_notification(sample_id, user_id)
     @sample_id            = sample_id
     @user_id              = user_id
-    @notification_message = 'SDS extraction completed successfully.'
-    @notification_level   = 'info'
+    @run_token            = SecureRandom.hex(8)
+    @claimed              = false
+    @duplicate            = false
+    @notification_message = 'SDS extraction did not complete.'
+    @notification_level   = 'error'
     @notification_action  = nil
+  end
+
+  # Stamp this execution on the chemical, and answer whether it may proceed: one
+  # conditional UPDATE, so of two executions of one job row exactly one claims it.
+  # The same statement drops any earlier failure marker. Cf. ChemicalTab's polling.
+  def claim_extraction(chemical)
+    claim = { 'job_id' => job_id, 'token' => @run_token, 'started_at' => Time.current.iso8601 }
+    # rubocop:disable Rails/SkipsModelValidations -- deliberate: the claim must be
+    # one atomic statement, and fires no validations or callbacks.
+    rows = Chemical.where(id: chemical.id)
+                   .where("COALESCE(chemical_data -> 0 -> 'extraction_run' ->> 'job_id', '') <> ?", job_id.to_s)
+                   .update_all(["chemical_data = jsonb_set(chemical_data #- '{0,extraction_error}', " \
+                                "'{0,extraction_run}', ?::jsonb, true)", claim.to_json])
+    # rubocop:enable Rails/SkipsModelValidations
+    @claimed = rows.positive?
+    @duplicate = !@claimed
+    Rails.logger.warn("[ExtractSdsJob] sample #{@sample_id}: job #{job_id} is already running; skipping.") if @duplicate
+    @claimed
+  rescue StandardError => e
+    # An unstamped run still runs and reports: a lost stamp must not cost the user
+    # their extraction.
+    Delayed::Worker.logger.error "ExtractSdsJob claim error: #{e.message}"
+    true
+  end
+
+  # Whether another execution owns this sample's extraction — a duplicate of this
+  # job, or a newer extraction started while this one was running.
+  def superseded?
+    return true if @duplicate
+    return false unless @claimed
+
+    token = stored_run_token
+    return false if token.blank? || token == @run_token
+
+    Rails.logger.warn(
+      "[ExtractSdsJob] sample #{@sample_id}: a newer extraction is in charge; " \
+      "suppressing this run's #{@notification_level} notification.",
+    )
+    true
+  rescue StandardError => e
+    Delayed::Worker.logger.error "ExtractSdsJob supersede-check error: #{e.message}"
+    false
+  end
+
+  def stored_run_token
+    chemical = Chemical.find_by(sample_id: @sample_id)
+    data = chemical&.chemical_data
+    return nil unless data.is_a?(Array) && data[0].is_a?(Hash)
+
+    data[0].dig('extraction_run', 'token')
   end
 
   # Record a failure for after_perform to surface, and return nil so callers can
@@ -179,7 +240,8 @@ class ExtractSdsJob < ApplicationJob
     )
 
     @notification_message = "SDS extraction completed. Safety data has been updated for sample #{@sample_id}."
-    @notification_action = 'ElementActions.fetchSampleById'
+    @notification_level   = 'info'
+    @notification_action  = 'ElementActions.fetchSampleById'
   end
 
   # Legacy ai4chemotion microservice path — disabled for now; re-enabled in a
@@ -328,6 +390,9 @@ class ExtractSdsJob < ApplicationJob
   #   but was unavailable, when the runner fell back to the default model. nil when
   #   no fallback happened; lets the UI show "requested X, fell back to <model>".
   def update_chemical_data(chemical, extraction_result, model_used: nil, requested_model: nil)
+    # Re-read first: the record may have moved on while the LLM was answering,
+    # and merging onto a stale copy would drop that work.
+    chemical.reload
     data  = chemical.chemical_data.deep_dup
     entry = data[0] || {}
 
