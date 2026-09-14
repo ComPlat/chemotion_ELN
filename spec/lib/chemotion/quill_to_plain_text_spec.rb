@@ -89,7 +89,8 @@ RSpec.describe 'QuillToPlainText' do
           { insert: 'Before ' },
           { insert: { image: 'data:image/png;base64,AAA' } },
           { insert: 'middle ' },
-          { insert: 'legacy.pdf', attributes: { 'attachment-file' => { attachment_identifier: 'ghi', filename: 'legacy.pdf' } } },
+          { insert: 'legacy.pdf',
+            attributes: { 'attachment-file' => { attachment_identifier: 'ghi', filename: 'legacy.pdf' } } },
           { insert: " after\n" },
         ],
       }
