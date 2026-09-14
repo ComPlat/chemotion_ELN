@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module Export
+  # rubocop:disable Metrics/ClassLength -- richtext-materialization helpers
+  #   (rewrite_op / bundle_richtext_file / tempfile plumbing) are cohesive
+  #   with the exporter and don't warrant a separate class.
   class ExportResearchPlan
     # Long-side cap for Inkscape rasterization. Must stay large enough for
     # reaction schemes (~1560×440) while still allowing square molecule /
@@ -169,7 +172,7 @@ module Export
     # them ourselves — so unmask them post-conversion. Narrow regex so we
     # never touch a genuinely user-authored `unsafe:` link.
     def strip_unsafe_bundled_link_prefix(html)
-      html.to_s.gsub(/href=(["'])unsafe:(files\/[^"']+)\1/, 'href=\\1\\2\\1')
+      html.to_s.gsub(%r{href=(["'])unsafe:(files/[^"']+)\1}, 'href=\\1\\2\\1')
     end
 
     # Rewrite Quill embed ops that reference polymorphic Attachments so the
@@ -189,35 +192,43 @@ module Export
     # emit a broken <img> and the exported document would show a placeholder.
     def materialize_richtext_attachments(value)
       return value if value.blank?
+
       ops = value.is_a?(Hash) ? value['ops'] : value
       return value unless ops.is_a?(Array)
 
-      rewritten = ops.map { |op| rewrite_op(op) }.compact
+      rewritten = ops.filter_map { |delta_op| rewrite_op(delta_op) }
       value.is_a?(Hash) ? value.merge('ops' => rewritten) : rewritten
     end
 
-    def rewrite_op(op)
-      return op unless op.is_a?(Hash)
-      insert = op['insert']
-      return op unless insert.is_a?(Hash)
+    def rewrite_op(delta_op)
+      return delta_op unless delta_op.is_a?(Hash)
 
-      if (image_payload = insert['attachment-image']).is_a?(Hash)
-        path = attachment_path_for(image_payload['attachment_identifier'])
-        return nil unless path
+      insert = delta_op['insert']
+      return delta_op unless insert.is_a?(Hash)
 
-        { 'insert' => { 'image' => path } }
-      elsif (file_payload = insert['attachment-file']).is_a?(Hash)
-        filename = file_payload['filename'].to_s
-        filename = 'attachment' if filename.empty?
-        bundled_name = bundle_richtext_file(file_payload['attachment_identifier'], filename)
-        if bundled_name
-          { 'insert' => filename, 'attributes' => { 'link' => "files/#{bundled_name}" } }
-        else
-          { 'insert' => "[#{filename}]" }
-        end
-      else
-        op
-      end
+      image_payload = insert['attachment-image']
+      return rewrite_image_op(image_payload) if image_payload.is_a?(Hash)
+
+      file_payload = insert['attachment-file']
+      return rewrite_file_op(file_payload) if file_payload.is_a?(Hash)
+
+      delta_op
+    end
+
+    def rewrite_image_op(payload)
+      path = attachment_path_for(payload['attachment_identifier'])
+      return nil unless path
+
+      { 'insert' => { 'image' => path } }
+    end
+
+    def rewrite_file_op(payload)
+      filename = payload['filename'].to_s
+      filename = 'attachment' if filename.empty?
+      bundled_name = bundle_richtext_file(payload['attachment_identifier'], filename)
+      return { 'insert' => "[#{filename}]" } unless bundled_name
+
+      { 'insert' => filename, 'attributes' => { 'link' => "files/#{bundled_name}" } }
     end
 
     # Bundle a file attachment referenced by an `attachment-file` op into the
@@ -229,27 +240,40 @@ module Export
     # against, or nil when the attachment can't be resolved to a file on disk
     # (which triggers the plain-text fallback).
     def bundle_richtext_file(identifier, filename)
-      return nil unless @bundle_richtext_files
-      return nil if identifier.blank?
+      return nil unless @bundle_richtext_files && identifier.present?
       return @richtext_file_bundles[identifier][:bundled_name] if @richtext_file_bundles.key?(identifier)
 
+      path = resolvable_attachment_path(identifier)
+      return nil unless path
+
+      ext = File.extname(filename)
+      bundled_name = "#{identifier[0, 8]}-#{safe_file_basename(filename, ext)}#{ext}"
+      copy_path = copy_to_export_tempfile(path, ext)
+      @richtext_file_bundles[identifier] = { bundled_name: bundled_name, path: copy_path }
+      bundled_name
+    end
+
+    def resolvable_attachment_path(identifier)
       attachment = Attachment.find_by(identifier: identifier)
       path = attachment&.abs_path.to_s
       return nil if path.empty? || !File.file?(path)
 
-      ext = File.extname(filename)
-      # Strip path separators / control chars from the on-zip basename so a
-      # crafted attachment filename can't traverse outside `files/`.
-      safe_base = File.basename(filename, ext).gsub(/[^\w.\-]+/, '_')
-      safe_base = 'attachment' if safe_base.empty?
-      bundled_name = "#{identifier[0, 8]}-#{safe_base}#{ext}"
+      path
+    end
 
+    # Strip path separators / control chars from the on-zip basename so a
+    # crafted attachment filename can't traverse outside `files/`.
+    def safe_file_basename(filename, ext)
+      base = File.basename(filename, ext).gsub(/[^\w.-]+/, '_')
+      base.empty? ? 'attachment' : base
+    end
+
+    def copy_to_export_tempfile(source_path, ext)
       copy = Tempfile.new(['rp_export_file', ext])
-      IO.copy_stream(path, copy.path)
+      IO.copy_stream(source_path, copy.path)
       copy.close
       @png_tempfiles << copy # ride the same cleanup lifecycle as image tempfiles
-      @richtext_file_bundles[identifier] = { bundled_name: bundled_name, path: copy.path }
-      bundled_name
+      copy.path
     end
 
     def attachment_path_for(identifier)
@@ -337,4 +361,5 @@ module Export
       @png_tempfiles.clear
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
