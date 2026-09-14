@@ -261,6 +261,85 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/all with an active user label filter' do
+    let(:url) { '/api/v1/search/all' }
+    let(:user_label) { UserLabel.create!(user_id: user.id, title: 'My Label', color: '#aabbcc') }
+    let(:labelled_sample) { create(:sample, name: 'Labelled zzlabelfilter', creator: user, collections: [collection]) }
+    let(:unlabelled_sample) { create(:sample, name: 'Plain zzlabelfilter', creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :all,
+          name: 'zzlabelfilter',
+          search_by_method: :sample_name,
+          list_filter_params: list_filter_params,
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      labelled_sample.tag.update!(
+        taggable_data: labelled_sample.tag.taggable_data.merge('user_labels' => [user_label.id]),
+      )
+      unlabelled_sample
+      do_request
+    end
+
+    context 'when the label filter is set' do
+      let(:list_filter_params) { { user_label: user_label.id } }
+
+      it 'returns only the sample carrying the label' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [labelled_sample.id]
+      end
+
+      it 'counts only the sample carrying the label' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+      end
+    end
+
+    context 'when no label filter is set' do
+      let(:list_filter_params) { {} }
+
+      it 'returns both matching samples' do
+        expect(parsed_json_response.dig('samples', 'ids')).to contain_exactly(labelled_sample.id, unlabelled_sample.id)
+      end
+    end
+
+    context 'when the label filter is set on a search by ids' do
+      let(:url) { '/api/v1/search/by_ids' }
+      let(:list_filter_params) { { user_label: user_label.id } }
+      let(:params) do
+        {
+          selection: {
+            elementType: :by_ids,
+            id_params: {
+              model_name: 'sample',
+              ids: [labelled_sample.id, unlabelled_sample.id],
+              total_elements: 2,
+              with_filter: true,
+            },
+            list_filter_params: list_filter_params,
+            search_by_method: 'search_by_ids',
+          },
+          collection_id: collection.id,
+          page: 1,
+          page_size: 15,
+          per_page: 15,
+          molecule_sort: true,
+        }
+      end
+
+      it 'returns only the sample carrying the label' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [labelled_sample.id.to_s]
+      end
+
+      it 'counts only the sample carrying the label' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/advanced' do
     let(:url) { '/api/v1/search/advanced' }
     let(:advanced_params) do

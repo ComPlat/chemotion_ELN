@@ -25,12 +25,22 @@ module Usecases
       end
 
       def perform!
+        restrict_ids_to_user_label
         scope = basic_scope
         scope = search_filter_scope(scope)
         serialize_result_by_ids(scope)
       end
 
       private
+
+      # Intersects the requested ids with the active My Labels filter before any paging happens.
+      def restrict_ids_to_user_label
+        label_id = Usecases::Search::UserLabelFilter.label_id(@params)
+        return if label_id.blank?
+
+        @id_params[:ids] = Usecases::Search::UserLabelFilter.labelled_ids(@model_name.name, @id_params[:ids], label_id)
+        @total_elements = @id_params[:ids].size
+      end
 
       def model_name(id_params)
         case id_params[:model_name]
@@ -90,7 +100,7 @@ module Usecases
       end
 
       def search_filter_scope(scope)
-        return scope if @filter_params.blank? && !@from && !@to
+        return scope if @from.blank? && @to.blank?
 
         timezone = @from ? Time.zone.at(@from.to_time) : Time.zone.at(@to.to_time) + 1.day
         created_or_updated_at = @by_created_at ? 'created_at' : 'updated_at'

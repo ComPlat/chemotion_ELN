@@ -9,14 +9,26 @@ import GenericEl from 'src/models/GenericEl';
 import ResearchPlan from 'src/models/ResearchPlan';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import DeviceDescription from 'src/models/DeviceDescription';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class SearchFetcher {
+  // Search results have to intersect with the active My Labels filter of the element list.
+  static withUserLabel(selection) {
+    const { userLabel } = UIStore.getState();
+    if (!userLabel) return selection;
+
+    return {
+      ...selection,
+      list_filter_params: { ...selection.list_filter_params, user_label: userLabel },
+    };
+  }
+
   static fetchBasedOnSearchSelectionAndCollection(params) {
     const {
       selection, collectionId, page, moleculeSort, isPublic
     } = params;
     const body = {
-      selection,
+      selection: this.withUserLabel(selection),
       collection_id: collectionId,
       page: page || 1,
       per_page: selection.page_size,
@@ -33,7 +45,7 @@ export default class SearchFetcher {
       selection, collectionId, page, moleculeSort, isPublic
     } = params;
     const body = {
-      selection,
+      selection: this.withUserLabel(selection),
       collection_id: collectionId,
       page: page || 1,
       page_size: selection.page_size,
