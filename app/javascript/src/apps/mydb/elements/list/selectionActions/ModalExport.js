@@ -8,7 +8,8 @@ import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
 const filterUIState = (uiState) => {
   const {
-    currentCollection, sample, reaction, wellplate
+    currentCollection, sample, reaction, wellplate,
+    userLabel, fromDate, toDate, filterCreatedAt, productOnly
   } = uiState;
   return {
     sample: {
@@ -27,6 +28,12 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
+    // "All pages" sends no ids, so the list filters have to travel with it.
+    userLabel,
+    fromDate,
+    toDate,
+    filterCreatedAt,
+    productOnly,
   };
 };
 
