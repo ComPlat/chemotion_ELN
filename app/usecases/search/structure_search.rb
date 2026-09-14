@@ -33,6 +33,7 @@ module Usecases
       def perform!
         scope = basic_scope
         elements_by_scope(scope)
+        @elements = @shared_methods.filter_by_user_label(@elements)
         @shared_methods.serialization_by_elements_and_page(@elements, '')
 
         results = @shared_methods.serialization_by_elements_and_page(@elements, '')

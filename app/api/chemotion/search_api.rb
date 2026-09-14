@@ -64,6 +64,7 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :product_only, type: Boolean
+            optional :user_label, type: Integer
           end
         end
         requires :collection_id, type: String
@@ -94,6 +95,10 @@ module Chemotion
 
       def list_filter_params
         params[:selection][:list_filter_params]
+      end
+
+      def user_label
+        Usecases::Search::UserLabelFilter.label_id(params)
       end
 
       # TODO: move to Sample (DRY Usecases::Search::StructureSearch::basic_scope)
@@ -523,7 +528,7 @@ module Chemotion
         when DeviceDescription
           elements[:device_description_ids] = scope&.ids
         end
-        elements
+        Usecases::Search::UserLabelFilter.apply(elements, user_label)
       end
     end
 

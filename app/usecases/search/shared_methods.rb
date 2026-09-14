@@ -26,6 +26,10 @@ class SharedMethods
     scope.order("#{model.model_name.plural}.created_at DESC")
   end
 
+  def filter_by_user_label(elements)
+    Usecases::Search::UserLabelFilter.apply(elements, Usecases::Search::UserLabelFilter.label_id(@params))
+  end
+
   def pages(total_elements, per_page)
     total_elements.fdiv(per_page).ceil
   end
