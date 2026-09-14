@@ -32,7 +32,7 @@ export default class QuillViewer extends React.Component {
     if (!this.viewer) {
       const { quillViewer } = this;
       const defaultOptions = {
-        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent', 'attachment-image', 'attachment-file'],
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent', 'attachment-image', 'attachment-file', 'resize-inline', 'resize-block'],
         theme: this.theme,
         readOnly: this.readOnly,
       };
