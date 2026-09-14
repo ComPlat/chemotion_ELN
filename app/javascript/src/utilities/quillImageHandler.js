@@ -24,27 +24,26 @@ const isImageFile = (file) => !!file && typeof file.type === 'string' && file.ty
 
 const insertAttachmentAtCursor = (quill, attachment, file) => {
   const range = quill.getSelection(true) || { index: quill.getLength(), length: 0 };
+  const filename = attachment.filename || file.name;
   if (isImageFile(file)) {
     const preview = URL.createObjectURL(file);
-    // Register the preview in the session cache so the blot can recover it
-    // after any setContents-driven re-create (Quill destroys and re-builds
-    // BlockEmbed nodes when a parent React re-render fires componentDidUpdate).
+    // Session cache lets the blot recover its src after setContents-driven
+    // re-creates (Quill rebuilds embed nodes when a parent React re-render
+    // fires componentDidUpdate).
     setSessionPreview(attachment.identifier, preview);
     quill.insertEmbed(range.index, 'attachment-image', {
       attachment_identifier: attachment.identifier,
-      filename: attachment.filename || file.name,
+      filename,
       preview,
     }, 'user');
-    quill.setSelection(range.index + 1, 0, 'silent');
   } else {
-    quill.insertText(range.index, attachment.filename || file.name, 'attachment-file', {
+    quill.insertEmbed(range.index, 'attachment-file', {
       attachment_identifier: attachment.identifier,
-      filename: attachment.filename || file.name,
+      filename,
       filesize: file.size,
     }, 'user');
-    const label = String(attachment.filename || file.name || '');
-    quill.setSelection(range.index + label.length, 0, 'silent');
   }
+  quill.setSelection(range.index + 1, 0, 'silent');
 };
 
 const filesFromClipboard = (dataTransfer) => {
@@ -56,8 +55,6 @@ const filesFromClipboard = (dataTransfer) => {
     .map(it => it.getAsFile())
     .filter(Boolean);
 };
-
-const filesFromDrop = (dataTransfer) => filesFromClipboard(dataTransfer);
 
 export function createQuillImageHandler({ getAttachments, onAttachmentsChange }) {
   if (typeof getAttachments !== 'function' || typeof onAttachmentsChange !== 'function') {
@@ -90,7 +87,7 @@ export function createQuillImageHandler({ getAttachments, onAttachmentsChange })
 
       // 2) Drop
       editorRoot.addEventListener('drop', (event) => {
-        const files = filesFromDrop(event.dataTransfer);
+        const files = filesFromClipboard(event.dataTransfer);
         if (!files.length) return;
         event.preventDefault();
         event.stopPropagation();

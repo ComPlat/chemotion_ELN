@@ -36,16 +36,32 @@ const keepSupSub = (value) => {
   return content;
 };
 
-const isImageOp = op => op && op.insert && typeof op.insert === 'object' && op.insert.image;
-const isFileOp = op => op && op.insert && typeof op.insert === 'object' && op.insert.file;
+// Image / file op detection across every shape this field has produced:
+//   - legacy: op.insert.image (raw URL or object) and op.insert.file
+//   - current: op.insert['attachment-image'] and op.insert['attachment-file']
+//     (Quill Embed blots serialize under their blotName)
+const getImagePayload = op => (
+  op && op.insert && typeof op.insert === 'object'
+    ? (op.insert['attachment-image'] || op.insert.image)
+    : null
+);
+const getFilePayload = op => (
+  op && op.insert && typeof op.insert === 'object'
+    ? (op.insert['attachment-file'] || op.insert.file)
+    : null
+);
+const isImageOp = op => !!getImagePayload(op);
+const isFileOp = op => !!getFilePayload(op);
 
 // Keep ops whose inserted image or file carries an `attachment_identifier` —
 // those are real, first-class attachments backed by the polymorphic Attachment
 // table. Only strip legacy raw image ops (base64 / dataURL / inline URL) that
 // slipped in via paste before this feature existed.
 const isAttachmentBackedOp = (op) => {
-  if (isImageOp(op)) return !!op.insert.image.attachment_identifier;
-  if (isFileOp(op)) return !!op.insert.file.attachment_identifier;
+  const imagePayload = getImagePayload(op);
+  if (imagePayload) return typeof imagePayload === 'object' && !!imagePayload.attachment_identifier;
+  const filePayload = getFilePayload(op);
+  if (filePayload) return typeof filePayload === 'object' && !!filePayload.attachment_identifier;
   return false;
 };
 

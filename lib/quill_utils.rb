@@ -54,15 +54,21 @@ module QuillUtils
   end
 
   # remove image and file-attachment inserts from quill ops string.
-  # Handles three shapes:
-  #   - legacy raw URL:    {"insert":{"image":"data:image/png;base64,..."}}
-  #   - attachment image:  {"insert":{"image":{"attachment_identifier":"...","filename":"..."}}}
-  #   - attachment file:   {"insert":{"file":{"attachment_identifier":"...","filename":"..."}},"attributes":{...}}
+  # Handles all shapes produced across the field's history:
+  #   - legacy raw URL:       {"insert":{"image":"data:image/png;base64,..."}}
+  #   - legacy object image:  {"insert":{"image":{"attachment_identifier":"...","filename":"..."}}}
+  #   - legacy inline file:   {"insert":"...","attributes":{"attachment-file":{...}}}
+  #   - Embed image (current): {"insert":{"attachment-image":{"attachment_identifier":"...","filename":"...","width":"..."}}}
+  #   - Embed file  (current): {"insert":{"attachment-file":{"attachment_identifier":"...","filename":"...","filesize":...}}}
+  # The current shapes come from AttachmentImageBlot / AttachmentFileBlot
+  # (blots/embed) — Quill uses each blot's `blotName` as the insert key.
   def filter_image(delta_string)
     delta_string
       .gsub(/\{"insert":\{"image":"[^"]*"\}\},?/, '')
       .gsub(/\{"insert":\{"image":\{[^}]*\}\}\},?/, '')
       .gsub(/\{"insert":"[^"]*","attributes":\{"attachment-file":\{[^}]*\}\}\},?/, '')
+      .gsub(/\{"insert":\{"attachment-image":\{[^}]*\}\}\},?/, '')
+      .gsub(/\{"insert":\{"attachment-file":\{[^}]*\}\}\},?/, '')
       .sub(/,\]$/, ']')
   end
 
