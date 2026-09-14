@@ -37,11 +37,24 @@ const keepSupSub = (value) => {
 };
 
 const isImageOp = op => op && op.insert && typeof op.insert === 'object' && op.insert.image;
+const isFileOp = op => op && op.insert && typeof op.insert === 'object' && op.insert.file;
+
+// Keep ops whose inserted image or file carries an `attachment_identifier` —
+// those are real, first-class attachments backed by the polymorphic Attachment
+// table. Only strip legacy raw image ops (base64 / dataURL / inline URL) that
+// slipped in via paste before this feature existed.
+const isAttachmentBackedOp = (op) => {
+  if (isImageOp(op)) return !!op.insert.image.attachment_identifier;
+  if (isFileOp(op)) return !!op.insert.file.attachment_identifier;
+  return false;
+};
+
+const shouldStripOp = op => (isImageOp(op) || isFileOp(op)) && !isAttachmentBackedOp(op);
 
 const stripImages = (value) => {
   if (!value) return value;
-  if (Array.isArray(value)) return value.filter(op => !isImageOp(op));
-  if (value.ops) return { ...value, ops: value.ops.filter(op => !isImageOp(op)) };
+  if (Array.isArray(value)) return value.filter(op => !shouldStripOp(op));
+  if (value.ops) return { ...value, ops: value.ops.filter(op => !shouldStripOp(op)) };
   return value;
 };
 
