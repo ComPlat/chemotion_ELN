@@ -3,8 +3,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'src/components/common/Dropzone';
 import { Form, InputGroup } from 'react-bootstrap';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
+import { getInlineImagePreview } from 'src/utilities/attachmentPreviewCache';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
 import ImageAnnotationModalSVG from 'src/components/ImageAnnotationModalSVG';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -29,6 +29,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onElementStoreChange);
+    // Release a transient blob URL we own (a just-dropped image the user
+    // never saved). Server-backed previews from the cache are revoked by
+    // the cache itself on eviction/invalidation, not here.
+    const pn = this.props.field?.value?.public_name;
+    if (typeof pn === 'string' && pn.startsWith('blob:')) {
+      URL.revokeObjectURL(pn);
+    }
   }
 
   onElementStoreChange(state) {
@@ -54,9 +61,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       return;
     }
     const handler = new ImageFileDropHandler();
-    const value = handler.handleDrop(files, this.props.field, this.state.attachments);
-    this.generateSrcOfImage(value.public_name);
-    this.props.onChange(value, this.props.field.id, this.state.attachments);
+    const { nextAttachments, fieldValue } = handler.handleDrop(
+      files, this.props.field, this.state.attachments,
+    );
+    this.setState({ attachments: nextAttachments });
+    this.generateSrcOfImage(fieldValue.public_name);
+    this.props.onChange(fieldValue, this.props.field.id, nextAttachments);
   }
 
   handleResizeChange(event) {
@@ -134,20 +144,19 @@ export default class ResearchPlanDetailsFieldImage extends Component {
 
   generateSrcOfImage(publicName) {
     if (!publicName) { return; }
-    let src;
     if (publicName.startsWith('blob')) {
       this.setState({ imageSrc: publicName });
-    } else if (this.isLegacyImage(publicName)) {
-      src = `/images/research_plans/${publicName}`;
-      this.setState({ imageSrc: src });
-    } else {
-      AttachmentFetcher.fetchImageAttachment({ identifier: publicName })
-        .then((result) => {
-          if (result !== undefined && result.data != null) {
-            this.setState({ imageSrc: result.data });
-          }
-        });
+      return;
     }
+    if (this.isLegacyImage(publicName)) {
+      this.setState({ imageSrc: `/images/research_plans/${publicName}` });
+      return;
+    }
+    getInlineImagePreview(publicName).then((result) => {
+      if (result !== undefined && result !== null && result.data != null) {
+        this.setState({ imageSrc: result.data });
+      }
+    });
   }
 
   renderStatic() {
