@@ -37,6 +37,7 @@ export default class ResearchPlanDetailsField extends Component {
             disabled={disabled}
             onChange={onChange.bind(this)}
             edit={edit}
+            attachments={this.props.attachments}
           />
         );
         break;

@@ -8,6 +8,10 @@ import Delta from 'quill-delta';
 import _ from 'lodash';
 import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
 import { stripImages } from 'src/utilities/quillFormat';
+// Side-effect imports — the blot modules self-register on the Quill singleton.
+import 'src/components/reactQuill/AttachmentImageBlot';
+import 'src/components/reactQuill/AttachmentFileBlot';
+import { createQuillImageHandler } from 'src/utilities/quillImageHandler';
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
@@ -175,7 +179,7 @@ export default class QuillEditor extends React.Component {
             }
           }
         },
-        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent'],
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent', 'attachment-image', 'attachment-file'],
         theme: this.theme,
         readOnly: this.readOnly,
       };
@@ -184,6 +188,20 @@ export default class QuillEditor extends React.Component {
       this.editor = new Quill(quillEditor, quillOptions);
       const { value } = this.state;
       if (value) this.editor.setContents(stripImages(value));
+
+      // Wire the paste/drop → Attachment pipeline when the consumer supplies
+      // an attachments contract. Consumers without an element (e.g. text
+      // template editors) simply omit the props and images/files continue to
+      // be stripped as before.
+      if (typeof this.props.onAttachmentsChange === 'function') {
+        const handler = createQuillImageHandler({
+          getAttachments: () => (typeof this.props.getAttachments === 'function'
+            ? this.props.getAttachments()
+            : (this.props.attachments || [])),
+          onAttachmentsChange: this.props.onAttachmentsChange,
+        });
+        handler.install(this.editor);
+      }
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574
@@ -420,6 +438,15 @@ QuillEditor.propTypes = {
   height: PropTypes.string,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
+  // Inline-attachment plumbing (optional). Consumers that want paste/drop-to-
+  // attachment routing supply either `attachments` (static snapshot) or
+  // `getAttachments` (dynamic lookup) plus `onAttachmentsChange` to receive
+  // updated arrays. Without `onAttachmentsChange`, image/file drops fall
+  // through to the legacy strip-and-discard behavior.
+  // eslint-disable-next-line react/forbid-prop-types
+  attachments: PropTypes.array,
+  getAttachments: PropTypes.func,
+  onAttachmentsChange: PropTypes.func,
 };
 
 QuillEditor.defaultProps = {
@@ -431,4 +458,7 @@ QuillEditor.defaultProps = {
   height: '230px',
   disabled: false,
   onChange: null,
+  attachments: undefined,
+  getAttachments: undefined,
+  onAttachmentsChange: undefined,
 };

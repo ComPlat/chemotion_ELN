@@ -2,9 +2,10 @@
 
 module QuillUtils
   # desc: convert quill delta ops to html or plain text
-  # without_image: remove image inserts from quill ops string.
-  #   Images are anyway discarded for plain text output
-  def convert(content, without_image: false)
+  # without_image: remove image and file-attachment inserts from quill ops
+  #   string. Both have no plain-text representation; keeping them just adds
+  #   bytes to the payload sent to the Node bridge for no downstream benefit.
+  def convert(content, without_image: true)
     # avoid spwaning a nodejs process if the content is empty
     return '' if blank_ops?(content)
 
@@ -52,9 +53,17 @@ module QuillUtils
     delta_ops.gsub('{"insert":""},', '').gsub('{"insert":""}]', ']')
   end
 
-  # remove image inserts from quill ops string
+  # remove image and file-attachment inserts from quill ops string.
+  # Handles three shapes:
+  #   - legacy raw URL:    {"insert":{"image":"data:image/png;base64,..."}}
+  #   - attachment image:  {"insert":{"image":{"attachment_identifier":"...","filename":"..."}}}
+  #   - attachment file:   {"insert":{"file":{"attachment_identifier":"...","filename":"..."}},"attributes":{...}}
   def filter_image(delta_string)
-    delta_string.gsub(/\{"insert":\{"image":.*"\}\},/, '').gsub(/\{"insert":\{"image":.*"\}\}\]/, ']')
+    delta_string
+      .gsub(/\{"insert":\{"image":"[^"]*"\}\},?/, '')
+      .gsub(/\{"insert":\{"image":\{[^}]*\}\}\},?/, '')
+      .gsub(/\{"insert":"[^"]*","attributes":\{"attachment-file":\{[^}]*\}\}\},?/, '')
+      .sub(/,\]$/, ']')
   end
 
   def input_as_file(input)
