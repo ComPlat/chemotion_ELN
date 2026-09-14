@@ -539,8 +539,9 @@ module AttachmentJcampProcess
   def file_match(attachments, num)
     attachments.select do |att|
       if num
-        att.filename == filename || ["#{filename[0..-2]}#{num}_bagit.peak.jdx",
-                                     "#{filename[0..-2]}#{num}_bagit.edit.jdx"].include?(att.filename)
+        peak = filename.sub(/\.jdx\z/i, '.peak.jdx')
+        edit = filename.sub(/\.jdx\z/i, '.edit.jdx')
+        [peak, edit].include?(att.filename)
       else
         att.extension_parts[-1] == 'jdx' || att.extension_parts[0] == 'peak' ||
           att.extension_parts[0] == 'edit'
@@ -627,6 +628,7 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
     end
 
+    set_done
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
