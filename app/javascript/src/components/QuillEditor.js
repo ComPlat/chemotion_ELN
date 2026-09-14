@@ -7,7 +7,18 @@ import Delta from 'quill-delta';
 
 import _ from 'lodash';
 import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import QuillResize from 'quill-resize-module';
+// resize.css is inlined into app/assets/stylesheets/components/QuillResize.scss
+// so the Sprockets asset pipeline serves it — avoids adding a CSS require-hook
+// to the mocha test setup for a single third-party stylesheet.
 import { stripImages } from 'src/utilities/quillFormat';
+// Side-effect imports — the blot modules self-register on the Quill singleton.
+import 'src/components/reactQuill/AttachmentImageBlot';
+import 'src/components/reactQuill/AttachmentFileBlot';
+import { createQuillImageHandler } from 'src/utilities/quillImageHandler';
+
+// Register the resize module once. Idempotent under Quill.register(overwrite=true).
+Quill.register('modules/resize', QuillResize, true);
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
@@ -173,9 +184,30 @@ export default class QuillEditor extends React.Component {
                 }
               }
             }
-          }
+          },
+          // Inline image resize handles + alignment toolbar. quill-resize-module
+          // keys its parchment map by `blot.statics.blotName` (not by tag), so
+          // we register under our custom blot's name — 'attachment-image'.
+          // Width is written as an HTML attribute and survives the delta
+          // round-trip via AttachmentImageBlot.value(). Alignment buttons
+          // add a class to the img (`ql-resize-style-left|center|right|full`)
+          // whose CSS is inlined in components/QuillResize.scss.
+          resize: {
+            modules: ['Resize', 'DisplaySize', 'Toolbar'],
+            tools: ['left', 'center', 'right', 'full'],
+            parchment: {
+              'attachment-image': {
+                attribute: ['width'],
+                limit: { minWidth: 50 },
+              },
+            },
+          },
         },
-        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent'],
+        // `resize-inline` / `resize-block` are the ClassAttributors that
+        // quill-resize-module's Toolbar uses to apply alignment (ql-resize-style-*).
+        // Without them in the allowlist, Quill silently drops the format and
+        // clicking left/center/right/full does nothing.
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent', 'attachment-image', 'attachment-file', 'resize-inline', 'resize-block'],
         theme: this.theme,
         readOnly: this.readOnly,
       };
@@ -184,6 +216,20 @@ export default class QuillEditor extends React.Component {
       this.editor = new Quill(quillEditor, quillOptions);
       const { value } = this.state;
       if (value) this.editor.setContents(stripImages(value));
+
+      // Wire the paste/drop → Attachment pipeline when the consumer supplies
+      // an attachments contract. Consumers without an element (e.g. text
+      // template editors) simply omit the props and images/files continue to
+      // be stripped as before.
+      if (typeof this.props.onAttachmentsChange === 'function') {
+        const handler = createQuillImageHandler({
+          getAttachments: () => (typeof this.props.getAttachments === 'function'
+            ? this.props.getAttachments()
+            : (this.props.attachments || [])),
+          onAttachmentsChange: this.props.onAttachmentsChange,
+        });
+        handler.install(this.editor);
+      }
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574
@@ -420,6 +466,15 @@ QuillEditor.propTypes = {
   height: PropTypes.string,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
+  // Inline-attachment plumbing (optional). Consumers that want paste/drop-to-
+  // attachment routing supply either `attachments` (static snapshot) or
+  // `getAttachments` (dynamic lookup) plus `onAttachmentsChange` to receive
+  // updated arrays. Without `onAttachmentsChange`, image/file drops fall
+  // through to the legacy strip-and-discard behavior.
+  // eslint-disable-next-line react/forbid-prop-types
+  attachments: PropTypes.array,
+  getAttachments: PropTypes.func,
+  onAttachmentsChange: PropTypes.func,
 };
 
 QuillEditor.defaultProps = {
@@ -431,4 +486,7 @@ QuillEditor.defaultProps = {
   height: '230px',
   disabled: false,
   onChange: null,
+  attachments: undefined,
+  getAttachments: undefined,
+  onAttachmentsChange: undefined,
 };

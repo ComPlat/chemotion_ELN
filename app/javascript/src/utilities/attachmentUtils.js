@@ -32,3 +32,94 @@ export function setAttachmentDeleted(attachments, attachment, isDeleted) {
 export function replaceAttachment(attachments, attachment) {
   return (attachments || []).map((a) => (a.id === attachment.id ? attachment : a));
 }
+
+// ---------------------------------------------------------------------------
+// Inline-image attachments — used by any editor that lets users embed an image
+// directly in a rich-text/body-block field (currently ResearchPlan body-block
+// image field; Phase 2 extends to Quill descriptions across all element types).
+//
+// Conventions (frontend-only — no DB column):
+//   - `is_image_field: true` marks the attachment as belonging to an inline
+//     editor rather than the general Attachments tab drop zone.
+//   - `ancestor` (identifier of the previous attachment in the same slot)
+//     lets a replace preserve lineage so the old file is marked deleted.
+// ---------------------------------------------------------------------------
+
+/**
+ * Factory. Returns a new Attachment instance flagged as an inline image.
+ * Optional `ancestorIdentifier` records the previous attachment in the same
+ * slot so the caller can mark the ancestor chain as deleted on save.
+ */
+export function createInlineImageAttachment(file, ancestorIdentifier = null) {
+  const att = Attachment.fromFile(file);
+  att.is_image_field = true;
+  if (ancestorIdentifier) att.ancestor = ancestorIdentifier;
+  return att;
+}
+
+/**
+ * Appends a new inline-image attachment to `attachments` and — if replacing
+ * an existing one — marks the ancestor as deleted.
+ *
+ * Returns `{ attachments, newAttachment }`. The returned array is always a new
+ * reference. Extensible items are mutated in place (preserves reference
+ * equality for undo lookups); frozen / non-extensible items are shallow-cloned
+ * so callers can safely feed MobX-state-tree instances (CellLine,
+ * DeviceDescription, SBMM) without crashing.
+ */
+export function replaceInlineImageAttachment(attachments, file, ancestorIdentifier = null) {
+  const newAttachment = createInlineImageAttachment(file, ancestorIdentifier);
+  const next = [...(attachments || []), newAttachment];
+  if (ancestorIdentifier) {
+    const idx = next.findIndex((a) => a.identifier === ancestorIdentifier);
+    if (idx >= 0) {
+      const target = next[idx];
+      if (Object.isExtensible(target) && !Object.isFrozen(target)) {
+        target.is_deleted = true;
+        target.is_image_field = true;
+      } else {
+        next[idx] = { ...target, is_deleted: true, is_image_field: true };
+      }
+    }
+  }
+  return { attachments: next, newAttachment };
+}
+
+/**
+ * Releases a transient blob: URL owned by the previous field value. No-op if
+ * the value is missing, not a string, or not a blob URL (server-backed
+ * previews own their own lifecycle via `attachmentPreviewCache`).
+ * Shared so every inline-image consumer revokes the same way — otherwise
+ * each caller re-implements it and per-consumer drift creeps back in.
+ */
+export function revokeTransientBlob(oldFieldValue) {
+  const pn = oldFieldValue && oldFieldValue.public_name;
+  if (typeof pn === 'string' && pn.startsWith('blob:')) URL.revokeObjectURL(pn);
+}
+
+/**
+ * Marks the attachment with `identifier` and every ancestor in its lineage as
+ * deleted. Iterative (not recursive) so a long replace chain stays stack-safe.
+ * Extensible items are mutated in place; frozen items are shallow-cloned.
+ * Returns a new array reference.
+ */
+export function markInlineAttachmentDeleted(attachments, identifier) {
+  if (!identifier) return attachments || [];
+  const source = attachments || [];
+  const byId = new Map(source.map((a) => [a.identifier, a]));
+  const toMark = new Set();
+  let cur = identifier;
+  while (cur && byId.has(cur) && !toMark.has(cur)) {
+    toMark.add(cur);
+    cur = byId.get(cur).ancestor || null;
+  }
+  return source.map((a) => {
+    if (!toMark.has(a.identifier)) return a;
+    if (Object.isExtensible(a) && !Object.isFrozen(a)) {
+      a.is_deleted = true;
+      a.is_image_field = true;
+      return a;
+    }
+    return { ...a, is_deleted: true, is_image_field: true };
+  });
+}
