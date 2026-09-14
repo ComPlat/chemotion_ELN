@@ -21,6 +21,12 @@ module Export
     # the width at a legible height (~1.6 in) while samples stay compact.
     REACTION_DISPLAY_WIDTH = 600
 
+    # Formats that produce a ZIP alongside a `files/` folder for bundled
+    # attachments (see #to_zip). Single-file formats (docx/pdf/odt/...) can't
+    # carry a companion folder, so file-attachment ops fall back to a
+    # plain-text label there.
+    BUNDLED_EXPORT_FORMATS = %w[html markdown latex].freeze
+
     def initialize(current_user, research_plan, export_format)
       @current_user = current_user
       @name = research_plan.name
@@ -29,6 +35,11 @@ module Export
       # Retain PNG Tempfiles until the export finishes so GC does not delete
       # them before Pandoc/HTML rendering reads the paths.
       @png_tempfiles = []
+      # attachment_identifier => { bundled_name:, path: } for files dropped
+      # into a richtext field. Populated by rewrite_op → bundle_richtext_file,
+      # consumed by to_zip when writing the `files/` entries.
+      @richtext_file_bundles = {}
+      @bundle_richtext_files = BUNDLED_EXPORT_FORMATS.include?(@export_format.to_s)
 
       research_plan.body.each { |field| add_field(field) }
     end
@@ -91,7 +102,9 @@ module Export
         # substitute tmp dir with images in the document
         document.gsub! tmpdir, 'images'
 
-        # create a zipfile with the document and an image directory
+        # create a zipfile with the document, an image directory, and — for any
+        # `attachment-file` op dropped into a richtext field — a `files/`
+        # directory the rewritten <a href="files/…"> anchors resolve against.
         zip = Zip::OutputStream.write_buffer do |zip|
           zip.put_next_entry "document.#{@export_format}"
           zip.write document
@@ -99,6 +112,11 @@ module Export
           Dir.children(tmpdir).each do |tmpfile|
             zip.put_next_entry "images/#{tmpfile}"
             zip.write File.read(File.join(tmpdir, tmpfile))
+          end
+
+          @richtext_file_bundles.each_value do |bundle|
+            zip.put_next_entry "files/#{bundle[:bundled_name]}"
+            zip.write File.binread(bundle[:path])
           end
         end
         zip.rewind
@@ -129,10 +147,132 @@ module Export
     end
 
     def richtext_field(field)
+      value = materialize_richtext_attachments(field['value'])
+      html = Chemotion::QuillToHtml.convert(value, without_image: false)
       {
         type: field['type'],
-        text: Chemotion::QuillToHtml.convert(field['value']),
+        # `without_image: false` — after materialize_richtext_attachments the
+        # only remaining `insert.image` ops are those we just rewrote to point
+        # at an on-disk attachment path, so QuillUtils#filter_image must NOT
+        # strip them. `insert.attachment-file` ops were rewritten to link ops
+        # pointing at bundled `files/…` entries (see bundle_richtext_file),
+        # `insert.attachment-image` ops were either rewritten to `insert.image`
+        # (URL form) or dropped when the attachment was unresolvable.
+        text: strip_unsafe_bundled_link_prefix(html),
       }
+    end
+
+    # quill-delta-to-html's default URL sanitizer prepends `unsafe:` to any
+    # link whose scheme isn't in its allowlist (http/https/mailto/tel/sms/...).
+    # Our bundled attachment links are relative paths (`files/<name>`) and
+    # therefore fail that check. They are safe by construction — we generated
+    # them ourselves — so unmask them post-conversion. Narrow regex so we
+    # never touch a genuinely user-authored `unsafe:` link.
+    def strip_unsafe_bundled_link_prefix(html)
+      html.to_s.gsub(/href=(["'])unsafe:(files\/[^"']+)\1/, 'href=\\1\\2\\1')
+    end
+
+    # Rewrite Quill embed ops that reference polymorphic Attachments so the
+    # exporter's HTML pass (QuillToHtml → Pandoc) can render them:
+    #
+    #   {"insert":{"attachment-image":{"attachment_identifier":X,...}}}
+    #     → {"insert":{"image":"/abs/path/to/file"}}   (Pandoc extracts + embeds)
+    #
+    #   {"insert":{"attachment-file":{"filename":Y,...}}}
+    #     → {"insert":"[Y]"}                            (plain-text label; a file
+    #                                                    pill has no portable
+    #                                                    representation in
+    #                                                    HTML/DOCX/MD/PDF)
+    #
+    # Unresolvable image ops (identifier not in DB, or the backing file is
+    # missing) are dropped rather than passed through — otherwise Pandoc would
+    # emit a broken <img> and the exported document would show a placeholder.
+    def materialize_richtext_attachments(value)
+      return value if value.blank?
+      ops = value.is_a?(Hash) ? value['ops'] : value
+      return value unless ops.is_a?(Array)
+
+      rewritten = ops.map { |op| rewrite_op(op) }.compact
+      value.is_a?(Hash) ? value.merge('ops' => rewritten) : rewritten
+    end
+
+    def rewrite_op(op)
+      return op unless op.is_a?(Hash)
+      insert = op['insert']
+      return op unless insert.is_a?(Hash)
+
+      if (image_payload = insert['attachment-image']).is_a?(Hash)
+        path = attachment_path_for(image_payload['attachment_identifier'])
+        return nil unless path
+
+        { 'insert' => { 'image' => path } }
+      elsif (file_payload = insert['attachment-file']).is_a?(Hash)
+        filename = file_payload['filename'].to_s
+        filename = 'attachment' if filename.empty?
+        bundled_name = bundle_richtext_file(file_payload['attachment_identifier'], filename)
+        if bundled_name
+          { 'insert' => filename, 'attributes' => { 'link' => "files/#{bundled_name}" } }
+        else
+          { 'insert' => "[#{filename}]" }
+        end
+      else
+        op
+      end
+    end
+
+    # Bundle a file attachment referenced by an `attachment-file` op into the
+    # export ZIP. Only wired for the ZIP-producing formats (see
+    # BUNDLED_EXPORT_FORMATS) — single-file formats fall through to the
+    # plain-text label branch in rewrite_op.
+    #
+    # Returns the ZIP-relative filename (e.g. `abc12345-report.pdf`) to link
+    # against, or nil when the attachment can't be resolved to a file on disk
+    # (which triggers the plain-text fallback).
+    def bundle_richtext_file(identifier, filename)
+      return nil unless @bundle_richtext_files
+      return nil if identifier.blank?
+      return @richtext_file_bundles[identifier][:bundled_name] if @richtext_file_bundles.key?(identifier)
+
+      attachment = Attachment.find_by(identifier: identifier)
+      path = attachment&.abs_path.to_s
+      return nil if path.empty? || !File.file?(path)
+
+      ext = File.extname(filename)
+      # Strip path separators / control chars from the on-zip basename so a
+      # crafted attachment filename can't traverse outside `files/`.
+      safe_base = File.basename(filename, ext).gsub(/[^\w.\-]+/, '_')
+      safe_base = 'attachment' if safe_base.empty?
+      bundled_name = "#{identifier[0, 8]}-#{safe_base}#{ext}"
+
+      copy = Tempfile.new(['rp_export_file', ext])
+      IO.copy_stream(path, copy.path)
+      copy.close
+      @png_tempfiles << copy # ride the same cleanup lifecycle as image tempfiles
+      @richtext_file_bundles[identifier] = { bundled_name: bundled_name, path: copy.path }
+      bundled_name
+    end
+
+    def attachment_path_for(identifier)
+      return nil if identifier.blank?
+
+      attachment = Attachment.find_by(identifier: identifier)
+      path = attachment&.abs_path.to_s
+      return nil if path.empty? || !File.file?(path)
+
+      # Shrine stores blobs with a UUID name (no extension), but Pandoc's
+      # extract-media names the extracted file after the source basename +
+      # extension. If we hand it the raw path, extracted files land as
+      # `<hash>.so` (Pandoc's fallback), which some viewers won't render.
+      # Copy to a Tempfile whose extension matches the attachment's original
+      # filename so the ZIP contains e.g. `images/<hash>.png`.
+      ext = File.extname(attachment.filename.to_s)
+      return path if ext.empty?
+
+      copy = Tempfile.new(['rp_export_attachment', ext])
+      IO.copy_stream(path, copy.path)
+      copy.close
+      @png_tempfiles << copy
+      copy.path
     end
 
     def table_field(field)
