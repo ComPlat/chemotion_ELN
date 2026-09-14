@@ -1,4 +1,4 @@
-import { createInlineImageAttachment } from 'src/utilities/attachmentUtils';
+import { createInlineImageAttachment, markInlineAttachmentDeleted } from 'src/utilities/attachmentUtils';
 import { setSessionPreview } from 'src/utilities/attachmentPreviewCache';
 
 // Shared handler for routing files pasted or dropped into a Quill editor
@@ -44,6 +44,24 @@ const insertAttachmentAtCursor = (quill, attachment, file) => {
     }, 'user');
   }
   quill.setSelection(range.index + 1, 0, 'silent');
+};
+
+// Harvest every attachment_identifier referenced by an inline embed op in
+// the current editor contents. Used by the orphan-cleanup reconciler to
+// diff before/after each text-change and detect removed blots.
+const collectInlineIdentifiers = (quill) => {
+  const ops = (quill.getContents() || {}).ops || [];
+  const identifiers = new Set();
+  ops.forEach((op) => {
+    const insert = op && op.insert;
+    if (!insert || typeof insert !== 'object') return;
+    const image = insert['attachment-image'];
+    const file = insert['attachment-file'];
+    const id = (image && image.attachment_identifier)
+      || (file && file.attachment_identifier);
+    if (id) identifiers.add(id);
+  });
+  return identifiers;
 };
 
 const filesFromClipboard = (dataTransfer) => {
@@ -117,6 +135,32 @@ export function createQuillImageHandler({ getAttachments, onAttachmentsChange })
         // HTML that includes a raw <img src="data:...">), drop it. Real image
         // paste already flowed through our `paste` handler above.
         return { ops: (delta.ops || []).filter(op => !(op.insert && op.insert.image)) };
+      });
+
+      // 4) Orphan-cleanup reconciler.
+      // Snapshot the set of inline attachment identifiers currently in the
+      // delta on install. After every user-driven text-change, rescan and
+      // diff — any identifier that disappeared marks its Attachment as
+      // deleted so the row doesn't persist as an orphan (surfacing in the
+      // Attachments tab, wasting storage).
+      let knownIdentifiers = collectInlineIdentifiers(quill);
+      quill.on('text-change', (_delta, _oldDelta, source) => {
+        // Programmatic setContents (e.g. React re-renders that reset the
+        // editor value) shouldn't be interpreted as user removals — those
+        // fire with source === 'silent' or 'api'. Only 'user' edits count.
+        if (source !== 'user') {
+          knownIdentifiers = collectInlineIdentifiers(quill);
+          return;
+        }
+        const current = collectInlineIdentifiers(quill);
+        const removed = [];
+        knownIdentifiers.forEach((id) => { if (!current.has(id)) removed.push(id); });
+        knownIdentifiers = current;
+        if (removed.length === 0) return;
+
+        let next = getAttachments() || [];
+        removed.forEach((id) => { next = markInlineAttachmentDeleted(next, id); });
+        onAttachmentsChange(next);
       });
     },
   };

@@ -49,11 +49,13 @@ RSpec.describe 'QuillToHtml' do
         { insert: "text\n" },
       ]
       html = quill_to_html.convert(delta.to_json)
-      expect(html).to include('Kept ')
-      expect(html).to include('text')
-      expect(html).not_to include('attachment-image')
-      expect(html).not_to include('attachment-file')
-      expect(html).not_to include('attachment_identifier')
+      aggregate_failures do
+        expect(html).to include('Kept ')
+        expect(html).to include('text')
+        expect(html).not_to include('attachment-image')
+        expect(html).not_to include('attachment-file')
+        expect(html).not_to include('attachment_identifier')
+      end
     end
   end
 end

@@ -39,6 +39,7 @@ export default class ResearchPlanDetailsBody extends Component {
       } else {
         item = (
           <Field
+            attachments={this.props.attachments}
             key={field.id}
             field={field}
             index={index}

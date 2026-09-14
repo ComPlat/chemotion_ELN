@@ -159,6 +159,130 @@ describe Export::ExportResearchPlan do
     end
   end
 
+  describe 'richtext field with inline Quill attachment ops' do
+    # Regression guard for the RP export path's handling of the
+    # `attachment-image` / `attachment-file` Quill Embed ops introduced with the
+    # drop-into-richtext feature. Without materialize_richtext_attachments,
+    # QuillUtils#filter_image strips both shapes and the exported document
+    # loses everything the user dropped into the editor.
+    let(:user) { create(:person) }
+    let(:research_plan) { create(:research_plan, creator: user) }
+    let(:image_attachment) do
+      create(
+        :attachment,
+        bucket: 1,
+        filename: 'inline.png',
+        created_by: user.id,
+        attachable: research_plan,
+      )
+    end
+    let(:exporter) { described_class.new(user, research_plan, 'html') }
+
+    def richtext_body(ops)
+      [{ id: 'e-rt', type: 'richtext', value: { 'ops' => ops } }]
+    end
+
+    it 'rewrites attachment-image ops to an <img> Pandoc can bundle' do
+      ops = [
+        { 'insert' => 'Before ' },
+        { 'insert' => { 'attachment-image' => {
+          'attachment_identifier' => image_attachment.identifier, 'filename' => 'inline.png'
+        } } },
+        { 'insert' => " after\n" },
+      ]
+      research_plan.update!(body: richtext_body(ops))
+
+      html = exporter.to_html
+
+      aggregate_failures do
+        expect(html).to include('Before')
+        expect(html).to include('after')
+        expect(html).to match(/<img[^>]+src=['"][^'"]+\.png['"]/)
+        expect(html).not_to include('attachment-image')
+        expect(html).not_to include('attachment_identifier')
+      end
+    end
+
+    it 'renders attachment-file ops as plain-text labels when the format cannot bundle files' do
+      # Single-file formats (docx/pdf/odt/...) can't carry a companion folder,
+      # so we fall back to a `[filename]` label instead of a broken relative
+      # link. The identifier is intentionally unresolvable here to also cover
+      # the orphan-file case.
+      ops = [
+        { 'insert' => 'Attached: ' },
+        { 'insert' => { 'attachment-file' => {
+          'attachment_identifier' => 'anything', 'filename' => 'report.pdf', 'filesize' => 42
+        } } },
+        { 'insert' => "\n" },
+      ]
+      research_plan.update!(body: richtext_body(ops))
+      # Instantiate AFTER updating the body — the exporter walks fields in #initialize.
+      exporter_docx = described_class.new(user, research_plan, 'docx')
+
+      html = exporter_docx.to_html
+
+      aggregate_failures do
+        expect(html).to include('Attached:')
+        expect(html).to include('[report.pdf]')
+        expect(html).not_to include('attachment-file')
+        expect(html).not_to include('attachment_identifier')
+      end
+    end
+
+    it 'bundles attachment-file ops into the ZIP under files/ for zip-producing formats' do
+      file_attachment = create(
+        :attachment,
+        bucket: 1,
+        filename: 'report.pdf',
+        created_by: user.id,
+        attachable: research_plan,
+      )
+      ops = [
+        { 'insert' => 'See ' },
+        { 'insert' => { 'attachment-file' => {
+          'attachment_identifier' => file_attachment.identifier, 'filename' => 'report.pdf'
+        } } },
+        { 'insert' => "\n" },
+      ]
+      research_plan.update!(body: richtext_body(ops))
+
+      # to_html surfaces the anchor + hits the strip_unsafe_bundled_link_prefix
+      # workaround (quill-delta-to-html tags relative URLs `unsafe:` by default).
+      html = exporter.to_html
+      zip_bytes = exporter.to_zip
+      entries = []
+      Zip::InputStream.open(StringIO.new(zip_bytes)) { |io| while (e = io.get_next_entry); entries << e.name; end }
+
+      aggregate_failures do
+        expect(html).to match(%r{<a[^>]+href=['"]files/[^'"]+\.pdf['"]})
+        expect(html).not_to include('unsafe:')
+        expect(html).not_to include('[report.pdf]')
+        expect(entries).to include('document.html')
+        expect(entries.any? { |n| n.start_with?('files/') && n.end_with?('.pdf') }).to be true
+      end
+    end
+
+    it 'drops attachment-image ops whose identifier does not resolve to a file' do
+      ops = [
+        { 'insert' => 'Only text ' },
+        { 'insert' => { 'attachment-image' => {
+          'attachment_identifier' => 'orphan-that-does-not-exist', 'filename' => 'gone.png'
+        } } },
+        { 'insert' => "kept\n" },
+      ]
+      research_plan.update!(body: richtext_body(ops))
+
+      html = exporter.to_html
+
+      aggregate_failures do
+        expect(html).to include('Only text')
+        expect(html).to include('kept')
+        expect(html).not_to include('<img')
+        expect(html).not_to include('attachment-image')
+      end
+    end
+  end
+
   describe 'PNG tempfile lifecycle' do
     let(:user) { create(:person) }
     let(:research_plan) { create(:research_plan, creator: user) }
