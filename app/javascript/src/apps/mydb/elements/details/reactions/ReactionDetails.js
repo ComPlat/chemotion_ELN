@@ -572,8 +572,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
-
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
 
