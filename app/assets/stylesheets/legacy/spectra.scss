@@ -3,7 +3,8 @@
 }
 
 .react-spectrum-editor div[class^='InfoPanel-panelDetail'] {
-  max-width: 22vw;
+  max-width: 100%;
+  padding: 0 16px;
 }
 
 .spectra-editor-modal-body__editor {
@@ -52,7 +53,8 @@
       min-height: 0;
     }
 
-    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3 {
+    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3,
+    .MuiGrid-grid-xs-8, .MuiGrid-grid-xs-4 {
       height: 100%;
       min-height: 0;
       display: flex;
