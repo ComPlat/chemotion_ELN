@@ -20,7 +20,6 @@ import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CopyButton from 'src/components/common/CopyButton';
-import ElementIcon from 'src/components/common/ElementIcon';
 
 const Cite = require('citation-js');
 
