@@ -1186,9 +1186,9 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-spectra-editor@ComPlat/react-spectra-editor#1179e28e0dc6bc7e82fd057321326c097266fc20":
+"@complat/react-spectra-editor@ComPlat/react-spectra-editor#c8cf3dfb8452e45451d07c0eeaf73a9e18135ecd":
   version "1.8.2"
-  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/1179e28e0dc6bc7e82fd057321326c097266fc20"
+  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/c8cf3dfb8452e45451d07c0eeaf73a9e18135ecd"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.5"
     "@emotion/react" "^11.11.1"

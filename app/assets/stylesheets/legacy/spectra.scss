@@ -2,7 +2,8 @@
   z-index: 1998;
 }
 
-.react-spectrum-editor div[class^='InfoPanel-panelDetail'] {
+// data-testid, not the JSS class name which is hashed in production.
+.react-spectrum-editor [data-testid='PanelInfo'] .MuiAccordion-region > div {
   max-width: 100%;
   padding: 0 16px;
 }
@@ -67,6 +68,13 @@
         flex: 1 1 auto;
         min-height: 0;
       }
+    }
+
+    // The xs-3/xs-4 column stacks the Graph/Info/Multiplicity accordions. When
+    // Info expands the stack outgrows the column; scroll so Multiplicity stays
+    // reachable. xs-8/xs-9 are chart columns and stay clipped.
+    .MuiGrid-grid-xs-3 > div, .MuiGrid-grid-xs-4 > div {
+      overflow-y: auto;
     }
 
     .d3Line, .d3Rect, .d3Multi, .d3Svg, .d3SvgRect, .d3SvgMulti {
