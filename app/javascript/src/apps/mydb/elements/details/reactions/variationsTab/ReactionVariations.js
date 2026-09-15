@@ -36,16 +36,15 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 const OPENSTATS_TPA_NAME = 'OpenStats';
 
-const notify = ({ title, message, level }) => NotificationActions.add({
+const notify = ({ title, message, level }) => rootStore.notificationsStore.add({
   title,
   message,
   level,
-  dismissible: 'button',
   autoDismiss: 10,
   position: 'tr',
 });
