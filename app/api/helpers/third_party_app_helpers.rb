@@ -102,13 +102,29 @@ module ThirdPartyAppHelpers
     labels = reaction_sample_labels(@reaction)
     selected.each { |row| annotate_material_names!(row, labels) }
 
+    # Segment values are reaction-wide (one set per reaction), so they are exposed
+    # once under the top-level `segment` key instead of being repeated on every
+    # variation row.
+    variations = Entities::ReactionVariationEntity.represent(selected, serializable: true)
+                                                  .map { |variation| variation.tap { |v| v.delete(:segments) } }
+
     content_type 'application/json'
     {
       id: @reaction.id.to_s,
       request_id: @request_id,
       columnOrder: @column_order,
-      variations: Entities::ReactionVariationEntity.represent(selected, serializable: true),
+      segment: reaction_segment_payload(@reaction),
+      variations: variations,
     }
+  end
+
+  # desc: the reaction-wide `segment` section. Labimotion decides which
+  # segments/layers go into it and how their fields are reduced; gem versions
+  # that predate Labimotion::ExportTpaSegments contribute nothing.
+  def reaction_segment_payload(reaction)
+    return {} unless defined?(Labimotion::ExportTpaSegments)
+
+    Labimotion::ExportTpaSegments.call(reaction)
   end
 
   # desc: store the statistics result POSTed back by the third-party app.

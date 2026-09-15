@@ -520,8 +520,8 @@ describe Chemotion::ThirdPartyAppAPI do
           expect(response).to have_http_status(:ok)
         end
 
-        it 'returns the identity envelope alongside the variations' do
-          expect(body.keys).to match_array(%w[id request_id columnOrder variations])
+        it 'returns the identity envelope with the segment section ahead of the variations' do
+          expect(body.keys).to eq(%w[id request_id columnOrder segment variations])
           expect(body['id']).to eq reaction.id.to_s
           expect(body['request_id']).to eq request_id
           expect(body['columnOrder']).to eq %w[a b]
@@ -529,6 +529,10 @@ describe Chemotion::ThirdPartyAppAPI do
 
         it 'returns every requested variation' do
           expect(body['variations'].length).to eq variation_uuids.length
+        end
+
+        it 'does not nest segment data inside the variation rows' do
+          body['variations'].each { |variation| expect(variation).not_to have_key('segments') }
         end
 
         it 'annotates each material with its human-readable name and short label' do
@@ -549,6 +553,42 @@ describe Chemotion::ThirdPartyAppAPI do
 
         it 'returns only the requested variation' do
           expect(body['variations'].length).to eq 1
+        end
+      end
+
+      # Which segments/layers are exported, and how, is covered by labimotion's
+      # own spec for Labimotion::ExportTpaSegments.
+      context 'when labimotion exports the reaction segments' do
+        let(:segment_payload) do
+          { 'Mol interactions' => { 'bind_partners' => { 'molecule_stoich' => { 'value' => '2' } } } }
+        end
+        # A string reference, since gem versions that predate the class must still load this spec.
+        # rubocop:disable RSpec/VerifiedDoubleReference
+        let(:segment_export) { class_double('Labimotion::ExportTpaSegments', call: segment_payload) }
+        # rubocop:enable RSpec/VerifiedDoubleReference
+
+        before do
+          stub_const('Labimotion::ExportTpaSegments', segment_export)
+          get "/api/v1/public/third_party_app_variations/#{token}"
+        end
+
+        it 'hands labimotion the reaction' do
+          expect(segment_export).to have_received(:call).with(reaction)
+        end
+
+        it 'exposes its result under the top-level segment key' do
+          expect(body['segment']).to eq(segment_payload)
+        end
+      end
+
+      context 'when the labimotion gem predates the segment export' do
+        before do
+          hide_const('Labimotion::ExportTpaSegments')
+          get "/api/v1/public/third_party_app_variations/#{token}"
+        end
+
+        it 'returns an empty segment payload' do
+          expect(body['segment']).to eq({})
         end
       end
 
