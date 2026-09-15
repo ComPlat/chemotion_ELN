@@ -34,6 +34,29 @@ module Chemotion
           end
         end
       end
+
+      resource :third_party_app_variations, requirements: { token: %r{[^\/]+} } do
+        route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+$/ do
+          after_validation do
+            parse_variations_payload(JsonWebToken.decode(params[:token]))
+          end
+          desc 'download reaction variations JSON to 3rd party app'
+          get '/' do
+            download_variations_to_third_party_app
+          end
+
+          desc 'upload reaction-variations statistics result (a zip) from 3rd party app'
+          params do
+            requires :file, type: File,
+                     desc: 'result.zip bundling the statistics workbook (.xlsx) and the summary tables (.json)'
+            optional :request_id, type: String, desc: 'echoed request_id; validated against the token when present'
+            optional :id, type: String, desc: 'echoed reaction id; validated against the token when present'
+          end
+          post '/' do
+            upload_variations_result_from_third_party_app
+          end
+        end
+      end
     end
 
     resource :third_party_apps do
@@ -107,6 +130,22 @@ module Chemotion
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
         "#{@app.url}?url=#{CGI.escape(token_uri.to_s)}"
+      end
+
+      desc 'create token for sending reaction variations to a 3rd party app'
+      params do
+        requires :reactionID, type: Integer, desc: 'Reaction ID'
+        requires :appID, type: Integer, desc: 'id of the third party app'
+        requires :variationUuids, type: Array[String], desc: 'UUIDs of variation rows to send'
+        optional :columnOrder, type: Array[String],
+                 desc: 'array of strings describing the order of the columns'
+      end
+
+      get 'variations_token' do
+        prepare_variations_payload
+        parse_variations_payload
+        encode_and_cache_token
+        "#{@app.url}?url=#{CGI.escape(variations_token_uri.to_s)}&method=VariationStatistics"
       end
 
       desc 'get chemotion handler url'
