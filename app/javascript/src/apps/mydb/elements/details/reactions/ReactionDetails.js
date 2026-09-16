@@ -649,10 +649,7 @@ export default class ReactionDetails extends Component {
       return name;
     }).filter((s) => s);
 
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
+    const temperature = reaction.temperature_display_with_unit;
     const productsOnly = reaction.isInteractionReaction();
     const showYield = !productsOnly;
 

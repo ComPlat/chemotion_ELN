@@ -815,4 +815,25 @@ describe('Reaction', () => {
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
     });
   });
+
+  describe('Reaction.temperature_display_with_unit', () => {
+    it('appends the unit to a single numeric value', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '25', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('25 °C');
+    });
+
+    it('appends the unit to a generated range', () => {
+      reaction.temperature = {
+        valueUnit: '°C',
+        userText: '',
+        data: [{ value: 21 }, { value: 25 }],
+      };
+      expect(reaction.temperature_display_with_unit).toBe('21 ~ 25 °C');
+    });
+
+    it('leaves free text untouched', () => {
+      reaction.temperature = { valueUnit: '°C', userText: 'reflux', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('reflux');
+    });
+  });
 });

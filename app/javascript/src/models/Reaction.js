@@ -381,6 +381,16 @@ export default class Reaction extends Element {
     return `${minTemp} ~ ${maxTemp}`;
   }
 
+  // Temperature label for the reaction scheme, e.g. "25 °C" or "21 ~ 25 °C".
+  // The unit is only appended to numeric values/ranges so free text (e.g. "reflux") is left as-is.
+  get temperature_display_with_unit() {
+    const temperature = this.temperature_display;
+    if (/^-?\d+(\.\d{1,2})?( ~ -?\d+(\.\d{1,2})?)?$/.test(temperature)) {
+      return `${temperature} ${this._temperature.valueUnit}`;
+    }
+    return temperature;
+  }
+
   get temperature() {
     return this._temperature;
   }
