@@ -68,7 +68,8 @@ describe Chemotion::ChemicalsService do
     end
 
     context 'when creating SDS file (API download path)' do
-      let(:link) { 'https://www.alfa.com/en/catalog/A14672' }
+      # Must be an ALLOWED_DOMAINS host, or validate_url_for_request! rejects it before the download.
+      let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sial/A14672' }
       let(:product_number) { 'A14672' }
       let(:vendor) { 'thermofischer' }
       let(:full_hash) { 'a' * 32 }
