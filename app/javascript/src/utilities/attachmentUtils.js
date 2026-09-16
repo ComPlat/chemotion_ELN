@@ -103,6 +103,68 @@ export function revokeTransientBlob(oldFieldValue) {
  * Extensible items are mutated in place; frozen items are shallow-cloned.
  * Returns a new array reference.
  */
+// Walks an element's `body` (Research-Plan-shaped array of fields) and
+// collects every attachment identifier referenced by a richtext field's
+// inline blot ops. Returns a Set for O(1) lookup. Empty Set when body is
+// missing or contains no richtext fields.
+//
+// Reused by the Attachments tab to badge inline-referenced rows so users
+// can tell a file is used inside the Rich Text field vs. plain tab upload.
+export function collectInlineAttachmentIdentifiers(body) {
+  const ids = new Set();
+  if (!Array.isArray(body)) return ids;
+  body.forEach((field) => {
+    if (!field || field.type !== 'richtext') return;
+    const ops = field.value && field.value.ops;
+    if (!Array.isArray(ops)) return;
+    ops.forEach((op) => {
+      const insert = op && op.insert;
+      if (!insert || typeof insert !== 'object') return;
+      const image = insert['attachment-image'];
+      const file = insert['attachment-file'];
+      const id = (image && image.attachment_identifier)
+        || (file && file.attachment_identifier);
+      if (id) ids.add(id);
+    });
+  });
+  return ids;
+}
+
+// Returns a new `body` array with every inline blot op referencing a
+// deleted-identifier stripped from richtext fields. Non-richtext fields
+// pass through unchanged. Used on the save path so that after the user
+// deletes an inline attachment from the Attachments tab and saves, the
+// persisted body no longer references the (now-deleted) attachment —
+// preventing broken-image icons on reload.
+//
+// Non-mutating: returns a new outer array, new richtext field objects
+// where a strip actually happened, and a new ops array in those cases.
+// Fields with no matching ops are returned by reference.
+export function stripDeletedInlineBlotsFromBody(body, deletedIdentifiers) {
+  if (!Array.isArray(body)) return body;
+  const deleted = deletedIdentifiers instanceof Set
+    ? deletedIdentifiers
+    : new Set(deletedIdentifiers || []);
+  if (deleted.size === 0) return body;
+
+  return body.map((field) => {
+    if (!field || field.type !== 'richtext') return field;
+    const ops = field.value && field.value.ops;
+    if (!Array.isArray(ops)) return field;
+
+    const nextOps = ops.filter((op) => {
+      const insert = op && op.insert;
+      if (!insert || typeof insert !== 'object') return true;
+      const id = (insert['attachment-image'] && insert['attachment-image'].attachment_identifier)
+        || (insert['attachment-file'] && insert['attachment-file'].attachment_identifier);
+      return !(id && deleted.has(id));
+    });
+
+    if (nextOps.length === ops.length) return field;
+    return { ...field, value: { ...field.value, ops: nextOps } };
+  });
+}
+
 export function markInlineAttachmentDeleted(attachments, identifier) {
   if (!identifier) return attachments || [];
   const source = attachments || [];

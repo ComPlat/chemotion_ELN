@@ -227,6 +227,7 @@ export class AttachmentTab extends Component {
     const {
       onUndoDelete, attachments, elementType, element,
       onImport, isDeleteProtected, deleteProtectedTooltip, elementChanged,
+      inlineAttachmentIdentifiers,
     } = this.props;
     const filteredAttachments = this.getSortedFilteredAttachments();
     const { currentUser } = UserStore.getState();
@@ -269,6 +270,9 @@ export class AttachmentTab extends Component {
           <>
             {combinedAttachments.map((attachment) => {
               const deleteProtected = isDeleteProtected ? isDeleteProtected(attachment) : false;
+              const isInline = inlineAttachmentIdentifiers
+                && inlineAttachmentIdentifiers.has
+                && inlineAttachmentIdentifiers.has(attachment.identifier);
               return (
                 <div className="attachment-row" key={attachment.id}>
                   {attachmentThumbnail(attachment)}
@@ -278,6 +282,15 @@ export class AttachmentTab extends Component {
                       <strike>{attachment.filename}</strike>
                     ) : (
                       attachment.filename
+                    )}
+                    {isInline && (
+                      <span
+                        className="badge bg-info ms-2"
+                        title="Referenced inline in the Rich Text field"
+                      >
+                        <i className="fa fa-link me-1" aria-hidden="true" />
+                        inline
+                      </span>
                     )}
                     <div className="attachment-row-subtext">
                       <div>
@@ -370,6 +383,7 @@ AttachmentTab.propTypes = {
   isDeleteProtected: PropTypes.func,
   deleteProtectedTooltip: PropTypes.string,
   elementChanged: PropTypes.bool,
+  inlineAttachmentIdentifiers: PropTypes.instanceOf(Set),
 };
 
 AttachmentTab.defaultProps = {
@@ -382,6 +396,7 @@ AttachmentTab.defaultProps = {
   isDeleteProtected: null,
   deleteProtectedTooltip: null,
   elementChanged: false,
+  inlineAttachmentIdentifiers: null,
 };
 
 export default observer(AttachmentTab);

@@ -35,6 +35,7 @@ export default class ResearchPlanDetailsFieldRichText extends Component {
           height="100%"
           onChange={value => onChange(value, field.id)}
           disabled={disabled}
+          attachments={this.props.attachments}
           getAttachments={this.getAttachments}
           onAttachmentsChange={this.handleAttachmentsChange}
         />
