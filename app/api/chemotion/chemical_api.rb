@@ -129,6 +129,8 @@ module Chemotion
               product_info['productNumber'],
             )
             return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
+            # A failed download yields false; storing it would record an SDS path resolving to nothing.
+            return error!({ error: 'Could not retrieve the SDS from the vendor' }, 400) unless file_path.is_a?(String)
 
             Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
               sample_id: params[:sample_id],

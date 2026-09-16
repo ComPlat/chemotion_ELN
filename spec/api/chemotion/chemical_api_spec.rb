@@ -138,15 +138,16 @@ describe Chemotion::ChemicalAPI do
           'Access-Control-Request-Method' => 'GET',
         })
         .to_return(status: 200, body: '', headers: {})
-      stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
-        .with(headers:
-        {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip, deflate, br',
-          'Access-Control-Request-Method' => 'GET',
-          'User-Agent' => 'Google Chrome',
-        })
-        .to_return(status: 200, body: '', headers: {})
+      # Absorbed the merck search scrape, which now resolves through PubChem instead.
+      # stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
+      #   .with(headers:
+      #   {
+      #     'Accept' => '*/*',
+      #     'Accept-Encoding' => 'gzip, deflate, br',
+      #     'Access-Control-Request-Method' => 'GET',
+      #     'User-Agent' => 'Google Chrome',
+      #   })
+      #   .to_return(status: 200, body: '', headers: {})
       get(
         "/api/v1/chemicals/fetch_safetysheet/#{chemical.sample_id}?" \
         "data[vendor]=#{params[:vendor]}&" \
