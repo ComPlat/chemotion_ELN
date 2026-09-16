@@ -31,6 +31,7 @@ module Entities
       expose! :container,             anonymize_with: nil,                              using: 'Entities::ContainerEntity'
       expose! :dangerous_products,    anonymize_with: [],   unless: :displayed_in_list
       expose! :duration,                                    unless: :displayed_in_list
+      expose! :environment,           anonymize_with: -> { Reaction.column_defaults['environment'] }, unless: :displayed_in_list
       expose! :name
       expose! :origin,                anonymize_with: nil
       expose! :purification,          anonymize_with: [],   unless: :displayed_in_list
