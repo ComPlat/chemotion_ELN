@@ -23,15 +23,17 @@ module Chemotion
       # ascending order, hidden (negative) entries are renumbered -1..-N ordered
       # by descending value. Returns a new hash.
       def reindex_layout(layout)
-        sorted = {}
         entries = layout || {}
-        entries.select { |_k, v| v.positive? }
-               .sort_by { |_k, v| v }
-               .each_with_index { |(k, _v), i| sorted[k] = i + 1 }
-        entries.select { |_k, v| v.negative? }
-               .sort_by { |_k, v| -v }
-               .each_with_index { |(k, _v), i| sorted[k] = (i + 1) * -1 }
-        sorted
+        number_layout_side(entries, 1).merge(number_layout_side(entries, -1))
+      end
+
+      # Number one side of a layout: keep the entries whose sign matches (1 for
+      # visible, -1 for hidden), order them, and renumber to sign * (1..N).
+      def number_layout_side(entries, sign)
+        entries.select { |_k, v| (v * sign).positive? }
+               .sort_by { |_k, v| v * sign }
+               .each_with_index
+               .to_h { |(k, _v), i| [k, (i + 1) * sign] }
       end
 
       # Names of every element a layout may reference: the built-in ELN elements
@@ -91,7 +93,7 @@ module Chemotion
               new_layout[el.name.to_s] = new_layout&.values&.min&.negative? ? new_layout.values.min - 1 : -1
             end
           end
-          new_layout = new_layout.select { |k, _v| available_elements.include?(k) }
+          new_layout = new_layout.slice(*available_elements)
           data['layout'] = reindex_layout(new_layout)
         end
 
