@@ -121,6 +121,10 @@ table.table-borderless {
       z-index: 1;
     }
 }
+// NOTE: the AI extraction button rules that used to live here (.ai-extract-btn,
+// .ai-extract-view-btn and the shine-wave keyframes) were replaced by the shared
+// components/AiActionButton.scss — see commit 8f1e08f0c. Nothing else in this
+// file is AI-related.
 
 .inventory-tab {
     margin-top: 15px;

@@ -49,7 +49,7 @@ export default class ChemicalFetcher {
   }
 
   static saveManualAttachedSafetySheet(params) {
-    return ApiClient.postJson('/api/v1/chemicals/save_manual_sds', { body: params });
+    return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
 
   static safetyPhrases(queryParams) {
@@ -63,5 +63,33 @@ export default class ChemicalFetcher {
 
   static chemicalProperties(productLink) {
     return ApiClient.getJson(`/api/v1/chemicals/chemical_properties?link=${productLink}`);
+  }
+
+  // Whether an LLM provider is configured for the current user (personal or
+  // institution). Resolves to false on error so AI features fail safe (disabled).
+  static llmAvailable() {
+    return fetch('/api/v1/llm/available', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { available: false }))
+      .then((d) => !!d.available)
+      .catch(() => false);
+  }
+
+  static extractSds(sampleId) {
+    return fetch('/api/v1/chemicals/extract_sds', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sample_id: sampleId })
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      return response.json().then((errorData) => {
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      });
+    });
   }
 }
