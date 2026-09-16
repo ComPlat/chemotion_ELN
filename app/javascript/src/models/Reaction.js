@@ -13,6 +13,7 @@ import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -41,6 +42,12 @@ const parseNumericTemperatureText = (text) => {
 };
 
 const isNumericTemperatureText = (text) => parseNumericTemperatureText(text) !== null;
+
+const EnvironmentDefault = {
+  temperature: { value: '', unit: '°C' },
+  humidity: { value: '', unit: '%' },
+  air_pressure: { value: '', unit: 'mbar' }
+};
 
 export const convertTemperature = (temperature, fromUnit, toUnit) => {
   if (fromUnit === toUnit) {
@@ -152,6 +159,7 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
+      environment: JSON.parse(JSON.stringify(EnvironmentDefault)),
       ph_operator: '=',
       ph_value: null,
       description: Reaction.quillDefault(),
@@ -249,6 +257,13 @@ export default class Reaction extends Element {
     return Number.isFinite(v) ? v : null;
   }
 
+  environmentForSerialize() {
+    return Object.fromEntries(Object.entries(this.environment).map(([field, condition]) => [
+      field,
+      { ...condition, value: isEnvironmentNumber(condition.value) ? condition.value : '' },
+    ]));
+  }
+
   serialize() {
     return super.serialize({
       collection_id: this.collection_id,
@@ -256,6 +271,7 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
+      environment: this.environmentForSerialize(),
       ph_operator: this.ph_operator || '=',
       ph_value: this.phValueForSerialize(),
       duration: this.duration,
@@ -435,6 +451,37 @@ export default class Reaction extends Element {
 
   set temperature(temperature) {
     this._temperature = temperature;
+  }
+
+  // Environmental conditions are stored as a single jsonb column shaped
+  // { temperature: { value, unit }, humidity: { value, unit }, air_pressure: { value, unit } }
+  // (like vessel_size). The getter normalizes to the full default shape so a missing, empty
+  // ({}), or partial persisted hash (older records, or a raw API write of the unconstrained
+  // Hash param) can't crash the panel, which dereferences environment.temperature.value etc.
+  // without guarding the nested objects.
+  get environment() {
+    const env = this._environment || {};
+    this._environment = {
+      temperature: { ...EnvironmentDefault.temperature, ...env.temperature },
+      humidity: { ...EnvironmentDefault.humidity, ...env.humidity },
+      air_pressure: { ...EnvironmentDefault.air_pressure, ...env.air_pressure },
+    };
+    return this._environment;
+  }
+
+  set environment(environment) {
+    this._environment = environment;
+  }
+
+  // True when any environmental condition (temperature, humidity, air pressure)
+  // holds a numeric value. Drives the check mark next to the toggle button.
+  isEnvironmentSet() {
+    const env = this._environment;
+    if (!env) { return false; }
+    return ['temperature', 'humidity', 'air_pressure'].some((key) => {
+      const value = env[key]?.value;
+      return isEnvironmentNumber(value);
+    });
   }
 
   get description_contents() {

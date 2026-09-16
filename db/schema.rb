@@ -1198,6 +1198,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "ph_value"
     t.boolean "lock_reaction_volume", default: false, null: false
     t.string "concentration_mode", default: "solvents_only", null: false
+    t.jsonb "environment", default: {"temperature"=>{"value"=>"", "unit"=>"°C"}, "humidity"=>{"value"=>"", "unit"=>"%"}, "air_pressure"=>{"value"=>"", "unit"=>"mbar"}}
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"

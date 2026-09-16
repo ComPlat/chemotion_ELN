@@ -214,6 +214,70 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction environment normalization', () => {
+    it('serializes and restores the selected air pressure unit with its measurement', () => {
+      reaction.environment = { air_pressure: { value: '760', unit: 'torr' } };
+      const restored = new Reaction(reaction.serialize());
+      expect(restored.environment.air_pressure).toEqual({ value: '760', unit: 'torr' });
+      expect(restored.isEnvironmentSet()).toBe(true);
+    });
+
+    it('excludes incomplete drafts from the indicator and serialized values', () => {
+      ['-', '.', '-.', '', 'NaN', 'Infinity'].forEach((value) => {
+        reaction.environment = { temperature: { value, unit: '°F' } };
+        expect(reaction.isEnvironmentSet()).toBe(false);
+        expect(reaction.serialize().environment.temperature).toEqual({ value: '', unit: '°F' });
+        expect(reaction.environment.temperature.value).toBe(value);
+      });
+    });
+
+    it('keeps valid measurements including zero, negatives and trailing decimal points', () => {
+      ['0', '-25.5', '.5', '1.'].forEach((value) => {
+        reaction.environment = { temperature: { value, unit: '°C' } };
+        expect(reaction.isEnvironmentSet()).toBe(true);
+        expect(reaction.serialize().environment.temperature.value).toBe(value);
+      });
+    });
+
+    // The panel dereferences environment.temperature.value / .humidity.value / .air_pressure.value
+    // without guarding the nested objects, so the getter must always return the full three-key
+    // shape regardless of what was persisted (missing, empty {}, or partial hash from a raw API write).
+    it('fills the full default shape when environment is missing', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = null;
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('backfills every sub-object when a bare {} was persisted', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = {};
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('keeps persisted values while backfilling the missing conditions', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = { temperature: { value: '25', unit: 'K' } };
+      const env = r.environment;
+      expect(env.temperature).toEqual({ value: '25', unit: 'K' });
+      expect(env.humidity).toEqual({ value: '', unit: '%' });
+      expect(env.air_pressure).toEqual({ value: '', unit: 'mbar' });
+    });
+
+    it('backfills a missing unit within a partially-filled condition', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = { temperature: { value: '25' } };
+      expect(r.environment.temperature).toEqual({ value: '25', unit: '°C' });
+    });
+  });
+
   describe('Reaction.calculateCombinedReactionVolume()', () => {
     it('calculates combined volume from solvents and materials', async() => {
       const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
