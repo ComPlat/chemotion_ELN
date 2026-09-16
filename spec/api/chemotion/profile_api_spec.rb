@@ -11,6 +11,50 @@ describe Chemotion::ProfileAPI do
   let(:folder_path) { Rails.root.join('uploads', Rails.env, "user_templates/#{user.id}") }
   let(:file_path) { "#{folder_path}/#{SecureRandom.alphanumeric(10)}.txt" }
 
+  describe 'GET /api/v1/profiles' do
+    context 'when genericElement is enabled but no generic ElementKlass is active' do
+      before do
+        allow(user).to receive(:matrix_check_by_name).and_call_original
+        allow(user).to receive(:matrix_check_by_name).with('genericElement').and_return(true)
+      end
+
+      it 'keeps the built-in ELN elements in the returned layout' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        # Regression: the layout filter used to strip built-in elements when no
+        # generic element was active, wiping sample/reaction/etc. from the tab
+        # layout and the "Create" menu.
+        expect(layout).to include('sample', 'reaction', 'wellplate', 'screen', 'research_plan')
+        expect(layout['sample']).to be_positive
+      end
+    end
+
+    context 'when a built-in element is missing from both the stored layout and the config default' do
+      before do
+        # Simulate a stale profile_default.yml that predates vessel...
+        stale_config = ActiveSupport::OrderedOptions.new
+        stale_config.layout = { layout: { sample: 1, reaction: 2 } }
+        allow(Rails.configuration).to receive(:profile_default).and_return(stale_config)
+        # ...and a profile whose stored layout also lacks vessel (migration not run).
+        user.profile.update!(data: user.profile.data.merge('layout' => { 'sample' => 1, 'reaction' => 2 }))
+      end
+
+      it 'still backfills built-in elements like vessel from ::API::ELEMENTS' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        # Self-sufficiency: no data migration and no vessel in the yml, yet the
+        # endpoint reconstructs the built-in element so it shows in the layout.
+        expect(layout).to include('vessel')
+      end
+    end
+  end
+
   describe 'POST /api/v1/profiles' do
     context 'when the request is valid' do
       it 'creates a new template and saves the file' do

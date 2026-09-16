@@ -18,6 +18,39 @@ module Chemotion
 
   # rubocop: disable Metrics/ClassLength
   class ProfileAPI < Grape::API
+    helpers do
+      # Reindex a layout hash: visible (positive) entries are renumbered 1..N in
+      # ascending order, hidden (negative) entries are renumbered -1..-N ordered
+      # by descending value. Returns a new hash.
+      def reindex_layout(layout)
+        entries = layout || {}
+        number_layout_side(entries, 1).merge(number_layout_side(entries, -1))
+      end
+
+      # Number one side of a layout: keep the entries whose sign matches (1 for
+      # visible, -1 for hidden), order them, and renumber to sign * (1..N).
+      def number_layout_side(entries, sign)
+        entries.select { |_k, v| (v * sign).positive? }
+               .sort_by { |_k, v| v * sign }
+               .each_with_index
+               .to_h { |(k, _v), i| [k, (i + 1) * sign] }
+      end
+
+      # Names of every element a layout may reference: the built-in ELN elements
+      # plus any active generic elements.
+      def available_element_names
+        ::API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+      end
+
+      # Default tab layout, sourced from config/profile_default.yml so the values
+      # are not duplicated across the codebase.
+      def default_layout
+        return {} unless Rails.configuration.respond_to?(:profile_default)
+
+        (Rails.configuration.profile_default&.layout&.dig(:layout) || {}).transform_keys(&:to_s)
+      end
+    end
+
     resource :profiles do
       desc 'Return the profile of the current_user'
       get do
@@ -35,39 +68,40 @@ module Chemotion
           data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
         end
 
+        # Ensure every built-in element is present, adding any that are missing as
+        # hidden. This makes the endpoint self-sufficient: a newly introduced
+        # element (e.g. vessel) or a profile created before an element existed
+        # still appears, without relying on a data migration or an up-to-date
+        # profile_default.yml.
+        data['layout'] ||= {}
+        ::API::ELEMENTS.each do |name|
+          next if data['layout'].key?(name)
+
+          min = data['layout'].values.min
+          data['layout'][name] = min&.negative? ? min - 1 : -1
+        end
+
         if current_user.matrix_check_by_name('genericElement')
-          available_elements = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+          # Built-in ELN elements must be kept alongside any active generic
+          # elements. Otherwise, when no generic ElementKlass is active, the
+          # filter below strips sample/reaction/etc. out of the layout and every
+          # element disappears from the tab layout and the "Create" menu.
+          available_elements = available_element_names
           new_layout = data['layout'] || {}
           Labimotion::ElementKlass.where(is_active: true).find_each do |el|
             if data['layout'] && data['layout'][el.name.to_s].nil?
               new_layout[el.name.to_s] = new_layout&.values&.min&.negative? ? new_layout.values.min - 1 : -1
             end
           end
-          new_layout = new_layout.select { |e| available_elements.include?(e) }
-          sorted_layout = {}
-          new_layout.select { |_k, v| v.positive? }
-                    .sort_by { |_k, v| v }
-                    .each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-          new_layout.select { |_k, v| v.negative? }
-                    .sort_by { |_k, v| -v }
-                    .each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
-          data[:layout] = sorted_layout
+          new_layout = new_layout.slice(*available_elements)
+          data['layout'] = reindex_layout(new_layout)
         end
 
         data.each_key do |dt|
-          sorted_layout = {}
           next if dt[0..6] != 'layout_'
-
           next if data[dt].blank?
 
-          old_layout = data[dt]
-          old_layout&.select { |_k, v| v.positive? }
-                    &.sort_by { |_k, v| v }
-                    &.each_with_index { |k, i| sorted_layout[k[0]] = i + 1 }
-          old_layout&.select { |_k, v| v.negative? }
-                    &.sort_by { |_k, v| -v }
-                    &.each_with_index { |k, i| sorted_layout[k[0]] = (i + 1) * -1 }
-          data[dt] = sorted_layout
+          data[dt] = reindex_layout(data[dt])
         end
 
         folder_path = "user_templates/#{current_user.id}"
@@ -125,31 +159,21 @@ module Chemotion
       end
       put do
         declared_params = declared(params, include_missing: false)
-        available_ements = API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+        available_elements = available_element_names
         # Find not declared generic layout details
         generic_layouts = params[:data].select do |key, _|
           key.to_s.match(/^layout_detail_.+/) && !declared_params[:data].key?(key)
         end
         generic_layouts = generic_layouts.select do |key, _|
-          available_ements.include? key.delete_prefix('layout_detail_')
+          available_elements.include? key.delete_prefix('layout_detail_')
         end
         # Set not declared generic layout details as declared
         declared_params[:data] = declared_params[:data].merge(generic_layouts)
 
         data = current_user.profile.data || {}
-        data['layout'] ||= {
-          'sample' => 1,
-          'reaction' => 2,
-          'wellplate' => 3,
-          'screen' => 4,
-          'research_plan' => 5,
-          'cell_line' => -1000,
-          'device_description' => -1100,
-          'sequence_based_macromolecule_sample' => -1200,
-          'vessel' => -1300,
-        }
+        data['layout'] ||= default_layout
 
-        layout = data['layout'].select { |e| available_ements.include?(e) }
+        layout = data['layout'].select { |e| available_elements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
         if data['default_structure_editor'].nil? || data['default_structure_editor'] =~ /ketcher/i
           data['default_structure_editor'] = 'ketcher'
