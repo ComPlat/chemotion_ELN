@@ -123,7 +123,8 @@ table.reaction-scheme-solvent {
 
   &__right {
     margin-left: auto;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    max-width: 100%;
   }
 
   &__group {
@@ -133,7 +134,8 @@ table.reaction-scheme-solvent {
   }
 
   &__group--status {
-    min-width: 220px;
+    width: 220px;
+    min-width: 0;
   }
 }
 
