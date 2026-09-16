@@ -27,6 +27,10 @@ module Chemotion
     }.freeze
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
+
+    # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
+    MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco mm].freeze
+    MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
     ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
     # Sending only a User-Agent + `Accept: */*`
@@ -57,65 +61,67 @@ module Chemotion
         follow_redirects: false }
     end
 
-    def self.merck_request(name)
-      string = CGI.escape(name.gsub(/\s/, '-'))
-      url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
-            "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
-      safe_url = validate_url_for_request!(url)
-      merck_res = HTTParty.get(safe_url, request_options)
-      doc = Nokogiri::HTML.parse(merck_res.body.to_s)
-
-      href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
-      raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
-
-      href
-    end
-
-    # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
-    # Apollo GraphQL cache that Next.js embeds in __NEXT_DATA__. Product objects in
-    # the cache carry brandKey and productNumber but no URL, so we construct it.
-    def self.extract_product_href_from_next_data(doc)
-      script = doc.at_css('#__NEXT_DATA__')
-      return nil unless script
-
-      data = JSON.parse(script.text)
-      extract_product_href_from_apollo_state(data)
-    rescue JSON::ParserError, TypeError
-      nil
-    end
-
-    # Construct the canonical /DE/de/product/{brand}/{number} path from the first
-    # entry in the Apollo GraphQL cache search results.
-    def self.extract_product_href_from_apollo_state(data)
-      first = apollo_first_search_product(data)
-      return nil unless first
-
-      brand_key = first['brandKey'].to_s.downcase
-      product_number = first['productNumber'].to_s
-      return nil if brand_key.empty? || product_number.empty?
-
-      "/DE/de/product/#{brand_key}/#{product_number}"
-    end
-
-    # Return the first product object from ROOT_QUERY.getNewProductSearchResults.
-    def self.apollo_first_search_product(data)
-      root_query = data.dig('props', 'apolloState', 'ROOT_QUERY') ||
-                   data.dig('apolloState', 'ROOT_QUERY')
-      return nil unless root_query.is_a?(Hash)
-
-      sr_key = root_query.keys.find { |k| k.start_with?('getNewProductSearchResults') }
-      return nil unless sr_key
-
-      products = root_query.dig(sr_key, 'products')
-      products.is_a?(Array) ? products.first : nil
-    end
-
-    # Last-resort fallback: first anchor whose href matches the product path pattern.
-    def self.extract_product_href_from_html(doc)
-      product_path_re = %r{\A/[A-Z]{2}/[a-z]{2}/product/}i
-      doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
-    end
-
+    # Sigma-Aldrich's search rejects automated clients, so this scraping path is unreachable;
+    # merck now resolves the catalogue entry via PubChem. Kept for a future vendor API route.
+    # def self.merck_request(name)
+    #   string = CGI.escape(name.gsub(/\s/, '-'))
+    #   url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
+    #         "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
+    #   safe_url = validate_url_for_request!(url)
+    #   merck_res = HTTParty.get(safe_url, request_options)
+    #   doc = Nokogiri::HTML.parse(merck_res.body.to_s)
+    #
+    #   href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
+    #   raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
+    #
+    #   href
+    # end
+    #
+    # # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
+    # # Apollo GraphQL cache that Next.js embeds in __NEXT_DATA__. Product objects in
+    # # the cache carry brandKey and productNumber but no URL, so we construct it.
+    # def self.extract_product_href_from_next_data(doc)
+    #   script = doc.at_css('#__NEXT_DATA__')
+    #   return nil unless script
+    #
+    #   data = JSON.parse(script.text)
+    #   extract_product_href_from_apollo_state(data)
+    # rescue JSON::ParserError, TypeError
+    #   nil
+    # end
+    #
+    # # Construct the canonical /DE/de/product/{brand}/{number} path from the first
+    # # entry in the Apollo GraphQL cache search results.
+    # def self.extract_product_href_from_apollo_state(data)
+    #   first = apollo_first_search_product(data)
+    #   return nil unless first
+    #
+    #   brand_key = first['brandKey'].to_s.downcase
+    #   product_number = first['productNumber'].to_s
+    #   return nil if brand_key.empty? || product_number.empty?
+    #
+    #   "/DE/de/product/#{brand_key}/#{product_number}"
+    # end
+    #
+    # # Return the first product object from ROOT_QUERY.getNewProductSearchResults.
+    # def self.apollo_first_search_product(data)
+    #   root_query = data.dig('props', 'apolloState', 'ROOT_QUERY') ||
+    #                data.dig('apolloState', 'ROOT_QUERY')
+    #   return nil unless root_query.is_a?(Hash)
+    #
+    #   sr_key = root_query.keys.find { |k| k.start_with?('getNewProductSearchResults') }
+    #   return nil unless sr_key
+    #
+    #   products = root_query.dig(sr_key, 'products')
+    #   products.is_a?(Array) ? products.first : nil
+    # end
+    #
+    # # Last-resort fallback: first anchor whose href matches the product path pattern.
+    # def self.extract_product_href_from_html(doc)
+    #   product_path_re = %r{\A/[A-Z]{2}/[a-z]{2}/product/}i
+    #   doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
+    # end
+    #
     # Validate that a URL is safe to request (SSRF protection).
     # Redirects are disabled in request_options so whitelisted URLs cannot
     # redirect to untrusted hosts.
@@ -144,23 +150,38 @@ module Chemotion
       end
     end
 
-    private_class_method :extract_product_href_from_next_data,
-                         :extract_product_href_from_apollo_state,
-                         :apollo_first_search_product,
-                         :extract_product_href_from_html,
-                         :validate_url_for_request!,
+    private_class_method :validate_url_for_request!,
                          :allowed_host?
 
     def self.merck(name, language)
-      product_number_string = merck_request(name)
-      product_number = product_number_string[15, product_number_string.length].split('/')[1]
+      brand, product_number = merck_product_from_pubchem(name)
+      raise StandardError, 'No Sigma-Aldrich catalogue entry found' unless brand
+
       validate_product_number!(product_number)
-      url_string = product_number_string[15, product_number_string.length]
-      merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
-      { 'merck_link' => merck_link, 'merck_product_number' => product_number,
-        'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
+      path = "#{brand}/#{product_number}"
+      { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
+        'merck_product_number' => product_number,
+        'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}" }
     rescue StandardError
       'Could not find safety data sheet from Merck'
+    end
+
+    # Sigma's own search rejects automated clients, so the catalogue entry comes from
+    # PubChem's Chemical Vendors list. Returns [brand, product_number] or nil.
+    def self.merck_product_from_pubchem(name)
+      cid = PubChem.get_cid_from_identifier(name)
+      return nil unless cid
+
+      candidates = PubChem.get_vendor_sources_from_cid(cid).filter_map do |source|
+        next unless source[:SourceName].to_s.casecmp?('Sigma-Aldrich')
+
+        match = MERCK_PRODUCT_URL_RE.match(source[:SourceRecordURL].to_s)
+        [match[1].downcase, match[2].downcase] if match
+      end
+
+      candidates.min_by do |brand, number|
+        [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
+      end
     end
 
     # Validate product number: allow letters, digits, hyphen, underscore, dot.
@@ -220,7 +241,8 @@ module Chemotion
     def self.create_sds_file(link, product_number, vendor_name)
       Tempfile.create(['sds', '.pdf'], Rails.root.join('tmp')) do |tmp_file|
         result = request_pdf_file(link, tmp_file.path)
-        return result unless result
+        # Only true means bytes landed; an error Hash is truthy and would hash the empty tempfile.
+        return result unless result == true
 
         file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
         existing_file_path = GenerateFileHashUtils.find_duplicate_file_by_hash(vendor_name, product_number, file_hash)

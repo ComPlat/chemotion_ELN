@@ -31,6 +31,8 @@ export default class ChemicalTab extends React.Component {
       dynamicCheckMarks: {},
       vendorValue: 'Merck',
       queryOption: 'CAS',
+      sdsProductNumber: '',
+      sdsBrand: 'sial',
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -248,6 +250,14 @@ export default class ChemicalTab extends React.Component {
     this.setState({ queryOption: value });
   }
 
+  handleSdsProductNumber(value) {
+    this.setState({ sdsProductNumber: value });
+  }
+
+  handleSdsBrand(value) {
+    this.setState({ sdsBrand: value });
+  }
+
   handleLanguageOption(value) {
     this.setState({ safetySheetLanguage: value });
   }
@@ -285,6 +295,35 @@ export default class ChemicalTab extends React.Component {
     };
   }
 
+  // Sigma SDS URLs are derivable from brand + product number, so this needs no vendor request.
+  // Cf. Chemotion::ChemicalsService.merck, whose result shape this must match exactly.
+  buildSdsLinksFromProductNumber = (language) => {
+    const { sdsProductNumber, sdsBrand } = this.state;
+    const productNumber = sdsProductNumber.trim();
+
+    if (!/^[A-Za-z0-9\-_.]+$/.test(productNumber)) {
+      this.setState({
+        loadingQuerySafetySheets: false,
+        warningMessage: 'Enter a Sigma-Aldrich product number, e.g. 179124.',
+      });
+      return;
+    }
+
+    // The vendor's own paths and the safety_sheets cache filenames are both lowercase.
+    const catalogueNumber = productNumber.toLowerCase();
+    const path = `${sdsBrand}/${catalogueNumber}`;
+    this.setState({
+      searchResults: [{
+        merck_link: `https://www.sigmaaldrich.com/DE/${language}/sds/${path}`,
+        merck_product_number: catalogueNumber,
+        merck_product_link: `https://www.sigmaaldrich.com/DE/de/product/${path}`,
+      }],
+      loadingQuerySafetySheets: false,
+      displayWell: true,
+      warningMessage: '',
+    });
+  };
+
   querySafetySheets = () => {
     const { sample } = this.props;
     this.setState({ loadingQuerySafetySheets: true });
@@ -297,6 +336,12 @@ export default class ChemicalTab extends React.Component {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
     }
+
+    if (queryOption === 'Product Number') {
+      this.buildSdsLinksFromProductNumber(safetySheetLanguage);
+      return;
+    }
+
     let searchStr;
 
     if (queryOption === 'Common Name') {
@@ -1101,7 +1146,8 @@ export default class ChemicalTab extends React.Component {
     const cas = sample.xref?.cas ?? '';
     const queryOptions = [
       { label: 'Common Name', value: 'Common Name' },
-      { label: 'CAS', value: 'CAS' }
+      { label: 'CAS', value: 'CAS' },
+      { label: 'Product Number', value: 'Product Number' }
     ];
     const conditionalOverlay = `Assign a cas number using the cas field in labels section
     for better search results using cas number`;
@@ -1125,6 +1171,58 @@ export default class ChemicalTab extends React.Component {
           value={queryOptions.find(({ value }) => value === queryOption)}
         />
       </Form.Group>
+    );
+  }
+
+  // Brand keys are the vendor's own URL segments; a wrong one yields a 404 on their site.
+  sdsProductNumberFields() {
+    const { queryOption, sdsProductNumber, sdsBrand } = this.state;
+    if (queryOption !== 'Product Number') return null;
+
+    const brandOptions = [
+      { label: 'Sigma-Aldrich', value: 'sial' },
+      { label: 'Aldrich', value: 'aldrich' },
+      { label: 'Sigma', value: 'sigma' },
+      { label: 'Supelco', value: 'supelco' },
+      { label: 'Merck Millipore', value: 'mm' },
+      { label: 'Riedel-de Haen', value: 'rdh' },
+    ];
+
+    return (
+      <>
+        <Col>
+          <Form.Group>
+            <Form.Label>
+              Product number
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip>The catalogue number printed on the bottle label</Tooltip>}
+              >
+                <i className="fa fa-info-circle ms-1" />
+              </OverlayTrigger>
+            </Form.Label>
+            <Form.Control
+              type="text"
+              name="sdsProductNumber"
+              value={sdsProductNumber}
+              placeholder="e.g. 179124"
+              onChange={(event) => this.handleSdsProductNumber(event.target.value)}
+            />
+          </Form.Group>
+        </Col>
+        <Col>
+          <Form.Group>
+            <Form.Label>Brand</Form.Label>
+            <Select
+              name="sdsBrand"
+              isClearable={false}
+              options={brandOptions}
+              onChange={(selectedOption) => this.handleSdsBrand(selectedOption?.value)}
+              value={brandOptions.find(({ value }) => value === sdsBrand)}
+            />
+          </Form.Group>
+        </Col>
+      </>
     );
   }
 
@@ -1748,6 +1846,7 @@ export default class ChemicalTab extends React.Component {
           <Col>
             {this.queryOption()}
           </Col>
+          {this.sdsProductNumberFields()}
           <Col>
             {this.safetySheetLanguage()}
           </Col>
