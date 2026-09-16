@@ -8,6 +8,8 @@ import {
   createInlineImageAttachment,
   replaceInlineImageAttachment,
   markInlineAttachmentDeleted,
+  collectInlineAttachmentIdentifiers,
+  stripDeletedInlineBlotsFromBody,
 } from 'src/utilities/attachmentUtils';
 
 function makeAttachment(overrides = {}) {
@@ -203,6 +205,124 @@ describe('attachmentUtils', () => {
       expect(() => { result = markInlineAttachmentDeleted([a], 'a'); }).not.toThrow();
       expect(result[0].is_deleted).toBe(true);
       expect(result[0]).not.toBe(a);
+    });
+  });
+
+  describe('collectInlineAttachmentIdentifiers', () => {
+    it('returns an empty Set when body is missing or empty', () => {
+      expect(collectInlineAttachmentIdentifiers(null).size).toBe(0);
+      expect(collectInlineAttachmentIdentifiers([]).size).toBe(0);
+    });
+
+    it('collects attachment-image identifiers from richtext ops', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: 'hi ' },
+          { insert: { 'attachment-image': { attachment_identifier: 'img-1', filename: 'a.png' } } },
+          { insert: "\n" },
+        ] } },
+      ];
+      const ids = collectInlineAttachmentIdentifiers(body);
+      expect(ids.has('img-1')).toBe(true);
+      expect(ids.size).toBe(1);
+    });
+
+    it('collects attachment-file identifiers from richtext ops', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: { 'attachment-file': { attachment_identifier: 'file-1', filename: 'b.pdf' } } },
+        ] } },
+      ];
+      const ids = collectInlineAttachmentIdentifiers(body);
+      expect(ids.has('file-1')).toBe(true);
+    });
+
+    it('collects across multiple richtext fields and ignores non-richtext fields', () => {
+      const body = [
+        { type: 'image', value: { public_name: 'legacy' } },
+        { type: 'richtext', value: { ops: [
+          { insert: { 'attachment-image': { attachment_identifier: 'a' } } },
+        ] } },
+        { type: 'table', value: {} },
+        { type: 'richtext', value: { ops: [
+          { insert: { 'attachment-file': { attachment_identifier: 'b' } } },
+        ] } },
+      ];
+      const ids = collectInlineAttachmentIdentifiers(body);
+      expect(Array.from(ids).sort()).toEqual(['a', 'b']);
+    });
+
+    it('skips ops without an attachment identifier payload', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: 'text only' },
+          { insert: { image: 'legacy-data-url' } },
+          { insert: { 'attachment-image': {} } },
+        ] } },
+      ];
+      expect(collectInlineAttachmentIdentifiers(body).size).toBe(0);
+    });
+  });
+
+  describe('stripDeletedInlineBlotsFromBody', () => {
+    it('returns body untouched when deleted set is empty', () => {
+      const body = [{ type: 'richtext', value: { ops: [{ insert: 'x' }] } }];
+      expect(stripDeletedInlineBlotsFromBody(body, new Set())).toBe(body);
+    });
+
+    it('removes matching attachment-image ops and keeps everything else', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: 'before ' },
+          { insert: { 'attachment-image': { attachment_identifier: 'dead-1' } } },
+          { insert: " after\n" },
+        ] } },
+      ];
+      const result = stripDeletedInlineBlotsFromBody(body, new Set(['dead-1']));
+      const ops = result[0].value.ops;
+      expect(ops.length).toBe(2);
+      expect(ops[0].insert).toBe('before ');
+      expect(ops[1].insert).toBe(" after\n");
+    });
+
+    it('removes matching attachment-file ops', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: { 'attachment-file': { attachment_identifier: 'gone' } } },
+          { insert: 'kept' },
+        ] } },
+      ];
+      const result = stripDeletedInlineBlotsFromBody(body, new Set(['gone']));
+      expect(result[0].value.ops.length).toBe(1);
+      expect(result[0].value.ops[0].insert).toBe('kept');
+    });
+
+    it('leaves non-matching identifiers in place', () => {
+      const body = [
+        { type: 'richtext', value: { ops: [
+          { insert: { 'attachment-image': { attachment_identifier: 'live' } } },
+          { insert: { 'attachment-image': { attachment_identifier: 'dead' } } },
+        ] } },
+      ];
+      const result = stripDeletedInlineBlotsFromBody(body, new Set(['dead']));
+      const ops = result[0].value.ops;
+      expect(ops.length).toBe(1);
+      expect(ops[0].insert['attachment-image'].attachment_identifier).toBe('live');
+    });
+
+    it('returns the same field reference when nothing was stripped', () => {
+      const untouched = { type: 'richtext', value: { ops: [{ insert: 'x' }] } };
+      const body = [untouched];
+      const result = stripDeletedInlineBlotsFromBody(body, new Set(['nope']));
+      expect(result[0]).toBe(untouched);
+    });
+
+    it('passes through non-richtext fields untouched', () => {
+      const image = { type: 'image', value: { public_name: 'a' } };
+      const table = { type: 'table', value: {} };
+      const result = stripDeletedInlineBlotsFromBody([image, table], new Set(['a']));
+      expect(result[0]).toBe(image);
+      expect(result[1]).toBe(table);
     });
   });
 });

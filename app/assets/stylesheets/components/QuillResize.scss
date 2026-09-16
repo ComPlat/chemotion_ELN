@@ -9,6 +9,50 @@
   height: auto;
 }
 
+// Applied by QuillEditor.syncDeletedBlotVisualState when the tab-side
+// Delete flips the matching attachment's is_deleted flag. Purely visual
+// until save; the delta ops still hold the blot. On save, the body ops
+// are stripped via stripDeletedInlineBlotsFromBody and the visual state
+// becomes irrelevant.
+.quill-inline-attachment-image.inline-blot-deleted {
+  opacity: 0.4;
+}
+
+// Wrapper around a deleted <img>. JS inserts this so we can position an
+// overlay trash badge — <img> is a replaced element and can't render
+// ::before/::after content directly.
+// URL-encoded SVG trash icon for the file-pill overlay. Anchor elements
+// (unlike <img>) can host ::after pseudo-elements, so no DOM wrapping is
+// needed here.
+$trash-icon-red: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23dc3545'%3E%3Cpath d='M9 3v1H4v2h1v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm2 5h2v10h-2V8zm-4 0h2v10H7V8zm8 0h2v10h-2V8z'/%3E%3C/svg%3E";
+
+.quill-inline-attachment-file.inline-blot-deleted {
+  position: relative;
+  opacity: 0.6;
+  border-color: #dc3545 !important;
+  padding-right: 28px;
+
+  .quill-inline-attachment-file__name,
+  .quill-inline-attachment-file__size {
+    text-decoration: line-through;
+  }
+
+  &::after {
+    content: '';
+    background-image: url($trash-icon-red);
+    background-size: 14px 14px;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 14px;
+    height: 14px;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}
+
 // Styles for the `quill-resize-module` resize overlay.
 //
 // The vendor ships its CSS under `node_modules/quill-resize-module/dist/resize.css`.

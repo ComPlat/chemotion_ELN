@@ -102,12 +102,41 @@ export default class QuillEditor extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { value } = this.props;
-    if (value?.ops === prevProps.value?.ops) return;
+    if (value?.ops !== prevProps.value?.ops) {
+      this.setState({ value });
+      const sel = this.editor.getSelection();
+      this.editor.setContents(stripImages(value));
+      if (sel) this.editor.setSelection(sel);
+    }
+    this.syncDeletedBlotVisualState();
+  }
 
-    this.setState({ value });
-    const sel = this.editor.getSelection();
-    this.editor.setContents(stripImages(value));
-    if (sel) this.editor.setSelection(sel);
+  // Toggles the `inline-blot-deleted` class on every embed DOM node whose
+  // matching attachment carries `is_deleted: true`. Purely visual; the
+  // delta ops stay intact until save-time cascade strips them. Symmetric
+  // with A1 (editor→tab): here the tab→editor side flips the CSS so users
+  // see instant feedback when they delete an inline row.
+  syncDeletedBlotVisualState() {
+    if (!this.editor) return;
+    const root = this.editor.root;
+    if (!root) return;
+
+    const attachments = (typeof this.props.getAttachments === 'function'
+      ? this.props.getAttachments()
+      : (this.props.attachments || [])) || [];
+    const deletedIds = new Set(
+      attachments.filter((a) => a && a.is_deleted && a.identifier).map((a) => a.identifier)
+    );
+
+    const nodes = root.querySelectorAll('[data-attachment-identifier]');
+    nodes.forEach((node) => {
+      const id = node.getAttribute('data-attachment-identifier');
+      if (deletedIds.has(id)) {
+        node.classList.add('inline-blot-deleted');
+      } else {
+        node.classList.remove('inline-blot-deleted');
+      }
+    });
   }
 
   onChange(val) {
@@ -216,6 +245,12 @@ export default class QuillEditor extends React.Component {
       this.editor = new Quill(quillEditor, quillOptions);
       const { value } = this.state;
       if (value) this.editor.setContents(stripImages(value));
+      // First render — reflect any pre-existing `is_deleted` flags on the
+      // blots. Without this, when the Research Plan tab re-mounts after the
+      // user deleted an inline attachment on the Attachments tab (Tabs is
+      // mountOnEnter/unmountOnExit), the blot renders as normal because
+      // componentDidUpdate hasn't fired yet.
+      this.syncDeletedBlotVisualState();
 
       // Wire the paste/drop → Attachment pipeline when the consumer supplies
       // an attachments contract. Consumers without an element (e.g. text
