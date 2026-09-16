@@ -162,6 +162,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :environment, type: Hash
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
@@ -258,6 +259,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :environment, type: Hash
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
