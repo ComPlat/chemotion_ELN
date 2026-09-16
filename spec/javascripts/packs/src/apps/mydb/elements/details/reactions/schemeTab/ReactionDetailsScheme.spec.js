@@ -201,7 +201,8 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
 
 // Regression tests for the solvent volume calculation:
 // - Eq unlocked: a solvent's volume stays fixed; only its (derived) equivalent updates.
-// - Eq locked: a solvent's volume scales with the reference (equivalent * ref.amount_mol).
+// - Eq locked: this helper leaves the solvent volume untouched; it is scaled by reference
+//   ratio in Reaction#scaleSolventVolumesForReferenceChange, not through the mole pathway.
 // The historical glitch: editing a solvent volume set its equivalent via amount_g / maxAmount
 // (NaN, because a solvent has no maxAmount), and the correction block excluded solvents, so
 // the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
@@ -244,22 +245,22 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     gasStoreStub.restore();
   });
 
-  it('scales a solvent volume from its equivalent when Eq is locked and the reference changes', () => {
+  it('leaves locked solvent scaling to the volume-ratio scaler', () => {
     const ctx = buildCtx({ lockEquivColumn: true });
     const solvent = makeSolvent({ equivalent: 0.5 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       updatedReference,
       'solvents'
     );
 
-    // equivalent (0.5) * reference amount_mol (0.1) = 0.05 mol
-    expect(solvent.setAmountAndNormalizeToGram.calledOnce).toBe(true);
-    const arg = solvent.setAmountAndNormalizeToGram.firstCall.args[0];
-    expect(arg.unit).toBe('mol');
-    expect(Math.abs(arg.value - 0.05) < 1e-9).toBe(true);
+    // Solvents are excluded from the mole-based locked scale-up; their volume is scaled
+    // separately by Reaction#scaleSolventVolumesForReferenceChange, so this helper leaves
+    // the solvent amount untouched.
+    expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(result[0].amount_value).toBe(0.01);
   });
 
   it('keeps a solvent volume fixed but refreshes its equivalent when Eq is unlocked and the reference changes', () => {
@@ -298,6 +299,76 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     // Volume stays fixed while unlocked.
     expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
     expect(result[0].amount_value).toBe(0.01);
+  });
+});
+
+// Handler-level regression tests for the solvent volume scaling wiring.
+// The model-level scaler (Reaction#scaleSolventVolumesForReferenceChange) is unit-tested in
+// Reaction.spec.js; these prove the two amount-change handlers feed it correctly:
+//   - snapshot the reference amount BEFORE the edit mutates it, and
+//   - invoke the scaler only under locked equivalents, and only after locked propagation.
+describe('ReactionDetailsScheme amount-change handlers — solvent volume scaling wiring', () => {
+  // editMethod is the sample mutator each handler calls (setAmountAndNormalizeToGram vs setAmount);
+  // it bumps the reference amount so a mistimed snapshot would read 0.2 instead of 0.1.
+  const buildCtx = ({ lockEquivColumn, editMethod }) => {
+    const referenceMaterial = { amount_mol: 0.1 };
+    const updatedReaction = {
+      scaleSolventVolumesForReferenceChange: sinon.spy(),
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+      gaseous: false,
+    };
+    const updatedSample = {
+      sample_details: {},
+      initializeSampleDetails: sinon.spy(),
+      [editMethod]: sinon.spy(() => { referenceMaterial.amount_mol = 0.2; }),
+    };
+    const reaction = {
+      referenceMaterial,
+      gaseous: false,
+      weight_percentage: false,
+      findReactionSample: sinon.stub().returns(updatedSample),
+    };
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn },
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+    return { ctx, updatedReaction, updatedSample };
+  };
+
+  const changeEvent = { sampleID: 'solv-1', amount: { value: 5, unit: 'mg' }, isSbmm: false };
+
+  const cases = [
+    { handler: 'updatedReactionForAmountChange', editMethod: 'setAmountAndNormalizeToGram' },
+    { handler: 'updatedReactionForAmountUnitChange', editMethod: 'setAmount' },
+  ];
+
+  cases.forEach(({ handler, editMethod }) => {
+    describe(`#${handler}`, () => {
+      it('scales solvent volume by the pre-edit reference ratio when equivalents are locked', () => {
+        const { ctx, updatedReaction, updatedSample } = buildCtx({ lockEquivColumn: true, editMethod });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        const scaler = updatedReaction.scaleSolventVolumesForReferenceChange;
+        // The snapshotted reference amount (0.1) is passed, not the value after the edit (0.2):
+        // proof the snapshot precedes the mutation.
+        expect(scaler.calledOnceWith(0.1)).toBe(true);
+        // The edit and locked propagation both precede the scaler call.
+        expect(updatedSample[editMethod].calledBefore(scaler)).toBe(true);
+        expect(ctx.updatedReactionWithSample.calledBefore(scaler)).toBe(true);
+      });
+
+      it('leaves solvent volume untouched when equivalents are unlocked', () => {
+        const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: false, editMethod });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        expect(updatedReaction.scaleSolventVolumesForReferenceChange.called).toBe(false);
+      });
+    });
   });
 });
 
