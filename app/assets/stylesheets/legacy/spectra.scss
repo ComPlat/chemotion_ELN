@@ -2,12 +2,6 @@
   z-index: 1998;
 }
 
-// data-testid, not the JSS class name which is hashed in production.
-.react-spectrum-editor [data-testid='PanelInfo'] .MuiAccordion-region > div {
-  max-width: 100%;
-  padding: 0 16px;
-}
-
 .spectra-editor-modal-body__editor {
   height: 100%;
   min-height: 0;
