@@ -66,6 +66,19 @@ module Chemotion
           data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
         end
 
+        # Ensure every built-in element is present, adding any that are missing as
+        # hidden. This makes the endpoint self-sufficient: a newly introduced
+        # element (e.g. vessel) or a profile created before an element existed
+        # still appears, without relying on a data migration or an up-to-date
+        # profile_default.yml.
+        data['layout'] ||= {}
+        ::API::ELEMENTS.each do |name|
+          next if data['layout'].key?(name)
+
+          min = data['layout'].values.min
+          data['layout'][name] = min&.negative? ? min - 1 : -1
+        end
+
         if current_user.matrix_check_by_name('genericElement')
           # Built-in ELN elements must be kept alongside any active generic
           # elements. Otherwise, when no generic ElementKlass is active, the

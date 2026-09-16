@@ -31,6 +31,28 @@ describe Chemotion::ProfileAPI do
         expect(layout['sample']).to be_positive
       end
     end
+
+    context 'when a built-in element is missing from both the stored layout and the config default' do
+      before do
+        # Simulate a stale profile_default.yml that predates vessel...
+        stale_config = ActiveSupport::OrderedOptions.new
+        stale_config.layout = { layout: { sample: 1, reaction: 2 } }
+        allow(Rails.configuration).to receive(:profile_default).and_return(stale_config)
+        # ...and a profile whose stored layout also lacks vessel (migration not run).
+        user.profile.update!(data: user.profile.data.merge('layout' => { 'sample' => 1, 'reaction' => 2 }))
+      end
+
+      it 'still backfills built-in elements like vessel from ::API::ELEMENTS' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        # Self-sufficiency: no data migration and no vessel in the yml, yet the
+        # endpoint reconstructs the built-in element so it shows in the layout.
+        expect(layout).to include('vessel')
+      end
+    end
   end
 
   describe 'POST /api/v1/profiles' do
