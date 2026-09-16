@@ -11,6 +11,28 @@ describe Chemotion::ProfileAPI do
   let(:folder_path) { Rails.root.join('uploads', Rails.env, "user_templates/#{user.id}") }
   let(:file_path) { "#{folder_path}/#{SecureRandom.alphanumeric(10)}.txt" }
 
+  describe 'GET /api/v1/profiles' do
+    context 'when genericElement is enabled but no generic ElementKlass is active' do
+      before do
+        allow(user).to receive(:matrix_check_by_name).and_call_original
+        allow(user).to receive(:matrix_check_by_name).with('genericElement').and_return(true)
+      end
+
+      it 'keeps the built-in ELN elements in the returned layout' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        # Regression: the layout filter used to strip built-in elements when no
+        # generic element was active, wiping sample/reaction/etc. from the tab
+        # layout and the "Create" menu.
+        expect(layout).to include('sample', 'reaction', 'wellplate', 'screen', 'research_plan')
+        expect(layout['sample']).to be_positive
+      end
+    end
+  end
+
   describe 'POST /api/v1/profiles' do
     context 'when the request is valid' do
       it 'creates a new template and saves the file' do
