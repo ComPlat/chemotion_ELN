@@ -301,6 +301,113 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
   });
 });
 
+// Regression tests for the Eq-edit highlight bug:
+// When the Eq of a starting material/reactant is edited, the recalculation is molar-amount
+// based, so the sample's amount_unit must stay 'mol' (which highlights the Amount field),
+// NOT be normalized to 'g' (which would highlight the Mass field). Gas and reference-less
+// mixture samples keep the old gram-normalized behavior so their calculations are unchanged.
+describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculated field is Amount', () => {
+  const buildCtx = (referenceMaterial = { amount_mol: 0.1, coefficient: 1 }) => ({
+    props: { reaction: { referenceMaterial } },
+    handleEquivalentBasedAmountUpdate:
+      ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+    warnIfMixtureMassExceeded: sinon.spy(),
+  });
+
+  const makeMaterial = (overrides = {}) => ({
+    id: 'mat-1',
+    reference: false,
+    gas_type: 'off',
+    equivalent: 1,
+    amount_mol: 0.05,
+    amount_g: 5,
+    coefficient: 1,
+    isMixture: () => false,
+    hasComponents: () => false,
+    isGas: () => false,
+    setAmount: sinon.spy(),
+    setAmountAndNormalizeToGram: sinon.spy(),
+    ...overrides,
+  });
+
+  it('sets a regular material amount in mol (unit=mol) so the Amount field is highlighted', () => {
+    const ctx = buildCtx();
+    const material = makeMaterial();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    // equivalent (3) * reference amount_mol (0.1) = 0.3 mol
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.setAmount.calledOnce).toBe(true);
+    const arg = material.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.3) < 1e-9).toBe(true);
+  });
+
+  it('keeps the gram-normalized path for a gas material so its vessel-driven amount is unchanged', () => {
+    const ctx = buildCtx();
+    const gas = makeMaterial({ isGas: () => true });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [gas],
+      { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
+      'reactants'
+    );
+
+    expect(gas.setAmount.called).toBe(false);
+    expect(gas.setAmountAndNormalizeToGram.calledOnce).toBe(true);
+    expect(gas.setAmountAndNormalizeToGram.firstCall.args[0].unit).toBe('mol');
+  });
+
+  // Fallback branch: when the reference has no usable amount_mol, the new amount is derived
+  // from the sample's own amount_mol (equivalent * sample.amount_mol) rather than from the
+  // reference. This path is independent of handleEquivalentBasedAmountUpdate, so it needs its
+  // own coverage: a regular material must stay in 'mol' (Amount highlighted), while gas/mixture
+  // samples must keep the gram-normalized behavior.
+  it('sets a regular material amount in mol via the fallback when the reference has no amount', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const material = makeMaterial({ amount_value: 5, amount_mol: 0.05 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    // equivalent (3) * sample amount_mol (0.05) = 0.15 mol
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.setAmount.calledOnce).toBe(true);
+    const arg = material.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.15) < 1e-9).toBe(true);
+  });
+
+  it('keeps the gram-normalized path for a gas material in the fallback when the reference has no amount', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const gas = makeMaterial({ isGas: () => true, amount_value: 5, amount_mol: 0.05 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [gas],
+      { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
+      'reactants'
+    );
+
+    expect(gas.setAmount.called).toBe(false);
+    expect(gas.setAmountAndNormalizeToGram.calledOnce).toBe(true);
+    const arg = gas.setAmountAndNormalizeToGram.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.15) < 1e-9).toBe(true);
+  });
+});
+
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
