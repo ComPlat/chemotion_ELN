@@ -16,6 +16,7 @@ export default class Attachment extends Element {
         file,
         name: file.name,
         filename: file.name,
+        is_new: true,
         is_deleted: false,
         preview: Attachment.filePreview(file),
         is_image_field: false,

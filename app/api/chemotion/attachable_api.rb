@@ -4,22 +4,32 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
+    ATTACHABLE_POLICY_MAP = {
+      'ResearchPlan' => ResearchPlan,
+      'Sample' => Sample,
+      'Reaction' => Reaction,
+      'Screen' => Screen,
+      'CelllineSample' => CelllineSample,
+      'Wellplate' => Wellplate,
+      'DeviceDescription' => DeviceDescription,
+      'SequenceBasedMacromoleculeSample' => SequenceBasedMacromoleculeSample,
+      'SequenceBasedMacromolecule' => SequenceBasedMacromolecule,
+    }.freeze
+
     resource :attachable do
       params do
         optional :files, type: [File], desc: 'files', default: []
         optional :attachable_type, type: String, desc: 'attachable_type'
-        optional :attachable_id, type: Integer, desc: 'attachable id'
+        optional :attachable_id, type: String, desc: 'attachable id'
         optional :attfilesIdentifier, type: [String], desc: 'file identifier'
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        case params[:attachable_type]
-        when 'ResearchPlan'
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(
-            current_user,
-            ResearchPlan.find_by(id: params[:attachable_id]),
-          ).update?
-        end
+        attachable_type = params[:attachable_type]
+        error!('400 Bad Request: unknown attachable_type', 400) unless ATTACHABLE_POLICY_MAP.key?(attachable_type)
+
+        element = ATTACHABLE_POLICY_MAP[attachable_type].find_by(id: params[:attachable_id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, element).update?
       end
 
       desc 'Update attachable records'
@@ -54,7 +64,9 @@ module Chemotion
           end
         end
         if params[:del_files].any?
-          Attachment.where(id: params[:del_files].map!(&:to_i), attachable_type: attachable_type)
+          Attachment.where(id: params[:del_files].map!(&:to_i),
+                           attachable_type: attachable_type,
+                           attachable_id: attachable_id)
                     .update_all(attachable_id: nil)
         end
         true
