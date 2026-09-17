@@ -454,6 +454,40 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
+  describe 'GET fetch_safetysheet with the All vendors option' do
+    let(:molecule) { create(:molecule, names: ['Water'], cas: ['7732-18-5']) }
+    let(:overview) do
+      { 'sds_vendors' => [{ 'vendor' => 'Sigma-Aldrich', 'count' => 2, 'sds_supported' => true,
+                            'products' => [{ 'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/1',
+                                             'merck_product_number' => '1' }] }],
+        'catalogue_vendors' => [{ 'vendor' => 'abcr GmbH', 'count' => 1, 'sds_supported' => false,
+                                  'products' => [{ 'label' => 'AB1',
+                                                   'product_link' => 'https://abcr.com/de_en/AB1' }] }],
+        'vendor_count' => 31,
+        'pubchem_url' => 'https://pubchem.ncbi.nlm.nih.gov/compound/962#section=Chemical-Vendors' }
+    end
+
+    before do
+      allow(Molecule).to receive(:find).and_return(molecule)
+      allow(Chemotion::ChemicalsService).to receive(:vendor_overview).and_return(overview)
+      get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=All&data[option]=CAS&data[language]=en"
+    end
+
+    it 'answers with the two vendor sets separated' do
+      body = JSON.parse(response.body)
+      expect(body['sds_vendors'].first['vendor']).to eq('Sigma-Aldrich')
+      expect(body['catalogue_vendors'].first['vendor']).to eq('abcr GmbH')
+    end
+
+    it 'reports how many vendors PubChem lists in total' do
+      expect(JSON.parse(response.body)['vendor_count']).to eq(31)
+    end
+
+    it 'links to the compound Chemical Vendors section on PubChem' do
+      expect(JSON.parse(response.body)['pubchem_url']).to include('#section=Chemical-Vendors')
+    end
+  end
+
   describe 'GET fetch_safetysheet vendor branches' do
     let(:molecule) { create(:molecule, names: ['Water'], cas: ['7732-18-5']) }
 
