@@ -161,5 +161,5 @@ WellplateProperties.propTypes = { /* eslint-disable react/forbid-prop-types */
 
 WellplateProperties.defaultProps = {
   attachments: [],
-  onAttachmentsChange: undefined,
+  onAttachmentsChange: () => {},
 };

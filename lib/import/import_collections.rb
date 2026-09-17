@@ -7,6 +7,8 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
+    INLINE_BLOT_KEYS = %w[attachment-image attachment-file].freeze
+
     attr_reader :log_file_path
 
     # Labels of collections created in this import (from import_collections or gate).
@@ -874,7 +876,7 @@ module Import
         insert = op.is_a?(Hash) ? op['insert'] : nil
         next unless insert.is_a?(Hash)
 
-        %w[attachment-image attachment-file].each do |blot_key|
+        INLINE_BLOT_KEYS.each do |blot_key|
           payload = insert[blot_key]
           next unless payload.is_a?(Hash)
 
