@@ -47,15 +47,28 @@ module AttachmentJcampAasm
                     to: :queueing
       end
 
+      # :peaked is included alongside the other resting states below: a bagit curve's
+      # filename never gains a .peak./.edit. addon (see jcamp_peak_addon?), so
+      # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware
+      # that its aasm_state is already :peaked - and regenerate_spectrum (attachment_api.rb)
+      # calls set_regenerating on every "orig" id. Without :peaked here that raised
+      # AASM::InvalidTransition and 500'd the whole Reprocess request.
       event :set_regenerating do
-        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium],
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium peaked],
                     to: :regenerating
       end
 
+      # peaked self-loop: generate_att's reuse path (see its lineage lookup) can re-run this
+      # on a row that's already peaked - not a first-time creation - and needs that to
+      # succeed rather than raise. This widens the event for every caller in the class, not
+      # just generate_att: don't narrow the from: list back without checking the reuse path
+      # still needs it.
       event :set_force_peaked do
         transitions from: %i[idle queueing regenerating nmrium peaked failure], to: :peaked
       end
 
+      # edited self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-edited row, not just on first-time creation.
       event :set_edited do
         transitions from: %i[peaked queueing regenerating nmrium edited failure], to: :edited
       end
@@ -80,10 +93,14 @@ module AttachmentJcampAasm
         transitions from: %i[idle peaked non_jcamp json failure], to: :json
       end
 
+      # csv self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-csv row, not just on first-time creation.
       event :set_csv do
         transitions from: %i[idle peaked non_jcamp csv failure], to: :csv
       end
 
+      # nmrium self-loop: same reason as set_force_peaked above - generate_att's reuse path
+      # re-runs this on an already-nmrium row, not just on first-time creation.
       event :set_nmrium do
         transitions from: %i[idle peaked edited non_jcamp queueing regenerating nmrium failure], to: :nmrium
       end
@@ -195,7 +212,14 @@ module AttachmentJcampProcess
   end
 
   def jcamp_peak_addon?(addon)
-    addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
+    return false unless addon.is_a?(String)
+
+    # read_bagit_data names each curve "<n>_bagit" (no "peak" substring) - those rows already
+    # hold peak-picked data from chem-spectra's zip_jcamp_n_img, so without this they match
+    # neither this predicate nor jcamp_edit_addon?, generate_att's dispatch fires no AASM
+    # event, and the row is stuck in :queueing forever - which extractJcampFiles.js filters
+    # out of the viewer, disabling the spectra editor for the whole dataset.
+    addon == 'peak' || addon.include?('peak') || addon.match?(/\A\d+_bagit\z/)
   end
 
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
@@ -211,89 +235,114 @@ module AttachmentJcampProcess
     return if attachable_id.nil? || attachable_type != 'Container'
 
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
-    # Look up the canonical row for this filename within self's own lineage (not just self's own
-    # direct children): re-editing an already-edited file, or editing a curve whose dataset still
-    # holds both a .peak. and .edit. lineage, must reuse that single row - scoping to
-    # children_of(self) would miss it (self isn't its own child) and mint a duplicate .edit.jdx
-    # attachment on every save. Narrowed to self's ancestry root so two independently uploaded
-    # curves that happen to derive the same target filename (e.g. foo.dx and foo.jdx both ->
-    # foo.peak.jdx) don't collapse onto each other.
-    lineage_root = root_id || id
-    # Descending so that, if a dataset still holds duplicate rows from before this fix,
-    # the row picked matches the one handleLoadSpectra already showed the user (it sorts
-    # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
-    att = Attachment.where_container(attachable_id)
-                    .where(filename: meta_filename)
-                    .order(id: :desc)
-                    .detect { |candidate| (candidate.root_id || candidate.id) == lineage_root }
-    # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
-    # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
-    # row gets parented - without this, a row reused from a different lineage member keeps
-    # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
-    # attachment_api.rb) stops finding it on later regenerate_spectrum calls. Guarded against
-    # the reverse direction: the lookup matches by (lineage, filename) alone, so when self is a
-    # non-root member and the derived filename happens to collide with an ancestor's own (e.g.
-    # an nmrium re-edit deriving the root's own '<base>.nmrium' filename), att can resolve to
-    # that ancestor. Reparenting an ancestor onto its own descendant is a cycle - ancestry's
-    # ancestry_exclude_self validation would reject the save - so skip it in that direction;
-    # the two rows are already correctly related the other way.
-    att.parent = self if att && att.id != id && !att.ancestor_of?(self)
 
-    att ||= Attachment.children_of(self[:id]).new(
-      filename: meta_filename,
-      con_state: Labimotion::ConState::READ,
-      created_by: created_by,
-      created_for: created_for,
-      key: SecureRandom.uuid,
-    )
-    att.attachable_id = attachable_id
-    att.attachable_type = attachable_type
-    att.file_path = meta_tmp.path
-    # See require_peaks_generation? - only matters when att is a found, persisted row (an
-    # update); harmless to set on a freshly-built one, which goes through before_create
-    # :init_aasm instead.
-    att.reattaching_derivative = true
-    att.save!
-    # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
-    # attr_accessor that stays set on the object otherwise, so every subsequent save below
-    # (each AASM set_* event call persists itself, plus the final save for att.thumb) would
-    # re-run the full attach/create_derivatives/update_column pipeline and re-upload the
-    # same blob - clear it so those saves are plain state/column updates instead.
-    att.file_path = nil
-    # Same reason, same scope: the flag guarded *this* save only. It is a plain
-    # attr_accessor, so leaving it set would suppress require_peaks_generation? for every
-    # later save on this object too - including the final save! below, which is exactly
-    # where a freshly derived jcamp (a bagit curve, say) transitions out of :queueing and
-    # asks for its peak table. Left set, such a curve keeps the content it was created
-    # with, stays in :queueing, and is filtered out of the viewer entirely.
-    att.reattaching_derivative = false
+    # The lookup-then-create below has no DB-level uniqueness to fall back on (a plain
+    # unique index on attachable_id+filename would be wrong: B2 above deliberately allows
+    # two different lineages to share a filename), so two concurrent saves deriving the
+    # same meta_filename could both pass the lookup before either commits its insert and
+    # mint a duplicate - the same bug this method exists to prevent, just under
+    # concurrency. An advisory lock keyed by (attachable_id, meta_filename), held for the
+    # transaction's lifetime, serializes that instead. It's coarser than the real identity
+    # (lineage isn't part of the key, since it isn't a stored column to lock on), so it
+    # also serializes the legitimate B2 case, but that's a minor concurrency cost, not a
+    # correctness issue - each call still resolves its own correct row once it has the lock.
+    Attachment.transaction do
+      lock_key = "Attachment#generate_att:#{attachable_id}:#{meta_filename}"
+      Attachment.connection.execute("SELECT pg_advisory_xact_lock(hashtext(#{Attachment.connection.quote(lock_key)}))")
 
-    if ext == 'png'
-      att.set_image if att.may_set_image?
-    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
-      att.set_edited if att.may_set_edited?
-    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
-      att.set_force_peaked if att.may_set_force_peaked?
-    else
-      filename_lower = att.filename.to_s.downcase
-      if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
+      # Look up the canonical row for this filename within self's own lineage (not just self's
+      # own direct children): re-editing an already-edited file, or editing a curve whose
+      # dataset still holds both a .peak. and .edit. lineage, must reuse that single row -
+      # scoping to children_of(self) would miss it (self isn't its own child) and mint a
+      # duplicate .edit.jdx attachment on every save. Narrowed to self's ancestry root so two
+      # independently uploaded curves that happen to derive the same target filename (e.g.
+      # foo.dx and foo.jdx both -> foo.peak.jdx) don't collapse onto each other.
+      # root_id already returns id for a root node (never nil) - see the ancestry gem.
+      lineage_root = root_id
+      # Composes ancestry's own subtree_of (descendants of lineage_root, plus lineage_root
+      # itself) rather than loading every same-filename row in the dataset and re-deriving
+      # "same lineage" by hand: the lineage scoping lives in the query, not a Ruby block.
+      # Descending so that, if a dataset still holds duplicate rows from before this fix,
+      # the row picked matches the one handleLoadSpectra already showed the user (it sorts
+      # descending by id too - SpectraStore.js) rather than an arbitrary/older duplicate.
+      att = Attachment.where_container(attachable_id)
+                      .where(filename: meta_filename)
+                      .merge(Attachment.subtree_of(lineage_root))
+                      .order(id: :desc)
+                      .first
+      # Re-parent a reused row onto self: the lookup above is identity by (lineage, filename),
+      # decoupled from ancestry, but children_of(self[:id]) below is still how a freshly-created
+      # row gets parented - without this, a row reused from a different lineage member keeps
+      # its stale parent, and ancestry-based cleanup (e.g. remove_generated_children in
+      # attachment_api.rb) stops finding it on later regenerate_spectrum calls. Guarded against
+      # the reverse direction: the lookup matches by (lineage, filename) alone, so when self is a
+      # non-root member and the derived filename happens to collide with an ancestor's own (e.g.
+      # an nmrium re-edit deriving the root's own '<base>.nmrium' filename), att can resolve to
+      # that ancestor. Reparenting an ancestor onto its own descendant is a cycle - ancestry's
+      # ancestry_exclude_self validation would reject the save - so skip it in that direction;
+      # the two rows are already correctly related the other way.
+      att.parent = self if att && att.id != id && !att.ancestor_of?(self)
+
+      # attachable_id/attachable_type only need setting here, on the not-found branch: a
+      # found att was already resolved via where_container(attachable_id), which filters on
+      # exactly these two values, so reassigning them on that branch would be a no-op write.
+      att ||= Attachment.children_of(self[:id]).new(
+        filename: meta_filename,
+        con_state: Labimotion::ConState::READ,
+        created_by: created_by,
+        created_for: created_for,
+        key: SecureRandom.uuid,
+        attachable_id: attachable_id,
+        attachable_type: attachable_type,
+      )
+      att.file_path = meta_tmp.path
+      # See require_peaks_generation? - only matters when att is a found, persisted row (an
+      # update); harmless to set on a freshly-built one, which goes through before_create
+      # :init_aasm instead.
+      att.reattaching_derivative = true
+      att.save!
+      # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
+      # attr_accessor that stays set on the object otherwise, so the final att.save! below
+      # (after the AASM set_* calls - non-bang, so persist: false: they only mutate
+      # aasm_state in memory and don't themselves trigger a save, see edit_process's
+      # set_backup comment) would re-run the full attach/create_derivatives/update_column
+      # pipeline and re-upload the same blob - clear it so that save is a plain
+      # state/column update instead.
+      att.file_path = nil
+      # Reset now too: att is generate_att's return value, so it can outlive this method in
+      # caller code (edit_process/create_process/save_spectrum all hold onto it). Leaving
+      # this true forever would silently no-op require_peaks_generation? on any future
+      # save/touch of this same in-memory object that isn't already guarded by one of
+      # require_peaks_generation?'s own incidental checks (peaked?/edited?/extension).
+      att.reattaching_derivative = false
+
+      if ext == 'png'
+        att.set_image if att.may_set_image?
+      elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
         att.set_edited if att.may_set_edited?
-      elsif filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
+      elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
         att.set_force_peaked if att.may_set_force_peaked?
-      elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
-        if lcms_uvvis_raw?(filename_lower)
-          att.set_non_jcamp if att.may_set_non_jcamp?
-        else
+      else
+        filename_lower = att.filename.to_s.downcase
+        if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i) && filename_lower.include?('.edit.')
+          att.set_edited if att.may_set_edited?
+        elsif filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
           att.set_force_peaked if att.may_set_force_peaked?
+        elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
+          if lcms_uvvis_raw?(filename_lower)
+            att.set_non_jcamp if att.may_set_non_jcamp?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
         end
       end
+      att.set_json  if ext == 'json' && att.may_set_json?
+      att.set_csv   if ext == 'csv' && att.may_set_csv?
+      att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
+      att.thumb = false if ext == 'json'
+      att.save!
+      att
     end
-    att.set_json  if ext == 'json' && att.may_set_json?
-    att.set_csv   if ext == 'csv' && att.may_set_csv?
-    att.set_nmrium if ext == 'nmrium' && att.may_set_nmrium?
-    att.thumb = false if ext == 'json'
-    att.save!
-    att
   end
 
   def generate_img_att(img_tmp, addon, to_edit = false)
@@ -429,7 +478,9 @@ module AttachmentJcampProcess
 
     tmp_jcamp ||= arr_jcamp&.first
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    new_jcamp_created = !jcamp_att.nil?
+    # generate_att may return a reused row, not only a freshly minted one - this just gates
+    # delete_related_edit_peak on "was a jcamp attachment resolved at all" below.
+    jcamp_att_resolved = !jcamp_att.nil?
     jcamp_att&.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true) if tmp_img
 
@@ -460,7 +511,7 @@ module AttachmentJcampProcess
     set_backup unless jcamp_att&.id == id
     delete_tmps(tmp_files_to_be_deleted)
     delete_related_imgs(img_att) if img_att
-    delete_related_edit_peak(jcamp_att) if new_jcamp_created
+    delete_related_edit_peak(jcamp_att) if jcamp_att_resolved
     jcamp_att || self
   end
 
@@ -548,6 +599,25 @@ module AttachmentJcampProcess
     end
   end
 
+  # generate_att's dedup lookup matches by the dot-style name it derives from `addon`
+  # (Chemotion::Jcamp::Gen.filename), but read_processed_data immediately renames the
+  # resolved row to an underscore-style stem below - which means that same dot-style name
+  # matches nothing on the next call (e.g. a later regenerate), and generate_att mints a
+  # duplicate instead of reusing it. Rename any existing row back to its dot-style name
+  # first so generate_att's lookup finds and reuses it; the underscore-style rename below
+  # then restores the final name exactly as before.
+  def reconnect_dot_style_name(final_filename, addon, ext)
+    lineage_root = root_id
+    existing = Attachment.where_container(attachable_id)
+                         .where(filename: final_filename)
+                         .merge(Attachment.subtree_of(lineage_root))
+                         .first
+    return unless existing
+
+    existing.reattaching_derivative = true
+    existing.update!(filename: Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext))
+  end
+
   def read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
     jcamp_att = nil
     tmp_to_be_deleted = []
@@ -559,6 +629,7 @@ module AttachmentJcampProcess
       stem = original_stem(jcamp, base) || "#{base}_processed_#{idx}"
       addon = stem.sub(/^#{base}_/, '')
 
+      reconnect_dot_style_name("#{stem}.jdx", addon, 'jdx')
       curr_jcamp_att = generate_jcamp_att(jcamp, addon)
       curr_jcamp_att.update!(filename: "#{stem}.jdx")
       curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
@@ -567,6 +638,7 @@ module AttachmentJcampProcess
       curr_tmp_img = arr_img[idx]
       if curr_tmp_img
         img_stem = original_stem(curr_tmp_img, base) || stem
+        reconnect_dot_style_name("#{img_stem}.png", addon, 'png')
         img_att = generate_img_att(curr_tmp_img, addon)
         img_att.update!(filename: "#{img_stem}.png")
         tmp_img_to_deleted << img_att
@@ -617,6 +689,7 @@ module AttachmentJcampProcess
         generate_csv_att(curr_tmp_csv, "#{idx + 1}_bagit", false, params)
         tmp_to_be_deleted.push(curr_tmp_csv)
       end
+
       jcamp_att = curr_jcamp_att if idx.zero?
     end
 
@@ -627,6 +700,7 @@ module AttachmentJcampProcess
       tmp_img_to_deleted.push(img_att)
     end
 
+    set_done
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
@@ -692,7 +766,7 @@ module AttachmentJcampProcess
     # Restricted to self's own lineage (see generate_att) - matching by filename stem alone,
     # across the whole dataset, would also catch an independently-uploaded curve that happens
     # to derive the same target name, deleting it as collateral of an unrelated edit.
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
@@ -700,7 +774,7 @@ module AttachmentJcampProcess
       should_del = (att.edited? || att.peaked? || is_peak_file) &&
                    att.id != jcamp_att.id &&
                    valid_name == fname_wo_ext(att) &&
-                   (att.root_id || att.id) == lineage_root
+                   att.root_id == lineage_root
       att.delete if should_del
     end
   end
@@ -717,14 +791,14 @@ module AttachmentJcampProcess
   def delete_related_imgs(img_att)
     return unless img_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.image? &&
                   att.id != img_att.id &&
                   valid_name == fname_wo_ext(att) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end
@@ -752,14 +826,14 @@ module AttachmentJcampProcess
   def delete_related_csv(csv_att)
     return unless csv_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.csv? &&
                   att.id != csv_att.id &&
                   valid_name == fname_wo_ext(att) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end
@@ -767,14 +841,17 @@ module AttachmentJcampProcess
   def delete_related_nmrium(nmrium_att)
     return unless nmrium_att
 
-    lineage_root = root_id || id
+    lineage_root = root_id
     atts = Attachment.where(attachable_id: attachable_id)
-    valid_name = filename_parts[0]
+    # Strip a trailing .edit/.peak addon but keep the "N_bagit" curve token, so a jcamp
+    # attachment mid edit_process (e.g. "x.1_bagit.peak.jdx") still matches its own
+    # nmrium sibling ("x.1_bagit.nmrium") without matching other curves ("x.2_bagit...").
+    valid_name = fname_wo_ext(self).sub(/\.(edit|peak)\z/, '')
     atts.each do |att|
       is_delete = att.nmrium? &&
                   att.id != nmrium_att.id &&
                   (valid_name == fname_wo_ext(att) || fname_wo_ext(self) == fname_wo_ext(att)) &&
-                  (att.root_id || att.id) == lineage_root
+                  att.root_id == lineage_root
       att.delete if is_delete
     end
   end

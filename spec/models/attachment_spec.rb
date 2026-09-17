@@ -757,10 +757,18 @@ RSpec.describe Attachment do
         let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
         let(:attachment) { create(:attachment, :with_spectra_file, attachable: dataset_container) }
         let!(:queueing_edit) do
-          create(
+          # Created edited (a state require_peaks_generation? always short-circuits on, via
+          # peaked?/edited?) and only afterwards flipped to queueing via update_column, which
+          # bypasses callbacks entirely - unlike passing aasm_state: 'queueing' straight to
+          # create, which risks require_peaks_generation? itself firing mid-setup in this
+          # analysis/dataset hierarchy (belong_to_analysis? true) and kicking off real
+          # chem-spectra processing for this fixture, independent of generate_att below.
+          att = create(
             :attachment, filename: 'spectra_file.edit.jdx', attachable: dataset_container,
-                         aasm_state: 'queueing', parent: attachment
+                         aasm_state: 'edited', parent: attachment
           )
+          att.update_column(:aasm_state, 'queueing') # rubocop:disable Rails/SkipsModelValidations
+          att
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
 
@@ -1106,6 +1114,159 @@ RSpec.describe Attachment do
 
   describe '#create_process' do
     pending 'not yet implemented'
+  end
+
+  describe '#read_processed_data' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file_lcms.jdx', aasm_state: 'idle') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'reuses the same curve row on a later regenerate instead of minting a duplicate' do
+      tmp1 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+      attachment.send(:read_processed_data, [tmp1], [nil], 'NMR', false)
+
+      expect do
+        attachment.set_regenerating
+        attachment.save!
+        tmp2 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+        attachment.send(:read_processed_data, [tmp2], [nil], 'NMR', true)
+      end.not_to change(described_class, :count)
+    end
+  end
+
+  describe '#read_bagit_data' do
+    # Unlike create_process's plain (non-bagit) branch, read_bagit_data never
+    # transitioned self out of :queueing/:regenerating - so a bagit archive's own
+    # attachment (e.g. "740.zip") got permanently stuck there after every upload or
+    # Reprocess. :regenerating in particular isn't excluded by
+    # SpectraHelper.js#extractJcampFiles's isApp check, so the stuck .zip (a jcamp-like
+    # extension) got fed to the spectra editor as if it were a JCAMP file instead of
+    # being filtered out, producing garbage (NaN frequency, blank graph) even though
+    # the actual curve attachments it generated were entirely correct.
+    let(:attachment) { create(:attachment, filename: '740.zip', aasm_state: 'regenerating') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'transitions self to :done instead of leaving it stuck in :regenerating' do
+      tmp1 = make_tmp_jcamp('740.1_bagit.dx')
+      tmp2 = make_tmp_jcamp('740.2_bagit.dx')
+
+      attachment.send(:read_bagit_data, [tmp1, tmp2], [nil, nil], [nil, nil], 'NMR', true, {})
+
+      expect(attachment.aasm_state).to eq('done')
+    end
+  end
+
+  describe '#set_regenerating' do
+    # A bagit curve's filename never gains a .peak./.edit. addon (jcamp_peak_addon?), so
+    # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware its
+    # aasm_state is already :peaked - and regenerate_spectrum (attachment_api.rb) calls
+    # set_regenerating on every "orig" id. Before :peaked was added to this event's from:
+    # list, that raised AASM::InvalidTransition and 500'd the whole Reprocess request.
+    let(:attachment) { create(:attachment, filename: '740.1_bagit.jdx', aasm_state: 'peaked') }
+
+    it 'allows a peaked bagit curve to be regenerated' do
+      expect(attachment.may_set_regenerating?).to be true
+
+      attachment.set_regenerating
+      expect(attachment.aasm_state).to eq('regenerating')
+    end
+  end
+
+  describe '#generate_att concurrency (S9 advisory lock)', :js do
+    # js: true switches DatabaseCleaner to :truncation (see spec/support/database_cleaner.rb)
+    # instead of the suite's default :transaction strategy - a second, independent DB
+    # connection needs to actually see this example's data, which an uncommitted
+    # transaction on the main connection would hide from it.
+    let(:attachment) { create(:attachment, :with_spectra_file) }
+
+    it 'takes a Postgres advisory lock keyed by (attachable_id, meta_filename) for the ' \
+       "transaction's lifetime, so a concurrent generate_att for the same target serializes " \
+       'instead of racing' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        holder_conn.begin_transaction
+        holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+        other_conn = ActiveRecord::Base.connection_pool.checkout
+        begin
+          available = other_conn.select_value(
+            "SELECT pg_try_advisory_xact_lock(hashtext(#{other_conn.quote(lock_key)}))",
+          )
+          expect(available).to be(false)
+        ensure
+          ActiveRecord::Base.connection_pool.checkin(other_conn)
+        end
+      ensure
+        holder_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(holder_conn)
+      end
+
+      fresh_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        fresh_conn.begin_transaction
+        available_after_release = fresh_conn.select_value(
+          "SELECT pg_try_advisory_xact_lock(hashtext(#{fresh_conn.quote(lock_key)}))",
+        )
+        expect(available_after_release).to be(true)
+      ensure
+        fresh_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(fresh_conn)
+      end
+    end
+
+    it 'blocks generate_att itself on that same key, rather than just an independently computed one' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+      tmp = Tempfile.new('jcamp').tap do |f|
+        f.write('##TITLE=x')
+        f.rewind
+      end
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      holder_conn.begin_transaction
+      holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+      thread = Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          attachment.generate_att(tmp, 'edit', true, 'jdx')
+        end
+      end
+
+      # Poll instead of a fixed sleep: give generate_att up to 2s to reach the blocking
+      # DB call and go to sleep waiting on it - that status change happening at all, this
+      # early, is the proof it actually took the lock we're holding, not some other path.
+      blocked = false
+      10.times do
+        blocked = thread.status == 'sleep'
+        break if blocked
+
+        sleep 0.2
+      end
+      expect(blocked).to be(true)
+
+      holder_conn.rollback_transaction
+      ActiveRecord::Base.connection_pool.checkin(holder_conn)
+
+      thread.join(5)
+      expect(thread.status).to be(false)
+      expect(thread.value).to be_a(described_class)
+    end
   end
 
   describe '#edit_process' do

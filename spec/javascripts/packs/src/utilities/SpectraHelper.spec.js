@@ -217,6 +217,24 @@ describe('SpectraHelper', () => {
         const expectedValue = { orig: [1], gene: [2, 3], edited: [2, 3] };
         expect(listJcampIds).toEqual(expectedValue);
       });
+
+      it('treats bagit per-curve files as generated, not original', () => {
+        // A bagit curve's own addon is "<n>_bagit" (see jcamp_peak_addon? on the Rails
+        // side) - it never gains a .peak./.edit. addon, so it must not be classified
+        // as "orig": regenerate_spectrum would then resubmit it independently in the
+        // same request that's also reprocessing the archive that generated it, racing
+        // the two and corrupting the result (see #616).
+        const attachments = [
+          { id: 1, filename: '740.zip' },
+          { id: 2, filename: '740.1_bagit.jdx' },
+          { id: 3, filename: '740.2_bagit.jdx' },
+        ];
+        container.children.push({ attachments });
+
+        const listJcampIds = JcampIds(container);
+        const expectedValue = { orig: [1], gene: [2, 3], edited: [] };
+        expect(listJcampIds).toEqual(expectedValue);
+      });
     });
   });
 
