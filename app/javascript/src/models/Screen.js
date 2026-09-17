@@ -26,7 +26,6 @@ export default class Screen extends Element {
       user_labels: [],
       research_plans: [],
       attachments: [],
-      can_update: true,
       container: Container.init(),
       segments: [],
       can_update: true,

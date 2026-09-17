@@ -154,6 +154,12 @@ export default class ReactionDetailsPurification extends Component {
                     height="100%"
                     disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
                     onChange={(event) => onInputChange('observation', event)}
+                    attachments={reaction.attachments || []}
+                    getAttachments={() => reaction.attachments || []}
+                    onAttachmentsChange={(next) => {
+                      reaction.attachments = next;
+                      this.handleOnReactionChange(reaction);
+                    }}
                   />
                 ) : <QuillViewer value={reaction.observation} />
               }

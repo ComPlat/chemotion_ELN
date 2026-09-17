@@ -30,5 +30,56 @@ RSpec.describe Reporter::Delta do
       html = described_class.new(delta).getHTML
       expect(html).to include('<sub>').and include('</sub>')
     end
+
+    # New embed shapes emitted by AttachmentImageBlot / AttachmentFileBlot
+    # (inline drop feature). Before B1 the reporter treated these as plain
+    # text and either raised NoMethodError on gsub or dumped the raw hash
+    # into the document as `{"attachment-image"=>{...}}`.
+    context 'with new-shape inline attachment ops' do
+      it 'does not raise when an attachment-image embed op is present' do
+        delta = { 'ops' => [
+          { 'insert' => 'before ' },
+          { 'insert' => { 'attachment-image' => { 'attachment_identifier' => 'abc', 'filename' => 'x.png' } } },
+          { 'insert' => "\n" },
+        ] }
+        expect { described_class.new(delta).getHTML }.not_to raise_error
+      end
+
+      it 'does not raise when an attachment-file embed op is present' do
+        delta = { 'ops' => [
+          { 'insert' => { 'attachment-file' => { 'attachment_identifier' => 'xyz', 'filename' => 'x.pdf' } } },
+          { 'insert' => "\n" },
+        ] }
+        expect { described_class.new(delta).getHTML }.not_to raise_error
+      end
+
+      it 'does not dump the raw hash into the HTML for attachment-image' do
+        delta = { 'ops' => [
+          { 'insert' => { 'attachment-image' => { 'attachment_identifier' => 'abc' } } },
+          { 'insert' => "\n" },
+        ] }
+        html = described_class.new(delta).getHTML
+        expect(html).not_to include('attachment-image')
+        expect(html).not_to include('attachment_identifier')
+      end
+
+      it 'does not dump the raw hash into the HTML for attachment-file' do
+        delta = { 'ops' => [
+          { 'insert' => { 'attachment-file' => { 'attachment_identifier' => 'xyz' } } },
+          { 'insert' => "\n" },
+        ] }
+        html = described_class.new(delta).getHTML
+        expect(html).not_to include('attachment-file')
+        expect(html).not_to include('attachment_identifier')
+      end
+
+      it 'still renders legacy image embed ops without raising' do
+        delta = { 'ops' => [
+          { 'insert' => { 'image' => 'data:image/png;base64,legacy' } },
+          { 'insert' => "\n" },
+        ] }
+        expect { described_class.new(delta).getHTML }.not_to raise_error
+      end
+    end
   end
 end

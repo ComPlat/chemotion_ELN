@@ -38,4 +38,60 @@ RSpec.describe ResearchPlan, type: :model do
       expect(research_plan.short_label).to eq(expected_label)
     end
   end
+
+  describe '#update_body_attachments' do
+    # Body mixes the legacy image-field shape (rewritten by public_name) and
+    # richtext delta ops containing attachment-image / attachment-file blots
+    # (rewritten by the new remap). Both must be flipped from ORIG-* to
+    # COPY-* so a duplicated RP no longer references the source's attachments.
+    let(:body) do
+      [
+        {
+          'id' => SecureRandom.uuid,
+          'type' => 'image',
+          'value' => { 'public_name' => 'ORIG-IMG', 'file_name' => 'x.png' },
+        },
+        {
+          'id' => SecureRandom.uuid,
+          'type' => 'richtext',
+          'value' => { 'ops' => [
+            { 'insert' => 'before ' },
+            { 'insert' => { 'attachment-image' => { 'attachment_identifier' => 'ORIG-RT-IMG', 'filename' => 'x.png' } } },
+            { 'insert' => { 'attachment-file'  => { 'attachment_identifier' => 'ORIG-RT-FILE', 'filename' => 'x.pdf' } } },
+            { 'insert' => " after\n" },
+            # An unrelated identifier that must NOT be rewritten.
+            { 'insert' => { 'attachment-image' => { 'attachment_identifier' => 'UNRELATED', 'filename' => 'y.png' } } },
+          ] },
+        },
+      ]
+    end
+
+    let(:research_plan) { create(:research_plan, body: body) }
+
+    it 'rewrites the legacy image-field public_name' do
+      research_plan.update_body_attachments('ORIG-IMG', 'COPY-IMG')
+      expect(research_plan.reload.body[0]['value']['public_name']).to eq('COPY-IMG')
+    end
+
+    it 'rewrites attachment-image identifiers inside richtext ops' do
+      research_plan.update_body_attachments('ORIG-RT-IMG', 'COPY-RT-IMG')
+      ops = research_plan.reload.body[1]['value']['ops']
+      img_ids = ops.filter_map { |op| op['insert'].is_a?(Hash) ? op['insert'].dig('attachment-image', 'attachment_identifier') : nil }
+      expect(img_ids).to contain_exactly('COPY-RT-IMG', 'UNRELATED')
+    end
+
+    it 'rewrites attachment-file identifiers inside richtext ops' do
+      research_plan.update_body_attachments('ORIG-RT-FILE', 'COPY-RT-FILE')
+      ops = research_plan.reload.body[1]['value']['ops']
+      file_id = ops.filter_map { |op| op['insert'].is_a?(Hash) ? op['insert'].dig('attachment-file', 'attachment_identifier') : nil }.first
+      expect(file_id).to eq('COPY-RT-FILE')
+    end
+
+    it 'leaves unrelated identifiers untouched' do
+      research_plan.update_body_attachments('ORIG-RT-IMG', 'COPY-RT-IMG')
+      ops = research_plan.reload.body[1]['value']['ops']
+      unrelated_still_there = ops.any? { |op| op['insert'].is_a?(Hash) && op['insert'].dig('attachment-image', 'attachment_identifier') == 'UNRELATED' }
+      expect(unrelated_still_there).to be(true)
+    end
+  end
 end

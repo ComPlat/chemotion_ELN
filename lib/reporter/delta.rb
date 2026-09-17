@@ -118,13 +118,23 @@ module Reporter
       op_html
     end
 
+    # An embed op (image / inline attachment) is any op whose insert is a
+    # Hash — regardless of the specific key used. Modern shapes use
+    # `attachment-image` / `attachment-file` (from AttachmentImageBlot /
+    # AttachmentFileBlot). Legacy shape used `image`. Treat every Hash
+    # insert as "not text" so callers don't try to gsub/escape it and
+    # crash with NoMethodError.
+    def embed_op?(op)
+      op && op['insert'].is_a?(Hash)
+    end
+
     def buildDeltaOps(op)
-      return CGI.escapeHTML(op["insert"].to_s) if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
+      return CGI.escapeHTML(op["insert"].to_s) if !op["attributes"] && !embed_op?(op)
 
       styles = []
       tags = []
 
-      if (op && op["insert"].is_a?(Hash) && op["insert"]["image"])
+      if embed_op?(op)
         styles << "color:red"
         styles << "font-weight:bold"
         return "<i><span style=\"#{styles.join(";")}\">(Image is not supported in this version)</span></i>"

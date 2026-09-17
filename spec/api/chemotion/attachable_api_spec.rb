@@ -314,7 +314,9 @@ describe Chemotion::AttachableAPI do
 
     context 'when the sample belongs to another user' do
       let(:other_user) { create(:person) }
-      let(:other_sample) { create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user) }
+      let(:other_sample) do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user)
+      end
       let(:other_collection) { create(:collection, user: other_user) }
 
       before do
