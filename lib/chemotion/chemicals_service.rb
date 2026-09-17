@@ -29,9 +29,21 @@ module Chemotion
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
 
     # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
-    MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco mm].freeze
+    SDS_VENDOR = 'Sigma-Aldrich'
+    FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
+    # Fisher partitions this endpoint by catalogue availability, so the country code is pinned
+    # to the one the part numbers below were verified against.
+    FISHER_SDS_URL = 'https://www.fishersci.com/store/msds?partNumber=%<part_number>s' \
+                     '&productDescription=&language=EN&countryCode=US'
+    # Alfa-lineage sheets come from DirectWebViewer, which unlike the Fisher catalogue
+    # serves the requested language.
+    THERMO_SDS_URL = 'https://documents.thermofisher.com/directwebviewer/private/results.aspx' \
+                     '?page=NewSearch&LANGUAGE=d__%<language>s&SUBFORMAT=d__CLP1' \
+                     '&SKU=%<sku>s&PLANT=d__ALF'
+    THERMO_LANGUAGES = { 'en' => 'EN', 'de' => 'DE', 'fr' => 'FR' }.freeze
+    MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco vetec saj usp cerillian].freeze
     MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
-    ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
+    ALLOWED_DOMAINS = %w[sigmaaldrich.com fishersci.com thermofisher.com].freeze
 
     # Sending only a User-Agent + `Accept: */*`
     # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
@@ -158,12 +170,16 @@ module Chemotion
       raise StandardError, 'No Sigma-Aldrich catalogue entry found' unless brand
 
       validate_product_number!(product_number)
+      merck_product_entry(brand, product_number, language)
+    rescue StandardError
+      'Could not find safety data sheet from Merck'
+    end
+
+    def self.merck_product_entry(brand, product_number, language)
       path = "#{brand}/#{product_number}"
       { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
         'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}" }
-    rescue StandardError
-      'Could not find safety data sheet from Merck'
     end
 
     # Sigma's own search rejects automated clients, so the catalogue entry comes from
@@ -172,16 +188,129 @@ module Chemotion
       cid = PubChem.get_cid_from_identifier(name)
       return nil unless cid
 
-      candidates = PubChem.get_vendor_sources_from_cid(cid).filter_map do |source|
-        next unless source[:SourceName].to_s.casecmp?('Sigma-Aldrich')
+      merck_candidates(PubChem.get_vendor_sources_from_cid(cid)).min_by { |c| merck_rank(*c) }
+    end
+
+    def self.merck_candidates(sources)
+      sources.filter_map do |source|
+        next unless source[:SourceName].to_s.casecmp?(SDS_VENDOR)
 
         match = MERCK_PRODUCT_URL_RE.match(source[:SourceRecordURL].to_s)
         [match[1].downcase, match[2].downcase] if match
       end
+    end
 
-      candidates.min_by do |brand, number|
-        [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
+    def self.merck_rank(brand, number)
+      [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
+    end
+
+    # One entry per vendor for the "All vendors" view, Sigma-Aldrich first because it
+    # is the only vendor whose SDS URL can be derived.
+    def self.vendor_groups(name, language)
+      cid = PubChem.get_cid_from_identifier(name)
+      return [] unless cid
+
+      PubChem.get_vendor_sources_from_cid(cid)
+             .group_by { |source| source[:SourceName].to_s }
+             .filter_map { |vendor, sources| vendor_group(vendor, sources, language) }
+             .sort_by { |group| [vendor_rank(group), -group['count']] }
+    end
+
+    # Sigma-Aldrich leads as the ELN's primary vendor, then the other vendors whose SDS
+    # can be fetched, then catalogue-only ones.
+    def self.vendor_rank(group)
+      return 0 if group['vendor'].casecmp?(SDS_VENDOR)
+
+      group['sds_supported'] ? 1 : 2
+    end
+
+    def self.vendor_group(vendor, sources, language)
+      return nil if vendor.empty?
+
+      products, sds_supported = vendor_products(vendor, sources, language)
+      return nil if products.empty?
+
+      { 'vendor' => vendor, 'count' => products.size,
+        'sds_supported' => sds_supported, 'products' => products }
+    end
+
+    def self.vendor_products(vendor, sources, language)
+      return [merck_products(sources, language), true] if vendor.casecmp?(SDS_VENDOR)
+
+      if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+        fisher = fisher_products(sources, language)
+        return [fisher, true] if fisher.any? { |product| product['fisher_link'] }
       end
+
+      [other_vendor_products(sources), false]
+    end
+
+    # Returns [part_number, sds_url]. A Fisher Chemical RegistryID is a catalogue number
+    # already; Thermo codes are all-numeric (Acros, US catalogue only) or dotted (Alfa).
+    def self.fisher_sds(source, language)
+      registry = source[:RegistryID].to_s
+      if registry.present? && !registry.start_with?('GID_') && registry.match?(/\A[A-Za-z0-9]+\z/)
+        return [registry, format(FISHER_SDS_URL, part_number: registry)]
+      end
+
+      code = url_last_segment(source[:SourceRecordURL].to_s).to_s
+      return ["AC#{code}", format(FISHER_SDS_URL, part_number: "AC#{code}")] if code.match?(/\A\d+\z/)
+
+      alfa_sds(code, language)
+    end
+
+    # Only a letter-prefixed dotted code resolves; the dotted suffix is a pack size.
+    def self.alfa_sds(code, language)
+      base = code[/\A([A-Za-z][A-Za-z0-9]*)\./, 1]
+      return nil unless base
+
+      sku = "ALFAA#{base.upcase}"
+      [sku, format(THERMO_SDS_URL, language: THERMO_LANGUAGES.fetch(language, 'EN'), sku: sku)]
+    end
+
+    def self.fisher_products(sources, language)
+      sources.filter_map { |source| fisher_product(source, language) }
+             .uniq { |product| product['fisher_product_number'] || product['product_link'] }
+    end
+
+    def self.fisher_product(source, language)
+      url = source[:SourceRecordURL].to_s
+      part_number, sds_url = fisher_sds(source, language)
+      return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
+
+      product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number }
+      product['fisher_product_link'] = url if url.present?
+      product
+    end
+
+    def self.url_last_segment(url)
+      return nil if url.blank?
+
+      URI.parse(url).path.to_s.split('/').reject(&:empty?).last
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    def self.merck_products(sources, language)
+      merck_candidates(sources).uniq.sort_by { |c| merck_rank(*c) }
+                               .map { |brand, number| merck_product_entry(brand, number, language) }
+    end
+
+    def self.other_vendor_products(sources)
+      sources.filter_map do |source|
+        url = source[:SourceRecordURL].to_s
+        next if url.empty?
+
+        { 'label' => vendor_product_label(source, url), 'product_link' => url }
+      end
+    end
+
+    # RegistryID is the vendor's catalogue number unless PubChem assigned an internal GID.
+    def self.vendor_product_label(source, url)
+      registry = source[:RegistryID].to_s
+      return registry unless registry.empty? || registry.start_with?('GID_')
+
+      url_last_segment(url) || url
     end
 
     # Validate product number: allow letters, digits, hyphen, underscore, dot.
@@ -258,12 +387,24 @@ module Chemotion
       { error: e.message }
     end
 
-    def self.request_pdf_file(link, file_path)
-      safe_url = validate_url_for_request!(link)
+    # Every redirect hop is re-validated, so a whitelisted host cannot forward us off-allowlist.
+    def self.fetch_allowed_url(url, limit: 3)
+      safe_url = validate_url_for_request!(url)
       options = request_options.dup
-      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(safe_url, options)
-      if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
+      origin = URI.parse(safe_url)
+      options[:headers]['Origin'] = "#{origin.scheme}://#{origin.host}"
+      response = HTTParty.get(safe_url, options)
+      location = response.headers['Location']
+      return response if location.blank? || !limit.positive?
+      return response unless response.code.to_i.between?(300, 399)
+
+      fetch_allowed_url(URI.join(safe_url, location).to_s, limit: limit - 1)
+    end
+
+    def self.request_pdf_file(link, file_path)
+      req_safety_sheet = fetch_allowed_url(link)
+      # Vendors append a charset to the PDF content type, so this cannot be an equality test.
+      if req_safety_sheet.headers['Content-Type'].to_s.start_with?('application/pdf')
         File.binwrite(file_path, req_safety_sheet)
         sleep 1
         true
