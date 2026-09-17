@@ -13,7 +13,7 @@ import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard'
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import Screen from 'src/models/Screen';
 import ScreenDetailsContainers from 'src/apps/mydb/elements/details/screens/analysesTab/ScreenDetailsContainers';
@@ -260,10 +260,14 @@ export default class ScreenDetails extends Component {
             <Col>
               <Form.Group>
                 <Form.Label>Description</Form.Label>
-                <QuillEditor
+                <RichTextEditor
+                  templateType="free_text"
+                  specialCharacters
+                  indent
+                  height="230px"
                   value={description}
                   onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-                  disabled={screen.isReadOnly || screen.isMethodDisabled('description')}
+                  readOnly={screen.isReadOnly || screen.isMethodDisabled('description')}
                 />
               </Form.Group>
             </Col>
