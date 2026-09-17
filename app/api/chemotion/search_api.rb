@@ -119,6 +119,7 @@ module Chemotion
              .joins(:molecule)
              .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
              .order('molecules.sum_formular')
+             .order('molecules.id')
       end
 
       def advanced_search(c_id = @c_id, dl = @dl)
@@ -150,12 +151,13 @@ module Chemotion
             Molecule.joins(:samples).where(samples: { id: sample_ids })
                     .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                     .order(:sum_formular)
+                    .order('molecules.id')
           molecule_scope = molecule_scope.page(page).per(page_size)
           samples = Sample.includes_for_list_display.find(sample_ids)
           samples_size = molecule_scope.size
           molecule_scope.each do |molecule|
             samplesGroup = samples.select { |sample| sample.molecule_id == molecule.id }
-            samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
+            samplesGroup = samplesGroup.sort { |x, y| [y.updated_at, y.id] <=> [x.updated_at, x.id] }
             samplesGroup.each do |sample|
               # Per-element (not for_collection like the other element types below): a sample reached
               # via a restrictive share still shows its true level if the user owns/better-shares it
@@ -436,6 +438,7 @@ module Chemotion
                .joins(:molecule)
                .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
                .order('molecules.sum_formular')
+               .order('molecules.id')
         elsif search_by_method.start_with?('element_short_label_')
           klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub('element_short_label_', ''))
           return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
