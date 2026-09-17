@@ -19,7 +19,6 @@ import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const VENDOR_PREVIEW_COUNT = 8;
 const PRODUCT_PREVIEW_COUNT = 5;
 
 export default class ChemicalTab extends React.Component {
@@ -36,10 +35,9 @@ export default class ChemicalTab extends React.Component {
       queryOption: 'CAS',
       sdsProductNumber: '',
       sdsBrand: 'sial',
-      vendorGroups: [],
+      vendorOverview: null,
       expandedVendors: {},
       expandedProducts: {},
-      showAllVendors: false,
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -332,7 +330,7 @@ export default class ChemicalTab extends React.Component {
     const catalogueNumber = productNumber.toLowerCase();
     const path = `${sdsBrand}/${catalogueNumber}`;
     this.setState({
-      vendorGroups: [],
+      vendorOverview: null,
       searchResults: [{
         merck_link: `https://www.sigmaaldrich.com/DE/${language}/sds/${path}`,
         merck_product_number: catalogueNumber,
@@ -382,13 +380,13 @@ export default class ChemicalTab extends React.Component {
 
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
-      if (obj?.vendor_groups) {
+      if (obj?.sds_vendors || obj?.catalogue_vendors) {
         this.setState({
-          vendorGroups: obj.vendor_groups,
+          vendorOverview: obj,
           searchResults: [],
           loadingQuerySafetySheets: false,
           displayWell: true,
-          warningMessage: obj.vendor_groups.length ? '' : 'No chemical vendors found on PubChem.',
+          warningMessage: obj.vendor_count ? '' : 'No chemical vendors found on PubChem.',
         });
         return;
       }
@@ -396,7 +394,7 @@ export default class ChemicalTab extends React.Component {
         const newResults = Object.values(obj);
         this.setState({
           searchResults: newResults,
-          vendorGroups: [],
+          vendorOverview: null,
           loadingQuerySafetySheets: false,
           displayWell: true
         });
@@ -1396,31 +1394,56 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
-  // PubChem lists every vendor carrying the compound, so rows are collapsed per vendor;
-  // only Sigma-Aldrich exposes a derivable SDS URL, the rest link to their product page.
+  // The curated vendors split by what we can actually deliver: a downloadable sheet, or
+  // only a catalogue page. The full PubChem list stays one click away rather than rendered.
   renderVendorGroups = () => {
-    const { vendorGroups, showAllVendors } = this.state;
-    if (!vendorGroups.length) return null;
+    const { vendorOverview } = this.state;
+    if (!vendorOverview) return null;
 
-    const visible = showAllVendors ? vendorGroups : vendorGroups.slice(0, VENDOR_PREVIEW_COUNT);
+    const {
+      sds_vendors: sdsVendors = [],
+      catalogue_vendors: catalogueVendors = [],
+      vendor_count: vendorCount,
+      pubchem_url: pubchemUrl,
+    } = vendorOverview;
+    if (!sdsVendors.length && !catalogueVendors.length && !pubchemUrl) return null;
+
     return (
       <div className="mt-3" data-component="vendorGroups">
-        <div className="text-muted small mb-2">
-          {`${vendorGroups.length} vendors list this compound on PubChem. `}
-          Sigma-Aldrich and Thermo Fisher expose a downloadable SDS; other vendors open their
-          product page, from where the sheet can be attached with Upload SDS.
-        </div>
-        <ListGroup>
-          {visible.map((group) => this.renderVendorGroup(group))}
-        </ListGroup>
-        {vendorGroups.length > VENDOR_PREVIEW_COUNT && (
+        {sdsVendors.length > 0 && (
+          <>
+            <h6 className="mb-1">Safety data sheets</h6>
+            <div className="text-muted small mb-2">
+              Saving a sheet stores the PDF with the chemical, which is what the AI
+              extraction reads.
+            </div>
+            <ListGroup className="mb-3">
+              {sdsVendors.map((group) => this.renderVendorGroup(group))}
+            </ListGroup>
+          </>
+        )}
+        {catalogueVendors.length > 0 && (
+          <>
+            <h6 className="mb-1">Vendor product pages</h6>
+            <div className="text-muted small mb-2">
+              No sheet can be fetched from these. Open the product page and attach the
+              sheet with Upload SDS to make it available for extraction.
+            </div>
+            <ListGroup className="mb-2">
+              {catalogueVendors.map((group) => this.renderVendorGroup(group))}
+            </ListGroup>
+          </>
+        )}
+        {pubchemUrl && (
           <Button
-            variant="link"
+            variant="outline-secondary"
             size="sm"
-            className="ps-0"
-            onClick={() => this.setState({ showAllVendors: !showAllVendors })}
+            href={pubchemUrl}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            {showAllVendors ? 'Show fewer vendors' : `Show all ${vendorGroups.length} vendors`}
+            <i className="fa fa-external-link me-2" />
+            {`All ${vendorCount} vendors on PubChem`}
           </Button>
         )}
       </div>
