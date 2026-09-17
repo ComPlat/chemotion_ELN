@@ -14,6 +14,7 @@ import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
+import EnvironmentConditionsPanel from 'src/apps/mydb/elements/details/reactions/schemeTab/EnvironmentConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
@@ -2529,6 +2530,14 @@ export default class ReactionDetailsScheme extends React.Component {
 
     return (
       <>
+        <EnvironmentConditionsPanel
+          open={this.props.environmentConditionsOpen}
+          environment={reaction.environment}
+          isDisabled={!permitOn(reaction)}
+          onChange={(environment) => {
+            onInputChange('environment', environment);
+          }}
+        />
         <div className="mt-2 border-top">
           <MaterialGroup
             reaction={reaction}
@@ -2679,5 +2688,10 @@ export default class ReactionDetailsScheme extends React.Component {
 ReactionDetailsScheme.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  environmentConditionsOpen: PropTypes.bool
+};
+
+ReactionDetailsScheme.defaultProps = {
+  environmentConditionsOpen: false
 };

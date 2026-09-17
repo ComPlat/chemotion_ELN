@@ -23,6 +23,7 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import { EnvironmentConditionsToggle } from 'src/apps/mydb/elements/details/reactions/schemeTab/EnvironmentConditions';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
@@ -113,6 +114,7 @@ export default class ReactionDetails extends Component {
       isRefreshingGraphic: false,
       isEditingHeaderName: false,
       headerNameDraft: reaction.name || '',
+      environmentConditionsOpen: false,
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -250,10 +252,11 @@ export default class ReactionDetails extends Component {
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
     const nextIsEditingHeaderName = nextState.isEditingHeaderName;
     const nextHeaderNameDraft = nextState.headerNameDraft;
+    const nextEnvironmentConditionsOpen = nextState.environmentConditionsOpen;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
       schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion,
-      isEditingHeaderName, headerNameDraft
+      isEditingHeaderName, headerNameDraft, environmentConditionsOpen
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -268,6 +271,7 @@ export default class ReactionDetails extends Component {
       || nextReactionSvgVersion !== reactionSvgVersion
       || nextIsEditingHeaderName !== isEditingHeaderName
       || nextHeaderNameDraft !== headerNameDraft
+      || nextEnvironmentConditionsOpen !== environmentConditionsOpen
     );
   }
 
@@ -427,6 +431,7 @@ export default class ReactionDetails extends Component {
       || type === 'vesselSizeUnit'
       || type === 'gaseous'
       || type === 'conditions'
+      || type === 'environment'
       || type === 'phOperator'
       || type === 'phValue'
       || type === 'volume'
@@ -1051,7 +1056,7 @@ export default class ReactionDetails extends Component {
                 {documentComponent}
               </>
             )}
-            <div className="reaction-details-toolbar__right d-flex align-items-end">
+            <div className="reaction-details-toolbar__right d-flex align-items-end gap-2">
               <Form.Group className="reaction-details-toolbar__group reaction-details-toolbar__group--status mb-0">
                 <Select
                   size="sm"
@@ -1067,6 +1072,13 @@ export default class ReactionDetails extends Component {
                   }}
                 />
               </Form.Group>
+              <EnvironmentConditionsToggle
+                open={this.state.environmentConditionsOpen}
+                isSet={reaction.isEnvironmentSet()}
+                onToggle={() => this.setState((prev) => ({
+                  environmentConditionsOpen: !prev.environmentConditionsOpen,
+                }))}
+              />
             </div>
           </div>
           {
@@ -1074,6 +1086,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsScheme
             reaction={reaction}
+            environmentConditionsOpen={this.state.environmentConditionsOpen}
             onReactionChange={(r, options) => this.handleReactionChange(r, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
           />

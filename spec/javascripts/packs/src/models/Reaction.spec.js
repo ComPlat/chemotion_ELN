@@ -197,6 +197,46 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction environment normalization', () => {
+    // The panel dereferences environment.temperature.value / .humidity.value / .air_pressure.value
+    // without guarding the nested objects, so the getter must always return the full three-key
+    // shape regardless of what was persisted (missing, empty {}, or partial hash from a raw API write).
+    it('fills the full default shape when environment is missing', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = null;
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('backfills every sub-object when a bare {} was persisted', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = {};
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('keeps persisted values while backfilling the missing conditions', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = { temperature: { value: '25', unit: 'K' } };
+      const env = r.environment;
+      expect(env.temperature).toEqual({ value: '25', unit: 'K' });
+      expect(env.humidity).toEqual({ value: '', unit: '%' });
+      expect(env.air_pressure).toEqual({ value: '', unit: 'mbar' });
+    });
+
+    it('backfills a missing unit within a partially-filled condition', () => {
+      const r = Reaction.buildEmpty(1);
+      r._environment = { temperature: { value: '25' } };
+      expect(r.environment.temperature).toEqual({ value: '25', unit: '°C' });
+    });
+  });
+
   describe('Reaction.calculateCombinedReactionVolume()', () => {
     it('calculates combined volume from solvents and materials', async() => {
       const solvent = await SampleFactory.build('reactionConcentrations.water_100g');

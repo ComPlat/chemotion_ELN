@@ -26,6 +26,12 @@ const TemperatureDefault = {
   data: []
 };
 
+const EnvironmentDefault = {
+  temperature: { value: '', unit: '°C' },
+  humidity: { value: '', unit: '%' },
+  air_pressure: { value: '', unit: 'mbar' }
+};
+
 export const convertTemperature = (temperature, fromUnit, toUnit) => {
   if (fromUnit === toUnit) {
     return temperature;
@@ -133,6 +139,7 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
+      environment: JSON.parse(JSON.stringify(EnvironmentDefault)),
       ph_operator: '=',
       ph_value: null,
       description: Reaction.quillDefault(),
@@ -217,6 +224,7 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
+      environment: this.environment,
       ph_operator: this.ph_operator || '=',
       ph_value: this.phValueForSerialize(),
       duration: this.duration,
@@ -387,6 +395,37 @@ export default class Reaction extends Element {
 
   set temperature(temperature) {
     this._temperature = temperature;
+  }
+
+  // Environmental conditions are stored as a single jsonb column shaped
+  // { temperature: { value, unit }, humidity: { value, unit }, air_pressure: { value, unit } }
+  // (like vessel_size). The getter normalizes to the full default shape so a missing, empty
+  // ({}), or partial persisted hash (older records, or a raw API write of the unconstrained
+  // Hash param) can't crash the panel, which dereferences environment.temperature.value etc.
+  // without guarding the nested objects.
+  get environment() {
+    const env = this._environment || {};
+    this._environment = {
+      temperature: { ...EnvironmentDefault.temperature, ...env.temperature },
+      humidity: { ...EnvironmentDefault.humidity, ...env.humidity },
+      air_pressure: { ...EnvironmentDefault.air_pressure, ...env.air_pressure },
+    };
+    return this._environment;
+  }
+
+  set environment(environment) {
+    this._environment = environment;
+  }
+
+  // True when any environmental condition (temperature, humidity, air pressure)
+  // holds a non-empty value. Drives the check mark next to the toggle button.
+  isEnvironmentSet() {
+    const env = this._environment;
+    if (!env) { return false; }
+    return ['temperature', 'humidity', 'air_pressure'].some((key) => {
+      const value = env[key]?.value;
+      return value !== undefined && value !== null && `${value}`.trim() !== '';
+    });
   }
 
   get description_contents() {
