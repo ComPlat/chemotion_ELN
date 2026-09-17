@@ -30,6 +30,9 @@ const VENDOR_DISPLAY_NAMES = {
   thermofischer: 'Thermo Fisher',
 };
 
+// Vendors that block the server but allow a cross-origin read from the browser.
+const VENDOR_BROWSER_FETCH = new Set(['merck']);
+
 const vendorDisplayName = (name) => {
   if (!name) return name;
   return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
@@ -585,6 +588,43 @@ export default class ChemicalTab extends React.Component {
     return button;
   };
 
+  // Sigma-Aldrich refuses the server's own request but serves the sheet with
+  // access-control-allow-origin *, so the browser reads it and hands us the bytes.
+  saveSdsViaBrowser = (sdsLink, productNumber, productLink, vendorName) => {
+    this.setState((prev) => ({
+      loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: true },
+    }));
+
+    const stopSpinner = () => this.setState((prev) => ({
+      loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: false },
+    }));
+
+    return fetch(sdsLink)
+      .then((response) => {
+        if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
+        return this.handleAttachmentSubmit({
+          productNumber,
+          vendorName,
+          attachedFile: new File([blob], `${productNumber}.pdf`, { type: 'application/pdf' }),
+          productLink,
+          safetySheetLink: sdsLink,
+        });
+      })
+      .catch((error) => {
+        this.context.notifications.add({
+          title: 'Could not save the safety data sheet',
+          message: `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
+          level: 'error',
+          position: 'tc',
+        });
+      })
+      .finally(stopSpinner);
+  };
+
   handleAttachmentSubmit = ({
     productNumber,
     vendorName,
@@ -637,7 +677,7 @@ export default class ChemicalTab extends React.Component {
     this.setState({ showModal: false });
 
     // Send data to server
-    ChemicalFetcher.saveManualAttachedSafetySheet(data)
+    return ChemicalFetcher.saveManualAttachedSafetySheet(data)
       .then((updatedChemical) => {
         if (!updatedChemical || updatedChemical.error) {
           this.context.notifications.add({
@@ -1114,7 +1154,11 @@ export default class ChemicalTab extends React.Component {
         size="xsm"
         variant="warning"
         disabled={isSaved}
-        onClick={() => this.saveSdsFile(productInfo)}
+        onClick={() => (
+          VENDOR_BROWSER_FETCH.has(normalizedVendorName)
+            ? this.saveSdsViaBrowser(sdsLink, productNumber, productLink, vendorName)
+            : this.saveSdsFile(productInfo)
+        )}
       >
         {isLoading ? (
           <div>
