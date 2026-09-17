@@ -30,9 +30,6 @@ const VENDOR_DISPLAY_NAMES = {
   thermofischer: 'Thermo Fisher',
 };
 
-// Vendors that block the server but allow a cross-origin read from the browser.
-const VENDOR_BROWSER_FETCH = new Set(['merck']);
-
 const vendorDisplayName = (name) => {
   if (!name) return name;
   return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
@@ -1098,6 +1095,13 @@ export default class ChemicalTab extends React.Component {
       return null;
     }
 
+    // Rows saved before save_mode existed were all server downloads. 'none' means no route
+    // reaches the sheet, so no save is offered rather than one that fails.
+    const saveMode = sdsInfo.save_mode || 'server';
+    if (saveMode === 'none') {
+      return null;
+    }
+
     // Extract vendor information
     const vendorName = vendorLinkKey.replace('_link', '');
     const normalizedVendorName = vendorName.toLowerCase();
@@ -1155,7 +1159,7 @@ export default class ChemicalTab extends React.Component {
         variant="warning"
         disabled={isSaved}
         onClick={() => (
-          VENDOR_BROWSER_FETCH.has(normalizedVendorName)
+          saveMode === 'browser'
             ? this.saveSdsViaBrowser(sdsLink, productNumber, productLink, vendorName)
             : this.saveSdsFile(productInfo)
         )}
