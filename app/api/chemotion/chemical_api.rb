@@ -96,7 +96,7 @@ module Chemotion
                 name = data[:searchStr] || molecule.cas[0]
               end
               case vendor
-              when 'Merck'
+              when 'Merck', 'Sigma-Aldrich'
                 { merck_link: Chemotion::ChemicalsService.merck(name, language) }
               when 'Thermofisher'
                 { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }

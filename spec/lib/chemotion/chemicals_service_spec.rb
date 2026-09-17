@@ -21,6 +21,52 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.fisher_sds' do
+    def source(registry, url)
+      { RegistryID: registry, SourceRecordURL: url }
+    end
+
+    it 'prefixes an all-numeric Thermo catalogue code with AC' do
+      part, url = described_class.fisher_sds(
+        source('GID_900000000130357', 'https://www.thermofisher.com/order/catalog/product/327840025'), 'en'
+      )
+      expect(part).to eq('AC327840025')
+      expect(url).to start_with('https://www.fishersci.com/store/msds?partNumber=AC327840025')
+    end
+
+    it 'uses a Fisher Chemical catalogue number unchanged' do
+      part, url = described_class.fisher_sds(source('A111', nil), 'en')
+      expect(part).to eq('A111')
+      expect(url).to include('partNumber=A111')
+    end
+
+    it 'maps a letter-prefixed dotted code to an ALFAA SKU on DirectWebViewer' do
+      part, url = described_class.fisher_sds(
+        source('GID_1', 'https://www.thermofisher.com/order/catalog/product/B22935.06'), 'de'
+      )
+      expect(part).to eq('ALFAAB22935')
+      expect(url).to eq(
+        'https://documents.thermofisher.com/directwebviewer/private/results.aspx' \
+        '?page=NewSearch&LANGUAGE=d__DE&SUBFORMAT=d__CLP1&SKU=ALFAAB22935&PLANT=d__ALF',
+      )
+    end
+
+    it 'falls back to English for a language Thermo does not publish' do
+      _, url = described_class.fisher_sds(
+        source('GID_1', 'https://www.thermofisher.com/order/catalog/product/L10407.AU'), 'it'
+      )
+      expect(url).to include('LANGUAGE=d__EN')
+    end
+
+    it 'builds no SDS link for an all-numeric dotted code' do
+      expect(
+        described_class.fisher_sds(
+          source('GID_1', 'https://www.thermofisher.com/order/catalog/product/019392.K7'), 'en'
+        ),
+      ).to be_nil
+    end
+  end
+
   describe '.fetch_allowed_url' do
     let(:pdf) { instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }) }
 
