@@ -577,7 +577,18 @@ module SVG
     end
 
     def compose_yield_svg(amount, x = 0, y = @max_height_for_products)
-      yield_amount = amount && !amount.to_f.nan? && !amount.to_f.infinite? ? (amount * 100).try(:round, 0) : 0
+      # Yield is always displayed as a percentage in [0, 100]. Clamp defensively
+      # so a stale/oversized `equivalent` in the DB (e.g., left over from a save
+      # made before the frontend clamp existed, common for HierarchicalMaterial
+      # products with missing loading) can never render as e.g. "39553%".
+      # The client-side yield display in Material.js:calculateYield uses the
+      # same clamp; this mirrors it on the SVG-generation path.
+      yield_amount = if amount && !amount.to_f.nan? && !amount.to_f.infinite?
+                       clamped = amount.to_f.clamp(0.0, 1.0)
+                       (clamped * 100).round(0)
+                     else
+                       0
+                     end
       <<~XML
         <svg font-family="sans-serif">
           <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f + YIELD_YOFFSET}" x="#{x}">#{yield_amount}%</text>

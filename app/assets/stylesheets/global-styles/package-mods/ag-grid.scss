@@ -45,3 +45,12 @@
   @extend .mt-2;
   @extend .bg-white;
 }
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-cell-value,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'] .ag-cell-value,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'].ag-cell-inline-editing,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'].ag-cell-inline-editing,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-input-field-input,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'] .ag-input-field-input {
+  background-color: #f2f2f2 !important;
+}

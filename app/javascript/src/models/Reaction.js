@@ -1020,6 +1020,18 @@ export default class Reaction extends Element {
     return this.samples.find((sample) => sample.contains_residues);
   }
 
+  hasHierarchicalMaterials() {
+    return this.samples.find((sample) => sample.isHierarchicalMaterial?.());
+  }
+
+  // True when any material stores its amount via loading (mmol/g) rather than MW —
+  // i.e. polymers OR hierarchical materials. Use this when the intent is
+  // "show the Loading column" or "yield/amount is loading-based", NOT when the
+  // intent is "this is a polymer specifically".
+  hasLoadingBasedSamples() {
+    return this.hasPolymers() || this.hasHierarchicalMaterials();
+  }
+
   getReferenceMaterial() {
     return this.referenceMaterial;
   }

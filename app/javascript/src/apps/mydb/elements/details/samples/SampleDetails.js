@@ -119,7 +119,7 @@ const sampleTitleAppendixLeading = (sample) => (
 const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-    <PubchemLabels element={sample} />
+    { !sample.isHierarchicalMaterial() && <PubchemLabels element={sample} /> }
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
@@ -168,7 +168,14 @@ export default class SampleDetails extends React.Component {
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
       ketcherSVGError: null,
-      previousSurfaceType: null
+      previousSurfaceType: null,
+      // Heterogeneous sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -205,6 +212,8 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.props;
     const { currentUser, showRedirectWarning } = this.state;
 
+    this._isMounted = true;
+
     UIStore.listen(this.onUIStoreChange);
 
     const { activeTab } = this.state;
@@ -221,9 +230,11 @@ export default class SampleDetails extends React.Component {
       _pendingChemicalCreate = null;
       ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
         .then(() => {
-          // Re-fetch chemical so ChemicalTab renders the newly-created record
-          // without requiring a page refresh.
-          this.chemicalTabRef.current?.fetchChemical(sample);
+          if (this._isMounted) {
+            // Re-fetch chemical so ChemicalTab renders the newly-created record
+            // without requiring a page refresh.
+            this.chemicalTabRef.current?.fetchChemical(sample);
+          }
         })
         .catch((err) => console.log(err));
     }
@@ -250,7 +261,6 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-
     this.setState({
       sample,
       smileReadonly,
@@ -261,6 +271,7 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     UIStore.unlisten(this.onUIStoreChange);
   }
 
@@ -278,7 +289,7 @@ export default class SampleDetails extends React.Component {
 
   handleSampleChanged(sample, cb) {
     this.setState({
-      sample,
+      sample: cloneDeep(sample),
     }, () => {
       if (typeof cb === 'function') {
         cb();
@@ -288,8 +299,9 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     const { sample } = this.state;
-    sample.setAmountAndNormalizeToGram(amount);
-    this.setState({ sample });
+    const updatedSample = cloneDeep(sample);
+    updatedSample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample: updatedSample });
   }
 
   handleFastInput(smi, cas) {
@@ -303,6 +315,7 @@ export default class SampleDetails extends React.Component {
     // const casObj = {};
     MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
+        if (!this._isMounted) return;
         if (!result || result == null) {
           this.context.notifications.add({
             title: 'Error on Sample creation',
@@ -356,15 +369,32 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg, info, editorId) {
+  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
-    const svgFile = svg; // SVG is passed as 4th parameter
-    const editor = editorId || 'ketcher'; // editorId is passed as 6th parameter
-    const config = info; // info might contain config data like smiles
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+
+    // For HierarchicalMaterial: preserve user-entered molar_mass and weight_ratio_exp
+    // when Ketcher rebuilds components from text nodes (which resets these to 0).
+    if (sample.isHierarchicalMaterial() && components?.length > 0 && sample.components?.length > 0) {
+      const existingComponents = sample.components;
+      components.forEach((newComp) => {
+        const existing = existingComponents.find((c) => {
+          const existingSource = c.source || c.component_properties?.source;
+          return existingSource && existingSource === newComp.source;
+        });
+        if (existing) {
+          const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
+          const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
+          if (existingMolarMass != null) newComp.molar_mass = existingMolarMass;
+          if (existingWeightRatioExp != null) newComp.weight_ratio_exp = existingWeightRatioExp;
+        }
+      });
+    }
+    sample.components = components;
+
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -374,7 +404,9 @@ export default class SampleDetails extends React.Component {
         level: 'error',
         position: 'tc'
       });
-      this.setState({ loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ loadingMolecule: false });
+      }
     };
 
     const fetchSuccess = (result) => {
@@ -385,12 +417,32 @@ export default class SampleDetails extends React.Component {
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
 
-      this.setState({
-        sample,
-        smileReadonly: true,
-        pageMessage: result.ob_log,
-        loadingMolecule: false
-      });
+      // Handle temporary SVG file from structure editor
+      if (result.temp_svg) {
+        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
+        // This ensures the combined molecule SVG is always displayed
+        if (sample.isMixture()) {
+          sample.sample_svg_file = null;
+        } else {
+          sample.sample_svg_file = result.temp_svg;
+        }
+      }
+
+      // Auto-create a molecule name from the Ketcher text-node formula and assign it.
+      // Collapse any newlines/extra whitespace so the label renders on a single line.
+      if (textNodesFormula?.length > 0) {
+        const normalizedFormula = textNodesFormula.replace(/\s*\n\s*/g, ' ').trim();
+        DetailActions.updateMoleculeNames(sample, normalizedFormula);
+      }
+
+      if (this._isMounted) {
+        this.setState({
+          sample,
+          smileReadonly: true,
+          pageMessage: result.ob_log,
+          loadingMolecule: false
+        });
+      }
     };
 
     const fetchMolecule = (fetchFunction) => {
@@ -447,8 +499,11 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -470,7 +525,11 @@ export default class SampleDetails extends React.Component {
   handleExportAnalyses(sample) {
     this.setState({ startExport: true });
     AttachmentFetcher.downloadZipBySample(sample.id)
-      .then(() => { this.setState({ startExport: false }); })
+      .then(() => {
+        if (this._isMounted) {
+          this.setState({ startExport: false });
+        }
+      })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -847,7 +906,7 @@ export default class SampleDetails extends React.Component {
     }
 
     const label = sample.contains_residues
-      ? 'Polymer section / Elemental composition'
+      ? 'Material Detail Section / Elemental composition'
       : 'Elemental composition';
 
     const { materialGroup } = this.state;
@@ -903,7 +962,6 @@ export default class SampleDetails extends React.Component {
 
   samplePropertiesTab(ind) {
     const { sample } = this.state;
-
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
@@ -920,7 +978,7 @@ export default class SampleDetails extends React.Component {
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
-          {sample.molecule_formula && (
+          {sample.molecule_formula && (!sample.isHierarchicalMaterial() || sample.contains_residues) && (
             this.elementalPropertiesItem(sample)
           )}
         </div>
@@ -1155,6 +1213,7 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1176,14 +1235,14 @@ export default class SampleDetails extends React.Component {
         <Row className="mb-4">
           <Col md={4}>
             <h4><SampleName sample={sample} /></h4>
-            {!isMixture && (
+            {!isMixture && !isHierarchicalMaterial && (
               <>
                 <h5>{this.sampleAverageMW(sample)}</h5>
                 <h5>{this.sampleExactMW(sample)}</h5>
               </>
             )}
-            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
-            {lcssSign}
+            {sample.isNew || isMixture || isHierarchicalMaterial ? null : <h6>{this.moleculeCas()}</h6>}
+            {isHierarchicalMaterial ? null : lcssSign}
           </Col>
           <Col md={8} className="position-relative">
             {this.svgOrLoading(sample)}
@@ -1409,14 +1468,20 @@ export default class SampleDetails extends React.Component {
     try {
       // Phase 1: Fetch individual molecules, create Components, add sync
       await sample.splitSmilesToMolecule(mixtureSmiles, editor);
-      this.setState({ sample });
+      if (this._isMounted) {
+        this.setState({ sample });
+      }
 
       // Phase 2: Update combined molecule/SVG
       await sample.updateMixtureMolecule();
-      this.setState({ sample, loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ sample, loadingMolecule: false });
+      }
     } catch (error) {
       console.log(error);
-      this.setState({ loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ loadingMolecule: false });
+      }
     }
   }
 
@@ -1429,6 +1494,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     MoleculesFetcher.decouple(sample.molfile, sample.sample_svg_file, sample.decoupled)
       .then((result) => {
+        if (!this._isMounted) return;
         sample.molecule = result;
         sample.molecule_id = result.id;
         if (result.inchikey === 'DUMMY') { sample.decoupled = true; }

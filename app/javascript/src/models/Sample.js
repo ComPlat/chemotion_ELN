@@ -25,6 +25,7 @@ import { rootStore } from 'src/stores/mobx/RootStore';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+export const SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -156,7 +157,7 @@ export default class Sample extends Element {
         custom_info: {
           formula: 'CH',
           loading: null,
-          polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+          polymer_type: ((this.decoupled || this.isHierarchicalMaterial()) ? 'self_defined' : 'polystyrene'),
           loading_type: 'external',
           external_loading: 0.0,
           reaction_product: (this.reaction_product ? true : null),
@@ -185,7 +186,7 @@ export default class Sample extends Element {
             custom_info: {
               formula: 'CH',
               loading: (residue.custom_info ? residue.custom_info.loading : null),
-              polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+              polymer_type: ((this.decoupled || this.isHierarchicalMaterial()) ? 'self_defined' : 'polystyrene'),
               loading_type: 'external',
               external_loading: 0.0,
               reaction_product: (this.reaction_product ? true : null),
@@ -260,6 +261,11 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      // color, state, particle_size stay in xref — main's storage
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -287,6 +293,18 @@ export default class Sample extends Element {
    */
   isMixture() {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  /**
+   * Determines whether the sample is of type "HierarchicalMaterial".
+   *
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HIERARCHICAL_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HierarchicalMaterial"; otherwise false.
+   */
+  isHierarchicalMaterial() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_HIERARCHICAL_MATERIAL;
   }
 
   /**
@@ -512,6 +530,19 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
+      // color, state, particle_size travel with `xref` — main's storage
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      diameter: this.diameter || '',
+      storage_condition: this.storage_condition || '',
+      material: this.material || '',
+      cspi: this.cspi || '',
+      shape: this.shape || '',
+      sieve_fraction: this.sieve_fraction || '',
+      layer_thickness: this.layer_thickness || '',
+      liquid_medium: this.liquid_medium || '',
+      stabilizer: this.stabilizer || '',
     });
 
     return serialized;
@@ -1122,7 +1153,8 @@ export default class Sample extends Element {
   }
 
   setAmountAndNormalizeToGram(amount) {
-    this.amount_value = this.convertToGram(amount.value, amount.unit);
+    const converted = this.convertToGram(amount.value, amount.unit);
+    this.amount_value = converted;
     this.amount_unit = 'g';
   }
 
@@ -1244,7 +1276,8 @@ export default class Sample extends Element {
   }
 
   get amount_g() {
-    return this.convertToGram(this.amount_value, this.amount_unit);
+    const result = this.convertToGram(this.amount_value, this.amount_unit);
+    return result;
   }
 
   get amount_l() {
@@ -1253,6 +1286,12 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      if (loading) return (parseHstoreNumber(loading) * this.amount_g) / 1000.0;
+      return null;
+    }
+
     // For mixtures, always use calculateMixtureAmountMol() to respect reference_component_changed flag
     // This ensures that when reference component is switched, amount_mol updates correctly
     // even if amount_unit is 'mol'
@@ -1263,7 +1302,8 @@ export default class Sample extends Element {
     if (this.amount_unit === 'mol' && (this.isGas()
     || this.isFeedstock())) return this.amount_value;
 
-    return this.convertGramToUnit(this.amount_g, 'mol');
+    const result = this.convertGramToUnit(this.amount_g, 'mol');
+    return result;
   }
 
   calculateFeedstockOrGasMoles(purity, gasType, amountLiter = null) {
@@ -1372,8 +1412,19 @@ export default class Sample extends Element {
     const gasPhaseCondition = (this.isGas() || this.isFeedstock());
     const purity = this.purity || 1.0;
     const molecularWeight = this.molecule_molecular_weight;
-    if (this.contains_residues) {
-      const { loading } = this.residues[0].custom_info;
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      switch (unit) {
+        case 'g':
+          return amount_g;
+        case 'mol':
+          if (!loading) return null;
+          return (parseHstoreNumber(loading) * amount_g) / 1000.0;
+        default:
+          return amount_g;
+      }
+    } else if (this.contains_residues) {
+      const loading = this.residues[0]?.custom_info?.loading;
       switch (unit) {
         case 'g':
           return amount_g;
@@ -1421,17 +1472,21 @@ export default class Sample extends Element {
         }
         case 'mol': {
           if (this.gas_type && gasPhaseCondition) {
-            return this.calculateFeedstockOrGasMoles(purity, this.gas_type);
+            const result = this.calculateFeedstockOrGasMoles(purity, this.gas_type);
+            return result;
           }
 
           if (this.isMixture()) {
-            return this.calculateMixtureAmountMol();
+            const result = this.calculateMixtureAmountMol();
+            return result;
           }
 
           if (this.has_molarity) {
-            return this.amount_l * this.molarity_value;
+            const result = this.amount_l * this.molarity_value;
+            return result;
           }
-          return (amount_g * purity) / molecularWeight;
+          const result = (amount_g * purity) / molecularWeight;
+          return result;
         }
         default:
           return amount_g;
@@ -1440,7 +1495,21 @@ export default class Sample extends Element {
   }
 
   convertToGram(amount_value, amount_unit) {
-    if (this.contains_residues) {
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      switch (amount_unit) {
+        case 'g':
+          return amount_value;
+        case 'mg':
+          return amount_value / 1000.0;
+        case 'mol': {
+          if (!loading) return 0.0;
+          return (amount_value / parseHstoreNumber(loading)) * 1000.0;
+        }
+        default:
+          return amount_value;
+      }
+    } else if (this.contains_residues) {
       const amountValue = amount_value;
       switch (amount_unit) {
         case 'g':
@@ -1448,9 +1517,8 @@ export default class Sample extends Element {
         case 'mg':
           return amountValue / 1000.0;
         case 'mol': {
-          const { loading } = this.residues[0].custom_info;
+          const loading = this.residues[0]?.custom_info?.loading;
           if (!loading) return 0.0;
-
           return (amountValue / loading) * 1000.0;
         }
         default:
@@ -1727,7 +1795,7 @@ export default class Sample extends Element {
       return '';
     }
 
-    if (this.contains_residues) {
+    if (this.contains_residues && this.polymer_formula) {
       return this.molecule_formula + this.polymer_formula;
     }
 
@@ -1744,14 +1812,14 @@ export default class Sample extends Element {
   }
 
   get loading() {
-    if (this.contains_residues && this.residues?.[0]?.custom_info) {
+    if ((this.contains_residues || this.isHierarchicalMaterial()) && this.residues?.[0]?.custom_info) {
       return parseHstoreNumber(this.residues[0].custom_info.loading);
     }
     return false;
   }
 
   set loading(loading) {
-    if (this.contains_residues && this.residues?.[0]?.custom_info) {
+    if ((this.contains_residues || this.isHierarchicalMaterial()) && this.residues?.[0]?.custom_info) {
       this.residues[0].custom_info.loading = loading;
     }
   }
