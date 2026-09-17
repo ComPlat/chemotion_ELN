@@ -1,5 +1,6 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -814,5 +815,95 @@ describe('Reaction', () => {
 
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
     });
+  });
+});
+
+// Under locked equivalents a reference-amount change scales the whole reaction. A solvent is
+// scaled by volume ratio (not through moles), so it also works for a solvent with neither a
+// density nor a molarity, whose volume cannot be converted to moles at all.
+describe('Reaction#scaleSolventVolumesForReferenceChange', () => {
+  const makeSolvent = (amountL, extra = {}) => ({
+    amount_l: amountL,
+    setAmount: sinon.spy(),
+    ...extra,
+  });
+
+  const buildReaction = (currentRefMol, solvents) => ({
+    referenceMaterial: { amount_mol: currentRefMol },
+    solvents,
+  });
+
+  it('scales every solvent volume by newRef / prevRef', () => {
+    const solvent = makeSolvent(10);
+    // reference went from 0.02 mol (prev) to 0.01 mol (now) -> factor 0.5
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(solvent.setAmount.calledOnce).toBe(true);
+    const arg = solvent.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('l');
+    expect(Math.abs(arg.value - 5) < 1e-9).toBe(true);
+  });
+
+  it('scales a density/molarity-less solvent the same way (volume path, no moles)', () => {
+    // amount_l is the stored liter value for a volume-only solvent; no mole conversion needed.
+    const solvent = makeSolvent(8);
+    const ctx = buildReaction(0.04, [solvent]); // prev 0.02 -> now 0.04 -> factor 2
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(Math.abs(solvent.setAmount.firstCall.args[0].value - 16) < 1e-9).toBe(true);
+  });
+
+  it('does nothing when the previous reference amount is not positive', () => {
+    const solvent = makeSolvent(10);
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0);
+
+    expect(solvent.setAmount.called).toBe(false);
+  });
+
+  it('does nothing when the new reference amount is not positive', () => {
+    const solvent = makeSolvent(10);
+    const ctx = buildReaction(0, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(solvent.setAmount.called).toBe(false);
+  });
+
+  it('does nothing when the reference amount is unchanged', () => {
+    const solvent = makeSolvent(10);
+    const ctx = buildReaction(0.02, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(solvent.setAmount.called).toBe(false);
+  });
+
+  it('skips a solvent with no positive volume', () => {
+    const solvent = makeSolvent(0);
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(solvent.setAmount.called).toBe(false);
+  });
+
+  it('resyncs mixture components after scaling a mixture solvent', () => {
+    const updateMixtureComponentAmounts = sinon.spy();
+    const solvent = makeSolvent(10, {
+      isMixture: () => true,
+      hasComponents: () => true,
+      updateMixtureComponentAmounts,
+    });
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.scaleSolventVolumesForReferenceChange.call(ctx, 0.02);
+
+    expect(solvent.setAmount.calledOnce).toBe(true);
+    expect(updateMixtureComponentAmounts.calledOnce).toBe(true);
   });
 });
