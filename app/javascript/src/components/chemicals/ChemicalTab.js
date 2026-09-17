@@ -21,6 +21,20 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const PRODUCT_PREVIEW_COUNT = 5;
 
+// Display names only. The vendor key stays as stored, since it is also the
+// safety_sheets directory of every sheet already saved.
+const VENDOR_DISPLAY_NAMES = {
+  merck: 'Sigma-Aldrich',
+  fisher: 'Thermo Fisher',
+  thermofisher: 'Thermo Fisher',
+  thermofischer: 'Thermo Fisher',
+};
+
+const vendorDisplayName = (name) => {
+  if (!name) return name;
+  return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
+};
+
 export default class ChemicalTab extends React.Component {
   static contextType = StoreContext;
   constructor(props) {
@@ -1151,7 +1165,7 @@ export default class ChemicalTab extends React.Component {
     const { vendorValue } = this.state;
     const vendorOptions = [
       // { label: 'All', value: 'All' },
-      { label: 'Merck', value: 'Merck' },
+      { label: 'Sigma-Aldrich', value: 'Merck' },
       { label: 'All vendors (PubChem)', value: 'All' },
       // { label: 'Thermofisher', value: 'Thermofisher' },
     ];
@@ -1300,7 +1314,7 @@ export default class ChemicalTab extends React.Component {
       const fileName = pathParts[pathParts.length - 1]; // get the filename
 
       if (vendorFromPath) {
-        displayName = vendorFromPath.charAt(0).toUpperCase() + vendorFromPath.slice(1);
+        displayName = vendorDisplayName(vendorFromPath);
       }
 
       // Extract product number from filename: 270709_4c82b57ffb35b49b.pdf -> 270709
@@ -1362,8 +1376,7 @@ export default class ChemicalTab extends React.Component {
     } else {
       // for a search query: extract vendor name from key
       const vendor = linkKey.replace('_link', '').toUpperCase();
-      // uppercase first letter
-      displayName = vendor.charAt(0).toUpperCase() + vendor.slice(1).toLowerCase();
+      displayName = vendorDisplayName(vendor.toLowerCase());
       productInfo = ` - ${document[`${vendor.toLowerCase()}_product_number`] || ''}`;
     }
 
