@@ -137,6 +137,9 @@ export default class WellplateProperties extends Component {
                 value={description}
                 onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
                 disabled={wellplate.isReadOnly || description === '***'}
+                attachments={this.props.attachments || []}
+                getAttachments={() => this.props.attachments || []}
+                onAttachmentsChange={this.props.onAttachmentsChange}
               />
             </Form.Group>
           </Row>
@@ -151,5 +154,12 @@ WellplateProperties.propTypes = { /* eslint-disable react/forbid-prop-types */
   changeProperties: PropTypes.func.isRequired,
   handleAddReadout: PropTypes.func.isRequired,
   handleRemoveReadout: PropTypes.func.isRequired,
-  readoutTitles: PropTypes.array.isRequired
+  readoutTitles: PropTypes.array.isRequired,
+  attachments: PropTypes.array,
+  onAttachmentsChange: PropTypes.func,
+};
+
+WellplateProperties.defaultProps = {
+  attachments: [],
+  onAttachmentsChange: undefined,
 };
