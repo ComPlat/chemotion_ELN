@@ -18,7 +18,7 @@ import WellplateDetailsContainers from
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from
   'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, stripDeletedInlineBlotsFromBody } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, collectInlineAttachmentIdentifiersFromContainers, stripDeletedInlineBlotsFromBody, stripDeletedInlineBlotsFromDelta } from 'src/utilities/attachmentUtils';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -130,6 +130,18 @@ export default class WellplateDetails extends Component {
         deletedInlineIds
       );
       wellplate.description = stripped[0].value;
+
+      if (wellplate.container) {
+        const walkContainers = (container) => {
+          if (container.extended_metadata && container.extended_metadata.content) {
+            container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+              container.extended_metadata.content, deletedInlineIds
+            );
+          }
+          (container.children || []).forEach(walkContainers);
+        };
+        walkContainers(wellplate.container);
+      }
     }
 
     this.context.attachmentNotificationStore.clearMessages();
@@ -413,9 +425,12 @@ export default class WellplateDetails extends Component {
                 onTemplateDownload={this.handleTemplateDownload.bind(this)}
                 templateInfoContent={wellplateTemplateInfo}
                 readOnly={wellplate.isReadOnly}
-                inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(
-                  [{ type: 'richtext', value: wellplate.description }]
-                )}
+                inlineAttachmentIdentifiers={new Set([
+                  ...collectInlineAttachmentIdentifiers(
+                    [{ type: 'richtext', value: wellplate.description }]
+                  ),
+                  ...collectInlineAttachmentIdentifiersFromContainers(wellplate.container),
+                ])}
               />
             </ListGroupItem>
           </ListGroup>

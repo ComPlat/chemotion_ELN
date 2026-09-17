@@ -443,6 +443,12 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     setAttachmentSortDirectory(value) {
       self.attachment_sort_direction = value;
     },
+    changeAttachments(next) {
+      self.setSequenceBasedMacromoleculeSample({
+        ...self.sequence_based_macromolecule_sample,
+        attachments: next,
+      });
+    },
     changeAttachment(index, key, value, initial = false) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
       let attachment = { ...self.sequence_based_macromolecule_sample.attachments[index] };

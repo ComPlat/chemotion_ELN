@@ -207,7 +207,7 @@ const rmHeadSpace = (content) => {
   let els = content;
   let head = null;
   els.some((el) => {
-    head = el.insert.replace(/^\s+/, '');
+    head = typeof el.insert === 'string' ? el.insert.replace(/^\s+/, '') : el.insert;
     if (!head) els = [...els.slice(1)];
     return head;
   });
@@ -221,7 +221,7 @@ const rmTailSpace = (content) => {
   let els = content;
   let tail = null;
   els.reverse().some((el) => {
-    tail = el.insert.replace(/\s*[,.;]*\s*$/, '');
+    tail = typeof el.insert === 'string' ? el.insert.replace(/\s*[,.;]*\s*$/, '') : el.insert;
     if (!tail) els = [...els.slice(1)];
     return tail;
   });

@@ -109,7 +109,7 @@ const newHeader = (props) => {
   const contentOneLine = {
     ops: content.ops.map((x) => {
       const c = Object.assign({}, x);
-      if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+      if (typeof c.insert === 'string') c.insert = c.insert.replace(/\n/g, ' ');
       return c;
     }),
   };
@@ -238,6 +238,7 @@ function AiHeader(props) {
     readOnly,
     fnChange,
     handleSubmit,
+    onAttachmentsChange,
   } = props;
 
   return (
@@ -258,6 +259,9 @@ function AiHeader(props) {
             onChange={fnChange}
             rootContainer={generic.container}
             index={idx}
+            attachments={generic.attachments || []}
+            getAttachments={() => generic.attachments || []}
+            onAttachmentsChange={onAttachmentsChange}
           />
         </Card.Body>
       </Accordion.Collapse>
@@ -273,6 +277,11 @@ AiHeader.propTypes = {
   fnChange: PropTypes.func.isRequired,
   toggleAddToReport: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
+  onAttachmentsChange: PropTypes.func,
+};
+
+AiHeader.defaultProps = {
+  onAttachmentsChange: null,
 };
 
 export { AiHeader, AiHeaderDeleted, newHeader };

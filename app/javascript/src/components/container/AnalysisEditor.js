@@ -6,6 +6,9 @@ import { OverlayTrigger, Popover } from 'react-bootstrap';
 import Delta from 'quill-delta';
 
 import { formatAnalysisContent } from 'src/utilities/ElementUtils';
+import { createQuillImageHandler } from 'src/utilities/quillImageHandler';
+import 'src/components/reactQuill/AttachmentImageBlot';
+import 'src/components/reactQuill/AttachmentFileBlot';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -21,6 +24,7 @@ const toolbarOptions = [
   'bold', 'italic', 'underline',
   'header', 'script',
   'list', 'bullet',
+  'attachment-image', 'attachment-file',
 ];
 
 export default class AnalysisEditor extends React.Component {
@@ -55,12 +59,23 @@ export default class AnalysisEditor extends React.Component {
     TextTemplateStore.listen(this.onChangeTemplateStore);
     TextTemplateActions.fetchPredefinedTemplateNames();
 
-    const { template } = this.props;
+    const { template, getAttachments, onAttachmentsChange } = this.props;
     const namesToFetch = Object.values(template).flat();
     this.fetchPredefinedTemplates(namesToFetch);
+
+    if (getAttachments && onAttachmentsChange && this.reactQuillRef.current) {
+      const quill = this.reactQuillRef.current.getEditor();
+      const handler = createQuillImageHandler({ getAttachments, onAttachmentsChange });
+      handler.install(quill);
+      this.syncDeletedBlotVisualState();
+    }
   }
 
   componentDidUpdate(prevProps) {
+    if (this.props.attachments !== prevProps.attachments) {
+      this.syncDeletedBlotVisualState();
+    }
+
     const { template } = this.props;
     const namesToFetch = Object.values(template).flat();
 
@@ -172,6 +187,20 @@ export default class AnalysisEditor extends React.Component {
     this.onChangeContent(quill);
   }
 
+  syncDeletedBlotVisualState() {
+    if (!this.reactQuillRef.current) return;
+    const { getAttachments, attachments } = this.props;
+    const atts = getAttachments ? getAttachments() : (attachments || []);
+    const deletedIds = new Set(
+      atts.filter((a) => a && a.is_deleted && a.identifier).map((a) => a.identifier)
+    );
+    const quill = this.reactQuillRef.current.getEditor();
+    quill.root.querySelectorAll('[data-attachment-identifier]').forEach((node) => {
+      const id = node.dataset.attachmentIdentifier;
+      node.classList.toggle('inline-blot-deleted', deletedIds.has(id));
+    });
+  }
+
   updateTextTemplates(template) {
     const { updateTextTemplates } = this.props;
     updateTextTemplates(template);
@@ -242,10 +271,13 @@ AnalysisEditor.propTypes = {
   /* eslint-disable react/forbid-prop-types */
   template: PropTypes.object,
   analysis: PropTypes.object,
+  attachments: PropTypes.arrayOf(PropTypes.object),
   /* eslint-enable react/forbid-prop-types */
   readOnly: PropTypes.bool,
   onChangeContent: PropTypes.func,
   updateTextTemplates: PropTypes.func,
+  getAttachments: PropTypes.func,
+  onAttachmentsChange: PropTypes.func,
 };
 
 AnalysisEditor.defaultProps = {
@@ -253,5 +285,8 @@ AnalysisEditor.defaultProps = {
   template: {},
   analysis: {},
   onChangeContent: null,
-  updateTextTemplates: null
+  updateTextTemplates: null,
+  attachments: [],
+  getAttachments: null,
+  onAttachmentsChange: null,
 };

@@ -10,6 +10,7 @@ import {
   markInlineAttachmentDeleted,
   collectInlineAttachmentIdentifiers,
   stripDeletedInlineBlotsFromBody,
+  stripDeletedInlineBlotsFromDelta,
 } from 'src/utilities/attachmentUtils';
 
 function makeAttachment(overrides = {}) {
@@ -323,6 +324,42 @@ describe('attachmentUtils', () => {
       const result = stripDeletedInlineBlotsFromBody([image, table], new Set(['a']));
       expect(result[0]).toBe(image);
       expect(result[1]).toBe(table);
+    });
+  });
+
+  describe('stripDeletedInlineBlotsFromDelta', () => {
+    it('returns delta unchanged when no ops reference deleted identifiers', () => {
+      const delta = {
+        ops: [
+          { insert: 'text' },
+          { insert: { 'attachment-image': { attachment_identifier: 'keep' } } },
+        ],
+      };
+      const result = stripDeletedInlineBlotsFromDelta(delta, new Set(['other']));
+      expect(result.ops.length).toBe(2);
+    });
+
+    it('filters out attachment-image ops whose identifier is in the deleted set', () => {
+      const delta = {
+        ops: [
+          { insert: 'hello' },
+          { insert: { 'attachment-image': { attachment_identifier: 'del-id' } } },
+          { insert: { 'attachment-file': { attachment_identifier: 'del-id' } } },
+        ],
+      };
+      const result = stripDeletedInlineBlotsFromDelta(delta, new Set(['del-id']));
+      expect(result.ops.length).toBe(1);
+      expect(result.ops[0].insert).toBe('hello');
+    });
+
+    it('returns null unchanged', () => {
+      expect(stripDeletedInlineBlotsFromDelta(null, new Set(['x']))).toBe(null);
+    });
+
+    it('returns the delta reference unchanged when deletedIdentifiers set is empty', () => {
+      const delta = { ops: [{ insert: { 'attachment-image': { attachment_identifier: 'x' } } }] };
+      const result = stripDeletedInlineBlotsFromDelta(delta, new Set());
+      expect(result).toBe(delta);
     });
   });
 });

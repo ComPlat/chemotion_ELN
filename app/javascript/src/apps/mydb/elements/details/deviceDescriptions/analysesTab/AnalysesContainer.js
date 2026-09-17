@@ -119,6 +119,9 @@ function AnalysesContainer({ readonly }) {
                     onChange={(cont) => handleContainerChanged(cont)}
                     rootContainer={deviceDescription.container}
                     index={index}
+                    attachments={deviceDescription.attachments || []}
+                    getAttachments={() => deviceDescription.attachments || []}
+                    onAttachmentsChange={(next) => deviceDescriptionsStore.changeAttachments(next)}
                   />
                 </Card.Body>
               </Accordion.Collapse>

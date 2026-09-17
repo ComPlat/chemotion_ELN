@@ -131,6 +131,12 @@ function ReactionsDisplay({
                         index={i}
                         disabled={isDisabled}
                         onChange={handleChange}
+                        attachments={sample.attachments || []}
+                        getAttachments={() => sample.attachments || []}
+                        onAttachmentsChange={(next) => {
+                          sample.attachments = next;
+                          handleChange();
+                        }}
                       />
                     </Card.Body>
                   </Accordion.Collapse>

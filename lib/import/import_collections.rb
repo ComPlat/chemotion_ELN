@@ -7,6 +7,8 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
+    INLINE_BLOT_KEYS = %w[attachment-image attachment-file].freeze
+
     attr_reader :log_file_path
 
     # Labels of collections created in this import (from import_collections or gate).
@@ -851,11 +853,12 @@ module Import
       end
     end
 
+    # Must run in extract() before import_attachments(); att.filename is "<old-uuid>.<ext>" from the ZIP entry name.
     def update_richtext_attachment_identifiers(attachments)
       return if attachments.empty?
 
       identifier_map = attachments.each_with_object({}) do |att, map|
-        map[att.filename] = att.identifier if att.filename.present? && att.identifier.present?
+        map[File.basename(att.filename, '.*')] = att.identifier if att.filename.present? && att.identifier.present?
       end
       return if identifier_map.empty?
 
@@ -870,6 +873,25 @@ module Import
           end
         end
       end
+
+      %w[Reaction Sample Screen Wellplate ResearchPlan CelllineSample DeviceDescription SequenceBasedMacromoleculeSample].each do |type|
+        remap_container_richtext_identifiers(@data.fetch(type, {}), identifier_map)
+      end
+    end
+
+    def remap_container_richtext_identifiers(elements_by_type, identifier_map)
+      elements_by_type.each_value do |attrs|
+        walk_container_tree(attrs['container'], identifier_map)
+      end
+    end
+
+    def walk_container_tree(container, identifier_map)
+      return unless container.is_a?(Hash)
+
+      content = container.dig('extended_metadata', 'content')
+      remap_quill_delta_identifiers(content, identifier_map) if content.is_a?(Hash)
+
+      (container['children'] || []).each { |child| walk_container_tree(child, identifier_map) }
     end
 
     def remap_quill_delta_identifiers(delta, identifier_map)
@@ -880,7 +902,7 @@ module Import
         insert = op.is_a?(Hash) ? op['insert'] : nil
         next unless insert.is_a?(Hash)
 
-        %w[attachment-image attachment-file].each do |blot_key|
+        INLINE_BLOT_KEYS.each do |blot_key|
           payload = insert[blot_key]
           next unless payload.is_a?(Hash)
 

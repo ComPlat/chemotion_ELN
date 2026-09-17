@@ -28,7 +28,7 @@ import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, stripDeletedInlineBlotsFromDelta, collectInlineAttachmentIdentifiersFromContainers } from 'src/utilities/attachmentUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -177,6 +177,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         onUndoDelete={handleAttachmentUndoDelete}
         onEdit={handleAttachmentEdit}
         readOnly={isReadOnly()}
+        inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiersFromContainers(sbmmSample.container)}
       />
     </Tab>
   );
@@ -295,6 +296,22 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   };
 
   const handleSubmit = () => {
+    const deletedInlineIds = new Set(
+      (sbmmSample.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0 && sbmmSample.container) {
+      const walkContainers = (container) => {
+        if (container.extended_metadata && container.extended_metadata.content) {
+          container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+            container.extended_metadata.content, deletedInlineIds
+          );
+        }
+        (container.children || []).forEach(walkContainers);
+      };
+      walkContainers(sbmmSample.container);
+    }
     sbmmStore.saveSample(sbmmSample);
   };
 

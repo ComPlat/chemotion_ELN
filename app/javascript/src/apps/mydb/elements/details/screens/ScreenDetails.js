@@ -35,7 +35,7 @@ import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, stripDeletedInlineBlotsFromBody } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, collectInlineAttachmentIdentifiersFromContainers, stripDeletedInlineBlotsFromBody, stripDeletedInlineBlotsFromDelta } from 'src/utilities/attachmentUtils';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -103,6 +103,18 @@ export default class ScreenDetails extends Component {
         deletedInlineIds
       );
       screen.description = stripped[0].value;
+
+      if (screen.container) {
+        const walkContainers = (container) => {
+          if (container.extended_metadata && container.extended_metadata.content) {
+            container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+              container.extended_metadata.content, deletedInlineIds
+            );
+          }
+          (container.children || []).forEach(walkContainers);
+        };
+        walkContainers(screen.container);
+      }
     }
 
     LoadingActions.start();
@@ -433,9 +445,12 @@ export default class ScreenDetails extends Component {
                 onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
                 onEdit={this.handleAttachmentEdit.bind(this)}
                 readOnly={!screen.can_update}
-                inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(
-                  [{ type: 'richtext', value: screen.description }]
-                )}
+                inlineAttachmentIdentifiers={new Set([
+                  ...collectInlineAttachmentIdentifiers(
+                    [{ type: 'richtext', value: screen.description }]
+                  ),
+                  ...collectInlineAttachmentIdentifiersFromContainers(screen.container),
+                ])}
               />
             </ListGroupItem>
           </ListGroup>

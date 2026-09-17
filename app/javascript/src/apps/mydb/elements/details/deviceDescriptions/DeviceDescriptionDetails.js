@@ -15,7 +15,7 @@ import { List } from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, stripDeletedInlineBlotsFromDelta, collectInlineAttachmentIdentifiersFromContainers } from 'src/utilities/attachmentUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -135,6 +135,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
         onUndoDelete={handleAttachmentUndoDelete}
         onEdit={handleAttachmentEdit}
         readOnly={isReadOnly()}
+        inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiersFromContainers(deviceDescription.container)}
       />
     </Tab>
   );
@@ -167,6 +168,22 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
   };
 
   const handleSubmit = () => {
+    const deletedInlineIds = new Set(
+      (deviceDescription.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0 && deviceDescription.container) {
+      const walkContainers = (container) => {
+        if (container.extended_metadata && container.extended_metadata.content) {
+          container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+            container.extended_metadata.content, deletedInlineIds
+          );
+        }
+        (container.children || []).forEach(walkContainers);
+      };
+      walkContainers(deviceDescription.container);
+    }
     LoadingActions.start();
     if (deviceDescription.is_new) {
       DetailActions.close(deviceDescription, true);

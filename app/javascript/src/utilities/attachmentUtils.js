@@ -130,6 +130,33 @@ export function collectInlineAttachmentIdentifiers(body) {
   return ids;
 }
 
+// Walks a Quill container tree (element.container) and returns a Set of all
+// attachment_identifier values referenced by inline blots in any analysis delta.
+export function collectInlineAttachmentIdentifiersFromContainers(container) {
+  const ids = new Set();
+  if (!container) return ids;
+  const walk = (node) => {
+    const content = node.extended_metadata && node.extended_metadata.content;
+    if (content) {
+      const ops = content.ops;
+      if (Array.isArray(ops)) {
+        ops.forEach((op) => {
+          const insert = op && op.insert;
+          if (!insert || typeof insert !== 'object') return;
+          const image = insert['attachment-image'];
+          const file = insert['attachment-file'];
+          const id = (image && image.attachment_identifier)
+            || (file && file.attachment_identifier);
+          if (id) ids.add(id);
+        });
+      }
+    }
+    (node.children || []).forEach(walk);
+  };
+  walk(container);
+  return ids;
+}
+
 // Returns a new `body` array with every inline blot op referencing a
 // deleted-identifier stripped from richtext fields. Non-richtext fields
 // pass through unchanged. Used on the save path so that after the user
@@ -163,6 +190,20 @@ export function stripDeletedInlineBlotsFromBody(body, deletedIdentifiers) {
     if (nextOps.length === ops.length) return field;
     return { ...field, value: { ...field.value, ops: nextOps } };
   });
+}
+
+export function stripDeletedInlineBlotsFromDelta(delta, deletedIdentifiers) {
+  if (!delta) return delta;
+  if (!delta.ops || deletedIdentifiers.size === 0) return delta;
+  const filtered = delta.ops.filter((op) => {
+    const insert = op && op.insert;
+    if (typeof insert !== 'object' || insert === null) return true;
+    const id = (insert['attachment-image'] && insert['attachment-image'].attachment_identifier)
+      || (insert['attachment-file'] && insert['attachment-file'].attachment_identifier);
+    return !id || !deletedIdentifiers.has(id);
+  });
+  if (filtered.length === delta.ops.length) return delta;
+  return { ...delta, ops: filtered };
 }
 
 export function markInlineAttachmentDeleted(attachments, identifier) {

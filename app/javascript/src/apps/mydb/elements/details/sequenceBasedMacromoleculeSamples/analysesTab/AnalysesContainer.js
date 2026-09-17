@@ -101,6 +101,9 @@ function AnalysesContainer({ readonly }) {
                     readOnly={readonly}
                     templateType="sbmmSample"
                     container={container}
+                    attachments={sbmmSample.attachments || []}
+                    getAttachments={() => sbmmSample.attachments || []}
+                    onAttachmentsChange={(next) => sbmmStore.changeAttachments(next)}
                     onChange={(cont) => {
                       const rootId = sbmmSample?.container?.id;
                       // Only the post-save root container carries the full analyses tree under

@@ -124,6 +124,12 @@ class AnalysesContainer extends Component {
         rootContainer={currentElement.container}
         index={i}
         isFirst={i === 0}
+        onAttachmentsChange={(next) => {
+          const { cellLineDetailsStore } = this.context;
+          const { item } = this.props;
+          cellLineDetailsStore.changeAttachments(item.id, next);
+          this.handleChange(true);
+        }}
       />
     ));
 

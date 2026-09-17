@@ -26,6 +26,7 @@ import {
   replaceAttachment,
   collectInlineAttachmentIdentifiers,
   stripDeletedInlineBlotsFromBody,
+  stripDeletedInlineBlotsFromDelta,
 } from 'src/utilities/attachmentUtils';
 import ResearchPlanDetailsBody from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
@@ -128,6 +129,18 @@ export default class ResearchPlanDetails extends Component {
     );
     if (deletedInlineIds.size > 0) {
       researchPlan.body = stripDeletedInlineBlotsFromBody(researchPlan.body, deletedInlineIds);
+
+      if (researchPlan.container) {
+        const walkContainers = (container) => {
+          if (container.extended_metadata && container.extended_metadata.content) {
+            container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+              container.extended_metadata.content, deletedInlineIds
+            );
+          }
+          (container.children || []).forEach(walkContainers);
+        };
+        walkContainers(researchPlan.container);
+      }
     }
 
     if (researchPlan.isNew) {
