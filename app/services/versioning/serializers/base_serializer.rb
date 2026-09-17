@@ -24,8 +24,18 @@ module Versioning
             changes_comparison_hash = {} # hash for changes comparison
             revertible = changes.none? { |key, _v| key == 'created_at' }
             changes.each do |key, value|
-              next if value == base[key] # ignore if value is same as in last version
-              next if blank?(base[key]) && blank?(value) # ignore if value is empty
+              previous_value = base[key]
+
+              # Deep-merge hash-valued changes (e.g. extended_metadata) instead of overwriting them outright.
+              # Logidze's jsonb diff only stores the sub-keys that actually changed in a given version, so
+              # `value` here may be a partial hash - merge it onto the previous full value so both the stored
+              # `base` and the "new" side of the comparison below reflect the complete, current state instead
+              # of losing (or, on the "new" side, spuriously blanking) sub-keys this version didn't touch.
+              value = previous_value.deep_merge(value) if previous_value.is_a?(Hash) && value.is_a?(Hash)
+              base[key] = value
+
+              next if value == previous_value # ignore if value is same as in last version
+              next if blank?(previous_value) && blank?(value) # ignore if value is empty
 
               fields = field_definitions[key]
               next if fields.nil?
@@ -35,10 +45,10 @@ module Versioning
                 formatter = field[:formatter] || default_formatter
                 revertible_value_formatter = field[:revertible_value_formatter] || formatter
 
-                old_value = formatter.call(key, base[key])
+                old_value = formatter.call(key, previous_value)
                 new_value = formatter.call(key, value)
                 current_value = formatter.call(key, record.read_attribute_before_type_cast(key))
-                revertible_value = revertible_value_formatter.call(key, base[key])
+                revertible_value = revertible_value_formatter.call(key, previous_value)
                 next if old_value == new_value # ignore if value is same as in last version
                 next if old_value.blank? && new_value.blank? # ignore if value is empty or nil
 
@@ -53,7 +63,6 @@ module Versioning
                 }
               end
             end
-            base.merge!(changes) # merge changes with last version data for next iteration
             next if changes_comparison_hash.empty?
 
             result << {
@@ -121,6 +130,16 @@ module Versioning
 
       def non_formatter
         ->(_key, value) { value }
+      end
+
+      # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]}, which
+      # isn't the same value as nil/{} but is visually just as empty - normalize it so it doesn't
+      # get treated as a real content change in the history view.
+      def quill_formatter
+        lambda do |key, value|
+          parsed = default_formatter.call(key, value)
+          Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
+        end
       end
 
       def fix_malformed_value_formatter

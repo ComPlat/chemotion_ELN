@@ -21,6 +21,7 @@ module Versioning
             label: 'Description',
             kind: :quill,
             revert: %i[description],
+            formatter: quill_formatter,
           },
           width: {
             label: 'Width',
