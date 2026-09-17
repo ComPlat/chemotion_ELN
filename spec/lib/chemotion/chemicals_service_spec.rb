@@ -21,6 +21,121 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.fetch_allowed_url' do
+    let(:pdf) { instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }) }
+
+    def redirect_to(location)
+      instance_double(HTTParty::Response, headers: { 'Location' => location }, code: 302)
+    end
+
+    it 'follows a redirect that stays on an allowed host' do
+      allow(HTTParty).to receive(:get).with('https://www.fishersci.com/start', anything)
+                                      .and_return(redirect_to('https://www.fishersci.com/final.pdf'))
+      allow(HTTParty).to receive(:get).with('https://www.fishersci.com/final.pdf', anything).and_return(pdf)
+      expect(described_class.fetch_allowed_url('https://www.fishersci.com/start')).to eq(pdf)
+    end
+
+    it 'refuses a redirect that leaves the allowlist' do
+      allow(HTTParty).to receive(:get).and_return(redirect_to('https://evil.example.com/x.pdf'))
+      expect { described_class.fetch_allowed_url('https://www.fishersci.com/start') }
+        .to raise_error(StandardError, /not allowed/)
+    end
+
+    it 'gives up rather than following a redirect loop' do
+      looping = redirect_to('https://www.fishersci.com/again')
+      allow(HTTParty).to receive(:get).and_return(looping)
+      expect(described_class.fetch_allowed_url('https://www.fishersci.com/start')).to eq(looping)
+    end
+  end
+
+  describe '.merck and .vendor_groups' do
+    let(:sources) do
+      [
+        { SourceName: 'Sigma-Aldrich', RegistryID: '00560_SIAL',
+          SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sial/00560?utm_source=pubchem' },
+        { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+          SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124?utm_source=pubchem' },
+        { SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+          SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' },
+        { SourceName: 'Glentham Life Sciences Ltd.', RegistryID: 'GK3021',
+          SourceRecordURL: 'https://www.glentham.com/en/products/product/GK3021/' },
+      ]
+    end
+
+    before do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+    end
+
+    it 'prefers the sigald brand over sial when both are listed' do
+      expect(described_class.merck('Acetone', 'en')).to eq(
+        'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+        'merck_product_number' => '179124',
+        'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
+      )
+    end
+
+    it 'reports a miss when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.merck('Nonexistent', 'en')).to eq('Could not find safety data sheet from Merck')
+    end
+
+    it 'groups vendors and puts the SDS-capable one first' do
+      groups = described_class.vendor_groups('Acetone', 'en')
+      expect(groups.map { |g| g['vendor'] }).to eq(
+        ['Sigma-Aldrich', 'Thermo Fisher Scientific', 'Glentham Life Sciences Ltd.'],
+      )
+      expect(groups.first).to include('count' => 2, 'sds_supported' => true)
+    end
+
+    it 'builds an AC-prefixed Fisher SDS link from an all-numeric Thermo catalogue code' do
+      thermo = described_class.vendor_groups('Acetone', 'en').find { |g| g['vendor'].start_with?('Thermo') }
+      expect(thermo['sds_supported']).to be true
+      expect(thermo['products'].first).to include(
+        'fisher_product_number' => 'AC327840025',
+        'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=AC327840025' \
+                         '&productDescription=&language=EN&countryCode=US',
+      )
+    end
+
+    it 'uses a Fisher Chemical RegistryID verbatim as the part number' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Fisher Chemical', RegistryID: 'A111', SourceRecordURL: nil }],
+      )
+      group = described_class.vendor_groups('Acetone', 'en').first
+      expect(group['products'].first).to eq(
+        'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=A111' \
+                         '&productDescription=&language=EN&countryCode=US',
+        'fisher_product_number' => 'A111',
+      )
+    end
+
+    it 'leaves a dotted Thermo code as a catalogue link with no SDS' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+           SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/019392.K7' }],
+      )
+      group = described_class.vendor_groups('Acetone', 'en').first
+      expect(group['sds_supported']).to be false
+      expect(group['products'].first).not_to have_key('fisher_link')
+    end
+
+    it 'gives a catalogue-only vendor a product link and no SDS link' do
+      glentham = described_class.vendor_groups('Acetone', 'en').find { |g| g['vendor'].start_with?('Glentham') }
+      expect(glentham['sds_supported']).to be false
+      expect(glentham['products'].first).to eq(
+        'label' => 'GK3021', 'product_link' => 'https://www.glentham.com/en/products/product/GK3021/',
+      )
+    end
+
+    it 'falls back to the URL segment when RegistryID is an internal PubChem GID' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Oakwood Products', RegistryID: 'GID_900000000999999',
+           SourceRecordURL: 'https://oakwoodchemical.com/products/035905' }],
+      )
+      expect(described_class.vendor_groups('Acetone', 'en').first['products'].first['label']).to eq('035905')
+    end
+  end
+
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
       let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }

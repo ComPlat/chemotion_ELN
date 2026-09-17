@@ -100,6 +100,8 @@ module Chemotion
                 { merck_link: Chemotion::ChemicalsService.merck(name, language) }
               when 'Thermofisher'
                 { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+              when 'All'
+                { vendor_groups: Chemotion::ChemicalsService.vendor_groups(name, language) }
               else
                 {
                   alfa_link: Chemotion::ChemicalsService.alfa(name, language),

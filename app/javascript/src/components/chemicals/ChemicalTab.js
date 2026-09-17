@@ -19,6 +19,9 @@ import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
+const VENDOR_PREVIEW_COUNT = 8;
+const PRODUCT_PREVIEW_COUNT = 5;
+
 export default class ChemicalTab extends React.Component {
   static contextType = StoreContext;
   constructor(props) {
@@ -33,6 +36,10 @@ export default class ChemicalTab extends React.Component {
       queryOption: 'CAS',
       sdsProductNumber: '',
       sdsBrand: 'sial',
+      vendorGroups: [],
+      expandedVendors: {},
+      expandedProducts: {},
+      showAllVendors: false,
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -258,6 +265,18 @@ export default class ChemicalTab extends React.Component {
     this.setState({ sdsBrand: value });
   }
 
+  toggleVendor(vendor) {
+    this.setState((prev) => ({
+      expandedVendors: { ...prev.expandedVendors, [vendor]: !prev.expandedVendors[vendor] },
+    }));
+  }
+
+  toggleVendorProducts(vendor) {
+    this.setState((prev) => ({
+      expandedProducts: { ...prev.expandedProducts, [vendor]: !prev.expandedProducts[vendor] },
+    }));
+  }
+
   handleLanguageOption(value) {
     this.setState({ safetySheetLanguage: value });
   }
@@ -313,6 +332,7 @@ export default class ChemicalTab extends React.Component {
     const catalogueNumber = productNumber.toLowerCase();
     const path = `${sdsBrand}/${catalogueNumber}`;
     this.setState({
+      vendorGroups: [],
       searchResults: [{
         merck_link: `https://www.sigmaaldrich.com/DE/${language}/sds/${path}`,
         merck_product_number: catalogueNumber,
@@ -362,10 +382,21 @@ export default class ChemicalTab extends React.Component {
 
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
+      if (obj?.vendor_groups) {
+        this.setState({
+          vendorGroups: obj.vendor_groups,
+          searchResults: [],
+          loadingQuerySafetySheets: false,
+          displayWell: true,
+          warningMessage: obj.vendor_groups.length ? '' : 'No chemical vendors found on PubChem.',
+        });
+        return;
+      }
       if (obj !== null && obj !== undefined) {
         const newResults = Object.values(obj);
         this.setState({
           searchResults: newResults,
+          vendorGroups: [],
           loadingQuerySafetySheets: false,
           displayWell: true
         });
@@ -1123,6 +1154,7 @@ export default class ChemicalTab extends React.Component {
     const vendorOptions = [
       // { label: 'All', value: 'All' },
       { label: 'Merck', value: 'Merck' },
+      { label: 'All vendors (PubChem)', value: 'All' },
       // { label: 'Thermofisher', value: 'Thermofisher' },
     ];
 
@@ -1360,6 +1392,105 @@ export default class ChemicalTab extends React.Component {
         <div className="justify-content-end">
           {this.querySafetyPhrases(displayName.toLowerCase())}
         </div>
+      </div>
+    );
+  };
+
+  // PubChem lists every vendor carrying the compound, so rows are collapsed per vendor;
+  // only Sigma-Aldrich exposes a derivable SDS URL, the rest link to their product page.
+  renderVendorGroups = () => {
+    const { vendorGroups, showAllVendors } = this.state;
+    if (!vendorGroups.length) return null;
+
+    const visible = showAllVendors ? vendorGroups : vendorGroups.slice(0, VENDOR_PREVIEW_COUNT);
+    return (
+      <div className="mt-3" data-component="vendorGroups">
+        <div className="text-muted small mb-2">
+          {`${vendorGroups.length} vendors list this compound on PubChem. `}
+          Sigma-Aldrich and Thermo Fisher expose a downloadable SDS; other vendors open their
+          product page, from where the sheet can be attached with Upload SDS.
+        </div>
+        <ListGroup>
+          {visible.map((group) => this.renderVendorGroup(group))}
+        </ListGroup>
+        {vendorGroups.length > VENDOR_PREVIEW_COUNT && (
+          <Button
+            variant="link"
+            size="sm"
+            className="ps-0"
+            onClick={() => this.setState({ showAllVendors: !showAllVendors })}
+          >
+            {showAllVendors ? 'Show fewer vendors' : `Show all ${vendorGroups.length} vendors`}
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  renderVendorGroup = (group) => {
+    const { expandedVendors } = this.state;
+    const isOpen = !!expandedVendors[group.vendor];
+
+    return (
+      <ListGroupItem key={group.vendor}>
+        <div className="d-flex align-items-center gap-2">
+          <Button
+            variant="link"
+            size="sm"
+            className="p-0 text-decoration-none"
+            onClick={() => this.toggleVendor(group.vendor)}
+          >
+            <i className={`fa fa-caret-${isOpen ? 'down' : 'right'} me-2`} />
+            {group.vendor}
+          </Button>
+          <span className="text-muted small">{`${group.count} products`}</span>
+          {group.sds_supported && <span className="badge bg-success">SDS</span>}
+        </div>
+        {isOpen && this.renderVendorProducts(group)}
+      </ListGroupItem>
+    );
+  };
+
+  renderVendorProducts = (group) => {
+    const { expandedProducts } = this.state;
+    const showAll = !!expandedProducts[group.vendor];
+    const products = showAll ? group.products : group.products.slice(0, PRODUCT_PREVIEW_COUNT);
+
+    return (
+      <div className="ms-4 mt-2">
+        {products.map((product) => {
+          // A vendor group can mix rows whose SDS URL is derivable with rows that only
+          // carry a catalogue page, so the SDS controls are decided per product.
+          const keys = Object.keys(product);
+          const sdsKey = keys.find((key) => key.endsWith('_link') && !key.endsWith('product_link'));
+          const numberKey = keys.find((key) => key.endsWith('_product_number'));
+          const productLinkKey = keys.find((key) => key.endsWith('product_link'));
+          const label = (numberKey && product[numberKey]) || product.label;
+          const productLink = productLinkKey && product[productLinkKey];
+
+          return (
+            <div key={label} className="d-flex align-items-center gap-2 mb-1">
+              <code>{label}</code>
+              {productLink && (
+                <a href={productLink} target="_blank" rel="noopener noreferrer">Product page</a>
+              )}
+              {sdsKey && (
+                <a href={product[sdsKey]} target="_blank" rel="noopener noreferrer">Open SDS</a>
+              )}
+              {sdsKey && this.saveSafetySheetsButton(product)}
+            </div>
+          );
+        })}
+        {group.products.length > PRODUCT_PREVIEW_COUNT && (
+          <Button
+            variant="link"
+            size="sm"
+            className="ps-0"
+            onClick={() => this.toggleVendorProducts(group.vendor)}
+          >
+            {showAll ? 'Show fewer' : `Show ${group.products.length - PRODUCT_PREVIEW_COUNT} more`}
+          </Button>
+        )}
       </div>
     );
   };
@@ -1855,6 +1986,7 @@ export default class ChemicalTab extends React.Component {
           </Col>
         </Row>
 
+        {displayWell && this.renderVendorGroups()}
         {displayWell && this.renderSafetySheets()}
         {warningMessage && this.renderWarningMessage()}
         {this.renderSafetyPhrases()}
