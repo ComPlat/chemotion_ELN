@@ -382,8 +382,11 @@ module Chemotion
       # Ensure parent directory exists
       FileUtils.mkdir_p(File.dirname(full_file_path))
 
-      if file.is_a?(Hash) && file['tempfile']
-        File.binwrite(full_file_path, file['tempfile'].read)
+      # Grape hands the upload over with symbol keys, so both spellings have to be accepted.
+      upload = file.is_a?(Hash) ? (file[:tempfile] || file['tempfile']) : nil
+      if upload.respond_to?(:read)
+        upload.rewind if upload.respond_to?(:rewind)
+        File.binwrite(full_file_path, upload.read)
       elsif file.respond_to?(:read)
         File.binwrite(full_file_path, file.read)
       else

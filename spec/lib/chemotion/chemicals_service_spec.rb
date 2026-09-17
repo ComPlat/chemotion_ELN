@@ -21,6 +21,30 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.write_file with a Grape upload' do
+    let(:relative_path) { '/safety_sheets/testvendor/upload.pdf' }
+    let(:full_path) { Rails.public_path.join('safety_sheets/testvendor/upload.pdf') }
+
+    after { FileUtils.rm_rf(Rails.public_path.join('safety_sheets/testvendor')) }
+
+    it 'writes the upload when the hash is keyed by symbol' do
+      described_class.write_file(relative_path, { tempfile: StringIO.new('%PDF symbol') })
+      expect(File.read(full_path)).to eq('%PDF symbol')
+    end
+
+    it 'writes the upload when the hash is keyed by string' do
+      described_class.write_file(relative_path, { 'tempfile' => StringIO.new('%PDF string') })
+      expect(File.read(full_path)).to eq('%PDF string')
+    end
+
+    it 'rewinds an upload whose hash was already computed' do
+      io = StringIO.new('%PDF rewound')
+      io.read
+      described_class.write_file(relative_path, { tempfile: io })
+      expect(File.read(full_path)).to eq('%PDF rewound')
+    end
+  end
+
   describe '.fisher_sds' do
     def source(registry, url)
       { RegistryID: registry, SourceRecordURL: url }
