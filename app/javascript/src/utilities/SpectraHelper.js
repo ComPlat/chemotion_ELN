@@ -374,8 +374,9 @@ const urlToEntry = (url) => {
 //
 // Precedence, strongest first:
 //   1. a live url - an exact statement of which attachment was fetched, so it outranks every name;
-//   2. the filename inside a reference, with the id only breaking ties between candidates that
-//      already agree on it;
+//   2. the filename inside a reference, compared verbatim, then - only if nothing carries that
+//      exact name - by its slug, with the id breaking ties between candidates that already agree
+//      on the name;
 //   3. the slug of the caller's own name hint, or of the `sources[]` id a pre-reference save
 //      minted (`nmrium-src-<slug>`, suffixed when one save had to separate two spectra);
 //   4. the reference's id alone - the attachment was renamed since the save, so on the instance
@@ -409,6 +410,16 @@ const findAttachmentForRef = (attachments, url, options = {}) => {
 
   const ref = parseAttachmentRef(url);
   if (ref?.label) {
+    // The reference carries the filename verbatim, so compare it verbatim first. The slug below is
+    // lossy - every run of non-alphanumerics collapses to one dash - so `a-b.zip` and `a_b.zip` are
+    // one and the same to it. Two such siblings in a dataset would be decided by `named[0]` the
+    // moment the id no longer matches anything, which after an import is always: the destination
+    // reassigns ids, so the one in the reference is stale. That silently binds the spectrum to the
+    // wrong file. The slug stays as a second tier - it is what lets a file renamed only in its
+    // punctuation still resolve - but it may no longer pre-empt an exact name.
+    const byName = attachments.filter((att) => att?.label === ref.label);
+    if (byName.length) return byName.find((att) => `${att?.id}` === ref.id) || byName[0];
+
     const refSlug = buildSourceId(ref.label);
     const named = attachments.filter((att) => buildSourceId(att?.label) === refSlug);
     if (named.length) return named.find((att) => `${att?.id}` === ref.id) || named[0];

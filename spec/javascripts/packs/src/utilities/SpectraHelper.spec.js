@@ -744,6 +744,53 @@ describe('SpectraHelper', () => {
           expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/740.zip');
         });
 
+        // The reference carries the filename verbatim, but resolution used to compare only its
+        // slug, which collapses every run of non-alphanumerics to a single dash: `a-b.zip` and
+        // `a_b.zip` are indistinguishable to it. Two such siblings in one dataset and a stale id -
+        // which after an import is every id - had `named.find(id)` land on the *other* file.
+        it('prefers an exact filename over a slug-equal sibling with the stale id', () => {
+          const stale = {
+            spectra: [{
+              info: { dimension: 2, name: 'a-b.zip' },
+              display: { name: 'a-b.zip' },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'nmrium-src-a-b-zip' },
+            }],
+            sources: [{
+              id: 'nmrium-src-a-b-zip',
+              entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/4711/a-b.zip' }],
+            }],
+          };
+          const imported = [
+            { id: 4711, label: 'a_b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B1' },
+            { id: 9002, label: 'a-b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B2' },
+          ];
+          const cleaned = cleaningNMRiumData(stale, { attachments: imported, forPersistence: true });
+          expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/a-b.zip');
+        });
+
+        // The slug tier still has to carry a file renamed only in its punctuation - nothing bears
+        // the exact name any more, so the lossy comparison is the only thing left that can match.
+        it('falls back to the slug when nothing carries the exact filename', () => {
+          const renamed = {
+            spectra: [{
+              info: { dimension: 2, name: 'a-b.zip' },
+              display: { name: 'a-b.zip' },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'nmrium-src-a-b-zip' },
+            }],
+            sources: [{
+              id: 'nmrium-src-a-b-zip',
+              entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/4711/a-b.zip' }],
+            }],
+          };
+          const imported = [
+            { id: 9002, label: 'a_b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B2' },
+          ];
+          const cleaned = cleaningNMRiumData(renamed, { attachments: imported, forPersistence: true });
+          expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/a_b.zip');
+        });
+
         it('still embeds live urls when not persisting', () => {
           const cleaned = cleaningNMRiumData(zipState(), { attachments });
           expect(cleaned.sources[0].entries[0].baseURL).toEqual('https://eln.test');

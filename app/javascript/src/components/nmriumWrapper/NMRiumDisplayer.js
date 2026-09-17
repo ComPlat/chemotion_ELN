@@ -393,6 +393,29 @@ export default class NMRiumDisplayer extends React.Component {
     return zipSpectra.find((z) => this.getFileBaseName(z.label) === baseInNmrium) || zipSpectra[0];
   }
 
+  // The archive backing *one* spectrum. findMatchingZip names a single zip for the whole document -
+  // read off the first spectrum that has a name - and a dataset may well hold two. Applying that
+  // one pick to every spectrum re-points the second archive's member paths at the first archive's
+  // url, and the cleaning pass that follows then prunes the second source as unreferenced: the
+  // second curve is quietly served from the wrong file. The spectrum's own persisted reference says
+  // which archive it came from, so ask that first; the document-wide pick stays as the fallback for
+  // a spectrum that carries no reference of its own (every pre-reference document).
+  //
+  // Runs before refreshPersistedSources, so sources[] still holds the opaque references a save
+  // wrote rather than the urls re-minted from them - which is exactly what is wanted here.
+  zipForSpectrum(spectrum, root, zipSpectra) {
+    if (!zipSpectra?.length || !spectrum) return null;
+    const sourceId = spectrum?.selector?.root;
+    const source = Array.isArray(root?.sources)
+      ? root.sources.find((s) => s?.id && s.id === sourceId)
+      : null;
+    const refUrl = entryUrl(source?.entries?.[0]) || spectrum?.source?.jcampURL || null;
+    if (!isAttachmentRef(refUrl) && !sourceId) return null;
+    // No allowSoleCandidate: with one zip the document-wide pick is already that zip, and letting
+    // it match unconditionally here would make an unrelated spectrum claim it.
+    return findAttachmentForRef(zipSpectra, refUrl, { sourceId, name: spectrum?.info?.name });
+  }
+
   // The download url for an attachment, minted for this open. The extension is the server's cue
   // for what it is serving, so it comes from the attachment's own filename.
   mintAttachmentUrl(attachment) {
@@ -542,7 +565,13 @@ export default class NMRiumDisplayer extends React.Component {
       const oldUrl = s?.source?.jcampURL
         || s?.sourceSelector?.files?.find((file) => typeof file === 'string');
       const match = !isZipBased ? this.findMatchingJcamp(s, jcampSpectra) : null;
-      let spectrumSourceUrl = preferredUrl;
+      // Per spectrum, not per document: see zipForSpectrum. Falls back to the document-wide pick,
+      // so a single-archive document and a pre-reference one behave exactly as before.
+      const spectrumZip = isZipBased ? this.zipForSpectrum(s, root, zipSpectra) : null;
+      const spectrumZipUrl = spectrumZip?.url ?? effectiveZipUrl;
+      const spectrumZipLabel = spectrumZip?.label ?? effectiveZipLabel;
+      const spectrumZipUrlWithFile = spectrumZipUrl ? `${spectrumZipUrl}/file.zip` : undefined;
+      let spectrumSourceUrl = (isZipBased && spectrumZipUrlWithFile) || preferredUrl;
 
       if (!isZipBased) {
         if (!s.source || typeof s.source !== 'object') s.source = {};
@@ -568,10 +597,10 @@ export default class NMRiumDisplayer extends React.Component {
         sourceRoot.entries[0].baseURL = sourceUrl.origin;
       }
 
-      if (effectiveZipUrl && effectiveZipLabel) {
-        s.display = { ...s.display, name: effectiveZipLabel };
+      if (spectrumZipUrl && spectrumZipLabel) {
+        s.display = { ...s.display, name: spectrumZipLabel };
         if (s.info) {
-          s.info.name = effectiveZipLabel;
+          s.info.name = spectrumZipLabel;
         }
       }
 
@@ -581,10 +610,10 @@ export default class NMRiumDisplayer extends React.Component {
       // the next cleaning pass, which then falls back to the stale sources[] entry instead. The
       // two input shapes are a live NMRium state's full reference through the archive, and a saved
       // document's bare member path (its token prefix was stripped on the way into the file).
-      if (zipUrlWithFile && Array.isArray(s?.sourceSelector?.files)) {
+      if (spectrumZipUrlWithFile && Array.isArray(s?.sourceSelector?.files)) {
         s.sourceSelector.files = s.sourceSelector.files.map((f) => {
           const within = archiveMemberPath(f);
-          return within ? `${zipUrlWithFile}/${within}` : f;
+          return within ? `${spectrumZipUrlWithFile}/${within}` : f;
         });
       }
     });
