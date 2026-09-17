@@ -127,6 +127,35 @@ describe Chemotion::ChemicalsService do
       )
     end
 
+    it 'splits curated vendors into sheet sources and catalogue-only ones' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        sources + [{ SourceName: 'abcr GmbH', RegistryID: 'AB148930',
+                     SourceRecordURL: 'https://abcr.com/de_en/AB148930' },
+                   { SourceName: 'VladaChem', RegistryID: 'V1',
+                     SourceRecordURL: 'https://www.vladachem.com/product.php?products=67-64-1' }],
+      )
+      overview = described_class.vendor_overview('Acetone', 'en')
+      expect(overview['sds_vendors'].map { |g| g['vendor'] }).to eq(['Sigma-Aldrich', 'Thermo Fisher Scientific'])
+      expect(overview['catalogue_vendors'].map { |g| g['vendor'] })
+        .to contain_exactly('abcr GmbH', 'Glentham Life Sciences Ltd.')
+      expect(overview['catalogue_vendors'].map { |g| g['vendor'] }).not_to include('VladaChem')
+    end
+
+    it 'counts every vendor and links to the full PubChem list' do
+      overview = described_class.vendor_overview('Acetone', 'en')
+      expect(overview['vendor_count']).to eq(3)
+      expect(overview['pubchem_url']).to eq(
+        'https://pubchem.ncbi.nlm.nih.gov/compound/180#section=Chemical-Vendors',
+      )
+    end
+
+    it 'returns an empty overview when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.vendor_overview('Nonexistent', 'en')).to eq(
+        'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0,
+      )
+    end
+
     it 'falls back to the URL segment when RegistryID is an internal PubChem GID' do
       allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
         [{ SourceName: 'Oakwood Products', RegistryID: 'GID_900000000999999',

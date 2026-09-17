@@ -41,6 +41,13 @@ module Chemotion
                      '?page=NewSearch&LANGUAGE=d__%<language>s&SUBFORMAT=d__CLP1' \
                      '&SKU=%<sku>s&PLANT=d__ALF'
     THERMO_LANGUAGES = { 'en' => 'EN', 'de' => 'DE', 'fr' => 'FR' }.freeze
+
+    # PubChem lists 30 to 50 vendors per compound, most of them building-block houses
+    # a European lab will not order from. Only these are surfaced; the rest stay one
+    # click away on PubChem itself.
+    CURATED_VENDORS = ['abcr GmbH', 'TCI (Tokyo Chemical Industry)', 'LGC Standards',
+                       'Glentham Life Sciences Ltd.', 'Fluorochem', 'CymitQuimica'].freeze
+    PUBCHEM_VENDOR_URL = 'https://pubchem.ncbi.nlm.nih.gov/compound/%<cid>s#section=Chemical-Vendors'
     MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco vetec saj usp cerillian].freeze
     MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
     ALLOWED_DOMAINS = %w[sigmaaldrich.com fishersci.com thermofisher.com].freeze
@@ -210,10 +217,31 @@ module Chemotion
       cid = PubChem.get_cid_from_identifier(name)
       return [] unless cid
 
-      PubChem.get_vendor_sources_from_cid(cid)
-             .group_by { |source| source[:SourceName].to_s }
-             .filter_map { |vendor, sources| vendor_group(vendor, sources, language) }
+      grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
+    end
+
+    def self.grouped_vendor_sources(sources, language)
+      sources.group_by { |source| source[:SourceName].to_s }
+             .filter_map { |vendor, group| vendor_group(vendor, group, language) }
              .sort_by { |group| [vendor_rank(group), -group['count']] }
+    end
+
+    # Splits the curated vendors into the ones we can fetch a sheet from and the ones that
+    # only have a catalogue page, and points at PubChem for the full list.
+    def self.vendor_overview(name, language)
+      cid = PubChem.get_cid_from_identifier(name)
+      return { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0 } unless cid
+
+      groups = grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
+      sds, catalogue = curated_groups(groups).partition { |group| group['sds_supported'] }
+      { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
+        'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+    end
+
+    def self.curated_groups(groups)
+      groups.select do |group|
+        group['sds_supported'] || CURATED_VENDORS.any? { |name| group['vendor'].casecmp?(name) }
+      end
     end
 
     # Sigma-Aldrich leads as the ELN's primary vendor, then the other vendors whose SDS

@@ -101,7 +101,7 @@ module Chemotion
               when 'Thermofisher'
                 { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
               when 'All'
-                { vendor_groups: Chemotion::ChemicalsService.vendor_groups(name, language) }
+                Chemotion::ChemicalsService.vendor_overview(name, language)
               else
                 {
                   alfa_link: Chemotion::ChemicalsService.alfa(name, language),
