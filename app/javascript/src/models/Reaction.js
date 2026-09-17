@@ -399,11 +399,17 @@ export default class Reaction extends Element {
 
   // Environmental conditions are stored as a single jsonb column shaped
   // { temperature: { value, unit }, humidity: { value, unit }, air_pressure: { value, unit } }
-  // (like vessel_size). The getter falls back to the default shape for older records.
+  // (like vessel_size). The getter normalizes to the full default shape so a missing, empty
+  // ({}), or partial persisted hash (older records, or a raw API write of the unconstrained
+  // Hash param) can't crash the panel, which dereferences environment.temperature.value etc.
+  // without guarding the nested objects.
   get environment() {
-    if (!this._environment) {
-      this._environment = JSON.parse(JSON.stringify(EnvironmentDefault));
-    }
+    const env = this._environment || {};
+    this._environment = {
+      temperature: { ...EnvironmentDefault.temperature, ...env.temperature },
+      humidity: { ...EnvironmentDefault.humidity, ...env.humidity },
+      air_pressure: { ...EnvironmentDefault.air_pressure, ...env.air_pressure },
+    };
     return this._environment;
   }
 

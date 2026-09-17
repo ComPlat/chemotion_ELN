@@ -42,23 +42,25 @@ const environmentFieldHint = (field, value) => {
 
 // Toolbar toggle: sits next to the Status field, opens/closes the panel below the toolbar.
 export const EnvironmentConditionsToggle = ({
-  open, isSet, disabled, onToggle,
+  open, isSet, onToggle,
 }) => (
   <Button
     variant={open ? 'primary' : 'outline-primary'}
     size="sm"
     className="d-inline-flex align-items-center gap-2"
     onClick={onToggle}
-    disabled={disabled}
     aria-expanded={open}
   >
     <span>Environment conditions</span>
     {isSet && (
-      <i
-        className="fa fa-check-circle text-success"
-        aria-hidden="true"
-        title="Conditions entered"
-      />
+      <>
+        <i
+          className="fa fa-check-circle text-success"
+          aria-hidden="true"
+          title="Conditions entered"
+        />
+        <span className="visually-hidden">Conditions entered</span>
+      </>
     )}
     <i className={`fa fa-chevron-${open ? 'up' : 'down'}`} aria-hidden="true" />
   </Button>
@@ -67,7 +69,6 @@ export const EnvironmentConditionsToggle = ({
 EnvironmentConditionsToggle.propTypes = {
   open: PropTypes.bool.isRequired,
   isSet: PropTypes.bool.isRequired,
-  disabled: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
 };
 
@@ -102,6 +103,7 @@ const EnvironmentConditionsPanel = ({
               <InputGroup>
                 <Form.Control
                   type="text"
+                  aria-label="Temperature"
                   value={environment.temperature.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
@@ -126,6 +128,7 @@ const EnvironmentConditionsPanel = ({
               <InputGroup>
                 <Form.Control
                   type="text"
+                  aria-label="Humidity"
                   value={environment.humidity.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
@@ -146,6 +149,7 @@ const EnvironmentConditionsPanel = ({
               <InputGroup>
                 <Form.Control
                   type="text"
+                  aria-label="Air pressure"
                   value={environment.air_pressure.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}

@@ -1077,7 +1077,6 @@ export default class ReactionDetails extends Component {
               <EnvironmentConditionsToggle
                 open={this.state.environmentConditionsOpen}
                 isSet={reaction.isEnvironmentSet()}
-                disabled={!permitOn(reaction)}
                 onToggle={() => this.setState((prev) => ({
                   environmentConditionsOpen: !prev.environmentConditionsOpen,
                 }))}
