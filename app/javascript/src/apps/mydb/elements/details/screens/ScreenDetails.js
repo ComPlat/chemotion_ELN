@@ -35,7 +35,7 @@ import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, stripDeletedInlineBlotsFromBody } from 'src/utilities/attachmentUtils';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -92,6 +92,19 @@ export default class ScreenDetails extends Component {
     const { screen } = this.state;
     if (screen.isReadOnly) { return; }
 
+    const deletedInlineIds = new Set(
+      (screen.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0) {
+      const stripped = stripDeletedInlineBlotsFromBody(
+        [{ type: 'richtext', value: screen.description }],
+        deletedInlineIds
+      );
+      screen.description = stripped[0].value;
+    }
+
     LoadingActions.start();
 
     if (screen.isNew) {
@@ -132,6 +145,15 @@ export default class ScreenDetails extends Component {
 
   handleScreenChanged(screen) {
     this.setState({ screen });
+  }
+
+  handleDescriptionAttachmentsChange(nextAttachments) {
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = nextAttachments;
+      screen.changed = true;
+      return { screen };
+    });
   }
 
   dropResearchPlan(researchPlan) {
@@ -267,6 +289,9 @@ export default class ScreenDetails extends Component {
                   value={description}
                   onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
                   disabled={screen.isReadOnly || screen.isMethodDisabled('description')}
+                  attachments={screen.attachments || []}
+                  getAttachments={() => screen.attachments || []}
+                  onAttachmentsChange={(next) => this.handleDescriptionAttachmentsChange(next)}
                 />
               </Form.Group>
             </Col>
@@ -408,6 +433,9 @@ export default class ScreenDetails extends Component {
                 onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
                 onEdit={this.handleAttachmentEdit.bind(this)}
                 readOnly={!screen.can_update}
+                inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(
+                  [{ type: 'richtext', value: screen.description }]
+                )}
               />
             </ListGroupItem>
           </ListGroup>

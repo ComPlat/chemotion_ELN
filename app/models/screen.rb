@@ -70,7 +70,34 @@ class Screen < ApplicationRecord
     self.container ? self.container.analyses : []
   end
 
+  def update_body_attachments(original_identifier, copy_identifier)
+    remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    save!
+  end
+
+  def remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    remap_delta_op_identifiers(description, original_identifier, copy_identifier)
+  end
+
   private
+
+  def remap_delta_op_identifiers(delta, original_identifier, copy_identifier)
+    ops = delta.is_a?(Hash) ? delta['ops'] : nil
+    return unless ops.is_a?(Array)
+
+    ops.each do |op|
+      insert = op.is_a?(Hash) ? op['insert'] : nil
+      next unless insert.is_a?(Hash)
+
+      %w[attachment-image attachment-file].each do |blot_key|
+        payload = insert[blot_key]
+        next unless payload.is_a?(Hash)
+        next unless payload['attachment_identifier'] == original_identifier
+
+        payload['attachment_identifier'] = copy_identifier
+      end
+    end
+  end
 
   def description_to_plain_text
     return unless description_changed?
