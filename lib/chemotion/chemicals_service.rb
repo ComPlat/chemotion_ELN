@@ -186,7 +186,18 @@ module Chemotion
       path = "#{brand}/#{product_number}"
       { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
         'merck_product_number' => product_number,
-        'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}" }
+        'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
+        'save_mode' => vendor_save_mode(SDS_VENDOR) }
+    end
+
+    # How a sheet can reach the ELN. Sigma refuses the server yet allows a cross-origin
+    # browser read, so the two routes are not interchangeable and the UI has to know which
+    # applies. Anything unlisted has no fetchable sheet and must not offer a save.
+    def self.vendor_save_mode(vendor)
+      return 'browser' if vendor.casecmp?(SDS_VENDOR)
+      return 'server' if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+
+      'none'
     end
 
     # Sigma's own search rejects automated clients, so the catalogue entry comes from
@@ -258,8 +269,8 @@ module Chemotion
       products, sds_supported = vendor_products(vendor, sources, language)
       return nil if products.empty?
 
-      { 'vendor' => vendor, 'count' => products.size,
-        'sds_supported' => sds_supported, 'products' => products }
+      { 'vendor' => vendor, 'count' => products.size, 'sds_supported' => sds_supported,
+        'save_mode' => sds_supported ? vendor_save_mode(vendor) : 'none', 'products' => products }
     end
 
     def self.vendor_products(vendor, sources, language)
@@ -306,7 +317,8 @@ module Chemotion
       part_number, sds_url = fisher_sds(source, language)
       return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
 
-      product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number }
+      product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number,
+                  'save_mode' => vendor_save_mode(FISHER_VENDORS.first) }
       product['fisher_product_link'] = url if url.present?
       product
     end

@@ -91,6 +91,21 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe 'save routing' do
+    it 'marks Sigma sheets browser-fetched, since the server is refused' do
+      expect(described_class.vendor_save_mode('Sigma-Aldrich')).to eq('browser')
+    end
+
+    it 'marks Thermo sheets server-fetched' do
+      expect(described_class.vendor_save_mode('Thermo Fisher Scientific')).to eq('server')
+      expect(described_class.vendor_save_mode('Fisher Chemical')).to eq('server')
+    end
+
+    it 'offers no save route for a catalogue-only vendor' do
+      expect(described_class.vendor_save_mode('abcr GmbH')).to eq('none')
+    end
+  end
+
   describe '.fetch_allowed_url' do
     let(:pdf) { instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }) }
 
@@ -141,6 +156,7 @@ describe Chemotion::ChemicalsService do
         'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
         'merck_product_number' => '179124',
         'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
+        'save_mode' => 'browser',
       )
     end
 
@@ -176,6 +192,7 @@ describe Chemotion::ChemicalsService do
         'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=A111' \
                          '&productDescription=&language=EN&countryCode=US',
         'fisher_product_number' => 'A111',
+        'save_mode' => 'server',
       )
     end
 
