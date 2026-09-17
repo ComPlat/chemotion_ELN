@@ -290,11 +290,17 @@ export default class ReactionDetails extends Component {
         .map((a) => a.identifier)
     );
     if (deletedInlineIds.size > 0) {
-      const stripped = stripDeletedInlineBlotsFromBody(
+      const strippedObs = stripDeletedInlineBlotsFromBody(
         [{ type: 'richtext', value: reaction.observation }],
         deletedInlineIds
       );
-      reaction.observation = stripped[0].value;
+      reaction.observation = strippedObs[0].value;
+
+      const strippedDesc = stripDeletedInlineBlotsFromBody(
+        [{ type: 'richtext', value: reaction.description }],
+        deletedInlineIds
+      );
+      reaction.description = strippedDesc[0].value;
     }
 
     if (reaction && reaction.isNew) {
