@@ -1673,9 +1673,8 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
-  static copyTooltip(copied, vendorName) {
-    if (copied) return copied.ok ? 'Copied' : 'Could not reach the clipboard';
-
+  // The mark on the badge reports the copy; the tooltip keeps saying what a click does.
+  static copyTooltip(vendorName) {
     return vendorName ? `${vendorName} catalogue number. Click to copy.` : 'Product listing. Click to copy.';
   }
 
@@ -1709,7 +1708,7 @@ export default class ChemicalTab extends React.Component {
                   placement="top"
                   overlay={(
                     <Tooltip id={`product-number-${group.vendor}-${index}`}>
-                      {ChemicalTab.copyTooltip(copied, numberKey && vendorDisplayName(group.vendor))}
+                      {ChemicalTab.copyTooltip(numberKey && vendorDisplayName(group.vendor))}
                     </Tooltip>
                   )}
                 >

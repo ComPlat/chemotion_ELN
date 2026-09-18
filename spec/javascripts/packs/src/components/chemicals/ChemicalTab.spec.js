@@ -452,11 +452,10 @@ describe('ChemicalTab component', () => {
         expect(trigger.prop('overlay').props.children).toEqual(expect.stringContaining('Click to copy'));
       });
 
-      it('says what the badge is doing', () => {
-        expect(ChemicalTab.copyTooltip({ ok: true })).toEqual('Copied');
-        expect(ChemicalTab.copyTooltip({ ok: false })).toEqual('Could not reach the clipboard');
-        expect(ChemicalTab.copyTooltip(null, 'Sigma-Aldrich'))
+      it('keeps saying what a click does, copied or not', () => {
+        expect(ChemicalTab.copyTooltip('Sigma-Aldrich'))
           .toEqual('Sigma-Aldrich catalogue number. Click to copy.');
+        expect(ChemicalTab.copyTooltip(null)).toEqual('Product listing. Click to copy.');
       });
     });
 
