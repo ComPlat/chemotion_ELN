@@ -3,29 +3,6 @@
 module Chemotion
   # rubocop:disable Metrics/ClassLength
   class ChemicalsService
-    MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
-      'qualitätsniveau' => 'quality level',
-      'form' => 'form',
-      'schmelzpunkt' => 'melting point',
-      'siedepunkt' => 'boiling point',
-      'dichte' => 'density',
-      'dampfdichte' => 'vapor density',
-      'dampfdruck' => 'vapor pressure',
-      'brechungsindex' => 'refractive_index',
-      'farbe' => 'color',
-      'löslichkeit' => 'solubility',
-      'flammpunkt' => 'flash_point',
-      'ph-wert' => 'ph',
-      'grad' => 'grade',
-      'optische aktivität' => 'optical_activity',
-      'funktionelle gruppe' => 'functional_group',
-    }.freeze
-
-    PROPERTY_ABBREVIATIONS = {
-      'mp' => 'melting_point',
-      'bp' => 'boiling_point',
-    }.freeze
-
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
 
     # Sheets per sample. Cf. MAX_SAVED_SDS in ChemicalTab.js, which refuses first; this is
@@ -482,14 +459,6 @@ module Chemotion
       nil
     end
 
-    def self.health_section(product_number)
-      url = "https://www.alfa.com/en/catalog/#{CGI.escape(product_number)}/"
-      safe_url = validate_url_for_request!(url)
-      alfa_req = HTTParty.get(safe_url, request_options)
-      Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'health')]")
-                    .children[1].children[1].children[1]
-    end
-
     def self.construct_h_statements(h_phrases)
       h_statements = {}
       h_phrases_hash = load_hazard_phrases_hash
@@ -570,120 +539,8 @@ module Chemotion
       pictogram_array.filter_map { |e| pictograms_hash.key?(e) ? e : nil }
     end
 
-    def self.safety_phrases_thermofischer(product_number)
-      health_section = health_section(product_number)
-      h_phrases = health_section.children[5].text.gsub(/\t|\n|Hazard Statements:/, '').split(/[+-]/)
-      p_phrases = health_section.children[11].text.gsub(/\t|\n|Precautionary Statements:/, '').split(/[+-]/)
-      pictograms = health_section.css('img').map do |e|
-        e.attributes['src'].value.gsub('/static//images/pictogram/', '')
-      end
-      { 'h_statements' => construct_h_statements(h_phrases),
-        'p_statements' => construct_p_statements(p_phrases),
-        'pictograms' => construct_pictograms(pictograms) }
-    rescue StandardError
-      'Could not find H and P phrases'
-    end
-
-    # Fetch and parse __NEXT_DATA__ Apollo state from a Sigma-Aldrich product page.
-    # Returns the first Hash with __typename == 'Product', or nil.
-    def self.fetch_product_from_apollo(product_link)
-      safe_url = validate_url_for_request!(product_link)
-      response = HTTParty.get(safe_url, request_options)
-      doc = Nokogiri::HTML.parse(response.body.to_s)
-      script = doc.at_css('#__NEXT_DATA__')
-      return nil unless script
-
-      apollo = JSON.parse(script.text).dig('props', 'apolloState') || {}
-      apollo.values.find { |v| v.is_a?(Hash) && v['__typename'] == 'Product' }
-    rescue JSON::ParserError, TypeError
-      nil
-    end
-
-    private_class_method :fetch_product_from_apollo
     private_class_method :process_statement, :normalize_phrases_to_array, :load_hazard_phrases_hash,
                          :load_precautionary_phrases_hash
-
-    def self.safety_phrases_merck(product_link)
-      product = fetch_product_from_apollo(product_link)
-      raise StandardError, 'Product not found in Apollo state' unless product
-
-      compliance = product['compliance'] || []
-      { 'h_statements' => construct_h_statements(compliance_value(compliance, 'hcodes')),
-        'p_statements' => construct_p_statements(compliance_value(compliance, 'pcodes')),
-        'pictograms' => construct_pictograms(compliance_value(compliance, 'pictograms')) }
-    rescue StandardError
-      'Could not find H and P phrases'
-    end
-
-    # Return the value string for a given key from a compliance array, or ''.
-    def self.compliance_value(compliance, key)
-      compliance.find { |c| c['key'] == key }&.fetch('value', '').to_s
-    end
-
-    private_class_method :compliance_value
-
-    def self.chem_properties_alfa(properties)
-      chemical_properties = {}
-      properties.each_with_index do |property, index|
-        property_name = property.tr(' ', '_').downcase
-        chemical_properties[property_name] = properties[index + 1] unless index.odd?
-      end
-      chemical_properties
-    end
-
-    def self.chemical_properties_alfa(product_link)
-      safe_url = validate_url_for_request!(product_link)
-      alfa_req = HTTParty.get(safe_url, request_options)
-      properties = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'product')]").search('div.col-md-12')
-                                 .search('div.col-md-3').text.delete("\t").split("\n\n")
-      chem_properties_alfa(properties)
-    rescue StandardError
-      'Could not find additional chemical properties'
-    end
-
-    def self.clean_property_name(property_name)
-      return nil if property_name.blank?
-
-      property_name = property_name.downcase.strip
-      return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
-
-      handle_property_with_parentheses(property_name)
-    end
-
-    def self.handle_property_with_parentheses(property_name)
-      return MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name unless property_name.include?('(')
-
-      main_term = extract_main_term(property_name)
-      return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
-
-      german_term = extract_german_term(property_name)
-      MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] || property_name
-    end
-
-    def self.extract_main_term(property_name)
-      property_name.split('(').first.strip
-    end
-
-    def self.extract_german_term(property_name)
-      property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
-    end
-
-    def self.chemical_properties_merck(product_link)
-      safe_url = validate_url_for_request!(product_link)
-      product = fetch_product_from_apollo(safe_url)
-      raise StandardError, 'Product not found in Apollo state' unless product
-
-      (product['attributes'] || []).each_with_object({}) do |attr, result|
-        property_name = clean_property_name(attr['label'])
-        next unless property_name
-
-        raw_value = Array(attr['values']).join(', ')
-        cleaned_value = Nokogiri::HTML.fragment(CGI.unescapeHTML(raw_value)).text.strip
-        result[property_name] = cleaned_value unless cleaned_value.empty?
-      end
-    rescue StandardError
-      'Could not find additional chemical properties'
-    end
 
     # Generate safety sheet file path (unique by vendor/product and hash initials)
     # Adds "_web_" marker when file originates from vendor API (url_signature = true)

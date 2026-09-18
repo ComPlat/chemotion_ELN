@@ -166,8 +166,7 @@ describe('ChemicalTab component', () => {
       const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
-      // Assert via a stable method to avoid shallow-render side effects
-      expect(wrapper.instance().isSavedSds()).toBe(true);
+      expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
     });
 
     it('Simulate clicking on the modal close button ', () => {
@@ -185,7 +184,7 @@ describe('ChemicalTab component', () => {
       sinon.assert.calledOnce(setStateStub);
       sinon.assert.calledWith(setStateStub, {
         viewChemicalPropertiesModal: false,
-        viewModalForVendor: ''
+        viewPropertiesForSheet: ''
       });
       setStateStub.restore();
     });
@@ -532,12 +531,11 @@ describe('ChemicalTab component', () => {
       expect(instance.atSavedSdsLimit()).toBe(false);
     });
 
-    it('calls querySafetySheets() when fetch safety phrases button is clicked', () => {
-      const fetchSafetyPhrasesSpy = sinon.spy(wrapper.instance(), 'fetchSafetyPhrases');
-      // Directly invoke to avoid DOM find flakiness in shallow render
-      wrapper.instance().fetchSafetyPhrases('merck');
-      expect(fetchSafetyPhrasesSpy.called).toBe(true);
-      fetchSafetyPhrasesSpy.restore();
+    it('leaves the extract button disabled for a sheet that is not saved yet', () => {
+      const button = shallow(
+        <div>{wrapper.instance().renderSdsExtraction('https://vendor.example/sheet.pdf')}</div>
+      ).find('#extract-sds');
+      expect(button.prop('disabled')).toBe(true);
     });
 
     it('calls renderSafetySheets() when query safety sheets button is clicked', () => {
@@ -558,27 +556,37 @@ describe('ChemicalTab component', () => {
       renderChildElementsSpy.restore();
     });
 
-    it('calls fetchChemicalProperties() when fetch chemical properties button is clicked', () => {
-      const fetchChemicalPropertiesSpy = sinon.spy(wrapper.instance(), 'fetchChemicalProperties');
+    it('sends the saved sheet path to the extractor and stores what came back', async () => {
+      const sheetPath = '/safety_sheets/merck/252549_web_c0161049cda26386.pdf';
+      const extracted = {
+        safetyPhrases: { h_statements: { H225: ' x' }, p_statements: {}, pictograms: [] },
+        properties: { flash_point: '4 °C', form: 'liquid' },
+        diagnostics: { notes: [], errors: [] }
+      };
+      const fetcherStub = sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted);
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [{ merck_link: sheetPath }] }]) });
 
-      // Set up the component state with a chemical object and displayWell
-      const chemicalData = [{
-        safetySheetPath: [
-          { merck_link: '/safety_sheets/252549_Merck.pdf' }
-        ]
-      }];
-      const newChemical = createChemical(chemicalData, '7681-82-5');
-      instance.setState({
-        chemical: newChemical,
-        displayWell: true,
-        viewModalForVendor: 'merck'
+      await instance.extractFromSheet(sheetPath);
+
+      expect(fetcherStub.calledWith(sheetPath)).toBe(true);
+      expect(instance.state.extractedProperties[sheetPath]).toEqual(extracted.properties);
+      expect(instance.state.chemical.chemical_data[0].safetyPhrases).toEqual(extracted.safetyPhrases);
+      fetcherStub.restore();
+    });
+
+    it('reports the reason when the sheet yields nothing', async () => {
+      const sheetPath = '/safety_sheets/merck/empty_0000000000000000.pdf';
+      const fetcherStub = sinon.stub(ChemicalFetcher, 'extractFromSds').resolves({
+        safetyPhrases: { h_statements: {}, p_statements: {}, pictograms: [] },
+        properties: {},
+        diagnostics: { notes: [], errors: ['ghostscript produced no text'] }
       });
 
-      // Directly call the method instead of simulating button click
-      instance.fetchChemicalProperties('merck');
+      await instance.extractFromSheet(sheetPath);
 
-      expect(fetchChemicalPropertiesSpy.called).toBe(true);
-      fetchChemicalPropertiesSpy.restore();
+      expect(instance.state.warningMessage)
+        .toBe('Nothing could be read from this sheet: ghostscript produced no text');
+      fetcherStub.restore();
     });
 
     it('calls textInput() when field input is changed', () => {
@@ -805,11 +813,9 @@ describe('Manual SDS attachment functionality', () => {
     expect(saveManualAttachedSafetySheetStub.calledOnce).toBe(true);
     expect(saveManualAttachedSafetySheetStub.firstCall.args[0]).toBeTruthy();
 
-    // Ensure the well is displayed and saved SDS detected
+    // Ensure the well is displayed and the sheet list renders
     instance.setState({ displayWell: true });
     wrapper.update();
-    expect(wrapper.instance().isSavedSds()).toBe(true);
-    // renderSafetySheets should produce content (not null)
     expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
   });
 });

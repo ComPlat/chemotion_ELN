@@ -43,17 +43,6 @@ const VENDOR_DISPLAY_NAMES = {
   'fisher chemical': 'Thermofisher',
 };
 
-// The phrases and properties endpoints know only these two keys, and the whole Thermo
-// lineage is stored under the alfa/thermofischer one.
-const PROPERTY_VENDOR_KEYS = {
-  merck: 'merck',
-  'sigma-aldrich': 'merck',
-  alfa: 'thermofischer',
-  fisher: 'thermofischer',
-  thermofisher: 'thermofischer',
-  thermofischer: 'thermofischer',
-};
-
 // How long the badge shows the outcome of a copy before returning to its resting state.
 const COPY_FEEDBACK_MS = 1600;
 
@@ -63,8 +52,6 @@ const MISSING_QUERY_HINT = {
   CAS: 'Assign a CAS number in the labels section, or search by common name.',
   'Common Name': 'This sample has no molecule name yet, so there is nothing to search with.',
 };
-
-const propertyVendorKey = (name) => PROPERTY_VENDOR_KEYS[String(name || '').toLowerCase()] || '';
 
 const vendorDisplayName = (name) => {
   if (!name) return name;
@@ -92,11 +79,11 @@ export default class ChemicalTab extends React.Component {
       warningMessage: '',
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: {},
-      loadingPhrasesVendor: '',
-      loadChemicalProperties: { vendor: '', loading: false },
+      extractingSheet: '',
+      extractedProperties: {},
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
-      viewModalForVendor: '',
+      viewPropertiesForSheet: '',
       showModal: false,
       searchResults: [],
     };
@@ -336,10 +323,10 @@ export default class ChemicalTab extends React.Component {
     this.setState({ safetySheetLanguage: value });
   }
 
-  handlePropertiesModal(vendor) {
+  handlePropertiesModal(sheetPath) {
     this.setState({
       viewChemicalPropertiesModal: true,
-      viewModalForVendor: vendor
+      viewPropertiesForSheet: sheetPath
     });
   }
 
@@ -501,161 +488,46 @@ export default class ChemicalTab extends React.Component {
     this.handleFieldChanged('safetyPhrases', next);
   };
 
-  isSavedSds = () => {
-    const { chemical } = this.state;
-    const isSaved = chemical?._chemical_data?.[0]?.safetySheetPath?.some(
-      (sheet) => Object.keys(sheet).some((key) => key.endsWith('_link') && sheet[key])
-    );
-    return isSaved;
-  };
+  // One pass over the saved PDF: H and P codes land on the chemical, section 9 values on
+  // the sample. Cf. Chemotion::SdsExtractor.
+  extractFromSheet = (sheetPath) => {
+    this.setState({ warningMessage: '', extractingSheet: sheetPath });
 
-  extractProductInfo = (vendor) => {
-    const { chemical } = this.state;
-    let productLink = '';
-    if (chemical && vendor === 'thermofischer') {
-      productLink = chemical._chemical_data[0].alfaProductInfo
-        ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
-    } else if (chemical && vendor === 'merck') {
-      productLink = chemical._chemical_data[0].merckProductInfo
-        ? chemical._chemical_data[0].merckProductInfo.productLink : '';
-    }
-    return productLink;
-  };
+    ChemicalFetcher.extractFromSds(sheetPath).then((result) => {
+      this.setState({ extractingSheet: '' });
+      const properties = result?.properties ?? {};
+      const phrases = result?.safetyPhrases;
+      const codeCount = phrases
+        ? Object.keys(phrases.h_statements ?? {}).length + Object.keys(phrases.p_statements ?? {}).length
+        : 0;
 
-  fetchSafetyPhrases = (vendor) => {
-    const { sample } = this.props;
-    const queryParams = {
-      vendor, id: sample.id
-    };
-
-    // Set loading state for this vendor
-    this.setState({
-      warningMessage: '',
-      loadingPhrasesVendor: vendor
-    });
-
-    const productLink = this.extractProductInfo(vendor);
-
-    if (!productLink) {
-      if (this.isSavedSds()) {
-        this.setState({
-          loadingPhrasesVendor: '',
-          warningMessage: 'No product link available for this vendor' });
+      if (!codeCount && !Object.keys(properties).length) {
+        this.setState({ warningMessage: ChemicalTab.extractionWarning(result) });
         return;
       }
-      this.setState({
-        loadingPhrasesVendor: '',
-        warningMessage: 'Please fetch and save corresponding safety data sheet first' });
-      return;
-    }
 
-    ChemicalFetcher.safetyPhrases(queryParams).then((result) => {
-      // Clear loading state
-      this.setState({ loadingPhrasesVendor: '' });
-      const warningMessage = 'No safety phrases could be found';
-      if (result === warningMessage || result === 204) {
-        this.setState({ warningMessage });
-      } else if (result === 'Could not find H and P phrases') {
-        this.setState({ warningMessage: result });
-      } else {
-        this.handleFieldChanged('safetyPhrases', result);
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-      // Clear loading state on error
-      this.setState({ loadingPhrasesVendor: '' });
-    });
-  };
-
-  fetchChemicalProperties = (vendor) => {
-    const { chemical } = this.state;
-    this.setState({ warningMessage: '' });
-
-    const productLink = this.extractProductInfo(vendor);
-
-    if (!productLink) {
-      if (this.isSavedSds()) {
-        this.setState({ warningMessage: 'No product link available for this vendor' });
-        return;
-      }
-      this.setState({ warningMessage: 'Please fetch and save corresponding safety data sheet first' });
-      return;
-    }
-
-    this.setState({ loadChemicalProperties: { vendor, loading: true } });
-    ChemicalFetcher.chemicalProperties(productLink).then((result) => {
-      this.setState({ loadChemicalProperties: { vendor: '', loading: false } });
-      if (result === 'Could not find additional chemical properties' || result === null) {
-        // Only show warning if this is a saved SDS
-        if (this.isSavedSds()) {
-          this.setState({ warningMessage: result });
-        }
-      } else {
-        if (chemical && vendor === 'thermofischer') {
-          chemical._chemical_data[0].alfaProductInfo.properties = result;
-        } else if (chemical && vendor === 'merck') {
-          if (chemical._chemical_data && chemical._chemical_data[0] && chemical._chemical_data[0].merckProductInfo) {
-            chemical._chemical_data[0].merckProductInfo.properties = result;
-          }
-        }
-        this.mapToSampleProperties(vendor);
-      }
+      this.setState((state) => ({
+        extractedProperties: { ...state.extractedProperties, [sheetPath]: properties }
+      }));
+      if (codeCount) this.handleFieldChanged('safetyPhrases', phrases);
+      this.mapToSampleProperties(properties);
     }).catch((errorMessage) => {
       console.log(errorMessage);
       this.setState({
-        loadChemicalProperties: { vendor: '', loading: false },
-        warningMessage: this.isSavedSds() ? 'Error fetching chemical properties' : ''
+        extractingSheet: '',
+        warningMessage: 'Could not read this safety data sheet'
       });
     });
   };
 
-  querySafetyPhrases = (vendor) => {
-    // Only enable for special vendors: merck and thermofischer
-    const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
-    const { loadingPhrasesVendor } = this.state;
-    const isLoading = loadingPhrasesVendor === vendor;
-
-    const button = (
-      <Button
-        id="safetyPhrases-btn"
-        onClick={() => this.fetchSafetyPhrases(vendor)}
-        variant="light"
-        disabled={!specialVendor || isLoading}
-      >
-        {isLoading ? (
-          <div>
-            <i className="fa fa-spinner fa-pulse fa-fw" />
-            <span className="ms-1">Loading phrases...</span>
-          </div>
-        ) : (
-          <>
-            fetch Safety Phrases
-            {!specialVendor && (
-              <span className="ms-1"><i className="fa fa-info-circle" /></span>
-            )}
-          </>
-        )}
-      </Button>
-    );
-
-    // If disabled, wrap in an OverlayTrigger to show the tooltip
-    if (!specialVendor) {
-      return (
-        <OverlayTrigger container={TOOLTIP_CONTAINER}
-          placement="top"
-          overlay={(
-            <Tooltip id="disabledPhrases">
-              Fetching safety phrases is not available for manually attached safety sheets
-            </Tooltip>
-          )}
-        >
-          <div>{button}</div>
-        </OverlayTrigger>
-      );
-    }
-
-    return button;
-  };
+  // The extractor omits rather than guesses, so say which step stopped short.
+  static extractionWarning(result) {
+    const diagnostics = result?.diagnostics ?? {};
+    const reason = (diagnostics.errors ?? [])[0] ?? (diagnostics.notes ?? [])[0];
+    return reason
+      ? `Nothing could be read from this sheet: ${reason}`
+      : 'Nothing could be read from this sheet';
+  }
 
   // Sigma-Aldrich refuses the server's own request but serves the sheet with
   // access-control-allow-origin *, so the browser reads it and hands us the bytes.
@@ -808,17 +680,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   /* eslint-disable prefer-destructuring */
-  mapToSampleProperties(vendor) {
+  mapToSampleProperties(properties) {
     const { sample, handleUpdateSample } = this.props;
-    const { chemical } = this.state;
-    const chemicalData = chemical?._chemical_data[0] || [];
-    let properties = {};
-
-    if (vendor === 'thermofischer') {
-      properties = chemicalData.alfaProductInfo.properties;
-    } else if (vendor === 'merck') {
-      properties = chemicalData.merckProductInfo.properties;
-    }
 
     const updateSampleProperty = (propertyName, propertyValue) => {
       if (propertyValue) {
@@ -833,10 +696,11 @@ export default class ChemicalTab extends React.Component {
     updateSampleProperty('boiling_point', properties.boiling_point);
     updateSampleProperty('melting_point', properties.melting_point);
 
-    sample.xref.flash_point = {
-      unit: '°C',
-      value: properties.flash_point
-    };
+    // The unit field is fixed, so only a Celsius reading may be written into it.
+    const flashPoint = properties.flash_point?.match(/^(-?[\d.]+)\s*°C$/);
+    if (flashPoint) {
+      sample.xref.flash_point = { unit: '°C', value: parseFloat(flashPoint[1]) };
+    }
 
     const densityNumber = properties.density?.match(/[0-9.]+/g);
     if (densityNumber) {
@@ -1394,7 +1258,6 @@ export default class ChemicalTab extends React.Component {
 
     const vendorLink = linkKey ? document[linkKey] : null;
     let displayName = 'queried vendor';
-    let vendorKey = '';
     let productInfo = '';
     let versionInfo = '';
 
@@ -1406,7 +1269,6 @@ export default class ChemicalTab extends React.Component {
 
       if (vendorFromPath) {
         displayName = vendorDisplayName(vendorFromPath);
-        vendorKey = vendorFromPath.toLowerCase();
       }
 
       // Extract product number from filename: 270709_4c82b57ffb35b49b.pdf -> 270709
@@ -1467,10 +1329,9 @@ export default class ChemicalTab extends React.Component {
       }
     } else {
       // for a search query: extract vendor name from key
-      const vendor = linkKey.replace('_link', '').toUpperCase();
-      vendorKey = vendor.toLowerCase();
-      displayName = vendorDisplayName(vendorKey);
-      productInfo = ` - ${document[`${vendor.toLowerCase()}_product_number`] || ''}`;
+      const vendor = linkKey.replace('_link', '').toLowerCase();
+      displayName = vendorDisplayName(vendor);
+      productInfo = ` - ${document[`${vendor}_product_number`] || ''}`;
     }
 
     const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
@@ -1490,11 +1351,8 @@ export default class ChemicalTab extends React.Component {
             {this.removeButton(index, document)}
           </ButtonToolbar>
         </div>
-        <div className="me-auto">
-          {this.renderChemicalProperties(propertyVendorKey(vendorKey))}
-        </div>
         <div className="justify-content-end">
-          {this.querySafetyPhrases(propertyVendorKey(vendorKey))}
+          {this.renderSdsExtraction(vendorLink)}
         </div>
       </div>
     );
@@ -1983,42 +1841,40 @@ export default class ChemicalTab extends React.Component {
   closePropertiesModal() {
     this.setState({
       viewChemicalPropertiesModal: false,
-      viewModalForVendor: ''
+      viewPropertiesForSheet: ''
     });
   }
 
-  renderChemicalProperties = (vendor) => {
-    const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
-    // Only enable for special vendors: merck and thermofischer
-    const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
+  // Reads the saved PDF itself, so it works for a manually attached sheet as much as a
+  // fetched one. A search result has no file yet, hence the saved-path gate.
+  renderSdsExtraction = (sheetPath) => {
+    const { loadingQuerySafetySheets, extractingSheet, extractedProperties } = this.state;
+    const isSaved = !!sheetPath && sheetPath.includes('/safety_sheets/');
+    const isLoading = extractingSheet === sheetPath;
+    const hint = isSaved
+      ? 'Reads H and P phrases and section 9 properties out of the saved sheet'
+      : 'Save the safety data sheet first';
 
     return (
       <div className="w-100 mt-0 ms-2">
         <InputGroup>
           <OverlayTrigger container={TOOLTIP_CONTAINER}
             placement="top"
-            overlay={(
-              <Tooltip id="renderChemProp">
-                {specialVendor
-                  ? 'Info, if any found, will be copied to properties fields in sample properties tab'
-                  : 'Fetching Chemical properties is not available for manually attached safety sheets'}
-              </Tooltip>
-            )}
+            overlay={<Tooltip id="extractSds">{hint}</Tooltip>}
           >
             <div>
               <Button
-                id="fetch-properties"
-                onClick={() => this.fetchChemicalProperties(vendor)}
-                disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading || !specialVendor}
+                id="extract-sds"
+                onClick={() => this.extractFromSheet(sheetPath)}
+                disabled={!isSaved || isLoading || !!loadingQuerySafetySheets}
                 variant="light"
               >
-                {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
-                  ? (
-                    <div>
-                      <i className="fa fa-spinner fa-pulse fa-fw" />
-                      <span>Loading...</span>
-                    </div>
-                  ) : 'fetch Chemical Properties'}
+                {isLoading ? (
+                  <div>
+                    <i className="fa fa-spinner fa-pulse fa-fw" />
+                    <span>Reading sheet...</span>
+                  </div>
+                ) : 'Extract from sheet'}
               </Button>
             </div>
           </OverlayTrigger>
@@ -2026,18 +1882,18 @@ export default class ChemicalTab extends React.Component {
             placement="top"
             overlay={(
               <Tooltip id="viewChemProp">
-                {specialVendor
-                  ? 'Click to view fetched chemical properties'
-                  : 'Fetching Chemical properties is not available for manually attached safety sheets'}
+                {extractedProperties[sheetPath]
+                  ? 'Click to view the properties read from this sheet'
+                  : 'Extract from this sheet first'}
               </Tooltip>
             )}
           >
             <div>
               <Button
                 active
-                onClick={() => this.handlePropertiesModal(vendor)}
+                onClick={() => this.handlePropertiesModal(sheetPath)}
                 variant="light"
-                disabled={!specialVendor}
+                disabled={!extractedProperties[sheetPath]}
               >
                 <i className="fa fa-file-text" />
               </Button>
@@ -2312,21 +2168,11 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderPropertiesModal() {
-    const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
-    let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
-    if (viewModalForVendor === 'thermofischer') {
-      const condition = chemical._chemical_data[0].alfaProductInfo
-      && chemical._chemical_data[0].alfaProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].alfaProductInfo.properties, null, '\n')
-        : fetchedChemicalProperties;
-    } else if (viewModalForVendor === 'merck') {
-      const condition = chemical._chemical_data[0].merckProductInfo
-        && chemical._chemical_data[0].merckProductInfo.properties;
-      fetchedChemicalProperties = condition
-        ? JSON.stringify(chemical._chemical_data[0].merckProductInfo.properties, null, '\n')
-        : fetchedChemicalProperties;
-    }
+    const { viewChemicalPropertiesModal, viewPropertiesForSheet, extractedProperties } = this.state;
+    const properties = extractedProperties[viewPropertiesForSheet];
+    const fetchedChemicalProperties = properties
+      ? JSON.stringify(properties, null, '\n')
+      : 'Please extract from a safety data sheet first to view results';
 
     return (
       <AppModal

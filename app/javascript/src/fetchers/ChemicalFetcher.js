@@ -55,16 +55,7 @@ export default class ChemicalFetcher {
     return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
 
-  static safetyPhrases(queryParams) {
-    return ApiClient.getJson(`/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
-      handleResponseSuccess: (response) => {
-        if (response.status === 204) { return response.status; }
-        return response.json();
-      },
-    });
-  }
-
-  static chemicalProperties(productLink) {
-    return ApiClient.getJson(`/api/v1/chemicals/chemical_properties?link=${productLink}`);
+  static extractFromSds(sheetPath) {
+    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?path=${encodeURIComponent(sheetPath)}`);
   }
 }

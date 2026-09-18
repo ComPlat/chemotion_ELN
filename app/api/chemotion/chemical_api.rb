@@ -195,50 +195,16 @@ module Chemotion
         end
       end
 
-      resources :safety_phrases do
-        desc 'H and P safety phrases'
+      resources :extract_sds do
+        desc 'Read H and P codes and section 9 properties out of a saved safety data sheet'
 
         params do
-          requires :vendor, type: String, desc: 'params'
-        end
-
-        route_param :sample_id do
-          get do
-            Chemotion::ChemicalsService.handle_exceptions do
-              chemical = Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
-              if chemical.chemical_data.present?
-                if params[:vendor] == 'thermofischer' && chemical.chemical_data[0]['alfaProductInfo']
-                  product_number = chemical.chemical_data[0]['alfaProductInfo']['productNumber']
-                  Chemotion::ChemicalsService.safety_phrases_thermofischer(product_number)
-                elsif params[:vendor] == 'merck' && chemical.chemical_data[0]['merckProductInfo']
-                  product_link = chemical.chemical_data[0]['merckProductInfo']['productLink']
-                  Chemotion::ChemicalsService.safety_phrases_merck(product_link)
-                else
-                  err_body = 'No safety phrases could be found'
-                  err_body
-                end
-              else
-                status 204
-              end
-            end
-          end
-        end
-      end
-
-      resources :chemical_properties do
-        desc 'additional chemical properties'
-
-        params do
-          requires :link, type: String, desc: 'vendor product link'
+          requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
 
         get do
           Chemotion::ChemicalsService.handle_exceptions do
-            if params[:link].include? 'alfa'
-              Chemotion::ChemicalsService.chemical_properties_alfa(params[:link])
-            elsif params[:link].include? 'sigmaaldrich'
-              Chemotion::ChemicalsService.chemical_properties_merck(params[:link])
-            end
+            Chemotion::SdsExtractor.extract_saved_sheet(params[:path])
           end
         end
       end

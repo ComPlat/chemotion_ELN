@@ -162,37 +162,6 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
-  describe 'GET safety phrases /api/v1/chemicals/safety_phrases' do
-    let(:chemical) { create(:chemical, id: 1, sample_id: s.id) }
-    let(:params) { { vendor: 'Thermofisher' } }
-
-    before do
-      get "/api/v1/chemicals/safety_phrases/#{chemical.sample_id}?vendor=#{params[:vendor]}"
-    end
-
-    it 'returns no content' do
-      expect(response).to have_http_status(:no_content)
-    end
-  end
-
-  describe 'GET chemical properties /api/v1/chemicals/chemical_properties' do
-    let(:params) { { link: 'alfa' } }
-
-    before { get '/api/v1/chemicals/chemical_properties', params: params }
-
-    it 'response is ok with params as link' do
-      expect(response).to have_http_status(:ok)
-    end
-
-    context 'when link unsupported' do
-      it 'returns empty body' do
-        get '/api/v1/chemicals/chemical_properties', params: { link: 'unknownvendor' }
-        expect(response.status).to eq 200
-        expect(response.body).to be_empty.or eq('null')
-      end
-    end
-  end
-
   describe 'PUT update chemicals with no changes' do
     context 'when chemical_data param omitted (validation error)' do
       before do
@@ -354,107 +323,32 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
-  describe 'GET safety_phrases thermofischer' do
-    context 'when product info present (returns phrases)' do
-      let(:chemical_tf) do
-        create(:chemical, chemical_data: [{ 'alfaProductInfo' => { 'productNumber' => 'A14672' } }])
-      end
-
+  describe 'GET extract_sds' do
+    context 'with a saved sheet' do
       before do
-        allow(Chemotion::ChemicalsService)
-          .to receive(:safety_phrases_thermofischer)
-          .and_return({ 'h_statements' => { 'H200' => ' test' } })
-        get "/api/v1/chemicals/safety_phrases/#{chemical_tf.sample_id}?vendor=thermofischer"
+        get '/api/v1/chemicals/extract_sds',
+            params: { path: '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
       end
 
-      it 'returns 200 with hazard statements' do
-        parsed = response.body&.start_with?('{') ? JSON.parse(response.body) : nil
+      it 'returns the codes and properties read out of the file', :aggregate_failures do
+        body = JSON.parse(response.body)
         expect(response.status).to eq 200
-        expect(parsed['h_statements']).to have_key('H200')
+        expect(body['safetyPhrases']['h_statements'].keys).to include('H225')
+        expect(body['properties']['flash_point']).to eq('4 °C')
       end
     end
 
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
-
+    context 'with a path outside the safety sheet folder' do
       before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=thermofischer"
+        get '/api/v1/chemicals/extract_sds', params: { path: '/etc/passwd' }
       end
 
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
-      end
-    end
-  end
-
-  describe 'GET safety_phrases merck' do
-    context 'when product info present (returns pictograms)' do
-      let(:chemical_merck) do
-        create(:chemical,
-               chemical_data: [{ 'merckProductInfo' => { 'productLink' => 'https://sigmaaldrich.com/product' } }])
-      end
-
-      before do
-        allow(Chemotion::ChemicalsService).to receive(:safety_phrases_merck).and_return({ 'pictograms' => %w[GHS01] })
-        get "/api/v1/chemicals/safety_phrases/#{chemical_merck.sample_id}?vendor=merck"
-      end
-
-      it 'returns 200 with pictograms' do
-        parsed = response.body&.start_with?('{') ? JSON.parse(response.body) : nil
+      it 'refuses to read it', :aggregate_failures do
+        body = JSON.parse(response.body)
         expect(response.status).to eq 200
-        expect(parsed['pictograms']).to include('GHS01')
+        expect(body['properties']).to be_empty
+        expect(body['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
       end
-    end
-
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=merck"
-      end
-
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
-      end
-    end
-  end
-
-  describe 'GET safety_phrases unknown vendor' do
-    context 'when chemical_data exists but vendor info missing (returns message)' do
-      let(:chemical_empty) { create(:chemical, chemical_data: [{ 'otherInfo' => {} }]) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chemical_empty.sample_id}?vendor=unknown"
-      end
-
-      it 'returns informative not found message with 200' do
-        expect(response.status).to eq 200
-        expect(response.body).to include('No safety phrases could be found')
-      end
-    end
-
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=unknown"
-      end
-
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
-      end
-    end
-  end
-
-  describe 'GET chemical_properties merck link' do
-    before do
-      allow(Chemotion::ChemicalsService).to receive(:chemical_properties_merck).and_return({ 'grade' => '200' })
-      get '/api/v1/chemicals/chemical_properties', params: { link: 'https://www.sigmaaldrich.com/item' }
-    end
-
-    it 'returns merck properties' do
-      body = JSON.parse(response.body)
-      expect(body['grade']).to eq('200')
     end
   end
 

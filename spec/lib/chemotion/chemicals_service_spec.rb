@@ -499,14 +499,6 @@ describe Chemotion::ChemicalsService do
       end
     end
 
-    context 'with chem_properties_alfa' do
-      it 'constructs chemical properties hash for alfa vendor' do
-        properties = ['formula', 'NaI', 'formula Weight', '149.89', 'form', 'powder', 'melting point', '651°']
-        chemical_properties = described_class.chem_properties_alfa(properties)
-        expect(chemical_properties.keys).to match_array(%w[formula formula_weight form melting_point])
-      end
-    end
-
     context 'when handling exceptions' do
       it 'executes block without error' do
         result = described_class.handle_exceptions { 'ok' }
@@ -533,18 +525,6 @@ describe Chemotion::ChemicalsService do
       it 'captures StandardError default' do
         result = described_class.handle_exceptions { raise StandardError, 'boom' }
         expect(result[:error]).to eq('boom')
-      end
-    end
-
-    context 'when clean_property_name' do
-      it 'handles abbreviations and german forms' do
-        expect(described_class.clean_property_name('mp (schmelzpunkt)')).to eq('melting_point')
-        expect(described_class.clean_property_name('bp')).to eq('boiling_point')
-        expect(described_class.clean_property_name('qualitätsniveau')).to eq('quality level')
-      end
-
-      it 'returns nil for blank' do
-        expect(described_class.clean_property_name('')).to be_nil
       end
     end
 

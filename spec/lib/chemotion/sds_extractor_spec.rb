@@ -141,6 +141,24 @@ RSpec.describe Chemotion::SdsExtractor do
     end
   end
 
+  describe '.extract_saved_sheet' do
+    it 'reads a link as chemical_data stores it' do
+      result = described_class.extract_saved_sheet('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf')
+      expect(result['properties']['flash_point']).to eq('4 °C')
+    end
+
+    it 'refuses a path outside the safety sheet folder', :aggregate_failures do
+      result = described_class.extract_saved_sheet('../../../etc/passwd')
+      expect(result['properties']).to be_empty
+      expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+    end
+
+    it 'refuses a nested path that escapes the vendor folder' do
+      result = described_class.extract_saved_sheet('/safety_sheets/merck/../../../etc/passwd.pdf')
+      expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+    end
+  end
+
   describe 'a misfiled sheet' do
     let(:misfiled) { Rails.root.join('tmp/sds_extractor_spec/merck/392693_web_deadbeef.pdf') }
 

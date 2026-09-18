@@ -31,14 +31,28 @@ module Chemotion
     SUBSECTION_END = { sigma: /\A2\.3\b/, fisher: /\AHazards\s+not\s+otherwise\s+classified/i }.freeze
     REDUCED_LABELLING = /\AReduced\s+Label/i.freeze
     NOT_HAZARDOUS = /not\s+a\s+hazardous\s+(substance|mixture)/i.freeze
+    # The shape Chemical#chemical_data stores in safetySheetPath; nothing else reaches the disk.
+    SAVED_SHEET = %r{\A/?safety_sheets/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+\.pdf\z}.freeze
 
     def self.extract(pdf_path)
       new(pdf_path).extract
     end
 
+    # Entry point for a link held in chemical_data, which is client-supplied.
+    def self.extract_saved_sheet(link)
+      return new(link.to_s).refuse('not a saved safety sheet path') unless link.to_s.match?(SAVED_SHEET)
+
+      extract(Rails.public_path.join(link.to_s.delete_prefix('/')).to_s)
+    end
+
     def initialize(pdf_path)
       @pdf_path = pdf_path.to_s
       @diagnostics = { 'notes' => [], 'errors' => [] }
+    end
+
+    def refuse(message)
+      fail_with(message)
+      result({})
     end
 
     def extract

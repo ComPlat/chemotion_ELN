@@ -197,60 +197,23 @@ describe('ChemicalFetcher methods', () => {
     });
   });
 
-  describe('safety phrases', () => {
-    const queryParams = {
-      vendor: 'Merck',
-      id: 19
-    };
-    it('should fetch safety phrases', async () => {
+  describe('extractFromSds', () => {
+    const sheetPath = '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf';
+
+    it('should read phrases and properties out of a saved sheet', async () => {
       const expectedResponse = {
-        h_statements: {
-          H226: ' Flammable liquid and vapour',
-          H314: ' Causes severe skin burns and eye damage',
-          H317: ' May cause an allergic skin reaction',
-          H330: ' Fatal if inhaled',
-          H335: ' May cause respiratory irritation',
-          H341: ' Suspected of causing genetic defects',
-          H350: ' May cause cancer',
-          H370: ' Causes damage to organs'
+        safetyPhrases: {
+          h_statements: { H225: ' Highly flammable liquid and vapour.' },
+          p_statements: {},
+          pictograms: []
         },
-        p_statements: {
-          P201: ' Obtain special instructions before use.',
-          P210: ' Keep away from heat, hot surfaces, sparks,'
-                  + 'open flames and other ignition sources. No smoking. [As modified by IV ATP]',
-          P280: ' Wear protective gloves/protective clothing/eye protection/face protection. [As modified by IV ATP]'
-        },
-        pictograms: [
-          'GHS02',
-          'GHS05',
-          'GHS06',
-          'GHS08'
-        ]
+        properties: { flash_point: '4 °C' },
+        diagnostics: { notes: [], errors: [] }
       };
 
       fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
 
-      const result = await ChemicalFetcher.safetyPhrases(queryParams);
-
-      sinon.assert.calledOnce(fetchStub);
-      expect(result).toEqual(expectedResponse);
-    });
-  });
-
-  describe('chemicalProperties', () => {
-    const productLink = 'https://www.sigmaaldrich.com/US/en/product/sial/252549';
-    it('should fetch chemical properties', async () => {
-      const expectedResponse = {
-        grade: 'ACS reagent',
-        quality_level: '200',
-        vapor_density: '1.03 (vs air)',
-        vapor_pressure: '52 mmHg ( 37 °C)52 mmHg ( 37 °C)',
-        form: 'liquid'
-      };
-
-      fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
-
-      const result = await ChemicalFetcher.chemicalProperties(productLink);
+      const result = await ChemicalFetcher.extractFromSds(sheetPath);
 
       sinon.assert.calledOnce(fetchStub);
       expect(result).toEqual(expectedResponse);
