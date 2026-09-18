@@ -145,6 +145,66 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe 'narrowing a vendor search by product number' do
+    let(:sources) do
+      [{ SourceName: 'Sigma-Aldrich', RegistryID: '00560_SIAL',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sial/00560' },
+       { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124' },
+       { SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+         SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' }]
+    end
+
+    before do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+    end
+
+    it 'keeps only the vendor holding that number' do
+      overview = described_class.vendor_overview('Acetone', 'en', '179124')
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Sigma-Aldrich'])
+      expect(overview['sds_vendors'].first['products'].pluck('merck_product_number')).to eq(['179124'])
+      expect(overview['sds_vendors'].first['count']).to eq(1)
+    end
+
+    it 'matches a Fisher code through its catalogue prefix' do
+      overview = described_class.vendor_overview('Acetone', 'en', '327840025')
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Thermo Fisher Scientific'])
+      expect(overview['sds_vendors'].first['products'].first['fisher_product_number']).to eq('AC327840025')
+    end
+
+    it 'ignores separators and case in the number the user typed' do
+      overview = described_class.vendor_overview('Acetone', 'en', ' 179-124 ')
+      expect(overview['sds_vendors'].first['products'].pluck('merck_product_number')).to eq(['179124'])
+    end
+
+    it 'returns no vendor when nothing carries that number' do
+      overview = described_class.vendor_overview('Acetone', 'en', '999999')
+      expect(overview['sds_vendors']).to be_empty
+      expect(overview['catalogue_vendors']).to be_empty
+    end
+
+    it 'leaves the listing whole when no number is given' do
+      expect(described_class.vendor_overview('Acetone', 'en')['sds_vendors'].size).to eq(2)
+    end
+
+    it 'picks the Sigma entry the number names, not the highest-ranked brand' do
+      expect(described_class.merck('Acetone', 'en', '00560')).to include('merck_product_number' => '00560')
+      expect(described_class.merck('Acetone', 'en')).to include('merck_product_number' => '179124')
+    end
+
+    it 'reports a miss when the number matches no Sigma entry' do
+      expect(described_class.merck('Acetone', 'en', '999999'))
+        .to eq('Could not find safety data sheet from Merck')
+    end
+
+    it 'narrows the Thermofisher lookup the same way' do
+      expect(described_class.thermofisher('Acetone', 'en', '327840025'))
+        .to include('fisher_product_number' => 'AC327840025')
+      expect(described_class.thermofisher('Acetone', 'en', '999999'))
+        .to eq('Could not find safety data sheet from Thermofisher')
+    end
+  end
+
   describe '.sds_limit_reached?' do
     def with_sheets(count)
       [{ 'safetySheetPath' => Array.new(count) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } } }]

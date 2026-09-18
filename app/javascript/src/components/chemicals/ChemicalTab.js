@@ -51,10 +51,6 @@ const PROPERTY_VENDOR_KEYS = {
 };
 
 // What to tell the user when the field the chosen option searches on is empty.
-// The vendor dropdown value for Sigma, and the brand its catalogue URLs default to.
-const SDS_VENDOR_VALUE = 'Merck';
-const DEFAULT_BRAND = 'sial';
-
 const MISSING_QUERY_HINT = {
   'Product Number': 'Add a product number in Inventory Information, or search by CAS or common name.',
   CAS: 'Assign a CAS number in the labels section, or search by common name.',
@@ -79,7 +75,6 @@ export default class ChemicalTab extends React.Component {
       dynamicCheckMarks: {},
       vendorValue: 'Merck',
       queryOption: 'CAS',
-      sdsBrand: DEFAULT_BRAND,
       vendorOverview: null,
       expandedVendors: {},
       expandedProducts: {},
@@ -290,18 +285,11 @@ export default class ChemicalTab extends React.Component {
   // Brand only shapes a Sigma catalogue URL, so leaving Sigma drops the choice rather
   // than carrying a stale one back.
   handleVendorOption(value) {
-    this.setState((prev) => ({
-      vendorValue: value,
-      sdsBrand: value === SDS_VENDOR_VALUE ? prev.sdsBrand : DEFAULT_BRAND,
-    }));
+    this.setState({ vendorValue: value });
   }
 
   handleQueryOption(value) {
     this.setState({ queryOption: value });
-  }
-
-  handleSdsBrand(value) {
-    this.setState({ sdsBrand: value });
   }
 
   toggleVendor(vendor) {
@@ -369,37 +357,6 @@ export default class ChemicalTab extends React.Component {
     };
   }
 
-  // Sigma SDS URLs are derivable from brand + product number, so this needs no vendor request.
-  // Cf. Chemotion::ChemicalsService.merck, whose result shape this must match exactly.
-  buildSdsLinksFromProductNumber = (language) => {
-    const { chemical, sdsBrand } = this.state;
-    const productNumber = (chemical?._chemical_data?.[0]?.product_number ?? '').trim();
-
-    if (!/^[A-Za-z0-9\-_.]+$/.test(productNumber)) {
-      this.setState({
-        loadingQuerySafetySheets: false,
-        warningMessage: `"${productNumber}" is not a valid product number, e.g. 179124.`,
-      });
-      return;
-    }
-
-    // The vendor's own paths and the safety_sheets cache filenames are both lowercase.
-    const catalogueNumber = productNumber.toLowerCase();
-    const path = `${sdsBrand}/${catalogueNumber}`;
-    this.setState({
-      vendorOverview: null,
-      searchResults: [{
-        merck_link: `https://www.sigmaaldrich.com/DE/${language}/sds/${path}`,
-        merck_product_number: catalogueNumber,
-        merck_product_link: `https://www.sigmaaldrich.com/DE/de/product/${path}`,
-        save_modes: ['browser', 'server'],
-      }],
-      loadingQuerySafetySheets: false,
-      displayWell: true,
-      warningMessage: '',
-    });
-  };
-
   // The provider is absent in shallow renders; a missing toast must not take the
   // action down with it.
   notify(payload) {
@@ -413,6 +370,22 @@ export default class ChemicalTab extends React.Component {
       level: 'warning',
       position: 'tc',
     });
+  }
+
+  // Clipboard access is refused outside a secure context, so the failure is reported
+  // rather than swallowed; the number stays on screen to copy by hand.
+  copyProductNumber(value) {
+    const done = () => this.notify({
+      title: 'Copied', message: `${value} is on the clipboard`, level: 'info', position: 'tc',
+    });
+    const failed = () => this.notify({
+      title: 'Could not copy', message: `Copy ${value} manually.`, level: 'warning', position: 'tc',
+    });
+
+    const write = navigator?.clipboard?.writeText?.(value);
+    if (!write) return failed();
+
+    return write.then(done).catch(failed);
   }
 
   // The value the chosen option searches on. Empty means there is nothing to send.
@@ -448,19 +421,16 @@ export default class ChemicalTab extends React.Component {
       chemical.buildChemical('molecule_id', moleculeId);
     }
 
-    // The URL this builds is a Sigma catalogue path, so it cannot stand in for another vendor.
-    if (queryOption === 'Product Number') {
-      if (vendorValue !== SDS_VENDOR_VALUE) {
-        this.notify({
-          title: 'Product number search is Sigma-Aldrich only',
-          message: 'Pick Sigma-Aldrich as the vendor, or search by CAS or common name instead.',
-          level: 'warning',
-          position: 'tc',
-        });
-        this.setState({ loadingQuerySafetySheets: false });
-        return;
-      }
-      this.buildSdsLinksFromProductNumber(safetySheetLanguage);
+    // PubChem is reached by the molecule either way; a product number only narrows the
+    // vendor listing it returns, so the identifier still has to come from the sample.
+    const byNumber = queryOption === 'Product Number';
+    const identifier = byNumber
+      ? (sample.xref?.cas || sample.molecule_name_hash?.label || '')
+      : searchStr;
+
+    if (byNumber && !identifier) {
+      this.notifyMissingQueryValue('CAS');
+      this.setState({ loadingQuerySafetySheets: false });
       return;
     }
 
@@ -469,7 +439,8 @@ export default class ChemicalTab extends React.Component {
       vendor: vendorValue,
       queryOption,
       language: safetySheetLanguage,
-      string: searchStr
+      string: identifier,
+      productNumber: byNumber ? searchStr : null
     };
     this.setState({ warningMessage: '' });
 
@@ -1370,37 +1341,6 @@ export default class ChemicalTab extends React.Component {
 
   // Brand keys are the vendor's own URL segments; a wrong one yields a 404 on their site.
   // The number itself comes from Inventory Information, not from a field duplicated here.
-  sdsProductNumberFields() {
-    const { queryOption, sdsBrand, vendorValue } = this.state;
-    if (queryOption !== 'Product Number' || vendorValue !== SDS_VENDOR_VALUE) return null;
-
-    const brandOptions = [
-      { label: 'Sigma-Aldrich', value: 'sial' },
-      { label: 'Aldrich', value: 'aldrich' },
-      { label: 'Sigma', value: 'sigma' },
-      { label: 'Supelco', value: 'supelco' },
-      { label: 'Merck Millipore', value: 'mm' },
-      { label: 'Riedel-de Haen', value: 'rdh' },
-    ];
-
-    return (
-      <>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Brand</Form.Label>
-            <Select
-              name="sdsBrand"
-              isClearable={false}
-              options={brandOptions}
-              onChange={(selectedOption) => this.handleSdsBrand(selectedOption?.value)}
-              value={brandOptions.find(({ value }) => value === sdsBrand)}
-            />
-          </Form.Group>
-        </Col>
-      </>
-    );
-  }
-
   safetySheetLanguage() {
     const { safetySheetLanguage } = this.state;
     const languageOptions = [
@@ -1723,11 +1663,21 @@ export default class ChemicalTab extends React.Component {
                   placement="top"
                   overlay={(
                     <Tooltip id={`product-number-${group.vendor}-${index}`}>
-                      {numberKey ? `Catalogue number at ${vendorDisplayName(group.vendor)}` : 'Product listing'}
+                      {numberKey
+                        ? `${vendorDisplayName(group.vendor)} catalogue number. Click to copy.`
+                        : 'Product listing. Click to copy.'}
                     </Tooltip>
                   )}
                 >
-                  <Badge bg="light" text="dark" className="border font-monospace fw-normal">{label}</Badge>
+                  <Badge
+                    bg="light"
+                    text="dark"
+                    role="button"
+                    className="border font-monospace fw-normal"
+                    onClick={() => this.copyProductNumber(label)}
+                  >
+                    {label}
+                  </Badge>
                 </OverlayTrigger>
                 {productLink && ChemicalTab.linkIconButton({
                   href: productLink,
@@ -2272,7 +2222,6 @@ export default class ChemicalTab extends React.Component {
           <Col md={3}>
             {this.queryOption()}
           </Col>
-          {this.sdsProductNumberFields()}
           <Col md={2}>
             {this.safetySheetLanguage()}
           </Col>

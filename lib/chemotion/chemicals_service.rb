@@ -115,8 +115,8 @@ module Chemotion
     private_class_method :validate_url_for_request!,
                          :allowed_host?
 
-    def self.merck(name, language)
-      brand, product_number = merck_product_from_pubchem(name)
+    def self.merck(name, language, wanted_number = nil)
+      brand, product_number = merck_product_from_pubchem(name, wanted_number)
       raise StandardError, 'No Sigma-Aldrich catalogue entry found' unless brand
 
       validate_product_number!(product_number)
@@ -160,11 +160,15 @@ module Chemotion
 
     # Sigma's own search rejects automated clients, so the catalogue entry comes from
     # PubChem's Chemical Vendors list. Returns [brand, product_number] or nil.
-    def self.merck_product_from_pubchem(name)
+    def self.merck_product_from_pubchem(name, product_number = nil)
       cid = PubChem.get_cid_from_identifier(name)
       return nil unless cid
 
-      merck_candidates(PubChem.get_vendor_sources_from_cid(cid)).min_by { |c| merck_rank(*c) }
+      candidates = merck_candidates(PubChem.get_vendor_sources_from_cid(cid))
+      wanted = normalize_product_number(product_number)
+      candidates = candidates.select { |_, number| normalize_product_number(number) == wanted } if wanted.present?
+
+      candidates.min_by { |c| merck_rank(*c) }
     end
 
     def self.merck_candidates(sources)
@@ -197,14 +201,42 @@ module Chemotion
 
     # Splits the curated vendors into the ones we can fetch a sheet from and the ones that
     # only have a catalogue page, and points at PubChem for the full list.
-    def self.vendor_overview(name, language)
+    def self.vendor_overview(name, language, product_number = nil)
       cid = PubChem.get_cid_from_identifier(name)
       return { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0 } unless cid
 
       groups = grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
-      sds, catalogue = curated_groups(groups).partition { |group| group['sds_supported'] }
+      shown = filter_by_product_number(curated_groups(groups), product_number)
+      sds, catalogue = shown.partition { |group| group['sds_supported'] }
       { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
         'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+    end
+
+    # Narrows the listing to the catalogue number the user already knows, so one row comes
+    # back instead of every product the vendor sells. Vendors left with nothing drop out.
+    def self.filter_by_product_number(groups, product_number)
+      wanted = normalize_product_number(product_number)
+      return groups if wanted.blank?
+
+      groups.filter_map do |group|
+        products = group['products'].select { |product| product_number_match?(product, wanted) }
+        next if products.empty?
+
+        group.merge('products' => products, 'count' => products.size)
+      end
+    end
+
+    def self.normalize_product_number(value)
+      value.to_s.strip.downcase.delete('-_. ')
+    end
+
+    # Fisher prefixes its catalogue codes (AC..., ALFAA...), so an edge match counts.
+    def self.product_number_match?(product, wanted)
+      numbers = product.keys.grep(/_product_number\z/).map { |key| product[key] }
+      (numbers << product['label']).compact.any? do |value|
+        candidate = normalize_product_number(value)
+        candidate == wanted || candidate.start_with?(wanted) || candidate.end_with?(wanted)
+      end
     end
 
     def self.curated_groups(groups)
@@ -328,12 +360,14 @@ module Chemotion
     # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
     # entry is resolved through PubChem and the SDS URL built from it. alfa.com is off the
     # allowlist, which is why .alfa can only ever return its failure string.
-    def self.thermofisher(name, language)
+    def self.thermofisher(name, language, product_number = nil)
       cid = PubChem.get_cid_from_identifier(name)
       raise StandardError, 'No PubChem CID for this name' unless cid
 
+      wanted = normalize_product_number(product_number)
       product = fisher_products(fisher_candidates(PubChem.get_vendor_sources_from_cid(cid)), language)
-                .find { |candidate| candidate['fisher_link'] }
+                .select { |candidate| candidate['fisher_link'] }
+                .find { |candidate| wanted.blank? || product_number_match?(candidate, wanted) }
       raise StandardError, 'No Thermofisher catalogue entry found' unless product
 
       product

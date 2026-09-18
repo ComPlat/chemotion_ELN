@@ -370,47 +370,69 @@ describe('ChemicalTab component', () => {
       });
     });
 
-    describe('brand field', () => {
-      it('renders only for Sigma with the product number option', () => {
-        instance.setState({ vendorValue: 'Merck', queryOption: 'Product Number' });
-        expect(instance.sdsProductNumberFields()).not.toBeNull();
+    describe('product number search', () => {
+      // PubChem is reached by the molecule, so the sample needs an identifier of its own.
+      before(() => { sample.xref = { ...sample.xref, cas: '7732-18-5' }; });
+      after(() => { delete sample.xref.cas; });
 
-        instance.setState({ vendorValue: 'Thermofisher' });
-        expect(instance.sdsProductNumberFields()).toBeNull();
-
-        instance.setState({ vendorValue: 'All' });
-        expect(instance.sdsProductNumberFields()).toBeNull();
-
-        instance.setState({ vendorValue: 'Merck', queryOption: 'CAS' });
-        expect(instance.sdsProductNumberFields()).toBeNull();
-      });
-
-      it('drops a chosen brand when the vendor leaves Sigma', () => {
-        instance.setState({ vendorValue: 'Merck', sdsBrand: 'supelco' });
-        instance.handleVendorOption('Thermofisher');
-        expect(wrapper.state().sdsBrand).toEqual('sial');
-
-        instance.setState({ vendorValue: 'Merck', sdsBrand: 'supelco' });
-        instance.handleVendorOption('Merck');
-        expect(wrapper.state().sdsBrand).toEqual('supelco');
-      });
-
-      it('refuses a product number search for a non-Sigma vendor', () => {
-        const notify = sinon.stub(instance, 'notify');
+      const searchWith = (vendorValue) => {
         const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
         instance.setState({
-          vendorValue: 'Thermofisher',
+          vendorValue,
           queryOption: 'Product Number',
           chemical: createChemical([{ product_number: '179124' }], '7681-82-5')
         });
-
         instance.querySafetySheets();
-
-        expect(notify.firstCall.args[0].title).toEqual('Product number search is Sigma-Aldrich only');
-        expect(fetchSpy.called).toBe(false);
-        notify.restore();
+        const args = fetchSpy.firstCall?.args?.[0];
         fetchSpy.restore();
-        instance.setState({ vendorValue: 'Merck', queryOption: 'CAS' });
+        return args;
+      };
+
+      it('goes to the vendor lookup for every vendor option, not just Sigma', () => {
+        ['Merck', 'Thermofisher', 'All'].forEach((vendorValue) => {
+          const args = searchWith(vendorValue);
+          expect(args).not.toBeUndefined();
+          expect(args.vendor).toEqual(vendorValue);
+          expect(args.productNumber).toEqual('179124');
+        });
+      });
+
+      it('sends the molecule identifier, since PubChem is reached by the molecule', () => {
+        const args = searchWith('All');
+        expect(args.string).toEqual('7732-18-5');
+      });
+
+      it('carries no product number for the other options', () => {
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({ vendorValue: 'All', queryOption: 'CAS' });
+        const value = sinon.stub(instance, 'queryValueFor').returns('7732-18-5');
+        instance.querySafetySheets();
+        expect(fetchSpy.firstCall.args[0].productNumber).toBeNull();
+        value.restore();
+        fetchSpy.restore();
+      });
+    });
+
+    describe('copyProductNumber', () => {
+      it('reports the copy once the clipboard accepts it', () => {
+        const notify = sinon.stub(instance, 'notify');
+        const write = sinon.stub().resolves();
+        global.navigator.clipboard = { writeText: write };
+
+        return instance.copyProductNumber('179124').then(() => {
+          expect(write.calledWith('179124')).toBe(true);
+          expect(notify.firstCall.args[0].title).toEqual('Copied');
+          notify.restore();
+        });
+      });
+
+      it('says so rather than failing silently when the clipboard is unavailable', () => {
+        const notify = sinon.stub(instance, 'notify');
+        global.navigator.clipboard = undefined;
+
+        instance.copyProductNumber('179124');
+        expect(notify.firstCall.args[0].title).toEqual('Could not copy');
+        notify.restore();
       });
     });
 
