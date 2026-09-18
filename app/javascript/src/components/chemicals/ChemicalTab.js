@@ -50,6 +50,17 @@ const PROPERTY_VENDOR_KEYS = {
   thermofischer: 'thermofischer',
 };
 
+// What to tell the user when the field the chosen option searches on is empty.
+// The vendor dropdown value for Sigma, and the brand its catalogue URLs default to.
+const SDS_VENDOR_VALUE = 'Merck';
+const DEFAULT_BRAND = 'sial';
+
+const MISSING_QUERY_HINT = {
+  'Product Number': 'Add a product number in Inventory Information, or search by CAS or common name.',
+  CAS: 'Assign a CAS number in the labels section, or search by common name.',
+  'Common Name': 'This sample has no molecule name yet, so there is nothing to search with.',
+};
+
 const propertyVendorKey = (name) => PROPERTY_VENDOR_KEYS[String(name || '').toLowerCase()] || '';
 
 const vendorDisplayName = (name) => {
@@ -64,12 +75,11 @@ export default class ChemicalTab extends React.Component {
     this.state = {
       chemical: undefined,
       displayWell: false,
-      checkSaveIconThermofischer: false,
       checkSaveIconMerck: false,
       dynamicCheckMarks: {},
       vendorValue: 'Merck',
       queryOption: 'CAS',
-      sdsBrand: 'sial',
+      sdsBrand: DEFAULT_BRAND,
       vendorOverview: null,
       expandedVendors: {},
       expandedProducts: {},
@@ -228,10 +238,7 @@ export default class ChemicalTab extends React.Component {
             // Remove the safety sheet path entry
             path.splice(vendorIndex, 1);
 
-            // Reset check mark state for this vendor
-            if (normalizedVendorName === 'thermofischer' || normalizedVendorName === 'alfa') {
-              this.setState({ checkSaveIconThermofischer: false });
-            } else if (normalizedVendorName === 'merck') {
+            if (normalizedVendorName === 'merck') {
               this.setState({ checkSaveIconMerck: false });
             }
 
@@ -261,10 +268,7 @@ export default class ChemicalTab extends React.Component {
     const normalizedVendor = String(vendor || '').toLowerCase();
     if (!normalizedVendor) return;
 
-    // Handle the existing vendor cases for backward compatibility
-    if (normalizedVendor === 'thermofisher' || normalizedVendor === 'alfa') {
-      this.setState({ checkSaveIconThermofischer: isNew !== null ? isNew : true });
-    } else if (normalizedVendor === 'merck') {
+    if (normalizedVendor === 'merck') {
       this.setState({ checkSaveIconMerck: isNew !== null ? isNew : true });
     }
 
@@ -283,8 +287,13 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
+  // Brand only shapes a Sigma catalogue URL, so leaving Sigma drops the choice rather
+  // than carrying a stale one back.
   handleVendorOption(value) {
-    this.setState({ vendorValue: value });
+    this.setState((prev) => ({
+      vendorValue: value,
+      sdsBrand: value === SDS_VENDOR_VALUE ? prev.sdsBrand : DEFAULT_BRAND,
+    }));
   }
 
   handleQueryOption(value) {
@@ -301,14 +310,19 @@ export default class ChemicalTab extends React.Component {
     }));
   }
 
-  toggleSection(id) {
+  toggleSection(id, defaultOpen = true) {
     this.setState((prev) => ({
-      collapsedSections: { ...prev.collapsedSections, [id]: !prev.collapsedSections[id] },
+      collapsedSections: {
+        ...prev.collapsedSections,
+        [id]: prev.collapsedSections[id] === undefined ? defaultOpen : !prev.collapsedSections[id],
+      },
     }));
   }
 
-  isSectionOpen(id) {
+  isSectionOpen(id, defaultOpen = true) {
     const { collapsedSections } = this.state;
+    if (collapsedSections[id] === undefined) return defaultOpen;
+
     return !collapsedSections[id];
   }
 
@@ -361,14 +375,6 @@ export default class ChemicalTab extends React.Component {
     const { chemical, sdsBrand } = this.state;
     const productNumber = (chemical?._chemical_data?.[0]?.product_number ?? '').trim();
 
-    if (!productNumber) {
-      this.setState({
-        loadingQuerySafetySheets: false,
-        warningMessage: 'Set a product number in the Inventory Information tab to search by it.',
-      });
-      return;
-    }
-
     if (!/^[A-Za-z0-9\-_.]+$/.test(productNumber)) {
       this.setState({
         loadingQuerySafetySheets: false,
@@ -394,31 +400,68 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
+  // The provider is absent in shallow renders; a missing toast must not take the
+  // action down with it.
+  notify(payload) {
+    this.context?.notifications?.add(payload);
+  }
+
+  notifyMissingQueryValue(option) {
+    this.notify({
+      title: `No ${option.toLowerCase()} to search with`,
+      message: MISSING_QUERY_HINT[option],
+      level: 'warning',
+      position: 'tc',
+    });
+  }
+
+  // The value the chosen option searches on. Empty means there is nothing to send.
+  queryValueFor(option) {
+    const { chemical } = this.state;
+    const { sample } = this.props;
+
+    if (option === 'Product Number') return (chemical?._chemical_data?.[0]?.product_number ?? '').trim();
+    if (option === 'Common Name') return (sample.molecule_name_hash?.label ?? '').trim();
+
+    return (sample.xref?.cas ?? '').trim();
+  }
+
   querySafetySheets = () => {
     const { sample } = this.props;
-    this.setState({ loadingQuerySafetySheets: true });
-    const sampleName = sample.showedName();
-    const moleculeId = sample.molecule_name_hash?.mid ?? null;
     const {
       chemical, vendorValue, queryOption, safetySheetLanguage
     } = this.state;
+
+    // Reported before any request, so an empty CAS or name does not become a vendor
+    // round trip that comes back empty for a reason the user cannot see.
+    const searchStr = this.queryValueFor(queryOption);
+    if (!searchStr) {
+      this.notifyMissingQueryValue(queryOption);
+      return;
+    }
+
+    this.setState({ loadingQuerySafetySheets: true });
+    const sampleName = sample.showedName();
+    const moleculeId = sample.molecule_name_hash?.mid ?? null;
     if (chemical) {
       chemical.buildChemical('sample_name', sampleName);
       chemical.buildChemical('molecule_id', moleculeId);
     }
 
+    // The URL this builds is a Sigma catalogue path, so it cannot stand in for another vendor.
     if (queryOption === 'Product Number') {
+      if (vendorValue !== SDS_VENDOR_VALUE) {
+        this.notify({
+          title: 'Product number search is Sigma-Aldrich only',
+          message: 'Pick Sigma-Aldrich as the vendor, or search by CAS or common name instead.',
+          level: 'warning',
+          position: 'tc',
+        });
+        this.setState({ loadingQuerySafetySheets: false });
+        return;
+      }
       this.buildSdsLinksFromProductNumber(safetySheetLanguage);
       return;
-    }
-
-    let searchStr;
-
-    if (queryOption === 'Common Name') {
-      searchStr = sample.molecule_name_hash.label;
-    } else {
-      const sampleCas = sample.xref?.cas ?? '';
-      searchStr = sampleCas;
     }
 
     const queryParams = {
@@ -451,10 +494,14 @@ export default class ChemicalTab extends React.Component {
           displayWell: true
         });
       } else {
+        // A non-ok response comes back as null; without this the list rendered a
+        // placeholder string that threw further down and blanked the whole section.
         this.setState({
-          searchResults: ['mockValue'],
+          searchResults: [],
+          vendorOverview: null,
           loadingQuerySafetySheets: false,
-          displayWell: true
+          displayWell: true,
+          warningMessage: 'The vendor did not return any safety data sheets for this sample.'
         });
       }
     }).catch((errorMessage) => {
@@ -669,7 +716,7 @@ export default class ChemicalTab extends React.Component {
 
     return attempt(0, null)
       .catch((error) => {
-        this.context.notifications.add({
+        this.notify({
           title: 'Could not save the safety data sheet',
           message: `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
           level: 'error',
@@ -751,7 +798,7 @@ export default class ChemicalTab extends React.Component {
   // The upload modal has no route chain behind it, so it reports its own failure.
   submitManualAttachment = (payload) => this.handleAttachmentSubmit(payload)
     .catch((error) => {
-      this.context.notifications.add({
+      this.notify({
         title: 'Could not attach safety sheet',
         message: error.message,
         level: 'error',
@@ -1014,7 +1061,6 @@ export default class ChemicalTab extends React.Component {
 
   checkMarkButton(document) {
     const {
-      checkSaveIconThermofischer,
       checkSaveIconMerck,
       dynamicCheckMarks = {},
       chemical
@@ -1042,9 +1088,7 @@ export default class ChemicalTab extends React.Component {
     // If not found in actual safety sheet data, check state variables
     if (!checkSaveIcon) {
       // First check traditional state variables for backward compatibility
-      if (vendorName === 'thermofischer' || vendorName === 'alfa') {
-        checkSaveIcon = checkSaveIconThermofischer;
-      } else if (vendorName === 'merck') {
+      if (vendorName === 'merck') {
         checkSaveIcon = checkSaveIconMerck;
       } else {
         // Check our dynamic state for any other vendor
@@ -1125,7 +1169,7 @@ export default class ChemicalTab extends React.Component {
 
   saveSafetySheetsButton(sdsInfo) {
     const {
-      checkSaveIconMerck, checkSaveIconThermofischer,
+      checkSaveIconMerck,
       loadingSaveSafetySheets, chemical, dynamicCheckMarks = {}
     } = this.state;
 
@@ -1173,9 +1217,7 @@ export default class ChemicalTab extends React.Component {
     // 2. If not found in data, check state variables
     if (!isSaved) {
       // Check traditional state variables for backward compatibility
-      if (normalizedVendorName === 'thermofischer' || normalizedVendorName === 'alfa') {
-        isSaved = checkSaveIconThermofischer;
-      } else if (normalizedVendorName === 'merck') {
+      if (normalizedVendorName === 'merck') {
         isSaved = checkSaveIconMerck;
       } else {
         // Check dynamic state for any other vendor
@@ -1234,7 +1276,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   notifySavedSdsLimit() {
-    this.context.notifications.add({
+    this.notify({
       title: `Limit of ${MAX_SAVED_SDS} safety data sheets reached`,
       message: `This sample already has ${this.savedSdsCount()} saved sheets. `
         + 'Delete at least one below to save another. Searching stays available.',
@@ -1329,10 +1371,8 @@ export default class ChemicalTab extends React.Component {
   // Brand keys are the vendor's own URL segments; a wrong one yields a 404 on their site.
   // The number itself comes from Inventory Information, not from a field duplicated here.
   sdsProductNumberFields() {
-    const { queryOption, chemical, sdsBrand } = this.state;
-    if (queryOption !== 'Product Number') return null;
-
-    const productNumber = chemical?._chemical_data?.[0]?.product_number ?? '';
+    const { queryOption, sdsBrand, vendorValue } = this.state;
+    if (queryOption !== 'Product Number' || vendorValue !== SDS_VENDOR_VALUE) return null;
 
     const brandOptions = [
       { label: 'Sigma-Aldrich', value: 'sial' },
@@ -1345,29 +1385,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <>
-        <Col xs="auto">
-          <Form.Group>
-            <Form.Label>
-              Product number
-              <OverlayTrigger
-                placement="top"
-                overlay={(
-                  <Tooltip>
-                    Taken from Inventory Information, so one number serves the whole sample
-                  </Tooltip>
-                )}
-              >
-                <i className="fa fa-info-circle ms-1" />
-              </OverlayTrigger>
-            </Form.Label>
-            <div>
-              {productNumber
-                ? <Badge bg="light" text="dark" className="border fs-6 fw-normal">{productNumber}</Badge>
-                : <span className="text-muted small">Not set</span>}
-            </div>
-          </Form.Group>
-        </Col>
-        <Col>
+        <Col md={2}>
           <Form.Group>
             <Form.Label>Brand</Form.Label>
             <Select
@@ -1415,7 +1433,6 @@ export default class ChemicalTab extends React.Component {
           && document[key]);
 
     const vendorLink = linkKey ? document[linkKey] : null;
-    // const rawVendorName = linkKey ? linkKey.replace('_link', '') : 'uploaded source';
     let displayName = 'queried vendor';
     let vendorKey = '';
     let productInfo = '';
@@ -1538,7 +1555,7 @@ export default class ChemicalTab extends React.Component {
     if (!sdsVendors.length && !catalogueVendors.length && !pubchemUrl) return null;
 
     return (
-      <div className="mt-3" data-component="vendorGroups">
+      <div data-component="vendorGroups">
         {pubchemUrl && (
           <div className="mb-3">
             <OverlayTrigger
@@ -1604,17 +1621,17 @@ export default class ChemicalTab extends React.Component {
 
   // Every sheet section folds the same way, so the header is built once. Sections start
   // open, which is how they behaved before they could be collapsed.
-  sectionHeader(id, title, { meta = null, className = '' } = {}) {
-    const isOpen = this.isSectionOpen(id);
+  sectionHeader(id, title, { meta = null, className = '', defaultOpen = true } = {}) {
+    const isOpen = this.isSectionOpen(id, defaultOpen);
 
     return (
-      <h6 className={`mb-1 ${className}`}>
+      <h6 className={`mt-4 mb-1 ${className}`}>
         <Button
           variant="link"
           size="sm"
           className="p-0 text-decoration-none text-reset align-baseline"
           aria-expanded={isOpen}
-          onClick={() => this.toggleSection(id)}
+          onClick={() => this.toggleSection(id, defaultOpen)}
         >
           <i className={`fa fa-caret-${isOpen ? 'down' : 'right'} me-2`} />
           {title}
@@ -1819,7 +1836,7 @@ export default class ChemicalTab extends React.Component {
         <>
           {this.sectionHeader('searchResults', 'Search Results', {
             meta: `${searchResults.length} found`,
-            className: 'mt-5 text-primary',
+            className: 'text-primary',
           })}
           <div
             className={`border rounded p-2 ${resultsScroll ? 'overflow-auto' : ''}`}
@@ -1872,7 +1889,7 @@ export default class ChemicalTab extends React.Component {
         <div>
           {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
             meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
-            className: 'mt-4 text-success',
+            className: 'text-success',
           })}
           <div
             className="border rounded p-2 overflow-auto"
@@ -1918,14 +1935,36 @@ export default class ChemicalTab extends React.Component {
     }
   };
 
+  // Nothing fetched or typed yet, so the box has nothing to show and starts folded.
+  safetyPhrasesEmpty() {
+    const { chemical } = this.state;
+    const phrases = chemical?._chemical_data?.[0]?.safetyPhrases;
+    if (!phrases) return true;
+
+    const counts = [phrases.h_statements, phrases.p_statements, phrases.pictograms]
+      .map((part) => (Array.isArray(part) ? part.length : Object.keys(part || {}).length));
+
+    return counts.every((count) => count === 0);
+  }
+
   renderSafetyPhrases = () => {
     const { chemical } = this.state;
     const phrases = chemical?._chemical_data?.[0]?.safetyPhrases;
+    const startsOpen = !this.safetyPhrasesEmpty();
+
     return (
-      <SafetyPhrasesEditor
-        value={phrases}
-        onChange={this.handleSafetyPhrasesChange}
-      />
+      <div>
+        {this.sectionHeader('safetyPhrases', 'Safety phrases and pictograms', {
+          meta: startsOpen ? null : 'none yet',
+          defaultOpen: startsOpen,
+        })}
+        <div hidden={!this.isSectionOpen('safetyPhrases', startsOpen)}>
+          <SafetyPhrasesEditor
+            value={phrases}
+            onChange={this.handleSafetyPhrasesChange}
+          />
+        </div>
+      </div>
     );
   };
 
@@ -2167,10 +2206,7 @@ export default class ChemicalTab extends React.Component {
             // Set check mark to true for this vendor
             dynamicCheckMarks[normalizedVendorName] = true;
 
-            // Also set specific state variables for backward compatibility
-            if (normalizedVendorName === 'thermofischer' || normalizedVendorName === 'alfa') {
-              this.setState({ checkSaveIconThermofischer: true });
-            } else if (normalizedVendorName === 'merck') {
+            if (normalizedVendorName === 'merck') {
               this.setState({ checkSaveIconMerck: true });
             }
           });
@@ -2230,14 +2266,14 @@ export default class ChemicalTab extends React.Component {
           <Col xs="auto" className="mb-1">
             {this.addAttachment()}
           </Col>
-          <Col>
+          <Col md={3}>
             {this.chooseVendor()}
           </Col>
-          <Col>
+          <Col md={3}>
             {this.queryOption()}
           </Col>
           {this.sdsProductNumberFields()}
-          <Col>
+          <Col md={2}>
             {this.safetySheetLanguage()}
           </Col>
           <Col>
