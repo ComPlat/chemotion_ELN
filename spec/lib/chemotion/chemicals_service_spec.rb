@@ -135,13 +135,26 @@ describe Chemotion::ChemicalsService do
       allow(PubChem).to receive_messages(get_cid_from_identifier: 180,
                                          get_vendor_sources_from_cid: [sources.last])
       expect(described_class.thermofisher('Acetone', 'en'))
-        .to eq('Could not find safety data sheet from Thermofisher')
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
     end
 
     it 'reports a miss when PubChem knows no CID' do
       allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
       expect(described_class.thermofisher('Nonexistent', 'en'))
-        .to eq('Could not find safety data sheet from Thermofisher')
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+    end
+  end
+
+  describe '.no_sheet_found' do
+    it 'names the vendor the way the UI names it' do
+      expect(described_class.no_sheet_found(described_class::SDS_VENDOR))
+        .to eq('No safety data sheet found from Sigma-Aldrich')
+      expect(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+        .to eq('No safety data sheet found from Thermofisher')
+    end
+
+    it 'never calls Sigma-Aldrich by its parent company' do
+      expect(described_class.no_sheet_found(described_class::SDS_VENDOR)).not_to include('Merck')
     end
   end
 
@@ -194,14 +207,14 @@ describe Chemotion::ChemicalsService do
 
     it 'reports a miss when the number matches no Sigma entry' do
       expect(described_class.merck('Acetone', 'en', '999999'))
-        .to eq('Could not find safety data sheet from Merck')
+        .to eq(described_class.no_sheet_found(described_class::SDS_VENDOR))
     end
 
     it 'narrows the Thermofisher lookup the same way' do
       expect(described_class.thermofisher('Acetone', 'en', '327840025'))
         .to include('fisher_product_number' => 'AC327840025')
       expect(described_class.thermofisher('Acetone', 'en', '999999'))
-        .to eq('Could not find safety data sheet from Thermofisher')
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
     end
   end
 
@@ -281,7 +294,8 @@ describe Chemotion::ChemicalsService do
 
     it 'reports a miss when PubChem knows no CID' do
       allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
-      expect(described_class.merck('Nonexistent', 'en')).to eq('Could not find safety data sheet from Merck')
+      expect(described_class.merck('Nonexistent', 'en'))
+        .to eq(described_class.no_sheet_found(described_class::SDS_VENDOR))
     end
 
     it 'groups vendors and puts the SDS-capable one first' do

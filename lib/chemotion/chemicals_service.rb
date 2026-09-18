@@ -34,6 +34,7 @@ module Chemotion
 
     # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
     SDS_VENDOR = 'Sigma-Aldrich'
+    THERMO_VENDOR = 'Thermofisher'
     FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
     # Fisher partitions this endpoint by catalogue availability, so the country code is pinned
     # to the one the part numbers below were verified against.
@@ -122,7 +123,7 @@ module Chemotion
       validate_product_number!(product_number)
       merck_product_entry(brand, product_number, language)
     rescue StandardError
-      'Could not find safety data sheet from Merck'
+      no_sheet_found(SDS_VENDOR)
     end
 
     def self.merck_product_entry(brand, product_number, language)
@@ -151,6 +152,11 @@ module Chemotion
       return %w[server browser] if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
 
       []
+    end
+
+    # One wording for every vendor that has nothing to offer, named as the UI names it.
+    def self.no_sheet_found(vendor)
+      "No safety data sheet found from #{vendor}"
     end
 
     # The preferred route alone, for stored rows and clients that read a single mode.
@@ -347,14 +353,12 @@ module Chemotion
 
     # Validate product number: allow letters, digits, hyphen, underscore, dot.
     def self.validate_product_number!(product_number)
-      if product_number.nil? || product_number.to_s.strip.empty?
-        raise StandardError, 'Could not find safety data sheet from Merck'
-      end
+      raise StandardError, no_sheet_found(SDS_VENDOR) if product_number.to_s.strip.empty?
 
       allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
       return if product_number.to_s.match?(allowed_pattern)
 
-      raise StandardError, 'Could not find safety data sheet from Merck'
+      raise StandardError, no_sheet_found(SDS_VENDOR)
     end
 
     # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
@@ -372,7 +376,7 @@ module Chemotion
 
       product
     rescue StandardError
-      'Could not find safety data sheet from Thermofisher'
+      no_sheet_found(THERMO_VENDOR)
     end
 
     def self.fisher_candidates(sources)

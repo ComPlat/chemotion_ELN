@@ -414,25 +414,73 @@ describe('ChemicalTab component', () => {
     });
 
     describe('copyProductNumber', () => {
-      it('reports the copy once the clipboard accepts it', () => {
-        const notify = sinon.stub(instance, 'notify');
+      it('marks the badge copied, then lets it settle back', () => {
+        const clock = sinon.useFakeTimers();
         const write = sinon.stub().resolves();
         global.navigator.clipboard = { writeText: write };
 
         return instance.copyProductNumber('179124').then(() => {
           expect(write.calledWith('179124')).toBe(true);
-          expect(notify.firstCall.args[0].title).toEqual('Copied');
-          notify.restore();
+          expect(wrapper.state().copyFeedback).toEqual({ value: '179124', ok: true });
+          clock.tick(2000);
+          expect(wrapper.state().copyFeedback).toBeNull();
+          clock.restore();
         });
       });
 
-      it('says so rather than failing silently when the clipboard is unavailable', () => {
+      it('shows a failed copy on the badge and raises no notification', () => {
         const notify = sinon.stub(instance, 'notify');
         global.navigator.clipboard = undefined;
 
-        instance.copyProductNumber('179124');
-        expect(notify.firstCall.args[0].title).toEqual('Could not copy');
-        notify.restore();
+        return instance.copyProductNumber('179124').then(() => {
+          expect(wrapper.state().copyFeedback).toEqual({ value: '179124', ok: false });
+          expect(notify.called).toBe(false);
+          notify.restore();
+          instance.setState({ copyFeedback: null });
+        });
+      });
+
+      it('dresses the badge by outcome', () => {
+        expect(ChemicalTab.copyTooltip({ ok: true })).toEqual('Copied');
+        expect(ChemicalTab.copyTooltip({ ok: false })).toEqual('Could not reach the clipboard');
+        expect(ChemicalTab.copyTooltip(null, 'Sigma-Aldrich'))
+          .toEqual('Sigma-Aldrich catalogue number. Click to copy.');
+        expect(ChemicalTab.copyBadgeVariant({ ok: true })).toEqual('success');
+        expect(ChemicalTab.copyBadgeVariant({ ok: false })).toEqual('danger');
+        expect(ChemicalTab.copyBadgeVariant(null)).toEqual('light');
+      });
+    });
+
+    describe('the empty state and vendor messages', () => {
+      const emptyChemical = () => createChemical([{ safetySheetPath: [] }], '7681-82-5');
+
+      it('stays quiet while vendor groups are on screen', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: [],
+          vendorOverview: { sds_vendors: [{ vendor: 'Sigma-Aldrich', products: [] }], catalogue_vendors: [] }
+        });
+        expect(instance.renderSafetySheets().props['data-empty']).toBeUndefined();
+      });
+
+      it('reports no sheets when there is genuinely nothing', () => {
+        instance.setState({
+          chemical: emptyChemical(), displayWell: true, searchResults: [], vendorOverview: null
+        });
+        expect(instance.renderSafetySheets().props['data-empty']).toEqual('true');
+      });
+
+      it('renders a vendor message as a line, not a sheet row', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: ['No safety data sheet found from Sigma-Aldrich'],
+          vendorOverview: null
+        });
+        const text = shallow(instance.renderSafetySheets()).text();
+        expect(text).toEqual(expect.stringContaining('No safety data sheet found from Sigma-Aldrich'));
+        instance.setState({ searchResults: [] });
       });
     });
 
