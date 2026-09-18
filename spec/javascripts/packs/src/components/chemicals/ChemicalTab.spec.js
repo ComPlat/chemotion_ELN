@@ -9,6 +9,7 @@ import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import AppModal from 'src/components/common/AppModal';
+import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -98,7 +99,10 @@ describe('ChemicalTab component', () => {
 
   it('calls querySafetySheets() when submit button is clicked', () => {
     const querySafetySheetsSpy = sinon.spy(wrapper.instance(), 'querySafetySheets');
+    // The button refuses to search with an empty CAS, so give it one.
+    const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
     wrapper.find('#submit-sds-btn').simulate('click');
+    value.restore();
     expect(wrapper.find('.fa-spinner')).toHaveLength(1);
     expect(querySafetySheetsSpy.called).toBe(true);
   });
@@ -282,6 +286,134 @@ describe('ChemicalTab component', () => {
       expect(wrapper.state().searchResults).toEqual([]);
     });
 
+    describe('empty query values', () => {
+      // Stubbed rather than spied: the real one needs the notifications context.
+      const withNotifications = () => sinon.stub(instance, 'notifyMissingQueryValue');
+
+      it('reads the value the chosen option searches on', () => {
+        instance.setState({
+          chemical: createChemical([{ product_number: '179124' }], '7681-82-5')
+        });
+        expect(instance.queryValueFor('Product Number')).toEqual('179124');
+        expect(instance.queryValueFor('CAS')).toEqual('');
+      });
+
+      it('notifies and sends no request when the option has no value', () => {
+        const add = withNotifications();
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({
+          chemical: createChemical([{}], null),
+          queryOption: 'Product Number'
+        });
+
+        instance.querySafetySheets();
+
+        expect(add.called).toBe(true);
+        expect(fetchSpy.called).toBe(false);
+        expect(wrapper.state().loadingQuerySafetySheets).toBe(false);
+        add.restore();
+        fetchSpy.restore();
+      });
+
+      it('names the option that has nothing to search with', () => {
+        const add = withNotifications();
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({ chemical: createChemical([{}], null), queryOption: 'CAS' });
+
+        instance.querySafetySheets();
+
+        expect(add.firstCall.args[0]).toEqual('CAS');
+        expect(fetchSpy.called).toBe(false);
+        add.restore();
+        fetchSpy.restore();
+      });
+    });
+
+    describe('safety phrases section', () => {
+      it('counts an absent or wholly empty set as empty', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5') });
+        expect(instance.safetyPhrasesEmpty()).toBe(true);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { h_statements: {}, p_statements: {}, pictograms: [] } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(true);
+      });
+
+      it('is not empty once any one of the three carries a value', () => {
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { h_statements: { H200: 'x' } } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(false);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { pictograms: ['GHS02'] } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(false);
+      });
+
+      it('starts folded when empty and open when populated', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5') });
+        expect(instance.isSectionOpen('safetyPhrases', !instance.safetyPhrasesEmpty())).toBe(false);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { pictograms: ['GHS02'] } }])
+        });
+        expect(instance.isSectionOpen('safetyPhrases', !instance.safetyPhrasesEmpty())).toBe(true);
+      });
+
+      it('still opens on an explicit toggle while empty', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5'), collapsedSections: {} });
+        instance.toggleSection('safetyPhrases', false);
+        expect(instance.isSectionOpen('safetyPhrases', false)).toBe(true);
+        instance.setState({ collapsedSections: {} });
+      });
+    });
+
+    describe('brand field', () => {
+      it('renders only for Sigma with the product number option', () => {
+        instance.setState({ vendorValue: 'Merck', queryOption: 'Product Number' });
+        expect(instance.sdsProductNumberFields()).not.toBeNull();
+
+        instance.setState({ vendorValue: 'Thermofisher' });
+        expect(instance.sdsProductNumberFields()).toBeNull();
+
+        instance.setState({ vendorValue: 'All' });
+        expect(instance.sdsProductNumberFields()).toBeNull();
+
+        instance.setState({ vendorValue: 'Merck', queryOption: 'CAS' });
+        expect(instance.sdsProductNumberFields()).toBeNull();
+      });
+
+      it('drops a chosen brand when the vendor leaves Sigma', () => {
+        instance.setState({ vendorValue: 'Merck', sdsBrand: 'supelco' });
+        instance.handleVendorOption('Thermofisher');
+        expect(wrapper.state().sdsBrand).toEqual('sial');
+
+        instance.setState({ vendorValue: 'Merck', sdsBrand: 'supelco' });
+        instance.handleVendorOption('Merck');
+        expect(wrapper.state().sdsBrand).toEqual('supelco');
+      });
+
+      it('refuses a product number search for a non-Sigma vendor', () => {
+        const notify = sinon.stub(instance, 'notify');
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({
+          vendorValue: 'Thermofisher',
+          queryOption: 'Product Number',
+          chemical: createChemical([{ product_number: '179124' }], '7681-82-5')
+        });
+
+        instance.querySafetySheets();
+
+        expect(notify.firstCall.args[0].title).toEqual('Product number search is Sigma-Aldrich only');
+        expect(fetchSpy.called).toBe(false);
+        notify.restore();
+        fetchSpy.restore();
+        instance.setState({ vendorValue: 'Merck', queryOption: 'CAS' });
+      });
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
@@ -298,14 +430,18 @@ describe('ChemicalTab component', () => {
 
     it('calls renderSafetySheets() when query safety sheets button is clicked', () => {
       const renderSafetySheetsSpy = sinon.spy(wrapper.instance(), 'renderSafetySheets');
+      const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
       wrapper.find('#submit-sds-btn').simulate('click');
+      value.restore();
       expect(renderSafetySheetsSpy.called).toBe(true);
       renderSafetySheetsSpy.restore();
     });
 
     it('calls renderChildElements() when query safety sheets button is clicked', () => {
       const renderChildElementsSpy = sinon.spy(wrapper.instance(), 'renderChildElements');
+      const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
       wrapper.find('#submit-sds-btn').simulate('click');
+      value.restore();
       expect(renderChildElementsSpy.called).toBe(true);
       renderChildElementsSpy.restore();
     });
@@ -378,10 +514,11 @@ describe('ChemicalTab component', () => {
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
 
-      const editor = instance.renderSafetyPhrases();
-      expect(editor).not.toBeNull();
-      expect(editor.props.value).toEqual(chemicalData[0].safetyPhrases);
-      expect(typeof editor.props.onChange).toBe('function');
+      // The editor now sits inside the collapsible section wrapper.
+      const editor = shallow(instance.renderSafetyPhrases()).find(SafetyPhrasesEditor);
+      expect(editor).toHaveLength(1);
+      expect(editor.prop('value')).toEqual(chemicalData[0].safetyPhrases);
+      expect(typeof editor.prop('onChange')).toBe('function');
     });
 
     it('handleSafetyPhrasesChange persists into chemical_data via handleFieldChanged', () => {
