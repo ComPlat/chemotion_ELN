@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, OverlayTrigger } from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -481,6 +481,26 @@ describe('ChemicalTab component', () => {
         const text = shallow(instance.renderSafetySheets()).text();
         expect(text).toEqual(expect.stringContaining('No safety data sheet found from Sigma-Aldrich'));
         instance.setState({ searchResults: [] });
+      });
+    });
+
+    describe('section counters', () => {
+      const headerOf = (args) => shallow(instance.sectionHeader('anId', 'A title', args));
+
+      it('explains a counter on hover when it has something to explain', () => {
+        const header = headerOf({ meta: '2 of 5', metaTooltip: 'A sample holds at most 5.' });
+        const tip = header.find(OverlayTrigger);
+        expect(tip).toHaveLength(1);
+        expect(tip.prop('overlay').props.children).toEqual('A sample holds at most 5.');
+      });
+
+      it('shows a bare counter when there is nothing to explain', () => {
+        expect(headerOf({ meta: '2 of 5' }).find(OverlayTrigger)).toHaveLength(0);
+        expect(headerOf({ meta: '2 of 5' }).text()).toEqual(expect.stringContaining('2 of 5'));
+      });
+
+      it('renders no counter at all without one', () => {
+        expect(headerOf({}).find('span')).toHaveLength(0);
       });
     });
 
