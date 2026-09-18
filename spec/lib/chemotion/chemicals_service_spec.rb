@@ -196,6 +196,22 @@ describe Chemotion::ChemicalsService do
       expect(overview['catalogue_vendors']).to be_empty
     end
 
+    it 'says so in the same words a single vendor would' do
+      overview = described_class.vendor_overview('Acetone', 'en', '999999')
+      expect(overview['message']).to eq(described_class.no_sheet_found(described_class::ALL_VENDORS))
+      expect(overview['message']).to eq('No safety data sheet found from any vendor')
+    end
+
+    it 'carries no message when vendors were found' do
+      expect(described_class.vendor_overview('Acetone', 'en')).not_to have_key('message')
+    end
+
+    it 'says the same when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.vendor_overview('Nonexistent', 'en')['message'])
+        .to eq(described_class.no_sheet_found(described_class::ALL_VENDORS))
+    end
+
     it 'leaves the listing whole when no number is given' do
       expect(described_class.vendor_overview('Acetone', 'en')['sds_vendors'].size).to eq(2)
     end
@@ -373,7 +389,10 @@ describe Chemotion::ChemicalsService do
     it 'returns an empty overview when PubChem knows no CID' do
       allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
       expect(described_class.vendor_overview('Nonexistent', 'en')).to eq(
-        'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0,
+        'sds_vendors' => [],
+        'catalogue_vendors' => [],
+        'vendor_count' => 0,
+        'message' => described_class.no_sheet_found(described_class::ALL_VENDORS),
       )
     end
 

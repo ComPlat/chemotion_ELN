@@ -457,12 +457,14 @@ export default class ChemicalTab extends React.Component {
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
       if (obj?.sds_vendors || obj?.catalogue_vendors) {
+        // A search that found nothing reads the same here as it does for one vendor.
+        const nothingFound = !obj.sds_vendors?.length && !obj.catalogue_vendors?.length;
         this.setState({
-          vendorOverview: obj,
-          searchResults: [],
+          vendorOverview: nothingFound ? null : obj,
+          searchResults: nothingFound && obj.message ? [obj.message] : [],
           loadingQuerySafetySheets: false,
           displayWell: true,
-          warningMessage: obj.vendor_count ? '' : 'No chemical vendors found on PubChem.',
+          warningMessage: '',
         });
         return;
       }

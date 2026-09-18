@@ -323,7 +323,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
 
   return (
     <div
-      className="border rounded p-3 mt-3 w-100 bg-body"
+      className="border rounded p-3 mt-1 w-100 bg-body"
       data-component="SafetyPhrasesEditor"
       style={{ maxHeight: '500px', overflow: 'auto' }}
     >

@@ -35,6 +35,8 @@ module Chemotion
     # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
     SDS_VENDOR = 'Sigma-Aldrich'
     THERMO_VENDOR = 'Thermofisher'
+    # Stands in for the vendor name when the search covered all of them.
+    ALL_VENDORS = 'any vendor'
     FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
     # Fisher partitions this endpoint by catalogue availability, so the country code is pinned
     # to the one the part numbers below were verified against.
@@ -207,15 +209,24 @@ module Chemotion
 
     # Splits the curated vendors into the ones we can fetch a sheet from and the ones that
     # only have a catalogue page, and points at PubChem for the full list.
+    # An empty result carries the same sentence a single-vendor search returns, so the UI
+    # renders one shape either way.
     def self.vendor_overview(name, language, product_number = nil)
       cid = PubChem.get_cid_from_identifier(name)
-      return { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0 } unless cid
+      return empty_overview unless cid
 
       groups = grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
       shown = filter_by_product_number(curated_groups(groups), product_number)
       sds, catalogue = shown.partition { |group| group['sds_supported'] }
-      { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
-        'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+      overview = { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
+                   'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+      overview['message'] = no_sheet_found(ALL_VENDORS) if shown.empty?
+      overview
+    end
+
+    def self.empty_overview
+      { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0,
+        'message' => no_sheet_found(ALL_VENDORS) }
     end
 
     # Narrows the listing to the catalogue number the user already knows, so one row comes
