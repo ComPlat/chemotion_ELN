@@ -129,7 +129,7 @@ CollapsibleSection.propTypes = {
 CollapsibleSection.defaultProps = { className: 'mb-4' };
 
 const PhraseSection = ({
-  title, idPrefix, options, items, emptyText, onAdd, disabled,
+  title, idPrefix, options, items, onAdd, disabled,
 }) => {
   return (
     <CollapsibleSection title={title} count={items.length} dataComponent={idPrefix}>
@@ -144,9 +144,7 @@ const PhraseSection = ({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">{emptyText}</p>
-      ) : (
+      {items.length > 0 && (
         <ol className="list-group list-group-numbered mt-2" data-component={`${idPrefix}-list`}>
           {items.map((item) => (
             <PhraseListItem
@@ -167,7 +165,6 @@ PhraseSection.propTypes = {
   idPrefix: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(optionShape).isRequired,
   items: PropTypes.arrayOf(itemShape).isRequired,
-  emptyText: PropTypes.string.isRequired,
   onAdd: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
 };
@@ -232,9 +229,7 @@ const PictogramSection = ({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">No pictograms added yet.</p>
-      ) : (
+      {items.length > 0 && (
         <div
           className="d-flex flex-wrap gap-2 mt-2"
           data-component="safety-pictograms-list"
@@ -381,7 +376,6 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
         idPrefix="safety-h-phrases"
         options={hazardOptions}
         items={hazardItems}
-        emptyText="No hazard statements added yet."
         onAdd={handleAddH}
         disabled={loading}
       />
@@ -390,7 +384,6 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
         idPrefix="safety-p-phrases"
         options={precautionaryOptions}
         items={precautionaryItems}
-        emptyText="No precautionary statements added yet."
         onAdd={handleAddP}
         disabled={loading}
       />
