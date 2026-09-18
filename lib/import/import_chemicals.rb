@@ -10,7 +10,6 @@ module Import
     KEYS_TO_EXCLUDE = SAFETY_SHEET + %w[cas].freeze
     SIGMA_ALDRICH_PATTERN = /(sigmaaldrich|merck)/.freeze
     THERMOFISCHER_PATTERN = /(thermofischer|alfa)/.freeze
-    SAFETY_SHEET_PATH = '/safety_sheets/'
     VENDOR_MAP = {
       SIGMA_ALDRICH_PATTERN => 'Merck',
       THERMOFISCHER_PATTERN => 'Alfa',

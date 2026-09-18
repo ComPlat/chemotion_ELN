@@ -414,16 +414,6 @@ describe Chemotion::ChemicalsService do
       end
     end
 
-    context 'when chem_properties_merck' do
-      it 'constructs chemical properties hash for merck vendor' do
-        chem_properties_names = %w[grade quality_level form mp ph]
-        chem_properties_values = ['200', '>1 (vs air)', '≤0.002% N compounds≤0.01% insolubles', '661 °C',
-                                  '6.0-9.0 (25 °C, 5%)']
-        chemical_properties = described_class.chem_properties_merck(chem_properties_names, chem_properties_values.dup)
-        expect(chemical_properties.keys).to include('grade', 'quality_level', 'form', 'melting_point', 'ph')
-      end
-    end
-
     context 'when handling exceptions' do
       it 'executes block without error' do
         result = described_class.handle_exceptions { 'ok' }
@@ -477,23 +467,6 @@ describe Chemotion::ChemicalsService do
       end
     end
 
-    context 'with chemical_has_vendor_product?' do
-      let(:chemical) { build(:chemical, chemical_data: [{ 'merckProductInfo' => { 'productNumber' => '270709' } }]) }
-
-      it 'returns true when vendor+product present' do
-        expect(described_class.chemical_has_vendor_product?(chemical, 'merck', '270709')).to be true
-      end
-
-      it 'returns false when product number different' do
-        expect(described_class.chemical_has_vendor_product?(chemical, 'merck', '111111')).to be false
-      end
-
-      it 'returns false when chemical_data malformed' do
-        malformed = build(:chemical, chemical_data: [])
-        expect(described_class.chemical_has_vendor_product?(malformed, 'merck', '270709')).to be false
-      end
-    end
-
     context 'with update_chemical_data' do
       let(:data) { [{ 'safetySheetPath' => [] }] }
       # Use only hex chars so regex in service matches
@@ -532,16 +505,6 @@ describe Chemotion::ChemicalsService do
                                                    create_sds_file: '/safety_sheets/merck/270709_web_newhash.pdf')
         result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
         expect(result).to eq('/safety_sheets/merck/270709_web_newhash.pdf')
-      end
-    end
-
-    context 'when extracting vendor key from path' do
-      it 'returns nil when product_number missing' do
-        expect(described_class.extract_vendor_key_from_path('/safety_sheets/merck/270709_hash.pdf', nil)).to be_nil
-      end
-
-      it 'returns nil when file_path nil' do
-        expect(described_class.extract_vendor_key_from_path(nil, '270709')).to be_nil
       end
     end
 

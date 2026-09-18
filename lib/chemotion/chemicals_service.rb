@@ -84,67 +84,6 @@ module Chemotion
         follow_redirects: false }
     end
 
-    # Sigma-Aldrich's search rejects automated clients, so this scraping path is unreachable;
-    # merck now resolves the catalogue entry via PubChem. Kept for a future vendor API route.
-    # def self.merck_request(name)
-    #   string = CGI.escape(name.gsub(/\s/, '-'))
-    #   url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
-    #         "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
-    #   safe_url = validate_url_for_request!(url)
-    #   merck_res = HTTParty.get(safe_url, request_options)
-    #   doc = Nokogiri::HTML.parse(merck_res.body.to_s)
-    #
-    #   href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
-    #   raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
-    #
-    #   href
-    # end
-    #
-    # # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
-    # # Apollo GraphQL cache that Next.js embeds in __NEXT_DATA__. Product objects in
-    # # the cache carry brandKey and productNumber but no URL, so we construct it.
-    # def self.extract_product_href_from_next_data(doc)
-    #   script = doc.at_css('#__NEXT_DATA__')
-    #   return nil unless script
-    #
-    #   data = JSON.parse(script.text)
-    #   extract_product_href_from_apollo_state(data)
-    # rescue JSON::ParserError, TypeError
-    #   nil
-    # end
-    #
-    # # Construct the canonical /DE/de/product/{brand}/{number} path from the first
-    # # entry in the Apollo GraphQL cache search results.
-    # def self.extract_product_href_from_apollo_state(data)
-    #   first = apollo_first_search_product(data)
-    #   return nil unless first
-    #
-    #   brand_key = first['brandKey'].to_s.downcase
-    #   product_number = first['productNumber'].to_s
-    #   return nil if brand_key.empty? || product_number.empty?
-    #
-    #   "/DE/de/product/#{brand_key}/#{product_number}"
-    # end
-    #
-    # # Return the first product object from ROOT_QUERY.getNewProductSearchResults.
-    # def self.apollo_first_search_product(data)
-    #   root_query = data.dig('props', 'apolloState', 'ROOT_QUERY') ||
-    #                data.dig('apolloState', 'ROOT_QUERY')
-    #   return nil unless root_query.is_a?(Hash)
-    #
-    #   sr_key = root_query.keys.find { |k| k.start_with?('getNewProductSearchResults') }
-    #   return nil unless sr_key
-    #
-    #   products = root_query.dig(sr_key, 'products')
-    #   products.is_a?(Array) ? products.first : nil
-    # end
-    #
-    # # Last-resort fallback: first anchor whose href matches the product path pattern.
-    # def self.extract_product_href_from_html(doc)
-    #   product_path_re = %r{\A/[A-Z]{2}/[a-z]{2}/product/}i
-    #   doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
-    # end
-    #
     # Validate that a URL is safe to request (SSRF protection).
     # Redirects are disabled in request_options so whitelisted URLs cannot
     # redirect to untrusted hosts.
@@ -195,8 +134,6 @@ module Chemotion
         'save_modes' => vendor_save_modes(SDS_VENDOR) }
     end
 
-    # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
-    # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
     # Form-encoded params arrive with the sheet list rebuilt as an index-keyed Hash, so
     # both shapes count.
     def self.sds_limit_reached?(chemical_data)
@@ -207,6 +144,8 @@ module Chemotion
       sheets.is_a?(Enumerable) && sheets.count >= MAX_SAVED_SDS
     end
 
+    # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
+    # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
     def self.vendor_save_modes(vendor)
       return %w[browser server] if vendor.casecmp?(SDS_VENDOR)
       return %w[server browser] if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
@@ -384,29 +323,6 @@ module Chemotion
       return if product_number.to_s.match?(allowed_pattern)
 
       raise StandardError, 'Could not find safety data sheet from Merck'
-    end
-
-    def self.alfa_product(alfa_req)
-      response = Nokogiri::HTML.parse(alfa_req.body)
-      if response.title && response.title != 'Alfa Aesar'
-        product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
-        product_number[0].value
-      else
-        str = 'search-result-number'
-        response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
-      end
-    end
-
-    def self.alfa(name, language)
-      chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
-      safe_url = validate_url_for_request!(url)
-      alfa_req = HTTParty.get(safe_url, request_options)
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
-      { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
-        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
-    rescue StandardError
-      'Could not find safety data sheet from Thermofisher'
     end
 
     # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
@@ -703,18 +619,6 @@ module Chemotion
       property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
     end
 
-    def self.chem_properties_merck(chem_properties_names, chem_properties_values)
-      chemical_properties = {}
-      chem_properties_values.pop
-      chem_properties_names.map.with_index do |string, index|
-        property_name = clean_property_name(string)
-        cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
-        cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
-        chemical_properties[property_name] = cleaned_value if property_name
-      end
-      chemical_properties
-    end
-
     def self.chemical_properties_merck(product_link)
       safe_url = validate_url_for_request!(product_link)
       product = fetch_product_from_apollo(safe_url)
@@ -730,26 +634,6 @@ module Chemotion
       end
     rescue StandardError
       'Could not find additional chemical properties'
-    end
-
-    # Generate or extract vendor key for safetySheetPath based on file path
-    # Handles both raw filenames and existing versioned file paths
-    # @param file_path [String] Path to the SDS file
-    # @param product_number [String, nil] Optional product number to match versioned filenames
-    # @return [String] Vendor key for safetySheetPath
-    def self.extract_vendor_key_from_path(file_path, product_number = nil)
-      return nil unless file_path && product_number.present?
-
-      file_name = File.basename(file_path, '.pdf')
-
-      match = file_name.match(/#{@vendor_name}_#{product_number}_(?:web_)?([a-f0-9]{16})/)
-      version_num = match && match[1]
-
-      if version_num
-        "#{@vendor_name.downcase}_v#{version_num}_link"
-      else
-        "#{@vendor_name.downcase}_link"
-      end
     end
 
     # Generate safety sheet file path (unique by vendor/product and hash initials)
@@ -769,21 +653,6 @@ module Chemotion
       end
     end
     # rubocop:enable Style/OptionalBooleanParameter
-
-    # Check if chemical record already contains this vendor and product combination
-    # @param chemical [Chemical] Chemical record to check
-    # @param vendor_name [String] Vendor name
-    # @param product_number [String] Product number
-    # @return [Boolean] true if vendor+product exists in chemical
-    def self.chemical_has_vendor_product?(chemical, vendor_name, product_number)
-      return false unless chemical&.chemical_data.is_a?(Array) && chemical.chemical_data[0]
-
-      # Check if vendor product key exists
-      vendor_product_key = "#{vendor_name.downcase}ProductInfo"
-      vendor_info = chemical.chemical_data[0][vendor_product_key]
-
-      vendor_info.present? && vendor_info['productNumber'] == product_number
-    end
 
     def self.update_chemical_data(chemical_data, file_path, product_number, vendor)
       hash_initials = file_path[%r{/safety_sheets/#{vendor}/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$}, 1]
