@@ -28,6 +28,7 @@ import {
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
+  imagesListSetter,
   mols,
   textList,
   textListSetter,
@@ -679,13 +680,8 @@ const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
     console.error('Editor is undefined');
     return;
   }
-
   const serialized = JSON.stringify(dataCopy);
-  if (recenter) {
-    await editor.structureDef.editor.setMolecule(serialized);
-    return;
-  }
-  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
+  await editor.structureDef.editor.setMolecule(serialized, { preserveCanvasPosition: true });
 };
 
 /* istanbul ignore next */
@@ -758,6 +754,13 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
+
+  // Snapshot mol list before fetchKetcherData calls. If getKet() returns stale/empty
+  // data (e.g. Ketcher is mid-render), placeAtomOnImage produces no $ref nodes. The
+  // guard below detects this and aborts rather than overwriting the canvas with an
+  // image-only KET that Ketcher cannot render.
+  const molsSnapshot = [...mols];
+
   // first fetch to save values
   await fetchKetcherData(editor);
 
@@ -774,6 +777,16 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   } else {
     imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   }
+
+  // Guard: if getKet() returned stale data, placeAtomOnImage produces no $ref
+  // entries despite mols and images existing. The canvas is already correct —
+  // abort rather than overwriting it with an image-only KET Ketcher cannot render.
+  const hasMolRefs = imageNodes.some((n) => n.$ref);
+  if (!hasMolRefs && molsSnapshot.length > 0 && imageListCopy.length > 0) {
+    await runImageLayering();
+    return;
+  }
+
   latestData.root.nodes = imageNodes;
 
   // Always reposition text nodes to follow atom positions
@@ -1025,6 +1038,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     latestData.root.nodes.push({ $ref: `mol${molCount}` });
     latestData.root.nodes.push(imageItem);
     latestData[`mol${molCount}`] = await addNewMol(tempId);
+    // Sync imagesList immediately so placeAtomOnImage can find this image by index.
+    // fetchKetcherData uses preserveImagesWhenEmpty=true, so if Ketcher omits image
+    // nodes from getKet() the stateManager list would stay at the pre-add length,
+    // causing placeAtomOnImage to silently fail for the new atom (async-forEach swallows
+    // the throw) and the image to be absent from the rebuilt node list.
+    imagesListSetter([...imagesList, imageItem]);
   } else if (imageCount - 1 !== imageNodeCounter) {
     // header
     // atom

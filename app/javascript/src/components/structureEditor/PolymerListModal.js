@@ -20,9 +20,9 @@ const SpecialCharacterPickerIcon = `
 </svg>
 `;
 
-function PolymerListModal({
+const PolymerListModal = ({
   loading, onShapeSelection, title, onCloseClick
-}) {
+}) => {
   const [shapesList, setShapeList] = useState([]); // Initialize the state as an empty array
   const [category, setCategory] = useState(() => localStorage.getItem('polymerCategory') || 'basic');
   const [loadingData, setLoadingData] = useState(false); // Initialize the state as an empty array
@@ -176,7 +176,7 @@ function PolymerListModal({
       </div>
     </div>
   );
-}
+};
 
 const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
@@ -234,7 +234,7 @@ const specialCharButton = (iframeDocument) => {
   }
 };
 
-function SpecialCharModal({
+const SpecialCharModal = ({
   loading,
   title,
   onCloseClick,
@@ -242,7 +242,7 @@ function SpecialCharModal({
   restSelection,
   onDashedSelection,
   onRestSelections
-}) {
+}) => {
   const specialCharacters = [
     '!', '@', '#', '$',
     '/', '?', '∆', '★'
@@ -294,7 +294,7 @@ function SpecialCharModal({
       </div>
     </AppModal>
   );
-}
+};
 
 SpecialCharModal.propTypes = {
   loading: PropTypes.bool,
