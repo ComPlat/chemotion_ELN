@@ -74,6 +74,7 @@ export default class ChemicalTab extends React.Component {
       expandedVendors: {},
       expandedProducts: {},
       showAllSearchResults: false,
+      collapsedSections: {},
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -299,6 +300,17 @@ export default class ChemicalTab extends React.Component {
     this.setState((prev) => ({
       expandedVendors: { ...prev.expandedVendors, [vendor]: !prev.expandedVendors[vendor] },
     }));
+  }
+
+  toggleSection(id) {
+    this.setState((prev) => ({
+      collapsedSections: { ...prev.collapsedSections, [id]: !prev.collapsedSections[id] },
+    }));
+  }
+
+  isSectionOpen(id) {
+    const { collapsedSections } = this.state;
+    return !collapsedSections[id];
   }
 
   toggleVendorProducts(vendor) {
@@ -1548,31 +1560,65 @@ export default class ChemicalTab extends React.Component {
         )}
         {sdsVendors.length > 0 && (
           <>
-            <h6 className="mb-1">Safety data sheets</h6>
-            <div className="text-muted small mb-2">
-              Saving a sheet stores the PDF with the chemical, which is what the AI
-              extraction reads.
-            </div>
-            <ListGroup className="mb-3">
-              {sdsVendors.map((group) => this.renderVendorGroup(group))}
-            </ListGroup>
+            {this.sectionHeader('sdsVendors', 'Safety data sheets', {
+              meta: `${sdsVendors.length} vendors`,
+            })}
+            {this.isSectionOpen('sdsVendors') && (
+              <>
+                <div className="text-muted small mb-2">
+                  Saving a sheet stores the PDF with the chemical, which is what the AI
+                  extraction reads.
+                </div>
+                <ListGroup className="mb-3">
+                  {sdsVendors.map((group) => this.renderVendorGroup(group))}
+                </ListGroup>
+              </>
+            )}
           </>
         )}
         {catalogueVendors.length > 0 && (
           <>
-            <h6 className="mb-1">Vendor product pages</h6>
-            <div className="text-muted small mb-2">
-              No sheet can be fetched from these. Open the product page and attach the
-              sheet with Upload SDS to make it available for extraction.
-            </div>
-            <ListGroup className="mb-2">
-              {catalogueVendors.map((group) => this.renderVendorGroup(group))}
-            </ListGroup>
+            {this.sectionHeader('catalogueVendors', 'Vendor product pages', {
+              meta: `${catalogueVendors.length} vendors`,
+            })}
+            {this.isSectionOpen('catalogueVendors') && (
+              <>
+                <div className="text-muted small mb-2">
+                  No sheet can be fetched from these. Open the product page and attach the
+                  sheet with Upload SDS to make it available for extraction.
+                </div>
+                <ListGroup className="mb-2">
+                  {catalogueVendors.map((group) => this.renderVendorGroup(group))}
+                </ListGroup>
+              </>
+            )}
           </>
         )}
       </div>
     );
   };
+
+  // Every sheet section folds the same way, so the header is built once. Sections start
+  // open, which is how they behaved before they could be collapsed.
+  sectionHeader(id, title, { meta = null, className = '' } = {}) {
+    const isOpen = this.isSectionOpen(id);
+
+    return (
+      <h6 className={`mb-1 ${className}`}>
+        <Button
+          variant="link"
+          size="sm"
+          className="p-0 text-decoration-none text-reset align-baseline"
+          aria-expanded={isOpen}
+          onClick={() => this.toggleSection(id)}
+        >
+          <i className={`fa fa-caret-${isOpen ? 'down' : 'right'} me-2`} />
+          {title}
+        </Button>
+        {meta && <span className="text-muted small fw-normal ms-2">{meta}</span>}
+      </h6>
+    );
+  }
 
   // One shape for every "open this elsewhere" control, so the row reads as a button bar
   // rather than a run of bare links.
@@ -1767,13 +1813,14 @@ export default class ChemicalTab extends React.Component {
       const resultsScroll = showAllSearchResults && searchResults.length > PRODUCT_PREVIEW_COUNT;
       const searchResultsSection = hasSearchResults && (
         <>
-          <h6 className="mt-5 text-primary">
-            Search Results:
-            <span className="text-muted small fw-normal ms-2">{`${searchResults.length} found`}</span>
-          </h6>
+          {this.sectionHeader('searchResults', 'Search Results', {
+            meta: `${searchResults.length} found`,
+            className: 'mt-5 text-primary',
+          })}
           <div
             className={resultsScroll ? 'overflow-auto pe-2' : ''}
             style={resultsScroll ? { maxHeight: '22rem' } : undefined}
+            hidden={!this.isSectionOpen('searchResults')}
           >
             <ol className="list-group list-group-numbered">
               {shownResults.map((document, index) => {
@@ -1801,7 +1848,7 @@ export default class ChemicalTab extends React.Component {
               })}
             </ol>
           </div>
-          {searchResults.length > PRODUCT_PREVIEW_COUNT && (
+          {this.isSectionOpen('searchResults') && searchResults.length > PRODUCT_PREVIEW_COUNT && (
             <Button
               variant="link"
               size="sm"
@@ -1819,13 +1866,15 @@ export default class ChemicalTab extends React.Component {
       // Render saved SDS if we have any
       const savedSdsSection = hasSavedSds && (
         <div className={hasSearchResults ? 'border-top mt-4 pt-2' : ''}>
-          <h6 className="mt-4 text-success">
-            Safety Sheets saved in the database:
-            <span className="text-muted small fw-normal ms-2">
-              {`${savedSds.length} of ${MAX_SAVED_SDS}`}
-            </span>
-          </h6>
-          <div className="overflow-auto pe-2" style={{ maxHeight: '22rem' }}>
+          {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
+            meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
+            className: 'mt-4 text-success',
+          })}
+          <div
+            className="overflow-auto pe-2"
+            style={{ maxHeight: '22rem' }}
+            hidden={!this.isSectionOpen('savedSds')}
+          >
             <ol className="list-group list-group-numbered">
               {savedSds.map((document, index) => {
                 if (!document) {
