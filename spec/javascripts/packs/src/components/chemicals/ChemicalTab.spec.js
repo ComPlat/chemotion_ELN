@@ -440,6 +440,20 @@ describe('ChemicalTab component', () => {
         });
       });
 
+      it('builds the badge tooltip as a render prop, so it can reposition itself', () => {
+        const group = {
+          vendor: 'Sigma-Aldrich',
+          products: [{ merck_link: 'x', merck_product_number: '179124' }]
+        };
+        instance.setState({ expandedProducts: {}, copyFeedback: null });
+
+        const overlay = shallow(instance.renderVendorProducts(group))
+          .find(OverlayTrigger).first().prop('overlay');
+        expect(typeof overlay).toBe('function');
+        expect(shallow(overlay({ popper: { scheduleUpdate: sinon.spy() } })).prop('children'))
+          .toEqual(expect.stringContaining('Click to copy'));
+      });
+
       it('says what the badge is doing', () => {
         expect(ChemicalTab.copyTooltip({ ok: true })).toEqual('Copied');
         expect(ChemicalTab.copyTooltip({ ok: false })).toEqual('Could not reach the clipboard');
