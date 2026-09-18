@@ -99,12 +99,12 @@ module Chemotion
               when 'Merck', 'Sigma-Aldrich'
                 { merck_link: Chemotion::ChemicalsService.merck(name, language) }
               when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language) }
               when 'All'
                 Chemotion::ChemicalsService.vendor_overview(name, language)
               else
                 {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
+                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language),
                   merck_link: Chemotion::ChemicalsService.merck(name, language),
                 }
               end

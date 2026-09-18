@@ -463,7 +463,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Molecule).to receive(:find).and_return(molecule)
-      allow(Chemotion::ChemicalsService).to receive_messages(alfa: { alfa_link: 'alfa' },
+      allow(Chemotion::ChemicalsService).to receive_messages(thermofisher: { fisher_link: 'fisher' },
                                                              merck: { merck_link: 'merck' })
       get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=Unknown&data[option]=CAS&data[language]=en"
     end
@@ -523,7 +523,7 @@ describe Chemotion::ChemicalAPI do
     end
 
     it 'returns alfa_link only for Thermofisher vendor' do
-      allow(Chemotion::ChemicalsService).to receive(:alfa).and_return('alfa_link_val')
+      allow(Chemotion::ChemicalsService).to receive(:thermofisher).and_return('alfa_link_val')
       path = "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}" \
              '?data[vendor]=Thermofisher&data[option]=CAS&data[language]=en'
       get path

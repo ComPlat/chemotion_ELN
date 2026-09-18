@@ -115,6 +115,36 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.thermofisher' do
+    let(:sources) do
+      [{ SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+         SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' },
+       { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124' }]
+    end
+
+    it 'resolves the Fisher catalogue entry through PubChem' do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+      expect(described_class.thermofisher('Acetone', 'en')).to include(
+        'fisher_product_number' => 'AC327840025',
+        'save_modes' => %w[server browser],
+      )
+    end
+
+    it 'ignores vendors other than the Fisher lineage' do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180,
+                                         get_vendor_sources_from_cid: [sources.last])
+      expect(described_class.thermofisher('Acetone', 'en'))
+        .to eq('Could not find safety data sheet from Thermofisher')
+    end
+
+    it 'reports a miss when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.thermofisher('Nonexistent', 'en'))
+        .to eq('Could not find safety data sheet from Thermofisher')
+    end
+  end
+
   describe '.sds_limit_reached?' do
     def with_sheets(count)
       [{ 'safetySheetPath' => Array.new(count) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } } }]

@@ -409,6 +409,28 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
+    # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
+    # entry is resolved through PubChem and the SDS URL built from it. alfa.com is off the
+    # allowlist, which is why .alfa can only ever return its failure string.
+    def self.thermofisher(name, language)
+      cid = PubChem.get_cid_from_identifier(name)
+      raise StandardError, 'No PubChem CID for this name' unless cid
+
+      product = fisher_products(fisher_candidates(PubChem.get_vendor_sources_from_cid(cid)), language)
+                .find { |candidate| candidate['fisher_link'] }
+      raise StandardError, 'No Thermofisher catalogue entry found' unless product
+
+      product
+    rescue StandardError
+      'Could not find safety data sheet from Thermofisher'
+    end
+
+    def self.fisher_candidates(sources)
+      sources.select do |source|
+        FISHER_VENDORS.any? { |vendor| source[:SourceName].to_s.casecmp?(vendor) }
+      end
+    end
+
     def self.write_file(file_path, file = nil, link = nil)
       full_file_path = "public#{file_path}"
 
