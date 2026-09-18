@@ -1663,12 +1663,6 @@ export default class ChemicalTab extends React.Component {
     return vendorName ? `${vendorName} catalogue number. Click to copy.` : 'Product listing. Click to copy.';
   }
 
-  static copyBadgeVariant(copied) {
-    if (!copied) return 'light';
-
-    return copied.ok ? 'success' : 'danger';
-  }
-
   renderVendorProducts = (group) => {
     const { expandedProducts, copyFeedback } = this.state;
     const showAll = !!expandedProducts[group.vendor];
@@ -1704,14 +1698,22 @@ export default class ChemicalTab extends React.Component {
                   )}
                 >
                   <Badge
-                    bg={ChemicalTab.copyBadgeVariant(copied)}
-                    text={copied ? 'white' : 'dark'}
+                    bg="light"
+                    text="dark"
                     role="button"
                     className="border font-monospace fw-normal"
                     onClick={() => this.copyProductNumber(label)}
                   >
-                    {copied && <i className={`fa ${copied.ok ? 'fa-check' : 'fa-times'} me-1`} />}
-                    {label}
+                    {/* The badge is monospace, so reserving the label's width in ch keeps
+                        the row still while the mark stands in its place. */}
+                    <span
+                      className="d-inline-block text-center"
+                      style={{ minWidth: `${String(label).length}ch` }}
+                    >
+                      {copied
+                        ? <i className={`fa ${copied.ok ? 'fa-check' : 'fa-times'}`} />
+                        : label}
+                    </span>
                   </Badge>
                 </OverlayTrigger>
                 {productLink && ChemicalTab.linkIconButton({
