@@ -245,6 +245,43 @@ describe('ChemicalTab component', () => {
       instance.toggleSection('savedSds');
     });
 
+    describe('vendorFromDocument', () => {
+      it('reads the vendor out of a stored sheet path', () => {
+        expect(ChemicalTab.vendorFromDocument({
+          '252549_8996a8681115b875_link': '/safety_sheets/merck/252549_web_8996a8681115b875.pdf'
+        })).toEqual('merck');
+      });
+
+      it('falls back to the link key for a search result', () => {
+        expect(ChemicalTab.vendorFromDocument({
+          merck_link: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124'
+        })).toEqual('merck');
+        expect(ChemicalTab.vendorFromDocument({
+          fisher_link: 'https://www.fishersci.com/store/msds?partNumber=AC327840025'
+        })).toEqual('fisher');
+      });
+
+      it('yields nothing rather than throwing on an unusable document', () => {
+        expect(ChemicalTab.vendorFromDocument({})).toEqual('');
+        expect(ChemicalTab.vendorFromDocument(undefined)).toEqual('');
+      });
+    });
+
+    it('removes a search result without throwing on its vendor URL', () => {
+      const found = {
+        merck_link: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+        merck_product_number: '179124'
+      };
+      instance.setState({
+        chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5'),
+        searchResults: [found],
+        displayWell: true
+      });
+
+      expect(() => instance.handleRemove(0, found)).not.toThrow();
+      expect(wrapper.state().searchResults).toEqual([]);
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
