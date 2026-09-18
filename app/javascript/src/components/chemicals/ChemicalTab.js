@@ -1533,6 +1533,7 @@ export default class ChemicalTab extends React.Component {
           <>
             {this.sectionHeader('sdsVendors', 'Safety data sheets', {
               meta: `${sdsVendors.length} vendors`,
+              metaTooltip: 'Vendors PubChem lists for this sample whose safety data sheet can be saved here.',
             })}
             {this.isSectionOpen('sdsVendors') && (
               <>
@@ -1551,6 +1552,8 @@ export default class ChemicalTab extends React.Component {
           <>
             {this.sectionHeader('catalogueVendors', 'Vendor product pages', {
               meta: `${catalogueVendors.length} vendors`,
+              metaTooltip: 'These vendors publish a product page but no sheet we can fetch. '
+                + 'Open the page and attach the sheet with Upload SDS.',
             })}
             {this.isSectionOpen('catalogueVendors') && (
               <>
@@ -1571,8 +1574,11 @@ export default class ChemicalTab extends React.Component {
 
   // Every sheet section folds the same way, so the header is built once. Sections start
   // open, which is how they behaved before they could be collapsed.
-  sectionHeader(id, title, { meta = null, className = '', defaultOpen = true } = {}) {
+  sectionHeader(id, title, {
+    meta = null, metaTooltip = null, className = '', defaultOpen = true,
+  } = {}) {
     const isOpen = this.isSectionOpen(id, defaultOpen);
+    const counter = <span className="text-muted small fw-normal ms-2">{meta}</span>;
 
     return (
       <h6 className={`mt-4 mb-1 ${className}`}>
@@ -1586,7 +1592,12 @@ export default class ChemicalTab extends React.Component {
           <i className={`fa fa-caret-${isOpen ? 'down' : 'right'} me-2`} />
           {title}
         </Button>
-        {meta && <span className="text-muted small fw-normal ms-2">{meta}</span>}
+        {meta && metaTooltip && (
+          <OverlayTrigger placement="top" overlay={<Tooltip id={`${id}-meta`}>{metaTooltip}</Tooltip>}>
+            {counter}
+          </OverlayTrigger>
+        )}
+        {meta && !metaTooltip && counter}
       </h6>
     );
   }
@@ -1811,6 +1822,7 @@ export default class ChemicalTab extends React.Component {
         <>
           {this.sectionHeader('searchResults', 'Search Results', {
             meta: `${searchResults.length} found`,
+            metaTooltip: 'Sheets this search turned up. Saving one copies it into the sample.',
             className: 'text-primary',
           })}
           <div
@@ -1866,6 +1878,8 @@ export default class ChemicalTab extends React.Component {
         <div>
           {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
             meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
+            metaTooltip: `A sample holds at most ${MAX_SAVED_SDS} safety data sheets. `
+              + 'Searching stays open at the limit; delete one here to save another.',
             className: 'text-success',
           })}
           <div
@@ -1933,6 +1947,8 @@ export default class ChemicalTab extends React.Component {
       <div>
         {this.sectionHeader('safetyPhrases', 'Safety phrases and pictograms', {
           meta: startsOpen ? null : 'none yet',
+          metaTooltip: 'No H or P statement and no pictogram is set. '
+            + 'Fetch them from a saved sheet, or type them in here.',
           defaultOpen: startsOpen,
         })}
         <div hidden={!this.isSectionOpen('safetyPhrases', startsOpen)}>
