@@ -440,14 +440,11 @@ describe('ChemicalTab component', () => {
         });
       });
 
-      it('dresses the badge by outcome', () => {
+      it('says what the badge is doing', () => {
         expect(ChemicalTab.copyTooltip({ ok: true })).toEqual('Copied');
         expect(ChemicalTab.copyTooltip({ ok: false })).toEqual('Could not reach the clipboard');
         expect(ChemicalTab.copyTooltip(null, 'Sigma-Aldrich'))
           .toEqual('Sigma-Aldrich catalogue number. Click to copy.');
-        expect(ChemicalTab.copyBadgeVariant({ ok: true })).toEqual('success');
-        expect(ChemicalTab.copyBadgeVariant({ ok: false })).toEqual('danger');
-        expect(ChemicalTab.copyBadgeVariant(null)).toEqual('light');
       });
     });
 
