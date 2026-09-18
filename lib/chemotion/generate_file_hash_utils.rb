@@ -37,15 +37,6 @@ module Chemotion
       nil
     end
 
-    # Extract initials (first 16 characters) from existing full hash
-    # @param full_hash [String] Full MD5 hash string
-    # @return [String] First 16 characters of the hash
-    def self.extract_initials_from_hash(full_hash)
-      return '' if full_hash.blank?
-
-      full_hash[0..15]
-    end
-
     # Check if a file with same content already exists globally
     # @param vendor_name [String] Vendor name
     # @param product_number [String] Product number

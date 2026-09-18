@@ -206,51 +206,16 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.extract_initials_from_hash' do
-    it 'extracts first 16 characters from full hash' do
-      full_hash = 'abcdef1234567890abcdef1234567890'
-      result = described_class.extract_initials_from_hash(full_hash)
-      expect(result).to eq('abcdef1234567890')
-    end
-
-    it 'handles hashes shorter than 16 characters' do
-      short_hash = 'abc123'
-      result = described_class.extract_initials_from_hash(short_hash)
-      expect(result).to eq('abc123')
-    end
-
-    it 'handles exactly 16 character hashes' do
-      exact_hash = 'abcdef1234567890'
-      result = described_class.extract_initials_from_hash(exact_hash)
-      expect(result).to eq('abcdef1234567890')
-    end
-
-    it 'returns empty string for blank inputs' do
-      expect(described_class.extract_initials_from_hash('')).to eq('')
-      expect(described_class.extract_initials_from_hash(nil)).to eq('')
-      expect(described_class.extract_initials_from_hash('   ')).to eq('')
-    end
-
-    it 'handles various input types' do
-      expect(described_class.extract_initials_from_hash('a')).to eq('a')
-      expect(described_class.extract_initials_from_hash('0123456789abcdef')).to eq('0123456789abcdef')
-      expect(described_class.extract_initials_from_hash('0123456789abcdefghijklmnop')).to eq('0123456789abcdef')
-    end
-  end
-
   describe 'integration tests' do
     it 'generates consistent hashes across all methods' do
       test_file = create_test_file(test_content)
 
       full_hash = described_class.generate_full_hash(test_file)
       initials_from_file = described_class.generate_file_hash_initials(test_file)
-      initials_from_hash = described_class.extract_initials_from_hash(full_hash)
 
       aggregate_failures do
         expect(full_hash).to eq(expected_hash)
         expect(initials_from_file).to eq(expected_initials)
-        expect(initials_from_hash).to eq(expected_initials)
-        expect(initials_from_file).to eq(initials_from_hash)
       end
 
       File.delete(test_file)
