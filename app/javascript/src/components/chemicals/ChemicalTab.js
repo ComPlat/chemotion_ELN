@@ -50,6 +50,9 @@ const PROPERTY_VENDOR_KEYS = {
   thermofischer: 'thermofischer',
 };
 
+// How long the badge shows the outcome of a copy before returning to its resting state.
+const COPY_FEEDBACK_MS = 1600;
+
 // What to tell the user when the field the chosen option searches on is empty.
 const MISSING_QUERY_HINT = {
   'Product Number': 'Add a product number in Inventory Information, or search by CAS or common name.',
@@ -80,6 +83,7 @@ export default class ChemicalTab extends React.Component {
       expandedProducts: {},
       showAllSearchResults: false,
       collapsedSections: {},
+      copyFeedback: null,
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -100,6 +104,10 @@ export default class ChemicalTab extends React.Component {
     const { sample } = this.props;
     this.fetchChemical(sample);
     this.updateDisplayWell();
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.copyFeedbackTimer);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -372,20 +380,22 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
-  // Clipboard access is refused outside a secure context, so the failure is reported
-  // rather than swallowed; the number stays on screen to copy by hand.
+  // The badge answers for itself for a moment rather than raising a toast. Clipboard
+  // access is refused outside a secure context, so failure shows too.
   copyProductNumber(value) {
-    const done = () => this.notify({
-      title: 'Copied', message: `${value} is on the clipboard`, level: 'info', position: 'tc',
-    });
-    const failed = () => this.notify({
-      title: 'Could not copy', message: `Copy ${value} manually.`, level: 'warning', position: 'tc',
-    });
+    const show = (ok) => {
+      clearTimeout(this.copyFeedbackTimer);
+      this.setState({ copyFeedback: { value, ok } });
+      this.copyFeedbackTimer = setTimeout(() => this.setState({ copyFeedback: null }), COPY_FEEDBACK_MS);
+    };
 
     const write = navigator?.clipboard?.writeText?.(value);
-    if (!write) return failed();
+    if (!write) {
+      show(false);
+      return Promise.resolve();
+    }
 
-    return write.then(done).catch(failed);
+    return write.then(() => show(true)).catch(() => show(false));
   }
 
   // The value the chosen option searches on. Empty means there is nothing to send.
@@ -1634,8 +1644,20 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
+  static copyTooltip(copied, vendorName) {
+    if (copied) return copied.ok ? 'Copied' : 'Could not reach the clipboard';
+
+    return vendorName ? `${vendorName} catalogue number. Click to copy.` : 'Product listing. Click to copy.';
+  }
+
+  static copyBadgeVariant(copied) {
+    if (!copied) return 'light';
+
+    return copied.ok ? 'success' : 'danger';
+  }
+
   renderVendorProducts = (group) => {
-    const { expandedProducts } = this.state;
+    const { expandedProducts, copyFeedback } = this.state;
     const showAll = !!expandedProducts[group.vendor];
     const products = showAll ? group.products : group.products.slice(0, PRODUCT_PREVIEW_COUNT);
 
@@ -1655,6 +1677,7 @@ export default class ChemicalTab extends React.Component {
             const productLinkKey = keys.find((key) => key.endsWith('product_link'));
             const label = (numberKey && product[numberKey]) || product.label;
             const productLink = productLinkKey && product[productLinkKey];
+            const copied = copyFeedback?.value === label ? copyFeedback : null;
 
             return (
               // eslint-disable-next-line react/no-array-index-key
@@ -1663,19 +1686,18 @@ export default class ChemicalTab extends React.Component {
                   placement="top"
                   overlay={(
                     <Tooltip id={`product-number-${group.vendor}-${index}`}>
-                      {numberKey
-                        ? `${vendorDisplayName(group.vendor)} catalogue number. Click to copy.`
-                        : 'Product listing. Click to copy.'}
+                      {ChemicalTab.copyTooltip(copied, numberKey && vendorDisplayName(group.vendor))}
                     </Tooltip>
                   )}
                 >
                   <Badge
-                    bg="light"
-                    text="dark"
+                    bg={ChemicalTab.copyBadgeVariant(copied)}
+                    text={copied ? 'white' : 'dark'}
                     role="button"
                     className="border font-monospace fw-normal"
                     onClick={() => this.copyProductNumber(label)}
                   >
+                    {copied && <i className={`fa ${copied.ok ? 'fa-check' : 'fa-times'} me-1`} />}
                     {label}
                   </Badge>
                 </OverlayTrigger>
@@ -1761,8 +1783,11 @@ export default class ChemicalTab extends React.Component {
     const hasSearchResults = Array.isArray(searchResults) && searchResults.length > 0;
     const hasSavedSds = Array.isArray(savedSds) && savedSds.length > 0;
 
-    // If no safety sheets at all, show empty message
-    if (!hasSearchResults && !hasSavedSds) {
+    // The vendor overview renders above this, so its results are not "no sheets".
+    const { vendorOverview } = this.state;
+    const hasVendorGroups = !!(vendorOverview?.sds_vendors?.length || vendorOverview?.catalogue_vendors?.length);
+
+    if (!hasSearchResults && !hasSavedSds && !hasVendorGroups) {
       return (
         <div data-component="SafetySheets" data-empty="true">
           <ListGroup className="my-3 overflow-auto">
@@ -1799,19 +1824,21 @@ export default class ChemicalTab extends React.Component {
                   return null;
                 }
 
-                const key = (document.alfa_product_number || document.merck_product_number) || `search-${index}`;
-                const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
-                  && document !== 'Could not find safety data sheet from Merck';
+                // A vendor with nothing to offer answers with a sentence, not a sheet.
+                const isMessage = typeof document === 'string';
+                const numberKey = Object.keys(document).find((key) => key.endsWith('_product_number'));
+                const key = (!isMessage && numberKey && document[numberKey]) || `search-${index}`;
 
                 return (
                   <li className="list-group-item border-0 d-flex align-items-center" key={key}>
-                    {isValidDocument ? (
-                      <div className="ms-2 me-auto w-100 safety-sheet-width">
-                        {this.renderChildElements(document, index)}
+                    {isMessage ? (
+                      <div className="ms-2 me-auto text-muted">
+                        <i className="fa fa-info-circle me-2" />
+                        {document}
                       </div>
                     ) : (
-                      <div className="ms-2 me-auto">
-                        <p className="mb-0">{document}</p>
+                      <div className="ms-2 me-auto w-100 safety-sheet-width">
+                        {this.renderChildElements(document, index)}
                       </div>
                     )}
                   </li>
