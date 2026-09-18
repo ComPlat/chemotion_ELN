@@ -89,23 +89,22 @@ module Chemotion
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
               vendor = data[:vendor]
               language = data[:language]
-              case data[:option]
-              when 'Common Name'
-                name = data[:searchStr] || molecule.names[0]
-              when 'CAS'
-                name = data[:searchStr] || molecule.cas[0]
-              end
+              # A product number narrows the vendor listing; PubChem is still reached by
+              # the molecule, so a name or CAS is needed either way.
+              name = data[:searchStr].presence ||
+                     (data[:option] == 'Common Name' ? molecule&.names&.first : molecule&.cas&.first)
+              number = data[:productNumber]
               case vendor
               when 'Merck', 'Sigma-Aldrich'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
+                { merck_link: Chemotion::ChemicalsService.merck(name, language, number) }
               when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language) }
+                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number) }
               when 'All'
-                Chemotion::ChemicalsService.vendor_overview(name, language)
+                Chemotion::ChemicalsService.vendor_overview(name, language, number)
               else
                 {
-                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
+                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number),
+                  merck_link: Chemotion::ChemicalsService.merck(name, language, number),
                 }
               end
             end

@@ -26,6 +26,9 @@ export default class ChemicalFetcher {
       'data[language]': queryParams.language,
       'data[searchStr]': queryParams.string
     };
+    if (queryParams.productNumber) {
+      searchTerm['data[productNumber]'] = queryParams.productNumber;
+    }
     const path = `/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?${new URLSearchParams(searchTerm)}`;
 
     return ApiClient.getJson(path, {
