@@ -30,6 +30,7 @@ export const defaultChemicalSchemaValidation = {
   status: { type: 'string' },
   vendor: { type: 'string' },
   order_number: { type: 'string' },
+  product_number: { type: 'string' },
   price: { type: 'float' },
   person: { type: 'string' },
   required_date: { type: 'date' },

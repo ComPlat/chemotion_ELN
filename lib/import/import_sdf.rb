@@ -20,6 +20,7 @@ class Import::ImportSdf < Import::ImportSamples
     status: { field: 'status', displayName: 'Status' },
     vendor: { field: 'vendor', displayName: 'Vendor' },
     order_number: { field: 'order_number', displayName: 'Order Number' },
+    product_number: { field: 'product_number', displayName: 'Product Number' },
     amount: { field: 'amount', displayName: 'Amount' },
     volume: { field: 'volume', displayName: 'Volume' },
     price: { field: 'price', displayName: 'Price' },

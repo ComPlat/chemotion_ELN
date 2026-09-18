@@ -29,6 +29,13 @@ export default {
               type: 'text',
             },
             {
+              column: 'product_number',
+              label: 'Product number',
+              key: 'information',
+              table: 'chemicals',
+              type: 'text',
+            },
+            {
               column: 'amount',
               label: 'Amount',
               key: 'information',

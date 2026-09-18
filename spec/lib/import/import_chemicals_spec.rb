@@ -126,6 +126,11 @@ RSpec.describe Import::ImportChemicals do
       described_class.process_column(chemical, 'opening date', '2024-06-15')
       expect(chemical['chemical_data'][0]['opening_date']).to eq('2024-06-15')
     end
+
+    it 'sets product_number from import' do
+      described_class.process_column(chemical, 'product number', '179124')
+      expect(chemical['chemical_data'][0]['product_number']).to eq('179124')
+    end
   end
 
   describe 'build_chemical' do

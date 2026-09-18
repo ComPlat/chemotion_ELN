@@ -1959,11 +1959,14 @@ export default class ChemicalTab extends React.Component {
           <Col>
             {this.textInput(data, 'Order number', 'order_number')}
           </Col>
-          <Col sm={3}>
-            {this.textInput(data, 'Price', 'price')}
+          <Col>
+            {this.textInput(data, 'Product number', 'product_number')}
           </Col>
         </Row>
         <Row className="mb-3">
+          <Col sm={3}>
+            {this.textInput(data, 'Price', 'price')}
+          </Col>
           <Col sm={3}>
             {this.textInput(data, 'Person', 'person')}
           </Col>
