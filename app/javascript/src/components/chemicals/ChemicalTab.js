@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Row, Col,
-  ButtonGroup
+  ButtonGroup, Badge
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
@@ -21,14 +21,36 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const PRODUCT_PREVIEW_COUNT = 5;
 
+// Sheets per sample. Searching stays open at the limit; only saving is refused.
+const MAX_SAVED_SDS = 5;
+
 // Display names only. The vendor key stays as stored, since it is also the
-// safety_sheets directory of every sheet already saved.
+// safety_sheets directory of every sheet already saved. PubChem's own source names
+// are mapped too, so a group header and the sheet it saves read the same.
 const VENDOR_DISPLAY_NAMES = {
   merck: 'Sigma-Aldrich',
-  fisher: 'Thermo Fisher',
-  thermofisher: 'Thermo Fisher',
-  thermofischer: 'Thermo Fisher',
+  'sigma-aldrich': 'Sigma-Aldrich',
+  fisher: 'Thermofisher',
+  alfa: 'Thermofisher',
+  thermofisher: 'Thermofisher',
+  thermofischer: 'Thermofisher',
+  'thermo fisher': 'Thermofisher',
+  'thermo fisher scientific': 'Thermofisher',
+  'fisher chemical': 'Thermofisher',
 };
+
+// The phrases and properties endpoints know only these two keys, and the whole Thermo
+// lineage is stored under the alfa/thermofischer one.
+const PROPERTY_VENDOR_KEYS = {
+  merck: 'merck',
+  'sigma-aldrich': 'merck',
+  alfa: 'thermofischer',
+  fisher: 'thermofischer',
+  thermofisher: 'thermofischer',
+  thermofischer: 'thermofischer',
+};
+
+const propertyVendorKey = (name) => PROPERTY_VENDOR_KEYS[String(name || '').toLowerCase()] || '';
 
 const vendorDisplayName = (name) => {
   if (!name) return name;
@@ -47,11 +69,11 @@ export default class ChemicalTab extends React.Component {
       dynamicCheckMarks: {},
       vendorValue: 'Merck',
       queryOption: 'CAS',
-      sdsProductNumber: '',
       sdsBrand: 'sial',
       vendorOverview: null,
       expandedVendors: {},
       expandedProducts: {},
+      showAllSearchResults: false,
       safetySheetLanguage: 'en',
       warningMessage: '',
       loadingQuerySafetySheets: false,
@@ -269,10 +291,6 @@ export default class ChemicalTab extends React.Component {
     this.setState({ queryOption: value });
   }
 
-  handleSdsProductNumber(value) {
-    this.setState({ sdsProductNumber: value });
-  }
-
   handleSdsBrand(value) {
     this.setState({ sdsBrand: value });
   }
@@ -329,13 +347,21 @@ export default class ChemicalTab extends React.Component {
   // Sigma SDS URLs are derivable from brand + product number, so this needs no vendor request.
   // Cf. Chemotion::ChemicalsService.merck, whose result shape this must match exactly.
   buildSdsLinksFromProductNumber = (language) => {
-    const { sdsProductNumber, sdsBrand } = this.state;
-    const productNumber = sdsProductNumber.trim();
+    const { chemical, sdsBrand } = this.state;
+    const productNumber = (chemical?._chemical_data?.[0]?.product_number ?? '').trim();
+
+    if (!productNumber) {
+      this.setState({
+        loadingQuerySafetySheets: false,
+        warningMessage: 'Set a product number in the Inventory Information tab to search by it.',
+      });
+      return;
+    }
 
     if (!/^[A-Za-z0-9\-_.]+$/.test(productNumber)) {
       this.setState({
         loadingQuerySafetySheets: false,
-        warningMessage: 'Enter a Sigma-Aldrich product number, e.g. 179124.',
+        warningMessage: `"${productNumber}" is not a valid product number, e.g. 179124.`,
       });
       return;
     }
@@ -349,6 +375,7 @@ export default class ChemicalTab extends React.Component {
         merck_link: `https://www.sigmaaldrich.com/DE/${language}/sds/${path}`,
         merck_product_number: catalogueNumber,
         merck_product_link: `https://www.sigmaaldrich.com/DE/de/product/${path}`,
+        save_modes: ['browser', 'server'],
       }],
       loadingQuerySafetySheets: false,
       displayWell: true,
@@ -385,7 +412,7 @@ export default class ChemicalTab extends React.Component {
 
     const queryParams = {
       id: moleculeId,
-      vendor: vendorValue.value || vendorValue,
+      vendor: vendorValue,
       queryOption,
       language: safetySheetLanguage,
       string: searchStr
@@ -587,30 +614,49 @@ export default class ChemicalTab extends React.Component {
 
   // Sigma-Aldrich refuses the server's own request but serves the sheet with
   // access-control-allow-origin *, so the browser reads it and hands us the bytes.
-  saveSdsViaBrowser = (sdsLink, productNumber, productLink, vendorName) => {
+  fetchSdsInBrowser = ({ sdsLink, productNumber, productLink }, vendorName) => fetch(sdsLink)
+    .then((response) => {
+      if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
+      return response.blob();
+    })
+    .then((blob) => {
+      if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
+      return this.handleAttachmentSubmit({
+        productNumber,
+        vendorName,
+        attachedFile: new File([blob], `${productNumber}.pdf`, { type: 'application/pdf' }),
+        productLink,
+        safetySheetLink: sdsLink,
+      });
+    });
+
+  // Tries the vendor's routes in the order the backend ranked them, reporting the first
+  // failure only once every route is spent. Cf. ChemicalsService.vendor_save_modes.
+  saveSdsViaRoutes = (routes, productInfo, vendorName) => {
+    const { productNumber } = productInfo;
+
+    if (this.atSavedSdsLimit()) {
+      this.notifySavedSdsLimit();
+      return Promise.resolve();
+    }
+
     this.setState((prev) => ({
       loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: true },
     }));
 
-    const stopSpinner = () => this.setState((prev) => ({
-      loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: false },
-    }));
+    const attempt = (index, firstError) => {
+      if (index >= routes.length) {
+        return Promise.reject(firstError || new Error('no save route is available'));
+      }
 
-    return fetch(sdsLink)
-      .then((response) => {
-        if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
-        return response.blob();
-      })
-      .then((blob) => {
-        if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
-        return this.handleAttachmentSubmit({
-          productNumber,
-          vendorName,
-          attachedFile: new File([blob], `${productNumber}.pdf`, { type: 'application/pdf' }),
-          productLink,
-          safetySheetLink: sdsLink,
-        });
-      })
+      const run = routes[index] === 'browser'
+        ? () => this.fetchSdsInBrowser(productInfo, vendorName)
+        : () => this.fetchSdsOnServer(productInfo);
+
+      return Promise.resolve().then(run).catch((error) => attempt(index + 1, firstError || error));
+    };
+
+    return attempt(0, null)
       .catch((error) => {
         this.context.notifications.add({
           title: 'Could not save the safety data sheet',
@@ -619,7 +665,9 @@ export default class ChemicalTab extends React.Component {
           position: 'tc',
         });
       })
-      .finally(stopSpinner);
+      .finally(() => this.setState((prev) => ({
+        loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: false },
+      })));
   };
 
   handleAttachmentSubmit = ({
@@ -674,28 +722,31 @@ export default class ChemicalTab extends React.Component {
     this.setState({ showModal: false });
 
     // Send data to server
+    // Rejects rather than notifying, so saveSdsViaRoutes can fall through to the next route.
     return ChemicalFetcher.saveManualAttachedSafetySheet(data)
       .then((updatedChemical) => {
-        if (!updatedChemical || updatedChemical.error) {
-          this.context.notifications.add({
-            title: 'Could not attach safety sheet',
-            message: updatedChemical.error,
-            level: 'error',
-            position: 'tc'
-          });
-          return;
-        }
+        if (!updatedChemical) throw new Error('the server did not return the saved sheet');
+        if (updatedChemical.error) throw new Error(updatedChemical.error);
 
         const chemicalInstance = new Chemical(updatedChemical);
-        this.setState({ chemical: chemicalInstance });
+        // Clearing the results moves the row into the saved list instead of leaving a
+        // duplicate of it under Search Results with a dead save button.
+        this.setState({ chemical: chemicalInstance, searchResults: [] });
         editChemical(false);
         chemicalInstance.updateChecksum();
-      })
-      .catch((error) => {
-        console.error('Error saving safety sheet:', error);
-        this.setState({ loadingSaveSafetySheets: false });
       });
   };
+
+  // The upload modal has no route chain behind it, so it reports its own failure.
+  submitManualAttachment = (payload) => this.handleAttachmentSubmit(payload)
+    .catch((error) => {
+      this.context.notifications.add({
+        title: 'Could not attach safety sheet',
+        message: error.message,
+        level: 'error',
+        position: 'tc',
+      });
+    });
 
   fetchChemical(sample) {
     const { type } = this.props;
@@ -1006,82 +1057,55 @@ export default class ChemicalTab extends React.Component {
 
   removeButton(index, document) {
     return (
-      <Button
-        size="xsm"
-        variant="danger"
-        onClick={() => this.handleRemove(index, document)}
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`remove-sds-${index}`}>Remove this safety data sheet</Tooltip>}
       >
-        <i className="fa fa-trash-o" />
-      </Button>
+        <Button
+          size="xsm"
+          variant="danger"
+          onClick={() => this.handleRemove(index, document)}
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
+      </OverlayTrigger>
     );
   }
 
-  saveSdsFile(productInfo) {
+  // Thermofisher and Merck sheets are stored under their legacy keys.
+  static vendorProductKey(vendor) {
+    if (vendor === 'Thermofisher') return 'alfaProductInfo';
+    if (vendor === 'Merck') return 'merckProductInfo';
+
+    return `${vendor.toLowerCase()}ProductInfo`;
+  }
+
+  // Rejects rather than notifying, so saveSdsViaRoutes can fall through to the next route.
+  fetchSdsOnServer = (productInfo) => {
     const { chemical } = this.state;
     const { sample, editChemical } = this.props;
+    const vendorProduct = ChemicalTab.vendorProductKey(productInfo.vendor);
 
-    let vendorProduct;
-
-    // Determine vendor product key based on vendor name
-    if (productInfo.vendor === 'Thermofisher') {
-      vendorProduct = 'alfaProductInfo';
-    } else if (productInfo.vendor === 'Merck') {
-      vendorProduct = 'merckProductInfo';
-    } else {
-      // Dynamic vendor handling
-      vendorProduct = `${productInfo.vendor.toLowerCase()}ProductInfo`;
-    }
-
-    // Show loading state for this specific element
-    this.setState((prevState) => ({
-      loadingSaveSafetySheets: {
-        ...prevState.loadingSaveSafetySheets,
-        [productInfo.productNumber]: true
-      }
-    }));
-
-    const cas = sample.xref?.cas ?? '';
-
-    // Update chemical data before saving it in the database
     this.handleFieldChanged(vendorProduct, productInfo);
 
     const params = {
       sample_id: sample.id,
-      cas,
+      cas: sample.xref?.cas ?? '',
       chemical_data: chemical._chemical_data,
       vendor_product: vendorProduct
     };
 
-    ChemicalFetcher.saveSafetySheets(params).then((updatedChemical) => {
-      if (updatedChemical) {
-        // Mark chemical as not new
-        chemical.isNew = false;
+    return ChemicalFetcher.saveSafetySheets(params).then((updatedChemical) => {
+      if (!updatedChemical) throw new Error('the server could not retrieve the sheet');
 
-        // Update the state and save to database
-        const chemicalInstance = new Chemical(updatedChemical);
-        this.setState({
-          chemical: chemicalInstance,
-          // Clear search results after saving
-          searchResults: [],
-          // Clear loading state for this element
-          loadingSaveSafetySheets: {}
-        });
-        editChemical(false);
-        chemicalInstance.updateChecksum();
-
-        // Update the checkmark for this vendor
-        this.handleCheckMark(productInfo.vendor);
-      }
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-      // Clear loading state on error
-      this.setState(() => ({
-        searchResults: [],
-        loadingSaveSafetySheets: {},
-        warningMessage: `${errorMessage}`
-      }));
+      chemical.isNew = false;
+      const chemicalInstance = new Chemical(updatedChemical);
+      this.setState({ chemical: chemicalInstance, searchResults: [] });
+      editChemical(false);
+      chemicalInstance.updateChecksum();
+      this.handleCheckMark(productInfo.vendor);
     });
-  }
+  };
 
   saveSafetySheetsButton(sdsInfo) {
     const {
@@ -1095,10 +1119,11 @@ export default class ChemicalTab extends React.Component {
       return null;
     }
 
-    // Rows saved before save_mode existed were all server downloads. 'none' means no route
-    // reaches the sheet, so no save is offered rather than one that fails.
-    const saveMode = sdsInfo.save_mode || 'server';
-    if (saveMode === 'none') {
+    // Rows saved before save_modes existed carry one mode; older ones were all server
+    // downloads. An empty list means no route reaches the sheet, so no save is offered.
+    const saveModes = (sdsInfo.save_modes || [sdsInfo.save_mode || 'server'])
+      .filter((mode) => mode !== 'none');
+    if (saveModes.length === 0) {
       return null;
     }
 
@@ -1152,70 +1177,89 @@ export default class ChemicalTab extends React.Component {
     // Check if this specific element is loading
     const isLoading = productNumber && loadingSaveSafetySheets[productNumber];
 
+    const tooltip = (() => {
+      if (isSaved) return 'This sheet is already saved with the sample';
+      if (this.atSavedSdsLimit()) return `Limit of ${MAX_SAVED_SDS} reached. Delete a saved sheet first.`;
+      return 'Save this safety data sheet with the sample';
+    })();
+
     return (
-      <Button
-        id="saveSafetySheetButton"
-        size="xsm"
-        variant="warning"
-        disabled={isSaved}
-        onClick={() => (
-          saveMode === 'browser'
-            ? this.saveSdsViaBrowser(sdsLink, productNumber, productLink, vendorName)
-            : this.saveSdsFile(productInfo)
-        )}
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`save-sds-${productNumber || 'sheet'}`}>{tooltip}</Tooltip>}
       >
-        {isLoading ? (
-          <div>
-            <i className="fa fa-spinner fa-pulse fa-fw" />
-          </div>
-        ) : <i className="fa fa-save" />}
-      </Button>
+        <div>
+          <Button
+            id="saveSafetySheetButton"
+            size="xsm"
+            variant="warning"
+            disabled={isSaved}
+            onClick={() => this.saveSdsViaRoutes(saveModes, productInfo, vendorName)}
+          >
+            {isLoading ? (
+              <div>
+                <i className="fa fa-spinner fa-pulse fa-fw" />
+              </div>
+            ) : <i className="fa fa-save" />}
+          </Button>
+        </div>
+      </OverlayTrigger>
     );
   }
 
-  addAttachment() {
+  savedSdsCount() {
     const { chemical } = this.state;
-    const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
-    const hasMaxAttachments = savedSds.length >= 10;
+    return (chemical?._chemical_data?.[0]?.safetySheetPath || []).length;
+  }
+
+  // Shared by the upload button and the per-row save, so both refuse at the same count.
+  atSavedSdsLimit() {
+    return this.savedSdsCount() >= MAX_SAVED_SDS;
+  }
+
+  notifySavedSdsLimit() {
+    this.context.notifications.add({
+      title: `Limit of ${MAX_SAVED_SDS} safety data sheets reached`,
+      message: `This sample already has ${this.savedSdsCount()} saved sheets. `
+        + 'Delete at least one below to save another. Searching stays available.',
+      level: 'warning',
+      position: 'tc',
+    });
+  }
+
+  addAttachment() {
+    const hasMaxAttachments = this.atSavedSdsLimit();
 
     const button = (
       <Button
         size="sm"
         variant="success"
-        onClick={() => this.handleAdd()}
-        disabled={hasMaxAttachments}
+        onClick={() => (hasMaxAttachments ? this.notifySavedSdsLimit() : this.handleAdd())}
       >
         <i className="fa fa-plus" />
       </Button>
     );
 
-    if (hasMaxAttachments) {
-      const message = `Maximum allowed attached safety sheets is reached.
-      Please delete some of the existing ones to enable attachment.`;
-      return (
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="max-attachments-tooltip">
-              {message}
-            </Tooltip>
-          )}
-        >
-          <div>{button}</div>
-        </OverlayTrigger>
-      );
-    }
+    const message = hasMaxAttachments
+      ? `Limit of ${MAX_SAVED_SDS} reached. Delete a saved sheet below to attach another.`
+      : 'Attach a safety data sheet from your computer';
 
-    return button;
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="max-attachments-tooltip">{message}</Tooltip>}
+      >
+        <div>{button}</div>
+      </OverlayTrigger>
+    );
   }
 
   chooseVendor() {
     const { vendorValue } = this.state;
     const vendorOptions = [
-      // { label: 'All', value: 'All' },
       { label: 'Sigma-Aldrich', value: 'Merck' },
+      { label: 'Thermofisher', value: 'Thermofisher' },
       { label: 'All vendors (PubChem)', value: 'All' },
-      // { label: 'Thermofisher', value: 'Thermofisher' },
     ];
 
     return (
@@ -1225,7 +1269,7 @@ export default class ChemicalTab extends React.Component {
           name="chemicalVendor"
           isClearable={false}
           options={vendorOptions}
-          onChange={(selectedOption) => this.handleVendorOption(selectedOption)}
+          onChange={(selectedOption) => this.handleVendorOption(selectedOption?.value)}
           value={vendorOptions.find((option) => option.value === vendorValue)}
         />
       </Form.Group>
@@ -1267,9 +1311,12 @@ export default class ChemicalTab extends React.Component {
   }
 
   // Brand keys are the vendor's own URL segments; a wrong one yields a 404 on their site.
+  // The number itself comes from Inventory Information, not from a field duplicated here.
   sdsProductNumberFields() {
-    const { queryOption, sdsProductNumber, sdsBrand } = this.state;
+    const { queryOption, chemical, sdsBrand } = this.state;
     if (queryOption !== 'Product Number') return null;
+
+    const productNumber = chemical?._chemical_data?.[0]?.product_number ?? '';
 
     const brandOptions = [
       { label: 'Sigma-Aldrich', value: 'sial' },
@@ -1282,24 +1329,26 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <>
-        <Col>
+        <Col xs="auto">
           <Form.Group>
             <Form.Label>
               Product number
               <OverlayTrigger
                 placement="top"
-                overlay={<Tooltip>The catalogue number printed on the bottle label</Tooltip>}
+                overlay={(
+                  <Tooltip>
+                    Taken from Inventory Information, so one number serves the whole sample
+                  </Tooltip>
+                )}
               >
                 <i className="fa fa-info-circle ms-1" />
               </OverlayTrigger>
             </Form.Label>
-            <Form.Control
-              type="text"
-              name="sdsProductNumber"
-              value={sdsProductNumber}
-              placeholder="e.g. 179124"
-              onChange={(event) => this.handleSdsProductNumber(event.target.value)}
-            />
+            <div>
+              {productNumber
+                ? <Badge bg="light" text="dark" className="border fs-6 fw-normal">{productNumber}</Badge>
+                : <span className="text-muted small">Not set</span>}
+            </div>
           </Form.Group>
         </Col>
         <Col>
@@ -1352,6 +1401,7 @@ export default class ChemicalTab extends React.Component {
     const vendorLink = linkKey ? document[linkKey] : null;
     // const rawVendorName = linkKey ? linkKey.replace('_link', '') : 'uploaded source';
     let displayName = 'queried vendor';
+    let vendorKey = '';
     let productInfo = '';
     let versionInfo = '';
 
@@ -1363,6 +1413,7 @@ export default class ChemicalTab extends React.Component {
 
       if (vendorFromPath) {
         displayName = vendorDisplayName(vendorFromPath);
+        vendorKey = vendorFromPath.toLowerCase();
       }
 
       // Extract product number from filename: 270709_4c82b57ffb35b49b.pdf -> 270709
@@ -1424,15 +1475,16 @@ export default class ChemicalTab extends React.Component {
     } else {
       // for a search query: extract vendor name from key
       const vendor = linkKey.replace('_link', '').toUpperCase();
-      displayName = vendorDisplayName(vendor.toLowerCase());
+      vendorKey = vendor.toLowerCase();
+      displayName = vendorDisplayName(vendorKey);
       productInfo = ` - ${document[`${vendor.toLowerCase()}_product_number`] || ''}`;
     }
 
     const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
 
     return (
-      <div className="d-flex gap-3 align-items-center">
-        <div className="d-flex me-auto gap-3">
+      <div className="d-flex gap-3 align-items-center flex-wrap">
+        <div className="d-flex me-auto gap-3 align-items-center flex-wrap">
           {vendorLink ? (
             <a href={vendorLink} target="_blank" rel="noreferrer">
               {finalDisplayName}
@@ -1446,10 +1498,10 @@ export default class ChemicalTab extends React.Component {
           </ButtonToolbar>
         </div>
         <div className="me-auto">
-          {this.renderChemicalProperties(displayName.toLowerCase())}
+          {this.renderChemicalProperties(propertyVendorKey(vendorKey))}
         </div>
         <div className="justify-content-end">
-          {this.querySafetyPhrases(displayName.toLowerCase())}
+          {this.querySafetyPhrases(propertyVendorKey(vendorKey))}
         </div>
       </div>
     );
@@ -1471,6 +1523,29 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <div className="mt-3" data-component="vendorGroups">
+        {pubchemUrl && (
+          <div className="mb-3">
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="pubchem-all-vendors">
+                  Browse the full vendor list on PubChem, including the ones not curated here
+                </Tooltip>
+              )}
+            >
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                href={pubchemUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <i className="fa fa-external-link me-2" />
+                {`All ${vendorCount} vendors on PubChem`}
+              </Button>
+            </OverlayTrigger>
+          </div>
+        )}
         {sdsVendors.length > 0 && (
           <>
             <h6 className="mb-1">Safety data sheets</h6>
@@ -1495,21 +1570,27 @@ export default class ChemicalTab extends React.Component {
             </ListGroup>
           </>
         )}
-        {pubchemUrl && (
-          <Button
-            variant="outline-secondary"
-            size="sm"
-            href={pubchemUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i className="fa fa-external-link me-2" />
-            {`All ${vendorCount} vendors on PubChem`}
-          </Button>
-        )}
       </div>
     );
   };
+
+  // One shape for every "open this elsewhere" control, so the row reads as a button bar
+  // rather than a run of bare links.
+  static linkIconButton({ href, icon, tooltip, key }) {
+    return (
+      <OverlayTrigger key={key} placement="top" overlay={<Tooltip id={`${key}-tip`}>{tooltip}</Tooltip>}>
+        <Button
+          size="xsm"
+          variant="light"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <i className={`fa ${icon}`} />
+        </Button>
+      </OverlayTrigger>
+    );
+  }
 
   renderVendorGroup = (group) => {
     const { expandedVendors } = this.state;
@@ -1517,7 +1598,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <ListGroupItem key={group.vendor}>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           <Button
             variant="link"
             size="sm"
@@ -1525,10 +1606,21 @@ export default class ChemicalTab extends React.Component {
             onClick={() => this.toggleVendor(group.vendor)}
           >
             <i className={`fa fa-caret-${isOpen ? 'down' : 'right'} me-2`} />
-            {group.vendor}
+            {vendorDisplayName(group.vendor)}
           </Button>
           <span className="text-muted small">{`${group.count} products`}</span>
-          {group.sds_supported && <span className="badge bg-success">SDS</span>}
+          {group.sds_supported && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id={`sds-badge-${group.vendor}`}>
+                  Safety data sheets can be saved from this vendor
+                </Tooltip>
+              )}
+            >
+              <span className="badge bg-success">SDS</span>
+            </OverlayTrigger>
+          )}
         </div>
         {isOpen && this.renderVendorProducts(group)}
       </ListGroupItem>
@@ -1540,31 +1632,53 @@ export default class ChemicalTab extends React.Component {
     const showAll = !!expandedProducts[group.vendor];
     const products = showAll ? group.products : group.products.slice(0, PRODUCT_PREVIEW_COUNT);
 
+    // Expanding a long catalogue scrolls in place rather than pushing the saved sheets
+    // off the screen; the toggle still collapses it back to the preview.
+    const scrolls = showAll && products.length > PRODUCT_PREVIEW_COUNT;
+
     return (
       <div className="ms-4 mt-2">
-        {products.map((product) => {
-          // A vendor group can mix rows whose SDS URL is derivable with rows that only
-          // carry a catalogue page, so the SDS controls are decided per product.
-          const keys = Object.keys(product);
-          const sdsKey = keys.find((key) => key.endsWith('_link') && !key.endsWith('product_link'));
-          const numberKey = keys.find((key) => key.endsWith('_product_number'));
-          const productLinkKey = keys.find((key) => key.endsWith('product_link'));
-          const label = (numberKey && product[numberKey]) || product.label;
-          const productLink = productLinkKey && product[productLinkKey];
+        <div className={scrolls ? 'overflow-auto pe-2' : ''} style={scrolls ? { maxHeight: '18rem' } : undefined}>
+          {products.map((product, index) => {
+            // A vendor group can mix rows whose SDS URL is derivable with rows that only
+            // carry a catalogue page, so the SDS controls are decided per product.
+            const keys = Object.keys(product);
+            const sdsKey = keys.find((key) => key.endsWith('_link') && !key.endsWith('product_link'));
+            const numberKey = keys.find((key) => key.endsWith('_product_number'));
+            const productLinkKey = keys.find((key) => key.endsWith('product_link'));
+            const label = (numberKey && product[numberKey]) || product.label;
+            const productLink = productLinkKey && product[productLinkKey];
 
-          return (
-            <div key={label} className="d-flex align-items-center gap-2 mb-1">
-              <code>{label}</code>
-              {productLink && (
-                <a href={productLink} target="_blank" rel="noopener noreferrer">Product page</a>
-              )}
-              {sdsKey && (
-                <a href={product[sdsKey]} target="_blank" rel="noopener noreferrer">Open SDS</a>
-              )}
-              {sdsKey && this.saveSafetySheetsButton(product)}
-            </div>
-          );
-        })}
+            return (
+              // eslint-disable-next-line react/no-array-index-key
+              <div key={`${label}-${index}`} className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <OverlayTrigger
+                  placement="top"
+                  overlay={(
+                    <Tooltip id={`product-number-${group.vendor}-${index}`}>
+                      {numberKey ? `Catalogue number at ${vendorDisplayName(group.vendor)}` : 'Product listing'}
+                    </Tooltip>
+                  )}
+                >
+                  <Badge bg="light" text="dark" className="border font-monospace fw-normal">{label}</Badge>
+                </OverlayTrigger>
+                {productLink && ChemicalTab.linkIconButton({
+                  href: productLink,
+                  icon: 'fa-external-link',
+                  tooltip: 'Open the product page at the vendor',
+                  key: `product-page-${group.vendor}-${index}`,
+                })}
+                {sdsKey && ChemicalTab.linkIconButton({
+                  href: product[sdsKey],
+                  icon: 'fa-file-pdf-o',
+                  tooltip: 'Open the safety data sheet in a new tab',
+                  key: `open-sds-${group.vendor}-${index}`,
+                })}
+                {sdsKey && this.saveSafetySheetsButton(product)}
+              </div>
+            );
+          })}
+        </div>
         {group.products.length > PRODUCT_PREVIEW_COUNT && (
           <Button
             variant="link"
@@ -1584,6 +1698,7 @@ export default class ChemicalTab extends React.Component {
       searchResults,
       chemical,
       displayWell,
+      showAllSearchResults,
     } = this.state;
 
     // Early return if displayWell is false or no chemical data
@@ -1646,12 +1761,22 @@ export default class ChemicalTab extends React.Component {
 
     try {
       // Render search results if we have any
+      const shownResults = showAllSearchResults
+        ? searchResults
+        : searchResults.slice(0, PRODUCT_PREVIEW_COUNT);
+      const resultsScroll = showAllSearchResults && searchResults.length > PRODUCT_PREVIEW_COUNT;
       const searchResultsSection = hasSearchResults && (
         <>
-          <h6 className="mt-5 text-primary">Search Results:</h6>
-          <div className="overflow-auto" style={{ maxHeight: '300px' }}>
+          <h6 className="mt-5 text-primary">
+            Search Results:
+            <span className="text-muted small fw-normal ms-2">{`${searchResults.length} found`}</span>
+          </h6>
+          <div
+            className={resultsScroll ? 'overflow-auto pe-2' : ''}
+            style={resultsScroll ? { maxHeight: '22rem' } : undefined}
+          >
             <ol className="list-group list-group-numbered">
-              {searchResults.map((document, index) => {
+              {shownResults.map((document, index) => {
                 if (!document) {
                   return null;
                 }
@@ -1676,14 +1801,31 @@ export default class ChemicalTab extends React.Component {
               })}
             </ol>
           </div>
+          {searchResults.length > PRODUCT_PREVIEW_COUNT && (
+            <Button
+              variant="link"
+              size="sm"
+              className="ps-0"
+              onClick={() => this.setState((prev) => ({ showAllSearchResults: !prev.showAllSearchResults }))}
+            >
+              {showAllSearchResults
+                ? 'Show fewer'
+                : `Show ${searchResults.length - PRODUCT_PREVIEW_COUNT} more`}
+            </Button>
+          )}
         </>
       );
 
       // Render saved SDS if we have any
       const savedSdsSection = hasSavedSds && (
-        <>
-          <h6 className="mt-5 text-success">Safety Sheets saved in the database:</h6>
-          <div className="overflow-auto" style={{ maxHeight: '300px' }}>
+        <div className={hasSearchResults ? 'border-top mt-4 pt-2' : ''}>
+          <h6 className="mt-4 text-success">
+            Safety Sheets saved in the database:
+            <span className="text-muted small fw-normal ms-2">
+              {`${savedSds.length} of ${MAX_SAVED_SDS}`}
+            </span>
+          </h6>
+          <div className="overflow-auto pe-2" style={{ maxHeight: '22rem' }}>
             <ol className="list-group list-group-numbered">
               {savedSds.map((document, index) => {
                 if (!document) {
@@ -1704,7 +1846,7 @@ export default class ChemicalTab extends React.Component {
               })}
             </ol>
           </div>
-        </>
+        </div>
       );
 
       // Return the combined content
@@ -1984,30 +2126,11 @@ export default class ChemicalTab extends React.Component {
     }
   }
 
+  // Searching stays available however many sheets are saved; only the save itself is capped,
+  // so a user can always look a sheet up before deciding which saved one to drop.
   querySafetySheetButton() {
-    const { loadingQuerySafetySheets, chemical } = this.state;
-
-    // Check if there are any saved safety sheets
-    const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
-    const hasSavedSds = savedSds.length > 0;
-
-    // Check if default vendors (merck or thermofischer) exist in saved safety sheets
-    let hasWebSignature = false;
-    const hasDefaultVendors = savedSds.some((sheet) => {
-      const keys = Object.keys(sheet);
-      hasWebSignature = hasWebSignature || Object.entries(sheet).some(
-        ([, v]) => v.includes('_web_')
-      );
-      return (
-        keys.includes('merck_link')
-        || keys.includes('thermofischer_link')
-        || keys.includes('alfa_link')
-        || hasWebSignature
-      );
-    });
-
-    // Only disable the button if we're loading or if default vendors exist
-    const isDisabled = !!loadingQuerySafetySheets || hasDefaultVendors;
+    const { loadingQuerySafetySheets } = this.state;
+    const isDisabled = !!loadingQuerySafetySheets;
 
     const button = (
       <Button
@@ -2029,20 +2152,16 @@ export default class ChemicalTab extends React.Component {
     );
 
     const overlay = (
-      <Tooltip id="disabledSdsSearchButton">
-        {hasDefaultVendors
-          ? 'Delete the saved sheet fetched via this search button to enable the search button'
-          : 'click to fetch safety sheet from the vendor'}
-      </Tooltip>
+      <Tooltip id="sdsSearchButton">Search the vendor for safety data sheets for this sample</Tooltip>
     );
 
     return (
       <div className="mt-4">
-        {isDisabled && hasSavedSds ? (
+        {isDisabled ? button : (
           <OverlayTrigger placement="top" overlay={overlay}>
             <div>{button}</div>
           </OverlayTrigger>
-        ) : button}
+        )}
       </div>
     );
   }
@@ -2177,7 +2296,7 @@ export default class ChemicalTab extends React.Component {
         <SDSAttachmentModal
           show={showModal}
           onHide={() => this.setState({ showModal: false })}
-          onSubmit={this.handleAttachmentSubmit}
+          onSubmit={this.submitManualAttachment}
         />
       </>
     );

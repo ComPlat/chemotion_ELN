@@ -104,6 +104,34 @@ describe Chemotion::ChemicalsService do
     it 'offers no save route for a catalogue-only vendor' do
       expect(described_class.vendor_save_mode('abcr GmbH')).to eq('none')
     end
+
+    it 'falls back to the other route for a vendor that has one' do
+      expect(described_class.vendor_save_modes('Sigma-Aldrich')).to eq(%w[browser server])
+      expect(described_class.vendor_save_modes('Thermo Fisher Scientific')).to eq(%w[server browser])
+    end
+
+    it 'offers no fallback for a catalogue-only vendor' do
+      expect(described_class.vendor_save_modes('abcr GmbH')).to be_empty
+    end
+  end
+
+  describe '.sds_limit_reached?' do
+    def with_sheets(count)
+      [{ 'safetySheetPath' => Array.new(count) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } } }]
+    end
+
+    it 'allows a save below the cap' do
+      expect(described_class.sds_limit_reached?(with_sheets(described_class::MAX_SAVED_SDS - 1))).to be false
+    end
+
+    it 'refuses a save at the cap' do
+      expect(described_class.sds_limit_reached?(with_sheets(described_class::MAX_SAVED_SDS))).to be true
+    end
+
+    it 'treats a chemical with no sheets yet as free' do
+      expect(described_class.sds_limit_reached?([{}])).to be false
+      expect(described_class.sds_limit_reached?(nil)).to be false
+    end
   end
 
   describe '.fetch_allowed_url' do
@@ -157,6 +185,7 @@ describe Chemotion::ChemicalsService do
         'merck_product_number' => '179124',
         'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
         'save_mode' => 'browser',
+        'save_modes' => %w[browser server],
       )
     end
 
@@ -193,6 +222,7 @@ describe Chemotion::ChemicalsService do
                          '&productDescription=&language=EN&countryCode=US',
         'fisher_product_number' => 'A111',
         'save_mode' => 'server',
+        'save_modes' => %w[server browser],
       )
     end
 

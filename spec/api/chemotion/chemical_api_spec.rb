@@ -323,6 +323,27 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
+  describe 'POST save safety data sheet at the sheet limit' do
+    let(:full_sheets) do
+      Array.new(Chemotion::ChemicalsService::MAX_SAVED_SDS) do |i|
+        { "p#{i}_link" => "/safety_sheets/merck/p#{i}_web_1234567890abcd1#{i}.pdf" }
+      end
+    end
+
+    # Posted as JSON, the way ChemicalFetcher does, so the sheet list stays a real array.
+    it 'refuses the save and names the cap' do
+      body = { sample_id: s.id, cas: '629-59-4', vendor_product: 'merckProductInfo',
+               chemical_data: [{ 'safetySheetPath' => full_sheets,
+                                 'merckProductInfo' => { 'productNumber' => '1',
+                                                         'vendor' => 'Merck',
+                                                         'sdsLink' => 'https://www.sigmaaldrich.com/x' } }] }
+      post '/api/v1/chemicals/save_safety_datasheet', params: body.to_json,
+                                                      headers: { 'CONTENT_TYPE' => 'application/json' }
+      expect(response.status).to eq 422
+      expect(JSON.parse(response.body)['error']).to include('at most 5')
+    end
+  end
+
   describe 'POST save safety data sheet missing nested product info' do
     let(:sample2) { create(:sample) }
 

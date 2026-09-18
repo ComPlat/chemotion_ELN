@@ -186,19 +186,52 @@ describe('ChemicalTab component', () => {
       setStateStub.restore();
     });
 
-    it('render fetch SDS button in disabled mode, if safety sheet with web signature exists and saved', () => {
-      // Seed state with a saved SDS from a default vendor (merck) so the button is disabled
-      const chemicalData = [{
-        safetySheetPath: [
-          { '252549_8996a8681115b875_link': '/safety_sheets/merck/252549_web_8996a8681115b875.pdf' }
-        ]
-      }];
-      const newChemical = createChemical(chemicalData, '7681-82-5');
+    const savedSheets = (count) => Array.from({ length: count }, (_, i) => ({
+      [`25254${i}_8996a8681115b87${i}_link`]: `/safety_sheets/merck/25254${i}_web_8996a8681115b87${i}.pdf`
+    }));
+
+    it('keeps the SDS search enabled once sheets are already saved', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(1) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
 
       expect(wrapper.find('#submit-sds-btn')).toHaveLength(1);
-      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(true);
+      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(false);
+    });
+
+    it('keeps the SDS search enabled at the saved-sheet limit', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(5) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      wrapper.update();
+
+      expect(instance.atSavedSdsLimit()).toBe(true);
+      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(false);
+    });
+
+    it('reports the limit instead of saving a sixth sheet', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(5) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      // Stubbed, not spied: the real one needs the notifications context.
+      const notify = sinon.stub(instance, 'notifySavedSdsLimit');
+      const browser = sinon.spy(instance, 'fetchSdsInBrowser');
+      const server = sinon.spy(instance, 'fetchSdsOnServer');
+
+      return instance
+        .saveSdsViaRoutes(['browser', 'server'], { productNumber: '1', sdsLink: 'x', vendor: 'Merck' }, 'merck')
+        .then(() => {
+          expect(notify.called).toBe(true);
+          expect(browser.called).toBe(false);
+          expect(server.called).toBe(false);
+          notify.restore();
+          browser.restore();
+          server.restore();
+        });
+    });
+
+    it('stays below the limit for four saved sheets', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      expect(instance.atSavedSdsLimit()).toBe(false);
     });
 
     it('calls querySafetySheets() when fetch safety phrases button is clicked', () => {
@@ -327,8 +360,8 @@ describe('ChemicalTab component', () => {
       saveSafetySheetsButtonSpy.restore();
     });
 
-    it('should call saveSdsFile with expected arguments', () => {
-      const saveSdsFileSpy = sinon.spy(instance, 'saveSdsFile');
+    it('should call fetchSdsOnServer with expected arguments', () => {
+      const fetchSdsOnServerSpy = sinon.spy(instance, 'fetchSdsOnServer');
       const productInfo = {
         vendor: 'Merck',
         sdsLink: 'https://example.com/merck',
@@ -336,11 +369,11 @@ describe('ChemicalTab component', () => {
         productLink: 'https://example.com/merck-product',
       };
 
-      instance.saveSdsFile(productInfo);
-      expect(saveSdsFileSpy.called).toBe(true);
+      instance.fetchSdsOnServer(productInfo)?.catch(() => {});
+      expect(fetchSdsOnServerSpy.called).toBe(true);
 
-      sinon.assert.calledOnce(saveSdsFileSpy);
-      saveSdsFileSpy.restore();
+      sinon.assert.calledOnce(fetchSdsOnServerSpy);
+      fetchSdsOnServerSpy.restore();
     });
 
     it('should render renderWarningMessage when warningMessage state is updated', () => {
