@@ -14,7 +14,7 @@
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
     "@complat/chemotion-converter-client": "~0.16.2",
-    "@complat/react-spectra-editor": "ComPlat/react-spectra-editor#92956d15f3d16b180e6616e87b2fbf94bc65fb4c",
+    "@complat/react-spectra-editor": "ComPlat/react-spectra-editor#9e7cd8bd55e12627375bc3c44f71b7da3feb9a84",
     "@novnc/novnc": "~1.5.0",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
