@@ -471,6 +471,20 @@ describe('ChemicalTab component', () => {
         expect(instance.renderSafetySheets().props['data-empty']).toEqual('true');
       });
 
+      it('shows an all-vendors miss as the same line, not a red warning', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: ['No safety data sheet found from any vendor'],
+          vendorOverview: null,
+          warningMessage: ''
+        });
+        const text = shallow(instance.renderSafetySheets()).text();
+        expect(text).toEqual(expect.stringContaining('No safety data sheet found from any vendor'));
+        expect(wrapper.state().warningMessage).toEqual('');
+        instance.setState({ searchResults: [] });
+      });
+
       it('renders a vendor message as a line, not a sheet row', () => {
         instance.setState({
           chemical: emptyChemical(),
