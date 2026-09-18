@@ -28,6 +28,10 @@ module Chemotion
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
 
+    # Sheets per sample. Cf. MAX_SAVED_SDS in ChemicalTab.js, which refuses first; this is
+    # the backstop for any client that does not.
+    MAX_SAVED_SDS = 5
+
     # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
     SDS_VENDOR = 'Sigma-Aldrich'
     FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
@@ -187,17 +191,32 @@ module Chemotion
       { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
         'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
-        'save_mode' => vendor_save_mode(SDS_VENDOR) }
+        'save_mode' => vendor_save_mode(SDS_VENDOR),
+        'save_modes' => vendor_save_modes(SDS_VENDOR) }
     end
 
-    # How a sheet can reach the ELN. Sigma refuses the server yet allows a cross-origin
-    # browser read, so the two routes are not interchangeable and the UI has to know which
-    # applies. Anything unlisted has no fetchable sheet and must not offer a save.
-    def self.vendor_save_mode(vendor)
-      return 'browser' if vendor.casecmp?(SDS_VENDOR)
-      return 'server' if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+    # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
+    # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
+    # Form-encoded params arrive with the sheet list rebuilt as an index-keyed Hash, so
+    # both shapes count.
+    def self.sds_limit_reached?(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return false unless first.is_a?(Hash)
 
-      'none'
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      sheets.is_a?(Enumerable) && sheets.count >= MAX_SAVED_SDS
+    end
+
+    def self.vendor_save_modes(vendor)
+      return %w[browser server] if vendor.casecmp?(SDS_VENDOR)
+      return %w[server browser] if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+
+      []
+    end
+
+    # The preferred route alone, for stored rows and clients that read a single mode.
+    def self.vendor_save_mode(vendor)
+      vendor_save_modes(vendor).first || 'none'
     end
 
     # Sigma's own search rejects automated clients, so the catalogue entry comes from
@@ -270,7 +289,8 @@ module Chemotion
       return nil if products.empty?
 
       { 'vendor' => vendor, 'count' => products.size, 'sds_supported' => sds_supported,
-        'save_mode' => sds_supported ? vendor_save_mode(vendor) : 'none', 'products' => products }
+        'save_mode' => sds_supported ? vendor_save_mode(vendor) : 'none',
+        'save_modes' => sds_supported ? vendor_save_modes(vendor) : [], 'products' => products }
     end
 
     def self.vendor_products(vendor, sources, language)
@@ -318,7 +338,8 @@ module Chemotion
       return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
 
       product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number,
-                  'save_mode' => vendor_save_mode(FISHER_VENDORS.first) }
+                  'save_mode' => vendor_save_mode(FISHER_VENDORS.first),
+                  'save_modes' => vendor_save_modes(FISHER_VENDORS.first) }
       product['fisher_product_link'] = url if url.present?
       product
     end

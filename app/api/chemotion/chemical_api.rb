@@ -123,6 +123,11 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
+          if Chemotion::ChemicalsService.sds_limit_reached?(params[:chemical_data])
+            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
+                            'safety data sheets. Delete one before saving another.' }, 422)
+          end
+
           Chemotion::ChemicalsService.handle_exceptions do
             product_info = params[:chemical_data][0][params[:vendor_product]]
             file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
@@ -159,6 +164,16 @@ module Chemotion
         end
 
         post do
+          existing = begin
+            JSON.parse(params[:chemical_data].to_s)
+          rescue JSON::ParserError
+            nil
+          end
+          if Chemotion::ChemicalsService.sds_limit_reached?([existing].compact)
+            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
+                            'safety data sheets. Delete one before attaching another.' }, 422)
+          end
+
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],

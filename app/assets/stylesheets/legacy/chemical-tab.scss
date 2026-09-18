@@ -226,22 +226,11 @@ table.table-borderless {
 
 #fetch-properties {
     border-radius: 5px;
-    min-width: 200px !important;
 }
 
-@media (max-width: 1600px) {
-    /* Adjust styles for smaller screens */
-    .render-chemical-properties {
-        width: 50%;
-
-        .fetch-properties-button  {
-            min-width: 130px;
-            max-width: 130px;
-            overflow: auto;
-        }
-    }
-}
-
+// Sheet rows wrap instead of forcing a fixed width, so the section stays inside the
+// tab at any viewport and never grows a horizontal scrollbar of its own.
 .safety-sheet-width {
-    min-width: 850px !important;
+    min-width: 0;
+    width: 100%;
 }
