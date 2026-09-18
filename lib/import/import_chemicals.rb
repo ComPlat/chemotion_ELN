@@ -16,7 +16,8 @@ module Import
       THERMOFISCHER_PATTERN => 'Alfa',
     }.freeze
     CHEMICAL_FIELDS = [
-      'cas', 'status', 'vendor', 'order number', 'amount', 'volume', 'price', 'person', 'required date', 'ordered date',
+      'cas', 'status', 'vendor', 'order number', 'product number', 'amount', 'volume', 'price', 'person',
+      'required date', 'ordered date',
       'required by', 'pictograms', 'h statements', 'p statements', 'safety sheet link', 'product link', 'host building',
       'host room', 'host cabinet', 'host group', 'owner', 'borrowed by', 'current building', 'current room',
       'current cabinet', 'current group', 'disposal info', 'important notes', 'expiration date', 'storage temperature',
