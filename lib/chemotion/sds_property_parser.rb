@@ -2,7 +2,7 @@
 
 module Chemotion
   # Reads the section 9 lines of an SDS into the flat property hash the chemical tab
-  # consumes. Cf. ChemicalsService.chemical_properties_merck for the shape.
+  # consumes. Cf. ChemicalTab.js#mapToSampleProperties for the keys it reads.
   class SdsPropertyParser
     # Normalised sheet label => the key ChemicalTab.js reads.
     LABELS = {
