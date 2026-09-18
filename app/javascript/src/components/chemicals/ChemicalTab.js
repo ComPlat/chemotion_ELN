@@ -212,9 +212,8 @@ export default class ChemicalTab extends React.Component {
         const dynamicKey = Object.keys(document).find((key) => key.endsWith('_link'));
         if (dynamicKey) {
           // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
-          const dynamicKeyValue = document[dynamicKey];
-          const vendorName = (dynamicKeyValue.match(/\/safety_sheets\/([^/]+)\//) || [])[1];
-          const normalizedVendorName = vendorName.toLowerCase();
+          const normalizedVendorName = ChemicalTab.vendorFromDocument(document);
+          const vendorName = normalizedVendorName;
 
           // Find the safety sheet with this vendor link
           const vendorIndex = path.findIndex((element) => element[dynamicKey] === document[dynamicKey]);
@@ -259,8 +258,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleCheckMark(vendor, isNew = null) {
-    // Normalize vendor name for consistency
-    const normalizedVendor = vendor.toLowerCase();
+    const normalizedVendor = String(vendor || '').toLowerCase();
+    if (!normalizedVendor) return;
 
     // Handle the existing vendor cases for backward compatibility
     if (normalizedVendor === 'thermofisher' || normalizedVendor === 'alfa') {
@@ -995,17 +994,22 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  // A saved sheet names its vendor in the stored path; a search result only carries the
+  // vendor's own URL, so the link key answers for it. Returns '' when neither does.
+  static vendorFromDocument(document) {
+    const key = Object.keys(document || {}).find((k) => k.endsWith('_link') && document[k]);
+    if (!key) return '';
+
+    const fromPath = String(document[key]).match(/\/safety_sheets\/([^/]+)\//);
+    if (fromPath) return fromPath[1].toLowerCase();
+
+    const fromKey = key.replace('_link', '');
+    return /^[a-z]+$/i.test(fromKey) ? fromKey.toLowerCase() : '';
+  }
+
   updateCheckMark(document) {
-    // Find any key that ends with "_link"
-    const dynamicKey = Object.keys(document)
-      .find((key) => key.endsWith('_link') && document[key]);
-    if (dynamicKey) {
-      // Extract vendor name by removing "_link" suffix
-      const dynamicKeyValue = document[dynamicKey];
-      const vendorName = (dynamicKeyValue.match(/\/safety_sheets\/([^/]+)\//) || [])[1];
-      const vendor = vendorName.toLowerCase();
-      this.handleCheckMark(vendor, false);
-    }
+    const vendor = ChemicalTab.vendorFromDocument(document);
+    if (vendor) this.handleCheckMark(vendor, false);
   }
 
   checkMarkButton(document) {
