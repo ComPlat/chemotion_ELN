@@ -69,10 +69,16 @@ const vendorDisplayName = (name) => {
 
 // Popper measures a tooltip once, when it opens. Swapping a long label for "Copied"
 // afterwards leaves it placed for the old width, which reads as a shift to the left.
+// The popper object is rebuilt on every render, so it cannot be a dependency: scheduling
+// an update would re-render, which would schedule another. Only the text is watched.
 const RepositioningTooltip = ({ popper, children, ...props }) => {
+  const schedule = React.useRef(null);
+
+  React.useEffect(() => { schedule.current = popper?.scheduleUpdate; });
+
   React.useEffect(() => {
-    popper?.scheduleUpdate?.();
-  }, [children, popper]);
+    schedule.current?.();
+  }, [children]);
 
   return <Tooltip {...props}>{children}</Tooltip>;
 };
@@ -1577,8 +1583,7 @@ export default class ChemicalTab extends React.Component {
             {this.isSectionOpen('catalogueVendors') && (
               <>
                 <div className="text-muted small mb-2">
-                  No sheet can be fetched from these. Open the product page and attach the
-                  sheet with Upload SDS to make it available for extraction.
+                  No sheet could be fetched from these. Open the product page, find, download, and then upload the safety sheet using the attach button.
                 </div>
                 <ListGroup className="mb-2">
                   {catalogueVendors.map((group) => this.renderVendorGroup(group))}
@@ -1967,7 +1972,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <div>
         {this.sectionHeader('safetyPhrases', 'Safety phrases and pictograms', {
-          meta: startsOpen ? null : 'none yet',
+          meta: startsOpen ? null : 'none added yet',
           metaTooltip: 'No H or P statement and no pictogram is set. '
             + 'Fetch them from a saved sheet, or type them in here.',
           defaultOpen: startsOpen,
