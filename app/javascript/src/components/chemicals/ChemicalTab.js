@@ -19,6 +19,10 @@ import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
+// Tooltips render into the body, not into the scrolling sheet lists they belong to,
+// where growing the page would move the row out from under the cursor.
+const TOOLTIP_CONTAINER = () => document.body;
+
 const PRODUCT_PREVIEW_COUNT = 5;
 
 // Sheets per sample. Searching stays open at the limit; only saving is refused.
@@ -66,29 +70,6 @@ const vendorDisplayName = (name) => {
   if (!name) return name;
   return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
 };
-
-// Popper measures a tooltip once, when it opens. Swapping a long label for "Copied"
-// afterwards leaves it placed for the old width, which reads as a shift to the left.
-// The popper object is rebuilt on every render, so it cannot be a dependency: scheduling
-// an update would re-render, which would schedule another. Only the text is watched.
-const RepositioningTooltip = ({ popper, children, ...props }) => {
-  const schedule = React.useRef(null);
-
-  React.useEffect(() => { schedule.current = popper?.scheduleUpdate; });
-
-  React.useEffect(() => {
-    schedule.current?.();
-  }, [children]);
-
-  return <Tooltip {...props}>{children}</Tooltip>;
-};
-
-RepositioningTooltip.propTypes = {
-  popper: PropTypes.shape({ scheduleUpdate: PropTypes.func }),
-  children: PropTypes.node,
-};
-
-RepositioningTooltip.defaultProps = { popper: null, children: null };
 
 export default class ChemicalTab extends React.Component {
   static contextType = StoreContext;
@@ -660,7 +641,7 @@ export default class ChemicalTab extends React.Component {
     // If disabled, wrap in an OverlayTrigger to show the tooltip
     if (!specialVendor) {
       return (
-        <OverlayTrigger
+        <OverlayTrigger container={TOOLTIP_CONTAINER}
           placement="top"
           overlay={(
             <Tooltip id="disabledPhrases">
@@ -914,7 +895,7 @@ export default class ChemicalTab extends React.Component {
     const dateArray = ['person', 'required_by', 'expiration_date'];
 
     return (
-      <OverlayTrigger
+      <OverlayTrigger container={TOOLTIP_CONTAINER}
         placement="top"
         overlay={dateArray.includes(parameter)
           ? <Tooltip id="field-text-input">{conditionalOverlay}</Tooltip> : <div />}
@@ -973,7 +954,11 @@ export default class ChemicalTab extends React.Component {
     const tooltipMessage = value ? `product link (${value})` : 'No product link available';
 
     return (
-      <OverlayTrigger placement="bottom" overlay={<Tooltip id="productLink_button">{tooltipMessage}</Tooltip>}>
+      <OverlayTrigger
+        container={TOOLTIP_CONTAINER}
+        placement="bottom"
+        overlay={<Tooltip id="productLink_button">{tooltipMessage}</Tooltip>}
+      >
         <div>
           <Button
             active
@@ -1105,7 +1090,7 @@ export default class ChemicalTab extends React.Component {
     // Check if the document has the vendor link and we should show a check mark
     if (document[dynamicKey] && checkSaveIcon) {
       return (
-        <OverlayTrigger
+        <OverlayTrigger container={TOOLTIP_CONTAINER}
           placement="top"
           overlay={(
             <Tooltip id={`saveCheckIcon${vendorName}`}>
@@ -1123,7 +1108,7 @@ export default class ChemicalTab extends React.Component {
 
   removeButton(index, document) {
     return (
-      <OverlayTrigger
+      <OverlayTrigger container={TOOLTIP_CONTAINER}
         placement="top"
         overlay={<Tooltip id={`remove-sds-${index}`}>Remove this safety data sheet</Tooltip>}
       >
@@ -1248,7 +1233,7 @@ export default class ChemicalTab extends React.Component {
     })();
 
     return (
-      <OverlayTrigger
+      <OverlayTrigger container={TOOLTIP_CONTAINER}
         placement="top"
         overlay={<Tooltip id={`save-sds-${productNumber || 'sheet'}`}>{tooltip}</Tooltip>}
       >
@@ -1309,7 +1294,7 @@ export default class ChemicalTab extends React.Component {
       : 'Attach a safety data sheet from your computer';
 
     return (
-      <OverlayTrigger
+      <OverlayTrigger container={TOOLTIP_CONTAINER}
         placement="top"
         overlay={<Tooltip id="max-attachments-tooltip">{message}</Tooltip>}
       >
@@ -1356,7 +1341,7 @@ export default class ChemicalTab extends React.Component {
       <Form.Group>
         <Form.Label>
           Query SDS using
-          <OverlayTrigger
+          <OverlayTrigger container={TOOLTIP_CONTAINER}
             placement="top"
             overlay={cas && cas !== '' ? <Tooltip>{conditionalOverlay}</Tooltip> : <div />}
           >
@@ -1533,7 +1518,7 @@ export default class ChemicalTab extends React.Component {
       <div data-component="vendorGroups">
         {pubchemUrl && (
           <div className="mb-3">
-            <OverlayTrigger
+            <OverlayTrigger container={TOOLTIP_CONTAINER}
               placement="top"
               overlay={(
                 <Tooltip id="pubchem-all-vendors">
@@ -1617,7 +1602,11 @@ export default class ChemicalTab extends React.Component {
           {title}
         </Button>
         {meta && metaTooltip && (
-          <OverlayTrigger placement="top" overlay={<Tooltip id={`${id}-meta`}>{metaTooltip}</Tooltip>}>
+          <OverlayTrigger
+            container={TOOLTIP_CONTAINER}
+            placement="top"
+            overlay={<Tooltip id={`${id}-meta`}>{metaTooltip}</Tooltip>}
+          >
             {counter}
           </OverlayTrigger>
         )}
@@ -1630,7 +1619,12 @@ export default class ChemicalTab extends React.Component {
   // rather than a run of bare links.
   static linkIconButton({ href, icon, tooltip, key }) {
     return (
-      <OverlayTrigger key={key} placement="top" overlay={<Tooltip id={`${key}-tip`}>{tooltip}</Tooltip>}>
+      <OverlayTrigger
+        container={TOOLTIP_CONTAINER}
+        key={key}
+        placement="top"
+        overlay={<Tooltip id={`${key}-tip`}>{tooltip}</Tooltip>}
+      >
         <Button
           size="xsm"
           variant="light"
@@ -1662,7 +1656,7 @@ export default class ChemicalTab extends React.Component {
           </Button>
           <span className="text-muted small">{`${group.count} products`}</span>
           {group.sds_supported && (
-            <OverlayTrigger
+            <OverlayTrigger container={TOOLTIP_CONTAINER}
               placement="top"
               overlay={(
                 <Tooltip id={`sds-badge-${group.vendor}`}>
@@ -1711,12 +1705,12 @@ export default class ChemicalTab extends React.Component {
             return (
               // eslint-disable-next-line react/no-array-index-key
               <div key={`${label}-${index}`} className="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                <OverlayTrigger
+                <OverlayTrigger container={TOOLTIP_CONTAINER}
                   placement="top"
-                  overlay={(overlayProps) => (
-                    <RepositioningTooltip {...overlayProps} id={`product-number-${group.vendor}-${index}`}>
+                  overlay={(
+                    <Tooltip id={`product-number-${group.vendor}-${index}`}>
                       {ChemicalTab.copyTooltip(copied, numberKey && vendorDisplayName(group.vendor))}
-                    </RepositioningTooltip>
+                    </Tooltip>
                   )}
                 >
                   <Badge
@@ -2002,7 +1996,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <div className="w-100 mt-0 ms-2">
         <InputGroup>
-          <OverlayTrigger
+          <OverlayTrigger container={TOOLTIP_CONTAINER}
             placement="top"
             overlay={(
               <Tooltip id="renderChemProp">
@@ -2029,7 +2023,7 @@ export default class ChemicalTab extends React.Component {
               </Button>
             </div>
           </OverlayTrigger>
-          <OverlayTrigger
+          <OverlayTrigger container={TOOLTIP_CONTAINER}
             placement="top"
             overlay={(
               <Tooltip id="viewChemProp">
@@ -2269,7 +2263,7 @@ export default class ChemicalTab extends React.Component {
     return (
       <div className="mt-4">
         {isDisabled ? button : (
-          <OverlayTrigger placement="top" overlay={overlay}>
+          <OverlayTrigger container={TOOLTIP_CONTAINER} placement="top" overlay={overlay}>
             <div>{button}</div>
           </OverlayTrigger>
         )}
