@@ -1818,7 +1818,7 @@ export default class ChemicalTab extends React.Component {
             className: 'mt-5 text-primary',
           })}
           <div
-            className={resultsScroll ? 'overflow-auto pe-2' : ''}
+            className={`border rounded p-2 ${resultsScroll ? 'overflow-auto' : ''}`}
             style={resultsScroll ? { maxHeight: '22rem' } : undefined}
             hidden={!this.isSectionOpen('searchResults')}
           >
@@ -1865,13 +1865,13 @@ export default class ChemicalTab extends React.Component {
 
       // Render saved SDS if we have any
       const savedSdsSection = hasSavedSds && (
-        <div className={hasSearchResults ? 'border-top mt-4 pt-2' : ''}>
+        <div>
           {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
             meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
             className: 'mt-4 text-success',
           })}
           <div
-            className="overflow-auto pe-2"
+            className="border rounded p-2 overflow-auto"
             style={{ maxHeight: '22rem' }}
             hidden={!this.isSectionOpen('savedSds')}
           >
@@ -2063,21 +2063,21 @@ export default class ChemicalTab extends React.Component {
             {switchRequiredOrderedDate === 'delivery' && this.textInput(data, 'Date', 'delivery_date')}
             {switchRequiredOrderedDate === 'opening' && this.textInput(data, 'Date', 'opening_date')}
           </Col>
-          <Col sm={3}>
-            {this.textInput(data, 'Required by', 'required_by')}
-          </Col>
         </Row>
         <Row className="mb-3">
-          <Col>
+          <Col sm={3}>
             {this.numInputWithoutTable(data, 'Amount', 'amount')}
           </Col>
-          <Col className="pt-2">
+          <Col sm={2} className="pt-2">
             {this.numInputWithoutTable(data, '', 'volume')}
           </Col>
-          <Col>
+          <Col sm={3}>
             {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
           </Col>
-          <Col>
+          <Col sm={2}>
+            {this.textInput(data, 'Required by', 'required_by')}
+          </Col>
+          <Col sm={2}>
             {this.textInput(data, 'Inventory Label', 'inventory_label')}
           </Col>
         </Row>
