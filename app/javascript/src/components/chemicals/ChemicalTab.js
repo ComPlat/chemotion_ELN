@@ -67,6 +67,23 @@ const vendorDisplayName = (name) => {
   return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+// Popper measures a tooltip once, when it opens. Swapping a long label for "Copied"
+// afterwards leaves it placed for the old width, which reads as a shift to the left.
+const RepositioningTooltip = ({ popper, children, ...props }) => {
+  React.useEffect(() => {
+    popper?.scheduleUpdate?.();
+  }, [children, popper]);
+
+  return <Tooltip {...props}>{children}</Tooltip>;
+};
+
+RepositioningTooltip.propTypes = {
+  popper: PropTypes.shape({ scheduleUpdate: PropTypes.func }),
+  children: PropTypes.node,
+};
+
+RepositioningTooltip.defaultProps = { popper: null, children: null };
+
 export default class ChemicalTab extends React.Component {
   static contextType = StoreContext;
   constructor(props) {
@@ -1691,10 +1708,10 @@ export default class ChemicalTab extends React.Component {
               <div key={`${label}-${index}`} className="d-flex align-items-center gap-2 mb-1 flex-wrap">
                 <OverlayTrigger
                   placement="top"
-                  overlay={(
-                    <Tooltip id={`product-number-${group.vendor}-${index}`}>
+                  overlay={(overlayProps) => (
+                    <RepositioningTooltip {...overlayProps} id={`product-number-${group.vendor}-${index}`}>
                       {ChemicalTab.copyTooltip(copied, numberKey && vendorDisplayName(group.vendor))}
-                    </Tooltip>
+                    </RepositioningTooltip>
                   )}
                 >
                   <Badge
