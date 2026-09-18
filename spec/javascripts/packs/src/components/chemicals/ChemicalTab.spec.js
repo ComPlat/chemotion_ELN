@@ -228,6 +228,23 @@ describe('ChemicalTab component', () => {
         });
     });
 
+    it('starts every sheet section open and folds it on toggle', () => {
+      ['sdsVendors', 'catalogueVendors', 'searchResults', 'savedSds'].forEach((id) => {
+        expect(instance.isSectionOpen(id)).toBe(true);
+        instance.toggleSection(id);
+        expect(instance.isSectionOpen(id)).toBe(false);
+        instance.toggleSection(id);
+        expect(instance.isSectionOpen(id)).toBe(true);
+      });
+    });
+
+    it('folds one section without folding the others', () => {
+      instance.toggleSection('savedSds');
+      expect(instance.isSectionOpen('savedSds')).toBe(false);
+      expect(instance.isSectionOpen('searchResults')).toBe(true);
+      instance.toggleSection('savedSds');
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
