@@ -53,10 +53,12 @@ RSpec.describe Chemotion::SdsExtractor do
         .to include('label elements truncated at the reduced labelling block')
     end
 
-    it 'returns no pictograms and says why', :aggregate_failures do
-      expect(result['safetyPhrases']['pictograms']).to eq([])
+    it 'derives the pictograms from the codes and says so', :aggregate_failures do
+      expect(result['safetyPhrases']['pictograms']).to contain_exactly('GHS02', 'GHS05', 'GHS07')
       expect(result['diagnostics']['notes'])
-        .to include('pictograms are images; the text layer carries no GHS codes')
+        .to include('pictograms are images, so these are derived from the hazard codes')
+      expect(result['diagnostics']['phrases']['pictograms_derived'])
+        .to contain_exactly('GHS02', 'GHS05', 'GHS07')
     end
   end
 
@@ -183,6 +185,11 @@ RSpec.describe Chemotion::SdsExtractor do
     it 'reads a comma decimal and a "bei" condition', :aggregate_failures do
       expect(result['properties']['density']).to eq('1.022 g/cm3 (25 °C)')
       expect(result['properties']['vapor_pressure']).to eq('0.49 hPa (20 °C)')
+    end
+
+    it 'derives the pictograms the codes imply, and says they are derived', :aggregate_failures do
+      expect(result['safetyPhrases']['pictograms']).to contain_exactly('GHS05', 'GHS06', 'GHS08', 'GHS09')
+      expect(result['diagnostics']['notes']).to include(a_string_matching(/derived from the hazard codes/))
     end
 
     it 'treats "Keine Daten verfügbar" as absent rather than as a value' do

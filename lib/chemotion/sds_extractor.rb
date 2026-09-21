@@ -96,7 +96,6 @@ module Chemotion
       h_codes = SdsPhraseParser.codes(lines, 'H')
       p_codes = SdsPhraseParser.codes(lines, 'P')
       note(empty_reason(lines)) if (h_codes + p_codes).empty?
-      note('pictograms are images; the text layer carries no GHS codes')
       statements(h_codes, p_codes)
     end
 
@@ -108,11 +107,14 @@ module Chemotion
     end
 
     def statements(h_codes, p_codes)
+      pictograms = SdsPictograms.new(h_codes).codes
+      note('pictograms are images, so these are derived from the hazard codes') if pictograms.any?
       phrases = { 'h_statements' => ChemicalsService.construct_h_statements(h_codes),
                   'p_statements' => ChemicalsService.construct_p_statements(p_codes),
-                  'pictograms' => ChemicalsService.construct_pictograms([]) }
+                  'pictograms' => ChemicalsService.construct_pictograms(pictograms) }
       known = phrases['h_statements'].keys + phrases['p_statements'].keys
       @diagnostics['phrases'] = { 'h_codes' => h_codes, 'p_codes' => p_codes,
+                                  'pictograms_derived' => pictograms,
                                   'unknown_codes' => (h_codes + p_codes) - known }
       phrases
     end
