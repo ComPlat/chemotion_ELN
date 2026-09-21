@@ -16,7 +16,8 @@ validations = lambda do |config, service|
   next settings.desc = 'no url - Ghostscript runs locally' if settings.url.blank?
 
   url = URI.parse(settings.url)
-  raise ArgumentError, "Invalid URL: #{url}" unless url.host && %w[http https].include?(url.scheme)
+  # host.present?, not just host: since Ruby 3.2 URI.parse('http://').host is '' instead of nil
+  raise ArgumentError, "Invalid URL: #{url}" unless url.host.present? && %w[http https].include?(url.scheme)
 
   settings.timeout = Integer(settings.timeout || default_timeout)
   raise ArgumentError, "Invalid timeout: #{settings.timeout}" unless settings.timeout.positive?

@@ -17,7 +17,11 @@ module Collectable
 
       public_send(method, arg)
     }
-    scope :by_user_label, ->(id) { joins(:tag).where("element_tags.taggable_data->'user_labels' @> '?'", id) }
+    # The label id is bound as a jsonb value: Rails 7.2 turns +?+ into a bind parameter, so a
+    # +'?'+ inside an SQL string literal would no longer be replaced.
+    scope :by_user_label, lambda { |id|
+      joins(:tag).where("element_tags.taggable_data->'user_labels' @> ?::jsonb", Integer(id).to_json)
+    }
 
     # TODO: Filters are not working properly
     # the following scopes are not working as I would expect
