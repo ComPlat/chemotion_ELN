@@ -127,17 +127,17 @@ RSpec.describe Import::ImportSdf do
       order = []
       depths = []
 
-      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
-        origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args, **kwargs|
+        origin = caller.find { |line| line.start_with?("#{Rails.root}/") }
         if origin&.include?('release_connection_for_native_work')
           order << :release
           depths << ActiveRecord::Base.connection.open_transactions
         end
-        orig.call(*args)
+        orig.call(*args, **kwargs)
       end
-      allow(sdf_import).to receive(:resolve_molecule_for_row).and_wrap_original do |orig, *args|
+      allow(sdf_import).to receive(:resolve_molecule_for_row).and_wrap_original do |orig, *args, **kwargs|
         order << :resolve
-        orig.call(*args)
+        orig.call(*args, **kwargs)
       end
 
       expect { sdf_import.create_samples }.to change(Sample, :count).by(1)
@@ -435,14 +435,14 @@ RSpec.describe Import::ImportSdf do
       allow(PubchemLookupJob).to receive(:perform_later)
       order = []
 
-      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args|
-        origin = caller.find { |line| line.start_with?(Rails.root.to_s) }
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args, **kwargs|
+        origin = caller.find { |line| line.start_with?("#{Rails.root}/") }
         order << :release if origin&.include?('release_connection_for_native_work')
-        orig.call(*args)
+        orig.call(*args, **kwargs)
       end
-      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_wrap_original do |orig, *args|
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_wrap_original do |orig, *args, **kwargs|
         order << :openbabel
-        orig.call(*args)
+        orig.call(*args, **kwargs)
       end
 
       batch_import.find_or_create_mol_by_batch
@@ -469,11 +469,11 @@ RSpec.describe Import::ImportSdf do
       scheduled_before_last_batch = nil
       batches_seen = 0
       allow(PubchemLookupJob).to receive(:perform_later) { scheduled_calls += 1 }
-      allow(batch_import).to receive(:find_or_create_by_molfiles).and_wrap_original do |orig, *args|
+      allow(batch_import).to receive(:find_or_create_by_molfiles).and_wrap_original do |orig, *args, **kwargs|
         batches_seen += 1
         # Sampled at the start of the *last* batch: enrichment must already be queued by then.
         scheduled_before_last_batch = scheduled_calls if batches_seen == 2
-        orig.call(*args)
+        orig.call(*args, **kwargs)
       end
 
       batch_import.find_or_create_mol_by_batch(1)
@@ -505,7 +505,7 @@ RSpec.describe Import::ImportSdf do
       # The raced molecule's decision-lookup misses first (winner committed in the gap),
       # then the rescue re-find returns the winner; all other lookups behave normally.
       first_lookup = true
-      allow(Molecule).to receive(:find_by).and_wrap_original do |orig, *args|
+      allow(Molecule).to receive(:find_by).and_wrap_original do |orig, *args, **kwargs|
         cond = args.first
         if cond.is_a?(Hash) && cond[:inchikey] == raced_inchikey
           next winner unless first_lookup
@@ -513,7 +513,7 @@ RSpec.describe Import::ImportSdf do
           first_lookup = false
           nil
         else
-          orig.call(*args)
+          orig.call(*args, **kwargs)
         end
       end
 
