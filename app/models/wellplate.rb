@@ -33,7 +33,7 @@ class Wellplate < ApplicationRecord
   include Taggable
   include Labimotion::Segmentable
 
-  serialize :description, Hash
+  serialize :description, type: Hash
 
   multisearchable against: :name
 

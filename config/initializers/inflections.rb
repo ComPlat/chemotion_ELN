@@ -14,3 +14,6 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym 'RESTful'
 # end
+
+# API / SFTP acronyms are defined in config/application.rb (application body), not
+# here, so they take effect before autoloading during initialization.
