@@ -124,9 +124,30 @@ module Chemotion
       product_number = @vendor_info['productNumber']
       @file_hash = compute_or_fail(upload_path)
       sds_file_path = resolve_sds_file_path(product_number)
+      return duplicate_error(sds_file_path) if already_held?(sds_file_path)
+
       handle_chemical_update_or_create(build_sds_params(product_number, sds_file_path))
     rescue StandardError => e
       { error: "Error processing SDS: #{e.message}" }
+    end
+
+    # Read from the record rather than the posted copy: the sheets the sample holds are
+    # what decides, and chemical_data is optional on this endpoint.
+    def already_held?(file_path)
+      return false if chemical_record.nil?
+
+      ChemicalsService.sheet_already_saved?(chemical_record.chemical_data, file_path)
+    end
+
+    # One lookup serves both the duplicate check and the update that follows it.
+    def chemical_record
+      return @chemical_record if defined?(@chemical_record)
+
+      @chemical_record = Chemical.find_by(sample_id: @sample_id)
+    end
+
+    def duplicate_error(file_path)
+      { error: ChemicalsService.duplicate_sheet_message(file_path), final: true, status: 422 }
     end
 
     # Compute hash for uploaded file
@@ -198,7 +219,7 @@ module Chemotion
     # @param sds_params [Hash] Parameters for chemical record creation/update
     # @return [Chemical, Hash] Chemical record or error hash
     def handle_chemical_update_or_create(sds_params)
-      chemical = Chemical.find_by(sample_id: sds_params[:sample_id])
+      chemical = chemical_record
 
       if chemical.present?
         update_existing_chemical(chemical, sds_params)

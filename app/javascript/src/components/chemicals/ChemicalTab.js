@@ -705,10 +705,15 @@ export default class ChemicalTab extends React.Component {
 
     return attempt(0, null)
       .catch((error) => {
+        // A refused save has nothing to retry: suggesting a manual upload only sends the
+        // user to a second route that refuses it for the same reason.
+        const refused = !!error?.final;
         this.notify({
-          title: 'Could not save the safety data sheet',
-          message: `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
-          level: 'error',
+          title: refused ? 'Sheet not saved' : 'Could not save the safety data sheet',
+          message: refused
+            ? error.message
+            : `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
+          level: refused ? 'warning' : 'error',
           position: 'tc',
         });
       })

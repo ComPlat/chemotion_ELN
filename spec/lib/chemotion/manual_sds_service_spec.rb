@@ -439,4 +439,36 @@ RSpec.describe Chemotion::ManualSdsService do
       end
     end
   end
+
+  describe 'refusing a duplicate upload' do
+    let(:dup_sample) { create(:sample) }
+    let(:held) { '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf' }
+    let(:upload) do
+      file = Tempfile.new(['dup', '.pdf'])
+      file.write('%PDF x')
+      file.flush
+      { tempfile: file }
+    end
+
+    before do
+      create(:chemical, sample: dup_sample,
+                        chemical_data: [{ 'safetySheetPath' => [{ 'ABC123_aaaaaaaaaaaaaaaa_link' => held }] }])
+      allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(held)
+    end
+
+    it 'refuses a file the sample already holds, naming it', :aggregate_failures do
+      result = described_class.create_manual_sds(
+        sample_id: dup_sample.id,
+        cas: '1-1-1',
+        vendor_info: { 'productNumber' => 'ABC123', 'vendor' => 'testvendor' }.to_json,
+        vendor_name: 'testvendor',
+        vendor_product: 'testvendorProductInfo',
+        attached_file: upload,
+      )
+
+      expect(result[:error]).to include('ABC123')
+      expect(result[:final]).to be true
+      expect(result[:status]).to eq(422)
+    end
+  end
 end

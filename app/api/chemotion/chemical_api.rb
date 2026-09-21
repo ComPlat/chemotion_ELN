@@ -176,7 +176,7 @@ module Chemotion
           end
           if Chemotion::ChemicalsService.sds_limit_reached?([existing].compact)
             error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
-                            'safety data sheets. Delete one before attaching another.' }, 422)
+                            'safety data sheets. Delete one before attaching another.', final: true }, 422)
           end
 
           result = Chemotion::ManualSdsService.create_manual_sds(
@@ -190,7 +190,7 @@ module Chemotion
           )
 
           if result.is_a?(Hash) && result[:error].present?
-            error!({ error: result[:error] }, 400)
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
           else
             # Return the created/updated chemical
             present result

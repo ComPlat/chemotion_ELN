@@ -589,6 +589,36 @@ describe('ChemicalTab component', () => {
         });
     });
 
+    describe('what a failed save tells the user', () => {
+      const saveWith = (error) => {
+        const notify = sinon.stub(instance, 'notify');
+        sinon.stub(instance, 'fetchSdsOnServer').rejects(error);
+        instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+        return instance
+          .saveSdsViaRoutes(['server'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+          .then(() => {
+            const payload = notify.firstCall.args[0];
+            sinon.restore();
+            return payload;
+          });
+      };
+
+      it('gives the reason alone when the sheet was refused', () => {
+        const refusal = Object.assign(new Error('It is the same document as AC172380250.'), { final: true });
+        return saveWith(refusal).then((payload) => {
+          expect(payload.message).toEqual('It is the same document as AC172380250.');
+          expect(payload.message).not.toEqual(expect.stringContaining('Upload SDS'));
+        });
+      });
+
+      it('still points at a manual upload when the vendor could not be reached', () => {
+        return saveWith(new Error('the vendor timed out')).then((payload) => {
+          expect(payload.message).toEqual(expect.stringContaining('Upload SDS'));
+        });
+      });
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
