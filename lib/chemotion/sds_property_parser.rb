@@ -28,7 +28,27 @@ module Chemotion
       'viscosity' => 'viscosity', 'viscosity, dynamic' => 'viscosity_dynamic',
       'viscosity, kinematic' => 'viscosity_kinematic',
       'molecular weight' => 'molecular_weight',
-      'refractive index' => 'refractive_index'
+      'refractive index' => 'refractive_index',
+      # German Sigma sheets, whose section 9 is the same lettered layout.
+      'physikalischer zustand' => 'form', 'aggregatzustand' => 'form',
+      'farbe' => 'color', 'geruch' => 'odor',
+      'schmelzpunkt' => 'melting_point', 'schmelzpunkt/gefrierpunkt' => 'melting_point',
+      'siedepunkt' => 'boiling_point', 'siedebeginn und siedebereich' => 'boiling_point',
+      'siedepunkt/siedebereich' => 'boiling_point',
+      'flammpunkt' => 'flash_point',
+      'zündtemperatur' => 'autoignition_temperature',
+      'zersetzungstemperatur' => 'decomposition_temperature',
+      'ph-wert' => 'ph',
+      'wasserlöslichkeit' => 'solubility', 'löslichkeit' => 'solubility',
+      'löslichkeit in wasser' => 'solubility',
+      'dampfdruck' => 'vapor_pressure',
+      'dichte' => 'density', 'relative dichte' => 'relative_density',
+      'relative dampfdichte' => 'vapor_density', 'dampfdichte' => 'vapor_density',
+      'viskosität' => 'viscosity',
+      'viskosität, dynamisch' => 'viscosity_dynamic',
+      'viskosität, kinematisch' => 'viscosity_kinematic',
+      'molekulargewicht' => 'molecular_weight', 'molmasse' => 'molecular_weight',
+      'brechungsindex' => 'refractive_index'
     }.freeze
     TEXT_KEYS = %w[form color odor solubility].freeze
     # Keys whose consumer can hold a span; density and flash point take one number or nothing.

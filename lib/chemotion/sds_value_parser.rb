@@ -6,6 +6,8 @@ module Chemotion
   class SdsValueParser
     ABSENT = %r{\A(no\s+data\s+available|no\s+information\s+available|not\s+available|
                   not\s+applicable|not\s+determined|not\s+specified|not\s+established|
+                  keine\s+daten\s+verf(ü|ue)gbar|nicht\s+anwendbar|nicht\s+verf(ü|ue)gbar|
+                  nicht\s+bestimmt|keine\s+angaben|
                   none|n/?a|[-–—])\b}xi.freeze
     QUALIFIER = /[<>≤≥~]|\b(ca|approx|approximately|about|est|estimated)\b/i.freeze
     UNITS = ['°C', '°F', 'K', 'hPa', 'kPa', 'MPa', 'mPa.s', 'mPa·s', 'Pa', 'mbar', 'bar',
@@ -19,11 +21,11 @@ module Chemotion
     UNIT_BEARING = /(#{NUM})\s*(?=#{UNIT_RE})/.freeze
     PLAIN_NUMBER = /\A-?\d+(\.\d+)?\z/.freeze
     BRACKETED = /\A(.*?)\s*\(([^()]*)\)\z/.freeze
-    MEASURED_AT = /\A(.*?)(?:\s+at\s+|\s*@\s*)(.+)\z/i.freeze
+    MEASURED_AT = /\A(.*?)(?:\s+at\s+|\s+bei\s+|\s*@\s*)(.+)\z/i.freeze
     # A value may be qualified by the temperature or pressure it was measured at, nothing else.
     CONDITION = /\A-?\d[\d.,]*\s*(°C|°F|K|hPa|kPa|mbar|bar|mmHg|atm|Pa)\z/.freeze
     # Sigma appends its source or method to the value cell; neither changes the number.
-    PROVENANCE = /\s*-\s*(lit\.?|closed cup|open cup)\z/i.freeze
+    PROVENANCE = /\s*-\s*(lit\.?|closed cup|open cup|geschlossener\s+Tiegel|offener\s+Tiegel)\z/i.freeze
     BLANKS = "\u00A0\u2007\u202F"
     MAX_TEXT_LENGTH = 80
     # Ordered: the first signal that points one way settles the sheet's decimal separator.

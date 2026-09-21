@@ -159,6 +159,39 @@ RSpec.describe Chemotion::SdsExtractor do
     end
   end
 
+  describe 'a German Sigma sheet' do
+    let(:result) { described_class.extract_saved_sheet('/safety_sheets/merck/45326_858ce38e0de45f17.pdf') }
+
+    it 'finds all sixteen ABSCHNITT headings' do
+      expect(result['diagnostics']['sections_found']).to eq((1..16).to_a)
+    end
+
+    it 'reads the codes, which carry no language', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys)
+        .to include('H301+H311+H331', 'H317', 'H318', 'H410')
+      expect(result['safetyPhrases']['p_statements'].keys).to include('P305+P351+P338')
+    end
+
+    it 'reads the German section 9 labels', :aggregate_failures do
+      expect(result['properties']).to include(
+        'boiling_point' => '184 °C',
+        'flash_point' => '70 °C',
+        'decomposition_temperature' => '190 °C',
+      )
+    end
+
+    it 'reads a comma decimal and a "bei" condition', :aggregate_failures do
+      expect(result['properties']['density']).to eq('1.022 g/cm3 (25 °C)')
+      expect(result['properties']['vapor_pressure']).to eq('0.49 hPa (20 °C)')
+    end
+
+    it 'treats "Keine Daten verfügbar" as absent rather than as a value' do
+      absent = result['diagnostics']['properties']['skipped'].values.select { |s| s['reason'] == 'absent' }
+      expect(absent).not_to be_empty
+      expect(result['properties'].values).not_to include(a_string_matching(/Keine Daten/i))
+    end
+  end
+
   describe 'a misfiled sheet' do
     let(:misfiled) { Rails.root.join('tmp/sds_extractor_spec/merck/392693_web_deadbeef.pdf') }
 
