@@ -4,7 +4,7 @@ module Chemotion
   # Indexes the 16 GHS section headings of an SDS so a scan can be bounded to one of them.
   class SdsSections
     HEADINGS = {
-      sigma: /\ASECTION\s+(\d{1,2})\s*:\s*(\S.*)\z/,
+      sigma: /\A(?:SECTION|ABSCHNITT)\s+(\d{1,2})\s*:\s*(\S.*)\z/,
       fisher: /\A(\d{1,2})\.\s+(\S.*)\z/,
     }.freeze
     MAX_SECTION = 16
