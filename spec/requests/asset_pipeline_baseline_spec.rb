@@ -22,6 +22,8 @@ require 'rails_helper'
 # `tmp/asset_pipeline_testing/verify_baseline.sh` instead of here. The specs
 # below only touch pages whose layout has NO pack tag (2FA, swagger), so they
 # run cleanly in CI.
+
+# rubocop:disable RSpec/MultipleExpectations
 RSpec.describe 'Asset-pipeline baseline (Stage 2)', type: :request do
   describe 'GET /swagger (grape_swagger_rails UI — Sprockets-served)' do
     it 'renders and references the engine Sprockets assets' do
@@ -52,4 +54,5 @@ RSpec.describe 'Asset-pipeline baseline (Stage 2)', type: :request do
       expect(response.body).to include('/assets/favicon')
     end
   end
+  # rubocop:enable RSpec/MultipleExpectations
 end

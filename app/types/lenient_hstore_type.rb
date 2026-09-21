@@ -8,7 +8,7 @@ require 'active_record/connection_adapters/postgresql/oid/hstore'
 
 class LenientHstoreType < ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Hstore
   # Verbatim from activerecord-6.1.7.10 hstore.rb.
-  HstorePair = begin
+  HSTORE_PAIR = begin
     quoted_string = /"[^"\\]*(?:\\.[^"\\]*)*"/
     unquoted_string = /(?:\\.|[^\s,])[^\s=,\\]*(?:\\.[^\s=,\\]*|=[^,>])*/
     /(#{quoted_string}|#{unquoted_string})\s*=>\s*(#{quoted_string}|#{unquoted_string})/
@@ -26,10 +26,10 @@ class LenientHstoreType < ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Hst
   def lenient_deserialize(value)
     return value unless value.is_a?(::String)
 
-    ::Hash[value.scan(HstorePair).map do |k, v|
+    value.scan(HSTORE_PAIR).to_h do |k, v|
       v = v.upcase == 'NULL' ? nil : v.gsub(/\A"(.*)"\Z/m, '\1').gsub(/\\(.)/, '\1')
       k = k.gsub(/\A"(.*)"\Z/m, '\1').gsub(/\\(.)/, '\1')
       [k, v]
-    end]
+    end
   end
 end

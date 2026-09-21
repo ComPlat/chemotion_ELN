@@ -35,7 +35,9 @@ module Chemotion
     # first, so the Api-word exceptions (ApiToken, LcmsApiHelpers, …) still win.
     Rails::Autoloaders::Inflector.singleton_class.prepend(Module.new do
       def camelize(basename, _abspath)
-        @overrides[basename] || basename.split('_').map! { |p| { 'api' => 'API', 'sftp' => 'SFTP' }[p] || p.capitalize }.join
+        @overrides[basename] || basename.split('_').map! do |p|
+          { 'api' => 'API', 'sftp' => 'SFTP' }[p] || p.capitalize
+        end.join
       end
     end)
 
@@ -174,7 +176,7 @@ module Chemotion
 
     # OnlyOffice document-server JWT secret, from ENV (off the deprecated
     # Rails.application.secrets). Dev/test: set this ENV when using OnlyOffice locally.
-    config.only_office_secret_key_base = ENV['ONLY_OFFICE_SECRET_KEY_BASE']
+    config.only_office_secret_key_base = ENV.fetch('ONLY_OFFICE_SECRET_KEY_BASE', nil)
 
     # Specifically allow some classes to be serialized by Psych
     # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017

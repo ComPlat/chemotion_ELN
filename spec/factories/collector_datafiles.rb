@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
+  # Faker repeats itself: build_list(:data_file, 2) could draw the same name
+  # twice, FileUtils.touch would then leave ONE file where the spec asked for
+  # two, and the example failed in its setup — on some RSpec seeds only, which
+  # is why it looked like an environment difference. The counter makes every
+  # generated name distinct; an explicit name: still wins.
+  sequence(:data_file_index)
+
   # Build a Pathname object for a file
   #  optionally create the file with touch or cp from another location
   # @param [String] prefix - prefix for the filename
@@ -16,7 +23,7 @@ FactoryBot.define do
     transient do
       prefix { nil }
       ext { 'chemotion' }
-      name  { File.basename(Faker::File.file_name(ext: ext)) }
+      name  { "#{generate(:data_file_index)}-#{File.basename(Faker::File.file_name(ext: ext))}" }
       root { nil }
       touch { true } # rubocop:disable Rails/SkipsModelValidations
       copy_from { nil }
