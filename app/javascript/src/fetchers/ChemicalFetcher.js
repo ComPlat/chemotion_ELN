@@ -51,6 +51,9 @@ export default class ChemicalFetcher {
           throw error;
         });
       },
+      // The client's default handler logs and resolves undefined, which turned every
+      // reason the server gave into a bare "could not retrieve" on the way out.
+      handleResponseError: (error) => { throw error; },
     });
   }
 
