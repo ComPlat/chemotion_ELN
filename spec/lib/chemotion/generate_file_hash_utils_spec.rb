@@ -277,33 +277,6 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.find_safety_sheets_by_product_number' do
-    it 'returns matching pdf files for product number' do
-      vendor = 'testvendor'
-      product = 'PN123'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      primary_pdf_path = File.join(vendor_dir, "#{product}_abcdef1234567890.pdf")
-      web_pdf_path = File.join(vendor_dir, "#{product}_web_abcdef1234567890.pdf")
-      File.write(primary_pdf_path, 'dummy')
-      File.write(web_pdf_path, 'dummy web')
-
-      found = described_class.find_safety_sheets_by_product_number(vendor, product)
-      expect(found).to include(primary_pdf_path, web_pdf_path)
-    ensure
-      FileUtils.rm_f(primary_pdf_path) if defined?(primary_pdf_path)
-      FileUtils.rm_f(web_pdf_path) if defined?(web_pdf_path)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
-    end
-
-    it 'returns empty array when vendor folder missing' do
-      vendor = 'missingvendor'
-      product = 'PN123'
-      expect(described_class.find_safety_sheets_by_product_number(vendor, product)).to eq([])
-    end
-  end
-
   describe '.vendor_folder_exists?' do
     let(:vendor) { 'existvendor' }
     let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
@@ -332,36 +305,42 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.find_duplicate_file_by_hash' do
-    it 'returns matching existing path (public trimmed) when initials match' do
-      vendor = 'dupvendor'
-      product = 'PN999'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      existing_file = File.join(vendor_dir, "#{product}_abcdeffedcba1234.pdf")
-      File.write(existing_file, 'dup content')
+  describe '.find_identical_sheet' do
+    let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
+    let(:vendor_dir) { File.join(base_dir, 'dupvendor') }
+    let(:other_dir) { File.join(base_dir, 'othervendor') }
+    let(:source) { File.join(Dir.mktmpdir, 'incoming.pdf') }
 
-      path = described_class.find_duplicate_file_by_hash(vendor, product, 'abcdeffedcba1234')
-      expect(path).to eq(existing_file.sub('public/', '/'))
-    ensure
-      FileUtils.rm_f(existing_file) if defined?(existing_file)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
+    before { FileUtils.mkdir_p([vendor_dir, other_dir]) }
+
+    after do
+      FileUtils.rm_rf([vendor_dir, other_dir])
+      FileUtils.rm_f(source)
     end
 
-    it 'returns nil when initials do not match' do
-      vendor = 'dupvendor'
-      product = 'PN999'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      existing_file = File.join(vendor_dir, "#{product}_abcdeffedcba1234.pdf")
-      File.write(existing_file, 'dup content')
+    it 'finds a byte-identical sheet whatever it is named' do
+      File.write(source, '%PDF same bytes')
+      File.write(File.join(vendor_dir, 'PN999_abcdeffedcba1234.pdf'), '%PDF same bytes')
 
-      expect(described_class.find_duplicate_file_by_hash(vendor, product, '1234567890abcdef')).to be_nil
-    ensure
-      FileUtils.rm_f(existing_file) if defined?(existing_file)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
+      expect(described_class.find_identical_sheet(source)).to eq('/safety_sheets/dupvendor/PN999_abcdeffedcba1234.pdf')
+    end
+
+    it 'looks across every vendor folder, not just one' do
+      File.write(source, '%PDF elsewhere')
+      File.write(File.join(other_dir, 'AC1_1111111111111111.pdf'), '%PDF elsewhere')
+
+      expect(described_class.find_identical_sheet(source)).to eq('/safety_sheets/othervendor/AC1_1111111111111111.pdf')
+    end
+
+    it 'returns nil when the bytes differ, however similar the name' do
+      File.write(source, '%PDF one')
+      File.write(File.join(vendor_dir, 'PN999_abcdeffedcba1234.pdf'), '%PDF two')
+
+      expect(described_class.find_identical_sheet(source)).to be_nil
+    end
+
+    it 'returns nil for a source that is not there' do
+      expect(described_class.find_identical_sheet('/no/such/file.pdf')).to be_nil
     end
   end
 

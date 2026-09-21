@@ -147,6 +147,22 @@ module Chemotion
       sheets.is_a?(Enumerable) && sheets.count >= MAX_SAVED_SDS
     end
 
+    # True when this sample already holds the very same file. Two samples may share one
+    # sheet on disk; one sample holding it twice is the case worth refusing.
+    def self.sheet_already_saved?(chemical_data, file_path)
+      file_path.is_a?(String) && saved_sheet_paths(chemical_data).include?(file_path)
+    end
+
+    def self.saved_sheet_paths(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return [] unless first.is_a?(Hash)
+
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      return [] unless sheets.is_a?(Enumerable)
+
+      sheets.flat_map { |sheet| sheet.respond_to?(:values) ? sheet.values : [] }
+    end
+
     # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
     # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
     def self.vendor_save_modes(vendor)
@@ -424,11 +440,11 @@ module Chemotion
         # Only true means bytes landed; an error Hash is truthy and would hash the empty tempfile.
         return result unless result == true
 
-        file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
-        existing_file_path = GenerateFileHashUtils.find_duplicate_file_by_hash(vendor_name, product_number, file_hash)
-        return existing_file_path if existing_file_path.present? && existing_file_path.is_a?(String)
+        identical = GenerateFileHashUtils.find_identical_sheet(tmp_file.path)
+        return identical if identical.present?
 
-        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15], true)
+        file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
+        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15])
         write_file(file_name.to_s, tmp_file, link)
         return file_name if File.exist?("public/#{file_name}")
 
@@ -466,20 +482,6 @@ module Chemotion
     rescue StandardError => e
       Rails.logger.error("HTTP error downloading PDF: #{e.message}")
       { error: e.message }
-    end
-
-    def self.find_existing_file_by_vendor_product_number_signature(vendor, product_number)
-      vendor_product_files = GenerateFileHashUtils.find_safety_sheets_by_product_number(vendor, product_number)
-      return nil if vendor_product_files.empty?
-
-      # Look for files matching the URL signature pattern
-      pattern = "#{SAFETY_SHEETS_DIR}/#{vendor}/#{product_number}_web_*.pdf"
-      existing_files = Dir.glob(pattern)
-      ## returning the first match is not best practice, for now it is ok as safety sheets which are fetched
-      ## using internal fetch_safetysheet API for merck are unique, so existing_files should always contain one file
-      return "/safety_sheets/#{vendor}/#{File.basename(existing_files.first)}" if existing_files.any?
-
-      nil
     end
 
     def self.health_section(product_number)
@@ -685,26 +687,15 @@ module Chemotion
       'Could not find additional chemical properties'
     end
 
-    # Generate safety sheet file path (unique by vendor/product and hash initials)
-    # Adds "_web_" marker when file originates from vendor API (url_signature = true)
-    # @param vendor_name [String] vendor folder name (e.g. 'merck')
-    # @param product_number [String] vendor product number (e.g. '270709')
-    # @param file_hash_initials [String] first 16 chars (or similar) of file hash for uniqueness
-    # @param url_signature [Boolean] whether to include the "_web_" segment (API-fetched)
+    # Where a sheet lands: the vendor folder, the catalogue number, and enough of the
+    # content hash that two different sheets for one product cannot collide.
     # @return [String] relative path starting with /safety_sheets/
-    # rubocop:disable Style/OptionalBooleanParameter
-    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials, url_signature = false)
-      base_file_name = "#{vendor_name}/#{product_number}"
-      if url_signature
-        "/safety_sheets/#{base_file_name}_web_#{file_hash_initials}.pdf"
-      else
-        "/safety_sheets/#{base_file_name}_#{file_hash_initials}.pdf"
-      end
+    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials)
+      "/safety_sheets/#{vendor_name}/#{product_number}_#{file_hash_initials}.pdf"
     end
-    # rubocop:enable Style/OptionalBooleanParameter
 
-    def self.update_chemical_data(chemical_data, file_path, product_number, vendor)
-      hash_initials = file_path[%r{/safety_sheets/#{vendor}/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$}, 1]
+    def self.update_chemical_data(chemical_data, file_path, product_number)
+      hash_initials = file_path[/([a-f0-9]{16})\.pdf\z/, 1]
       if file_path.present? && file_path.is_a?(String) && hash_initials.present?
         safety_sheet_key = "#{product_number}_#{hash_initials}_link"
         chemical_data[0]['safetySheetPath'] ||= []
@@ -718,12 +709,10 @@ module Chemotion
       chemical_data
     end
 
+    # Always fetches: only the bytes can say whether this sheet is one we already hold,
+    # and the same catalogue number serves different sheets per language and revision.
     def self.find_existing_or_create_safety_sheet(link, vendor, product_number)
-      existing_file_path = find_existing_file_by_vendor_product_number_signature(
-        vendor,
-        product_number,
-      )
-      existing_file_path || create_sds_file(link, product_number, vendor)
+      create_sds_file(link, product_number, vendor)
     end
 
     # Finds existing chemical or creates new one with updated safety data
@@ -732,14 +721,12 @@ module Chemotion
     # @param chemical_data [Array<Hash>] Chemical data array
     # @param file_path [String] Path to safety data sheet file
     # @param product_number [String] Vendor product number
-    # @param vendor [String] Vendor name
     # @return [Chemical] Created or updated chemical record
     def self.find_or_create_chemical_with_safety_data(**args)
       updated_chemical_data = update_chemical_data(
         args[:chemical_data],
         args[:file_path],
         args[:product_number],
-        args[:vendor],
       )
       chemical = Chemical.find_by(sample_id: args[:sample_id])
 

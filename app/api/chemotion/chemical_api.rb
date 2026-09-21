@@ -138,6 +138,10 @@ module Chemotion
             # A failed download yields false; storing it would record an SDS path resolving to nothing.
             return error!({ error: 'Could not retrieve the SDS from the vendor' }, 400) unless file_path.is_a?(String)
 
+            if Chemotion::ChemicalsService.sheet_already_saved?(params[:chemical_data], file_path)
+              return error!({ error: 'This sample already holds this safety data sheet.' }, 422)
+            end
+
             Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
               sample_id: params[:sample_id],
               cas: params[:cas],

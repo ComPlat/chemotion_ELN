@@ -234,6 +234,61 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.sheet_already_saved?' do
+    let(:saved) { '/safety_sheets/merck/a_1111111111111111.pdf' }
+    let(:data) { [{ 'safetySheetPath' => [{ 'a_1111111111111111_link' => saved }] }] }
+
+    it 'spots the same file already on this sample' do
+      expect(described_class.sheet_already_saved?(data, saved)).to be true
+    end
+
+    it 'lets a different sheet for the same product through' do
+      expect(described_class.sheet_already_saved?(data, '/safety_sheets/merck/a_2222222222222222.pdf')).to be false
+    end
+
+    it 'holds no opinion on an empty sample', :aggregate_failures do
+      expect(described_class.sheet_already_saved?([{}], '/safety_sheets/merck/a.pdf')).to be false
+      expect(described_class.sheet_already_saved?(nil, '/safety_sheets/merck/a.pdf')).to be false
+    end
+  end
+
+  describe 'saving a second sheet for one product number' do
+    let(:vendor) { 'merck' }
+    let(:product) { '270709' }
+    let(:link) { 'https://www.sigmaaldrich.com/sheet.pdf' }
+
+    before do
+      FileUtils.mkdir_p("public/safety_sheets/#{vendor}")
+      File.write("public/safety_sheets/#{vendor}/#{product}_1111111111111111.pdf", '%PDF first')
+    end
+
+    after { FileUtils.rm_rf("public/safety_sheets/#{vendor}") }
+
+    # The old code globbed <product>_web_*.pdf and returned that file without ever
+    # fetching, so a second language or revision could never be saved.
+    it 'writes the second sheet rather than handing back the first', :aggregate_failures do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF second')
+        true
+      end
+
+      result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
+      expect(result).to match(%r{\A/safety_sheets/#{vendor}/#{product}_[a-f0-9]{16}\.pdf\z})
+      expect(result).not_to end_with('1111111111111111.pdf')
+      expect(File.read("public#{result}")).to eq('%PDF second')
+    end
+
+    it 'hands back the file already held when the bytes repeat' do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF first')
+        true
+      end
+
+      result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
+      expect(result).to eq("/safety_sheets/#{vendor}/#{product}_1111111111111111.pdf")
+    end
+  end
+
   describe '.sds_limit_reached?' do
     def with_sheets(count)
       [{ 'safetySheetPath' => Array.new(count) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } } }]
@@ -467,17 +522,18 @@ describe Chemotion::ChemicalsService do
         FileUtils.mkdir_p('public/safety_sheets/thermofischer')
       end
 
-      it 'returns existing file path if duplicate detected' do
-        existing_path = "/safety_sheets/#{vendor}/#{product_number}_web_#{hash_initials}.pdf"
-        allow(Chemotion::GenerateFileHashUtils).to receive(:find_duplicate_file_by_hash).and_return(existing_path)
+      it 'reuses the file already on disk when the bytes are the same' do
+        existing_path = "/safety_sheets/#{vendor}/#{product_number}_#{hash_initials}.pdf"
+        allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(existing_path)
         result = described_class.create_sds_file(link, product_number, vendor)
         expect(result).to eq(existing_path)
       end
 
-      it 'downloads, saves new file, returns its relative path when no duplicate' do
-        allow(Chemotion::GenerateFileHashUtils).to receive(:find_duplicate_file_by_hash).and_return(nil)
+      it 'writes a new file, with no web marker, when nothing matches', :aggregate_failures do
+        allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(nil)
         result = described_class.create_sds_file(link, product_number, vendor)
-        expect(result).to match(%r{^/safety_sheets/#{vendor}/#{product_number}_web_[a-f0-9]{16}\.pdf$})
+        expect(result).to match(%r{^/safety_sheets/#{vendor}/#{product_number}_[a-f0-9]{16}\.pdf$})
+        expect(result).not_to include('_web_')
         expect(File.exist?(File.join('public', result))).to be true
       end
 
@@ -549,13 +605,8 @@ describe Chemotion::ChemicalsService do
     end
 
     context 'with generate_safety_sheet_file_path' do
-      it 'builds path with web signature when flagged' do
-        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678', true)
-        expect(path).to eq('/safety_sheets/merck/270709_web_abcd1234efgh5678.pdf')
-      end
-
-      it 'builds path without web signature when flag false' do
-        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678', false)
+      it 'names a sheet by vendor, product and content hash' do
+        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678')
         expect(path).to eq('/safety_sheets/merck/270709_abcd1234efgh5678.pdf')
       end
     end
@@ -563,22 +614,28 @@ describe Chemotion::ChemicalsService do
     context 'with update_chemical_data' do
       let(:data) { [{ 'safetySheetPath' => [] }] }
       # Use only hex chars so regex in service matches
-      let(:file_path) { '/safety_sheets/merck/270709_web_abcd1234efab5678.pdf' }
+      let(:file_path) { '/safety_sheets/merck/270709_abcd1234efab5678.pdf' }
 
       it 'appends new safety sheet key when absent' do
-        updated = described_class.update_chemical_data(data, file_path, '270709', 'merck')
+        updated = described_class.update_chemical_data(data, file_path, '270709')
         keys = updated[0]['safetySheetPath'].flat_map(&:keys)
         expect(keys.first).to eq('270709_abcd1234efab5678_link')
       end
 
       it 'does not duplicate existing safety sheet key' do
-        described_class.update_chemical_data(data, file_path, '270709', 'merck')
-        updated = described_class.update_chemical_data(data, file_path, '270709', 'merck')
+        described_class.update_chemical_data(data, file_path, '270709')
+        updated = described_class.update_chemical_data(data, file_path, '270709')
         expect(updated[0]['safetySheetPath'].size).to eq(1)
       end
 
+      it 'records a file reused from another vendor folder' do
+        reused = '/safety_sheets/fisher/AC123_abcd1234efab5678.pdf'
+        updated = described_class.update_chemical_data(data, reused, '270709')
+        expect(updated[0]['safetySheetPath'].flat_map(&:values)).to eq([reused])
+      end
+
       it 'returns original data when pattern does not match' do
-        unchanged = described_class.update_chemical_data(data, '/invalid/path.pdf', '270709', 'merck')
+        unchanged = described_class.update_chemical_data(data, '/invalid/path.pdf', '270709')
         expect(unchanged[0]['safetySheetPath']).to be_empty
       end
     end
@@ -586,18 +643,12 @@ describe Chemotion::ChemicalsService do
     context 'when finding existing or creating safety sheet' do
       let(:link) { 'http://example.com/file.pdf' }
 
-      it 'returns existing path if found' do
-        allow(described_class).to receive(:find_existing_file_by_vendor_product_number_signature)
-          .and_return('/safety_sheets/merck/270709_web_hash.pdf')
+      it 'always fetches, so a second sheet for one product can still be saved' do
+        allow(described_class).to receive(:create_sds_file)
+          .and_return('/safety_sheets/merck/270709_abcd1234efab5678.pdf')
         result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
-        expect(result).to eq('/safety_sheets/merck/270709_web_hash.pdf')
-      end
-
-      it 'creates new file when none exists' do
-        allow(described_class).to receive_messages(find_existing_file_by_vendor_product_number_signature: nil,
-                                                   create_sds_file: '/safety_sheets/merck/270709_web_newhash.pdf')
-        result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
-        expect(result).to eq('/safety_sheets/merck/270709_web_newhash.pdf')
+        expect(result).to eq('/safety_sheets/merck/270709_abcd1234efab5678.pdf')
+        expect(described_class).to have_received(:create_sds_file).with(link, '270709', 'merck')
       end
     end
 

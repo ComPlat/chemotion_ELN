@@ -113,7 +113,7 @@ RSpec.describe Chemotion::ManualSdsService do
       before do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -194,7 +194,7 @@ RSpec.describe Chemotion::ManualSdsService do
     # Stub file hash and write path to avoid filesystem operations
     allow(Chemotion::GenerateFileHashUtils).to receive_messages(
       generate_full_hash: 'a' * 32,
-      find_duplicate_file_by_hash: nil,
+      find_identical_sheet: nil,
       vendor_folder_exists?: true,
     )
     allow(Chemotion::ChemicalsService).to receive_messages(
@@ -252,7 +252,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Create a chemical first
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -286,7 +286,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Mock utilities to avoid file system operations
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -335,7 +335,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Set up mocks
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -362,7 +362,7 @@ RSpec.describe Chemotion::ManualSdsService do
         chemical.chemical_data = [{ 'safetySheetPath' => [] }]
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -393,7 +393,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Mock necessary methods to avoid file system operations
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
@@ -422,7 +422,7 @@ RSpec.describe Chemotion::ManualSdsService do
         service = described_class.new(build_params(setup_data))
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
+          find_identical_sheet: nil,
           vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
