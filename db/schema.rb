@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_07_09_140001) do
+ActiveRecord::Schema[7.2].define(version: 2026_08_11_120000) do
+  create_schema "rdkit"
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -26,8 +27,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "organization"
     t.string "department"
     t.string "group"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.date "from"
     t.date "to"
     t.string "domain"
@@ -48,18 +49,18 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "number_of_scans"
     t.integer "sweep_width"
     t.string "time"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "api_tokens", force: :cascade do |t|
     t.string "name"
     t.string "token_digest", null: false
     t.bigint "user_id", null: false
-    t.datetime "expires_at"
-    t.datetime "revoked_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "expires_at", precision: nil
+    t.datetime "revoked_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -73,8 +74,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "created_by", null: false
     t.integer "created_for"
     t.string "version", default: "/", null: false, collation: "C"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "content_type"
     t.string "bucket"
     t.string "key", limit: 500
@@ -82,7 +83,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
@@ -100,20 +101,20 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.inet "ip"
     t.string "role"
     t.string "fqdn"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.index ["user_id"], name: "index_authentication_keys_on_user_id"
   end
 
   create_table "calendar_entries", force: :cascade do |t|
     t.string "title"
     t.string "description"
-    t.datetime "start_time"
-    t.datetime "end_time"
+    t.datetime "start_time", precision: nil
+    t.datetime "end_time", precision: nil
     t.string "kind"
     t.integer "created_by", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "eventable_type"
     t.bigint "eventable_id"
     t.string "status"
@@ -125,8 +126,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.bigint "user_id"
     t.bigint "calendar_entry_id"
     t.integer "status", default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["calendar_entry_id"], name: "index_calendar_entry_notifications_on_calendar_entry_id"
     t.index ["user_id"], name: "index_calendar_entry_notifications_on_user_id"
   end
@@ -146,9 +147,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "cryo_pres_medium"
     t.string "gender"
     t.string "description"
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "created_by"
     t.index ["name", "source"], name: "index_cellline_materials_on_name_and_source", unique: true
   end
@@ -163,9 +164,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.string "description"
     t.bigint "user_id"
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "short_label"
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.index ["ancestry"], name: "index_cellline_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
@@ -175,16 +176,16 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "subject"
     t.jsonb "msg_template"
     t.integer "channel_type", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "chemicals", force: :cascade do |t|
     t.integer "sample_id"
     t.text "cas"
     t.jsonb "chemical_data"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.jsonb "log_data"
     t.bigint "sequence_based_macromolecule_sample_id"
     t.index ["sequence_based_macromolecule_sample_id"], name: "idx_chemicals_sbmm_sample_id"
@@ -194,9 +195,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "source"
     t.integer "source_id"
     t.string "value", limit: 40
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
@@ -213,10 +214,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "screen_detail_level", default: 0, null: false
     t.integer "sequencebasedmacromoleculesample_detail_level", default: 0, null: false
     t.integer "wellplate_detail_level", default: 0, null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["collection_id", "shared_with_id"], name: "index_collection_shares_on_collection_id_and_shared_with_id", unique: true
+    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
     t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
   end
 
@@ -224,11 +225,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "position"
     t.boolean "is_locked", default: false
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.jsonb "tabs_segment", default: {}
     t.bigint "inventory_id"
     t.boolean "shared", default: false, null: false
@@ -241,7 +242,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_celllines", force: :cascade do |t|
     t.integer "collection_id"
     t.integer "cellline_sample_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["cellline_sample_id", "collection_id"], name: "index_collections_celllines_on_cellsample_id_and_coll_id", unique: true
     t.index ["collection_id"], name: "index_collections_celllines_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_celllines_on_deleted_at"
@@ -250,7 +251,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_device_descriptions", force: :cascade do |t|
     t.integer "collection_id"
     t.integer "device_description_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_device_descriptions_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_device_descriptions_on_deleted_at"
     t.index ["device_description_id", "collection_id"], name: "index_on_device_description_and_collection", unique: true
@@ -260,7 +261,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "collection_id"
     t.integer "element_id"
     t.string "element_type"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_elements_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_elements_on_deleted_at"
     t.index ["element_id", "collection_id"], name: "index_collections_elements_on_element_id_and_collection_id", unique: true
@@ -270,7 +271,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_reactions", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "reaction_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_reactions_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_reactions_on_deleted_at"
     t.index ["reaction_id", "collection_id"], name: "index_collections_reactions_on_reaction_id_and_collection_id", unique: true
@@ -279,7 +280,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_research_plans", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "research_plan_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_research_plans_on_collection_id"
     t.index ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true
   end
@@ -287,7 +288,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_samples", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "sample_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_samples_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_samples_on_deleted_at"
     t.index ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true
@@ -296,7 +297,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_screens", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "screen_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_screens_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at"
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
@@ -305,7 +306,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_sequence_based_macromolecule_samples", force: :cascade do |t|
     t.bigint "collection_id"
     t.bigint "sequence_based_macromolecule_sample_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id", "sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_unique_joins", unique: true
     t.index ["collection_id"], name: "idx_collections_sbmm_sample_collection"
     t.index ["deleted_at"], name: "idx_collections_sbmm_sample_deleted_at"
@@ -315,9 +316,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.bigint "collection_id"
     t.uuid "vessel_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
     t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
@@ -327,7 +328,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "wellplate_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["collection_id"], name: "index_collections_wellplates_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_wellplates_on_deleted_at"
     t.index ["wellplate_id", "collection_id"], name: "index_collections_wellplates_on_wellplate_id_and_collection_id", unique: true
@@ -335,8 +336,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
 
   create_table "collector_errors", id: :serial, force: :cascade do |t|
     t.string "error_code"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "comments", force: :cascade do |t|
@@ -348,8 +349,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "resolver_name"
     t.integer "commentable_id"
     t.string "commentable_type"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
@@ -360,9 +361,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.integer "position"
     t.jsonb "component_properties"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
     t.jsonb "log_data"
     t.index ["sample_id"], name: "index_components_on_sample_id"
   end
@@ -379,14 +380,14 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.float "dipol_debye", default: 0.0
     t.integer "status", default: 0
     t.jsonb "data"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.float "mean_abs_potential", default: 0.0
     t.integer "creator", default: 0
     t.integer "sample_id", default: 0
     t.jsonb "tddft", default: {}
     t.string "task_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_computed_props_on_deleted_at"
   end
 
@@ -406,10 +407,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "container_type"
     t.text "description"
     t.hstore "extended_metadata", default: {}
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "parent_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
@@ -424,14 +425,14 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.boolean "is_active", default: false, null: false
     t.integer "place", default: 100, null: false
     t.integer "created_by", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.string "identifier"
-    t.datetime "sync_time"
+    t.datetime "sync_time", precision: nil
     t.integer "updated_by"
     t.integer "released_by"
     t.integer "sync_by"
@@ -449,12 +450,12 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "dataset_klass_id"
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.integer "released_by"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "version"
     t.integer "submitted", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
@@ -467,11 +468,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "element_type"
     t.integer "element_id"
     t.jsonb "properties"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil
     t.string "uuid"
     t.string "klass_uuid"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.jsonb "properties_release"
     t.jsonb "metadata", default: {}, null: false
     t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_datasets_metadata"
@@ -483,9 +484,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "klass_uuid"
     t.jsonb "properties", default: {}
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.jsonb "properties_release"
     t.jsonb "metadata", default: {}, null: false
     t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
@@ -497,13 +498,13 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "attempts", default: 0, null: false
     t.text "handler", null: false
     t.text "last_error"
-    t.datetime "run_at"
-    t.datetime "locked_at"
-    t.datetime "failed_at"
+    t.datetime "run_at", precision: nil
+    t.datetime "locked_at", precision: nil
+    t.datetime "failed_at", precision: nil
     t.string "locked_by"
     t.string "queue"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.string "cron"
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
   end
@@ -518,7 +519,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "contact_for_maintenance"
     t.jsonb "consumables_needed_for_maintenance"
     t.integer "created_by"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.text "description"
     t.text "description_for_methods_part"
     t.integer "device_id"
@@ -553,16 +554,16 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "version_doi"
     t.string "version_doi_url"
     t.string "version_identifier_type"
-    t.datetime "version_installation_start_date"
-    t.datetime "version_installation_end_date"
+    t.datetime "version_installation_start_date", precision: nil
+    t.datetime "version_installation_end_date", precision: nil
     t.string "version_number"
     t.string "weight"
     t.string "weight_unit"
     t.string "vendor_device_name"
     t.string "vendor_device_id"
     t.string "vendor_company_name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.jsonb "log_data"
     t.string "owner_institution"
     t.string "owner_email"
@@ -591,13 +592,13 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "manufacturers"
     t.jsonb "owners"
     t.jsonb "dates"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.integer "doi_sequence"
     t.string "data_cite_prefix"
-    t.datetime "data_cite_created_at"
-    t.datetime "data_cite_updated_at"
+    t.datetime "data_cite_created_at", precision: nil
+    t.datetime "data_cite_updated_at", precision: nil
     t.integer "data_cite_version"
     t.jsonb "data_cite_last_response", default: {}
     t.string "data_cite_state", default: "draft"
@@ -616,9 +617,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "verification_status", default: "none"
     t.boolean "account_active", default: false
     t.boolean "visibility", default: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "datacollector_method"
     t.string "datacollector_dir"
     t.string "datacollector_host"
@@ -639,7 +640,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.bigint "dose_resp_request_id", null: false
     t.jsonb "output_data", default: {}, null: false
     t.text "notes"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_dose_resp_outputs_on_created_at"
@@ -654,14 +655,14 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "wellplates_metadata"
     t.string "resp_message"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "access_token"
-    t.datetime "expires_at"
-    t.datetime "revoked_at"
-    t.datetime "first_accessed_at"
-    t.datetime "last_accessed_at"
+    t.datetime "expires_at", precision: nil
+    t.datetime "revoked_at", precision: nil
+    t.datetime "first_accessed_at", precision: nil
+    t.datetime "last_accessed_at", precision: nil
     t.integer "access_count", default: 0
     t.jsonb "input_metadata", default: {}, null: false
     t.index ["access_token"], name: "index_dose_resp_requests_on_access_token", unique: true
@@ -680,14 +681,14 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "place", default: 100, null: false
     t.jsonb "properties_template"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.string "identifier"
-    t.datetime "sync_time"
+    t.datetime "sync_time", precision: nil
     t.integer "updated_by"
     t.integer "released_by"
     t.integer "sync_by"
@@ -702,12 +703,12 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "element_klass_id"
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.integer "released_by"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "version"
     t.integer "submitted", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
@@ -719,8 +720,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "taggable_type"
     t.integer "taggable_id"
     t.jsonb "taggable_data"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.index ["taggable_id"], name: "index_element_tags_on_taggable_id"
   end
 
@@ -739,8 +740,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "composition_type", null: false
     t.hstore "data", default: {}, null: false
     t.float "loading"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.jsonb "log_data"
     t.index ["sample_id"], name: "index_elemental_compositions_on_sample_id"
   end
@@ -751,9 +752,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "short_label"
     t.jsonb "properties"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
@@ -769,9 +770,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "element_id"
     t.integer "parent_id"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.index ["element_id"], name: "index_elements_elements_on_element_id"
     t.index ["parent_id"], name: "index_elements_elements_on_parent_id"
   end
@@ -783,9 +784,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.jsonb "properties", default: {}
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.jsonb "properties_release"
     t.jsonb "metadata", default: {}, null: false
     t.index ["element_id"], name: "index_elements_revisions_on_element_id"
@@ -796,11 +797,22 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "element_id"
     t.integer "sample_id"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.index ["element_id"], name: "index_elements_samples_on_element_id"
     t.index ["sample_id"], name: "index_elements_samples_on_sample_id"
+  end
+
+  create_table "elements_wellplates", force: :cascade do |t|
+    t.bigint "element_id", null: false
+    t.bigint "wellplate_id", null: false
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
+    t.jsonb "log_data"
+    t.index ["element_id"], name: "index_elements_wellplates_on_element_id"
+    t.index ["wellplate_id"], name: "index_elements_wellplates_on_wellplate_id"
   end
 
   create_table "experiments", id: :serial, force: :cascade do |t|
@@ -816,19 +828,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "experimentable_type"
     t.string "ancestry"
     t.integer "parent_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "elements_wellplates", force: :cascade do |t|
-    t.bigint "element_id", null: false
-    t.bigint "wellplate_id", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
-    t.jsonb "log_data"
-    t.index ["element_id"], name: "index_elements_wellplates_on_element_id"
-    t.index ["wellplate_id"], name: "index_elements_wellplates_on_wellplate_id"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "fingerprints", id: :serial, force: :cascade do |t|
@@ -849,8 +850,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.bit "fp14", limit: 64
     t.bit "fp15", limit: 64
     t.integer "num_set_bits", limit: 2
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.time "deleted_at"
   end
 
@@ -859,16 +860,16 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "url", null: false
     t.integer "position", default: 0, null: false
     t.boolean "enabled", default: true, null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "inventories", force: :cascade do |t|
     t.string "prefix"
     t.string "name"
     t.integer "counter", default: 0
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
   end
 
@@ -879,11 +880,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "description"
     t.jsonb "properties", default: {}
     t.integer "created_by"
-    t.datetime "created_at"
+    t.datetime "created_at", precision: nil
     t.integer "updated_by"
-    t.datetime "updated_at"
+    t.datetime "updated_at", precision: nil
     t.integer "deleted_by"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
   end
 
   create_table "layers", force: :cascade do |t|
@@ -893,11 +894,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "properties", default: {}, null: false
     t.string "identifier", null: false
     t.integer "created_by", null: false
-    t.datetime "created_at", null: false
+    t.datetime "created_at", precision: nil, null: false
     t.integer "updated_by"
-    t.datetime "updated_at"
+    t.datetime "updated_at", precision: nil
     t.integer "deleted_by"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["identifier"], name: "index_layers_on_identifier", unique: true
     t.index ["label"], name: "index_layers_on_label"
     t.index ["name"], name: "index_layers_on_name"
@@ -910,8 +911,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "element_type", limit: 40
     t.string "category", limit: 40
     t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "litype"
     t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature"
     t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature"
@@ -920,9 +921,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "literatures", id: :serial, force: :cascade do |t|
     t.string "title"
     t.string "url"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
@@ -936,9 +937,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "include_ids", default: [], array: true
     t.integer "exclude_ids", default: [], array: true
     t.jsonb "configs", default: {}, null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.index ["name"], name: "index_matrices_on_name", unique: true
   end
 
@@ -946,11 +947,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "description", null: false
     t.decimal "value", null: false
     t.string "unit", null: false
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.bigint "well_id"
     t.bigint "sample_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "source_type"
     t.bigint "source_id"
     t.jsonb "metadata", default: {}
@@ -964,16 +965,16 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "channel_id"
     t.jsonb "content", null: false
     t.integer "created_by", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "metadata", force: :cascade do |t|
     t.integer "collection_id"
     t.jsonb "metadata"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "molecule_names", id: :serial, force: :cascade do |t|
@@ -981,9 +982,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "user_id"
     t.text "description"
     t.string "name", null: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["deleted_at"], name: "index_molecule_names_on_deleted_at"
     t.index ["molecule_id"], name: "index_molecule_names_on_molecule_id"
     t.index ["name"], name: "index_molecule_names_on_name"
@@ -1003,9 +1004,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "names", default: [], array: true
     t.string "iupac_name"
     t.string "molecule_svg_file"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.boolean "is_partial", default: false, null: false
     t.float "exact_molecular_weight"
     t.string "cano_smiles"
@@ -1020,9 +1021,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.text "path_1h"
     t.text "path_13c"
     t.text "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at"
     t.index ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true
   end
@@ -1031,8 +1032,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "message_id"
     t.integer "user_id"
     t.integer "is_ack", default: 0
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["message_id", "user_id"], name: "index_notifications_on_message_id_and_user_id", unique: true
   end
 
@@ -1047,8 +1048,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "desc"
     t.jsonb "metadata"
     t.boolean "is_enabled", default: true
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["ancestry"], name: "index_ols_terms_on_ancestry", opclass: :varchar_pattern_ops
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
@@ -1057,8 +1058,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.text "content"
     t.string "searchable_type"
     t.integer "searchable_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
@@ -1095,9 +1096,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "methylation_lys_details", default: ""
     t.boolean "other_modifications_enabled", default: false, null: false
     t.string "other_modifications_details", default: ""
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "idx_sbmm_ptm_deleted_at"
   end
 
@@ -1105,8 +1106,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "predictable_type"
     t.integer "predictable_id"
     t.jsonb "decision", default: {}, null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.index ["decision"], name: "index_predictions_on_decision", using: :gin
     t.index ["predictable_type", "predictable_id"], name: "index_predictions_on_predictable_type_and_predictable_id"
   end
@@ -1114,8 +1115,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "private_notes", force: :cascade do |t|
     t.string "content"
     t.integer "created_by", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "noteable_id"
     t.string "noteable_type"
     t.index ["created_by"], name: "index_private_note_on_user"
@@ -1125,9 +1126,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "profiles", id: :serial, force: :cascade do |t|
     t.boolean "show_external_name", default: false
     t.integer "user_id", null: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.jsonb "data", default: {}, null: false
     t.integer "curation", default: 2
     t.boolean "show_sample_name", default: false
@@ -1149,16 +1150,16 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "modification_mutation_details", default: ""
     t.boolean "modification_other", default: false, null: false
     t.string "modification_other_details", default: ""
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.text "description"
     t.string "timestamp_start"
     t.string "timestamp_stop"
@@ -1172,7 +1173,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "status"
     t.string "reaction_svg_file"
     t.string "solvent"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.string "short_label"
     t.integer "created_by"
     t.string "role"
@@ -1193,10 +1194,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
+    t.boolean "lock_reaction_volume", default: false, null: false
     t.string "reaction_type", default: "standard", null: false
     t.string "ph_operator", default: "=", null: false
     t.float "ph_value"
-    t.boolean "lock_reaction_volume", default: false, null: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1208,13 +1209,13 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "reaction_id", null: false
     t.bigint "sequence_based_macromolecule_sample_id", null: false
     t.integer "position"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.boolean "show_label", default: false, null: false
     t.boolean "reference", default: false, null: false
     t.float "equivalent"
     t.float "weight_percentage"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.jsonb "log_data"
     t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
     t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
@@ -1228,15 +1229,15 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.float "equivalent"
     t.integer "position"
     t.string "type"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.boolean "waste", default: false
     t.float "coefficient", default: 1.0
     t.boolean "show_label", default: false, null: false
     t.integer "gas_type", default: 0
     t.jsonb "gas_phase_data", default: {"time"=>{"unit"=>"h", "value"=>nil}, "temperature"=>{"unit"=>"°C", "value"=>nil}, "turnover_number"=>nil, "part_per_million"=>nil, "turnover_frequency"=>{"unit"=>"TON/h", "value"=>nil}}
     t.float "conversion_rate"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
@@ -1248,8 +1249,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "report_templates", id: :serial, force: :cascade do |t|
     t.string "name", null: false
     t.string "report_type", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "attachment_id"
     t.index ["attachment_id"], name: "index_report_templates_on_attachment_id"
   end
@@ -1264,10 +1265,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.text "objects"
     t.string "img_format"
     t.string "file_path"
-    t.datetime "generated_at"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "generated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "template", default: "standard"
     t.text "mol_serials", default: "--- []\n"
     t.text "si_reaction_settings", default: "---\nName: true\nCAS: true\nFormula: true\nSmiles: true\nInCHI: true\nMolecular Mass: true\nExact Mass: true\nEA: true\n"
@@ -1281,10 +1282,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "reports_users", id: :serial, force: :cascade do |t|
     t.integer "user_id"
     t.integer "report_id"
-    t.datetime "downloaded_at"
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "downloaded_at", precision: nil
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["deleted_at"], name: "index_reports_users_on_deleted_at"
     t.index ["report_id"], name: "index_reports_users_on_report_id"
     t.index ["user_id"], name: "index_reports_users_on_user_id"
@@ -1300,12 +1301,12 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "publisher"
     t.integer "publication_year"
     t.jsonb "dates"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.string "data_cite_prefix"
-    t.datetime "data_cite_created_at"
-    t.datetime "data_cite_updated_at"
+    t.datetime "data_cite_created_at", precision: nil
+    t.datetime "data_cite_updated_at", precision: nil
     t.integer "data_cite_version"
     t.jsonb "data_cite_last_response", default: {}
     t.string "data_cite_state", default: "draft"
@@ -1332,17 +1333,17 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.jsonb "value"
     t.integer "created_by", null: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
   end
 
   create_table "research_plans", id: :serial, force: :cascade do |t|
     t.string "name", null: false
     t.integer "created_by", null: false
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.jsonb "body"
     t.jsonb "log_data"
     t.string "short_label"
@@ -1351,9 +1352,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "research_plans_screens", force: :cascade do |t|
     t.bigint "screen_id", null: false
     t.bigint "research_plan_id", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.index ["research_plan_id"], name: "index_research_plans_screens_on_research_plan_id"
     t.index ["screen_id"], name: "index_research_plans_screens_on_screen_id"
   end
@@ -1361,9 +1362,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "research_plans_wellplates", force: :cascade do |t|
     t.bigint "research_plan_id", null: false
     t.bigint "wellplate_id", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.jsonb "log_data"
     t.index ["research_plan_id"], name: "index_research_plans_wellplates_on_research_plan_id"
     t.index ["wellplate_id"], name: "index_research_plans_wellplates_on_wellplate_id"
@@ -1373,8 +1374,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "sample_id"
     t.string "residue_type"
     t.hstore "custom_info"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.jsonb "log_data"
     t.index ["sample_id"], name: "index_residues_on_sample_id"
   end
@@ -1385,8 +1386,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "description"
     t.bigint "creator_id", null: false
     t.bigint "sample_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.integer "required_scan_results", default: 1, null: false
     t.index ["creator_id"], name: "index_sample_tasks_on_creator_id"
     t.index ["sample_id"], name: "index_sample_tasks_on_sample_id"
@@ -1396,8 +1397,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.float "target_amount_value", default: 0.0
     t.string "target_amount_unit", default: "g"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.text "description", default: ""
     t.integer "molecule_id"
     t.binary "molfile"
@@ -1413,7 +1414,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.float "real_amount_value"
     t.string "real_amount_unit"
     t.string "imported_readout"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.string "sample_svg_file"
     t.integer "user_id"
     t.string "identifier"
@@ -1453,17 +1454,17 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "title"
     t.integer "position", default: 0, null: false
     t.bigint "sample_task_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["sample_task_id"], name: "index_scan_results_on_sample_task_id"
   end
 
   create_table "scifinder_n_credentials", force: :cascade do |t|
     t.string "access_token", null: false
     t.string "refresh_token"
-    t.datetime "expires_at", null: false
+    t.datetime "expires_at", precision: nil, null: false
     t.integer "created_by", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["created_by"], name: "uni_scifinder_n_credentials", unique: true
   end
 
@@ -1474,9 +1475,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "collaborator"
     t.string "conditions"
     t.string "requirements"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.jsonb "component_graph_data", default: {}
     t.text "plain_text_description"
     t.jsonb "log_data"
@@ -1486,7 +1487,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "screens_wellplates", id: :serial, force: :cascade do |t|
     t.integer "screen_id"
     t.integer "wellplate_id"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.index ["deleted_at"], name: "index_screens_wellplates_on_deleted_at"
     t.index ["screen_id"], name: "index_screens_wellplates_on_screen_id"
     t.index ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id"
@@ -1500,14 +1501,14 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.boolean "is_active", default: true, null: false
     t.integer "place", default: 100, null: false
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.string "identifier"
-    t.datetime "sync_time"
+    t.datetime "sync_time", precision: nil
     t.integer "updated_by"
     t.integer "released_by"
     t.integer "sync_by"
@@ -1522,12 +1523,12 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "segment_klass_id"
     t.string "uuid"
     t.jsonb "properties_release", default: {}
-    t.datetime "released_at"
+    t.datetime "released_at", precision: nil
     t.integer "released_by"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "version"
     t.integer "submitted", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
@@ -1541,9 +1542,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "element_id"
     t.jsonb "properties"
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
@@ -1557,9 +1558,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "klass_uuid"
     t.jsonb "properties", default: {}
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.jsonb "properties_release"
     t.jsonb "metadata", default: {}, null: false
     t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
@@ -1568,7 +1569,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
 
   create_table "sequence_based_macromolecule_samples", force: :cascade do |t|
     t.string "name", null: false
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.string "external_label"
     t.string "short_label", null: false
     t.string "function_or_application"
@@ -1603,8 +1604,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.float "purity"
     t.string "purity_detection", default: ""
     t.string "purification_method", default: ""
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.float "concentration_rt_value"
     t.string "concentration_rt_unit", default: "mol/L", null: false
     t.boolean "inventory_sample", default: false, null: false
@@ -1643,9 +1644,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "own_identifier", default: ""
     t.string "other_identifier", default: ""
     t.bigint "post_translational_modification_id"
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["accessions"], name: "idx_sbmm_accessions"
     t.index ["deleted_at"], name: "idx_sbmm_deleted_at"
     t.index ["ec_numbers"], name: "idx_sbmm_ec_numbers"
@@ -1662,8 +1663,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_table "subscriptions", id: :serial, force: :cascade do |t|
     t.integer "channel_id"
     t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
   end
 
@@ -1672,9 +1673,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "user_id", null: false
     t.string "name"
     t.jsonb "data", default: {}
-    t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
     t.index ["user_id", "name"], name: "index_personal_text_template", unique: true, where: "((type)::text = 'PersonalTextTemplate'::text)"
@@ -1685,17 +1686,17 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "url"
     t.string "name", limit: 100, null: false
     t.string "file_types", limit: 100
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["name"], name: "index_third_party_apps_on_name", unique: true
   end
 
   create_table "user_affiliations", id: :serial, force: :cascade do |t|
     t.integer "user_id"
     t.integer "affiliation_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
     t.date "from"
     t.date "to"
     t.boolean "main"
@@ -1708,41 +1709,41 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "color", null: false
     t.integer "access_level", default: 0
     t.integer "position", default: 10
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
   end
 
   create_table "users", id: :serial, force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
-    t.datetime "reset_password_sent_at"
-    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at", precision: nil
+    t.datetime "remember_created_at", precision: nil
     t.integer "sign_in_count", default: 0, null: false
-    t.datetime "current_sign_in_at"
-    t.datetime "last_sign_in_at"
+    t.datetime "current_sign_in_at", precision: nil
+    t.datetime "last_sign_in_at", precision: nil
     t.inet "current_sign_in_ip"
     t.inet "last_sign_in_ip"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "name"
     t.string "first_name", null: false
     t.string "last_name", null: false
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.hstore "counters", default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string "name_abbreviation", limit: 12
     t.string "type", default: "Person"
     t.string "reaction_name_prefix", limit: 3, default: "R"
     t.string "confirmation_token"
-    t.datetime "confirmed_at"
-    t.datetime "confirmation_sent_at"
+    t.datetime "confirmed_at", precision: nil
+    t.datetime "confirmation_sent_at", precision: nil
     t.string "unconfirmed_email"
     t.hstore "layout", default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer "selected_device_id"
     t.integer "failed_attempts", default: 0, null: false
     t.string "unlock_token"
-    t.datetime "locked_at"
+    t.datetime "locked_at", precision: nil
     t.boolean "account_active"
     t.integer "matrix", default: 0
     t.jsonb "providers"
@@ -1789,9 +1790,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "vessel_type"
     t.float "volume_amount"
     t.string "volume_unit"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
     t.float "weight_amount"
     t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
@@ -1804,9 +1805,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "name"
     t.string "description"
     t.string "short_label"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at", precision: nil
     t.string "bar_code"
     t.string "qr_code"
     t.float "weight_amount"
@@ -1830,17 +1831,17 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "field_id"
     t.jsonb "properties", default: {}
     t.integer "created_by"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+    t.datetime "deleted_at", precision: nil
   end
 
   create_table "wellplates", id: :serial, force: :cascade do |t|
     t.string "name"
     t.string "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
+    t.datetime "deleted_at", precision: nil
     t.string "short_label"
     t.jsonb "readout_titles", default: ["Readout"]
     t.text "plain_text_description"
@@ -1855,10 +1856,10 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "wellplate_id", null: false
     t.integer "position_x"
     t.integer "position_y"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at", precision: nil, null: false
+    t.datetime "updated_at", precision: nil, null: false
     t.string "additive"
-    t.datetime "deleted_at"
+    t.datetime "deleted_at", precision: nil
     t.jsonb "readouts", default: [{"unit"=>"", "value"=>""}]
     t.string "label", default: "Molecular structure", null: false
     t.string "color_code"
@@ -1875,8 +1876,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
-  add_foreign_key "dose_resp_outputs", "dose_resp_requests"
   add_foreign_key "components", "samples"
+  add_foreign_key "dose_resp_outputs", "dose_resp_requests"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
@@ -2106,8 +2107,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2225,7 +2226,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2779,14 +2780,53 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   SQL
 
 
-  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_reactions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
+      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
+  SQL
+  create_trigger :logidze_on_wells, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_containers, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
@@ -2794,44 +2834,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   create_trigger :logidze_on_components, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
-  create_trigger :logidze_on_reactions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_residues, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_screens, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_wells, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_elements_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elements_wellplates BEFORE INSERT OR UPDATE ON public.elements_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
   create_view "literal_groups", sql_definition: <<-SQL

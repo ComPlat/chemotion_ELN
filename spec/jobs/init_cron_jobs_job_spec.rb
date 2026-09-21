@@ -11,6 +11,15 @@ class DummyJob < ApplicationJob
 end
 
 RSpec.describe InitCronJobsJob do
+  # This spec writes real Delayed::Job cron rows, so it needs the :delayed_job adapter,
+  # not the suite's :test default (see config/environments/test.rb).
+  around do |example|
+    previous_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :delayed_job
+    example.run
+    ActiveJob::Base.queue_adapter = previous_adapter
+  end
+
   let(:cron_job_list) do
     [{ job_class: DummyJob, enabled: :default, cron_variable: 'DUMMY_CRON' }]
   end

@@ -31,11 +31,11 @@ class ResearchPlan < ApplicationRecord
   scope :includes_for_list_display, -> { includes(:attachments, :comments) }
   scope :by_sample_ids, lambda { |ids|
     joins('CROSS JOIN jsonb_array_elements(body) AS element')
-      .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?])", ids)
+      .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?]::int[])", ids)
   }
   scope :by_reaction_ids, lambda { |ids|
     joins('CROSS JOIN jsonb_array_elements(body) AS element')
-      .where("(element -> 'value'->> 'reaction_id')::INT = ANY(array[?])", ids)
+      .where("(element -> 'value'->> 'reaction_id')::INT = ANY(array[?]::int[])", ids)
   }
   scope :sample_ids_by_research_plan_ids, lambda { |ids|
     select("(element -> 'value'->> 'sample_id') AS sample_id")

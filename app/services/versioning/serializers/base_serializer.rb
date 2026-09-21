@@ -99,7 +99,13 @@ module Versioning
       delegate :log_data, to: :record
 
       def default_formatter
-        ->(key, value) { record.instance_variable_get(:@attributes)[key].type.deserialize(value) }
+        lambda do |key, value|
+          record.instance_variable_get(:@attributes)[key].type.deserialize(value)
+        rescue ArgumentError
+          # Rails 7 Hstore#deserialize rejects non-hstore-wire input. Logidze's
+          # log_data (jsonb) stores hstore columns as a JSON object → parse directly.
+          value.is_a?(String) ? JSON.parse(value) : value
+        end
       end
 
       def user_formatter

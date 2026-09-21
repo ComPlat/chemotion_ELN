@@ -36,7 +36,7 @@ class ComputedProp < ApplicationRecord
   belongs_to :molecule
   belongs_to :user, foreign_key: :creator, class_name: 'User'
 
-  enum status: %w[
+  enum :status, %w[
     pending
     started
     success

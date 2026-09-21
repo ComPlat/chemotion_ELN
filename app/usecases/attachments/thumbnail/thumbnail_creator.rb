@@ -2,8 +2,7 @@
 
 # Class for creating thumbnails. It must fulfill the contract of the "virtual" interface for creating derivatives:
 # create_derivative(tmpPath,originalFile,dbId,result,record)
-# Currently we use the thumbnailer library
-# https://github.com/merlin-p/thumbnailer.git
+# Rendering is delegated to ThumbnailGenerator.
 
 module Usecases
   module Attachments
@@ -11,7 +10,7 @@ module Usecases
       class ThumbnailCreator
         def create_derivative(tmp_path, _, _, result, record)
           begin
-            thumbnail = Thumbnailer.create(tmp_path)
+            thumbnail = ThumbnailGenerator.create(tmp_path)
             add_thumbnail_to_record(thumbnail, record, result) if thumbnail.present?
           rescue StandardError => e
             Rails.logger.info('**** ThumbnailCreator failed ***')
@@ -31,7 +30,7 @@ module Usecases
         end
 
         def self.supported_formats
-          Thumbnailer.supported_formats.map(&:to_s)
+          ThumbnailGenerator.supported_formats
         end
       end
     end

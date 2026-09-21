@@ -40,7 +40,7 @@ module Reporter
       def render_erb(template, data = {})
         render_binding = binding
         data.each do |k, v| render_binding.local_variable_set(k.to_sym, v) end
-        ERB.new(template, nil, '%<>').result(render_binding)
+        ERB.new(template, trim_mode: '%<>').result(render_binding)
       end
 
       def wrap_data

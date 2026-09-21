@@ -57,7 +57,11 @@
 
 # rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
-  enum reaction_type: {
+  # Declare the enum's backing type so the model loads even when the reaction_type column is
+  # absent (old data migrations reference Reaction first) — Rails 7.1 otherwise rejects it.
+  # Matches the string column (default 'standard'), so behaviour is unchanged.
+  attribute :reaction_type, :string, default: 'standard'
+  enum :reaction_type, {
     standard: 'standard',
     interaction: 'interaction',
   }
@@ -72,8 +76,8 @@ class Reaction < ApplicationRecord
   include ReactionRinchi
   include Labimotion::Segmentable
 
-  serialize :description, Hash
-  serialize :observation, Hash
+  serialize :description, type: Hash
+  serialize :observation, type: Hash
 
   multisearchable against: %i[name short_label rinchi_string]
 
