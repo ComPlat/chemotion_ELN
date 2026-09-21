@@ -256,10 +256,12 @@ describe Chemotion::ChemicalsService do
     let(:vendor) { 'merck' }
     let(:product) { '270709' }
     let(:link) { 'https://www.sigmaaldrich.com/sheet.pdf' }
+    let(:first_initials) { Digest::MD5.hexdigest('%PDF first')[0..15] }
 
     before do
       FileUtils.mkdir_p("public/safety_sheets/#{vendor}")
-      File.write("public/safety_sheets/#{vendor}/#{product}_1111111111111111.pdf", '%PDF first')
+      # The name carries the content hash, which is how a duplicate is found.
+      File.write("public/safety_sheets/#{vendor}/#{product}_#{first_initials}.pdf", '%PDF first')
     end
 
     after { FileUtils.rm_rf("public/safety_sheets/#{vendor}") }
@@ -274,7 +276,7 @@ describe Chemotion::ChemicalsService do
 
       result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
       expect(result).to match(%r{\A/safety_sheets/#{vendor}/#{product}_[a-f0-9]{16}\.pdf\z})
-      expect(result).not_to end_with('1111111111111111.pdf')
+      expect(result).not_to end_with("#{first_initials}.pdf")
       expect(File.read("public#{result}")).to eq('%PDF second')
     end
 
@@ -285,7 +287,7 @@ describe Chemotion::ChemicalsService do
       end
 
       result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
-      expect(result).to eq("/safety_sheets/#{vendor}/#{product}_1111111111111111.pdf")
+      expect(result).to eq("/safety_sheets/#{vendor}/#{product}_#{first_initials}.pdf")
     end
   end
 
@@ -662,12 +664,21 @@ describe Chemotion::ChemicalsService do
         expect(result[:error]).to include('net')
       end
 
-      it 'warns and returns false for non-pdf content' do
-        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'text/html' })
+      it 'refuses a page that is not a PDF however it is labelled' do
+        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' },
+                                                   body: '<html>Access Denied</html>')
         allow(HTTParty).to receive(:get).and_return(resp)
         allow(Rails.logger).to receive(:warn)
-        result = described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)
-        expect(result).to be false
+        expect(described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)).to be false
+      end
+
+      # Fisher labels the same sheet octet-stream under load; the bytes are what matter.
+      it 'accepts a PDF sent under the wrong content type', :aggregate_failures do
+        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/octet-stream' },
+                                                   body: '%PDF-1.4 body')
+        allow(HTTParty).to receive(:get).and_return(resp)
+        expect(described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)).to be true
+        expect(File.read(tmp_path)).to eq('%PDF-1.4 body')
       end
     end
 

@@ -48,10 +48,11 @@ module Chemotion
       hash = generate_full_hash(source_path)
       return nil if hash.nil?
 
-      size = File.size(source_path)
-      match = Dir.glob("#{SAFETY_SHEETS_DIR}/**/*.pdf").find do |candidate|
-        File.size(candidate) == size && generate_full_hash(candidate) == hash
-      end
+      # Every saved sheet carries the first 16 characters of its own content hash in its
+      # name, so the candidates come from a glob rather than from hashing the whole folder.
+      # A file renamed by hand is missed and stored again, which costs space, not accuracy.
+      candidates = Dir.glob("#{SAFETY_SHEETS_DIR}/**/*#{hash[0..15]}.pdf")
+      match = candidates.find { |candidate| generate_full_hash(candidate) == hash }
       match&.delete_prefix('public')
     end
 
