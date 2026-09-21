@@ -7,7 +7,7 @@ class ChangeColumnReactionsTemperature < ActiveRecord::Migration[4.2]
       tmp = r.temperature
       tmp = "---\nvalueUnit: \"°C\"\nuserText: ''\ndata: []\n" if tmp.empty?
       t = if tmp.is_a?(String)
-            YAML.load(tmp).to_json
+            YAML.unsafe_load(tmp).to_json
           elsif tmp.is_a?(Hash)
             tmp.to_json
           end

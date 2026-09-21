@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-class SharedMethods
+# Compact namespace form (Zeitwerk expects Usecases::Search::SharedMethods).
+class Usecases::Search::SharedMethods
   attr_reader :params, :user
 
   def initialize(user:, params: {})

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'export_table'
 require 'base64'
 
 # rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -345,7 +344,8 @@ module Export
     end
 
     def convert_svg_to_png_with_inkscape(svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT)
-      require 'reporter/img/conv'
+      # Reporter::Img::Conv is Zeitwerk-autoloaded (no bare require needed;
+      # prep for add_autoload_paths_to_load_path = false).
       width, height = svg_export_dimensions(svg_path, max_width, max_height)
       scale = INKSCAPE_EXPORT_SCALE
       export_w = (width * scale).round
