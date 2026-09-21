@@ -140,16 +140,13 @@ module Import
       return unless accepted_vendors.include?(vendor.downcase) && product_number.present?
 
       file_path = Chemotion::ChemicalsService.create_sds_file(value, product_number, vendor)
-      is_created = File.exist?("public/safety_sheets/#{file_path}.pdf")
 
-      if is_created
-        chemical_data = Chemotion::ChemicalsService.update_chemical_data(
+      if file_path.is_a?(String) && File.exist?("public#{file_path}")
+        chemical['chemical_data'] = Chemotion::ChemicalsService.update_chemical_data(
           chemical['chemical_data'],
           file_path,
           product_number,
-          vendor,
         )
-        chemical['chemical_data'] = chemical_data
       end
       chemical
     end

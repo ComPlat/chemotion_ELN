@@ -152,11 +152,7 @@ module Chemotion
 
     # Resolve the final SDS file path, using existing duplicate when available
     def resolve_sds_file_path(product_number)
-      existing = GenerateFileHashUtils.find_duplicate_file_by_hash(
-        @vendor_name,
-        product_number,
-        @file_hash,
-      )
+      existing = GenerateFileHashUtils.find_identical_sheet(fetch_upload_path)
       return existing if existing.present?
 
       path = Chemotion::ChemicalsService.generate_safety_sheet_file_path(

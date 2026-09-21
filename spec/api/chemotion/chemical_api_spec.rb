@@ -106,7 +106,6 @@ describe Chemotion::ChemicalAPI do
     before do
       # Short-circuit SDS creation to avoid filesystem/network dependencies in this API spec
       allow(Chemotion::ChemicalsService).to receive_messages(
-        find_existing_file_by_vendor_product_number_signature: nil,
         create_sds_file: '/safety_sheets/thermofischer/A14672_web_1234567890abcdef.pdf',
       )
 
@@ -307,7 +306,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Chemotion::ChemicalsService).to receive_messages(
-        find_existing_file_by_vendor_product_number_signature: nil, create_sds_file: sds_path,
+        create_sds_file: sds_path,
       )
       post '/api/v1/chemicals/save_safety_datasheet', params: params
     end
