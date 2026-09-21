@@ -24,8 +24,13 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
-  // No wrapping folder named after the archive: its files land as they are packed, so a BagIt
-  // data file like reaction_variation.json keeps the name the variations autofill looks for.
+  /*
+  Build the tree under an unnamed root so entries keep the archive's own structure
+  instead of being nested one level deeper under `<archive>/`. The root container is
+  still named after the archive once the tree is built: its name is what `getFile()`
+  calls the re-zipped file and what ends up as the analysis name, and an empty one
+  yields an analysis called "File: " and an archive called ".zip".
+  */
   const rootFileName = '';
 
   const files = new VirtualFolderNode(rootFileName, '');
@@ -46,7 +51,10 @@ async function handleZipFile(zipFile) {
   });
   await Promise.all(readFilePromises);
 
-  return files.clean();
+  const rootContainer = files.clean();
+  rootContainer.name = zipFile.name.replace(/\.zip$/, '');
+
+  return rootContainer;
 }
 
 const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {

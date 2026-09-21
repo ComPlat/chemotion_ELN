@@ -98,6 +98,14 @@ describe('ReactionVariationsAnalyses', () => {
       });
     });
 
+    it('prefers a higher-priority label over an earlier material', () => {
+      reaction.starting_materials[0].name = 'shared';
+      reaction.starting_materials[1].short_label = 'shared';
+      autofillVariationFromAnalysis(reaction, handler, [['shared', 1, 'g']]);
+
+      expect(handler.handleMaterialsChange.firstCall.args[0].sampleID).toBe(reaction.starting_materials[1].id);
+    });
+
     it("fills the equivalent for a '%' entry", () => {
       autofillVariationFromAnalysis(reaction, handler, [['water-a', 0.5, '%']]);
 

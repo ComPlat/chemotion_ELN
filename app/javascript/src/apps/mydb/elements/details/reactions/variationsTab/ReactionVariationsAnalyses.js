@@ -83,7 +83,7 @@ const GAS_FIELD_FROM_BASE = {
 };
 
 const SAMPLE_LABELS = [
-  'short_label', 'external_label', 'name', 'molecule_formula', 'sum_formula', 'molecule_iupac_name'
+  'short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name', 'sum_formula'
 ];
 const AUTOFILL_MATERIAL_GROUPS = ['starting_materials', 'reactants', 'solvents', 'products'];
 
@@ -118,16 +118,19 @@ const loadAutofillSamples = async (dataset) => {
   }
 };
 
+/*
+Labels are tried in `SAMPLE_LABELS` order rather than material order, so an identifier that is one
+material's `short_label` and another's `molecule_formula` resolves to the former instead of to
+whichever material happens to come first.
+*/
 const findMaterialByLabel = (variationReaction, identifier) => {
-  for (const matGroup of AUTOFILL_MATERIAL_GROUPS) {
-    const material = (variationReaction[matGroup] ?? []).find(
-      (candidate) => SAMPLE_LABELS.some((label) => candidate[label] === identifier)
-    );
-    if (material) {
-      return { material, matGroup };
-    }
-  }
-  return null;
+  const candidates = AUTOFILL_MATERIAL_GROUPS.flatMap(
+    (matGroup) => (variationReaction[matGroup] ?? []).map((material) => ({ material, matGroup }))
+  );
+  return SAMPLE_LABELS.reduce(
+    (found, label) => found ?? candidates.find(({ material }) => material[label] === identifier),
+    undefined
+  ) ?? null;
 };
 
 /*

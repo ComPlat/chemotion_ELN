@@ -69,13 +69,14 @@ export default class AttachmentFetcher {
     return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: { ids } });
   }
 
-  static async loadAttachmentContent({ id }) {
-    const res = await fetch(`/api/v1/attachments/${id}`, { credentials: 'same-origin' });
-    if (!res.ok) {
-      throw new Error(`HTTP error: ${res.status}`);
-    }
+  // resolves with the raw Response so callers can pick the body decoding themselves
+  static loadAttachmentContent({ id }) {
+    const handleResponseSuccess = (response) => {
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return response;
+    };
 
-    return res;
+    return ApiClient.getJson(`/api/v1/attachments/${id}`, { handleResponseSuccess });
   }
 
   static fetchFiles(ids) {
