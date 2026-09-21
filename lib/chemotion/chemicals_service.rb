@@ -149,6 +149,15 @@ module Chemotion
 
     # True when this sample already holds the very same file. Two samples may share one
     # sheet on disk; one sample holding it twice is the case worth refusing.
+    # The same PDF is published under several catalogue numbers, so naming the one already
+    # held is the difference between a refusal that makes sense and one that looks wrong.
+    def self.duplicate_sheet_message(file_path)
+      held = File.basename(file_path.to_s).sub(/_(?:web_)?[a-f0-9]{16}\.pdf\z/, '')
+      return 'This sample already holds this safety data sheet.' if held.blank?
+
+      "This sample already holds this sheet. It is the same document as #{held}."
+    end
+
     def self.sheet_already_saved?(chemical_data, file_path)
       file_path.is_a?(String) && saved_sheet_paths(chemical_data).include?(file_path)
     end

@@ -45,7 +45,10 @@ export default class ChemicalFetcher {
       handleResponseSuccess: (response) => {
         if (response.ok) { return response.json(); }
         return response.json().then((errorData) => {
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          const error = new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          // A refusal the other save route would meet as well; trying it only wastes a fetch.
+          error.final = !!errorData.final;
+          throw error;
         });
       },
     });

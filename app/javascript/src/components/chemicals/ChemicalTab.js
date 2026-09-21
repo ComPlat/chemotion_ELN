@@ -698,7 +698,9 @@ export default class ChemicalTab extends React.Component {
         ? () => this.fetchSdsInBrowser(productInfo, vendorName)
         : () => this.fetchSdsOnServer(productInfo);
 
-      return Promise.resolve().then(run).catch((error) => attempt(index + 1, firstError || error));
+      return Promise.resolve().then(run).catch((error) => (
+        error?.final ? Promise.reject(error) : attempt(index + 1, firstError || error)
+      ));
     };
 
     return attempt(0, null)
