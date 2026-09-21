@@ -253,7 +253,13 @@ RSpec.describe 'ExportCollection' do
     let(:sample_material_join) { 'CelllineMaterialCelllineSample' }
     let(:sample_collection_join) { 'CollectionsCelllineSample' }
     let(:expected_attachment_name) do
-      "attachments/#{cell_line_sample.container.children[0].children[0].children[0].attachments[0].identifier}.jpg"
+      # Fetch the container fresh from the DB so we navigate persisted data (what
+      # the export actually reads). Walking cell_line_sample.container directly
+      # relies on cached in-memory associations, which under Rails 6.1's
+      # has_many_inversing=true never see the attachment created out-of-band by the
+      # :with_jpg_in_dataset factory (it's created via attachable_id, not <<).
+      dataset = Container.find(cell_line_sample.container.id).children[0].children[0].children[0]
+      "attachments/#{dataset.attachments[0].identifier}.jpg"
     end
     let(:cell_line_sample) { create(:cellline_sample, :with_analysis, user_id: user.id, collections: [collection]) }
     let!(:cell_line_sample2) do

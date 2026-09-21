@@ -20,7 +20,7 @@ class CalendarEntryNotification < ApplicationRecord
   belongs_to :calendar_entry
   belongs_to :user
 
-  enum status: {
+  enum :status, {
     created: 0,
     updated: 1,
   }

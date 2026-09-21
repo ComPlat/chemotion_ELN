@@ -13,27 +13,113 @@ Bundler.require(*Rails.groups, :plugins)
 
 module Chemotion
   class Application < Rails::Application
-    # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 6.0
-    config.autoloader = :classic # classic mode is required because of naming/configuration inconsistencies
+    # Deploy note: load_defaults (7.0+) sets cookies_serializer=:json and the SHA256 key
+    # generator — existing signed/encrypted cookies are invalidated, so a rotator is
+    # needed for a zero-downtime rollout.
+    config.load_defaults 7.2
+    # (config.autoloader= is deleted since Rails 7.0; Zeitwerk is the only autoloader.)
 
-    config.version = (File.exist?('VERSION') && YAML.load_file('VERSION')) || {
+    # Keep the pre-7.1 YAMLColumn serializer (7.1+ default is nil): our `serialize … type:`
+    # columns rely on it for yaml_column_permitted_classes safe-loading.
+    config.active_record.default_column_serializer = ActiveRecord::Coders::YAMLColumn
+
+    # Keep autoload paths on $LOAD_PATH (7.1+ default is false): otherwise the app's Encryptor
+    # concern loses to the encryptor gem's ::Encryptor and Device#encrypt_value goes undefined.
+    config.add_autoload_paths_to_load_path = true
+
+    # API/SFTP acronyms for Zeitwerk file->constant mapping (api.rb -> API,
+    # sftp_client.rb -> SFTPClient). Scoped to the AUTOLOADER inflector, NOT registered as
+    # global ActiveSupport acronyms: a global acronym also drives ActiveRecord's migration
+    # class-name camelization (create_api_tokens -> CreateAPITokens) and would break main's
+    # immutable CreateApiTokens migration. The per-basename overrides below are consulted
+    # first, so the Api-word exceptions (ApiToken, LcmsApiHelpers, …) still win.
+    Rails::Autoloaders::Inflector.singleton_class.prepend(Module.new do
+      def camelize(basename, _abspath)
+        @overrides[basename] || basename.split('_').map! { |p| { 'api' => 'API', 'sftp' => 'SFTP' }[p] || p.capitalize }.join
+      end
+    end)
+
+    config.version = (File.exist?('VERSION') && YAML.unsafe_load_file('VERSION')) || {
       'version' => 'v0', 'base_revision' => '0', 'current_revision' => '0'
     }
     config.version['current_revision'] = File.read('REVISION') if File.exist?('REVISION')
 
     config.action_dispatch.perform_deep_munge = false
 
-    # TODO: Update autoload configuration to current rails standards
+    # Zeitwerk requires one root per namespace. app/api and lib are each a single root
+    # (Rails auto-adds app/*); the previous overlapping roots (app/api/*, app, lib/**/)
+    # are removed so nested namespaces resolve conventionally
+    # (app/api/chemotion/collection_api.rb -> Chemotion::CollectionAPI).
+    config.autoload_paths << Rails.root.join('lib')
 
-    # Grape API config
-    config.paths.add File.join('app', 'api'), glob: File.join('**', '*.rb')
-    config.autoload_paths += Dir[Rails.root.join('app', 'api', '*')]
-    # load lib path
-    config.autoload_paths += Dir["#{config.root}/lib/**/"]
+    # Excluded from Zeitwerk. Dead/non-conforming legacy (don't map to their path's
+    # constant, no live callers — deletion candidates):
+    #  * lib/storage — top-level Storage; remotesftp.rb raises on load; only a 2016 rake used it.
+    #  * lib/chemotion/chemotion.rb — Chemotion monkey-patch, no callers since 2018.
+    #  * lib/chemotion/safety_sheets_reorganizer.rb — standalone manual script.
+    # Non-autoloadable lib subdirs (Rails 7.1 ignores these by default):
+    #  * lib/tasks — rake tasks + support helpers.
+    #  * lib/generators — Rails generators.
+    #  * lib/omniauth — ORCID strategy, required explicitly in devise.rb (OmniAuth gem namespace).
+    Rails.autoloaders.main.ignore(
+      Rails.root.join('lib/storage'),
+      Rails.root.join('lib/chemotion/chemotion.rb'),
+      Rails.root.join('lib/chemotion/safety_sheets_reorganizer.rb'),
+      Rails.root.join('lib/tasks'),
+      Rails.root.join('lib/generators'),
+      Rails.root.join('lib/omniauth'),
+    )
+    # lib is autoload-only, not eager-loaded (matches pre-Zeitwerk behaviour).
+    # zeitwerk:check over lib passes, so every lib constant resolves.
 
-    config.autoload_paths += Dir[Rails.root.join('app')]
-    config.autoload_paths += Dir[Rails.root.join('lib')]
+    # These lib subdirs stay on $LOAD_PATH for bare require / rake_require (the old
+    # lib/**/ glob provided it). Zeitwerk is unaffected (loads from the lib root):
+    #  * lib/export — labimotion gem does a bare `require 'export_table'`.
+    #  * lib/tasks — `rake_require('data/mol_structure')` resolves relative to lib/tasks.
+    $LOAD_PATH.unshift(
+      Rails.root.join('lib/export').to_s,
+      Rails.root.join('lib/tasks').to_s,
+    )
+
+    # app/api/helpers and app/api/modules define top-level constants (AttachmentHelpers,
+    # LogidzeModule) used bare — collapse so they add no Helpers::/Modules:: namespace.
+    Rails.autoloaders.main.collapse(
+      Rails.root.join('app/api/helpers'),
+      Rails.root.join('app/api/modules'),
+    )
+
+    # Per-basename overrides for names that don't follow the global acronyms, so
+    # existing constants keep their casing without renaming code:
+    Rails.autoloaders.main.inflector.inflect(
+      'element_ui_state_scopes' => 'ElementUIStateScopes', # UI acronym (vs UiAPI = word)
+      'cell_line_api_params_helpers' => 'CellLineApiParamsHelpers', # Api word (vs API acronym)
+      'lcms_api_helpers' => 'LcmsApiHelpers', # Api word (vs API acronym)
+      'api_token_entity' => 'ApiTokenEntity', # Api word (vs API acronym)
+      'api_token' => 'ApiToken', # Api word (vs API acronym)
+      'by_ui_state' => 'ByUIState',
+      # "Sftp" word here vs the SFTP acronym elsewhere (SFTPClient):
+      'collect_data_from_sftp_job' => 'CollectDataFromSftpJob',
+      'collect_file_from_sftp_job' => 'CollectFileFromSftpJob',
+      'svg' => 'SVG', # lib/svg dir = SVG:: namespace (Svg-word classes keep default casing)
+      'svg_processor' => 'SVGProcessor', # KetcherService::SVGProcessor
+      'dc_logger' => 'DCLogger', # DC acronym
+    )
+
+    # app/usecases/**/*.rb define Usecases::* constants, but Rails would register
+    # app/usecases as a plain root (expecting Reactions::Create, not
+    # Usecases::Reactions::Create). Register it as a namespaced root instead, keeping
+    # all Usecases::* names. No config sugar for this before Rails 7.1, so intercept
+    # before :setup_main_autoloader (the finisher that push_dirs each autoload_path as
+    # a plain root, then setups): drop app/usecases from that list and push it
+    # namespaced. Rails 7.1+ has push_dir(..., namespace:) — revisit then.
+    initializer :usecases_namespaced_root, before: :setup_main_autoloader do
+      usecases_dir = Rails.root.join('app/usecases').to_s
+      deps = ActiveSupport::Dependencies
+      deps.autoload_paths.delete(usecases_dir)
+      deps._eager_load_paths.delete(usecases_dir) if deps.respond_to?(:_eager_load_paths)
+      Object.const_set(:Usecases, Module.new) unless defined?(::Usecases)
+      Rails.autoloaders.main.push_dir(usecases_dir, namespace: ::Usecases)
+    end
 
     config.active_job.queue_adapter = :delayed_job
 
@@ -85,6 +171,10 @@ module Chemotion
     # In development and test, it falls back to a default value. In production, ensure
     # OTP_SECRET_KEY is set in the environment to keep encryption secure.
     config.otp_secret_encryption_key = ENV.fetch('OTP_SECRET_KEY')
+
+    # OnlyOffice document-server JWT secret, from ENV (off the deprecated
+    # Rails.application.secrets). Dev/test: set this ENV when using OnlyOffice locally.
+    config.only_office_secret_key_base = ENV['ONLY_OFFICE_SECRET_KEY_BASE']
 
     # Specifically allow some classes to be serialized by Psych
     # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017

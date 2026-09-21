@@ -15,7 +15,7 @@ RSpec.shared_examples 'a graphql resolver for single object' do
     end
 
     it 'finds the object by id' do
-      resolver.resolve(params)
+      resolver.resolve(**params)
 
       expect(model_class).to have_received(:find_by!).with(**params).once
     end
