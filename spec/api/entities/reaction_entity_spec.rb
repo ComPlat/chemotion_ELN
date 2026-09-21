@@ -69,13 +69,29 @@ describe Entities::ReactionEntity do
         )
       end
 
-      it 'returns a reaction with filtered variations keys' do
-        reaction.variations[0]['properties']['duration']['foo'] = 'bar'
-        expect(grape_entity_as_hash[:variations][0][:properties][:duration]).not_to include(:foo)
-      end
-
       it 'returns a reaction with variations' do
         expect(grape_entity_as_hash[:variations]).to match_array(reaction.variations.map(&:deep_symbolize_keys))
+      end
+
+      # The diff follows the reaction and sample models rather than a fixed list of keys, so it has
+      # to survive being represented untouched - anything dropped here would be a change the user
+      # made and then lost on the next reload.
+      it 'returns the diff of a variation unfiltered' do
+        reaction.variations[0]['data']['some_new_reaction_attribute'] = 'kept'
+
+        expect(grape_entity_as_hash[:variations][0][:data]).to include(some_new_reaction_attribute: 'kept')
+      end
+
+      it 'omits legacy_data from variations that do not carry any' do
+        expect(grape_entity_as_hash[:variations][0]).not_to include(:legacy_data)
+      end
+
+      it 'returns legacy_data of a converted variation, so that saving cannot drop it' do
+        reaction.variations[0]['legacy_data'] = { 'properties' => { 'duration' => { 'value' => '42' } } }
+
+        expect(grape_entity_as_hash[:variations][0][:legacy_data]).to eq(
+          { properties: { duration: { value: '42' } } },
+        )
       end
 
       it 'returns a reaction with products' do

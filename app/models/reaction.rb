@@ -174,7 +174,7 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
-  before_save :transform_variations
+  before_save :normalize_variations
   around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
@@ -298,12 +298,13 @@ class Reaction < ApplicationRecord
     # scrub_xml would strip them. Conditions are escaped at display time.
   end
 
+  # Variations are a list, ordered by `idx`: see db/schemas/reaction_variations.schema.json.
+  # Rows written before that change were an object keyed by variation UUID, which is only still
+  # reachable here for a database that has not run
+  # db/migrate/20260731120000_convert_reaction_variations_to_diff_list.rb yet.
   def variations
-    # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
-    return raw.values if raw.is_a?(Hash)
-
-    raw || []
+    raw.is_a?(Hash) ? raw.values : (raw || [])
   end
 
   def assign_attachment_to_variation(variation_id, analysis_id)
@@ -333,11 +334,11 @@ class Reaction < ApplicationRecord
     variation = current_variations.find { |v| v['id'].to_s == variation_id.to_s }
     return false unless variation
 
-    variation['metadata'] ||= {}
-    variation['metadata']['analyses'] ||= []
-    return false if variation['metadata']['analyses'].include?(analysis_id)
+    # Linked analyses sit on the variation itself now, not under `metadata`.
+    variation['analyses'] ||= []
+    return false if variation['analyses'].include?(analysis_id)
 
-    variation['metadata']['analyses'] << analysis_id
+    variation['analyses'] << analysis_id
     true
   end
 
@@ -405,12 +406,25 @@ class Reaction < ApplicationRecord
     Chemotion::Sanitizer.scrub_xml(value)
   end
 
-  def transform_variations
-    return unless variations.is_a?(Array)
+  # Keeps the column at the shape db/schemas/reaction_variations.schema.json describes: a list whose
+  # rows each have an id, a number and a diff. It used to key the list by UUID into an object
+  # instead, which the column can no longer hold - the list order is what orders the rows, and an
+  # object would lose it, since jsonb sorts its keys.
+  #
+  # `idx` is only filled in where it is missing: it is the number the row is known by, not its
+  # position, so renumbering here would relabel rows behind the user's back.
+  def normalize_variations
+    list = self[:variations]
+    list = list.values if list.is_a?(Hash)
 
-    self.variations = variations.each_with_object({}) do |item, hash|
-      item['uuid'] = SecureRandom.uuid if item['uuid'].blank?
-      hash[item['uuid']] = item
+    self[:variations] = Array(list).each_with_index.map do |item, index|
+      next item unless item.is_a?(Hash)
+
+      item = item.dup
+      item['id'] = item['uuid'].presence || SecureRandom.uuid if item['id'].blank?
+      item['idx'] = index unless item['idx'].is_a?(Integer)
+      item['data'] ||= {}
+      item
     end
   end
 

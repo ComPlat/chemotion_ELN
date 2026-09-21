@@ -50,8 +50,9 @@ ToggleButton.propTypes = {
   onChange: PropTypes.func,
   onLabel: PropTypes.string,
   offLabel: PropTypes.string,
-  tooltipOn: PropTypes.string,
-  tooltipOff: PropTypes.string,
+  // Rendered inside a <Tooltip>, so multi-line JSX is as welcome as a plain string.
+  tooltipOn: PropTypes.node,
+  tooltipOff: PropTypes.node,
   buttonTitleClass: PropTypes.string,
   buttonClass: PropTypes.string,
   size: PropTypes.string,
