@@ -257,3 +257,38 @@ describe('ChemicalFetcher methods', () => {
     });
   });
 });
+
+describe('ChemicalFetcher.saveSafetySheets error reporting', () => {
+  afterEach(() => { sinon.restore(); });
+
+  it('lets the reason the server gave reach the caller', () => {
+    sinon.stub(global, 'fetch').resolves({
+      ok: false,
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      json: () => Promise.resolve({ error: 'It is the same document as AC172380250.', final: true }),
+    });
+
+    return ChemicalFetcher.saveSafetySheets({ sample_id: 1 }).then(
+      () => { throw new Error('expected a rejection'); },
+      (error) => {
+        expect(error.message).toEqual('It is the same document as AC172380250.');
+        expect(error.final).toBe(true);
+      }
+    );
+  });
+
+  it('marks an ordinary failure as not final', () => {
+    sinon.stub(global, 'fetch').resolves({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve({ error: 'Could not retrieve the SDS from the vendor' }),
+    });
+
+    return ChemicalFetcher.saveSafetySheets({ sample_id: 1 }).then(
+      () => { throw new Error('expected a rejection'); },
+      (error) => { expect(error.final).toBe(false); }
+    );
+  });
+});
