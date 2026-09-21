@@ -1159,10 +1159,7 @@ export default class ChemicalTab extends React.Component {
   };
 
   saveSafetySheetsButton(sdsInfo) {
-    const {
-      checkSaveIconMerck,
-      loadingSaveSafetySheets, chemical, dynamicCheckMarks = {}
-    } = this.state;
+    const { loadingSaveSafetySheets, chemical } = this.state;
 
     // Find any key that ends with "_link" to determine vendor
     const vendorLinkKey = Object.keys(sdsInfo).find((key) => key.endsWith('_link'));
@@ -1180,7 +1177,6 @@ export default class ChemicalTab extends React.Component {
 
     // Extract vendor information
     const vendorName = vendorLinkKey.replace('_link', '');
-    const normalizedVendorName = vendorName.toLowerCase();
     const sdsLink = sdsInfo[vendorLinkKey];
     const productNumberKey = `${vendorName}_product_number`;
     const productLinkKey = `${vendorName}_product_link`;
@@ -1190,31 +1186,13 @@ export default class ChemicalTab extends React.Component {
     // Determine vendor display name (capitalize first letter)
     const displayVendorName = vendorName.charAt(0).toUpperCase() + vendorName.slice(1);
 
-    // Check if this safety sheet is already saved
-    let isSaved = false;
-
-    // 1. Check in the actual safety sheet data
-    if (chemical?._chemical_data?.[0]?.safetySheetPath) {
-      const safetySheets = chemical._chemical_data[0].safetySheetPath;
-      isSaved = safetySheets.some((sheet) => {
-        const key = Object.keys(sheet).find((k) => /^(\d+)_/.test(k));
-        const extractProductNumber = key ? key.match(/^(\d+)_/)[1] : null;
-        // Disable save button if safety sheet file of same product number for merck vendor already saved
-        const existingMerckSafetySheet = normalizedVendorName === 'merck' && extractProductNumber === productNumber;
-        return (sheet[vendorLinkKey] === sdsLink || existingMerckSafetySheet);
-      });
-    }
-
-    // 2. If not found in data, check state variables
-    if (!isSaved) {
-      // Check traditional state variables for backward compatibility
-      if (normalizedVendorName === 'merck') {
-        isSaved = checkSaveIconMerck;
-      } else {
-        // Check dynamic state for any other vendor
-        isSaved = dynamicCheckMarks[normalizedVendorName] || false;
-      }
-    }
+    // Saved sheets are keyed "<productNumber>_<hash>_link", so this row is spoken for only
+    // when a sheet for its own product number is held. Asking the vendor instead marked
+    // every row of that vendor as saved the moment one of them was.
+    const savedSheets = chemical?._chemical_data?.[0]?.safetySheetPath || [];
+    const isSaved = !!productNumber && savedSheets.some((sheet) => Object.keys(sheet).some(
+      (key) => key.startsWith(`${productNumber}_`) || sheet[key] === sdsLink
+    ));
 
     const productInfo = {
       vendor: displayVendorName,

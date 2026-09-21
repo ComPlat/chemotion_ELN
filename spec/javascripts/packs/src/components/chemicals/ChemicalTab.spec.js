@@ -526,6 +526,38 @@ describe('ChemicalTab component', () => {
       });
     });
 
+    describe('which save buttons look saved', () => {
+      const row = (productNumber) => ({
+        fisher_link: `https://www.fishersci.com/msds?partNumber=${productNumber}`,
+        fisher_product_number: productNumber,
+        save_modes: ['server', 'browser']
+      });
+
+      const isDisabled = (sdsInfo) => shallow(instance.saveSafetySheetsButton(sdsInfo))
+        .find(Button).prop('disabled');
+
+      beforeEach(() => {
+        instance.setState({
+          chemical: createChemical([{
+            safetySheetPath: [{
+              AC158190025_f7aaa63e3029e8ed_link: '/safety_sheets/fisher/AC158190025_f7aaa63e3029e8ed.pdf'
+            }]
+          }], '7681-82-5'),
+          // Saving through the server route used to set this and grey out the whole vendor.
+          dynamicCheckMarks: { fisher: true },
+          checkSaveIconMerck: true
+        });
+      });
+
+      it('marks the row whose sheet is saved', () => {
+        expect(isDisabled(row('AC158190025'))).toBe(true);
+      });
+
+      it('leaves another product from the same vendor available', () => {
+        expect(isDisabled(row('AC133710010'))).toBe(false);
+      });
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });

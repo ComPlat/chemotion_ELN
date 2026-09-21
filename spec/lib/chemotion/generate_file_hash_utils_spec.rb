@@ -318,23 +318,38 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
       FileUtils.rm_f(source)
     end
 
-    it 'finds a byte-identical sheet whatever it is named' do
-      File.write(source, '%PDF same bytes')
-      File.write(File.join(vendor_dir, 'PN999_abcdeffedcba1234.pdf'), '%PDF same bytes')
+    # A saved sheet is named for its own content, which is what makes the lookup a glob.
+    def saved_as(dir, product, content)
+      name = "#{product}_#{Digest::MD5.hexdigest(content)[0..15]}.pdf"
+      File.write(File.join(dir, name), content)
+      name
+    end
 
-      expect(described_class.find_identical_sheet(source)).to eq('/safety_sheets/dupvendor/PN999_abcdeffedcba1234.pdf')
+    it 'finds a byte-identical sheet under any product number' do
+      File.write(source, '%PDF same bytes')
+      name = saved_as(vendor_dir, 'PN999', '%PDF same bytes')
+
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/dupvendor/#{name}")
     end
 
     it 'looks across every vendor folder, not just one' do
       File.write(source, '%PDF elsewhere')
-      File.write(File.join(other_dir, 'AC1_1111111111111111.pdf'), '%PDF elsewhere')
+      name = saved_as(other_dir, 'AC1', '%PDF elsewhere')
 
-      expect(described_class.find_identical_sheet(source)).to eq('/safety_sheets/othervendor/AC1_1111111111111111.pdf')
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/othervendor/#{name}")
+    end
+
+    it 'finds a sheet saved under the older web naming' do
+      File.write(source, '%PDF legacy')
+      initials = Digest::MD5.hexdigest('%PDF legacy')[0..15]
+      File.write(File.join(vendor_dir, "PN1_web_#{initials}.pdf"), '%PDF legacy')
+
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/dupvendor/PN1_web_#{initials}.pdf")
     end
 
     it 'returns nil when the bytes differ, however similar the name' do
       File.write(source, '%PDF one')
-      File.write(File.join(vendor_dir, 'PN999_abcdeffedcba1234.pdf'), '%PDF two')
+      saved_as(vendor_dir, 'PN999', '%PDF two')
 
       expect(described_class.find_identical_sheet(source)).to be_nil
     end

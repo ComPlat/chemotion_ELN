@@ -468,17 +468,19 @@ module Chemotion
       fetch_allowed_url(URI.join(safe_url, location).to_s, limit: limit - 1)
     end
 
+    # The bytes decide, not the header: Fisher labels the same sheet application/pdf,
+    # application/octet-stream or text/html depending on load, and a header that lies
+    # either way is what made a reachable sheet look unreachable.
     def self.request_pdf_file(link, file_path)
-      req_safety_sheet = fetch_allowed_url(link)
-      # Vendors append a charset to the PDF content type, so this cannot be an equality test.
-      if req_safety_sheet.headers['Content-Type'].to_s.start_with?('application/pdf')
-        File.binwrite(file_path, req_safety_sheet)
-        sleep 1
-        true
-      else
-        Rails.logger.warn("Non-PDF content received from #{link}")
-        false
+      response = fetch_allowed_url(link)
+      body = response.body.to_s
+      unless body.start_with?('%PDF')
+        Rails.logger.warn("Non-PDF content from #{link} (#{response.headers['Content-Type']})")
+        return false
       end
+
+      File.binwrite(file_path, body)
+      true
     rescue StandardError => e
       Rails.logger.error("HTTP error downloading PDF: #{e.message}")
       { error: e.message }
