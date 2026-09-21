@@ -558,6 +558,37 @@ describe('ChemicalTab component', () => {
       });
     });
 
+    it('stops trying routes once the server gives a final refusal', () => {
+      const notify = sinon.stub(instance, 'notify');
+      const browser = sinon.stub(instance, 'fetchSdsInBrowser').resolves();
+      const refusal = Object.assign(new Error('already held'), { final: true });
+      const server = sinon.stub(instance, 'fetchSdsOnServer').rejects(refusal);
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+      return instance
+        .saveSdsViaRoutes(['server', 'browser'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+        .then(() => {
+          expect(server.called).toBe(true);
+          expect(browser.called).toBe(false);
+          expect(notify.firstCall.args[0].message).toEqual(expect.stringContaining('already held'));
+          [notify, browser, server].forEach((stub) => stub.restore());
+        });
+    });
+
+    it('still falls through when the failure is not final', () => {
+      const notify = sinon.stub(instance, 'notify');
+      const browser = sinon.stub(instance, 'fetchSdsInBrowser').resolves();
+      const server = sinon.stub(instance, 'fetchSdsOnServer').rejects(new Error('vendor timed out'));
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+      return instance
+        .saveSdsViaRoutes(['server', 'browser'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+        .then(() => {
+          expect(browser.called).toBe(true);
+          [notify, browser, server].forEach((stub) => stub.restore());
+        });
+    });
+
     it('stays below the limit for four saved sheets', () => {
       const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });

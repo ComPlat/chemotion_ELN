@@ -124,7 +124,7 @@ module Chemotion
         post do
           if Chemotion::ChemicalsService.sds_limit_reached?(params[:chemical_data])
             error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
-                            'safety data sheets. Delete one before saving another.' }, 422)
+                            'safety data sheets. Delete one before saving another.', final: true }, 422)
           end
 
           Chemotion::ChemicalsService.handle_exceptions do
@@ -139,7 +139,9 @@ module Chemotion
             return error!({ error: 'Could not retrieve the SDS from the vendor' }, 400) unless file_path.is_a?(String)
 
             if Chemotion::ChemicalsService.sheet_already_saved?(params[:chemical_data], file_path)
-              return error!({ error: 'This sample already holds this safety data sheet.' }, 422)
+              # final: the other save route would fetch the same bytes and be refused too.
+              return error!({ error: Chemotion::ChemicalsService.duplicate_sheet_message(file_path),
+                              final: true }, 422)
             end
 
             Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(

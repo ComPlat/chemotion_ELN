@@ -234,6 +234,23 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.duplicate_sheet_message' do
+    it 'names the catalogue number the sheet is already held under' do
+      expect(described_class.duplicate_sheet_message('/safety_sheets/fisher/AC196660010_web_2be7b427e93cc619.pdf'))
+        .to eq('This sample already holds this sheet. It is the same document as AC196660010.')
+    end
+
+    it 'reads a sheet saved under the current naming' do
+      expect(described_class.duplicate_sheet_message('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
+        .to include('as 392693.')
+    end
+
+    it 'falls back to a plain sentence when the name says nothing' do
+      expect(described_class.duplicate_sheet_message(nil))
+        .to eq('This sample already holds this safety data sheet.')
+    end
+  end
+
   describe '.sheet_already_saved?' do
     let(:saved) { '/safety_sheets/merck/a_1111111111111111.pdf' }
     let(:data) { [{ 'safetySheetPath' => [{ 'a_1111111111111111_link' => saved }] }] }
