@@ -2,6 +2,8 @@
 
 module Chemotion
   # Service class for handling manual Safety Data Sheet attachment (SDS) operations
+  # rubocop:disable Metrics/ClassLength -- pre-existing; the chemical_data shaping
+  #   below is a chain of small single-purpose helpers, not one oversized method
   class ManualSdsService
     # @param args [Hash] Parameters for SDS creation
     # @option args [Integer] :sample_id Sample ID
@@ -442,4 +444,5 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
