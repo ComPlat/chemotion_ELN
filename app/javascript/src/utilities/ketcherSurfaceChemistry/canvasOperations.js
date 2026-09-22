@@ -708,8 +708,9 @@ const saveMoveCanvas = async (
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
 
     // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
+    // Ketcher might not have processed the text node yet when we fetch back.
+    // Only keep text nodes that have valid data.content (not Ketcher internal format nodes).
+    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text' && n.data?.content) || [];
     const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
 
     if (isFetchRequired) {
