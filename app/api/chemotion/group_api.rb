@@ -35,7 +35,7 @@ module Chemotion
       get do
         data =
           if current_user
-            current_user&.groups || current_user&.administrated_accounts&.where(type: 'Group')&.distinct
+            current_user.groups.presence || current_user.administrated_accounts.where(type: 'Group').distinct
           else
             []
           end

@@ -117,7 +117,6 @@ module Users
       resource.password = Devise.friendly_token[0, 20] if resource.password.nil?
     end
 
-    # rubocop:disable Metrics/AbcSize
     def resource_saved_handler
       if resource.active_for_authentication?
         sign_up(resource_name, resource)
@@ -141,7 +140,6 @@ module Users
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize
 
     def resource_not_saved_handler
       clean_up_passwords resource
