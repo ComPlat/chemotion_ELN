@@ -439,4 +439,99 @@ RSpec.describe Chemotion::ManualSdsService do
       end
     end
   end
+
+  # These examples deliberately leave Chemotion::ChemicalsService.write_file unstubbed:
+  # the branch that actually puts the PDF on disk is the one that interpolates
+  # client-supplied input into a filesystem path, so it has to be exercised for real.
+  describe 'safety sheet file write' do
+    let(:pdf_bytes) { "%PDF-1.4\nmanual sds spec\n" }
+    let(:real_tempfile) do
+      file = Tempfile.new(['manual_sds_spec', '.pdf'])
+      file.binmode
+      file.write(pdf_bytes)
+      file.flush
+      file.rewind
+      file
+    end
+
+    # Grape exposes multipart uploads as a HashWithIndifferentAccess; write_file reads
+    # file['tempfile'] (string key) while fetch_upload_path reads file[:tempfile].
+    let(:uploaded_file) do
+      ActiveSupport::HashWithIndifferentAccess.new(
+        tempfile: real_tempfile,
+        filename: 'sds.pdf',
+        type: 'application/pdf',
+      )
+    end
+
+    def vendor
+      'testvendor'
+    end
+
+    def vendor_dir
+      File.join(Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR, vendor)
+    end
+
+    def hash_initials
+      Digest::MD5.hexdigest(pdf_bytes)[0..15]
+    end
+
+    def service_for(vendor_info)
+      described_class.new(
+        sample_id: 1,
+        cas: '123-45-6',
+        vendor_info: vendor_info,
+        vendor_name: vendor,
+        vendor_product: 'testvendorproductinfo',
+        attached_file: uploaded_file,
+        chemical_data: nil,
+      )
+    end
+
+    before do
+      allow(Chemical).to receive(:find_by).with(sample_id: 1).and_return(factory_chemical)
+      allow(factory_chemical).to receive(:update!).and_return(true)
+      allow(Chemotion::ChemicalsService).to receive(:write_file).and_call_original
+    end
+
+    after do
+      real_tempfile.close!
+      FileUtils.rm_rf(vendor_dir)
+    end
+
+    it 'writes the uploaded PDF under the vendor folder' do
+      result = service_for('{"productNumber":"abc123"}').create
+
+      expect(result).to eq(factory_chemical)
+      written = File.join(vendor_dir, "abc123_#{hash_initials}.pdf")
+      expect(File.binread(written)).to eq(pdf_bytes)
+    end
+
+    it 'accepts a blank product link rather than rejecting it as invalid' do
+      result = service_for('{"productNumber":"abc123","productLink":""}').create
+
+      expect(result).to eq(factory_chemical)
+    end
+
+    it 'rejects a product number that would escape the safety sheet folder' do
+      result = service_for('{"productNumber":"../../../../tmp/pwn"}').create
+
+      expect(result).to eq({ error: 'Product number is invalid' })
+      expect(Chemotion::ChemicalsService).not_to have_received(:write_file)
+    end
+
+    it 'rejects a missing product number instead of writing a nameless file' do
+      result = service_for('{"vendor":"testvendor"}').create
+
+      expect(result).to eq({ error: 'Product number is invalid' })
+      expect(Chemotion::ChemicalsService).not_to have_received(:write_file)
+    end
+
+    it 'rejects a javascript: safety sheet link' do
+      result = service_for('{"productNumber":"abc123","sdsLink":"javascript:alert(1)"}').create
+
+      expect(result).to eq({ error: 'Invalid safety sheet link URL' })
+      expect(Chemotion::ChemicalsService).not_to have_received(:write_file)
+    end
+  end
 end
