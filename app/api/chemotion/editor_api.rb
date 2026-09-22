@@ -21,7 +21,7 @@ module Chemotion
           feedbackurl: Rails.configuration.editors.info[:feedbackurl],
           callback_server: Rails.configuration.editors.docserver[:callback_server],
           author_name: current_user.name,
-          author_id: current_user.id
+          author_id: current_user.id,
         }
       end
 

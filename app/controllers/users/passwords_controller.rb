@@ -30,7 +30,7 @@ module Users
 
     # PUT /resource/password
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
     def update
       self.resource = resource_class.reset_password_by_token(resource_params)
 
@@ -74,7 +74,7 @@ module Users
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     protected
 
