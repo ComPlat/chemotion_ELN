@@ -523,9 +523,7 @@ module Export
                                   else
                                     '-'
                                   end
-        weight_ratio_calc_mm_col9 = if row[:molar_mass].positive?
-                                       (row[:weight_ratio_exp] / row[:molar_mass]).round(3)
-                                     end
+        weight_ratio_calc_mm_col9 = (row[:weight_ratio_exp] / row[:molar_mass]).round(3) if row[:molar_mass].positive? # rubocop:disable Layout/LineLength
 
         row.merge(
           molar_ratio_calc_mm: row[:molar_ratio_calc_mm].round(3),

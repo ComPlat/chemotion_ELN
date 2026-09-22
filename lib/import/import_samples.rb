@@ -290,9 +290,7 @@ module Import
         weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
                              row_values[weight_ratio_idx].to_s.to_f
                            end
-        molar_mass_val = if molar_mass_idx && row_values[molar_mass_idx].present?
-                           row_values[molar_mass_idx].to_s.to_f
-                         end
+        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?) # rubocop:disable Layout/LineLength
         next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
 
         @composition_table_data[current_sample_uuid] ||= []
