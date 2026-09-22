@@ -392,7 +392,7 @@ export default class SampleForm extends React.Component {
     const isMoleculeNameDisabled = !sample.can_update || sample.isHierarchicalMaterial();
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    const newMolecule = !mno || sample._molecule.id !== mno.mid;
+    const newMolecule = !mno || sample._molecule?.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 

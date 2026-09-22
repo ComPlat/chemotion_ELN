@@ -275,6 +275,8 @@ export default class Sample extends Element {
   getMoleculeId() {
     if (this.decoupled && this.molfile) {
       return `M${this.id}`;
+    } else if (!this.molecule) {
+      return null;
     } else if (this.stereo == null) {
       return `M${this.molecule.id}_any_any`;
     } else {
@@ -1845,7 +1847,8 @@ export default class Sample extends Element {
 
   get isValid() {
     const isValidMixture = this.isMixture() && this.components?.length > 0;
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
+    const isValidHierarchical = this.isHierarchicalMaterial();
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture || isValidHierarchical)
       && !this.error_loading && !this.error_polymer_type);
   }
 

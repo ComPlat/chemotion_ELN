@@ -77,7 +77,7 @@ const MWPrecision = 6;
 let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample, notifications) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture() && !sample.isHierarchicalMaterial()) {
     notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -150,8 +150,8 @@ export default class SampleDetails extends React.Component {
       validCas: true,
       showMolfileModal: false,
       trackMolfile: props.sample.molfile,
-      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
-        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      smileReadonly: !!(props.sample.molecule && !((typeof props.sample.molecule.inchikey === 'undefined')
+        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY')),
       smilesInput: '',
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
@@ -256,7 +256,7 @@ export default class SampleDetails extends React.Component {
         && (typeof (sample.molfile) === 'undefined'
           || (sample.molfile || '').length === 0)
       )
-      || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
+      || (typeof (sample.molfile) !== 'undefined' && sample.molecule?.inchikey === 'DUMMY')
     );
 
     // Sync casInputValue when CAS changes
