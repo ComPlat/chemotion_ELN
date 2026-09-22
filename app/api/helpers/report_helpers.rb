@@ -479,7 +479,9 @@ module ReportHelpers
           SELECT
             #{component_columns}
           FROM components comp
-          #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
+          #{if needs_molecule_join
+              "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer"
+            end}
           WHERE comp.sample_id = s.id AND comp.deleted_at IS NULL
           ORDER BY comp.position
         ) AS component_row

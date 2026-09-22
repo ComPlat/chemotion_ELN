@@ -414,7 +414,10 @@ module Chemotion
 
           # Extract fields that have DB columns and save them directly
           # (color, state, particle_size stay in xref — main's storage)
-          db_column_fields = %i[height width length diameter storage_condition material cspi shape sieve_fraction layer_thickness liquid_medium stabilizer]
+          db_column_fields = %i[
+            height width length diameter storage_condition material
+            cspi shape sieve_fraction layer_thickness liquid_medium stabilizer
+          ]
           db_column_fields.each do |field|
             next unless sample_details_param.key?(field.to_s)
 

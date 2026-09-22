@@ -290,7 +290,9 @@ module Import
         weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
                              row_values[weight_ratio_idx].to_s.to_f
                            end
-        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?)
+        molar_mass_val = if molar_mass_idx && row_values[molar_mass_idx].present?
+                           row_values[molar_mass_idx].to_s.to_f
+                         end
         next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
 
         @composition_table_data[current_sample_uuid] ||= []
@@ -1009,7 +1011,10 @@ module Import
     def handle_default_fields(sample, db_column, value)
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
-      elsif %w[height width length diameter state storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer].include?(db_column)
+      elsif %w[
+               height width length diameter state storage_condition material cspi
+               particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+             ].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -1246,7 +1251,8 @@ module Import
     # NB: always called nested inside #write_to_db's row loop (via
     # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
     # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
-    def apply_composition_table_data(sample, sample_row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def apply_composition_table_data(sample, sample_row)
       sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
       return if sample_uuid.blank?
 
@@ -1282,6 +1288,7 @@ module Import
     rescue StandardError => e
       Rails.logger.error("apply_composition_table_data failed for sample: #{e.message}")
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # handle_sample_components), which already has @defer_pubchem_lookup set — a
     # component's molecule creation is deferred the same way as the outer
