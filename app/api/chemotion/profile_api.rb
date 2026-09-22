@@ -24,7 +24,9 @@ module Chemotion
         profile = current_user.profile
         data = profile.data || {}
         layout = {}
-        layout = Rails.configuration.profile_default&.layout if Rails.configuration.respond_to?(:profile_default)
+        if Rails.configuration.respond_to?(:profile_default)
+          layout = Rails.configuration.profile_default&.layout&.deep_dup
+        end
         templates_list = []
 
         layout&.each_key do |ll|

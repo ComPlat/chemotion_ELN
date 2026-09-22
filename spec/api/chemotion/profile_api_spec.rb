@@ -11,6 +11,49 @@ describe Chemotion::ProfileAPI do
   let(:folder_path) { Rails.root.join('uploads', Rails.env, "user_templates/#{user.id}") }
   let(:file_path) { "#{folder_path}/#{SecureRandom.alphanumeric(10)}.txt" }
 
+  describe 'GET /api/v1/profiles' do
+    before do
+      # Avoid picking up stale, non-JSON template files left on disk by other
+      # specs when a user id is reused across runs.
+      FileUtils.rm_rf(Rails.root.join('uploads', Rails.env, "user_templates/#{user.id}"))
+    end
+
+    context 'when the profile has no stored layout yet' do
+      # Non-Person users skip Profile#set_default, and legacy profiles can also
+      # have empty profile data with no 'layout' key.
+      before { user.profile.update!(data: {}) }
+
+      it 'returns the profile successfully' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        response_body = JSON.parse(response.body)
+        expect(response_body['data']).not_to be_nil
+        # Profiles with no stored layout still receive the configured defaults.
+        expect(response_body.dig('data', 'layout', 'sample')).to eq(
+          Rails.configuration.profile_default.layout.dig(:layout, :sample),
+        )
+      end
+
+      it 'does not mutate the shared default-layout config' do
+        # The layout config is one hash shared across every request. Deep-freeze
+        # it: the old code leaked a reference into the per-request data and then
+        # mutated it, which (a) corrupted process-wide state and (b) made
+        # concurrent first-time sign-ins raise
+        # "can't add a new key into hash during iteration". Mutating a frozen
+        # hash raises here instead, so a regression fails this test loudly.
+        frozen = Rails.configuration.profile_default.layout.deep_dup
+        frozen.each_value { |v| v.freeze if v.is_a?(Hash) }
+        frozen.freeze
+        allow(Rails.configuration.profile_default).to receive(:layout).and_return(frozen)
+
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+      end
+    end
+  end
+
   describe 'POST /api/v1/profiles' do
     context 'when the request is valid' do
       it 'creates a new template and saves the file' do
