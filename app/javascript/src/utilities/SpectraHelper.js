@@ -21,7 +21,8 @@ const JcampIds = (container) => {
         // reprocessing within the same request (both touching the same curve rows),
         // spawning duplicate generations and can even leave the curve rows deleted
         // entirely if the race's last writer is a cleanup/destroy call. Confirmed via
-        // real regenerate_spectrum traces on #616's 740.zip - not archive-specific.
+        // real regenerate_spectrum traces on a Bruker archive holding a raw FID plus a
+        // pdata/1 subfolder - not archive-specific.
         const isBagitCurve = typeof typ === 'string' && /^\d+_bagit$/.test(typ);
         const notOrig = typ === 'peak' || typ === 'edit' || isBagitCurve;
         if (isJcamp) {
