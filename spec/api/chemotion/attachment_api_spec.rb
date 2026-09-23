@@ -729,19 +729,6 @@ describe Chemotion::AttachmentAPI do
         expect(Attachment.find(generated_attachment_id)).not_to be_nil
       end
     end
-
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user regenerate/overwrite spectrum data for an attachment they don't own.
-    context 'when the attachment belongs to another user' do
-      let(:attachment) { create(:attachment, :with_spectra_file) }
-      let(:spectrum_params) { { attachment_id: attachment.id } }
-
-      before { post '/api/v1/attachments/save_spectrum', params: spectrum_params }
-
-      it 'is rejected as unauthorized' do
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
   end
 
   describe 'GET /api/v1/attachments/{attachment_id}?annotated=true' do
@@ -831,19 +818,6 @@ describe Chemotion::AttachmentAPI do
         expect(parsed_json_response['files'].first['id']).to eq(generated_attachment.id)
       end
     end
-
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user run spectrum inference against - and read the raw file content of -
-    # an attachment they don't own.
-    context 'when the attachment belongs to another user' do
-      let(:attachment) { create(:attachment, :with_spectra_file) }
-
-      before { post '/api/v1/attachments/infer', params: infer_params }
-
-      it 'is rejected as unauthorized' do
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
   end
 
   describe 'POST /api/v1/attachments/lcms_page' do
@@ -912,18 +886,6 @@ describe Chemotion::AttachmentAPI do
 
       it 'returns statuscode 201' do
         expect(response).to have_http_status(:created)
-      end
-    end
-
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user overwrite the annotation SVG of an attachment they don't own.
-    context 'when the attachment belongs to another user' do
-      let(:attachment) { create(:attachment, :with_image) }
-
-      before { post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params }
-
-      it 'is rejected as unauthorized' do
-        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

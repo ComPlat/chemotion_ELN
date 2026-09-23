@@ -4,17 +4,6 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
-    # Every attachable_type the frontend actually sends to update_attachments_attachable
-    # (AttachmentFetcher.js#updateAttachables). Anything else is rejected below rather than
-    # silently skipping authorization, as previously happened for every type but ResearchPlan.
-    ATTACHABLE_CLASSES = {
-      'ResearchPlan' => ResearchPlan,
-      'Wellplate' => Wellplate,
-      'DeviceDescription' => DeviceDescription,
-      'SequenceBasedMacromoleculeSample' => SequenceBasedMacromoleculeSample,
-      'SequenceBasedMacromolecule' => SequenceBasedMacromolecule,
-    }.freeze
-
     resource :attachable do
       params do
         optional :files, type: [File], desc: 'files', default: []
@@ -24,9 +13,13 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        klass = ATTACHABLE_CLASSES[params[:attachable_type]]
-        record = klass&.find_by(id: params[:attachable_id])
-        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, record).update?
+        case params[:attachable_type]
+        when 'ResearchPlan'
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(
+            current_user,
+            ResearchPlan.find_by(id: params[:attachable_id]),
+          ).update?
+        end
       end
 
       desc 'Update attachable records'
