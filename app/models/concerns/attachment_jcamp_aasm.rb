@@ -855,12 +855,14 @@ module AttachmentJcampProcess
   def delete_related_edited_jcamp(jcamp_att)
     return unless jcamp_att
 
+    # Match the derived filename exactly, not the stem: "740.nmrium" derives "740.edit.jdx" and
+    # replaces the dataset's other edited "740.edit.jdx" (e.g. the ChemSpectra edit of the same
+    # spectrum, which sits in a different lineage), but "740.2_bagit.edit.jdx" is another curve.
     atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
-    valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.edited? &&
                   att.id != jcamp_att.id &&
-                  valid_name == att.filename_parts[0]
+                  att.filename == jcamp_att.filename
       att.delete if is_delete
     end
   end
