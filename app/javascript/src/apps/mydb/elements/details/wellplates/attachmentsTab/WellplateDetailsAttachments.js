@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup, OverlayTrigger, Popover, Alert, Tooltip
+  Button, OverlayTrigger, Popover, Alert, Tooltip
 } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -93,10 +93,6 @@ export class WellplateDetailsAttachments extends Component {
 
   handleTemplateDownload() {
     const { wellplate } = this.props;
-    if (this.isTemplateDownloadDisabled()) {
-      this.context.notifications.notifyMustSave('Wellplate', 'downloading the import template');
-      return;
-    }
     Utils.downloadFile({
       contents: `/api/v1/wellplates/template/${wellplate.id}`,
       name: 'wellplate_import_template.xlsx',
@@ -225,30 +221,26 @@ export class WellplateDetailsAttachments extends Component {
     );
 
     return (
-      <div>
-        <ButtonGroup className="mb-1">
-          {/* span wrapper: a disabled button fires no mouse events, so the tooltip needs a host */}
-          <OverlayTrigger placement="bottom" overlay={downloadTooltip}>
-            <span className="d-inline-block">
-              <Button
-                variant="primary"
-                disabled={disabled}
-                onClick={() => this.handleTemplateDownload()}
-              >
-                <i className="fa fa-download" aria-hidden="true" />
-                &nbsp;
-                Download Import Template xlsx
-              </Button>
-            </span>
-          </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={templateInfo}>
+      <div className="d-flex align-items-center gap-1 mb-1">
+        {/* span wrapper: a disabled button fires no mouse events, so the tooltip needs a host */}
+        <OverlayTrigger placement="bottom" overlay={downloadTooltip}>
+          <span className="d-inline-block" style={disabled ? { cursor: 'not-allowed' } : undefined}>
             <Button
-              variant="info"
+              variant="light"
+              disabled={disabled}
+              onClick={() => this.handleTemplateDownload()}
             >
-              <i className="fa fa-info" aria-hidden="true" />
+              <i className="fa fa-download" aria-hidden="true" />
+              &nbsp;
+              Download Import Template xlsx
             </Button>
-          </OverlayTrigger>
-        </ButtonGroup>
+          </span>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom" overlay={templateInfo}>
+          <Button variant="light">
+            <i className="fa fa-info" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
       </div>
     );
   }

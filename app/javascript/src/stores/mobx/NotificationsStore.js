@@ -39,17 +39,6 @@ export const NotificationsStore = types
       toast.dismiss(uid);
     },
 
-    notifyMustSave(entity, action) {
-      const label = entity || 'record';
-      self.add({
-        title: `${label} not saved`,
-        message: `Please save the ${label.toLowerCase()} before ${action}.`,
-        level: 'warning',
-        position: 'tr',
-        autoDismiss: 5,
-      });
-    },
-
     notifyExImportStatus(title, status) {
       const submittedMessage = 'The task has been submitted: this might take a while '
         + 'but you will be notified as soon as it is completed.';
