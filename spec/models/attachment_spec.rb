@@ -1170,18 +1170,13 @@ RSpec.describe Attachment do
   end
 
   describe '#set_regenerating' do
-    # A bagit curve's filename never gains a .peak./.edit. addon (jcamp_peak_addon?), so
-    # SpectraHelper.js#JcampIds buckets it as "orig" by filename shape alone, unaware its
-    # aasm_state is already :peaked - and regenerate_spectrum (attachment_api.rb) calls
-    # set_regenerating on every "orig" id. Before :peaked was added to this event's from:
-    # list, that raised AASM::InvalidTransition and 500'd the whole Reprocess request.
+    # A peaked row is a derived curve (or an LCMS jcamp forced to peaked on upload).
+    # Regenerating it on its own would race its root's reprocess, so the event must not
+    # allow it; regenerate_spectrum skips such rows instead of raising.
     let(:attachment) { create(:attachment, filename: '740.1_bagit.jdx', aasm_state: 'peaked') }
 
-    it 'allows a peaked bagit curve to be regenerated' do
-      expect(attachment.may_set_regenerating?).to be true
-
-      attachment.set_regenerating
-      expect(attachment.aasm_state).to eq('regenerating')
+    it 'does not allow a peaked curve to be regenerated independently' do
+      expect(attachment.may_set_regenerating?).to be false
     end
   end
 
