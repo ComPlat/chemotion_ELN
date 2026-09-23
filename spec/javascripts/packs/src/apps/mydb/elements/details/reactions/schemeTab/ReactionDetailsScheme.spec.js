@@ -1361,6 +1361,158 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
   });
 });
 
+// A saved mixture may contain the legacy reference_component_changed flag. A component switch
+// must clear that transient state, derive the new amount from the unchanged mixture mass, rebase
+// dependents (including SBMM reactants), and scale solvents by the reference-amount ratio.
+describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — reference mixture recompute', () => {
+  const massG = 1000.124;
+  const icosaneRelMW = 2825825.158875;
+  const octaneRelMW = 921311.970455;
+
+  const build = ({ lockEquivColumn }) => {
+    const sampleDetails = {
+      previous_amount_mol: massG / icosaneRelMW,
+      reference_relative_molecular_weight: icosaneRelMW,
+      reference_component_changed: true,
+    };
+    const updatedSample = {
+      id: 'ref-1',
+      amount_g: massG,
+      isMixture: () => true,
+      hasComponents: () => true,
+      components: [
+        { id: 'c-1', reference: true, relative_molecular_weight: icosaneRelMW },
+        { id: 'c-2', reference: false, relative_molecular_weight: octaneRelMW },
+      ],
+      sample_details: sampleDetails,
+      initializeSampleDetails: sinon.spy(),
+      storePreviousAmountState: sinon.spy(() => { sampleDetails.previous_amount_mol = updatedSample.amount_mol; }),
+      get reference_component() { return this.components.find((c) => c.reference === true); },
+      // Simulate the getter state restored from the database. Once the stale flag is cleared,
+      // the selected component and unchanged mixture mass determine the amount.
+      get amount_mol() {
+        return sampleDetails.reference_component_changed
+          ? sampleDetails.previous_amount_mol
+          : this.amount_g / this.reference_component.relative_molecular_weight;
+      },
+    };
+    const dependentSample = {
+      id: 'dependent-1',
+      equivalent: 2,
+      amount_mol: 0,
+    };
+    const solventVolumes = [4, 2];
+    const scaleFactors = [];
+    const updatedReaction = {
+      flagAtRebase: undefined,
+      includeSbmmAtRebase: undefined,
+      scaleSolventVolumesForReferenceChange: sinon.spy((previousAmountMol) => {
+        const factor = updatedSample.amount_mol / previousAmountMol;
+        scaleFactors.push(factor);
+        solventVolumes.forEach((volume, index) => {
+          solventVolumes[index] = volume * factor;
+        });
+      }),
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const reaction = {
+      referenceMaterial: updatedSample,
+      sampleById: sinon.stub().returns(updatedSample),
+    };
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn },
+      // Mirror production: the locked path writes the mass represented by the newly derived
+      // reference amount. That must resolve to the original mixture mass.
+      calculateMixturePropertiesFromReferenceComponentChange: sinon.spy((sample, referenceComponent) => {
+        if (lockEquivColumn) {
+          sample.amount_g = sampleDetails.previous_amount_mol * referenceComponent.relative_molecular_weight;
+        }
+      }),
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      // Capture the deferral flag and the includeSbmm argument at the moment amounts are rebased,
+      // then execute the supplied update callback against a dependent reaction material.
+      updatedReactionWithSample: sinon.stub().callsFake((updateFunction, referenceSample, _extLabel, includeSbmm) => {
+        updatedReaction.flagAtRebase = sampleDetails.reference_component_changed;
+        updatedReaction.includeSbmmAtRebase = includeSbmm;
+        updateFunction([dependentSample], referenceSample, 'reactants');
+        return updatedReaction;
+      }),
+      updatedSamplesForAmountChange: sinon.spy((samples, referenceSample) => {
+        if (lockEquivColumn) {
+          samples.forEach((sample) => {
+            sample.amount_mol = sample.equivalent * referenceSample.amount_mol;
+          });
+        }
+        return samples;
+      }),
+    };
+    return { ctx, updatedReaction, updatedSample, dependentSample, solventVolumes, scaleFactors };
+  };
+
+  it('restores a saved mixture, derives the octane amount, and scales dependents under lock', () => {
+    const {
+      ctx, updatedReaction, updatedSample, dependentSample, solventVolumes, scaleFactors
+    } = build({ lockEquivColumn: true });
+
+    ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
+      ctx, { sampleID: 'ref-1', componentId: 'c-2' }
+    );
+
+    // The flag was cleared before the rebase, and SBMM samples are included like every sibling path.
+    expect(updatedReaction.flagAtRebase).toBe(false);
+    expect(updatedReaction.includeSbmmAtRebase).toBe(true);
+    expect(ctx.updatedSamplesForAmountChange.calledOnce).toBe(true);
+    const expectedScale = icosaneRelMW / octaneRelMW;
+    expect(updatedSample.amount_mol).toBeCloseTo(massG / octaneRelMW, 12);
+    expect(updatedSample.amount_g).toBeCloseTo(massG, 12);
+    expect(dependentSample.amount_mol).toBeCloseTo(2 * massG / octaneRelMW, 12);
+    expect(updatedReaction.scaleSolventVolumesForReferenceChange.calledOnceWith(
+      massG / icosaneRelMW
+    )).toBe(true);
+    expect(scaleFactors[0]).toBeCloseTo(expectedScale, 12);
+    expect(solventVolumes[0]).toBeCloseTo(4 * expectedScale, 12);
+    expect(solventVolumes[1]).toBeCloseTo(2 * expectedScale, 12);
+    // Concentrations refreshed under lock (the gap this fixes).
+    expect(updatedReaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
+    expect(updatedReaction.updateAllConcentrations.calledOnce).toBe(true);
+  });
+
+  it('restores the icosane amount and original solvent volumes on the reverse switch', () => {
+    const {
+      ctx, updatedReaction, updatedSample, solventVolumes, scaleFactors
+    } = build({ lockEquivColumn: true });
+
+    ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
+      ctx, { sampleID: 'ref-1', componentId: 'c-2' }
+    );
+    ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
+      ctx, { sampleID: 'ref-1', componentId: 'c-1' }
+    );
+
+    expect(updatedReaction.scaleSolventVolumesForReferenceChange.callCount).toBe(2);
+    expect(scaleFactors[0]).toBeCloseTo(icosaneRelMW / octaneRelMW, 12);
+    expect(scaleFactors[1]).toBeCloseTo(octaneRelMW / icosaneRelMW, 12);
+    expect(updatedReaction.flagAtRebase).toBe(false);
+    expect(updatedSample.amount_mol).toBeCloseTo(massG / icosaneRelMW, 12);
+    expect(updatedSample.amount_g).toBeCloseTo(massG, 12);
+    expect(solventVolumes[0]).toBeCloseTo(4, 12);
+    expect(solventVolumes[1]).toBeCloseTo(2, 12);
+  });
+
+  it('does not refresh concentrations or scale solvents when equivalents are unlocked', () => {
+    const { ctx, updatedReaction } = build({ lockEquivColumn: false });
+
+    ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
+      ctx, { sampleID: 'ref-1', componentId: 'c-2' }
+    );
+
+    expect(updatedReaction.updateAllConcentrations.called).toBe(false);
+    expect(updatedReaction.scaleSolventVolumesForReferenceChange.called).toBe(false);
+  });
+});
+
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).

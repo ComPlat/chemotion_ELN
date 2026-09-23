@@ -620,6 +620,9 @@ class Material extends Component {
       const { mixtureComponents } = this.state;
       const { onChange, material, materialGroup } = this.props;
 
+      const outgoingReference = mixtureComponents.find((comp) => comp.reference === true);
+      const previousReferenceAmountMol = outgoingReference ? outgoingReference.amount_mol : null;
+
       // Update the reference directly on the ComponentModel instances
       mixtureComponents.forEach((comp) => {
         const isReference = comp.id === changeEvent.componentId;
@@ -636,7 +639,8 @@ class Material extends Component {
         onChange({
           ...changeEvent,
           sampleID: material.id,
-          materialGroup
+          materialGroup,
+          previousReferenceAmountMol
         });
       }
     }
