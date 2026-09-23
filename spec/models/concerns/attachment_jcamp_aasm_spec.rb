@@ -147,8 +147,7 @@ RSpec.describe AttachmentJcampAasm do
 
   describe AttachmentJcampProcess do
     describe '#jcamp_peak_addon?' do
-      att_jcamp_process = AttachmentAasmTest.new
-      att_jcamp_process.extend(AttachmentJcampProcess)
+      let(:att_jcamp_process) { AttachmentAasmTest.new.extend(described_class) }
 
       it 'matches the plain peak addon' do
         expect(att_jcamp_process.jcamp_peak_addon?('peak')).to be true
