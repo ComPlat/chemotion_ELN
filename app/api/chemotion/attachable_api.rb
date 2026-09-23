@@ -25,15 +25,12 @@ module Chemotion
       end
       after_validation do
         klass = ATTACHABLE_CLASSES[params[:attachable_type]]
-        record = klass&.find_by(id: params[:attachable_id])
-        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, record).update?
+        @attachable = klass&.find_by(id: params[:attachable_id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachable).update?
       end
 
       desc 'Update attachable records'
       post 'update_attachments_attachable' do
-        attachable_type = params[:attachable_type]
-        attachable_id = params[:attachable_id]
-
         if params.fetch(:files, []).any?
           params[:files].each_with_index do |file, index|
             next unless (tempfile = file[:tempfile])
@@ -46,8 +43,7 @@ module Chemotion
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: file[:type],
-              attachable_type: attachable_type,
-              attachable_id: attachable_id,
+              attachable: @attachable,
             )
 
             begin
@@ -60,8 +56,12 @@ module Chemotion
             end
           end
         end
+        # Scope the detach to the record authorized above, not just its type: otherwise an
+        # attachable_id the caller owns plus someone else's attachment ids in del_files would
+        # unlink the victim's attachments (unrecoverable, since an unlinked attachment has no
+        # root element and even its owner can no longer download it).
         if params[:del_files].any?
-          Attachment.where(id: params[:del_files].map!(&:to_i), attachable_type: attachable_type)
+          Attachment.where(id: params[:del_files], attachable: @attachable)
                     .update_all(attachable_id: nil)
         end
         true

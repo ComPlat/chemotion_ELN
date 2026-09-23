@@ -107,6 +107,35 @@ describe Chemotion::AttachableAPI do
       end
     end
 
+    # Regression: the detach query filtered del_files by attachable_type only, never by the
+    # attachable_id that after_validation had just authorized. Passing an attachable_id the caller
+    # owns together with another user's attachment ids therefore detached the victim's files.
+    %w[ResearchPlan Wellplate].each do |type|
+      context "when del_files targets another user's #{type} attachment but attachable_id is the caller's own" do
+        let(:attachable_type) { type }
+        let(:attachable_id) { own_element.id }
+        let(:own_element) { create(type.underscore.to_sym, collections: [collection]) }
+        let(:victim_element) { create(type.underscore.to_sym, collections: [other_collection]) }
+        let!(:own_attachment) { create(:attachment, attachable: own_element) }
+        let!(:victim_attachment) { create(:attachment, attachable: victim_element) }
+        let(:params) do
+          {
+            attachable_type: attachable_type,
+            attachable_id: attachable_id,
+            del_files: [own_attachment.id, victim_attachment.id],
+          }
+        end
+
+        before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+        it "detaches only the caller's own attachment and leaves the victim's linked" do
+          expect(response).to have_http_status(:created)
+          expect(own_attachment.reload.attachable_id).to be_nil
+          expect(victim_attachment.reload).to have_attributes(attachable_type: type, attachable_id: victim_element.id)
+        end
+      end
+    end
+
     context 'when deleting an attachment from a wellplate belonging to another user' do
       let(:attachable_type) { 'Wellplate' }
       let(:attachable_id) { wellplate.id }
