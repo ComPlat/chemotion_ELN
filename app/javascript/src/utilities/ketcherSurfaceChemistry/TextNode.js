@@ -180,6 +180,7 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
     try { content = JSON.parse(text.data.content); } catch { continue; }
     if (content?.blocks?.[0]?.key === textNodeKey) {
       const split = atom.alias.split('_')[2];
+      if (!imagesList[split]?.boundingBox) return null;
       const imageWidth = imagesList[split].boundingBox.width;
 
       // Estimate text width based on content length (rough approximation)

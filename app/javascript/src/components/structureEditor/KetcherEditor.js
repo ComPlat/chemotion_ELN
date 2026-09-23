@@ -552,13 +552,14 @@ const KetcherEditor = forwardRef((props, ref) => {
         // Responding to a second 'init' would call prepareKetcherData(initMol) and
         // wipe every polymer shape the user drew.
         if (initHandledRef.current) return;
-        initHandledRef.current = true;
 
         window.editor = editor;
         if (editor && editor.structureDef) {
           // Store cleanup function in ref for later use
           eventCleanupRef.current = onEditorContentChange(editor);
           await prepareKetcherData(editor, initMol);
+          // Mark as handled only after successful load so a failed init can retry
+          initHandledRef.current = true;
         }
       }
     } catch (err) {

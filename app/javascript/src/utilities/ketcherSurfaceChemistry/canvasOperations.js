@@ -675,7 +675,7 @@ const getSvgFromCanvas = async (iframeRef) => {
   }
 };
 
-const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
+const applyCanvasDataToEditor = async (editor, dataCopy) => {
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
@@ -705,7 +705,7 @@ const saveMoveCanvas = async (
   }
 
   if (isMoveRequired) {
-    await applyCanvasDataToEditor(editor, dataCopy, recenter);
+    await applyCanvasDataToEditor(editor, dataCopy);
 
     // IMPORTANT: Preserve textList from dataCopy before fetching
     // Ketcher might not have processed the text node yet when we fetch back.
@@ -725,7 +725,7 @@ const saveMoveCanvas = async (
     return;
   }
 
-  await applyCanvasDataToEditor(editor, dataCopy, recenter);
+  await applyCanvasDataToEditor(editor, dataCopy);
 
   if (isFetchRequired) {
     await fetchKetcherData(editor);
@@ -784,6 +784,11 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   // abort rather than overwriting it with an image-only KET Ketcher cannot render.
   const hasMolRefs = imageNodes.some((n) => n.$ref);
   if (!hasMolRefs && molsSnapshot.length > 0 && imageListCopy.length > 0) {
+    ImagesToBeUpdatedSetter(true);
+    reloadCanvasSetter(false);
+    deletedAtomsSetter([]);
+    imageListCopyContainerSetter([]);
+    textListCopyContainerSetter([]);
     await runImageLayering();
     return;
   }
@@ -796,7 +801,7 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
     const textNodes = await placeTextOnAtoms();
     latestData.root.nodes = textNodes;
   }
-  await applyCanvasDataToEditor(editor, latestData, recenter);
+  await applyCanvasDataToEditor(editor, latestData);
   await fetchKetcherData(editor);
 
   // clear required
