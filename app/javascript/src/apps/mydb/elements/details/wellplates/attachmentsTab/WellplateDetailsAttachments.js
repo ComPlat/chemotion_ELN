@@ -99,13 +99,6 @@ export class WellplateDetailsAttachments extends Component {
     });
   }
 
-  // The template is built server-side from the saved wellplate, so a new plate has nothing to
-  // build from and unsaved edits (e.g. a resize) would yield a template that doesn't match.
-  isTemplateDownloadDisabled() {
-    const { wellplate } = this.props;
-    return wellplate.isNew || wellplate.changed;
-  }
-
   handleFilterChange = (e) => {
     this.setState({ filterText: e.target.value }, this.filterAndSortAttachments);
   };
@@ -211,31 +204,40 @@ export class WellplateDetailsAttachments extends Component {
   }
 
   renderTemplateDownload() {
-    const disabled = this.isTemplateDownloadDisabled();
-    const downloadTooltip = (
+    const { wellplate } = this.props;
+    // The template is built server-side from the stored wells, so a wellplate that is not saved
+    // yet has nothing to build it from. A saved one always matches the screen: its only input,
+    // the well positions, changes solely through a resize, which is persisted immediately.
+    const disabled = wellplate.isNew;
+    const templateButton = (
+      <Button
+        variant="light"
+        disabled={disabled}
+        onClick={() => this.handleTemplateDownload()}
+      >
+        <i className="fa fa-download" aria-hidden="true" />
+        &nbsp;
+        Download Import Template xlsx
+      </Button>
+    );
+    const disabledTooltip = (
       <Tooltip id="template_download_tooltip">
-        {disabled
-          ? 'Please save the wellplate before downloading the import template'
-          : 'Download an xlsx template for importing well readouts'}
+        Please save the wellplate before downloading the import template
       </Tooltip>
     );
 
     return (
       <div className="d-flex align-items-center gap-1 mb-1">
-        {/* span wrapper: a disabled button fires no mouse events, so the tooltip needs a host */}
-        <OverlayTrigger placement="bottom" overlay={downloadTooltip}>
-          <span className="d-inline-block" style={disabled ? { cursor: 'not-allowed' } : undefined}>
-            <Button
-              variant="light"
-              disabled={disabled}
-              onClick={() => this.handleTemplateDownload()}
-            >
-              <i className="fa fa-download" aria-hidden="true" />
-              &nbsp;
-              Download Import Template xlsx
-            </Button>
-          </span>
-        </OverlayTrigger>
+        {disabled ? (
+          <OverlayTrigger placement="bottom" overlay={disabledTooltip}>
+            {/* The disabled button takes no mouse events or focus, so a focusable wrapper
+                hosts the explanation for mouse and keyboard users alike. */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <span className="d-inline-block" tabIndex={0} style={{ cursor: 'not-allowed' }}>
+              {templateButton}
+            </span>
+          </OverlayTrigger>
+        ) : templateButton}
         <OverlayTrigger placement="bottom" overlay={templateInfo}>
           <Button variant="light">
             <i className="fa fa-info" aria-hidden="true" />
