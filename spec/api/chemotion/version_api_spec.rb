@@ -118,6 +118,14 @@ describe Chemotion::VersionAPI do
     end
   end
 
+  describe 'POST /api/v1/versions/revert with a class that cannot be reverted' do
+    it 'rejects the request' do
+      post '/api/v1/versions/revert', params: { changes: [{ db_id: 1, klass_name: 'User', fields: [] }] }
+
+      expect(response.status).to eq 400
+    end
+  end
+
   describe 'POST /api/v1/versions/revert for a literal' do
     let(:literal) { create(:literal, literature: create(:literature), litype: 'referTo') }
     let(:fields) { [{ value: nil, name: 'deleted_at' }, { value: 'citedOwn', name: 'litype' }] }
