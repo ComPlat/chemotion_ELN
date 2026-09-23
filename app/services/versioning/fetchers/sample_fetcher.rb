@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/AbcSize
 
 module Versioning
   module Fetchers
@@ -43,19 +43,26 @@ module Versioning
             end
           end
         end
-        unless sample.chemical.nil?
-          versions += Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
-        end
 
-        sample.literals.each do |literal|
-          versions += Versioning::Serializers::LiteratureSerializer
-                      .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
-        end
+        versions + chemical_versions + literature_versions
+      end
 
-        versions
+      private
+
+      def chemical_versions
+        return [] if sample.chemical.nil?
+
+        Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
+      end
+
+      def literature_versions
+        sample.literals.flat_map do |literal|
+          Versioning::Serializers::LiteratureSerializer
+            .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
+        end
       end
     end
   end
 end
 
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/AbcSize
