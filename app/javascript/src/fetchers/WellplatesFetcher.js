@@ -34,7 +34,7 @@ export default class WellplatesFetcher {
       .then((json) => {
         const { id } = json.wellplate;
         return this.wellplateAttachments(wellplate, id)
-          .then(() => this.wellplateElement(json, id));
+          .then(() => this.fetchById(id));
       });
   }
 

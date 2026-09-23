@@ -20,7 +20,7 @@ module Chemotion
       params do
         optional :files, type: [File], desc: 'files', default: []
         optional :attachable_type, type: String, desc: 'attachable_type'
-        optional :attachable_id, type: String, desc: 'attachable id'
+        optional :attachable_id, type: Integer, desc: 'attachable id'
         optional :attfilesIdentifier, type: [String], desc: 'file identifier'
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
@@ -29,6 +29,7 @@ module Chemotion
         error!('400 Bad Request: unknown attachable_type', 400) unless ATTACHABLE_POLICY_MAP.key?(attachable_type)
 
         element = ATTACHABLE_POLICY_MAP[attachable_type].find_by(id: params[:attachable_id])
+        error!('404 Not Found', 404) if element.nil?
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, element).update?
       end
 

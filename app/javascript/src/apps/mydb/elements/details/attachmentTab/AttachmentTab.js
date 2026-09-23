@@ -38,7 +38,7 @@ export class AttachmentTab extends Component {
       filterText: '',
       sortBy: 'name',
       sortDirection: 'asc',
-      showImportConfirm: [],
+      showImportConfirm: {},
     };
 
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
@@ -67,6 +67,13 @@ export class AttachmentTab extends Component {
     const currLen = (this.props.attachments || []).length;
     if (prevLen !== currLen) {
       this.createAttachmentPreviews();
+      this.setState((prevState) => {
+        const updated = { ...prevState.showImportConfirm };
+        (this.props.attachments || []).forEach((a) => {
+          if (!(a.id in updated)) updated[a.id] = false;
+        });
+        return { showImportConfirm: updated };
+      });
     }
   }
 
@@ -99,9 +106,9 @@ export class AttachmentTab extends Component {
           comparison = (a.filesize || 0) - (b.filesize || 0);
           break;
         case 'date': {
-          const dateA = parseDate(a.created_at);
-          const dateB = parseDate(b.created_at);
-          comparison = dateA.valueOf() - dateB.valueOf();
+          const dateA = a.created_at ? parseDate(a.created_at).valueOf() : Infinity;
+          const dateB = b.created_at ? parseDate(b.created_at).valueOf() : Infinity;
+          comparison = dateA - dateB;
           break;
         }
         default:
@@ -113,15 +120,15 @@ export class AttachmentTab extends Component {
   }
 
   showImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = true;
-    this.setState({ showImportConfirm });
+    this.setState((prevState) => ({
+      showImportConfirm: { ...prevState.showImportConfirm, [attachmentId]: true },
+    }));
   }
 
   hideImportConfirm(attachmentId) {
-    const { showImportConfirm } = this.state;
-    showImportConfirm[attachmentId] = false;
-    this.setState({ showImportConfirm });
+    this.setState((prevState) => ({
+      showImportConfirm: { ...prevState.showImportConfirm, [attachmentId]: false },
+    }));
   }
 
   confirmAttachmentImport(attachment) {
