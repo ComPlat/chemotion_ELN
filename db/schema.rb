@@ -913,6 +913,8 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "litype"
+    t.datetime "deleted_at"
+    t.jsonb "log_data"
     t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature"
     t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature"
   end
@@ -2780,6 +2782,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   SQL
   create_trigger :logidze_on_literatures, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_literals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literals BEFORE INSERT OR UPDATE ON public.literals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')

@@ -18,7 +18,7 @@ module Versioning
           versions += reactions_sample_versions(reactions_sample)
         end
 
-        versions + literature_versions
+        versions + Versioning::Fetchers::LiteratureFetcher.call(element: reaction)
       end
 
       private
@@ -58,13 +58,6 @@ module Versioning
           end
 
           versions
-        end
-      end
-
-      def literature_versions
-        reaction.literals.flat_map do |literal|
-          Versioning::Serializers::LiteratureSerializer
-            .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
         end
       end
 
