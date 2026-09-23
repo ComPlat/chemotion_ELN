@@ -88,23 +88,84 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/list_editors' do
-    pending 'TODO: Add missing spec'
+    before do
+      create(:matrice, name: 'ketcherEditor', enabled: true)
+      create(:matrice, name: 'marvinjsEditor', enabled: false)
+      user.reload
+      get '/api/v1/users/list_editors'
+    end
+
+    it 'returns only the editors enabled for the current user' do
+      expect(parsed_json_response['matrices'].pluck('name')).to eq(['ketcherEditor'])
+    end
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do
-    pending 'TODO: Add missing spec'
+    before do
+      get '/api/v1/users/omniauth_providers'
+    end
+
+    it 'returns the omniauth providers configured for the app' do
+      expect(parsed_json_response['providers']).to eq(Devise.omniauth_configs.keys.map(&:to_s))
+    end
+
+    # Regression: this used to serialize the whole current_user object, leaking
+    # encrypted_otp_secret/otp_secret/otp_backup_codes to any authenticated user.
+    it "returns only the current user's linked providers" do
+      expect(parsed_json_response['current_user']).to eq('providers' => nil)
+    end
+
+    context 'when the user has linked providers' do
+      let(:user) { create(:person, providers: { 'github' => { 'uid' => '123' } }) }
+
+      it "returns the user's linked providers" do
+        expect(parsed_json_response['current_user']['providers']).to eq('github' => { 'uid' => '123' })
+      end
+    end
   end
 
   describe 'PUT /api/v1/users/update_counter' do
-    pending 'TODO: Add missing spec'
+    before do
+      put '/api/v1/users/update_counter', params: { type: 'samples', counter: 5 }, as: :json
+    end
+
+    it 'updates the given counter and preserves the others' do
+      expect(parsed_json_response['counters']).to eq('samples' => '5', 'reactions' => '0', 'wellplates' => '0')
+    end
   end
 
   describe 'GET /api/v1/users/scifinder' do
-    pending 'TODO: Add missing spec'
+    context 'when no credential exists for the current user' do
+      before { get '/api/v1/users/scifinder' }
+
+      it 'returns an empty credential' do
+        expect(parsed_json_response).to eq(
+          'id' => nil, 'access_token' => nil, 'refresh_token' => nil, 'expires_at' => nil, 'updated_at' => nil,
+        )
+      end
+    end
+
+    context 'when a credential exists for the current user' do
+      let!(:credential) do
+        ScifinderNCredential.create!(
+          created_by: user.id, access_token: 'tok', refresh_token: 'ref', expires_at: 1.day.from_now,
+        )
+      end
+
+      before { get '/api/v1/users/scifinder' }
+
+      it "returns the current user's credential" do
+        expect(parsed_json_response['id']).to eq(credential.id)
+        expect(parsed_json_response['access_token']).to eq('tok')
+      end
+    end
   end
 
   describe 'DELETE /api/v1/users/sign_out' do
-    pending 'TODO: Add missing spec'
+    it 'returns 204' do
+      delete '/api/v1/users/sign_out'
+      expect(response).to have_http_status(:no_content)
+    end
   end
 
   describe 'GET /api/v1/users/devices' do
@@ -165,10 +226,49 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/devices/novnc' do
-    pending 'TODO: Add missing spec'
+    let(:novnc_device) { create(:device, :novnc_settings) }
+    let(:unrelated_novnc_device) { create(:device, :novnc_settings) }
+    let(:device_without_target) { create(:device) }
+
+    before do
+      novnc_device.people << user
+      device_without_target.people << user
+      unrelated_novnc_device
+      get '/api/v1/devices/novnc'
+    end
+
+    it 'returns only accessible devices that have a novnc target' do
+      ids = parsed_json_response['devices'].pluck('id')
+      expect(ids).to contain_exactly(novnc_device.id)
+    end
   end
 
   describe 'GET /api/v1/devices/current_connection' do
-    pending 'TODO: Add missing spec'
+    let(:device) { create(:device) }
+    let(:path) { NOVNC_DEVICES_DIR.join(device.id.to_s) }
+
+    after { FileUtils.rm_f(path) }
+
+    context 'when the device belongs to the current user' do
+      before do
+        device.people << user
+        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      end
+
+      it 'returns 200 and appends the connection status to the device log' do
+        expect(response).to have_http_status(:ok)
+        expect(File.read(path)).to include("#{user.id},1")
+      end
+    end
+
+    context 'when the current user has no relation to the device' do
+      before do
+        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      end
+
+      it 'returns 404' do
+        expect(response).to have_http_status(:not_found)
+      end
+    end
   end
 end

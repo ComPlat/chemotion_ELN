@@ -201,6 +201,7 @@ class Attachment < ApplicationRecord
     super
 
     set_key
+    self
   end
 
   def set_key; end
