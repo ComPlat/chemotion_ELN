@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup, OverlayTrigger, Popover, Alert
+  Button, ButtonGroup, OverlayTrigger, Popover, Alert, Tooltip
 } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -93,7 +93,7 @@ export class WellplateDetailsAttachments extends Component {
 
   handleTemplateDownload() {
     const { wellplate } = this.props;
-    if (!wellplate || wellplate.isNew) {
+    if (this.isTemplateDownloadDisabled()) {
       this.context.notifications.notifyMustSave('Wellplate', 'downloading the import template');
       return;
     }
@@ -101,6 +101,13 @@ export class WellplateDetailsAttachments extends Component {
       contents: `/api/v1/wellplates/template/${wellplate.id}`,
       name: 'wellplate_import_template.xlsx',
     });
+  }
+
+  // The template is built server-side from the saved wellplate, so a new plate has nothing to
+  // build from and unsaved edits (e.g. a resize) would yield a template that doesn't match.
+  isTemplateDownloadDisabled() {
+    const { wellplate } = this.props;
+    return wellplate.isNew || wellplate.changed;
   }
 
   handleFilterChange = (e) => {
@@ -208,17 +215,32 @@ export class WellplateDetailsAttachments extends Component {
   }
 
   renderTemplateDownload() {
+    const disabled = this.isTemplateDownloadDisabled();
+    const downloadTooltip = (
+      <Tooltip id="template_download_tooltip">
+        {disabled
+          ? 'Please save the wellplate before downloading the import template'
+          : 'Download an xlsx template for importing well readouts'}
+      </Tooltip>
+    );
+
     return (
       <div>
         <ButtonGroup className="mb-1">
-          <Button
-            variant="primary"
-            onClick={() => this.handleTemplateDownload()}
-          >
-            <i className="fa fa-download" aria-hidden="true" />
-            &nbsp;
-            Download Import Template xlsx
-          </Button>
+          {/* span wrapper: a disabled button fires no mouse events, so the tooltip needs a host */}
+          <OverlayTrigger placement="bottom" overlay={downloadTooltip}>
+            <span className="d-inline-block">
+              <Button
+                variant="primary"
+                disabled={disabled}
+                onClick={() => this.handleTemplateDownload()}
+              >
+                <i className="fa fa-download" aria-hidden="true" />
+                &nbsp;
+                Download Import Template xlsx
+              </Button>
+            </span>
+          </OverlayTrigger>
           <OverlayTrigger placement="bottom" overlay={templateInfo}>
             <Button
               variant="info"
@@ -366,6 +388,7 @@ WellplateDetailsAttachments.propTypes = {
       PropTypes.number
     ]).isRequired,
     changed: PropTypes.bool,
+    isNew: PropTypes.bool,
     attachments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([
