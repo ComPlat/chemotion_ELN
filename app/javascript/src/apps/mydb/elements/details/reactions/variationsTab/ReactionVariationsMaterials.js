@@ -7,6 +7,9 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
+const SAMPLE_LABELS = ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'];
+const SAMPLE_LABELS_WITH_SUM = [...SAMPLE_LABELS, 'sum_formula'];
+
 const concentrationEnabledMaterialTypes = ['startingMaterials', 'reactants'];
 
 function isConcentrationEnabledMaterial(material) {
@@ -440,6 +443,9 @@ function cellIsEditable(params) {
   const { data, colDef } = params;
   const { entry, field } = colDef;
   const cellData = get(data, field);
+  if (!cellData) {
+    return false;
+  }
   const { isReference, gasType, materialType } = cellData.aux;
 
   switch (entry) {
@@ -571,7 +577,7 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
   const gasType = getMaterialGasType(materialCopy, gasMode);
   const entries = getMaterialEntries(materialType, gasType);
   let names = new Set([]);
-  ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
+  SAMPLE_LABELS.forEach((name) => {
     if (materialCopy[name]) {
       names.add(materialCopy[name]);
     }
@@ -721,5 +727,7 @@ export {
   computeCombinedReactionVolume,
   resolveReactionVolumeFromContext,
   cellIsEditable,
+  SAMPLE_LABELS,
+  SAMPLE_LABELS_WITH_SUM,
   getValidReactionVolume,
 };
