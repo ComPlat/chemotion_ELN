@@ -1138,6 +1138,21 @@ RSpec.describe Attachment do
         attachment.send(:read_processed_data, [tmp2], [nil], 'NMR', true)
       end.not_to change(described_class, :count)
     end
+
+    # When a curve's stem resolves to the upload's own name, the lookup must not pick self:
+    # renaming self and handing it to generate_att would overwrite the raw upload's file.
+    it 'derives a new row instead of reusing the upload itself' do
+      tmp = make_tmp_jcamp('spectra_file_lcms.dx')
+      upload_blob = attachment.read_file
+
+      expect do
+        attachment.send(:read_processed_data, [tmp], [nil], 'NMR', false)
+      end.to change(described_class, :count).by(1)
+
+      derived = described_class.where(filename: 'spectra_file_lcms.jdx').where.not(id: attachment.id)
+      expect(derived.map(&:parent_id)).to eq([attachment.id])
+      expect(attachment.read_file).to eq(upload_blob)
+    end
   end
 
   describe '#read_bagit_data' do

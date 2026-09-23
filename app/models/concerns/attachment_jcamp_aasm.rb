@@ -602,9 +602,14 @@ module AttachmentJcampProcess
   # then restores the final name exactly as before.
   def reconnect_dot_style_name(final_filename, addon, ext)
     lineage_root = root_id
+    # subtree_of includes lineage_root itself, so exclude self: when a curve's stem resolves to
+    # the upload's own name, renaming self would hand the raw upload to generate_att to overwrite.
+    # Ordered like generate_att's lookup so both resolve the same row among pre-fix duplicates.
     existing = Attachment.where_container(attachable_id)
                          .where(filename: final_filename)
+                         .where.not(id: id)
                          .merge(Attachment.subtree_of(lineage_root))
+                         .order(id: :desc)
                          .first
     return unless existing
 
