@@ -73,25 +73,95 @@ describe Chemotion::ProfileAPI do
       end
     end
 
-    context 'when a built-in element is missing from both the stored layout and the config default' do
+    context 'when the config default omits a built-in element' do
       before do
-        # Simulate a stale profile_default.yml that predates vessel...
+        # A site whose profile_default.yml predates vessel, or that dropped it
+        # deliberately. The file is the single source of truth, so the endpoint
+        # must not reinstate the element behind the administrator's back.
         stale_config = ActiveSupport::OrderedOptions.new
         stale_config.layout = { layout: { sample: 1, reaction: 2 } }
         allow(Rails.configuration).to receive(:profile_default).and_return(stale_config)
-        # ...and a profile whose stored layout also lacks vessel (migration not run).
         user.profile.update!(data: user.profile.data.merge('layout' => { 'sample' => 1, 'reaction' => 2 }))
       end
 
-      it 'still backfills built-in elements like vessel from ::API::ELEMENTS' do
+      it 'does not inject the element into the layout' do
         get '/api/v1/profiles', headers: headers
 
         expect(response).to have_http_status(:success)
         layout = JSON.parse(response.body).dig('data', 'layout')
 
-        # Self-sufficiency: no data migration and no vessel in the yml, yet the
-        # endpoint reconstructs the built-in element so it shows in the layout.
-        expect(layout).to include('vessel')
+        expect(layout.keys).to contain_exactly('sample', 'reaction')
+        expect(layout).not_to include('vessel')
+      end
+    end
+
+    context 'when the layout configuration is blank' do
+      # The initializer's rescue path, or a hand-emptied :layout: key. The
+      # allow-list would be empty, and filtering on it would strip every element
+      # out of the layout - the very failure this endpoint was fixed for.
+      let(:stored_layout) { { 'sample' => 1, 'reaction' => 2, 'vessel' => -1 } }
+
+      before do
+        blank_config = ActiveSupport::OrderedOptions.new
+        blank_config.layout = {}
+        allow(Rails.configuration).to receive(:profile_default).and_return(blank_config)
+        allow(user).to receive(:matrix_check_by_name).and_call_original
+        allow(user).to receive(:matrix_check_by_name).with('genericElement').and_return(true)
+        user.profile.update!(data: user.profile.data.merge('layout' => stored_layout))
+      end
+
+      it 'returns the stored layout unstripped' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        expect(layout.keys).to match_array(stored_layout.keys)
+      end
+
+      it 'does not persist an empty layout on update' do
+        put '/api/v1/profiles', params: { data: {} }.to_json, headers: headers
+
+        expect(response).to have_http_status(:success)
+        expect(user.profile.reload.data['layout']).to eq(stored_layout)
+      end
+    end
+
+    context 'when the stored layout holds a zero position' do
+      before do
+        user.profile.update!(
+          data: user.profile.data.merge('layout' => { 'sample' => 1, 'reaction' => 0, 'vessel' => -1 }),
+        )
+        allow(user).to receive(:matrix_check_by_name).and_call_original
+        allow(user).to receive(:matrix_check_by_name).with('genericElement').and_return(true)
+      end
+
+      it 'keeps the entry as hidden instead of dropping it' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        layout = JSON.parse(response.body).dig('data', 'layout')
+
+        # 0 is neither positive nor negative, so the old sign test discarded it
+        # from both sides of the reindex and the element vanished.
+        expect(layout).to include('reaction')
+        expect(layout['reaction']).to be_negative
+      end
+    end
+
+    context 'when the profile is seeded from the configured default' do
+      before { user.profile.update!(data: {}) }
+
+      it 'stores the layout under string keys only' do
+        get '/api/v1/profiles', headers: headers
+
+        expect(response).to have_http_status(:success)
+        # The configuration is symbol-keyed while the endpoint works in strings.
+        # Mixing the two persists :sample alongside 'sample' - invisible in the
+        # response, because JSON collapses them.
+        layout = JSON.parse(response.body).dig('data', 'layout')
+        expect(layout.keys).to all(be_a(String))
+        expect(layout.keys.uniq.size).to eq(layout.keys.size)
       end
     end
   end

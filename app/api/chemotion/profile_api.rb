@@ -27,27 +27,49 @@ module Chemotion
         number_layout_side(entries, 1).merge(number_layout_side(entries, -1))
       end
 
-      # Number one side of a layout: keep the entries whose sign matches (1 for
-      # visible, -1 for hidden), order them, and renumber to sign * (1..N).
+      # Number one side of a layout and renumber it to +sign * (1..N)+.
+      #
+      # Visible means a strictly positive position; everything else, including
+      # +0+, counts as hidden. A +0+ entry therefore survives the reindex as the
+      # first hidden entry rather than being dropped, which is what the previous
+      # +(v * sign).positive?+ test did for both signs.
+      #
+      # @param entries [Hash{String => Integer}] layout entries
+      # @param sign [Integer] +1+ for the visible side, +-1+ for the hidden side
+      # @return [Hash{String => Integer}] the entries of that side, renumbered
       def number_layout_side(entries, sign)
-        entries.select { |_k, v| (v * sign).positive? }
-               .sort_by { |_k, v| v * sign }
-               .each_with_index
-               .to_h { |(k, _v), i| [k, (i + 1) * sign] }
+        side = if sign.positive?
+                 entries.select { |_k, v| v.positive? }
+               else
+                 entries.reject { |_k, v| v.positive? }
+               end
+        side.sort_by { |_k, v| v * sign }
+            .each_with_index
+            .to_h { |(k, _v), i| [k, (i + 1) * sign] }
       end
 
-      # Names of every element a layout may reference: the built-in ELN elements
-      # plus any active generic elements.
+      # Names a layout may reference: the elements this instance's
+      # +config/profile_default.yml+ declares, plus any active generic element.
+      #
+      # The configuration file is the single source of truth for the element tab
+      # layout, so an element the site removed from it is not offered. Callers
+      # must skip filtering entirely when {#default_layout} is blank — see the
+      # guards below.
+      #
+      # @return [Array<String>]
       def available_element_names
-        ::API::ELEMENTS + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
+        default_layout.keys + Labimotion::ElementKlass.where(is_active: true).pluck(:name)
       end
 
-      # Default tab layout, sourced from config/profile_default.yml so the values
-      # are not duplicated across the codebase.
+      # Default tab layout for this instance, from +config/profile_default.yml+.
+      #
+      # Memoized per request: it is consulted several times per call and each
+      # read deep-copies the shared configuration hash.
+      #
+      # @return [Hash{String => Integer}] empty when the configuration could not
+      #   be loaded
       def default_layout
-        return {} unless Rails.configuration.respond_to?(:profile_default)
-
-        (Rails.configuration.profile_default&.layout&.dig(:layout) || {}).transform_keys(&:to_s)
+        @default_layout ||= Profile.default_layout
       end
     end
 
@@ -70,32 +92,22 @@ module Chemotion
           data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
         end
 
-        # Ensure every built-in element is present, adding any that are missing as
-        # hidden. This makes the endpoint self-sufficient: a newly introduced
-        # element (e.g. vessel) or a profile created before an element existed
-        # still appears, without relying on a data migration or an up-to-date
-        # profile_default.yml.
         data['layout'] ||= {}
-        ::API::ELEMENTS.each do |name|
-          next if data['layout'].key?(name)
-
-          min = data['layout'].values.min
-          data['layout'][name] = min&.negative? ? min - 1 : -1
-        end
 
         if current_user.matrix_check_by_name('genericElement')
-          # Built-in ELN elements must be kept alongside any active generic
-          # elements. Otherwise, when no generic ElementKlass is active, the
-          # filter below strips sample/reaction/etc. out of the layout and every
-          # element disappears from the tab layout and the "Create" menu.
-          available_elements = available_element_names
           new_layout = data['layout'] || {}
           Labimotion::ElementKlass.where(is_active: true).find_each do |el|
             if data['layout'] && data['layout'][el.name.to_s].nil?
               new_layout[el.name.to_s] = new_layout&.values&.min&.negative? ? new_layout.values.min - 1 : -1
             end
           end
-          new_layout = new_layout.slice(*available_elements)
+          # The allow-list comes from profile_default.yml, so the configured
+          # elements survive alongside the active generic ones. Filtering on the
+          # generic names alone wiped sample/reaction/etc. out of the tab layout
+          # and the "Create" menu whenever no generic element was active.
+          # A blank configuration yields a blank allow-list, which would strip
+          # everything, so in that case nothing is filtered at all.
+          new_layout = new_layout.slice(*available_element_names) if default_layout.present?
           data['layout'] = reindex_layout(new_layout)
         end
 
@@ -161,22 +173,30 @@ module Chemotion
       end
       put do
         declared_params = declared(params, include_missing: false)
+        # A blank configuration yields a blank allow-list; filtering on it would
+        # strip the whole layout, so in that case nothing is filtered at all.
+        filter_elements = default_layout.present?
         available_elements = available_element_names
         # Find not declared generic layout details
         generic_layouts = params[:data].select do |key, _|
           key.to_s.match(/^layout_detail_.+/) && !declared_params[:data].key?(key)
         end
-        generic_layouts = generic_layouts.select do |key, _|
-          available_elements.include? key.delete_prefix('layout_detail_')
+        if filter_elements
+          generic_layouts = generic_layouts.select do |key, _|
+            available_elements.include? key.delete_prefix('layout_detail_')
+          end
         end
         # Set not declared generic layout details as declared
         declared_params[:data] = declared_params[:data].merge(generic_layouts)
 
         data = current_user.profile.data || {}
-        data['layout'] ||= default_layout
+        # Only seed from the configuration when it actually holds a layout:
+        # persisting a blank one would leave the user with no tabs at all.
+        data['layout'] = default_layout if data['layout'].blank? && default_layout.present?
+        data['layout'] ||= {}
 
-        layout = data['layout'].select { |e| available_elements.include?(e) }
-        data['layout'] = layout.sort_by { |_k, v| v }.to_h
+        data['layout'] = data['layout'].select { |e| available_elements.include?(e) } if filter_elements
+        data['layout'] = data['layout'].sort_by { |_k, v| v }.to_h
         if data['default_structure_editor'].nil? || data['default_structure_editor'] =~ /ketcher/i
           data['default_structure_editor'] = 'ketcher'
         end
