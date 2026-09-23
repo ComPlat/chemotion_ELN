@@ -340,6 +340,226 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/all with an active date filter' do
+    let(:url) { '/api/v1/search/all' }
+    let(:old_sample) do
+      create(:sample, name: 'Old zzdatefilter', creator: user, collections: [collection],
+                      created_at: '2020-01-10', updated_at: '2020-01-10')
+    end
+    let(:recent_sample) do
+      create(:sample, name: 'Recent zzdatefilter', creator: user, collections: [collection],
+                      created_at: '2026-09-23', updated_at: '2026-09-23')
+    end
+    let(:params) do
+      {
+        selection: {
+          elementType: :all,
+          name: 'zzdatefilter',
+          search_by_method: :sample_name,
+          list_filter_params: list_filter_params,
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      old_sample
+      recent_sample
+      do_request
+    end
+
+    context 'when a from date excludes the older sample' do
+      let(:list_filter_params) { { filter_created_at: true, from_date: Time.zone.parse('2026-09-23').to_i } }
+
+      it 'returns only the sample created on or after that date' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [recent_sample.id]
+      end
+    end
+
+    context 'when a to date excludes the recent sample' do
+      let(:list_filter_params) { { filter_created_at: true, to_date: Time.zone.parse('2020-01-10').to_i } }
+
+      it 'returns only the sample created on or before that date' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [old_sample.id]
+      end
+    end
+
+    context 'when the range spans both samples' do
+      let(:list_filter_params) do
+        { filter_created_at: true,
+          from_date: Time.zone.parse('2020-01-10').to_i,
+          to_date: Time.zone.parse('2026-09-23').to_i }
+      end
+
+      it 'returns both samples' do
+        expect(parsed_json_response.dig('samples', 'ids')).to contain_exactly(old_sample.id, recent_sample.id)
+      end
+    end
+
+    context 'when filtering on updated_at instead' do
+      let(:list_filter_params) { { filter_created_at: false, from_date: Time.zone.parse('2026-09-23').to_i } }
+
+      it 'returns only the recently updated sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [recent_sample.id]
+      end
+    end
+
+    context 'when the date filter is set on a search by ids' do
+      let(:url) { '/api/v1/search/by_ids' }
+      let(:list_filter_params) { { filter_created_at: true, from_date: Time.zone.parse('2026-09-23').to_i } }
+      let(:params) do
+        {
+          selection: {
+            elementType: :by_ids,
+            id_params: {
+              model_name: 'sample',
+              ids: [old_sample.id, recent_sample.id],
+              total_elements: 2,
+              with_filter: true,
+            },
+            list_filter_params: list_filter_params,
+            search_by_method: 'search_by_ids',
+          },
+          collection_id: collection.id,
+          page: 1,
+          page_size: 15,
+          per_page: 15,
+          molecule_sort: true,
+        }
+      end
+
+      it 'returns only the sample created on or after that date' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [recent_sample.id.to_s]
+      end
+
+      it 'counts only the sample created on or after that date' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/all with a from date picked east of UTC' do
+    let(:url) { '/api/v1/search/all' }
+    # What the picker sends for 20-09-2025 in a UTC+2 browser: the instant of local midnight.
+    let(:local_midnight) { Time.parse('2025-09-20 00:00:00 +02:00').to_i }
+    let(:day_before) do
+      create(:sample, name: 'Before zztzfilter', creator: user, collections: [collection],
+                      created_at: '2025-09-19 12:00:00 UTC')
+    end
+    let(:on_the_day) do
+      create(:sample, name: 'OnDay zztzfilter', creator: user, collections: [collection],
+                      created_at: '2025-09-20 08:00:00 UTC')
+    end
+    let(:params) do
+      {
+        selection: {
+          elementType: :all,
+          name: 'zztzfilter',
+          search_by_method: :sample_name,
+          list_filter_params: { filter_created_at: true, from_date: local_midnight },
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      day_before
+      on_the_day
+      do_request
+    end
+
+    it 'does not pull in the previous day' do
+      expect(parsed_json_response.dig('samples', 'ids')).to eq [on_the_day.id]
+    end
+  end
+
+  describe 'POST /api/v1/search/advanced with an active user label filter' do
+    let(:url) { '/api/v1/search/advanced' }
+    let(:user_label) { UserLabel.create!(user_id: user.id, title: 'My Label', color: '#aabbcc') }
+    let(:labelled_sample) { create(:sample, name: 'Labelled zzadvlabel', creator: user, collections: [collection]) }
+    let(:unlabelled_sample) { create(:sample, name: 'Plain zzadvlabel', creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :advanced,
+          advanced_params: [
+            {
+              link: '', match: 'ILIKE', table: 'samples', element_id: 0,
+              field: { column: 'name', label: 'Name' },
+              value: 'zzadvlabel', sub_values: [], unit: '', available_options: []
+            },
+          ],
+          list_filter_params: list_filter_params,
+          search_by_method: :advanced,
+        },
+        collection_id: collection.id,
+        page: 1,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
+
+    before do
+      labelled_sample.tag.update!(
+        taggable_data: labelled_sample.tag.taggable_data.merge('user_labels' => [user_label.id]),
+      )
+      unlabelled_sample
+      do_request
+    end
+
+    context 'when the label filter is set' do
+      let(:list_filter_params) { { user_label: user_label.id } }
+
+      it 'returns and counts only the sample carrying the label' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [labelled_sample.id]
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+      end
+    end
+
+    context 'when no label filter is set' do
+      let(:list_filter_params) { {} }
+
+      it 'returns both matching samples' do
+        expect(parsed_json_response.dig('samples', 'ids')).to contain_exactly(labelled_sample.id, unlabelled_sample.id)
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/by_ids for one page of search modal results' do
+    let(:url) { '/api/v1/search/by_ids' }
+    let(:samples) { create_list(:sample, 3, creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :by_ids,
+          id_params: {
+            model_name: 'sample',
+            ids: [samples.last.id],
+            total_elements: 3,
+            with_filter: false,
+          },
+          list_filter_params: {},
+          search_by_method: 'search_by_ids',
+          page_size: 2,
+        },
+        collection_id: collection.id,
+        page: 2,
+        page_size: 2,
+        per_page: 2,
+        molecule_sort: true,
+      }
+    end
+
+    before { do_request }
+
+    it 'returns the requested page with the full result counts' do
+      expect(parsed_json_response.dig('samples', 'page')).to eq 2
+      expect(parsed_json_response.dig('samples', 'pages')).to eq 2
+      expect(parsed_json_response.dig('samples', 'totalElements')).to eq 3
+      expect(parsed_json_response.dig('samples', 'elements').pluck('id')).to eq [samples.last.id]
+    end
+  end
+
   describe 'POST /api/v1/search/advanced' do
     let(:url) { '/api/v1/search/advanced' }
     let(:advanced_params) do

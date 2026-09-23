@@ -7,6 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { allElnElementsForSearch, allElnElements } from 'src/apps/generic/Utils';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -383,6 +384,11 @@ class UIStore {
       const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
       const { profile } = UserStore.getState();
 
+      if (state.currentSearchSelection) {
+        this.handleSelectCollectionForSearchSelection(collection);
+        return;
+      }
+
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
 
@@ -459,6 +465,28 @@ class UIStore {
     }
   }
 
+  // A running search stays in charge of the list, so re-run it against the
+  // current filters instead of falling back to the plain collection listing.
+  handleSelectCollectionForSearchSelection(collection) {
+    const { state } = this;
+    const { moleculeSort } = ElementStore.getState();
+    const selection = { ...state.currentSearchSelection, page_size: state.number_of_results };
+    this.state.currentSearchSelection = selection;
+
+    // The result set shrinks or grows with the filter, so the old page number no longer applies.
+    Object.keys(state).forEach((key) => {
+      const entry = state[key];
+      if (entry && typeof entry === 'object' && typeof entry.page === 'number') entry.page = 1;
+    });
+
+    ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
+      selection,
+      collectionId: collection.id,
+      page: 1,
+      moleculeSort,
+    });
+  }
+
   handleSelectCollectionForSearchById(layout, collection) {
     const { state } = this;
     const searchResult = { ...state.currentSearchByID };
@@ -478,8 +506,8 @@ class UIStore {
         if (fromDate || toDate || productOnly || userLabel) {
           filterParams = {
             filter_created_at: filterCreatedAt,
-            from_date: fromDate,
-            to_date: toDate,
+            from_date: fromDate ? dateToUnixTimestamp(fromDate) : null,
+            to_date: toDate ? dateToUnixTimestamp(toDate) : null,
             user_label: userLabel,
             product_only: productOnly,
           };
@@ -521,8 +549,10 @@ class UIStore {
     this.state.currentSearchSelection = selection;
   }
 
+  // An adopted result replaces any quick search. Cf. AutoCompleteInput#selectSuggestion.
   handleSetSearchById(selection) {
     this.state.currentSearchByID = selection;
+    this.state.currentSearchSelection = null;
   }
 
   handleSelectCollectionWithoutUpdating(collection) {

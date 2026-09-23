@@ -12,6 +12,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ClipboardStore from 'src/stores/alt/stores/ClipboardStore';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -1409,8 +1410,8 @@ class ElementStore {
     if (fromDate || toDate || userLabel || productOnly) {
       filterParams = {
         filter_created_at: filterCreatedAt,
-        from_date: fromDate,
-        to_date: toDate,
+        from_date: fromDate ? dateToUnixTimestamp(fromDate) : null,
+        to_date: toDate ? dateToUnixTimestamp(toDate) : null,
         user_label: userLabel,
         product_only: productOnly,
       };
