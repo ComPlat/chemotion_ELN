@@ -70,6 +70,7 @@ class Reaction < ApplicationRecord
   include ElementCodes
   include Taggable
   include ReactionRinchi
+  include QuillInlineAttachmentRemappable
   include Labimotion::Segmentable
 
   serialize :description, Hash
@@ -325,6 +326,12 @@ class Reaction < ApplicationRecord
     changed = pairs.count { |variation_id, analysis_id| link_variation?(current_variations, variation_id, analysis_id) }
 
     update(variations: current_variations) if changed.positive?
+  end
+
+  def remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    [description, observation].each do |delta|
+      remap_delta_op_identifiers(delta, original_identifier, copy_identifier)
+    end
   end
 
   private

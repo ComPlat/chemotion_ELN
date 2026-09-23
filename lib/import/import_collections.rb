@@ -7,6 +7,8 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
+    INLINE_BLOT_KEYS = %w[attachment-image attachment-file].freeze
+
     attr_reader :log_file_path
 
     # Labels of collections created in this import (from import_collections or gate).
@@ -99,6 +101,7 @@ module Import
         end
       end
       update_researchplan_body(attachments)
+      update_richtext_attachment_identifiers(attachments)
 
       @attachments = attachments.map(&:id)
       attachments = []
@@ -840,6 +843,46 @@ module Import
           field['value']['file_name'] = new_att['filename']
         rescue StandardError => _e
           log_unassociated_attachment(attr_value['name'], field)
+        end
+      end
+    end
+
+    # Must run in extract() before import_attachments(); att.filename is "<old-uuid>.<ext>" from the ZIP entry name.
+    def update_richtext_attachment_identifiers(attachments)
+      return if attachments.empty?
+
+      identifier_map = attachments.each_with_object({}) do |att, map|
+        map[File.basename(att.filename, '.*')] = att.identifier if att.filename.present? && att.identifier.present?
+      end
+      return if identifier_map.empty?
+
+      [
+        { type: 'Reaction', fields: %w[observation description] },
+        { type: 'Screen',   fields: %w[description] },
+        { type: 'Wellplate', fields: %w[description] },
+      ].each do |config|
+        @data.fetch(config[:type], {}).each_value do |attrs|
+          config[:fields].each do |field_name|
+            remap_quill_delta_identifiers(attrs[field_name], identifier_map)
+          end
+        end
+      end
+    end
+
+    def remap_quill_delta_identifiers(delta, identifier_map)
+      ops = delta.is_a?(Hash) ? delta['ops'] : nil
+      return unless ops.is_a?(Array)
+
+      ops.each do |op|
+        insert = op.is_a?(Hash) ? op['insert'] : nil
+        next unless insert.is_a?(Hash)
+
+        INLINE_BLOT_KEYS.each do |blot_key|
+          payload = insert[blot_key]
+          next unless payload.is_a?(Hash)
+
+          old_id = payload['attachment_identifier']
+          payload['attachment_identifier'] = identifier_map[old_id] if identifier_map.key?(old_id)
         end
       end
     end

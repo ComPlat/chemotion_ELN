@@ -66,6 +66,38 @@ RSpec.describe 'QuillToPlainText' do
     end
   end
 
+  describe 'filter_image strips attachment ops across every shape' do
+    # Locks the regex additions in lib/quill_utils.rb#filter_image so future
+    # blot refactors that change the delta key (`image` → `attachment-image`,
+    # etc.) can't silently leak raw JSON tokens into exported plain text.
+    it 'strips current Embed-shape attachment-image and attachment-file ops' do
+      delta = {
+        ops: [
+          { insert: 'Hello ' },
+          { insert: { 'attachment-image' => { attachment_identifier: 'abc', filename: 'foo.png', width: '320' } } },
+          { insert: ' and ' },
+          { insert: { 'attachment-file' => { attachment_identifier: 'def', filename: 'bar.pdf', filesize: 1024 } } },
+          { insert: " done\n" },
+        ],
+      }
+      expect(lib.convert(delta.to_json)).to eq("Hello  and  done\n")
+    end
+
+    it 'still strips legacy shapes (raw dataURL image and inline attachment-file attribute)' do
+      delta = {
+        ops: [
+          { insert: 'Before ' },
+          { insert: { image: 'data:image/png;base64,AAA' } },
+          { insert: 'middle ' },
+          { insert: 'legacy.pdf',
+            attributes: { 'attachment-file' => { attachment_identifier: 'ghi', filename: 'legacy.pdf' } } },
+          { insert: " after\n" },
+        ],
+      }
+      expect(lib.convert(delta.to_json)).to eq("Before middle  after\n")
+    end
+  end
+
   describe 'convert long delta' do
     let(:delta_ops) do
       "{\"ops\":[{\"insert\":\"#{'a' * 10_000}\"}]}"

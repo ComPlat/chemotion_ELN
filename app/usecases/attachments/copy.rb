@@ -23,7 +23,9 @@ module Usecases
 
           update_annotation(original_attach, copy_attach.id)
 
-          if element.instance_of?(::ResearchPlan)
+          # Duck-type opt-in: any model including QuillInlineAttachmentRemappable gets its
+          # richtext attachment identifiers remapped to point at the new copy.
+          if element.respond_to?(:update_body_attachments)
             element.update_body_attachments(original_attach.identifier, copy_attach.identifier)
           end
         end

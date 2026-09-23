@@ -31,6 +31,7 @@ class Wellplate < ApplicationRecord
   include Collectable
   include ElementCodes
   include Taggable
+  include QuillInlineAttachmentRemappable
   include Labimotion::Segmentable
 
   serialize :description, Hash
@@ -163,6 +164,10 @@ class Wellplate < ApplicationRecord
 
   def size
     width * height
+  end
+
+  def remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    remap_delta_op_identifiers(description, original_identifier, copy_identifier)
   end
 
   private

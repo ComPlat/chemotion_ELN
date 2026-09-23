@@ -20,7 +20,13 @@ import ResearchPlan from 'src/models/ResearchPlan';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from
   'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import {
+  addAttachmentsFromFiles,
+  setAttachmentDeleted,
+  replaceAttachment,
+  collectInlineAttachmentIdentifiers,
+  stripDeletedInlineBlotsFromBody,
+} from 'src/utilities/attachmentUtils';
 import ResearchPlanDetailsBody from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from
@@ -109,6 +115,20 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.state;
     LoadingActions.start();
     this.context.attachmentNotificationStore.clearMessages();
+
+    // Cascade: strip any richtext inline blot whose backing attachment was
+    // deleted from the Attachments tab (`is_deleted: true` but still
+    // referenced in body ops). Without this, the persisted body would
+    // reference a soft-deleted attachment and render as a broken image
+    // after reload.
+    const deletedInlineIds = new Set(
+      (researchPlan.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0) {
+      researchPlan.body = stripDeletedInlineBlotsFromBody(researchPlan.body, deletedInlineIds);
+    }
 
     if (researchPlan.isNew) {
       ElementActions.createResearchPlan(researchPlan);
@@ -465,6 +485,7 @@ export default class ResearchPlanDetails extends Component {
         elementChanged={researchPlan.changed}
         isDeleteProtected={this.isAttachmentInBody.bind(this)}
         readOnly={researchPlan.isReadOnly}
+        inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(researchPlan.body)}
       />
     );
   } /* eslint-enable */

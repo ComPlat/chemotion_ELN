@@ -60,7 +60,7 @@ import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import Reaction from 'src/models/Reaction';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, stripDeletedInlineBlotsFromBody } from 'src/utilities/attachmentUtils';
 
 const formatReactionTypeOption = (option, { context }) => (
   context === 'value'
@@ -283,6 +283,26 @@ export default class ReactionDetails extends Component {
     LoadingActions.start();
 
     const { reaction } = this.state;
+
+    const deletedInlineIds = new Set(
+      (reaction.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0) {
+      const strippedObs = stripDeletedInlineBlotsFromBody(
+        [{ type: 'richtext', value: reaction.observation }],
+        deletedInlineIds
+      );
+      reaction.observation = strippedObs[0].value;
+
+      const strippedDesc = stripDeletedInlineBlotsFromBody(
+        [{ type: 'richtext', value: reaction.description }],
+        deletedInlineIds
+      );
+      reaction.description = strippedDesc[0].value;
+    }
+
     if (reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
@@ -1189,6 +1209,10 @@ export default class ReactionDetails extends Component {
                 onUndoDelete={this.handleAttachmentUndoDelete}
                 onEdit={this.handleAttachmentEdit}
                 readOnly={!reaction.can_update}
+                inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(
+                  [{ type: 'richtext', value: reaction.observation },
+                   { type: 'richtext', value: reaction.description }]
+                )}
               />
             </ListGroupItem>
           </ListGroup>
