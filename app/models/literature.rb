@@ -81,7 +81,7 @@ class Literature < ApplicationRecord
 
   def sanitize_refs
     self.refs ||= {}
-    bt = self.refs['bibtex']
-    self.refs['bibtex'] = bt.gsub(/,\s*,/, ',') if bt
+    bt = refs['bibtex']
+    refs['bibtex'] = bt.gsub(/,\s*,/, ',') if bt
   end
 end

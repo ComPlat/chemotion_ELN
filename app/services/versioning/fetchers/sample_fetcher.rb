@@ -44,7 +44,7 @@ module Versioning
           end
         end
 
-        versions + chemical_versions + literature_versions
+        versions + chemical_versions + Versioning::Fetchers::LiteratureFetcher.call(element: sample)
       end
 
       private
@@ -53,13 +53,6 @@ module Versioning
         return [] if sample.chemical.nil?
 
         Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
-      end
-
-      def literature_versions
-        sample.literals.flat_map do |literal|
-          Versioning::Serializers::LiteratureSerializer
-            .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
-        end
       end
     end
   end

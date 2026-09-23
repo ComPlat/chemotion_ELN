@@ -22,7 +22,7 @@ module Versioning
                                                                           "Attachment: #{attachment.filename}"].compact)
         end
 
-        versions + analyses_versions + literature_versions
+        versions + analyses_versions + Versioning::Fetchers::LiteratureFetcher.call(element: research_plan)
       end
 
       private
@@ -55,13 +55,6 @@ module Versioning
         versions + dataset.attachments.with_log_data.flat_map do |attachment|
           Versioning::Serializers::AttachmentSerializer.call(attachment,
                                                              [*dataset_labels, "Attachment: #{attachment.filename}"])
-        end
-      end
-
-      def literature_versions
-        research_plan.literals.flat_map do |literal|
-          Versioning::Serializers::LiteratureSerializer
-            .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
         end
       end
     end
