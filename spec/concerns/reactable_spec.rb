@@ -23,6 +23,35 @@ RSpec.describe Reactable, type: :module do
            })
   end
 
+  describe '#update_equivalent' do
+    it 'preserves the client-calculated equivalent when the reference is a mixture' do
+      mixture = create(
+        :sample,
+        sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+        real_amount_value: 1000.124,
+        real_amount_unit: 'g',
+      )
+      dependent = create(:sample, real_amount_value: 0.816, real_amount_unit: 'g')
+      create(
+        :reactions_starting_material_sample,
+        reaction: reaction,
+        sample: mixture,
+        reference: true,
+        equivalent: 1.0,
+      )
+      association = create(
+        :reactions_reactant_sample,
+        reaction: reaction,
+        sample: dependent,
+        equivalent: 1.7728,
+      )
+
+      association.update_equivalent
+
+      expect(association.reload.equivalent).to eq(1.7728)
+    end
+  end
+
   describe '#test methods for gas phase reaction samples' do
     describe '#detect_amount_type' do
       it 'returns a hash with sample target_amount_value and target_amount_unit' do
