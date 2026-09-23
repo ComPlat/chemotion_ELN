@@ -26,7 +26,7 @@ module Entities
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
       expose! :segments,                anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :short_label
-      expose! :attachments, anonymize_with: [], using: 'Entities::AttachmentEntity'
+      expose! :attachments, anonymize_with: [], unless: :displayed_in_list, using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 
