@@ -691,6 +691,44 @@ describe Chemotion::AttachmentAPI do
         expect(atts.length).to eq(1)
       end
     end
+
+    context 'when a derived curve is sent as an original' do
+      let(:root_attachment) { create(:attachment, filename: 'x_lcms.zip', attachable: container, aasm_state: 'done') }
+      let(:derived_curve) do
+        # failure is a state set_regenerating accepts, so only the root check keeps it out
+        create(:attachment, filename: 'x_lcms_tic.jdx', attachable: container, aasm_state: 'failure',
+                            parent: root_attachment)
+      end
+
+      before do
+        spectrum_params[:original] = [derived_curve.id]
+        execute_request
+      end
+
+      it 'returns statuscode 201' do
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'leaves the derived curve to its root instead of regenerating it' do
+        expect(derived_curve.reload.aasm_state).to eq('failure')
+      end
+    end
+
+    context 'when a root row cannot be regenerated' do
+      let(:peaked_upload) do
+        create(:attachment, filename: 'x_lcms_tic.jdx', attachable: container, aasm_state: 'peaked')
+      end
+
+      before do
+        spectrum_params[:original] = [peaked_upload.id]
+        execute_request
+      end
+
+      it 'skips it instead of failing the request' do
+        expect(response).to have_http_status(:created)
+        expect(peaked_upload.reload.aasm_state).to eq('peaked')
+      end
+    end
   end
 
   describe 'POST /api/v1/attachments/save_spectrum' do

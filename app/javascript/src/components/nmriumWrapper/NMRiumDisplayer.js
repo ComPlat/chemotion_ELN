@@ -231,9 +231,13 @@ export default class NMRiumDisplayer extends React.Component {
     this.hasSentToNMRium = true;
     LoadingActions.start.defer();
 
-    const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
-    const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
-    const zip = fetchedSpectra.find((s) => s.kind === 'zip');
+    const anchor = this.getSpcInfo();
+    const spectra = this.sessionSpectra();
+    // The anchor, not merely the first .nmrium of its dataset: see getSpcInfo.
+    const nmrium = spectra.find((s) => s.kind === 'nmrium' && s.id === anchor?.idx);
+    const jdxList = spectra.filter((s) => s.kind === 'jcamp' && s.url);
+    const jdx = jdxList[0];
+    const zip = spectra.find((s) => s.kind === 'zip');
     const molfile = sample?.molfile || null;
 
     // If we have a .nmrium file, patch it and send it
@@ -244,18 +248,18 @@ export default class NMRiumDisplayer extends React.Component {
     }
 
     // Fallback: only .jdx/.zip file available
-    if (jdx?.url) {
-      // get file extension from jdx.label
-      const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
-      const jdxUrlWithFile = `${jdx.url}/file.${fileExtension}`;
+    if (jdxList.length) {
       const payload = {
         type: 'nmrium',
         data: {
-          spectra: [{
-            id: crypto.randomUUID(),
-            source: { jcampURL: jdxUrlWithFile },
-            display: { name: jdx.label || 'spectrum' },
-          }],
+          spectra: jdxList.map((item) => {
+            const fileExtension = item.label?.split('.').pop()?.toLowerCase() || 'jdx';
+            return {
+              id: crypto.randomUUID(),
+              source: { jcampURL: `${item.url}/file.${fileExtension}` },
+              display: { name: item.label || 'spectrum' },
+            };
+          }),
           molecules: molfile ? [{ molfile }] : [],
         },
       };
@@ -645,6 +649,9 @@ export default class NMRiumDisplayer extends React.Component {
     const specInfo = this.getSpcInfo();
     if (!specInfo) return;
 
+    // One .nmrium/.svg per dataset, not per curve: NMRium is always handed a single
+    // combined session (sendPatchedNmrium posts exactly one file) and only one .nmrium is
+    // ever read back, so a per-curve basename names a document that isn't per-curve.
     const baseName = specInfo.label?.split('.')[0] || 'spectrum';
 
     const imageAttachment = this.prepareImageAttachment(imageBlobData, baseName);
@@ -672,9 +679,34 @@ export default class NMRiumDisplayer extends React.Component {
     if (handleSubmit) handleSubmit();
   }
 
+  // The analysis-level button hands over the files of every dataset in the analysis, but a
+  // session is saved back into one dataset. Anchor on the dataset holding the .nmrium (the
+  // document being reopened), else on the first file's, and use that same anchor both for what
+  // is loaded (sessionSpectra) and for where the save lands (prepareDatasets).
+  //
+  // Within that dataset, prefer the "<stem>.nmrium" a save writes (savingNMRiumWrapperData) over any
+  // other .nmrium listed ahead of it - e.g. a per-curve "x.1_bagit.nmrium" left by an earlier save
+  // under a per-curve name. Otherwise the document reopened and the one saved diverge: every save
+  // lands in "x.nmrium" while every reopen shows the older file.
   getSpcInfo() {
-    const { spcInfos, spcIdx } = this.state;
-    return spcInfos.find((spc) => spc.idx === spcIdx) || spcInfos[0];
+    const { spcInfos } = this.state;
+    const isNmrium = (si) => this.getFileExtension(si.label) === 'nmrium';
+    const first = spcInfos.find(isNmrium);
+    if (!first) return spcInfos[0];
+
+    const saved = spcInfos.find((si) => (
+      si.idDt === first.idDt && isNmrium(si) && si.label.split('.').length === 2
+    ));
+    return saved || first;
+  }
+
+  sessionSpectra() {
+    const { fetchedSpectra, spcInfos } = this.state;
+    const anchor = this.getSpcInfo();
+    if (!anchor) return fetchedSpectra || [];
+
+    const inDataset = new Set(spcInfos.filter((si) => si.idDt === anchor.idDt).map((si) => si.idx));
+    return (fetchedSpectra || []).filter((s) => inDataset.has(s.id));
   }
 
   prepareDatasets(fileNamesToDelete = []) {
