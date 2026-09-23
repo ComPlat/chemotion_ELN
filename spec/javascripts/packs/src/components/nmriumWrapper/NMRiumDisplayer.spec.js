@@ -82,4 +82,95 @@ describe('NMRiumDisplayer', () => {
         .toEqual([`${TPA}/TOKEN-A/file.zip/exp1/pdata/1/2rr`]);
     });
   });
+
+  // The analysis-level button hands over every dataset's files, but a session is saved back into
+  // one dataset. Loading all of them into one session and saving into whichever came first wrote
+  // one dataset's document into another; both sides now follow the same anchor.
+  describe('dataset anchoring', () => {
+    const spcInfos = [
+      { idx: 1, idDt: 10, label: 'a.jdx' },
+      { idx: 2, idDt: 20, label: 'b.1_bagit.jdx' },
+      { idx: 3, idDt: 20, label: 'b.2_bagit.jdx' },
+      { idx: 4, idDt: 20, label: 'b.nmrium' },
+    ];
+    const fetched = [
+      { id: 1, kind: 'jcamp', label: 'a.jdx', url: `${TPA}/A` },
+      { id: 2, kind: 'jcamp', label: 'b.1_bagit.jdx', url: `${TPA}/B1` },
+      { id: 3, kind: 'jcamp', label: 'b.2_bagit.jdx', url: `${TPA}/B2` },
+    ];
+
+    const displayerFor = (infos, fetchedSpectra, props = {}) => {
+      const displayer = new NMRiumDisplayer(props);
+      displayer.state = { ...displayer.state, spcInfos: infos, fetchedSpectra };
+      return displayer;
+    };
+
+    it('anchors on the dataset holding the .nmrium document', () => {
+      expect(displayerFor(spcInfos, fetched).getSpcInfo().idDt).toEqual(20);
+    });
+
+    it('ignores a stale spcIdx left in the shared store by the spectra editor', () => {
+      const displayer = displayerFor(spcInfos, fetched);
+      displayer.state.spcIdx = 1;
+      expect(displayer.getSpcInfo().idDt).toEqual(20);
+    });
+
+    it('falls back to the first file when no .nmrium exists', () => {
+      const infos = spcInfos.filter((si) => !si.label.endsWith('.nmrium'));
+      expect(displayerFor(infos, fetched).getSpcInfo().idDt).toEqual(10);
+    });
+
+    it('loads every curve of the anchored dataset and nothing from the others', async () => {
+      // No .nmrium, and a dataset-20 file listed first, so the anchor is dataset 20.
+      const infos = spcInfos.filter((si) => !si.label.endsWith('.nmrium')).reverse();
+      const displayer = displayerFor(infos, fetched, { sample: { molfile: null } });
+      Object.assign(displayer.state, { isIframeLoaded: true, showModalNMRDisplayer: true });
+      const posted = [];
+      displayer.postToNMRium = (message) => posted.push(message);
+
+      await displayer.trySendUrlsToNMRium();
+
+      const sources = posted[0].data.data.spectra.map((spc) => spc.source.jcampURL);
+      expect(sources).toEqual([`${TPA}/B1/file.jdx`, `${TPA}/B2/file.jdx`]);
+    });
+
+    it('saves into the anchored dataset', () => {
+      const datasets = [{ id: 10, attachments: [] }, { id: 20, attachments: [] }];
+      const sample = { datasetContainers: () => datasets };
+      const displayer = displayerFor(spcInfos, fetched, { sample });
+      expect(displayer.prepareDatasets().id).toEqual(20);
+    });
+
+    // A save always writes "<stem>.nmrium". A per-curve document left by an earlier save (listed
+    // ahead of it) must not keep being reopened in its place, or the save never shows up again.
+    describe('when the dataset also holds a per-curve .nmrium', () => {
+      const perCurve = { idx: 5, idDt: 20, label: 'b.1_bagit.nmrium' };
+      const infos = [...spcInfos.slice(0, 3), perCurve, spcInfos[3]];
+      const withDocs = [
+        ...fetched,
+        { id: 5, kind: 'nmrium', label: 'b.1_bagit.nmrium', file: 'e30=' },
+        { id: 4, kind: 'nmrium', label: 'b.nmrium', file: 'e30=' },
+      ];
+
+      it('anchors on the document a save writes', () => {
+        expect(displayerFor(infos, withDocs).getSpcInfo().idx).toEqual(4);
+      });
+
+      it('loads that same document', async () => {
+        const displayer = displayerFor(infos, withDocs, { sample: { molfile: null } });
+        Object.assign(displayer.state, { isIframeLoaded: true, showModalNMRDisplayer: true });
+        let loaded = null;
+        displayer.sendPatchedNmrium = async (nmrium) => { loaded = nmrium; };
+
+        await displayer.trySendUrlsToNMRium();
+
+        expect(loaded.id).toEqual(4);
+      });
+
+      it('still anchors on a per-curve document when it is the only one', () => {
+        const onlyPerCurve = [...spcInfos.slice(0, 3), perCurve];
+        expect(displayerFor(onlyPerCurve, withDocs).getSpcInfo().idx).toEqual(5);
+      });
+    });
+  });
 });
