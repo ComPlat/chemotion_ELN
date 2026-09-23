@@ -246,6 +246,53 @@ const SOURCE_ID_PREFIX = 'nmrium-src-';
 const ARCHIVE_MARKER = '/file.zip/';
 const isAbsoluteUrl = (value) => typeof value === 'string' && /^https?:\/\//.test(value);
 
+// A saved .nmrium must not carry a download URL. The ELN mints those per open as third-party-app
+// tokens, and `encode_and_cache_token` rewrites the server-side cache entry keyed on
+// attachment+user every time — so re-minting on the *next* open is itself what invalidates the
+// token a previous save persisted. Such a URL is already dead when it is read back, long before
+// its 48h expiry or its download counter matter. Persist an opaque reference to the attachment
+// instead and re-mint on open (see refreshPersistedSources in NMRiumDisplayer.js), so what lives
+// in the file is the one thing that does not change: which attachment this spectrum came from.
+const ATTACHMENT_REF_ORIGIN = 'chemotion-attachment://eln';
+const TPA_PATH_RE = /\/api\/v\d+\/public\/third_party_apps\//;
+
+const isAttachmentRef = (value) => (
+  typeof value === 'string' && value.startsWith(`${ATTACHMENT_REF_ORIGIN}/`)
+);
+
+// True for a URL that only works for the one open that minted it - what must never reach a file.
+const isEphemeralUrl = (value) => typeof value === 'string' && TPA_PATH_RE.test(value);
+
+// The opaque stand-in a download url is replaced by on the way into a file: which attachment, and
+// under what name. Used both as a `sources[]` entry and in place of a spectrum's `source.jcampURL`.
+const buildAttachmentRefUrl = (attachment) => {
+  const id = attachment?.id;
+  if (id === null || id === undefined || id === '') return null;
+  return `${ATTACHMENT_REF_ORIGIN}/${id}/${encodeURIComponent(attachment.label || '')}`;
+};
+
+const buildAttachmentRefEntry = (attachment) => {
+  const url = buildAttachmentRefUrl(attachment);
+  return url
+    ? { baseURL: ATTACHMENT_REF_ORIGIN, relativePath: url.slice(ATTACHMENT_REF_ORIGIN.length) }
+    : null;
+};
+
+// @return [Object, null] +{ id, label }+ for an attachment reference, null for anything else
+const parseAttachmentRef = (value) => {
+  if (!isAttachmentRef(value)) return null;
+  const [, id, label = ''] = value.slice(ATTACHMENT_REF_ORIGIN.length).split('/');
+  if (!id) return null;
+  // A truncated or hand-edited reference can carry a percent sequence decodeURIComponent refuses,
+  // and this runs on the save path, which has no error handling above it. The raw segment still
+  // names the file well enough to match on, so fall back to it rather than throwing the save away.
+  try {
+    return { id, label: decodeURIComponent(label) };
+  } catch (err) {
+    return { id, label };
+  }
+};
+
 // Splits `<archive>/file.zip/exp1/pdata/1/2rr` into the archive itself and the path of the member
 // inside it. Both halves matter and they go to different places: a `sources[]` entry must address
 // the archive (the server serves the whole zip), while the member path is what NMRium filters the
@@ -262,6 +309,19 @@ const splitArchiveRef = (value) => {
 const entryUrl = (entry) => (
   (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null
 );
+
+// The member path a `sourceSelector.files` / `selector.files` entry addresses inside an archive,
+// or null when it addresses no member. Three shapes reach this and all of them matter: a live
+// NMRium reference through the archive (`<url>/file.zip/exp1/...`), a saved document's bare member
+// path (its token prefix was stripped on the way into the file), and something that names a whole
+// file rather than a member - an absolute url, an attachment reference, or a rooted server path.
+const archiveMemberPath = (file) => {
+  if (typeof file !== 'string' || !file) return null;
+  const { member } = splitArchiveRef(file);
+  if (member) return member;
+  if (isAbsoluteUrl(file) || isAttachmentRef(file) || file.startsWith('/')) return null;
+  return file;
+};
 
 // A JCAMP/zip file's own filename is a stable, already-trusted key in this file (patchZipName,
 // findMatchingZip, findMatchingJcamp in NMRiumDisplayer.js all match spectra by it) — unlike the
@@ -294,25 +354,105 @@ const resolveSpectrumSourceUrl = (spc, root) => {
   return entryUrl(existingSource?.entries?.[0]);
 };
 
-// Registers `url` in root.sources[] and returns the id that addresses it, or null when it can't be
-// registered. NMRium's own reader (readNMRiumObject) re-fetches a spectrum's data only when its
-// selector.root matches an id here, so this is what actually lets us stop embedding `data` for a
-// source-backed spectrum. `claimed` maps url -> id for this cleaning pass: two spectra backed by
-// the same file share one entry, while two backed by *different* files never collapse onto one id
-// (the preferred id is suffixed instead of being repointed at the second file).
-const ensureSource = (root, preferredId, url, claimed) => {
-  if (!preferredId || !isAbsoluteUrl(url)) return null;
-
-  let parsed;
+// Splits an absolute url into the { relativePath, baseURL } pair a sources[] entry is made of.
+// Attachment references deliberately do not go through this: they are not a fetchable origin, and
+// WHATWG URL reports `origin` as the string "null" for a non-special scheme, which would silently
+// corrupt the entry. They are built directly by buildAttachmentRefEntry instead.
+const urlToEntry = (url) => {
+  if (!isAbsoluteUrl(url)) return null;
   try {
-    parsed = new URL(url);
+    const parsed = new URL(url);
+    return { relativePath: parsed.pathname, baseURL: parsed.origin };
   } catch (err) {
     return null;
   }
-  const entry = { relativePath: parsed.pathname, baseURL: parsed.origin };
+};
+
+// Resolves which fetched attachment a source url or persisted reference names. Both directions go
+// through this: the save path, to write a durable reference in place of a download url, and the
+// reopen path, to mint a fresh download url from one.
+//
+// Precedence, strongest first:
+//   1. a live url - an exact statement of which attachment was fetched, so it outranks every name;
+//   2. the filename inside a reference, compared verbatim, then - only if nothing carries that
+//      exact name - by its slug, with the id breaking ties between candidates that already agree
+//      on the name;
+//   3. the slug of the caller's own name hint, or of the `sources[]` id a pre-reference save
+//      minted (`nmrium-src-<slug>`, suffixed when one save had to separate two spectra);
+//   4. the reference's id alone - the attachment was renamed since the save, so on the instance
+//      that wrote the reference it still points home;
+//   5. the sole candidate, for callers that allow it.
+//
+// The filename has to lead because of what survives a collection export/import: export writes
+// `as_json.except('id')` and import builds fresh rows, so the id in a reference means nothing once
+// a document has moved - while `identifier`, a db-defaulted uuid the importer never assigns, is
+// regenerated too. The filename is the only field carried across intact. Trusting the id first is
+// therefore not merely useless after an import, it is unsafe: ids are reassigned from the
+// destination's own sequence, so a stale one can land on a *sibling* attachment in the same
+// dataset and quietly resolve the spectrum to the wrong file.
+//
+// @param attachments [Array] fetched spectra ({ id, label, url }) to resolve against
+// @param url [String, null] a live download url, an attachment reference, or nothing
+// @option options sourceId [String] the `sources[]` id the entry is filed under
+// @option options name [String] the spectrum's resolved name
+// @option options allowSoleCandidate [Boolean] fall back to the only candidate when nothing
+//   matches - what lets a document saved before references existed reopen at all
+// @return [Object, null] the matching attachment, or null
+const findAttachmentForRef = (attachments, url, options = {}) => {
+  if (!Array.isArray(attachments) || attachments.length === 0) return null;
+  const { sourceId = null, name = null, allowSoleCandidate = false } = options;
+
+  const { archive } = splitArchiveRef(url);
+  if (archive && isAbsoluteUrl(archive)) {
+    const byUrl = attachments.find((att) => att?.url && archive.startsWith(att.url));
+    if (byUrl) return byUrl;
+  }
+
+  const ref = parseAttachmentRef(url);
+  if (ref?.label) {
+    // The reference carries the filename verbatim, so compare it verbatim first. The slug below is
+    // lossy - every run of non-alphanumerics collapses to one dash - so `a-b.zip` and `a_b.zip` are
+    // one and the same to it. Two such siblings in a dataset would be decided by `named[0]` the
+    // moment the id no longer matches anything, which after an import is always: the destination
+    // reassigns ids, so the one in the reference is stale. That silently binds the spectrum to the
+    // wrong file. The slug stays as a second tier - it is what lets a file renamed only in its
+    // punctuation still resolve - but it may no longer pre-empt an exact name.
+    const byName = attachments.filter((att) => att?.label === ref.label);
+    if (byName.length) return byName.find((att) => `${att?.id}` === ref.id) || byName[0];
+
+    const refSlug = buildSourceId(ref.label);
+    const named = attachments.filter((att) => buildSourceId(att?.label) === refSlug);
+    if (named.length) return named.find((att) => `${att?.id}` === ref.id) || named[0];
+  }
+
+  const slugs = [buildSourceId(name), sourceId, sourceId && sourceId.replace(/-\d+$/, '')];
+  const bySlug = slugs.reduce(
+    (found, slug) => found || (slug && attachments.find((att) => buildSourceId(att?.label) === slug)) || null,
+    null
+  );
+  if (bySlug) return bySlug;
+
+  if (ref) {
+    const byId = attachments.find((att) => `${att?.id}` === ref.id);
+    if (byId) return byId;
+  }
+
+  return (allowSoleCandidate && attachments.length === 1) ? attachments[0] : null;
+};
+
+// Registers `entry` in root.sources[] and returns the id that addresses it, or null when it can't
+// be registered. NMRium's own reader (readNMRiumObject) re-fetches a spectrum's data only when its
+// selector.root matches an id here, so this is what actually lets us stop embedding `data` for a
+// source-backed spectrum. `claimed` maps key -> id for this cleaning pass: two spectra backed by
+// the same file share one entry, while two backed by *different* files never collapse onto one id
+// (the preferred id is suffixed instead of being repointed at the second file).
+const ensureSource = (root, preferredId, entry, claimed) => {
+  if (!preferredId || !entry?.baseURL || !entry?.relativePath) return null;
+
+  const key = `${entry.baseURL}${entry.relativePath}`;
   if (!Array.isArray(root.sources)) root.sources = [];
 
-  const alreadyClaimed = claimed.get(url);
+  const alreadyClaimed = claimed.get(key);
   if (alreadyClaimed) return alreadyClaimed;
 
   let id = preferredId;
@@ -329,12 +469,46 @@ const ensureSource = (root, preferredId, url, claimed) => {
   } else {
     root.sources.push({ id, entries: [entry] });
   }
-  claimed.set(url, id);
+  claimed.set(key, id);
   return id;
 };
 
-const cleaningNMRiumData = (nmriumData) => {
+// Reduces a sourceSelector.files entry to something safe to persist: the member path inside the
+// archive, which is what NMRium actually filters on, with the token-bearing prefix dropped. An
+// entry that addresses no member is only a name for the whole file, so it is rewritten to the same
+// opaque reference sources[] gets - findMatchingJcamp reads a filename out of it on the next open
+// exactly as it did out of the url. With no attachment to point at there is nothing to keep.
+const persistableSourceFile = (file, attachment) => {
+  if (typeof file !== 'string') return null;
+  const member = archiveMemberPath(file);
+  if (member) return member;
+  return isEphemeralUrl(file) ? buildAttachmentRefUrl(attachment) : file;
+};
+
+// Drops `root.spectra` / `root.molecules` entries off a `sources[]` id that is about to disappear.
+// Returns a new array with new items: the caller's own payload must come out of cleaning untouched,
+// and a spectrum copy still shares its `selector` object with the spectrum it was copied from.
+const cutLooseFromSources = (items, ids) => (items || []).map((item) => {
+  if (!item?.selector?.root || !ids.has(item.selector.root)) return item;
+  const selector = { ...item.selector };
+  delete selector.root;
+  return { ...item, selector };
+});
+
+/**
+ * Strips a saved document of anything that will not survive to the next open.
+ *
+ * @param nmriumData [Object] the NMRium state, wrapped ({version, data}) or flat
+ * @param options [Object]
+ * @option options attachments [Array] fetched spectra ({ id, label, url }) backing this document
+ * @option options forPersistence [Boolean] true when the result is written to a .nmrium file:
+ *   sources[] then hold opaque attachment references rather than live download URLs, and a
+ *   spectrum keeps its embedded +data+ unless a reference was successfully registered for it
+ * @return [Object, null] the cleaned copy; the input is never mutated
+ */
+const cleaningNMRiumData = (nmriumData, options = {}) => {
   if (!nmriumData) return null;
+  const { attachments = [], forPersistence = false } = options;
   const cleanedNMRiumData = { ...nmriumData };
 
   // Copy the wrapped root too: without this `root` is the caller's own object, so the deletes and
@@ -388,11 +562,6 @@ const cleaningNMRiumData = (nmriumData) => {
           backfilledInfo[key] = tmpSpc.meta[key];
         }
       });
-      if (Object.keys(backfilledInfo).length) {
-        tmpSpc.info = backfilledInfo;
-      } else {
-        delete tmpSpc.info;
-      }
       delete tmpSpc.originalInfo;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
@@ -407,7 +576,30 @@ const cleaningNMRiumData = (nmriumData) => {
       // If no URL can be resolved, leave `data` embedded: that's the same safe fallback this file
       // relied on before this was wired up, not a regression.
       const sourceUrl = resolveSpectrumSourceUrl(tmpSpc, root);
-      const sourceId = ensureSource(root, buildSourceId(resolvedName), sourceUrl, claimedSources);
+      // On the way to a file, never register the live download URL: resolve which attachment it
+      // addresses and persist a reference to *that*, for the next open to re-mint. A spectrum no
+      // attachment backs has nothing that can be re-minted, so it registers no source at all and
+      // keeps its embedded `data` below - a bigger file, but one that still opens.
+      const attachment = forPersistence
+        ? findAttachmentForRef(attachments, sourceUrl, { name: resolvedName })
+        : null;
+      const sourceEntry = forPersistence
+        ? buildAttachmentRefEntry(attachment)
+        : urlToEntry(sourceUrl);
+      const preferredId = buildSourceId(resolvedName || attachment?.label);
+      const sourceId = ensureSource(root, preferredId, sourceEntry, claimedSources);
+
+      if (Object.keys(backfilledInfo).length) {
+        tmpSpc.info = backfilledInfo;
+      } else if (sourceId) {
+        delete tmpSpc.info;
+      } else {
+        // NMRium's no-source fallback (readNMRiumObject -> bn) destructures `info.dimension`
+        // without guarding, so a spectrum that keeps its embedded `data` because nothing could be
+        // registered for it must keep an `info` too, or that path throws instead of drawing it.
+        tmpSpc.info = { dimension: 2 };
+      }
+
       if (sourceId) {
         // sourceSelector.files may address individual members *within* a shared source (e.g. one
         // experiment inside a multi-spectrum zip, all sharing one sources[] id); NMRium's reader
@@ -416,20 +608,45 @@ const cleaningNMRiumData = (nmriumData) => {
         // URL/server path through the archive (`.../file.zip/exp1/...`, which has to be reduced to
         // the member path) or already as a bare member path. Anything else does not address a
         // member and is dropped.
-        const filesWithinSource = tmpSpc.sourceSelector?.files
-          ?.map((file) => {
-            if (typeof file !== 'string') return null;
-            const { member } = splitArchiveRef(file);
-            if (member) return member;
-            return (isAbsoluteUrl(file) || file.startsWith('/')) ? null : file;
-          })
-          .filter(Boolean);
+        const filesWithinSource = tmpSpc.sourceSelector?.files?.map(archiveMemberPath).filter(Boolean);
         tmpSpc.selector = {
           ...tmpSpc.selector,
           root: sourceId,
           ...(filesWithinSource?.length ? { files: filesWithinSource } : {}),
         };
         delete tmpSpc.data;
+      }
+
+      // Everything below runs whether or not a source was registered: a spectrum that kept its
+      // embedded `data` because no attachment backed it still has the same expiring urls written
+      // all over it, and the file must not carry one either way.
+      if (forPersistence) {
+        // sourceSelector is not what NMRium reads (selector is), but it IS what findMatchingJcamp
+        // matches on when the document is reopened - and it holds the same token URLs. Keep the
+        // part that identifies the file, drop the part that expires.
+        if (Array.isArray(tmpSpc.sourceSelector?.files)) {
+          const persistableFiles = tmpSpc.sourceSelector.files
+            .map((file) => persistableSourceFile(file, attachment))
+            .filter(Boolean);
+          if (persistableFiles.length) {
+            tmpSpc.sourceSelector = { ...tmpSpc.sourceSelector, files: persistableFiles };
+          } else {
+            delete tmpSpc.sourceSelector;
+          }
+        }
+
+        // `source.jcampURL` is not a reference NMRium reads either, but it is the *first* thing
+        // resolveSpectrumSourceUrl consults - so a persisted one both writes a download url into
+        // the file and shadows the durable entry registered above: the next open would re-mint
+        // sources[] and then have the display-time cleaning pass overwrite it with this dead url
+        // again. Rewrite it to the same opaque reference, for refreshPersistedSources to re-mint.
+        if (isEphemeralUrl(tmpSpc.source?.jcampURL)) {
+          const refUrl = buildAttachmentRefUrl(attachment);
+          const nextSource = { ...tmpSpc.source };
+          if (refUrl) nextSource.jcampURL = refUrl; else delete nextSource.jcampURL;
+          if (Object.keys(nextSource).length) tmpSpc.source = nextSource;
+          else delete tmpSpc.source;
+        }
       }
     }
 
@@ -438,14 +655,56 @@ const cleaningNMRiumData = (nmriumData) => {
 
   root.spectra = [...newSpectra];
 
-  // Drop our own now-unreferenced entries: their URLs carry per-open download tokens that nothing
-  // refreshes, so leaving one behind after a rename only accumulates dead references. Entries we
-  // did not mint are left alone.
-  if (Array.isArray(root.sources)) {
-    const referenced = new Set(newSpectra.map((spc) => spc?.selector?.root).filter(Boolean));
-    root.sources = root.sources.filter(
-      (source) => referenced.has(source?.id) || !`${source?.id}`.startsWith(SOURCE_ID_PREFIX)
+  // Anything still holding an expiring url on the way to a file is a reference that cannot
+  // survive being read back, so it is no reference at all: drop it, and cut loose whatever points
+  // at it. This catches the entry the loop above could not replace - the wrapper's own, still
+  // addressed by a spectrum for which no attachment was found. Those spectra kept their embedded
+  // `data`, so losing the pointer costs them nothing.
+  if (forPersistence && Array.isArray(root.sources)) {
+    const expiring = new Set(
+      root.sources
+        .filter((source) => source?.entries?.some((entry) => isEphemeralUrl(entryUrl(entry))))
+        .map((source) => source?.id)
     );
+    if (expiring.size > 0) {
+      root.sources = root.sources.filter((source) => !expiring.has(source?.id));
+      root.spectra = cutLooseFromSources(root.spectra, expiring);
+      if (Array.isArray(root.molecules)) root.molecules = cutLooseFromSources(root.molecules, expiring);
+    }
+  }
+
+  // Drop every unreferenced entry, whoever minted it. This is not housekeeping: readNMRiumObject
+  // fetches the whole sources[] array through a single `Promise.all`, so one entry nothing points
+  // at any more - the wrapper's own uuid entry, left behind when selector.root was repointed at
+  // ours - still gets fetched, and its failure rejects the read for the entire document. An
+  // unreferenced source can only cost; it can never contribute.
+  if (Array.isArray(root.sources)) {
+    const referenced = new Set(
+      [...root.spectra, ...(root.molecules || [])].map((item) => item?.selector?.root).filter(Boolean)
+    );
+    root.sources = root.sources.filter((source) => referenced.has(source?.id));
+    if (root.sources.length === 0) delete root.sources;
+  }
+
+  // The legacy singular `source` holds the same expiring URLs, and resolveSpectrumSourceUrl
+  // consults it *before* sources[] - so a stale one does not merely sit there, it shadows the good
+  // reference we just registered. Persist it only if it can be pinned to an attachment.
+  // It sits on the wrapper or on the root depending on who wrote the document, and the reopen path
+  // reads both, so neither may keep an expiring url.
+  if (forPersistence) {
+    [...new Set([cleanedNMRiumData, root])].forEach((holder) => {
+      if (!holder?.source?.entries?.length) return;
+      const persisted = holder.source.entries.map((entry) => {
+        const url = entryUrl(entry);
+        if (!isEphemeralUrl(url)) return entry;
+        return buildAttachmentRefEntry(findAttachmentForRef(attachments, url));
+      });
+      if (persisted.every(Boolean)) {
+        holder.source = { ...holder.source, entries: persisted };
+      } else {
+        delete holder.source;
+      }
+    });
   }
 
   // Deliberately not forcing a {version, data} wrap or an explicit version, even though a spectrum
@@ -549,4 +808,6 @@ const inlineNotation = (layout, data, metadata) => {
 export {
   BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
   cleaningNMRiumData, inlineNotation,
+  isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
+  entryUrl, urlToEntry, findAttachmentForRef,
 }; // eslint-disable-line
