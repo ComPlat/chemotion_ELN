@@ -855,14 +855,17 @@ module AttachmentJcampProcess
   def delete_related_edited_jcamp(jcamp_att)
     return unless jcamp_att
 
-    # Match the derived filename exactly, not the stem: "740.nmrium" derives "740.edit.jdx" and
-    # replaces the dataset's other edited "740.edit.jdx" (e.g. the ChemSpectra edit of the same
-    # spectrum, which sits in a different lineage), but "740.2_bagit.edit.jdx" is another curve.
+    # "740.nmrium" derives "740.edit.jdx" and replaces the dataset's other edits of the "740"
+    # spectrum: the ChemSpectra edit of the same spectrum sits in a different lineage, and a dotted
+    # name such as "740.1H.edit.jdx" shares only the first dot-token the save is named after. An
+    # "N_bagit" second token marks another curve of a multi-curve archive, which it must not take.
+    valid_name = fname_wo_ext(self)
     atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
     atts.each do |att|
       is_delete = att.edited? &&
                   att.id != jcamp_att.id &&
-                  att.filename == jcamp_att.filename
+                  valid_name == att.filename_parts[0] &&
+                  !att.filename_parts[1].to_s.match?(/\A\d+_bagit\z/)
       att.delete if is_delete
     end
   end

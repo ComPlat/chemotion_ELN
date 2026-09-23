@@ -1368,9 +1368,10 @@ RSpec.describe Attachment do
   end
 
   describe '#delete_related_edited_jcamp' do
-    # An NMRium save "740.nmrium" derives "740.edit.jdx". It replaces the dataset's other edited
-    # "740.edit.jdx" (e.g. the ChemSpectra edit of the same spectrum), but must not take every
-    # curve of a multi-curve archive with it just because they share the "740" stem.
+    # An NMRium save "740.nmrium" derives "740.edit.jdx". It replaces the dataset's other edits of
+    # the "740" spectrum - the same name, or a dotted one such as "740.1H.edit.jdx", since the save
+    # is named after the first dot-token only - but must not take every curve of a multi-curve
+    # archive with it just because they share the "740" stem.
     let(:nmrium) { create(:attachment, filename: '740.nmrium', aasm_state: 'nmrium') }
     let(:derived) do
       create(:attachment, filename: '740.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
@@ -1381,11 +1382,18 @@ RSpec.describe Attachment do
     let!(:other_curve) do
       create(:attachment, filename: '740.2_bagit.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
     end
+    let!(:dotted_edit) do
+      create(:attachment, filename: '740.1H.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
+    end
 
     before { nmrium.send(:delete_related_edited_jcamp, derived) }
 
     it 'deletes the older edited jcamp of the same name' do
       expect(described_class.exists?(superseded.id)).to be false
+    end
+
+    it 'deletes an edited jcamp of the same spectrum under a dotted name' do
+      expect(described_class.exists?(dotted_edit.id)).to be false
     end
 
     it "keeps another curve's edited jcamp that only shares the stem" do
