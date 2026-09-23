@@ -60,7 +60,7 @@ module Entities
       expose! :lock_reaction_volume,  anonymize_with: false
       expose! :gaseous,               anonymize_with: false
       expose! :weight_percentage,     anonymize_with: false
-      expose! :attachments,           anonymize_with: [],                               using: 'Entities::AttachmentEntity'
+      expose! :attachments,           anonymize_with: [],  unless: :displayed_in_list,   using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Metrics/BlockLength
 

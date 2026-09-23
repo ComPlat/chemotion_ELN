@@ -214,7 +214,7 @@ export class AttachmentTab extends Component {
     const { sortDirection, showImportConfirm } = this.state;
     const {
       onUndoDelete, attachments, elementType, element,
-      onImport, isDeleteProtected, elementChanged,
+      onImport, isDeleteProtected, deleteProtectedTooltip, elementChanged,
     } = this.props;
     const filteredAttachments = this.getSortedFilteredAttachments();
     const { currentUser } = UserStore.getState();
@@ -234,7 +234,7 @@ export class AttachmentTab extends Component {
         {this.renderImageEditModal()}
         <div className="d-flex justify-content-between align-items-center">
           <div className="flex-grow-1 align-self-center">
-            {customDropzone(this.props.onDrop)}
+            {!this.props.readOnly && customDropzone(this.props.onDrop)}
           </div>
           <div className="ms-3 align-self-center">
             {
@@ -283,14 +283,16 @@ export class AttachmentTab extends Component {
                   </div>
                   <div className="attachment-row-actions d-flex align-items-center gap-1">
                     {attachment.is_deleted ? (
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        className="attachment-button-size"
-                        onClick={() => onUndoDelete(attachment)}
-                      >
-                        <i className="fa fa-undo" aria-hidden="true" />
-                      </Button>
+                      !this.props.readOnly && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="attachment-button-size"
+                          onClick={() => onUndoDelete(attachment)}
+                        >
+                          <i className="fa fa-undo" aria-hidden="true" />
+                        </Button>
+                      )
                     ) : (
                       <>
                         {downloadButton(attachment)}
@@ -314,7 +316,8 @@ export class AttachmentTab extends Component {
                         {removeButton(
                           attachment,
                           this.props.onDelete,
-                          this.props.readOnly || deleteProtected
+                          this.props.readOnly || deleteProtected,
+                          deleteProtected && deleteProtectedTooltip ? deleteProtectedTooltip : undefined
                         )}
                       </>
                     )}
@@ -323,7 +326,7 @@ export class AttachmentTab extends Component {
                 </div>
               );
             })}
-            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+            <Alert variant="warning" show={!this.props.readOnly && UserStore.isUserQuotaExceeded(filteredAttachments)}>
               Uploading attachments will fail; User quota
               {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
               will be exceeded.
@@ -353,6 +356,7 @@ AttachmentTab.propTypes = {
   onTemplateDownload: PropTypes.func,
   templateInfoContent: PropTypes.node,
   isDeleteProtected: PropTypes.func,
+  deleteProtectedTooltip: PropTypes.string,
   elementChanged: PropTypes.bool,
 };
 
@@ -364,6 +368,7 @@ AttachmentTab.defaultProps = {
   onTemplateDownload: null,
   templateInfoContent: null,
   isDeleteProtected: null,
+  deleteProtectedTooltip: null,
   elementChanged: false,
 };
 

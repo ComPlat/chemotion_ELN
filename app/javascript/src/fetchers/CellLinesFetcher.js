@@ -55,7 +55,7 @@ export default class CellLinesFetcher {
             rootStore.notificationsStore.add(successfullyCreatedParameter);
             // eslint-disable-next-line no-param-reassign
             user.cell_lines_count += 1;
-            return this.cellLineElement(params.collection_id, json);
+            return this.fetchById(json.id);
           });
       });
   }
@@ -101,7 +101,7 @@ export default class CellLinesFetcher {
         return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)
           .then(() => {
             rootStore.notificationsStore.add(successfullyUpdatedParameter);
-            return this.cellLineElement(params.collection_id, json);
+            return this.fetchById(cellLineItem.id);
           });
       });
   }

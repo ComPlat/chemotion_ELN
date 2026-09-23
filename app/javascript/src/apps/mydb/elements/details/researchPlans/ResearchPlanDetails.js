@@ -464,6 +464,7 @@ export default class ResearchPlanDetails extends Component {
         onImport={this.handleAttachmentImport.bind(this)}
         elementChanged={researchPlan.changed}
         isDeleteProtected={this.isAttachmentInBody.bind(this)}
+        deleteProtectedTooltip="This attachment is used in the research plan body"
         readOnly={researchPlan.isReadOnly}
       />
     );
