@@ -40,9 +40,11 @@ module CleanupDuplicateDerivedAttachmentsTask
   end
 
   # Splits a same-filename candidate list by ancestry root - only rows sharing both
-  # filename and lineage are true duplicates of one logical curve.
+  # filename and lineage are true duplicates of one logical curve. The lineage root itself is
+  # never a candidate: it is the upload, and a derived curve can legitimately carry the same
+  # filename (see AttachmentJcampProcess#read_processed_data).
   def self.resolve_group(candidates)
-    candidates.group_by { |att| att.root_id || att.id }.values.filter_map do |lineage_group|
+    candidates.reject(&:root?).group_by(&:root_id).values.filter_map do |lineage_group|
       next if lineage_group.size <= 1
 
       kept = lineage_group.max_by(&:id)

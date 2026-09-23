@@ -69,6 +69,38 @@ RSpec.describe 'CleanupDuplicateDerivedAttachmentsTask' do
       end
     end
 
+    # An upload whose derived curve resolves to the upload's own name (see #read_processed_data)
+    # shares both filename and lineage with that curve, but it is the raw data, not a duplicate:
+    # destroy would delete its file for good.
+    context 'when a derived row shares the upload filename' do
+      let!(:upload) do
+        create(:attachment, filename: 'spectra_file_lcms.jdx', attachable: root.attachable, aasm_state: 'peaked')
+      end
+      let!(:derived) do
+        create(
+          :attachment, filename: 'spectra_file_lcms.jdx', attachable: root.attachable,
+                       aasm_state: 'peaked', parent: upload
+        )
+      end
+
+      it 'never removes the upload' do
+        CleanupDuplicateDerivedAttachmentsTask.execute!(dry_run: false)
+
+        expect(Attachment.exists?(upload.id)).to be true
+        expect(Attachment.exists?(derived.id)).to be true
+      end
+
+      it 'still deduplicates the derived rows among themselves' do
+        newer = create(
+          :attachment, filename: 'spectra_file_lcms.jdx', attachable: root.attachable,
+                       aasm_state: 'peaked', parent: upload
+        )
+        results = CleanupDuplicateDerivedAttachmentsTask.execute!(dry_run: true)
+
+        expect(results.find { |r| r.kept_id == newer.id }&.removed_ids).to eq([derived.id])
+      end
+    end
+
     context 'when attachable_type is not Container' do
       let!(:research_plan_duplicate) do
         create(:attachment, :attached_to_research_plan, filename: 'unrelated.jdx', aasm_state: 'edited')
