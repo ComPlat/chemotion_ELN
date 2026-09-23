@@ -1299,6 +1299,10 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   // eslint-disable-next-line class-methods-use-this
   handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent) {
+    // For a reference-component switch, previous_amount_mol is captured after the new
+    // component is selected. Multiplying it by the new relative MW therefore reconstructs
+    // the existing amount_g. Keep this normalization call for now because setAmount also
+    // applies mixture state updates; removing that coupling belongs in a separate cleanup.
     const preservedAmountMol = updatedSample.sample_details?.previous_amount_mol;
     const newRelMolWeight = referenceComponent.relative_molecular_weight;
 
