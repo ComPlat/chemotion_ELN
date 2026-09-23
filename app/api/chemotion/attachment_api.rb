@@ -29,8 +29,13 @@ module Chemotion
         }
       end
 
+      # Resolves the element via Attachment#root_element, which covers both container-nested
+      # attachments and ones linked directly to an element through attachable (ResearchPlan,
+      # Wellplate, DeviceDescription, SBMM). The former AttachmentPolicy#write? only followed
+      # the container chain, so collaborators with update rights on the element were locked out
+      # of directly-linked attachments.
       def writable?(attachment)
-        AttachmentPolicy.can_delete?(current_user, attachment)
+        attachment.present? && write_access?(attachment, current_user)
       end
 
       def upload_chunk_error_message

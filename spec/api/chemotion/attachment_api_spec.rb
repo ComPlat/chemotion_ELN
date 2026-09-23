@@ -39,8 +39,8 @@ describe Chemotion::AttachmentAPI do
         allow(Usecases::Attachments::Delete).to receive(:execute!)
       end
 
-      if example.metadata[:enable_attachment_policy_can_delete].present?
-        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      if example.metadata[:enable_write_access].present?
+        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
       end
 
       execute_request
@@ -54,7 +54,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when "AttachmentPolicy" denies deletion' do
+    context 'when the user has no write access' do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
@@ -62,7 +62,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
+    context 'when the user has write access', :enable_write_access do
       let(:attachment) { create(:attachment) }
 
       it 'returns with the right http status' do
@@ -91,14 +91,14 @@ describe Chemotion::AttachmentAPI do
     end
 
     before do |example|
-      if example.metadata[:enable_attachment_policy_can_delete].present?
-        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      if example.metadata[:enable_write_access].present?
+        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
       end
 
       execute_request
     end
 
-    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
+    context 'when the user has write access', :enable_write_access do
       it 'returns with the right http status' do
         expect(response).to have_http_status(:ok)
       end
@@ -112,7 +112,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when "AttachmentPolicy" denies deletion' do
+    context 'when the user has no write access' do
       it 'returns with an error' do
         expect(response).to have_http_status(:unauthorized)
       end
@@ -143,8 +143,8 @@ describe Chemotion::AttachmentAPI do
         allow(Usecases::Attachments::Unlink).to receive(:execute!)
       end
 
-      if example.metadata[:enable_attachment_policy_can_delete].present?
-        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      if example.metadata[:enable_write_access].present?
+        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
       end
 
       execute_request
@@ -158,7 +158,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when "AttachmentPolicy" denies deletion' do
+    context 'when the user has no write access' do
       let(:attachment) { create(:attachment) }
 
       it 'returns with an error' do
@@ -166,7 +166,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
+    context 'when the user has write access', :enable_write_access do
       let(:container) { create(:container, containable: user) }
       let(:attachment) { create(:attachment, attachable: container) }
 
@@ -923,6 +923,83 @@ describe Chemotion::AttachmentAPI do
       before { post "/api/v1/attachments/#{attachment.id}/annotation", params: annotation_params }
 
       it 'is rejected as unauthorized' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  # Regression: writable? used to resolve the element only via the container chain
+  # (AttachmentPolicy#write?), so for an attachment linked directly to an element through
+  # attachable (ResearchPlan, Wellplate, ...) only its uploader had write access - a collaborator
+  # with edit rights on the element was rejected.
+  describe 'write access to an attachment linked directly to a shared research plan' do
+    let(:owner_user) { create(:person) }
+    let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
+    let(:shared_collection) do
+      create(:collection, user: owner_user).tap do |collection|
+        create(:collection_share, collection: collection, shared_with: user, permission_level: permission_level)
+      end
+    end
+    let(:research_plan) { create(:research_plan, creator: owner_user, collections: [shared_collection]) }
+    let!(:attachment) do
+      create(:attachment, :with_spectra_file, attachable: research_plan, created_for: owner_user.id)
+    end
+    let(:generated_attachment) { create(:attachment, :with_spectra_file, attachable: research_plan) }
+
+    before do
+      allow_any_instance_of(Attachment).to receive(:infer_spectrum).and_return('shift' => [])
+      allow_any_instance_of(Attachment).to receive(:generate_spectrum).and_return(generated_attachment)
+      allow_any_instance_of(Usecases::Attachments::Annotation::AnnotationUpdater).to receive(:update_annotation)
+    end
+
+    context 'when shared with edit_elements and full detail level' do
+      it 'allows infer' do
+        post '/api/v1/attachments/infer', params: { attachment_id: attachment.id, layout: 'IR' }
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'allows save_spectrum' do
+        post '/api/v1/attachments/save_spectrum', params: { attachment_id: attachment.id }
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'allows updating the annotation' do
+        post "/api/v1/attachments/#{attachment.id}/annotation", params: { updated_svg_string: '<svg/>' }
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'allows regenerate_spectrum to remove the generated file' do
+        post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [attachment.id] }
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: attachment.id)).to be_nil
+      end
+
+      it 'allows deleting the attachment' do
+        delete "/api/v1/attachments/#{attachment.id}"
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when shared with read_elements only' do
+      let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+
+      it 'rejects infer' do
+        post '/api/v1/attachments/infer', params: { attachment_id: attachment.id, layout: 'IR' }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'rejects updating the annotation' do
+        post "/api/v1/attachments/#{attachment.id}/annotation", params: { updated_svg_string: '<svg/>' }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'leaves the attachment in place on regenerate_spectrum' do
+        post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [attachment.id] }
+        expect(Attachment.find_by(id: attachment.id)).not_to be_nil
+      end
+
+      it 'rejects deleting the attachment' do
+        delete "/api/v1/attachments/#{attachment.id}"
         expect(response).to have_http_status(:unauthorized)
       end
     end
