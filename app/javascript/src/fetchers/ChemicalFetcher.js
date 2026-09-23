@@ -49,7 +49,7 @@ export default class ChemicalFetcher {
   }
 
   static saveManualAttachedSafetySheet(params) {
-    return ApiClient.postJson('/api/v1/chemicals/save_manual_sds', { body: params });
+    return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
 
   static safetyPhrases(queryParams) {

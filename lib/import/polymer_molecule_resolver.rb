@@ -42,7 +42,8 @@ module Import
       # render_svg: false — the polymer SVG is rendered separately through Indigo in
       # #reattach_svg_if_present; OpenBabel's would be discarded either way.
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(
-        Chemotion::MolfilePolymerSupport.normalize_for_open_babel(cleaned), render_svg: false
+        Chemotion::MolfilePolymerSupport.normalize_for_open_babel(cleaned),
+        render_svg: false, bound_native_work: true,
       )
       molecule = if babel_info[:inchikey].present?
                    Molecule.find_or_create_by_molfile(raw, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)

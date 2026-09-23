@@ -8,7 +8,11 @@ import UIFetcher from 'src/fetchers/UIFetcher';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
-import { cleaningNMRiumData, isSpectrum2D } from 'src/utilities/SpectraHelper';
+import {
+  cleaningNMRiumData, isSpectrum2D, spectrumName,
+  isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
+  entryUrl, urlToEntry, findAttachmentForRef,
+} from 'src/utilities/SpectraHelper';
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
@@ -46,6 +50,9 @@ export default class NMRiumDisplayer extends React.Component {
     this.prepareAnalysisMetadata = this.prepareAnalysisMetadata.bind(this);
     this.prepareImageAttachment = this.prepareImageAttachment.bind(this);
     this.prepareNMRiumDataAttachment = this.prepareNMRiumDataAttachment.bind(this);
+    this.postToNMRium = this.postToNMRium.bind(this);
+    this.refreshPersistedSources = this.refreshPersistedSources.bind(this);
+    this.mintAttachmentUrl = this.mintAttachmentUrl.bind(this);
   }
 
   componentDidMount() {
@@ -170,17 +177,24 @@ export default class NMRiumDisplayer extends React.Component {
     }
   }
 
-  requestDataToBeSaved() {
+  // receiveMessage already refuses anything not from nmriumOrigin; this is the same
+  // check in the outbound direction, so the payload is only ever delivered to the frame
+  // we resolved from the configured wrapper url. Silently doing nothing without an
+  // origin is deliberate: it means loadWrapperHost has not resolved yet, and the caller
+  // is about to be re-run once the iframe loads.
+  postToNMRium(message) {
+    const { nmriumOrigin } = this.state;
     const iframe = this.iframeRef.current;
-    if (!iframe) return;
+    if (!iframe?.contentWindow || !nmriumOrigin) return;
 
-    iframe.contentWindow.postMessage(
-      {
-        type: 'nmr-wrapper:action-request',
-        data: { type: 'exportSpectraViewerAsBlob' },
-      },
-      '*'
-    );
+    iframe.contentWindow.postMessage(message, nmriumOrigin);
+  }
+
+  requestDataToBeSaved() {
+    this.postToNMRium({
+      type: 'nmr-wrapper:action-request',
+      data: { type: 'exportSpectraViewerAsBlob' },
+    });
   }
 
   handleCloseRequest(event, source) {
@@ -246,10 +260,10 @@ export default class NMRiumDisplayer extends React.Component {
           molecules: molfile ? [{ molfile }] : [],
         },
       };
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: payload });
     } else if (zip?.url) {
 
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } });
 
       const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
       if (!nmriumState) {
@@ -266,7 +280,7 @@ export default class NMRiumDisplayer extends React.Component {
 
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } });
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
@@ -309,6 +323,10 @@ export default class NMRiumDisplayer extends React.Component {
       const nmriumObj = JSON.parse(fileContent);
 
       this.patchZipAndJcampReference(nmriumObj, jdx?.url, zip?.url, zip?.label);
+      // Runs unconditionally, and separately: patchZipAndJcampReference bails out early whenever
+      // it cannot work out a preferred url, but a stale sources[] entry is fatal on its own and
+      // has to be dealt with either way.
+      this.refreshPersistedSources(nmriumObj);
       if (molfile) {
         nmriumObj.molecules = [{ molfile }];
       }
@@ -322,7 +340,7 @@ export default class NMRiumDisplayer extends React.Component {
       this.setState({ fetchedSpectra: updatedSpectra });
 
       const payload = { type: 'file', data: fileList };
-      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: payload });
     } catch (err) {
       console.error('Failed to parse/patch .nmrium:', err);
     }
@@ -343,9 +361,17 @@ export default class NMRiumDisplayer extends React.Component {
       || spectrum?.sourceSelector?.files?.find((file) => typeof file === 'string');
     const baseFromUrl = this.getFileBaseName(oldUrl);
     const baseFromInfo = this.getFileBaseName(spectrum?.info?.name);
+    // Last resort for a spectrum carrying neither a source url nor an info.name - the jcamp-loaded
+    // shape, where display.name is only the spectrum's uuid. spectrumName falls through to the raw
+    // JCAMP TITLE, which is already a stem ("X23827_10.processed_1"): it must not be run through
+    // getFileBaseName, which would read ".processed_1" as an extension and strip the curve away.
+    const nameFromSpectrum = spectrumName(spectrum);
+    const baseFromName = nameFromSpectrum ? nameFromSpectrum.toLowerCase() : '';
     const extFromUrl = this.getFileExtension(oldUrl);
     const extFromInfo = this.getFileExtension(spectrum?.info?.name);
-    const targetBase = baseFromUrl || baseFromInfo;
+    const targetBase = baseFromUrl || baseFromInfo || baseFromName;
+    // No extension is derived from the stem: it has none, and guessing one would only narrow the
+    // match away from the very attachment being looked for.
     const targetExt = extFromUrl || extFromInfo;
     if (!targetBase) return null;
 
@@ -368,6 +394,134 @@ export default class NMRiumDisplayer extends React.Component {
     return zipSpectra.find((z) => this.getFileBaseName(z.label) === baseInNmrium) || zipSpectra[0];
   }
 
+  // The archive backing *one* spectrum. findMatchingZip names a single zip for the whole document -
+  // read off the first spectrum that has a name - and a dataset may well hold two. Applying that
+  // one pick to every spectrum re-points the second archive's member paths at the first archive's
+  // url, and the cleaning pass that follows then prunes the second source as unreferenced: the
+  // second curve is quietly served from the wrong file. The spectrum's own persisted reference says
+  // which archive it came from, so ask that first; the document-wide pick stays as the fallback for
+  // a spectrum that carries no reference of its own (every pre-reference document).
+  //
+  // Runs before refreshPersistedSources, so sources[] still holds the opaque references a save
+  // wrote rather than the urls re-minted from them - which is exactly what is wanted here.
+  zipForSpectrum(spectrum, root, zipSpectra) {
+    if (!zipSpectra?.length || !spectrum) return null;
+    const sourceId = spectrum?.selector?.root;
+    const source = Array.isArray(root?.sources)
+      ? root.sources.find((s) => s?.id && s.id === sourceId)
+      : null;
+    const refUrl = entryUrl(source?.entries?.[0]) || spectrum?.source?.jcampURL || null;
+    if (!isAttachmentRef(refUrl) && !sourceId) return null;
+    // No allowSoleCandidate: with one zip the document-wide pick is already that zip, and letting
+    // it match unconditionally here would make an unrelated spectrum claim it.
+    return findAttachmentForRef(zipSpectra, refUrl, { sourceId, name: spectrum?.info?.name });
+  }
+
+  // The download url for an attachment, minted for this open. The extension is the server's cue
+  // for what it is serving, so it comes from the attachment's own filename.
+  mintAttachmentUrl(attachment) {
+    if (!attachment?.url) return null;
+    const ext = this.getFileExtension(attachment.label) || 'jdx';
+    return `${attachment.url}/file.${ext}`;
+  }
+
+  // Re-points one source's entries at freshly minted urls, or null when any of them cannot be
+  // re-pointed - a source is only usable if all of it is.
+  refreshSourceEntries(entries, sourceId, candidates) {
+    if (!Array.isArray(entries) || entries.length === 0) return null;
+
+    const refreshed = entries.map((entry) => {
+      const url = entryUrl(entry);
+      // Anything that is neither ours nor expiring is someone else's source: leave it be.
+      if (url && !isAttachmentRef(url) && !isEphemeralUrl(url)) return entry;
+
+      const attachment = findAttachmentForRef(candidates, url, { sourceId, allowSoleCandidate: true });
+      return urlToEntry(this.mintAttachmentUrl(attachment));
+    });
+
+    return refreshed.every(Boolean) ? refreshed : null;
+  }
+
+  // Re-mints every download url a saved document persisted, before it is handed to NMRium.
+  //
+  // root.sources[] is the one structure the rest of the patching never touched, and the only one
+  // NMRium actually fetches from. Whatever url a save persisted there is dead by now - re-minting
+  // on this very open overwrites the server-side token cache keyed on attachment+user, so opening
+  // the file is itself what invalidates the token inside it. And readNMRiumObject pulls the whole
+  // array through a single `Promise.all`, so one stale entry rejects the read for the entire
+  // document: the wrapper reports it to nobody, and the viewer comes up blank.
+  //
+  // The legacy singular root.source and each spectrum's own source.jcampURL are refreshed too, not
+  // because NMRium reads them but because resolveSpectrumSourceUrl consults both *before*
+  // sources[]: leaving a stale one behind would have the cleaning pass that follows overwrite the
+  // entry just re-minted with the dead url again.
+  //
+  // An entry that cannot be re-pointed is dropped rather than passed on, together with the
+  // selector.root of anything relying on it - a spectrum we cannot restore must not also take its
+  // siblings down with it.
+  refreshPersistedSources(nmriumObj) {
+    const root = nmriumObj?.data || nmriumObj;
+    if (!root) return;
+
+    const candidates = (this.state.fetchedSpectra || []).filter((sp) => sp.url);
+    const stale = new Set();
+
+    if (Array.isArray(root.sources) && root.sources.length > 0) {
+      root.sources = root.sources.filter((source) => {
+        const refreshed = this.refreshSourceEntries(source?.entries, source?.id, candidates);
+        if (refreshed) {
+          source.entries = refreshed;
+          return true;
+        }
+        stale.add(source?.id);
+        return false;
+      });
+    }
+
+    // The legacy singular source sits on the wrapper or on the root depending on who wrote the
+    // document - patchZipAndJcampReference reads both, so both get refreshed.
+    [...new Set([nmriumObj, root])].forEach((holder) => {
+      if (!holder?.source?.entries?.length) return;
+      const refreshed = this.refreshSourceEntries(holder.source.entries, holder.source.id, candidates);
+      if (refreshed) holder.source = { ...holder.source, entries: refreshed };
+      else delete holder.source;
+    });
+
+    // A url minted for *this* open starts with a candidate's own url; anything else that expires
+    // is left over from a previous one and cannot be revived here.
+    const isLive = (url) => candidates.some((att) => url.startsWith(att.url));
+    const isDeadUrl = (url) => isEphemeralUrl(url) && !isLive(url);
+
+    (root.spectra || []).forEach((spc) => {
+      const jcampURL = spc?.source?.jcampURL;
+      if (isAttachmentRef(jcampURL)) {
+        const attachment = findAttachmentForRef(candidates, jcampURL, { allowSoleCandidate: true });
+        const fresh = this.mintAttachmentUrl(attachment);
+        if (fresh) spc.source.jcampURL = fresh;
+        else delete spc.source.jcampURL;
+      } else if (isDeadUrl(jcampURL)) {
+        // patchZipAndJcampReference refreshes this where it can, but not for a zip-based document.
+        // resolveSpectrumSourceUrl consults it before anything re-minted above, so a survivor does
+        // not merely sit there - it shadows the good entry. Take it out of the way.
+        delete spc.source.jcampURL;
+      }
+
+      if (!Array.isArray(spc?.sourceSelector?.files)) return;
+      // Same story one rung down, and the same treatment: a member path keeps pointing at the
+      // right member, a whole-file token url is only in the way.
+      const files = spc.sourceSelector.files.filter((f) => typeof f !== 'string' || !isDeadUrl(f));
+      if (files.length) spc.sourceSelector.files = files;
+      else delete spc.sourceSelector;
+    });
+
+    if (stale.size === 0) return;
+    [...(root.spectra || []), ...(root.molecules || [])].forEach((item) => {
+      if (item?.selector?.root && stale.has(item.selector.root)) {
+        delete item.selector.root;
+      }
+    });
+  }
+
   patchZipAndJcampReference(nmriumObj, jdxUrl, zipUrl, zipLabel) {
     const root = nmriumObj.data || nmriumObj;
     const sourceRoot = nmriumObj.source || root.source;
@@ -376,13 +530,29 @@ export default class NMRiumDisplayer extends React.Component {
     const fetchedSpectra = this.state.fetchedSpectra || [];
     const jcampSpectra = fetchedSpectra.filter((s) => s.kind === 'jcamp' && s.url);
     const zipSpectra = fetchedSpectra.filter((s) => s.kind === 'zip' && s.url);
-    const isZipBased = root.spectra.some((s) => s?.sourceSelector?.files?.some?.((f) => typeof f === 'string' && f.includes('/file.zip/')));
+    // A document addresses a member inside an archive in two shapes, and both mean zip-based: a
+    // live NMRium reference through the archive, and a saved document's bare member path, whose
+    // token-bearing prefix was stripped on the way into the file. Detecting only the first - as
+    // this did - means every document this wrapper saves reopens as if it were jcamp-based, which
+    // both bypasses findMatchingZip and lets the branch below overwrite the member paths with a
+    // sibling .jdx url. The bare shape is only conclusive with a zip to resolve it against.
+    const spectrumSourceFiles = (s) => [
+      ...(Array.isArray(s?.sourceSelector?.files) ? s.sourceSelector.files : []),
+      ...(Array.isArray(s?.selector?.files) ? s.selector.files : []),
+    ];
+    const addressesArchiveMember = root.spectra.some(
+      (s) => spectrumSourceFiles(s).some((f) => splitArchiveRef(f).member)
+    );
+    const addressesBareMember = zipSpectra.length > 0 && root.spectra.some(
+      (s) => spectrumSourceFiles(s).some((f) => archiveMemberPath(f))
+    );
+    const isZipBased = addressesArchiveMember || addressesBareMember;
     const matchingZip = isZipBased ? this.findMatchingZip(root, zipSpectra) : null;
     const effectiveZipUrl = matchingZip?.url ?? zipUrl;
     const effectiveZipLabel = matchingZip?.label ?? zipLabel;
     if ((!jdxUrl && jcampSpectra.length === 0) && !effectiveZipUrl) return;
 
-    const zipUrlWithFile = effectiveZipUrl !== undefined ? `${effectiveZipUrl}/file.zip` : undefined;
+    const zipUrlWithFile = effectiveZipUrl ? `${effectiveZipUrl}/file.zip` : undefined;
     const firstJcampMatch = !isZipBased && root.spectra.map((s) => this.findMatchingJcamp(s, jcampSpectra)).find(Boolean);
     const jdxUrlWithFile = firstJcampMatch
       ? `${firstJcampMatch.url}/file.${this.getFileExtension(firstJcampMatch.label) || 'jdx'}`
@@ -390,17 +560,19 @@ export default class NMRiumDisplayer extends React.Component {
     const preferredUrl = (isZipBased ? zipUrlWithFile : jdxUrlWithFile) || zipUrlWithFile || jdxUrlWithFile;
     if (!preferredUrl) return;
 
-    const u = new URL(preferredUrl);
-    const baseURL = u.origin;
-    const relativePath = u.pathname;
-
     root.spectra.forEach((s) => {
       if (!s) return;
 
       const oldUrl = s?.source?.jcampURL
         || s?.sourceSelector?.files?.find((file) => typeof file === 'string');
       const match = !isZipBased ? this.findMatchingJcamp(s, jcampSpectra) : null;
-      let spectrumSourceUrl = preferredUrl;
+      // Per spectrum, not per document: see zipForSpectrum. Falls back to the document-wide pick,
+      // so a single-archive document and a pre-reference one behave exactly as before.
+      const spectrumZip = isZipBased ? this.zipForSpectrum(s, root, zipSpectra) : null;
+      const spectrumZipUrl = spectrumZip?.url ?? effectiveZipUrl;
+      const spectrumZipLabel = spectrumZip?.label ?? effectiveZipLabel;
+      const spectrumZipUrlWithFile = spectrumZipUrl ? `${spectrumZipUrl}/file.zip` : undefined;
+      let spectrumSourceUrl = (isZipBased && spectrumZipUrlWithFile) || preferredUrl;
 
       if (!isZipBased) {
         if (!s.source || typeof s.source !== 'object') s.source = {};
@@ -426,19 +598,24 @@ export default class NMRiumDisplayer extends React.Component {
         sourceRoot.entries[0].baseURL = sourceUrl.origin;
       }
 
-      if (effectiveZipUrl && effectiveZipLabel) {
-        s.display = { ...s.display, name: effectiveZipLabel };
+      if (spectrumZipUrl && spectrumZipLabel) {
+        s.display = { ...s.display, name: spectrumZipLabel };
         if (s.info) {
-          s.info.name = effectiveZipLabel;
+          s.info.name = spectrumZipLabel;
         }
       }
 
-      // Patch the zip references in the nmrium data
-      if (effectiveZipUrl && Array.isArray(s?.sourceSelector?.files)) {
-        const marker = '/file.zip/';
-        s.sourceSelector.files = s.sourceSelector.files.map(
-          (f) => f.includes(marker) ? `${relativePath}/${f.split(marker)[1]}` : f
-        );
+      // Patch the zip references in the nmrium data. These have to come back out as *absolute*
+      // urls: resolveSpectrumSourceUrl only accepts `http(s)://`, so writing the bare pathname
+      // here - as this did - means the one freshly minted reference on the spectrum is skipped on
+      // the next cleaning pass, which then falls back to the stale sources[] entry instead. The
+      // two input shapes are a live NMRium state's full reference through the archive, and a saved
+      // document's bare member path (its token prefix was stripped on the way into the file).
+      if (spectrumZipUrlWithFile && Array.isArray(s?.sourceSelector?.files)) {
+        s.sourceSelector.files = s.sourceSelector.files.map((f) => {
+          const within = archiveMemberPath(f);
+          return within ? `${spectrumZipUrlWithFile}/${within}` : f;
+        });
       }
     });
   }
@@ -538,7 +715,13 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   prepareNMRiumDataAttachment(nmriumData, baseName) {
-    const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+    const cleanedNMRiumData = cleaningNMRiumData(nmriumData, {
+      // Only a fetched attachment can back a reference: the reopen path re-mints from `url`, so
+      // resolving a spectrum to a url-less attachment (the .nmrium file itself) would write a
+      // reference nothing can ever resolve - and by then the embedded `data` is already gone.
+      attachments: (this.state.fetchedSpectra || []).filter((sp) => sp.url),
+      forPersistence: true,
+    });
     const hasDataProp = !!cleanedNMRiumData.data;
     const root = hasDataProp ? cleanedNMRiumData.data : cleanedNMRiumData;
     const spectra = root?.spectra || [];
@@ -686,7 +869,7 @@ export default class NMRiumDisplayer extends React.Component {
     return (
       <>
         <AppModal
-          size="xxxl"
+          fullscreen
           show={showModalNMRDisplayer}
           onHide={this.hideCloseOverlay}
           onRequestClose={this.handleCloseRequest}

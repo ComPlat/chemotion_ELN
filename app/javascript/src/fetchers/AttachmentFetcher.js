@@ -69,6 +69,16 @@ export default class AttachmentFetcher {
     return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: { ids } });
   }
 
+  // resolves with the raw Response so callers can pick the body decoding themselves
+  static loadAttachmentContent({ id }) {
+    const handleResponseSuccess = (response) => {
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return response;
+    };
+
+    return ApiClient.getJson(`/api/v1/attachments/${id}`, { handleResponseSuccess });
+  }
+
   static fetchFiles(ids) {
     if (ids.length < 1) { return {}; }
 

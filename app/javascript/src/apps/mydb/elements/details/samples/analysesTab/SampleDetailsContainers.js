@@ -26,7 +26,10 @@ export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { sample } = props;
-    const hasComment = sample.container?.description && sample.container.description.trim() !== '';
+    const hasComment = Boolean(
+      sample.container?.description
+      && sample.container.description.trim() !== ''
+    );
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',

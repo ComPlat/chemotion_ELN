@@ -60,7 +60,12 @@ IMG_INDIGO=epmlsop/indigo-service:1.34.0-rc.1
 ## Rails at /nmrium/default/). Installing it is opt-in — see that service's
 ## comment for the command. .service-dependencies stays the source of truth
 ## for the version — keep the tag here in sync with its NMRIUMWRAPPER entry.
-IMG_NMRIUMWRAPPER=nfdi4chem/nmrium-react-wrapper:v1.1.0
+IMG_NMRIUMWRAPPER=nfdi4chem/nmrium-react-wrapper:v1.2.0
+## Origins allowed to drive the wrapper, space- or comma-separated and each with
+## its scheme (a scheme-less hostname is dropped on the wrapper side). Ports are
+## ignored, so one entry covers every port on that host. Left empty the wrapper
+## accepts messages from any origin — set it for anything but local development.
+#NMRIUM_ALLOWED_ORIGINS='https://eln.example.org https://1.eln.example.org'
 ## Keep the wrapper's sourcemaps, which are dropped by default: they multiply
 ## the installed size several times over and are only useful when debugging the
 ## wrapper itself, which this setup does not support.

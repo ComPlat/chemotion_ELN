@@ -197,6 +197,7 @@ export default class ImageModal extends Component {
 
   // click a thumbnail = preview large only; never persists
   handleSelectThumbnail = (thumb) => {
+    if (thumb.id === this.state.selectedId) return; // already showing this image
     this.setState({ selectedId: thumb.id });
     this.fetchLargeImage(thumb.id);
   };
@@ -230,53 +231,73 @@ export default class ImageModal extends Component {
     );
   }
 
+  // vertical rail: flex: 0 0 auto (fixed width, doesn't grow into the preview column).
+  // The "set as preferred" action lives here, over the thumbnail list it acts on; the
+  // list itself scrolls internally so the rail scales to analyses with many attachments.
   renderCarousel() {
     const { thumbnails, selectedId, preferredId } = this.state;
     if (!thumbnails.length) return null;
+    const canSetPreferred = selectedId && selectedId !== preferredId;
     return (
-      <div className="d-flex flex-row flex-nowrap overflow-auto gap-2 justify-content-center mt-3 pt-2">
-        {thumbnails.map((thumb) => {
-          const isPreferred = thumb.id === preferredId;
-          const isSelected = thumb.id === selectedId;
-          const cls = isSelected ? 'border-2 border-primary' : 'border border-secondary';
-          return (
-            <div
-              key={thumb.id}
-              className={`d-flex flex-column align-items-center p-1 rounded bg-white ${cls}`}
-              style={{
-                cursor: 'pointer', minWidth: 72, maxWidth: 72, height: 96,
-              }}
-              role="button"
-              tabIndex={0}
-              title={`${thumb.filename || `attachment ${thumb.id}`}${isPreferred ? ' (current preferred)' : ''}`}
-              onClick={() => this.handleSelectThumbnail(thumb)}
-              onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
-            >
-              {isValidImageSrc(thumb.thumbnail) ? (
-                <img
-                  src={thumb.thumbnail}
-                  alt={thumb.filename || `attachment ${thumb.id}`}
-                  style={{ width: 56, height: 56, objectFit: 'cover' }}
-                />
-              ) : (
-                // no rendered thumbnail (e.g. PDF without a generated preview)
-                <div
-                  className="d-flex align-items-center justify-content-center text-body-tertiary"
-                  style={{ width: 56, height: 56 }}
-                >
-                  <i className={`fa ${fileIconClass(thumb.filename)} fa-2x`} aria-hidden="true" />
-                </div>
-              )}
-              <span
-                className="text-truncate w-100 text-center"
-                style={{ fontSize: '0.6rem', lineHeight: 1.1 }}
+      <div className="d-flex flex-column" style={{ flex: '0 0 auto' }}>
+        <div className="d-flex justify-content-center mb-2" style={{ flex: '0 0 auto' }}>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!canSetPreferred}
+            onClick={this.handleSetPreferred}
+          >
+            <i className="fa fa-star me-1" />
+            {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
+          </Button>
+        </div>
+        <div
+          className="d-flex flex-column flex-nowrap align-items-center gap-2 p-2"
+          style={{ flex: '1 1 auto', overflowY: 'auto' }}
+        >
+          {thumbnails.map((thumb) => {
+            const isPreferred = thumb.id === preferredId;
+            const isSelected = thumb.id === selectedId;
+            const cls = isSelected ? 'border-2 border-primary' : 'border border-secondary';
+            return (
+              <div
+                key={thumb.id}
+                className={`d-flex flex-column align-items-center p-1 rounded bg-white ${cls}`}
+                style={{
+                  cursor: 'pointer', width: 80, flex: '0 0 auto', height: 96,
+                }}
+                role="button"
+                tabIndex={0}
+                title={`${thumb.filename || `attachment ${thumb.id}`}${isPreferred ? ' (current preferred)' : ''}`}
+                onClick={() => this.handleSelectThumbnail(thumb)}
+                onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
               >
-                {isPreferred && <i className="fa fa-star text-primary me-1" />}
-                {thumb.filename || `#${thumb.id}`}
-              </span>
-            </div>
-          );
-        })}
+                {isValidImageSrc(thumb.thumbnail) ? (
+                  <img
+                    src={thumb.thumbnail}
+                    alt={thumb.filename || `attachment ${thumb.id}`}
+                    style={{ width: 56, height: 56, objectFit: 'cover' }}
+                  />
+                ) : (
+                  // no rendered thumbnail (e.g. PDF without a generated preview)
+                  <div
+                    className="d-flex align-items-center justify-content-center text-body-tertiary"
+                    style={{ width: 56, height: 56 }}
+                  >
+                    <i className={`fa ${fileIconClass(thumb.filename)} fa-2x`} aria-hidden="true" />
+                  </div>
+                )}
+                <span
+                  className="text-truncate w-100 text-center"
+                  style={{ fontSize: '0.6rem', lineHeight: 1.1 }}
+                >
+                  {isPreferred && <i className="fa fa-star text-primary me-1" />}
+                  {thumb.filename || `#${thumb.id}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -310,15 +331,26 @@ export default class ImageModal extends Component {
   render() {
     const { showPop, popObject, placement = 'right' } = this.props;
     const {
-      isPdf, isLoading, modalPreviewSrc, selectedId, preferredId, thumbnails,
+      isPdf, isLoading, modalPreviewSrc, selectedId,
     } = this.state;
     const { attachment, candidates } = ImageModal.derive(this.props);
-    // Preferred selection only applies in analysis mode (a carousel of candidates exists).
-    const canSelectPreferred = thumbnails.length > 0;
-    const canSetPreferred = selectedId && selectedId !== preferredId;
-    // Filename of the image currently shown large (any file type), for the caption.
+    // Filename of the image currently shown large (any file type). Folded into the modal
+    // title (rather than its own caption band in the body) to reclaim body height.
     const selectedFilename = candidates.find((c) => c.id === selectedId)?.filename
       || attachment?.filename || '';
+    const modalTitle = selectedFilename ? (
+      <span className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+        <span className="text-truncate">{popObject.title}</span>
+        <span
+          className="text-body-secondary text-truncate"
+          style={{ fontSize: '0.85em', fontWeight: 400 }}
+          title={selectedFilename}
+        >
+          <i className="fa fa-file-o me-1" aria-hidden="true" />
+          {selectedFilename}
+        </span>
+      </span>
+    ) : popObject.title;
 
     if (showPop) {
       return <div className="preview-table">{this.renderPreviewBox()}</div>;
@@ -341,65 +373,51 @@ export default class ImageModal extends Component {
         </div>
 
         <AppModal
-          title={popObject.title}
+          title={modalTitle}
           show={this.state.showModal}
           onHide={this.handleModalClose}
           dialogClassName="noticeModal"
           size="xxxl"
+          scrollable
+          bodyClassName="d-flex flex-column"
           closeLabel="Close"
           showFooter
         >
-          <div style={{ overflow: 'auto', position: 'relative', minHeight: 400 }}>
-            {selectedFilename && (
-              <div className="text-center text-body-secondary text-truncate mb-2" title={selectedFilename}>
-                <i className="fa fa-file-o me-1" aria-hidden="true" />
-                {selectedFilename}
-              </div>
-            )}
-            {/* main preview: PDF in an iframe, everything else as an image */}
-            {isPdf && modalPreviewSrc ? (
-              <iframe
-                src={modalPreviewSrc}
-                width="100%"
-                height="500px"
-                style={{ border: 'none' }}
-                title="PDF Viewer"
-              />
-            ) : (
-              <div
-                className="d-flex justify-content-center align-items-center bg-light rounded position-relative"
-                style={{ minHeight: 300, maxHeight: 420 }}
-              >
-                {isLoading ? (
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                ) : (
-                  <img
-                    src={isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : DEFAULT_UNAVAILABLE}
-                    className="img-fluid"
-                    style={{ maxHeight: 400, objectFit: 'contain' }}
-                    alt={attachment?.filename}
-                    onError={this.handleImageError}
-                  />
-                )}
-              </div>
-            )}
-            {/* selection controls — shown for both image and PDF previews */}
-            {canSelectPreferred && (
-              <div className="d-flex justify-content-center mt-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={!canSetPreferred}
-                  onClick={this.handleSetPreferred}
-                >
-                  <i className="fa fa-star me-1" />
-                  {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
-                </Button>
-              </div>
-            )}
+          {/* landscape body: rail (fixed width, scrolls) + preview (grows). Sized by flex
+              against the (now-scrollable) modal body instead of a guessed vh figure, so
+              header/footer stay put and only this row scrolls if it ever doesn't fit. */}
+          <div className="d-flex flex-row gap-2 flex-grow-1" style={{ minHeight: 0 }}>
             {this.renderCarousel()}
+            {/* flex-grown preview container: with the `centered` modal not stretching
+                .modal-content to fill the dialog, nothing here has a definite height, so
+                percentage heights don't resolve — the box just hugs its child's own size. */}
+            <div
+              className="d-flex justify-content-center align-items-center bg-light rounded position-relative"
+              style={{ flex: '1 1 auto', minWidth: 0, minHeight: 0 }}
+            >
+              {isLoading ? (
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              ) : isPdf && modalPreviewSrc ? (
+                // <img> falls back to its intrinsic aspect ratio when height:100% can't
+                // resolve, so the box still hugs a sensible size; an iframe has no such
+                // fallback and collapses to the browser's tiny default, so it alone needs
+                // an explicit (always-resolvable) height to render at a usable size.
+                <iframe
+                  src={modalPreviewSrc}
+                  style={{ border: 'none', width: '100%', height: '70vh' }}
+                  title="PDF Viewer"
+                />
+              ) : (
+                <img
+                  src={isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : DEFAULT_UNAVAILABLE}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  alt={attachment?.filename}
+                  onError={this.handleImageError}
+                />
+              )}
+            </div>
           </div>
         </AppModal>
       </div>

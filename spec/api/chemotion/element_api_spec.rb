@@ -182,4 +182,89 @@ describe Chemotion::ElementAPI do
       expect(response).to have_http_status(:created)
     end
   end
+
+  describe 'POST /api/v1/ui_state/load_report detail levels' do
+    let(:own_collection) { create(:collection, user: user) }
+
+    def load_report(collection_id, sample_ids: [], reaction_ids: [], load_type: nil)
+      report = { currentCollection: { id: collection_id } }
+      report[:sample] = { checkedAll: false, checkedIds: sample_ids } if sample_ids.any?
+      report[:reaction] = { checkedAll: false, checkedIds: reaction_ids } if reaction_ids.any?
+      report[:loadType] = load_type if load_type
+      post '/api/v1/ui_state/load_report', params: report, as: :json
+    end
+
+    # ElementDetailLevelCalculator#user_collections_with_element probes each element's collection
+    # membership with `SELECT 1 AS one FROM collections INNER JOIN collections_<type> ...`. The old
+    # per-element instantiation fired this once (or more) per element; the batched for_collection
+    # call resolves the whole page from @collection, so the probe count must not grow with page size.
+    # Counts both sample and reaction probes so a regression on either loop is caught.
+    def count_membership_probes(&block)
+      count = 0
+      counter = lambda do |_name, _start, _finish, _id, payload|
+        sql = payload[:sql]
+        next unless sql.include?('1 AS one')
+
+        count += 1 if sql.include?('collections_samples') || sql.include?('collections_reactions')
+      end
+      ActiveSupport::Notifications.subscribed(counter, 'sql.active_record', &block)
+      count
+    end
+
+    it 'renders samples from an owned collection at full detail' do
+      own_sample = create(:sample, collections: [own_collection])
+      load_report(own_collection.id, sample_ids: [own_sample.id])
+
+      expect(response).to have_http_status(:created)
+      returned = parsed_json_response['samples'].first
+      # molfile is exposed at detail level >= 1; is_top_secret only at the owner level (10), where it
+      # is the real boolean rather than the '***' placeholder. Asserting both pins the owner level.
+      expect(returned['molfile']).to eq(own_sample.molfile)
+      expect(returned['is_top_secret']).to eq(own_sample.is_top_secret)
+    end
+
+    # Guards all four hoisted call sites: samples and reactions, in both the 'lists' and the
+    # non-'lists' (full report) branch. The invariant is that the probe count does not scale with
+    # page size, not that it is any particular value: a correct single-query design stays green,
+    # only a per-element N+1 fails.
+    [nil, 'lists'].each do |load_type|
+      it "resolves detail levels once per page, not once per element (no N+1, load_type=#{load_type.inspect})" do
+        samples = create_list(:sample, 3, collections: [own_collection])
+        reactions = create_list(:reaction, 3, collections: [own_collection])
+
+        one = count_membership_probes do
+          load_report(own_collection.id, sample_ids: [samples.first.id], reaction_ids: [reactions.first.id],
+                                         load_type: load_type)
+        end
+        many = count_membership_probes do
+          load_report(own_collection.id, sample_ids: samples.map(&:id), reaction_ids: reactions.map(&:id),
+                                         load_type: load_type)
+        end
+
+        expect(many).to eq(one)
+      end
+    end
+
+    # The report reflects the level granted on the collection it was run from, by design: even when
+    # the same element is fully accessible through another collection, a report drawn from a
+    # restricted share renders it at the share's (lower) level. This documents that intentional
+    # trade-off, and guards that a shared-collection report still redacts fields it should.
+    it 'renders a sample at the browsed shared collection\'s reduced level, not its best-available level' do
+      restricted_collection = create(:collection, user: other_user)
+      create(:collection_share, collection: restricted_collection, shared_with: user,
+                                permission_level: CollectionShare.permission_level(:read_elements),
+                                sample_detail_level: 0)
+      # The sample is also in the user's own collection, where it would render at full detail.
+      shared_sample = create(:sample, collections: [own_collection, restricted_collection])
+
+      load_report(restricted_collection.id, sample_ids: [shared_sample.id])
+
+      expect(response).to have_http_status(:created)
+      returned = parsed_json_response['samples'].first
+      # The requested sample is present but rendered at the share's level 0, so molfile (anonymised
+      # below level 1) is the '***' placeholder rather than the real structure.
+      expect(returned['id']).to eq(shared_sample.id)
+      expect(returned['molfile']).to eq('***')
+    end
+  end
 end

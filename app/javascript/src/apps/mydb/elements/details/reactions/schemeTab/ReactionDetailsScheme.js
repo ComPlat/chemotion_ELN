@@ -2372,7 +2372,7 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={this.handleVolumeCheckboxChange}
             label={(
               <span>
-                Calculate Conc
+                Use for concentration
                 <OverlayTrigger
                   placement="top"
                   overlay={this.renderVolumeCalculationTooltip()}

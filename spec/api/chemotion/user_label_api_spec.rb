@@ -43,7 +43,76 @@ describe Chemotion::UserLabelAPI do
   end
 
   describe 'PUT /api/v1/user_labels/save_label' do
-    pending 'TODO: Add missing spec'
+    context 'when creating a new label' do
+      let(:params) { { title: 'New label', description: 'A description', color: '#123456', access_level: 1 } }
+
+      it 'creates a label owned by the current user' do
+        expect do
+          put '/api/v1/user_labels/save_label', params: params, as: :json
+        end.to change(UserLabel, :count).by(1)
+
+        expect(response).to have_http_status(:success)
+        expect(UserLabel.last).to have_attributes(
+          user_id: user.id,
+          title: 'New label',
+          description: 'A description',
+          color: '#123456',
+          access_level: 1,
+        )
+      end
+
+      it 'defaults access_level to 0 when not supplied' do
+        put '/api/v1/user_labels/save_label', params: params.except(:access_level), as: :json
+
+        expect(UserLabel.last.access_level).to eq(0)
+      end
+
+      it 'returns the created label' do
+        put '/api/v1/user_labels/save_label', params: params, as: :json
+
+        expect(parsed_json_response['title']).to eq('New label')
+        expect(parsed_json_response['color']).to eq('#123456')
+      end
+    end
+
+    context 'when updating an existing label' do
+      it 'updates the label attributes' do
+        params = { id: label_a.id, title: 'Renamed', description: 'Updated', color: '#fff000', access_level: 1 }
+
+        put '/api/v1/user_labels/save_label', params: params, as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(label_a.reload).to have_attributes(
+          title: 'Renamed',
+          description: 'Updated',
+          color: '#fff000',
+          access_level: 1,
+        )
+      end
+
+      it 'does not create an additional label' do
+        params = { id: label_a.id, title: 'Renamed', color: '#fff000' }
+
+        expect do
+          put '/api/v1/user_labels/save_label', params: params, as: :json
+        end.not_to change(UserLabel, :count)
+      end
+    end
+
+    context 'when the id belongs to another user' do
+      let(:foreign_label) do
+        UserLabel.create!(user_id: other_user.id, access_level: 0, title: 'Foreign', color: '#fff')
+      end
+
+      it 'returns 404 and leaves the label untouched' do
+        params = { id: foreign_label.id, title: 'Hijacked', color: '#000000' }
+
+        put '/api/v1/user_labels/save_label', params: params, as: :json
+
+        expect(response).to have_http_status(:not_found)
+        expect(foreign_label.reload).to have_attributes(title: 'Foreign', color: '#fff', user_id: other_user.id)
+      end
+    end
   end
 
   def ui_state_for(sample_ids)
@@ -70,7 +139,8 @@ describe Chemotion::UserLabelAPI do
     end
 
     it 'removes labels from the selected samples while preserving others' do
-      sample_1.tag.update!(taggable_data: (sample_1.tag.taggable_data || {}).merge('user_labels' => [label_a.id, label_b.id]))
+      sample_1.tag.update!(taggable_data: (sample_1.tag.taggable_data || {}).merge('user_labels' => [label_a.id,
+                                                                                                     label_b.id]))
 
       params = { ui_state: ui_state_for([sample_1.id]), remove_label_ids: [label_a.id] }
 
@@ -119,7 +189,8 @@ describe Chemotion::UserLabelAPI do
 
       ui_state = {
         currentCollection: { id: foreign_collection.id },
-        sample: { checkedAll: false, checkedIds: [foreign_sample.id], uncheckedIds: [], collection_id: foreign_collection.id },
+        sample: { checkedAll: false, checkedIds: [foreign_sample.id], uncheckedIds: [],
+                  collection_id: foreign_collection.id },
       }
       params = { ui_state: ui_state, add_label_ids: [label_a.id] }
 

@@ -34,6 +34,7 @@
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
+#
 
 # rubocop: disable Metrics/ClassLength
 class Attachment < ApplicationRecord
@@ -200,6 +201,7 @@ class Attachment < ApplicationRecord
     super
 
     set_key
+    self
   end
 
   def set_key; end
