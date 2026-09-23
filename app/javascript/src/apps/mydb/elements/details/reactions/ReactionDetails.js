@@ -1210,7 +1210,8 @@ export default class ReactionDetails extends Component {
                 onEdit={this.handleAttachmentEdit}
                 readOnly={!reaction.can_update}
                 inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(
-                  [{ type: 'richtext', value: reaction.observation }]
+                  [{ type: 'richtext', value: reaction.observation },
+                   { type: 'richtext', value: reaction.description }]
                 )}
               />
             </ListGroupItem>
