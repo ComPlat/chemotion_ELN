@@ -25,9 +25,10 @@ export default class Screen extends Element {
       wellplates: [],
       user_labels: [],
       research_plans: [],
+      attachments: [],
+      can_update: true,
       container: Container.init(),
       segments: [],
-      can_update: true,
       component_graph_data: {
         nodes: [],
         edges: []
@@ -51,6 +52,7 @@ export default class Screen extends Element {
       description: descriptionDefault,
       wellplates: clipboardWellplates,
       research_plans: [],
+      attachments: [],
       user_labels: [],
       container: Container.init(),
       segments: [],
@@ -73,6 +75,7 @@ export default class Screen extends Element {
       wellplate_ids: this.wellplateIDs,
       research_plan_ids: this.researchPlanIDs,
       user_labels: this.user_labels || [],
+      attachments: this.attachments,
       container: this.container,
       segments: this.segments.map(s => s.serialize()),
       component_graph_data: this.component_graph_data

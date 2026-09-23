@@ -67,9 +67,9 @@ module Chemotion
           present(
             screen,
             with: Entities::ScreenEntity,
+            policy: policy,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
-            policy: policy,
           )
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
