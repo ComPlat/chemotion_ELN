@@ -7,6 +7,11 @@ import { addMiddleware } from 'mobx-state-tree';
 
 describe('Component', () => {
   let component;
+  const originalGetState = ComponentStore.getState;
+
+  afterEach(() => {
+    ComponentStore.getState = originalGetState;
+  });
 
   beforeEach(() => {
     const mockMolecule = { id: 101, molecular_weight: 18.010564684 };
