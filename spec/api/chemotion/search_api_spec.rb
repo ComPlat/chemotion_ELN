@@ -125,9 +125,9 @@ describe Chemotion::SearchAPI do
     CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
   end
 
-  describe 'POST /api/v1/search/elements' do
-    pending 'TODO: Add missing spec'
-  end
+  # POST /api/v1/search/elements was renamed to /search/all in 0be3cd9844 ("feat: extend search");
+  # the pending spec here tested a route that no longer exists. Its replacement is covered below by
+  # 'POST /api/v1/search/all'.
 
   describe 'POST /api/v1/search/cell_lines' do
     let(:url) { '/api/v1/search/cell_lines' }
@@ -747,15 +747,104 @@ describe Chemotion::SearchAPI do
   end
 
   describe 'POST /api/v1/search/reactions' do
-    pending 'TODO: Add missing spec'
+    let(:url) { '/api/v1/search/reactions' }
+
+    before do
+      do_request
+    end
+
+    context 'when searching a reaction in correct collection' do
+      let(:search_term) { 'Other Reaction' }
+      let(:params) do
+        {
+          selection: {
+            elementType: :reactions,
+            name: search_term,
+            search_by_method: :substring,
+          },
+          collection_id: other_collection.id,
+        }
+      end
+
+      it 'returns the reaction' do
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [other_reaction.id]
+      end
+    end
   end
 
   describe 'POST /api/v1/search/wellplates' do
-    pending 'TODO: Add missing spec'
+    let(:url) { '/api/v1/search/wellplates' }
+
+    before do
+      do_request
+    end
+
+    context 'when searching a wellplate in correct collection' do
+      let(:search_term) { 'Other Wellplate' }
+      let(:params) do
+        {
+          selection: {
+            elementType: :wellplates,
+            name: search_term,
+            search_by_method: :substring,
+          },
+          collection_id: other_collection.id,
+        }
+      end
+
+      it 'returns the wellplate' do
+        expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('wellplates', 'ids')).to eq [other_wellplate.id]
+      end
+
+      it 'returns the referenced screen of the wellplate' do
+        expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('screens', 'ids')).to eq [other_screen.id]
+      end
+
+      it 'returns the referenced sample of the wellplate' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_b.id]
+      end
+    end
   end
 
   describe 'POST /api/v1/search/screens' do
-    pending 'TODO: Add missing spec'
+    let(:url) { '/api/v1/search/screens' }
+
+    before do
+      do_request
+    end
+
+    context 'when searching a screen in correct collection' do
+      let(:search_term) { 'Other Screen' }
+      let(:params) do
+        {
+          selection: {
+            elementType: :screens,
+            name: search_term,
+            search_by_method: :substring,
+          },
+          collection_id: other_collection.id,
+        }
+      end
+
+      it 'returns the screen' do
+        expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('screens', 'ids')).to eq [other_screen.id]
+      end
+
+      it 'returns the referenced wellplate of the screen' do
+        expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('wellplates', 'ids')).to eq [other_wellplate.id]
+      end
+
+      it 'returns the referenced sample of the screen' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_b.id]
+      end
+    end
   end
 end
 # rubocop:enable RSpec/IndexedLet, Naming/VariableNumber

@@ -784,9 +784,7 @@ module Export
       @synthetic_attachments << attachment
       # Without this, the in-memory Shrine reference set by the after_save attach callback streams
       # back empty on its first read — a fresh reload forces it to rebuild from the persisted record.
-      # Note: Attachment#reload returns set_key's value, not self, so it can't be the last expression.
       attachment.reload
-      attachment
     rescue StandardError => e
       Rails.logger.error("Failed to attach research plan report image: #{e.message}")
       nil
