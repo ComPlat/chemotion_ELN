@@ -632,6 +632,18 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       // embedded `data` because no attachment backed it still has the same expiring urls written
       // all over it, and the file must not carry one either way.
       if (forPersistence) {
+        // selector.files is what NMRium does read, and when it loads a zip by url it fills the list
+        // in itself: every entry is the download url's path through the archive, token included.
+        // Only the member path survives an open - the reopen path re-points it onto the archive it
+        // mints (patchZipAndJcampReference) - so that is all that is kept. An entry naming no member
+        // only names the whole file, which the source already does.
+        if (Array.isArray(tmpSpc.selector?.files)) {
+          const members = tmpSpc.selector.files.map(archiveMemberPath).filter(Boolean);
+          const selector = { ...tmpSpc.selector };
+          if (members.length) selector.files = members; else delete selector.files;
+          tmpSpc.selector = selector;
+        }
+
         // sourceSelector is not what NMRium reads (selector is), but it IS what findMatchingJcamp
         // matches on when the document is reopened - and it holds the same token URLs. Keep the
         // part that identifies the file, drop the part that expires.
@@ -718,11 +730,11 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
     });
   }
 
-  // Deliberately not forcing a {version, data} wrap or an explicit version, even though a spectrum
-  // here may now depend on sources[] actually being processed on load: a real, working .nmrium
-  // capture has neither (flat top-level sources/spectra, no version at all) and reloads correctly,
-  // while an explicit version apparently opts a document out of whatever normalization an unversioned
-  // one gets put through on load. Forcing our own wrap previously broke exactly this case.
+  // The shape is returned as it came in; the version is the caller's to add. It has to be added
+  // whenever a spectrum depends on sources[]: NMRium reads an unversioned document as version 0, and
+  // its migration chain empties sources[] and rewrites each data-less 2D spectrum to
+  // `data: {rr: undefined}`. See nmriumDocumentToSave and versionFlatDocument in
+  // NMRiumDisplayer.js.
   return cleanedNMRiumData;
 };
 

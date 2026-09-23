@@ -650,6 +650,23 @@ describe('SpectraHelper', () => {
           expect(cleaned.spectra[0].sourceSelector.files).toEqual(['exp1/pdata/1/2rr']);
         });
 
+        // A zip loaded by url leaves no sourceSelector at all: NMRium writes the member list into
+        // selector.files itself, each entry the download url's path through the archive.
+        it("reduces NMRium's own selector.files to member paths, dropping the token", () => {
+          const loadedByUrl = zipState();
+          delete loadedByUrl.spectra[0].sourceSelector;
+          loadedByUrl.spectra[0].selector.files = [
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/pdata/1/2rr',
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/acqus',
+          ];
+          const cleaned = cleaningNMRiumData(loadedByUrl, { attachments, forPersistence: true });
+          expect(cleaned.spectra[0].selector).toEqual({
+            root: 'nmrium-src-740-zip',
+            files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+          });
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+        });
+
         it('keeps the data matrix when no attachment backs the spectrum', () => {
           const cleaned = cleaningNMRiumData(zipState(), { attachments: [], forPersistence: true });
           expect(cleaned.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });

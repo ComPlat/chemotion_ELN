@@ -83,6 +83,117 @@ describe('NMRiumDisplayer', () => {
     });
   });
 
+  // The shape a save writes for a zip loaded by url: flat, with sources[] holding an attachment
+  // reference, the spectrum's data dropped for it, and NMRium's own selector.files still carrying
+  // the download token of the open it was saved from. NMRium reads an unversioned document as
+  // version 0, and its migrations empty sources[] and turn the spectrum into `data: {rr: undefined}`.
+  describe('reopening a document saved from a zip loaded by url', () => {
+    const OLD = '/api/v1/public/third_party_apps/OLD-TOKEN/file.zip';
+    const zip = { id: 11, label: 'a.zip', kind: 'zip', url: `${TPA}/NEW-TOKEN` };
+    const savedDocument = () => ({
+      sources: [{
+        id: 'nmrium-src-a-zip',
+        entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/11/a.zip' }],
+      }],
+      spectra: [{
+        id: 'spc-1',
+        info: { dimension: 2, isFt: true, name: `${OLD}/a/1` },
+        display: { name: `${OLD}/a/1` },
+        selector: { root: 'nmrium-src-a-zip', files: [`${OLD}/a/1/pdata/1/2rr`, `${OLD}/a/1/acqus`] },
+      }],
+      molecules: [],
+    });
+
+    const reopen = async (doc, molfile = null) => {
+      const displayer = displayerWith([zip]);
+      displayer.setState = () => {};
+      displayer.postToNMRium = () => {};
+      let loaded = null;
+      displayer.buildPatchedNmriumFile = (label, content) => { loaded = content; return {}; };
+      await displayer.sendPatchedNmrium({ file: btoa(JSON.stringify(doc)) }, undefined, zip, molfile);
+      return loaded;
+    };
+
+    it('hands NMRium a versioned document, so sources[] survives its migrations', async () => {
+      const loaded = await reopen(savedDocument());
+      expect(loaded.version).toEqual(19);
+      expect(loaded.data.sources).toEqual([{
+        id: 'nmrium-src-a-zip',
+        entries: [{ baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/NEW-TOKEN/file.zip' }],
+      }]);
+      expect(loaded.data.spectra[0].selector.root).toEqual('nmrium-src-a-zip');
+    });
+
+    it('re-points selector.files onto the archive minted for this open', async () => {
+      const loaded = await reopen(savedDocument());
+      expect(loaded.data.spectra[0].selector.files).toEqual([
+        '/api/v1/public/third_party_apps/NEW-TOKEN/file.zip/a/1/pdata/1/2rr',
+        '/api/v1/public/third_party_apps/NEW-TOKEN/file.zip/a/1/acqus',
+      ]);
+    });
+
+    it('re-points the bare member paths a fixed save writes the same way', async () => {
+      const doc = savedDocument();
+      doc.spectra[0].selector.files = ['a/1/pdata/1/2rr'];
+      const loaded = await reopen({ version: 19, data: doc });
+      expect(loaded.version).toEqual(19);
+      expect(loaded.data.spectra[0].selector.files)
+        .toEqual(['/api/v1/public/third_party_apps/NEW-TOKEN/file.zip/a/1/pdata/1/2rr']);
+    });
+
+    it("puts the sample's molfile into a versioned document, not beside it", async () => {
+      const loaded = await reopen({ version: 19, data: savedDocument() }, 'MOLFILE');
+      expect(loaded.data.molecules).toEqual([{ molfile: 'MOLFILE' }]);
+      expect(loaded.molecules).toEqual(undefined);
+    });
+
+    it('leaves a flat document that relies on no source unversioned', async () => {
+      const embedded = { spectra: [{ id: 'spc-1', info: { dimension: 1 }, data: { x: [1], re: [1] } }] };
+      const loaded = await reopen(embedded);
+      expect(loaded.version).toEqual(undefined);
+      expect(loaded.data).toEqual(undefined);
+    });
+  });
+
+  describe('.nmriumDocumentToSave()', () => {
+    const zip = { id: 11, label: 'a.zip', kind: 'zip', url: `${TPA}/LIVE-TOKEN` };
+    const liveState = () => ({
+      sources: [{
+        id: 'wrapper-uuid',
+        entries: [{ baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/LIVE-TOKEN/file.zip' }],
+      }],
+      spectra: [{
+        id: 'spc-1',
+        info: { dimension: 2, isFt: true, name: 'a.zip' },
+        display: { name: 'a.zip' },
+        data: { rr: { z: [[1.0]] } },
+        selector: {
+          root: 'wrapper-uuid',
+          files: ['/api/v1/public/third_party_apps/LIVE-TOKEN/file.zip/a/1/pdata/1/2rr'],
+        },
+      }],
+    });
+
+    const saved = (nmriumVersion) => {
+      const displayer = displayerWith([zip]);
+      displayer.state.nmriumVersion = nmriumVersion;
+      return JSON.parse(JSON.stringify(displayer.nmriumDocumentToSave(liveState())));
+    };
+
+    it('wraps the document with the version the wrapper reported', () => {
+      const doc = saved(19);
+      expect(doc.version).toEqual(19);
+      expect(doc.data.spectra[0].selector).toEqual({ root: 'nmrium-src-a-zip', files: ['a/1/pdata/1/2rr'] });
+      expect(JSON.stringify(doc)).not.toContain('third_party_apps');
+    });
+
+    it('keeps the flat shape when no version was ever reported', () => {
+      const doc = saved(null);
+      expect(doc.version).toEqual(undefined);
+      expect(Array.isArray(doc.spectra)).toBe(true);
+    });
+  });
+
   // The analysis-level button hands over every dataset's files, but a session is saved back into
   // one dataset. Loading all of them into one session and saving into whichever came first wrote
   // one dataset's document into another; both sides now follow the same anchor.
