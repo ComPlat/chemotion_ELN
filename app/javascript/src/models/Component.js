@@ -85,6 +85,26 @@ export default class Component extends Sample {
     this._amount_l = amount_l;
   }
 
+  /** Keeps mass and volume on the same scale as the component's molar amount. */
+  updatePhysicalAmounts() {
+    if (this.amount_mol == null) return;
+    const amountMol = Number(this.amount_mol);
+    const molecularWeight = Number(this.molecule_molecular_weight);
+    const purity = Number(this.purity || 1);
+    if (!Number.isFinite(amountMol) || amountMol < 0
+      || !Number.isFinite(molecularWeight) || molecularWeight <= 0
+      || !Number.isFinite(purity) || purity <= 0) return;
+
+    this.amount_g = amountMol * molecularWeight / purity;
+    if (this.material_group === 'liquid') {
+      if (this.density > 0) {
+        this.amount_l = this.amount_g / (this.density * 1000);
+      } else if (this.starting_molarity_value > 0) {
+        this.amount_l = amountMol / this.starting_molarity_value;
+      }
+    }
+  }
+
   /**
    * @returns {string} Path to the molecule SVG image, if available.
    */
