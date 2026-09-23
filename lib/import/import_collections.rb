@@ -847,11 +847,12 @@ module Import
       end
     end
 
+    # Must run in extract() before import_attachments(); att.filename is "<old-uuid>.<ext>" from the ZIP entry name.
     def update_richtext_attachment_identifiers(attachments)
       return if attachments.empty?
 
       identifier_map = attachments.each_with_object({}) do |att, map|
-        map[att.filename] = att.identifier if att.filename.present? && att.identifier.present?
+        map[File.basename(att.filename, '.*')] = att.identifier if att.filename.present? && att.identifier.present?
       end
       return if identifier_map.empty?
 
