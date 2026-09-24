@@ -58,7 +58,11 @@
       // LayerContent/Panel render an unstyled wrapper <div> here before the
       // d3-mounted / InfoPanel content; without this it's a block box with
       // auto height, which breaks the percentage-height chain below it.
-      > div {
+      // Only that first wrapper grows: the CV chart column also stacks the
+      // voltammetry table under the chart, and growing it too hands it a share
+      // of the chart's height - which the chart, sizing itself to its own
+      // wrapper, then keeps. The table takes its natural height instead.
+      > div:first-child {
         flex: 1 1 auto;
         min-height: 0;
       }
