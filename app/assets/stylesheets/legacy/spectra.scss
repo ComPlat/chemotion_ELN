@@ -2,10 +2,6 @@
   z-index: 1998;
 }
 
-.react-spectrum-editor div[class^='InfoPanel-panelDetail'] {
-  max-width: 22vw;
-}
-
 .spectra-editor-modal-body__editor {
   height: 100%;
   min-height: 0;
@@ -52,7 +48,8 @@
       min-height: 0;
     }
 
-    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3 {
+    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3,
+    .MuiGrid-grid-xs-8, .MuiGrid-grid-xs-4 {
       height: 100%;
       min-height: 0;
       display: flex;
@@ -65,6 +62,13 @@
         flex: 1 1 auto;
         min-height: 0;
       }
+    }
+
+    // The xs-3/xs-4 column stacks the Graph/Info/Multiplicity accordions. When
+    // Info expands the stack outgrows the column; scroll so Multiplicity stays
+    // reachable. xs-8/xs-9 are chart columns and stay clipped.
+    .MuiGrid-grid-xs-3 > div, .MuiGrid-grid-xs-4 > div {
+      overflow-y: auto;
     }
 
     .d3Line, .d3Rect, .d3Multi, .d3Svg, .d3SvgRect, .d3SvgMulti {
