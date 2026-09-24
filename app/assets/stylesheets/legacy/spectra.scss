@@ -48,8 +48,7 @@
       min-height: 0;
     }
 
-    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3,
-    .MuiGrid-grid-xs-8, .MuiGrid-grid-xs-4 {
+    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3 {
       height: 100%;
       min-height: 0;
       display: flex;
@@ -68,10 +67,10 @@
       }
     }
 
-    // The xs-3/xs-4 column stacks the Graph/Info/Multiplicity accordions. When
-    // Info expands the stack outgrows the column; scroll so Multiplicity stays
-    // reachable. xs-8/xs-9 are chart columns and stay clipped.
-    .MuiGrid-grid-xs-3 > div, .MuiGrid-grid-xs-4 > div {
+    // The xs-3 column stacks the Graph/Info/Multiplicity accordions. When Info
+    // expands the stack outgrows the column; scroll so Multiplicity stays
+    // reachable. The xs-9 chart column stays clipped.
+    .MuiGrid-grid-xs-3 > div {
       overflow-y: auto;
     }
 
