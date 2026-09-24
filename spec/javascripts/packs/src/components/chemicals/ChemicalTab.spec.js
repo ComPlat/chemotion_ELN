@@ -477,3 +477,52 @@ describe('Manual SDS attachment functionality', () => {
     expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
   });
 });
+
+describe('ChemicalTab vendor links', () => {
+  let instance;
+
+  const renderEntry = (document) => shallow(instance.renderChildElements(document, 0));
+
+  beforeEach(() => {
+    const wrapper = shallow(
+      React.createElement(
+        ChemicalTab,
+        {
+          sample,
+          type: 'sample',
+          saveInventory: false,
+          setSaveInventory: sinon.spy(),
+          handleUpdateSample: sinon.spy(),
+          editChemical: sinon.spy(),
+          key: 'ChemicalTabLinks',
+        },
+      )
+    );
+    instance = wrapper.instance();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('links a stored safety sheet and its product page', () => {
+    instance.setState({
+      chemical: createChemical([{ merckProductInfo: { productLink: 'https://www.sigmaaldrich.com/p/270709' } }]),
+    });
+    const entry = renderEntry({ merck_link: '/safety_sheets/merck/270709_abcd.pdf' });
+
+    const hrefs = entry.find('a').map((a) => a.prop('href'));
+    expect(hrefs).toContain('/safety_sheets/merck/270709_abcd.pdf');
+    expect(hrefs).toContain('https://www.sigmaaldrich.com/p/270709');
+  });
+
+  it('lists a sheet whose stored links are not web or local links without linking them', () => {
+    instance.setState({
+      chemical: createChemical([{ merckProductInfo: { productLink: 'javascript:void(0)' } }]),
+    });
+    const entry = renderEntry({ merck_link: 'javascript:void(0)' });
+
+    expect(entry.find('a').length).toBe(0);
+    expect(entry.text()).toContain('Safety Data Sheet from');
+  });
+});
