@@ -27,7 +27,37 @@ module Chemotion
     }.freeze
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
-    ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
+
+    # Sheets per sample. Cf. MAX_SAVED_SDS in ChemicalTab.js, which refuses first; this is
+    # the backstop for any client that does not.
+    MAX_SAVED_SDS = 5
+
+    # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
+    SDS_VENDOR = 'Sigma-Aldrich'
+    THERMO_VENDOR = 'Thermofisher'
+    # Stands in for the vendor name when the search covered all of them.
+    ALL_VENDORS = 'any vendor'
+    FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
+    # Fisher partitions this endpoint by catalogue availability, so the country code is pinned
+    # to the one the part numbers below were verified against.
+    FISHER_SDS_URL = 'https://www.fishersci.com/store/msds?partNumber=%<part_number>s' \
+                     '&productDescription=&language=EN&countryCode=US'
+    # Alfa-lineage sheets come from DirectWebViewer, which unlike the Fisher catalogue
+    # serves the requested language.
+    THERMO_SDS_URL = 'https://documents.thermofisher.com/directwebviewer/private/results.aspx' \
+                     '?page=NewSearch&LANGUAGE=d__%<language>s&SUBFORMAT=d__CLP1' \
+                     '&SKU=%<sku>s&PLANT=d__ALF'
+    THERMO_LANGUAGES = { 'en' => 'EN', 'de' => 'DE', 'fr' => 'FR' }.freeze
+
+    # PubChem lists 30 to 50 vendors per compound, most of them building-block houses
+    # a European lab will not order from. Only these are surfaced; the rest stay one
+    # click away on PubChem itself.
+    CURATED_VENDORS = ['abcr GmbH', 'TCI (Tokyo Chemical Industry)', 'LGC Standards',
+                       'Glentham Life Sciences Ltd.', 'Fluorochem', 'CymitQuimica'].freeze
+    PUBCHEM_VENDOR_URL = 'https://pubchem.ncbi.nlm.nih.gov/compound/%<cid>s#section=Chemical-Vendors'
+    MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco vetec saj usp cerillian].freeze
+    MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
+    ALLOWED_DOMAINS = %w[sigmaaldrich.com fishersci.com thermofisher.com].freeze
 
     # Sending only a User-Agent + `Accept: */*`
     # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
@@ -55,65 +85,6 @@ module Chemotion
         },
         timeout: 15,
         follow_redirects: false }
-    end
-
-    def self.merck_request(name)
-      string = CGI.escape(name.gsub(/\s/, '-'))
-      url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
-            "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
-      safe_url = validate_url_for_request!(url)
-      merck_res = HTTParty.get(safe_url, request_options)
-      doc = Nokogiri::HTML.parse(merck_res.body.to_s)
-
-      href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
-      raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
-
-      href
-    end
-
-    # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
-    # Apollo GraphQL cache that Next.js embeds in __NEXT_DATA__. Product objects in
-    # the cache carry brandKey and productNumber but no URL, so we construct it.
-    def self.extract_product_href_from_next_data(doc)
-      script = doc.at_css('#__NEXT_DATA__')
-      return nil unless script
-
-      data = JSON.parse(script.text)
-      extract_product_href_from_apollo_state(data)
-    rescue JSON::ParserError, TypeError
-      nil
-    end
-
-    # Construct the canonical /DE/de/product/{brand}/{number} path from the first
-    # entry in the Apollo GraphQL cache search results.
-    def self.extract_product_href_from_apollo_state(data)
-      first = apollo_first_search_product(data)
-      return nil unless first
-
-      brand_key = first['brandKey'].to_s.downcase
-      product_number = first['productNumber'].to_s
-      return nil if brand_key.empty? || product_number.empty?
-
-      "/DE/de/product/#{brand_key}/#{product_number}"
-    end
-
-    # Return the first product object from ROOT_QUERY.getNewProductSearchResults.
-    def self.apollo_first_search_product(data)
-      root_query = data.dig('props', 'apolloState', 'ROOT_QUERY') ||
-                   data.dig('apolloState', 'ROOT_QUERY')
-      return nil unless root_query.is_a?(Hash)
-
-      sr_key = root_query.keys.find { |k| k.start_with?('getNewProductSearchResults') }
-      return nil unless sr_key
-
-      products = root_query.dig(sr_key, 'products')
-      products.is_a?(Array) ? products.first : nil
-    end
-
-    # Last-resort fallback: first anchor whose href matches the product path pattern.
-    def self.extract_product_href_from_html(doc)
-      product_path_re = %r{\A/[A-Z]{2}/[a-z]{2}/product/}i
-      doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
     end
 
     # Validate that a URL is safe to request (SSRF protection).
@@ -144,58 +115,310 @@ module Chemotion
       end
     end
 
-    private_class_method :extract_product_href_from_next_data,
-                         :extract_product_href_from_apollo_state,
-                         :apollo_first_search_product,
-                         :extract_product_href_from_html,
-                         :validate_url_for_request!,
+    private_class_method :validate_url_for_request!,
                          :allowed_host?
 
-    def self.merck(name, language)
-      product_number_string = merck_request(name)
-      product_number = product_number_string[15, product_number_string.length].split('/')[1]
+    def self.merck(name, language, wanted_number = nil)
+      brand, product_number = merck_product_from_pubchem(name, wanted_number)
+      raise StandardError, 'No Sigma-Aldrich catalogue entry found' unless brand
+
       validate_product_number!(product_number)
-      url_string = product_number_string[15, product_number_string.length]
-      merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
-      { 'merck_link' => merck_link, 'merck_product_number' => product_number,
-        'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
+      merck_product_entry(brand, product_number, language)
     rescue StandardError
-      'Could not find safety data sheet from Merck'
+      no_sheet_found(SDS_VENDOR)
+    end
+
+    def self.merck_product_entry(brand, product_number, language)
+      path = "#{brand}/#{product_number}"
+      { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
+        'merck_product_number' => product_number,
+        'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
+        'save_mode' => vendor_save_mode(SDS_VENDOR),
+        'save_modes' => vendor_save_modes(SDS_VENDOR) }
+    end
+
+    # Form-encoded params arrive with the sheet list rebuilt as an index-keyed Hash, so
+    # both shapes count.
+    def self.sds_limit_reached?(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return false unless first.is_a?(Hash)
+
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      sheets.is_a?(Enumerable) && sheets.count >= MAX_SAVED_SDS
+    end
+
+    # True when this sample already holds the very same file. Two samples may share one
+    # sheet on disk; one sample holding it twice is the case worth refusing.
+    # The same PDF is published under several catalogue numbers, so naming the one already
+    # held is the difference between a refusal that makes sense and one that looks wrong.
+    def self.duplicate_sheet_message(file_path)
+      held = File.basename(file_path.to_s).sub(/_(?:web_)?[a-f0-9]{16}\.pdf\z/, '')
+      return 'This sample already holds this safety data sheet.' if held.blank?
+
+      "This sample already holds this sheet. It is the same document as #{held}."
+    end
+
+    def self.sheet_already_saved?(chemical_data, file_path)
+      file_path.is_a?(String) && saved_sheet_paths(chemical_data).include?(file_path)
+    end
+
+    def self.saved_sheet_paths(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return [] unless first.is_a?(Hash)
+
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      return [] unless sheets.is_a?(Enumerable)
+
+      sheets.flat_map { |sheet| sheet.respond_to?(:values) ? sheet.values : [] }
+    end
+
+    # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
+    # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
+    def self.vendor_save_modes(vendor)
+      return %w[browser server] if vendor.casecmp?(SDS_VENDOR)
+      return %w[server browser] if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+
+      []
+    end
+
+    # One wording for every vendor that has nothing to offer, named as the UI names it.
+    def self.no_sheet_found(vendor)
+      "No safety data sheet found from #{vendor}"
+    end
+
+    # The preferred route alone, for stored rows and clients that read a single mode.
+    def self.vendor_save_mode(vendor)
+      vendor_save_modes(vendor).first || 'none'
+    end
+
+    # Sigma's own search rejects automated clients, so the catalogue entry comes from
+    # PubChem's Chemical Vendors list. Returns [brand, product_number] or nil.
+    def self.merck_product_from_pubchem(name, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      return nil unless cid
+
+      candidates = merck_candidates(PubChem.get_vendor_sources_from_cid(cid))
+      wanted = normalize_product_number(product_number)
+      candidates = candidates.select { |_, number| normalize_product_number(number) == wanted } if wanted.present?
+
+      candidates.min_by { |c| merck_rank(*c) }
+    end
+
+    def self.merck_candidates(sources)
+      sources.filter_map do |source|
+        next unless source[:SourceName].to_s.casecmp?(SDS_VENDOR)
+
+        match = MERCK_PRODUCT_URL_RE.match(source[:SourceRecordURL].to_s)
+        [match[1].downcase, match[2].downcase] if match
+      end
+    end
+
+    def self.merck_rank(brand, number)
+      [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
+    end
+
+    # One entry per vendor for the "All vendors" view, Sigma-Aldrich first because it
+    # is the only vendor whose SDS URL can be derived.
+    def self.vendor_groups(name, language)
+      cid = PubChem.get_cid_from_identifier(name)
+      return [] unless cid
+
+      grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
+    end
+
+    def self.grouped_vendor_sources(sources, language)
+      sources.group_by { |source| source[:SourceName].to_s }
+             .filter_map { |vendor, group| vendor_group(vendor, group, language) }
+             .sort_by { |group| [vendor_rank(group), -group['count']] }
+    end
+
+    # Splits the curated vendors into the ones we can fetch a sheet from and the ones that
+    # only have a catalogue page, and points at PubChem for the full list.
+    # An empty result carries the same sentence a single-vendor search returns, so the UI
+    # renders one shape either way.
+    def self.vendor_overview(name, language, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      return empty_overview unless cid
+
+      groups = grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
+      shown = filter_by_product_number(curated_groups(groups), product_number)
+      sds, catalogue = shown.partition { |group| group['sds_supported'] }
+      overview = { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
+                   'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+      overview['message'] = no_sheet_found(ALL_VENDORS) if shown.empty?
+      overview
+    end
+
+    def self.empty_overview
+      { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0,
+        'message' => no_sheet_found(ALL_VENDORS) }
+    end
+
+    # Narrows the listing to the catalogue number the user already knows, so one row comes
+    # back instead of every product the vendor sells. Vendors left with nothing drop out.
+    def self.filter_by_product_number(groups, product_number)
+      wanted = normalize_product_number(product_number)
+      return groups if wanted.blank?
+
+      groups.filter_map do |group|
+        products = group['products'].select { |product| product_number_match?(product, wanted) }
+        next if products.empty?
+
+        group.merge('products' => products, 'count' => products.size)
+      end
+    end
+
+    def self.normalize_product_number(value)
+      value.to_s.strip.downcase.delete('-_. ')
+    end
+
+    # Fisher prefixes its catalogue codes (AC..., ALFAA...), so an edge match counts.
+    def self.product_number_match?(product, wanted)
+      numbers = product.keys.grep(/_product_number\z/).map { |key| product[key] }
+      (numbers << product['label']).compact.any? do |value|
+        candidate = normalize_product_number(value)
+        candidate == wanted || candidate.start_with?(wanted) || candidate.end_with?(wanted)
+      end
+    end
+
+    def self.curated_groups(groups)
+      groups.select do |group|
+        group['sds_supported'] || CURATED_VENDORS.any? { |name| group['vendor'].casecmp?(name) }
+      end
+    end
+
+    # Sigma-Aldrich leads as the ELN's primary vendor, then the other vendors whose SDS
+    # can be fetched, then catalogue-only ones.
+    def self.vendor_rank(group)
+      return 0 if group['vendor'].casecmp?(SDS_VENDOR)
+
+      group['sds_supported'] ? 1 : 2
+    end
+
+    def self.vendor_group(vendor, sources, language)
+      return nil if vendor.empty?
+
+      products, sds_supported = vendor_products(vendor, sources, language)
+      return nil if products.empty?
+
+      { 'vendor' => vendor, 'count' => products.size, 'sds_supported' => sds_supported,
+        'save_mode' => sds_supported ? vendor_save_mode(vendor) : 'none',
+        'save_modes' => sds_supported ? vendor_save_modes(vendor) : [], 'products' => products }
+    end
+
+    def self.vendor_products(vendor, sources, language)
+      return [merck_products(sources, language), true] if vendor.casecmp?(SDS_VENDOR)
+
+      if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+        fisher = fisher_products(sources, language)
+        return [fisher, true] if fisher.any? { |product| product['fisher_link'] }
+      end
+
+      [other_vendor_products(sources), false]
+    end
+
+    # Returns [part_number, sds_url]. A Fisher Chemical RegistryID is a catalogue number
+    # already; Thermo codes are all-numeric (Acros, US catalogue only) or dotted (Alfa).
+    def self.fisher_sds(source, language)
+      registry = source[:RegistryID].to_s
+      if registry.present? && !registry.start_with?('GID_') && registry.match?(/\A[A-Za-z0-9]+\z/)
+        return [registry, format(FISHER_SDS_URL, part_number: registry)]
+      end
+
+      code = url_last_segment(source[:SourceRecordURL].to_s).to_s
+      return ["AC#{code}", format(FISHER_SDS_URL, part_number: "AC#{code}")] if code.match?(/\A\d+\z/)
+
+      alfa_sds(code, language)
+    end
+
+    # Only a letter-prefixed dotted code resolves; the dotted suffix is a pack size.
+    def self.alfa_sds(code, language)
+      base = code[/\A([A-Za-z][A-Za-z0-9]*)\./, 1]
+      return nil unless base
+
+      sku = "ALFAA#{base.upcase}"
+      [sku, format(THERMO_SDS_URL, language: THERMO_LANGUAGES.fetch(language, 'EN'), sku: sku)]
+    end
+
+    def self.fisher_products(sources, language)
+      sources.filter_map { |source| fisher_product(source, language) }
+             .uniq { |product| product['fisher_product_number'] || product['product_link'] }
+    end
+
+    def self.fisher_product(source, language)
+      url = source[:SourceRecordURL].to_s
+      part_number, sds_url = fisher_sds(source, language)
+      return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
+
+      product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number,
+                  'save_mode' => vendor_save_mode(FISHER_VENDORS.first),
+                  'save_modes' => vendor_save_modes(FISHER_VENDORS.first) }
+      product['fisher_product_link'] = url if url.present?
+      product
+    end
+
+    def self.url_last_segment(url)
+      return nil if url.blank?
+
+      URI.parse(url).path.to_s.split('/').reject(&:empty?).last
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    def self.merck_products(sources, language)
+      merck_candidates(sources).uniq.sort_by { |c| merck_rank(*c) }
+                               .map { |brand, number| merck_product_entry(brand, number, language) }
+    end
+
+    def self.other_vendor_products(sources)
+      sources.filter_map do |source|
+        url = source[:SourceRecordURL].to_s
+        next if url.empty?
+
+        { 'label' => vendor_product_label(source, url), 'product_link' => url }
+      end
+    end
+
+    # RegistryID is the vendor's catalogue number unless PubChem assigned an internal GID.
+    def self.vendor_product_label(source, url)
+      registry = source[:RegistryID].to_s
+      return registry unless registry.empty? || registry.start_with?('GID_')
+
+      url_last_segment(url) || url
     end
 
     # Validate product number: allow letters, digits, hyphen, underscore, dot.
     def self.validate_product_number!(product_number)
-      if product_number.nil? || product_number.to_s.strip.empty?
-        raise StandardError, 'Could not find safety data sheet from Merck'
-      end
+      raise StandardError, no_sheet_found(SDS_VENDOR) if product_number.to_s.strip.empty?
 
       allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
       return if product_number.to_s.match?(allowed_pattern)
 
-      raise StandardError, 'Could not find safety data sheet from Merck'
+      raise StandardError, no_sheet_found(SDS_VENDOR)
     end
 
-    def self.alfa_product(alfa_req)
-      response = Nokogiri::HTML.parse(alfa_req.body)
-      if response.title && response.title != 'Alfa Aesar'
-        product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
-        product_number[0].value
-      else
-        str = 'search-result-number'
-        response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
-      end
-    end
+    # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
+    # entry is resolved through PubChem and the SDS URL built from it. alfa.com is off the
+    # allowlist, which is why .alfa can only ever return its failure string.
+    def self.thermofisher(name, language, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      raise StandardError, 'No PubChem CID for this name' unless cid
 
-    def self.alfa(name, language)
-      chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
-      safe_url = validate_url_for_request!(url)
-      alfa_req = HTTParty.get(safe_url, request_options)
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
-      { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
-        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
+      wanted = normalize_product_number(product_number)
+      product = fisher_products(fisher_candidates(PubChem.get_vendor_sources_from_cid(cid)), language)
+                .select { |candidate| candidate['fisher_link'] }
+                .find { |candidate| wanted.blank? || product_number_match?(candidate, wanted) }
+      raise StandardError, 'No Thermofisher catalogue entry found' unless product
+
+      product
     rescue StandardError
-      'Could not find safety data sheet from Thermofisher'
+      no_sheet_found(THERMO_VENDOR)
+    end
+
+    def self.fisher_candidates(sources)
+      sources.select do |source|
+        FISHER_VENDORS.any? { |vendor| source[:SourceName].to_s.casecmp?(vendor) }
+      end
     end
 
     def self.write_file(file_path, file = nil, link = nil)
@@ -204,8 +427,11 @@ module Chemotion
       # Ensure parent directory exists
       FileUtils.mkdir_p(File.dirname(full_file_path))
 
-      if file.is_a?(Hash) && file['tempfile']
-        File.binwrite(full_file_path, file['tempfile'].read)
+      # Grape hands the upload over with symbol keys, so both spellings have to be accepted.
+      upload = file.is_a?(Hash) ? (file[:tempfile] || file['tempfile']) : nil
+      if upload.respond_to?(:read)
+        upload.rewind if upload.respond_to?(:rewind)
+        File.binwrite(full_file_path, upload.read)
       elsif file.respond_to?(:read)
         File.binwrite(full_file_path, file.read)
       else
@@ -220,13 +446,14 @@ module Chemotion
     def self.create_sds_file(link, product_number, vendor_name)
       Tempfile.create(['sds', '.pdf'], Rails.root.join('tmp')) do |tmp_file|
         result = request_pdf_file(link, tmp_file.path)
-        return result unless result
+        # Only true means bytes landed; an error Hash is truthy and would hash the empty tempfile.
+        return result unless result == true
+
+        identical = GenerateFileHashUtils.find_identical_sheet(tmp_file.path)
+        return identical if identical.present?
 
         file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
-        existing_file_path = GenerateFileHashUtils.find_duplicate_file_by_hash(vendor_name, product_number, file_hash)
-        return existing_file_path if existing_file_path.present? && existing_file_path.is_a?(String)
-
-        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15], true)
+        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15])
         write_file(file_name.to_s, tmp_file, link)
         return file_name if File.exist?("public/#{file_name}")
 
@@ -236,36 +463,36 @@ module Chemotion
       { error: e.message }
     end
 
-    def self.request_pdf_file(link, file_path)
-      safe_url = validate_url_for_request!(link)
+    # Every redirect hop is re-validated, so a whitelisted host cannot forward us off-allowlist.
+    def self.fetch_allowed_url(url, limit: 3)
+      safe_url = validate_url_for_request!(url)
       options = request_options.dup
-      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(safe_url, options)
-      if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
-        File.binwrite(file_path, req_safety_sheet)
-        sleep 1
-        true
-      else
-        Rails.logger.warn("Non-PDF content received from #{link}")
-        false
+      origin = URI.parse(safe_url)
+      options[:headers]['Origin'] = "#{origin.scheme}://#{origin.host}"
+      response = HTTParty.get(safe_url, options)
+      location = response.headers['Location']
+      return response if location.blank? || !limit.positive?
+      return response unless response.code.to_i.between?(300, 399)
+
+      fetch_allowed_url(URI.join(safe_url, location).to_s, limit: limit - 1)
+    end
+
+    # The bytes decide, not the header: Fisher labels the same sheet application/pdf,
+    # application/octet-stream or text/html depending on load, and a header that lies
+    # either way is what made a reachable sheet look unreachable.
+    def self.request_pdf_file(link, file_path)
+      response = fetch_allowed_url(link)
+      body = response.body.to_s
+      unless body.start_with?('%PDF')
+        Rails.logger.warn("Non-PDF content from #{link} (#{response.headers['Content-Type']})")
+        return false
       end
+
+      File.binwrite(file_path, body)
+      true
     rescue StandardError => e
       Rails.logger.error("HTTP error downloading PDF: #{e.message}")
       { error: e.message }
-    end
-
-    def self.find_existing_file_by_vendor_product_number_signature(vendor, product_number)
-      vendor_product_files = GenerateFileHashUtils.find_safety_sheets_by_product_number(vendor, product_number)
-      return nil if vendor_product_files.empty?
-
-      # Look for files matching the URL signature pattern
-      pattern = "#{SAFETY_SHEETS_DIR}/#{vendor}/#{product_number}_web_*.pdf"
-      existing_files = Dir.glob(pattern)
-      ## returning the first match is not best practice, for now it is ok as safety sheets which are fetched
-      ## using internal fetch_safetysheet API for merck are unique, so existing_files should always contain one file
-      return "/safety_sheets/#{vendor}/#{File.basename(existing_files.first)}" if existing_files.any?
-
-      nil
     end
 
     def self.health_section(product_number)
@@ -454,18 +681,6 @@ module Chemotion
       property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
     end
 
-    def self.chem_properties_merck(chem_properties_names, chem_properties_values)
-      chemical_properties = {}
-      chem_properties_values.pop
-      chem_properties_names.map.with_index do |string, index|
-        property_name = clean_property_name(string)
-        cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
-        cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
-        chemical_properties[property_name] = cleaned_value if property_name
-      end
-      chemical_properties
-    end
-
     def self.chemical_properties_merck(product_link)
       safe_url = validate_url_for_request!(product_link)
       product = fetch_product_from_apollo(safe_url)
@@ -483,61 +698,15 @@ module Chemotion
       'Could not find additional chemical properties'
     end
 
-    # Generate or extract vendor key for safetySheetPath based on file path
-    # Handles both raw filenames and existing versioned file paths
-    # @param file_path [String] Path to the SDS file
-    # @param product_number [String, nil] Optional product number to match versioned filenames
-    # @return [String] Vendor key for safetySheetPath
-    def self.extract_vendor_key_from_path(file_path, product_number = nil)
-      return nil unless file_path && product_number.present?
-
-      file_name = File.basename(file_path, '.pdf')
-
-      match = file_name.match(/#{@vendor_name}_#{product_number}_(?:web_)?([a-f0-9]{16})/)
-      version_num = match && match[1]
-
-      if version_num
-        "#{@vendor_name.downcase}_v#{version_num}_link"
-      else
-        "#{@vendor_name.downcase}_link"
-      end
-    end
-
-    # Generate safety sheet file path (unique by vendor/product and hash initials)
-    # Adds "_web_" marker when file originates from vendor API (url_signature = true)
-    # @param vendor_name [String] vendor folder name (e.g. 'merck')
-    # @param product_number [String] vendor product number (e.g. '270709')
-    # @param file_hash_initials [String] first 16 chars (or similar) of file hash for uniqueness
-    # @param url_signature [Boolean] whether to include the "_web_" segment (API-fetched)
+    # Where a sheet lands: the vendor folder, the catalogue number, and enough of the
+    # content hash that two different sheets for one product cannot collide.
     # @return [String] relative path starting with /safety_sheets/
-    # rubocop:disable Style/OptionalBooleanParameter
-    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials, url_signature = false)
-      base_file_name = "#{vendor_name}/#{product_number}"
-      if url_signature
-        "/safety_sheets/#{base_file_name}_web_#{file_hash_initials}.pdf"
-      else
-        "/safety_sheets/#{base_file_name}_#{file_hash_initials}.pdf"
-      end
-    end
-    # rubocop:enable Style/OptionalBooleanParameter
-
-    # Check if chemical record already contains this vendor and product combination
-    # @param chemical [Chemical] Chemical record to check
-    # @param vendor_name [String] Vendor name
-    # @param product_number [String] Product number
-    # @return [Boolean] true if vendor+product exists in chemical
-    def self.chemical_has_vendor_product?(chemical, vendor_name, product_number)
-      return false unless chemical&.chemical_data.is_a?(Array) && chemical.chemical_data[0]
-
-      # Check if vendor product key exists
-      vendor_product_key = "#{vendor_name.downcase}ProductInfo"
-      vendor_info = chemical.chemical_data[0][vendor_product_key]
-
-      vendor_info.present? && vendor_info['productNumber'] == product_number
+    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials)
+      "/safety_sheets/#{vendor_name}/#{product_number}_#{file_hash_initials}.pdf"
     end
 
-    def self.update_chemical_data(chemical_data, file_path, product_number, vendor)
-      hash_initials = file_path[%r{/safety_sheets/#{vendor}/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$}, 1]
+    def self.update_chemical_data(chemical_data, file_path, product_number)
+      hash_initials = file_path[/([a-f0-9]{16})\.pdf\z/, 1]
       if file_path.present? && file_path.is_a?(String) && hash_initials.present?
         safety_sheet_key = "#{product_number}_#{hash_initials}_link"
         chemical_data[0]['safetySheetPath'] ||= []
@@ -551,12 +720,10 @@ module Chemotion
       chemical_data
     end
 
+    # Always fetches: only the bytes can say whether this sheet is one we already hold,
+    # and the same catalogue number serves different sheets per language and revision.
     def self.find_existing_or_create_safety_sheet(link, vendor, product_number)
-      existing_file_path = find_existing_file_by_vendor_product_number_signature(
-        vendor,
-        product_number,
-      )
-      existing_file_path || create_sds_file(link, product_number, vendor)
+      create_sds_file(link, product_number, vendor)
     end
 
     # Finds existing chemical or creates new one with updated safety data
@@ -565,14 +732,12 @@ module Chemotion
     # @param chemical_data [Array<Hash>] Chemical data array
     # @param file_path [String] Path to safety data sheet file
     # @param product_number [String] Vendor product number
-    # @param vendor [String] Vendor name
     # @return [Chemical] Created or updated chemical record
     def self.find_or_create_chemical_with_safety_data(**args)
       updated_chemical_data = update_chemical_data(
         args[:chemical_data],
         args[:file_path],
         args[:product_number],
-        args[:vendor],
       )
       chemical = Chemical.find_by(sample_id: args[:sample_id])
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, OverlayTrigger } from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -9,6 +9,7 @@ import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import AppModal from 'src/components/common/AppModal';
+import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -98,7 +99,10 @@ describe('ChemicalTab component', () => {
 
   it('calls querySafetySheets() when submit button is clicked', () => {
     const querySafetySheetsSpy = sinon.spy(wrapper.instance(), 'querySafetySheets');
+    // The button refuses to search with an empty CAS, so give it one.
+    const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
     wrapper.find('#submit-sds-btn').simulate('click');
+    value.restore();
     expect(wrapper.find('.fa-spinner')).toHaveLength(1);
     expect(querySafetySheetsSpy.called).toBe(true);
   });
@@ -186,19 +190,439 @@ describe('ChemicalTab component', () => {
       setStateStub.restore();
     });
 
-    it('render fetch SDS button in disabled mode, if safety sheet with web signature exists and saved', () => {
-      // Seed state with a saved SDS from a default vendor (merck) so the button is disabled
-      const chemicalData = [{
-        safetySheetPath: [
-          { '252549_8996a8681115b875_link': '/safety_sheets/merck/252549_web_8996a8681115b875.pdf' }
-        ]
-      }];
-      const newChemical = createChemical(chemicalData, '7681-82-5');
+    const savedSheets = (count) => Array.from({ length: count }, (_, i) => ({
+      [`25254${i}_8996a8681115b87${i}_link`]: `/safety_sheets/merck/25254${i}_web_8996a8681115b87${i}.pdf`
+    }));
+
+    it('keeps the SDS search enabled once sheets are already saved', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(1) }], '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
 
       expect(wrapper.find('#submit-sds-btn')).toHaveLength(1);
-      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(true);
+      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(false);
+    });
+
+    it('keeps the SDS search enabled at the saved-sheet limit', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(5) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      wrapper.update();
+
+      expect(instance.atSavedSdsLimit()).toBe(true);
+      expect(wrapper.find('#submit-sds-btn').prop('disabled')).toBe(false);
+    });
+
+    it('reports the limit instead of saving a sixth sheet', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(5) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      // Stubbed, not spied: the real one needs the notifications context.
+      const notify = sinon.stub(instance, 'notifySavedSdsLimit');
+      const browser = sinon.spy(instance, 'fetchSdsInBrowser');
+      const server = sinon.spy(instance, 'fetchSdsOnServer');
+
+      return instance
+        .saveSdsViaRoutes(['browser', 'server'], { productNumber: '1', sdsLink: 'x', vendor: 'Merck' }, 'merck')
+        .then(() => {
+          expect(notify.called).toBe(true);
+          expect(browser.called).toBe(false);
+          expect(server.called).toBe(false);
+          notify.restore();
+          browser.restore();
+          server.restore();
+        });
+    });
+
+    it('starts every sheet section open and folds it on toggle', () => {
+      ['sdsVendors', 'catalogueVendors', 'searchResults', 'savedSds'].forEach((id) => {
+        expect(instance.isSectionOpen(id)).toBe(true);
+        instance.toggleSection(id);
+        expect(instance.isSectionOpen(id)).toBe(false);
+        instance.toggleSection(id);
+        expect(instance.isSectionOpen(id)).toBe(true);
+      });
+    });
+
+    it('folds one section without folding the others', () => {
+      instance.toggleSection('savedSds');
+      expect(instance.isSectionOpen('savedSds')).toBe(false);
+      expect(instance.isSectionOpen('searchResults')).toBe(true);
+      instance.toggleSection('savedSds');
+    });
+
+    describe('vendorFromDocument', () => {
+      it('reads the vendor out of a stored sheet path', () => {
+        expect(ChemicalTab.vendorFromDocument({
+          '252549_8996a8681115b875_link': '/safety_sheets/merck/252549_web_8996a8681115b875.pdf'
+        })).toEqual('merck');
+      });
+
+      it('falls back to the link key for a search result', () => {
+        expect(ChemicalTab.vendorFromDocument({
+          merck_link: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124'
+        })).toEqual('merck');
+        expect(ChemicalTab.vendorFromDocument({
+          fisher_link: 'https://www.fishersci.com/store/msds?partNumber=AC327840025'
+        })).toEqual('fisher');
+      });
+
+      it('yields nothing rather than throwing on an unusable document', () => {
+        expect(ChemicalTab.vendorFromDocument({})).toEqual('');
+        expect(ChemicalTab.vendorFromDocument(undefined)).toEqual('');
+      });
+    });
+
+    it('removes a search result without throwing on its vendor URL', () => {
+      const found = {
+        merck_link: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+        merck_product_number: '179124'
+      };
+      instance.setState({
+        chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5'),
+        searchResults: [found],
+        displayWell: true
+      });
+
+      expect(() => instance.handleRemove(0, found)).not.toThrow();
+      expect(wrapper.state().searchResults).toEqual([]);
+    });
+
+    describe('empty query values', () => {
+      // Stubbed rather than spied: the real one needs the notifications context.
+      const withNotifications = () => sinon.stub(instance, 'notifyMissingQueryValue');
+
+      it('reads the value the chosen option searches on', () => {
+        instance.setState({
+          chemical: createChemical([{ product_number: '179124' }], '7681-82-5')
+        });
+        expect(instance.queryValueFor('Product Number')).toEqual('179124');
+        expect(instance.queryValueFor('CAS')).toEqual('');
+      });
+
+      it('notifies and sends no request when the option has no value', () => {
+        const add = withNotifications();
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({
+          chemical: createChemical([{}], null),
+          queryOption: 'Product Number'
+        });
+
+        instance.querySafetySheets();
+
+        expect(add.called).toBe(true);
+        expect(fetchSpy.called).toBe(false);
+        expect(wrapper.state().loadingQuerySafetySheets).toBe(false);
+        add.restore();
+        fetchSpy.restore();
+      });
+
+      it('names the option that has nothing to search with', () => {
+        const add = withNotifications();
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({ chemical: createChemical([{}], null), queryOption: 'CAS' });
+
+        instance.querySafetySheets();
+
+        expect(add.firstCall.args[0]).toEqual('CAS');
+        expect(fetchSpy.called).toBe(false);
+        add.restore();
+        fetchSpy.restore();
+      });
+    });
+
+    describe('safety phrases section', () => {
+      it('counts an absent or wholly empty set as empty', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5') });
+        expect(instance.safetyPhrasesEmpty()).toBe(true);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { h_statements: {}, p_statements: {}, pictograms: [] } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(true);
+      });
+
+      it('is not empty once any one of the three carries a value', () => {
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { h_statements: { H200: 'x' } } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(false);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { pictograms: ['GHS02'] } }])
+        });
+        expect(instance.safetyPhrasesEmpty()).toBe(false);
+      });
+
+      it('starts folded when empty and open when populated', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5') });
+        expect(instance.isSectionOpen('safetyPhrases', !instance.safetyPhrasesEmpty())).toBe(false);
+
+        instance.setState({
+          chemical: createChemical([{ safetyPhrases: { pictograms: ['GHS02'] } }])
+        });
+        expect(instance.isSectionOpen('safetyPhrases', !instance.safetyPhrasesEmpty())).toBe(true);
+      });
+
+      it('still opens on an explicit toggle while empty', () => {
+        instance.setState({ chemical: createChemical([{}], '7681-82-5'), collapsedSections: {} });
+        instance.toggleSection('safetyPhrases', false);
+        expect(instance.isSectionOpen('safetyPhrases', false)).toBe(true);
+        instance.setState({ collapsedSections: {} });
+      });
+    });
+
+    describe('product number search', () => {
+      // PubChem is reached by the molecule, so the sample needs an identifier of its own.
+      before(() => { sample.xref = { ...sample.xref, cas: '7732-18-5' }; });
+      after(() => { delete sample.xref.cas; });
+
+      const searchWith = (vendorValue) => {
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({
+          vendorValue,
+          queryOption: 'Product Number',
+          chemical: createChemical([{ product_number: '179124' }], '7681-82-5')
+        });
+        instance.querySafetySheets();
+        const args = fetchSpy.firstCall?.args?.[0];
+        fetchSpy.restore();
+        return args;
+      };
+
+      it('goes to the vendor lookup for every vendor option, not just Sigma', () => {
+        ['Merck', 'Thermofisher', 'All'].forEach((vendorValue) => {
+          const args = searchWith(vendorValue);
+          expect(args).not.toBeUndefined();
+          expect(args.vendor).toEqual(vendorValue);
+          expect(args.productNumber).toEqual('179124');
+        });
+      });
+
+      it('sends the molecule identifier, since PubChem is reached by the molecule', () => {
+        const args = searchWith('All');
+        expect(args.string).toEqual('7732-18-5');
+      });
+
+      it('carries no product number for the other options', () => {
+        const fetchSpy = sinon.stub(ChemicalFetcher, 'fetchSafetySheets').resolves('{}');
+        instance.setState({ vendorValue: 'All', queryOption: 'CAS' });
+        const value = sinon.stub(instance, 'queryValueFor').returns('7732-18-5');
+        instance.querySafetySheets();
+        expect(fetchSpy.firstCall.args[0].productNumber).toBeNull();
+        value.restore();
+        fetchSpy.restore();
+      });
+    });
+
+    describe('copyProductNumber', () => {
+      it('marks the badge copied, then lets it settle back', () => {
+        const clock = sinon.useFakeTimers();
+        const write = sinon.stub().resolves();
+        global.navigator.clipboard = { writeText: write };
+
+        return instance.copyProductNumber('179124').then(() => {
+          expect(write.calledWith('179124')).toBe(true);
+          expect(wrapper.state().copyFeedback).toEqual({ value: '179124', ok: true });
+          clock.tick(2000);
+          expect(wrapper.state().copyFeedback).toBeNull();
+          clock.restore();
+        });
+      });
+
+      it('shows a failed copy on the badge and raises no notification', () => {
+        const notify = sinon.stub(instance, 'notify');
+        global.navigator.clipboard = undefined;
+
+        return instance.copyProductNumber('179124').then(() => {
+          expect(wrapper.state().copyFeedback).toEqual({ value: '179124', ok: false });
+          expect(notify.called).toBe(false);
+          notify.restore();
+          instance.setState({ copyFeedback: null });
+        });
+      });
+
+      it('renders its tooltip into the body, clear of the scrolling list', () => {
+        const group = {
+          vendor: 'Sigma-Aldrich',
+          products: [{ merck_link: 'x', merck_product_number: '179124' }]
+        };
+        instance.setState({ expandedProducts: {}, copyFeedback: null });
+
+        const trigger = shallow(instance.renderVendorProducts(group)).find(OverlayTrigger).first();
+        expect(trigger.prop('container')()).toBe(document.body);
+        expect(trigger.prop('overlay').props.children).toEqual(expect.stringContaining('Click to copy'));
+      });
+
+      it('keeps saying what a click does, copied or not', () => {
+        expect(ChemicalTab.copyTooltip('Sigma-Aldrich'))
+          .toEqual('Sigma-Aldrich catalogue number. Click to copy.');
+        expect(ChemicalTab.copyTooltip(null)).toEqual('Product listing. Click to copy.');
+      });
+    });
+
+    describe('the empty state and vendor messages', () => {
+      const emptyChemical = () => createChemical([{ safetySheetPath: [] }], '7681-82-5');
+
+      it('stays quiet while vendor groups are on screen', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: [],
+          vendorOverview: { sds_vendors: [{ vendor: 'Sigma-Aldrich', products: [] }], catalogue_vendors: [] }
+        });
+        expect(instance.renderSafetySheets().props['data-empty']).toBeUndefined();
+      });
+
+      it('reports no sheets when there is genuinely nothing', () => {
+        instance.setState({
+          chemical: emptyChemical(), displayWell: true, searchResults: [], vendorOverview: null
+        });
+        expect(instance.renderSafetySheets().props['data-empty']).toEqual('true');
+      });
+
+      it('shows an all-vendors miss as the same line, not a red warning', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: ['No safety data sheet found from any vendor'],
+          vendorOverview: null,
+          warningMessage: ''
+        });
+        const text = shallow(instance.renderSafetySheets()).text();
+        expect(text).toEqual(expect.stringContaining('No safety data sheet found from any vendor'));
+        expect(wrapper.state().warningMessage).toEqual('');
+        instance.setState({ searchResults: [] });
+      });
+
+      it('renders a vendor message as a line, not a sheet row', () => {
+        instance.setState({
+          chemical: emptyChemical(),
+          displayWell: true,
+          searchResults: ['No safety data sheet found from Sigma-Aldrich'],
+          vendorOverview: null
+        });
+        const text = shallow(instance.renderSafetySheets()).text();
+        expect(text).toEqual(expect.stringContaining('No safety data sheet found from Sigma-Aldrich'));
+        instance.setState({ searchResults: [] });
+      });
+    });
+
+    describe('section counters', () => {
+      const headerOf = (args) => shallow(instance.sectionHeader('anId', 'A title', args));
+
+      it('explains a counter on hover when it has something to explain', () => {
+        const header = headerOf({ meta: '2 of 5', metaTooltip: 'A sample holds at most 5.' });
+        const tip = header.find(OverlayTrigger);
+        expect(tip).toHaveLength(1);
+        expect(tip.prop('overlay').props.children).toEqual('A sample holds at most 5.');
+      });
+
+      it('shows a bare counter when there is nothing to explain', () => {
+        expect(headerOf({ meta: '2 of 5' }).find(OverlayTrigger)).toHaveLength(0);
+        expect(headerOf({ meta: '2 of 5' }).text()).toEqual(expect.stringContaining('2 of 5'));
+      });
+
+      it('renders no counter at all without one', () => {
+        expect(headerOf({}).find('span')).toHaveLength(0);
+      });
+    });
+
+    describe('which save buttons look saved', () => {
+      const row = (productNumber) => ({
+        fisher_link: `https://www.fishersci.com/msds?partNumber=${productNumber}`,
+        fisher_product_number: productNumber,
+        save_modes: ['server', 'browser']
+      });
+
+      const isDisabled = (sdsInfo) => shallow(instance.saveSafetySheetsButton(sdsInfo))
+        .find(Button).prop('disabled');
+
+      beforeEach(() => {
+        instance.setState({
+          chemical: createChemical([{
+            safetySheetPath: [{
+              AC158190025_f7aaa63e3029e8ed_link: '/safety_sheets/fisher/AC158190025_f7aaa63e3029e8ed.pdf'
+            }]
+          }], '7681-82-5'),
+          // Saving through the server route used to set this and grey out the whole vendor.
+          dynamicCheckMarks: { fisher: true },
+          checkSaveIconMerck: true
+        });
+      });
+
+      it('marks the row whose sheet is saved', () => {
+        expect(isDisabled(row('AC158190025'))).toBe(true);
+      });
+
+      it('leaves another product from the same vendor available', () => {
+        expect(isDisabled(row('AC133710010'))).toBe(false);
+      });
+    });
+
+    it('stops trying routes once the server gives a final refusal', () => {
+      const notify = sinon.stub(instance, 'notify');
+      const browser = sinon.stub(instance, 'fetchSdsInBrowser').resolves();
+      const refusal = Object.assign(new Error('already held'), { final: true });
+      const server = sinon.stub(instance, 'fetchSdsOnServer').rejects(refusal);
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+      return instance
+        .saveSdsViaRoutes(['server', 'browser'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+        .then(() => {
+          expect(server.called).toBe(true);
+          expect(browser.called).toBe(false);
+          expect(notify.firstCall.args[0].message).toEqual(expect.stringContaining('already held'));
+          [notify, browser, server].forEach((stub) => stub.restore());
+        });
+    });
+
+    it('still falls through when the failure is not final', () => {
+      const notify = sinon.stub(instance, 'notify');
+      const browser = sinon.stub(instance, 'fetchSdsInBrowser').resolves();
+      const server = sinon.stub(instance, 'fetchSdsOnServer').rejects(new Error('vendor timed out'));
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+      return instance
+        .saveSdsViaRoutes(['server', 'browser'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+        .then(() => {
+          expect(browser.called).toBe(true);
+          [notify, browser, server].forEach((stub) => stub.restore());
+        });
+    });
+
+    describe('what a failed save tells the user', () => {
+      const saveWith = (error) => {
+        const notify = sinon.stub(instance, 'notify');
+        sinon.stub(instance, 'fetchSdsOnServer').rejects(error);
+        instance.setState({ chemical: createChemical([{ safetySheetPath: [] }], '7681-82-5') });
+
+        return instance
+          .saveSdsViaRoutes(['server'], { productNumber: '1', sdsLink: 'x', vendor: 'Fisher' }, 'fisher')
+          .then(() => {
+            const payload = notify.firstCall.args[0];
+            sinon.restore();
+            return payload;
+          });
+      };
+
+      it('gives the reason alone when the sheet was refused', () => {
+        const refusal = Object.assign(new Error('It is the same document as AC172380250.'), { final: true });
+        return saveWith(refusal).then((payload) => {
+          expect(payload.message).toEqual('It is the same document as AC172380250.');
+          expect(payload.message).not.toEqual(expect.stringContaining('Upload SDS'));
+        });
+      });
+
+      it('still points at a manual upload when the vendor could not be reached', () => {
+        return saveWith(new Error('the vendor timed out')).then((payload) => {
+          expect(payload.message).toEqual(expect.stringContaining('Upload SDS'));
+        });
+      });
+    });
+
+    it('stays below the limit for four saved sheets', () => {
+      const newChemical = createChemical([{ safetySheetPath: savedSheets(4) }], '7681-82-5');
+      instance.setState({ chemical: newChemical, displayWell: true });
+      expect(instance.atSavedSdsLimit()).toBe(false);
     });
 
     it('calls querySafetySheets() when fetch safety phrases button is clicked', () => {
@@ -211,14 +635,18 @@ describe('ChemicalTab component', () => {
 
     it('calls renderSafetySheets() when query safety sheets button is clicked', () => {
       const renderSafetySheetsSpy = sinon.spy(wrapper.instance(), 'renderSafetySheets');
+      const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
       wrapper.find('#submit-sds-btn').simulate('click');
+      value.restore();
       expect(renderSafetySheetsSpy.called).toBe(true);
       renderSafetySheetsSpy.restore();
     });
 
     it('calls renderChildElements() when query safety sheets button is clicked', () => {
       const renderChildElementsSpy = sinon.spy(wrapper.instance(), 'renderChildElements');
+      const value = sinon.stub(wrapper.instance(), 'queryValueFor').returns('7732-18-5');
       wrapper.find('#submit-sds-btn').simulate('click');
+      value.restore();
       expect(renderChildElementsSpy.called).toBe(true);
       renderChildElementsSpy.restore();
     });
@@ -291,10 +719,11 @@ describe('ChemicalTab component', () => {
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
 
-      const editor = instance.renderSafetyPhrases();
-      expect(editor).not.toBeNull();
-      expect(editor.props.value).toEqual(chemicalData[0].safetyPhrases);
-      expect(typeof editor.props.onChange).toBe('function');
+      // The editor now sits inside the collapsible section wrapper.
+      const editor = shallow(instance.renderSafetyPhrases()).find(SafetyPhrasesEditor);
+      expect(editor).toHaveLength(1);
+      expect(editor.prop('value')).toEqual(chemicalData[0].safetyPhrases);
+      expect(typeof editor.prop('onChange')).toBe('function');
     });
 
     it('handleSafetyPhrasesChange persists into chemical_data via handleFieldChanged', () => {
@@ -327,8 +756,8 @@ describe('ChemicalTab component', () => {
       saveSafetySheetsButtonSpy.restore();
     });
 
-    it('should call saveSdsFile with expected arguments', () => {
-      const saveSdsFileSpy = sinon.spy(instance, 'saveSdsFile');
+    it('should call fetchSdsOnServer with expected arguments', () => {
+      const fetchSdsOnServerSpy = sinon.spy(instance, 'fetchSdsOnServer');
       const productInfo = {
         vendor: 'Merck',
         sdsLink: 'https://example.com/merck',
@@ -336,11 +765,11 @@ describe('ChemicalTab component', () => {
         productLink: 'https://example.com/merck-product',
       };
 
-      instance.saveSdsFile(productInfo);
-      expect(saveSdsFileSpy.called).toBe(true);
+      instance.fetchSdsOnServer(productInfo)?.catch(() => {});
+      expect(fetchSdsOnServerSpy.called).toBe(true);
 
-      sinon.assert.calledOnce(saveSdsFileSpy);
-      saveSdsFileSpy.restore();
+      sinon.assert.calledOnce(fetchSdsOnServerSpy);
+      fetchSdsOnServerSpy.restore();
     });
 
     it('should render renderWarningMessage when warningMessage state is updated', () => {

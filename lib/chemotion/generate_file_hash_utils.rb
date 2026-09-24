@@ -37,45 +37,23 @@ module Chemotion
       nil
     end
 
-    # Extract initials (first 16 characters) from existing full hash
-    # @param full_hash [String] Full MD5 hash string
-    # @return [String] First 16 characters of the hash
-    def self.extract_initials_from_hash(full_hash)
-      return '' if full_hash.blank?
+    # The same sheet saved twice should be one file on disk. The scan covers every saved
+    # sheet rather than this vendor and product alone, because the same PDF is published
+    # under several catalogue numbers, and compares content rather than the name.
+    # @param source_path [String] file to look for
+    # @return [String, nil] the /safety_sheets/... path of a byte-identical file
+    def self.find_identical_sheet(source_path)
+      return nil unless File.file?(source_path)
 
-      full_hash[0..15]
-    end
+      hash = generate_full_hash(source_path)
+      return nil if hash.nil?
 
-    # Check if a file with same content already exists globally
-    # @param vendor_name [String] Vendor name
-    # @param product_number [String] Product number
-    # @param file_hash [String] MD5 hash of file content
-    # @return [String, nil] Existing file path if found, nil otherwise
-    def self.find_duplicate_file_by_hash(vendor_name, product_number, file_hash_initials)
-      existing_files = find_safety_sheets_by_product_number(vendor_name, product_number)
-      return nil if existing_files.empty?
-
-      existing_files.each do |file_path|
-        file_path.match(/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$/) do |match|
-          existing_hash_initials = match[1]
-          return file_path.sub('public/', '/') if existing_hash_initials == file_hash_initials
-        end
-      end
-      nil
-    end
-
-    # Find all safety sheet PDF files for a given vendor/product number.
-    # Matches both regular and API-fetched (_web_) variants, e.g.:
-    #   public/safety_sheets/merck/270709_4c82b57ffb35b49b.pdf
-    #   public/safety_sheets/merck/270709_web_4c82b57ffb35b49b.pdf
-    # @param vendor_name [String] Vendor folder name
-    # @param product_number [String] Product number (prefix of filename)
-    # @return [Array<String>] Absolute file paths (may be empty)
-    def self.find_safety_sheets_by_product_number(vendor_name, product_number)
-      return [] unless vendor_folder_exists?(vendor_name)
-
-      pattern = "#{SAFETY_SHEETS_DIR}/#{vendor_name}/#{product_number}_*.pdf"
-      Dir.glob(pattern)
+      # Every saved sheet carries the first 16 characters of its own content hash in its
+      # name, so the candidates come from a glob rather than from hashing the whole folder.
+      # A file renamed by hand is missed and stored again, which costs space, not accuracy.
+      candidates = Dir.glob("#{SAFETY_SHEETS_DIR}/**/*#{hash[0..15]}.pdf")
+      match = candidates.find { |candidate| generate_full_hash(candidate) == hash }
+      match&.delete_prefix('public')
     end
 
     # Check if a vendor folder exists under safety sheets root.

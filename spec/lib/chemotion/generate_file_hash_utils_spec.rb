@@ -206,51 +206,16 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.extract_initials_from_hash' do
-    it 'extracts first 16 characters from full hash' do
-      full_hash = 'abcdef1234567890abcdef1234567890'
-      result = described_class.extract_initials_from_hash(full_hash)
-      expect(result).to eq('abcdef1234567890')
-    end
-
-    it 'handles hashes shorter than 16 characters' do
-      short_hash = 'abc123'
-      result = described_class.extract_initials_from_hash(short_hash)
-      expect(result).to eq('abc123')
-    end
-
-    it 'handles exactly 16 character hashes' do
-      exact_hash = 'abcdef1234567890'
-      result = described_class.extract_initials_from_hash(exact_hash)
-      expect(result).to eq('abcdef1234567890')
-    end
-
-    it 'returns empty string for blank inputs' do
-      expect(described_class.extract_initials_from_hash('')).to eq('')
-      expect(described_class.extract_initials_from_hash(nil)).to eq('')
-      expect(described_class.extract_initials_from_hash('   ')).to eq('')
-    end
-
-    it 'handles various input types' do
-      expect(described_class.extract_initials_from_hash('a')).to eq('a')
-      expect(described_class.extract_initials_from_hash('0123456789abcdef')).to eq('0123456789abcdef')
-      expect(described_class.extract_initials_from_hash('0123456789abcdefghijklmnop')).to eq('0123456789abcdef')
-    end
-  end
-
   describe 'integration tests' do
     it 'generates consistent hashes across all methods' do
       test_file = create_test_file(test_content)
 
       full_hash = described_class.generate_full_hash(test_file)
       initials_from_file = described_class.generate_file_hash_initials(test_file)
-      initials_from_hash = described_class.extract_initials_from_hash(full_hash)
 
       aggregate_failures do
         expect(full_hash).to eq(expected_hash)
         expect(initials_from_file).to eq(expected_initials)
-        expect(initials_from_hash).to eq(expected_initials)
-        expect(initials_from_file).to eq(initials_from_hash)
       end
 
       File.delete(test_file)
@@ -312,33 +277,6 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.find_safety_sheets_by_product_number' do
-    it 'returns matching pdf files for product number' do
-      vendor = 'testvendor'
-      product = 'PN123'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      primary_pdf_path = File.join(vendor_dir, "#{product}_abcdef1234567890.pdf")
-      web_pdf_path = File.join(vendor_dir, "#{product}_web_abcdef1234567890.pdf")
-      File.write(primary_pdf_path, 'dummy')
-      File.write(web_pdf_path, 'dummy web')
-
-      found = described_class.find_safety_sheets_by_product_number(vendor, product)
-      expect(found).to include(primary_pdf_path, web_pdf_path)
-    ensure
-      FileUtils.rm_f(primary_pdf_path) if defined?(primary_pdf_path)
-      FileUtils.rm_f(web_pdf_path) if defined?(web_pdf_path)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
-    end
-
-    it 'returns empty array when vendor folder missing' do
-      vendor = 'missingvendor'
-      product = 'PN123'
-      expect(described_class.find_safety_sheets_by_product_number(vendor, product)).to eq([])
-    end
-  end
-
   describe '.vendor_folder_exists?' do
     let(:vendor) { 'existvendor' }
     let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
@@ -367,36 +305,57 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.find_duplicate_file_by_hash' do
-    it 'returns matching existing path (public trimmed) when initials match' do
-      vendor = 'dupvendor'
-      product = 'PN999'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      existing_file = File.join(vendor_dir, "#{product}_abcdeffedcba1234.pdf")
-      File.write(existing_file, 'dup content')
+  describe '.find_identical_sheet' do
+    let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
+    let(:vendor_dir) { File.join(base_dir, 'dupvendor') }
+    let(:other_dir) { File.join(base_dir, 'othervendor') }
+    let(:source) { File.join(Dir.mktmpdir, 'incoming.pdf') }
 
-      path = described_class.find_duplicate_file_by_hash(vendor, product, 'abcdeffedcba1234')
-      expect(path).to eq(existing_file.sub('public/', '/'))
-    ensure
-      FileUtils.rm_f(existing_file) if defined?(existing_file)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
+    before { FileUtils.mkdir_p([vendor_dir, other_dir]) }
+
+    after do
+      FileUtils.rm_rf([vendor_dir, other_dir])
+      FileUtils.rm_f(source)
     end
 
-    it 'returns nil when initials do not match' do
-      vendor = 'dupvendor'
-      product = 'PN999'
-      base_dir = Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR
-      vendor_dir = File.join(base_dir, vendor)
-      FileUtils.mkdir_p(vendor_dir)
-      existing_file = File.join(vendor_dir, "#{product}_abcdeffedcba1234.pdf")
-      File.write(existing_file, 'dup content')
+    # A saved sheet is named for its own content, which is what makes the lookup a glob.
+    def saved_as(dir, product, content)
+      name = "#{product}_#{Digest::MD5.hexdigest(content)[0..15]}.pdf"
+      File.write(File.join(dir, name), content)
+      name
+    end
 
-      expect(described_class.find_duplicate_file_by_hash(vendor, product, '1234567890abcdef')).to be_nil
-    ensure
-      FileUtils.rm_f(existing_file) if defined?(existing_file)
-      FileUtils.rm_rf(vendor_dir) if defined?(vendor_dir)
+    it 'finds a byte-identical sheet under any product number' do
+      File.write(source, '%PDF same bytes')
+      name = saved_as(vendor_dir, 'PN999', '%PDF same bytes')
+
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/dupvendor/#{name}")
+    end
+
+    it 'looks across every vendor folder, not just one' do
+      File.write(source, '%PDF elsewhere')
+      name = saved_as(other_dir, 'AC1', '%PDF elsewhere')
+
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/othervendor/#{name}")
+    end
+
+    it 'finds a sheet saved under the older web naming' do
+      File.write(source, '%PDF legacy')
+      initials = Digest::MD5.hexdigest('%PDF legacy')[0..15]
+      File.write(File.join(vendor_dir, "PN1_web_#{initials}.pdf"), '%PDF legacy')
+
+      expect(described_class.find_identical_sheet(source)).to eq("/safety_sheets/dupvendor/PN1_web_#{initials}.pdf")
+    end
+
+    it 'returns nil when the bytes differ, however similar the name' do
+      File.write(source, '%PDF one')
+      saved_as(vendor_dir, 'PN999', '%PDF two')
+
+      expect(described_class.find_identical_sheet(source)).to be_nil
+    end
+
+    it 'returns nil for a source that is not there' do
+      expect(described_class.find_identical_sheet('/no/such/file.pdf')).to be_nil
     end
   end
 
