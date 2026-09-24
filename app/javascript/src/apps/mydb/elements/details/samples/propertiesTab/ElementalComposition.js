@@ -35,7 +35,7 @@ export default class ElementalComposition extends React.Component {
           <tr>
             <th>{description}</th>
             <th style={{ width: '20%' }}>
-              {loading && 'Loading (mmol/g)'}
+              Loading (mmol/g)
             </th>
           </tr>
         </thead>
@@ -46,7 +46,7 @@ export default class ElementalComposition extends React.Component {
               {this.elementsList(data)}
             </td>
             <td>
-              {loading && loading.toFixed(2)}
+              {loading != null ? loading.toFixed(2) : 'n.d.'}
             </td>
           </tr>
         </tbody>

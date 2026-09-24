@@ -19,7 +19,10 @@ module Import
   # genuinely need attention.
   class ValueCoercion
     RANGE_COLUMNS = %w[melting_point boiling_point].freeze
-    FLOAT_COLUMNS = %w[purity refractive_index molecular_mass real_amount_value target_amount_value].freeze
+    FLOAT_COLUMNS = %w[
+      purity refractive_index molecular_mass real_amount_value target_amount_value
+      height width length diameter
+    ].freeze
     UNIT_COLUMNS = %w[real_amount_unit target_amount_unit].freeze
 
     # The only units the application actually converts: Sample#convertToGram and #amount_l

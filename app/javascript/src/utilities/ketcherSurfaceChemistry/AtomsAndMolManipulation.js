@@ -21,6 +21,7 @@ import {
   imagesList,
   textList,
   allAtoms,
+  allTemplates,
   deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {

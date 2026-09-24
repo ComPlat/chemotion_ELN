@@ -11,6 +11,7 @@ class ImportSamplesJob < ApplicationJob
   ATTEMPT_MARKER_TTL = 1.day
 
   def perform(params)
+    params = params.with_indifferent_access
     @user_id = params[:user_id]
     @collection_id = params[:collection_id]
 
@@ -143,11 +144,16 @@ class ImportSamplesJob < ApplicationJob
 
   def notify_user
     result = @result.is_a?(Hash) ? @result : {}
+    # Tell the frontend NoticeButton to refresh the current collection list on receipt
+    # (handled by the RefreshSampleList action).
+    data_args = { message: result[:message], action: 'RefreshSampleList' }
+    data_args[:collection_id] = @collection_id if @collection_id.present?
+    data_args[:status] = result[:status] if result[:status].present?
     Message.create_msg_notification(
       channel_subject: Channel::IMPORT_SAMPLES_NOTIFICATION,
       message_from: @user_id,
       message_to: [@user_id],
-      data_args: { message: result[:message] },
+      data_args: data_args,
       collection_id: @collection_id,
       level: notification_level(result[:status]),
       # A partial or failed import needs to stay on screen

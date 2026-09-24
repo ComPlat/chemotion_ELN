@@ -7,7 +7,9 @@ module UnitConvertable
       when 'g'
         amount_g
       when 'mol'
-        (self.loading * amount_g) / 1000.0 # loading is always in mmol/g
+        # loading is always in mmol/g; nil loading (HM without a value) yields 0 mol
+        loading_value = self.loading
+        loading_value ? (loading_value * amount_g) / 1000.0 : 0.0
       else
         amount_g
       end
