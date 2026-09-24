@@ -436,26 +436,8 @@ class ElementActions {
   }
 
   handleSvgReactionChange(reaction) {
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter(s => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
     return () => {
-      const productsOnly = reaction.reaction_type === 'interaction';
-      const showYield = !productsOnly;
-      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions, productsOnly, showYield)
+      ReactionSvgFetcher.fetchByReaction(reaction)
         .then((result) => {
           reaction.reaction_svg_file = result.reaction_svg;
         }).catch((errorMessage) => {
