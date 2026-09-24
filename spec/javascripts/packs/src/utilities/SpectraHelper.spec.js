@@ -471,8 +471,8 @@ describe('SpectraHelper', () => {
         };
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
         const [first, second] = cleanedNMRiumData.data.spectra;
-        expect(first.selector).toEqual({ root: 'nmrium-src-multi', files: ['exp1/pdata/1/2rr'] });
-        expect(second.selector).toEqual({ root: 'nmrium-src-multi', files: ['exp2/pdata/1/2rr'] });
+        expect(first.selector).toEqual({ root: 'nmrium-src-multi', files: ['/zip/file.zip/exp1/pdata/1/2rr'] });
+        expect(second.selector).toEqual({ root: 'nmrium-src-multi', files: ['/zip/file.zip/exp2/pdata/1/2rr'] });
         expect(first.data).toEqual(undefined);
         expect(second.data).toEqual(undefined);
       });
@@ -526,7 +526,9 @@ describe('SpectraHelper', () => {
         expect(second.selector).toEqual({ root: 'nmrium-src-cosy-2' });
       });
 
-      it('addresses the archive in sources[] and the member path in selector.files', () => {
+      // NMRium filters the fetched file collection by selector.files, and the entries of that collection
+      // are the source's relativePath plus the member: a bare member path would match nothing.
+      it('addresses the archive in sources[] and the member through it in selector.files', () => {
         const nmriumData = {
           spectra: [{
             sourceSelector: { files: ['https://example.com/tpa/token/file.zip/exp1/pdata/1/2rr'] },
@@ -540,11 +542,25 @@ describe('SpectraHelper', () => {
           { id: 'nmrium-src-hsqc', entries: [{ relativePath: '/tpa/token/file.zip', baseURL: 'https://example.com' }] },
         ]);
         expect(cleanedNMRiumData.spectra[0].selector).toEqual({
-          root: 'nmrium-src-hsqc', files: ['exp1/pdata/1/2rr'],
+          root: 'nmrium-src-hsqc', files: ['/tpa/token/file.zip/exp1/pdata/1/2rr'],
         });
       });
 
-      it('reduces an already server-path-patched zip reference to the member path too', () => {
+      it('keeps only the member path in selector.files when the document is persisted', () => {
+        const nmriumData = {
+          spectra: [{
+            sourceSelector: { files: ['https://example.com/tpa/token/file.zip/exp1/pdata/1/2rr'] },
+            info: { dimension: 2, name: 'hsqc' },
+            display: { name: 'hsqc' },
+            data: { rr: { z: [[1.0]] } },
+          }],
+        };
+        const attachments = [{ id: 11, label: 'hsqc.zip', url: 'https://example.com/tpa/token' }];
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData, { attachments, forPersistence: true });
+        expect(cleanedNMRiumData.spectra[0].selector.files).toEqual(['exp1/pdata/1/2rr']);
+      });
+
+      it('re-roots an already server-path-patched zip reference on the registered archive too', () => {
         const nmriumData = {
           source: { entries: [{ baseURL: 'https://example.com', relativePath: '/tpa/token/file.zip' }] },
           spectra: [{
@@ -556,7 +572,7 @@ describe('SpectraHelper', () => {
         };
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
         expect(cleanedNMRiumData.spectra[0].selector).toEqual({
-          root: 'nmrium-src-hsqc', files: ['exp1/pdata/1/2rr'],
+          root: 'nmrium-src-hsqc', files: ['/tpa/token/file.zip/exp1/pdata/1/2rr'],
         });
       });
 
@@ -648,6 +664,23 @@ describe('SpectraHelper', () => {
         it('reduces sourceSelector.files to the member path, dropping the token', () => {
           const cleaned = cleaningNMRiumData(zipState(), { attachments, forPersistence: true });
           expect(cleaned.spectra[0].sourceSelector.files).toEqual(['exp1/pdata/1/2rr']);
+        });
+
+        // A zip loaded by url leaves no sourceSelector at all: NMRium writes the member list into
+        // selector.files itself, each entry the download url's path through the archive.
+        it("reduces NMRium's own selector.files to member paths, dropping the token", () => {
+          const loadedByUrl = zipState();
+          delete loadedByUrl.spectra[0].sourceSelector;
+          loadedByUrl.spectra[0].selector.files = [
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/pdata/1/2rr',
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/acqus',
+          ];
+          const cleaned = cleaningNMRiumData(loadedByUrl, { attachments, forPersistence: true });
+          expect(cleaned.spectra[0].selector).toEqual({
+            root: 'nmrium-src-740-zip',
+            files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+          });
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
         });
 
         it('keeps the data matrix when no attachment backs the spectrum', () => {
@@ -888,7 +921,7 @@ describe('SpectraHelper', () => {
         ]);
         expect(spectrum.selector).toEqual({
           root: 'nmrium-src-hsqc-zip',
-          files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+          files: ['/tpa/fresh/file.zip/exp1/pdata/1/2rr', '/tpa/fresh/file.zip/exp1/acqus'],
         });
       });
 
