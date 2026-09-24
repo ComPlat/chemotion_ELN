@@ -473,6 +473,110 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/all with several filters at once' do
+    let(:url) { '/api/v1/search/all' }
+    let(:user_label) { UserLabel.create!(user_id: user.id, title: 'Cross Label', color: '#aabbcc') }
+    # Each sample fails exactly one of the two filters, so a union would return all three.
+    let(:label_and_date) do
+      create(:sample, name: 'Both zzcrossfilter', creator: user, collections: [collection],
+                      created_at: '2026-09-23')
+    end
+    let(:label_only) do
+      create(:sample, name: 'LabelOnly zzcrossfilter', creator: user, collections: [collection],
+                      created_at: '2020-01-10')
+    end
+    let(:date_only) do
+      create(:sample, name: 'DateOnly zzcrossfilter', creator: user, collections: [collection],
+                      created_at: '2026-09-23')
+    end
+    let(:params) do
+      {
+        selection: {
+          elementType: :all,
+          name: 'zzcrossfilter',
+          search_by_method: :sample_name,
+          list_filter_params: {
+            user_label: user_label.id,
+            filter_created_at: true,
+            from_date: Time.zone.parse('2026-09-23').to_i,
+          },
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      [label_and_date, label_only].each do |sample|
+        sample.tag.update!(taggable_data: sample.tag.taggable_data.merge('user_labels' => [user_label.id]))
+      end
+      date_only
+      do_request
+    end
+
+    it 'intersects the filters instead of unioning them' do
+      expect(parsed_json_response.dig('samples', 'ids')).to eq [label_and_date.id]
+    end
+
+    it 'counts only the intersection' do
+      expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+    end
+  end
+
+  describe 'POST /api/v1/search/all with a product only filter' do
+    let(:url) { '/api/v1/search/all' }
+    let(:plain_sample) { create(:sample, name: 'Plain zzproductfilter', creator: user, collections: [collection]) }
+    let(:product_sample) { create(:sample, name: 'Product zzproductfilter', creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :all,
+          name: 'zzproductfilter',
+          search_by_method: :sample_name,
+          list_filter_params: { product_only: true },
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      create(:reaction, products: [product_sample], creator: user, collections: [collection])
+      plain_sample
+      do_request
+    end
+
+    it 'returns only the sample that is a reaction product' do
+      expect(parsed_json_response.dig('samples', 'ids')).to eq [product_sample.id]
+    end
+  end
+
+  describe 'POST /api/v1/search/samples with an active filter' do
+    let(:url) { '/api/v1/search/samples' }
+    let(:user_label) { UserLabel.create!(user_id: user.id, title: 'CAS Label', color: '#aabbcc') }
+    let(:labelled) { create(:sample, name: 'Labelled zzcasfilter', creator: user, collections: [collection]) }
+    let(:unlabelled) { create(:sample, name: 'Plain zzcasfilter', creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :samples,
+          name: 'zzcasfilter',
+          search_by_method: :substring,
+          list_filter_params: { user_label: user_label.id },
+        },
+        collection_id: collection.id,
+      }
+    end
+
+    before do
+      labelled.tag.update!(taggable_data: labelled.tag.taggable_data.merge('user_labels' => [user_label.id]))
+      unlabelled
+      do_request
+    end
+
+    it 'narrows the dedicated samples endpoint too' do
+      expect(parsed_json_response.dig('samples', 'ids')).to eq [labelled.id]
+    end
+  end
+
   describe 'POST /api/v1/search/advanced with an active user label filter' do
     let(:url) { '/api/v1/search/advanced' }
     let(:user_label) { UserLabel.create!(user_id: user.id, title: 'My Label', color: '#aabbcc') }

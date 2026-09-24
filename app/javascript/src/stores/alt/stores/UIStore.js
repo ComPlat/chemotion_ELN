@@ -500,7 +500,9 @@ class UIStore {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
         if (productOnly && key != 'samples') { return; }
         let filterParams = {};
-        let modelName = !allElnElementsForSearch.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        // allElnElementsForSearch holds plurals, so the plural key is what decides whether this is a
+        // built-in type. Testing the singular never matched and sent every type as a generic element.
+        let modelName = !allElnElementsForSearch.includes(key) ? 'element' : key.slice(0, -1);
         modelName = key === 'cell_lines' ? 'cell_lines' : modelName;
 
         if (fromDate || toDate || productOnly || userLabel) {
