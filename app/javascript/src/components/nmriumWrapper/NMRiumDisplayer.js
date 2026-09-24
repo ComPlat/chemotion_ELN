@@ -293,7 +293,12 @@ export default class NMRiumDisplayer extends React.Component {
 
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
-      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } });
+      // Handed back as a versioned .nmrium file, the same way sendPatchedNmrium does: cleaning
+      // registered sources[] and dropped each 2D spectrum's data, and a flat, unversioned document
+      // in that shape is read as version 0 and migrated to `data: {rr: undefined}`.
+      const zipBaseName = this.getFileBaseName(zip.label) || 'spectrum';
+      const nmriumFile = this.buildPatchedNmriumFile(`${zipBaseName}.nmrium`, this.versionedForHandOff(cleaned));
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'file', data: [nmriumFile] } });
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
@@ -371,6 +376,15 @@ export default class NMRiumDisplayer extends React.Component {
     const reliesOnSources = [...(doc.spectra || []), ...(doc.molecules || [])]
       .some((item) => sourceIds.has(item?.selector?.root));
     return reliesOnSources ? { version: FLAT_NMRIUM_DOC_VERSION, data: doc } : doc;
+  }
+
+  // Wraps a flat document built from the live state with the schema version the wrapper reported
+  // for that state - the rule nmriumDocumentToSave applies to a save - or, when none was reported,
+  // labels it as versionFlatDocument does.
+  versionedForHandOff(doc) {
+    const { nmriumVersion } = this.state;
+    if (doc && !doc.data && Number.isInteger(nmriumVersion)) return { version: nmriumVersion, data: doc };
+    return this.versionFlatDocument(doc);
   }
 
   async readFileContent(file) {

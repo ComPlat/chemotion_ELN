@@ -619,7 +619,16 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
         // URL/server path through the archive (`.../file.zip/exp1/...`, which has to be reduced to
         // the member path) or already as a bare member path. Anything else does not address a
         // member and is dropped.
-        const filesWithinSource = tmpSpc.sourceSelector?.files?.map(archiveMemberPath).filter(Boolean);
+        // The file collection NMRium filters holds the source entry's relativePath plus the member,
+        // so a bare member path matches nothing: on the way to NMRium each member is re-rooted on
+        // the entry registered under this spectrum's selector.root. Only a document being persisted
+        // keeps the bare member, since the archive it lives in is re-minted on every open.
+        const members = tmpSpc.sourceSelector?.files?.map(archiveMemberPath).filter(Boolean);
+        const archivePath = !forPersistence
+          && root.sources.find((source) => source.id === sourceId)?.entries?.[0]?.relativePath;
+        const filesWithinSource = archivePath
+          ? members?.map((member) => `${archivePath}/${member}`)
+          : members;
         tmpSpc.selector = {
           ...tmpSpc.selector,
           root: sourceId,
