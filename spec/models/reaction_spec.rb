@@ -107,6 +107,83 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe '#temperature_display_with_unit' do
+    test_cases = [
+      {
+        description: 'numeric user text',
+        temperature: { 'userText' => '25.5678', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25.5678 °C',
+      },
+      {
+        description: 'a numeric range containing a negative value',
+        temperature: { 'userText' => '-10 ~ 5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-10 ~ 5 °C',
+      },
+      {
+        description: 'a range with an unspaced hyphen',
+        temperature: { 'userText' => '20-25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '20-25 °C',
+      },
+      {
+        description: 'a range with an unspaced tilde',
+        temperature: { 'userText' => '21~25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21~25 °C',
+      },
+      {
+        description: 'a range with an en dash',
+        temperature: { 'userText' => '21 – 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21 – 25 °C',
+      },
+      {
+        description: 'a range using to',
+        temperature: { 'userText' => '-78 to 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-78 to 25 °C',
+      },
+      {
+        description: 'a numeric value with a decimal comma',
+        temperature: { 'userText' => '25,5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25,5 °C',
+      },
+      {
+        description: 'a single generated data point',
+        temperature: { 'userText' => '', 'data' => [{ 'value' => 25 }], 'valueUnit' => '°C' },
+        expected: '25 °C',
+      },
+      {
+        description: 'a generated data range',
+        temperature: {
+          'userText' => '',
+          'data' => [{ 'value' => '21' }, { 'value' => '5' }],
+          'valueUnit' => '°C',
+        },
+        expected: '5 ~ 21 °C',
+      },
+      {
+        description: 'free text',
+        temperature: { 'userText' => 'reflux', 'data' => [], 'valueUnit' => '°C' },
+        expected: 'reflux',
+      },
+      {
+        description: 'an empty temperature',
+        temperature: { 'userText' => '', 'data' => [], 'valueUnit' => '°C' },
+        expected: '',
+      },
+      {
+        description: 'a nil temperature',
+        temperature: nil,
+        expected: '',
+      },
+    ]
+
+    test_cases.each do |test_case|
+      it "formats #{test_case[:description]}" do
+        reaction = described_class.new(temperature: test_case[:temperature])
+
+        expect(reaction.temperature_display_with_unit).to eq(test_case[:expected])
+      end
+    end
+  end
+
   describe '#variations' do
     let(:reaction) { create(:reaction) }
 
