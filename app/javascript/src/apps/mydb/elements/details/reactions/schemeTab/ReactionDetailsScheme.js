@@ -709,6 +709,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
+    // Snapshot the reference amount before any mutation so solvent volumes can be scaled by
+    // the reference ratio under locked equivalents (see scaleSolventVolumesForReferenceChange).
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
     // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
     // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
     // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
@@ -720,12 +723,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction =
+      this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
 
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
@@ -754,6 +753,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
+    // Snapshot the reference amount before any mutation so solvent volumes can be scaled by
+    // the reference ratio under locked equivalents (see scaleSolventVolumesForReferenceChange).
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
@@ -782,12 +784,8 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction =
+      this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
 
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
@@ -863,10 +861,14 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
+    // Changing the active target/real amount can also change the reaction reference amount.
+    // Snapshot it first so locked-equivalent propagation can scale solvent volumes by the
+    // same old-to-new reference ratio used for every other reference-amount change.
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
 
     updatedSample.amountType = amountType;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    return this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
   }
 
   /**
@@ -877,15 +879,12 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
+    // Snapshot before amountType switches which stored amount the sample exposes.
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
 
     updatedSample.amountType = amountType;
 
-    return this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    return this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
   }
 
   /**
@@ -1382,16 +1381,15 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    // Snapshot the reference amount before the edit mutates it so solvent volumes
+    // can be scaled by the reference ratio under locked equivalents.
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
+
     updatedSample.concn = newConcentration;
     updatedSample.preserveConcentration = true;
     updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
 
     if (lockEquivColumn) {
       // Locked-equivalent propagation changed the dependent samples' amounts,
@@ -1496,6 +1494,10 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    // Snapshot the reference amount before the edit mutates it so solvent volumes
+    // can be scaled by the reference ratio under locked equivalents.
+    const previousReferenceAmountMol = reaction.referenceMaterial?.amount_mol;
+
     updatedSample.concn = newConcentration;
     updatedSample.setAmountFromConcentrationAndPreserve(
       newConcentration,
@@ -1507,12 +1509,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Always include SBMM samples so their equivalents are rebased when the
     // reference's amount changes (the edited sample may be a regular reference,
     // not the SBMM itself). Mirrors updatedReactionForAmountChange.
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, true);
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
     // except the currently edited sample. The edited sample keeps its manually-entered
@@ -1774,19 +1771,23 @@ export default class ReactionDetailsScheme extends React.Component {
             }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
+            // Solvents are scaled by volume ratio (Reaction#scaleSolventVolumesForReferenceChange),
+            // not through moles, so they are excluded from the mole-based locked scale-up here.
+            if (referenceMaterial && referenceMaterial.amount_value
+              && updatedSample.gas_type !== 'feedstock'
+              && sample.gas_type !== 'gas'
+              && materialGroup !== 'solvents') {
               const newAmountMol = sample.equivalent * referenceMaterial.amount_mol;
               this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
             }
           }
         }
 
-        // Solvents are included here so that editing a solvent volume (Eq unlocked) derives
-        // its equivalent from the real amount (amount_mol / reference.amount_mol). Otherwise
-        // the updated-sample branch above leaves it as amount_g / maxAmount, which is NaN for
-        // a solvent (no maxAmount); the next locked scale-up then multiplies NaN by the
-        // reference and shows the volume as "n.d.". This block is skipped while Eq is locked,
-        // so the solvent still scales from its (now valid) equivalent under lock.
+        // A solvent volume edit (Eq unlocked) derives the solvent's equivalent from its real
+        // amount (amount_mol / reference.amount_mol). Without this the updated-sample branch
+        // above leaves it as amount_g / maxAmount, which is NaN for a solvent (no maxAmount).
+        // The equivalent is display-only for solvents; under lock the solvent volume is scaled
+        // by reference ratio in Reaction#scaleSolventVolumesForReferenceChange, not from here.
         if ((materialGroup === 'starting_materials'
           || materialGroup === 'reactants'
           || materialGroup === 'solvents') && !sample.reference && !lockEquivColumn) {
@@ -2195,6 +2196,41 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
     reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
     return reaction;
+  }
+
+  /**
+   * Single entry point for any edit that changes the reference amount. It rebases
+   * every dependent sample's amount (updatedSamplesForAmountChange) and, under
+   * locked equivalents, scales solvent volumes by the reference ratio.
+   *
+   * updatedSamplesForAmountChange deliberately skips solvents (they are scaled by
+   * volume, not moles), so solvent scaling must be paired with it here rather than
+   * at each call site. Routing every reference-changing path through this method
+   * keeps solvent volumes from drifting from the reference.
+   *
+   * The caller must snapshot the reference amount BEFORE its edit mutates it and
+   * pass it as previousReferenceAmountMol (the new amount is read from the
+   * already-updated reference material inside scaleSolventVolumesForReferenceChange).
+   *
+   * @param {Sample} updatedSample - the edited sample driving the change
+   * @param {number} previousReferenceAmountMol - reference amount in mol before the edit
+   * @param {boolean} [includeSbmm=false] - also rebase SBMM reactant samples
+   * @returns {Reaction}
+   */
+  propagateReferenceAmountChange(updatedSample, previousReferenceAmountMol, includeSbmm = false) {
+    const { lockEquivColumn } = this.state;
+    const updatedReaction = this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample,
+      undefined,
+      includeSbmm
+    );
+
+    if (lockEquivColumn) {
+      updatedReaction.scaleSolventVolumesForReferenceChange(previousReferenceAmountMol);
+    }
+
+    return updatedReaction;
   }
 
   // eslint-disable-next-line class-methods-use-this
