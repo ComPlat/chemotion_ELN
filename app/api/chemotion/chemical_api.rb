@@ -124,15 +124,16 @@ module Chemotion
           Chemotion::ChemicalsService.handle_exceptions do
             product_info = params[:chemical_data].first&.dig(params[:vendor_product])
             product_info = {} unless product_info.is_a?(Hash)
-            vendor = product_info['vendor'].to_s.downcase
-            unless Chemotion::ChemicalsService.valid_vendor_product?(vendor, product_info['productNumber'])
+            vendor = product_info['vendor'].to_s.strip.downcase
+            product_number = product_info['productNumber'].to_s.strip
+            unless Chemotion::ChemicalsService.valid_vendor_product?(vendor, product_number)
               error!({ error: 'Invalid vendor or product number' }, 400)
             end
 
             file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
               product_info['sdsLink'],
               vendor,
-              product_info['productNumber'],
+              product_number,
             )
             return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
 
@@ -141,7 +142,7 @@ module Chemotion
               cas: params[:cas],
               chemical_data: params[:chemical_data],
               file_path: file_path,
-              product_number: product_info['productNumber'],
+              product_number: product_number,
               vendor: vendor,
             )
           end

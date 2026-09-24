@@ -1245,21 +1245,17 @@ export default class ChemicalTab extends React.Component {
     const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
     // only link to web URLs or local files; otherwise list the sheet without a link
     const vendorHref = safeHref(vendorLink);
+    const SheetName = vendorHref ? 'a' : 'span';
+    const sheetLinkProps = vendorHref ? { href: vendorHref, target: '_blank', rel: 'noreferrer' } : {};
 
     return (
       <div className="d-flex gap-3 align-items-center">
         <div className="d-flex me-auto gap-3">
-          {vendorHref ? (
-            <a href={vendorHref} target="_blank" rel="noreferrer">
+          {vendorLink ? (
+            <SheetName {...sheetLinkProps}>
               {finalDisplayName}
               {this.checkMarkButton(document)}
-            </a>
-          ) : null}
-          {vendorLink && !vendorHref ? (
-            <span>
-              {finalDisplayName}
-              {this.checkMarkButton(document)}
-            </span>
+            </SheetName>
           ) : null}
           <ButtonToolbar>
             {this.copyButton(document)}

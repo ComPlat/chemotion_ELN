@@ -318,6 +318,14 @@ describe Chemotion::ChemicalAPI do
         .with(product_info['sdsLink'], 'merck', '1.09634')
     end
 
+    it 'strips surrounding whitespace from the vendor and product number' do
+      post_product_info(product_info.merge('vendor' => ' Merck ', 'productNumber' => " 1.09634\n"))
+
+      expect(response).to have_http_status(:created)
+      expect(Chemotion::ChemicalsService).to have_received(:find_existing_or_create_safety_sheet)
+        .with(product_info['sdsLink'], 'merck', '1.09634')
+    end
+
     [
       ['a product number with a slash', { 'productNumber' => '../1.09634' }],
       ['a product number with a wildcard', { 'productNumber' => '*' }],

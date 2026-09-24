@@ -561,7 +561,9 @@ module Chemotion
     end
 
     def self.update_chemical_data(chemical_data, file_path, product_number, vendor)
-      hash_initials = file_path[%r{/safety_sheets/#{vendor}/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$}, 1]
+      file_prefix = "#{Regexp.escape(vendor.to_s)}/#{Regexp.escape(product_number.to_s)}"
+      pattern = %r{/safety_sheets/#{file_prefix}_(?:web_)?([a-f0-9]{16})\.pdf$}
+      hash_initials = file_path[pattern, 1]
       if file_path.present? && file_path.is_a?(String) && hash_initials.present?
         safety_sheet_key = "#{product_number}_#{hash_initials}_link"
         chemical_data[0]['safetySheetPath'] ||= []

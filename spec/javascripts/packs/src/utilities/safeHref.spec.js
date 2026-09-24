@@ -12,9 +12,15 @@ describe('safeHref', () => {
     expect(safeHref(' /safety_sheets/merck/270709_abcd.pdf ')).toBe('/safety_sheets/merck/270709_abcd.pdf');
   });
 
-  it('returns null for protocol-relative and backslash paths', () => {
-    expect(safeHref('//example.com/a')).toBe(null);
-    expect(safeHref('/\\example.com/a')).toBe(null);
+  it('returns null for paths that lead to another host', () => {
+    ['//example.com/a', '/\\example.com/a', '/\t/example.com/a', '/\n\\example.com/a']
+      .forEach((value) => expect(safeHref(value)).toBe(null));
+  });
+
+  it('checks the scheme the browser would see', () => {
+    expect(safeHref('java\tscript:void(0)')).toBe(null);
+    expect(safeHref('https://www.carlroth.com/de/sicherheitsdatenbl\u00e4tter'))
+      .toBe('https://www.carlroth.com/de/sicherheitsdatenbl%C3%A4tter');
   });
 
   it('returns null for other schemes', () => {
