@@ -116,7 +116,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
               textSeparator,
               atom.alias,
               textSeparator,
-              block.text
+              textItem.data.content
             ].join('').trim();
             const y = textItem.data?.position?.y ?? 0;
             assembleTextList.push({ line, y });
@@ -214,6 +214,22 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   };
 };
 
+const createTextNode = (textContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  try {
+    const incoming = JSON.parse(textContent);
+    if (incoming?.blocks?.[0]?.text?.trim()) {
+      const defaultPos = [
+        { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
+        { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z },
+      ];
+      return { type: 'text', data: { content: textContent, position: defaultPosition, pos: defaultPos } };
+    }
+  } catch { /* not JSON — fall through */ }
+  return createTextNodeFromContent(textContent, defaultPosition);
+};
+
 // function to add text nodes to canvas/struct
 const onAddText = async (editor, selectedImageForTextNode) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
@@ -257,9 +273,10 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       return false;
     }
 
-    if (!textContent || !textContent.trim()) {
-      return false;
-    }
+    const plainText = (() => {
+      try { const p = JSON.parse(textContent); return p?.blocks?.[0]?.text || ''; } catch { return textContent; }
+    })();
+    if (!plainText?.trim()) return false;
 
     // Fetch latest data first to ensure we have current state
     await fetchKetcherData(editor);
@@ -285,17 +302,28 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         });
 
         if (existingNodeIndex !== -1) {
-          // Update the existing text node content
           const existingNode = updatedTextList[existingNodeIndex];
-          const existingContent = JSON.parse(existingNode.data.content);
-          existingContent.blocks[0].text = textContent.trim();
-          existingNode.data.content = JSON.stringify(existingContent);
+          try {
+            const incoming = JSON.parse(textContent);
+            if (incoming?.blocks) {
+              incoming.blocks[0].key = existingKey;
+              existingNode.data.content = JSON.stringify(incoming);
+            } else {
+              const existingContent = JSON.parse(existingNode.data.content);
+              existingContent.blocks[0].text = textContent.trim();
+              existingNode.data.content = JSON.stringify(existingContent);
+            }
+          } catch {
+            const existingContent = JSON.parse(existingNode.data.content);
+            existingContent.blocks[0].text = textContent.trim();
+            existingNode.data.content = JSON.stringify(existingContent);
+          }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);
         } else {
           // Existing node not found, create new one
-          newTextNode = createTextNodeFromContent(textContent);
+          newTextNode = createTextNode(textContent);
           if (!newTextNode) {
             return false;
           }
@@ -305,7 +333,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         }
       } else {
         // No existing text found, create new one
-        newTextNode = createTextNodeFromContent(textContent);
+        newTextNode = createTextNode(textContent);
         if (!newTextNode) {
           return false;
         }
@@ -315,7 +343,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       }
     } else {
       // Create new text node from content
-      newTextNode = createTextNodeFromContent(textContent);
+      newTextNode = createTextNode(textContent);
       if (!newTextNode) {
         return false;
       }

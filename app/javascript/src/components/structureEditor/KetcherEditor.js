@@ -463,8 +463,7 @@ const KetcherEditor = forwardRef((props, ref) => {
             try {
               const content = JSON.parse(selectedTextNode.data.content);
               selectedTextKey = content.blocks[0].key;
-              // Extract the text content
-              selectedTextContent = content.blocks[0].text || '';
+              selectedTextContent = JSON.stringify(content);
 
               // Find associated image index from alias
               for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
@@ -552,14 +551,13 @@ const KetcherEditor = forwardRef((props, ref) => {
         // Responding to a second 'init' would call prepareKetcherData(initMol) and
         // wipe every polymer shape the user drew.
         if (initHandledRef.current) return;
+        initHandledRef.current = true;
 
         window.editor = editor;
         if (editor && editor.structureDef) {
           // Store cleanup function in ref for later use
           eventCleanupRef.current = onEditorContentChange(editor);
           await prepareKetcherData(editor, initMol);
-          // Mark as handled only after successful load so a failed init can retry
-          initHandledRef.current = true;
         }
       }
     } catch (err) {
@@ -655,19 +653,40 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          // Convert Delta object to plain text
-          const deltaToText = (delta) => {
-            if (!delta || !delta.ops) return '';
-            return delta.ops
-              .filter((op) => typeof op.insert === 'string')
-              .map((op) => op.insert)
-              .join('');
+          const deltaToContentJson = (delta, existingKey) => {
+            const ops = delta?.ops || [];
+            const key = existingKey || Math.random().toString(36).substring(2, 8);
+            const fontSize = 10;
+            let text = '';
+            const inlineStyleRanges = [];
+            let offset = 0;
+            for (const op of ops) {
+              if (typeof op.insert !== 'string') continue;
+              const chunk = op.insert.replace(/\n$/, '');
+              if (!chunk) continue;
+              const len = chunk.length;
+              text += chunk;
+              if (op.attributes?.bold) inlineStyleRanges.push({ style: 'BOLD', offset, length: len });
+              if (op.attributes?.italic) inlineStyleRanges.push({ style: 'ITALIC', offset, length: len });
+              if (op.attributes?.underline) inlineStyleRanges.push({ style: 'UNDERLINE', offset, length: len });
+              offset += len;
+            }
+            if (text.length > 0) inlineStyleRanges.push({ style: `fontsize-${fontSize}`, offset: 0, length: text.length });
+            return JSON.stringify({
+              blocks: [{ key, text, type: 'unstyled', depth: 0, inlineStyleRanges, entityRanges: [], data: { fontSize } }],
+              entityMap: {},
+            });
           };
-          const text = deltaToText(contents);
 
-          // Use the improved function that handles text node creation/update and positioning
-          await onAddTextFromEditor(editor, text, selectedImageForTextNode, selectedTextNodeContent !== null);
-          // Update button state after text is added/updated
+          let existingKey;
+          try {
+            const existing = selectedTextNodeContent ? JSON.parse(selectedTextNodeContent) : null;
+            existingKey = existing?.blocks?.[0]?.key;
+          } catch { /* new node */ }
+
+          const contentJson = deltaToContentJson(contents, existingKey);
+
+          await onAddTextFromEditor(editor, contentJson, selectedImageForTextNode, selectedTextNodeContent !== null);
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
           setSelectedTextNodeContent(null);

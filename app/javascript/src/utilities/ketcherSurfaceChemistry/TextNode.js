@@ -124,7 +124,18 @@ const addTextNodes = async (textNodes) => textNodes.map((item) => {
   const description = rest.join(KET_TAGS.textIdentifier);
   if (alias && key) {
     textNodeStruct[alias] = key;
-    const content = forTextNodeHeader(key, description);
+    let content;
+    try {
+      const parsed = JSON.parse(description);
+      if (parsed?.blocks?.[0]) {
+        parsed.blocks[0].key = key;
+        content = JSON.stringify(parsed);
+      } else {
+        content = forTextNodeHeader(key, description);
+      }
+    } catch {
+      content = forTextNodeHeader(key, description);
+    }
     return {
       type: 'text',
       data: {
