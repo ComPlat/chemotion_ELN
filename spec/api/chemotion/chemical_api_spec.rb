@@ -287,6 +287,62 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
+  describe 'POST save safety data sheet input validation' do
+    def post_product_info(product_info)
+      post '/api/v1/chemicals/save_safety_datasheet', params: {
+        chemical_data: [{ 'merckProductInfo' => product_info }],
+        cas: '7681-82-5',
+        sample_id: s.id,
+        vendor_product: 'merckProductInfo',
+      }
+    end
+
+    let(:product_info) do
+      {
+        'productNumber' => '1.09634',
+        'vendor' => 'Merck',
+        'sdsLink' => 'https://www.sigmaaldrich.com/DE/en/sds/mm/1.09634',
+      }
+    end
+
+    before do
+      allow(Chemotion::ChemicalsService).to receive(:find_existing_or_create_safety_sheet)
+        .and_return('/safety_sheets/merck/1.09634_web_1234567890abcdef.pdf')
+    end
+
+    it 'accepts a dotted product number and passes the downcased vendor on' do
+      post_product_info(product_info)
+
+      expect(response).to have_http_status(:created)
+      expect(Chemotion::ChemicalsService).to have_received(:find_existing_or_create_safety_sheet)
+        .with(product_info['sdsLink'], 'merck', '1.09634')
+    end
+
+    [
+      ['a product number with a slash', { 'productNumber' => '../1.09634' }],
+      ['a product number with a wildcard', { 'productNumber' => '*' }],
+      ['a blank product number', { 'productNumber' => '' }],
+      ['a vendor name that is not a plain name', { 'vendor' => '../merck' }],
+    ].each do |description, override|
+      it "rejects #{description} before touching the file system" do
+        post_product_info(product_info.merge(override))
+
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(response.body)['error']).to eq 'Invalid vendor or product number'
+        expect(Chemotion::ChemicalsService).not_to have_received(:find_existing_or_create_safety_sheet)
+      end
+    end
+
+    it 'rejects a request without product info for the given vendor product' do
+      post '/api/v1/chemicals/save_safety_datasheet', params: {
+        chemical_data: [{ 'other' => {} }], cas: '7681-82-5', sample_id: s.id, vendor_product: 'merckProductInfo'
+      }
+
+      expect(response).to have_http_status(:bad_request)
+      expect(Chemotion::ChemicalsService).not_to have_received(:find_existing_or_create_safety_sheet)
+    end
+  end
+
   describe 'POST save safety data sheet success updates chemical' do
     let(:params) do
       {

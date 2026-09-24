@@ -27,6 +27,8 @@ module Chemotion
     }.freeze
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
+    # Vendor product numbers: letters, digits, hyphen, underscore, dot.
+    PRODUCT_NUMBER_PATTERN = /\A[A-Za-z0-9\-_.]+\z/.freeze
     ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
     # Sending only a User-Agent + `Accept: */*`
@@ -163,14 +165,13 @@ module Chemotion
       'Could not find safety data sheet from Merck'
     end
 
-    # Validate product number: allow letters, digits, hyphen, underscore, dot.
+    # Validate product number against PRODUCT_NUMBER_PATTERN.
     def self.validate_product_number!(product_number)
       if product_number.nil? || product_number.to_s.strip.empty?
         raise StandardError, 'Could not find safety data sheet from Merck'
       end
 
-      allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
-      return if product_number.to_s.match?(allowed_pattern)
+      return if product_number.to_s.match?(PRODUCT_NUMBER_PATTERN)
 
       raise StandardError, 'Could not find safety data sheet from Merck'
     end
@@ -198,8 +199,31 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
+    # Whether a vendor name and product number can be used to name a stored safety sheet.
+    #
+    # @param vendor [String, nil] vendor name, already downcased
+    # @param product_number [String, nil]
+    # @return [Boolean]
+    def self.valid_vendor_product?(vendor, product_number)
+      InputValidationUtils.valid_vendor_name?(vendor) &&
+        product_number.is_a?(String) && product_number.match?(PRODUCT_NUMBER_PATTERN)
+    end
+
+    # Resolves a +/safety_sheets/...+ path to its location on disk.
+    #
+    # @param file_path [String] public path of the sheet, e.g. +/safety_sheets/merck/270709_<hash>.pdf+
+    # @return [String] absolute path under {SAFETY_SHEETS_DIR}
+    # @raise [ArgumentError] if the path does not resolve to a location under {SAFETY_SHEETS_DIR}
+    def self.safety_sheet_full_path(file_path)
+      base_dir = File.expand_path(SAFETY_SHEETS_DIR)
+      full_path = File.expand_path("public#{file_path}")
+      raise ArgumentError, 'invalid safety sheet path' unless full_path.start_with?("#{base_dir}/")
+
+      full_path
+    end
+
     def self.write_file(file_path, file = nil, link = nil)
-      full_file_path = "public#{file_path}"
+      full_file_path = safety_sheet_full_path(file_path)
 
       # Ensure parent directory exists
       FileUtils.mkdir_p(File.dirname(full_file_path))

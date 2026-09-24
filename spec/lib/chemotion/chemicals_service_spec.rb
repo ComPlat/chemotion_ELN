@@ -65,6 +65,19 @@ describe Chemotion::ChemicalsService do
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('direct content')
       end
+
+      %w[
+        /safety_sheets/merck/../../sds_outside_dir.pdf
+        /safety_sheets/../sds_outside_dir.pdf
+        /safety_sheets_other/sds_outside_dir.pdf
+      ].each do |path|
+        it "keeps writes inside the safety sheets directory (#{path})" do
+          expect { described_class.write_file(path, StringIO.new('content'), nil) }
+            .to raise_error(ArgumentError, 'invalid safety sheet path')
+          expect(File.exist?(File.join('public', 'sds_outside_dir.pdf'))).to be false
+          expect(Dir.exist?(File.join('public', 'safety_sheets_other'))).to be false
+        end
+      end
     end
 
     context 'when creating SDS file (API download path)' do
