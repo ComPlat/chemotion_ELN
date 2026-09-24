@@ -75,3 +75,77 @@ describe('Material — lockEquivColumn does not disable product mol/activity', (
     });
   });
 });
+
+describe('Material — external-label change source', () => {
+  it('includes the SBMM discriminator in the emitted event', () => {
+    const events = [];
+    const instance = {
+      props: { onChange: (event) => events.push(event), materialGroup: 'reactants' },
+      materialId: () => 'shared-id',
+      isSbmm: true,
+    };
+
+    Material.prototype.handleExternalLabelChange.call(instance, { target: { value: 'SBMM label' } });
+
+    expect(events).toHaveLength(1);
+    expect(events[0].sampleID).toBe('shared-id');
+    expect(events[0].isSbmm).toBe(true);
+    expect(events[0].externalLabel).toBe('SBMM label');
+  });
+});
+
+describe('Material — amount-type change source', () => {
+  it('includes the SBMM discriminator in the emitted event', () => {
+    const events = [];
+    const instance = {
+      props: { onChange: (event) => events.push(event), materialGroup: 'reactants' },
+      materialId: () => 'shared-id',
+      isSbmm: true,
+    };
+
+    Material.prototype.handleAmountTypeChange.call(instance, 'real');
+
+    expect(events).toHaveLength(1);
+    expect(events[0].sampleID).toBe('shared-id');
+    expect(events[0].isSbmm).toBe(true);
+    expect(events[0].amountType).toBe('real');
+  });
+});
+
+describe('Material — equivalent change source', () => {
+  it('marks weight-percentage selector changes as programmatic', () => {
+    const events = [];
+    const instance = {
+      setState: () => {},
+      handleEquivalentChange: (event) => events.push(event),
+    };
+
+    Material.prototype.handleEquivalentWeightPercentageChange.call(
+      instance,
+      { reference: true },
+      'weight percentage'
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0].value).toBe(1);
+    expect(events[0].isEquivalentEdit).toBe(false);
+  });
+
+  it('propagates whether an equivalent change came from a direct edit', () => {
+    const events = [];
+    const instance = {
+      props: { onChange: (event) => events.push(event), materialGroup: 'reactants' },
+      materialId: () => 'mat-1',
+      isSbmm: false,
+    };
+
+    Material.prototype.handleEquivalentChange.call(instance, { value: 2 });
+    Material.prototype.handleEquivalentChange.call(instance, {
+      value: 1,
+      isEquivalentEdit: false,
+    });
+
+    expect(events[0].isEquivalentEdit).toBe(true);
+    expect(events[1].isEquivalentEdit).toBe(false);
+  });
+});
