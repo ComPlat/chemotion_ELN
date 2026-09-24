@@ -817,8 +817,8 @@ export default class Sample extends Element {
   }
 
   /**
-   * Updates each component's amount (in mol) based on total mixture mass.
-   * Uses the component's relative molecular weight (relMw) and equivalent (eq) values.
+   * Updates each component's amount (in mol) from total mixture mass and its own
+   * relative molecular weight. Ratios are derived values and do not affect this calculation.
    * @returns {void}
    */
   updateComponentAmounts() {
@@ -829,13 +829,7 @@ export default class Sample extends Element {
       const relMw = Number(component.relative_molecular_weight);
       if (!Number.isFinite(relMw) || relMw <= 0) return;
 
-      const isRef = !!component.reference;
-      const eq = Number.isFinite(component.equivalent)
-        ? component.equivalent
-        : (isRef ? 1 : 0);
-
-      const totalMoles = totalMassG / relMw;
-      component.amount_mol = isRef ? totalMoles : totalMoles * eq;
+      component.amount_mol = totalMassG / relMw;
     });
   }
 
@@ -1636,17 +1630,6 @@ export default class Sample extends Element {
     }
 
     return result;
-  }
-
-  /**
-   * Gets the relative molecular weight from the reference component.
-   * Only uses the component_properties.relative_molecular_weight value.
-   *
-   * @param {Object} referenceComponent - The reference component to get molecular weight from
-   * @returns {number|null} The relative molecular weight or null if not found
-   */
-  getReferenceRelativeMolecularWeight(referenceComponent) {
-    return referenceComponent.relative_molecular_weight;
   }
 
   get molecule_iupac_name() {
@@ -2748,22 +2731,23 @@ export default class Sample extends Element {
     const referenceComponent = this.reference_component;
 
     if (referenceComponent) {
-      const { molecule, component_properties: componentProperties } = referenceComponent;
+      const { molecule, relative_molecular_weight: relativeMolecularWeight } = referenceComponent;
 
       // Assign values to sample_details
       Object.assign(this.sample_details, {
         reference_molecular_weight: molecule?.molecular_weight || null,
-        reference_relative_molecular_weight: componentProperties?.relative_molecular_weight || null
+        reference_relative_molecular_weight: relativeMolecularWeight || null
       });
 
-      // Reset the reference component changed flag to default (true) after saving calculations
-      this.sample_details.reference_component_changed = true;
+      // A reference-component change is a transient UI state. Persist the settled state so
+      // reloaded mixtures derive amount_mol from their mass and selected component.
+      this.sample_details.reference_component_changed = false;
 
       // Log warnings if values are missing
       if (!molecule?.molecular_weight) {
         console.warn('Reference component has no molecular weight');
       }
-      if (!componentProperties?.relative_molecular_weight) {
+      if (!relativeMolecularWeight) {
         console.warn('Reference component has no relative molecular weight');
       }
     }

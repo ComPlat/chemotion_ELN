@@ -209,11 +209,58 @@ describe('Sample', async () => {
     });
   });
 
-  describe('Sample.getReferenceRelativeMolecularWeight()', () => {
-    it('returns the relative molecular weight from reference component', () => {
-      const s = new Sample();
-      const ref = { relative_molecular_weight: 42 };
-      expect(s.getReferenceRelativeMolecularWeight(ref)).toBe(42);
+  describe('Sample.updateComponentAmounts()', () => {
+    it('keeps component amounts and ratios stable when the reference changes', () => {
+      const sample = new Sample({ amount_value: 1000.124, amount_unit: 'g' });
+      sample.components = [
+        {
+          id: 'icosane',
+          reference: true,
+          relative_molecular_weight: 2825825.158875,
+          amount_mol: 0.000353923,
+          equivalent: 1,
+        },
+        {
+          id: 'octane',
+          reference: false,
+          relative_molecular_weight: 921311.970455,
+          amount_mol: 0.001085543,
+          equivalent: 3.067175,
+        },
+      ];
+
+      sample.updateComponentAmounts();
+
+      sample.components[0].reference = false;
+      sample.components[1].reference = true;
+      sample.updateComponentAmounts();
+
+      sample.components[0].reference = true;
+      sample.components[1].reference = false;
+      sample.updateComponentAmounts();
+
+      expect(sample.components[0].amount_mol).toBeCloseTo(0.000353923, 8);
+      expect(sample.components[1].amount_mol).toBeCloseTo(0.001085543, 8);
+      expect(sample.components[1].equivalent).toBe(3.067175);
+    });
+  });
+
+  describe('Sample.prepareMixtureForSave()', () => {
+    it('persists a settled reference-component state', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.sample_details = { reference_component_changed: true };
+      sample.components = [{
+        reference: true,
+        molecule: { molecular_weight: 114.23 },
+        relative_molecular_weight: 2825825.158875,
+      }];
+
+      sample.prepareMixtureForSave();
+
+      expect(sample.sample_details.reference_component_changed).toBe(false);
+      expect(sample.sample_details.reference_molecular_weight).toBe(114.23);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(2825825.158875);
     });
   });
 
@@ -1799,14 +1846,6 @@ describe('Sample', async () => {
       ref2.component_properties = {};
       s2.initialComponents([ref2]);
       expect(s2.calculateMixtureAmountMol()).toBe('n.d');
-    });
-  });
-
-  describe('Sample.getReferenceRelativeMolecularWeight()', () => {
-    it('returns the relative molecular weight from reference component', () => {
-      const s = new Sample();
-      const ref = { relative_molecular_weight: 42 };
-      expect(s.getReferenceRelativeMolecularWeight(ref)).toBe(42);
     });
   });
 

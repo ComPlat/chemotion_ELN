@@ -667,16 +667,16 @@ export default class Component extends Sample {
 
     const totalMixtureMass = sample.total_mixture_mass_g || 0;
     const componentAmountMol = this.amount_mol || 0;
+    const storedRelativeMW = Number(this.relative_molecular_weight);
+    const hasStoredRelativeMW = Number.isFinite(storedRelativeMW) && storedRelativeMW > 0;
 
     const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
       ? totalMixtureMass / componentAmountMol
-      : 0;
+      : (hasStoredRelativeMW ? storedRelativeMW : 0);
 
-    // Ensure component_properties exists
-    this.component_properties = this.component_properties || {};
-
-    // Assign calculated value
-    this.component_properties.relative_molecular_weight = relativeMW;
+    // Store the canonical runtime value. serializeComponent nests it under
+    // component_properties when preparing the API payload.
+    this.relative_molecular_weight = relativeMW;
 
     // Return summary for reporting/debugging
     return {
