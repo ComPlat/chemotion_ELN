@@ -271,6 +271,43 @@ class User < ApplicationRecord
     errors.add(:name_abbreviation, "has to be #{min_val} to #{max_val} characters long")
   end
 
+  # @return [Array(Integer, Integer)] +[min, max]+ allowed name_abbreviation length for this type
+  def name_abbreviation_length_bounds
+    config = case type
+             when 'Group' then name_abbr_config[:length_group]
+             when 'Device' then name_abbr_config[:length_device]
+             else name_abbr_config[:length_default]
+             end
+    default_max = %w[Group Device].include?(type) ? 5 : 3
+    [config&.first || 2, config&.last || default_max]
+  end
+
+  # Candidate abbreviations derived from the user's initials, shortest/simplest first.
+  #
+  # @return [Array<String>] downcased, format-compatible candidates within the length bounds
+  def name_abbreviation_candidates
+    alphabet = ('a'..'z').to_a + ('0'..'9').to_a
+    min_len, max_len = name_abbreviation_length_bounds
+    initials = "#{first_name&.first}#{last_name&.first}".downcase.gsub(/[^a-z0-9]/, '')
+    initials = "u#{initials}" if initials.empty? || initials.start_with?(/[0-9]/)
+
+    list = []
+    (min_len..max_len).each do |len|
+      # plain prefix of the initials at this length
+      list << initials[0, len] if initials.length >= len
+      # grow a shorter prefix with one alphanumeric to fill this length
+      prefix = initials[0, len - 1]
+      alphabet.each { |char| list << (prefix + char) } if prefix.present?
+    end
+    list.uniq.select { |abbr| abbr.length.between?(min_len, max_len) && abbr.start_with?(/[a-z]/) }
+  end
+
+  # @return [Boolean] whether the currently assigned name_abbreviation passes all its validations
+  def name_abbreviation_acceptable?
+    valid?
+    errors[:name_abbreviation].blank?
+  end
+
   def mail_checker
     MailChecker.valid?(email) || errors.add(
       :email, 'from throwable email providers not accepted'
@@ -455,9 +492,69 @@ class User < ApplicationRecord
   end
 
   def link_omniauth(provider, uid)
-    providers = {} if providers.nil?
-    providers[provider] = uid
+    self.providers = (providers || {}).merge(provider => uid)
     save!
+  end
+
+  # Finds a user by email or auto-provisions one from OmniAuth data, persisting it.
+  #
+  # Unlike {from_omniauth} (which leaves new users unsaved so the controller can route
+  # them to the registration form), this creates and saves the user, generating a unique
+  # +name_abbreviation+. Used by the LDAP login flow and the JWT token endpoint.
+  #
+  # @param params [Hash] +:email+, +:uid+, +:provider+, +:first_name+, +:last_name+, +:groups+
+  # @return [User] persisted on success; an unsaved record when no unique
+  #   +name_abbreviation+ could be generated (caller checks +persisted?+)
+  def self.find_or_create_from_omniauth!(params)
+    user = by_email(params[:email]).first if params[:email].present?
+
+    if user.present?
+      user.providers = (user.providers || {}).merge(params[:provider] => params[:uid])
+    else
+      user = User.new(
+        email: params[:email]&.downcase,
+        first_name: params[:first_name],
+        last_name: params[:last_name],
+        password: Devise.friendly_token[0, 20],
+        providers: { params[:provider] => params[:uid] }.compact,
+      )
+      return user if user.generate_unique_name_abbreviation.blank?
+    end
+
+    user.save!
+    user.assign_omniauth_groups(params[:groups])
+    user
+  end
+
+  # Assigns the user to existing {Group}s parsed from OmniAuth entitlement strings.
+  #
+  # @param groups [Array<String>, nil] entries shaped +"group:<last_name>:<first_name>"+
+  # @return [void]
+  def assign_omniauth_groups(groups)
+    (groups || []).each do |entry|
+      name = entry.split(':')
+      next unless name.size == 3
+
+      group = Group.find_by(first_name: name[2], last_name: name[1])
+      self.groups << group if group.present? && groups.exclude?(group)
+    end
+  end
+
+  # Generates and assigns a unique, validation-passing +name_abbreviation+ from initials.
+  #
+  # Tries the plain initials first, then initials grown with alphanumerics, vetting each
+  # candidate against the real model validations (format, length, reserved list, uniqueness).
+  #
+  # @return [String, nil] the assigned abbreviation, or nil if the constrained space is
+  #   exhausted (+name_abbreviation+ is left blank so the caller can fall back)
+  def generate_unique_name_abbreviation
+    name_abbreviation_candidates.each do |candidate|
+      self.name_abbreviation = candidate
+      return candidate if name_abbreviation_acceptable?
+    end
+
+    self.name_abbreviation = nil
+    nil
   end
 
   def password_required?
