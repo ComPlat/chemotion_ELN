@@ -71,7 +71,7 @@ RSpec.describe ComputedProp do
     it 'returns the numeric matches of the first line containing the target' do
       matches = described_class.parse_data(['foo: 1', 'bar: 2.5 -3', 'bar: 9'], 'bar')
 
-      expect(matches.map { |m| m[1] }).to eq %w[2.5 -3]
+      expect(matches.pluck(1)).to eq %w[2.5 -3]
     end
   end
 
