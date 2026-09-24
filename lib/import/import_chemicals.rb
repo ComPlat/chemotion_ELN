@@ -137,7 +137,8 @@ module Import
     def self.create_safety_sheet_path(vendor, value, product_number, chemical)
       ## only fetch and save safety sheets for accepted vendors
       accepted_vendors = %w[merck sigma_aldrich]
-      return unless accepted_vendors.include?(vendor.downcase) && product_number.present?
+      return unless accepted_vendors.include?(vendor.downcase) &&
+                    product_number.to_s.match?(Chemotion::ChemicalsService::PRODUCT_NUMBER_PATTERN)
 
       file_path = Chemotion::ChemicalsService.create_sds_file(value, product_number, vendor)
       is_created = File.exist?("public/safety_sheets/#{file_path}.pdf")

@@ -65,6 +65,19 @@ describe Chemotion::ChemicalsService do
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('direct content')
       end
+
+      %w[
+        /safety_sheets/merck/../../sds_outside_dir.pdf
+        /safety_sheets/../sds_outside_dir.pdf
+        /safety_sheets_other/sds_outside_dir.pdf
+      ].each do |path|
+        it "keeps writes inside the safety sheets directory (#{path})" do
+          expect { described_class.write_file(path, StringIO.new('content'), nil) }
+            .to raise_error(ArgumentError, 'invalid safety sheet path')
+          expect(File.exist?(File.join('public', 'sds_outside_dir.pdf'))).to be false
+          expect(Dir.exist?(File.join('public', 'safety_sheets_other'))).to be false
+        end
+      end
     end
 
     context 'when creating SDS file (API download path)' do
@@ -206,6 +219,16 @@ describe Chemotion::ChemicalsService do
       let(:data) { [{ 'safetySheetPath' => [] }] }
       # Use only hex chars so regex in service matches
       let(:file_path) { '/safety_sheets/merck/270709_web_abcd1234efab5678.pdf' }
+
+      it 'matches the product number literally when reading the hash from the file path' do
+        path = '/safety_sheets/merck/1x09634_web_1234567890abcdef.pdf'
+        result = described_class.update_chemical_data([{}], path, '1.09634', 'merck')
+        expect(result[0]['safetySheetPath']).to be_nil
+
+        path = '/safety_sheets/merck/1.09634_web_1234567890abcdef.pdf'
+        result = described_class.update_chemical_data([{}], path, '1.09634', 'merck')
+        expect(result[0]['safetySheetPath']).to eq([{ '1.09634_1234567890abcdef_link' => path }])
+      end
 
       it 'appends new safety sheet key when absent' do
         updated = described_class.update_chemical_data(data, file_path, '270709', 'merck')

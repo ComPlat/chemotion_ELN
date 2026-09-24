@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength -- the save_safety_datasheet input checks
+  #   tipped this pre-existing endpoint class just over the limit
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
     resource :chemicals do
@@ -122,11 +124,18 @@ module Chemotion
         end
         post do
           Chemotion::ChemicalsService.handle_exceptions do
-            product_info = params[:chemical_data][0][params[:vendor_product]]
+            product_info = params[:chemical_data].first&.dig(params[:vendor_product])
+            product_info = {} unless product_info.is_a?(Hash)
+            vendor = product_info['vendor'].to_s.strip.downcase
+            product_number = product_info['productNumber'].to_s.strip
+            unless Chemotion::ChemicalsService.valid_vendor_product?(vendor, product_number)
+              error!({ error: 'Invalid vendor or product number' }, 400)
+            end
+
             file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
               product_info['sdsLink'],
-              product_info['vendor'].downcase,
-              product_info['productNumber'],
+              vendor,
+              product_number,
             )
             return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
 
@@ -135,8 +144,8 @@ module Chemotion
               cas: params[:cas],
               chemical_data: params[:chemical_data],
               file_path: file_path,
-              product_number: product_info['productNumber'],
-              vendor: product_info['vendor'].downcase,
+              product_number: product_number,
+              vendor: vendor,
             )
           end
         end
@@ -226,4 +235,5 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

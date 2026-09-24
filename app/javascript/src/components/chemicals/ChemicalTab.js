@@ -17,6 +17,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
 import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
+import safeHref from 'src/utilities/safeHref';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ChemicalTab extends React.Component {
@@ -730,7 +731,9 @@ export default class ChemicalTab extends React.Component {
       }
     }
 
-    const tooltipMessage = value ? `product link (${value})` : 'No product link available';
+    // only link to web URLs or local files
+    const href = safeHref(value);
+    const tooltipMessage = href ? `product link (${href})` : 'No product link available';
 
     return (
       <OverlayTrigger placement="bottom" overlay={<Tooltip id="productLink_button">{tooltipMessage}</Tooltip>}>
@@ -739,10 +742,10 @@ export default class ChemicalTab extends React.Component {
             active
             size="xsm"
             variant="light"
-            disabled={!value}
+            disabled={!href}
           >
-            {value ? (
-              <a href={value} target="_blank" rel="noreferrer">
+            {href ? (
+              <a href={href} target="_blank" rel="noreferrer">
                 <i className="fa fa-external-link" />
               </a>
             ) : (
@@ -1240,15 +1243,19 @@ export default class ChemicalTab extends React.Component {
     }
 
     const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
+    // only link to web URLs or local files; otherwise list the sheet without a link
+    const vendorHref = safeHref(vendorLink);
+    const SheetName = vendorHref ? 'a' : 'span';
+    const sheetLinkProps = vendorHref ? { href: vendorHref, target: '_blank', rel: 'noreferrer' } : {};
 
     return (
       <div className="d-flex gap-3 align-items-center">
         <div className="d-flex me-auto gap-3">
           {vendorLink ? (
-            <a href={vendorLink} target="_blank" rel="noreferrer">
+            <SheetName {...sheetLinkProps}>
               {finalDisplayName}
               {this.checkMarkButton(document)}
-            </a>
+            </SheetName>
           ) : null}
           <ButtonToolbar>
             {this.copyButton(document)}

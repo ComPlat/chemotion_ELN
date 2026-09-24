@@ -12,6 +12,32 @@ RSpec.describe Import::ImportChemicals do
     end
   end
 
+  describe '.create_safety_sheet_path' do
+    let(:chemical) { { 'chemical_data' => [{}] } }
+    let(:link) { 'https://www.sigmaaldrich.com/US/en/sds/sigma/131377' }
+
+    before do
+      allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(nil)
+    end
+
+    it 'fetches the sheet for an accepted vendor and a valid product number' do
+      described_class.create_safety_sheet_path('merck', link, '131377', chemical)
+      expect(Chemotion::ChemicalsService).to have_received(:create_sds_file).with(link, '131377', 'merck')
+    end
+
+    it 'skips product numbers outside the allowed characters' do
+      ['13*77', 'a[b]', '{a,b}', '../131377'].each do |product_number|
+        described_class.create_safety_sheet_path('merck', link, product_number, chemical)
+      end
+      expect(Chemotion::ChemicalsService).not_to have_received(:create_sds_file)
+    end
+
+    it 'skips vendors that are not accepted' do
+      described_class.create_safety_sheet_path('acme', link, '131377', chemical)
+      expect(Chemotion::ChemicalsService).not_to have_received(:create_sds_file)
+    end
+  end
+
   describe '.set_safety_phrases' do
     let(:chemical) { { 'chemical_data' => [{}] } }
 

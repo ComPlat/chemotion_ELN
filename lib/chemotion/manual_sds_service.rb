@@ -2,6 +2,8 @@
 
 module Chemotion
   # Service class for handling manual Safety Data Sheet attachment (SDS) operations
+  # rubocop:disable Metrics/ClassLength -- pre-existing; the chemical_data shaping
+  #   below is a chain of small single-purpose helpers, not one oversized method
   class ManualSdsService
     # @param args [Hash] Parameters for SDS creation
     # @option args [Integer] :sample_id Sample ID
@@ -32,13 +34,14 @@ module Chemotion
     # Create a new manual SDS record
     # @return [Chemical, Hash] Created/updated chemical record or error hash
     def create
+      # Parse vendor info and chemical data first: validation below inspects the
+      # parsed @vendor_info, which is only assigned by parse_data.
+      parsing_result = parse_data
+      return parsing_result if parsing_result.is_a?(Hash) && parsing_result[:error]
+
       # Validate parameters
       validation_errors = validate_params
       return { error: validation_errors.join(', ') } if validation_errors.any?
-
-      # Parse vendor info and chemical data
-      parsing_result = parse_data
-      return parsing_result if parsing_result.is_a?(Hash) && parsing_result[:error]
 
       # Process SDS file and create/update chemical record
       process_file
@@ -51,7 +54,9 @@ module Chemotion
     #  - presence: sample_id, attached_file, vendor_name
     #  - format: vendor_name (InputValidationUtils.valid_vendor_name?)
     #  - format: vendor_product (InputValidationUtils.valid_product_number?)
+    #  - format: vendor_info['productNumber'] (InputValidationUtils.valid_product_number?)
     #  - if vendor_info is a Hash, delegates URL checks to validate_vendor_info_links
+    # Must run after parse_data, which assigns @vendor_info.
     # @return [Array<String>] empty array if valid; otherwise list of error messages
     def validate_params
       errors = []
@@ -77,7 +82,19 @@ module Chemotion
       errors = []
       errors << 'Vendor name is invalid' unless InputValidationUtils.valid_vendor_name?(@vendor_name)
       errors << 'Vendor product is invalid' unless InputValidationUtils.valid_product_number?(@vendor_product)
+      errors << 'Product number is invalid' unless InputValidationUtils.valid_product_number?(product_number)
       errors
+    end
+
+    # Client-supplied product number, read from the parsed vendor info.
+    #
+    # Only meaningful after +parse_data+ has run. It is interpolated into the
+    # safety-sheet file path, so +validate_format_errors+ constrains it to the
+    # +valid_product_number?+ character whitelist before it reaches disk.
+    #
+    # @return [String, nil] the product number, or nil when vendor_info is not a Hash
+    def product_number
+      @vendor_info.is_a?(Hash) ? @vendor_info['productNumber'] : nil
     end
 
     # Validate optional URLs inside vendor_info.
@@ -89,11 +106,13 @@ module Chemotion
       return [] unless @vendor_info.is_a?(Hash)
 
       errors = []
-      if @vendor_info['productLink'] && !InputValidationUtils.valid_product_link_url?(@vendor_info['productLink'])
+      if @vendor_info['productLink'].present? &&
+         !InputValidationUtils.valid_product_link_url?(@vendor_info['productLink'])
         errors << 'Invalid product link URL'
       end
 
-      if @vendor_info['sdsLink'] && !InputValidationUtils.valid_safety_sheet_link_url?(@vendor_info['sdsLink'])
+      if @vendor_info['sdsLink'].present? &&
+         !InputValidationUtils.valid_safety_sheet_link_url?(@vendor_info['sdsLink'])
         errors << 'Invalid safety sheet link URL'
       end
       errors
@@ -121,7 +140,6 @@ module Chemotion
     # @return [Chemical, Hash] Chemical record or error hash
     def process_file
       upload_path = fetch_upload_path
-      product_number = @vendor_info['productNumber']
       @file_hash = compute_or_fail(upload_path)
       sds_file_path = resolve_sds_file_path(product_number)
       handle_chemical_update_or_create(build_sds_params(product_number, sds_file_path))
@@ -426,4 +444,5 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

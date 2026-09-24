@@ -56,7 +56,7 @@ module Chemotion
       return nil if existing_files.empty?
 
       existing_files.each do |file_path|
-        file_path.match(/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$/) do |match|
+        file_path.match(/#{Regexp.escape(product_number.to_s)}_(?:web_)?([a-f0-9]{16})\.pdf$/) do |match|
           existing_hash_initials = match[1]
           return file_path.sub('public/', '/') if existing_hash_initials == file_hash_initials
         end
