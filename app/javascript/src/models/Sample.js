@@ -817,25 +817,56 @@ export default class Sample extends Element {
   }
 
   /**
-   * Updates each component's amount (in mol) based on total mixture mass.
-   * Uses the component's relative molecular weight (relMw) and equivalent (eq) values.
+   * Updates each component's amount (in mol) from the mixture's total mass, using its
+   * ratio (equivalent) and its own molar mass.
+   *
+   * The total mass is split across components in proportion to their ratios:
+   *   amount_mol_i = (ratio_i * totalMass) / Σ_j (ratio_j * molar_mass_j)
+   * which keeps the component mole ratios equal to their ratios and conserves the
+   * total mass (Σ amount_mol_i * molar_mass_i === totalMass).
+   *
+   * The split is only performed when every component has a KNOWN ratio and a usable molar
+   * mass. An 'n.d' (unknown) ratio means the composition is unknown, not zero, so the
+   * amounts are left unchanged rather than silently assigning that component 0 moles and
+   * reallocating its share to the others.
+   *
+   * This is self-contained (ratios + molar masses only), so it also works when the
+   * components have no prior amounts, i.e. when a mass is first entered on a mixture used
+   * as a reaction material.
    * @returns {void}
    */
   updateComponentAmounts() {
     const totalMassG = Number(this.amount_g);
     if (!Number.isFinite(totalMassG) || totalMassG < 0) return;
 
-    (this.components || []).forEach((component) => {
-      const relMw = Number(component.relative_molecular_weight);
-      if (!Number.isFinite(relMw) || relMw <= 0) return;
+    const components = this.components || [];
+    if (components.length === 0) return;
 
+    const ratioOf = (component) => {
       const isRef = !!component.reference;
-      const eq = Number.isFinite(component.equivalent)
-        ? component.equivalent
-        : (isRef ? 1 : 0);
+      return Number.isFinite(component.equivalent) ? component.equivalent : (isRef ? 1 : 0);
+    };
+    const molarMassOf = (component) => Number(component.molecule_molecular_weight);
 
-      const totalMoles = totalMassG / relMw;
-      component.amount_mol = isRef ? totalMoles : totalMoles * eq;
+    // Bail when any component's composition is unknown: an 'n.d' (non-numeric) ratio or a
+    // missing/invalid molar mass makes the distribution indeterminate, so we must not
+    // silently assign that component 0 moles and reallocate its share to the others.
+    const hasUnknownComposition = components.some((component) => {
+      const ratioKnown = !!component.reference || Number.isFinite(component.equivalent);
+      const molarMass = molarMassOf(component);
+      return !ratioKnown || !Number.isFinite(molarMass) || molarMass <= 0;
+    });
+    if (hasUnknownComposition) return;
+
+    // Weighted molar-mass sum: Σ (ratio_j * molar_mass_j).
+    const weighted = components.reduce(
+      (sum, component) => sum + (ratioOf(component) * molarMassOf(component)),
+      0
+    );
+    if (!(weighted > 0)) return;
+
+    components.forEach((component) => {
+      component.amount_mol = (ratioOf(component) * totalMassG) / weighted;
     });
   }
 
@@ -2441,15 +2472,71 @@ export default class Sample extends Element {
 
     // Set equivalent for each component
     this.components.forEach((component, index) => {
-      if (!referenceMol || Number.isNaN(referenceMol)) {
-        component.equivalent = index === referenceIndex ? 1 : 'n.d';
-      } else if (index === referenceIndex) {
+      if (index === referenceIndex) {
         component.equivalent = 1;
+      } else if (!referenceMol || Number.isNaN(referenceMol)) {
+        // The reference has no amount, so the ratio cannot be derived from amounts.
+        // Preserve a user-entered numeric ratio; only fall back to 'n.d' when the
+        // component has no meaningful ratio yet.
+        const currentEq = component.equivalent;
+        const hasNumericEq = typeof currentEq === 'number' && !Number.isNaN(currentEq);
+        component.equivalent = hasNumericEq ? currentEq : 'n.d';
       } else {
         const currentMol = component.amount_mol ?? 0;
         component.equivalent = currentMol && !Number.isNaN(currentMol)
           ? currentMol / referenceMol
           : 0;
+      }
+    });
+  }
+
+  /**
+   * Recomputes non-reference components after the reference component's own amount
+   * changes.
+   *
+   * Per non-reference component:
+   * - has a typed ratio (numeric equivalent > 0) but NO amount yet → fill the amount
+   *   from the ratio: amount_mol = ratio * referenceAmount, ratio kept. This is the
+   *   case where a ratio was typed while the reference had no amount.
+   * - already has an amount → keep the amount fixed and re-derive the ratio from it
+   *   (matching updateMixtureComponentEquivalent), so a later reference change updates
+   *   the ratio rather than the amount the user already established.
+   *
+   * Falls back to updateMixtureComponentEquivalent when there is no usable reference
+   * amount to scale from.
+   */
+  updateMixtureComponentsFromReferenceAmount() {
+    if (!this.hasComponents()) return;
+
+    const referenceComponent = this.reference_component;
+    const referenceMol = referenceComponent?.amount_mol ?? 0;
+
+    // Without a reference amount, ratios cannot be scaled into amounts; defer to the
+    // ratio-preserving path.
+    if (!referenceComponent || !referenceMol || Number.isNaN(referenceMol)) {
+      this.updateMixtureComponentEquivalent();
+      return;
+    }
+
+    const totalVolume = this.amount_l;
+
+    this.components.forEach((component) => {
+      if (component.id === referenceComponent.id) {
+        component.equivalent = 1;
+        return;
+      }
+
+      const eq = component.equivalent;
+      const hasTypedRatio = typeof eq === 'number' && !Number.isNaN(eq) && eq > 0;
+      const currentMol = component.amount_mol ?? 0;
+      // Fill the amount from the ratio only when the component has a typed ratio and no
+      // amount yet. Once it has an amount, keep the amount and re-derive the ratio.
+      const isRatioDriven = hasTypedRatio && !currentMol;
+
+      if (isRatioDriven) {
+        component.updateAmountFromRatio(eq, referenceMol, totalVolume);
+      } else {
+        component.updateRatioFromReference(referenceComponent);
       }
     });
   }

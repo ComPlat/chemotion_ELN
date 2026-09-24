@@ -93,9 +93,9 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Check
-        className={className}
+        className={`${className} d-inline-flex align-items-center gap-2`}
         style={{ margin: 0 }}
-        type="checkbox"
+        type="switch"
         id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
