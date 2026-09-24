@@ -9,14 +9,38 @@ import GenericEl from 'src/models/GenericEl';
 import ResearchPlan from 'src/models/ResearchPlan';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import DeviceDescription from 'src/models/DeviceDescription';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 export default class SearchFetcher {
+  // Search results have to intersect with the element list's active filter chips; without these the
+  // chips stay visible above results that ignore them.
+  static withListFilters(selection) {
+    const {
+      userLabel, fromDate, toDate, productOnly, filterCreatedAt
+    } = UIStore.getState();
+    if (!userLabel && !fromDate && !toDate && !productOnly) return selection;
+
+    return {
+      ...selection,
+      list_filter_params: {
+        ...selection.list_filter_params,
+        filter_created_at: filterCreatedAt,
+        from_date: fromDate ? dateToUnixTimestamp(fromDate) : null,
+        to_date: toDate ? dateToUnixTimestamp(toDate) : null,
+        product_only: productOnly,
+        user_label: userLabel,
+      },
+    };
+  }
+
+  // applyListFilters: false keeps the full result, for the search modal whose adopted ids are re-filtered later.
   static fetchBasedOnSearchSelectionAndCollection(params) {
     const {
-      selection, collectionId, page, moleculeSort, isPublic
+      selection, collectionId, page, moleculeSort, isPublic, applyListFilters = true
     } = params;
     const body = {
-      selection,
+      selection: applyListFilters ? this.withListFilters(selection) : selection,
       collection_id: collectionId,
       page: page || 1,
       per_page: selection.page_size,
@@ -28,6 +52,7 @@ export default class SearchFetcher {
       .then((json) => this.getResultByKey({ ...json }, collectionId));
   }
 
+  // No withListFilters here: the search modal pages with one page of already filtered ids.
   static fetchBasedOnSearchResultIds(params) {
     const {
       selection, collectionId, page, moleculeSort, isPublic
