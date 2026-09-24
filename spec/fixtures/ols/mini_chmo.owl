@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/chmo.owl#"
+     xml:base="http://purl.obolibrary.org/obo/chmo.owl"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/chmo.owl">
+        <owl:versionIRI rdf:resource="http://purl.obolibrary.org/obo/chmo/releases/2022-04-19/chmo.owl"/>
+    </owl:Ontology>
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000002">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CHMO_0000001"/>
+        <oboInOwl:id>CHMO:0000002</oboInOwl:id>
+        <oboInOwl:hasExactSynonym>NMR</oboInOwl:hasExactSynonym>
+        <rdfs:label>nuclear magnetic resonance spectroscopy</rdfs:label>
+    </owl:Class>
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000001">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CHMO_0000000"/>
+        <oboInOwl:id>CHMO:0000001</oboInOwl:id>
+        <rdfs:label>spectroscopy</rdfs:label>
+    </owl:Class>
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000000">
+        <oboInOwl:id>CHMO:0000000</oboInOwl:id>
+        <obo:IAO_0000115>A method used to analyse a sample.</obo:IAO_0000115>
+        <rdfs:label>analytical method</rdfs:label>
+    </owl:Class>
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000099">
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/CHMO_0000000"/>
+        <oboInOwl:id>CHMO:0000099</oboInOwl:id>
+        <owl:deprecated rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</owl:deprecated>
+        <rdfs:label>obsolete method</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
