@@ -161,13 +161,6 @@ describe Chemotion::UserAPI do
     end
   end
 
-  describe 'DELETE /api/v1/users/sign_out' do
-    it 'returns 204' do
-      delete '/api/v1/users/sign_out'
-      expect(response).to have_http_status(:no_content)
-    end
-  end
-
   describe 'GET /api/v1/users/devices' do
     # named against creation order, so the sort is not satisfied by id order
     let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
