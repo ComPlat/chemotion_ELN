@@ -504,6 +504,31 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/samples with a structure search method' do
+    let(:url) { '/api/v1/search/samples' }
+    let(:params) do
+      {
+        selection: {
+          elementType: :samples,
+          search_by_method: 'fingerprint_sub',
+          name: sample_a.molfile,
+        },
+        collection_id: collection.id,
+        page: 1,
+        per_page: 15,
+      }
+    end
+
+    before do
+      do_request
+    end
+
+    it 'does not run the structure search' do
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+    end
+  end
+
   describe 'POST /api/v1/search/structure' do
     let(:url) { '/api/v1/search/structure' }
 
@@ -631,6 +656,37 @@ describe Chemotion::SearchAPI do
           expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
           expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
+        end
+      end
+
+      context 'when the molfile header contains a quote' do
+        let(:molfile) { sample_a.molfile.sub(/\A[^\n]*/, "it's a title") }
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'sub',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        before do
+          do_request
+        end
+
+        it 'treats the molfile as a literal and returns the matching samples' do
+          expected_ids =
+            Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id, sample_b.id]
+
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).to include(*expected_ids)
         end
       end
 
