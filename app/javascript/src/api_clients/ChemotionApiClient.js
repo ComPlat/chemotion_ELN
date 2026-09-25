@@ -2,6 +2,30 @@
 // TODO: research if the following import can be safely removed
 // import 'whatwg-fetch';
 
+// utility functions
+const buildHeaders = (headers) => {
+  const returnHeaders = new Headers();
+  // for formData submission, content type header must not be set, so the browser can set it properly
+  // see Warning at the end of section https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects#sending_files_using_a_formdata_object
+  const suppressContentType = headers != null && headers['Content-Type'] === null;
+
+  if (headers != null) {
+    Object.keys(headers).forEach((header) => {
+      if (headers[header] !== null) {
+        returnHeaders.set(header, headers[header]);
+      }
+    });
+  }
+  const authToken = localStorage.getItem('chemotion-auth-token');
+  if (authToken) { returnHeaders.set('Authorization', authToken); }
+  if (!returnHeaders.has('Accept')) { returnHeaders.set('Accept', 'application/json'); }
+  if (!suppressContentType && !returnHeaders.has('Content-Type')) {
+    returnHeaders.set('Content-Type', 'application/json');
+  }
+
+  return returnHeaders;
+};
+
 /**
  * Low-level request wrapper shared by every verb helper; the only place that
  * actually calls `fetch`.
@@ -28,10 +52,10 @@ const apiRequest = (apiEndpoint, options) => {
     credentials: 'same-origin',
     handleResponseSuccess: (response) => (response.status === 204 ? null : response.json()),
     handleResponseError: (exception) => { console.log(exception); },
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
   };
+  const headers = buildHeaders(options?.headers);
 
-  options = { ...globalDefaults, ...options };
+  options = { ...globalDefaults, ...options, headers };
   const { handleResponseSuccess, handleResponseError } = options;
 
   return fetch(apiEndpoint, options)
@@ -58,14 +82,12 @@ const putJson = (apiEndpoint, options = {}) => {
 
 // this function assumes the body is already a form data object and does not try to typecast it
 const putFormData = (apiEndpoint, options) => {
-  const defaults = {
-    method: 'PUT',
-    headers: {
-      Accept: 'application/json' // lets see what omitting the content-type header does...
-    }
-  };
+  const defaults = { method: 'PUT' };
+  // assign null, so buildHeaders will not auto-assign this headerfield but clear it;
+  // merged after options.headers so a caller-provided (even empty) headers object can't drop this marker
+  const headers = { ...options.headers, 'Content-Type': null };
 
-  return apiRequest(apiEndpoint, { ...defaults, ...options });
+  return apiRequest(apiEndpoint, { ...defaults, ...options, headers });
 };
 
 const postJson = (apiEndpoint, options = {}) => {
@@ -80,14 +102,12 @@ const postJson = (apiEndpoint, options = {}) => {
 
 // this function assumes the body is already a form data object and does not try to typecast it
 const postFormData = (apiEndpoint, options) => {
-  const defaults = {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json' // lets see what omitting the content-type header does...
-    }
-  };
+  const defaults = { method: 'POST' };
+  // assign null, so buildHeaders will not auto-assign this headerfield but clear it;
+  // merged after options.headers so a caller-provided (even empty) headers object can't drop this marker
+  const headers = { ...options.headers, 'Content-Type': null };
 
-  return apiRequest(apiEndpoint, { ...defaults, ...options });
+  return apiRequest(apiEndpoint, { ...defaults, ...options, headers });
 };
 
 const patchJson = (apiEndpoint, options = {}) => {

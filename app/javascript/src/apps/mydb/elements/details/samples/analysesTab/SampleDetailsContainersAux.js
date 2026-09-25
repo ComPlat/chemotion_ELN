@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { Button, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
@@ -9,7 +10,7 @@ import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
@@ -82,7 +83,7 @@ const headerBtnGroup = (
     e.stopPropagation();
     SpectraActions.ToggleModalNMRDisplayer();
     SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
-  }
+  };
 
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
@@ -103,25 +104,26 @@ const headerBtnGroup = (
         LoadingActions.stop();
       });
     }
-  }
+  };
 
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  const { chmos } = UserStore.getState();
+  const { chmos } = rootStore.userStore;
   const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-  const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
+  const { currentUser } = rootStore.userStore || {};
+  const enableMoleculeViewer = MatrixCheck(currentUser?.matrix, MolViewerSet.PK);
 
   return (deleted ?
     <Button
       size="xxsm"
       variant="danger"
-      onClick={() => {handleUndo(container)}}
+      onClick={() => {handleUndo(container);}}
     >
       <i className="fa fa-undo" />
     </Button> :
     <div
       className="d-flex gap-1 align-items-center"
       onClick={(e) => e.stopPropagation()}
+      role="presentation"
     >
       <Form.Check
         id={`add-sample-${sample.id}-to-report`}
@@ -161,7 +163,7 @@ const headerBtnGroup = (
   );
 };
 
-function AnalysesHeader({
+const AnalysesHeader = ({
   sample,
   container,
   mode,
@@ -172,7 +174,7 @@ function AnalysesHeader({
   handleSubmit,
   toggleAddToReport,
   updateContainerPreferredThumbnail,
-}) {
+}) => {
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const deleted = container.is_deleted;
@@ -200,9 +202,9 @@ function AnalysesHeader({
             />
           )}
       </div>
-      <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
+      <div className={`flex-grow-1${  deleted ? '' : ' analysis-header-fade'}`}>
         <div className="d-flex justify-content-between align-items-center">
-          <h4 className={"flex-grow-1" + (deleted ? " text-decoration-line-through" : "")}>{container.name}</h4>
+          <h4 className={`flex-grow-1${  deleted ? ' text-decoration-line-through' : ''}`}>{container.name}</h4>
           {(mode === 'edit') &&
             headerBtnGroup(
               deleted, container, sample, handleRemove, handleSubmit,
@@ -210,7 +212,7 @@ function AnalysesHeader({
             )
           }
         </div>
-        <div className={deleted ? "text-body-tertiary" : ""}>
+        <div className={deleted ? 'text-body-tertiary' : ''}>
           Type: {kind}
           <br />
           Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
@@ -226,6 +228,6 @@ function AnalysesHeader({
       </div>
     </div>
   );
-}
+};
 
 export { AnalysesHeader };

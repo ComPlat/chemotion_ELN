@@ -16,15 +16,11 @@ class InboxActions {
   }
 
   toggleInboxModal() {
-    return null
+    return null;
   }
 
   showInboxModal() {
     return null;
-  }
-
-  changeInboxFilter(filter) {
-    return filter;
   }
 
   changeInboxSize(size) {
@@ -195,7 +191,7 @@ class InboxActions {
   }
 
   backToInbox(attachment) {
-    return attachment
+    return attachment;
   }
 
 }

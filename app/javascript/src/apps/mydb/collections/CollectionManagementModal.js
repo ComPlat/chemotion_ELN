@@ -9,7 +9,7 @@ import AppModal from 'src/components/common/AppModal';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionManagementMenu from 'src/apps/mydb/collections/CollectionManagementMenu';
 
-function CollectionManagementModal({ show, onHide }) {
+const CollectionManagementModal = ({ show, onHide }) => {
   const collectionsStore = useContext(StoreContext).collections;
 
   const closeModal = () => {
@@ -53,7 +53,7 @@ function CollectionManagementModal({ show, onHide }) {
       </div>
     </AppModal>
   );
-}
+};
 
 CollectionManagementModal.propTypes = {
   show: propTypes.bool.isRequired,

@@ -8,15 +8,13 @@ import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
-import { wellplateShowSample } from 'src/utilities/routesUtils';
-import Aviator from 'aviator';
+import { aviatorNavigation, wellplateShowSample } from 'src/utilities/routesUtils';
 import ColorLabel from 'src/components/common/ColorLabel';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
 
 const navigateToSample = (sample) => {
-  const { params, uri } = Aviator.getCurrentRequest();
-  Aviator.navigate(`${uri}/sample/${sample.id}`, { silent: true });
-  wellplateShowSample({ params: { ...params, sampleID: sample.id } });
+  aviatorNavigation('sample', sample.id);
+  wellplateShowSample({ params: { sampleID: sample.id } });
 };
 
 const sampleName = (sample) => {
@@ -28,9 +26,9 @@ const sampleName = (sample) => {
     return sampleNameLabel;
   }
   return (
-    <a onClick={() => navigateToSample(sample)} role="button" className="text-primary">
+    <Button onClick={() => navigateToSample(sample)} variant="plain">
       {sampleNameLabel}
-    </a>
+    </Button>
   );
 };
 
@@ -69,10 +67,10 @@ const sampleVisualisation = (well, onChange, readOnly) => {
 };
 
 const readoutSection = (readouts, readoutTitles) => {
-  if (!readouts || readouts.every((readout) => readout.unit == '' && readout.value == '')) return null;
+  if (!readouts || readouts.every((readout) => readout.unit === '' && readout.value === '')) return null;
 
   const readoutListItems = readouts.map((readout, index) => (
-    <li key={`readout_${index}`}>
+    <li key={`readout_${readout.value}`}>
       <strong>
         {readoutTitles[index]}
         :
@@ -156,7 +154,7 @@ const colorPicker = (well, onChange, activeColor, setActiveColor, readOnly) => (
   </Form.Group>
 );
 
-function WellDetails({ well, readoutTitles, handleClose, onChange, readOnly }) {
+const WellDetails = ({ well, readoutTitles, handleClose, onChange, readOnly }) => {
   const [activeColor, setActiveColor] = useState(well.color_code || null);
   return (
     <AppModal
@@ -171,7 +169,7 @@ function WellDetails({ well, readoutTitles, handleClose, onChange, readOnly }) {
       {colorPicker(well, onChange, activeColor, setActiveColor, readOnly)}
     </AppModal>
   );
-}
+};
 
 WellDetails.propTypes = {
   well: PropTypes.object.isRequired,

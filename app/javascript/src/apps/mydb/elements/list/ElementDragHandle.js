@@ -6,7 +6,6 @@ import { observer } from 'mobx-react';
 import { useDnD } from 'chem-generic-ui';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import DragHandle from 'src/components/common/DragHandle';
@@ -63,13 +62,12 @@ EnabledHandle.propTypes = {
 };
 
 const ElementDragHandle = ({ element, sourceType: sourceTypeProp }) => {
+  const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
+  const { userStore } = useContext(StoreContext);
   const [currentElement, setCurrentElement] = useState(
     ElementStore.getState().currentElement || {}
   );
-  const [genericEls, setGenericEls] = useState(
-    UserStore.getState().genericEls || []
-  );
-  const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
+  const genericEls = userStore.genericEls || [];
   const dndEnabled = useDnD(currentElement, genericEls);
 
   useEffect(() => {
@@ -78,14 +76,6 @@ const ElementDragHandle = ({ element, sourceType: sourceTypeProp }) => {
     };
     ElementStore.listen(updateCurrentElement);
     return () => ElementStore.unlisten(updateCurrentElement);
-  }, []);
-
-  useEffect(() => {
-    const updateGenericEls = (userState) => {
-      setGenericEls(userState.genericEls);
-    };
-    UserStore.listen(updateGenericEls);
-    return () => UserStore.unlisten(updateGenericEls);
   }, []);
 
   const currentElementType = currentElement?.type || null;

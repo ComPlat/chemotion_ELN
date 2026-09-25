@@ -1,35 +1,36 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
+import React, { useContext } from 'react';
 import { Accordion, Form } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
 import { Constants, GenInterface, GenToolbar } from 'chem-generic-ui';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Segment from 'src/models/Segment';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 
 const OntologySegmentsList = ({ store, element, isSelection }) => {
+  const { userStore } = useContext(StoreContext);
   const ontologies = element['ontologies'] || [];
   if (ontologies.length < 1) { return null; }
 
-  let list = [];
-  const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  let existingSegment = {}
+  const segmentKlasses = userStore?.segmentKlasses || [];
+  let existingSegment = {};
 
   const toggleSegment = (segment) => {
     store.toggleSegment(segment);
-  }
+  };
 
   const handleSegmentsChange = (segment) => {
-    let segments = [...element.segments];
+    const segments = [...element.segments];
     const sid = segments.findIndex((s) => s.segment_klass_id === segment.segment_klass_id);
     if (sid >= 0) { segments.splice(sid, 1, segment); } else { segments.push(segment); }
 
     store.changeDeviceDescription('segments', segments);
-  }
+  };
 
   const handleRetrieveRevision = (revision, cb) => {
-    let segments = [...element.segments];
+    const segments = [...element.segments];
     const selectedSegmentId = store.selected_segment_id;
     const sid = segments.findIndex((s) => s.id === selectedSegmentId);
 
@@ -38,26 +39,25 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
       cb();
       store.changeDeviceDescription('segments', segments);
       store.setSelectedSegmentId(0);
-    } 
-  }
+    }
+  };
 
   const handleExport = (segment) => {
     ElementActions.exportElement(segment, 'Segment', 'docx');
-  }
+  };
 
   const handleExpandAll = (expanded) => {
-    store.changeSegmentExpandAll(expanded)
-  }
+    store.changeSegmentExpandAll(expanded);
+  };
 
   const changeFormSelection = (index_ontology, index_segment, event) => {
     event.stopPropagation();
-    let ontologies = [...element.ontologies];
+    const elementOntologies = [...element.ontologies];
     ontologies[index_ontology].segments[index_segment].show = event.target.checked;
-    store.changeDeviceDescription('ontologies', ontologies);
-  }
+    store.changeDeviceDescription('ontologies', elementOntologies);
+  };
 
-  const segmentVersionToolbar = (segment, segmentKlass, index, j) => {
-    return (
+  const segmentVersionToolbar = (segment, segmentKlass, index, j) => (
       <GenToolbar
         generic={segment}
         genericType={Constants.GENERIC_TYPES.SEGMENT}
@@ -69,7 +69,6 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         key={`revisions-buttons-${index}-${j}`}
       />
     );
-  }
 
   const displayGenericSegment = (segment) => {
     const layersLayout = (
@@ -86,16 +85,14 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
       />
     );
     return <div style={{ margin: '5px' }}>{layersLayout}</div>;
-  }
+  };
 
   const genericFormFields = (rows, ontology, index) => {
     ontology['segments'].forEach((segment, j) => {
       const segmentKlass = segmentKlasses.find(
-        (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] == s.id
+        (s) => s.element_klass && s.element_klass.name === element.type && segment['segment_klass_id'] === s.id
       );
-      existingSegment = element['segments'].find((s) => {
-        return segment['segment_klass_id'] === s.segment_klass_id;
-      });
+      existingSegment = element['segments'].find((s) => segment['segment_klass_id'] === s.segment_klass_id);
 
       const segmentElement = existingSegment ? existingSegment : Segment.buildEmpty(cloneDeep(segmentKlass));
 
@@ -105,19 +102,18 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         rows.push(
           <Accordion
             className="mb-4"
-            key={`ontology-row-segments-list-${j}`}
+            key={`ontology-row-segments-list-${segment.segment_klass_id}`}
           >
             <Accordion.Item eventKey={accordionRowIdent}>
               <Accordion.Header>
                 <div className="d-flex gap-2">
-                  <div onClick={(event) => event.stopPropagation()}>
-                    <Form.Check
-                      type="checkbox"
-                      label="Use this form for"
-                      checked={showValue}
-                      onChange={(event) => changeFormSelection(index, j, event)}
-                    />
-                  </div>
+                  <Form.Check
+                    type="checkbox"
+                    label="Use this form for"
+                    checked={showValue}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => changeFormSelection(index, j, event)}
+                  />
                   <b>{segmentKlass.label}</b>
                 </div>
               </Accordion.Header>
@@ -130,7 +126,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
       } else {
         if (segment['show'] || segment['show'] === undefined) {
           rows.push(
-            <div>
+            <div key={`ontology-row-segments-list-${segment.segment_klass_id}`}>
               {segmentVersionToolbar(segmentElement, segmentKlass, index, j)}
               {displayGenericSegment(segmentElement)}
             </div>
@@ -139,10 +135,10 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
       }
     });
     return rows;
-  }
+  };
 
   const segmentsOfOntologies = () => {
-    list = [];
+    const list = [];
 
     ontologies
       .sort((a, b) => a.index - b.index)
@@ -166,7 +162,11 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         rows = genericFormFields(rows, ontology, index);
 
         if (isSelection) {
-          list.push(<h3 className="mb-4">{ontology.data.label}</h3>);
+          list.push(
+            <h3 className="mb-4" key={`ontology-segments-list-header-${ontology.index}`}>
+              {ontology.data.label}
+            </h3>
+          );
           list.push(rows);
         } else {
           list.push(
@@ -174,7 +174,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
               className={`mb-4${deletedClass}`}
               activeKey={isActive && accordionIdent}
               onSelect={() => toggleSegment(accordionIdent)}
-              key={`ontology-segments-list-${index}`}
+              key={`ontology-segments-list-${ontology.index}`}
             >
               <Accordion.Item eventKey={accordionIdent}>
                 <Accordion.Header>
@@ -191,9 +191,9 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         }
       });
     return list;
-  }
+  };
 
   return segmentsOfOntologies();
-}
+};
 
 export default observer(OntologySegmentsList);

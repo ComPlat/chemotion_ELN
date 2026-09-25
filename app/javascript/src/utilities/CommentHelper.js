@@ -6,12 +6,8 @@ const formatSection = (section, type = '') => {
   return words?.join(' ');
 };
 
-const getSectionComments = (comments, section) => {
-  return comments?.filter((cmt) => (cmt.section === section));
-};
+const getSectionComments = (comments, section) => comments?.filter((cmt) => (cmt.section === section));
 const getAllComments = (comments, section) => comments?.filter((cmt) => (cmt.section !== section));
-
-const selectCurrentUser = (state) => state.currentUser || {};
 
 const commentActivation = 'commentActivation';
 
@@ -19,6 +15,5 @@ export {
   formatSection,
   getSectionComments,
   getAllComments,
-  selectCurrentUser,
   commentActivation,
 };

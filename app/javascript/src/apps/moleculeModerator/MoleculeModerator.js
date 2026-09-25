@@ -9,6 +9,7 @@ import MoleculeModeratorComponent from 'src/apps/moleculeModerator/MoleculeModer
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import Notifications from 'src/components/Notifications';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 class MoleculeModerator extends Component {
   static contextType = StoreContext;
@@ -131,10 +132,15 @@ class MoleculeModerator extends Component {
       <>
         <Navbar className="bg-gray-200 px-4">
           <Nav className="container-md justify-content-start">
-            <Navbar.Brand>
-              Molecule Moderator
+            <Navbar.Brand
+              href="#"
+              onClick={(e) => { e.preventDefault(); aviatorNavigationToApp('/mydb/collection/all'); }}
+            >
+              Back to MyDB
             </Navbar.Brand>
-            <Nav.Link href="/">Home</Nav.Link>
+            <Navbar.Text className="fs-5 text-black">
+              Molecule Moderator
+            </Navbar.Text>
           </Nav>
         </Navbar>
         <Container className="py-2">

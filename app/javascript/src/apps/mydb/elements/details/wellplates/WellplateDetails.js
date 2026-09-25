@@ -22,7 +22,6 @@ import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
@@ -45,15 +44,16 @@ export default class WellplateDetails extends Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
-  constructor(props) {
-    super(props);
+  constructor(props, context) {
+    super(props, context);
     const { wellplate } = props;
+    const { currentUser } = context.userStore || {};
     this.state = {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
       visible: List(),
-      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      currentUser
     };
     this.handleWellplateChanged = this.handleWellplateChanged.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -300,7 +300,7 @@ export default class WellplateDetails extends Component {
   }
 
   render() {
-    const { wellplate, showWellplate, visible } = this.state;
+    const { wellplate, visible } = this.state;
     const readoutTitles = wellplate.readout_titles;
     const tabContentsMap = {
       designer: (

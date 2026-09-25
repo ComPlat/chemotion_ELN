@@ -4,7 +4,7 @@ import { findIndex, cloneDeep } from 'lodash';
 import { OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
 import { browseElement } from 'chem-generic-ui';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import GenericSGDetails from 'src/components/generic/GenericSGDetails';
 import Segment from 'src/models/Segment';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -12,7 +12,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
-  const { genericEls = [] } = UserStore.getState();
+  const { genericEls = [] } = rootStore.userStore;
   const elementAction = browseElement(currentCollection, false, type, id, genericEls);
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
@@ -20,10 +20,10 @@ const onNaviClick = (type, id) => {
 };
 
 const addSegmentTabs = (element, onChange, contentMap) => {
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const currentUser = rootStore.userStore.currentUser || {};
   const uiCtrl = MatrixCheck(currentUser.matrix, 'segment');
   if (!uiCtrl) return;
-  let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  let segmentKlasses = rootStore.userStore.segmentKlasses || [];
   segmentKlasses = segmentKlasses.filter(
     (s) => s.element_klass && s.element_klass.name === element.type
   );
@@ -65,10 +65,10 @@ const addSegmentTabs = (element, onChange, contentMap) => {
 
 const SegmentTabs = (element, onChange) => {
   const result = {};
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const currentUser = rootStore.userStore.currentUser || {};
   const uiCtrl = MatrixCheck(currentUser.matrix, 'segment');
   if (!uiCtrl) return {};
-  let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  let segmentKlasses = rootStore.userStore.segmentKlasses || [];
   segmentKlasses = segmentKlasses.filter(
     (s) => s.element_klass && s.element_klass.name === element.type
   );

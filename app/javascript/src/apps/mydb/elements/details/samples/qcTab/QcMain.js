@@ -5,15 +5,17 @@ import { Button } from 'react-bootstrap';
 import QcContent from 'src/apps/mydb/elements/details/samples/qcTab/components/QcContent';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 class QcMain extends Component {
-  constructor(props) {
-    super(props);
+  static contextType = StoreContext;
+  constructor(props, context) {
+    super(props, context);
 
+    const { profile } = context.userStore;
     this.state = {
       ...QcStore.getState(),
-      profile: UserStore.getState().profile,
+      profile
     };
 
     this.onChange = this.onChange.bind(this);
@@ -65,7 +67,7 @@ class QcMain extends Component {
       .filter(r => r != null)[0];
     if (!infer) return null;
     let curation = profile ? profile.curation : 2;
-    if (curation === null) { curation = 2 }
+    if (curation === null) { curation = 2; }
     return (
       <QcContent
         sample={sample}

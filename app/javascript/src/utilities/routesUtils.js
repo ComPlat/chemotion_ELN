@@ -1,21 +1,16 @@
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import Aviator from 'aviator';
+import { camelCase } from 'lodash';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
 const collectionShow = (e) => {
-  UserActions.fetchCurrentUser();
-  const { profile } = UserStore.getState();
-  if (!profile) {
-    UserActions.fetchProfile();
-  }
   const uiState = UIStore.getState();
   const { currentSearchSelection, currentSearchByID } = uiState;
   const collectionId = e.params.collectionID;
@@ -201,16 +196,16 @@ const deviceShowDeviceManagement = () => {
 };
 
 const researchPlanShowOrNew = (e) => {
-  const { research_planID, collectionID } = e.params;
+  const { researchPlanID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'research_plan' && el.id === research_planID);
+  const index = selecteds.findIndex((el) => el.type === 'research_plan' && el.id === researchPlanID);
 
-  if (research_planID === 'new') {
+  if (researchPlanID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
-  } else if (research_planID === 'copy') {
+  } else if (researchPlanID === 'copy') {
     //
   } else if (index < 0) {
-    ElementActions.fetchResearchPlanById(research_planID);
+    ElementActions.fetchResearchPlanById(researchPlanID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
@@ -221,43 +216,45 @@ const metadataShowOrNew = (e) => {
   const { selecteds, activeKey } = ElementStore.getState();
 
   // check if the metadata detail tab is alredy open
-  const index = selecteds.findIndex((el) => el.collection_id == collectionID);
+  const index = selecteds.findIndex((el) => el.collection_id === collectionID);
   if (index < 0) {
     // not found, fetch the metadata from the server
     ElementActions.fetchMetadata(collectionID);
-  } else if (index != activeKey) {
+  } else if (index !== activeKey) {
     // not active, activate tab
     DetailActions.select(index);
   }
 };
 
 const deviceDescriptionShowOrNew = (e) => {
-  const { device_descriptionID, collectionID } = e.params;
+  const { deviceDescriptionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'device_description' && el.id === device_descriptionID);
+  const index = selecteds.findIndex((el) => el.type === 'device_description' && el.id === deviceDescriptionID);
 
-  if (device_descriptionID === 'new' || device_descriptionID === undefined) {
+  if (deviceDescriptionID === 'new' || deviceDescriptionID === undefined) {
     ElementActions.generateEmptyDeviceDescription(collectionID);
-  } else if (device_descriptionID === 'copy') {
+  } else if (deviceDescriptionID === 'copy') {
     ElementActions.copyDeviceDescriptionFromClipboard.defer(collectionID);
   } else if (index < 0) {
-    ElementActions.fetchDeviceDescriptionById(device_descriptionID);
+    ElementActions.fetchDeviceDescriptionById(deviceDescriptionID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
 };
 
 const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
-  const { sequence_based_macromolecule_sampleID, collectionID } = e.params;
+  const { sequenceBasedMacromoleculeSampleID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID);
+  const index = selecteds.findIndex((el) => (
+    el.type === 'sequence_based_macromolecule_sample' && el.id === sequenceBasedMacromoleculeSampleID
+  ));
 
-  if (sequence_based_macromolecule_sampleID === 'new' || sequence_based_macromolecule_sampleID === undefined) {
+  if (sequenceBasedMacromoleculeSampleID === 'new' || sequenceBasedMacromoleculeSampleID === undefined) {
     ElementActions.generateEmptySequenceBasedMacromoleculeSample(collectionID);
-  } else if (sequence_based_macromolecule_sampleID === 'copy') {
+  } else if (sequenceBasedMacromoleculeSampleID === 'copy') {
     ElementActions.copySequenceBasedMacromoleculeSampleFromClipboard.defer(collectionID);
   } else if (index < 0) {
-    ElementActions.fetchSequenceBasedMacromoleculeSampleById(sequence_based_macromolecule_sampleID);
+    ElementActions.fetchSequenceBasedMacromoleculeSampleById(sequenceBasedMacromoleculeSampleID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
@@ -265,9 +262,10 @@ const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
 
 const genericElShowOrNew = (e, type) => {
   const { collectionID } = e.params;
+
   let itype = '';
-  if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
-    const keystr = e.params && Object.keys(e.params).filter((k) => k != 'collectionID' && k.includes('ID'));
+  if (typeof type === 'undefined' || typeof type === 'object' || type == null || type === '') {
+    const keystr = e.params && Object.keys(e.params).filter((k) => k !== 'collectionID' && k.includes('ID'));
     itype = keystr && keystr[0] && keystr[0].slice(0, -2);
   } else {
     itype = type;
@@ -320,7 +318,7 @@ const elementShowOrNew = (e) => {
       sequenceBasedMacromoleculeSampleShowOrNew(e);
       break;
     default:
-      if (e && e.klassType == 'GenericEl') {
+      if (e && e.klassType === 'GenericEl') {
         genericElShowOrNew(e, type);
         break;
       }
@@ -329,11 +327,43 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
+const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
+  const isGenericEl = (rootStore.userStore.genericEls || []).some(({ name }) => name === type);
+  const camelCaseType = camelCase(type);
+
+  const params = {
+    type,
+    klassType: isGenericEl ? 'GenericEl' : undefined,
+    params: {
+      collectionID: collectionId,
+      [`${camelCaseType}ID`]: id,
+    }
+  };
+  return params;
+};
+
+const aviatorNavigationToApp = (url, silent = false) => {
+  Aviator.navigate(url, { silent });
+  rootStore.userStore.setCurrentRoute(url);
+};
+
+// For route targets in apps/routes.js that just need to react to a URL
+// Aviator already matched (dispatch(), or a popstate-triggered re-dispatch) -
+// unlike aviatorNavigationToApp, this never calls Aviator.navigate(), so it
+// can't push another history entry or re-trigger dispatch() for the same URL
+// (which would recurse: navigate -> dispatch -> target -> navigate -> ...).
+const syncCurrentRoute = (url) => {
+  rootStore.userStore.setCurrentRoute(url);
+};
+
 const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
   const { currentCollection } = UIStore.getState();
   const withType = type ? `/${type}` : '';
   const withId = id ? `/${id}` : '';
-  const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
+  const url = type === 'collection'
+    ? `/mydb/collection/${id}/`
+    : `/mydb/collection/${currentCollection.id}${withType}${withId}`;
+  rootStore.userStore.setCurrentRoute(url);
 
   Aviator.navigate(url, { silent });
 
@@ -347,24 +377,11 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
   }
 };
 
-const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
-  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
-
-  const params = {
-    type,
-    klassType: isGenericEl ? 'GenericEl' : undefined,
-    params: {
-      collectionID: collectionId,
-      [`${type}ID`]: id,
-    }
-  };
-  return params;
-};
-
 const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {
   const withId = id ? `/${id}` : '';
   const withType = type ? `/${type}` : '';
-  const url = `/collection/${collectionId}${withType}${withId}`;
+  const url = `/mydb/collection/${collectionId}${withType}${withId}`;
+  rootStore.userStore.setCurrentRoute(url);
 
   Aviator.navigate(url, { silent });
 
@@ -401,6 +418,8 @@ export {
   vesselShowOrNew,
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
+  aviatorNavigationToApp,
+  syncCurrentRoute,
   aviatorNavigation,
   aviatorNavigationWithCollectionId,
 };

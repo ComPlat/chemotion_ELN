@@ -1,3 +1,10 @@
+body.dnd-in-progress {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 .element-drag-layer {
   @extend .position-fixed;
   pointer-events: none;

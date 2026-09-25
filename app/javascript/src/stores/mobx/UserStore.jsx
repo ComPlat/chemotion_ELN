@@ -1,0 +1,461 @@
+import { flow, getRoot, types } from 'mobx-state-tree';
+import { values } from 'mobx';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+
+const defaultDeviseMappings = {
+  database_authenticatable: false,
+  rememberable: false,
+  omniauthable: false,
+  recoverable: false,
+  registerable: false,
+  validatable: false,
+  confirmable: false,
+  lockable: false,
+  trackable: false,
+  two_factor_authenticatable: false,
+  unlock_strategy_enabled: false,
+};
+
+// adapted from Entities::UserEntity
+const User = types.model(
+  'User',
+  {
+    id: types.identifierNumber,
+    name: types.optional(types.string, ''),
+    first_name: types.optional(types.string, ''),
+    last_name: types.optional(types.string, ''),
+    initials: types.optional(types.string, ''),
+    used_space: types.optional(types.integer, 0),
+    allocated_space: types.optional(types.integer, 0),
+    samples_count: types.optional(types.integer, 0),
+    reactions_count: types.optional(types.integer, 0),
+    cell_lines_count: types.optional(types.integer, 0),
+    device_descriptions_count: types.optional(types.integer, 0),
+    vessels_count: types.optional(types.integer, 0),
+    sequence_based_macromolecule_samples_count: types.optional(types.integer, 0),
+    type: types.maybeNull(types.string),
+    reaction_name_prefix: types.optional(types.string, ''),
+    // layout: types.???, // this column appears to be orphaned and moved to profile, just without deleting the field in the users table
+    email: types.optional(types.string, ''),
+    unconfirmed_email: types.maybeNull(types.string),
+    is_templates_moderator: types.optional(types.boolean, false),
+    molecule_editor: types.optional(types.boolean, false),
+    converter_admin: types.optional(types.boolean, false),
+    account_active: types.optional(types.boolean, false),
+    matrix: types.optional(types.integer, 0),
+    counters: types.map(types.union(types.integer, types.string)),
+    generic_admin: types.frozen({ elements: false, segments: false, datasets: false }),
+    otp_required_for_login: types.optional(types.boolean, false),
+    providers: types.frozen({}),
+    tokens: types.optional(types.array(types.frozen({})), []),
+    profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
+  }
+);
+const Device = types.model(
+  'Device',
+  {
+    id: types.integer,
+    name: types.string,
+    target: types.string,
+    password: types.string
+  }
+);
+
+const RxnoItem = types.model(
+  'RxnoItem',
+  {
+    is_enabled: types.maybeNull(types.boolean, false),
+    search: types.string,
+    synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.maybeNull(types.string))),
+    term_id: types.maybeNull(types.string),
+    title: types.string,
+    value: types.string,
+    children: types.array(types.late(() => RxnoItem))
+  }
+);
+const RxnoRecentlySelectedHeader = types.model(
+  'RxnoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(RxnoItem)
+  }
+);
+const RxnoOrHeader = types.union(
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined || snapshot.selectable === false) {
+        return RxnoRecentlySelectedHeader;
+      }
+      return RxnoItem;
+    }
+  },
+  RxnoRecentlySelectedHeader,
+  RxnoItem
+);
+
+const ChmoItem = types.model(
+  'ChmoItem',
+  {
+    id: types.optional(types.integer, 0),
+    is_enabled: types.optional(types.boolean, true),
+    search: types.string,
+    synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.string)),
+    term_id: types.maybeNull(types.string),
+    title: types.string,
+    value: types.string,
+    children: types.array(types.late(() => ChmoItem))
+  }
+);
+const ChmoRecentlySelectedHeader = types.model(
+  'ChmoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(ChmoItem)
+  }
+);
+const ChmoOrHeader = types.union(
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined) {
+        return ChmoRecentlySelectedHeader;
+      }
+      return ChmoItem;
+    }
+  },
+  ChmoItem,
+  ChmoRecentlySelectedHeader
+);
+
+const BaoItem = types.model(
+  'BaoItem',
+  {
+    id: types.string,
+    term_id: types.maybeNull(types.string),
+    synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.string)),
+    search: types.string,
+    title: types.string,
+    is_enabled: types.boolean,
+    children: types.array(types.late(() => BaoItem))
+  }
+);
+const BaoRecentlySelectedHeader = types.model(
+  'BaoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(BaoItem)
+  }
+);
+const BaoOrHeader = types.union(
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined) {
+        return BaoRecentlySelectedHeader;
+      }
+      return BaoItem;
+    }
+  },
+  BaoItem,
+  BaoRecentlySelectedHeader
+);
+
+const Label = types.model(
+  'Label',
+  {
+    id: types.identifierNumber,
+    user_id: types.maybeNull(types.integer), // must be adapted when switching to uuids eventually
+    access_level: types.integer,
+    title: types.string,
+    description: types.optional(types.string, ''),
+    color: types.string
+  }
+);
+const UnitSystemField = types.model(
+  'UnitSystemField',
+  {
+    type: types.string,
+    field: types.string,
+    label: types.string,
+    default: types.string,
+    position: types.integer,
+    placeholder: types.string,
+    units: types.array(types.model(
+      'Unit',
+      {
+        key: types.string,
+        label: types.string,
+        nm: types.optional(types.union(types.float, types.integer), 1.0),
+        unit_type: types.maybeNull(types.string)
+      }
+    ))
+  }
+);
+const UnitSystem = types.model(
+  'UnitSystem',
+  {
+    fields: types.array(UnitSystemField)
+  }
+);
+const MatrixConfiguration = types.model(
+  'MatrixConfiguration',
+  {
+    id: types.identifierNumber,
+    enabled: types.boolean,
+    name: types.string,
+    label: types.string,
+    configs: types.frozen({}),
+    include_ids: types.array(types.integer),
+    include_users: types.array(types.model(
+      'IncludeUserConfiguration',
+      {
+        value: types.integer,
+        name: types.string,
+        label: types.string
+      }
+    )),
+    exclude_ids: types.array(types.integer),
+    exclude_users: types.array(types.model(
+      'ExcludeUserConfiguration',
+      {
+        value: types.integer,
+        name: types.string,
+        label: types.string
+      }
+    )),
+  }
+);
+
+const ExtraRule = types.model(
+  'ExtraRule',
+  {
+    disable_db_login: types.optional(types.boolean, false),
+    disable_signup: types.optional(types.boolean, false)
+  }
+);
+
+const UserStore = types.model(
+  'UserStore',
+  {
+    authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
+    role: types.optional(types.string, () => localStorage.getItem('chemotion-role') || 'Guest'),
+    currentUser: types.maybeNull(User),
+    currentRoute: types.optional(types.string, location.pathname || '/home'),
+    profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
+    currentTab: types.optional(types.integer, 0),
+    currentType: types.optional(types.string, ''),
+    devices: types.array(Device),
+    rxnos: types.array(RxnoOrHeader),
+    chmos: types.array(ChmoOrHeader),
+    labels: types.array(Label),
+    genericEls: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
+    genericElKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
+    segmentKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    dsKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    dsAdminKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    unitsSystem: types.optional(UnitSystem, { fields: [] }),
+    matriceConfigs: types.array(MatrixConfiguration),
+    omniauthProviders: types.frozen({}),
+    extraRules: types.optional(ExtraRule, {}),
+    bao: types.array(BaoOrHeader),
+    loginStatus: types.optional(types.string, ''),
+    deviseMappings: types.frozen(defaultDeviseMappings),
+    deviseErrorMessages: types.optional(types.string, ''),
+  }
+).actions((self) => ({
+  fetchCurrentUser: flow(function* fetchCurrentUser() {
+    const result = yield UsersFetcher.fetchCurrentUser();
+    if (!result.error) {
+      self.currentUser = User.create(result.user);
+    }
+  }),
+  fetchProfile: flow(function* fetchProfile() {
+    const result = yield UsersFetcher.fetchProfile();
+    if (!result.error) {
+      self.profile = result;
+      if (self.currentType === '') {
+        const { layout } = self.profile.data;
+        const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === self.currentTab + 1)[0];
+        self.currentType = typeFromProfile;
+      }
+    }
+  }),
+  updateUserProfile: flow(function* updateUserProfile(params = {}) {
+    const result = yield UsersFetcher.updateUserProfile(params);
+    self.profile = result;
+  }),
+  selectTab: (tab, type) => {
+    self.currentTab = tab;
+    self.currentType = type;
+  },
+  fetchNoVNCDevices: flow(function* fetchNoVNCDevices() {
+    const result = yield UsersFetcher.fetchNoVNCDevices();
+    if (!result.error) {
+      self.devices = result.map((device) => Device.create(device));
+      return self.devices;
+    }
+  }),
+
+  fetchOlsRxno: flow(function* fetchOlsRxno() {
+    const result = yield UsersFetcher.fetchOls('rxno');
+    if (!result.error) {
+      self.rxnos = result.ols_terms.map((item) => RxnoOrHeader.create(item));
+    }
+  }),
+  fetchOlsChmo: flow(function* fetchOlsChmo() {
+    const result = yield UsersFetcher.fetchOls('chmo');
+    if (!result.error) {
+      self.chmos = result.ols_terms.map((item) => ChmoOrHeader.create(item));
+    }
+  }),
+  fetchOlsBao: flow(function* fetchOlsBao() {
+    const result = yield UsersFetcher.fetchOls('bao');
+    if (!result.error) {
+      self.bao = result.ols_terms.map((item) => BaoOrHeader.create(item));
+    }
+  }),
+  fetchUserLabels: flow(function* fetchUserLabels() {
+    const result = yield UserLabelsFetcher.listUserLabels(true);
+    if (!result.error) {
+      self.labels = result.labels.map((label) => Label.create(label));
+    }
+  }),
+  fetchGenericEls: flow(function* fetchGenericEls() {
+    const result = yield UsersFetcher.fetchElementKlasses();
+    if (!result.error) {
+      self.genericEls = result.klass;
+    }
+  }),
+  fetchGenericElKlasses: flow(function* fetchGenericElKlasses() {
+    const result = yield GenericElsFetcher.fetchElementKlasses();
+    if (result?.error) {
+      getRoot(self).notificationsStore.add({
+        title: 'Error Loading Data',
+        message: `Failed to load initial data. Please refresh the page. ${result?.error}`,
+        level: 'error'
+      });
+    }
+    self.genericElKlasses = result.klass;
+  }),
+  fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
+    const result = yield GenericSgsFetcher.listSegmentKlass();
+    if (!result.error) {
+      self.segmentKlasses = result.klass;
+    }
+  }),
+  fetchDatasetKlasses: flow(function* fetchDatasetKlasses() {
+    const result = yield GenericDSsFetcher.fetchKlass();
+    if (!result.error) {
+      self.dsKlasses = result.klass;
+    }
+  }),
+  fetchAdminDatasetKlasses: flow(function* fetchDatasetKlasses() {
+    const result = yield GenericDSsFetcher.listDatasetKlass();
+    if (result?.error) {
+      getRoot(self).notificationsStore.add({
+        title: 'Error Loading Data',
+        message: `Failed to load initial data. Please refresh the page. ${result?.error}`,
+        level: 'error'
+      });
+    }
+    self.dsAdminKlasses = result.klass;
+  }),
+  fetchUnitsSystem: flow(function* fetchUnitsSystem() {
+    const result = yield ApiClient.getJson(
+      '/units_system/units_system.json',
+      { cache: 'no-store', headers: { 'cache-control': 'no-cache' } }
+    );
+    if (!result.error) {
+      self.unitsSystem = UnitSystem.create(result);
+    }
+  }),
+  fetchEditors: flow(function* fetchEditors() {
+    const result = yield UsersFetcher.listEditors();
+    if (!result.error) {
+      self.matriceConfigs = result.matrices.map((entry) => MatrixConfiguration.create(entry));
+    }
+  }),
+  fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
+    const result = yield UsersFetcher.fetchOmniauthProviders();
+    if (result && Object.keys(result?.omniauth_providers).length >= 1) {
+      self.omniauthProviders = result.omniauth_providers;
+    }
+    self.extraRules = ExtraRule.create(result?.extraRules);
+  }),
+  fetchDeviseMappings: flow(function* fetchDeviseMappings() {
+    const result = yield UsersFetcher.fetchDeviseMappings();
+    if (!result.error) {
+      self.deviseMappings = result.devise_mappings;
+    }
+  }),
+  setAuthToken: (authToken) => {
+    self.authToken = authToken;
+    if (authToken) {
+      localStorage.setItem('chemotion-auth-token', authToken);
+    } else {
+      localStorage.removeItem('chemotion-auth-token');
+    }
+  },
+  setRole: (role) => {
+    self.role = role;
+    if (role) {
+      localStorage.setItem('chemotion-role', role);
+    } else {
+      localStorage.removeItem('chemotion-role');
+    }
+  },
+  setCurrentRoute: (route) => {
+    self.currentRoute = route;
+  },
+  setLoginStatus: (state) => {
+    self.loginStatus = state;
+  },
+  setDeviseErrorMessages: (message) => {
+    self.deviseErrorMessages = message;
+  },
+  logout: () => {
+    self.setAuthToken(null);
+    self.setRole('Guest');
+    self.currentUser = null;
+  }
+})).views((self) => ({
+  isUserQuotaExceeded(filteredAttachments) {
+    const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
+      .reduce((acc, attachment) => acc + attachment.filesize, 0);
+    const { currentUser } = self;
+    return currentUser !== null && currentUser.allocated_space !== 0
+      && totalSize > (currentUser.allocated_space - currentUser.used_space);
+  },
+  allGenericElements() {
+    if (!self.currentUser) { return []; }
+    if (!MatrixCheck(self.currentUser.matrix, 'genericElement')) { return []; }
+
+    return values(self.genericEls);
+  },
+  updateUserProfileValues(params = {}) {
+    self.updateUserProfile(params);
+  },
+  genericElementKlassesArray(adminType) {
+    if (adminType === 'segmentAdmin') {
+       return self.genericElKlasses.slice().sort((a, b) => a.place - b.place);
+    } else if (adminType === 'datasetAdmin') {
+      return self.genericElKlasses.slice().sort((a, b) => a.label > b.label);
+    }
+    return self.genericElKlasses.filter((k) => k.is_generic);
+  },
+}));
+
+export default UserStore;

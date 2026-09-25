@@ -1,5 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/require-default-props */
+/* eslint-disable react/prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -25,7 +26,7 @@ import {
   JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
 } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
@@ -76,6 +77,7 @@ const nmrMsg = (reaction, container) => {
 };
 
 export default class ReactionDetailsContainers extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     const { reaction } = props;
@@ -201,7 +203,7 @@ export default class ReactionDetailsContainers extends Component {
       SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
     };
 
-    const { chmos } = UserStore.getState();
+    const { chmos } = this.context.userStore || {};
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
@@ -271,7 +273,7 @@ export default class ReactionDetailsContainers extends Component {
           <UploadField
             disabled={!reaction.can_update}
             element={reaction}
-            setElement={(reaction, cb = null) => handleReactionChange(reaction)}
+            setElement={(element) => handleReactionChange(element)}
           />
 
           <OverlayTrigger
@@ -374,9 +376,11 @@ export default class ReactionDetailsContainers extends Component {
 
     const containerHeaderDeleted = (container) => {
       const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
-      const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
+      const titleKind = kind
+        ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`)
+        : '';
 
-      const status = container.extended_metadata.status && container.extended_metadata.status != '';
+      const status = container.extended_metadata.status && container.extended_metadata.status !== '';
       const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
       return (

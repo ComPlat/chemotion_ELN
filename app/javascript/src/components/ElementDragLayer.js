@@ -1,21 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useDragLayer } from 'react-dnd';
-
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
-export default function ElementDragLayer() {
-  const [genericEls, setGenericEls] = useState(
-    UserStore.getState().genericEls || []
-  );
-
-  useEffect(() => {
-    const updateGenericEls = (userState) => {
-      setGenericEls(userState.genericEls);
-    };
-    UserStore.listen(updateGenericEls);
-    return () => UserStore.unlisten(updateGenericEls);
-  }, []);
+const ElementDragLayer = () => {
+  const { genericEls } = useContext(StoreContext).userStore;
 
   const {
     dndType, isDragging, item, currentOffset
@@ -26,11 +16,19 @@ export default function ElementDragLayer() {
     currentOffset: monitor.getClientOffset(),
   }));
 
+  // TouchBackend (used for mouse+touch support via MultiBackend) drives dragging
+  // through plain mouse events instead of the native HTML5 drag API, so it does not
+  // suppress the browser's default text-selection behavior on its own.
+  useEffect(() => {
+    document.body.classList.toggle('dnd-in-progress', isDragging);
+    return () => document.body.classList.remove('dnd-in-progress');
+  }, [isDragging]);
+
   if (
     !isDragging
     || !currentOffset
     || !Object.values(DragDropItemTypes).includes(dndType)
-    || !item.isElement
+    || !item?.isElement
   ) {
     return null;
   }
@@ -66,4 +64,6 @@ export default function ElementDragLayer() {
       </div>
     </div>
   );
-}
+};
+
+export default observer(ElementDragLayer);

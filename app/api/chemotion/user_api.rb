@@ -118,11 +118,6 @@ module Chemotion
         end
       end
 
-      desc 'Log out current_user'
-      delete 'sign_out' do
-        status 204
-      end
-
       namespace :auth_token do
         desc 'Generate Token'
         params do

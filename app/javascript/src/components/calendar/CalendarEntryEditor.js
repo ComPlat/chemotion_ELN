@@ -1,3 +1,4 @@
+/* eslint-disable  jsx-a11y/no-autofocus */
 import React, { useContext, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import {
@@ -9,7 +10,6 @@ import PropTypes from 'prop-types';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 const STATUS_OPTIONS = [
   { value: 'to be done', label: 'To Be Done' },
@@ -19,9 +19,9 @@ const STATUS_OPTIONS = [
 ];
 
 const CalendarEntryEditor = (props) => {
-  const calendarStore = useContext(StoreContext).calendar;
+  const { calendarStore, userStore } = useContext(StoreContext);
   const { entry, resizeEditor } = props;
-  const currentUserId = UserStore.getState().currentUser?.id;
+  const currentUserId = userStore.currentUser?.id;
   const isInvitedEvent = calendarStore.show_time_slot_editor
     && !!entry?.created_by
     && entry.created_by !== currentUserId;
@@ -412,7 +412,7 @@ const CalendarEntryEditor = (props) => {
   );
 
   return isInvitedEvent ? renderInvitedEventView() : renderEditEventView();
-}
+};
 
 export default observer(CalendarEntryEditor);
 

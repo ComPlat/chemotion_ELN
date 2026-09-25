@@ -1,10 +1,10 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 export default class InboxFetcher {
   static fetchInbox(isCntOnly = false, queryParams = {}) {
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
+    const { profile } = rootStore.userStore;
+    const filters = profile?.data?.filters || {};
 
     // if the user has not updated its profile yet, we set the default sort to name
     const searchTerm = {
@@ -20,8 +20,8 @@ export default class InboxFetcher {
   static fetchInboxByContainer(containerId, currentContainerPage) {
     if (containerId < 0) { return Promise.resolve([]); }
 
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
+    const { profile } = rootStore.userStore;
+    const filters = profile?.data?.filters || {};
 
     // if the user has not updated its profile yet, we set the default sort to name
     const searchTerm = { dataset_page: currentContainerPage || 1, sort_column: filters.inbox?.sort || 'name' };

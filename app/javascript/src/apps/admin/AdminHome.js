@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { observer } from 'mobx-react';
+
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import TreeViewItem from 'src/components/common/TreeViewItem';
 import Notifications from 'src/components/Notifications';
@@ -14,6 +16,7 @@ import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 import InfoSupportLinks from 'src/apps/admin/InfoSupportLinks';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const ADMIN_PAGES = [
   { key: 0, label: 'Dashboard', component: AdminDashboard },
@@ -30,8 +33,17 @@ const ADMIN_PAGES = [
   { key: 16, label: 'Info & Support Links', component: InfoSupportLinks },
 ];
 
-export default function AdminHome() {
+const AdminHome = () => {
   const [pageIndex, setPageIndex] = useState(0);
+
+  const { userStore } = useContext(StoreContext);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // it is disabled because the effect is used to fetch the currentUser just once, so it is present when the component is displayed
+  useEffect(() => {
+    userStore.fetchCurrentUser();
+  }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const handleSelect = (nextPageIndex) => {
     setPageIndex(Number(nextPageIndex));
@@ -65,4 +77,6 @@ export default function AdminHome() {
       <Notifications />
     </div>
   );
-}
+};
+
+export default observer(AdminHome);

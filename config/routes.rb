@@ -4,47 +4,51 @@ Rails.application.routes.draw do
   post '/graphql', to: 'graphql#execute' unless Rails.env.production?
   post '/csp-violation-report', to: 'csp_reports#create'
 
+  get 'users/sign_in' => redirect('sign_in')
+  get 'users/sign_up' => redirect('sign_up')
+  get 'users/password' => redirect('password')
+  get 'users/password/edit' => redirect(path: 'edit_password')
+
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }, skip: [:registrations]
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations', passwords: 'users/passwords' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
       get 'users/edit' => 'devise/registrations#edit', as: 'edit_user_registration'
-      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_confirmation'
+      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_devise_confirmation'
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations', passwords: 'users/passwords' }
   end
 
   authenticated :user, ->(u) { u.type == 'Admin' } do
-    root to: 'pages#admin', as: :admin_root
-    get 'admin', to: 'pages#admin'
-    get 'mydb/*any', to: 'pages#admin'
-    get 'mydb', to: 'pages#admin'
+    root to: 'pages#home', as: :admin_root
+    get 'admin', to: 'pages#home'
+    get 'mydb/*any', to: 'pages#home'
+    get 'mydb', to: 'pages#home'
   end
 
   authenticated :user, ->(u) { u.type == 'Group' } do
-    root to: 'pages#cnc', as: :group_root
-    get 'group', to: 'pages#cnc'
-    get 'mydb/*any', to: 'pages#cnc'
-    get 'mydb', to: 'pages#cnc'
+    root to: 'pages#home', as: :group_root
+    get 'group', to: 'pages#home'
+    get 'mydb/*any', to: 'pages#home'
+    get 'mydb', to: 'pages#home'
   end
 
   authenticated :user do
-    root to: redirect('mydb'), as: :authenticated_root
+    root to: redirect('mydb/collection/all'), as: :authenticated_root
   end
 
   authenticate :user do
-    get 'sfn_cb', to: 'pages#sfn_cb'
-    get 'command_n_control', to: 'pages#cnc'
-    get 'mydb/*any', to: 'pages#welcome'
-    get 'mydb', to: 'pages#welcome'
-    get 'molecule_moderator', to: 'pages#molecule_moderator'
-    get 'converter_admin', to: 'pages#converter_admin'
-    get 'generic_elements_admin', to: 'pages#gea'
-    get 'generic_segments_admin', to: 'pages#gsa'
-    get 'generic_datasets_admin', to: 'pages#gda'
+    get 'command_n_control', to: 'pages#home'
+    get 'mydb/*any', to: 'pages#home'
+    get 'mydb', to: 'pages#home'
+    get 'molecule_moderator', to: 'pages#home'
+    get 'converter_admin', to: 'pages#home'
+    get 'generic_elements_admin', to: 'pages#home'
+    get 'generic_segments_admin', to: 'pages#home'
+    get 'generic_datasets_admin', to: 'pages#home'
   end
 
   namespace :users do
@@ -53,11 +57,11 @@ Rails.application.routes.draw do
     post 'two_factor_auth/verify'
   end
 
-  get 'editor',      to: 'pages#editor'
+  get 'editor',      to: 'pages#home'
 
   # Standalone page for ChemSpectra
-  get 'chemspectra', to: 'pages#chemspectra'
-  get 'chemspectra-editor', to: 'pages#chemspectra_editor'
+  get 'chemspectra', to: 'pages#home'
+  get 'chemspectra-editor', to: 'pages#home'
 
   # route for the radar oauth callback
   namespace :oauth do
@@ -72,6 +76,12 @@ Rails.application.routes.draw do
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
 
+  get 'sign_in', to: 'pages#home'
+  get 'sign_up', to: 'pages#home'
+  get 'password', to: 'pages#home'
+  get 'edit_password', to: 'pages#home'
+  get 'new_confirmation', to: 'pages#home'
+
   get 'admin', to: 'pages#home'
 
   mount API => '/'
@@ -79,8 +89,6 @@ Rails.application.routes.draw do
   mount GrapeSwaggerRails::Engine => '/swagger'
 
   root to: redirect('home')
-
-  get 'test', to: 'pages#test'
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

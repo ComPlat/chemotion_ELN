@@ -5,7 +5,7 @@ import {
   Alert, Button, Form, InputGroup, Modal
 } from 'react-bootstrap';
 
-function AppModal({
+const AppModal = ({
   show,
   onHide,
   onRequestClose,
@@ -29,7 +29,7 @@ function AppModal({
   enforceFocus,
   dialogClassName,
   ...rest
-}) {
+}) => {
   const handleRequestClose = (event, source) => {
     if (onRequestClose) {
       onRequestClose(event, source);
@@ -104,7 +104,7 @@ function AppModal({
       )}
     </Modal>
   );
-}
+};
 
 AppModal.propTypes = {
   /** Controls visibility */
