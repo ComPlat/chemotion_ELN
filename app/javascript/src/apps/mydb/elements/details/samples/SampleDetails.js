@@ -47,6 +47,8 @@ import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsCo
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import MofFetcher from 'src/fetchers/MofFetcher';
+import { fragmentsFromNodeLinker, resolveFragments } from 'src/components/mof/mofUtils';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { EditUserLabels } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -77,7 +79,8 @@ const MWPrecision = 6;
 let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample, notifications) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_'
+    && sample.hasMoleculeStructure()) {
     notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -120,10 +123,13 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <PubchemLabels element={sample} />
-    {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
+    {sample.isNew && sample.hasMoleculeStructure() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
 
+// Read-only structure preview for MOF samples: renders the SVG generated
+// (server-side) from the building-block SMILES the pipeline returned. No
+// editing — falls back to topology / upload hints when no SVG is available.
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
@@ -150,8 +156,8 @@ export default class SampleDetails extends React.Component {
       validCas: true,
       showMolfileModal: false,
       trackMolfile: props.sample.molfile,
-      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
-        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      smileReadonly: !((typeof props.sample.molecule?.inchikey === 'undefined')
+        || props.sample.molecule?.inchikey == null || props.sample.molecule?.inchikey === 'DUMMY'),
       smilesInput: '',
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
@@ -245,7 +251,7 @@ export default class SampleDetails extends React.Component {
         && (typeof (sample.molfile) === 'undefined'
           || (sample.molfile || '').length === 0)
       )
-      || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
+      || (typeof (sample.molfile) !== 'undefined' && sample.molecule?.inchikey === 'DUMMY')
     );
 
     // Sync casInputValue when CAS changes
@@ -391,6 +397,12 @@ export default class SampleDetails extends React.Component {
         pageMessage: result.ob_log,
         loadingMolecule: false
       });
+
+      // For a MOF, decompose the drawn structure into node/linker fragments
+      // (topology / MOFid still come from a CIF or are entered manually).
+      if (sample.isMof()) {
+        this.populateMofFragmentsFromStructure(sample, molfile);
+      }
     };
 
     const fetchMolecule = (fetchFunction) => {
@@ -412,6 +424,44 @@ export default class SampleDetails extends React.Component {
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
+  }
+
+  /**
+   * Sends a drawn MOF structure to the fragmentation service (break metal-ligand
+   * bonds) and stores the resulting node/linker fragments on sample_details.mof,
+   * then resolves each for its display name / structure preview.
+   * @param {Sample} sample
+   * @param {string} molfile - the drawn structure
+   */
+  populateMofFragmentsFromStructure(sample, molfile) {
+    if (!molfile) return;
+
+    MofFetcher.fragment(molfile)
+      .then((result) => {
+        const fragments = fragmentsFromNodeLinker(result);
+        if (!fragments.length) return;
+
+        const mof = { ...(sample.sample_details?.mof || {}), fragments };
+        sample.sample_details = { ...(sample.sample_details || {}), mof };
+        sample.changed = true;
+        this.setState({ sample });
+
+        // Enrich each fragment (IUPAC / sum formula / structure SVG) for display.
+        resolveFragments(fragments)
+          .then((resolved) => {
+            const currentMof = sample.sample_details?.mof || mof;
+            sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments: resolved } };
+            this.setState({ sample });
+          })
+          .catch(() => {});
+      })
+      .catch((e) => {
+        this.context.notifications.add({
+          title: 'MOF fragmentation failed',
+          message: e?.message || 'Could not split the structure into nodes and linkers',
+          level: 'error',
+        });
+      });
   }
 
   handleSubmit(closeView = false) {
@@ -842,7 +892,7 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if (!sample.molecule_formula || sample.isMixture()) {
+    if (!sample.molecule_formula || !sample.hasMoleculeStructure()) {
       return false;
     }
 
@@ -1154,7 +1204,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const isMixture = sample.isMixture();
+    const isMof = sample.isMof();
+    const hideMoleculeMeta = !sample.hasMoleculeStructure();
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1176,13 +1227,20 @@ export default class SampleDetails extends React.Component {
         <Row className="mb-4">
           <Col md={4}>
             <h4><SampleName sample={sample} /></h4>
-            {!isMixture && (
+            {!hideMoleculeMeta && (
               <>
                 <h5>{this.sampleAverageMW(sample)}</h5>
                 <h5>{this.sampleExactMW(sample)}</h5>
               </>
             )}
-            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
+            {isMof && sample.sample_details?.mof?.mofkey && (
+              <h6>
+                MOFkey:
+                {' '}
+                <code className="user-select-all">{sample.sample_details.mof.mofkey}</code>
+              </h6>
+            )}
+            {sample.isNew || hideMoleculeMeta ? null : <h6>{this.moleculeCas()}</h6>}
             {lcssSign}
           </Col>
           <Col md={8} className="position-relative">
