@@ -146,44 +146,37 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     ],
   }, using: { trigram: { threshold: 0.0001 } }
 
+  SEARCH_SAMPLE_TEXT_FIELDS = %w[name short_label organism taxon_id strain tissue].freeze
+  SEARCH_SBMM_TEXT_FIELDS = %w[systematic_name short_name other_identifier own_identifier].freeze
+  SEARCH_SBMM_TRAILING_TEXT_FIELDS = %w[organism taxon_id strain tissue].freeze
+
   def self.search_text_filter(term, field)
     Arel.sql(
-      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+      sanitize_sql_array(
+        ["COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE ?), '{}')", term],
+      ),
     )
   end
 
-  def self.search_array_filter(term, table, field)
-    Arel.sql(
-      'COALESCE(' \
-      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
-      ')',
-    )
-  end
-
+  # Aggregates the matching values of the current relation (e.g. scoped to a collection) into one jsonb object.
   def self.by_search_fields(query)
     term = "%#{sanitize_sql_like(query)}%"
 
-    json_expr = Arel.sql(
-      'jsonb_build_object(' \
-      "'sbmm_sample_name', #{search_text_filter(term, 'sequence_based_macromolecule_samples.name')}, " \
-      "'sbmm_sample_short_label', #{search_text_filter(term, 'sequence_based_macromolecule_samples.short_label')}, " \
-      "'sbmm_sample_organism', #{search_text_filter(term, 'sequence_based_macromolecule_samples.organism')}, " \
-      "'sbmm_sample_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecule_samples.taxon_id')}, " \
-      "'sbmm_sample_strain', #{search_text_filter(term, 'sequence_based_macromolecule_samples.strain')}, " \
-      "'sbmm_sample_tissue', #{search_text_filter(term, 'sequence_based_macromolecule_samples.tissue')}, " \
-      "'sbmm_systematic_name', #{search_text_filter(term, 'sequence_based_macromolecules.systematic_name')}, " \
-      "'sbmm_short_name', #{search_text_filter(term, 'sequence_based_macromolecules.short_name')}, " \
-      "'sbmm_other_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.other_identifier')}, " \
-      "'sbmm_own_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.own_identifier')}, " \
-      "'sbmm_ec_numbers', #{search_array_filter(term, 'sequence_based_macromolecules', 'ec_numbers')}, " \
-      "'sbmm_organism', #{search_text_filter(term, 'sequence_based_macromolecules.organism')}, " \
-      "'sbmm_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecules.taxon_id')}, " \
-      "'sbmm_strain', #{search_text_filter(term, 'sequence_based_macromolecules.strain')}, " \
-      "'sbmm_tissue', #{search_text_filter(term, 'sequence_based_macromolecules.tissue')}" \
-      ')',
-    )
+    fields = SEARCH_SAMPLE_TEXT_FIELDS.map do |field|
+      "'sbmm_sample_#{field}', #{search_text_filter(term, "sequence_based_macromolecule_samples.#{field}")}"
+    end
+    fields += SEARCH_SBMM_TEXT_FIELDS.map do |field|
+      "'sbmm_#{field}', #{search_text_filter(term, "sequence_based_macromolecules.#{field}")}"
+    end
+    fields << "'sbmm_ec_numbers', #{search_text_filter(term, 'sbmm_ec_number')}"
+    fields += SEARCH_SBMM_TRAILING_TEXT_FIELDS.map do |field|
+      "'sbmm_#{field}', #{search_text_filter(term, "sequence_based_macromolecules.#{field}")}"
+    end
 
-    select(json_expr.as('result')).joins(:sequence_based_macromolecule).take.result
+    select(Arel.sql("jsonb_build_object(#{fields.join(', ')})").as('result'))
+      .joins(:sequence_based_macromolecule)
+      .joins('LEFT JOIN LATERAL unnest(sequence_based_macromolecules.ec_numbers) sbmm_ec_number ON TRUE')
+      .take.result
   end
 
   def self.user_count_for_sbmm(sbmm_id:, except_user_id: nil)
