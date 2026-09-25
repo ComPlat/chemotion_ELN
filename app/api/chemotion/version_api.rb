@@ -7,14 +7,31 @@ module Chemotion
     include Grape::Kaminari
     helpers ParamsHelpers
 
+    helpers do
+      # resolve the reverter through the allowlist, never constantize the client supplied name; its scope also
+      # finds soft deleted records, which is needed to restore them
+      def revert_record(change)
+        reverter = Versioning::Reverter::ALLOWED_REVERTERS
+                   .index_with { |name| "Versioning::Reverters::#{name}Reverter".constantize }[change['klass_name']]
+        error!("Unknown change type: #{change['klass_name']}", 400) unless reverter
+
+        reverter.scope.find(change['db_id'])
+      end
+
+      # a literal is not an element itself, reverting it is an edit of the element it is attached to
+      def literals_revertible?(changes)
+        changes.select { |change| change['klass_name'] == 'Literal' }.all? do |change|
+          ElementPolicy.new(current_user, revert_record(change).element).update?
+        end
+      end
+    end
+
     namespace :versions do
       after_validation do
         resource = namespace.split('/')[2]
         if resource == 'revert'
-          result = params[:changes].reduce do |res, change|
-            res && ElementPolicy.new(current_user, change['klass_name'].constantize.find(change['db_id']))
-          end
-          error!('401 Unauthorized', 401) unless result
+          result = params[:changes].all? { |change| ElementPolicy.new(current_user, revert_record(change)) }
+          error!('401 Unauthorized', 401) unless result && literals_revertible?(params[:changes])
         else
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
                                                                    resource.classify.constantize.find(params[:id]))
