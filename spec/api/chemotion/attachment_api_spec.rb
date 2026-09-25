@@ -928,6 +928,52 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # Regression: unsorted inbox files have attachable_type 'Container' but no attachable_id, so
+  # Attachment#root_element is nil and write_access? denies everyone - including the owner, who
+  # could no longer delete their own inbox files. No write_access? stub here on purpose.
+  describe 'deleting an unsorted inbox file' do
+    let(:inbox_attachment) do
+      post '/api/v1/attachments/upload_to_inbox',
+           params: { file_1: fixture_file_upload(Rails.root.join('spec/fixtures/upload.txt'), 'text/plain') }
+      Attachment.find_by!(created_for: user.id, filename: 'upload.txt')
+    end
+
+    it 'has the inbox shape' do
+      expect(inbox_attachment).to have_attributes(attachable_type: 'Container', attachable_id: nil)
+    end
+
+    it 'lets the owner delete it' do
+      delete "/api/v1/attachments/#{inbox_attachment.id}"
+      expect(response).to have_http_status(:ok)
+      expect(Attachment.find_by(id: inbox_attachment.id)).to be_nil
+    end
+
+    it 'lets the owner bulk delete it' do
+      delete '/api/v1/attachments/bulk_delete',
+             params: { ids: [inbox_attachment.id] }.to_json,
+             headers: { 'CONTENT_TYPE' => 'application/json' }
+      expect(response).to have_http_status(:ok)
+      expect(Attachment.find_by(id: inbox_attachment.id)).to be_nil
+    end
+
+    it 'lets the owner delete a file unlinked back to the inbox' do
+      container = create(:container, containable: user)
+      attachment = create(:attachment, attachable: container, created_for: user.id)
+      Usecases::Attachments::Unlink.execute!(attachment)
+
+      delete "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'does not let another user delete it' do
+      other_attachment = create(:attachment, attachable: nil, attachable_type: 'Container',
+                                             created_for: create(:person).id)
+      delete "/api/v1/attachments/#{other_attachment.id}"
+      expect(response).to have_http_status(:unauthorized)
+      expect(Attachment.find_by(id: other_attachment.id)).not_to be_nil
+    end
+  end
+
   # Regression: writable? used to resolve the element only via the container chain
   # (AttachmentPolicy#write?), so for an attachment linked directly to an element through
   # attachable (ResearchPlan, Wellplate, ...) only its uploader had write access - a collaborator

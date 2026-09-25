@@ -34,8 +34,17 @@ module Chemotion
       # Wellplate, DeviceDescription, SBMM). The former AttachmentPolicy#write? only followed
       # the container chain, so collaborators with update rights on the element were locked out
       # of directly-linked attachments.
+      #
+      # Unsorted inbox files (upload_to_inbox, Usecases::Attachments::Unlink, detached via
+      # update_attachments_attachable) keep an attachable_type but have no attachable_id, so
+      # there is no element to authorize against; they are writable by the user they belong to.
+      # Keyed on attachable_id rather than root_element being nil, so an attachment whose
+      # element was deleted does not fall back to its uploader.
       def writable?(attachment)
-        attachment.present? && write_access?(attachment, current_user)
+        return false if attachment.blank?
+        return attachment.created_for == current_user.id if attachment.attachable_id.nil?
+
+        write_access?(attachment, current_user)
       end
 
       def upload_chunk_error_message
