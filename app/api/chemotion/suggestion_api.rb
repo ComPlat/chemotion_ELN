@@ -179,9 +179,9 @@ module Chemotion
         when 'cell_lines'
           dl_cl.positive? ? search_for_celllines : []
         when 'sequence_based_macromolecule_samples'
-          dl_sbmms ? SequenceBasedMacromoleculeSample.by_search_fields(qry) : []
+          dl_sbmms ? d_for.call(SequenceBasedMacromoleculeSample).by_search_fields(qry) : []
         when 'device_descriptions'
-          dl_dd ? DeviceDescription.by_search_fields(qry) : []
+          dl_dd ? d_for.call(DeviceDescription).by_search_fields(qry) : []
         else
           element_short_label = (dl_e.positive? && search_by_element_short_label.call(Labimotion::Element, qry)) || []
           sample_name = (dl_s.positive? && search_by_field.call(Sample, :name, qry)) || []
@@ -207,8 +207,8 @@ module Chemotion
           conditions = (dl_sc > -1 && search_by_field.call(Screen, :conditions, qry)) || []
           requirements = (dl_sc > -1 && search_by_field.call(Screen, :requirements, qry)) || []
           cell_line_infos = dl_cl.positive? ? search_for_celllines : []
-          sbmm_samples = dl_sbmms ? SequenceBasedMacromoleculeSample.by_search_fields(qry) : []
-          device_descriptions = dl_dd ? DeviceDescription.by_search_fields(qry) : []
+          sbmm_samples = dl_sbmms ? d_for.call(SequenceBasedMacromoleculeSample).by_search_fields(qry) : []
+          device_descriptions = dl_dd ? d_for.call(DeviceDescription).by_search_fields(qry) : []
 
           {
             element_short_label: element_short_label,

@@ -306,6 +306,79 @@ describe Chemotion::SuggestionAPI do
     end
   end
 
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe 'GET /api/v1/suggestions/:element_type with quotes in the query and scoping' do
+    include_context 'api request authorization context'
+
+    let(:other_collection) { create(:collection, user: user) }
+    let(:suggestion_names) { parsed_json_response['suggestions'].pluck('name') }
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:sbmm_sample_in_collection) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                   name: "O'Brien in collection")
+    end
+    let(:sbmm_sample_elsewhere) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                   name: "O'Brien elsewhere")
+    end
+    let(:device_description_in_collection) do
+      create(:device_description, name: "O'Brien in collection", general_tags: ["o'brien-tag"], creator: user)
+    end
+    let(:device_description_elsewhere) do
+      create(:device_description, name: "O'Brien elsewhere", general_tags: ["o'brien-gone"], creator: user)
+    end
+    let(:deleted_device_description) do
+      create(:device_description, name: "O'Brien deleted", general_tags: ["o'brien-deleted"], creator: user)
+    end
+    let(:query) { "o'brien" }
+
+    before do
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample_in_collection, collection: collection,
+      )
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample_elsewhere, collection: other_collection,
+      )
+      CollectionsDeviceDescription.create!(device_description: device_description_in_collection,
+                                           collection: collection)
+      CollectionsDeviceDescription.create!(device_description: device_description_elsewhere,
+                                           collection: other_collection)
+      CollectionsDeviceDescription.create!(device_description: deleted_device_description, collection: collection)
+      deleted_device_description.destroy
+    end
+
+    %w[all sequence_based_macromolecule_samples device_descriptions].each do |element_type|
+      it "handles a quote in the query for #{element_type}" do
+        get "/api/v1/suggestions/#{element_type}", params: params
+
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    it 'only suggests sbmm samples of the requested collection' do
+      get '/api/v1/suggestions/sequence_based_macromolecule_samples', params: params
+
+      expect(suggestion_names).to include("O'Brien in collection")
+      expect(suggestion_names).not_to include("O'Brien elsewhere")
+    end
+
+    it 'only suggests non-deleted device descriptions of the requested collection' do
+      get '/api/v1/suggestions/device_descriptions', params: params
+
+      expect(suggestion_names).to include("O'Brien in collection", "o'brien-tag")
+      expect(suggestion_names).not_to include(
+        "O'Brien elsewhere", "o'brien-gone", "O'Brien deleted", "o'brien-deleted"
+      )
+    end
+
+    it 'treats LIKE wildcards in the query literally' do
+      get '/api/v1/suggestions/device_descriptions', params: params.merge(query: '%')
+
+      expect(suggestion_names).to be_empty
+    end
+  end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
+
   context 'when user is authenticated' do
     include_context 'api request authorization context'
     let(:query) { 'query' }
