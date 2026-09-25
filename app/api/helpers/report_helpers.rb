@@ -344,7 +344,8 @@ module ReportHelpers
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
+      collection_join = ' inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null ' \
+                        "and c_s.collection_id = #{Integer(c_id)} "
       order = 's_id asc'
       selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
@@ -383,7 +384,8 @@ module ReportHelpers
     if checked_all
       return '' unless c_id
 
-      collection_condition = "INNER JOIN collections_samples cs ON c.sample_id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
+      collection_condition = 'INNER JOIN collections_samples cs ON c.sample_id = cs.sample_id ' \
+                             "AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
       order = 'c.sample_id ASC'
       selection = if s_ids.empty?
                     ''
@@ -440,7 +442,8 @@ module ReportHelpers
 
       # For "All pages" - get all samples from the collection except excluded ones
       excluded_ids = sql_id_list(ids)
-      collection_condition = "INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
+      collection_condition = 'INNER JOIN collections_samples cs ON s.id = cs.sample_id ' \
+                             "AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
       where_condition = excluded_ids.empty? ? '' : "AND s.id NOT IN (#{excluded_ids})"
       order_clause = 's.id ASC'
     else
@@ -508,7 +511,8 @@ module ReportHelpers
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
+      collection_join = ' inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null ' \
+                        "and c_s.collection_id = #{Integer(c_id)} "
       order = 's_id asc'
       selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
@@ -585,7 +589,8 @@ module ReportHelpers
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
+      collection_join = ' inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null ' \
+                        "and c_s.collection_id = #{Integer(c_id)} "
       order = 'wp_id asc'
       selection = (wp_ids.empty? && '') || "w.wellplate_id not in (#{wp_ids}) and"
     else

@@ -306,8 +306,7 @@ describe Chemotion::SuggestionAPI do
     end
   end
 
-  # rubocop:disable RSpec/MultipleMemoizedHelpers
-  describe 'GET /api/v1/suggestions/:element_type with quotes in the query and scoping' do
+  describe 'GET /api/v1/suggestions/:element_type with quotes in the query and scoping' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     include_context 'api request authorization context'
 
     let(:other_collection) { create(:collection, user: user) }
@@ -377,7 +376,6 @@ describe Chemotion::SuggestionAPI do
       expect(suggestion_names).to be_empty
     end
   end
-  # rubocop:enable RSpec/MultipleMemoizedHelpers
 
   context 'when user is authenticated' do
     include_context 'api request authorization context'
