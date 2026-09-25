@@ -21,12 +21,12 @@ import { isPreviewableAttachment } from 'src/utilities/imageHelper';
 
 // Non-image/PDF attachments (e.g. a failed spectral-conversion .zip sibling, or a thumbnailed
 // .docx) have no preview: wiring them into ImageModal anyway would let a click fire
-// GET image/:id, which only knows how to serve images and PDFs and raises for anything else.
-// Show a static file-type icon. Unsaved attachments stay in ImageModal, which previews them
-// from the local blob without calling the server.
+// GET image/:id, which only serves images and PDFs. Show a static file-type icon. Unsaved
+// attachments carry no previewable flag, so they stay in ImageModal, which previews them from
+// the local blob without calling the server.
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
-    {attachment?.is_new || attachment?.is_pending || isPreviewableAttachment(attachment) ? (
+    {isPreviewableAttachment(attachment) ? (
       <ImageModal
         attachment={attachment}
         popObject={{

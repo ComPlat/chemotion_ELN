@@ -65,11 +65,11 @@ const getAttachmentFromContainer = (container) => {
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
-// Mirrors Usecases::Attachments::LoadImage (type_image? || type_pdf?), which is what serves
-// GET image/:id. content_type is the stored mime_type. Don't treat thumb as a signal: the
-// thumbnailer also renders office, video and 3D files, and image/:id raises for those.
-const isPreviewableAttachment = (att) => (att?.content_type || '').startsWith('image')
-  || att?.content_type === 'application/pdf';
+// The server decides what GET image/:id can serve (Attachment#previewable?, exposed by
+// Entities::AttachmentEntity). Only skip attachments it has marked as not previewable: unsaved
+// ones and raw-serialized ones (e.g. an element's preview_attachment) don't carry the flag, and
+// the endpoint answers those with a handled 422 if they turn out not to be images or PDFs.
+const isPreviewableAttachment = (att) => att?.previewable !== false;
 
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);

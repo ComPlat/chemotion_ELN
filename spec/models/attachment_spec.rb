@@ -43,6 +43,18 @@ require 'rails_helper'
 RSpec.describe Attachment do
   let(:attachment) { create(:attachment) }
 
+  describe '#previewable?' do
+    it 'is true for images and PDFs' do
+      expect(create(:attachment, :with_png_image)).to be_previewable
+      expect(create(:attachment, :with_pdf)).to be_previewable
+    end
+
+    it 'is false for other files, even with a thumbnail' do
+      attachment.update_column(:thumb, true) # rubocop:disable Rails/SkipsModelValidations
+      expect(attachment).not_to be_previewable
+    end
+  end
+
   describe '#extname' do
     it 'returns filename extension' do
       expect(attachment.extname).to eq('.txt')

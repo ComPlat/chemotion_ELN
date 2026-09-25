@@ -455,7 +455,7 @@ module Chemotion
       get 'image/:attachment_id' do
         # LoadImage only serves images and PDFs and raises for anything else (e.g. a thumbnailed
         # office file); answer that with a 4xx instead of letting it surface as a 500.
-        unless @attachment.type_image? || @attachment.type_pdf?
+        unless @attachment.previewable?
           error!({ error: 'Attachment is not an image or PDF', code: 'not_previewable' }, 422)
         end
 

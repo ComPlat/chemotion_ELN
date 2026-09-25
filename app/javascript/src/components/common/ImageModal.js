@@ -114,7 +114,7 @@ export default class ImageModal extends Component {
     // Fall back to the first candidate so a PDF-only analysis (no thumbnailed default) still
     // opens on a selectable attachment.
     // The default attachment is picked by thumb, which office/video/3D files also have, so
-    // only open on it if image/:id can actually serve it.
+    // don't open on it if the server has marked it as not previewable.
     const selectedId = preferredId
       || (attachment?.id && isPreviewableAttachment(attachment) ? Number(attachment.id) : null)
       || candidateIds[0]
