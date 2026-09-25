@@ -8,6 +8,7 @@ import { stopEvent } from 'src/utilities/DomHelper';
 import {
   fetchImageSrcByAttachmentId,
   getContainerImageData,
+  isPreviewableAttachment,
 } from 'src/utilities/imageHelper';
 
 const DEFAULT_NO_ATTACHMENT = '/images/wild_card/no_attachment.svg';
@@ -18,7 +19,7 @@ const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
 const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
 // Font-awesome icon for an attachment that has no rendered thumbnail, by extension.
-const fileIconClass = (filename) => {
+export const fileIconClass = (filename) => {
   const ext = (filename || '').split('.').pop().toLowerCase();
   if (ext === 'pdf') return 'fa-file-pdf-o';
   if (['doc', 'docx', 'odt'].includes(ext)) return 'fa-file-word-o';
@@ -112,8 +113,10 @@ export default class ImageModal extends Component {
 
     // Fall back to the first candidate so a PDF-only analysis (no thumbnailed default) still
     // opens on a selectable attachment.
+    // The default attachment is picked by thumb, which office/video/3D files also have, so
+    // don't open on it if the server has marked it as not previewable.
     const selectedId = preferredId
-      || (attachment?.id ? Number(attachment.id) : null)
+      || (attachment?.id && isPreviewableAttachment(attachment) ? Number(attachment.id) : null)
       || candidateIds[0]
       || null;
     this.setState({

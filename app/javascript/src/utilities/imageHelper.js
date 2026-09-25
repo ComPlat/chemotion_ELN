@@ -54,8 +54,8 @@ const getAttachmentFromContainer = (container) => {
  * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
  * all viewers, so it must reference a persisted attachment.
  *
- * Candidates are previewable saved attachments — images and PDFs (plus anything that already
- * has a thumbnail) — so PDFs are selectable even when their thumbnail wasn't generated.
+ * Candidates are previewable saved attachments — images and PDFs, i.e. what GET image/:id can
+ * serve — so PDFs are selectable even when their thumbnail wasn't generated.
  *
  * @param {Object} container - The analysis container with children[].attachments[].
  * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
@@ -65,10 +65,11 @@ const getAttachmentFromContainer = (container) => {
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
-const isPreviewableAttachment = (att) => att.thumb === true
-  || (att.content_type || '').startsWith('image/')
-  || att.content_type === 'application/pdf'
-  || /\.pdf$/i.test(att.filename || '');
+// The server decides what GET image/:id can serve (Attachment#previewable?, exposed by
+// Entities::AttachmentEntity). Only skip attachments it has marked as not previewable: unsaved
+// ones and raw-serialized ones (e.g. an element's preview_attachment) don't carry the flag, and
+// the endpoint answers those with a handled 422 if they turn out not to be images or PDFs.
+const isPreviewableAttachment = (att) => att?.previewable !== false;
 
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);
@@ -132,4 +133,5 @@ export {
   fetchImageSrcByAttachmentId,
   getAttachmentFromContainer,
   getContainerImageData,
+  isPreviewableAttachment,
 };

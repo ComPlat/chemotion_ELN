@@ -5,9 +5,9 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
-      def self.execute!(attachment, annotated) # rubocop:disable  Metrics/PerceivedComplexity
+      def self.execute!(attachment, annotated)
         # to allow reading of PDF files
-        raise "no image / PDF attachment: #{attachment.id}" unless attachment.type_image? || attachment.type_pdf?
+        raise "no image / PDF attachment: #{attachment.id}" unless attachment.previewable?
 
         conversion = attachment.type_image_tiff?
 
