@@ -959,11 +959,17 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  // The editor's "Refresh Simulation" button calls this with the current curve's state
+  // ({ peaks, layout, shift, ... }) and no spectra_list, which saveOp requires. Wrap that state
+  // as the single payload, or the refresh is dropped and the simulation never runs.
   refreshOp(params) {
-    const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
+    const hasSpectraList = Array.isArray(params?.spectra_list) && params.spectra_list.length > 0;
+    const spectraList = hasSpectraList
+      ? this.getSavePayloads(params, { simulatenmr: true })
+      : [{ ...params, simulatenmr: true }];
     this.saveOp({
       ...params,
-      spectra_list: refreshPayloads,
+      spectra_list: spectraList,
     });
   }
 
