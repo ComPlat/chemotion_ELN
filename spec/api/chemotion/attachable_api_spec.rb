@@ -114,6 +114,57 @@ describe Chemotion::AttachableAPI do
       end
     end
 
+    # Regression: an SBMM is reused across users (Usecases::Sbmm::Finder), and ElementPolicy#update?
+    # passes for anyone owning a sample of it, so owning a sample of the same SBMM let a user detach
+    # attachments another user had uploaded to it.
+    context 'when detaching from an SBMM that another user also has a sample of' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+      let!(:own_attachment) { create(:attachment, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+      let(:params) do
+        {
+          attachable_type: attachable_type,
+          attachable_id: attachable_id,
+          del_files: [own_attachment.id, foreign_attachment.id],
+        }
+      end
+
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                     collections: [collection])
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it "detaches only the caller's own upload" do
+        expect(response).to have_http_status(:created)
+        expect(own_attachment.reload.attachable_id).to be_nil
+        expect(foreign_attachment.reload.attachable_id).to eq(sbmm.id)
+      end
+    end
+
+    context 'when detaching from an SBMM no other user has a sample of' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+      let!(:attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+      let(:params) { { attachable_type: attachable_type, attachable_id: attachable_id, del_files: [attachment.id] } }
+
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                     collections: [collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it 'detaches it regardless of who uploaded it' do
+        expect(response).to have_http_status(:created)
+        expect(attachment.reload.attachable_id).to be_nil
+      end
+    end
+
     context 'when deleting an attachment from a wellplate in the current user\'s own collection' do
       let(:attachable_type) { 'Wellplate' }
       let(:attachable_id) { wellplate.id }
