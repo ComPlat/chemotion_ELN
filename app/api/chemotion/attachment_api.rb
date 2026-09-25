@@ -276,10 +276,10 @@ module Chemotion
       end
 
       desc 'update_annotation_of_attachment'
+      params do
+        requires :updated_svg_string, type: String
+      end
       post ':attachment_id/annotation' do
-        params do
-          require :updated_svg_string, type: String
-        end
         error!('401 Unauthorized', 401) unless writable?(@attachment)
 
         updater = Usecases::Attachments::Annotation::AnnotationUpdater.new

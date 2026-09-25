@@ -930,6 +930,20 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
+    # Regression: the params block sat inside the route body (and said require, not requires), so
+    # it declared nothing and a missing updated_svg_string reached the annotation updater.
+    context 'when updated_svg_string is missing' do
+      before do
+        allow(Usecases::Attachments::Annotation::AnnotationUpdater).to receive(:new).and_call_original
+        post "/api/v1/attachments/#{attachment.id}/annotation", params: {}
+      end
+
+      it 'is rejected by param validation before touching the annotation' do
+        expect(response).to have_http_status(:bad_request)
+        expect(Usecases::Attachments::Annotation::AnnotationUpdater).not_to have_received(:new)
+      end
+    end
+
     # Regression: this endpoint used to run with no authorization check at all, letting any
     # authenticated user overwrite the annotation SVG of an attachment they don't own.
     context 'when the attachment belongs to another user' do
