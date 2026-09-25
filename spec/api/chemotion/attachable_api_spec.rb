@@ -90,6 +90,30 @@ describe Chemotion::AttachableAPI do
       end
     end
 
+    # Regression: ElementPolicy derived the detail-level column from the record class, and there
+    # is no sequencebasedmacromolecule_detail_level column, so a sharee saving an SBMM with
+    # attachments got a 500 (PG::UndefinedColumn) instead of the upload succeeding.
+    context 'when attachable_type is SequenceBasedMacromolecule and its sample is shared with edit rights' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+
+      before do
+        create(:collection_share, collection: other_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it 'attaches the file to the sbmm' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.last).to have_attributes(
+          attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id,
+        )
+      end
+    end
+
     context 'when deleting an attachment from a wellplate in the current user\'s own collection' do
       let(:attachable_type) { 'Wellplate' }
       let(:attachable_id) { wellplate.id }

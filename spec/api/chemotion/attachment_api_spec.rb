@@ -974,6 +974,36 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # Regression: write_access? ran ElementPolicy#read_dataset?, whose detail-level lookup used a
+  # nonexistent sequencebasedmacromolecule_detail_level column, so any non-owner touching an
+  # attachment linked directly to an SBMM got a 500 instead of a 401.
+  describe 'write access to an attachment linked directly to another user\'s SBMM' do
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let!(:attachment) { create(:attachment, :with_spectra_file, attachable: sbmm) }
+
+    before do
+      owner = create(:person)
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: owner,
+                                                   collections: [create(:collection, user: owner)])
+    end
+
+    it 'rejects delete as unauthorized' do
+      delete "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'rejects infer as unauthorized' do
+      post '/api/v1/attachments/infer', params: { attachment_id: attachment.id, layout: 'IR' }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'skips the attachment on regenerate_spectrum without failing the request' do
+      post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [attachment.id] }
+      expect(response).to have_http_status(:created)
+      expect(Attachment.find_by(id: attachment.id)).not_to be_nil
+    end
+  end
+
   # Regression: writable? used to resolve the element only via the container chain
   # (AttachmentPolicy#write?), so for an attachment linked directly to an element through
   # attachable (ResearchPlan, Wellplate, ...) only its uploader had write access - a collaborator
