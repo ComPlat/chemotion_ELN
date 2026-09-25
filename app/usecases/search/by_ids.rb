@@ -15,22 +15,26 @@ module Usecases
         @shared_methods = SharedMethods.new(params: @params, user: @user)
 
         @model_name = model_name(@id_params)
-        if @filter_params
-          @from = @filter_params[:from_date]
-          @to = @filter_params[:to_date]
-          @by_created_at = @filter_params[:filter_created_at] || false
-        end
         @total_elements = @id_params[:total_elements]
         @result = {}
       end
 
       def perform!
-        scope = basic_scope
-        scope = search_filter_scope(scope)
-        serialize_result_by_ids(scope)
+        restrict_ids_to_list_filters
+        serialize_result_by_ids(basic_scope)
       end
 
       private
+
+      # Intersects the requested ids with the element list's active filters before any paging happens,
+      # so totals and page counts describe the set the user actually sees.
+      def restrict_ids_to_list_filters
+        filters = Usecases::Search::ListFilter.from_params(@params)
+        return unless Usecases::Search::ListFilter.active?(filters)
+
+        @id_params[:ids] = Usecases::Search::ListFilter.matching_ids(@model_name.name, @id_params[:ids], filters)
+        @total_elements = @id_params[:ids].size
+      end
 
       def model_name(id_params)
         case id_params[:model_name]
@@ -54,7 +58,6 @@ module Usecases
           @model_name.includes_for_list_display
                      .by_collection_id(@collection_id.to_i)
                      .where(id: ids)
-        scope = scope.product_only if @filter_params.present? && @filter_params[:product_only]
         order_by_samples_filter(scope, ids)
       end
 
@@ -87,18 +90,6 @@ module Usecases
             @params[:page_size].to_i * (@params[:page].to_i - 1)
           end
         @id_params[:ids][start_number, start_number + @params[:page_size].to_i]
-      end
-
-      def search_filter_scope(scope)
-        return scope if @filter_params.blank? && !@from && !@to
-
-        timezone = @from ? Time.zone.at(@from.to_time) : Time.zone.at(@to.to_time) + 1.day
-        created_or_updated_at = @by_created_at ? 'created_at' : 'updated_at'
-        model = @id_params[:model_name] == 'cell_lines' ? 'cellline_samples' : @id_params[:model_name].pluralize
-        scope = scope.where("#{model}.#{created_or_updated_at} >= ?", timezone)
-        @total_elements = scope.size
-
-        scope
       end
 
       def serialize_result_by_ids(scope)

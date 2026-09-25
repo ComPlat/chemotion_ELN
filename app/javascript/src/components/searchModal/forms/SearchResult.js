@@ -75,6 +75,13 @@ const SearchResult = ({ handleClear }) => {
     ElementActions.changeSorting(true);
     ElementActions.dispatchSearchResult(preparedResult);
     searchStore.handleAdopt();
+
+    // The modal result is unfiltered; the by-ids refetch narrows it to the active list filters.
+    const uiState = UIStore.getState();
+    const { userLabel, fromDate, toDate, productOnly } = uiState;
+    if (uiState.currentCollection && (userLabel || fromDate || toDate || productOnly)) {
+      UIActions.selectCollection(uiState.currentCollection);
+    }
   };
 
   const adoptResultAndOpenDetail = (element) => {
