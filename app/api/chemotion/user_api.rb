@@ -23,7 +23,15 @@ module Chemotion
 
       desc 'Return current_user'
       get 'current' do
-        present current_user, with: Entities::UserEntity, root: 'user', with_tokens: true
+        if current_user
+          present current_user, with: Entities::UserEntity, root: 'user', with_tokens: true
+        elsif token_in_header?
+          # credentials were supplied but did not resolve to a user: a genuine auth failure
+          error!('401 Unauthorized', 401)
+        else
+          # no credentials at all: an anonymous visitor probing login state, not an error
+          { user: nil }
+        end
       end
 
       resource :two_factor do
