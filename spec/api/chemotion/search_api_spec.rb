@@ -447,6 +447,61 @@ describe Chemotion::SearchAPI do
         expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 1
       end
     end
+
+    context 'with quotes in user supplied values' do
+      let(:base_param) { { link: '', element_id: 0 } }
+
+      context 'when a general tag value contains a quote' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'device_descriptions', unit: '',
+                            field: { column: 'general_tags', table: 'device_descriptions' },
+                            value: "o'brien")]
+        end
+
+        it 'treats the value as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when the unit contains a quote' do
+        let(:advanced_params) do
+          [base_param.merge(match: '>=', table: 'samples', unit: "g'",
+                            field: { column: 'target_amount_value' }, value: '0')]
+        end
+
+        it 'treats the unit as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when the column is not a plain identifier' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'device_descriptions', unit: '',
+                            field: { column: 'name desc' }, value: 'no match')]
+        end
+
+        it 'rejects the filter' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('device_descriptions', 'error')).to include('is not allowed')
+        end
+      end
+
+      context 'when generic field names contain quotes' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'samples', unit: '',
+                            field: { table: 'segments', key: "layer'", column: "field'", element_id: 1 },
+                            value: 'x')]
+        end
+
+        it 'treats them as literals' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+    end
   end
 
   describe 'POST /api/v1/search/structure' do
