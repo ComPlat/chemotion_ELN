@@ -307,8 +307,10 @@ module ReportHelpers
     return unless model
 
     scope = model.by_collection_id(c_id)
+    if table.to_sym == :sample
+      scope = ui_state[:productOnly] ? scope.product_only : scope.sample_or_startmat_or_products
+    end
     scope = scope.by_user_label(ui_state[:userLabel]) if ui_state[:userLabel]
-    scope = scope.product_only if ui_state[:productOnly] && table.to_sym == :sample
     apply_list_time_filter(scope, ui_state).distinct.pluck(:id)
   end
 

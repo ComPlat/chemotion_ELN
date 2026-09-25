@@ -5,6 +5,7 @@ import AppModal from 'src/components/common/AppModal';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 const filterUIState = (uiState) => {
   const {
@@ -30,8 +31,8 @@ const filterUIState = (uiState) => {
     currentCollection: currentCollection.id,
     // "All pages" sends no ids, so the list filters have to travel with it.
     userLabel,
-    fromDate,
-    toDate,
+    fromDate: fromDate ? dateToUnixTimestamp(fromDate) : null,
+    toDate: toDate ? dateToUnixTimestamp(toDate) : null,
     filterCreatedAt,
     productOnly,
   };
