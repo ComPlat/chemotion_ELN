@@ -1,28 +1,15 @@
+# Chemotion converter service. Rails merges `shared:` into every environment;
+# an environment block only needs the keys it changes.
+#
+# The url is the converter container of docker-compose.services.yml (development)
+# and of the production images, both reached on the `chemotion` network. Set
+# :url: to empty in production to disable the converter; :profile and
+# :secret_key are the credentials the converter service accepts.
 shared:
-  :ext:
-    - '.aif'
-    - '.brml'
-    - '.cif'
-    - '.dpt'
-    - '.dsp'
-    - '.dta'
-    - '.gz'
-    - '.pssession'
-    - '.tar'
-    - '.txt'
-    - '.xls'
-    - '.xlsx'
-    - '.xy'
-  :profile:
-  :secret_key:
-  :timeout:
-  :url:
-
-development:
+  :url: 'http://converter:4000/'
   :profile: 'chemotion'
   :secret_key: 'chemotion'
   :timeout: 300
-  :url: 'http://converter:4000/'
   :ext:
     - '.aif'
     - '.brml'
@@ -55,5 +42,19 @@ development:
 test:
   :url:
 
+# Production accepts a narrower set of extensions than development and test.
 production:
-  :url:
+  :ext:
+    - '.aif'
+    - '.brml'
+    - '.cif'
+    - '.dpt'
+    - '.dsp'
+    - '.dta'
+    - '.gz'
+    - '.pssession'
+    - '.tar'
+    - '.txt'
+    - '.xls'
+    - '.xlsx'
+    - '.xy'
