@@ -75,6 +75,14 @@ class Attachment < ApplicationRecord
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
 
+  # Element types an attachment can be linked to directly through attachable, rather than via a
+  # container. #root_element resolves these to the element itself, and AttachableAPI accepts
+  # exactly these as attachable_type - keep the two from drifting apart by using this list.
+  ELEMENT_ATTACHABLE_TYPES = %w[
+    Sample Reaction ResearchPlan Wellplate Screen CelllineSample DeviceDescription
+    SequenceBasedMacromolecule SequenceBasedMacromoleculeSample
+  ].freeze
+
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
   # rubocop:disable Rails/InverseOf
@@ -143,8 +151,7 @@ class Attachment < ApplicationRecord
   #  "Attachment.new.root_element" #=> "nil"
   def root_element
     case attachable_type
-    when 'Sample', 'Reaction', 'ResearchPlan', 'Wellplate', 'Screen', 'CelllineSample', 'DeviceDescription',
-         'SequenceBasedMacromolecule', 'SequenceBasedMacromoleculeSample' # *Model::ELEMENTS
+    when *ELEMENT_ATTACHABLE_TYPES
       attachable
     when 'Container'
       attachable&.root_element
