@@ -39,7 +39,6 @@ describe Chemotion::ContainerAPI do
 
     after(:all) do
       `rm -rf #{Rails.root.join('tmp/test')}`
-      puts "delete tmp folder #{Rails.root.join('tmp/test')} "
     end
 
     describe 'check if the current user is the container owner before removing the linkage between container and attachments' do
