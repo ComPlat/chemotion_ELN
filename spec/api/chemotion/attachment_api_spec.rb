@@ -39,10 +39,6 @@ describe Chemotion::AttachmentAPI do
         allow(Usecases::Attachments::Delete).to receive(:execute!)
       end
 
-      if example.metadata[:enable_write_access].present?
-        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
-      end
-
       execute_request
     end
 
@@ -62,8 +58,8 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when the user has write access', :enable_write_access do
-      let(:attachment) { create(:attachment) }
+    context 'when the user has write access' do
+      let(:attachment) { create(:attachment, attachable: create(:container, containable: user)) }
 
       it 'returns with the right http status' do
         expect(response).to have_http_status(:ok)
@@ -90,15 +86,14 @@ describe Chemotion::AttachmentAPI do
              headers: { 'CONTENT_TYPE' => 'application/json' }
     end
 
-    before do |example|
-      if example.metadata[:enable_write_access].present?
-        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
-      end
-
+    before do
       execute_request
     end
 
-    context 'when the user has write access', :enable_write_access do
+    context 'when the user has write access' do
+      let(:attachment_one) { create(:attachment, attachable: create(:container, containable: user)) }
+      let(:attachment_two) { create(:attachment, attachable: create(:container, containable: user)) }
+
       it 'returns with the right http status' do
         expect(response).to have_http_status(:ok)
       end
@@ -143,10 +138,6 @@ describe Chemotion::AttachmentAPI do
         allow(Usecases::Attachments::Unlink).to receive(:execute!)
       end
 
-      if example.metadata[:enable_write_access].present?
-        allow_any_instance_of(AttachmentHelpers).to receive(:write_access?).and_return(true)
-      end
-
       execute_request
     end
 
@@ -166,7 +157,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when the user has write access', :enable_write_access do
+    context 'when the user has write access' do
       let(:container) { create(:container, containable: user) }
       let(:attachment) { create(:attachment, attachable: container) }
 
@@ -1001,6 +992,22 @@ describe Chemotion::AttachmentAPI do
       post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [attachment.id] }
       expect(response).to have_http_status(:created)
       expect(Attachment.find_by(id: attachment.id)).not_to be_nil
+    end
+
+    context 'when its sample is in a collection shared with the user with edit rights' do
+      before do
+        owner = create(:person)
+        collection = create(:collection, user: owner)
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: owner,
+                                                     collections: [collection])
+      end
+
+      it 'allows delete' do
+        delete "/api/v1/attachments/#{attachment.id}"
+        expect(response).to have_http_status(:ok)
+      end
     end
   end
 
