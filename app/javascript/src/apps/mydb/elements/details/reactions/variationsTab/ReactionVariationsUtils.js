@@ -911,7 +911,12 @@ function setLayout(reactionId, columnDefinitions) {
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
-  const { state: gridState } = event;
+  const { api, state: gridState } = event;
+
+  const rowOrder = [];
+  api.forEachNode((node) => rowOrder.push(node.data.id));
+  persistRowOrder(reactionId, rowOrder);
+
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
   localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
 };
