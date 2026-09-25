@@ -1,6 +1,6 @@
 class AddBodyToResearchPlans < ActiveRecord::Migration[4.2]
   class ResearchPlan < ActiveRecord::Base
-    serialize :description, Hash
+    serialize :description, type: Hash
   end
 
   def up

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'schmooze'
-require 'meta_schmooze'
 
 module Chemotion
+  # MetaSchmooze is autoloaded via the superclass reference (Zeitwerk).
   class QuillToHtml < MetaSchmooze
     extend QuillUtils
     def initialize(schmooze_methods: {}, schmooze_dependencies: {}, root: Rails.root.to_s, env: {}, var: {})

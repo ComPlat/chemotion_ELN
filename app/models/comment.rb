@@ -28,66 +28,78 @@ class Comment < ApplicationRecord
     Sample Reaction Screen Wellplate ResearchPlan DeviceDescription SequenceBasedMacromoleculeSample CellLine
   ].freeze
 
-  enum sample_section: {
+  # Rails 7.1 requires a declared type for enum attributes. These *_section enums are
+  # value-maps only (no column; the model persists `section`), so declare them virtual string.
+  attribute :sample_section, :string
+  attribute :reaction_section, :string
+  attribute :wellplate_section, :string
+  attribute :screen_section, :string
+  attribute :research_plan_section, :string
+  attribute :device_description_section, :string
+  attribute :sequence_based_macromolecule_sample_section, :string
+  attribute :cell_line_sample_section, :string
+  attribute :header_section, :string
+
+  enum :sample_section, {
     properties: 'sample_properties',
     analyses: 'sample_analyses',
     qc_curation: 'sample_qc_curation',
     results: 'sample_results',
     references: 'sample_references',
     inventory: 'sample_inventory',
-  }, _prefix: true
+  }, prefix: true
 
-  enum reaction_section: {
+  enum :reaction_section, {
     scheme: 'reaction_scheme',
     properties: 'reaction_properties',
     references: 'reaction_references',
     analyses: 'reaction_analyses',
     green_chemistry: 'reaction_green_chemistry',
-  }, _prefix: true
+  }, prefix: true
 
-  enum wellplate_section: {
+  enum :wellplate_section, {
     properties: 'wellplate_properties',
     analyses: 'wellplate_analyses',
     designer: 'wellplate_designer',
     list: 'wellplate_list',
-  }, _prefix: true
+  }, prefix: true
 
-  enum screen_section: {
+  enum :screen_section, {
     properties: 'screen_properties',
     analyses: 'screen_analyses',
-  }, _prefix: true
+  }, prefix: true
 
-  enum research_plan_section: {
+  enum :research_plan_section, {
     properties: 'research_plan_research_plan',
     analyses: 'research_plan_analyses',
     attachments: 'research_plan_attachments',
     references: 'research_plan_references',
     metadata: 'research_plan_metadata',
-  }, _prefix: true
+  }, prefix: true
 
-  enum device_description_section: {
+  enum :device_description_section, {
     properties: 'device_description_properties',
     detail: 'device_description_detail',
     analyses: 'device_description_analyses',
     attachments: 'device_description_attachments',
     maintenance: 'device_description_maintenance',
-  }, _prefix: true
+  }, prefix: true
 
-  enum sequence_based_macromolecule_sample_section: {
+  enum :sequence_based_macromolecule_sample_section, {
     properties: 'sequence_based_macromolecule_sample_properties',
     analyses: 'sequence_based_macromolecule_sample_analyses',
     attachments: 'sequence_based_macromolecule_sample_attachments',
     references: 'sequence_based_macromolecule_sample_references',
     metadata: 'sequence_based_macromolecule_sample_metadata',
-  }, _prefix: true
+  }, prefix: true
 
-  enum cell_line_sample_section: {
+  enum :cell_line_sample_section, {
     properties: 'cell_line_sample_properties',
     analyses: 'cell_line_sample_analyses',
     references: 'cell_line_sample_references',
-  }, _prefix: true
+  }, prefix: true
 
-  enum header_section: {
+  enum :header_section, {
     sample: 'sample_header',
     reaction: 'reaction_header',
     wellplate: 'wellplate_header',
@@ -96,7 +108,7 @@ class Comment < ApplicationRecord
     device_description: 'device_description_header',
     sequence_based_macromolecule_sample: 'sequence_based_macromolecule_sample_header',
     cell_line: 'cell_line_header',
-  }, _prefix: true
+  }, prefix: true
 
   belongs_to :commentable, polymorphic: true
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :comments

@@ -6,8 +6,11 @@ RSpec.describe JsonWebToken do
   after { travel_back }
 
   let(:user_id) { 42 }
+  # NOTE: this used to be a hard-coded token string signed with the committed
+  # test secret_key_base from config/secrets.yml; the Rails 7.2 upgrade removed
+  # that file, so the fixture is now built against the effective key.
   let(:expected_token) do
-    'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo0MiwiZXhwIjoxNjY1NDA0MTI1fQ.jd-274lUfOejePcgYFOMQwiLuYanADMHhlFAPpAte_I'
+    JWT.encode({ user_id: user_id, exp: expected_timestamp }, Rails.application.secret_key_base, 'HS256')
   end
   let(:expected_timestamp) { 1_665_404_125 }
   let(:token_generated_time)  { Time.utc(2022, 4, 10, 12, 15, 25) }

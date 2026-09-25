@@ -35,7 +35,15 @@ jobs:
         run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
 
       - name: run Pronto
-        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        # DIVERGES FROM UPSTREAM (fork decision, 2026-09-21): upstream also passes
+        # `github_status`. We do not. That formatter posts a red commit status for
+        # any advisory warning, and pronto lints the lines a PR touches — on an
+        # upgrade or an upstream sync that is mostly code we did not write and must
+        # not change (dinge#2: all 15 findings were ComPlat's own). A red mark
+        # nobody may act on trains people to ignore red marks. The findings still
+        # arrive as review comments on the diff, which is where they are useful.
+        # On the next sync: keep our line, or re-decide — do not merge blindly.
+        run: pronto run -f github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
         if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
@@ -148,10 +156,42 @@ jobs:
           cp -f radar.yml.example radar.yml
           cp -f converter.yml.example converter.yml
           touch klasses.json
-          bundle config set without ''
+
+      # The shared runner image (complat/chemotion_eln_runner:latest) ships Ruby 2.7.8
+      # only, so asdf finds no Ruby for .tool-versions and `bundle install` dies with
+      # exit 126 before a single spec runs (seen on megorei#37/#38, 2026-08-25). Until
+      # ComPlat publishes an image with the current Ruby, build it here. The build deps
+      # are needed even on a cache hit: psych, openssl and ffi compile against them.
+      # The list mirrors the self-hosted runner's, which is proven to build this
+      # bundle on the pinned Ruby. It is not only Ruby's own build deps: with a
+      # Ruby the image does not ship, every native gem is rebuilt too — that is
+      # what pulled in icu (charlock_holmes), magic (ruby-filemagic) and the
+      # ImageMagick headers. apt skips whatever the image already has.
+      - name: install Ruby build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq build-essential autoconf bison wget \
+            libyaml-dev libssl-dev libffi-dev zlib1g-dev libreadline-dev \
+            cmake libpq-dev swig libmagickcore-dev libmagickwand-dev imagemagick \
+            libicu-dev libmagic-dev librsvg2-bin ghostscript locales postgresql-client
+
+      - name: restore Ruby toolchain cache
+        uses: actions/cache@v4
+        with:
+          path: /asdf/installs/ruby
+          key: asdf-ruby-${{ hashFiles('.tool-versions') }}
+
+      - name: install Ruby from .tool-versions
+        run: |
+          RUBY_VERSION=$(awk '/^ruby /{print $2}' .tool-versions)
+          asdf list ruby 2>/dev/null | grep -q "$RUBY_VERSION" || asdf install ruby "$RUBY_VERSION"
+          asdf reshim ruby
+          ruby -v
 
       - name: bundle install
-        run: bundle install
+        run: |
+          bundle config set without ''
+          bundle install
 
       - name: yarn install
         run: |

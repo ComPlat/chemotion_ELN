@@ -50,7 +50,7 @@ class Molecule < ApplicationRecord
   include Collectable
   include Taggable
 
-  serialize :cas, Array
+  serialize :cas, type: Array
 
   has_many :samples
   has_many :collections, through: :samples

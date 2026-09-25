@@ -1,5 +1,7 @@
 # frozen_string_literal: true
-ActiveSupport.on_load(:active_record) do
+# Runs in after_initialize so Matrice is not autoloaded during initialization (an
+# error in Rails 7). config.inference is read only at request time.
+Rails.application.config.after_initialize do
   Rails.application.configure do
     inference_config = {}
 
