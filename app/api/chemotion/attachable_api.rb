@@ -67,7 +67,7 @@ module Chemotion
         if params[:del_files].any?
           Attachment.where(id: params[:del_files].map!(&:to_i),
                            attachable_type: attachable_type,
-                           attachable_id: attachable_id)
+                           attachable_id: params[:attachable_id])
                     .update_all(attachable_id: nil)
         end
         true
