@@ -4,17 +4,6 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
-    # Every attachable_type the frontend actually sends to update_attachments_attachable
-    # (AttachmentFetcher.js#updateAttachables). Anything else is rejected below rather than
-    # silently skipping authorization, as previously happened for every type but ResearchPlan.
-    ATTACHABLE_CLASSES = {
-      'ResearchPlan' => ResearchPlan,
-      'Wellplate' => Wellplate,
-      'DeviceDescription' => DeviceDescription,
-      'SequenceBasedMacromoleculeSample' => SequenceBasedMacromoleculeSample,
-      'SequenceBasedMacromolecule' => SequenceBasedMacromolecule,
-    }.freeze
-
     helpers do
       # An SBMM is a shared reference record: Usecases::Sbmm::Finder reuses it across users by
       # accession/sequence, and ElementPolicy#update? passes for anyone owning a sample of it. Once
@@ -37,8 +26,12 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        klass = ATTACHABLE_CLASSES[params[:attachable_type]]
-        @attachable = klass&.find_by(id: params[:attachable_id])
+        # Only element types Attachment#root_element resolves directly; anything else (including
+        # 'Container') is rejected rather than silently skipping authorization.
+        attachable_type = params[:attachable_type]
+        if Attachment::ELEMENT_ATTACHABLE_TYPES.include?(attachable_type)
+          @attachable = attachable_type.constantize.find_by(id: params[:attachable_id])
+        end
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachable).update?
       end
 

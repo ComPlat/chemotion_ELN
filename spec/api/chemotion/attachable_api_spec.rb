@@ -31,6 +31,32 @@ describe Chemotion::AttachableAPI do
       end
     end
 
+    # attachable_type is checked against Attachment::ELEMENT_ATTACHABLE_TYPES, the list
+    # Attachment#root_element resolves, instead of a separately maintained copy.
+    context 'when attachable_type is any element root_element resolves directly' do
+      let(:attachable_type) { 'Sample' }
+      let(:attachable_id) { sample.id }
+      let(:sample) { create(:sample, collections: [collection]) }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'authorizes it through the element policy and attaches the file' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.last).to have_attributes(attachable_type: 'Sample', attachable_id: sample.id)
+      end
+    end
+
+    context 'when attachable_type is not a constant at all' do
+      let(:attachable_type) { 'NoSuchClass' }
+      let(:attachable_id) { 1 }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'is rejected as unauthorized, not a server error' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     context 'when attachable_type is ResearchPlan and it is in the current user\'s own collection' do
       let(:attachable_type) { 'ResearchPlan' }
       let(:attachable_id) { research_plan.id }
