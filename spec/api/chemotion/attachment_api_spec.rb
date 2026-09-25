@@ -684,6 +684,30 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # writable? runs per attachment in the regenerate loops; its result is memoized per attachable
+  # and per root element, so a batch under one element costs one policy check, not one per file.
+  describe 'POST /api/v1/attachments/regenerate_spectrum with many attachments of one element' do
+    let(:sample) { create(:sample, collections: [create(:collection, user: user)]) }
+    let(:containers) { create_list(:container, 2, containable: sample) }
+    let!(:attachments) do
+      containers.flat_map { |container| create_list(:attachment, 2, :with_spectra_file, attachable: container) }
+    end
+
+    before do
+      allow(ElementPolicy).to receive(:new).and_call_original
+      post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: attachments.map(&:id) }
+    end
+
+    it 'deletes every attachment' do
+      expect(response).to have_http_status(:created)
+      expect(Attachment.where(id: attachments.map(&:id))).to be_empty
+    end
+
+    it 'evaluates the element policy once' do
+      expect(ElementPolicy).to have_received(:new).once
+    end
+  end
+
   describe 'POST /api/v1/attachments/save_spectrum' do
     let(:collection) { create(:collection, user: user) }
     let(:sample) { create(:sample, collections: [collection]) }
