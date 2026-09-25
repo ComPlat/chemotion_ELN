@@ -519,7 +519,7 @@ export const isChemicalField = (fieldName) => {
 
   // Also check for fields specific to chemical objects
   const chemicalSpecificFields = [
-    'status', 'vendor', 'order_number', 'price', 'person', 'required_date',
+    'status', 'vendor', 'order_number', 'product_number', 'price', 'person', 'required_date',
     'ordered_date', 'required_by', 'host_building', 'host_room', 'host_cabinet',
     'host_group', 'host_owner', 'borrowed_by', 'current_building', 'current_room',
     'current_cabinet', 'current_group', 'safety_phrases', 'pictograms',

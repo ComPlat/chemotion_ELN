@@ -89,21 +89,22 @@ module Chemotion
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
               vendor = data[:vendor]
               language = data[:language]
-              case data[:option]
-              when 'Common Name'
-                name = data[:searchStr] || molecule.names[0]
-              when 'CAS'
-                name = data[:searchStr] || molecule.cas[0]
-              end
+              # A product number narrows the vendor listing; PubChem is still reached by
+              # the molecule, so a name or CAS is needed either way.
+              name = data[:searchStr].presence ||
+                     (data[:option] == 'Common Name' ? molecule&.names&.first : molecule&.cas&.first)
+              number = data[:productNumber]
               case vendor
-              when 'Merck'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
+              when 'Merck', 'Sigma-Aldrich'
+                { merck_link: Chemotion::ChemicalsService.merck(name, language, number) }
               when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number) }
+              when 'All'
+                Chemotion::ChemicalsService.vendor_overview(name, language, number)
               else
                 {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
+                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number),
+                  merck_link: Chemotion::ChemicalsService.merck(name, language, number),
                 }
               end
             end
@@ -121,6 +122,11 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
+          if Chemotion::ChemicalsService.sds_limit_reached?(params[:chemical_data])
+            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
+                            'safety data sheets. Delete one before saving another.', final: true }, 422)
+          end
+
           Chemotion::ChemicalsService.handle_exceptions do
             product_info = params[:chemical_data][0][params[:vendor_product]]
             file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
@@ -129,6 +135,14 @@ module Chemotion
               product_info['productNumber'],
             )
             return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
+            # A failed download yields false; storing it would record an SDS path resolving to nothing.
+            return error!({ error: 'Could not retrieve the SDS from the vendor' }, 400) unless file_path.is_a?(String)
+
+            if Chemotion::ChemicalsService.sheet_already_saved?(params[:chemical_data], file_path)
+              # final: the other save route would fetch the same bytes and be refused too.
+              return error!({ error: Chemotion::ChemicalsService.duplicate_sheet_message(file_path),
+                              final: true }, 422)
+            end
 
             Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
               sample_id: params[:sample_id],
@@ -155,6 +169,16 @@ module Chemotion
         end
 
         post do
+          existing = begin
+            JSON.parse(params[:chemical_data].to_s)
+          rescue JSON::ParserError
+            nil
+          end
+          if Chemotion::ChemicalsService.sds_limit_reached?([existing].compact)
+            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
+                            'safety data sheets. Delete one before attaching another.', final: true }, 422)
+          end
+
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],
@@ -166,7 +190,7 @@ module Chemotion
           )
 
           if result.is_a?(Hash) && result[:error].present?
-            error!({ error: result[:error] }, 400)
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
           else
             # Return the created/updated chemical
             present result

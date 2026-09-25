@@ -26,6 +26,9 @@ export default class ChemicalFetcher {
       'data[language]': queryParams.language,
       'data[searchStr]': queryParams.string
     };
+    if (queryParams.productNumber) {
+      searchTerm['data[productNumber]'] = queryParams.productNumber;
+    }
     const path = `/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?${new URLSearchParams(searchTerm)}`;
 
     return ApiClient.getJson(path, {
@@ -42,9 +45,15 @@ export default class ChemicalFetcher {
       handleResponseSuccess: (response) => {
         if (response.ok) { return response.json(); }
         return response.json().then((errorData) => {
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          const error = new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          // A refusal the other save route would meet as well; trying it only wastes a fetch.
+          error.final = !!errorData.final;
+          throw error;
         });
       },
+      // The client's default handler logs and resolves undefined, which turned every
+      // reason the server gave into a bare "could not retrieve" on the way out.
+      handleResponseError: (error) => { throw error; },
     });
   }
 
