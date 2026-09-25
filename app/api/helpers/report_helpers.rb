@@ -29,6 +29,11 @@ module ReportHelpers
         requires :checkedAll, type: Boolean
       end
       requires :currentCollection, type: Integer
+      optional :userLabel, type: Integer
+      optional :fromDate, type: Integer
+      optional :toDate, type: Integer
+      optional :filterCreatedAt, type: Boolean
+      optional :productOnly, type: Boolean
     end
     # requires :columns, type: Array
   end
@@ -286,14 +291,58 @@ module ReportHelpers
     send("build_sql_#{table}_#{type}", column_query, sql_params[:c_id], sql_params[:ids], sql_params[:checked_all])
   end
 
+  LIST_FILTER_MODELS = { sample: 'Sample', reaction: 'Reaction', wellplate: 'Wellplate' }.freeze
+
+  # Whether the list the user exported from was narrowed by a filter rather than showing the
+  # whole collection.
+  def list_filtered?(ui_state)
+    ui_state[:userLabel].present? || ui_state[:fromDate].present? ||
+      ui_state[:toDate].present? || ui_state[:productOnly].present?
+  end
+
+  # Ids a filtered list actually shows, using the same scopes as the listing endpoints.
+  # Cf. Chemotion::SampleAPI's index.
+  def filtered_element_ids(table, ui_state, c_id)
+    model = LIST_FILTER_MODELS[table.to_sym]&.constantize
+    return unless model
+
+    scope = model.by_collection_id(c_id)
+    if table.to_sym == :sample
+      scope = ui_state[:productOnly] ? scope.product_only : scope.sample_or_startmat_or_products
+    end
+    scope = scope.by_user_label(ui_state[:userLabel]) if ui_state[:userLabel]
+    apply_list_time_filter(scope, ui_state).distinct.pluck(:id)
+  end
+
+  def apply_list_time_filter(scope, ui_state)
+    from = ui_state[:fromDate]
+    to = ui_state[:toDate]
+    by_created_at = ui_state[:filterCreatedAt] || false
+
+    scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+    scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+    scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+    scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+    scope
+  end
+
   def generate_sheets_for_tables(tables, table_params, export, columns_params = nil, type = nil)
+    ui_state = table_params[:ui_state]
     tables.each do |table|
-      next unless (p_t = table_params[:ui_state][table])
+      next unless (p_t = ui_state[table])
 
       checked_all = p_t[:checkedAll]
 
       ids = checked_all ? p_t[:uncheckedIds] : p_t[:checkedIds]
       next unless checked_all || ids.present?
+
+      # checkedAll carries no ids, so the builders below would take it as the whole collection.
+      if checked_all && list_filtered?(ui_state) &&
+         (filtered = filtered_element_ids(table, ui_state, table_params[:c_id].to_i))
+        ids = filtered - ids.map(&:to_i)
+        checked_all = false
+        next if ids.empty?
+      end
 
       sql_params = {
         c_id: table_params[:c_id], ids: ids, checked_all: checked_all

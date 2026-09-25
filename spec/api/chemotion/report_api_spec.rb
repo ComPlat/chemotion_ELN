@@ -381,6 +381,49 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'ReportHelpers list filters' do
+      let(:helpers) { Class.new { |inst| inst.extend(ReportHelpers) } }
+      let(:label) { UserLabel.create!(user_id: user.id, access_level: 0, title: 'Shelf A', color: '#aaa') }
+      let(:labelled) { create(:sample, collections: [collection]) }
+      let(:unlabelled) { create(:sample, collections: [collection]) }
+
+      before do
+        tag = labelled.reload.tag
+        tag.update!(taggable_data: (tag.taggable_data || {}).merge('user_labels' => [label.id]))
+        unlabelled
+      end
+
+      it 'reports an unfiltered list as unfiltered' do
+        expect(helpers).not_to be_list_filtered({ userLabel: nil, productOnly: false })
+      end
+
+      it 'reports a label filter as filtering' do
+        expect(helpers).to be_list_filtered({ userLabel: label.id })
+      end
+
+      it 'resolves select-all to only the samples carrying the active label' do
+        ids = helpers.filtered_element_ids(:sample, { userLabel: label.id }, collection.id)
+
+        expect(ids).to eq [labelled.id]
+      end
+
+      it 'excludes solvent-only samples the list hides' do
+        solvent = create(:sample, collections: [collection])
+        solvent.tag.update!(taggable_data: (solvent.tag.taggable_data || {}).merge('user_labels' => [label.id]))
+        create(:reactions_solvent_sample, reaction: create(:reaction), sample: solvent)
+
+        ids = helpers.filtered_element_ids(:sample, { userLabel: label.id }, collection.id)
+
+        expect(ids).to eq [labelled.id]
+      end
+
+      it 'leaves a table it cannot filter to the collection-wide query' do
+        ids = helpers.filtered_element_ids(:screen, { userLabel: label.id }, collection.id)
+
+        expect(ids).to be_nil
+      end
+    end
+
     describe 'POST /api/v1/reports/export_reactions_from_selections' do
       let!(:other_user) { create(:person) }
       let!(:collection_with_shares) do
