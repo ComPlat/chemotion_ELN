@@ -5,7 +5,7 @@ import {
   Form,
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import Delta from 'quill-delta';
 
 function TextEditorModal({
@@ -61,15 +61,11 @@ function TextEditorModal({
     >
       <Form.Group className="mb-3">
         <div className="text-editor-quill">
-          <QuillEditor
+          <RichTextEditor
             value={editorValue}
             onChange={handleChange}
-            theme="snow"
+            specialCharacters
             height="200px"
-            disabled={false}
-            toolbarSymbol={[]}
-            toolbarDropdown={[]}
-            customToolbar=""
           />
         </div>
       </Form.Group>
