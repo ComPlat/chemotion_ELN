@@ -295,6 +295,28 @@ describe Chemotion::ReportAPI do
         end
       end
 
+      describe 'when a selected id is not an integer' do
+        let(:params) do
+          {
+            exportType: 1,
+            uiState: base_ui_state.merge(
+              sample: {
+                checkedIds: ["#{sample1.id}abc"],
+                uncheckedIds: [],
+                checkedAll: false,
+              },
+            ),
+            columns: columns,
+          }
+        end
+
+        before { make_request }
+
+        it 'rejects the request' do
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+
       describe 'when sample1 is selected' do
         before { make_request }
 
@@ -478,7 +500,25 @@ describe Chemotion::ReportAPI do
         expect(response['Content-Type']).to eq('text/csv')
       end
 
+      it 'rejects reaction ids that are not integers' do
+        params[:uiState][:reaction][:checkedIds] = ["#{reaction.id}abc"]
+        post('/api/v1/reports/export_reactions_from_selections',
+             params: params.to_json,
+             headers: {
+               'HTTP_ACCEPT' => 'text/plain, text/csv',
+               'CONTENT-TYPE' => 'application/json',
+             })
+        expect(response).to have_http_status(:bad_request)
+      end
+
       describe 'ReportHelpers' do
+        it 'refuses to build SQL from ids that are not integers' do
+          expect { subj.reaction_smiles_sql(collection.id, ["#{reaction.id}abc"], false, user.id) }
+            .to raise_error(ArgumentError)
+          expect { subj.reaction_smiles_sql(collection.id, ["#{reaction.id}abc"], true, user.id) }
+            .to raise_error(ArgumentError)
+        end
+
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
             "#{[smiles0, smiles1].join('.')}>>#{smiles4}",

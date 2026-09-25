@@ -145,51 +145,6 @@ module Chemotion
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
-
-      # not usesed anymore???
-      params do
-        requires :id, type: String
-      end
-      get :excel_wellplate do
-        env['api.format'] = :binary
-        content_type('application/vnd.ms-excel')
-        header(
-          'Content-Disposition',
-          "attachment; filename*=UTF-8''#{CGI.escape("Wellplate_#{params[:id]}_\
-          Samples Excel.xlsx")}",
-        )
-        export = Export::ExportExcel.new
-        column_query = build_column_query(default_columns_wellplate, current_user.id)
-        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
-        next unless sql_query
-
-        result = db_exec_query(sql_query)
-        export.generate_sheet_with_samples(:wellplate, result)
-        export.read || ''
-      end
-
-      params do
-        requires :id, type: String
-      end
-
-      # not usesed anymore???
-      get :excel_reaction do
-        env['api.format'] = :binary
-        content_type('application/vnd.ms-excel')
-        header(
-          'Content-Disposition',
-          "attachment; filename*=UTF-8''#{CGI.escape("Reaction_#{params[:id]}_\
-          Samples Excel.xlsx")}",
-        )
-        export = Export::ExportExcel.new
-        column_query = build_column_query(default_columns_reaction, current_user.id)
-        sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
-        next unless sql_query
-
-        result = db_exec_query(sql_query)
-        export.generate_sheet_with_samples(:reaction, result)
-        export.read || ''
-      end
     end
 
     resource :archives do

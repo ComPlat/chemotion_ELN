@@ -14,18 +14,18 @@ module ReportHelpers
     requires :exportType, type: Integer
     requires :uiState, type: Hash do
       requires :sample, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
+        requires :checkedIds, type: Array[Integer]
+        requires :uncheckedIds, type: Array[Integer]
         requires :checkedAll, type: Boolean
       end
       requires :reaction, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
+        requires :checkedIds, type: Array[Integer]
+        requires :uncheckedIds, type: Array[Integer]
         requires :checkedAll, type: Boolean
       end
       requires :wellplate, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
+        requires :checkedIds, type: Array[Integer]
+        requires :uncheckedIds, type: Array[Integer]
         requires :checkedAll, type: Boolean
       end
       requires :currentCollection, type: Integer
@@ -52,6 +52,12 @@ module ReportHelpers
   #   db_connect.connection.execute(sql)
   # end
 
+  # desc: comma separated list of integer ids to be interpolated into raw SQL.
+  # Raises ArgumentError for anything that is not an integer.
+  def sql_id_list(ids)
+    [ids].flatten.compact.map { |id| Integer(id) }.join(',')
+  end
+
   # desc: return  ActiveRecord::Result of smiles from reaction samples
   def db_exec_query_reaction_smiles(c_id, ids, all = false, u_ids = user_ids)
     sql = reaction_smiles_sql(c_id, ids, all, u_ids)
@@ -67,12 +73,12 @@ module ReportHelpers
   end
 
   def reaction_smiles_sql(c_id, ids, checkedAll = false, u_ids = user_ids)
-    r_ids = [ids].flatten.join(',')
-    u_ids = [u_ids].flatten.join(',')
+    r_ids = sql_id_list(ids)
+    u_ids = sql_id_list(u_ids)
     if checkedAll && c_id
       all_ids = Collection.find_by(id: c_id)&.reactions&.pluck(:id) || []
       order = 'r_id asc'
-      selection = (all_ids - ids).join(',')
+      selection = sql_id_list(all_ids - [ids].flatten.map { |id| Integer(id) })
     else
       order = "position(','||r_id::text||',' in '(,#{r_ids},)')"
       selection = r_ids
@@ -330,15 +336,15 @@ module ReportHelpers
   end
 
   def build_sql_sample_sample(columns, c_id, ids, checkedAll = false)
-    s_ids = [ids].flatten.join(',')
-    u_ids = [user_ids].flatten.join(',')
+    s_ids = sql_id_list(ids)
+    u_ids = sql_id_list(user_ids)
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && s_ids.empty?
 
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
       order = 's_id asc'
       selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
@@ -371,13 +377,13 @@ module ReportHelpers
   end
 
   def chemical_query(chemical_columns, c_id, ids, checked_all)
-    s_ids = [ids].flatten.join(',')
+    s_ids = sql_id_list(ids)
     return '' if !checked_all && s_ids.empty?
 
     if checked_all
       return '' unless c_id
 
-      collection_condition = "INNER JOIN collections_samples cs ON c.sample_id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{c_id}"
+      collection_condition = "INNER JOIN collections_samples cs ON c.sample_id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
       order = 'c.sample_id ASC'
       selection = if s_ids.empty?
                     ''
@@ -417,7 +423,7 @@ module ReportHelpers
   def build_sql_sample_components(columns, c_id, ids, checked_all)
     return if columns.blank? || columns[0].blank? || columns[1].blank?
 
-    u_ids = [user_ids].flatten.join(',')
+    u_ids = sql_id_list(user_ids)
     return if u_ids.empty?
 
     # Use sample columns directly
@@ -433,13 +439,13 @@ module ReportHelpers
       return unless c_id
 
       # For "All pages" - get all samples from the collection except excluded ones
-      excluded_ids = [ids].flatten.join(',')
-      collection_condition = "INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{c_id}"
+      excluded_ids = sql_id_list(ids)
+      collection_condition = "INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{Integer(c_id)}"
       where_condition = excluded_ids.empty? ? '' : "AND s.id NOT IN (#{excluded_ids})"
       order_clause = 's.id ASC'
     else
       # For specific sample selection
-      sample_ids = [ids].flatten.join(',')
+      sample_ids = sql_id_list(ids)
       return if sample_ids.empty?
 
       collection_condition = ''
@@ -492,8 +498,8 @@ module ReportHelpers
   end
 
   def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
-    s_ids = [ids].flatten.join(',')
-    u_ids = [user_ids].flatten.join(',')
+    s_ids = sql_id_list(ids)
+    u_ids = sql_id_list(user_ids)
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && s_ids.empty?
 
@@ -502,7 +508,7 @@ module ReportHelpers
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
       order = 's_id asc'
       selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
@@ -571,15 +577,15 @@ module ReportHelpers
   # is_shared == true => sample in at least 1 shared collection, no own coll
   # 'collections.id is not null or collection_shares.id is not null' : validate associations with user
   def build_sql_wellplate_sample(columns, c_id, ids, checkedAll = false)
-    wp_ids = [ids].flatten.join(',')
-    u_ids = [user_ids].flatten.join(',')
+    wp_ids = sql_id_list(ids)
+    u_ids = sql_id_list(user_ids)
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && wp_ids.empty?
 
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
+      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)} "
       order = 'wp_id asc'
       selection = (wp_ids.empty? && '') || "w.wellplate_id not in (#{wp_ids}) and"
     else
@@ -631,8 +637,8 @@ module ReportHelpers
   end
 
   def build_sql_reaction_sample(columns, c_id, ids, checkedAll = false)
-    r_ids = [ids].flatten.join(',')
-    u_ids = [user_ids].flatten.join(',')
+    r_ids = sql_id_list(ids)
+    u_ids = sql_id_list(user_ids)
     return if columns.empty? || u_ids.empty?
     return if !checkedAll && r_ids.empty?
 
@@ -644,11 +650,11 @@ module ReportHelpers
       reaction_filter = (r_ids.empty? && '') || "and reaction_id not in (#{r_ids})"
       collection_join = <<~SQL.squish
         left join collections_samples c_s on (
-          s.source_type = 'sample' and s.id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id}
+          s.source_type = 'sample' and s.id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{Integer(c_id)}
         )
         left join collections_sequence_based_macromolecule_samples c_sbms on (
           s.source_type = 'sbmm' and s.id = c_sbms.sequence_based_macromolecule_sample_id
-          and c_sbms.deleted_at is null and c_sbms.collection_id = #{c_id}
+          and c_sbms.deleted_at is null and c_sbms.collection_id = #{Integer(c_id)}
         )
       SQL
       collection_filter = 'where c_s.id is not null or c_sbms.id is not null'
@@ -1036,74 +1042,6 @@ module ReportHelpers
     return unless sample_params.nil? || sample_params.exclude?(:molfile)
 
     params[:columns][:sample] = (sample_params || []) + [:molfile]
-  end
-
-  DEFAULT_COLUMNS_WELLPLATE = {
-    sample: %i[
-      sample_svg_file
-      molecule_svg_file
-      external_label
-      name
-      target_amount_value
-      target_amount_unit
-      real_amount_value
-      real_amount_unit
-      purity
-      solvent
-      short_label
-      molecule_name
-    ],
-    molecule: %i[
-      cano_smiles
-      sum_formular
-      inchistring
-      molecular_weight
-    ],
-    wellplate: %i[
-      name
-      position_x
-      position_y
-      readouts
-    ],
-  }.freeze
-
-  DEFAULT_COLUMNS_REACTION = {
-    reaction: %i[
-      name
-      short_label
-      equivalent
-      reference
-      type
-      conversion_rate
-    ],
-    sample: %i[
-      sample_svg_file
-      molecule_svg_file
-      external_label
-      name
-      short_label
-      target_amount_value
-      target_amount_unit
-      real_amount_value
-      real_amount_unit
-      purity
-      solvent
-      molecule_name
-    ],
-    molecule: %i[
-      cano_smiles
-      sum_formular
-      inchistring
-      molecular_weight
-    ],
-  }.freeze
-
-  def default_columns_reaction
-    DEFAULT_COLUMNS_REACTION
-  end
-
-  def default_columns_wellplate
-    DEFAULT_COLUMNS_WELLPLATE
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
