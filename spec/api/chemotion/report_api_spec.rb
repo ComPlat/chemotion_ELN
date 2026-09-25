@@ -407,6 +407,16 @@ describe Chemotion::ReportAPI do
         expect(ids).to eq [labelled.id]
       end
 
+      it 'excludes solvent-only samples the list hides' do
+        solvent = create(:sample, collections: [collection])
+        solvent.tag.update!(taggable_data: (solvent.tag.taggable_data || {}).merge('user_labels' => [label.id]))
+        create(:reactions_solvent_sample, reaction: create(:reaction), sample: solvent)
+
+        ids = helpers.filtered_element_ids(:sample, { userLabel: label.id }, collection.id)
+
+        expect(ids).to eq [labelled.id]
+      end
+
       it 'leaves a table it cannot filter to the collection-wide query' do
         ids = helpers.filtered_element_ids(:screen, { userLabel: label.id }, collection.id)
 
