@@ -517,6 +517,33 @@ const cutLooseFromSources = (items, ids) => (items || []).map((item) => {
 // Removes download urls from each item's selector.files on the way into a file. The display pass
 // only reduces selector.files for 2D spectra, while NMRium fills it for every spectrum it loads by
 // url, 1D included.
+// The same for the two per-spectrum references the reopen path writes on every spectrum, 1D
+// included: source.jcampURL becomes a reference to the attachment it points at (what
+// findMatchingJcamp and refreshPersistedSources resolve on the next open) or goes, and
+// sourceSelector.files keeps only what does not expire. The 2D branch above already did this for
+// the spectra it handles; for the rest a versioned file no longer has NMRium's migrations strip
+// `source`, so the token would be saved.
+const dropEphemeralSpectrumRefs = (spectra, attachments) => (spectra || []).map((spc) => {
+  const jcampURL = spc?.source?.jcampURL;
+  const ssFiles = spc?.sourceSelector?.files;
+  const staleJcamp = isEphemeralUrl(jcampURL);
+  const staleSs = Array.isArray(ssFiles) && ssFiles.some(isEphemeralUrl);
+  if (!staleJcamp && !staleSs) return spc;
+  const next = { ...spc };
+  if (staleJcamp) {
+    const ref = buildAttachmentRefUrl(findAttachmentForRef(attachments, jcampURL, { name: spectrumName(spc) }));
+    const source = { ...spc.source };
+    if (ref) source.jcampURL = ref; else delete source.jcampURL;
+    if (Object.keys(source).length) next.source = source; else delete next.source;
+  }
+  if (staleSs) {
+    const kept = ssFiles.filter((file) => !isEphemeralUrl(file));
+    if (kept.length) next.sourceSelector = { ...spc.sourceSelector, files: kept };
+    else delete next.sourceSelector;
+  }
+  return next;
+});
+
 const dropEphemeralSelectorFiles = (items) => (items || []).map((item) => {
   const files = item?.selector?.files;
   if (!Array.isArray(files) || !files.some(isEphemeralUrl)) return item;
@@ -725,7 +752,7 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
     }
   }
   if (forPersistence) {
-    root.spectra = dropEphemeralSelectorFiles(root.spectra);
+    root.spectra = dropEphemeralSpectrumRefs(dropEphemeralSelectorFiles(root.spectra), attachments);
     if (Array.isArray(root.molecules)) root.molecules = dropEphemeralSelectorFiles(root.molecules);
   }
 

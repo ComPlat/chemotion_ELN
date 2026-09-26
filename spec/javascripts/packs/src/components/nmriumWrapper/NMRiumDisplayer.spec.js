@@ -176,14 +176,14 @@ describe('NMRiumDisplayer', () => {
   // itself was re-minted.
   describe('reopening a 1D document saved with a url-only source', () => {
     const OLD = `${TPA}/OLD-TOKEN/file.jdx`;
-    const savedDocument = () => ({
+    const savedDocument = ({ withData = true } = {}) => ({
       version: 19,
       data: {
         sources: [{ id: 'nmrium-uuid', entries: [{ relativePath: OLD, baseURL: null }] }],
         spectra: [{
           id: 'spc-1d',
           info: { dimension: 1, name: 'a.edit.jdx' },
-          data: { x: [1, 2], re: [3, 4] },
+          ...(withData ? { data: { x: [1, 2], re: [3, 4] } } : {}),
           selector: { root: 'nmrium-uuid', files: [OLD] },
         }],
         molecules: [],
@@ -191,20 +191,30 @@ describe('NMRiumDisplayer', () => {
     });
     const jcamp = (id, label, token) => ({ id, label, kind: 'jcamp', url: `${TPA}/${token}` });
 
-    const reopen = async (fetchedSpectra) => {
+    const reopen = async (fetchedSpectra, doc = savedDocument()) => {
       const displayer = displayerWith(fetchedSpectra);
       displayer.setState = () => {};
       displayer.postToNMRium = () => {};
       let loaded = null;
       displayer.buildPatchedNmriumFile = (label, content) => { loaded = content; return {}; };
       await displayer.sendPatchedNmrium(
-        { file: btoa(JSON.stringify(savedDocument())) }, fetchedSpectra[0], undefined, null,
+        { file: btoa(JSON.stringify(doc)) }, fetchedSpectra[0], undefined, null,
       );
       return loaded;
     };
 
-    it('re-points selector.files onto the url minted for the source', async () => {
+    // With the data embedded there is nothing to re-read: the dataset's one JCAMP may not even be
+    // the file the spectrum came from (ChemSpectra regenerates its outputs), so it is not guessed.
+    it('opens a spectrum with embedded data from that data, even with one JCAMP to re-mint onto', async () => {
       const loaded = await reopen([jcamp(21, 'a.edit.jdx', 'NEW-TOKEN')]);
+      const spectrum = loaded.data.spectra[0];
+      expect(loaded.data.sources).toEqual(undefined);
+      expect(spectrum.selector).toEqual({});
+      expect(spectrum.data).toEqual({ x: [1, 2], re: [3, 4] });
+    });
+
+    it('re-points selector.files onto the url minted for a source a spectrum depends on', async () => {
+      const loaded = await reopen([jcamp(21, 'a.edit.jdx', 'NEW-TOKEN')], savedDocument({ withData: false }));
       const spectrum = loaded.data.spectra[0];
       expect(spectrum.selector).toEqual({
         root: 'nmrium-uuid',
@@ -222,6 +232,22 @@ describe('NMRiumDisplayer', () => {
       expect(spectrum.selector).toEqual({});
       expect(spectrum.data).toEqual({ x: [1, 2], re: [3, 4] });
       expect(JSON.stringify(loaded)).not.toContain('OLD-TOKEN');
+    });
+  });
+
+  describe('.receiveMessage() keeping the schema version', () => {
+    it('keeps the last reported version when a data-change report carries none', () => {
+      const displayer = displayerWith([]);
+      displayer.state = {
+        ...displayer.state, nmriumWrapperHost: 'https://eln.test/nmrium', nmriumOrigin: 'https://eln.test',
+      };
+      displayer.setState = (update) => { displayer.state = { ...displayer.state, ...update }; };
+      const report = (state) => displayer.receiveMessage({
+        origin: 'https://eln.test', data: { type: 'nmr-wrapper:data-change', data: { state } },
+      });
+      report({ version: 19, data: { spectra: [] } });
+      report({ spectra: [] });
+      expect(displayer.state.nmriumVersion).toEqual(19);
     });
   });
 

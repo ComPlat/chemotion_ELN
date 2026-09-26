@@ -737,6 +737,17 @@ describe('SpectraHelper', () => {
             expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
           });
 
+          it('saves source.jcampURL as an attachment reference, not the download url', () => {
+            const withSource = oneD();
+            withSource.spectra[0].source = { jcampURL: JDX };
+            withSource.spectra[0].sourceSelector = { files: [JDX] };
+            const jdx = [{ id: 31, label: 'a.peak.jdx', url: TPA }];
+            const cleaned = cleaningNMRiumData(withSource, { attachments: jdx, forPersistence: true });
+            expect(cleaned.spectra[0].source).toEqual({ jcampURL: 'chemotion-attachment://eln/31/a.peak.jdx' });
+            expect(cleaned.spectra[0].sourceSelector).toEqual(undefined);
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
           it('leaves the url-only source in place for display', () => {
             const cleaned = cleaningNMRiumData(oneD(), { attachments });
             expect(cleaned.sources).toEqual([{ id: 'nmrium-uuid', entries: [{ relativePath: JDX }] }]);

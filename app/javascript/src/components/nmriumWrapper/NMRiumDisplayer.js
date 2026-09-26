@@ -175,8 +175,11 @@ export default class NMRiumDisplayer extends React.Component {
       const nmriumData = version > 3 && rawState.data ? rawState.data : rawState;
 
       // The schema version is kept apart from the unwrapped data, for the save to write it back:
-      // see nmriumDocumentToSave.
-      this.setState({ nmriumData, nmriumVersion: reportedVersion ?? null, is2D });
+      // see nmriumDocumentToSave. A report without one keeps the last version seen: the wrapper's
+      // schema does not change mid-session, and forgetting it makes the save fall back to a shape
+      // that relies on sources[] without saying which schema it is in.
+      const nmriumVersion = Number.isInteger(reportedVersion) ? reportedVersion : this.state.nmriumVersion ?? null;
+      this.setState({ nmriumData, nmriumVersion, is2D });
     }
 
     if (type === 'nmr-wrapper:action-response') {
@@ -507,6 +510,30 @@ export default class NMRiumDisplayer extends React.Component {
     const candidates = (this.state.fetchedSpectra || []).filter((sp) => sp.url);
     const stale = new Set();
     const remintedPath = new Map();
+
+    // A source NMRium registered for a JCAMP it loaded by url is a whole file, and every spectrum
+    // read from it was saved with its data embedded. Re-minting it can only guess which attachment
+    // it was - allowSoleCandidate picks the dataset's one JCAMP whatever its name, possibly a file
+    // regenerated since - and a versioned document makes NMRium re-read that file instead of the
+    // saved data. Such a source is let go: its spectra open from what was saved, as they always did
+    // while these documents went through NMRium's version-0 migrations.
+    if (Array.isArray(root.sources) && root.sources.length > 0) {
+      const items = [...(root.spectra || []), ...(root.molecules || [])];
+      const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
+        && Object.keys(item.data).length > 0;
+      const isWholeFileSource = (source) => Array.isArray(source?.entries) && source.entries.length > 0
+        && source.entries.every((entry) => {
+          const url = entryUrl(entry);
+          return url && !isAttachmentRef(url) && !splitArchiveRef(url).member && !/\.zip$/i.test(url);
+        });
+      root.sources.forEach((source) => {
+        const dependents = items.filter((item) => item?.selector?.root && item.selector.root === source?.id);
+        if (dependents.length > 0 && isWholeFileSource(source) && dependents.every(hasEmbeddedData)) {
+          stale.add(source.id);
+        }
+      });
+      root.sources = root.sources.filter((source) => !stale.has(source?.id));
+    }
 
     if (Array.isArray(root.sources) && root.sources.length > 0) {
       root.sources = root.sources.filter((source) => {
