@@ -11,7 +11,7 @@ shared:
   #   :watcher_sleep: 30
     - :name: 'filewatchersftp'
   #   :every: 2
-  #   :watcher_sleep: 30 
+  #   :watcher_sleep: 30
     - :name: 'filewatcherlocal'
   #   :every: 2
   #   :watcher_sleep: 30

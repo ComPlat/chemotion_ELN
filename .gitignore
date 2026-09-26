@@ -71,6 +71,8 @@
 
 /node_modules
 
+/private
+
 /public/images/molecules/*
 !/public/images/molecules/.keep
 

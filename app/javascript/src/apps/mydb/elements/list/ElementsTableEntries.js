@@ -17,6 +17,7 @@ import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVar
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
 import { ElementVariationsBadge } from 'chem-generic-ui';
 import ImageModal from 'src/components/common/ImageModal';
+import ReactionEditorLink from 'src/apps/mydb/elements/details/reactions/reactionProcessEditor/ReactionEditorLink';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -115,6 +116,7 @@ export default class ElementsTableEntries extends Component {
             <ElementVariationsBadge element={element} />
           </div>
           <div className="d-flex gap-1 align-items-center">
+            <ReactionEditorLink reaction={element} size="xxsm"/>
             <CommentIcon commentCount={element.comment_count} />
             <ElementCollectionLabels element={element} key={element.id} />
           </div>
