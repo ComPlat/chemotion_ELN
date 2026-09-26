@@ -506,11 +506,15 @@ export default class NMRiumDisplayer extends React.Component {
 
     const candidates = (this.state.fetchedSpectra || []).filter((sp) => sp.url);
     const stale = new Set();
+    const remintedPath = new Map();
 
     if (Array.isArray(root.sources) && root.sources.length > 0) {
       root.sources = root.sources.filter((source) => {
         const refreshed = this.refreshSourceEntries(source?.entries, source?.id, candidates);
         if (refreshed) {
+          if (refreshed[0] !== source.entries[0] && refreshed[0]?.relativePath) {
+            remintedPath.set(source.id, refreshed[0].relativePath);
+          }
           source.entries = refreshed;
           return true;
         }
@@ -555,11 +559,22 @@ export default class NMRiumDisplayer extends React.Component {
       else delete spc.sourceSelector;
     });
 
-    if (stale.size === 0) return;
+    // selector.files is what NMRium filters a source's fetched files by, and a whole-file entry in
+    // it is the url that source was fetched from - the dead one, in a document an earlier open
+    // saved. Follow the source it belongs to: onto the path just minted for it, or away with it.
+    // Member paths inside an archive are the display pass's to re-root, so they are left alone.
     [...(root.spectra || []), ...(root.molecules || [])].forEach((item) => {
-      if (item?.selector?.root && stale.has(item.selector.root)) {
+      const sourceId = item?.selector?.root;
+      if (!sourceId) return;
+      if (stale.has(sourceId)) {
         delete item.selector.root;
+        delete item.selector.files;
+        return;
       }
+      const fresh = remintedPath.get(sourceId);
+      if (!fresh || !Array.isArray(item.selector.files)) return;
+      const files = item.selector.files.map((file) => (archiveMemberPath(file) ? file : fresh));
+      item.selector.files = [...new Set(files)];
     });
   }
 

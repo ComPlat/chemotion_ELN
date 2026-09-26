@@ -317,9 +317,14 @@ const splitArchiveRef = (value) => {
   };
 };
 
-const entryUrl = (entry) => (
-  (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null
-);
+// The url a `sources[]` entry fetches. Entries this file writes split it into baseURL +
+// relativePath, but the entry NMRium creates itself when it loads a JCAMP by url has no baseURL
+// and carries the whole absolute url in relativePath. Missing that shape is how a 1D analysis got
+// saved with its download token as the only source, and then reopened empty.
+const entryUrl = (entry) => {
+  if (entry?.baseURL && entry?.relativePath) return `${entry.baseURL}${entry.relativePath}`;
+  return isAbsoluteUrl(entry?.relativePath) ? entry.relativePath : null;
+};
 
 // The member path a `sourceSelector.files` / `selector.files` entry addresses inside an archive,
 // or null when it addresses no member. Three shapes reach this and all of them matter: a live
@@ -499,10 +504,25 @@ const persistableSourceFile = (file, attachment) => {
 // Drops `root.spectra` / `root.molecules` entries off a `sources[]` id that is about to disappear.
 // Returns a new array with new items: the caller's own payload must come out of cleaning untouched,
 // and a spectrum copy still shares its `selector` object with the spectrum it was copied from.
+// selector.files goes too: it filters the file collection of the source named by selector.root,
+// so without a root it addresses nothing, and it is where the download url of that source sits.
 const cutLooseFromSources = (items, ids) => (items || []).map((item) => {
   if (!item?.selector?.root || !ids.has(item.selector.root)) return item;
   const selector = { ...item.selector };
   delete selector.root;
+  delete selector.files;
+  return { ...item, selector };
+});
+
+// Removes download urls from each item's selector.files on the way into a file. The display pass
+// only reduces selector.files for 2D spectra, while NMRium fills it for every spectrum it loads by
+// url, 1D included.
+const dropEphemeralSelectorFiles = (items) => (items || []).map((item) => {
+  const files = item?.selector?.files;
+  if (!Array.isArray(files) || !files.some(isEphemeralUrl)) return item;
+  const selector = { ...item.selector };
+  const kept = files.filter((file) => !isEphemeralUrl(file));
+  if (kept.length) selector.files = kept; else delete selector.files;
   return { ...item, selector };
 });
 
@@ -703,6 +723,10 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       root.spectra = cutLooseFromSources(root.spectra, expiring);
       if (Array.isArray(root.molecules)) root.molecules = cutLooseFromSources(root.molecules, expiring);
     }
+  }
+  if (forPersistence) {
+    root.spectra = dropEphemeralSelectorFiles(root.spectra);
+    if (Array.isArray(root.molecules)) root.molecules = dropEphemeralSelectorFiles(root.molecules);
   }
 
   // Drop every unreferenced entry, whoever minted it. This is not housekeeping: readNMRiumObject

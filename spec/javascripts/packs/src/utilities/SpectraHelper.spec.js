@@ -705,6 +705,45 @@ describe('SpectraHelper', () => {
           expect(cleaned.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
         });
 
+        // The shape NMRium itself writes for a 1D JCAMP it loaded by url: its source entry carries
+        // the whole download url in relativePath with no baseURL, and selector.files repeats it.
+        // Saved as is, the token was the spectrum's only source and it reopened empty.
+        describe("with NMRium's own url-only source for a 1D JCAMP", () => {
+          const JDX = `${TPA}/file.jdx`;
+          const oneD = () => ({
+            spectra: [{
+              id: 'spc-1d',
+              info: { dimension: 1, name: 'a.peak.jdx' },
+              data: { x: [1, 2], re: [3, 4] },
+              selector: { root: 'nmrium-uuid', files: [JDX] },
+            }],
+            sources: [{ id: 'nmrium-uuid', entries: [{ relativePath: JDX }] }],
+          });
+
+          it('drops the source and keeps the embedded data', () => {
+            const cleaned = cleaningNMRiumData(oneD(), { attachments, forPersistence: true });
+            expect(cleaned.sources).toEqual(undefined);
+            expect(cleaned.spectra[0].selector).toEqual({});
+            expect(cleaned.spectra[0].data).toEqual({ x: [1, 2], re: [3, 4] });
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
+          it('also strips the url from selector.files when there is no source to cut loose from', () => {
+            const noSources = oneD();
+            delete noSources.sources;
+            delete noSources.spectra[0].selector.root;
+            const cleaned = cleaningNMRiumData(noSources, { attachments, forPersistence: true });
+            expect(cleaned.spectra[0].selector.files).toEqual(undefined);
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
+          it('leaves the url-only source in place for display', () => {
+            const cleaned = cleaningNMRiumData(oneD(), { attachments });
+            expect(cleaned.sources).toEqual([{ id: 'nmrium-uuid', entries: [{ relativePath: JDX }] }]);
+            expect(cleaned.spectra[0].selector).toEqual({ root: 'nmrium-uuid', files: [JDX] });
+          });
+        });
+
         it('cuts loose a spectrum whose only source could not be made durable', () => {
           const cleaned = cleaningNMRiumData(zipState(), { attachments: [], forPersistence: true });
           expect(cleaned.sources).toEqual(undefined);

@@ -170,6 +170,61 @@ describe('NMRiumDisplayer', () => {
     });
   });
 
+  // A 1D analysis saved before the save path learnt NMRium's url-only source entry: the only
+  // source is a dead download url, and selector.files repeats it. NMRium filters the fetched files
+  // by selector.files, so leaving the dead url there empties the spectrum even when the source
+  // itself was re-minted.
+  describe('reopening a 1D document saved with a url-only source', () => {
+    const OLD = `${TPA}/OLD-TOKEN/file.jdx`;
+    const savedDocument = () => ({
+      version: 19,
+      data: {
+        sources: [{ id: 'nmrium-uuid', entries: [{ relativePath: OLD, baseURL: null }] }],
+        spectra: [{
+          id: 'spc-1d',
+          info: { dimension: 1, name: 'a.edit.jdx' },
+          data: { x: [1, 2], re: [3, 4] },
+          selector: { root: 'nmrium-uuid', files: [OLD] },
+        }],
+        molecules: [],
+      },
+    });
+    const jcamp = (id, label, token) => ({ id, label, kind: 'jcamp', url: `${TPA}/${token}` });
+
+    const reopen = async (fetchedSpectra) => {
+      const displayer = displayerWith(fetchedSpectra);
+      displayer.setState = () => {};
+      displayer.postToNMRium = () => {};
+      let loaded = null;
+      displayer.buildPatchedNmriumFile = (label, content) => { loaded = content; return {}; };
+      await displayer.sendPatchedNmrium(
+        { file: btoa(JSON.stringify(savedDocument())) }, fetchedSpectra[0], undefined, null,
+      );
+      return loaded;
+    };
+
+    it('re-points selector.files onto the url minted for the source', async () => {
+      const loaded = await reopen([jcamp(21, 'a.edit.jdx', 'NEW-TOKEN')]);
+      const spectrum = loaded.data.spectra[0];
+      expect(spectrum.selector).toEqual({
+        root: 'nmrium-uuid',
+        files: ['/api/v1/public/third_party_apps/NEW-TOKEN/file.jdx'],
+      });
+      expect(loaded.data.sources[0].entries).toEqual([
+        { baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/NEW-TOKEN/file.jdx' },
+      ]);
+    });
+
+    it('falls back to the embedded data when the source cannot be re-minted', async () => {
+      const loaded = await reopen([jcamp(21, 'a.dx', 'NEW-A'), jcamp(22, 'a.edit.jdx', 'NEW-B')]);
+      const spectrum = loaded.data.spectra[0];
+      expect(loaded.data.sources).toEqual(undefined);
+      expect(spectrum.selector).toEqual({});
+      expect(spectrum.data).toEqual({ x: [1, 2], re: [3, 4] });
+      expect(JSON.stringify(loaded)).not.toContain('OLD-TOKEN');
+    });
+  });
+
   describe('.trySendUrlsToNMRium() with only a zip', () => {
     const zip = { id: 11, label: 'a.zip', kind: 'zip', url: `${TPA}/LIVE-TOKEN` };
     const LIVE = '/api/v1/public/third_party_apps/LIVE-TOKEN/file.zip';
