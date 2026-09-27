@@ -14,6 +14,12 @@ import {
   entryUrl, urlToEntry, findAttachmentForRef,
 } from 'src/utilities/SpectraHelper';
 
+// The NMRium schema version of a document this wrapper saved flat - without `version` and without the
+// {version, data} wrap - while already relying on sources[]. Such files were written from the live
+// state of the pinned wrapper (v1.2.0, schema 19); NMRium would read them as version 0 and migrate
+// sources[] away. Follows the wrapper pin: the wrapper refuses to open a version above its own.
+const FLAT_NMRIUM_DOC_VERSION = 19;
+
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
     super(props);
@@ -24,6 +30,7 @@ export default class NMRiumDisplayer extends React.Component {
       nmriumWrapperHost: '',
       nmriumOrigin: '',
       nmriumData: null,
+      nmriumVersion: null,
       is2D: false,
       molFile: null,
       closeOverlayTarget: null,
@@ -163,10 +170,16 @@ export default class NMRiumDisplayer extends React.Component {
 
       const spectra = rawState?.spectra || rawState?.data?.spectra || [];
       const is2D = this.state.is2D || spectra.some(isSpectrum2D);
-      const version = rawState?.version ?? rawState?.data?.version ?? 1;
+      const reportedVersion = rawState?.version ?? rawState?.data?.version;
+      const version = reportedVersion ?? 1;
       const nmriumData = version > 3 && rawState.data ? rawState.data : rawState;
 
-      this.setState({ nmriumData, is2D });
+      // The schema version is kept apart from the unwrapped data, for the save to write it back:
+      // see nmriumDocumentToSave. A report without one keeps the last version seen: the wrapper's
+      // schema does not change mid-session, and forgetting it makes the save fall back to a shape
+      // that relies on sources[] without saying which schema it is in.
+      const nmriumVersion = Number.isInteger(reportedVersion) ? reportedVersion : this.state.nmriumVersion ?? null;
+      this.setState({ nmriumData, nmriumVersion, is2D });
     }
 
     if (type === 'nmr-wrapper:action-response') {
@@ -283,7 +296,12 @@ export default class NMRiumDisplayer extends React.Component {
 
       if (molfile) { cleaned.molecules = [{ molfile }]; }
 
-      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } });
+      // Handed back as a versioned .nmrium file, the same way sendPatchedNmrium does: cleaning
+      // registered sources[] and dropped each 2D spectrum's data, and a flat, unversioned document
+      // in that shape is read as version 0 and migrated to `data: {rr: undefined}`.
+      const zipBaseName = this.getFileBaseName(zip.label) || 'spectrum';
+      const nmriumFile = this.buildPatchedNmriumFile(`${zipBaseName}.nmrium`, this.versionedForHandOff(cleaned));
+      this.postToNMRium({ type: 'nmr-wrapper:load', data: { type: 'file', data: [nmriumFile] } });
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
@@ -331,10 +349,12 @@ export default class NMRiumDisplayer extends React.Component {
       // has to be dealt with either way.
       this.refreshPersistedSources(nmriumObj);
       if (molfile) {
-        nmriumObj.molecules = [{ molfile }];
+        // Into the document itself: a save writes {version, data}, where a top-level `molecules`
+        // would sit beside the document rather than in it.
+        (nmriumObj.data || nmriumObj).molecules = [{ molfile }];
       }
 
-      const cleanedNmriumObj = cleaningNMRiumData(nmriumObj);
+      const cleanedNmriumObj = this.versionFlatDocument(cleaningNMRiumData(nmriumObj));
       const patchedFile = this.buildPatchedNmriumFile(nmrium.label, cleanedNmriumObj);
       const fileList = [patchedFile];
 
@@ -347,6 +367,27 @@ export default class NMRiumDisplayer extends React.Component {
     } catch (err) {
       console.error('Failed to parse/patch .nmrium:', err);
     }
+  }
+
+  // Labels a flat, unversioned document that relies on sources[] with the schema it was written in,
+  // so NMRium does not read it as version 0: its migration chain would empty sources[] and turn each
+  // data-less 2D spectrum into `data: {rr: undefined}`, which throws on load. A flat document with no
+  // source-backed item keeps its embedded data and has always loaded as it is, so it is left alone.
+  versionFlatDocument(doc) {
+    if (!doc || doc.data || doc.version !== undefined || !Array.isArray(doc.sources)) return doc;
+    const sourceIds = new Set(doc.sources.map((source) => source?.id).filter(Boolean));
+    const reliesOnSources = [...(doc.spectra || []), ...(doc.molecules || [])]
+      .some((item) => sourceIds.has(item?.selector?.root));
+    return reliesOnSources ? { version: FLAT_NMRIUM_DOC_VERSION, data: doc } : doc;
+  }
+
+  // Wraps a flat document built from the live state with the schema version the wrapper reported
+  // for that state - the rule nmriumDocumentToSave applies to a save - or, when none was reported,
+  // labels it as versionFlatDocument does.
+  versionedForHandOff(doc) {
+    const { nmriumVersion } = this.state;
+    if (doc && !doc.data && Number.isInteger(nmriumVersion)) return { version: nmriumVersion, data: doc };
+    return this.versionFlatDocument(doc);
   }
 
   async readFileContent(file) {
@@ -468,11 +509,39 @@ export default class NMRiumDisplayer extends React.Component {
 
     const candidates = (this.state.fetchedSpectra || []).filter((sp) => sp.url);
     const stale = new Set();
+    const remintedPath = new Map();
+
+    // A source NMRium registered for a JCAMP it loaded by url is a whole file, and every spectrum
+    // read from it was saved with its data embedded. Re-minting it can only guess which attachment
+    // it was - allowSoleCandidate picks the dataset's one JCAMP whatever its name, possibly a file
+    // regenerated since - and a versioned document makes NMRium re-read that file instead of the
+    // saved data. Such a source is let go: its spectra open from what was saved, as they always did
+    // while these documents went through NMRium's version-0 migrations.
+    if (Array.isArray(root.sources) && root.sources.length > 0) {
+      const items = [...(root.spectra || []), ...(root.molecules || [])];
+      const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
+        && Object.keys(item.data).length > 0;
+      const isWholeFileSource = (source) => Array.isArray(source?.entries) && source.entries.length > 0
+        && source.entries.every((entry) => {
+          const url = entryUrl(entry);
+          return url && !isAttachmentRef(url) && !splitArchiveRef(url).member && !/\.zip$/i.test(url);
+        });
+      root.sources.forEach((source) => {
+        const dependents = items.filter((item) => item?.selector?.root && item.selector.root === source?.id);
+        if (dependents.length > 0 && isWholeFileSource(source) && dependents.every(hasEmbeddedData)) {
+          stale.add(source.id);
+        }
+      });
+      root.sources = root.sources.filter((source) => !stale.has(source?.id));
+    }
 
     if (Array.isArray(root.sources) && root.sources.length > 0) {
       root.sources = root.sources.filter((source) => {
         const refreshed = this.refreshSourceEntries(source?.entries, source?.id, candidates);
         if (refreshed) {
+          if (refreshed[0] !== source.entries[0] && refreshed[0]?.relativePath) {
+            remintedPath.set(source.id, refreshed[0].relativePath);
+          }
           source.entries = refreshed;
           return true;
         }
@@ -517,11 +586,22 @@ export default class NMRiumDisplayer extends React.Component {
       else delete spc.sourceSelector;
     });
 
-    if (stale.size === 0) return;
+    // selector.files is what NMRium filters a source's fetched files by, and a whole-file entry in
+    // it is the url that source was fetched from - the dead one, in a document an earlier open
+    // saved. Follow the source it belongs to: onto the path just minted for it, or away with it.
+    // Member paths inside an archive are the display pass's to re-root, so they are left alone.
     [...(root.spectra || []), ...(root.molecules || [])].forEach((item) => {
-      if (item?.selector?.root && stale.has(item.selector.root)) {
+      const sourceId = item?.selector?.root;
+      if (!sourceId) return;
+      if (stale.has(sourceId)) {
         delete item.selector.root;
+        delete item.selector.files;
+        return;
       }
+      const fresh = remintedPath.get(sourceId);
+      if (!fresh || !Array.isArray(item.selector.files)) return;
+      const files = item.selector.files.map((file) => (archiveMemberPath(file) ? file : fresh));
+      item.selector.files = [...new Set(files)];
     });
   }
 
@@ -618,6 +698,20 @@ export default class NMRiumDisplayer extends React.Component {
         s.sourceSelector.files = s.sourceSelector.files.map((f) => {
           const within = archiveMemberPath(f);
           return within ? `${spectrumZipUrlWithFile}/${within}` : f;
+        });
+      }
+
+      // selector.files is what NMRium itself filters the fetched archive by - it writes this list
+      // when a zip is loaded by url, so a saved document can carry it with no sourceSelector at all.
+      // Its entries have to match the members' paths in the collection read from the source, and
+      // those are the source entry's relativePath plus the member: neither a bare member path nor
+      // an absolute url matches anything. Re-point each onto the archive this open minted, the same
+      // url refreshPersistedSources registers, or the source loads and the spectrum stays empty.
+      const archivePath = spectrumZipUrlWithFile && urlToEntry(spectrumZipUrlWithFile)?.relativePath;
+      if (archivePath && Array.isArray(s?.selector?.files)) {
+        s.selector.files = s.selector.files.map((f) => {
+          const within = archiveMemberPath(f);
+          return within ? `${archivePath}/${within}` : f;
         });
       }
     });
@@ -738,6 +832,20 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   prepareNMRiumDataAttachment(nmriumData, baseName) {
+    const json = JSON.stringify(
+      this.nmriumDocumentToSave(nmriumData),
+      (key, value) => (ArrayBuffer.isView(value) ? Array.from(value) : value),
+      0
+    );
+
+    const blob = new Blob([json], { type: 'text/plain' });
+    blob.name = `${baseName}.nmrium`;
+
+    return Attachment.fromFile(blob);
+  }
+
+  // The document a save writes: the live state cleaned for persistence, in the shape it is stored in.
+  nmriumDocumentToSave(nmriumData) {
     const cleanedNMRiumData = cleaningNMRiumData(nmriumData, {
       // Only a fetched attachment can back a reference: the reopen path re-mints from `url`, so
       // resolving a spectrum to a url-less attachment (the .nmrium file itself) would write a
@@ -755,21 +863,21 @@ export default class NMRiumDisplayer extends React.Component {
       || !!root?.sources?.length
       || spectra.some((spc) => spc?.source || spc?.sourceSelector || spc?.selector?.root);
     const needsWrapper = has2D && !hasAnySource && !hasDataProp && !nmriumData.version;
+    const { nmriumVersion } = this.state;
 
-    const toSerialize = needsWrapper
-      ? { version: 7, data: root }
-      : cleanedNMRiumData;
-
-    const json = JSON.stringify(
-      toSerialize,
-      (key, value) => (ArrayBuffer.isView(value) ? Array.from(value) : value),
-      0
-    );
-
-    const blob = new Blob([json], { type: 'text/plain' });
-    blob.name = `${baseName}.nmrium`;
-
-    return Attachment.fromFile(blob);
+    // Written as {version, data} with the version the wrapper reported for this state. NMRium reads
+    // an unversioned document as version 0 and runs its whole migration chain over it, and that
+    // chain empties sources[] and rewrites every FT 2D spectrum without a jcampURL to
+    // `data: {rr: spectrum.data}` - `{rr: undefined}` for a spectrum whose data was dropped in favour
+    // of a sources[] reference, so reopening it throws. Labelled with its own version, nothing is
+    // migrated. The {version: 7} wrap stays as the fallback for a state that never reported one.
+    let toSerialize = cleanedNMRiumData;
+    if (!hasDataProp && Number.isInteger(nmriumVersion)) {
+      toSerialize = { version: nmriumVersion, data: root };
+    } else if (needsWrapper) {
+      toSerialize = { version: 7, data: root };
+    }
+    return toSerialize;
   }
 
   resetNMRiumState() {
@@ -784,6 +892,7 @@ export default class NMRiumDisplayer extends React.Component {
       spcInfos: [],
       spcIdx: null,
       nmriumData: null,
+      nmriumVersion: null,
       is2D: false,
       molFile: null,
     });
