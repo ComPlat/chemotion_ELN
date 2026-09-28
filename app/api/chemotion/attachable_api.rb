@@ -13,6 +13,7 @@ module Chemotion
       'Wellplate' => Wellplate,
       'DeviceDescription' => DeviceDescription,
       'SequenceBasedMacromoleculeSample' => SequenceBasedMacromoleculeSample,
+      'SequenceBasedMacromolecule' => SequenceBasedMacromolecule,
     }.freeze
 
     resource :attachable do
@@ -28,7 +29,18 @@ module Chemotion
         error!('400 Bad Request: unknown attachable_type', 400) unless ATTACHABLE_POLICY_MAP.key?(attachable_type)
 
         element = ATTACHABLE_POLICY_MAP[attachable_type].find_by(id: params[:attachable_id])
-        error!('401 Unauthorized', 401) unless element && ElementPolicy.new(current_user, element).update?
+
+        authorized =
+          if attachable_type == 'SequenceBasedMacromolecule'
+            element && SequenceBasedMacromoleculeSample
+              .for_user(current_user.id)
+              .where(sequence_based_macromolecule: element)
+              .exists?
+          else
+            element && ElementPolicy.new(current_user, element).update?
+          end
+
+        error!('401 Unauthorized', 401) unless authorized
       end
 
       desc 'Update attachable records'
