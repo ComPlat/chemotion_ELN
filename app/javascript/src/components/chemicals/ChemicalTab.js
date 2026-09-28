@@ -78,8 +78,6 @@ export default class ChemicalTab extends React.Component {
     this.state = {
       chemical: undefined,
       displayWell: false,
-      checkSaveIconMerck: false,
-      dynamicCheckMarks: {},
       vendorValue: 'Merck',
       queryOption: 'CAS',
       vendorOverview: null,
@@ -245,17 +243,6 @@ export default class ChemicalTab extends React.Component {
             // Remove the safety sheet path entry
             path.splice(vendorIndex, 1);
 
-            if (normalizedVendorName === 'merck') {
-              this.setState({ checkSaveIconMerck: false });
-            }
-
-            // Also remove from dynamicCheckMarks
-            this.setState((prevState) => {
-              const updatedCheckMarks = { ...prevState.dynamicCheckMarks };
-              delete updatedCheckMarks[normalizedVendorName];
-              return { dynamicCheckMarks: updatedCheckMarks };
-            });
-
             // Update the state and save changes
             this.setState({ chemical }, () => {
               // After state update, save to server
@@ -268,30 +255,6 @@ export default class ChemicalTab extends React.Component {
 
     // Clear any warning messages
     this.setState({ warningMessage: '' });
-    this.updateCheckMark(document);
-  }
-
-  handleCheckMark(vendor, isNew = null) {
-    const normalizedVendor = String(vendor || '').toLowerCase();
-    if (!normalizedVendor) return;
-
-    if (normalizedVendor === 'merck') {
-      this.setState({ checkSaveIconMerck: isNew !== null ? isNew : true });
-    }
-
-    // Store in dynamic check marks for all vendors
-    this.setState((prevState) => {
-      // Initialize or use existing dynamicCheckMarks
-      const dynamicCheckMarks = prevState.dynamicCheckMarks || {};
-
-      // Set check mark for this vendor to true
-      return {
-        dynamicCheckMarks: {
-          ...dynamicCheckMarks,
-          [normalizedVendor]: true
-        }
-      };
-    });
   }
 
   // Brand only shapes a Sigma catalogue URL, so leaving Sigma drops the choice rather
@@ -1052,50 +1015,31 @@ export default class ChemicalTab extends React.Component {
     return /^[a-z]+$/i.test(fromKey) ? fromKey.toLowerCase() : '';
   }
 
-  updateCheckMark(document) {
-    const vendor = ChemicalTab.vendorFromDocument(document);
-    if (vendor) this.handleCheckMark(vendor, false);
+  // Saved sheets are keyed "<productNumber>_<hash>_link": a search row is held when a sheet
+  // for its own product number is, a saved row (no product number) by its stored path.
+  isSheetHeld(sdsInfo) {
+    const { chemical } = this.state;
+    const linkKey = Object.keys(sdsInfo || {}).find((key) => key.endsWith('_link'));
+    if (!linkKey) return false;
+
+    const sdsLink = sdsInfo[linkKey];
+    const productNumber = sdsInfo[`${linkKey.replace('_link', '')}_product_number`];
+    const savedSheets = chemical?._chemical_data?.[0]?.safetySheetPath || [];
+    return savedSheets.some((sheet) => Object.keys(sheet).some(
+      (key) => (!!productNumber && key.startsWith(`${productNumber}_`))
+        || (!!sdsLink && sheet[key] === sdsLink)
+    ));
   }
 
   checkMarkButton(document) {
-    const {
-      checkSaveIconMerck,
-      dynamicCheckMarks = {},
-      chemical
-    } = this.state;
-
-    // Find the dynamic vendor key
     const dynamicKey = Object.keys(document).find((key) => key.endsWith('_link'));
     if (!dynamicKey) {
       return null;
     }
 
     const vendorName = dynamicKey.replace('_link', '');
-    const normalizedVendorName = vendorName.toLowerCase();
 
-    // Check if the document link exists in the safety sheet paths
-    let hasSavedSheet = false;
-    if (chemical?._chemical_data?.[0]?.safetySheetPath) {
-      const safetySheets = chemical._chemical_data[0].safetySheetPath;
-      hasSavedSheet = safetySheets.some((sheet) => sheet[dynamicKey] === document[dynamicKey]);
-    }
-
-    // Determine if we should show the check mark (either from state or direct check)
-    let checkSaveIcon = hasSavedSheet;
-
-    // If not found in actual safety sheet data, check state variables
-    if (!checkSaveIcon) {
-      // First check traditional state variables for backward compatibility
-      if (vendorName === 'merck') {
-        checkSaveIcon = checkSaveIconMerck;
-      } else {
-        // Check our dynamic state for any other vendor
-        checkSaveIcon = dynamicCheckMarks[normalizedVendorName] || false;
-      }
-    }
-
-    // Check if the document has the vendor link and we should show a check mark
-    if (document[dynamicKey] && checkSaveIcon) {
+    if (document[dynamicKey] && this.isSheetHeld(document)) {
       return (
         <OverlayTrigger container={TOOLTIP_CONTAINER}
           placement="top"
@@ -1161,12 +1105,11 @@ export default class ChemicalTab extends React.Component {
       this.setState({ chemical: chemicalInstance, searchResults: [] });
       editChemical(false);
       chemicalInstance.updateChecksum();
-      this.handleCheckMark(productInfo.vendor);
     });
   };
 
   saveSafetySheetsButton(sdsInfo) {
-    const { loadingSaveSafetySheets, chemical } = this.state;
+    const { loadingSaveSafetySheets } = this.state;
 
     // Find any key that ends with "_link" to determine vendor
     const vendorLinkKey = Object.keys(sdsInfo).find((key) => key.endsWith('_link'));
@@ -1174,10 +1117,8 @@ export default class ChemicalTab extends React.Component {
       return null;
     }
 
-    // Rows saved before save_modes existed carry one mode; older ones were all server
-    // downloads. An empty list means no route reaches the sheet, so no save is offered.
-    const saveModes = (sdsInfo.save_modes || [sdsInfo.save_mode || 'server'])
-      .filter((mode) => mode !== 'none');
+    // A saved row carries no save_modes and shows a server save; [] means nothing to save.
+    const saveModes = sdsInfo.save_modes || ['server'];
     if (saveModes.length === 0) {
       return null;
     }
@@ -1193,13 +1134,7 @@ export default class ChemicalTab extends React.Component {
     // Determine vendor display name (capitalize first letter)
     const displayVendorName = vendorName.charAt(0).toUpperCase() + vendorName.slice(1);
 
-    // Saved sheets are keyed "<productNumber>_<hash>_link", so this row is spoken for only
-    // when a sheet for its own product number is held. Asking the vendor instead marked
-    // every row of that vendor as saved the moment one of them was.
-    const savedSheets = chemical?._chemical_data?.[0]?.safetySheetPath || [];
-    const isSaved = !!productNumber && savedSheets.some((sheet) => Object.keys(sheet).some(
-      (key) => key.startsWith(`${productNumber}_`) || sheet[key] === sdsLink
-    ));
+    const isSaved = this.isSheetHeld(sdsInfo);
 
     const productInfo = {
       vendor: displayVendorName,
@@ -2184,34 +2119,6 @@ export default class ChemicalTab extends React.Component {
       && chemical._chemical_data[0].safetySheetPath
       && chemical._chemical_data[0].safetySheetPath.length !== 0) {
       this.setState({ displayWell: true });
-
-      // Initialize dynamic check marks from existing safety sheets
-      const dynamicCheckMarks = {};
-
-      // Process each saved safety sheet
-      chemical._chemical_data[0].safetySheetPath.forEach((sheet) => {
-        // Find any key that ends with "_link", but make sure we check it exists first
-        if (sheet && typeof sheet === 'object') {
-          // Get all keys that end with "_link"
-          const linkKeys = Object.keys(sheet).filter((key) => key.endsWith('_link') && sheet[key]);
-          // For each found link key, update the check marks
-          linkKeys.forEach((vendorLinkKey) => {
-            // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
-            const vendorName = vendorLinkKey.replace('_link', '');
-            const normalizedVendorName = vendorName.toLowerCase();
-
-            // Set check mark to true for this vendor
-            dynamicCheckMarks[normalizedVendorName] = true;
-
-            if (normalizedVendorName === 'merck') {
-              this.setState({ checkSaveIconMerck: true });
-            }
-          });
-        }
-      });
-
-      // Update the dynamicCheckMarks state
-      this.setState({ dynamicCheckMarks });
     }
   }
 

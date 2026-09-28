@@ -92,17 +92,8 @@ describe Chemotion::ChemicalsService do
   end
 
   describe 'save routing' do
-    it 'marks Sigma sheets browser-fetched, since the server is refused' do
-      expect(described_class.vendor_save_mode('Sigma-Aldrich')).to eq('browser')
-    end
-
-    it 'marks Thermo sheets server-fetched' do
-      expect(described_class.vendor_save_mode('Thermo Fisher Scientific')).to eq('server')
-      expect(described_class.vendor_save_mode('Fisher Chemical')).to eq('server')
-    end
-
     it 'offers no save route for a catalogue-only vendor' do
-      expect(described_class.vendor_save_mode('abcr GmbH')).to eq('none')
+      expect(described_class.vendor_save_modes('abcr GmbH')).to eq([])
     end
 
     it 'falls back to the other route for a vendor that has one' do
@@ -291,7 +282,7 @@ describe Chemotion::ChemicalsService do
         true
       end
 
-      result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
+      result = described_class.create_sds_file(link, product, vendor)
       expect(result).to match(%r{\A/safety_sheets/#{vendor}/#{product}_[a-f0-9]{16}\.pdf\z})
       expect(result).not_to end_with("#{first_initials}.pdf")
       expect(File.read("public#{result}")).to eq('%PDF second')
@@ -303,7 +294,7 @@ describe Chemotion::ChemicalsService do
         true
       end
 
-      result = described_class.find_existing_or_create_safety_sheet(link, vendor, product)
+      result = described_class.create_sds_file(link, product, vendor)
       expect(result).to eq("/safety_sheets/#{vendor}/#{product}_#{first_initials}.pdf")
     end
   end
@@ -354,7 +345,8 @@ describe Chemotion::ChemicalsService do
     end
   end
 
-  describe '.merck and .vendor_groups' do
+  describe '.merck and vendor grouping' do
+    let(:vendor_groups) { described_class.grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(180), 'en') }
     let(:sources) do
       [
         { SourceName: 'Sigma-Aldrich', RegistryID: '00560_SIAL',
@@ -377,7 +369,6 @@ describe Chemotion::ChemicalsService do
         'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
         'merck_product_number' => '179124',
         'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
-        'save_mode' => 'browser',
         'save_modes' => %w[browser server],
       )
     end
@@ -389,7 +380,7 @@ describe Chemotion::ChemicalsService do
     end
 
     it 'groups vendors and puts the SDS-capable one first' do
-      groups = described_class.vendor_groups('Acetone', 'en')
+      groups = vendor_groups
       expect(groups.map { |g| g['vendor'] }).to eq(
         ['Sigma-Aldrich', 'Thermo Fisher Scientific', 'Glentham Life Sciences Ltd.'],
       )
@@ -397,7 +388,7 @@ describe Chemotion::ChemicalsService do
     end
 
     it 'builds an AC-prefixed Fisher SDS link from an all-numeric Thermo catalogue code' do
-      thermo = described_class.vendor_groups('Acetone', 'en').find { |g| g['vendor'].start_with?('Thermo') }
+      thermo = vendor_groups.find { |g| g['vendor'].start_with?('Thermo') }
       expect(thermo['sds_supported']).to be true
       expect(thermo['products'].first).to include(
         'fisher_product_number' => 'AC327840025',
@@ -410,12 +401,11 @@ describe Chemotion::ChemicalsService do
       allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
         [{ SourceName: 'Fisher Chemical', RegistryID: 'A111', SourceRecordURL: nil }],
       )
-      group = described_class.vendor_groups('Acetone', 'en').first
+      group = vendor_groups.first
       expect(group['products'].first).to eq(
         'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=A111' \
                          '&productDescription=&language=EN&countryCode=US',
         'fisher_product_number' => 'A111',
-        'save_mode' => 'server',
         'save_modes' => %w[server browser],
       )
     end
@@ -425,13 +415,13 @@ describe Chemotion::ChemicalsService do
         [{ SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
            SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/019392.K7' }],
       )
-      group = described_class.vendor_groups('Acetone', 'en').first
+      group = vendor_groups.first
       expect(group['sds_supported']).to be false
       expect(group['products'].first).not_to have_key('fisher_link')
     end
 
     it 'gives a catalogue-only vendor a product link and no SDS link' do
-      glentham = described_class.vendor_groups('Acetone', 'en').find { |g| g['vendor'].start_with?('Glentham') }
+      glentham = vendor_groups.find { |g| g['vendor'].start_with?('Glentham') }
       expect(glentham['sds_supported']).to be false
       expect(glentham['products'].first).to eq(
         'label' => 'GK3021', 'product_link' => 'https://www.glentham.com/en/products/product/GK3021/',
@@ -475,7 +465,7 @@ describe Chemotion::ChemicalsService do
         [{ SourceName: 'Oakwood Products', RegistryID: 'GID_900000000999999',
            SourceRecordURL: 'https://oakwoodchemical.com/products/035905' }],
       )
-      expect(described_class.vendor_groups('Acetone', 'en').first['products'].first['label']).to eq('035905')
+      expect(vendor_groups.first['products'].first['label']).to eq('035905')
     end
   end
 
@@ -656,18 +646,6 @@ describe Chemotion::ChemicalsService do
       it 'returns original data when pattern does not match' do
         unchanged = described_class.update_chemical_data(data, '/invalid/path.pdf', '270709')
         expect(unchanged[0]['safetySheetPath']).to be_empty
-      end
-    end
-
-    context 'when finding existing or creating safety sheet' do
-      let(:link) { 'http://example.com/file.pdf' }
-
-      it 'always fetches, so a second sheet for one product can still be saved' do
-        allow(described_class).to receive(:create_sds_file)
-          .and_return('/safety_sheets/merck/270709_abcd1234efab5678.pdf')
-        result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
-        expect(result).to eq('/safety_sheets/merck/270709_abcd1234efab5678.pdf')
-        expect(described_class).to have_received(:create_sds_file).with(link, '270709', 'merck')
       end
     end
 

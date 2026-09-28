@@ -129,10 +129,11 @@ module Chemotion
 
           Chemotion::ChemicalsService.handle_exceptions do
             product_info = params[:chemical_data][0][params[:vendor_product]]
-            file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
+            # Always fetches: only the bytes say whether this sheet is one already held.
+            file_path = Chemotion::ChemicalsService.create_sds_file(
               product_info['sdsLink'],
-              product_info['vendor'].downcase,
               product_info['productNumber'],
+              product_info['vendor'].downcase,
             )
             return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
             # A failed download yields false; storing it would record an SDS path resolving to nothing.

@@ -542,12 +542,13 @@ describe('ChemicalTab component', () => {
             safetySheetPath: [{
               AC158190025_f7aaa63e3029e8ed_link: '/safety_sheets/fisher/AC158190025_f7aaa63e3029e8ed.pdf'
             }]
-          }], '7681-82-5'),
-          // Saving through the server route used to set this and grey out the whole vendor.
-          dynamicCheckMarks: { fisher: true },
-          checkSaveIconMerck: true
+          }], '7681-82-5')
         });
       });
+
+      const savedRow = {
+        AC158190025_f7aaa63e3029e8ed_link: '/safety_sheets/fisher/AC158190025_f7aaa63e3029e8ed.pdf'
+      };
 
       it('marks the row whose sheet is saved', () => {
         expect(isDisabled(row('AC158190025'))).toBe(true);
@@ -555,6 +556,15 @@ describe('ChemicalTab component', () => {
 
       it('leaves another product from the same vendor available', () => {
         expect(isDisabled(row('AC133710010'))).toBe(false);
+      });
+
+      it('marks a saved sheet row, which carries no product number', () => {
+        expect(isDisabled(savedRow)).toBe(true);
+        expect(instance.checkMarkButton(savedRow)).not.toBeNull();
+      });
+
+      it('shows no check mark on a row that is not saved', () => {
+        expect(instance.checkMarkButton(row('AC133710010'))).toBeNull();
       });
     });
 

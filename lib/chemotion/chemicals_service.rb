@@ -26,13 +26,10 @@ module Chemotion
       'bp' => 'boiling_point',
     }.freeze
 
-    SAFETY_SHEETS_DIR = 'public/safety_sheets'
-
     # Sheets per sample. Cf. MAX_SAVED_SDS in ChemicalTab.js, which refuses first; this is
     # the backstop for any client that does not.
     MAX_SAVED_SDS = 5
 
-    # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
     SDS_VENDOR = 'Sigma-Aldrich'
     THERMO_VENDOR = 'Thermofisher'
     # Stands in for the vendor name when the search covered all of them.
@@ -55,6 +52,7 @@ module Chemotion
     CURATED_VENDORS = ['abcr GmbH', 'TCI (Tokyo Chemical Industry)', 'LGC Standards',
                        'Glentham Life Sciences Ltd.', 'Fluorochem', 'CymitQuimica'].freeze
     PUBCHEM_VENDOR_URL = 'https://pubchem.ncbi.nlm.nih.gov/compound/%<cid>s#section=Chemical-Vendors'
+    # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
     MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco vetec saj usp cerillian].freeze
     MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
     ALLOWED_DOMAINS = %w[sigmaaldrich.com fishersci.com thermofisher.com].freeze
@@ -133,7 +131,6 @@ module Chemotion
       { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
         'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
-        'save_mode' => vendor_save_mode(SDS_VENDOR),
         'save_modes' => vendor_save_modes(SDS_VENDOR) }
     end
 
@@ -186,11 +183,6 @@ module Chemotion
       "No safety data sheet found from #{vendor}"
     end
 
-    # The preferred route alone, for stored rows and clients that read a single mode.
-    def self.vendor_save_mode(vendor)
-      vendor_save_modes(vendor).first || 'none'
-    end
-
     # Sigma's own search rejects automated clients, so the catalogue entry comes from
     # PubChem's Chemical Vendors list. Returns [brand, product_number] or nil.
     def self.merck_product_from_pubchem(name, product_number = nil)
@@ -215,15 +207,6 @@ module Chemotion
 
     def self.merck_rank(brand, number)
       [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
-    end
-
-    # One entry per vendor for the "All vendors" view, Sigma-Aldrich first because it
-    # is the only vendor whose SDS URL can be derived.
-    def self.vendor_groups(name, language)
-      cid = PubChem.get_cid_from_identifier(name)
-      return [] unless cid
-
-      grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
     end
 
     def self.grouped_vendor_sources(sources, language)
@@ -302,7 +285,6 @@ module Chemotion
       return nil if products.empty?
 
       { 'vendor' => vendor, 'count' => products.size, 'sds_supported' => sds_supported,
-        'save_mode' => sds_supported ? vendor_save_mode(vendor) : 'none',
         'save_modes' => sds_supported ? vendor_save_modes(vendor) : [], 'products' => products }
     end
 
@@ -351,7 +333,6 @@ module Chemotion
       return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
 
       product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number,
-                  'save_mode' => vendor_save_mode(FISHER_VENDORS.first),
                   'save_modes' => vendor_save_modes(FISHER_VENDORS.first) }
       product['fisher_product_link'] = url if url.present?
       product
@@ -398,8 +379,7 @@ module Chemotion
     end
 
     # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
-    # entry is resolved through PubChem and the SDS URL built from it. alfa.com is off the
-    # allowlist, which is why .alfa can only ever return its failure string.
+    # entry is resolved through PubChem and the SDS URL built from it.
     def self.thermofisher(name, language, product_number = nil)
       cid = PubChem.get_cid_from_identifier(name)
       raise StandardError, 'No PubChem CID for this name' unless cid
@@ -718,12 +698,6 @@ module Chemotion
         end
       end
       chemical_data
-    end
-
-    # Always fetches: only the bytes can say whether this sheet is one we already hold,
-    # and the same catalogue number serves different sheets per language and revision.
-    def self.find_existing_or_create_safety_sheet(link, vendor, product_number)
-      create_sds_file(link, product_number, vendor)
     end
 
     # Finds existing chemical or creates new one with updated safety data

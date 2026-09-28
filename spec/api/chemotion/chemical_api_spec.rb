@@ -276,7 +276,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Chemotion::ChemicalsService)
-        .to receive(:find_existing_or_create_safety_sheet)
+        .to receive(:create_sds_file)
         .and_return({ error: 'download failed' })
       post '/api/v1/chemicals/save_safety_datasheet', params: params
     end
