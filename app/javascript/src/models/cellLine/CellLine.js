@@ -50,6 +50,8 @@ export default class CellLine extends Element {
     cellLine.is_new = false;
 
     cellLine.container = response.container;
+    cellLine.attachments = response.attachments || [];
+    cellLine.updateChecksum();
 
     return cellLine;
   }
@@ -95,5 +97,6 @@ export default class CellLine extends Element {
     this.cellType = mobx.cellType;
     this.cryopreservationMedium = mobx.cryopreservationMedium;
     this.created_by = mobx.created_by;
+    this.attachments = mobx.attachments ? [...mobx.attachments] : [];
   }
 }
