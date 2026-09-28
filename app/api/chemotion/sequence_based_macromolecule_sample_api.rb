@@ -161,7 +161,8 @@ module Chemotion
           @sbmm_samples = @sbmm_samples.limit(params[:limit]) if params[:limit]
 
           present @sbmm_samples, with: Entities::SequenceBasedMacromoleculeSampleEntity,
-                                 root: :sequence_based_macromolecule_samples
+                                 root: :sequence_based_macromolecule_samples,
+                                 displayed_in_list: true
         end
       end
 

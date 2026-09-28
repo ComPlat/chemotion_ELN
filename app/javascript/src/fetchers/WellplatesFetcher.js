@@ -39,15 +39,11 @@ export default class WellplatesFetcher {
   }
 
   static update(wellplate) {
-    const tasks = [
-      AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container),
-      this.wellplateAttachments(wellplate, wellplate.id),
-    ];
-
-    return Promise.all(tasks)
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container)
       .then(() => AnnotationsFetcher.updateAnnotations(wellplate))
       .then(() => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() }))
-      .then((json) => this.wellplateElement(json, wellplate.id));
+      .then(() => this.wellplateAttachments(wellplate, wellplate.id))
+      .then(() => this.fetchById(wellplate.id));
   }
 
   static fetchWellplatesByUIState(params) {

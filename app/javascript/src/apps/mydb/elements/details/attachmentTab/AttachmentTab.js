@@ -51,6 +51,7 @@ export class AttachmentTab extends Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
     this.createAttachmentPreviews();
     const { attachments } = this.props;
     if (attachments && attachments.length > 0) {
@@ -60,6 +61,10 @@ export class AttachmentTab extends Component {
       }, {});
       this.setState({ showImportConfirm: initialConfirm });
     }
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   componentDidUpdate(prevProps) {
@@ -179,7 +184,7 @@ export class AttachmentTab extends Component {
                 // eslint-disable-next-line no-underscore-dangle
                 element._checksum = element.checksum();
               }
-              this.forceUpdate();
+              if (this._mounted) this.forceUpdate();
             }
           }
         );
