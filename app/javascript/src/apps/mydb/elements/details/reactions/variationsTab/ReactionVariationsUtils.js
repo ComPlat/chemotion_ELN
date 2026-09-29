@@ -99,9 +99,15 @@ const makeVariationReaction = (reaction, reactionData) => {
   );
 };
 
+// The [major, minor] group typed as e.g. "2.1": its numbers, at most two; null without any.
+const parseVariationGroup = (text) => {
+  const numbers = String(text ?? '').split(/[^\d]+/).filter(Boolean).slice(0, 2).map(Number);
+  return numbers.length > 0 ? numbers : null;
+};
+
 const addNewVariationDataset = ({ reaction: { variations } }) => {
   const id = uuid.v4();
-  const majorGroup = Math.max(0, ...variations.map(({ group }) => group[0])) + 1;
+  const majorGroup = Math.max(0, ...variations.map(({ group }) => Number(group?.[0]) || 0)) + 1;
   const nextIdx = Math.max(0, ...variations.map(({ idx }) => idx)) + 1;
   const group = [majorGroup, 0];
 
@@ -375,6 +381,7 @@ export {
   convertVariationDatasetToInternalVariations,
   addInternalVariationObject,
   addNewVariationDataset,
+  parseVariationGroup,
   makeVariationReaction,
   diffObjects,
   variationDiffOf,
