@@ -3,8 +3,12 @@
 #
 # The url is the converter container of docker-compose.services.yml (development)
 # and of the production images, both reached on the `chemotion` network. Set
-# :url: to empty in production to disable the converter; :profile and
-# :secret_key are the credentials the converter service accepts.
+# :url: to empty in production to disable the converter. An overriding :url:
+# must end with `/`: requests are built as <url><endpoint>.
+#
+# :profile and :secret_key are the client credentials registered on the
+# converter service. The values below are development defaults; change them in
+# production.
 shared:
   :url: 'http://converter:4000/'
   :profile: 'chemotion'

@@ -57,7 +57,8 @@ services:
   # public/nmrium/<version>/, points public/nmrium/default at it, and exits.
   # The wrapper's own nginx never runs — Rails serves the assets from public/
   # at /nmrium/default/, which is what config/spectra.yml.example sets
-  # :nmriumwrapper: :url: to for development.
+  # :nmriumwrapper: :url: to in every environment (the production images ship
+  # the same assets).
   #
   # Run it (or don't — the ELN falls back to any wrapper url in spectra.yml):
   #     docker compose -f docker-compose.dev.yml -f docker-compose.services.yml \
