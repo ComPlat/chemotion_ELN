@@ -271,23 +271,29 @@ const variationDiffOf = (reaction, variationReaction) => diffObjects(
 Column layout of the variations grid - order, hidden columns and widths - kept per user and per
 reaction, following the key convention of the previous variations table. Storage can be unavailable
 (private mode, quota), in which case the layout simply is not remembered.
+
+Each view of the grid - the scheme, or one segment klass picked instead of it - has columns of its
+own and so a layout of its own. The scheme keeps the key it always had.
 */
-const getColumnStateId = (reactionId) => {
+const SCHEMA_VIEW = 'Schema';
+
+const getColumnStateId = (reactionId, view = SCHEMA_VIEW) => {
   const { currentUser } = UserStore.getState();
-  return `user${currentUser?.id}-reaction${reactionId}-reactionVariationsColumnState`;
+  const id = `user${currentUser?.id}-reaction${reactionId}-reactionVariationsColumnState`;
+  return view === SCHEMA_VIEW ? id : `${id}-segment-${view}`;
 };
 
-const getInitialColumnState = (reactionId) => {
+const getInitialColumnState = (reactionId, view = SCHEMA_VIEW) => {
   try {
-    return JSON.parse(window.localStorage.getItem(getColumnStateId(reactionId))) || null;
+    return JSON.parse(window.localStorage.getItem(getColumnStateId(reactionId, view))) || null;
   } catch (e) {
     return null;
   }
 };
 
-const persistColumnState = (reactionId, columnState) => {
+const persistColumnState = (reactionId, columnState, view = SCHEMA_VIEW) => {
   try {
-    window.localStorage.setItem(getColumnStateId(reactionId), JSON.stringify(columnState));
+    window.localStorage.setItem(getColumnStateId(reactionId, view), JSON.stringify(columnState));
   } catch (e) { /* ignore storage errors */ }
 };
 
