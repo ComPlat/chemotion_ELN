@@ -112,6 +112,18 @@ describe('ReactionVariationsUtils', () => {
       expect(reaction.variations).toEqual([variation]);
     });
 
+    // The variations tab works on a reaction that has not been saved yet; what it adds has to go
+    // out with the reaction's first save.
+    it('adds to an unsaved reaction, which sends the variation along when it is created', () => {
+      const reaction = Reaction.buildEmpty();
+      const variation = addNewVariationDataset({ reaction });
+      const [row] = convertVariationDatasetToInternalVariations(reaction);
+
+      expect(reaction.isNew).toBe(true);
+      expect(row.data.id).toBe(variation.data.id);
+      expect(reaction.serialize().variations).toEqual([variation]);
+    });
+
     // The row is addressed by it; without one every rebuild would make up a new one.
     it('gives the variation reaction an identity right away', () => {
       const variation = addNewVariationDataset({ reaction: { variations: [] } });
