@@ -227,21 +227,51 @@ RSpec.describe Reaction, type: :model do
       end
     end
 
-    context 'when the variation id matches an existing variation' do
+    # The number comes from a `-vN` file name suffix and names the row the grid labels N, its `idx`.
+    context 'when the variation number matches the idx of an existing variation' do
+      let(:first_id) { SecureRandom.uuid }
+      let(:second_id) { SecureRandom.uuid }
+
       before do
         reaction.update!(
           variations: [
-            { 'id' => '1', 'idx' => 0, 'data' => {}, 'analyses' => [], 'notes' => '' },
+            { 'id' => first_id, 'idx' => 1, 'data' => {}, 'analyses' => [], 'notes' => '' },
+            { 'id' => second_id, 'idx' => 3, 'data' => {}, 'analyses' => [], 'notes' => '' },
           ],
         )
       end
 
       it 'adds the analysis id to that variation only once' do
-        reaction.assign_attachment_to_variation('1', 42)
-        reaction.assign_attachment_to_variation('1', 42)
+        reaction.assign_attachment_to_variation('3', 42)
+        reaction.assign_attachment_to_variation('3', 42)
 
-        variation = reaction.reload.variations.find { |v| v['id'] == '1' }
+        variation = reaction.reload.variations.find { |v| v['id'] == second_id }
         expect(variation['analyses']).to eq([42])
+      end
+
+      it 'matches by idx, not by position in the list' do
+        reaction.assign_attachment_to_variation(1, 42)
+
+        variations = reaction.reload.variations
+        expect(variations.find { |v| v['id'] == first_id }['analyses']).to eq([42])
+        expect(variations.find { |v| v['id'] == second_id }['analyses']).to eq([])
+      end
+
+      it 'accepts a zero padded number' do
+        reaction.assign_attachment_to_variation('03', 42)
+
+        variation = reaction.reload.variations.find { |v| v['id'] == second_id }
+        expect(variation['analyses']).to eq([42])
+      end
+
+      it 'links nothing for a number no row has' do
+        expect { reaction.assign_attachment_to_variation('2', 42) }
+          .not_to(change { reaction.reload.variations.map { |v| v['analyses'] } })
+      end
+
+      it 'links nothing for the row uuid' do
+        expect { reaction.assign_attachment_to_variation(second_id, 42) }
+          .not_to(change { reaction.reload.variations.map { |v| v['analyses'] } })
       end
     end
   end

@@ -322,11 +322,11 @@ class Reaction < ApplicationRecord
     raw.is_a?(Hash) ? raw.values : (raw || [])
   end
 
-  def assign_attachment_to_variation(variation_id, analysis_id)
-    assign_attachments_to_variations([[variation_id, analysis_id]])
+  def assign_attachment_to_variation(variation_number, analysis_id)
+    assign_attachments_to_variations([[variation_number, analysis_id]])
   end
 
-  # Batches multiple [variation_id, analysis_id] links into a single save, so bulk
+  # Batches multiple [variation_number, analysis_id] links into a single save, so bulk
   # attachment uploads don't pay a separate Reaction#update (and logidze version) per file.
   #
   # TODO: this is a non-atomic read-modify-write on the whole `variations` column - two
@@ -336,7 +336,7 @@ class Reaction < ApplicationRecord
   # worth revisiting (optimistic locking via lock_version, or a targeted jsonb update).
   def assign_attachments_to_variations(pairs)
     current_variations = variations
-    changed = pairs.count { |variation_id, analysis_id| link_variation?(current_variations, variation_id, analysis_id) }
+    changed = pairs.count { |number, analysis_id| link_variation?(current_variations, number, analysis_id) }
 
     update(variations: current_variations) if changed.positive?
   end
@@ -357,10 +357,14 @@ class Reaction < ApplicationRecord
     "#{min_temp} ~ #{max_temp}"
   end
 
-  def link_variation?(current_variations, variation_id, analysis_id)
-    return false if variation_id.blank?
+  # `variation_number` is the N of a `-vN` file name suffix (or the inbox's "V<N>"): the number the
+  # grid labels a row by, which is its `idx`. The row's `id` is a UUID nobody types into a file name.
+  def link_variation?(current_variations, variation_number, analysis_id)
+    number = variation_number.to_s
+    return false unless number.match?(/\A\d+\z/)
 
-    variation = current_variations.find { |v| v['id'].to_s == variation_id.to_s }
+    # to_i then to_s, so a zero padded suffix ('-v03') still names row 3.
+    variation = current_variations.find { |v| v['idx'].to_s == number.to_i.to_s }
     return false unless variation
 
     # Linked analyses sit on the variation itself now, not under `metadata`.
