@@ -73,7 +73,15 @@ let globalInputTimer;
 
 const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
-  const [activeVariation, setActiveVariation] = useState(null);
+  const [selectedVariation, setActiveVariation] = useState(null);
+  /*
+  The open variation panel only shows while its row still exists: removing all rows here, or
+  switching the scheme to or from gaseous in the scheme tab, empties the list without going through
+  deleteVariation.
+  */
+  const activeVariation = selectedVariation
+    && variations.some(({ data }) => data?.id === selectedVariation.data?.id)
+    ? selectedVariation : null;
   // Filled once the grid is up; the export button reads the grid through it.
   const gridApiRef = useRef(null);
   const [advancedMode, setAdvancedMode] = useState(false);
