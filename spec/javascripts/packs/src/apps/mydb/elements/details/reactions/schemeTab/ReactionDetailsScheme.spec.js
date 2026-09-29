@@ -1,18 +1,23 @@
 import expect from 'expect';
 import sinon from 'sinon';
 
-import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
+/*
+These edits used to be methods of the ReactionDetailsScheme component and now live on the update
+handler it drives, so that the variations grid can reuse them per row. They read the same `this.props`
+either way, which is why the stand-in instances below are unchanged.
+*/
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-describe('ReactionDetailsScheme#onChangeRole', () => {
+describe('ReactionUpdateHandler#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, null);
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, null);
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -21,7 +26,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: null });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: null });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -30,7 +35,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: undefined });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: undefined });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -39,7 +44,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: 'gp' });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: 'gp' });
 
     expect(onInputChange.calledOnceWith('role', 'gp')).toBe(true);
   });
@@ -49,7 +54,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
 // Yield corrupted when a non-reference reactant amount changes in a polymer surface-chemistry reaction.
 // Fix: updatedSamplesForAmountChange() now routes polymer products through checkMassPolymer
 //      instead of the MW-based maxAmount formula when the product is NOT the updated sample.
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer product guard', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — polymer product guard', () => {
   let gasStoreStub;
 
   // Polymer reference: surface-loaded starting material (is_partial=true)
@@ -114,7 +119,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
           updateReferenceAmountForLockedEquivalents: sinon.stub(),
         },
       },
-      state: { lockEquivColumn },
+      lockEquivColumn,
       checkMassMolecule,
       checkMassPolymer,
       triggerNotification,
@@ -137,7 +142,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const product = makePolymerProduct();
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       reactant,
@@ -153,7 +158,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const product = makePolymerProduct();
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       reactant,
@@ -175,7 +180,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     });
     const reactant = makeReactant();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [normalProduct],
       reactant,
@@ -191,7 +196,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     const ctx = buildCtx(ref);
     const product = makePolymerProduct();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [product],
       product,  // updatedSample IS the polymer product
@@ -202,7 +207,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
   });
 });
 
-describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', () => {
+describe('ReactionUpdateHandler — SBMM event resolution with colliding IDs', () => {
   it('updates only the SBMM sample when a regular sample has the same ID', () => {
     const regularSample = { id: 'shared-id', external_label: 'regular' };
     const sbmmSample = {
@@ -222,12 +227,12 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
     };
     const ctx = {
       props: { reaction },
-      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      updatedReactionWithSample: ReactionUpdateHandler.prototype.updatedReactionWithSample,
       updatedSamplesForExternalLabelChange:
-        ReactionDetailsScheme.prototype.updatedSamplesForExternalLabelChange,
+        ReactionUpdateHandler.prototype.updatedSamplesForExternalLabelChange,
     };
 
-    ReactionDetailsScheme.prototype.updatedReactionForExternalLabelChange.call(ctx, {
+    ReactionUpdateHandler.prototype.updatedReactionForExternalLabelChange.call(ctx, {
       sampleID: 'shared-id',
       externalLabel: 'new SBMM label',
       isSbmm: true,
@@ -255,10 +260,10 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
       props: { reaction },
       updatedReactionWithSample,
       updatedSamplesForAmountChange:
-        ReactionDetailsScheme.prototype.updatedSamplesForAmountChange,
+        ReactionUpdateHandler.prototype.updatedSamplesForAmountChange,
     };
 
-    ReactionDetailsScheme.prototype.updatedReactionForAmountTypeChange.call(ctx, {
+    ReactionUpdateHandler.prototype.updatedReactionForAmountTypeChange.call(ctx, {
       sampleID: 'shared-id',
       amountType: 'real',
       isSbmm: true,
@@ -271,7 +276,7 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
   });
 });
 
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type collision', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — sample type collision', () => {
   let gasStoreStub;
 
   const buildCtx = () => ({
@@ -281,7 +286,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
         updateReferenceAmountForLockedEquivalents: sinon.stub(),
       },
     },
-    state: { lockEquivColumn: false },
+    lockEquivColumn: false,
   });
 
   const makeCandidate = (isSbmm) => ({
@@ -320,7 +325,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
   it('matches distinct sample copies when both ID and kind match', () => {
     const sample = makeCandidate(false);
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       buildCtx(),
       [sample],
       makeEditedSample(false),
@@ -333,7 +338,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
   it('does not treat a regular sample as the edited SBMM when their IDs collide', () => {
     const sample = makeCandidate(false);
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       buildCtx(),
       [sample],
       makeEditedSample(true),
@@ -346,7 +351,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
   it('does not treat an SBMM sample as the edited regular sample when their IDs collide', () => {
     const sample = makeCandidate(true);
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       buildCtx(),
       [sample],
       makeEditedSample(false),
@@ -365,7 +370,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
 // the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
 // The correction block now includes solvents, so the equivalent is always a valid
 // amount_mol / reference.amount_mol ratio before it is used to scale.
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — solvent volume', () => {
   let gasStoreStub;
 
   const buildCtx = ({ lockEquivColumn = false } = {}) => ({
@@ -375,9 +380,9 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
         updateReferenceAmountForLockedEquivalents: sinon.stub(),
       },
     },
-    state: { lockEquivColumn },
+    lockEquivColumn,
     handleEquivalentBasedAmountUpdate:
-      ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+      ReactionUpdateHandler.prototype.handleEquivalentBasedAmountUpdate,
   });
 
   const makeSolvent = (overrides = {}) => ({
@@ -411,7 +416,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: true });
     const solvent = makeSolvent({ equivalent: 0.5 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       updatedReference,
@@ -429,7 +434,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: false });
     const solvent = makeSolvent({ equivalent: 999 });
 
-    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    const result = ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       updatedReference,
@@ -449,7 +454,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     const ctx = buildCtx({ lockEquivColumn: false });
     const solvent = makeSolvent({ equivalent: NaN, maxAmount: undefined });
 
-    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    const result = ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [solvent],
       solvent, // the solvent itself is the updated sample (its own volume was edited)
@@ -469,11 +474,11 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
 // based, so the sample's amount_unit must stay 'mol' (which highlights the Amount field),
 // NOT be normalized to 'g' (which would highlight the Mass field). Gas and reference-less
 // mixture samples keep the old gram-normalized behavior so their calculations are unchanged.
-describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculated field is Amount', () => {
+describe('ReactionUpdateHandler#updatedSamplesForEquivalentChange — recalculated field is Amount', () => {
   const buildCtx = (referenceMaterial = { amount_mol: 0.1, coefficient: 1 }) => ({
     props: { reaction: { referenceMaterial } },
     handleEquivalentBasedAmountUpdate:
-      ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+      ReactionUpdateHandler.prototype.handleEquivalentBasedAmountUpdate,
     warnIfMixtureMassExceeded: sinon.spy(),
   });
 
@@ -570,15 +575,15 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     };
     const ctx = {
       props: { reaction },
-      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      updatedReactionWithSample: ReactionUpdateHandler.prototype.updatedReactionWithSample,
       updatedSamplesForEquivalentChange:
-        ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange,
+        ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange,
       handleEquivalentBasedAmountUpdate:
-        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+        ReactionUpdateHandler.prototype.handleEquivalentBasedAmountUpdate,
       warnIfMixtureMassExceeded: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+    ReactionUpdateHandler.prototype.updatedReactionForEquivalentChange.call(ctx, {
       sampleID: material.id,
       equivalent,
       isSbmm: false,
@@ -610,12 +615,12 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     };
     const ctx = {
       props: { reaction },
-      state: { lockEquivColumn: true },
+      lockEquivColumn: true,
       handleEquivalentBasedAmountUpdate:
-        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+        ReactionUpdateHandler.prototype.handleEquivalentBasedAmountUpdate,
     };
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [mixture],
       reference,
@@ -714,16 +719,16 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     };
     const ctx = {
       props: { reaction },
-      state: { lockEquivColumn: true },
-      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      lockEquivColumn: true,
+      updatedReactionWithSample: ReactionUpdateHandler.prototype.updatedReactionWithSample,
       updatedSamplesForEquivalentChange:
-        ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange,
+        ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange,
       handleEquivalentBasedAmountUpdate:
-        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+        ReactionUpdateHandler.prototype.handleEquivalentBasedAmountUpdate,
       warnIfMixtureMassExceeded: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+    ReactionUpdateHandler.prototype.updatedReactionForEquivalentChange.call(ctx, {
       sampleID: 'ref-1',
       equivalent: 1,
       isSbmm: false,
@@ -735,7 +740,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     expect(reference.amount_mol).toBeCloseTo(0.001, 10);
     expect(reference.equivalent).toBeCloseTo(1, 10);
 
-    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+    ReactionUpdateHandler.prototype.updatedReactionForEquivalentChange.call(ctx, {
       sampleID: 'mat-1',
       equivalent: 3,
       isSbmm: false,
@@ -747,7 +752,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     expect(material.equivalent).toBeCloseTo(3, 10);
 
     reference.setAmount({ value: 0.2, unit: 'g' });
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx,
       [material],
       reference,
@@ -764,7 +769,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const material = makeMaterial();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 'n.d', gas_type: 'off' },
@@ -782,7 +787,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const material = makeMaterial();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -802,7 +807,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const gas = makeRealGas();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [gas],
       { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
@@ -823,7 +828,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
     const material = makeMaterial({ amount_value: 5, amount_mol: 0.05 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -843,7 +848,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
     const gas = makeRealGas();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [gas],
       { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
@@ -859,7 +864,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
     const mixture = makeRealMixture();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [mixture],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -877,7 +882,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const gas = makeRealGas();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [gas],
       { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
@@ -892,7 +897,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const mixture = makeRealMixture();
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [mixture],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -909,7 +914,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const material = makeMaterial({ amount_unit: 'g' });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -924,7 +929,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
     const material = makeMaterial({ amount_unit: 'g', amount_value: 5, amount_mol: 0.05 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -939,7 +944,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const ctx = buildCtx();
     const material = makeMaterial({ amount_unit: 'mol' });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       { id: 'mat-1', equivalent: 3, gas_type: 'off' },
@@ -971,7 +976,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     material.purity = editedSample.purity;
     expect(material.amount_mol).toBeCloseTo(0.001, 10);
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [material],
       editedSample,
@@ -989,7 +994,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const regularSample = makeMaterial();
     const editedSbmm = makeSbmm({ equivalent: 3 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [regularSample],
       editedSbmm,
@@ -1007,7 +1012,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
     const sbmmSample = makeSbmm();
     const editedRegularSample = makeMaterial({ equivalent: 3 });
 
-    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForEquivalentChange.call(
       ctx,
       [sbmmSample],
       editedRegularSample,
@@ -1023,7 +1028,7 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
-describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard', () => {
+describe('ReactionUpdateHandler#calculateEquivalentForProduct — polymer guard', () => {
   let gasStoreStub;
 
   const makeRef = () => ({
@@ -1071,7 +1076,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
       purity: 1,
     };
 
-    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
       ctx,
       polymerProduct,
       ref,
@@ -1094,7 +1099,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
       purity: 1,
     };
 
-    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
       ctx,
       normalProduct,
       ref,
@@ -1106,7 +1111,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
 });
 
 // B3 regression: checkMassPolymer must not write Infinity/NaN when product has no mass
-describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () => {
+describe('ReactionUpdateHandler#checkMassPolymer — zero amount_g guard', () => {
   const makeRef = () => ({
     amount_mol: 0.025,
     amount_g: 50,
@@ -1130,7 +1135,7 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
       calculateEquivalent: sinon.stub().returns(0.0),
     };
 
-    ReactionDetailsScheme.prototype.checkMassPolymer.call(ctx, ref, product, {});
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
 
     const loading = product.residues[0].custom_info.loading;
     expect(loading === null || loading === undefined || Number.isFinite(loading)).toBe(true);
@@ -1150,14 +1155,14 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
       calculateEquivalent: sinon.stub().returns(0.0),
     };
 
-    ReactionDetailsScheme.prototype.checkMassPolymer.call(ctx, ref, product, {});
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
 
     expect(product.equivalent).toBe(0.0);
   });
 });
 
 // B4 regression: yield clamp must not push to 100% when reference has no amount
-describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
   let gasStoreStub;
 
   beforeEach(() => {
@@ -1194,7 +1199,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
           updateReferenceAmountForLockedEquivalents: sinon.stub(),
         },
       },
-      state: { lockEquivColumn: false },
+      lockEquivColumn: false,
       checkMassMolecule,
       checkMassPolymer,
       triggerNotification,
@@ -1234,7 +1239,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
       contains_residues: false,
     };
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx, [product], reactant, 'products'
     );
 
@@ -1275,7 +1280,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
       contains_residues: false,
     };
 
-    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
       ctx, [product], reactant, 'products'
     );
 
@@ -1283,7 +1288,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
   });
 });
 
-describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', () => {
+describe('ReactionUpdateHandler#resolveReactionVolumeForConcentrationOrWarn', () => {
   it('warns and returns null when no reaction volume can be resolved', () => {
     // Locked volume + no usable concentration-basis volume + all-solid materials =>
     // reactionVolumeForConcentration() is null. The edit must surface a
@@ -1291,7 +1296,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => null };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(null);
@@ -1302,7 +1307,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => 0.01 };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(0.01);
@@ -1310,7 +1315,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
   });
 });
 
-describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
+describe('ReactionUpdateHandler#updatedSamplesForVesselSizeChange', () => {
   it('releases a feedstock preserveConcentration so it recomputes on vessel change', () => {
     const feedstock = {
       isFeedstock: () => true,
@@ -1319,7 +1324,7 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [feedstock], 0.5);
 
     expect(result.preserveConcentration).toBe(false);
@@ -1333,14 +1338,14 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [reactant], 0.5);
 
     expect(result.preserveConcentration).toBe(true);
   });
 });
 
-describe('ReactionDetailsScheme#switchVolumeLock', () => {
+describe('ReactionUpdateHandler#switchVolumeLock', () => {
   it('releases preserved concentrations and toggles the lock', () => {
     const reaction = {
       isVolumeLocked: false,
@@ -1353,7 +1358,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
     expect(onInputChange.calledOnceWith('lockReactionVolume', true)).toBe(true);
@@ -1371,7 +1376,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
     expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
@@ -1379,7 +1384,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
   });
 });
 
-describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
+describe('ReactionUpdateHandler#handleConcentrationModeChange', () => {
   it('releases preserved concentrations before recalculating with the new basis', () => {
     const reaction = {
       concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
@@ -1393,7 +1398,7 @@ describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.handleConcentrationModeChange.call(
+    ReactionUpdateHandler.prototype.handleConcentrationModeChange.call(
       instance, Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY
     );
 
@@ -1404,7 +1409,7 @@ describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
   });
 });
 
-describe('ReactionDetailsScheme#updateVolume', () => {
+describe('ReactionUpdateHandler#updateVolume', () => {
   it('releases preserved concentrations when changing an existing reaction-volume basis', () => {
     const reaction = {
       concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
@@ -1414,7 +1419,7 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { reaction, onInputChange } };
 
-    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+    ReactionUpdateHandler.prototype.updateVolume.call(instance, { value: 0.25 });
 
     expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
     expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
@@ -1434,7 +1439,7 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { reaction, onInputChange } };
 
-    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+    ReactionUpdateHandler.prototype.updateVolume.call(instance, { value: 0.25 });
 
     expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
     expect(onInputChange.calledWith('concentrationMode')).toBe(false);
@@ -1456,7 +1461,7 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     };
 
     // NumeralInputWithUnitsCompo reports a cleared field as numeric 0, not ''.
-    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
+    ReactionUpdateHandler.prototype.updateVolume.call(instance, { value: 0 });
 
     expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
@@ -1476,14 +1481,14 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     };
 
     // Same callback shape as clearing (value 0), but no prior volume to remove.
-    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
+    ReactionUpdateHandler.prototype.updateVolume.call(instance, { value: 0 });
 
     expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
     expect(instance.showReactionVolumeRequiredWarning.called).toBe(false);
   });
 });
 
-describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
+describe('ReactionUpdateHandler#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
     const reaction = {};
     const updatedSample = {
@@ -1492,13 +1497,13 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
     };
     const instance = {
       props: { reaction },
-      state: { lockEquivColumn: false },
+      lockEquivColumn: false,
       resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(null),
       updatedReactionWithSample: sinon.spy(),
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.setAmountFromConcentrationAndPreserve.called).toBe(false);
@@ -1516,13 +1521,13 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
     };
     const instance = {
       props: { reaction },
-      state: { lockEquivColumn: false },
+      lockEquivColumn: false,
       resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(0.01),
       updatedReactionWithSample: sinon.stub().returns(updatedReaction),
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.concn).toBe(2);
@@ -1533,7 +1538,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   });
 });
 
-describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', () => {
+describe('ReactionUpdateHandler#updatedReactionForConcentrationChange routing', () => {
   const buildInstance = (updatedSample, reactionOverrides = {}) => {
     const reaction = {
       gaseous: false,
@@ -1543,7 +1548,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     };
     return {
       props: { reaction },
-      state: { lockEquivColumn: false },
+      lockEquivColumn: false,
       guardConcentrationUpdate: sinon.stub().returns(true),
       handleFixedVolumeConcentrationChange: sinon.spy(),
       applyDerivedVolumeFromConcentration: sinon.spy(),
@@ -1554,7 +1559,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );
@@ -1567,7 +1572,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0.5, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );
@@ -1577,15 +1582,435 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
   });
 });
 
+// Regression tests for Bug 7 (ported from main after the update-handler refactor):
+// Yield corrupted when a non-reference reactant amount changes in a polymer surface-chemistry reaction.
+// Fix: updatedSamplesForAmountChange() now routes polymer products through checkMassPolymer
+//      instead of the MW-based maxAmount formula when the product is NOT the updated sample.
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — polymer product guard', () => {
+  let gasStoreStub;
+
+  // Polymer reference: surface-loaded starting material (is_partial=true)
+  const makePolymerReference = () => ({
+    id: 'ref-1',
+    reference: true,
+    amount_mol: 0.025,    // 0.5 mmol/g × 50 mg
+    amount_g: 50,
+    amount_value: 50,
+    coefficient: 1,
+    molecule: { molecular_weight: 100 },
+    residues: [{ custom_info: { loading: 0.5 } }],
+    contains_residues: true,
+    loading: 0.5,
+    decoupled: false,
+    gas_type: 'off',
+  });
+
+  // Polymer product: resin-bound product with loading and a real yield
+  const makePolymerProduct = (overrides = {}) => ({
+    id: 'prod-1',
+    contains_residues: true,
+    gas_type: 'off',
+    coefficient: 1,
+    equivalent: 0.5,
+    amount_g: 27,
+    amount_mol: 0.012,
+    molecule_molecular_weight: 2000,
+    molecule: { molecular_weight: 2000 },
+    purity: 1,
+    residues: [{ custom_info: { loading: 0.4, loading_type: null } }],
+    decoupled: false,
+    reference: false,
+    ...overrides,
+  });
+
+  // Non-polymer reactant whose amount the user changed
+  const makeReactant = () => ({
+    id: 'react-1',
+    gas_type: 'off',
+    amount_value: 200,
+    amount_mol: 200,
+    coefficient: 1,
+    molecule_molecular_weight: 36.5,
+    molecule: { molecular_weight: 36.5 },
+    purity: 1,
+    decoupled: false,
+    reference: false,
+    equivalent: 8000,
+    contains_residues: false,
+  });
+
+  // Build a minimal fake handler instance for the method's this-context
+  const buildCtx = (referenceMaterial, { lockEquivColumn = false } = {}) => {
+    const checkMassPolymer = sinon.spy();
+    const checkMassMolecule = sinon.stub().returns({ mFull: 55, errorMsg: null });
+    const triggerNotification = sinon.spy();
+    return {
+      props: {
+        reaction: {
+          referenceMaterial,
+          updateReferenceAmountForLockedEquivalents: sinon.stub(),
+        },
+      },
+      lockEquivColumn,
+      checkMassMolecule,
+      checkMassPolymer,
+      triggerNotification,
+    };
+  };
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+      reactionVesselSizeValue: 0,
+    });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  it('calls checkMassPolymer for a polymer product that is NOT the updated sample', () => {
+    const ref = makePolymerReference();
+    const ctx = buildCtx(ref);
+    const product = makePolymerProduct();
+    const reactant = makeReactant();
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [product],
+      reactant,
+      'products'
+    );
+
+    expect(ctx.checkMassPolymer.calledOnce).toBe(true);
+  });
+
+  it('does not call triggerNotification for a polymer product when a reactant amount changes', () => {
+    const ref = makePolymerReference();
+    const ctx = buildCtx(ref);
+    const product = makePolymerProduct();
+    const reactant = makeReactant();
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [product],
+      reactant,
+      'products'
+    );
+
+    expect(ctx.triggerNotification.called).toBe(false);
+  });
+
+  it('does not call checkMassPolymer for a non-polymer product (no regression)', () => {
+    const ref = makePolymerReference();
+    const ctx = buildCtx(ref);
+    const normalProduct = makePolymerProduct({
+      id: 'prod-2',
+      contains_residues: false,
+      molecule_molecular_weight: 150,
+      molecule: { molecular_weight: 150 },
+      residues: [],
+    });
+    const reactant = makeReactant();
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [normalProduct],
+      reactant,
+      'products'
+    );
+
+    expect(ctx.checkMassPolymer.called).toBe(false);
+  });
+
+  it('calls checkMassPolymer when the polymer product IS the updated sample', () => {
+    // Ensures the pre-existing if-branch (sample.id === updatedSample.id) still works
+    const ref = makePolymerReference();
+    const ctx = buildCtx(ref);
+    const product = makePolymerProduct();
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [product],
+      product,  // updatedSample IS the polymer product
+      'products'
+    );
+
+    expect(ctx.checkMassPolymer.calledOnce).toBe(true);
+  });
+});
+
+// Regression tests for the second polymer code path:
+// calculateEquivalentForProduct must route polymer products through checkMassPolymer
+// instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
+describe('ReactionUpdateHandler#calculateEquivalentForProduct — polymer guard', () => {
+  let gasStoreStub;
+
+  const makeRef = () => ({
+    amount_mol: 0.1,
+    amount_g: 200,
+    coefficient: 1,
+    molecule: { molecular_weight: 100 },
+    residues: [{ custom_info: { loading: 0.5 } }],
+    contains_residues: true,
+    loading: 0.5,
+  });
+
+  const buildCtx = (referenceMaterial) => {
+    const checkMassPolymer = sinon.spy();
+    const checkMassMolecule = sinon.stub().returns({ mFull: 55, errorMsg: null });
+    const triggerNotification = sinon.spy();
+    return {
+      props: { reaction: { referenceMaterial } },
+      checkMassMolecule,
+      checkMassPolymer,
+      triggerNotification,
+    };
+  };
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+      reactionVesselSizeValue: 0,
+    });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  it('calls checkMassPolymer for a polymer product (contains_residues=true)', () => {
+    const ref = makeRef();
+    const ctx = buildCtx(ref);
+    const polymerProduct = {
+      id: 'prod-1',
+      contains_residues: true,
+      gas_type: 'off',
+      isGas: () => false,
+      amount_g: null,
+      molecule_molecular_weight: 2000,
+      purity: 1,
+    };
+
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
+      ctx,
+      polymerProduct,
+      ref,
+      1.0
+    );
+
+    expect(ctx.checkMassPolymer.calledOnce).toBe(true);
+  });
+
+  it('does not call checkMassPolymer for a non-polymer product (contains_residues=false)', () => {
+    const ref = makeRef();
+    const ctx = buildCtx(ref);
+    const normalProduct = {
+      id: 'prod-2',
+      contains_residues: false,
+      gas_type: 'off',
+      isGas: () => false,
+      amount_g: 50,
+      molecule_molecular_weight: 150,
+      purity: 1,
+    };
+
+    ReactionUpdateHandler.prototype.calculateEquivalentForProduct.call(
+      ctx,
+      normalProduct,
+      ref,
+      1.0
+    );
+
+    expect(ctx.checkMassPolymer.called).toBe(false);
+  });
+});
+
+// B3 regression: checkMassPolymer must not write Infinity/NaN when product has no mass
+describe('ReactionUpdateHandler#checkMassPolymer — zero amount_g guard', () => {
+  const makeRef = () => ({
+    amount_mol: 0.025,
+    amount_g: 50,
+    coefficient: 1,
+    contains_residues: true,
+    loading: 0.5,
+    residues: [{ custom_info: { loading: 0.5 } }],
+    molecule: { molecular_weight: 100 },
+  });
+
+  it('does not write Infinity or NaN to loading when amount_g is 0', () => {
+    const ref = makeRef();
+    const product = {
+      amount_g: 0,
+      amount_mol: 0,
+      equivalent: 0,
+      molecule: { molecular_weight: 2000 },
+      residues: [{ custom_info: { loading: null, loading_type: null } }],
+    };
+    const ctx = {
+      calculateEquivalent: sinon.stub().returns(0.0),
+    };
+
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
+
+    const loading = product.residues[0].custom_info.loading;
+    expect(loading === null || loading === undefined || Number.isFinite(loading)).toBe(true);
+    expect(Number.isNaN(loading)).toBe(false);
+  });
+
+  it('sets equivalent even when amount_g is 0', () => {
+    const ref = makeRef();
+    const product = {
+      amount_g: 0,
+      amount_mol: 0,
+      equivalent: 0.5,
+      molecule: { molecular_weight: 2000 },
+      residues: [{ custom_info: { loading: null, loading_type: null } }],
+    };
+    const ctx = {
+      calculateEquivalent: sinon.stub().returns(0.0),
+    };
+
+    ReactionUpdateHandler.prototype.checkMassPolymer.call(ctx, ref, product, {});
+
+    expect(product.equivalent).toBe(0.0);
+  });
+});
+
+// B4 regression: yield clamp must not push to 100% when reference has no amount
+describe('ReactionUpdateHandler#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
+  let gasStoreStub;
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({ reactionVesselSizeValue: 0 });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  const makeRef = (amount_mol) => ({
+    id: 'ref-1',
+    reference: true,
+    amount_mol,
+    amount_g: amount_mol > 0 ? 50 : 0,
+    amount_value: amount_mol > 0 ? 50 : 0,
+    coefficient: 1,
+    molecule: { molecular_weight: 100 },
+    residues: [{ custom_info: { loading: 0.5 } }],
+    contains_residues: true,
+    loading: amount_mol > 0 ? 0.5 : 0,
+    decoupled: false,
+    gas_type: 'off',
+  });
+
+  const buildCtx = (ref) => {
+    const checkMassPolymer = sinon.spy();
+    const checkMassMolecule = sinon.stub().returns({ mFull: 55, errorMsg: null });
+    const triggerNotification = sinon.spy();
+    return {
+      props: {
+        reaction: {
+          referenceMaterial: ref,
+          updateReferenceAmountForLockedEquivalents: sinon.stub(),
+        },
+      },
+      lockEquivColumn: false,
+      checkMassMolecule,
+      checkMassPolymer,
+      triggerNotification,
+    };
+  };
+
+  it('sets equivalent to 0 when reference has no amount and product has real mass', () => {
+    const ref = makeRef(0);
+    const ctx = buildCtx(ref);
+    const product = {
+      id: 'prod-1',
+      contains_residues: false,
+      gas_type: 'off',
+      coefficient: 1,
+      equivalent: NaN,
+      amount_g: 30,
+      amount_mol: 0.2,
+      molecule_molecular_weight: 150,
+      molecule: { molecular_weight: 150 },
+      purity: 1,
+      residues: [],
+      decoupled: false,
+      reference: false,
+    };
+    const reactant = {
+      id: 'react-1',
+      gas_type: 'off',
+      amount_value: 100,
+      amount_mol: 100,
+      coefficient: 1,
+      molecule_molecular_weight: 36.5,
+      molecule: { molecular_weight: 36.5 },
+      purity: 1,
+      decoupled: false,
+      reference: false,
+      equivalent: 1,
+      contains_residues: false,
+    };
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx, [product], reactant, 'products'
+    );
+
+    expect(product.equivalent).toBe(0.0);
+  });
+
+  it('sets equivalent to 1.0 when product has real mass and reference has real amount with NaN equivalent', () => {
+    const ref = makeRef(0.025);
+    const ctx = buildCtx(ref);
+    const product = {
+      id: 'prod-1',
+      contains_residues: false,
+      gas_type: 'off',
+      coefficient: 1,
+      equivalent: NaN,
+      amount_g: 30,
+      amount_mol: 0.2,
+      maxAmount: 100,
+      molecule_molecular_weight: 150,
+      molecule: { molecular_weight: 150 },
+      purity: 1,
+      residues: [],
+      decoupled: false,
+      reference: false,
+    };
+    const reactant = {
+      id: 'react-1',
+      gas_type: 'off',
+      amount_value: 100,
+      amount_mol: 100,
+      coefficient: 1,
+      molecule_molecular_weight: 36.5,
+      molecule: { molecular_weight: 36.5 },
+      purity: 1,
+      decoupled: false,
+      reference: false,
+      equivalent: 1,
+      contains_residues: false,
+    };
+
+    ReactionUpdateHandler.prototype.updatedSamplesForAmountChange.call(
+      ctx, [product], reactant, 'products'
+    );
+
+    expect(product.equivalent).toBe(1.0);
+  });
+});
+
 // Bug fix: checkMassMolecule must NOT fire material-loss warning when product has no mass entered.
 // When user changes reference compound value with no product mass, massExperimental=0 which is
 // always < mFull, causing a false positive. Fixed by guarding with massExperimental > 0.
-describe('ReactionDetailsScheme#checkMassMolecule — no false material-loss warning', () => {
+describe('ReactionUpdateHandler#checkMassMolecule — no false material-loss warning', () => {
   let notificationStub;
 
   const buildInstance = () => {
     notificationStub = sinon.stub();
-    const instance = Object.create(ReactionDetailsScheme.prototype);
+    const instance = Object.create(ReactionUpdateHandler.prototype);
     instance.context = { notifications: { add: notificationStub } };
     return instance;
   };
@@ -1644,12 +2069,12 @@ describe('ReactionDetailsScheme#checkMassMolecule — no false material-loss war
 // recompute pass (a single edit can touch every product in the reaction), so their
 // notifications.add calls need a stable uid — otherwise react-hot-toast stacks one
 // toast per product instead of collapsing repeats of the same underlying condition.
-describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toast dedupe uid', () => {
+describe('ReactionUpdateHandler#checkMassMolecule / #calculateEquivalent — toast dedupe uid', () => {
   let notificationStub;
 
   const buildInstance = () => {
     notificationStub = sinon.stub();
-    const instance = Object.create(ReactionDetailsScheme.prototype);
+    const instance = Object.create(ReactionUpdateHandler.prototype);
     instance.context = { notifications: { add: notificationStub } };
     return instance;
   };

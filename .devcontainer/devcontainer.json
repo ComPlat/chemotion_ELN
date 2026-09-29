@@ -3,7 +3,10 @@
   "name": "Chemotion Dockerfile",
   "dockerComposeFile": [
     "docker-compose.dev.yml",
-    "docker-compose.vs.yml"
+    "docker-compose.vs.yml",
+    // Personal, gitignored overrides; pre_create.sh copies the repo-root
+    // docker-compose.dev.override.yml here (or writes an empty stub).
+    "docker-compose.dev.override.yml"
   ],
   "service": "app",
   "workspaceFolder": "/home/ubuntu/app",

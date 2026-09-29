@@ -13,6 +13,8 @@
 # Ignore bundler config.
 /.bundle
 
+/.claude
+
 # Ignore deploy configs
 /config/deploy/*.rb
 
@@ -36,6 +38,7 @@
 /.devcontainer/Dockerfile*
 /.devcontainer/docker-compose.dev*
 /.devcontainer/.env.development
+/.devcontainer/prepare-chuser.sh
 /docker-compose.services.yml
 
 /config/matrices.json
@@ -249,3 +252,4 @@ public/sprite.png
 storybook-static
 public/units_system/units_system.json
 CLAUDE.md
+/docker-compose.dev.override.yml
