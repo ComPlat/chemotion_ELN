@@ -10,7 +10,9 @@ import React, {
   useContext, useMemo, useState
 } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form, InputGroup } from 'react-bootstrap';
+import {
+  Button, Form, InputGroup, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import Reaction, { convertTonPerTime } from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitOn } from 'src/components/common/uis';
@@ -47,7 +49,9 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialComponents';
 import { GROUP_ID_SEPARATOR } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import REACTION_FIELDS from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationReactionFields';
-import { STICKY_NAME_CLASS } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
+import {
+  STICKY_NAME_CLASS, READ_ONLY_CELL_CLASS
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
 
 const MAT_GROUPS = ['starting_materials', 'reactants', 'solvents', 'products'];
 const REACTION_FIELDS_GROUP = 'reaction_fields';
@@ -166,6 +170,54 @@ PlainValue.propTypes = {
   children: PropTypes.node,
 };
 
+const summaryNumber = (value, factor = 1) => {
+  const number = Number(value) * factor;
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(number)
+    ? Number(number.toPrecision(4)).toString()
+    : 'n.d.';
+};
+
+/*
+The material of this row at a glance, as the previous variations table showed it when hovering a
+material: reference, coefficient, molar mass and its amounts. Per row, since every variation may
+have its own.
+*/
+const MaterialSummary = ({ mh }) => {
+  const { material, materialGroup } = mh;
+  if (mh.isSbmm) {
+    return null;
+  }
+
+  const lines = [
+    material.reference ? 'Reference material' : null,
+    `Coefficient: ${material.coefficient ?? 1}`,
+    `Molar mass: ${summaryNumber(material.molecule_molecular_weight)} g/mol`,
+    `Mass: ${summaryNumber(material.amount_g, 1000)} mg`,
+    `Amount: ${summaryNumber(material.amount_mol, 1000)} mmol`,
+    `Volume: ${summaryNumber(material.amount_l, 1000)} ml`,
+    materialGroup === 'products'
+      ? `Yield: ${summaryNumber(material.equivalent, 100)} %`
+      : `Equivalent: ${summaryNumber(material.equivalent)}`,
+  ].filter(Boolean);
+
+  return (
+    <OverlayTrigger
+      placement="right"
+      overlay={(
+        <Tooltip>
+          {lines.map((line) => <div key={line} className="text-start">{line}</div>)}
+        </Tooltip>
+      )}
+    >
+      <i className="fa fa-info-circle text-muted ms-1 mt-1" aria-label="Material summary" />
+    </OverlayTrigger>
+  );
+};
+
+MaterialSummary.propTypes = {
+  mh: PropTypes.instanceOf(MaterialHandler).isRequired,
+};
+
 const NAME_FIELD = {
   key: 'name',
   header: 'Material',
@@ -174,9 +226,17 @@ const NAME_FIELD = {
   sticky: true,
   sortValue: (material) => material.molecule?.iupac_name || material.name || material.short_label || '',
   render: (mh, { index }) => (
-    <MaterialNameWithIupac mh={mh} index={index} />
+    <div className="d-flex align-items-start">
+      <MaterialNameWithIupac mh={mh} index={index} />
+      <MaterialSummary mh={mh} />
+    </div>
   ),
 };
+
+// Whether the products show their yield, which is computed, rather than a conversion rate to enter.
+const displaysYield = (reaction) => reaction.products.every(
+  (product) => !(product.conversion_rate && product.conversion_rate !== 0)
+);
 
 const GENERAL_MATERIAL_SETTIGS_FIELDS = [
   NAME_FIELD,
@@ -243,6 +303,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
   },
   {
     key: 'molar_mass',
+    readOnly: (material) => !isSbmmSample(material),
     header: MATERIAL_HEADER.molar_mass,
     width: 120,
     exportUnit: 'g/mol',
@@ -253,6 +314,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
   },
   {
     key: 'density',
+    readOnly: () => true,
     header: MATERIAL_HEADER.density,
     width: 80,
     sortValue: (material) => (material.has_density ? material.density : null),
@@ -260,6 +322,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
   },
   {
     key: 'purity',
+    readOnly: () => true,
     header: MATERIAL_HEADER.purity,
     width: 80,
     sortValue: (material) => material.purity,
@@ -296,6 +359,10 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     key: 'eq',
     header: MATERIAL_HEADER.eq,
     width: 150,
+    // A product's yield is computed; so is the reference material's equivalent.
+    readOnly: (material, reaction, materialGroup) => (
+      materialGroup === 'products' ? displaysYield(reaction) : !!material.reference
+    ),
     sortValue: (material) => material.equivalent,
     render: (mh, { displayYieldField }) => (
       <EquivalentOrYield mh={mh} displayYieldField={displayYieldField} />
@@ -335,6 +402,7 @@ const SOLVENT_FIELDS = [
   },
   {
     key: 'ratio',
+    readOnly: () => true,
     header: 'Ratio',
     width: 90,
     sortValue: (material, reaction) => reaction.volumeRatioByMaterialId(material.id),
@@ -356,14 +424,16 @@ const GAS_PHASE_FIELDS = [
   { key: 'gas_time', header: 'Time', gasField: 'time', unitSwitchable: true },
   { key: 'gas_temperature', header: 'Temp', gasField: 'temperature', unitSwitchable: true },
   { key: 'gas_ppm', header: 'ppm', gasField: 'part_per_million' },
-  { key: 'gas_ton', header: 'TON', gasField: 'turnover_number' },
-  { key: 'gas_tof', header: 'TOF', gasField: 'turnover_frequency' },
+  { key: 'gas_ton', header: 'TON', gasField: 'turnover_number', readOnly: true },
+  { key: 'gas_tof', header: 'TOF', gasField: 'turnover_frequency', readOnly: true },
 ].map(({
-  key, header, gasField, unitSwitchable
+  key, header, gasField, unitSwitchable, readOnly
 }) => ({
   key,
   header,
   width: 150,
+  gasField,
+  ...(readOnly ? { readOnly: () => true } : {}),
   ...(unitSwitchable ? { unitToggle: { gasField } } : {}),
   // The units gasSortValue reports in.
   exportUnit: {
@@ -387,6 +457,21 @@ What one material column sorts on. A slot a variation does not fill sorts as emp
 throwing, and the amounts are read in their base unit, so switching the column's unit leaves the
 order alone.
 */
+/*
+Whether a material cell shows something that cannot be edited there, which gets the grey background
+of the previous variations table: the row may not be changed, the slot is empty in this variation, a
+gas phase field of a product that is not the gas one, or a field that is computed or only shown.
+*/
+const isReadOnlyMaterialCell = (row, matGroup, sampleIdx, field) => {
+  const variationReaction = row?.data ?? null;
+  const material = variationReaction?.[matGroup]?.[sampleIdx] ?? null;
+  if (!material) return true;
+  if (field.key === 'name') return false;
+  if (!permitOn(variationReaction)) return true;
+  if (field.gasField && !isGasProductMaterial(variationReaction, material)) return true;
+  return !!field.readOnly?.(material, variationReaction, matGroup);
+};
+
 const materialSortValue = (row, matGroup, sampleIdx, field) => {
   const variationReaction = row?.data ?? null;
   const material = variationReaction?.[matGroup]?.[sampleIdx] ?? null;
@@ -461,9 +546,7 @@ const MaterialFieldCell = ({
   const input = field.render(mh, {
     index: sampleIdx + 1,
     showLoadingColumn: !!variationReaction.hasPolymers(),
-    displayYieldField: variationReaction.products.every(
-      (product) => !(product.conversion_rate && product.conversion_rate !== 0)
-    ),
+    displayYieldField: displaysYield(variationReaction),
     isGasProduct: isGasProductMaterial(variationReaction, mh.material),
   });
 
@@ -773,6 +856,9 @@ const schemaBuildColumnGroups = (variations) => {
               valueGetter: ({ data }) => materialSortValue(data, matGroup, sampleIdx, field),
               ...(field.exportUnit ? { context: { exportUnit: field.exportUnit } } : {}),
               ...(field.sticky && !sharedSample ? { cellClass: STICKY_NAME_CLASS } : {}),
+              cellClassRules: {
+                [READ_ONLY_CELL_CLASS]: ({ data }) => isReadOnlyMaterialCell(data, matGroup, sampleIdx, field),
+              },
               // Overrides the plain draggable header of buildColumnDefs with one that also carries
               // the column wide unit switch.
               ...(field.unitToggle ? {
@@ -806,6 +892,9 @@ const schemaBuildColumnGroups = (variations) => {
         ? { valueGetter: ({ data }) => (data?.data ? field.sortValue(data.data) : null) }
         : { sortable: false }),
       ...(field.exportUnit ? { context: { exportUnit: field.exportUnit } } : {}),
+      cellClassRules: {
+        [READ_ONLY_CELL_CLASS]: ({ data }) => !data?.data || !permitOn(data.data) || !!field.readOnly,
+      },
       cellRenderer: ReactionFieldCell,
       cellRendererParams: { field },
     })),
@@ -823,5 +912,6 @@ export {
   MaterialUnitHeader,
   ReactionFieldCell,
   isGasProductMaterial,
+  isReadOnlyMaterialCell,
   schemaBuildColumnGroups,
 };

@@ -484,6 +484,8 @@ const REACTION_FIELDS = [
     key: 'conditions',
     header: 'Conditions',
     width: 260,
+    // Shown as tags; edited in the variation's scheme panel.
+    readOnly: true,
     requiresNonInteraction: true,
     sortValue: (reaction) => reaction.conditions ?? '',
     render: (reaction) => <ConditionsTags reaction={reaction} />,

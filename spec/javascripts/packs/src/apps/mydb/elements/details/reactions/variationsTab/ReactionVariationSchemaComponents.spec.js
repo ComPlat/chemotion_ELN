@@ -29,6 +29,57 @@ describe('ReactionVariationSchemaComponents', () => {
     });
   });
 
+  // Cells that cannot be edited get the grey background of the previous variations table.
+  describe('read-only cells', () => {
+    const READ_ONLY = 'variations-cell--read-only';
+    const isGrey = (groups, groupId, colId, row) => columnOf(groups, groupId, colId)
+      .cellClassRules[READ_ONLY]({ data: row });
+
+    const buildEditable = async () => {
+      const variations = await buildVariations();
+      variations[0].data.can_update = true;
+      return variations;
+    };
+
+    it('leaves editable fields white and greys computed or only shown ones', async () => {
+      const variations = await buildEditable();
+      const groups = schemaBuildColumnGroups(variations);
+
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_mass', variations[0])).toBe(false);
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_density', variations[0])).toBe(true);
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_molar_mass', variations[0])).toBe(true);
+    });
+
+    it('greys a product yield, which is computed, and the reference material equivalent', async () => {
+      const variations = await buildEditable();
+      variations[0].data.starting_materials[0].reference = true;
+      const groups = schemaBuildColumnGroups(variations);
+
+      expect(isGrey(groups, 'products::0', 'products_0_eq', variations[0])).toBe(true);
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_eq', variations[0])).toBe(true);
+      expect(isGrey(groups, 'starting_materials::1', 'starting_materials_1_eq', variations[0])).toBe(false);
+    });
+
+    it('greys every cell of a row the user may not change, but not the material name', async () => {
+      const variations = await buildVariations();
+      variations[0].data.can_update = false;
+      const groups = schemaBuildColumnGroups(variations);
+
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_mass', variations[0])).toBe(true);
+      expect(isGrey(groups, 'starting_materials::0', 'starting_materials_0_name', variations[0])).toBe(false);
+      expect(isGrey(groups, 'reaction_fields', 'reaction_temperature', variations[0])).toBe(true);
+    });
+
+    it('greys a slot this variation leaves empty', async () => {
+      const variations = await buildEditable();
+      const wider = await buildEditable();
+      wider[0].data.starting_materials = [...wider[0].data.starting_materials, wider[0].data.products[0]];
+      const groups = schemaBuildColumnGroups([...variations, { ...wider[0], idx: 1 }]);
+
+      expect(isGrey(groups, 'starting_materials::2', 'starting_materials_2_mass', variations[0])).toBe(true);
+    });
+  });
+
   describe('schemaBuildColumnGroups', () => {
     it('builds one group per material slot, sized by the widest variation', async () => {
       const variations = await buildVariations();
