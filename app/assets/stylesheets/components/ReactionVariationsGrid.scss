@@ -230,3 +230,19 @@ full name as a tooltip).
     overflow-y: auto;
   }
 }
+
+// A cell whose value cannot be edited there: computed, only shown, an empty slot, or a row the user
+// may not change - grey, as in the previous variations table.
+.reaction-variations-grid .ag-cell.variations-cell--read-only {
+  background-color: #e9ecef;
+}
+
+// The second horizontal scrollbar above the grid, mirroring AG Grid's own (TopHorizontalScrollbar).
+.reaction-variations-grid__top-scroll {
+  overflow-x: scroll;
+  overflow-y: hidden;
+
+  .reaction-variations-grid__top-scroll-spacer {
+    height: 1px;
+  }
+}

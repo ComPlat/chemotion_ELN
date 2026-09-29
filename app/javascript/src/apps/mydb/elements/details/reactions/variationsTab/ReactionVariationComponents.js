@@ -50,6 +50,9 @@ const ANALYSES_GROUP = 'analyses_fields';
 const NOTES_GROUP = 'notes_fields';
 // Marks the material name cells that follow the horizontal scroll inside their own group.
 const STICKY_NAME_CLASS = 'variations-sticky-name';
+// Grey background for a cell whose value cannot be edited there, as in the previous variations table.
+const READ_ONLY_CELL_CLASS = 'variations-cell--read-only';
+const readOnlyRowRule = { [READ_ONLY_CELL_CLASS]: ({ data }) => !data?.data || !permitOn(data.data) };
 const STICKY_NAME_FLOATING_CLASS = 'variations-sticky-name--floating';
 // Marks the group heading that follows the horizontal scroll inside its own group.
 const STICKY_GROUP_LABEL_CLASS = 'variations-sticky-group-label';
@@ -234,6 +237,7 @@ const GroupCell = ({ data }) => {
       type="text"
       size="sm"
       value={data.group.join('.')}
+      disabled={!permitOn(data.data)}
       onChange={(event) => onGroupChange(event.target.value, data.idx)}
       onBlur={() => onGroupBlur(data.idx)}
     />
@@ -243,6 +247,7 @@ const GroupCell = ({ data }) => {
 GroupCell.propTypes = {
   data: PropTypes.shape({
     idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
     group: PropTypes.arrayOf(
       PropTypes.oneOfType([PropTypes.number, PropTypes.string])
     ).isRequired,
@@ -439,6 +444,7 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
           // "10.2" after "2.1", not before it: a group is a sequence of numbers, so it is compared
           // as one rather than as the text it is displayed as.
           comparator: compareGroups,
+          cellClassRules: readOnlyRowRule,
           cellRenderer: GroupCell,
         },
       ],
@@ -469,6 +475,7 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
           headerName: 'Notes',
           width: 200,
           valueGetter: ({ data }) => data.notes ?? '',
+          cellClassRules: readOnlyRowRule,
           cellRenderer: NotesCell,
         },
       ],
@@ -589,6 +596,75 @@ The grid grows with its rows (autoHeight), but only up to 80% of what the detail
 the tab bar and the button group. Past that it gets a fixed height and scrolls its rows itself, so
 the header stays in view. Returns the fixed height to apply, or null while the grid still fits.
 */
+/*
+A second horizontal scrollbar above the grid, kept in step with AG Grid's own at the bottom - as the
+previous variations table had - so a wide table can be scrolled without first scrolling down to its
+end. It mirrors the grid's scrollbar, pinned column offsets included, and so disappears with it when
+nothing overflows. `gridToken` changes once the grid has built the elements it reads.
+*/
+const TopHorizontalScrollbar = ({ gridElementRef, gridToken }) => {
+  const scrollbarRef = useRef(null);
+  const spacerRef = useRef(null);
+
+  useEffect(() => {
+    const wrapper = gridElementRef.current;
+    const scrollbar = scrollbarRef.current;
+    const spacer = spacerRef.current;
+    if (!wrapper || !scrollbar || !spacer) { return undefined; }
+
+    const viewport = wrapper.querySelector('.ag-body-horizontal-scroll-viewport');
+    const container = wrapper.querySelector('.ag-body-horizontal-scroll-container');
+    if (!viewport || !container) { return undefined; }
+
+    const leftSpacer = wrapper.querySelector('.ag-horizontal-left-spacer');
+    const rightSpacer = wrapper.querySelector('.ag-horizontal-right-spacer');
+
+    // Setting an equal position is skipped, which ends the loop of each bar reacting to the other.
+    const sync = (source, target) => {
+      if (target.scrollLeft !== source.scrollLeft) {
+        target.scrollLeft = source.scrollLeft;
+      }
+    };
+    const syncToGrid = () => sync(scrollbar, viewport);
+    const syncFromGrid = () => sync(viewport, scrollbar);
+
+    const syncDimensions = () => {
+      scrollbar.style.height = `${viewport.offsetHeight}px`;
+      scrollbar.style.marginLeft = `${leftSpacer ? leftSpacer.offsetWidth : 0}px`;
+      scrollbar.style.marginRight = `${rightSpacer ? rightSpacer.offsetWidth : 0}px`;
+      spacer.style.width = `${container.offsetWidth}px`;
+      syncFromGrid();
+    };
+    syncDimensions();
+
+    scrollbar.addEventListener('scroll', syncToGrid, { passive: true });
+    viewport.addEventListener('scroll', syncFromGrid, { passive: true });
+
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncDimensions);
+    [viewport, container, leftSpacer, rightSpacer]
+      .filter(Boolean)
+      .forEach((element) => resizeObserver?.observe(element));
+
+    return () => {
+      scrollbar.removeEventListener('scroll', syncToGrid);
+      viewport.removeEventListener('scroll', syncFromGrid);
+      resizeObserver?.disconnect();
+    };
+  }, [gridElementRef, gridToken]);
+
+  return (
+    <div className="reaction-variations-grid__top-scroll" ref={scrollbarRef}>
+      <div className="reaction-variations-grid__top-scroll-spacer" ref={spacerRef} />
+    </div>
+  );
+};
+
+TopHorizontalScrollbar.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  gridElementRef: PropTypes.object.isRequired,
+  gridToken: PropTypes.number.isRequired,
+};
+
 const useGridHeightCap = (gridElementRef) => {
   const [gridHeight, setGridHeight] = useState(null);
 
@@ -679,6 +755,8 @@ const VariationSchemaTable = ({
   const gridApiRef = useRef(null);
   const gridElementRef = useRef(null);
   const restoredRef = useRef(false);
+  // Bumped once the grid is ready, for TopHorizontalScrollbar to find the elements it mirrors.
+  const [gridToken, setGridToken] = useState(0);
   const toolbarRef = useRef(null);
   const scrollThumbRef = useRef(null);
   const { gridHeight, syncGridHeight } = useGridHeightCap(gridElementRef);
@@ -1075,6 +1153,7 @@ const VariationSchemaTable = ({
         {/* Positioned by updateToolbarScrollIndicator; hidden while the grid has no overflow. */}
         {advancedMode && <div className="reaction-variations-grid__scroll-thumb" ref={scrollThumbRef} />}
       </div>
+      <TopHorizontalScrollbar gridElementRef={gridElementRef} gridToken={gridToken} />
       <div
         className={cs('ag-theme-alpine reaction-variations-grid',
           { 'reaction-variations-grid__simple-mode': !advancedMode })}
@@ -1112,6 +1191,7 @@ const VariationSchemaTable = ({
           suppressColumnVirtualisation
           onGridReady={({ api }) => {
             gridApiRef.current = api;
+            setGridToken((token) => token + 1);
             // The parent's toolbar drives the CSV export, so it gets the api too.
             onGridApiReady?.(api);
             const storedState = getInitialColumnState(reactionId, currentSegmentName);
@@ -1208,6 +1288,7 @@ VariationSchemaTable.defaultProps = {
 };
 
 export {
+  READ_ONLY_CELL_CLASS,
   STICKY_NAME_CLASS
 };
 
