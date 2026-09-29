@@ -517,9 +517,6 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
     unit: rangeUnit,
     isRangeField
   } = mh.findMinMayUnit('g', (m) => m.amount_g);
-  if (isRangeField) {
-    console.log({ rangeStart, rangeEnd, isRangeField, id: material.id });
-  }
   const isAmountDisabledByWeightPercentage = reaction.weight_percentage
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
   return (
@@ -918,11 +915,12 @@ SwitchTargetReal.propTypes = {
 
 const DrySolventCheckBox = ({ mh }) => {
   const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
-  const { material } = mh;
+  const { material, reaction } = mh;
   return (<OverlayTrigger overlay={drySolvTooltip}>
     <Form.Check
       type="checkbox"
       checked={material.dry_solvent}
+      disabled={!permitOn(reaction)}
       onChange={(event) => mh.handler.drySolventChange(event)}
       className="ms-1"
     />

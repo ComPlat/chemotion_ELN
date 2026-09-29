@@ -48,7 +48,7 @@ export default class MaterialHandler {
       reaction: this._reaction,
       materialGroup: this.materialGroup,
       onChange: this.onChange,
-      setFieldToShow: this.ssetFieldToShow,
+      setFieldToShow: this.setFieldToShow,
       fieldToShow: this.fieldToShow,
       mixtureComponents: this.mixtureComponents,
       setMixtureComponents: this.setMixtureComponents,

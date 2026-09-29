@@ -20,7 +20,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
-import { calculateTONPerTimeValue } from 'src/utilities/UnitsConversion';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -113,12 +112,20 @@ const ReactionTypeOptions = [
   { value: 'interaction', label: 'Interaction' },
 ];
 
-export const convertTonPerTime = (tonPerTime, fromUnit, toUnit) => {
-  const fromUnitTime = fromUnit.split('/').at(-1);
-  const toUnitTime = toUnit.split('/').at(-1);
-  const  convertedValue = calculateTONPerTimeValue(tonPerTime, fromUnitTime);
-  return convertedValue[ShirtLegMomentUnit[toUnitTime]];
+const SECONDS_PER_TON_TIME_UNIT = { s: 1, m: 60, h: 3600 };
 
+/*
+A turnover frequency is a rate - turnovers per time unit - so going to a longer time unit multiplies:
+2 TON/m is 120 TON/h. (Converting the time itself, as calculateTONPerTimeValue does for durations,
+would divide instead.) An unknown unit leaves the value as it is.
+*/
+export const convertTonPerTime = (tonPerTime, fromUnit, toUnit) => {
+  const fromSeconds = SECONDS_PER_TON_TIME_UNIT[String(fromUnit).split('/').at(-1)];
+  const toSeconds = SECONDS_PER_TON_TIME_UNIT[String(toUnit).split('/').at(-1)];
+  if (!fromSeconds || !toSeconds) {
+    return tonPerTime;
+  }
+  return Number(tonPerTime) * (toSeconds / fromSeconds);
 };
 
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value),
