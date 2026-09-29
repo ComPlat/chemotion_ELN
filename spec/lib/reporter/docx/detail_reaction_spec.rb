@@ -220,8 +220,9 @@ describe 'Reporter::Docx::DetailReaction' do
             'data' => {
               'id' => SecureRandom.uuid,
               '_temperature' => { 'userText' => '-78' },
+              # sample1 has a real amount, which is the one the client edits.
               '_starting_materials' => [
-                { '_target_amount_value' => 0.042, '_target_amount_unit' => 'g' },
+                { '_real_amount_value' => 0.042, '_real_amount_unit' => 'g' },
               ],
             },
           },
@@ -243,13 +244,28 @@ describe 'Reporter::Docx::DetailReaction' do
       expect(variation['notes']).to eq('ran it colder')
     end
 
-    it 'lists a changed material with what the variation changes about it' do
-      expect(variation['startingMaterials'].first).to include('target amount:', '0.042', 'g')
+    # The values the material has in the variation - the reaction's with the variation's changes on
+    # top - the way the Variations tab shows them, not just what the variation changed.
+    it 'lists a changed material with the amounts it has in the variation' do
+      # sample1's metrics show its mass in g.
+      expect(variation['startingMaterials'].first).to include('mass: 0.0420 g;')
+      expect(variation['startingMaterials'].first).to include('amount:', 'volume:')
     end
 
-    it 'lists an unchanged material by name alone' do
-      # Changed attributes are terminated by a semicolon, so an unchanged material has none.
-      expect(variation['products'].first).not_to include(';')
+    it 'lists an unchanged material with the reaction\'s own amounts' do
+      expect(variation['products'].first).to include('mass:', 'volume:', 'amount:', 'yield: 88')
+    end
+
+    it 'lists a material only the variation has' do
+      extra = create(:sample, name: 'Extra', collections: [collection], target_amount_value: 0.5,
+                              target_amount_unit: 'g')
+      # The reaction's one starting material is sample1; the entry after it is the variation's own.
+      data = reaction.variations.first['data']
+      data['_starting_materials'] << { 'id' => extra.id, 'name' => 'Extra', '_target_amount_value' => 0.25,
+                                       '_target_amount_unit' => 'g', '_metrics' => 'mmmm' }
+      reaction.update_columns(variations: reaction.variations) # rubocop:disable Rails/SkipsModelValidations
+
+      expect(variation['startingMaterials'].last).to include('mass: 250', 'mg')
     end
   end
 
