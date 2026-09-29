@@ -792,8 +792,9 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
 
         {variations.length > 0 && (
           <Alert variant="info">
-            This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with
-            variations.
+            This reaction has {reaction.variations.length} variations. Values that differ between variations are
+            shown as ranges and can only be edited in the Variations tab. Materials added, removed or moved here
+            are added, removed or moved in every variation.
           </Alert>
         )}
         <div className="d-flex align-items-center">
