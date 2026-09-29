@@ -22,6 +22,8 @@ const VariationsGridContext = createContext({
   setActiveVariation: () => {},
   onGroupChange: () => {},
   onGroupBlur: () => {},
+  onCopyVariation: () => {},
+  onNotesChange: () => {},
 });
 
 export default VariationsGridContext;
