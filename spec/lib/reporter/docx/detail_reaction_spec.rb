@@ -199,6 +199,20 @@ describe 'Reporter::Docx::DetailReaction' do
     end
   end
 
+  describe '#capitalize_first_letter' do
+    it 'capitalizes the first letter, after anything that is not a letter' do
+      expect(target.send(:capitalize_first_letter, '(2s)-butanol')).to eq('(2S)-butanol')
+      expect(target.send(:capitalize_first_letter, 'ethanol')).to eq('Ethanol')
+    end
+
+    # Used to raise NoMethodError on nil >= 0, failing the whole report.
+    it 'returns a name without a letter as it is' do
+      expect(target.send(:capitalize_first_letter, '123')).to eq('123')
+      expect(target.send(:capitalize_first_letter, '  ')).to eq('  ')
+      expect(target.send(:capitalize_first_letter, '')).to eq('')
+    end
+  end
+
   # A variation stores only what it changes about the reaction, so the report has to resolve the
   # two: see db/schemas/reaction_variations.schema.json. The attribute names below carry the leading
   # underscore the client's models put on everything they wrap in an accessor, which is what ends up

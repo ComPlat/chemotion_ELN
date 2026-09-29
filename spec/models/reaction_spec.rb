@@ -74,7 +74,7 @@ RSpec.describe Reaction, type: :model do
     it 'has a CodeLog' do
       expect(reaction.code_log.value).to match(/\d{40}/)
       expect(reaction.code_log.id).to match(
-        /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+        /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
       )
     end
   end
@@ -340,15 +340,15 @@ RSpec.describe Reaction, type: :model do
     it 'destroys associations properly' do
       expect(reaction.collections_reactions).to eq []
       expect(
-        reaction.collections.with_deleted.pluck(:deleted_at, :id)
+        reaction.collections.with_deleted.pluck(:deleted_at, :id),
       ).to eq([[nil, collection.id]])
       expect(
         [
           reaction.reactions_reactant_samples,
           reaction.reactions_product_samples,
           reaction.reactions_starting_material_samples,
-          reaction.reactions_solvent_samples
-        ].flatten.compact
+          reaction.reactions_solvent_samples,
+        ].flatten.compact,
       ).to eq []
       expect(Literature.count).to eq 0
     end
@@ -361,8 +361,8 @@ RSpec.describe Reaction, type: :model do
                   .only_deleted.pluck(:sample_id),
           reaction.reactions_solvent_samples.only_deleted.pluck(:sample_id),
           reaction.reactions_reactant_samples.only_deleted.pluck(:sample_id),
-          reaction.reactions_product_samples.only_deleted.pluck(:sample_id)
-        ].flatten
+          reaction.reactions_product_samples.only_deleted.pluck(:sample_id),
+        ].flatten,
       ).to eq [s1.id, s2.id, s3.id, s4.id]
     end
   end
@@ -375,44 +375,46 @@ RSpec.describe Reaction, type: :model do
 
   describe 'create private note' do
     let(:reaction) { create(:reaction) }
-    let(:note_1) do
+    let(:note1) do
       create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction')
     end
 
     before do
-      reaction.update(private_notes: [note_1])
+      reaction.update(private_notes: [note1])
     end
 
     it 'is possible to create a valid private note' do
       expect(reaction.private_notes).not_to be_nil
     end
 
-    context 'is content valid' do
+    context 'when the note is read back' do
       let(:n) { reaction.private_notes[0] }
+
       it 'is content valid' do
-        expect(n.content).to eq note_1.content
+        expect(n.content).to eq note1.content
       end
     end
   end
+
   describe 'create private note' do
     let(:reaction) { create(:reaction) }
 
-    let(:note_1) { create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction') }
+    let(:note1) { create(:private_note, content: 'Note 1', noteable_id: reaction.id, noteable_type: 'Reaction') }
 
     before do
-      reaction.update(private_notes: [note_1])
+      reaction.update(private_notes: [note1])
     end
 
     it 'is possible to create a valid private note' do
       expect(reaction.private_notes).not_to be_nil
     end
 
-    context 'is content valid' do
+    context 'when the note is read back' do
       let(:n) { reaction.private_notes[0] }
+
       it 'is content valid' do
-        expect(n.content).to eq note_1.content
+        expect(n.content).to eq note1.content
       end
     end
-
   end
 end
