@@ -5,7 +5,7 @@ import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
-  makeVariationReaction, addNewVariationDataset, convertVariationDatasetToInternalVariations,
+  makeVariationReaction, addNewVariationDataset, parseVariationGroup, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
@@ -116,6 +116,35 @@ describe('ReactionVariationsUtils', () => {
       const variation = addNewVariationDataset({ reaction });
       expect(variation.group).toEqual([3, 0]);
       expect(variation.idx).toBe(4);
+    });
+
+    // Groups saved before they were stored as numbers, or left empty.
+    it('reads string and empty groups as numbers', () => {
+      const reaction = { variations: [{ idx: 1, group: ['10', '2'] }, { idx: 2, group: [] }] };
+      const variation = addNewVariationDataset({ reaction });
+      expect(variation.group).toEqual([11, 0]);
+    });
+  });
+
+  describe('parseVariationGroup', () => {
+    it('reads major and minor group as numbers', () => {
+      expect(parseVariationGroup('2.1')).toEqual([2, 1]);
+      expect(parseVariationGroup('10')).toEqual([10]);
+    });
+
+    it('takes any run of non-digits as the separator, and ignores a trailing one', () => {
+      expect(parseVariationGroup('3 - 4')).toEqual([3, 4]);
+      expect(parseVariationGroup('1.')).toEqual([1]);
+      expect(parseVariationGroup('.5')).toEqual([5]);
+    });
+
+    it('keeps at most two numbers', () => {
+      expect(parseVariationGroup('1.2.3')).toEqual([1, 2]);
+    });
+
+    it('is null without any number, so the saved group is kept', () => {
+      expect(parseVariationGroup('')).toBe(null);
+      expect(parseVariationGroup('.')).toBe(null);
     });
   });
 

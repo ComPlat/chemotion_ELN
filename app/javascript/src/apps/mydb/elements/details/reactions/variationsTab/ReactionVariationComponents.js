@@ -157,7 +157,7 @@ OpenVariationCell.propTypes = {
 };
 
 const GroupCell = ({ data }) => {
-  const { onGroupChange } = useContext(VariationsGridContext);
+  const { onGroupChange, onGroupBlur } = useContext(VariationsGridContext);
 
   return (
     <Form.Control
@@ -165,6 +165,7 @@ const GroupCell = ({ data }) => {
       size="sm"
       value={data.group.join('.')}
       onChange={(event) => onGroupChange(event.target.value, data.idx)}
+      onBlur={() => onGroupBlur(data.idx)}
     />
   );
 };
@@ -555,6 +556,7 @@ const VariationSchemaTable = ({
                                 onReactionChange,
                                 setActiveVariation,
                                 onGroupChange,
+                                onGroupBlur,
                                 onDeleteVariation,
                                 onAnalysesChange,
                                 allReactionAnalyses,
@@ -898,6 +900,7 @@ const VariationSchemaTable = ({
     getRowHandler,
     setActiveVariation,
     onGroupChange,
+    onGroupBlur,
     onDeleteVariation,
     onAnalysesChange,
     allReactionAnalyses,
@@ -1083,6 +1086,7 @@ VariationSchemaTable.propTypes = {
   onReactionChange: PropTypes.func.isRequired,
   setActiveVariation: PropTypes.func.isRequired,
   onGroupChange: PropTypes.func.isRequired,
+  onGroupBlur: PropTypes.func.isRequired,
   onDeleteVariation: PropTypes.func.isRequired,
   onAnalysesChange: PropTypes.func.isRequired,
   allReactionAnalyses: PropTypes.arrayOf(PropTypes.shape({
