@@ -312,10 +312,6 @@ module Chemotion
           ).execute!
           reaction.reload
 
-          reaction.update!(variations: Usecases::Reactions::UpdateVariations.new(
-            reaction,
-          ).execute!)
-
           # save to profile
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
