@@ -4,8 +4,7 @@ import { Button } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementNoAccessTrigger from 'src/apps/mydb/elements/labels/ElementNoAccessTrigger';
 
-function ElementWellplateLabels({ element }) {
-  return (
+const ElementWellplateLabels = ({ element }) => (
     <ElementNoAccessTrigger
       element={element}
       isAvailable={(currentElement) => Boolean(currentElement.tag?.taggable_data?.wellplate_id)}
@@ -20,8 +19,9 @@ function ElementWellplateLabels({ element }) {
       warningMessage="Sorry, you cannot access this Wellplate."
     />
   );
-}
 
-ElementWellplateLabels.propTypes = ElementNoAccessTrigger.propTypes;
+ElementWellplateLabels.propTypes = {
+  element: ElementNoAccessTrigger.propTypes.element
+};
 
 export default ElementWellplateLabels;
