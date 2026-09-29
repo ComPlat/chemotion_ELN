@@ -141,6 +141,64 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
   return 'Hour(s)';
 };
 
+/*
+Variations store what they change about a material under the material's position in its group
+(`data._starting_materials[i]` belongs to `starting_materials[i]` - see
+db/schemas/reaction_variations.schema.json). Adding, removing or reordering the reaction's own
+materials therefore has to move those entries along, or every variation's changes would land on
+whatever material now sits at the old position.
+
+The entries are re-keyed by the id of the material they belonged to before the change, so a
+material dragged into another group takes its variation changes along. Entries past the end of the
+parent's group are materials only a variation has; they stay behind the parent's materials. An
+entry for a material that is gone is dropped.
+*/
+const VARIATION_MATERIAL_GROUPS = [
+  'starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products', 'reactant_sbmm_samples',
+];
+
+const materialIdsByGroup = (reaction) => Object.fromEntries(
+  VARIATION_MATERIAL_GROUPS.map((group) => [group, (reaction[group] || []).map((m) => String(m.id))])
+);
+
+// Reactions that are inside a material change already, so nested ones (moveMaterial) align once.
+const reactionsAligningVariations = new WeakSet();
+
+function realignVariationMaterials(variations, idsBefore, idsAfter) {
+  variations.forEach((variation) => {
+    const data = variation?.data;
+    if (!data) return;
+
+    const entryById = new Map();
+    const extrasByGroup = {};
+    VARIATION_MATERIAL_GROUPS.forEach((group) => {
+      const entries = data[`_${group}`];
+      if (!Array.isArray(entries)) return;
+
+      entries.forEach((entry, index) => {
+        if (index < idsBefore[group].length) {
+          if (entry !== null && entry !== undefined) entryById.set(idsBefore[group][index], entry);
+        } else {
+          extrasByGroup[group] = [...(extrasByGroup[group] || []), entry];
+        }
+      });
+    });
+
+    VARIATION_MATERIAL_GROUPS.forEach((group) => {
+      const key = `_${group}`;
+      const extras = extrasByGroup[group] || [];
+      const aligned = idsAfter[group].map((id) => entryById.get(id) ?? null);
+
+      if (extras.length === 0 && aligned.every((entry) => entry === null)) {
+        // Nothing changed about this group: leave it to the parent entirely.
+        delete data[key];
+      } else {
+        data[key] = [...aligned, ...extras];
+      }
+    });
+  });
+}
+
 export default class Reaction extends Element {
   // reaction material types
   static STARTING_MATERIALS = 'starting_materials';
@@ -721,117 +779,148 @@ export default class Reaction extends Element {
     return true;
   }
 
+  /*
+  Runs a change to the reaction's material lists and moves the variations' material entries along
+  with it - see realignVariationMaterials.
+  */
+  withVariationsAligned(change) {
+    const variations = this.variations || [];
+    if (variations.length === 0 || reactionsAligningVariations.has(this)) {
+      change();
+      return;
+    }
+
+    const idsBefore = materialIdsByGroup(this);
+    reactionsAligningVariations.add(this);
+    try {
+      change();
+    } finally {
+      reactionsAligningVariations.delete(this);
+    }
+    realignVariationMaterials(variations, idsBefore, materialIdsByGroup(this));
+  }
+
   addMaterial(material, group) {
-    if (!this.validateSbmmGroup(material, group)) return;
+    this.withVariationsAligned(() => {
+      if (!this.validateSbmmGroup(material, group)) return;
 
-    const materials = this[group];
-    const newMaterial = this.materialPolicy(material, null, group);
-    this[group] = [...materials, newMaterial];
+      const materials = this[group];
+      const newMaterial = this.materialPolicy(material, null, group);
+      this[group] = [...materials, newMaterial];
 
-    this.rebuildReference(newMaterial);
-    this.setPositions(group);
+      this.rebuildReference(newMaterial);
+      this.setPositions(group);
+    });
   }
 
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
-    if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+    this.withVariationsAligned(() => {
+      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
 
-    const materials = this[tagGp];
-    const idx = materials.indexOf(tagMaterial);
-    const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
+      const materials = this[tagGp];
+      const idx = materials.indexOf(tagMaterial);
+      const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
 
-    // rebuild weight percentage reference
-    if (srcIsWeightPercentageRef) {
-      newSrcMaterial.weight_percentage_reference = true;
-      newSrcMaterial.weight_percentage = 1;
-      WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
-      const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
-    }
+      // rebuild weight percentage reference
+      if (srcIsWeightPercentageRef) {
+        newSrcMaterial.weight_percentage_reference = true;
+        newSrcMaterial.weight_percentage = 1;
+        WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
+        const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
+      }
 
-    if (idx === -1) {
-      this[tagGp] = [...materials, newSrcMaterial];
-    } else {
-      this[tagGp] = [
-        ...materials.slice(0, idx),
-        newSrcMaterial,
-        ...materials.slice(idx),
-      ];
-    }
+      if (idx === -1) {
+        this[tagGp] = [...materials, newSrcMaterial];
+      } else {
+        this[tagGp] = [
+          ...materials.slice(0, idx),
+          newSrcMaterial,
+          ...materials.slice(idx),
+        ];
+      }
 
-    this.rebuildReference(newSrcMaterial);
-    this.setPositions(tagGp);
+      this.rebuildReference(newSrcMaterial);
+      this.setPositions(tagGp);
+    });
   }
 
   deleteMaterial(material, group) {
-    const materials = this[group];
-    const idx = materials.indexOf(material);
-    this[group] = [
-      ...materials.slice(0, idx),
-      ...materials.slice(idx + 1),
-    ];
+    this.withVariationsAligned(() => {
+      const materials = this[group];
+      const idx = materials.indexOf(material);
+      this[group] = [
+        ...materials.slice(0, idx),
+        ...materials.slice(idx + 1),
+      ];
 
-    // If deleted material is weight percentage reference, then set it to false
-    if (material.weight_percentage_reference) {
-      material.weight_percentage_reference = false;
-      WeightPercentageReactionActions.setWeightPercentageReference(null);
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-      const { allReactionMaterials } = this;
-      const refMaterial = allReactionMaterials.filter(
-        (m) => m.reference === true
-      )[0];
+      // If deleted material is weight percentage reference, then set it to false
+      if (material.weight_percentage_reference) {
+        material.weight_percentage_reference = false;
+        WeightPercentageReactionActions.setWeightPercentageReference(null);
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+        const { allReactionMaterials } = this;
+        const refMaterial = allReactionMaterials.filter(
+          (m) => m.reference === true
+        )[0];
 
-      const refAmountMol = refMaterial.amount_mol || 1;
+        const refAmountMol = refMaterial.amount_mol || 1;
 
-      // reset all weight percentage to null, since there is no weight percentage reference assigned
-      allReactionMaterials.forEach((m) => {
-        m.weight_percentage = null;
-        const amountMol = m.amount_mol || 0;
+        // reset all weight percentage to null, since there is no weight percentage reference assigned
+        allReactionMaterials.forEach((m) => {
+          m.weight_percentage = null;
+          const amountMol = m.amount_mol || 0;
 
-        // assign equivalent based on reference material (guard against missing ref)
-        if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
-          m.equivalent = amountMol / refAmountMol;
-        } else {
-          m.equivalent = null;
-        }
-      });
-    }
+          // assign equivalent based on reference material (guard against missing ref)
+          if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
+            m.equivalent = amountMol / refAmountMol;
+          } else {
+            m.equivalent = null;
+          }
+        });
+      }
 
-    if (material.weight_percentage && material.weight_percentage > 0) {
-      material.weight_percentage = null;
-    }
-    this.rebuildReference(material);
-    this.setPositions(group);
+      if (material.weight_percentage && material.weight_percentage > 0) {
+        material.weight_percentage = null;
+      }
+      this.rebuildReference(material);
+      this.setPositions(group);
+    });
   }
 
   swapMaterial(srcMaterial, tagMaterial, group) {
-    const srcIdx = this[group].indexOf(srcMaterial);
-    const tagIdx = this[group].indexOf(tagMaterial);
-    const groupWoSrc = [
-      ...this[group].slice(0, srcIdx),
-      ...this[group].slice(srcIdx + 1),
-    ];
-    const newGroup = [
-      ...groupWoSrc.slice(0, tagIdx),
-      srcMaterial,
-      ...groupWoSrc.slice(tagIdx),
-    ];
-    this[group] = newGroup.filter((o) => o != null) || [];
+    this.withVariationsAligned(() => {
+      const srcIdx = this[group].indexOf(srcMaterial);
+      const tagIdx = this[group].indexOf(tagMaterial);
+      const groupWoSrc = [
+        ...this[group].slice(0, srcIdx),
+        ...this[group].slice(srcIdx + 1),
+      ];
+      const newGroup = [
+        ...groupWoSrc.slice(0, tagIdx),
+        srcMaterial,
+        ...groupWoSrc.slice(tagIdx),
+      ];
+      this[group] = newGroup.filter((o) => o != null) || [];
 
-    this.rebuildReference(srcMaterial);
-    this.setPositions(group);
+      this.rebuildReference(srcMaterial);
+      this.setPositions(group);
+    });
   }
 
   moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
-    if (srcGp === tagGp) {
-      this.swapMaterial(srcMaterial, tagMaterial, tagGp);
-    } else {
-      // Validate before moving to prevent data loss if validation fails
-      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+    this.withVariationsAligned(() => {
+      if (srcGp === tagGp) {
+        this.swapMaterial(srcMaterial, tagMaterial, tagGp);
+      } else {
+        // Validate before moving to prevent data loss if validation fails
+        if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
 
-      const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
-      this.deleteMaterial(srcMaterial, srcGp);
-      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
-    }
+        const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
+        this.deleteMaterial(srcMaterial, srcGp);
+        this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
+      }
+    });
   }
 
   setPositions(group) {
