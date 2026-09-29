@@ -320,6 +320,12 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
         />
       </ButtonGroup>
       <VariationSchemaTable
+        /*
+        One grid per view: the scheme and each segment klass have columns - and a stored layout - of
+        their own, which a remount loads the way the first load does, instead of the columns of one
+        view being rebuilt in place from those of another and saved over its layout.
+        */
+        key={currentSegment}
         variations={variations}
         onGridApiReady={(api) => { gridApiRef.current = api; }}
         onReactionChange={handleReactionChange}
