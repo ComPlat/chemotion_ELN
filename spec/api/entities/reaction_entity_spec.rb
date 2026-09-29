@@ -198,11 +198,11 @@ describe Entities::ReactionEntity do
       end
 
       it 'returns a reaction without code_log' do
-        expect(grape_entity_as_hash[:code_log]).to eq(nil)
+        expect(grape_entity_as_hash[:code_log]).to be_nil
       end
 
       it 'returns a reaction without a container' do
-        expect(grape_entity_as_hash[:container]).to eq(nil)
+        expect(grape_entity_as_hash[:container]).to be_nil
       end
 
       it 'returns a research_plan without segments' do
@@ -210,7 +210,7 @@ describe Entities::ReactionEntity do
       end
 
       it 'returns a reaction without a tag' do
-        expect(grape_entity_as_hash[:tag]).to eq(nil)
+        expect(grape_entity_as_hash[:tag]).to be_nil
       end
     end
 
@@ -253,11 +253,11 @@ describe Entities::ReactionEntity do
       end
 
       it 'returns a reaction without code_log' do
-        expect(grape_entity_as_hash[:code_log]).to eq(nil)
+        expect(grape_entity_as_hash[:code_log]).to be_nil
       end
 
       it 'returns a reaction without container' do
-        expect(grape_entity_as_hash[:container]).to eq(nil)
+        expect(grape_entity_as_hash[:container]).to be_nil
       end
 
       it 'returns a reaction without products' do

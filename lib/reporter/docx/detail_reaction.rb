@@ -101,9 +101,7 @@ module Reporter
       def variation_diff(diff)
         return {} unless diff.is_a?(Hash)
 
-        diff.each_with_object({}) do |(key, value), result|
-          result[key.to_s.sub(/\A_/, '').to_sym] = value
-        end
+        diff.to_h.transform_keys { |key| key.to_s.delete_prefix('_').to_sym }
       end
 
       # The reaction's own temperature is a raw jsonb column and reaches the report with string
@@ -176,7 +174,9 @@ module Reporter
       end
 
       def variation_material(material, is_product, vessel_size)
-        s = OpenStruct.new(material)
+        # assigned_amount and unit_conversion read a material the way the rest of the report hands
+        # it to them.
+        s = OpenStruct.new(material) # rubocop:disable Style/OpenStructUse
         lines = [variation_material_flags(s)].compact
         lines += variation_amount_lines(s, is_product, vessel_size)
         lines << variation_equivalent_line(s, is_product)
@@ -186,13 +186,13 @@ module Reporter
       end
 
       def variation_material_label(material)
-        s = OpenStruct.new(material)
-        s.molecule_name_hash&.dig(:label).presence ||
-          s.preferred_label.presence ||
-          s.short_label.presence ||
-          s.name.presence ||
-          s.molecule&.dig(:sum_formular).presence ||
-          ''
+        [
+          material.dig(:molecule_name_hash, :label),
+          material[:preferred_label],
+          material[:short_label],
+          material[:name],
+          material.dig(:molecule, :sum_formular),
+        ].find(&:present?) || ''
       end
 
       def variation_material_flags(material)
@@ -203,7 +203,7 @@ module Reporter
       def variation_amount_lines(material, is_product, vessel_size)
         return [] if material.metrics.nil?
 
-        mass, vol, mmol = assigned_amount(material, is_product, vessel_size)
+        mass, vol, mmol = assigned_amount(material, is_product: is_product, vessel_size: vessel_size)
         mass_unit, vol_unit, mmol_unit = unit_conversion(material)
         [
           "mass: #{variation_value(mass, mass_unit)};",
@@ -324,7 +324,7 @@ module Reporter
 
       def is_disable_all
         st = @si_rxn_settings
-        !st.map { |_, v| v }.any?
+        st.map { |_, v| v }.none?
       end
 
       def name_delta(mol_name, counter, material)
@@ -434,8 +434,8 @@ module Reporter
         liters.each do |l|
           bib = l[:refs] && l[:refs]['bibtex']
           bb = DataCite::LiteraturePaser.parse_bibtex!(bib, id)
-          bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.class == BibTeX::Entry
-          output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.class == BibTeX::Entry
+          bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.instance_of?(BibTeX::Entry)
+          output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.instance_of?(BibTeX::Entry)
         end
         output
       end
@@ -532,7 +532,7 @@ module Reporter
       # @param sample [Sample] the sample containing components
       # @return [Hash, nil] the reference component or nil if not found
       def find_reference_component(sample)
-        return nil unless sample.components && sample.components.is_a?(Array)
+        return nil unless sample.components.is_a?(Array)
 
         sample.components.find do |component|
           component_props = normalize_component_properties(component)
@@ -566,24 +566,30 @@ module Reporter
         mole_value ? mole_value * 1000 : 0
       end
 
-      def assigned_amount(s, is_product = false, vessel_size = @obj.vessel_size)
-        mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
-        vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
-        mmol = if s.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                 # Always use special function (returns moles, convert to millimoles)
-                 mixture_mol = calculate_mixture_amount_mol(s, mass)
-                 mixture_mol.is_a?(Numeric) ? mixture_mol * 1000.0 : nil
-               elsif s.real_amount_mmol == 0.0 && !is_product
-                 s.amount_mmol
-               else
-                 calculate_amount_mmol(s, vessel_size)
-               end
+      # Mass, volume and amount of a material, in its display units: the real amounts, or - for
+      # anything but a product whose real amount is not set - the target ones.
+      def assigned_amount(sample, is_product: false, vessel_size: @obj.vessel_size)
+        mass = sample.real_amount_g == 0.0 && !is_product ? sample.amount_g : sample.real_amount_g
+        vol = sample.real_amount_ml == 0.0 && !is_product ? sample.amount_ml : sample.real_amount_ml
+        mmol = assigned_amount_mmol(sample, mass, is_product, vessel_size)
 
-        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
-        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
-        mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(s, 2, %w[m n])) if mmol.present?
+        mass = met_pre_conv(mass, 'n', assigned_metric_pref(sample, 0))
+        vol = met_pre_conv(vol, 'm', assigned_metric_pref(sample, 1))
+        mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(sample, 2, %w[m n])) if mmol.present?
 
         [mass, vol, mmol]
+      end
+
+      def assigned_amount_mmol(sample, mass, is_product, vessel_size)
+        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+          # Always use special function (returns moles, convert to millimoles)
+          mixture_mol = calculate_mixture_amount_mol(sample, mass)
+          mixture_mol.is_a?(Numeric) ? mixture_mol * 1000.0 : nil
+        elsif sample.real_amount_mmol == 0.0 && !is_product
+          sample.amount_mmol
+        else
+          calculate_amount_mmol(sample, vessel_size)
+        end
       end
 
       def unit_conversion(material)
@@ -680,7 +686,7 @@ module Reporter
       def material_hash(material, is_product = false)
         s = OpenStruct.new(material)
         m = s.molecule
-        mass, vol, mmol = assigned_amount(s, is_product)
+        mass, vol, mmol = assigned_amount(s, is_product: is_product)
         mass_unit, vol_unit, mmol_unit = unit_conversion(s)
         is_weight_percentage_scheme = @obj.weight_percentage
 
@@ -809,22 +815,12 @@ module Reporter
       end
 
       def starting_materials
-        output = []
-        obj.starting_materials.each do |s|
-          output.push(material_hash(s, false))
-        end
-        output
+        obj.starting_materials.map { |s| material_hash(s, false) }
       end
 
       def reactants
-        output = []
-        obj.reactants.each do |r|
-          output.push(material_hash(r, false))
-        end
-        reactant_sbmm_samples.each do |sbmm|
-          output.push(sbmm_material_hash(sbmm))
-        end
-        output
+        obj.reactants.map { |r| material_hash(r, false) } +
+          reactant_sbmm_samples.map { |sbmm| sbmm_material_hash(sbmm) }
       end
 
       def reactant_sbmm_samples
@@ -856,16 +852,18 @@ module Reporter
           molecule_name_hash: { label: sbmm_name },
           components: [],
           is_mixture: false,
-          weight_percentage: (@obj.weight_percentage && s.weight_percentage.present?) ? valid_digit(s.weight_percentage, digit) : '',
+          weight_percentage: if @obj.weight_percentage && s.weight_percentage.present?
+                               valid_digit(
+                                 s.weight_percentage, digit
+                               )
+                             else
+                               ''
+                             end,
         }
       end
 
       def products
-        output = []
-        obj.products.each do |p|
-          output.push(material_hash(p, true))
-        end
-        output
+        obj.products.map { |p| material_hash(p, true) }
       end
 
       def purification
@@ -933,7 +931,7 @@ module Reporter
       def content_check(delta)
         return false if delta.nil?
 
-        delta['ops'].present? && !delta['ops'].count.zero?
+        delta['ops'].present?
       end
 
       def tlc_control
@@ -950,7 +948,7 @@ module Reporter
       def products_synthesis_delta
         pd = is_disable_all ? [] : products_delta
         sd = synthesis_delta
-        if pd.length == 0
+        if pd.empty?
           sd
         else
           pd + sd
@@ -969,8 +967,8 @@ module Reporter
       end
 
       def synthesis_name_delta
-        return [] if (@std_rxn && !%w[gp
-                                      parts].include?(obj.role)) || (@template == 'supporting_information' && ['parts'].include?(obj.role))
+        return [] if (@std_rxn && %w[gp
+                                     parts].exclude?(obj.role)) || (@template == 'supporting_information' && ['parts'].include?(obj.role))
 
         [{ 'insert' => "#{title}: " }]
       end
@@ -1020,8 +1018,8 @@ module Reporter
       end
 
       def obsv_blank
-        obsv_arr = observation_delta.map { |ob| ob['insert'] }
-        obsv_arr.join('').gsub(/\s+/, '').blank?
+        obsv_arr = observation_delta.pluck('insert')
+        obsv_arr.join.gsub(/\s+/, '').blank?
       end
 
       def product_analyses_delta
@@ -1031,14 +1029,14 @@ module Reporter
           valid_analyses = keep_report(product[:analyses])
           sorted_analyses = sort_by_index(valid_analyses)
           current = merge_items_symbols(current, sorted_analyses, '; ')
-          next if current.length.zero?
+          next if current.empty?
 
           current = remove_redundant_space_break(current)[0..-2] +
                     [{ 'insert' => '.' }, { 'insert' => "\n\n" }]
           delta += current
         end
 
-        return [] if delta.length.zero?
+        return [] if delta.empty?
 
         delta[0..-2] + [{ 'insert' => "\n" }]
       end
@@ -1053,8 +1051,8 @@ module Reporter
                     *mol_serial_delta(material[:molecule][:id]),
                     { 'insert' => '} ' },
                     *sample_molecule_name_delta(m),
-                    { 'insert' => " (#{m[:mass]} g, #{m[:mol]} mmol, " +
-                      "#{m[:equiv]} equiv); " }]
+                    { 'insert' => " (#{m[:mass]} g, #{m[:mol]} mmol, " \
+                                  "#{m[:equiv]} equiv); " }]
         end
         counter = 0
         obj.solvents.flatten.each do |material|
@@ -1063,7 +1061,7 @@ module Reporter
           delta += [{ 'insert' => "{S#{counter}" },
                     { 'insert' => '} ' },
                     *sample_molecule_name_delta(m),
-                    {"insert"=>" (#{valid_digit(m[:vol], 2)} #{normalize_liter_unit(m[:vol_unit])}); "}]
+                    { 'insert' => " (#{valid_digit(m[:vol], 2)} #{normalize_liter_unit(m[:vol_unit])}); " }]
         end
         delta += [{ 'insert' => 'Yield ' }]
         counter = 0
@@ -1072,8 +1070,8 @@ module Reporter
           counter += 1
           delta += [{ 'insert' => "{P#{counter}|" },
                     *mol_serial_delta(material[:molecule][:id]),
-                    { 'insert' => "} = #{p[:equiv]} (#{p[:mass]} g, " +
-                      "#{p[:mol]} mmol)" },
+                    { 'insert' => "} = #{p[:equiv]} (#{p[:mass]} g, " \
+                                  "#{p[:mol]} mmol)" },
                     { 'insert' => '; ' }]
         end
         delta.pop
@@ -1083,12 +1081,10 @@ module Reporter
 
       def dangerous_delta
         d = obj.dangerous_products || []
-        return [] if d.length == 0
+        return [] if d.empty?
 
-        content = 'The reaction includes the use of dangerous chemicals, ' +
-                  'which have the following classification: ' +
-                  d.join(', ') +
-                  '.'
+        content = 'The reaction includes the use of dangerous chemicals, ' \
+                  "which have the following classification: #{d.join(', ')}."
         [{ 'insert' => "\n" }] + remove_redundant_space_break([
                                                                 { 'attributes' => { 'bold' => 'true' },
                                                                   'insert' => 'Attention! ' },
@@ -1127,7 +1123,7 @@ module Reporter
 
       def bib_delta
         refs = obj.references || []
-        return [] if refs.length == 0
+        return [] if refs.empty?
 
         delta = [{ 'insert' => "\n" }]
         refs.each_with_index do |ref, idx|
@@ -1136,25 +1132,20 @@ module Reporter
         delta
       end
 
+      # Capitalizes the first ASCII letter of the name. A name without one - digits, symbols, blank -
+      # is returned as it is.
       def capitalize_first_letter(snm)
-        if snm && snm.length > 0
-          char_idxs = []
-          snm.split('').each_with_index do |m, idx|
-            char_idxs += [idx] if /^[a-zA-Z]$/.match?(m)
-          end
-          char_idx = char_idxs[0]
-          if char_idx >= 0
-            return snm.slice(0, char_idx) + snm.slice(char_idx, 1).capitalize + snm.slice(char_idx + 1..-1)
-          end
-        end
-        snm
+        char_idx = snm.presence && snm.index(/[a-zA-Z]/)
+        return snm unless char_idx
+
+        snm.slice(0, char_idx) + snm.slice(char_idx, 1).capitalize + snm.slice((char_idx + 1)..-1)
       end
 
       def sample_molecule_name_delta(sample, font_size = 12, bold = false, idx = 1, std_rxn = false, template = nil)
         showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
         if showed_nm.present?
           snm = showed_nm.to_s
-          snm = capitalize_first_letter(snm) if (std_rxn || template == 'supporting_information') && idx == 0 && snm
+          snm = capitalize_first_letter(snm) if (std_rxn || template == 'supporting_information') && idx.zero? && snm
           [{ 'attributes' => { 'bold' => bold, 'font-size' => font_size },
              'insert' => snm }]
         else
@@ -1179,7 +1170,7 @@ module Reporter
       end
 
       def mol_serial(mol_id)
-        s = @mol_serials.select { |x| x['mol'] && x['mol']['id'] == mol_id }[0]
+        s = @mol_serials.find { |x| x['mol'] && x['mol']['id'] == mol_id }
         (s.present? && s['value'].present? && s['value']) || 'xx'
       end
 
