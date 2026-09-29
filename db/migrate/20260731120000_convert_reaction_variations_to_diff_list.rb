@@ -38,12 +38,17 @@ class ConvertReactionVariationsToDiffList < ActiveRecord::Migration[6.1]
     )
   SQL
 
+  LEGACY_IDX = <<~SQL.squish
+    CASE WHEN v.value ->> 'id' ~ '^[0-9]+$' THEN (v.value ->> 'id')::integer ELSE v.ordinality - 1 END
+  SQL
+
   def up
     change_column_default :reactions, :variations, from: {}, to: []
 
-    # Ordinality is the only order an object offers - jsonb sorts its keys and never kept the order
-    # the variations were added in - so `idx` ends up deterministic but not necessarily the order
-    # the rows had on screen before. Rows can be reordered in the grid afterwards.
+    # `idx` is the number a row is labelled by, and the N a `-vN` data file name refers to. The old
+    # rows carried that number as their sequential `id`, so it is kept; only a row without a numeric
+    # id falls back to its ordinality. The rows are listed in that order too - jsonb sorts an
+    # object's keys (the UUIDs), which says nothing about the order the rows were added in.
     execute <<~SQL.squish
       UPDATE reactions
       SET variations = converted.variations
@@ -53,7 +58,7 @@ class ConvertReactionVariationsToDiffList < ActiveRecord::Migration[6.1]
           jsonb_agg(
             jsonb_build_object(
               'id', COALESCE(v.value ->> 'uuid', v.key),
-              'idx', v.ordinality - 1,
+              'idx', #{LEGACY_IDX},
               'group', CASE jsonb_typeof(v.value -> 'metadata' -> 'group')
                 WHEN 'array' THEN v.value -> 'metadata' -> 'group'
                 WHEN 'object' THEN jsonb_build_array(
@@ -67,7 +72,7 @@ class ConvertReactionVariationsToDiffList < ActiveRecord::Migration[6.1]
               'data', jsonb_build_object('id', COALESCE(v.value ->> 'uuid', v.key)),
               'legacy_data', v.value
             )
-            ORDER BY v.ordinality
+            ORDER BY #{LEGACY_IDX}, v.ordinality
           ) AS variations
         FROM reactions r,
           LATERAL jsonb_each(r.variations) WITH ORDINALITY AS v(key, value, ordinality)
