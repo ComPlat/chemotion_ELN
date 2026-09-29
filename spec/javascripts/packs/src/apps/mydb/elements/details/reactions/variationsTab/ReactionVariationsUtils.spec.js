@@ -5,7 +5,8 @@ import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
-  makeVariationReaction, addNewVariationDataset, parseVariationGroup, convertVariationDatasetToInternalVariations,
+  makeVariationReaction, addNewVariationDataset, parseVariationGroup,
+  copyVariationDataset, reorderVariationDatasets, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
@@ -111,6 +112,12 @@ describe('ReactionVariationsUtils', () => {
       expect(reaction.variations).toEqual([variation]);
     });
 
+    // The row is addressed by it; without one every rebuild would make up a new one.
+    it('gives the variation reaction an identity right away', () => {
+      const variation = addNewVariationDataset({ reaction: { variations: [] } });
+      expect(typeof variation.data.id).toBe('string');
+    });
+
     it('continues numbering past the existing variations', () => {
       const reaction = { variations: [{ idx: 3, group: [2, 1] }] };
       const variation = addNewVariationDataset({ reaction });
@@ -123,6 +130,49 @@ describe('ReactionVariationsUtils', () => {
       const reaction = { variations: [{ idx: 1, group: ['10', '2'] }, { idx: 2, group: [] }] };
       const variation = addNewVariationDataset({ reaction });
       expect(variation.group).toEqual([11, 0]);
+    });
+  });
+
+  describe('copyVariationDataset', () => {
+    const source = {
+      id: 'a', idx: 4, group: [2, 1], analyses: [7], notes: 'first run',
+      data: { id: 'a-reaction', _starting_materials: [null, { _equivalent: 0.3 }] },
+    };
+
+    it('appends a copy with the values and group of the original', () => {
+      const reaction = { variations: [source] };
+      const copy = copyVariationDataset({ reaction }, 0);
+
+      expect(reaction.variations).toEqual([source, copy]);
+      expect(copy.group).toEqual([2, 1]);
+      expect(copy.data._starting_materials).toEqual([null, { _equivalent: 0.3 }]);
+    });
+
+    it('gives the copy a number and identities of its own, and no analyses or note', () => {
+      const reaction = { variations: [source] };
+      const copy = copyVariationDataset({ reaction }, 0);
+
+      expect(copy.idx).toBe(5);
+      expect(copy.id).not.toBe(source.id);
+      expect(copy.data.id).not.toBe(source.data.id);
+      expect(copy.analyses).toEqual([]);
+      expect(copy.notes).toBe('');
+    });
+
+    it('does not share its values with the original', () => {
+      const reaction = { variations: [source] };
+      const copy = copyVariationDataset({ reaction }, 0);
+
+      copy.data._starting_materials[1]._equivalent = 0.9;
+      expect(source.data._starting_materials[1]._equivalent).toBe(0.3);
+    });
+  });
+
+  describe('reorderVariationDatasets', () => {
+    it('puts the variations in the given order and leaves their numbers alone', () => {
+      const reaction = { variations: [{ idx: 1 }, { idx: 2 }, { idx: 5 }] };
+      reorderVariationDatasets({ reaction }, [2, 0, 1]);
+      expect(reaction.variations.map(({ idx }) => idx)).toEqual([5, 1, 2]);
     });
   });
 
@@ -196,6 +246,7 @@ describe('ReactionVariationsUtils', () => {
       expect(internal.map((row) => row.idx)).toEqual([0, 1]);
       expect(internal.map((row) => row.label)).toEqual([7, 9]);
       expect(internal[0].analyses).toEqual([9]);
+      expect(internal[0].notes).toBe('');
       expect(internal[0].data).toBeInstanceOf(Reaction);
     });
   });

@@ -47,6 +47,7 @@ import {
 
 const VARIATION_GROUP = 'variation_fields';
 const ANALYSES_GROUP = 'analyses_fields';
+const NOTES_GROUP = 'notes_fields';
 // Marks the material name cells that follow the horizontal scroll inside their own group.
 const STICKY_NAME_CLASS = 'variations-sticky-name';
 const STICKY_NAME_FLOATING_CLASS = 'variations-sticky-name--floating';
@@ -109,7 +110,7 @@ AnalysesLinkCell.propTypes = {
 const OpenVariationCell = ({ data }) => {
   const { setActiveVariation } = useContext(VariationsGridContext);
 
-  const { onDeleteVariation } = useContext(VariationsGridContext);
+  const { onDeleteVariation, onCopyVariation } = useContext(VariationsGridContext);
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
@@ -124,6 +125,17 @@ const OpenVariationCell = ({ data }) => {
     >
       Open
     </Button>
+      <Button
+        variant="success"
+        size="sm"
+        type="button"
+        title={`Copy variation ${data.label}`}
+        aria-label={`Copy variation ${data.label}`}
+        disabled={!permitOn(data.data)}
+        onClick={() => onCopyVariation(data.idx)}
+      >
+        <i className="fa fa-clone" aria-hidden="true" />
+      </Button>
       <DeleteButton
         disabled={!permitOn(data.data)}
         onClick={() => setShowConfirm(true)}
@@ -152,6 +164,64 @@ OpenVariationCell.propTypes = {
   data: PropTypes.shape({
     idx: PropTypes.number.isRequired,
     label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }).isRequired,
+};
+
+/*
+The row's note: shown in the cell, cut short to fit, and written in a modal - a note is prose, which a
+single-line cell input would not do justice to. Without write permission the modal only shows it.
+*/
+const NotesCell = ({ data }) => {
+  const { onNotesChange } = useContext(VariationsGridContext);
+  const [draft, setDraft] = useState(null);
+  const editable = permitOn(data.data);
+  const notes = data.notes ?? '';
+
+  return (
+    <>
+      <Button
+        variant="link"
+        size="sm"
+        className="variations-notes-cell p-0 w-100 text-start text-truncate text-body text-decoration-none"
+        title={notes || (editable ? 'Add a note' : '')}
+        onClick={() => setDraft(notes)}
+      >
+        {notes || <span className="text-muted">{editable ? 'Add note' : '-'}</span>}
+      </Button>
+      {draft !== null && (
+        <AppModal
+          show
+          onHide={() => setDraft(null)}
+          animation={false}
+          title={`Note for variation ${data.label}`}
+          closeLabel="Cancel"
+          primaryActionLabel="Save"
+          primaryActionDisabled={!editable}
+          onPrimaryAction={() => {
+            onNotesChange(data.idx, draft);
+            setDraft(null);
+          }}
+        >
+          <Form.Control
+            as="textarea"
+            rows={6}
+            value={draft}
+            readOnly={!editable}
+            placeholder="Start typing your note..."
+            onChange={(event) => setDraft(event.target.value)}
+          />
+        </AppModal>
+      )}
+    </>
+  );
+};
+
+NotesCell.propTypes = {
+  data: PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    notes: PropTypes.string,
     data: PropTypes.instanceOf(Reaction).isRequired,
   }).isRequired,
 };
@@ -346,14 +416,17 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
         {
           colId: 'variation_index',
           headerName: '#',
-          width: 60,
+          width: 75,
           valueGetter: ({ data }) => data.label,
+          // Rows are put in order by dragging them by this handle (see onRowDragEnd). AG Grid leaves
+          // managed dragging out while the rows are sorted, as there is no order to drop into then.
+          rowDrag: ({ data }) => permitOn(data.data),
           cellClass: 'text-center',
         },
         {
           colId: 'variation_control',
           headerName: 'Control',
-          width: 90,
+          width: 125,
           // Buttons, with nothing to order by.
           sortable: false,
           cellRenderer: OpenVariationCell,
@@ -384,6 +457,19 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
           width: 140,
           sortable: false,
           cellRenderer: AnalysesLinkCell,
+        },
+      ],
+    },
+    {
+      groupId: NOTES_GROUP,
+      headerName: 'Notes',
+      columns: [
+        {
+          colId: 'variation_notes',
+          headerName: 'Notes',
+          width: 200,
+          valueGetter: ({ data }) => data.notes ?? '',
+          cellRenderer: NotesCell,
         },
       ],
     },
@@ -557,6 +643,9 @@ const VariationSchemaTable = ({
                                 setActiveVariation,
                                 onGroupChange,
                                 onGroupBlur,
+                                onCopyVariation,
+                                onReorderVariations,
+                                onNotesChange,
                                 onDeleteVariation,
                                 onAnalysesChange,
                                 allReactionAnalyses,
@@ -901,6 +990,8 @@ const VariationSchemaTable = ({
     setActiveVariation,
     onGroupChange,
     onGroupBlur,
+    onCopyVariation,
+    onNotesChange,
     onDeleteVariation,
     onAnalysesChange,
     allReactionAnalyses,
@@ -997,6 +1088,14 @@ const VariationSchemaTable = ({
           // rows keep their nodes and their cells are left alone.
           rowData={[...variations]}
           getRowId={({ data }) => String(data.data?.id ?? data.idx)}
+          // AG Grid moves the dragged row itself; the variations are then put in the order it shows.
+          rowDragManaged
+          animateRows
+          onRowDragEnd={({ api }) => {
+            const order = [];
+            api.forEachNode((node) => order.push(node.data.idx));
+            onReorderVariations(order);
+          }}
           defaultColDef={DEFAULT_COL_DEF}
           domLayout={gridHeight ? 'normal' : 'autoHeight'}
           headerHeight={32}
@@ -1087,6 +1186,9 @@ VariationSchemaTable.propTypes = {
   setActiveVariation: PropTypes.func.isRequired,
   onGroupChange: PropTypes.func.isRequired,
   onGroupBlur: PropTypes.func.isRequired,
+  onCopyVariation: PropTypes.func.isRequired,
+  onReorderVariations: PropTypes.func.isRequired,
+  onNotesChange: PropTypes.func.isRequired,
   onDeleteVariation: PropTypes.func.isRequired,
   onAnalysesChange: PropTypes.func.isRequired,
   allReactionAnalyses: PropTypes.arrayOf(PropTypes.shape({

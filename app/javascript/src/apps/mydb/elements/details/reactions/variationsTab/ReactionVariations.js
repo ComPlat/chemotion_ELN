@@ -18,6 +18,8 @@ import
 {
   addInternalVariationObject,
   addNewVariationDataset,
+  copyVariationDataset,
+  reorderVariationDatasets,
   parseVariationGroup,
   variationDiffOf, getReactionSegments,
   exportVariationsToCsv,
@@ -74,13 +76,14 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
 
   const [selectedVariation, setActiveVariation] = useState(null);
   /*
-  The open variation panel only shows while its row still exists: removing all rows here, or
-  switching the scheme to or from gaseous in the scheme tab, empties the list without going through
-  deleteVariation.
+  The open variation panel follows its row by identity, not by the position it was opened at: rows
+  are moved, copied and removed, and the list is rebuilt whenever the parent changes. It closes once
+  the row is gone - removing all rows here, or switching the scheme to or from gaseous in the scheme
+  tab, empties the list without going through deleteVariation.
   */
   const activeVariation = selectedVariation
-    && variations.some(({ data }) => data?.id === selectedVariation.data?.id)
-    ? selectedVariation : null;
+    ? (variations.find(({ data }) => data?.id === selectedVariation.data?.id) ?? null)
+    : null;
   // Filled once the grid is up; the export button reads the grid through it.
   const gridApiRef = useRef(null);
   const [advancedMode, setAdvancedMode] = useState(false);
@@ -154,10 +157,40 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
 
     if (activeVariation?.idx === idx) {
       setActiveVariation(null);
-    } else if (activeVariation && activeVariation.idx > idx) {
-      setActiveVariation({ ...activeVariation, idx: activeVariation.idx - 1 });
     }
 
+    onReactionChange(reaction);
+    setVariations([...variations]);
+  };
+
+  const copyVariation = (idx) => {
+    const copy = copyVariationDataset({ reaction }, idx);
+    addInternalVariationObject(variations, reaction, copy);
+    reaction.changed = true;
+    onReactionChange(reaction);
+    setVariations([...variations]);
+  };
+
+  // `order` lists the rows' current positions in the order they were dragged into.
+  const reorderVariations = (order) => {
+    if (order.length !== variations.length || order.every((position, index) => position === index)) {
+      return;
+    }
+
+    reorderVariationDatasets({ reaction }, order);
+    const reordered = order.map((position) => variations[position]);
+    reordered.forEach((variation, index) => { variation.idx = index; });
+    variations.splice(0, variations.length, ...reordered);
+
+    reaction.changed = true;
+    onReactionChange(reaction);
+    setVariations([...variations]);
+  };
+
+  const onNotesChange = (idx, notes) => {
+    reaction.changed = true;
+    reaction.variations[idx].notes = notes;
+    variations[idx].notes = notes;
     onReactionChange(reaction);
     setVariations([...variations]);
   };
@@ -296,6 +329,9 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
         onGroupChange={onGroupChange}
         onGroupBlur={onGroupBlur}
         onDeleteVariation={deleteVariation}
+        onCopyVariation={copyVariation}
+        onReorderVariations={reorderVariations}
+        onNotesChange={onNotesChange}
         onAnalysesChange={onAnalysesChange}
         allReactionAnalyses={getReactionAnalyses(reaction)}
         reactionShortLabel={reaction.short_label}
@@ -346,6 +382,7 @@ ReactionVariations.propTypes = {
     analyses: PropTypes.arrayOf(
       PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     ),
+    notes: PropTypes.string,
     data: PropTypes.instanceOf(Reaction).isRequired,
   })).isRequired,
   setVariations: PropTypes.func.isRequired,
