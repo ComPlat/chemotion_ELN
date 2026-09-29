@@ -1,7 +1,7 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
-import Reaction from 'src/models/Reaction';
+import Reaction, { convertTonPerTime } from 'src/models/Reaction';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 function randFloat(min, max, precision) {
@@ -204,6 +204,19 @@ describe('Reaction', () => {
         expect(reaction.variations).toHaveLength(1);
         expect(reaction.variations[0].data._starting_materials[1]._equivalent).toBe(0.3);
       });
+    });
+  });
+
+  describe('convertTonPerTime', () => {
+    it('converts a turnover frequency as the rate it is', () => {
+      expect(convertTonPerTime(2, 'TON/m', 'TON/h')).toBe(120);
+      expect(convertTonPerTime(120, 'TON/h', 'TON/m')).toBe(2);
+      expect(convertTonPerTime(1, 'TON/s', 'TON/h')).toBe(3600);
+      expect(convertTonPerTime(5, 'TON/h', 'TON/h')).toBe(5);
+    });
+
+    it('leaves a value in an unknown unit as it is', () => {
+      expect(convertTonPerTime(5, 'TON/d', 'TON/h')).toBe(5);
     });
   });
 

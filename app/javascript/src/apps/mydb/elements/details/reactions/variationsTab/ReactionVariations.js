@@ -256,13 +256,10 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       placement="bottom"
       overlay={(
         <Tooltip>
-          Add row with current data from &quot;Scheme&quot; tab.
+          Add a row with the current data from the &quot;Scheme&quot; tab.
           <br/>
-          Changes in &quot;Scheme&quot; tab are not applied to
-          {' '}
-          <i>existing</i>
-          {' '}
-          rows.
+          Changes in the &quot;Scheme&quot; tab also apply to existing rows, except for the values a
+          row has been given of its own.
         </Tooltip>
       )}
     >
@@ -349,7 +346,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     </div>
     <div style={{ position: 'relative' }}>
       {activeVariation &&
-        (<div><h2>Variation #{activeVariation.label} {activeVariation.data.starting_materials.length}</h2>
+        (<div><h2>Variation #{activeVariation.label}</h2>
           <button onClick={()=> setActiveVariation(null)} className="close-btn" aria-label="Close">&times;</button>
           {currentSegment === 'Schema' ?
           <ReactionDetailsScheme
