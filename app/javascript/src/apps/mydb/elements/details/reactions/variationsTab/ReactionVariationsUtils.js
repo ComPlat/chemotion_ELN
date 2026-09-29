@@ -3,6 +3,10 @@ import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
 import uuid from 'uuid';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import {
+  applyLegacyVariationData,
+  needsLegacyConversion,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsLegacyConversion';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const GROUP_ID_SEPARATOR = '::';
@@ -126,9 +130,27 @@ const addInternalVariationObject = (
   });
 };
 
+/*
+A row the conversion migration left with its old values under `legacy_data` gets them written into
+its diff here, the first time it is read. The row's stored diff is updated in place, so the values
+reach the database with the reaction's next save; until then the conversion simply runs again on
+every load and yields the same diff.
+*/
+const convertLegacyVariation = (reaction, variation) => {
+  const variationReaction = applyLegacyVariationData(
+    makeVariationReaction(reaction, variation.data ?? {}),
+    variation.legacy_data
+  );
+  // eslint-disable-next-line no-use-before-define
+  variation.data = variationDiffOf(reaction, variationReaction);
+};
+
 const convertVariationDatasetToInternalVariations = (reaction) => {
   const internalVariation = [];
   reaction.variations.forEach((v) => {
+    if (needsLegacyConversion(v)) {
+      convertLegacyVariation(reaction, v);
+    }
     addInternalVariationObject(internalVariation, reaction, v);
   });
 
@@ -182,6 +204,19 @@ const diffObjects = (obj1, obj2, ignoreList = []) => {
 
   return result;
 };
+
+/*
+What a variation stores: its reaction diffed against the parent. Beyond the structural exclusions,
+the diff must not capture editor bookkeeping: `belongTo`, `matGroup` and `editedSample` are
+transient references the sample flows hang onto reactions and samples, and diffObjects would copy
+them - and through them the whole variation clone - into the diff by reference, breaking the
+structuredClone the variations are rebuilt with.
+*/
+const variationDiffOf = (reaction, variationReaction) => diffObjects(
+  reaction,
+  variationReaction,
+  ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample']
+);
 
 /*
 Column layout of the variations grid - order, hidden columns and widths - kept per user and per
@@ -324,6 +359,7 @@ export {
   addNewVariationDataset,
   makeVariationReaction,
   diffObjects,
+  variationDiffOf,
   getVariationsRowName,
   REACTION_VARIATIONS_TAB_KEY,
   GROUP_ID_SEPARATOR,
