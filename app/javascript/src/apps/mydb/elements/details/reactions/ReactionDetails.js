@@ -23,7 +23,7 @@ import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
-import { convertVariationDatasetToInternalVariations }
+import { adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations }
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties
@@ -162,9 +162,10 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   const [activeTab, setActiveTab] = useState(() => UIStore.getState().reaction.activeTab);
   const [activeAnalysisTab, setActiveAnalysisTab] = useState(() => UIStore.getState().reaction.activeAnalysisTab);
   const [visible, setVisible] = useState(() => List());
-  const [variations, setVariationsState] = useState(
-    () => convertVariationDatasetToInternalVariations(reactionFromProps)
-  );
+  const [variations, setVariationsState] = useState(() => {
+    adoptLegacyVariationsLayout(reactionFromProps);
+    return convertVariationDatasetToInternalVariations(reactionFromProps);
+  });
   // Bumped when the graphic is updated so the <ReactionSchemeGraphic> key changes (we mutate reaction in place)
   const [reactionSvgVersion, setReactionSvgVersion] = useState(0);
   const [isRefreshingGraphic, setIsRefreshingGraphic] = useState(false);
@@ -583,6 +584,8 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHeaderNameDraft(reactionFromProps.name || '');
     }
+    // Also after a save, which is when a carried over row order is found stored and let go of.
+    adoptLegacyVariationsLayout(reactionFromProps);
     setReaction(reactionFromProps);
 
     wasWeightPercentageRef.current = !!reactionFromProps.weight_percentage;
