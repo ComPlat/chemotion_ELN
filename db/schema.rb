@@ -1155,6 +1155,24 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
+  create_table "reaction_steps", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "position", null: false
+    t.jsonb "temperature", default: {"data"=>[], "userText"=>"", "valueUnit"=>"°C"}
+    t.string "duration"
+    t.string "conditions"
+    t.text "description"
+    t.string "ph_operator", default: "=", null: false
+    t.float "ph_value"
+    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
+    t.decimal "volume", precision: 10, scale: 4
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "index_reaction_steps_on_deleted_at"
+    t.index ["reaction_id"], name: "index_reaction_steps_on_reaction_id"
+  end
+
   create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -1241,7 +1259,10 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
+    t.bigint "reaction_step_id"
+    t.boolean "carry_on", default: false, null: false
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
+    t.index ["reaction_step_id"], name: "index_reactions_samples_on_reaction_step_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
