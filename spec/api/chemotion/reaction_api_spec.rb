@@ -718,6 +718,70 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    # A reaction can get variations before it is first saved; they have to arrive with it as sent.
+    context 'when creating a reaction that already has variations' do
+      let(:variations) do
+        [
+          {
+            'id' => SecureRandom.uuid,
+            'idx' => 1,
+            'group' => [1, 0],
+            'analyses' => [],
+            'notes' => 'first',
+            'data' => {
+              'id' => SecureRandom.uuid,
+              '_temperature' => { 'valueUnit' => '°C', 'userText' => '80' },
+              '_products' => [{ '_target_amount_value' => 0.05, '_target_amount_unit' => 'g' }],
+            },
+          },
+          {
+            'id' => SecureRandom.uuid,
+            'idx' => 2,
+            'group' => [1, 1],
+            'analyses' => [],
+            'notes' => '',
+            'data' => { 'id' => SecureRandom.uuid },
+          },
+        ]
+      end
+      let(:params) do
+        {
+          'name' => 'with variations',
+          'collection_id' => collection1.id,
+          'container' => new_root_container,
+          'variations' => variations,
+          'materials' => {
+            'products' => [{
+              'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
+              'name' => 'New Subsample 1',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 76.09596,
+              'reference' => true,
+              'equivalent' => 1,
+              'is_new' => true,
+              'is_split' => true,
+              'molfile' => molfile1,
+              'container' => new_root_container,
+            }],
+          },
+        }
+      end
+
+      before { post '/api/v1/reactions', params: params, as: :json }
+
+      it 'stores the variations as sent' do
+        expect(response).to have_http_status :created
+        expect(Reaction.find_by(name: 'with variations').variations).to eq(variations)
+      end
+
+      it 'returns them with the created reaction' do
+        returned = JSON.parse(response.body)['reaction']['variations']
+        expect(returned.map { |v| v.slice('id', 'idx', 'group', 'notes', 'data') }).to eq(variations.map do |v|
+          v.slice('id', 'idx', 'group', 'notes', 'data')
+        end)
+      end
+    end
+
     context 'when collection_id points to a read-only shared collection' do
       let(:read_only_collection) do
         create(:collection, user: other_user).tap do |c|
