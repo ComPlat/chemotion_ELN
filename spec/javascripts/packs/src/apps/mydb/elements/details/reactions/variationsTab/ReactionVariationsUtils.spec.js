@@ -1,12 +1,14 @@
 import expect from 'expect';
+import sinon from 'sinon';
 import Reaction from 'src/models/Reaction';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import Sample from 'src/models/Sample';
 import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
   makeVariationReaction, addNewVariationDataset, parseVariationGroup,
-  copyVariationDataset, reorderVariationDatasets, convertVariationDatasetToInternalVariations,
+  copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
@@ -185,6 +187,53 @@ describe('ReactionVariationsUtils', () => {
       const reaction = { variations: [{ idx: 1 }, { idx: 2 }, { idx: 5 }] };
       reorderVariationDatasets({ reaction }, [2, 0, 1]);
       expect(reaction.variations.map(({ idx }) => idx)).toEqual([5, 1, 2]);
+    });
+  });
+
+  /*
+  The grid's column layout is stored per view - the scheme, or a segment klass picked instead - so
+  that looking at a segment does not overwrite how the scheme columns were arranged.
+  */
+  describe('column layout storage', () => {
+    let storage;
+    let storeStub;
+    let localStorageBefore;
+
+    beforeEach(() => {
+      storage = {};
+      localStorageBefore = Object.getOwnPropertyDescriptor(window, 'localStorage');
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: {
+          getItem: (key) => (key in storage ? storage[key] : null),
+          setItem: (key, value) => { storage[key] = value; },
+        },
+      });
+      storeStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      storeStub.restore();
+      if (localStorageBefore) {
+        Object.defineProperty(window, 'localStorage', localStorageBefore);
+      } else {
+        delete window.localStorage;
+      }
+    });
+
+    it('keeps the scheme layout under the key it always had', () => {
+      persistColumnState(3, [{ colId: 'a' }]);
+      expect(Object.keys(storage)).toEqual(['user7-reaction3-reactionVariationsColumnState']);
+      expect(getInitialColumnState(3, 'Schema')).toEqual([{ colId: 'a' }]);
+    });
+
+    it('keeps a segment layout apart from the scheme one', () => {
+      persistColumnState(3, [{ colId: 'a' }], 'Schema');
+      persistColumnState(3, [{ colId: 'segment_x' }], 'foo');
+
+      expect(getInitialColumnState(3, 'Schema')).toEqual([{ colId: 'a' }]);
+      expect(getInitialColumnState(3, 'foo')).toEqual([{ colId: 'segment_x' }]);
+      expect(getInitialColumnState(3, 'bar')).toBe(null);
     });
   });
 

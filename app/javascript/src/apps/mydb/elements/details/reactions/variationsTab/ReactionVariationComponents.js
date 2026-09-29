@@ -660,7 +660,7 @@ const VariationSchemaTable = ({
   flags; the order is restored from the same state once the grid is ready.
   */
   const [hiddenColumns, setHiddenColumns] = useState(() => (
-    (getInitialColumnState(reactionId) ?? [])
+    (getInitialColumnState(reactionId, currentSegmentName) ?? [])
       .filter((column) => column.hide)
       .map((column) => column.colId)
   ));
@@ -962,7 +962,7 @@ const VariationSchemaTable = ({
       return;
     }
 
-    persistColumnState(reactionId, api.getColumnState());
+    persistColumnState(reactionId, api.getColumnState(), currentSegmentName);
   };
 
   // Visibility changes settle in state, so they are persisted from here rather than from the grid's
@@ -1114,7 +1114,7 @@ const VariationSchemaTable = ({
             gridApiRef.current = api;
             // The parent's toolbar drives the CSV export, so it gets the api too.
             onGridApiReady?.(api);
-            const storedState = getInitialColumnState(reactionId);
+            const storedState = getInitialColumnState(reactionId, currentSegmentName);
             if (storedState?.length) {
               api.applyColumnState({ state: storedState, applyOrder: true });
             }
