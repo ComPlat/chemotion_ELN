@@ -26,6 +26,8 @@ import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
 import { SortableHeaderName }
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
+import { READ_ONLY_CELL_CLASS }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
 
 /*
 Not GROUP_ID_SEPARATOR: `syncActiveSlot` reads every group id containing that separator as a
@@ -352,6 +354,10 @@ const segmentBuildColumnGroups = (segmentLabel, segmentFields) => {
           headerComponent: SegmentUnitHeader,
           headerComponentParams: params,
         } : {}),
+        // Grey where the row may not be changed, as the material and reaction cells.
+        cellClassRules: {
+          [READ_ONLY_CELL_CLASS]: ({ data }) => !data?.data || !permitOn(data.data),
+        },
         cellRenderer: SegmentFieldCell,
         cellRendererParams: params,
       };
