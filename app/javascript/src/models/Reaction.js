@@ -64,6 +64,33 @@ export const convertTemperature = (temperature, fromUnit, toUnit) => {
   return conversionTable[fromUnit][toUnit](temperature);
 };
 
+// The lowest temperature there is, per unit the reaction and its gas phase data keep temperatures in.
+const ABSOLUTE_ZERO = {
+  '°C': -273.15, '°F': -459.67, K: 0, '°K': 0,
+};
+
+// A temperature, raised to absolute zero if it lies below it; one in an unknown unit is left alone.
+export const clampTemperature = (value, unit) => {
+  const minimum = ABSOLUTE_ZERO[unit];
+  const numeric = Number(value);
+  if (minimum === undefined || value === '' || value === null || !Number.isFinite(numeric)) {
+    return value;
+  }
+  return numeric < minimum ? minimum : value;
+};
+
+/*
+The reaction temperature as typed: free text ("reflux", "rt", "-78 to -40"), so only a plain number is
+held to absolute zero, and it stays text.
+*/
+export const clampTemperatureText = (text, unit) => {
+  if (typeof text !== 'string' || !/^\s*-?\d+(\.\d*)?\s*$/.test(text)) {
+    return text;
+  }
+  const clamped = clampTemperature(text, unit);
+  return clamped === text ? text : String(clamped);
+};
+
 const MomentUnit = {
   'Week(s)': 'weeks',
   'Day(s)': 'days',
