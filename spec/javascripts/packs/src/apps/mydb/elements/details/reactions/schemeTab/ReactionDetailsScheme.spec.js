@@ -1380,9 +1380,6 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
 
 // Locked concentration edits use the explicit reaction-volume basis, so solvents may
 // scale without changing the divisor. Feedstock edits preserve solvent volumes.
-// Not covered here: the reference-component switch (updatedReactionForComponentReferenceChange)
-// still calls updatedSamplesForAmountChange directly and does NOT derive solvents under lock.
-// That bypass is scoped to the stacked #3584.
 describe('ReactionDetailsScheme reference-changing handlers — solvent volume scaling (regression)', () => {
   let gasStoreStub;
 
@@ -1514,20 +1511,22 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
       amount_mol: 0,
     };
     const solventVolumes = [4, 2];
-    const scaleFactors = [];
     const updatedReaction = {
       flagAtRebase: undefined,
       includeSbmmAtRebase: undefined,
-      scaleSolventVolumesForReferenceChange: sinon.spy((previousAmountMol) => {
-        const factor = updatedSample.amount_mol / previousAmountMol;
-        scaleFactors.push(factor);
-        solventVolumes.forEach((volume, index) => {
-          solventVolumes[index] = volume * factor;
-        });
-      }),
+      referenceMaterial: updatedSample,
+      solvents: solventVolumes.map((volume, index) => ({
+        id: `solvent-${index}`,
+        amount_unit: 'l',
+        get amount_l() { return solventVolumes[index]; },
+        setAmount: (amount) => { solventVolumes[index] = amount.value; },
+      })),
+      captureSolventReferenceRatios: Reaction.prototype.captureSolventReferenceRatios,
+      updateSolventVolumesForReference: sinon.spy(Reaction.prototype.updateSolventVolumesForReference),
       resetPreservedConcentrationExcept: sinon.spy(),
       updateAllConcentrations: sinon.spy(),
     };
+    updatedReaction.captureSolventReferenceRatios();
     const reaction = {
       referenceMaterial: updatedSample,
       sampleById: sinon.stub().returns(updatedSample),
@@ -1560,12 +1559,12 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
         return samples;
       }),
     };
-    return { ctx, updatedReaction, updatedSample, dependentSample, solventVolumes, scaleFactors };
+    return { ctx, updatedReaction, updatedSample, dependentSample, solventVolumes };
   };
 
   it('restores a saved mixture, derives the octane amount, and scales dependents under lock', () => {
     const {
-      ctx, updatedReaction, updatedSample, dependentSample, solventVolumes, scaleFactors
+      ctx, updatedReaction, updatedSample, dependentSample, solventVolumes
     } = build({ lockEquivColumn: true });
 
     ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
@@ -1580,10 +1579,7 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
     expect(updatedSample.amount_mol).toBeCloseTo(massG / octaneRelMW, 12);
     expect(updatedSample.amount_g).toBeCloseTo(massG, 12);
     expect(dependentSample.amount_mol).toBeCloseTo(2 * massG / octaneRelMW, 12);
-    expect(updatedReaction.scaleSolventVolumesForReferenceChange.calledOnceWith(
-      massG / icosaneRelMW
-    )).toBe(true);
-    expect(scaleFactors[0]).toBeCloseTo(expectedScale, 12);
+    expect(updatedReaction.updateSolventVolumesForReference.calledOnceWithExactly(updatedSample)).toBe(true);
     expect(solventVolumes[0]).toBeCloseTo(4 * expectedScale, 12);
     expect(solventVolumes[1]).toBeCloseTo(2 * expectedScale, 12);
     // Concentrations refreshed under lock (the gap this fixes).
@@ -1593,7 +1589,7 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
 
   it('restores the icosane amount and original solvent volumes on the reverse switch', () => {
     const {
-      ctx, updatedReaction, updatedSample, solventVolumes, scaleFactors
+      ctx, updatedReaction, updatedSample, solventVolumes
     } = build({ lockEquivColumn: true });
 
     ReactionDetailsScheme.prototype.updatedReactionForComponentReferenceChange.call(
@@ -1603,9 +1599,7 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
       ctx, { sampleID: 'ref-1', componentId: 'c-1' }
     );
 
-    expect(updatedReaction.scaleSolventVolumesForReferenceChange.callCount).toBe(2);
-    expect(scaleFactors[0]).toBeCloseTo(icosaneRelMW / octaneRelMW, 12);
-    expect(scaleFactors[1]).toBeCloseTo(octaneRelMW / icosaneRelMW, 12);
+    expect(updatedReaction.updateSolventVolumesForReference.callCount).toBe(2);
     expect(updatedReaction.flagAtRebase).toBe(false);
     expect(updatedSample.amount_mol).toBeCloseTo(massG / icosaneRelMW, 12);
     expect(updatedSample.amount_g).toBeCloseTo(massG, 12);
@@ -1621,7 +1615,7 @@ describe('ReactionDetailsScheme#updatedReactionForComponentReferenceChange — r
     );
 
     expect(updatedReaction.updateAllConcentrations.called).toBe(false);
-    expect(updatedReaction.scaleSolventVolumesForReferenceChange.called).toBe(false);
+    expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
   });
 });
 
