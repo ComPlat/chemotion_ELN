@@ -154,6 +154,9 @@ const updateWeightPercentageReference = (reaction) => {
   }, 0);
 };
 
+// Whether switching `reaction` to the scheme `nextSchemeType` turns the gaseous scheme on or off.
+const switchesGasMode = (reaction, nextSchemeType) => !!reaction.gaseous !== (nextSchemeType === 'gaseous');
+
 const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }) => {
   const [reaction, setReactionState] = useState(reactionFromProps);
   const [activeTab, setActiveTab] = useState(() => UIStore.getState().reaction.activeTab);
@@ -409,6 +412,17 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   const applySchemeChange = useCallback((type) => {
     const currentReaction = reactionRef.current;
 
+    /*
+    A variation stores its gas specific values (gas types, gas phase data, vessel size) as a diff
+    against the parent, and none of them fit the other side of a switch to or from the gaseous
+    scheme - so, as the confirmation says, the variations go. Cleared before the switch below
+    goes through onInputChange, whose setReaction re-derives the variations tab from this list.
+    */
+    if (switchesGasMode(currentReaction, type) && currentReaction.variations?.length > 0) {
+      currentReaction.variations = [];
+      currentReaction.changed = true;
+    }
+
     if (type === 'default') {
       // Reset weight_percentage_reference for all materials when leaving weight percentage mode
       currentReaction.resetWeightPercentagedependencies();
@@ -444,10 +458,8 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
 
     const isSwitchingFromWeightPercentage = (nextSchemeType !== 'weight_percentage')
       && (currentSchemeType === 'weight_percentage');
-    const isSwitchingFromGas = (nextSchemeType !== 'gaseous') && (currentSchemeType === 'gaseous');
-    const isSwitchingToGas = (nextSchemeType === 'gaseous') && (currentSchemeType !== 'gaseous');
-
-    const schemeSwitchClearsVariations = isSwitchingFromGas || isSwitchingToGas;
+    const schemeSwitchClearsVariations = switchesGasMode(currentReaction, nextSchemeType)
+      && currentReaction.variations?.length > 0;
 
     const schemeSwitchRequiresConfirmation = isSwitchingFromWeightPercentage || schemeSwitchClearsVariations;
     if (schemeSwitchRequiresConfirmation) {
