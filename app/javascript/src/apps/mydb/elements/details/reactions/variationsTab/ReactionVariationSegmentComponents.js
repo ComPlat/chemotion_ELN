@@ -15,7 +15,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
-import { getGenSI } from 'chem-generic-ui';
+import { convertMeasurementValue, getGenSI } from 'chem-generic-ui';
 import Reaction from 'src/models/Reaction';
 import Segment from 'src/models/Segment';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -74,34 +74,6 @@ const fieldOf = (segment, layerKey, fieldKey) => {
 const unitsOf = (field) => getGenSI(field.option_layers) ?? [];
 
 const unitLabel = (units, unit) => units.find((entry) => entry.key === unit)?.label ?? unit;
-
-const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
-  const unitConfigs = unitsOf(genericQuantity);
-  if (!unitConfigs || unitConfigs.length === 0) return null;
-
-  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
-  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
-  if (!fromUnitConfig || !toUnitConfig) return null;
-
-  return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
-};
-
-/*
-Not every quantity converts by a ratio - temperature does not - so this goes through the generic
-unit conversion rather than scaling by the units' factors. An unconvertible value (empty, or a
-quantity chem-units does not know) is left as it is rather than replaced by null.
-*/
-const convertValue = (value, fromUnit, toUnit, quantity) => {
-  if (value === '' || value === null || value === undefined || !fromUnit || !toUnit) {
-    return value;
-  }
-  if (fromUnit === toUnit) {
-    return value;
-  }
-
-  const converted = convertGenericUnit(quantity, value, fromUnit, toUnit);
-  return converted === null || converted === undefined ? value : converted;
-};
 
 const selectOptionsOf = (field) => (field.options ?? []).map((option) => ({
   value: option.key ?? option.value ?? option.label,
@@ -192,8 +164,12 @@ const SegmentFieldCell = ({
     const switchUnit = () => {
       const nextUnit = units[(units.findIndex((entry) => entry.key === unit) + 1) % units.length];
       commit((target) => {
-        // The value keeps meaning the same thing: it is converted into the unit it is now read in.
-        target.value = convertValue(target.value, unit, nextUnit.key, field.option_layers);
+        /*
+        The value keeps meaning the same thing: it is converted into the unit it is now read in, through
+        the conversion chem-generic-ui's own unit button uses - not every quantity converts by a ratio
+        (temperature does not). A value it cannot convert (empty, not a number) is left as it is.
+        */
+        target.value = convertMeasurementValue(target.value, unit, nextUnit.key, field.option_layers);
         target.value_system = nextUnit.key;
       });
     };
@@ -284,7 +260,7 @@ const SegmentUnitHeader = ({
       const target = fieldOf(segment, layerKey, fieldKey);
       // Converted out of the unit the row is actually in, so rows that were left behind in an
       // earlier unit still end up with the right number.
-      target.value = convertValue(
+      target.value = convertMeasurementValue(
         target.value, target.value_system || unit, nextUnit.key, field.option_layers
       );
       target.value_system = nextUnit.key;
