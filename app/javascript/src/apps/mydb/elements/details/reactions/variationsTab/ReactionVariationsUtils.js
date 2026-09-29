@@ -157,6 +157,20 @@ const convertVariationDatasetToInternalVariations = (reaction) => {
   return internalVariation;
 };
 
+/*
+Whether a nested diff says nothing changed. A list diff keeps a null hole per unchanged entry, so an
+unchanged list comes back as all holes - but only one as long as the original counts as unchanged:
+a variation's list is sized by its diff (see deepPatch), so a shorter or longer one is a change.
+*/
+const isUnchanged = (nestedDiff, original) => {
+  if (Array.isArray(nestedDiff)) {
+    return Array.isArray(original)
+      && nestedDiff.length === original.length
+      && nestedDiff.every((entry) => entry === null);
+  }
+  return Object.keys(nestedDiff).length === 0;
+};
+
 const diffObjects = (obj1, obj2, ignoreList = []) => {
   let result, keys;
   const isArray = Array.isArray(obj2);
@@ -190,7 +204,7 @@ const diffObjects = (obj1, obj2, ignoreList = []) => {
     ) {
       const nestedDiff = diffObjects(value1, value2, ignoreList);
 
-      if (Object.keys(nestedDiff).length > 0) {
+      if (!isUnchanged(nestedDiff, value1)) {
         result[key] = nestedDiff;
       } else if (isArray) {
         result[key] = null;
@@ -211,11 +225,15 @@ the diff must not capture editor bookkeeping: `belongTo`, `matGroup` and `edited
 transient references the sample flows hang onto reactions and samples, and diffObjects would copy
 them - and through them the whole variation clone - into the diff by reference, breaking the
 structuredClone the variations are rebuilt with.
+
+Nor the containers: makeVariationReaction gives every material a fresh one on each rebuild, so they
+always differ from the parent's and the rebuild would replace whatever the diff held anyway.
+Analyses stay on the parent reaction.
 */
 const variationDiffOf = (reaction, variationReaction) => diffObjects(
   reaction,
   variationReaction,
-  ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample']
+  ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container']
 );
 
 /*
