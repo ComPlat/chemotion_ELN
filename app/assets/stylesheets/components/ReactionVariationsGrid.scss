@@ -1,0 +1,232 @@
+// Grid of the reaction variations tab: every material field is its own column and every cell hosts
+// a live input from the scheme tab, so the cells need room and must not clip their popovers.
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f2f2f2;
+  color: #000;
+}
+.reaction-variations-grid {
+  width: 100%;
+
+  &__simple-mode {
+      .ag-cell .reaction-material__iupac-name {
+        display: None !important;
+      }
+      [col-id="reaction_reaction_volume"] .form-check {
+        display: None !important;
+      }
+      [col-id="reaction_duration"] .input-group:nth-child(2) {
+        display: None !important;
+      }
+  }
+
+  .ag-header-group-cell {
+    overflow: hidden;
+  }
+
+  .ag-header-group-cell:hover {
+    overflow: visible;
+    .ag-header-cell-comp-wrapper.ag-header-cell-comp-wrapper-limited-height {
+      background: #d3e8f2 !important;
+
+    }
+
+    z-index: 500;
+  }
+
+  .ag-cell {
+    overflow: visible;
+    padding-left: 4px;
+    padding-right: 4px;
+    line-height: normal;
+  }
+
+  .ag-cell-wrapper,
+  .ag-cell-value {
+    width: 100%;
+  }
+
+  // The material name cell reuses the scheme tab markup, which brings its own table cell padding.
+  .pseudo-table__cell {
+    padding: 0;
+  }
+
+  .numeral-input-with-units {
+    width: 100%;
+  }
+
+  /*
+  The material name cell is translated along the horizontal scroll by updateStickyNames so it stays
+  visible while its group is on screen. Once it has left its own slot it overlaps the cells it slides
+  over, so it needs to paint above them on an opaque background.
+  */
+  .variations-sticky-name {
+    will-change: transform;
+    transition: transform 10ms ease-in-out;
+
+    &--floating {
+      z-index: 30;
+      background-color: var(--ag-background-color, #fff)!important;
+      box-shadow: 1px 0 3px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  // Leave room for the column picker button next to a group's name.
+  .ag-header-group-cell-label {
+    overflow: visible;
+  }
+
+  // Column wide unit switch of a material header. Unlike the drag handle next to it this is a
+  // control, so it stays visible; it only has to fit into the 32px header row.
+  .variations-unit-switch {
+    max-height: 20px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /*
+  Group heading naming the sample every variation of the slot shares. The name widget is the one
+  the Material cells render, squeezed onto the single 32px header line: no wrapping, and no room
+  for the IUPAC subline it shows in a cell.
+  */
+  .variations-material-group-header {
+    min-width: 0;
+    white-space: nowrap;
+
+    .reaction-material__iupac-name {
+      max-width: 200px;
+      overflow: hidden;
+    }
+  }
+
+  /*
+  The group heading follows the horizontal scroll inside its own group, so "Starting material 1"
+  stays readable when the scroll is halfway through a group 900px wide. It is translated by
+  updateStickyNames rather than left to AG Grid's own `position: sticky` label, so that it travels
+  on the same events, and by the same arithmetic, as the material name cells above.
+
+  The heading must be as wide as its contents for that: the offset it may travel is the group's
+  width less its own, and AG Grid's wrapper around a custom header component is `width: 100%`.
+  */
+  .ag-header-group-cell .ag-header-cell-comp-wrapper {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .variations-sticky-group-label {
+    will-change: transform;
+    transition: transform 70ms linear;
+  }
+
+  // The column name doubles as the sort control, so it is a button that has to read as a label.
+  // The arrow only asserts itself once the column is actually sorted.
+  .variations-sort-header {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+
+    &:hover .variations-sort-header__idle {
+      opacity: 0.75;
+    }
+
+    &__idle {
+      opacity: 0.25;
+    }
+  }
+
+  // Columns are dragged by their header cell, so the handle is a hint rather than the drag source.
+  // It stays in the layout when idle so the header text does not jump on hover.
+  .ag-header-cell,
+  .ag-header-group-cell {
+    .drag-handle {
+      visibility: hidden;
+      min-width: 10px;
+      padding: 0;
+
+      &:after {
+        max-height: 16px;
+      }
+    }
+
+    &:hover .drag-handle {
+      visibility: visible;
+    }
+  }
+}
+
+/*
+The group toolbar is a table whose first row mirrors the grid header: one cell per shown group, in
+the header's order. `table-layout: fixed` shares the toolbar's width equally among the cells, so
+the table can never grow wider than its container - the buttons truncate instead (each carries its
+full name as a tooltip).
+*/
+.reaction-variations-grid__toolbar {
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0;
+  }
+
+  td {
+    padding: 0;
+  }
+
+  // The gap between the header row's buttons; the first cell stays flush with the grid's edge.
+  td + td {
+    padding-left: 0.25rem;
+  }
+
+  // The strip under the header row that the scroll thumb travels in.
+  tbody tr:first-child > td {
+    padding-bottom: 5px;
+  }
+}
+
+// The scroll position of the grid, drawn onto the toolbar table: the header row is the track and
+// this is the thumb. updateToolbarScrollIndicator places it; without horizontal overflow it stays
+// hidden.
+.reaction-variations-grid__scroll-thumb {
+  display: none;
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--bs-info);
+  pointer-events: none;
+}
+
+// Not nested in the grid block: the picker is portalled to the body to escape the header's overflow.
+.reaction-variations-grid__column-picker {
+  max-width: 320px;
+
+  .popover-body {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+}

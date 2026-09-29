@@ -155,3 +155,6 @@ ReactionConditions.propTypes = {
   isDisabled: PropTypes.bool.isRequired,
   onChange: PropTypes.func.isRequired,
 };
+
+// Exported so read-only views (e.g. the variations grid) decode conditions exactly like the editor.
+export { textToLines };

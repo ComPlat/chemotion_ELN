@@ -23,7 +23,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { components as ReactSelectComponents } from 'react-select';
 
-const headers = {
+const MATERIAL_HEADER = {
   ref: 'Ref',
   group: 'Starting materials',
   tr: 'T/R',
@@ -41,13 +41,12 @@ const headers = {
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
-  showLoadingColumn, reaction, headIndex,
+  showLoadingColumn, reaction, headIndex, variations,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled
+  switchYield, dndEnabled, showAddSampleButton
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
-
   const getMaterialComponent = ({
     dragRef,
     dropRef,
@@ -59,6 +58,7 @@ const MaterialGroup = ({
   }) => (
     <Material
       key={material.id}
+      variations={variations}
       reaction={reaction}
       onChange={onChange}
       material={material}
@@ -115,6 +115,7 @@ const MaterialGroup = ({
         headIndex={headIndex}
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
+        showAddSampleButton={showAddSampleButton}
       />
     );
   }
@@ -135,6 +136,7 @@ const MaterialGroup = ({
       displayYieldField={displayYieldField}
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
+      showAddSampleButton={showAddSampleButton}
     />
   );
 };
@@ -277,12 +279,12 @@ const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, showAddSampleButton
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
   const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   const [activeTab, setActiveTab] = useState('all');
   const [topReagents, setTopReagents] = useState(() => reagentTracker.getTop());
 
@@ -434,7 +436,7 @@ const GeneralMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {showAddSampleButton && addSampleButton}
                 {groupHeaders.group}
                 {isReactants && reagentDd}
               </div>
@@ -490,9 +492,9 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled
+  dropSample, onDrop, onReorder, dndEnabled, showAddSampleButton
 }) => {
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
   const [activeTab, setActiveTab] = useState('all');
   const [topSolvents, setTopSolvents] = useState(() => solventTracker.getTop());
@@ -567,7 +569,7 @@ const SolventsMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {showAddSampleButton && addSampleButton}
                 {groupHeaders.group}
                 <Select
                   isDisabled={!permitOn(reaction)}
@@ -613,11 +615,26 @@ MaterialGroup.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+  // Off in the variations tab, where materials follow the parent reaction's scheme.
+  showAddSampleButton: PropTypes.bool,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }))
+};
+
+/*
+Not every caller has the toggles: the yield/conversion switch only exists on the products group, and
+the purification solvents have no equivalent lock either.
+*/
+MaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -630,11 +647,19 @@ GeneralMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+  showAddSampleButton: PropTypes.bool,
+};
+
+GeneralMaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
+  showAddSampleButton: true,
+  displayYieldField: null
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -647,10 +672,12 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
+  showAddSampleButton: PropTypes.bool,
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
+  showAddSampleButton: true,
 };
 
 MaterialGroup.defaultProps = {
@@ -659,6 +686,8 @@ MaterialGroup.defaultProps = {
   displayYieldField: null,
   headIndex: 0,
   dndEnabled: true,
+  variations: null,
+  showAddSampleButton: true,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -669,3 +698,7 @@ GeneralMaterialGroup.defaultProps = {
 };
 
 export default MaterialGroup;
+
+export {
+  MATERIAL_HEADER
+};
