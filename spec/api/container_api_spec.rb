@@ -23,7 +23,7 @@ describe Chemotion::ContainerAPI do
   let!(:cont_hacker_analysis) { create(:analysis_container) }
   let!(:cont_hacker_dataset) { create(:container, container_type: 'dataset') }
 
-  context 'authorized user logged in' do
+  context 'when an authorized user is logged in' do
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user)
         .and_return(login)
@@ -39,7 +39,6 @@ describe Chemotion::ContainerAPI do
 
     after(:all) do
       `rm -rf #{Rails.root.join('tmp/test')}`
-      puts "delete tmp folder #{Rails.root.join('tmp/test')} "
     end
 
     describe 'check if the current user is the container owner before removing the linkage between container and attachments' do
@@ -92,11 +91,14 @@ describe Chemotion::ContainerAPI do
     end
 
     context 'when the root element is a Reaction' do
+      # A `-vN` file name links to the row labelled N, i.e. its `idx`; the row id is a UUID.
+      let(:variation_uuid) { SecureRandom.uuid }
+
       before do
         reaction.update!(
-          variations: {
-            'uuid-1' => { 'id' => '1', 'metadata' => { 'analyses' => [], 'notes' => '' } },
-          },
+          variations: [
+            { 'id' => variation_uuid, 'idx' => 1, 'data' => {}, 'analyses' => [], 'notes' => '' },
+          ],
         )
       end
 
@@ -118,7 +120,7 @@ describe Chemotion::ContainerAPI do
 
         json = JSON.parse(response.body)
         expect(json['variations']).to be_an(Array)
-        expect(json['variations'].first['id']).to eq('1')
+        expect(json['variations'].first['id']).to eq(variation_uuid)
       end
 
       context 'when an attachment with a variation filename is saved' do
@@ -176,8 +178,8 @@ describe Chemotion::ContainerAPI do
 
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
-          variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to include(analysis_container.id)
+          variation = json['variations'].find { |v| v['idx'] == 1 }
+          expect(variation['analyses']).to include(analysis_container.id)
         end
       end
 
@@ -236,8 +238,8 @@ describe Chemotion::ContainerAPI do
 
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
-          variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to be_empty
+          variation = json['variations'].find { |v| v['idx'] == 1 }
+          expect(variation['analyses']).to be_empty
         end
       end
 
@@ -289,8 +291,8 @@ describe Chemotion::ContainerAPI do
 
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
-          variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to be_empty
+          variation = json['variations'].find { |v| v['idx'] == 1 }
+          expect(variation['analyses']).to be_empty
         end
       end
 
@@ -367,8 +369,8 @@ describe Chemotion::ContainerAPI do
 
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
-          variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to eq([analysis_container.id])
+          variation = json['variations'].find { |v| v['idx'] == 1 }
+          expect(variation['analyses']).to eq([analysis_container.id])
           expect(reaction.reload.updated_at).to eq(updated_at_after_first_link)
         end
       end
@@ -432,10 +434,10 @@ describe Chemotion::ContainerAPI do
 
         before do
           reaction.update!(
-            variations: {
-              'uuid-1' => { 'id' => '1', 'metadata' => { 'analyses' => [], 'notes' => '' } },
-              'uuid-2' => { 'id' => '2', 'metadata' => { 'analyses' => [], 'notes' => '' } },
-            },
+            variations: [
+              { 'id' => SecureRandom.uuid, 'idx' => 1, 'data' => {}, 'analyses' => [], 'notes' => '' },
+              { 'id' => SecureRandom.uuid, 'idx' => 2, 'data' => {}, 'analyses' => [], 'notes' => '' },
+            ],
           )
           create(:attachment, key: first_attachment_key, filename: 'spectrum-v1.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
           create(:attachment, key: second_attachment_key, filename: 'spectrum-v2.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
@@ -451,10 +453,10 @@ describe Chemotion::ContainerAPI do
 
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
-          variation_one = json['variations'].find { |v| v['id'] == '1' }
-          variation_two = json['variations'].find { |v| v['id'] == '2' }
-          expect(variation_one['metadata']['analyses']).to eq([analysis_container.id])
-          expect(variation_two['metadata']['analyses']).to eq([analysis_container.id])
+          variation_one = json['variations'].find { |v| v['idx'] == 1 }
+          variation_two = json['variations'].find { |v| v['idx'] == 2 }
+          expect(variation_one['analyses']).to eq([analysis_container.id])
+          expect(variation_two['analyses']).to eq([analysis_container.id])
         end
       end
     end

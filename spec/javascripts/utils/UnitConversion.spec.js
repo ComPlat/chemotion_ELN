@@ -128,10 +128,30 @@ describe('Testing React Utility Functions', () => {
     assert.strictEqual(determineTONFrequencyValue(10, TON_UNITS.PER_HOUR, timeValues, 0), 5);
   });
 
+  // A turnover frequency is a rate: per minute is a sixtieth of per hour, not sixty times it.
   it('should convert turnover frequency correctly', () => {
-    const [converted, unit] = convertTurnoverFrequency(2, TON_UNITS.PER_HOUR);
-    assert.strictEqual(converted, 120);
+    const [converted, unit] = convertTurnoverFrequency(120, TON_UNITS.PER_HOUR);
+    assert.strictEqual(converted, 2);
     assert.strictEqual(unit, TON_UNITS.PER_MINUTE);
+  });
+
+  it('should convert turnover frequency through the whole unit cycle and back', () => {
+    let value = 2;
+    let unit = TON_UNITS.PER_HOUR;
+    [value, unit] = convertTurnoverFrequency(value, unit);
+    assert.strictEqual(unit, TON_UNITS.PER_MINUTE);
+    assert.ok(Math.abs(value - (2 / 60)) < 1e-12);
+    [value, unit] = convertTurnoverFrequency(value, unit);
+    assert.strictEqual(unit, TON_UNITS.PER_SECOND);
+    assert.ok(Math.abs(value - (2 / 3600)) < 1e-12);
+    [value, unit] = convertTurnoverFrequency(value, unit);
+    assert.strictEqual(unit, TON_UNITS.PER_HOUR);
+    assert.strictEqual(value, 2);
+  });
+
+  it('should keep an empty turnover frequency empty and reject an unknown unit', () => {
+    assert.deepEqual(convertTurnoverFrequency('', TON_UNITS.PER_HOUR), ['', TON_UNITS.PER_MINUTE]);
+    assert.strictEqual(convertTurnoverFrequency(2, 'TON/d'), null);
   });
 
   it('should handle float numbers with non-numeric precision/value', () => {

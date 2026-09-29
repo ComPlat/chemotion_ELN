@@ -1,7 +1,9 @@
 import {
+  cloneDeep,
   isEmpty,
   round,
 } from 'lodash';
+import uuid from 'uuid';
 import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
@@ -62,6 +64,33 @@ export const convertTemperature = (temperature, fromUnit, toUnit) => {
   return conversionTable[fromUnit][toUnit](temperature);
 };
 
+// The lowest temperature there is, per unit the reaction and its gas phase data keep temperatures in.
+const ABSOLUTE_ZERO = {
+  '°C': -273.15, '°F': -459.67, K: 0, '°K': 0,
+};
+
+// A temperature, raised to absolute zero if it lies below it; one in an unknown unit is left alone.
+export const clampTemperature = (value, unit) => {
+  const minimum = ABSOLUTE_ZERO[unit];
+  const numeric = Number(value);
+  if (minimum === undefined || value === '' || value === null || !Number.isFinite(numeric)) {
+    return value;
+  }
+  return numeric < minimum ? minimum : value;
+};
+
+/*
+The reaction temperature as typed: free text ("reflux", "rt", "-78 to -40"), so only a plain number is
+held to absolute zero, and it stays text.
+*/
+export const clampTemperatureText = (text, unit) => {
+  if (typeof text !== 'string' || !/^\s*-?\d+(\.\d*)?\s*$/.test(text)) {
+    return text;
+  }
+  const clamped = clampTemperature(text, unit);
+  return clamped === text ? text : String(clamped);
+};
+
 const MomentUnit = {
   'Week(s)': 'weeks',
   'Day(s)': 'days',
@@ -86,6 +115,17 @@ const DurationUnit = [
   'Second(s)'
 ];
 
+const ShirtLegMomentUnit = {
+  'Y': 'years',
+  'M': 'months',
+  'w': 'weeks',
+  'd': 'days',
+  'h': 'hours',
+  'm': 'minutes',
+  's': 'seconds',
+  ...LegMomentUnit
+};
+
 const DurationDefault = {
   dispUnit: 'Hour(s)',
   dispValue: '',
@@ -98,8 +138,24 @@ const ReactionTypeOptions = [
   { value: 'interaction', label: 'Interaction' },
 ];
 
-export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-  .as(MomentUnit[newUnit]);
+const SECONDS_PER_TON_TIME_UNIT = { s: 1, m: 60, h: 3600 };
+
+/*
+A turnover frequency is a rate - turnovers per time unit - so going to a longer time unit multiplies:
+2 TON/m is 120 TON/h. (Converting the time itself, as calculateTONPerTimeValue does for durations,
+would divide instead.) An unknown unit leaves the value as it is.
+*/
+export const convertTonPerTime = (tonPerTime, fromUnit, toUnit) => {
+  const fromSeconds = SECONDS_PER_TON_TIME_UNIT[String(fromUnit).split('/').at(-1)];
+  const toSeconds = SECONDS_PER_TON_TIME_UNIT[String(toUnit).split('/').at(-1)];
+  if (!fromSeconds || !toSeconds) {
+    return tonPerTime;
+  }
+  return Number(tonPerTime) * (toSeconds / fromSeconds);
+};
+
+export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value),
+  ShirtLegMomentUnit[unit]).as(ShirtLegMomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -120,6 +176,83 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
   if (d.asSeconds() >= threshold) { return 'Second(s)'; }
   return 'Hour(s)';
 };
+
+/*
+Variations store what they change about a material under the material's position in its group
+(`data._starting_materials[i]` belongs to `starting_materials[i]` - see
+db/schemas/reaction_variations.schema.json). Adding, removing or reordering the reaction's own
+materials therefore has to move those entries along, or every variation's changes would land on
+whatever material now sits at the old position.
+
+The entries are re-keyed by the id of the material they belonged to before the change, so a
+material dragged into another group takes its variation changes along. Entries past the end of the
+parent's group are materials only a variation has; they stay behind the parent's materials. An
+entry for a material that is gone is dropped.
+*/
+const VARIATION_MATERIAL_GROUPS = [
+  'starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products', 'reactant_sbmm_samples',
+];
+
+const materialIdsByGroup = (reaction) => Object.fromEntries(
+  VARIATION_MATERIAL_GROUPS.map((group) => [group, (reaction[group] || []).map((m) => String(m.id))])
+);
+
+// Reactions that are inside a material change already, so nested ones (moveMaterial) align once.
+const reactionsAligningVariations = new WeakSet();
+
+function realignVariationMaterials(variations, idsBefore, idsAfter) {
+  variations.forEach((variation) => {
+    const data = variation?.data;
+    if (!data) return;
+
+    const entryById = new Map();
+    const extrasByGroup = {};
+    VARIATION_MATERIAL_GROUPS.forEach((group) => {
+      const entries = data[`_${group}`];
+      if (!Array.isArray(entries)) return;
+
+      entries.forEach((entry, index) => {
+        if (index < idsBefore[group].length) {
+          if (entry !== null && entry !== undefined) entryById.set(idsBefore[group][index], entry);
+        } else {
+          extrasByGroup[group] = [...(extrasByGroup[group] || []), entry];
+        }
+      });
+    });
+
+    VARIATION_MATERIAL_GROUPS.forEach((group) => {
+      const key = `_${group}`;
+      const extras = extrasByGroup[group] || [];
+      const aligned = idsAfter[group].map((id) => entryById.get(id) ?? null);
+
+      if (extras.length === 0 && aligned.every((entry) => entry === null)) {
+        // Nothing changed about this group: leave it to the parent entirely.
+        delete data[key];
+      } else {
+        data[key] = [...aligned, ...extras];
+      }
+    });
+  });
+}
+
+/*
+A variation of a copied reaction: its own array entry, so editing the copy does not reach into the
+original's variations, and its own identities - the row's and that of the reaction it stands for,
+by which the grid and the open variation panel address it. Its values are positional (see
+realignVariationMaterials) and carry over to the copied materials as they are. What belongs to the
+original's run stays behind: the links to its analyses, which the copy does not have, and the old
+body a migrated row may still carry, which is keyed by the original's sample ids.
+*/
+function copyVariationForReactionCopy(variation) {
+  const rest = cloneDeep(variation);
+  delete rest.legacy_data;
+  return {
+    ...rest,
+    id: uuid.v4(),
+    analyses: [],
+    data: { ...(rest.data ?? {}), id: uuid.v4() },
+  };
+}
 
 export default class Reaction extends Element {
   // reaction material types
@@ -605,9 +738,65 @@ export default class Reaction extends Element {
 
     copy.rebuildProductName();
     copy.container = Container.init();
+    copy.variations = this.variations.map(copyVariationForReactionCopy);
     copy.can_update = true;
     copy.can_copy = false;
     return copy;
+  }
+
+  /**
+   * Resets weight_percentage_reference to false for all materials in the reaction.
+   * Called when switching from weight percentage scheme to default or gaseous scheme.
+   */
+  // eslint-disable-next-line class-methods-use-this
+  resetWeightPercentagedependencies() {
+    const allMaterials = this.samples;
+
+    allMaterials.forEach((material) => {
+      material.weight_percentage_reference = false;
+      material.weight_percentage = null;
+    });
+    WeightPercentageReactionActions.setWeightPercentageReference(null);
+    WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+  }
+
+  /**
+   * Recalculates equivalent values for starting materials and reactants.
+   * Uses the reference material's moles to compute each material's equivalent.
+   *
+   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
+   */
+  // eslint-disable-next-line class-methods-use-this
+  recalculateEquivalentsForMaterials() {
+    const { referenceMaterial } = this;
+    if (!referenceMaterial || !referenceMaterial.amount_mol) {
+      return;
+    }
+
+    const materialsToUpdate = [
+      ...this.starting_materials,
+      ...this.reactants,
+    ];
+
+    materialsToUpdate.forEach((material) => {
+      if (!material.reference && material.amount_mol) {
+        material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
+      }
+    });
+  }/**
+   * Assigns weight_percentage_reference of the first product to true for a reaction.
+   * Called when switching from default or gaseous scheme to weight percentage scheme.
+   */
+  // eslint-disable-next-line class-methods-use-this
+  assignWeightPercentageReference() {
+    if (this.products.length > 0) {
+      this.products[0].weight_percentage_reference = true;
+      WeightPercentageReactionActions.setWeightPercentageReference(this.products[0]);
+      const amountValue = this.products[0].target_amount_value;
+      const amountUnit = this.products[0].target_amount_unit;
+      const targetAmount = { value: amountValue, unit: amountUnit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    }
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
@@ -646,117 +835,157 @@ export default class Reaction extends Element {
     return true;
   }
 
+  /*
+  Runs a change to the reaction's material lists and moves the variations' material entries along
+  with it - see realignVariationMaterials.
+  */
+  withVariationsAligned(change) {
+    const variations = this.variations || [];
+    if (variations.length === 0 || reactionsAligningVariations.has(this)) {
+      change();
+      return;
+    }
+
+    const idsBefore = materialIdsByGroup(this);
+    reactionsAligningVariations.add(this);
+    try {
+      change();
+    } finally {
+      reactionsAligningVariations.delete(this);
+    }
+    realignVariationMaterials(variations, idsBefore, materialIdsByGroup(this));
+  }
+
   addMaterial(material, group) {
-    if (!this.validateSbmmGroup(material, group)) return;
+    this.withVariationsAligned(() => {
+      if (!this.validateSbmmGroup(material, group)) return;
 
-    const materials = this[group];
-    const newMaterial = this.materialPolicy(material, null, group);
-    this[group] = [...materials, newMaterial];
+      const materials = this[group];
+      const newMaterial = this.materialPolicy(material, null, group);
+      this[group] = [...materials, newMaterial];
 
-    this.rebuildReference(newMaterial);
-    this.setPositions(group);
+      this.rebuildReference(newMaterial);
+      this.setPositions(group);
+    });
   }
 
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
-    if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+    this.withVariationsAligned(() => {
+      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
 
-    const materials = this[tagGp];
-    const idx = materials.indexOf(tagMaterial);
-    const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
+      const materials = this[tagGp];
+      const idx = materials.indexOf(tagMaterial);
+      const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
 
-    // rebuild weight percentage reference
-    if (srcIsWeightPercentageRef) {
-      newSrcMaterial.weight_percentage_reference = true;
-      newSrcMaterial.weight_percentage = 1;
-      WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
-      const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
-    }
+      // rebuild weight percentage reference
+      if (srcIsWeightPercentageRef) {
+        newSrcMaterial.weight_percentage_reference = true;
+        newSrcMaterial.weight_percentage = 1;
+        WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
+        const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
+      }
 
-    if (idx === -1) {
-      this[tagGp] = [...materials, newSrcMaterial];
-    } else {
-      this[tagGp] = [
-        ...materials.slice(0, idx),
-        newSrcMaterial,
-        ...materials.slice(idx),
-      ];
-    }
+      if (idx === -1) {
+        this[tagGp] = [...materials, newSrcMaterial];
+      } else {
+        this[tagGp] = [
+          ...materials.slice(0, idx),
+          newSrcMaterial,
+          ...materials.slice(idx),
+        ];
+      }
 
-    this.rebuildReference(newSrcMaterial);
-    this.setPositions(tagGp);
+      this.rebuildReference(newSrcMaterial);
+      this.setPositions(tagGp);
+    });
   }
 
   deleteMaterial(material, group) {
-    const materials = this[group];
-    const idx = materials.indexOf(material);
-    this[group] = [
-      ...materials.slice(0, idx),
-      ...materials.slice(idx + 1),
-    ];
+    // Not one of this reaction's materials - e.g. one only a variation has: nothing to delete.
+    if (!(this[group] || []).includes(material)) return;
 
-    // If deleted material is weight percentage reference, then set it to false
-    if (material.weight_percentage_reference) {
-      material.weight_percentage_reference = false;
-      WeightPercentageReactionActions.setWeightPercentageReference(null);
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-      const { allReactionMaterials } = this;
-      const refMaterial = allReactionMaterials.filter(
-        (m) => m.reference === true
-      )[0];
+    this.withVariationsAligned(() => {
+      const materials = this[group];
+      const idx = materials.indexOf(material);
+      this[group] = [
+        ...materials.slice(0, idx),
+        ...materials.slice(idx + 1),
+      ];
 
-      const refAmountMol = refMaterial.amount_mol || 1;
+      // If deleted material is weight percentage reference, then set it to false
+      if (material.weight_percentage_reference) {
+        material.weight_percentage_reference = false;
+        WeightPercentageReactionActions.setWeightPercentageReference(null);
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+        const { allReactionMaterials } = this;
+        const refMaterial = allReactionMaterials.filter(
+          (m) => m.reference === true
+        )[0];
 
-      // reset all weight percentage to null, since there is no weight percentage reference assigned
-      allReactionMaterials.forEach((m) => {
-        m.weight_percentage = null;
-        const amountMol = m.amount_mol || 0;
+        const refAmountMol = refMaterial.amount_mol || 1;
 
-        // assign equivalent based on reference material (guard against missing ref)
-        if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
-          m.equivalent = amountMol / refAmountMol;
-        } else {
-          m.equivalent = null;
-        }
-      });
-    }
+        // reset all weight percentage to null, since there is no weight percentage reference assigned
+        allReactionMaterials.forEach((m) => {
+          m.weight_percentage = null;
+          const amountMol = m.amount_mol || 0;
 
-    if (material.weight_percentage && material.weight_percentage > 0) {
-      material.weight_percentage = null;
-    }
-    this.rebuildReference(material);
-    this.setPositions(group);
+          // assign equivalent based on reference material (guard against missing ref)
+          if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
+            m.equivalent = amountMol / refAmountMol;
+          } else {
+            m.equivalent = null;
+          }
+        });
+      }
+
+      if (material.weight_percentage && material.weight_percentage > 0) {
+        material.weight_percentage = null;
+      }
+      this.rebuildReference(material);
+      this.setPositions(group);
+    });
   }
 
   swapMaterial(srcMaterial, tagMaterial, group) {
-    const srcIdx = this[group].indexOf(srcMaterial);
-    const tagIdx = this[group].indexOf(tagMaterial);
-    const groupWoSrc = [
-      ...this[group].slice(0, srcIdx),
-      ...this[group].slice(srcIdx + 1),
-    ];
-    const newGroup = [
-      ...groupWoSrc.slice(0, tagIdx),
-      srcMaterial,
-      ...groupWoSrc.slice(tagIdx),
-    ];
-    this[group] = newGroup.filter((o) => o != null) || [];
+    if (!(this[group] || []).includes(srcMaterial)) return;
 
-    this.rebuildReference(srcMaterial);
-    this.setPositions(group);
+    this.withVariationsAligned(() => {
+      const srcIdx = this[group].indexOf(srcMaterial);
+      const tagIdx = this[group].indexOf(tagMaterial);
+      const groupWoSrc = [
+        ...this[group].slice(0, srcIdx),
+        ...this[group].slice(srcIdx + 1),
+      ];
+      const newGroup = [
+        ...groupWoSrc.slice(0, tagIdx),
+        srcMaterial,
+        ...groupWoSrc.slice(tagIdx),
+      ];
+      this[group] = newGroup.filter((o) => o != null) || [];
+
+      this.rebuildReference(srcMaterial);
+      this.setPositions(group);
+    });
   }
 
   moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
-    if (srcGp === tagGp) {
-      this.swapMaterial(srcMaterial, tagMaterial, tagGp);
-    } else {
-      // Validate before moving to prevent data loss if validation fails
-      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+    // Only this reaction's own materials can be moved; deleting a foreign one would do nothing and
+    // adding it would copy it in.
+    if (!(this[srcGp] || []).includes(srcMaterial)) return;
 
-      const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
-      this.deleteMaterial(srcMaterial, srcGp);
-      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
-    }
+    this.withVariationsAligned(() => {
+      if (srcGp === tagGp) {
+        this.swapMaterial(srcMaterial, tagMaterial, tagGp);
+      } else {
+        // Validate before moving to prevent data loss if validation fails
+        if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+
+        const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
+        this.deleteMaterial(srcMaterial, srcGp);
+        this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
+      }
+    });
   }
 
   setPositions(group) {
@@ -808,7 +1037,7 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup == "starting_materials") {
+    } else if (newGroup == 'starting_materials') {
       material.isSplit = true;
       material.reaction_product = false;
 
@@ -1323,7 +1552,15 @@ export default class Reaction extends Element {
   }
 
   get segments() {
-    return this._segments || [];
+    /*
+    Lazily settled rather than a fresh `[]` per read: callers hold on to the returned array - React
+    effect dependencies among them - and a new identity on every read makes an unchanged reaction
+    look permanently changed.
+    */
+    if (!this._segments) {
+      this._segments = [];
+    }
+    return this._segments;
   }
 
   updateMaxAmountOfProducts() {
