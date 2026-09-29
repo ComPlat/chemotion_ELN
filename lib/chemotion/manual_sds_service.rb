@@ -39,6 +39,7 @@ module Chemotion
       # Parse vendor info and chemical data
       parsing_result = parse_data
       return parsing_result if parsing_result.is_a?(Hash) && parsing_result[:error]
+      return ChemicalsService.sds_limit_error('attaching') if ChemicalsService.sds_limit_reached?([@chemical_data])
 
       # Process SDS file and create/update chemical record
       process_file
@@ -124,7 +125,7 @@ module Chemotion
       product_number = @vendor_info['productNumber']
       @file_hash = compute_or_fail(upload_path)
       sds_file_path = resolve_sds_file_path(product_number)
-      return duplicate_error(sds_file_path) if already_held?(sds_file_path)
+      return ChemicalsService.duplicate_sheet_error(sds_file_path) if already_held?(sds_file_path)
 
       handle_chemical_update_or_create(build_sds_params(product_number, sds_file_path))
     rescue StandardError => e
@@ -144,10 +145,6 @@ module Chemotion
       return @chemical_record if defined?(@chemical_record)
 
       @chemical_record = Chemical.find_by(sample_id: @sample_id)
-    end
-
-    def duplicate_error(file_path)
-      { error: ChemicalsService.duplicate_sheet_message(file_path), final: true, status: 422 }
     end
 
     # Compute hash for uploaded file

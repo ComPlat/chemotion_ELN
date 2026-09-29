@@ -287,6 +287,31 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
+  describe 'POST save safety data sheet refusals' do
+    let(:params) do
+      { chemical_data: [{ 'merckProductInfo' => { 'productNumber' => '1', 'vendor' => 'Merck',
+                                                  'sdsLink' => 'https://www.sigmaaldrich.com/x' } }],
+        cas: '629-59-4', sample_id: s.id, vendor_product: 'merckProductInfo' }
+    end
+
+    it 'passes the service status and final flag through' do
+      allow(Chemotion::ChemicalsService).to receive(:save_vendor_sheet)
+        .and_return({ error: 'already held', final: true, status: 422 })
+      post '/api/v1/chemicals/save_safety_datasheet', params: params
+
+      expect(response.status).to eq 422
+      expect(JSON.parse(response.body)).to eq('error' => 'already held', 'final' => true)
+    end
+
+    it 'reports an unexpected failure as a 400, not as a saved chemical' do
+      allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_raise(StandardError, 'boom')
+      post '/api/v1/chemicals/save_safety_datasheet', params: params
+
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['error']).to eq 'boom'
+    end
+  end
+
   describe 'POST save safety data sheet success updates chemical' do
     let(:params) do
       {
@@ -589,6 +614,19 @@ describe Chemotion::ChemicalAPI do
         post '/api/v1/chemicals/save_manual_sds', params: params
         expect(response.status).to eq 400
         expect(JSON.parse(response.body)['error']).to eq 'attached_file is missing'
+      end
+    end
+
+    context 'when the service refuses the upload' do
+      before do
+        allow(Chemotion::ManualSdsService).to receive(:create_manual_sds)
+          .and_return({ error: 'limit reached', final: true, status: 422 })
+      end
+
+      it 'passes its status and final flag through' do
+        post '/api/v1/chemicals/save_manual_sds', params: params.merge(attached_file: mock_file)
+        expect(response.status).to eq 422
+        expect(JSON.parse(response.body)).to eq('error' => 'limit reached', 'final' => true)
       end
     end
 

@@ -471,4 +471,20 @@ RSpec.describe Chemotion::ManualSdsService do
       expect(result[:status]).to eq(422)
     end
   end
+
+  describe 'refusing an upload at the sheet limit' do
+    let(:full) do
+      Array.new(Chemotion::ChemicalsService::MAX_SAVED_SDS) { |i| { "p#{i}_link" => "/safety_sheets/v/p#{i}.pdf" } }
+    end
+
+    it 'refuses before the file is processed', :aggregate_failures do
+      allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash)
+      data = { 'safetySheetPath' => full }.to_json
+      result = described_class.create_manual_sds(valid_params.merge(chemical_data: data))
+
+      expect(result).to include(final: true, status: 422)
+      expect(result[:error]).to include('before attaching another')
+      expect(Chemotion::GenerateFileHashUtils).not_to have_received(:generate_full_hash)
+    end
+  end
 end

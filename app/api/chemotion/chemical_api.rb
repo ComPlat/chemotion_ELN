@@ -122,38 +122,19 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
-          if Chemotion::ChemicalsService.sds_limit_reached?(params[:chemical_data])
-            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
-                            'safety data sheets. Delete one before saving another.', final: true }, 422)
-          end
-
-          Chemotion::ChemicalsService.handle_exceptions do
-            product_info = params[:chemical_data][0][params[:vendor_product]]
-            # Always fetches: only the bytes say whether this sheet is one already held.
-            file_path = Chemotion::ChemicalsService.create_sds_file(
-              product_info['sdsLink'],
-              product_info['productNumber'],
-              product_info['vendor'].downcase,
-            )
-            return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
-            # A failed download yields false; storing it would record an SDS path resolving to nothing.
-            return error!({ error: 'Could not retrieve the SDS from the vendor' }, 400) unless file_path.is_a?(String)
-
-            if Chemotion::ChemicalsService.sheet_already_saved?(params[:chemical_data], file_path)
-              # final: the other save route would fetch the same bytes and be refused too.
-              return error!({ error: Chemotion::ChemicalsService.duplicate_sheet_message(file_path),
-                              final: true }, 422)
-            end
-
-            Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
+          result = Chemotion::ChemicalsService.handle_exceptions do
+            Chemotion::ChemicalsService.save_vendor_sheet(
               sample_id: params[:sample_id],
               cas: params[:cas],
               chemical_data: params[:chemical_data],
-              file_path: file_path,
-              product_number: product_info['productNumber'],
-              vendor: product_info['vendor'].downcase,
+              product_info: params[:chemical_data][0][params[:vendor_product]],
             )
           end
+          if result.is_a?(Hash) && result[:error].present?
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
+          end
+
+          result
         end
       end
 
@@ -170,16 +151,6 @@ module Chemotion
         end
 
         post do
-          existing = begin
-            JSON.parse(params[:chemical_data].to_s)
-          rescue JSON::ParserError
-            nil
-          end
-          if Chemotion::ChemicalsService.sds_limit_reached?([existing].compact)
-            error!({ error: "A sample can hold at most #{Chemotion::ChemicalsService::MAX_SAVED_SDS} " \
-                            'safety data sheets. Delete one before attaching another.', final: true }, 422)
-          end
-
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],

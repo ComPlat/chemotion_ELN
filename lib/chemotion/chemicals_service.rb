@@ -155,6 +155,33 @@ module Chemotion
       "This sample already holds this sheet. It is the same document as #{held}."
     end
 
+    # Error hashes carry their HTTP status; final tells the client no other route will do better.
+    def self.sds_limit_error(action)
+      { error: "A sample can hold at most #{MAX_SAVED_SDS} safety data sheets. Delete one before #{action} another.",
+        final: true, status: 422 }
+    end
+
+    def self.duplicate_sheet_error(file_path)
+      { error: duplicate_sheet_message(file_path), final: true, status: 422 }
+    end
+
+    # Fetches the sheet a search row points at and records it on the sample.
+    # @return [Chemical, Hash] the chemical, or an error hash as built above
+    def self.save_vendor_sheet(sample_id:, cas:, chemical_data:, product_info:)
+      return sds_limit_error('saving') if sds_limit_reached?(chemical_data)
+
+      vendor = product_info['vendor'].downcase
+      # Always fetches: only the bytes say whether this sheet is one already held.
+      file_path = create_sds_file(product_info['sdsLink'], product_info['productNumber'], vendor)
+      return file_path.merge(status: 400) if file_path.is_a?(Hash) && file_path[:error]
+      return { error: 'Could not retrieve the SDS from the vendor', status: 400 } unless file_path.is_a?(String)
+      return duplicate_sheet_error(file_path) if sheet_already_saved?(chemical_data, file_path)
+
+      find_or_create_chemical_with_safety_data(sample_id: sample_id, cas: cas, chemical_data: chemical_data,
+                                               file_path: file_path, product_number: product_info['productNumber'],
+                                               vendor: vendor)
+    end
+
     def self.sheet_already_saved?(chemical_data, file_path)
       file_path.is_a?(String) && saved_sheet_paths(chemical_data).include?(file_path)
     end

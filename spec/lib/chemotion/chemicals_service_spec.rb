@@ -318,6 +318,71 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.save_vendor_sheet' do
+    let(:sample) { create(:sample) }
+    let(:held) { '/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf' }
+    let(:product_info) do
+      { 'vendor' => 'Merck', 'productNumber' => '179124', 'sdsLink' => 'https://www.sigmaaldrich.com/x' }
+    end
+
+    def save(sheets = [])
+      described_class.save_vendor_sheet(sample_id: sample.id, cas: '67-64-1', product_info: product_info,
+                                        chemical_data: [{ 'safetySheetPath' => sheets }])
+    end
+
+    it 'records the fetched sheet on a new chemical', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file).and_return(held)
+
+      chemical = save
+      expect(chemical).to be_a(Chemical)
+      expect(chemical.chemical_data[0]['safetySheetPath']).to eq([{ '179124_aaaaaaaaaaaaaaaa_link' => held }])
+      expect(described_class).to have_received(:create_sds_file)
+        .with('https://www.sigmaaldrich.com/x', '179124', 'merck')
+    end
+
+    it 'refuses at the cap without fetching', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file)
+      full = Array.new(described_class::MAX_SAVED_SDS) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } }
+
+      expect(save(full)).to include(final: true, status: 422)
+      expect(described_class).not_to have_received(:create_sds_file)
+    end
+
+    it 'passes a download error on as a 400' do
+      allow(described_class).to receive(:create_sds_file).and_return({ error: 'vendor timed out' })
+      expect(save).to eq(error: 'vendor timed out', status: 400)
+    end
+
+    it 'refuses a download that produced no file' do
+      allow(described_class).to receive(:create_sds_file).and_return(false)
+      expect(save).to eq(error: 'Could not retrieve the SDS from the vendor', status: 400)
+    end
+
+    it 'refuses a sheet the sample already holds as final', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file).and_return(held)
+
+      result = save([{ '179124_aaaaaaaaaaaaaaaa_link' => held }])
+      expect(result).to include(final: true, status: 422)
+      expect(result[:error]).to include('179124')
+    end
+  end
+
+  describe 'error hashes' do
+    it 'names the cap and the action in the limit error' do
+      expect(described_class.sds_limit_error('saving')).to eq(
+        error: "A sample can hold at most #{described_class::MAX_SAVED_SDS} safety data sheets. " \
+               'Delete one before saving another.',
+        final: true,
+        status: 422,
+      )
+    end
+
+    it 'names the held sheet in the duplicate error' do
+      expect(described_class.duplicate_sheet_error('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
+        .to include(error: a_string_including('179124'), final: true, status: 422)
+    end
+  end
+
   describe '.fetch_allowed_url' do
     let(:pdf) { instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }) }
 
