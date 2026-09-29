@@ -14,10 +14,10 @@
 # model the diff is expressed in, so rewriting them would mean guessing what each entry was meant to
 # override. Instead every converted variation starts out with a diff that changes nothing - i.e. it
 # reads as identical to its parent reaction - and keeps its former body verbatim under
-# `legacy_data`. Nothing is lost and `down` puts it back. The client turns `legacy_data` into a
-# real diff when it reads such a row, through the same Sample and Reaction models an edit goes
-# through (variationsTab/ReactionVariationsLegacyConversion.js); the result is stored with the
-# reaction's next save.
+# `legacy_data`. Nothing is lost and `down` puts it back. The next migration,
+# 20260929120000_convert_legacy_reaction_variation_values.rb, then writes the old values into the
+# diff (Usecases::Reactions::ConvertLegacyVariations); the client converts whatever that left on
+# read (variationsTab/ReactionVariationsLegacyConversion.js).
 #
 # `data` therefore ends up carrying nothing but the identity of the reaction the row stands for.
 # That one attribute is not optional: the client generates a fresh id for a row whose diff has none,

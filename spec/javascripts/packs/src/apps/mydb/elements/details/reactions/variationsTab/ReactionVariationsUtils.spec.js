@@ -2,6 +2,7 @@ import expect from 'expect';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import ReactionFactory from 'factories/ReactionFactory';
+import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, formatReactionSegments, getVariationsRowName,
   makeVariationReaction, addNewVariationDataset, convertVariationDatasetToInternalVariations,
@@ -108,6 +109,23 @@ describe('ReactionVariationsUtils', () => {
   });
 
   describe('convertVariationDatasetToInternalVariations', () => {
+    it('gives every variation a material added to the reaction, and keeps its changes in place', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const [first] = reaction.starting_materials;
+      reaction.variations = [{
+        id: 'a', idx: 1, group: [1, 0], analyses: [],
+        data: { id: 'a-reaction', _starting_materials: [{ _equivalent: 0.1 }, { _equivalent: 0.2 }] },
+      }];
+      const added = await SampleFactory.build('SampleFactory.water_100g');
+
+      reaction.addMaterialAt(added, null, first, 'starting_materials');
+
+      const [row] = convertVariationDatasetToInternalVariations(reaction);
+      const ids = row.data.starting_materials.map((m) => m.id);
+      expect(ids).toEqual(reaction.starting_materials.map((m) => m.id));
+      expect(row.data.starting_materials.map((m) => m.equivalent).slice(1)).toEqual([0.1, 0.2]);
+    });
+
     it('labels a row by its stored idx and addresses it by position', async () => {
       const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
       reaction.variations = [
