@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger
@@ -39,6 +39,12 @@ const MATERIAL_HEADER = {
   eq: 'Eq'
 };
 
+// The reaction as seen by a row that must not change it: everything reads through, write
+// permission reads as missing, and anything written lands on the view rather than the reaction.
+const readOnlyViewOf = (reaction) => Object.create(reaction, {
+  can_update: { value: false, writable: true, configurable: true },
+});
+
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex, variations,
@@ -47,6 +53,14 @@ const MaterialGroup = ({
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
+  /*
+  Next to its own materials, a group also lists those only some of the reaction's variations have
+  (see ReactionDetailsScheme). They are not the reaction's to edit - its handlers would look for them
+  among its own materials - so they get a read-only view of the reaction, which every input of a
+  material row already checks, and are edited in the Variations tab.
+  */
+  const ownMaterials = (materialGroup === 'reactants' ? reaction.reactantsWithSbmm : reaction[materialGroup]) || [];
+  const readOnlyReaction = useMemo(() => readOnlyViewOf(reaction), [reaction]);
   const getMaterialComponent = ({
     dragRef,
     dropRef,
@@ -59,7 +73,7 @@ const MaterialGroup = ({
     <Material
       key={material.id}
       variations={variations}
-      reaction={reaction}
+      reaction={ownMaterials.includes(material) ? reaction : readOnlyReaction}
       onChange={onChange}
       material={material}
       materialGroup={materialGroup}

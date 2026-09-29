@@ -875,6 +875,9 @@ export default class Reaction extends Element {
   }
 
   deleteMaterial(material, group) {
+    // Not one of this reaction's materials - e.g. one only a variation has: nothing to delete.
+    if (!(this[group] || []).includes(material)) return;
+
     this.withVariationsAligned(() => {
       const materials = this[group];
       const idx = materials.indexOf(material);
@@ -918,6 +921,8 @@ export default class Reaction extends Element {
   }
 
   swapMaterial(srcMaterial, tagMaterial, group) {
+    if (!(this[group] || []).includes(srcMaterial)) return;
+
     this.withVariationsAligned(() => {
       const srcIdx = this[group].indexOf(srcMaterial);
       const tagIdx = this[group].indexOf(tagMaterial);
@@ -938,6 +943,10 @@ export default class Reaction extends Element {
   }
 
   moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
+    // Only this reaction's own materials can be moved; deleting a foreign one would do nothing and
+    // adding it would copy it in.
+    if (!(this[srcGp] || []).includes(srcMaterial)) return;
+
     this.withVariationsAligned(() => {
       if (srcGp === tagGp) {
         this.swapMaterial(srcMaterial, tagMaterial, tagGp);
