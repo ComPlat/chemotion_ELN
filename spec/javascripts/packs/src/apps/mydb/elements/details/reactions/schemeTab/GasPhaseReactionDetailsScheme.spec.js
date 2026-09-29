@@ -5,6 +5,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 // Note: do not import UnitsConversion helpers here to avoid tautological tests
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -41,11 +42,27 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     setCatalystReferenceMoleStub.restore();
   });
 
+  /*
+  The edits under test moved from the ReactionDetailsScheme component onto the update handler it
+  drives, so that a variations row can reuse them. The handler builds its own `onInputChange`, which
+  is swapped for the spy here so the assertions can still see what a change reports.
+  */
+  function createHandler(rxn = reaction) {
+    const handler = new ReactionUpdateHandler({
+      reaction: rxn,
+      onReactionChange: onReactionChangeSpy,
+      onLockEquivColChange: () => {},
+    });
+    handler.props.onInputChange = onInputChangeSpy;
+    return handler;
+  }
+
   describe('Component Mounting', () => {
     it('should render without crashing', () => {
       const wrapper = shallow(
         React.createElement(ReactionDetailsScheme, {
           reaction,
+          variations: [],
           onReactionChange: onReactionChangeSpy,
           onInputChange: onInputChangeSpy
         })
@@ -291,17 +308,11 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsScheme, {
-          reaction,
-          onReactionChange: onReactionChangeSpy,
-          onInputChange: onInputChangeSpy,
-        })
-      );
+      const handler = createHandler();
       const gasProduct = reaction.products[0];
       const newPpm = 20000;
 
-      wrapper.instance().updatedReactionForGasProductFieldsChange({
+      handler.updatedReactionForGasProductFieldsChange({
         sampleID: gasProduct.id,
         materialGroup: 'products',
         field: 'part_per_million',
@@ -320,17 +331,11 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsScheme, {
-          reaction,
-          onReactionChange: onReactionChangeSpy,
-          onInputChange: onInputChangeSpy,
-        })
-      );
+      const handler = createHandler();
       const gasProduct = reaction.products[0];
       gasProduct.concn = 4.1e-4; // baseline derived from previous ppm edit
 
-      wrapper.instance().updatedReactionForGasProductFieldsChange({
+      handler.updatedReactionForGasProductFieldsChange({
         sampleID: gasProduct.id,
         materialGroup: 'products',
         field: 'temperature',
@@ -347,20 +352,14 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsScheme, {
-          reaction,
-          onReactionChange: onReactionChangeSpy,
-          onInputChange: onInputChangeSpy,
-        })
-      );
+      const handler = createHandler();
       const feedstock = reaction.reactants[0];
       // Simulate a feedstock concentration edit having locked the value.
       feedstock.preserveConcentration = true;
       expect(feedstock.gas_type).toBe('feedstock');
 
       // Toggle feedstock off (current display value is 'FES').
-      wrapper.instance().updatedReactionForGasTypeChange({
+      handler.updatedReactionForGasTypeChange({
         sampleID: feedstock.id,
         materialGroup: 'reactants',
         value: 'FES',
@@ -377,20 +376,14 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsScheme, {
-          reaction,
-          onReactionChange: onReactionChangeSpy,
-          onInputChange: onInputChangeSpy,
-        })
-      );
+      const handler = createHandler();
       const catalyst = reaction.reactants[1];
       catalyst.preserveConcentration = true;
       expect(catalyst.gas_type).toBe('catalyst');
 
       // Toggle catalyst off; the sample was never a feedstock so the flag
       // must not be cleared.
-      wrapper.instance().updatedReactionForGasTypeChange({
+      handler.updatedReactionForGasTypeChange({
         sampleID: catalyst.id,
         materialGroup: 'reactants',
         value: 'CAT',
@@ -402,16 +395,6 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
   });
 
   describe('Vessel Size Change Calculations', () => {
-    // Helper to create a shallow wrapper for these tests
-    function createWrapper(rxn, onReactionChange, onInputChange) {
-      return shallow(
-        React.createElement(ReactionDetailsScheme, {
-          reaction: rxn,
-          onReactionChange,
-          onInputChange,
-        })
-      );
-    }
 
     it('should recalculate gas product moles when vessel size changes', () => {
       // Stub the store so updateTONValue (called internally) has catalyst moles
@@ -420,11 +403,11 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handler = createHandler();
       const gasProduct = reaction.products[0];
       const vesselSizeInLiters = 20; // switch from 10 L to 20 L
 
-      const updatedSamples = wrapper.instance().updatedSamplesForVesselSizeChange(
+      const updatedSamples = handler.updatedSamplesForVesselSizeChange(
         reaction.products,
         vesselSizeInLiters
       );
@@ -444,15 +427,15 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
       });
 
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handler = createHandler();
 
-      const samplesAt10L = wrapper.instance().updatedSamplesForVesselSizeChange(
+      const samplesAt10L = handler.updatedSamplesForVesselSizeChange(
         reaction.products,
         10
       );
       const molesAt10L = samplesAt10L.find((s) => s.gas_type === 'gas').amount_mol;
 
-      const samplesAt20L = wrapper.instance().updatedSamplesForVesselSizeChange(
+      const samplesAt20L = handler.updatedSamplesForVesselSizeChange(
         reaction.products,
         20
       );
@@ -470,10 +453,10 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: vesselSizeInLiters,
       });
 
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handler = createHandler();
       const feedstock = reaction.reactants[0];
 
-      const updatedSamples = wrapper.instance().updatedSamplesForVesselSizeChange(
+      const updatedSamples = handler.updatedSamplesForVesselSizeChange(
         reaction.products,
         vesselSizeInLiters
       );
@@ -490,9 +473,9 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     });
 
     it('should strip non-numeric characters from vessel size input on change', () => {
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handler = createHandler();
 
-      wrapper.instance().updateVesselSize({ target: { value: '500abc.2xyz' } });
+      handler.updateVesselSize({ target: { value: '500abc.2xyz' } });
 
       // onInputChange should be called with only the numeric portion
       expect(onInputChangeSpy.calledOnce).toBe(true);
@@ -500,11 +483,11 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     });
 
     it('should fire VesselSizeChanged event on blur with correct vessel size in liters', () => {
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
-      const handleMaterialsChangeSpy = sinon.spy(wrapper.instance(), 'handleMaterialsChange');
+      const handler = createHandler();
+      const handleMaterialsChangeSpy = sinon.spy(handler, 'handleMaterialsChange');
 
       // Blur with 5000 ml value (reaction.vessel_size.unit is 'ml')
-      wrapper.instance().updateVesselSizeOnBlur({ target: { value: '5000' } });
+      handler.updateVesselSizeOnBlur({ target: { value: '5000' } });
 
       expect(handleMaterialsChangeSpy.calledOnce).toBe(true);
       const eventArg = handleMaterialsChangeSpy.getCall(0).args[0];
@@ -516,11 +499,11 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     });
 
     it('should fire VesselSizeChanged event on change with correct vessel size in liters', () => {
-      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
-      const handleMaterialsChangeSpy = sinon.spy(wrapper.instance(), 'handleMaterialsChange');
+      const handler = createHandler();
+      const handleMaterialsChangeSpy = sinon.spy(handler, 'handleMaterialsChange');
 
       // Change to 10000 ml (reaction.vessel_size.unit is 'ml')
-      wrapper.instance().updateVesselSize({ target: { value: '10000' } });
+      handler.updateVesselSize({ target: { value: '10000' } });
 
       expect(handleMaterialsChangeSpy.calledOnce).toBe(true);
       const eventArg = handleMaterialsChangeSpy.getCall(0).args[0];
@@ -573,6 +556,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     const createWrapper = (rxn) => shallow(
       React.createElement(ReactionDetailsScheme, {
         reaction: rxn,
+        variations: [],
         onReactionChange: onReactionChangeSpy,
         onInputChange: onInputChangeSpy,
       })
@@ -585,14 +569,14 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
         reactionVesselSizeValue: vesselVolume,
       });
 
-      const wrapper = createWrapper(reaction);
-      wrapper.setState({ lockEquivColumn: false });
+      const handler = createHandler();
+      handler.lockEquivColumn = false;
       const feedstock = reaction.reactants[0];
       const referenceMaterial = reaction.starting_materials[0];
       const originalEquivalent = feedstock.equivalent;
       const newConcentration = 0.002; // mol/L
 
-      wrapper.instance().updatedReactionForConcentrationChange({
+      handler.updatedReactionForConcentrationChange({
         sampleID: feedstock.id,
         concentration: { value: newConcentration },
       });

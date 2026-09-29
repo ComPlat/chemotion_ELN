@@ -177,7 +177,7 @@ describe Chemotion::ContainerAPI do
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
           variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to include(analysis_container.id)
+          expect(variation['analyses']).to include(analysis_container.id)
         end
       end
 
@@ -237,7 +237,7 @@ describe Chemotion::ContainerAPI do
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
           variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to be_empty
+          expect(variation['analyses']).to be_empty
         end
       end
 
@@ -290,7 +290,7 @@ describe Chemotion::ContainerAPI do
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
           variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to be_empty
+          expect(variation['analyses']).to be_empty
         end
       end
 
@@ -368,7 +368,7 @@ describe Chemotion::ContainerAPI do
           expect(response.status).to eq 200
           json = JSON.parse(response.body)
           variation = json['variations'].find { |v| v['id'] == '1' }
-          expect(variation['metadata']['analyses']).to eq([analysis_container.id])
+          expect(variation['analyses']).to eq([analysis_container.id])
           expect(reaction.reload.updated_at).to eq(updated_at_after_first_link)
         end
       end
@@ -453,8 +453,8 @@ describe Chemotion::ContainerAPI do
           json = JSON.parse(response.body)
           variation_one = json['variations'].find { |v| v['id'] == '1' }
           variation_two = json['variations'].find { |v| v['id'] == '2' }
-          expect(variation_one['metadata']['analyses']).to eq([analysis_container.id])
-          expect(variation_two['metadata']['analyses']).to eq([analysis_container.id])
+          expect(variation_one['analyses']).to eq([analysis_container.id])
+          expect(variation_two['analyses']).to eq([analysis_container.id])
         end
       end
     end
