@@ -107,6 +107,8 @@ describe('ReactionVariationSchemaComponents', () => {
           time: { unit: 'm', value: 30 },
           temperature: { unit: '°C', value: 25 },
           part_per_million: 10000,
+          turnover_number: 12,
+          turnover_frequency: { unit: 'TON/m', value: 2 },
         };
         return variations;
       };
@@ -135,6 +137,18 @@ describe('ReactionVariationSchemaComponents', () => {
         const temperatureColumn = columnOf(groups, 'products::0', 'products_0_gas_temperature');
         expect(timeColumn.valueGetter({ data: variations[0] })).toBeCloseTo(0.5, 6);
         expect(temperatureColumn.valueGetter({ data: variations[0] })).toBeCloseTo(298.15, 3);
+      });
+
+      // Derived and read-only, but what gas phase variations are compared by.
+      it('shows turnover number and frequency, the frequency per hour', async () => {
+        const variations = await buildGasVariations();
+        const groups = schemaBuildColumnGroups(variations);
+
+        const tonColumn = columnOf(groups, 'products::0', 'products_0_gas_ton');
+        const tofColumn = columnOf(groups, 'products::0', 'products_0_gas_tof');
+        expect(tonColumn.valueGetter({ data: variations[0] })).toBe(12);
+        expect(tofColumn.valueGetter({ data: variations[0] })).toBeCloseTo(120, 6);
+        expect(tofColumn.context.exportUnit).toBe('TON/h');
       });
     });
   });

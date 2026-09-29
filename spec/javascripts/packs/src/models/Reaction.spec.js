@@ -1,7 +1,7 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
-import Reaction from 'src/models/Reaction';
+import Reaction, { convertTonPerTime } from 'src/models/Reaction';
 import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
   from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -215,6 +215,19 @@ describe('Reaction', () => {
       expect(Object.isFrozen(Reaction.CONCENTRATION_MODES)).toBe(true);
       expect(isReactionConcentrationMode(REACTION_CONCENTRATION_MODES.COMBINED)).toBe(true);
       expect(isReactionConcentrationMode('invalid')).toBe(false);
+    });
+  });
+
+  describe('convertTonPerTime', () => {
+    it('converts a turnover frequency as the rate it is', () => {
+      expect(convertTonPerTime(2, 'TON/m', 'TON/h')).toBe(120);
+      expect(convertTonPerTime(120, 'TON/h', 'TON/m')).toBe(2);
+      expect(convertTonPerTime(1, 'TON/s', 'TON/h')).toBe(3600);
+      expect(convertTonPerTime(5, 'TON/h', 'TON/h')).toBe(5);
+    });
+
+    it('leaves a value in an unknown unit as it is', () => {
+      expect(convertTonPerTime(5, 'TON/d', 'TON/h')).toBe(5);
     });
   });
 

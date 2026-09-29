@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
-import Reaction from 'src/models/Reaction';
+import Reaction, { convertTonPerTime } from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
@@ -100,6 +100,10 @@ const gasSortValue = (material, gasField) => {
   }
   if (gasField === 'temperature') {
     return (GAS_TEMPERATURE_IN_KELVIN[unit] ?? ((raw) => raw))(numeric);
+  }
+  if (gasField === 'turnover_frequency' && unit && unit !== 'TON/h') {
+    const perHour = Number(convertTonPerTime(numeric, unit, 'TON/h'));
+    return Number.isFinite(perHour) ? perHour : numeric;
   }
   return numeric;
 };
@@ -339,9 +343,9 @@ const SOLVENT_FIELDS = [
 ];
 
 /*
-Gas phase inputs, which the scheme tab shows as an extra row under a gaseous product. Only the three
-editable ones are columns here; turnover number and turnover frequency are derived and read-only in
-GaseousInputFields, so they would just be dead columns.
+Gas phase inputs, which the scheme tab shows as an extra row under a gaseous product. Turnover number
+and turnover frequency are derived from the others and read-only, as in GaseousInputFields - but they
+are what a variation of a gas phase reaction is compared by, so they get columns too.
 
 The columns exist only for product slots where some variation actually has a gaseous product - see
 FIELDS_BY_GROUP.products below - and within them a row renders nothing unless its own product is the
@@ -352,6 +356,8 @@ const GAS_PHASE_FIELDS = [
   { key: 'gas_time', header: 'Time', gasField: 'time', unitSwitchable: true },
   { key: 'gas_temperature', header: 'Temp', gasField: 'temperature', unitSwitchable: true },
   { key: 'gas_ppm', header: 'ppm', gasField: 'part_per_million' },
+  { key: 'gas_ton', header: 'TON', gasField: 'turnover_number' },
+  { key: 'gas_tof', header: 'TOF', gasField: 'turnover_frequency' },
 ].map(({
   key, header, gasField, unitSwitchable
 }) => ({
@@ -360,7 +366,9 @@ const GAS_PHASE_FIELDS = [
   width: 150,
   ...(unitSwitchable ? { unitToggle: { gasField } } : {}),
   // The units gasSortValue reports in.
-  exportUnit: { time: 'h', temperature: 'K', part_per_million: 'ppm' }[gasField],
+  exportUnit: {
+    time: 'h', temperature: 'K', part_per_million: 'ppm', turnover_frequency: 'TON/h',
+  }[gasField],
   sortValue: (material) => gasSortValue(material, gasField),
   render: (mh, { isGasProduct }) => (
     isGasProduct ? <GaseousInputFields mh={mh} field={gasField} /> : null
