@@ -1,7 +1,7 @@
 /* eslint-disable react/sort-comp */
 import Delta from 'quill-delta';
 import Sample from 'src/models/Sample';
-import Reaction from 'src/models/Reaction';
+import Reaction, { clampTemperature } from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample , rfValueFormat } from 'src/utilities/ElementUtils';
 
@@ -88,6 +88,39 @@ const handleInputChange = (type, event, reaction, onReactionChange) => withReact
   reaction,
   () => applyInputChange(type, event, reaction, onReactionChange)
 );
+
+// A negative number where only a positive one makes sense - an amount, a concentration - reads as 0.
+const nonNegative = (value) => {
+  const numeric = Number(value);
+  return value !== '' && value !== null && Number.isFinite(numeric) && numeric < 0 ? 0 : value;
+};
+
+const NON_NEGATIVE_GAS_FIELDS = ['part_per_million', 'time'];
+
+/*
+What a material change may not set below 0, whichever input it comes from - the scheme tab's or the
+variations grid's, which share them and accept a leading minus sign.
+*/
+const withoutNegativeValues = (changeEvent) => {
+  switch (changeEvent.type) {
+    case 'amountChanged':
+      return changeEvent.amount
+        ? { ...changeEvent, amount: { ...changeEvent.amount, value: nonNegative(changeEvent.amount.value) } }
+        : changeEvent;
+    case 'equivalentChanged':
+      return { ...changeEvent, equivalent: nonNegative(changeEvent.equivalent) };
+    case 'concentrationChanged':
+      return { ...changeEvent, concentration: nonNegative(changeEvent.concentration) };
+    case 'weightPercentageChanged':
+      return { ...changeEvent, weightPercentage: nonNegative(changeEvent.weightPercentage) };
+    case 'gasFieldsChanged':
+      return NON_NEGATIVE_GAS_FIELDS.includes(changeEvent.field)
+        ? { ...changeEvent, value: nonNegative(changeEvent.value) }
+        : changeEvent;
+    default:
+      return changeEvent;
+  }
+};
 
 /*
 The handler methods that change the reaction, which on a variation have to be computed against the
@@ -453,8 +486,9 @@ export default class ReactionUpdateHandler {
     });
   }
 
-  handleMaterialsChange(changeEvent) {
+  handleMaterialsChange(incomingChangeEvent) {
     const { onReactionChange } = this.props;
+    const changeEvent = withoutNegativeValues(incomingChangeEvent);
 
     switch (changeEvent.type) {
       case 'referenceChanged':
@@ -1024,6 +1058,11 @@ export default class ReactionUpdateHandler {
     if (materialGroup === 'products' && updatedSample.gas_type === 'gas') {
       switch (field) {
         case 'temperature':
+          updatedSample.gas_phase_data.temperature.value = clampTemperature(
+            value,
+            updatedSample.gas_phase_data.temperature.unit
+          );
+          break;
         case 'time':
         case 'turnover_frequency':
           updatedSample.gas_phase_data[field].value = value;
