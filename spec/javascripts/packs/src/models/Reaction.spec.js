@@ -160,6 +160,53 @@ describe('Reaction', () => {
       expect(copy.products[0]._target_amount_value).toBe(2.0);
       expect(copy.products[0].equivalent).toBe(0.8);
     });
+
+    describe('with variations', () => {
+      const original = () => ({
+        id: 'row',
+        idx: 3,
+        group: [2, 1],
+        analyses: [11],
+        notes: 'first run',
+        data: { id: 'row-reaction', _starting_materials: [null, { _equivalent: 0.3 }] },
+        legacy_data: { startingMaterials: {} },
+      });
+
+      it('copies their values, number, group and note', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied).toMatchObject({ idx: 3, group: [2, 1], notes: 'first run' });
+        expect(copied.data._starting_materials).toEqual([null, { _equivalent: 0.3 }]);
+      });
+
+      it('gives them identities of their own', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied.id).not.toBe('row');
+        expect(copied.data.id).not.toBe('row-reaction');
+      });
+
+      it('leaves the links to the original analyses and the legacy body behind', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied.analyses).toEqual([]);
+        expect(copied).not.toHaveProperty('legacy_data');
+      });
+
+      it('does not share them with the original', () => {
+        reaction.variations = [original()];
+        const copy = reaction.buildCopy({ collection_id: 'col1' });
+
+        copy.variations[0].data._starting_materials[1]._equivalent = 0.9;
+        copy.variations.push({ id: 'new' });
+
+        expect(reaction.variations).toHaveLength(1);
+        expect(reaction.variations[0].data._starting_materials[1]._equivalent).toBe(0.3);
+      });
+    });
   });
 
   describe('Reaction.CONCENTRATION_MODES', () => {
