@@ -64,6 +64,16 @@ const MISSING_QUERY_HINT = {
   'Common Name': 'This sample has no molecule name yet, so there is nothing to search with.',
 };
 
+// Cf. ChemicalsService.generate_safety_sheet_file_path; older sheets carry a _web_ marker.
+const SAVED_SHEET_FILE = /^([^_]+)_(?:web_)?[a-f0-9]{16}\.pdf$/;
+
+// "/safety_sheets/<vendor>/<productNumber>_<hash>.pdf"; productNumber is null for other names.
+const parseSavedSheetPath = (path) => {
+  const parts = String(path).split('/');
+  const match = parts[parts.length - 1].match(SAVED_SHEET_FILE);
+  return { vendor: parts[2] || '', productNumber: match ? match[1] : null };
+};
+
 const propertyVendorKey = (name) => PROPERTY_VENDOR_KEYS[String(name || '').toLowerCase()] || '';
 
 const vendorDisplayName = (name) => {
@@ -376,26 +386,16 @@ export default class ChemicalTab extends React.Component {
     return (sample.xref?.cas ?? '').trim();
   }
 
-  querySafetySheets = () => {
+  // The request for the current search, or null once the user is told what is missing.
+  // Checked before any request, so an empty CAS or name is reported rather than sent.
+  buildSafetySheetQuery() {
     const { sample } = this.props;
-    const {
-      chemical, vendorValue, queryOption, safetySheetLanguage
-    } = this.state;
+    const { vendorValue, queryOption, safetySheetLanguage } = this.state;
 
-    // Reported before any request, so an empty CAS or name does not become a vendor
-    // round trip that comes back empty for a reason the user cannot see.
     const searchStr = this.queryValueFor(queryOption);
     if (!searchStr) {
       this.notifyMissingQueryValue(queryOption);
-      return;
-    }
-
-    this.setState({ loadingQuerySafetySheets: true });
-    const sampleName = sample.showedName();
-    const moleculeId = sample.molecule_name_hash?.mid ?? null;
-    if (chemical) {
-      chemical.buildChemical('sample_name', sampleName);
-      chemical.buildChemical('molecule_id', moleculeId);
+      return null;
     }
 
     // PubChem is reached by the molecule either way; a product number only narrows the
@@ -404,56 +404,60 @@ export default class ChemicalTab extends React.Component {
     const identifier = byNumber
       ? (sample.xref?.cas || sample.molecule_name_hash?.label || '')
       : searchStr;
-
-    if (byNumber && !identifier) {
+    if (!identifier) {
       this.notifyMissingQueryValue('CAS');
-      this.setState({ loadingQuerySafetySheets: false });
-      return;
+      return null;
     }
 
-    const queryParams = {
-      id: moleculeId,
+    return {
+      id: sample.molecule_name_hash?.mid ?? null,
       vendor: vendorValue,
       queryOption,
       language: safetySheetLanguage,
       string: identifier,
       productNumber: byNumber ? searchStr : null
     };
-    this.setState({ warningMessage: '' });
+  }
 
+  // The fetch_safetysheet answer as state: an All vendors overview, one vendor's rows, or
+  // null for a failed request.
+  static searchStateFromResponse(response) {
+    if (response?.sds_vendors || response?.catalogue_vendors) {
+      // A search that found nothing reads the same here as it does for one vendor.
+      const nothingFound = !response.sds_vendors?.length && !response.catalogue_vendors?.length;
+      return {
+        vendorOverview: nothingFound ? null : response,
+        searchResults: nothingFound && response.message ? [response.message] : [],
+      };
+    }
+    if (response !== null && response !== undefined) {
+      return { searchResults: Object.values(response), vendorOverview: null };
+    }
+    return {
+      searchResults: [],
+      vendorOverview: null,
+      warningMessage: 'The vendor did not return any safety data sheets for this sample.',
+    };
+  }
+
+  querySafetySheets = () => {
+    const queryParams = this.buildSafetySheetQuery();
+    if (!queryParams) return;
+
+    const { sample } = this.props;
+    const { chemical } = this.state;
+    if (chemical) {
+      chemical.buildChemical('sample_name', sample.showedName());
+      chemical.buildChemical('molecule_id', queryParams.id);
+    }
+
+    this.setState({ loadingQuerySafetySheets: true, warningMessage: '' });
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
-      const obj = JSON.parse(result);
-      if (obj?.sds_vendors || obj?.catalogue_vendors) {
-        // A search that found nothing reads the same here as it does for one vendor.
-        const nothingFound = !obj.sds_vendors?.length && !obj.catalogue_vendors?.length;
-        this.setState({
-          vendorOverview: nothingFound ? null : obj,
-          searchResults: nothingFound && obj.message ? [obj.message] : [],
-          loadingQuerySafetySheets: false,
-          displayWell: true,
-          warningMessage: '',
-        });
-        return;
-      }
-      if (obj !== null && obj !== undefined) {
-        const newResults = Object.values(obj);
-        this.setState({
-          searchResults: newResults,
-          vendorOverview: null,
-          loadingQuerySafetySheets: false,
-          displayWell: true
-        });
-      } else {
-        // A non-ok response comes back as null; without this the list rendered a
-        // placeholder string that threw further down and blanked the whole section.
-        this.setState({
-          searchResults: [],
-          vendorOverview: null,
-          loadingQuerySafetySheets: false,
-          displayWell: true,
-          warningMessage: 'The vendor did not return any safety data sheets for this sample.'
-        });
-      }
+      this.setState({
+        ...ChemicalTab.searchStateFromResponse(JSON.parse(result)),
+        loadingQuerySafetySheets: false,
+        displayWell: true,
+      });
     }).catch((errorMessage) => {
       console.log(errorMessage);
       this.setState({ loadingQuerySafetySheets: false });
@@ -622,133 +626,113 @@ export default class ChemicalTab extends React.Component {
 
   // Sigma-Aldrich refuses the server's own request but serves the sheet with
   // access-control-allow-origin *, so the browser reads it and hands us the bytes.
-  fetchSdsInBrowser = ({ sdsLink, productNumber, productLink }, vendorName) => fetch(sdsLink)
-    .then((response) => {
-      if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
-      return response.blob();
-    })
-    .then((blob) => {
-      if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
-      return this.handleAttachmentSubmit({
-        productNumber,
-        vendorName,
-        attachedFile: new File([blob], `${productNumber}.pdf`, { type: 'application/pdf' }),
-        productLink,
-        safetySheetLink: sdsLink,
-      });
-    });
-
-  // Tries the vendor's routes in the order the backend ranked them, reporting the first
-  // failure only once every route is spent. Cf. ChemicalsService.vendor_save_modes.
-  saveSdsViaRoutes = (routes, productInfo, vendorName) => {
-    const { productNumber } = productInfo;
-
-    if (this.atSavedSdsLimit()) {
-      this.notifySavedSdsLimit();
-      return Promise.resolve();
-    }
-
-    this.setState((prev) => ({
-      loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: true },
+  fetchSdsInBrowser = ({ sdsLink, productNumber, productLink }, vendorName) => ChemicalFetcher
+    .fetchVendorSheet(sdsLink, `${productNumber}.pdf`)
+    .then((attachedFile) => this.handleAttachmentSubmit({
+      productNumber,
+      vendorName,
+      attachedFile,
+      productLink,
+      safetySheetLink: sdsLink,
     }));
 
+  // Runs each route until one succeeds. A final refusal ends the chain; otherwise the first
+  // failure is the one reported, once every route is spent.
+  static tryRoutesInOrder(routes, runRoute) {
     const attempt = (index, firstError) => {
       if (index >= routes.length) {
         return Promise.reject(firstError || new Error('no save route is available'));
       }
 
-      const run = routes[index] === 'browser'
-        ? () => this.fetchSdsInBrowser(productInfo, vendorName)
-        : () => this.fetchSdsOnServer(productInfo);
-
-      return Promise.resolve().then(run).catch((error) => (
+      return Promise.resolve().then(() => runRoute(routes[index])).catch((error) => (
         error?.final ? Promise.reject(error) : attempt(index + 1, firstError || error)
       ));
     };
+    return attempt(0, null);
+  }
 
-    return attempt(0, null)
-      .catch((error) => {
-        // A refused save has nothing to retry: suggesting a manual upload only sends the
-        // user to a second route that refuses it for the same reason.
-        const refused = !!error?.final;
-        this.notify({
-          title: refused ? 'Sheet not saved' : 'Could not save the safety data sheet',
-          message: refused
-            ? error.message
-            : `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
-          level: refused ? 'warning' : 'error',
-          position: 'tc',
-        });
-      })
-      .finally(() => this.setState((prev) => ({
-        loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: false },
-      })));
+  setSavingSheet(productNumber, saving) {
+    this.setState((prev) => ({
+      loadingSaveSafetySheets: { ...prev.loadingSaveSafetySheets, [productNumber]: saving },
+    }));
+  }
+
+  // A refused save has nothing to retry, so it offers no manual upload either: that route
+  // would refuse it for the same reason.
+  notifySaveFailure(error) {
+    const refused = !!error?.final;
+    this.notify({
+      title: refused ? 'Sheet not saved' : 'Could not save the safety data sheet',
+      message: refused
+        ? error.message
+        : `${error.message}. Open the sheet and attach it with Upload SDS instead.`,
+      level: refused ? 'warning' : 'error',
+      position: 'tc',
+    });
+  }
+
+  // Routes come in the order the backend ranked them. Cf. ChemicalsService.vendor_save_modes.
+  saveSdsViaRoutes = (routes, productInfo, vendorName) => {
+    if (this.atSavedSdsLimit()) {
+      this.notifySavedSdsLimit();
+      return Promise.resolve();
+    }
+
+    const { productNumber } = productInfo;
+    this.setSavingSheet(productNumber, true);
+
+    return ChemicalTab.tryRoutesInOrder(routes, (route) => (route === 'browser'
+      ? this.fetchSdsInBrowser(productInfo, vendorName)
+      : this.fetchSdsOnServer(productInfo)))
+      .catch((error) => this.notifySaveFailure(error))
+      .finally(() => this.setSavingSheet(productNumber, false));
   };
 
-  handleAttachmentSubmit = ({
-    productNumber,
-    vendorName,
-    attachedFile,
-    productLink,
-    safetySheetLink,
-  }) => {
-    const { sample, editChemical } = this.props;
-    const { chemical } = this.state;
-    const cas = sample.xref?.cas ?? '';
-    const vendorProduct = `${vendorName.toLowerCase().trim()}ProductInfo`;
+  // The save_manual_sds request body. Cf. ChemicalApi save_manual_sds params.
+  static buildAttachmentForm({
+    sample, chemicalData, productNumber, vendorName, attachedFile, productLink, safetySheetLink,
+  }) {
+    const vendorInfo = { productNumber, vendor: vendorName };
+    if (productLink) vendorInfo.productLink = productLink;
+    if (safetySheetLink) vendorInfo.sdsLink = safetySheetLink;
+
     const data = new FormData();
-
-    // Create vendor info object - only what we need
-    const vendorInfo = {
-      productNumber,
-      vendor: vendorName,
-    };
-
-    if (productLink) {
-      vendorInfo.productLink = productLink;
-    }
-
-    if (safetySheetLink) {
-      vendorInfo.sdsLink = safetySheetLink;
-    }
-
-    // Append all parameters to FormData
     data.append('sample_id', sample.id);
-    data.append('cas', cas);
+    data.append('cas', sample.xref?.cas ?? '');
     data.append('vendor_info', JSON.stringify(vendorInfo));
     data.append('vendor_name', vendorName);
-    data.append('vendor_product', vendorProduct);
+    data.append('vendor_product', `${vendorName.toLowerCase().trim()}ProductInfo`);
     data.append('attached_file', attachedFile);
+    if (chemicalData) data.append('chemical_data', JSON.stringify(chemicalData));
+    return data;
+  }
 
-    // Initialize chemical data if it doesn't exist
-    if (!chemical) {
-      this.setState({
-        chemical: new Chemical({
-          _chemical_data: [{}]
-        })
-      });
-    }
+  // Clearing the results moves the row into the saved list instead of leaving a duplicate
+  // of it under Search Results with a dead save button.
+  adoptSavedChemical(savedChemical) {
+    const { editChemical } = this.props;
+    const chemicalInstance = new Chemical(savedChemical);
+    this.setState({ chemical: chemicalInstance, searchResults: [] });
+    editChemical(false);
+    chemicalInstance.updateChecksum();
+  }
 
-    // Include current chemical data if it exists
-    if (chemical && chemical._chemical_data && chemical._chemical_data[0]) {
-      data.append('chemical_data', JSON.stringify(chemical._chemical_data[0]));
-    }
+  // Rejects rather than notifying, so saveSdsViaRoutes can fall through to the next route.
+  handleAttachmentSubmit = (attachment) => {
+    const { sample } = this.props;
+    const { chemical } = this.state;
+    const data = ChemicalTab.buildAttachmentForm({
+      ...attachment, sample, chemicalData: chemical?._chemical_data?.[0],
+    });
 
+    if (!chemical) this.setState({ chemical: new Chemical({ _chemical_data: [{}] }) });
     this.setState({ showModal: false });
 
-    // Send data to server
-    // Rejects rather than notifying, so saveSdsViaRoutes can fall through to the next route.
     return ChemicalFetcher.saveManualAttachedSafetySheet(data)
       .then((updatedChemical) => {
         if (!updatedChemical) throw new Error('the server did not return the saved sheet');
         if (updatedChemical.error) throw new Error(updatedChemical.error);
-
-        const chemicalInstance = new Chemical(updatedChemical);
-        // Clearing the results moves the row into the saved list instead of leaving a
-        // duplicate of it under Search Results with a dead save button.
-        this.setState({ chemical: chemicalInstance, searchResults: [] });
-        editChemical(false);
-        chemicalInstance.updateChecksum();
+        this.adoptSavedChemical(updatedChemical);
       });
   };
 
@@ -795,7 +779,9 @@ export default class ChemicalTab extends React.Component {
         const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
         // replace hyphen with minus sign and parse
         const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
-        const upperBound = rangeValues.length === 2 ? parseFloat(rangeValues[1].replace('−', '-')) : Number.POSITIVE_INFINITY;
+        const upperBound = rangeValues.length === 2
+          ? parseFloat(rangeValues[1].replace('−', '-'))
+          : Number.POSITIVE_INFINITY;
         sample.updateRange(propertyName, lowerBound, upperBound);
       }
     };
@@ -1085,7 +1071,7 @@ export default class ChemicalTab extends React.Component {
   // Rejects rather than notifying, so saveSdsViaRoutes can fall through to the next route.
   fetchSdsOnServer = (productInfo) => {
     const { chemical } = this.state;
-    const { sample, editChemical } = this.props;
+    const { sample } = this.props;
     const vendorProduct = ChemicalTab.vendorProductKey(productInfo.vendor);
 
     this.handleFieldChanged(vendorProduct, productInfo);
@@ -1101,10 +1087,7 @@ export default class ChemicalTab extends React.Component {
       if (!updatedChemical) throw new Error('the server could not retrieve the sheet');
 
       chemical.isNew = false;
-      const chemicalInstance = new Chemical(updatedChemical);
-      this.setState({ chemical: chemicalInstance, searchResults: [] });
-      editChemical(false);
-      chemicalInstance.updateChecksum();
+      this.adoptSavedChemical(updatedChemical);
     });
   };
 
@@ -1303,104 +1286,52 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  // What a sheet row shows: its link, the vendor key its phrases and properties use, and
+  // a title with " vN" when the sample holds several sheets for one vendor and number.
+  static describeSheet(document, index, savedSds) {
+    const linkKey = Object.keys(document).find((key) => key.endsWith('_link')
+      && !key.includes('_product_link') && document[key]);
+    const link = linkKey ? document[linkKey] : null;
+    if (!link) return { link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor' };
+
+    if (!link.includes('/safety_sheets/')) {
+      const vendorKey = linkKey.replace('_link', '').toLowerCase();
+      const number = document[`${vendorKey}_product_number`] || '';
+      return { link, vendorKey, title: `Safety Data Sheet from ${vendorDisplayName(vendorKey)} - ${number}` };
+    }
+
+    const { vendor, productNumber } = parseSavedSheetPath(link);
+    const name = vendor ? vendorDisplayName(vendor) : 'queried vendor';
+    const vendorKey = vendor.toLowerCase();
+    if (!productNumber) return { link, vendorKey, title: `Safety Data Sheet from ${name}` };
+
+    const isSameProduct = (sheet) => {
+      const path = Object.entries(sheet || {}).find(([key, value]) => key.endsWith('_link') && value)?.[1];
+      if (!path) return false;
+      const other = parseSavedSheetPath(path);
+      return other.vendor === vendor && other.productNumber === productNumber;
+    };
+    const version = savedSds.filter(isSameProduct).length > 1
+      ? ` v${savedSds.slice(0, index).filter(isSameProduct).length + 1}`
+      : '';
+    return { link, vendorKey, title: `Safety Data Sheet from ${name} - ${productNumber}${version}` };
+  }
+
   renderChildElements = (document, index) => {
     if (!document) {
       return null;
     }
 
-    const linkKey = Object.keys(document).find((key) => key.endsWith('_link')
-          && !key.includes('_product_link')
-          && document[key]);
-
-    const vendorLink = linkKey ? document[linkKey] : null;
-    let displayName = 'queried vendor';
-    let vendorKey = '';
-    let productInfo = '';
-    let versionInfo = '';
-
-    if (vendorLink && vendorLink.includes('/safety_sheets/')) {
-      // Extract vendor from file path: /safety_sheets/merck/270709_hash.pdf -> merck
-      const pathParts = vendorLink.split('/');
-      const vendorFromPath = pathParts[2]; // safety_sheets/[vendor]/filename
-      const fileName = pathParts[pathParts.length - 1]; // get the filename
-
-      if (vendorFromPath) {
-        displayName = vendorDisplayName(vendorFromPath);
-        vendorKey = vendorFromPath.toLowerCase();
-      }
-
-      // Extract product number from filename: 270709_4c82b57ffb35b49b.pdf -> 270709
-      const productMatch = fileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
-      if (productMatch) {
-        const productNumber = productMatch[1];
-        productInfo = ` - ${productNumber}`;
-
-        // Count versions for the same vendor AND product number
-        const { chemical } = this.state;
-        const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
-
-        const sameProductCount = savedSds.filter((sheet) => {
-          const sheetLinkKey = Object.keys(sheet).find((key) => key.endsWith('_link'));
-          if (sheetLinkKey && sheet[sheetLinkKey]) {
-            const sheetFilePath = sheet[sheetLinkKey];
-            const sheetFileName = sheetFilePath.split('/').pop();
-            const sheetMatch = sheetFileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
-
-            if (sheetMatch) {
-              const sheetProductNumber = sheetMatch[1];
-              const sheetVendor = sheetFilePath.split('/')[2];
-
-              // Count if same vendor AND same product number
-              return sheetVendor === vendorFromPath && sheetProductNumber === productNumber;
-            }
-          }
-          return false;
-        }).length;
-
-        // Only show version info if there are multiple files for the same product
-        if (sameProductCount > 1) {
-          // Find the position of this specific document in the filtered list
-          let currentPosition = 1;
-          for (let i = 0; i <= index && i < savedSds.length; i++) {
-            const sheet = savedSds[i];
-            const sheetLinkKey = Object.keys(sheet).find((key) => key.endsWith('_link'));
-            if (sheetLinkKey && sheet[sheetLinkKey]) {
-              const sheetFilePath = sheet[sheetLinkKey];
-              const sheetFileName = sheetFilePath.split('/').pop();
-              const sheetMatch = sheetFileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
-
-              if (sheetMatch) {
-                const sheetProductNumber = sheetMatch[1];
-                const sheetVendor = sheetFilePath.split('/')[2];
-
-                if (sheetVendor === vendorFromPath && sheetProductNumber === productNumber) {
-                  if (i === index) {
-                    break; // Found our position
-                  }
-                  currentPosition++;
-                }
-              }
-            }
-          }
-          versionInfo = ` v${currentPosition}`;
-        }
-      }
-    } else {
-      // for a search query: extract vendor name from key
-      const vendor = linkKey.replace('_link', '').toUpperCase();
-      vendorKey = vendor.toLowerCase();
-      displayName = vendorDisplayName(vendorKey);
-      productInfo = ` - ${document[`${vendor.toLowerCase()}_product_number`] || ''}`;
-    }
-
-    const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
+    const { chemical } = this.state;
+    const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
+    const { link, vendorKey, title } = ChemicalTab.describeSheet(document, index, savedSds);
 
     return (
       <div className="d-flex gap-3 align-items-center flex-wrap">
         <div className="d-flex me-auto gap-3 align-items-center flex-wrap">
-          {vendorLink ? (
-            <a href={vendorLink} target="_blank" rel="noreferrer">
-              {finalDisplayName}
+          {link ? (
+            <a href={link} target="_blank" rel="noreferrer">
+              {title}
               {this.checkMarkButton(document)}
             </a>
           ) : null}
@@ -1488,7 +1419,8 @@ export default class ChemicalTab extends React.Component {
             {this.isSectionOpen('catalogueVendors') && (
               <>
                 <div className="text-muted small mb-2">
-                  No sheet could be fetched from these. Open the product page, find, download, and then upload the safety sheet using the attach button.
+                  No sheet could be fetched from these. Open the product page, find and download
+                  the safety sheet, then upload it using the attach button.
                 </div>
                 <ListGroup className="mb-2">
                   {catalogueVendors.map((group) => this.renderVendorGroup(group))}
@@ -1682,59 +1614,135 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
-  renderSafetySheets = () => {
-    const {
-      searchResults,
-      chemical,
-      displayWell,
-      showAllSearchResults,
-    } = this.state;
-
-    // Early return if displayWell is false or no chemical data
-    if (!displayWell || !chemical) {
-      return null;
-    }
-
-    // Synchronize data between chemical_data and _chemical_data if needed
-    if (chemical.chemical_data?.[0]?.safetySheetPath?.length > 0) {
-      // Initialize _chemical_data structure if needed
-      if (!chemical._chemical_data) {
-        chemical._chemical_data = [{}];
-      }
-
-      if (!chemical._chemical_data[0]) {
-        chemical._chemical_data[0] = {};
-      }
-
-      // Copy safety sheet path if missing or empty
-      if (!chemical._chemical_data[0].safetySheetPath
-          || chemical._chemical_data[0].safetySheetPath.length === 0) {
-        chemical._chemical_data[0].safetySheetPath = JSON.parse(
-          JSON.stringify(chemical.chemical_data[0].safetySheetPath)
-        );
-      }
-    }
-
-    // Ensure _chemical_data is properly initialized
+  // Mirrors the stored sheets into the _chemical_data the tab edits, and guarantees the
+  // safetySheetPath array every renderer reads.
+  static ensureSafetySheetPath(chemical) {
     if (!chemical._chemical_data) {
       chemical._chemical_data = [{}];
     } else if (!chemical._chemical_data[0]) {
       chemical._chemical_data[0] = {};
     }
 
-    if (!chemical._chemical_data[0].safetySheetPath) {
-      chemical._chemical_data[0].safetySheetPath = [];
+    const editable = chemical._chemical_data[0];
+    const stored = chemical.chemical_data?.[0]?.safetySheetPath;
+    if (stored?.length > 0 && !editable.safetySheetPath?.length) {
+      editable.safetySheetPath = JSON.parse(JSON.stringify(stored));
+    }
+    if (!editable.safetySheetPath) editable.safetySheetPath = [];
+    return editable.safetySheetPath;
+  }
+
+  renderSearchResultsSection() {
+    const { searchResults, showAllSearchResults } = this.state;
+    const shownResults = showAllSearchResults
+      ? searchResults
+      : searchResults.slice(0, PRODUCT_PREVIEW_COUNT);
+    const resultsScroll = showAllSearchResults && searchResults.length > PRODUCT_PREVIEW_COUNT;
+    return (
+      <>
+        {this.sectionHeader('searchResults', 'Search Results', {
+          meta: `${searchResults.length} found`,
+          metaTooltip: 'Sheets this search turned up. Saving one copies it into the sample.',
+          className: 'text-primary',
+        })}
+        <div
+          className={`border rounded p-2 ${resultsScroll ? 'overflow-auto' : ''}`}
+          style={resultsScroll ? { maxHeight: '22rem' } : undefined}
+          hidden={!this.isSectionOpen('searchResults')}
+        >
+          <ol className="list-group list-group-numbered">
+            {shownResults.map((document, index) => {
+              if (!document) {
+                return null;
+              }
+
+              // A vendor with nothing to offer answers with a sentence, not a sheet.
+              const isMessage = typeof document === 'string';
+              const numberKey = Object.keys(document).find((key) => key.endsWith('_product_number'));
+              const key = (!isMessage && numberKey && document[numberKey]) || `search-${index}`;
+
+              return (
+                <li className="list-group-item border-0 d-flex align-items-center" key={key}>
+                  {isMessage ? (
+                    <div className="ms-2 me-auto text-muted">
+                      <i className="fa fa-info-circle me-2" />
+                      {document}
+                    </div>
+                  ) : (
+                    <div className="ms-2 me-auto w-100 safety-sheet-width">
+                      {this.renderChildElements(document, index)}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        {this.isSectionOpen('searchResults') && searchResults.length > PRODUCT_PREVIEW_COUNT && (
+          <Button
+            variant="link"
+            size="sm"
+            className="ps-0"
+            onClick={() => this.setState((prev) => ({ showAllSearchResults: !prev.showAllSearchResults }))}
+          >
+            {showAllSearchResults
+              ? 'Show fewer'
+              : `Show ${searchResults.length - PRODUCT_PREVIEW_COUNT} more`}
+          </Button>
+        )}
+      </>
+    );
+  }
+
+  renderSavedSdsSection(savedSds) {
+    return (
+      <div>
+        {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
+          meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
+          metaTooltip: `A sample holds at most ${MAX_SAVED_SDS} safety data sheets. `
+            + 'Searching stays open at the limit; delete one here to save another.',
+          className: 'text-success',
+        })}
+        <div
+          className="border rounded p-2 overflow-auto"
+          style={{ maxHeight: '22rem' }}
+          hidden={!this.isSectionOpen('savedSds')}
+        >
+          <ol className="list-group list-group-numbered">
+            {savedSds.map((document, index) => {
+              if (!document) {
+                return null;
+              }
+
+              const vendorLinkKey = Object.keys(document).find((key) => key.endsWith('_link'));
+              const key = vendorLinkKey ? `saved-${vendorLinkKey}-${index}` : `saved-${index}`;
+
+              return (
+                <li className="list-group-item border-0 d-flex align-items-center" key={key}>
+                  <div className="ms-2 me-auto w-100 safety-sheet-width">
+                    {this.renderChildElements(document, index)}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </div>
+    );
+  }
+
+  renderSafetySheets = () => {
+    const {
+      searchResults, chemical, displayWell, vendorOverview,
+    } = this.state;
+    if (!displayWell || !chemical) {
+      return null;
     }
 
-    // Get saved safety sheets from chemical data
-    const savedSds = chemical._chemical_data[0].safetySheetPath || [];
-
-    // Check if we have search results or saved SDS to display
+    const savedSds = ChemicalTab.ensureSafetySheetPath(chemical);
     const hasSearchResults = Array.isArray(searchResults) && searchResults.length > 0;
-    const hasSavedSds = Array.isArray(savedSds) && savedSds.length > 0;
-
+    const hasSavedSds = savedSds.length > 0;
     // The vendor overview renders above this, so its results are not "no sheets".
-    const { vendorOverview } = this.state;
     const hasVendorGroups = !!(vendorOverview?.sds_vendors?.length || vendorOverview?.catalogue_vendors?.length);
 
     if (!hasSearchResults && !hasSavedSds && !hasVendorGroups) {
@@ -1752,111 +1760,13 @@ export default class ChemicalTab extends React.Component {
     }
 
     try {
-      // Render search results if we have any
-      const shownResults = showAllSearchResults
-        ? searchResults
-        : searchResults.slice(0, PRODUCT_PREVIEW_COUNT);
-      const resultsScroll = showAllSearchResults && searchResults.length > PRODUCT_PREVIEW_COUNT;
-      const searchResultsSection = hasSearchResults && (
-        <>
-          {this.sectionHeader('searchResults', 'Search Results', {
-            meta: `${searchResults.length} found`,
-            metaTooltip: 'Sheets this search turned up. Saving one copies it into the sample.',
-            className: 'text-primary',
-          })}
-          <div
-            className={`border rounded p-2 ${resultsScroll ? 'overflow-auto' : ''}`}
-            style={resultsScroll ? { maxHeight: '22rem' } : undefined}
-            hidden={!this.isSectionOpen('searchResults')}
-          >
-            <ol className="list-group list-group-numbered">
-              {shownResults.map((document, index) => {
-                if (!document) {
-                  return null;
-                }
-
-                // A vendor with nothing to offer answers with a sentence, not a sheet.
-                const isMessage = typeof document === 'string';
-                const numberKey = Object.keys(document).find((key) => key.endsWith('_product_number'));
-                const key = (!isMessage && numberKey && document[numberKey]) || `search-${index}`;
-
-                return (
-                  <li className="list-group-item border-0 d-flex align-items-center" key={key}>
-                    {isMessage ? (
-                      <div className="ms-2 me-auto text-muted">
-                        <i className="fa fa-info-circle me-2" />
-                        {document}
-                      </div>
-                    ) : (
-                      <div className="ms-2 me-auto w-100 safety-sheet-width">
-                        {this.renderChildElements(document, index)}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-          {this.isSectionOpen('searchResults') && searchResults.length > PRODUCT_PREVIEW_COUNT && (
-            <Button
-              variant="link"
-              size="sm"
-              className="ps-0"
-              onClick={() => this.setState((prev) => ({ showAllSearchResults: !prev.showAllSearchResults }))}
-            >
-              {showAllSearchResults
-                ? 'Show fewer'
-                : `Show ${searchResults.length - PRODUCT_PREVIEW_COUNT} more`}
-            </Button>
-          )}
-        </>
-      );
-
-      // Render saved SDS if we have any
-      const savedSdsSection = hasSavedSds && (
-        <div>
-          {this.sectionHeader('savedSds', 'Safety Sheets saved in the database', {
-            meta: `${savedSds.length} of ${MAX_SAVED_SDS}`,
-            metaTooltip: `A sample holds at most ${MAX_SAVED_SDS} safety data sheets. `
-              + 'Searching stays open at the limit; delete one here to save another.',
-            className: 'text-success',
-          })}
-          <div
-            className="border rounded p-2 overflow-auto"
-            style={{ maxHeight: '22rem' }}
-            hidden={!this.isSectionOpen('savedSds')}
-          >
-            <ol className="list-group list-group-numbered">
-              {savedSds.map((document, index) => {
-                if (!document) {
-                  return null;
-                }
-
-                // Find any key that ends with "_link" to find vendor
-                const vendorLinkKey = Object.keys(document).find((key) => key.endsWith('_link'));
-                const key = vendorLinkKey ? `saved-${vendorLinkKey}-${index}` : `saved-${index}`;
-
-                return (
-                  <li className="list-group-item border-0 d-flex align-items-center" key={key}>
-                    <div className="ms-2 me-auto w-100 safety-sheet-width">
-                      {this.renderChildElements(document, index)}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        </div>
-      );
-
-      // Return the combined content
       return (
         <div
           data-component="SafetySheets"
-          data-count={(hasSearchResults ? searchResults.length : 0) + (hasSavedSds ? savedSds.length : 0)}
+          data-count={(hasSearchResults ? searchResults.length : 0) + savedSds.length}
         >
-          {searchResultsSection}
-          {savedSdsSection}
+          {hasSearchResults && this.renderSearchResultsSection()}
+          {hasSavedSds && this.renderSavedSdsSection(savedSds)}
         </div>
       );
     } catch (error) {

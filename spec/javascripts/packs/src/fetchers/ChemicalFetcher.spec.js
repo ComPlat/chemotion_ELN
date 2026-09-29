@@ -291,4 +291,31 @@ describe('ChemicalFetcher.saveSafetySheets error reporting', () => {
       (error) => { expect(error.final).toBe(false); }
     );
   });
+
+  describe('fetchVendorSheet', () => {
+    const link = 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124';
+    const pdf = () => new Response('%PDF', { headers: { 'Content-Type': 'application/pdf' } });
+    let fetchStub;
+
+    beforeEach(() => { fetchStub = sinon.stub(global, 'fetch'); });
+    afterEach(() => { fetchStub.restore(); });
+
+    it('wraps the vendor PDF as a named file', async () => {
+      fetchStub.resolves(pdf());
+      const file = await ChemicalFetcher.fetchVendorSheet(link, '179124.pdf');
+      sinon.assert.calledWith(fetchStub, link);
+      expect(file.name).toEqual('179124.pdf');
+      expect(file.type).toEqual('application/pdf');
+    });
+
+    it('rejects a failed response with its status', async () => {
+      fetchStub.resolves(new Response('', { status: 403 }));
+      await expect(ChemicalFetcher.fetchVendorSheet(link, 'x.pdf')).rejects.toThrow('the vendor answered 403');
+    });
+
+    it('rejects a page that is not a PDF', async () => {
+      fetchStub.resolves(new Response('<html>', { headers: { 'Content-Type': 'text/html' } }));
+      await expect(ChemicalFetcher.fetchVendorSheet(link, 'x.pdf')).rejects.toThrow('the vendor did not return a PDF');
+    });
+  });
 });

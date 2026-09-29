@@ -916,3 +916,167 @@ describe('Manual SDS attachment functionality', () => {
     expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
   });
 });
+
+describe('ChemicalTab helpers', () => {
+  describe('searchStateFromResponse', () => {
+    it('keeps an All vendors overview that found something', () => {
+      const overview = { sds_vendors: [{ vendor: 'Sigma-Aldrich' }], catalogue_vendors: [] };
+      expect(ChemicalTab.searchStateFromResponse(overview)).toEqual({ vendorOverview: overview, searchResults: [] });
+    });
+
+    it('turns an empty overview into its message, like a single vendor miss', () => {
+      const empty = { sds_vendors: [], catalogue_vendors: [], message: 'No safety data sheet found from any vendor' };
+      expect(ChemicalTab.searchStateFromResponse(empty)).toEqual({
+        vendorOverview: null,
+        searchResults: ['No safety data sheet found from any vendor'],
+      });
+    });
+
+    it('lists a single vendor answer as rows', () => {
+      const row = { merck_link: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124' };
+      expect(ChemicalTab.searchStateFromResponse({ merck_link: row })).toEqual({
+        searchResults: [row],
+        vendorOverview: null,
+      });
+    });
+
+    it('warns instead of listing when the request failed', () => {
+      const state = ChemicalTab.searchStateFromResponse(null);
+      expect(state.searchResults).toEqual([]);
+      expect(state.warningMessage).toEqual(expect.stringContaining('did not return'));
+    });
+  });
+
+  describe('tryRoutesInOrder', () => {
+    it('stops at the first route that succeeds', async () => {
+      const run = sinon.stub();
+      run.withArgs('browser').rejects(new Error('cors'));
+      run.withArgs('server').resolves('saved');
+
+      await expect(ChemicalTab.tryRoutesInOrder(['browser', 'server'], run)).resolves.toEqual('saved');
+      sinon.assert.callCount(run, 2);
+    });
+
+    it('reports the first failure once every route is spent', async () => {
+      const run = sinon.stub();
+      run.withArgs('browser').rejects(new Error('first'));
+      run.withArgs('server').rejects(new Error('second'));
+
+      await expect(ChemicalTab.tryRoutesInOrder(['browser', 'server'], run)).rejects.toThrow('first');
+    });
+
+    it('tries nothing further after a final refusal', async () => {
+      const run = sinon.stub().rejects(Object.assign(new Error('already held'), { final: true }));
+
+      await expect(ChemicalTab.tryRoutesInOrder(['server', 'browser'], run)).rejects.toThrow('already held');
+      sinon.assert.calledOnce(run);
+    });
+
+    it('rejects when there is no route at all', async () => {
+      await expect(ChemicalTab.tryRoutesInOrder([], sinon.stub())).rejects.toThrow('no save route');
+    });
+  });
+
+  describe('buildAttachmentForm', () => {
+    const attachment = {
+      sample: { id: 7, xref: { cas: '67-64-1' } },
+      productNumber: '179124',
+      vendorName: 'Merck',
+      attachedFile: new File(['%PDF'], '179124.pdf'),
+    };
+
+    it('carries the sample, vendor and file the endpoint requires', () => {
+      const form = ChemicalTab.buildAttachmentForm(attachment);
+      expect(form.get('sample_id')).toEqual('7');
+      expect(form.get('cas')).toEqual('67-64-1');
+      expect(form.get('vendor_product')).toEqual('merckProductInfo');
+      expect(JSON.parse(form.get('vendor_info'))).toEqual({ productNumber: '179124', vendor: 'Merck' });
+      expect(form.has('chemical_data')).toBe(false);
+    });
+
+    it('adds the links and the current chemical data when there are any', () => {
+      const form = ChemicalTab.buildAttachmentForm({
+        ...attachment,
+        productLink: 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
+        safetySheetLink: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+        chemicalData: { safetySheetPath: [] },
+      });
+      expect(JSON.parse(form.get('vendor_info'))).toEqual(expect.objectContaining({
+        productLink: 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
+        sdsLink: 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+      }));
+      expect(JSON.parse(form.get('chemical_data'))).toEqual({ safetySheetPath: [] });
+    });
+  });
+
+  describe('describeSheet', () => {
+    const saved = (number, hash, vendor = 'merck') => ({
+      [`${number}_${hash}_link`]: `/safety_sheets/${vendor}/${number}_${hash}.pdf`,
+    });
+    const first = saved('179124', 'aaaaaaaaaaaaaaaa');
+    const second = saved('179124', 'bbbbbbbbbbbbbbbb');
+    const other = saved('270709', 'cccccccccccccccc');
+
+    it('titles a search row by vendor and product number', () => {
+      const row = {
+        fisher_link: 'https://www.fishersci.com/store/msds?partNumber=AC327840025',
+        fisher_product_number: 'AC327840025',
+        fisher_product_link: 'https://www.thermofisher.com/order/catalog/product/327840025',
+      };
+      expect(ChemicalTab.describeSheet(row, 0, [])).toEqual({
+        link: row.fisher_link,
+        vendorKey: 'fisher',
+        title: 'Safety Data Sheet from Thermofisher - AC327840025',
+      });
+    });
+
+    it('titles a saved sheet from its path, without a version when it is the only one', () => {
+      expect(ChemicalTab.describeSheet(first, 0, [first, other]).title)
+        .toEqual('Safety Data Sheet from Sigma-Aldrich - 179124');
+    });
+
+    it('numbers the sheets held for one vendor and product in list order', () => {
+      const list = [first, other, second];
+      expect(ChemicalTab.describeSheet(first, 0, list).title).toEqual(expect.stringMatching(/179124 v1$/));
+      expect(ChemicalTab.describeSheet(second, 2, list).title).toEqual(expect.stringMatching(/179124 v2$/));
+    });
+
+    it('reads the product number from a sheet saved with the older _web_ marker', () => {
+      const legacy = { '179124_x_link': '/safety_sheets/merck/179124_web_aaaaaaaaaaaaaaaa.pdf' };
+      expect(ChemicalTab.describeSheet(legacy, 0, [legacy]).title).toEqual(expect.stringContaining('179124'));
+    });
+
+    it('describes a row with no usable link without throwing', () => {
+      expect(ChemicalTab.describeSheet({}, 0, [])).toEqual({
+        link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor',
+      });
+    });
+  });
+
+  describe('ensureSafetySheetPath', () => {
+    it('copies the stored sheets into the editable data when it has none', () => {
+      const stored = [{ '179124_aaaaaaaaaaaaaaaa_link': '/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf' }];
+      const chemical = { chemical_data: [{ safetySheetPath: stored }], _chemical_data: [{}] };
+
+      const sheets = ChemicalTab.ensureSafetySheetPath(chemical);
+      expect(sheets).toEqual(stored);
+      expect(sheets).not.toBe(stored);
+      expect(chemical._chemical_data[0].safetySheetPath).toBe(sheets);
+    });
+
+    it('keeps sheets already edited in place', () => {
+      const edited = [{ a_link: '/safety_sheets/merck/a.pdf' }];
+      const chemical = {
+        chemical_data: [{ safetySheetPath: [{ b_link: '/safety_sheets/merck/b.pdf' }] }],
+        _chemical_data: [{ safetySheetPath: edited }],
+      };
+      expect(ChemicalTab.ensureSafetySheetPath(chemical)).toBe(edited);
+    });
+
+    it('builds the structure when the chemical has no editable data yet', () => {
+      const chemical = {};
+      expect(ChemicalTab.ensureSafetySheetPath(chemical)).toEqual([]);
+      expect(chemical._chemical_data).toEqual([{ safetySheetPath: [] }]);
+    });
+  });
+});

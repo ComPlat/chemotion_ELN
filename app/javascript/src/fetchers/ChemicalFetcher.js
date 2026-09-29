@@ -57,6 +57,19 @@ export default class ChemicalFetcher {
     });
   }
 
+  // Reads a sheet straight from the vendor, for vendors that refuse the server but allow CORS.
+  static fetchVendorSheet(sdsLink, fileName) {
+    return fetch(sdsLink)
+      .then((response) => {
+        if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
+        return new File([blob], fileName, { type: 'application/pdf' });
+      });
+  }
+
   static saveManualAttachedSafetySheet(params) {
     return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
