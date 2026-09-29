@@ -8,7 +8,8 @@ import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
   makeVariationReaction, addNewVariationDataset, parseVariationGroup,
-  copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState, convertVariationDatasetToInternalVariations,
+  copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
+  adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
@@ -207,6 +208,7 @@ describe('ReactionVariationsUtils', () => {
         value: {
           getItem: (key) => (key in storage ? storage[key] : null),
           setItem: (key, value) => { storage[key] = value; },
+          removeItem: (key) => { delete storage[key]; },
         },
       });
       storeStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
@@ -225,6 +227,52 @@ describe('ReactionVariationsUtils', () => {
       persistColumnState(3, [{ colId: 'a' }]);
       expect(Object.keys(storage)).toEqual(['user7-reaction3-reactionVariationsColumnState']);
       expect(getInitialColumnState(3, 'Schema')).toEqual([{ colId: 'a' }]);
+    });
+
+    describe('left behind by the previous variations table', () => {
+      const legacyKey = (name) => `user7-reaction3-reactionVariations${name}`;
+      const reactionWith = (idxs) => ({
+        id: 3, isNew: false, variations: idxs.map((idx) => ({ idx, id: `row-${idx}` })),
+      });
+
+      it('removes the grid state and layout, whose columns no longer exist', () => {
+        storage[legacyKey('GridState')] = '{}';
+        storage[legacyKey('Layout')] = '{}';
+
+        adoptLegacyVariationsLayout(reactionWith([1]));
+
+        expect(storage).toEqual({});
+      });
+
+      it('puts the rows in the order they were dragged into, unknown rows last', () => {
+        storage[legacyKey('RowOrder')] = JSON.stringify([3, 1]);
+        const reaction = reactionWith([1, 2, 3]);
+
+        adoptLegacyVariationsLayout(reaction);
+
+        expect(reaction.variations.map(({ idx }) => idx)).toEqual([3, 1, 2]);
+        // Kept until the reaction has been saved in that order.
+        expect(storage).toHaveProperty(legacyKey('RowOrder'));
+      });
+
+      it('lets the row order go once the reaction is stored in it', () => {
+        storage[legacyKey('RowOrder')] = JSON.stringify([3, 1]);
+        const reaction = reactionWith([3, 1, 2]);
+
+        adoptLegacyVariationsLayout(reaction);
+
+        expect(reaction.variations.map(({ idx }) => idx)).toEqual([3, 1, 2]);
+        expect(storage).toEqual({});
+      });
+
+      it('leaves an unsaved reaction alone', () => {
+        storage[legacyKey('RowOrder')] = JSON.stringify([2, 1]);
+        const reaction = { ...reactionWith([1, 2]), isNew: true };
+
+        adoptLegacyVariationsLayout(reaction);
+
+        expect(reaction.variations.map(({ idx }) => idx)).toEqual([1, 2]);
+      });
     });
 
     it('keeps a segment layout apart from the scheme one', () => {

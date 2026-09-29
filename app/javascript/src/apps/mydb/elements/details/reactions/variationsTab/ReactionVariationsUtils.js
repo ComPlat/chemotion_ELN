@@ -298,6 +298,54 @@ const persistColumnState = (reactionId, columnState, view = SCHEMA_VIEW) => {
 };
 
 /*
+What the variations table before the diff-based format kept in the browser, per user and reaction:
+
+- `…GridState` and `…Layout`: widths, order, sort, shown entries and units of its columns, keyed by
+  column ids (`startingMaterials.<sample id>.mass`, …) that the grid no longer has and that do not
+  map onto its material slots. They are removed.
+- `…RowOrder`: the ids of the rows in the order they had been dragged into. That order was not kept
+  anywhere else - the old column was a jsonb object, whose keys sort - and a row's old id is its
+  `idx` now (see 20260731120000_convert_reaction_variations_to_diff_list.rb), so it is carried over:
+  the rows are put in that order, which the reaction's next save stores, and the entry is removed
+  once a load finds them in it already.
+*/
+const legacyLayoutKey = (reactionId, name) => {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser?.id}-reaction${reactionId}-reactionVariations${name}`;
+};
+
+const rankIn = (rowOrder) => (variation) => {
+  const rank = rowOrder.findIndex((id) => Number(id) === Number(variation.idx));
+  return rank === -1 ? rowOrder.length : rank;
+};
+
+const adoptLegacyVariationsLayout = (reaction) => {
+  if (!reaction || reaction.isNew) return;
+
+  try {
+    const storage = window.localStorage;
+    storage.removeItem(legacyLayoutKey(reaction.id, 'GridState'));
+    storage.removeItem(legacyLayoutKey(reaction.id, 'Layout'));
+
+    const rowOrderKey = legacyLayoutKey(reaction.id, 'RowOrder');
+    const rowOrder = JSON.parse(storage.getItem(rowOrderKey));
+    if (!Array.isArray(rowOrder)) {
+      storage.removeItem(rowOrderKey);
+      return;
+    }
+
+    // Rows the stored order does not know go last, keeping their own order.
+    const rank = rankIn(rowOrder);
+    const ordered = [...reaction.variations].sort((a, b) => rank(a) - rank(b));
+    if (ordered.every((variation, index) => variation === reaction.variations[index])) {
+      storage.removeItem(rowOrderKey);
+    } else {
+      reaction.variations = ordered;
+    }
+  } catch (e) { /* storage unavailable or unreadable: nothing to carry over */ }
+};
+
+/*
 The editable fields of each segment klass, by segment label, ready to be turned into grid columns.
 
 `layerKey` is the key the layer sits under in `layers`, not `layer.key`: the two can differ, and it
@@ -407,6 +455,7 @@ async function getReactionSegments(reaction_segments) {
 }
 
 export {
+  adoptLegacyVariationsLayout,
   getInitialColumnState,
   persistColumnState,
   convertVariationDatasetToInternalVariations,
