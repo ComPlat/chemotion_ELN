@@ -22,6 +22,7 @@ import Component from 'src/models/Component';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
+import { withReactionGasPhase } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 
 // The same material of the reaction: SBMM samples and samples are numbered apart, so equal ids of
 // the two kinds are different materials.
@@ -32,7 +33,7 @@ const isSameMaterial = (first, second) => (
   && isSbmmSample(first) === isSbmmSample(second)
 );
 
-const handleInputChange = (type, event, reaction, onReactionChange) => {
+const applyInputChange = (type, event, reaction, onReactionChange) => {
   let value;
   if (
     type === 'temperatureUnit'
@@ -82,6 +83,20 @@ const handleInputChange = (type, event, reaction, onReactionChange) => {
   onReactionChange(newReaction, options);
 };
 
+// A variation's edits are computed against its own vessel size and catalyst - see GasPhaseContext.
+const handleInputChange = (type, event, reaction, onReactionChange) => withReactionGasPhase(
+  reaction,
+  () => applyInputChange(type, event, reaction, onReactionChange)
+);
+
+/*
+The handler methods that change the reaction, which on a variation have to be computed against the
+variation's own gas phase values - see GasPhaseContext.
+*/
+const GAS_PHASE_ENTRY_POINTS = [
+  'handleMaterialsChange', 'dropSample', 'dropSbmmSample', 'dropMaterial', 'deleteMaterial', 'switchEquiv',
+];
+
 export default class ReactionUpdateHandler {
   constructor({ reaction, onReactionChange, onLockEquivColChange, variations = [], reactQuillRef = null,
                 additionQuillRef = null }, context = null) {
@@ -97,6 +112,10 @@ export default class ReactionUpdateHandler {
     this.reactQuillRef = reactQuillRef;
     this.variations = variations;
     this.bindMethods();
+    GAS_PHASE_ENTRY_POINTS.forEach((name) => {
+      const method = this[name];
+      this[name] = (...args) => withReactionGasPhase(this.props.reaction, () => method(...args));
+    });
   }
 
   bindMethods() {
