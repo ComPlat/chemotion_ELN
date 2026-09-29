@@ -3,7 +3,6 @@ import { debounce } from 'lodash';
 import { getMetricMolConc } from 'src/utilities/MetricsUtils';
 import { permitOn } from 'src/components/common/uis';
 import { metPreConv } from 'src/utilities/metricPrefix';
-import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -231,7 +230,9 @@ export default class MaterialHandler {
   // eslint-disable-next-line class-methods-use-this
   recalculateYieldForGasProduct() {
     const { material, reaction } = this;
-    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+    // The reaction's own vessel size rather than the store's: shown while rendering, a variation's
+    // yield has to come from the variation's vessel - see GasPhaseContext.
+    const vesselVolume = reaction.findReactionVesselSizeCatalystMaterialValues().vesselSize;
     const refMaterial = reaction.findFeedstockMaterial();
     if (!refMaterial) {
       return null;

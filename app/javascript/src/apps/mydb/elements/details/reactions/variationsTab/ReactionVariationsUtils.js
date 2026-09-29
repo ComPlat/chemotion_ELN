@@ -4,6 +4,7 @@ import Container from 'src/models/Container';
 import uuid from 'uuid';
 import { cloneDeep } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { markAsVariationOf } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 import {
   applyLegacyVariationData,
   needsLegacyConversion,
@@ -94,9 +95,10 @@ const makeVariationReaction = (reaction, reactionData) => {
       }
     );
   });
-  return Object.assign(
-    Object.create(Reaction.prototype),
-    clonedReaction
+  // Marked so that its edits are computed against its own gas phase values - see GasPhaseContext.
+  return markAsVariationOf(
+    Object.assign(Object.create(Reaction.prototype), clonedReaction),
+    reaction
   );
 };
 
