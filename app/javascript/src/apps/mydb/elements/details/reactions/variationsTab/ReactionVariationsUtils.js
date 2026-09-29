@@ -2,6 +2,7 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
 import uuid from 'uuid';
+import { cloneDeep } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import {
   applyLegacyVariationData,
@@ -116,19 +117,43 @@ const addNewVariationDataset = ({ reaction: { variations } }) => {
     id, group,
       analyses: [],
     notes: '',
-    data: {}
+    // The identity of the reaction the row stands for, which the row is addressed by (getRowId, the
+    // open variation panel). Without it every rebuild would make one up afresh.
+    data: { id: uuid.v4() }
   };
   variations.push(newVariation);
   return newVariation;
 };
 
+/*
+Appends a copy of the variation at `sourceIdx` (a position in the list): its values and its group -
+a copy is a repetition of the same experiment - under a number and identity of its own. Linked
+analyses and the note belong to the original's run, not to the copy.
+*/
+const copyVariationDataset = ({ reaction }, sourceIdx) => {
+  const source = reaction.variations[sourceIdx];
+  const copy = addNewVariationDataset({ reaction });
+  copy.group = [...(source.group ?? copy.group)];
+  copy.data = { ...cloneDeep(source.data ?? {}), id: uuid.v4() };
+  return copy;
+};
+
+/*
+Puts the variations in a new order: `order` lists their current positions in the order they should
+have. The list order is what orders the rows - `idx`, the number a row is known by, stays with it.
+*/
+const reorderVariationDatasets = ({ reaction }, order) => {
+  reaction.variations = order.map((position) => reaction.variations[position]);
+};
+
 const addInternalVariationObject = (
   variations,
   reaction,
-  { data = { id: uuid.v4() }, group = [0,0], idx, analyses = [] }
+  { data = { id: uuid.v4() }, group = [0,0], idx, analyses = [], notes = '' }
 ) => {
   variations.push({
     analyses,
+    notes,
     group,
     data: makeVariationReaction(reaction, data),
     idx: variations.length,
@@ -381,6 +406,8 @@ export {
   convertVariationDatasetToInternalVariations,
   addInternalVariationObject,
   addNewVariationDataset,
+  copyVariationDataset,
+  reorderVariationDatasets,
   parseVariationGroup,
   makeVariationReaction,
   diffObjects,
