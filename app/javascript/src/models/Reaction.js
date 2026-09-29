@@ -1,7 +1,9 @@
 import {
+  cloneDeep,
   isEmpty,
   round,
 } from 'lodash';
+import uuid from 'uuid';
 import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
@@ -198,6 +200,25 @@ function realignVariationMaterials(variations, idsBefore, idsAfter) {
       }
     });
   });
+}
+
+/*
+A variation of a copied reaction: its own array entry, so editing the copy does not reach into the
+original's variations, and its own identities - the row's and that of the reaction it stands for,
+by which the grid and the open variation panel address it. Its values are positional (see
+realignVariationMaterials) and carry over to the copied materials as they are. What belongs to the
+original's run stays behind: the links to its analyses, which the copy does not have, and the old
+body a migrated row may still carry, which is keyed by the original's sample ids.
+*/
+function copyVariationForReactionCopy(variation) {
+  const rest = cloneDeep(variation);
+  delete rest.legacy_data;
+  return {
+    ...rest,
+    id: uuid.v4(),
+    analyses: [],
+    data: { ...(rest.data ?? {}), id: uuid.v4() },
+  };
 }
 
 export default class Reaction extends Element {
@@ -687,6 +708,7 @@ export default class Reaction extends Element {
 
     copy.rebuildProductName();
     copy.container = Container.init();
+    copy.variations = this.variations.map(copyVariationForReactionCopy);
     copy.can_update = true;
     copy.can_copy = false;
     return copy;
