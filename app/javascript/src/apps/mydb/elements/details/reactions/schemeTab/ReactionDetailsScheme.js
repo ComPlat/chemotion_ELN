@@ -1204,6 +1204,14 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.sample_details.reference_component_changed = false;
     updatedSample.storePreviousAmountState();
 
+    // storePreviousAmountState() runs after the new reference is selected, so with amount_unit
+    // 'mol' it recomputes previous_amount_g as amount_value * new relMW instead of the real
+    // pre-switch mixture mass. Restore the pre-switch mass captured above so the unlocked handler
+    // rebases amount_mol as mass / new relMW (and the preserved mass stays correct under render).
+    if (Number.isFinite(mixtureMassG)) {
+      updatedSample.sample_details.previous_amount_g = mixtureMassG;
+    }
+
     if (referenceComponent?.molecule?.molecular_weight) {
       updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
     }
