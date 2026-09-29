@@ -444,25 +444,9 @@ class Reaction < ApplicationRecord
   end
 
   # Keeps the column at the shape db/schemas/reaction_variations.schema.json describes: a list whose
-  # rows each have an id, a number and a diff. It used to key the list by UUID into an object
-  # instead, which the column can no longer hold - the list order is what orders the rows, and an
-  # object would lose it, since jsonb sorts its keys.
-  #
-  # `idx` is only filled in where it is missing: it is the number the row is known by, not its
-  # position, so renumbering here would relabel rows behind the user's back.
+  # rows each have an id, a number and a diff - see Usecases::Reactions::NormalizeVariations.
   def normalize_variations
-    list = self[:variations]
-    list = list.values if list.is_a?(Hash)
-
-    self[:variations] = Array(list).each_with_index.map do |item, index|
-      next item unless item.is_a?(Hash)
-
-      item = item.dup
-      item['id'] = item['uuid'].presence || SecureRandom.uuid if item['id'].blank?
-      item['idx'] = index unless item['idx'].is_a?(Integer)
-      item['data'] ||= {}
-      item
-    end
+    self[:variations] = Usecases::Reactions::NormalizeVariations.call(self[:variations])
   end
 
   def update_fields_to_plain_text
