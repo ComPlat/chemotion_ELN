@@ -18,7 +18,7 @@ import
 {
   addInternalVariationObject,
   addNewVariationDataset,
-  diffObjects, getReactionSegments,
+  variationDiffOf, getReactionSegments,
   exportVariationsToCsv,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -108,17 +108,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   const handleReactionChange = (variationReaction, idx) => {
     variationReaction.updateMaxAmountOfProducts();
 
-    /*
-    Beyond the structural exclusions, the diff must not capture editor bookkeeping: `belongTo`,
-    `matGroup` and `editedSample` are transient references the sample flows hang onto reactions and
-    samples, and diffObjects would copy them - and through them the whole variation clone - into
-    the diff by reference, breaking the structuredClone the variations are rebuilt with.
-    */
-    const variationDiff = diffObjects(
-      reaction,
-      variationReaction,
-      ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample']
-    );
+    const variationDiff = variationDiffOf(reaction, variationReaction);
 
     reaction.changed = true;
     reaction.variations[idx].data = variationDiff;
