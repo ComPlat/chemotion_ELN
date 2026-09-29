@@ -18,6 +18,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
+import { calculateTONPerTimeValue } from 'src/utilities/UnitsConversion';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -87,6 +88,17 @@ const DurationUnit = [
   'Second(s)'
 ];
 
+const ShirtLegMomentUnit = {
+  'Y': 'years',
+  'M': 'months',
+  'w': 'weeks',
+  'd': 'days',
+  'h': 'hours',
+  'm': 'minutes',
+  's': 'seconds',
+  ...LegMomentUnit
+};
+
 const DurationDefault = {
   dispUnit: 'Hour(s)',
   dispValue: '',
@@ -99,8 +111,16 @@ const ReactionTypeOptions = [
   { value: 'interaction', label: 'Interaction' },
 ];
 
-export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
-  .as(MomentUnit[newUnit]);
+export const convertTonPerTime = (tonPerTime, fromUnit, toUnit) => {
+  const fromUnitTime = fromUnit.split('/').at(-1);
+  const toUnitTime = toUnit.split('/').at(-1);
+  const  convertedValue = calculateTONPerTimeValue(tonPerTime, fromUnitTime);
+  return convertedValue[ShirtLegMomentUnit[toUnitTime]];
+
+};
+
+export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value),
+  ShirtLegMomentUnit[unit]).as(ShirtLegMomentUnit[newUnit]);
 
 const durationDiff = (startAt, stopAt, precise = false) => {
   if (startAt && stopAt) {
@@ -625,18 +645,6 @@ export default class Reaction extends Element {
       return copiedSample;
     });
 
-    // SBMM reactants sit in the variations' reactants group under "sbmm:<id>" keys; the copy has its own splits
-    const sbmmKeys = (sbmms) => sbmms.map((sbmm) => ({ id: `sbmm:${sbmm.id}` }));
-    copy.variations = Reaction.remapVariationMaterialKeys(this.variations, {
-      startingMaterials: [this.starting_materials, copy.starting_materials],
-      reactants: [
-        [...this.reactants, ...sbmmKeys(this.reactant_sbmm_samples)],
-        [...copy.reactants, ...sbmmKeys(copy.reactant_sbmm_samples)],
-      ],
-      products: [this.products, copy.products],
-      solvents: [this.solvents, copy.solvents],
-    });
-
     copy.rebuildProductName();
     copy.container = Container.init();
     copy.can_update = true;
@@ -645,26 +653,58 @@ export default class Reaction extends Element {
   }
 
   /**
-   * Re-keys the variations' material groups from the source materials' ids to their copies' ids, so a
-   * copied reaction's variations name its own (still preliminary) samples. The backend translates those
-   * to the saved samples' ids on create. Sequence-based macromolecule samples are passed in their
-   * `sbmm:<id>` key form (a copy gets its own splits). Keys without a counterpart are kept as they are.
-   * @param {Array<Object>} variations
-   * @param {Object<string, Array<Array<Object>>>} groupMaterials variations group => [sources, copies]
-   * @returns {Array<Object>}
+   * Resets weight_percentage_reference to false for all materials in the reaction.
+   * Called when switching from weight percentage scheme to default or gaseous scheme.
    */
-  static remapVariationMaterialKeys(variations, groupMaterials) {
-    return (variations || []).map((variation) => {
-      const remapped = { ...variation };
-      Object.entries(groupMaterials).forEach(([group, [sources, copies]]) => {
-        if (!variation[group]) { return; }
-        const idMap = new Map((sources || []).map((source, index) => [String(source.id), copies?.[index]?.id]));
-        remapped[group] = Object.fromEntries(
-          Object.entries(variation[group]).map(([key, entry]) => [idMap.get(key) ?? key, entry])
-        );
-      });
-      return remapped;
+  // eslint-disable-next-line class-methods-use-this
+  resetWeightPercentagedependencies() {
+    const allMaterials = this.samples;
+
+    allMaterials.forEach((material) => {
+      material.weight_percentage_reference = false;
+      material.weight_percentage = null;
     });
+    WeightPercentageReactionActions.setWeightPercentageReference(null);
+    WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+  }
+
+  /**
+   * Recalculates equivalent values for starting materials and reactants.
+   * Uses the reference material's moles to compute each material's equivalent.
+   *
+   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
+   */
+  // eslint-disable-next-line class-methods-use-this
+  recalculateEquivalentsForMaterials() {
+    const { referenceMaterial } = this;
+    if (!referenceMaterial || !referenceMaterial.amount_mol) {
+      return;
+    }
+
+    const materialsToUpdate = [
+      ...this.starting_materials,
+      ...this.reactants,
+    ];
+
+    materialsToUpdate.forEach((material) => {
+      if (!material.reference && material.amount_mol) {
+        material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
+      }
+    });
+  }/**
+   * Assigns weight_percentage_reference of the first product to true for a reaction.
+   * Called when switching from default or gaseous scheme to weight percentage scheme.
+   */
+  // eslint-disable-next-line class-methods-use-this
+  assignWeightPercentageReference() {
+    if (this.products.length > 0) {
+      this.products[0].weight_percentage_reference = true;
+      WeightPercentageReactionActions.setWeightPercentageReference(this.products[0]);
+      const amountValue = this.products[0].target_amount_value;
+      const amountUnit = this.products[0].target_amount_unit;
+      const targetAmount = { value: amountValue, unit: amountUnit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    }
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
@@ -865,7 +905,7 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup == "starting_materials") {
+    } else if (newGroup == 'starting_materials') {
       material.isSplit = true;
       material.reaction_product = false;
 
@@ -1382,7 +1422,15 @@ export default class Reaction extends Element {
   }
 
   get segments() {
-    return this._segments || [];
+    /*
+    Lazily settled rather than a fresh `[]` per read: callers hold on to the returned array - React
+    effect dependencies among them - and a new identity on every read makes an unchanged reaction
+    look permanently changed.
+    */
+    if (!this._segments) {
+      this._segments = [];
+    }
+    return this._segments;
   }
 
   updateMaxAmountOfProducts() {

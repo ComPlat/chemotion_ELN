@@ -3,6 +3,15 @@ module Reporter
     class DetailReaction < Detail
       include Reactable
 
+      # Template key of a material collection in the variations section, and the collection of the
+      # reaction it lines up with.
+      VARIATION_MATERIAL_GROUPS = {
+        'startingMaterials' => :starting_materials,
+        'reactants' => :reactants,
+        'products' => :products,
+        'solvents' => :solvents,
+      }.freeze
+
       def initialize(args)
         super
         @obj = args[:reaction]
@@ -60,41 +69,117 @@ module Reporter
 
       private
 
+      # A variation is a diff against this reaction: it carries only what it changes, and whatever
+      # it does not mention is the reaction's own value. See
+      # db/schemas/reaction_variations.schema.json. The report resolves the two - the reaction-level
+      # fields fall back to the reaction, and every material of the reaction is listed with the
+      # attributes that variation changes about it.
+      #
+      # Keys are what the docx templates iterate over: see `v.startingMaterials:each(s)` and its
+      # siblings in lib/template/Standard.docx.
       def variations
-        obj.variations.map do |var|
+        obj.variations.map do |variation|
+          diff = variation_diff(variation[:data])
+
           {
-            'temperature' => variation_property(var, :temperature),
-            'duration' => variation_property(var, :duration),
-            'startingMaterials' => variation_materials(var, :startingMaterials),
-            'reactants' => variation_materials(var, :reactants),
-            'solvents' => variation_materials(var, :solvents),
-            'products' => variation_materials(var, :products),
-            'notes' => var[:metadata]&.dig(:notes),
-            'group' => var[:metadata]&.dig(:group)&.values_at(:group, :subgroup)&.join('.'),
-          }.compact
+            'temperature' => variation_temperature(diff),
+            'duration' => diff.fetch(:duration, obj.duration),
+            'notes' => variation[:notes],
+            'group' => Array(variation[:group]).join('.'),
+          }.merge(variation_materials(diff)).compact
         end
       end
 
-      def variation_property(var, property)
-        value = var[:properties]&.dig(property, :value)
-        unit = var[:properties]&.dig(property, :unit)
-        "#{value} #{unit}" if value && unit
+      # The client's models keep a leading underscore on every attribute they wrap in an accessor,
+      # and that is the name that ends up in the diff. Stripping it lines the names back up with the
+      # reaction's and the samples' own attributes.
+      def variation_diff(diff)
+        return {} unless diff.is_a?(Hash)
+
+        diff.each_with_object({}) do |(key, value), result|
+          result[key.to_s.sub(/\A_/, '').to_sym] = value
+        end
       end
 
-      def variation_materials(variation, type)
-        variation[type].map do |_, vi|
-          result = "#{vi[:aux][:sumFormula]}:\n"
+      # The reaction's own temperature is a raw jsonb column and reaches the report with string
+      # keys, whereas the diff has been symbolized on its way through the entity - hence the
+      # deep_symbolize_keys before the two are merged. It can also arrive anonymized as a string,
+      # in which case there is no hash to merge into.
+      def variation_temperature(diff)
+        return obj.temperature_display_with_unit unless diff.key?(:temperature)
 
-          meta_data = [vi[:aux][:isReference] ? 'Ref' : '', vi[:aux][:gasType] == 'off' ? '' : vi[:aux][:gasType]]
-          meta_data = meta_data.reject(&:empty?).join(', ')
-          result += "(#{meta_data})\n" if meta_data.present?
+        reaction_temperature = obj.temperature.is_a?(Hash) ? obj.temperature.deep_symbolize_keys : {}
+        temperature = reaction_temperature.merge(diff[:temperature] || {})
+        text = temperature[:userText].presence || variation_temperature_range(temperature)
+        text.blank? ? '' : "#{text} #{temperature[:valueUnit]}".strip
+      end
 
-          result + vi.map do |k, vj|
-            next if k == :aux
+      def variation_temperature_range(temperature)
+        values = Array(temperature[:data]).filter_map { |point| point[:value] }
+        return '' if values.empty?
 
-            "#{k.to_s.gsub(/([A-Z])/, ' \1').downcase.strip}: #{vj[:value]} #{vj[:unit]};\n"
-          end.join
+        "#{values.min} ~ #{values.max}"
+      end
+
+      # The diff of a material collection is positional: entry i belongs to material i of the
+      # reaction and is null where that material is unchanged. There is nothing to match on instead
+      # - a sample's id is not something a variation changes, so the diff never carries one.
+      def variation_materials(diff)
+        VARIATION_MATERIAL_GROUPS.each_with_object({}) do |(template_key, collection), result|
+          changes = Array(diff[collection])
+
+          result[template_key] = Array(obj.public_send(collection)).each_with_index.map do |material, index|
+            variation_material(material, variation_diff(changes[index]))
+          end
         end
+      end
+
+      def variation_material(material, changes)
+        label = variation_material_label(material)
+        return label if changes.blank?
+
+        "#{label}:\n#{variation_changes(changes)}"
+      end
+
+      def variation_material_label(material)
+        s = OpenStruct.new(material)
+        s.molecule_name_hash&.dig(:label).presence ||
+          s.preferred_label.presence ||
+          s.short_label.presence ||
+          s.name.presence ||
+          s.molecule&.dig(:sum_formular).presence ||
+          ''
+      end
+
+      # Renders the attributes one variation changes, pairing a `*_value` with its `*_unit` so that
+      # an amount reads as a single line. A nested block - the gas phase data is the one that occurs
+      # in practice - is rendered one level down, under its own name.
+      def variation_changes(changes, prefix = nil)
+        units, values = changes.partition { |key, _| key.to_s.end_with?('_unit') }.map(&:to_h)
+
+        values.filter_map { |attribute, value| variation_change(attribute, value, units, prefix) }.join
+      end
+
+      def variation_change(attribute, value, units, prefix)
+        base = attribute.to_s.delete_suffix('_value')
+        name = [prefix, base.tr('_', ' ')].compact.join(' ').strip
+
+        if value.is_a?(Hash)
+          return "#{name}: #{variation_value(value[:value], value[:unit])};\n" if value.key?(:value)
+
+          return variation_changes(variation_diff(value), name)
+        end
+        # Collections a variation cannot edit - residues, components and the like - are left out
+        # rather than dumped into the report.
+        return nil if value.is_a?(Array)
+
+        unit = units[:"#{base}_unit"]
+        "#{name}: #{variation_value(value, unit)};\n"
+      end
+
+      def variation_value(value, unit)
+        formatted = value.is_a?(Numeric) ? valid_digit(value, digit) : value.to_s
+        [formatted.presence || 'n.d.', unit.presence].compact.join(' ')
       end
 
       def title
