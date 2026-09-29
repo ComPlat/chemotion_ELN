@@ -1,6 +1,7 @@
 import expect from 'expect';
 import sinon from 'sinon';
 import Reaction from 'src/models/Reaction';
+import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Sample from 'src/models/Sample';
 import ReactionFactory from 'factories/ReactionFactory';
@@ -328,6 +329,35 @@ describe('ReactionVariationsUtils', () => {
   });
 
   describe('convertVariationDatasetToInternalVariations', () => {
+    // As the previous variations table did: an analysis deleted in the Analyses tab, or already gone,
+    // is unlinked from every row.
+    it('unlinks analyses that are deleted or gone', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const analysis = (id, isDeleted = false) => Object.assign(Container.buildEmpty(), {
+        id, container_type: 'analysis', is_deleted: isDeleted,
+      });
+      const analyses = Object.assign(Container.buildEmpty(), {
+        container_type: 'analyses', children: [analysis(11), analysis(12, true)],
+      });
+      reaction.container = Object.assign(Container.init(), { children: [analyses] });
+      reaction.variations = [{ id: 'a', idx: 1, group: [1, 0], analyses: [11, 12, 13], data: { id: 'x' } }];
+
+      const [row] = convertVariationDatasetToInternalVariations(reaction);
+
+      expect(reaction.variations[0].analyses).toEqual([11]);
+      expect(row.analyses).toEqual([11]);
+    });
+
+    it('leaves the links alone for a reaction without analyses loaded', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      reaction.container = Object.assign(Container.init(), { children: [] });
+      reaction.variations = [{ id: 'a', idx: 1, group: [1, 0], analyses: [11], data: { id: 'x' } }];
+
+      convertVariationDatasetToInternalVariations(reaction);
+
+      expect(reaction.variations[0].analyses).toEqual([11]);
+    });
+
     it('gives every variation a material added to the reaction, and keeps its changes in place', async () => {
       const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
       const [first] = reaction.starting_materials;
@@ -347,6 +377,13 @@ describe('ReactionVariationsUtils', () => {
 
     it('labels a row by its stored idx and addresses it by position', async () => {
       const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      // The analysis the first row links, which has to exist to stay linked.
+      reaction.container = Object.assign(Container.init(), {
+        children: [Object.assign(Container.buildEmpty(), {
+          container_type: 'analyses',
+          children: [Object.assign(Container.buildEmpty(), { id: 9, container_type: 'analysis' })],
+        })],
+      });
       reaction.variations = [
         { id: 'a', idx: 7, group: [1, 0], analyses: [9], data: {} },
         { id: 'b', idx: 9, group: [2, 0], analyses: [], data: {} },
