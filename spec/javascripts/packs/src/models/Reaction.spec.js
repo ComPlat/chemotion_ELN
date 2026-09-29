@@ -1160,6 +1160,21 @@ describe('Reaction', () => {
       expect(variationData()).not.toHaveProperty('_starting_materials');
     });
 
+    // Materials only a variation has are listed in the reaction's scheme tab too, but are not the
+    // reaction's: the list used to come out as [A, A, B] for [A, B] when one of them was deleted.
+    it('leaves the materials alone when asked to delete, move or swap one it does not have', () => {
+      const foreign = { ...material, id: 'variation-only' };
+      const idsBefore = reaction.starting_materials.map((m) => m.id);
+
+      reaction.deleteMaterial(foreign, 'starting_materials');
+      reaction.swapMaterial(foreign, first, 'starting_materials');
+      reaction.moveMaterial(foreign, 'starting_materials', null, 'reactants');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual(idsBefore);
+      expect(reaction.reactants).toEqual([]);
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }, { _equivalent: 0.2 }]);
+    });
+
     it('does nothing to a reaction without variations', () => {
       reaction.variations = [];
 
