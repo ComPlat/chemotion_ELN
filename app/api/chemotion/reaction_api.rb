@@ -92,7 +92,7 @@ module Chemotion
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], "Reaction"),
+              citation_for_elements(params[:id], 'Reaction'),
               with_user_info: true,
             ),
             research_plans: research_plans,
@@ -215,7 +215,7 @@ module Chemotion
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(reaction.id, "Reaction"),
+              citation_for_elements(reaction.id, 'Reaction'),
               with_user_info: true,
             ),
             research_plans: research_plans,
