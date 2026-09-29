@@ -12,6 +12,11 @@ module Reporter
         'solvents' => :solvents,
       }.freeze
 
+      # What a variation may change about a material that its amounts are worked out from.
+      VARIATION_AMOUNT_ATTRIBUTES = %i[
+        target_amount_value target_amount_unit real_amount_value real_amount_unit purity density molarity_value
+      ].freeze
+
       def initialize(args)
         super
         @obj = args[:reaction]
@@ -122,23 +127,62 @@ module Reporter
       end
 
       # The diff of a material collection is positional: entry i belongs to material i of the
-      # reaction and is null where that material is unchanged. There is nothing to match on instead
-      # - a sample's id is not something a variation changes, so the diff never carries one.
+      # reaction and is null where that material is unchanged; entries past the reaction's own
+      # materials are whole samples only this variation has. Every material is listed with the
+      # values it has in the variation - the reaction's, with the variation's changes on top - the way
+      # the Variations tab shows them.
       def variation_materials(diff)
-        VARIATION_MATERIAL_GROUPS.each_with_object({}) do |(template_key, collection), result|
-          changes = Array(diff[collection])
+        vessel_size = variation_vessel_size(diff)
 
-          result[template_key] = Array(obj.public_send(collection)).each_with_index.map do |material, index|
-            variation_material(material, variation_diff(changes[index]))
+        VARIATION_MATERIAL_GROUPS.transform_values do |collection|
+          variation_group_materials(collection, Array(diff[collection])).map do |material|
+            variation_material(material, collection == :products, vessel_size)
           end
         end
       end
 
-      def variation_material(material, changes)
-        label = variation_material_label(material)
-        return label if changes.blank?
+      def variation_group_materials(collection, changes)
+        own = Array(obj.public_send(collection))
+        materials = own.each_with_index.map { |material, index| variation_material_data(material, changes[index]) }
+        extras = changes.drop(own.size).select { |extra| extra.is_a?(Hash) }
+        materials + extras.map { |extra| variation_material_data({}, extra) }
+      end
 
-        "#{label}:\n#{variation_changes(changes)}"
+      def variation_vessel_size(diff)
+        vessel_size = (obj.vessel_size || {}).to_h.stringify_keys
+        vessel_size.merge((diff[:vessel_size] || {}).to_h.stringify_keys)
+      end
+
+      # The material as it is in the variation, with its amounts worked out from the variation's.
+      def variation_material_data(material, changes)
+        data = material.to_h.deep_symbolize_keys.deep_merge(variation_diff(changes).deep_symbolize_keys)
+        # calculate_amount_mmol reads the gas phase data with string keys.
+        data[:gas_phase_data] = data[:gas_phase_data].with_indifferent_access if data[:gas_phase_data].is_a?(Hash)
+        data.merge(variation_amounts(data))
+      end
+
+      # The sample's own conversions, run on the variation's amount - never saved. A material without
+      # a stored sample keeps the amounts it came with.
+      def variation_amounts(data)
+        sample = data[:id].to_s.match?(/\A\d+\z/) && Sample.find_by(id: data[:id])
+        return {} unless sample
+
+        sample.assign_attributes(data.slice(*VARIATION_AMOUNT_ATTRIBUTES))
+        {
+          amount_g: sample.amount_g, amount_ml: sample.amount_ml, amount_mmol: sample.amount_mmol,
+          real_amount_g: sample.amount_g(:real), real_amount_ml: sample.amount_ml(:real),
+          real_amount_mmol: sample.amount_mmol(:real)
+        }
+      end
+
+      def variation_material(material, is_product, vessel_size)
+        s = OpenStruct.new(material)
+        lines = [variation_material_flags(s)].compact
+        lines += variation_amount_lines(s, is_product, vessel_size)
+        lines << variation_equivalent_line(s, is_product)
+        lines += variation_gas_lines(s.gas_phase_data) if s.gas_type.to_s == 'gas'
+
+        "#{variation_material_label(material)}:\n#{lines.compact.join("\n")}"
       end
 
       def variation_material_label(material)
@@ -151,30 +195,42 @@ module Reporter
           ''
       end
 
-      # Renders the attributes one variation changes, pairing a `*_value` with its `*_unit` so that
-      # an amount reads as a single line. A nested block - the gas phase data is the one that occurs
-      # in practice - is rendered one level down, under its own name.
-      def variation_changes(changes, prefix = nil)
-        units, values = changes.partition { |key, _| key.to_s.end_with?('_unit') }.map(&:to_h)
-
-        values.filter_map { |attribute, value| variation_change(attribute, value, units, prefix) }.join
+      def variation_material_flags(material)
+        flags = [material.reference ? 'Ref' : nil, material.gas_type.to_s.presence_in(%w[feedstock catalyst gas])]
+        flags.compact.empty? ? nil : "(#{flags.compact.join(', ')})"
       end
 
-      def variation_change(attribute, value, units, prefix)
-        base = attribute.to_s.delete_suffix('_value')
-        name = [prefix, base.tr('_', ' ')].compact.join(' ').strip
+      def variation_amount_lines(material, is_product, vessel_size)
+        return [] if material.metrics.nil?
 
-        if value.is_a?(Hash)
-          return "#{name}: #{variation_value(value[:value], value[:unit])};\n" if value.key?(:value)
+        mass, vol, mmol = assigned_amount(material, is_product, vessel_size)
+        mass_unit, vol_unit, mmol_unit = unit_conversion(material)
+        [
+          "mass: #{variation_value(mass, mass_unit)};",
+          "volume: #{variation_value(vol, vol_unit)};",
+          "amount: #{variation_value(mmol, mmol_unit)};",
+        ]
+      end
 
-          return variation_changes(variation_diff(value), name)
-        end
-        # Collections a variation cannot edit - residues, components and the like - are left out
-        # rather than dumped into the report.
-        return nil if value.is_a?(Array)
+      # The client keeps a product's yield as a fraction in `equivalent`.
+      def variation_equivalent_line(material, is_product)
+        equivalent = Float(material.equivalent, exception: false)
+        return nil if equivalent.nil?
 
-        unit = units[:"#{base}_unit"]
-        "#{name}: #{variation_value(value, unit)};\n"
+        return "yield: #{variation_value(equivalent * 100, '%')};" if is_product
+
+        "equivalent: #{variation_value(equivalent, nil)};"
+      end
+
+      def variation_gas_lines(gas_phase_data)
+        data = (gas_phase_data || {}).to_h.deep_symbolize_keys
+        [
+          ['concentration', data[:part_per_million], 'ppm'],
+          ['temperature', data.dig(:temperature, :value), data.dig(:temperature, :unit)],
+          ['duration', data.dig(:time, :value), data.dig(:time, :unit)],
+          ['turnover number', data[:turnover_number], nil],
+          ['turnover frequency', data.dig(:turnover_frequency, :value), data.dig(:turnover_frequency, :unit)],
+        ].map { |name, value, unit| "#{name}: #{variation_value(value, unit)};" }
       end
 
       def variation_value(value, unit)
@@ -413,9 +469,10 @@ module Reporter
       def calculate_vessel_volume(vessel_size)
         return nil if vessel_size['amount'].blank? || vessel_size['unit'].blank?
 
+        # A variation's vessel size comes from a text input and may be a string.
         case vessel_size['unit']
         when 'ml'
-          vessel_size['amount'] * 0.001
+          vessel_size['amount'].to_f * 0.001
         when 'l'
           vessel_size['amount'].to_f
         else
@@ -492,12 +549,12 @@ module Reporter
       #   - Vessel volume (converted to liters)
       #   - Gas phase data (part per million and temperature)
       #   - Converts the result to millimoles (multiplies by 1000)
-      def calculate_amount_mmol(sample)
+      def calculate_amount_mmol(sample, vessel_size = @obj.vessel_size)
         # Return real_amount_mmol if available (unless it's a gas sample)
         return sample.real_amount_mmol unless sample.gas_type == 'gas'
 
         # Handle gas samples
-        vessel_volume = calculate_vessel_volume(@obj.vessel_size)
+        vessel_volume = calculate_vessel_volume(vessel_size)
         return unless vessel_volume
 
         mole_value = calculate_mole_gas_product(
@@ -509,7 +566,7 @@ module Reporter
         mole_value ? mole_value * 1000 : 0
       end
 
-      def assigned_amount(s, is_product = false)
+      def assigned_amount(s, is_product = false, vessel_size = @obj.vessel_size)
         mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
         mmol = if s.sample_type == Sample::SAMPLE_TYPE_MIXTURE
@@ -519,7 +576,7 @@ module Reporter
                elsif s.real_amount_mmol == 0.0 && !is_product
                  s.amount_mmol
                else
-                 calculate_amount_mmol(s)
+                 calculate_amount_mmol(s, vessel_size)
                end
 
         mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
