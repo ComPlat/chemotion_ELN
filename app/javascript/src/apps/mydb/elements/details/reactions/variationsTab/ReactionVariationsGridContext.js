@@ -21,6 +21,7 @@ const VariationsGridContext = createContext({
   getRowHandler: () => null,
   setActiveVariation: () => {},
   onGroupChange: () => {},
+  onGroupBlur: () => {},
 });
 
 export default VariationsGridContext;

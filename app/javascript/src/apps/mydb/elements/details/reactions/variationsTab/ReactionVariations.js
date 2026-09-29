@@ -18,6 +18,7 @@ import
 {
   addInternalVariationObject,
   addNewVariationDataset,
+  parseVariationGroup,
   variationDiffOf, getReactionSegments,
   exportVariationsToCsv,
   REACTION_VARIATIONS_TAB_KEY
@@ -68,8 +69,6 @@ const RemoveVariationsModal = ({ onRemoveAll }) => {
 RemoveVariationsModal.propTypes = {
   onRemoveAll: PropTypes.func.isRequired,
 };
-
-let globalInputTimer;
 
 const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
@@ -171,22 +170,28 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     setVariations([...variations]);
   };
 
+  /*
+  The group is saved as typed, cleaned up: its numbers, at most two of them (see
+  db/schemas/reaction_variations.schema.json), and nothing at all while there is no number yet. The
+  cell meanwhile shows the raw parts, so "1." stays on screen while "1.2" is being typed; leaving it
+  shows what was saved.
+  */
   const onGroupChange = (value, idx) => {
-    const newValue = value.split(/[^\d]/);
+    const parts = value.split(/[^\d]/);
+    const group = parseVariationGroup(value);
+
     reaction.changed = true;
-    variations[idx].group = newValue;
+    if (group) {
+      reaction.variations[idx].group = group;
+    }
+    variations[idx].group = parts;
     onReactionChange(reaction);
     setVariations(variations);
-    if (globalInputTimer) {
-      clearTimeout(globalInputTimer);
-    }
+  };
 
-    globalInputTimer = setTimeout(() => {
-      variations[idx].group = reaction.variations[idx].group = newValue.filter(Boolean);
-      onReactionChange(reaction);
-      setVariations(variations);
-    }, 1000);
-
+  const onGroupBlur = (idx) => {
+    variations[idx].group = reaction.variations[idx].group;
+    setVariations([...variations]);
   };
   /*
   The segment of the open variation, for the panel under the grid: its own if it has one, otherwise
@@ -289,6 +294,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
         setActiveVariation={setActiveVariation}
         isActiveVariation={!!activeVariation}
         onGroupChange={onGroupChange}
+        onGroupBlur={onGroupBlur}
         onDeleteVariation={deleteVariation}
         onAnalysesChange={onAnalysesChange}
         allReactionAnalyses={getReactionAnalyses(reaction)}
