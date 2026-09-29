@@ -64,7 +64,7 @@
           "$ref": "#/definitions/reaction_diff"
         },
         "legacy_data": {
-          "description": "The body this variation had before the format changed, kept verbatim by the migration that converted it. Absent on every variation written since. See db/migrate/20260731120000_convert_reaction_variations_to_diff_list.rb.",
+          "description": "The body this variation had before the format changed, kept verbatim by the migration that converted it. Absent on every variation written since. While `data` holds nothing but its `id`, the client converts `legacy_data` into `data` when it reads the row. See db/migrate/20260731120000_convert_reaction_variations_to_diff_list.rb.",
           "type": "object"
         }
       }

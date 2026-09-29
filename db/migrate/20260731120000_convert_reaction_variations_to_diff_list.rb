@@ -14,8 +14,10 @@
 # model the diff is expressed in, so rewriting them would mean guessing what each entry was meant to
 # override. Instead every converted variation starts out with a diff that changes nothing - i.e. it
 # reads as identical to its parent reaction - and keeps its former body verbatim under
-# `legacy_data`. Nothing is lost, `down` puts it back, and a later migration can convert
-# `legacy_data` into a real diff once the mapping has been decided.
+# `legacy_data`. Nothing is lost and `down` puts it back. The client turns `legacy_data` into a
+# real diff when it reads such a row, through the same Sample and Reaction models an edit goes
+# through (variationsTab/ReactionVariationsLegacyConversion.js); the result is stored with the
+# reaction's next save.
 #
 # `data` therefore ends up carrying nothing but the identity of the reaction the row stands for.
 # That one attribute is not optional: the client generates a fresh id for a row whose diff has none,
