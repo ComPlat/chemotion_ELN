@@ -131,10 +131,10 @@ const addInternalVariationObject = (
 };
 
 /*
-A row the conversion migration left with its old values under `legacy_data` gets them written into
-its diff here, the first time it is read. The row's stored diff is updated in place, so the values
-reach the database with the reaction's next save; until then the conversion simply runs again on
-every load and yields the same diff.
+A row still holding its old values only under `legacy_data` gets them written into its diff here.
+The migration 20260929120000_convert_legacy_reaction_variation_values.rb does the same on the
+server, so this only catches rows it found nothing to write for, and databases that have not run it.
+The row's stored diff is updated in place and reaches the database with the reaction's next save.
 */
 const convertLegacyVariation = (reaction, variation) => {
   const variationReaction = applyLegacyVariationData(

@@ -976,4 +976,86 @@ describe('Reaction', () => {
       });
     });
   });
+
+  /*
+  Variations store their material changes by position in each group, so changing the reaction's own
+  material lists has to move those entries along with the materials they belong to.
+  */
+  describe('material changes in a reaction with variations', () => {
+    let first;
+    let second;
+
+    const variationData = () => reaction.variations[0].data;
+
+    beforeEach(() => {
+      [first, second] = reaction.starting_materials;
+      reaction.variations = [{
+        id: 'row', idx: 1, group: [1, 0], analyses: [], notes: '',
+        data: {
+          id: 'row-reaction',
+          _starting_materials: [{ _equivalent: 0.1 }, { _equivalent: 0.2 }],
+        },
+      }];
+    });
+
+    it('drops the entry of a deleted material and moves the others up', () => {
+      reaction.deleteMaterial(first, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.2 }]);
+    });
+
+    it('leaves the slot of an added material empty and moves the others down', () => {
+      reaction.addMaterialAt(material, null, first, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([null, { _equivalent: 0.1 }, { _equivalent: 0.2 }]);
+    });
+
+    it('covers a material appended at the end', () => {
+      reaction.addMaterial(material, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }, { _equivalent: 0.2 }, null]);
+    });
+
+    it('moves the entries along when materials are reordered', () => {
+      reaction.moveMaterial(second, 'starting_materials', first, 'starting_materials');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual([second.id, first.id]);
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.2 }, { _equivalent: 0.1 }]);
+    });
+
+    it('takes the entry along when a material moves to another group', () => {
+      reaction.moveMaterial(second, 'starting_materials', null, 'reactants');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }]);
+      expect(variationData()._reactants).toEqual([{ _equivalent: 0.2 }]);
+    });
+
+    it('keeps materials only the variation has behind the reaction\'s own', () => {
+      const extra = { id: 'variation-only', _equivalent: 3 };
+      variationData()._starting_materials.push(extra);
+
+      reaction.addMaterial(material, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([
+        { _equivalent: 0.1 }, { _equivalent: 0.2 }, null, extra,
+      ]);
+    });
+
+    it('leaves a group to the parent once none of its entries are left', () => {
+      variationData()._starting_materials = [null, { _equivalent: 0.2 }];
+
+      reaction.deleteMaterial(second, 'starting_materials');
+
+      expect(variationData()).not.toHaveProperty('_starting_materials');
+    });
+
+    it('does nothing to a reaction without variations', () => {
+      reaction.variations = [];
+
+      reaction.deleteMaterial(first, 'starting_materials');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual([second.id]);
+      expect(reaction.variations).toEqual([]);
+    });
+  });
 });
