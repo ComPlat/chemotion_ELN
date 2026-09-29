@@ -23,7 +23,7 @@ describe Chemotion::ContainerAPI do
   let!(:cont_hacker_analysis) { create(:analysis_container) }
   let!(:cont_hacker_dataset) { create(:container, container_type: 'dataset') }
 
-  context 'authorized user logged in' do
+  context 'when an authorized user is logged in' do
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user)
         .and_return(login)
@@ -39,7 +39,6 @@ describe Chemotion::ContainerAPI do
 
     after(:all) do
       `rm -rf #{Rails.root.join('tmp/test')}`
-      puts "delete tmp folder #{Rails.root.join('tmp/test')} "
     end
 
     describe 'check if the current user is the container owner before removing the linkage between container and attachments' do
