@@ -4,7 +4,7 @@ import Sample from 'src/models/Sample';
 import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
 import {
-  diffObjects, formatReactionSegments, getVariationsRowName,
+  diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
   makeVariationReaction, addNewVariationDataset, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -37,6 +37,17 @@ describe('ReactionVariationsUtils', () => {
     it('keeps the position of a changed entry in a list, with null for the unchanged', () => {
       const diff = diffObjects({ a: [{ v: 1 }, { v: 2 }] }, { a: [{ v: 1 }, { v: 9 }] });
       expect(diff.a).toEqual([null, { v: 9 }]);
+    });
+
+    it('reports an unchanged list as no difference', () => {
+      expect(diffObjects({ a: [{ v: 1 }, 2] }, { a: [{ v: 1 }, 2] })).toEqual({});
+      expect(diffObjects({ a: { b: [1] } }, { a: { b: [1] } })).toEqual({});
+    });
+
+    // A variation's list is sized by its diff, so a list of another length is a change even if every
+    // entry it has matches.
+    it('reports a shorter list, even with every entry unchanged', () => {
+      expect(diffObjects({ a: [1, 2] }, { a: [1] })).toEqual({ a: [null] });
     });
 
     it('ignores the keys it is told to', () => {
@@ -105,6 +116,26 @@ describe('ReactionVariationsUtils', () => {
       const variation = addNewVariationDataset({ reaction });
       expect(variation.group).toEqual([3, 0]);
       expect(variation.idx).toBe(4);
+    });
+  });
+
+  describe('variationDiffOf', () => {
+    it('is only the identity for a variation that changes nothing', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const variationReaction = makeVariationReaction(reaction, { id: 'row-reaction' });
+
+      expect(variationDiffOf(reaction, variationReaction)).toEqual({ id: 'row-reaction' });
+    });
+
+    it('holds only what was changed, positioned in its list', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const variationReaction = makeVariationReaction(reaction, { id: 'row-reaction' });
+      variationReaction.starting_materials[1].equivalent = 0.3;
+
+      expect(variationDiffOf(reaction, variationReaction)).toEqual({
+        id: 'row-reaction',
+        _starting_materials: [null, { _equivalent: 0.3 }],
+      });
     });
   });
 

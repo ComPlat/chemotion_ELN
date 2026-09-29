@@ -68,7 +68,7 @@ describe('ReactionVariationsLegacyConversion', () => {
     // The stored row now carries a real diff, keeping its identity and the legacy body.
     const [stored] = reaction.variations;
     expect(stored.data.id).toBe('row-reaction');
-    expect(stored.data._starting_materials[0]?._target_amount_value).toBeUndefined();
+    expect(stored.data._starting_materials[0]).toBeNull();
     expect(stored.data._starting_materials[1]._equivalent).toBe(0.3);
     expect(stored.legacy_data).toBeTruthy();
   });
@@ -103,9 +103,8 @@ describe('ReactionVariationsLegacyConversion', () => {
       startingMaterials: { 'gone-sample': { mass: { value: 9, unit: 'g' }, aux: {} } },
     })];
 
-    const [row] = convertVariationDatasetToInternalVariations(reaction);
-    expect(row.data.starting_materials.map((s) => s.amount_g))
-      .toEqual(reaction.starting_materials.map((s) => s.amount_g));
+    convertVariationDatasetToInternalVariations(reaction);
+    expect(reaction.variations[0].data).toEqual({ id: 'row-reaction' });
   });
 
   it('leaves a row alone once its diff holds values', () => {
