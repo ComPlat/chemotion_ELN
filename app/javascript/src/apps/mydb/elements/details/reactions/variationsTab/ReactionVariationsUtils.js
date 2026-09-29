@@ -178,8 +178,35 @@ const convertLegacyVariation = (reaction, variation) => {
   variation.data = variationDiffOf(reaction, variationReaction);
 };
 
+/*
+A variation links analyses of its reaction by id. Once an analysis is deleted - marked in the Analyses
+tab, or already gone from the reaction - the link goes too, and with the reaction's next save out of
+the database, as the previous variations table did. The container tree is read as it is: going
+through Element#analysesContainers would add an analyses container to a reaction that has none.
+*/
+const unlinkMissingAnalyses = (reaction) => {
+  const analysesContainers = (reaction.container?.children ?? [])
+    .filter((container) => container.container_type === 'analyses');
+  if (analysesContainers.length === 0) return;
+
+  const available = new Set(
+    analysesContainers
+      .flatMap((container) => container.children ?? [])
+      .filter((analysis) => analysis.container_type === 'analysis' && !analysis.is_deleted)
+      .map((analysis) => String(analysis.id))
+  );
+  reaction.variations.forEach((variation) => {
+    if (!Array.isArray(variation.analyses)) return;
+    const linked = variation.analyses.filter((id) => available.has(String(id)));
+    if (linked.length !== variation.analyses.length) {
+      variation.analyses = linked;
+    }
+  });
+};
+
 const convertVariationDatasetToInternalVariations = (reaction) => {
   const internalVariation = [];
+  unlinkMissingAnalyses(reaction);
   reaction.variations.forEach((v) => {
     if (needsLegacyConversion(v)) {
       convertLegacyVariation(reaction, v);
