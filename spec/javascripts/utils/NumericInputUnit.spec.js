@@ -99,6 +99,46 @@ describe('NumericInputUnit component', () => {
     expect(convertedUnit).toBe('°F');
   });
 
+  it('accepts a comma as decimal separator and keeps it displayed', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '-2,5' } });
+    expect(spy.calledWith(-2.5, '°C')).toEqual(true);
+    expect(wrapper.find('[name="storage_temperature"]').prop('value')).toBe('-2,5');
+  });
+
+  it('converts a comma-typed temperature when toggling the unit', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '2,5' } });
+    wrapper.find('Button').simulate('click');
+    expect(spy.lastCall.args).toEqual(['36.5', '°F']);
+  });
+
+  it('converts a comma-typed amount when toggling the unit', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'chemical_amount_in_g', onInputChange: spy, unit: 'g', numericValue: '', label: 'Amount'
+    }));
+    wrapper.find('[name="chemical_amount_in_g"]').simulate('change', { target: { value: '1,5' } });
+    wrapper.find('Button').simulate('click');
+    expect(spy.lastCall.args).toEqual([1500, 'mg']);
+  });
+
+  it('rejects a second decimal separator', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '2,5.1' } });
+    expect(spy.called).toEqual(false);
+    expect(wrapper.find('[name="storage_temperature"]').prop('value')).toBe('');
+  });
+
   it('toggles input should return the same value when the field is not "amount" or "flash_point"', () => {
     const wrapper = createWrapper('other field', ' ', 300, 'other_field', false);
     wrapper.find('Button').simulate('click');
