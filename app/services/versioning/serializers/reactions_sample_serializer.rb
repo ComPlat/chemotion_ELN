@@ -23,6 +23,11 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         kind: :boolean,
         revert: %i[show_label],
       },
+      carry_on: {
+        label: 'Carry on',
+        kind: :boolean,
+        revert: %i[carry_on],
+      },
       position: {
         label: 'Position',
         revert: %i[position],
