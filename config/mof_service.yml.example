@@ -1,5 +1,7 @@
+# Base URL of the chemotion-converter-app that hosts the MOF endpoint.
+# MofService posts the CIF to <mof_service_url>/mofid (no auth required).
 development:
-  :mof_service_url: 'http://mof_service:5000/'
+  :mof_service_url: 'http://converter:4000/'
 
 production:
-  :mof_service_url: 'http://mof_service:5000/'
+  :mof_service_url: 'http://converter:4000/'

@@ -1452,7 +1452,7 @@ export default class SampleForm extends React.Component {
   /**
    * Renders the sample type selection input.
    * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
-   * MOF is only offered when the MOF sidecar is enabled (unless the sample is already MOF).
+   * MOF is only offered when the MOF service is enabled (unless the sample is already MOF).
    * @returns {JSX.Element} The rendered sample type selects input
    */
   sampleTypeInput() {

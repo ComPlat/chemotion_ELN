@@ -3,17 +3,22 @@
 require 'rails_helper'
 
 RSpec.describe MofService do
-  let(:service_url) { 'http://mof_service:5000/' }
+  let(:service_url) { 'http://converter:4000/' }
   let(:cif) { "data_test\n_cell_length_a 1.0\n" }
-  let(:mof_result) do
+
+  # The converter returns every value as a string under a "mofid." namespace.
+  let(:converter_response) do
     {
-      'mofid' => '[Cu][O].[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1 MOFid-v1.tbo.cat0',
-      'mofkey' => 'Cu.VWYSYJQFPPLOBQ.MOFkey-v1.tbo',
-      'smiles' => '[Cu][O].[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1',
-      'smiles_nodes' => '[Cu][O]',
-      'smiles_linkers' => '[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1',
-      'topology' => 'tbo',
-      'cat' => '0',
+      'mofid.mofid' => '[Cu][O].[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1 MOFid-v1.tbo.cat0',
+      'mofid.mofkey' => 'Cu.VWYSYJQFPPLOBQ.MOFkey-v1.tbo',
+      'mofid.smiles' => '[Cu][O].[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1',
+      'mofid.smiles_nodes' => '[Cu][O]',
+      'mofid.smiles_linkers' => '[O-]C(=O)c1cc(C(=O)[O-])cc(C(=O)[O-])c1',
+      'mofid.topology' => 'tbo',
+      'mofid.cat' => '0',
+      'mofid.ccdc_number' => '',
+      'mofid.node_ratios' => '3',
+      'mofid.linker_ratios' => '4',
     }
   end
 
@@ -22,7 +27,10 @@ RSpec.describe MofService do
   def mof_config(url:, disabled:)
     ActiveSupport::OrderedOptions.new.tap do |config|
       config.mof_service_url = url
+      # config/default_missing.yml stores a literal "disabled?" key because
+      # OrderedOptions#disabled? just reads self["disabled?"]; mirror that.
       config.disabled = disabled
+      config[:disabled?] = disabled
     end
   end
 
@@ -48,21 +56,47 @@ RSpec.describe MofService do
   end
 
   describe '#analyze' do
-    it 'returns MOFid fields from the sidecar' do
-      stub_request(:post, "#{service_url}analyze")
-        .to_return(status: 200, body: mof_result.to_json, headers: { 'Content-Type' => 'application/json' })
+    it 'strips the "mofid." prefix and returns the bare MOFid fields' do
+      stub_request(:post, "#{service_url}mofid")
+        .to_return(status: 200, body: converter_response.to_json, headers: { 'Content-Type' => 'application/json' })
 
       result = described_class.new(cif).analyze
 
       expect(result).to include(
-        'mofid' => mof_result['mofid'],
-        'mofkey' => mof_result['mofkey'],
+        'mofid' => converter_response['mofid.mofid'],
+        'mofkey' => converter_response['mofid.mofkey'],
         'topology' => 'tbo',
       )
     end
 
-    it 'returns nil when the sidecar errors' do
-      stub_request(:post, "#{service_url}analyze").to_return(status: 500, body: '')
+    it 'parses the comma-separated ratio strings into integer arrays' do
+      stub_request(:post, "#{service_url}mofid")
+        .to_return(status: 200, body: converter_response.merge('mofid.node_ratios' => '3,1').to_json)
+
+      result = described_class.new(cif).analyze
+
+      expect(result['node_ratios']).to eq([3, 1])
+      expect(result['linker_ratios']).to eq([4])
+    end
+
+    it 'posts the CIF as a multipart file field' do
+      stub = stub_request(:post, "#{service_url}mofid")
+             .with(headers: { 'Content-Type' => %r{\Amultipart/form-data} })
+             .to_return(status: 200, body: converter_response.to_json)
+
+      described_class.new(cif).analyze
+
+      expect(stub).to have_been_requested
+    end
+
+    it 'returns nil when the converter returns an empty object (runtime missing)' do
+      stub_request(:post, "#{service_url}mofid").to_return(status: 200, body: '{}')
+
+      expect(described_class.new(cif).analyze).to be_nil
+    end
+
+    it 'returns nil when the converter errors' do
+      stub_request(:post, "#{service_url}mofid").to_return(status: 400, body: '{"error":"File could not be used to generate MOFid"}')
 
       expect(described_class.new(cif).analyze).to be_nil
     end

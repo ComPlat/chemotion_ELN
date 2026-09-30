@@ -47,8 +47,6 @@ import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsCo
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import MofFetcher from 'src/fetchers/MofFetcher';
-import { fragmentsFromNodeLinker, resolveFragments } from 'src/components/mof/mofUtils';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { EditUserLabels } from 'src/components/UserLabels';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -397,12 +395,6 @@ export default class SampleDetails extends React.Component {
         pageMessage: result.ob_log,
         loadingMolecule: false
       });
-
-      // For a MOF, decompose the drawn structure into node/linker fragments
-      // (topology / MOFid still come from a CIF or are entered manually).
-      if (sample.isMof()) {
-        this.populateMofFragmentsFromStructure(sample, molfile);
-      }
     };
 
     const fetchMolecule = (fetchFunction) => {
@@ -424,44 +416,6 @@ export default class SampleDetails extends React.Component {
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
-  }
-
-  /**
-   * Sends a drawn MOF structure to the fragmentation service (break metal-ligand
-   * bonds) and stores the resulting node/linker fragments on sample_details.mof,
-   * then resolves each for its display name / structure preview.
-   * @param {Sample} sample
-   * @param {string} molfile - the drawn structure
-   */
-  populateMofFragmentsFromStructure(sample, molfile) {
-    if (!molfile) return;
-
-    MofFetcher.fragment(molfile)
-      .then((result) => {
-        const fragments = fragmentsFromNodeLinker(result);
-        if (!fragments.length) return;
-
-        const mof = { ...(sample.sample_details?.mof || {}), fragments };
-        sample.sample_details = { ...(sample.sample_details || {}), mof };
-        sample.changed = true;
-        this.setState({ sample });
-
-        // Enrich each fragment (IUPAC / sum formula / structure SVG) for display.
-        resolveFragments(fragments)
-          .then((resolved) => {
-            const currentMof = sample.sample_details?.mof || mof;
-            sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments: resolved } };
-            this.setState({ sample });
-          })
-          .catch(() => {});
-      })
-      .catch((e) => {
-        this.context.notifications.add({
-          title: 'MOF fragmentation failed',
-          message: e?.message || 'Could not split the structure into nodes and linkers',
-          level: 'error',
-        });
-      });
   }
 
   handleSubmit(closeView = false) {

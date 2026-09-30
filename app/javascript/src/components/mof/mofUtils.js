@@ -54,21 +54,6 @@ export const resolveFragments = async (fragments = []) => Promise.all(
 );
 
 /**
- * Build fragment rows from a /fragment response (drawn-structure decomposition).
- * @param {{ nodes?: string[], linkers?: string[] }} result
- * @returns {Array<Object>} fragment rows (type_function node/linker + smiles)
- */
-export const fragmentsFromNodeLinker = ({ nodes = [], linkers = [] } = {}) => {
-  const row = (smiles, typeFunction) => ({
-    type_function: typeFunction, iupac: '', smiles, ratio: 1, comment: '',
-  });
-  return [
-    ...nodes.filter(Boolean).map((s) => row(s, 'node')),
-    ...linkers.filter(Boolean).map((s) => row(s, 'linker')),
-  ];
-};
-
-/**
  * Assemble the MOFid string from the structured mof fields.
  * @param {Object} mof - sample_details.mof
  * @returns {string} the MOFid, or '' when there is nothing to assemble
@@ -115,7 +100,7 @@ const normalizeCatenation = (result) => {
 
 const fragmentsFromResult = (result) => {
   const rows = [];
-  // ratios is aligned index-for-index with toSmilesList(smiles) (the sidecar
+  // ratios is aligned index-for-index with toSmilesList(smiles) (the converter
   // splits smiles_nodes / smiles_linkers the same way); default to 1 when the
   // stoichiometry could not be derived.
   const push = (smiles, typeFunction, ratios) => {
@@ -172,7 +157,7 @@ export const mofResultFromAnalysis = (result = {}) => {
     format_key: formatKey || 'MOFkey-v1',
     topology: asText(result.topology) || topologyFromKey || matchToken(result.mofid, /(?<=MOFid-v\d+\.)[^.\s]+/, ''),
     cat: normalizeCatenation(result),
-    // CCDC number is extracted from the CIF by the sidecar; SURMOF thin-film
+    // CCDC number is extracted from the CIF by the converter; SURMOF thin-film
     // properties are user-entered.
     ccdc_no: asText(result.ccdc_number),
     substrate: '',

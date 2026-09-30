@@ -5,16 +5,16 @@ require 'rails_helper'
 describe Chemotion::MofAPI do
   include_context 'api request authorization context'
 
-  let(:service_url) { 'http://mof_service:5000/' }
-  let(:mof_result) do
+  let(:service_url) { 'http://converter:4000/' }
+  let(:converter_response) do
     {
-      'mofid' => 'test.MOFid-v1.pcu.cat0',
-      'mofkey' => 'X.MOFkey-v1.pcu',
-      'smiles' => 'C',
-      'smiles_nodes' => 'C',
-      'smiles_linkers' => '',
-      'topology' => 'pcu',
-      'cat' => '0',
+      'mofid.mofid' => 'test.MOFid-v1.pcu.cat0',
+      'mofid.mofkey' => 'X.MOFkey-v1.pcu',
+      'mofid.smiles' => 'C',
+      'mofid.smiles_nodes' => 'C',
+      'mofid.smiles_linkers' => '',
+      'mofid.topology' => 'pcu',
+      'mofid.cat' => '0',
     }
   end
 
@@ -23,7 +23,10 @@ describe Chemotion::MofAPI do
   def mof_config(url:, disabled:)
     ActiveSupport::OrderedOptions.new.tap do |config|
       config.mof_service_url = url
+      # config/default_missing.yml stores a literal "disabled?" key because
+      # OrderedOptions#disabled? just reads self["disabled?"]; mirror that.
       config.disabled = disabled
+      config[:disabled?] = disabled
     end
   end
 
@@ -37,20 +40,20 @@ describe Chemotion::MofAPI do
 
   describe 'POST /api/v1/mof/analyze' do
     it 'accepts CIF text and returns MOFid identifiers' do
-      stub_request(:post, "#{service_url}analyze")
-        .to_return(status: 200, body: mof_result.to_json, headers: { 'Content-Type' => 'application/json' })
+      stub_request(:post, "#{service_url}mofid")
+        .to_return(status: 200, body: converter_response.to_json, headers: { 'Content-Type' => 'application/json' })
 
       post '/api/v1/mof/analyze', params: { cif: "data_test\n" }, as: :json
 
       expect(response).to have_http_status(:created)
       expect(parsed_json_response).to include(
-        'mofid' => mof_result['mofid'],
-        'mofkey' => mof_result['mofkey'],
+        'mofid' => converter_response['mofid.mofid'],
+        'mofkey' => converter_response['mofid.mofkey'],
         'topology' => 'pcu',
       )
     end
 
-    it 'returns 503 when the sidecar is not configured' do
+    it 'returns 503 when the converter is not configured' do
       allow(Rails.configuration).to receive(:mof_service).and_return(
         mof_config(url: nil, disabled: true),
       )

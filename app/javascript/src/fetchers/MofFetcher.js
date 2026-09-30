@@ -1,15 +1,15 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 /**
- * Client for Chemotion's MOF API (CIF → MOFid/MOFkey via sidecar).
+ * Client for Chemotion's MOF API (CIF → MOFid/MOFkey via the converter).
  */
 export default class MofFetcher {
-  // Kept above the Rails→sidecar timeout (MofService: 180s) so the browser
+  // Kept above the Rails→converter timeout (MofService: 180s) so the browser
   // receives the clean 422 instead of aborting at the same moment.
   static REQUEST_TIMEOUT = 200000;
 
   /**
-   * POST to a MOF endpoint with a timeout, surfacing the sidecar's error message.
+   * POST to a MOF endpoint with a timeout, surfacing the backend error message.
    * @param {string} endpoint
    * @param {Object} body
    * @returns {Promise<Object>}
@@ -52,14 +52,5 @@ export default class MofFetcher {
    */
   static analyze(cif) {
     return MofFetcher.postWithTimeout('/api/v1/mof/analyze', { cif });
-  }
-
-  /**
-   * Split a drawn structure into MOF nodes and linkers.
-   * @param {string} molfile - Molfile of the drawn structure
-   * @returns {Promise<{ nodes: string[], linkers: string[] }>}
-   */
-  static fragment(molfile) {
-    return MofFetcher.postWithTimeout('/api/v1/mof/fragment', { molfile });
   }
 }
