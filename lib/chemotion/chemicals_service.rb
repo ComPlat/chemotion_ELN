@@ -31,6 +31,10 @@ module Chemotion
     MAX_SAVED_SDS = 5
 
     SAFETY_SHEETS_ROOT = Rails.public_path.join('safety_sheets')
+    # A catalogue number becomes the first part of a file name, so only these characters.
+    SHEET_PRODUCT_NUMBER_RE = /\A[A-Za-z0-9][A-Za-z0-9\-_.]{0,63}\z/.freeze
+    # Sigma's SDS URL takes a two-letter language code in its path.
+    MERCK_LANGUAGE_RE = /\A[a-z]{2}\z/i.freeze
 
     SDS_VENDOR = 'Sigma-Aldrich'
     THERMO_VENDOR = 'Thermofisher'
@@ -130,6 +134,7 @@ module Chemotion
 
     def self.merck_product_entry(brand, product_number, language)
       path = "#{brand}/#{product_number}"
+      language = language.to_s.match?(MERCK_LANGUAGE_RE) ? language.to_s.downcase : 'en'
       { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
         'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
@@ -172,6 +177,9 @@ module Chemotion
     def self.save_vendor_sheet(sample_id:, cas:, chemical_data:, product_info:)
       return sds_limit_error('saving') if sds_limit_reached?(chemical_data)
 
+      invalid = product_info_error(product_info)
+      return { error: invalid, status: 400 } if invalid
+
       vendor = product_info['vendor'].downcase
       # Always fetches: only the bytes say whether this sheet is one already held.
       file_path = create_sds_file(product_info['sdsLink'], product_info['productNumber'], vendor)
@@ -182,6 +190,22 @@ module Chemotion
       find_or_create_chemical_with_safety_data(sample_id: sample_id, cas: cas, chemical_data: chemical_data,
                                                file_path: file_path, product_number: product_info['productNumber'],
                                                vendor: vendor)
+    end
+
+    # The row the client points at is its own copy of a search result, so every field the
+    # fetch and the file name depend on is checked before either is attempted.
+    # @return [String, nil] the reason it cannot be used
+    def self.product_info_error(product_info)
+      return 'Vendor product info is missing' unless product_info.is_a?(Hash)
+      return 'Vendor name is missing' if product_info['vendor'].blank?
+      return 'Vendor name is invalid' unless InputValidationUtils.valid_vendor_name?(product_info['vendor'].to_s)
+      return 'Safety sheet link is missing' if product_info['sdsLink'].blank?
+
+      'Product number is invalid' unless valid_sheet_product_number?(product_info['productNumber'])
+    end
+
+    def self.valid_sheet_product_number?(product_number)
+      product_number.is_a?(String) && product_number.match?(SHEET_PRODUCT_NUMBER_RE)
     end
 
     def self.sheet_already_saved?(chemical_data, file_path)

@@ -392,8 +392,27 @@ describe Chemotion::ChemicalsService do
       end
       product_info['productNumber'] = '../../../tmp/escaped'
 
-      expect(save).to include(status: 400, error: a_string_including('Not a safety sheet path'))
+      expect(save).to eq(status: 400, error: 'Product number is invalid')
+      expect(described_class).not_to have_received(:request_pdf_file)
       expect(Rails.root.glob('tmp/escaped_*.pdf')).to be_empty
+    end
+
+    it 'refuses a row that is missing or incomplete before fetching anything', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file)
+      save_with = lambda do |info|
+        described_class.save_vendor_sheet(sample_id: sample.id, cas: '67-64-1', product_info: info,
+                                          chemical_data: [{}])
+      end
+
+      expect(save_with.call(nil)).to eq(error: 'Vendor product info is missing', status: 400)
+      expect(save_with.call('Merck')).to eq(error: 'Vendor product info is missing', status: 400)
+      expect(save_with.call(product_info.except('vendor'))).to eq(error: 'Vendor name is missing', status: 400)
+      expect(save_with.call(product_info.merge('vendor' => 'Thermo Fisher/..')))
+        .to eq(error: 'Vendor name is invalid', status: 400)
+      expect(save_with.call(product_info.except('sdsLink'))).to eq(error: 'Safety sheet link is missing', status: 400)
+      expect(save_with.call(product_info.merge('productNumber' => 12)))
+        .to eq(error: 'Product number is invalid', status: 400)
+      expect(described_class).not_to have_received(:create_sds_file)
     end
 
     it 'refuses a sheet the sample already holds as final', :aggregate_failures do
@@ -474,6 +493,13 @@ describe Chemotion::ChemicalsService do
         'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
         'save_modes' => %w[browser server],
       )
+    end
+
+    it 'falls back to English when the language is not a two-letter code', :aggregate_failures do
+      expect(described_class.merck('Acetone', 'de')['merck_link']).to eq('https://www.sigmaaldrich.com/DE/de/sds/sigald/179124')
+      expect(described_class.merck('Acetone', '../../x')['merck_link'])
+        .to eq('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124')
+      expect(described_class.merck('Acetone', nil)['merck_link']).to eq('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124')
     end
 
     it 'reports a miss when PubChem knows no CID' do

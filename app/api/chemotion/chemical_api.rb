@@ -127,7 +127,7 @@ module Chemotion
               sample_id: params[:sample_id],
               cas: params[:cas],
               chemical_data: params[:chemical_data],
-              product_info: params[:chemical_data][0][params[:vendor_product]],
+              product_info: params[:chemical_data].first.try(:[], params[:vendor_product]),
             )
           end
           if result.is_a?(Hash) && result[:error].present?

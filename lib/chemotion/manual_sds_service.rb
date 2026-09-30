@@ -32,14 +32,13 @@ module Chemotion
     # Create a new manual SDS record
     # @return [Chemical, Hash] Created/updated chemical record or error hash
     def create
-      # Validate parameters
-      validation_errors = validate_params
-      return { error: validation_errors.join(', ') } if validation_errors.any?
-
-      # Parse vendor info and chemical data
+      # Parsed first: the link and product number checks read the decoded vendor_info.
       parsing_result = parse_data
       return parsing_result if parsing_result.is_a?(Hash) && parsing_result[:error]
-      return ChemicalsService.sds_limit_error('attaching') if ChemicalsService.sds_limit_reached?([@chemical_data])
+
+      validation_errors = validate_params
+      return { error: validation_errors.join(', ') } if validation_errors.any?
+      return ChemicalsService.sds_limit_error('attaching') if ChemicalsService.sds_limit_reached?(sheets_held)
 
       # Process SDS file and create/update chemical record
       process_file
@@ -47,18 +46,37 @@ module Chemotion
 
     private
 
+    # The record's own sheets decide the cap when the sample has one, since the update
+    # keeps those and discards the posted list. The posted copy only counts before then.
+    def sheets_held
+      return chemical_record.chemical_data if chemical_record&.chemical_data.present?
+
+      [@chemical_data]
+    end
+
     # Validate required parameters and basic formats.
     # Checks performed:
     #  - presence: sample_id, attached_file, vendor_name
     #  - format: vendor_name (InputValidationUtils.valid_vendor_name?)
     #  - format: vendor_product (InputValidationUtils.valid_product_number?)
-    #  - if vendor_info is a Hash, delegates URL checks to validate_vendor_info_links
+    #  - vendor_info: a Hash whose productNumber can name a file, with valid links if given
     # @return [Array<String>] empty array if valid; otherwise list of error messages
     def validate_params
       errors = []
       errors.concat(validate_presence_errors)
       errors.concat(validate_format_errors)
-      errors.concat(validate_vendor_info_links)
+      errors.concat(validate_vendor_info)
+      errors
+    end
+
+    # The product number becomes part of the file name on disk.
+    def validate_vendor_info
+      return ['Vendor info must be an object'] unless @vendor_info.is_a?(Hash)
+
+      errors = validate_vendor_info_links
+      unless ChemicalsService.valid_sheet_product_number?(@vendor_info['productNumber'])
+        errors << 'Vendor info product number is invalid'
+      end
       errors
     end
 
