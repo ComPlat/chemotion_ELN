@@ -7,6 +7,8 @@ class AddReactionSteps < ActiveRecord::Migration[6.1]
       t.integer :position, null: false
       t.jsonb :temperature, default: { 'data' => [], 'userText' => '', 'valueUnit' => '°C' }
       t.string :duration
+      t.string :timestamp_start
+      t.string :timestamp_stop
       t.string :conditions
       t.text :description
       t.string :ph_operator, null: false, default: '='

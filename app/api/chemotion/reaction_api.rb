@@ -181,6 +181,8 @@ module Chemotion
           optional :description, type: String
           optional :conditions, type: String
           optional :duration, type: String
+          optional :timestamp_start, type: String
+          optional :timestamp_stop, type: String
           optional :temperature, type: Hash
           optional :ph_operator, type: String
           optional :ph_value, type: Float
@@ -293,6 +295,8 @@ module Chemotion
           optional :description, type: String
           optional :conditions, type: String
           optional :duration, type: String
+          optional :timestamp_start, type: String
+          optional :timestamp_stop, type: String
           optional :temperature, type: Hash
           optional :ph_operator, type: String
           optional :ph_value, type: Float
