@@ -415,6 +415,10 @@ const CompareInlineEditor = ({
             value={selectedFiles}
             treeData={displayedMenuItems}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
+             // Always open below the field: flipping up covers the Apply button.
+            placement="bottomLeft"
+            dropdownAlign={{ overflow: { adjustX: true, adjustY: false } }}
+            listHeight={200}
             onChange={(value, _label, info) => handleSelectionChange(displayedMenuItems, value, info)}
             disabled={disabled || (generated && !isAdding)}
             maxTagCount={2}
