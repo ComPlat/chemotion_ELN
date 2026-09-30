@@ -10,6 +10,7 @@ end
 # Sample Structure
 class OSample < OpenStruct
   include JoinFlagDefaults
+
   def initialize(data)
     # set nested attributes
 

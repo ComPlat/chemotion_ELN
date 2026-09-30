@@ -4,9 +4,13 @@ require 'rails_helper'
 
 describe Chemotion::ReactionSvgAPI do
   let(:user) { create(:person) }
-  let(:paths) { create_list(:sample, 3).map(&:get_svg_path).compact }
+  let(:warden_instance) { instance_double(WardenAuthentication) }
+  let(:paths) { create_list(:sample, 3).filter_map(&:get_svg_path) }
 
-  before { allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user) }
+  before do
+    allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+    allow(warden_instance).to receive(:current_user).and_return(user)
+  end
 
   def post_svg(steps)
     post '/api/v1/reaction_svg', params: {
@@ -28,7 +32,7 @@ describe Chemotion::ReactionSvgAPI do
 
     expect(response.status).to eq(201).or eq(200)
     svg = JSON.parse(response.body)['reaction_svg']
-    expect(svg.scan(/<line x1="0" y1="4" x2=/).size).to eq(1)
+    expect(svg.scan('<line x1="0" y1="4" x2=').size).to eq(1)
     expect(svg).to include('first')
   end
 end
