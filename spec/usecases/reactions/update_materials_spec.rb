@@ -632,16 +632,18 @@ describe Usecases::Reactions::UpdateMaterials do
     let(:carried_product) do
       {
         'products' => [
-          'name' => 'carried product',
-          'target_amount_unit' => 'mg',
-          'target_amount_value' => 99.08304,
-          'equivalent' => 1,
-          'reference' => false,
-          'is_new' => true,
-          'molfile' => molfile,
-          'container' => root_container,
-          'reaction_step_position' => step.position,
-          'carry_on' => true,
+          {
+            'name' => 'carried product',
+            'target_amount_unit' => 'mg',
+            'target_amount_value' => 99.08304,
+            'equivalent' => 1,
+            'reference' => false,
+            'is_new' => true,
+            'molfile' => molfile,
+            'container' => root_container,
+            'reaction_step_position' => step.position,
+            'carry_on' => true,
+          },
         ],
       }
     end
