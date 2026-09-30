@@ -385,4 +385,61 @@ RSpec.describe Reaction, type: :model do
     end
 
   end
+
+  describe 'multi_step reaction type' do
+    let(:reaction) { create(:reaction, reaction_type: 'multi_step') }
+
+    it 'accepts multi_step' do
+      expect(reaction).to be_valid
+    end
+
+    it 'allows going back to standard with a single step and nothing carried' do
+      ReactionStep.create!(reaction: reaction, position: 1)
+
+      reaction.reaction_type = 'standard'
+
+      expect(reaction).to be_valid
+    end
+
+    it 'refuses to go back to standard with more than one step' do
+      ReactionStep.create!(reaction: reaction, position: 1)
+      ReactionStep.create!(reaction: reaction, position: 2)
+
+      reaction.reaction_type = 'standard'
+
+      expect(reaction).not_to be_valid
+      expect(reaction.errors[:reaction_type].join).to include('delete the extra steps')
+    end
+
+    it 'refuses to go back to standard while a product is carried on' do
+      step = ReactionStep.create!(reaction: reaction, position: 1)
+      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
+
+      reaction.reaction_type = 'standard'
+
+      expect(reaction).not_to be_valid
+    end
+  end
+
+  describe 'carried products and the scheme' do
+    let(:reaction) { create(:reaction, reaction_type: 'multi_step') }
+    let(:step) { ReactionStep.create!(reaction: reaction, position: 1) }
+
+    it 'leaves a carried product out of the drawing' do
+      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
+      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: false)
+
+      drawn = reaction.send(:scheme_materials_svg_paths)[:products]
+
+      expect(drawn.length).to eq(1)
+    end
+
+    it 'draws every product of a standard reaction' do
+      standard = create(:reaction)
+      create(:reactions_product_sample, reaction: standard)
+      create(:reactions_product_sample, reaction: standard)
+
+      expect(standard.send(:scheme_materials_svg_paths)[:products].length).to eq(2)
+    end
+  end
 end
