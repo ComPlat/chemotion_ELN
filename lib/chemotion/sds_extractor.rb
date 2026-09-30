@@ -8,6 +8,10 @@ module Chemotion
   # Every omission is recorded under 'diagnostics' rather than replaced by a guess.
   class SdsExtractor
     GHOSTSCRIPT = ['gs', '-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=txtwrite'].freeze
+    # The PDF was uploaded by a user, so a file built to keep the interpreter busy must not
+    # hold a worker for longer than this.
+    GHOSTSCRIPT_TIMEOUT_SECONDS = 60
+    TIMED_OUT_STATUS = 124
     VENDORS = [
       {
         'name' => 'merck',
@@ -163,7 +167,7 @@ module Chemotion
     end
 
     def text_lines
-      return fail_with("no such file: #{@pdf_path}") unless File.file?(@pdf_path)
+      return fail_with("no such file: #{File.basename(@pdf_path)}") unless File.file?(@pdf_path)
 
       text = ghostscript_text
       return fail_with('ghostscript produced no text') if text.nil? || text.strip.empty?
@@ -173,13 +177,20 @@ module Chemotion
 
     def ghostscript_text
       Tempfile.create(['sds', '.txt']) do |out|
-        _stdout, stderr, status = Open3.capture3(*GHOSTSCRIPT, "-sOutputFile=#{out.path}", @pdf_path)
-        next fail_with("ghostscript failed: #{stderr.lines.first.to_s.strip}") unless status.success?
+        command = ['timeout', GHOSTSCRIPT_TIMEOUT_SECONDS.to_s, *GHOSTSCRIPT, "-sOutputFile=#{out.path}", @pdf_path]
+        _stdout, stderr, status = Open3.capture3(*command)
+        next fail_with('ghostscript timed out') if status.exitstatus == TIMED_OUT_STATUS
+        next fail_with("ghostscript failed: #{first_line_without_path(stderr)}") unless status.success?
 
         File.read(out.path, encoding: 'UTF-8').scrub
       end
     rescue SystemCallError => e
       fail_with("ghostscript unavailable: #{e.message}")
+    end
+
+    # Diagnostics go back to the browser, so the server's file system stays out of them.
+    def first_line_without_path(stderr)
+      stderr.lines.first.to_s.strip.gsub(@pdf_path, File.basename(@pdf_path))
     end
 
     def fail_with(message)

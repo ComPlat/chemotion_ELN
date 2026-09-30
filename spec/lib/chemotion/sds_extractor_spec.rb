@@ -129,10 +129,30 @@ RSpec.describe Chemotion::SdsExtractor do
   end
 
   describe 'a sheet it cannot read' do
-    it 'reports a missing file instead of raising', :aggregate_failures do
+    it 'reports a missing file instead of raising, without the server path', :aggregate_failures do
       result = described_class.extract(sheet('merck/does-not-exist.pdf'))
       expect(result['properties']).to be_empty
-      expect(result['diagnostics']['errors'].first).to start_with('no such file')
+      expect(result['diagnostics']['errors']).to eq(['no such file: does-not-exist.pdf'])
+    end
+
+    it 'gives up on a file that keeps ghostscript busy past the time limit', :aggregate_failures do
+      timed_out = instance_double(Process::Status, success?: false, exitstatus: described_class::TIMED_OUT_STATUS)
+      allow(Open3).to receive(:capture3).and_return(['', '', timed_out])
+
+      result = described_class.extract(Rails.root.join('spec/fixtures/upload.pdf').to_s)
+      expect(result['diagnostics']['errors']).to include('ghostscript timed out')
+      expect(Open3).to have_received(:capture3)
+        .with('timeout', described_class::GHOSTSCRIPT_TIMEOUT_SECONDS.to_s, 'gs', any_args)
+    end
+
+    it 'keeps the server path out of a ghostscript error', :aggregate_failures do
+      path = Rails.root.join('spec/fixtures/upload.pdf').to_s
+      failed = instance_double(Process::Status, success?: false, exitstatus: 1)
+      allow(Open3).to receive(:capture3).and_return(['', "GPL Ghostscript: cannot open #{path}\n", failed])
+
+      errors = described_class.extract(path)['diagnostics']['errors']
+      expect(errors).to include('ghostscript failed: GPL Ghostscript: cannot open upload.pdf')
+      expect(errors.join).not_to include(Rails.root.to_s)
     end
 
     it 'reports a file ghostscript cannot open', :aggregate_failures do
