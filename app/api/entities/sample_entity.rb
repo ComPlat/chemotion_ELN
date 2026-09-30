@@ -80,6 +80,8 @@ module Entities
       expose! :sample_type
       expose! :sample_details,                                      anonymize_with: nil
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      expose! :is_legacy,                                           anonymize_with: false
+      expose! :merged_sources,          unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::MergedSourceEntity'
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 
@@ -162,6 +164,10 @@ module Entities
       return @reactions_sample if defined?(@reactions_sample)
 
       @reactions_sample = object.reactions_samples.first
+    end
+
+    def merged_sources
+      object.merged_sources
     end
   end
 end
