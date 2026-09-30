@@ -11,6 +11,7 @@ import useCompareSpectra, { COMPARE_STATUS } from '../hooks/useCompareSpectra';
 import useSpectraStoreSlice from '../hooks/useSpectraStoreSlice';
 import { resolveSelection } from '../utils/compareSelectionTree';
 import { cleanLayoutLabel } from '../utils/containerLayout';
+import { compareFileNames } from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
 import CompareSpectraHeader, { titleFromContainer } from './CompareSpectraHeader';
 import CompareSpectraBody, { formatPksOps, formatMpyOps } from './CompareSpectraBody';
 
@@ -96,6 +97,13 @@ const resolveWriteParams = (params) => {
     waveLength: payload?.waveLength,
     curveSt: { curveIdx },
   };
+};
+
+// With several graphs, say which one the written peaks/multiplets come from.
+const withGraphName = (ops, container, curveIdx, graphCount) => {
+  if (ops.length === 0 || graphCount < 2) return ops;
+  const name = compareFileNames(container)?.[curveIdx] || `Spectrum ${curveIdx + 1}`;
+  return [{ insert: `${name}: ` }, ...ops];
 };
 
 const CompareSpectraModal = ({
@@ -202,10 +210,11 @@ const CompareSpectraModal = ({
     const resolved = resolveWriteParams(params);
     if (!resolved.layout) return [];
     const curveIdx = resolved.curveSt.curveIdx ?? 0;
-    const { multiEntities } = compareRef.current;
+    const { multiEntities, container } = compareRef.current;
     const entity = multiEntities?.[curveIdx] || multiEntities?.[0];
     if (!entity) return [];
-    return isMpy ? formatMpyOps({ entity, ...resolved }) : formatPksOps({ entity, ...resolved });
+    const ops = isMpy ? formatMpyOps({ entity, ...resolved }) : formatPksOps({ entity, ...resolved });
+    return withGraphName(ops, container, curveIdx, multiEntities.length);
   }, []);
 
   const handleWritePeak = useCallback((params) => persistOps(params, buildWriteOps(params, false)), [persistOps, buildWriteOps]);

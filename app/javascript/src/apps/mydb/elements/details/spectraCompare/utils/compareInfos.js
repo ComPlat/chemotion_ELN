@@ -30,4 +30,14 @@ export const canOpenComparisonEditor = (container) => {
   return !hasUnsavedComparisonSelection(container);
 };
 
+// File names of the compared spectra, in curve order (the PNG previews are
+// skipped). Shared by the editor's graph selection and the written content.
+export const compareFileNames = (container) => {
+  const attachments = container?.comparable_info?.list_attachments;
+  if (!Array.isArray(attachments)) return null;
+  return attachments
+    .filter((att) => !/\.png$/i.test(att.filename || ''))
+    .map((att) => att.filename);
+};
+
 export default buildCompareInfos;
