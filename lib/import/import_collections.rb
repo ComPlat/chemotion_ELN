@@ -489,10 +489,14 @@ module Import
             'conversion_rate',
             'weight_percentage_reference',
             'weight_percentage',
+            'carry_on',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
           ))
+          # ponytail: reaction_step_id omitted — reaction_steps isn't exported yet, so an
+          # imported multi-step reaction lands flat. Export the table and remap the id
+          # here when cross-instance step transfer is needed.
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)
