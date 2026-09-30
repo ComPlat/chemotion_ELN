@@ -1,7 +1,15 @@
 # frozen_string_literal: true
 
+# Defaults for join-row flags the UI may omit
+module JoinFlagDefaults
+  def default_join_flags(data)
+    %w[show_label carry_on].each { |flag| data[flag] = false if data[flag].blank? }
+  end
+end
+
 # Sample Structure
 class OSample < OpenStruct
+  include JoinFlagDefaults
   def initialize(data)
     # set nested attributes
 
@@ -22,7 +30,7 @@ class OSample < OpenStruct
         i.delete('description')
       end
     end
-    data['show_label'] = false if data['show_label'].blank?
+    default_join_flags(data)
     super
   end
 
@@ -41,8 +49,10 @@ end
 
 # SBMM Sample Structure
 class OSbmmSample < OpenStruct
+  include JoinFlagDefaults
+
   def initialize(data)
-    data['show_label'] = false if data['show_label'].blank?
+    default_join_flags(data)
     super
   end
 
@@ -68,8 +78,9 @@ module Usecases
       include Reactable
       attr_reader :current_user
 
-      def initialize(reaction, materials, user, vessel_size)
+      def initialize(reaction, materials, user, vessel_size, step_id_by_position = {})
         @reaction = reaction
+        @step_id_by_position = step_id_by_position
         @materials = {
           starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
           reactant: Array(materials['reactants']).map { |m| OSample.new(m) },
@@ -212,7 +223,8 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
-          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage, :components, :literatures
+          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage,
+          :components, :literatures, :reaction_step_position, :carry_on
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -326,6 +338,8 @@ module Usecases
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
+            reaction_step_id: resolved_step_id(sample),
+            carry_on: sample.carry_on,
           )
         # sample was moved to other materialgroup
         else
@@ -344,8 +358,17 @@ module Usecases
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
+            reaction_step_id: resolved_step_id(sample),
+            carry_on: sample.carry_on,
           )
         end
+      end
+
+      def resolved_step_id(sample)
+        position = sample.reaction_step_position
+        return nil if position.nil?
+
+        @step_id_by_position[position.to_i]
       end
       # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
