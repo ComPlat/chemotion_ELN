@@ -973,6 +973,7 @@ describe('Reaction', () => {
         conditions: 'under nitrogen',
         productsOnly: true,
         showYield: false,
+        steps: [],
       });
     });
   });
