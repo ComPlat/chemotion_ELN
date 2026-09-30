@@ -1051,6 +1051,26 @@ describe('ChemicalTab helpers', () => {
         link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor',
       });
     });
+
+    it('renders no link for a stored value that is not a web URL or a saved sheet', () => {
+      const tampered = { '179124_aaaaaaaaaaaaaaaa_link': 'javascript:alert(1)' };
+      expect(ChemicalTab.describeSheet(tampered, 0, [tampered]).link).toBeNull();
+    });
+  });
+
+  describe('safeHref', () => {
+    it('keeps web URLs and saved sheet paths', () => {
+      expect(ChemicalTab.safeHref('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124'))
+        .toEqual('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124');
+      expect(ChemicalTab.safeHref(' http://example.org/x ')).toEqual('http://example.org/x');
+      expect(ChemicalTab.safeHref('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
+        .toEqual('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf');
+    });
+
+    it('drops everything else', () => {
+      ['javascript:alert(1)', 'data:text/html,hi', 'safety_sheets/x.pdf', '//evil.example/x', '', null, undefined, 5]
+        .forEach((value) => expect(ChemicalTab.safeHref(value)).toBeNull());
+    });
   });
 
   describe('ensureSafetySheetPath', () => {

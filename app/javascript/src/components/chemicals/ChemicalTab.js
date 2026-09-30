@@ -64,6 +64,13 @@ const MISSING_QUERY_HINT = {
   'Common Name': 'This sample has no molecule name yet, so there is nothing to search with.',
 };
 
+// Links come out of stored chemical_data, which any client can write, so only a web URL
+// or a saved sheet path is rendered as an href; anything else renders as no link.
+const safeHref = (value) => {
+  const href = String(value ?? '').trim();
+  return /^https?:\/\//i.test(href) || href.startsWith('/safety_sheets/') ? href : null;
+};
+
 // Cf. ChemicalsService.generate_safety_sheet_file_path; older sheets carry a _web_ marker.
 const SAVED_SHEET_FILE = /^([^_]+)_(?:web_)?[a-f0-9]{16}\.pdf$/;
 
@@ -906,6 +913,7 @@ export default class ChemicalTab extends React.Component {
         value = document[productLinkKey];
       }
     }
+    value = safeHref(value);
 
     const tooltipMessage = value ? `product link (${value})` : 'No product link available';
 
@@ -1291,7 +1299,7 @@ export default class ChemicalTab extends React.Component {
   static describeSheet(document, index, savedSds) {
     const linkKey = Object.keys(document).find((key) => key.endsWith('_link')
       && !key.includes('_product_link') && document[key]);
-    const link = linkKey ? document[linkKey] : null;
+    const link = linkKey ? safeHref(document[linkKey]) : null;
     if (!link) return { link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor' };
 
     if (!link.includes('/safety_sheets/')) {
@@ -1469,6 +1477,10 @@ export default class ChemicalTab extends React.Component {
 
   // One shape for every "open this elsewhere" control, so the row reads as a button bar
   // rather than a run of bare links.
+  static safeHref(value) {
+    return safeHref(value);
+  }
+
   static linkIconButton({ href, icon, tooltip, key }) {
     return (
       <OverlayTrigger
@@ -1480,7 +1492,7 @@ export default class ChemicalTab extends React.Component {
         <Button
           size="xsm"
           variant="light"
-          href={href}
+          href={safeHref(href)}
           target="_blank"
           rel="noopener noreferrer"
         >
