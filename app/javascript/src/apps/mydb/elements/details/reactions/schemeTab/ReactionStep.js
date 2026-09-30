@@ -181,10 +181,12 @@ const ReactionStep = ({
             phField={phField}
             vesselSizeField={vesselSizeField}
           />
-          <ReactionDetailsDuration
-            reaction={stepSource}
-            onInputChange={onStepInputChange}
-          />
+          <div className="mt-3">
+            <ReactionDetailsDuration
+              reaction={stepSource}
+              onInputChange={onStepInputChange}
+            />
+          </div>
           <div className="mb-2">
             <Form.Label className="mb-0 small">Description</Form.Label>
             <Form.Control
