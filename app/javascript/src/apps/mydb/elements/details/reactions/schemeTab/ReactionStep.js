@@ -4,6 +4,8 @@ import { Form, Button, Collapse } from 'react-bootstrap';
 
 import Reaction from 'src/models/Reaction';
 import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
+import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 import { permitOn } from 'src/components/common/uis';
 
@@ -25,6 +27,10 @@ const ReactionStep = ({
   onConcentrationModeChange,
   onDeleteStep,
   onStepFieldChange,
+  stepSource,
+  onStepInputChange,
+  phField,
+  vesselSizeField,
 }) => {
   const [open, setOpen] = useState(true);
   const stepId = step ? step.id : null;
@@ -34,21 +40,6 @@ const ReactionStep = ({
     sample.short_label || sample.name || sample.molecule_iupac_name || 'product'
   );
   const titleFor = (samples) => samples.map((s) => s.molecule_iupac_name).filter(Boolean).join(', ');
-  const disabled = !permitOn(reaction);
-  const input = (value, onChange, opts = {}) => (
-    <Form.Control
-      size="sm"
-      type={opts.type}
-      placeholder={opts.placeholder}
-      style={opts.width ? { maxWidth: opts.width } : undefined}
-      value={value}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  );
-  const setNestedField = (field, key, value) => {
-    onStepFieldChange(stepId, field, { ...(step && step[field] ? step[field] : {}), [key]: value });
-  };
   const startingMaterials = step
     ? reaction.materialsForStep('starting_materials', stepId)
     : reaction.starting_materials;
@@ -183,44 +174,17 @@ const ReactionStep = ({
       <Collapse in={open && !destroyed}>
         <div>
           {groups}
-          <div className="row g-2 mt-1">
-            <div className="col-sm-4">
-              <Form.Label className="mb-0 small">Duration</Form.Label>
-              {input(step.duration || '', (v) => onStepFieldChange(stepId, 'duration', v))}
-            </div>
-            <div className="col-sm-4">
-              <Form.Label className="mb-0 small">pH</Form.Label>
-              <div className="d-flex gap-1">
-                {input(step.ph_operator || '', (v) => onStepFieldChange(stepId, 'ph_operator', v),
-                  { width: '4rem' })}
-                {input(step.ph_value ?? '', (v) => onStepFieldChange(stepId, 'ph_value', v), { type: 'number' })}
-              </div>
-            </div>
-            <div className="col-sm-4">
-              <Form.Label className="mb-0 small">Volume</Form.Label>
-              {input(step.volume ?? '', (v) => onStepFieldChange(stepId, 'volume', v), { type: 'number' })}
-            </div>
-            <div className="col-sm-6">
-              <Form.Label className="mb-0 small">Temperature</Form.Label>
-              <div className="d-flex gap-1">
-                {input(step.temperature?.userText ?? '',
-                  (v) => setNestedField('temperature', 'userText', v), { type: 'number' })}
-                {input(step.temperature?.valueUnit ?? '',
-                  (v) => setNestedField('temperature', 'valueUnit', v),
-                  { width: '5rem', placeholder: '\u00b0C' })}
-              </div>
-            </div>
-            <div className="col-sm-6">
-              <Form.Label className="mb-0 small">Vessel size</Form.Label>
-              <div className="d-flex gap-1">
-                {input(step.vessel_size?.amount ?? '',
-                  (v) => setNestedField('vessel_size', 'amount', v), { type: 'number' })}
-                {input(step.vessel_size?.unit ?? '',
-                  (v) => setNestedField('vessel_size', 'unit', v),
-                  { width: '5rem', placeholder: 'ml' })}
-              </div>
-            </div>
-          </div>
+          <ReactionDetailsMainProperties
+            reaction={stepSource}
+            onInputChange={onStepInputChange}
+            showSchemeFields
+            phField={phField}
+            vesselSizeField={vesselSizeField}
+          />
+          <ReactionDetailsDuration
+            reaction={stepSource}
+            onInputChange={onStepInputChange}
+          />
           <div className="mb-2">
             <Form.Label className="mb-0 small">Description</Form.Label>
             <Form.Control
@@ -274,12 +238,21 @@ ReactionStep.propTypes = {
   onConcentrationModeChange: PropTypes.func.isRequired,
   onDeleteStep: PropTypes.func.isRequired,
   onStepFieldChange: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  stepSource: PropTypes.object,
+  onStepInputChange: PropTypes.func,
+  phField: PropTypes.node,
+  vesselSizeField: PropTypes.node,
 };
 
 ReactionStep.defaultProps = {
   step: null,
   lockEquivColumn: false,
   displayYieldField: null,
+  stepSource: null,
+  onStepInputChange: () => {},
+  phField: null,
+  vesselSizeField: null,
 };
 
 export default ReactionStep;

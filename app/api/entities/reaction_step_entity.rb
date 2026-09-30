@@ -7,6 +7,8 @@ module Entities
     expose! :description
     expose! :conditions
     expose! :duration
+    expose! :timestamp_start
+    expose! :timestamp_stop
     expose! :temperature
     expose! :ph_operator
     expose! :ph_value
