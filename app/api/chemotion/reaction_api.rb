@@ -178,7 +178,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
-        optional :concentration_mode, type: String, values: %w[solvents_only combined reaction_volume]
+        optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
@@ -271,7 +271,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
-        optional :concentration_mode, type: String, values: %w[solvents_only combined reaction_volume]
+        optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean

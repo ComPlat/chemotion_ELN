@@ -11,6 +11,7 @@ import Sample from 'src/models/Sample';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Component from 'src/models/Component';
 import Container from 'src/models/Container';
+import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -133,13 +134,8 @@ export default class Reaction extends Element {
 
   static PURIFICATION_SOLVENTS = 'purification_solvents';
 
-  // Basis used to resolve the volume for concentration calculations.
   // Mirrors Reaction::CONCENTRATION_MODES on the Ruby side.
-  static CONCENTRATION_MODES = {
-    SOLVENTS_ONLY: 'solvents_only',
-    COMBINED: 'combined',
-    REACTION_VOLUME: 'reaction_volume',
-  };
+  static CONCENTRATION_MODES = REACTION_CONCENTRATION_MODES;
 
   // material group
   static materialGroups = [
@@ -297,7 +293,6 @@ export default class Reaction extends Element {
       variations: this.variations,
       vessel_size: this.vessel_size,
       volume: this.volume,
-      use_reaction_volume: this.use_reaction_volume,
       concentration_mode: this.concentration_mode,
       reaction_type: this.reaction_type || 'standard',
       lock_reaction_volume: this.lock_reaction_volume,
@@ -1183,20 +1178,6 @@ export default class Reaction extends Element {
    */
   get hasValidReactionVolume() {
     return this.volume != null && this.volume !== '' && Number(this.volume) > 0;
-  }
-
-  // Temporary compatibility alias for clients that still consume the old boolean.
-  // concentration_mode remains the source of truth.
-  get use_reaction_volume() {
-    return this.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
-  }
-
-  set use_reaction_volume(value) {
-    if (this.concentration_mode === undefined || this.concentration_mode === null) {
-      this.concentration_mode = value
-        ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
-        : Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
-    }
   }
 
   /**

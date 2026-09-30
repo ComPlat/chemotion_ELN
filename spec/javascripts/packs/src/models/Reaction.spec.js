@@ -2,6 +2,8 @@ import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
+  from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 function randFloat(min, max, precision) {
@@ -160,6 +162,15 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction.CONCENTRATION_MODES', () => {
+    it('exposes the shared frozen concentration modes object', () => {
+      expect(Reaction.CONCENTRATION_MODES).toBe(REACTION_CONCENTRATION_MODES);
+      expect(Object.isFrozen(Reaction.CONCENTRATION_MODES)).toBe(true);
+      expect(isReactionConcentrationMode(REACTION_CONCENTRATION_MODES.COMBINED)).toBe(true);
+      expect(isReactionConcentrationMode('invalid')).toBe(false);
+    });
+  });
+
   describe('Reaction.buildEmpty()', () => {
     it('should initialize volume as null', () => {
       const emptyReaction = Reaction.buildEmpty(1);
@@ -169,13 +180,6 @@ describe('Reaction', () => {
     it('should initialize concentration_mode as solvents_only', () => {
       const emptyReaction = Reaction.buildEmpty(1);
       expect(emptyReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
-    });
-
-    it('should derive the compatibility boolean from concentration_mode', () => {
-      const emptyReaction = Reaction.buildEmpty(1);
-      expect(emptyReaction.use_reaction_volume).toBe(false);
-      emptyReaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
-      expect(emptyReaction.use_reaction_volume).toBe(true);
     });
 
     it('should initialize lock_reaction_volume as false', () => {
@@ -197,37 +201,16 @@ describe('Reaction', () => {
       expect(serialized.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.COMBINED);
     });
 
-    it('should include the derived compatibility boolean in serialized output', () => {
+    it('should not include use_reaction_volume in serialized output', () => {
       reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       const serialized = reaction.serialize();
-      expect(serialized.use_reaction_volume).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(serialized, 'use_reaction_volume')).toBe(false);
     });
 
     it('should include lock_reaction_volume in serialized output', () => {
       reaction.lock_reaction_volume = true;
       const serialized = reaction.serialize();
       expect(serialized.lock_reaction_volume).toBe(true);
-    });
-  });
-
-  describe('Reaction legacy concentration compatibility', () => {
-    it('hydrates concentration_mode from a legacy-only payload', () => {
-      const legacyReaction = new Reaction({ use_reaction_volume: true });
-      expect(legacyReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
-    });
-
-    it('uses solvents_only for a false legacy-only payload', () => {
-      const legacyReaction = new Reaction({ use_reaction_volume: false });
-      expect(legacyReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
-    });
-
-    it('does not let the legacy boolean override an explicit mode', () => {
-      const currentReaction = new Reaction({
-        concentration_mode: Reaction.CONCENTRATION_MODES.COMBINED,
-        use_reaction_volume: true,
-      });
-      expect(currentReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.COMBINED);
-      expect(currentReaction.use_reaction_volume).toBe(false);
     });
   });
 
