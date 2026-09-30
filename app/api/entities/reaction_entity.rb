@@ -20,6 +20,8 @@ module Entities
       expose! :type
       expose :comment_count
       expose! :user_labels
+      expose! :intermediate_samples,                                                    using: 'Entities::ReactionMaterialEntity'
+      expose! :editor_link_target
     end
 
     # rubocop:disable Metrics/BlockLength
@@ -107,6 +109,10 @@ module Entities
       displayed_in_list? ? [] : object.reactions_starting_material_samples
     end
 
+    def intermediate_samples
+      displayed_in_list? ? [] : object.reactions_intermediate_samples.visible
+    end
+
     def type
       'reaction'
     end
@@ -120,6 +126,11 @@ module Entities
 
     def variations
       object.variations.map(&:deep_symbolize_keys)
+    end
+
+    def editor_link_target
+      # The link to the Reaction Process Editor (external to the ELN).
+      "#{ENV.fetch('REACTION_PROCESS_EDITOR_HOSTNAME')}/reactions/#{object.id}?auth=#{object.creator.jti_auth_token}"
     end
   end
 end

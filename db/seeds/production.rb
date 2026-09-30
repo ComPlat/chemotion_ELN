@@ -2,3 +2,6 @@ require_relative "shared/report_templates.seed.rb"
 require_relative "shared/molecules.seed.rb"
 require_relative "shared/text_templates.seed.rb"
 require_relative "shared/rdkit.seed.rb"
+require_relative "shared/ontologies.seed.rb"
+require_relative "shared/process_editor.seed.rb"
+

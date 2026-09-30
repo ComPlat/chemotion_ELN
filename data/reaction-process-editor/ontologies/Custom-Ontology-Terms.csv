@@ -1,0 +1,6 @@
+Ontology ID;Ontology Name;Custom Label;Link;Roles;;;;;;;;;;;;;;;;;;;;;;;;
+CPOKIT:0000004;gas chromatography-helium discharge ionisation detection;GC-BID;;"=subtype,CHMO:0001002(type)|NCIT:C70669(mode)|NCIT:C70669(mode);";;;;;;;;;;;;;;;;;;;;;;;;
+CPOKIT:0000005;supercritical fluid chromatography-tandem mass spectrometry;SFC/MS;;"=subtype,CHMO:0001004(type)|NCIT:C70669(mode)|NCIT:C70669(mode);";;;;;;;;;;;;;;;;;;;;;;;;
+CPOKIT:0000006;Dosing;Dosing;;"=action;";;;;;;;;;;;;;;;;;;;;;;;;
+CPOKIT:0000007;solid transfer by pouring/tipping;Solids pouring;;"=subtype,PATO:0001736(type)|NCIT:C70669(mode)|NCIT:C70669(mode);";;;;;;;;;;;;;;;;;;;;;;;;
+CPOKIT:0000008;Exchange/Remove;Exchange/Remove;;"=action;";;;;;;;;;;;;;;;;;;;;;;;;
