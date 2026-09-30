@@ -30,6 +30,8 @@ module Chemotion
     # the backstop for any client that does not.
     MAX_SAVED_SDS = 5
 
+    SAFETY_SHEETS_ROOT = Rails.public_path.join('safety_sheets')
+
     SDS_VENDOR = 'Sigma-Aldrich'
     THERMO_VENDOR = 'Thermofisher'
     # Stands in for the vendor name when the search covered all of them.
@@ -428,26 +430,36 @@ module Chemotion
       end
     end
 
-    def self.write_file(file_path, file = nil, link = nil)
-      full_file_path = "public#{file_path}"
-
-      # Ensure parent directory exists
-      FileUtils.mkdir_p(File.dirname(full_file_path))
-
-      # Grape hands the upload over with symbol keys, so both spellings have to be accepted.
-      upload = file.is_a?(Hash) ? (file[:tempfile] || file['tempfile']) : nil
-      if upload.respond_to?(:read)
-        upload.rewind if upload.respond_to?(:rewind)
-        File.binwrite(full_file_path, upload.read)
-      elsif file.respond_to?(:read)
-        File.binwrite(full_file_path, file.read)
-      else
-        request_pdf_file(link, full_file_path)
+    # Vendor and product number arrive from the client, so the path is rebuilt from its two
+    # segments and refused unless it stays inside the safety sheets folder.
+    # @param relative_path [String] "/safety_sheets/<vendor>/<file>"
+    # @return [Pathname]
+    def self.safety_sheet_disk_path(relative_path)
+      vendor_dir, file_name = relative_path.to_s.delete_prefix('/safety_sheets/').split('/', 2)
+      unless safe_path_segment?(vendor_dir) && safe_path_segment?(file_name)
+        raise ArgumentError, "Not a safety sheet path: #{relative_path}"
       end
-    rescue HTTParty::RedirectionTooDeep => e
-      "Redirection limit exceeded: #{e}"
-    rescue Timeout::Error => e
-      "Request timed out: #{e}"
+
+      path = SAFETY_SHEETS_ROOT.join(File.basename(vendor_dir), File.basename(file_name)).cleanpath
+      raise ArgumentError, "Not a safety sheet path: #{relative_path}" unless path.dirname.dirname == SAFETY_SHEETS_ROOT
+
+      path
+    end
+
+    def self.safe_path_segment?(segment)
+      segment.present? && !segment.match?(%r{[/\\\0]}) && !segment.start_with?('.')
+    end
+
+    # @param file [Hash, IO] a Grape upload hash (symbol or string keys) or anything readable
+    def self.write_file(file_path, file)
+      full_file_path = safety_sheet_disk_path(file_path)
+      FileUtils.mkdir_p(full_file_path.dirname)
+
+      upload = file.is_a?(Hash) ? (file[:tempfile] || file['tempfile']) : file
+      raise ArgumentError, 'Nothing to write' unless upload.respond_to?(:read)
+
+      upload.rewind if upload.respond_to?(:rewind)
+      File.binwrite(full_file_path, upload.read)
     end
 
     def self.create_sds_file(link, product_number, vendor_name)
@@ -461,8 +473,8 @@ module Chemotion
 
         file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
         file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15])
-        write_file(file_name.to_s, tmp_file, link)
-        return file_name if File.exist?("public/#{file_name}")
+        write_file(file_name, tmp_file)
+        return file_name if File.exist?(safety_sheet_disk_path(file_name))
 
         { error: 'could not save safety data sheet' }
       end
@@ -709,7 +721,9 @@ module Chemotion
     # content hash that two different sheets for one product cannot collide.
     # @return [String] relative path starting with /safety_sheets/
     def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials)
-      "/safety_sheets/#{vendor_name}/#{product_number}_#{file_hash_initials}.pdf"
+      path = "/safety_sheets/#{vendor_name}/#{product_number}_#{file_hash_initials}.pdf"
+      safety_sheet_disk_path(path)
+      path
     end
 
     def self.update_chemical_data(chemical_data, file_path, product_number)

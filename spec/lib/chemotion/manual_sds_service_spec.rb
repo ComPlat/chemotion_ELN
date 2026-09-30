@@ -114,7 +114,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -195,13 +194,11 @@ RSpec.describe Chemotion::ManualSdsService do
     allow(Chemotion::GenerateFileHashUtils).to receive_messages(
       generate_full_hash: 'a' * 32,
       find_identical_sheet: nil,
-      vendor_folder_exists?: true,
     )
     allow(Chemotion::ChemicalsService).to receive_messages(
       generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
       write_file: true,
     )
-    allow(factory_service).to receive(:update_safety_sheet_path)
 
     # Execute and verify
     result = factory_service.create
@@ -253,7 +250,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -287,7 +283,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -336,7 +331,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -363,7 +357,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -394,7 +387,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -423,7 +415,6 @@ RSpec.describe Chemotion::ManualSdsService do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
           find_identical_sheet: nil,
-          vendor_folder_exists?: true,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',

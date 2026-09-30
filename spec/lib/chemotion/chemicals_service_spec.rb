@@ -21,6 +21,33 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe 'keeping sheet files inside the safety sheets folder' do
+    let(:root) { described_class::SAFETY_SHEETS_ROOT }
+
+    it 'maps a sheet path into its vendor folder' do
+      expect(described_class.safety_sheet_disk_path('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
+        .to eq(root.join('merck', '179124_aaaaaaaaaaaaaaaa.pdf'))
+    end
+
+    it 'refuses a path that climbs out of the folder or names no file', :aggregate_failures do
+      ['/safety_sheets/../config/x.pdf', '/safety_sheets/merck/../../x.pdf', '/safety_sheets/merck/a\\b.pdf',
+       '/safety_sheets/merck', '/etc/passwd', '/safety_sheets/.hidden/x.pdf'].each do |path|
+        expect { described_class.safety_sheet_disk_path(path) }.to raise_error(ArgumentError, /Not a safety sheet path/)
+      end
+    end
+
+    it 'refuses to build a sheet path from a product number or vendor carrying a path', :aggregate_failures do
+      expect { described_class.generate_safety_sheet_file_path('merck', '../../x', 'a' * 16) }
+        .to raise_error(ArgumentError)
+      expect { described_class.generate_safety_sheet_file_path('../merck', '1', 'a' * 16) }
+        .to raise_error(ArgumentError)
+    end
+
+    it 'writes nothing when there is nothing readable to write' do
+      expect { described_class.write_file('/safety_sheets/merck/x.pdf', nil) }.to raise_error(ArgumentError)
+    end
+  end
+
   describe '.write_file with a Grape upload' do
     let(:relative_path) { '/safety_sheets/testvendor/upload.pdf' }
     let(:full_path) { Rails.public_path.join('safety_sheets/testvendor/upload.pdf') }
@@ -358,6 +385,17 @@ describe Chemotion::ChemicalsService do
       expect(save).to eq(error: 'Could not retrieve the SDS from the vendor', status: 400)
     end
 
+    it 'refuses a product number that would write outside the sheets folder', :aggregate_failures do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF escape')
+        true
+      end
+      product_info['productNumber'] = '../../../tmp/escaped'
+
+      expect(save).to include(status: 400, error: a_string_including('Not a safety sheet path'))
+      expect(Rails.root.glob('tmp/escaped_*.pdf')).to be_empty
+    end
+
     it 'refuses a sheet the sample already holds as final', :aggregate_failures do
       allow(described_class).to receive(:create_sds_file).and_return(held)
 
@@ -446,7 +484,7 @@ describe Chemotion::ChemicalsService do
 
     it 'groups vendors and puts the SDS-capable one first' do
       groups = vendor_groups
-      expect(groups.map { |g| g['vendor'] }).to eq(
+      expect(groups.pluck('vendor')).to eq(
         ['Sigma-Aldrich', 'Thermo Fisher Scientific', 'Glentham Life Sciences Ltd.'],
       )
       expect(groups.first).to include('count' => 2, 'sds_supported' => true)
@@ -501,10 +539,10 @@ describe Chemotion::ChemicalsService do
                      SourceRecordURL: 'https://www.vladachem.com/product.php?products=67-64-1' }],
       )
       overview = described_class.vendor_overview('Acetone', 'en')
-      expect(overview['sds_vendors'].map { |g| g['vendor'] }).to eq(['Sigma-Aldrich', 'Thermo Fisher Scientific'])
-      expect(overview['catalogue_vendors'].map { |g| g['vendor'] })
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Sigma-Aldrich', 'Thermo Fisher Scientific'])
+      expect(overview['catalogue_vendors'].pluck('vendor'))
         .to contain_exactly('abcr GmbH', 'Glentham Life Sciences Ltd.')
-      expect(overview['catalogue_vendors'].map { |g| g['vendor'] }).not_to include('VladaChem')
+      expect(overview['catalogue_vendors'].pluck('vendor')).not_to include('VladaChem')
     end
 
     it 'counts every vendor and links to the full PubChem list' do
@@ -536,36 +574,15 @@ describe Chemotion::ChemicalsService do
 
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
-      let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }
       let(:relative_path) { '/safety_sheets/merck/252549_test.pdf' }
       let(:full_path) { File.join('public', relative_path) }
 
       before { FileUtils.rm_f(full_path) }
 
-      it 'downloads and writes PDF returning true (delegates to request_pdf_file)' do
-        pdf_body = '%PDF test'
-        allow(HTTParty).to receive(:get).with(link, anything).and_return(
-          instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }, body: pdf_body),
-        )
-        # request_pdf_file invoked internally when no upload given -> returns true
-        result = described_class.write_file(relative_path, nil, link)
-        expect(result).to be(true)
-        expect(File.exist?(full_path)).to be true
-      end
-
-      it 'returns false when remote content not PDF' do
-        allow(HTTParty).to receive(:get).and_return(
-          instance_double(HTTParty::Response, headers: { 'Content-Type' => 'text/html' }, body: '<html/>'),
-        )
-        result = described_class.write_file(relative_path, nil, link)
-        expect(result).to be(false)
-        expect(File.exist?(full_path)).to be false
-      end
-
       it 'writes uploaded tempfile (hash with tempfile) returning bytes written' do
         io = StringIO.new('uploaded content')
         file_param = { 'tempfile' => io }
-        result = described_class.write_file(relative_path, file_param, nil)
+        result = described_class.write_file(relative_path, file_param)
         expect(result).to be > 0
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('uploaded content')
@@ -573,7 +590,7 @@ describe Chemotion::ChemicalsService do
 
       it 'writes IO object directly (e.g. StringIO) returning bytes written' do
         io = StringIO.new('direct content')
-        result = described_class.write_file(relative_path, io, nil)
+        result = described_class.write_file(relative_path, io)
         expect(result).to be > 0
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('direct content')

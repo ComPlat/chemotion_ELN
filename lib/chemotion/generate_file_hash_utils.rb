@@ -55,23 +55,5 @@ module Chemotion
       match = candidates.find { |candidate| generate_full_hash(candidate) == hash }
       match&.delete_prefix('public')
     end
-
-    # Check if a vendor folder exists under safety sheets root.
-    # @param vendor_name [String]
-    # @return [Boolean] true if folder exists
-    def self.vendor_folder_exists?(vendor_name)
-      vendor_folder = File.join(SAFETY_SHEETS_DIR, vendor_name)
-      return true if Dir.exist?(vendor_folder)
-
-      false
-    end
-
-    # Ensure vendor folder exists
-    # @param vendor_name [String]
-    # @return [void]
-    def self.create_vendor_product_folder(vendor_name)
-      vendor_folder = File.join(SAFETY_SHEETS_DIR, vendor_name)
-      FileUtils.mkdir_p(vendor_folder)
-    end
   end
 end

@@ -277,34 +277,6 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
     end
   end
 
-  describe '.vendor_folder_exists?' do
-    let(:vendor) { 'existvendor' }
-    let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
-
-    it 'returns false when folder absent' do
-      expect(described_class.vendor_folder_exists?(vendor)).to be false
-    end
-
-    it 'returns true when folder exists' do
-      FileUtils.mkdir_p(File.join(base_dir, vendor))
-      expect(described_class.vendor_folder_exists?(vendor)).to be true
-      FileUtils.rm_rf(File.join(base_dir, vendor))
-    end
-  end
-
-  describe '.create_vendor_product_folder' do
-    let(:vendor) { 'newvendor' }
-    let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
-
-    it 'creates the vendor folder' do
-      path = File.join(base_dir, vendor)
-      FileUtils.rm_rf(path)
-      described_class.create_vendor_product_folder(vendor)
-      expect(Dir.exist?(path)).to be true
-      FileUtils.rm_rf(path)
-    end
-  end
-
   describe '.find_identical_sheet' do
     let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
     let(:vendor_dir) { File.join(base_dir, 'dupvendor') }
