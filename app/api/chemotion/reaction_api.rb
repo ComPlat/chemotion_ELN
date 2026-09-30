@@ -12,6 +12,18 @@ module Chemotion
     helpers ProfileHelpers
     helpers UserLabelHelpers
 
+    helpers do
+      def normalize_legacy_concentration_mode!(attributes)
+        return attributes unless attributes.key?(:use_reaction_volume)
+
+        legacy_value = attributes.delete(:use_reaction_volume)
+        unless attributes.key?(:concentration_mode)
+          attributes[:concentration_mode] = legacy_value ? 'reaction_volume' : 'solvents_only'
+        end
+        attributes
+      end
+    end
+
     resource :reactions do
       desc "Return serialized reactions. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
@@ -166,6 +178,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :concentration_mode, type: String, values: %w[solvents_only combined reaction_volume]
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
@@ -180,6 +193,7 @@ module Chemotion
         put do
           reaction = @reaction
           attributes = declared(params, include_missing: false)
+          normalize_legacy_concentration_mode!(attributes)
           update_element_labels(reaction, attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
           materials = attributes.delete(:materials)
@@ -257,6 +271,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :concentration_mode, type: String, values: %w[solvents_only combined reaction_volume]
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
@@ -264,6 +279,7 @@ module Chemotion
 
       post do
         attributes = declared(params, include_missing: false)
+        normalize_legacy_concentration_mode!(attributes)
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
         attributes.delete(:can_copy)

@@ -107,6 +107,27 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe 'legacy concentration compatibility' do
+    it 'derives the legacy reader and stored flag from concentration_mode' do
+      reaction = build(:reaction, concentration_mode: 'reaction_volume')
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(true)
+      expect(reaction[:use_reaction_volume]).to be(true)
+    end
+
+    it 'keeps concentration_mode authoritative over a stale stored flag' do
+      reaction = build(:reaction, concentration_mode: 'combined')
+      reaction[:use_reaction_volume] = true
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(false)
+      expect(reaction[:use_reaction_volume]).to be(false)
+    end
+  end
+
   describe '#temperature_display_with_unit' do
     test_cases = [
       {

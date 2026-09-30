@@ -64,6 +64,7 @@ describe Entities::ReactionEntity do
           gaseous: reaction.gaseous,
           volume: reaction.volume,
           use_reaction_volume: reaction.use_reaction_volume,
+          concentration_mode: reaction.concentration_mode,
           user_labels: [],
           weight_percentage: reaction.weight_percentage,
         )
@@ -155,6 +156,7 @@ describe Entities::ReactionEntity do
           gaseous: false,
           volume: '***',
           use_reaction_volume: false,
+          concentration_mode: 'solvents_only',
           weight_percentage: false,
         )
       end

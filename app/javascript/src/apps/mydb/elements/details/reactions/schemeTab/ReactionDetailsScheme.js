@@ -88,7 +88,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.changePhOperator = this.changePhOperator.bind(this);
     this.reactionVolume = this.reactionVolume.bind(this);
     this.updateVolume = this.updateVolume.bind(this);
-    this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
+    this.handleConcentrationModeChange = this.handleConcentrationModeChange.bind(this);
     this.switchVolumeLock = this.switchVolumeLock.bind(this);
     this.showReactionVolumeRequiredWarning = this.showReactionVolumeRequiredWarning.bind(this);
   }
@@ -1428,8 +1428,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   /**
    * Bridges `Reaction#deriveVolumeFromSampleConcentration` with the parent
-   * form's `onInputChange` so that the derived volume and the
-   * `use_reaction_volume` flag are persisted.
+   * form's `onInputChange` so the derived volume and mode are persisted.
    *
    * @param {Reaction} reaction
    * @param {Sample} sample
@@ -1442,15 +1441,15 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if (applied && onInputChange) {
       onInputChange('volume', applied.volume);
-      onInputChange('useReactionVolumeForConcentration', applied.useReactionVolume);
+      onInputChange('concentrationMode', applied.concentrationMode);
     }
   }
 
   /**
    * Resolves the reaction volume to use for a concentration-driven amount
-   * update. A locked volume is not necessarily usable: with
-   * `use_reaction_volume` off and no derivable combined volume (e.g. all
-   * solids), reactionVolumeForConcentration() is null. In that case a warning
+   * update. A locked volume is not necessarily usable: a concentration mode
+   * may not resolve a volume (e.g. solvents-only with all solids), in which
+   * case reactionVolumeForConcentration() is null. In that case a warning
    * is surfaced and null is returned, so the caller aborts instead of
    * silently dropping the typed concentration on the next recompute.
    *
@@ -2313,23 +2312,6 @@ export default class ReactionDetailsScheme extends React.Component {
     return Number.isFinite(parsedVolume) ? parsedVolume : undefined;
   }
 
-  renderVolumeCalculationTooltip() {
-    return (
-      <Tooltip id="volume-calculation-tooltip">
-        <div>
-          <strong>Concentration Calculation Method:</strong>
-          <br />
-          <strong>When checked:</strong>
-          {' Concentration calculations will use the reaction volume value entered above.'}
-          <br />
-          <strong>When unchecked:</strong>
-          {' Concentration calculations will be based on the sum of volumes from all reaction materials '}
-          (solvents, starting materials, and reactants).
-        </div>
-      </Tooltip>
-    );
-  }
-
   switchVolumeLock() {
     const { reaction, onInputChange } = this.props;
     const willLockVolume = !reaction.isVolumeLocked;
@@ -2412,24 +2394,6 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}
           />
-          <Form.Check
-            className="mt-2"
-            type="checkbox"
-            id="use_reaction_volume"
-            checked={reaction.use_reaction_volume || false}
-            onChange={this.handleVolumeCheckboxChange}
-            label={(
-              <span>
-                Use for concentration
-                <OverlayTrigger
-                  placement="top"
-                  overlay={this.renderVolumeCalculationTooltip()}
-                >
-                  <i className="ms-1 fa fa-info-circle" />
-                </OverlayTrigger>
-              </span>
-            )}
-          />
         </Form.Group>
       );
     }
@@ -2443,13 +2407,14 @@ export default class ReactionDetailsScheme extends React.Component {
       const newVolume = e.value === '' ? null : e.value;
       onInputChange('volume', newVolume);
 
-      // If a valid reaction volume is set, automatically enable it for concentration calculation
-      // and recalculate concentrations for all materials
+      // If a valid reaction volume is set, automatically switch to the
+      // reaction-volume basis and recalculate concentrations for all materials
       if (newVolume != null && newVolume > 0) {
-        // Enable the checkbox if not already enabled
-        if (!reaction.use_reaction_volume) {
-          reaction.use_reaction_volume = true;
-          onInputChange('useReactionVolumeForConcentration', true);
+        const reactionVolumeMode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+        if (reaction.concentration_mode !== reactionVolumeMode) {
+          reaction.resetPreservedConcentrationExcept();
+          reaction.concentration_mode = reactionVolumeMode;
+          onInputChange('concentrationMode', reactionVolumeMode);
         }
 
         // Recalculate concentrations for all materials
@@ -2458,27 +2423,29 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  handleVolumeCheckboxChange(event) {
-    const { checked } = event.target;
+  handleConcentrationModeChange(mode) {
     const { reaction, onInputChange } = this.props;
+    const reactionVolumeMode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
 
-    // Show notification if checkbox is selected but volume is 0 or null
-    if (checked && !reaction.hasValidReactionVolume) {
+    if (mode === reaction.concentration_mode) return;
+
+    // The reaction-volume basis needs a volume to divide by; keep the previous
+    // mode if none has been entered yet.
+    if (mode === reactionVolumeMode && !reaction.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
-        'Please enter a reaction volume value before enabling concentration calculation '
-          + 'based on reaction volume.'
+        'Please enter a reaction volume value before using it as the concentration basis.'
       );
-      // Don't update the checkbox if volume is invalid
       return;
     }
 
-    // Update the reaction property
-    reaction.use_reaction_volume = checked;
+    // A preserved concentration belongs to the volume basis under which it was
+    // entered. Release those values before recalculating under a new basis.
+    reaction.resetPreservedConcentrationExcept();
+    reaction.concentration_mode = mode;
 
-    // Trigger update through onInputChange
-    onInputChange('useReactionVolumeForConcentration', checked);
+    onInputChange('concentrationMode', mode);
 
-    // Recalculate concentrations when checkbox state changes
+    // Recalculate concentrations when the basis changes.
     reaction.updateAllConcentrations();
   }
 
@@ -2591,6 +2558,7 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
+            onConcentrationModeChange={this.handleConcentrationModeChange}
           />
           <MaterialGroup
             reaction={reaction}

@@ -133,6 +133,14 @@ export default class Reaction extends Element {
 
   static PURIFICATION_SOLVENTS = 'purification_solvents';
 
+  // Basis used to resolve the volume for concentration calculations.
+  // Mirrors Reaction::CONCENTRATION_MODES on the Ruby side.
+  static CONCENTRATION_MODES = {
+    SOLVENTS_ONLY: 'solvents_only',
+    COMBINED: 'combined',
+    REACTION_VOLUME: 'reaction_volume',
+  };
+
   // material group
   static materialGroups = [
     Reaction.PRODUCTS,
@@ -180,7 +188,7 @@ export default class Reaction extends Element {
       variations: [],
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
-      use_reaction_volume: false,
+      concentration_mode: Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY,
       reaction_type: 'standard',
       lock_reaction_volume: false,
       gaseous: false,
@@ -290,6 +298,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
+      concentration_mode: this.concentration_mode,
       reaction_type: this.reaction_type || 'standard',
       lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
@@ -1176,21 +1185,37 @@ export default class Reaction extends Element {
     return this.volume != null && this.volume !== '' && Number(this.volume) > 0;
   }
 
+  // Temporary compatibility alias for clients that still consume the old boolean.
+  // concentration_mode remains the source of truth.
+  get use_reaction_volume() {
+    return this.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+  }
+
+  set use_reaction_volume(value) {
+    if (this.concentration_mode === undefined || this.concentration_mode === null) {
+      this.concentration_mode = value
+        ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+        : Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+    }
+  }
+
   /**
    * Decides whether a concentration edit may proceed given the reaction's
    * current volume settings and the caller-supplied equivalents lock state.
    *
    * Rules:
    * - If equivalents are unlocked, concentration edits are always allowed.
-   * - If equivalents are locked, `use_reaction_volume` must be enabled and
-   *   a positive reaction volume must be set.
+   * - If equivalents are locked, the mode must be `reaction_volume` and a
+   *   positive reaction volume must be set.
    *
    * @param {boolean} lockEquivColumn - Whether the equivalents column is locked.
    * @returns {boolean}
    */
   canUpdateConcentration(lockEquivColumn) {
     if (!lockEquivColumn) return true;
-    return !!(this.use_reaction_volume && this.hasValidReactionVolume);
+
+    return this.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      && this.hasValidReactionVolume;
   }
 
   /**
@@ -1445,23 +1470,33 @@ export default class Reaction extends Element {
   }
 
   /**
-   * Returns the volume (L) to use for concentration calculations.
+   * Returns the volume (L) to use for concentration calculations, based on the
+   * reaction's `concentration_mode`:
    *
-   * Priority:
-   * 1. Explicit reaction volume when `use_reaction_volume` is enabled and valid.
-   * 2. Calculated combined reaction volume from materials.
+   * - `reaction_volume`: the explicit reaction volume when valid, otherwise
+   *   falls back to the default solvents-only basis.
+   * - `solvents_only` (default): the summed solvent volume.
+   * - `combined`: solvents + reactants + starting materials.
    *
    * @returns {number|null} Volume in liters, or null if no valid volume is available
    */
   reactionVolumeForConcentration() {
-    if (this.use_reaction_volume) {
-      const reactionVolume = Number(this.volume);
-      if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
-        return reactionVolume;
-      }
-    }
+    const modes = Reaction.CONCENTRATION_MODES;
 
-    return this.calculateCombinedReactionVolume();
+    switch (this.concentration_mode) {
+      case modes.REACTION_VOLUME: {
+        const reactionVolume = Number(this.volume);
+        if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+          return reactionVolume;
+        }
+        return this.solventVolume;
+      }
+      case modes.COMBINED:
+        return this.calculateCombinedReactionVolume();
+      case modes.SOLVENTS_ONLY:
+      default:
+        return this.solventVolume;
+    }
   }
 
   /**
@@ -1491,13 +1526,13 @@ export default class Reaction extends Element {
    * Formula: volume (L) = amount_mol / concentration (mol/L)
    *
    * On a valid positive `concentration` and a sample with positive
-   * `amount_mol`, this sets `reaction.volume` to the computed value,
-   * enables `use_reaction_volume`, and recalculates concentrations for all
-   * materials.
+   * `amount_mol`, this sets `reaction.volume` to the computed value, switches
+   * `concentration_mode` to `reaction_volume`, and recalculates concentrations
+   * for all materials.
    *
    * @param {Sample} sample
    * @param {number} concentration - New concentration in mol/L.
-   * @returns {{ volume: number, useReactionVolume: true } | null}
+   * @returns {{volume: number, concentrationMode: string}|null}
    *   Describes the applied changes so the caller can persist them via
    *   `onInputChange`, or `null` if no change was applied.
    */
@@ -1511,10 +1546,13 @@ export default class Reaction extends Element {
 
     const newVolume = amountMol / concentration;
     this.volume = newVolume;
-    this.use_reaction_volume = true;
+    this.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
     this.updateAllConcentrations();
 
-    return { volume: newVolume, useReactionVolume: true };
+    return {
+      volume: newVolume,
+      concentrationMode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+    };
   }
 
   /**

@@ -623,12 +623,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       return;
     }
 
-    let volumeToUse;
-    if (reaction.use_reaction_volume && reaction.volume != null && reaction.volume > 0) {
-      volumeToUse = reaction.volume;
-    } else {
-      volumeToUse = reaction.calculateCombinedReactionVolume();
-    }
+    const volumeToUse = reaction.reactionVolumeForConcentration();
 
     if (!volumeToUse || volumeToUse <= 0) {
       this._concentration_rt_value = null;

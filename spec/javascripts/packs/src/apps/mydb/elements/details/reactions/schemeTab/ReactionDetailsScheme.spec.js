@@ -3,6 +3,7 @@ import sinon from 'sinon';
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import Component from 'src/models/Component';
+import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
@@ -1284,7 +1285,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
 
 describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', () => {
   it('warns and returns null when no reaction volume can be resolved', () => {
-    // Locked volume + use_reaction_volume off + all-solid materials =>
+    // Locked volume + no usable concentration-basis volume + all-solid materials =>
     // reactionVolumeForConcentration() is null. The edit must surface a
     // warning rather than silently proceed with an unusable volume.
     const reaction = { reactionVolumeForConcentration: () => null };
@@ -1375,6 +1376,31 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
     expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
     expect(onInputChange.called).toBe(false);
+  });
+});
+
+describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
+  it('releases preserved concentrations before recalculating with the new basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      hasValidReactionVolume: true,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.handleConcentrationModeChange.call(
+      instance, Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY
+    );
+
+    expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
+    expect(reaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
+    expect(onInputChange.calledOnce).toBe(true);
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
   });
 });
 
