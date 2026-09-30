@@ -21,6 +21,7 @@ import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/scheme
 import { rolesOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
+import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { permitOn } from 'src/components/common/uis';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -43,6 +44,20 @@ import Component from 'src/models/Component';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
+
+const STEP_FIELD_DEFAULTS = {
+  temperature: () => ({ data: [], userText: '', valueUnit: '\u00b0C' }),
+  vessel_size: () => ({ unit: 'ml', amount: null }),
+  duration: () => '',
+  timestamp_start: () => '',
+  timestamp_stop: () => '',
+  ph_operator: () => '=',
+  ph_value: () => null,
+  volume: () => null,
+  conditions: () => '',
+};
+
+const STEP_EVENT_VALUE_TYPES = ['temperature', 'timestampStart', 'timestampStop'];
 
 const isSameMaterial = (first, second) => (
   first?.id != null
@@ -2215,9 +2230,13 @@ export default class ReactionDetailsScheme extends React.Component {
     return unit === 'l' ? numericValue : numericValue * 0.001;
   }
 
-  updateVesselSize(e) {
+  updateVesselSize(e, onChange = null) {
     const { onInputChange, reaction } = this.props;
     const value = this.normalizeVesselSizeValue(e.target.value);
+    if (onChange) {
+      onChange('vesselSizeAmount', value);
+      return;
+    }
     onInputChange('vesselSizeAmount', value);
     this.handleMaterialsChange({
       type: 'VesselSizeChanged',
@@ -2225,9 +2244,13 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updateVesselSizeOnBlur(e) {
+  updateVesselSizeOnBlur(e, onChange = null) {
     const { onInputChange, reaction } = this.props;
     const value = this.normalizeVesselSizeValue(e.target.value);
+    if (onChange) {
+      onChange('vesselSizeAmount', value);
+      return;
+    }
     onInputChange('vesselSizeAmount', value);
     if (value !== '') {
       this.handleMaterialsChange({
@@ -2237,22 +2260,26 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  changeVesselSizeUnit() {
+  changeVesselSizeUnit(source = null, onChange = null) {
     const { onInputChange, reaction } = this.props;
-    if (reaction.vessel_size.unit === 'ml') {
-      onInputChange('vesselSizeUnit', 'l');
-    } else if (reaction.vessel_size.unit === 'l') {
-      onInputChange('vesselSizeUnit', 'ml');
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    if (target.vessel_size.unit === 'ml') {
+      change('vesselSizeUnit', 'l');
+    } else if (target.vessel_size.unit === 'l') {
+      change('vesselSizeUnit', 'ml');
     }
   }
 
-  changePhOperator() {
+  changePhOperator(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
     const operators = ['=', '<', '>'];
-    const currentIndex = operators.indexOf(reaction.ph_operator || '=');
+    const currentIndex = operators.indexOf(target.ph_operator || '=');
     const nextOperator = operators[(currentIndex + 1) % operators.length];
 
-    onInputChange('phOperator', nextOperator);
+    change('phOperator', nextOperator);
   }
 
   // Ensure first mixture becomes the reference with Eq=1,
@@ -2277,8 +2304,9 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  reactionVesselSize() {
+  reactionVesselSize(source = null, onChange = null) {
     const { reaction } = this.props;
+    const target = source || reaction;
     return (
       <Form.Group>
         <Form.Label>Vessel size</Form.Label>
@@ -2286,18 +2314,18 @@ export default class ReactionDetailsScheme extends React.Component {
           <Form.Control
             name="reaction_vessel_size"
             type="text"
-            value={reaction.vessel_size?.amount ?? ''}
+            value={target.vessel_size?.amount ?? ''}
             disabled={reaction.can_update === false}
-            onChange={(event) => this.updateVesselSize(event)}
-            onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
+            onChange={(event) => this.updateVesselSize(event, onChange)}
+            onBlur={(event) => this.updateVesselSizeOnBlur(event, onChange)}
             className="flex-grow-1 Select-control"
           />
           <Button
             disabled={reaction.can_update === false}
             variant="light"
-            onClick={() => this.changeVesselSizeUnit()}
+            onClick={() => this.changeVesselSizeUnit(target, onChange)}
           >
-            {reaction.vessel_size?.unit || 'ml'}
+            {target.vessel_size?.unit || 'ml'}
           </Button>
         </InputGroup>
       </Form.Group>
@@ -2485,10 +2513,12 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.updateAllConcentrations();
   }
 
-  renderPhConditionProperty() {
+  renderPhConditionProperty(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
-    const operator = reaction.ph_operator || '=';
-    const value = reaction.ph_value ?? '';
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    const operator = target.ph_operator || '=';
+    const value = target.ph_value ?? '';
     const isDisabled = !permitOn(reaction);
 
     return (
@@ -2499,7 +2529,7 @@ export default class ReactionDetailsScheme extends React.Component {
             className="reaction-ph-operator"
             disabled={isDisabled}
             variant="primary"
-            onClick={() => this.changePhOperator()}
+            onClick={() => this.changePhOperator(target, change)}
           >
             {operator}
           </Button>
@@ -2509,7 +2539,7 @@ export default class ReactionDetailsScheme extends React.Component {
             value={value}
             disabled={isDisabled}
             placeholder="value"
-            onChange={(event) => onInputChange('phValue', event.target.value)}
+            onChange={(event) => change('phValue', event.target.value)}
           />
         </InputGroup>
       </Form.Group>
@@ -2539,6 +2569,24 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.setStepField(stepId, 'conditions', value);
     }
+    onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  stepView(step) {
+    const { reaction } = this.props;
+    const view = Object.create(reaction);
+    Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
+      view[field] = step[field] ?? fallback();
+    });
+    return view;
+  }
+
+  handleStepInputChange(step, type, event) {
+    const { reaction, onReactionChange } = this.props;
+    const value = STEP_EVENT_VALUE_TYPES.includes(type) ? event.target.value : event;
+    const view = this.stepView(step);
+    setReactionByType(view, type, value);
+    Object.keys(STEP_FIELD_DEFAULTS).forEach((field) => this.setStepField(step.id, field, view[field]));
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -2589,11 +2637,17 @@ export default class ReactionDetailsScheme extends React.Component {
       this.activeDropStepId = stepId;
       return handler(...args);
     };
+    const stepSource = step ? this.stepView(step) : null;
+    const stepChange = step ? (type, event) => this.handleStepInputChange(step, type, event) : null;
     return (
       <ReactionStep
         key={step ? step.id : 'standard'}
         reaction={reaction}
         step={step}
+        stepSource={stepSource}
+        onStepInputChange={stepChange}
+        phField={step ? this.renderPhConditionProperty(stepSource, stepChange) : null}
+        vesselSizeField={step ? this.reactionVesselSize(stepSource, stepChange) : null}
         isInteractionReaction={reaction.isInteractionReaction()}
         lockEquivColumn={lockEquivColumn}
         displayYieldField={displayYieldField}

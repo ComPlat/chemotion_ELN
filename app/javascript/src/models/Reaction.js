@@ -273,6 +273,8 @@ export default class Reaction extends Element {
         description: step.description,
         conditions: step.conditions,
         duration: step.duration,
+        timestamp_start: step.timestamp_start,
+        timestamp_stop: step.timestamp_stop,
         temperature: step.temperature,
         ph_operator: step.ph_operator,
         ph_value: step.ph_value,
@@ -1068,8 +1070,22 @@ export default class Reaction extends Element {
     return step;
   }
 
+  seedFirstStep() {
+    const step = this.addStep();
+    step.conditions = this.conditions;
+    step.duration = this.duration;
+    step.timestamp_start = this.timestamp_start;
+    step.timestamp_stop = this.timestamp_stop;
+    step.temperature = this.temperature ? { ...this.temperature } : this.temperature;
+    step.ph_operator = this.ph_operator;
+    step.ph_value = this.ph_value;
+    step.vessel_size = this.vessel_size ? { ...this.vessel_size } : this.vessel_size;
+    step.volume = this.volume;
+    return step;
+  }
+
   enterMultiStep() {
-    if (this.reaction_steps.length === 0) this.addStep();
+    if (this.reaction_steps.length === 0) this.seedFirstStep();
     const firstId = this.reaction_steps[0].id;
     ['starting_materials', 'reactants', 'solvents', 'products'].forEach((group) => {
       this[group].forEach((material) => {
