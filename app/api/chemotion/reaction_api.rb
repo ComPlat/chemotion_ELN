@@ -163,6 +163,18 @@ module Chemotion
         optional :segments, type: Array
         optional :user_labels, type: Array
         optional :variations, type: [Hash]
+        optional :reaction_steps, type: Array do
+          optional :id, type: Integer
+          optional :position, type: Integer
+          optional :description, type: String
+          optional :conditions, type: String
+          optional :duration, type: String
+          optional :temperature, type: Hash
+          optional :ph_operator, type: String
+          optional :ph_value, type: Float
+          optional :vessel_size, type: Hash
+          optional :volume, type: BigDecimal
+        end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
@@ -190,14 +202,21 @@ module Chemotion
           attributes.delete(:container)
           attributes.delete(:segments)
 
-          reaction.update!(attributes)
-          reaction.touch
+          steps = attributes.delete(:reaction_steps)
           reaction_vessel_size = attributes[:vessel_size]
-          reaction = Usecases::Reactions::UpdateMaterials.new(
-            reaction, materials,
-            current_user,
-            reaction_vessel_size
-          ).execute!
+          ActiveRecord::Base.transaction do
+            # Steps sync first so leaving Multi-step validates against the removed rows.
+            persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
+            step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            reaction.update!(attributes)
+            reaction.touch
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction, materials,
+              current_user,
+              reaction_vessel_size,
+              step_id_by_position
+            ).execute!
+          end
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -254,6 +273,18 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :variations, type: [Hash]
+        optional :reaction_steps, type: Array do
+          optional :id, type: Integer
+          optional :position, type: Integer
+          optional :description, type: String
+          optional :conditions, type: String
+          optional :duration, type: String
+          optional :temperature, type: Hash
+          optional :ph_operator, type: String
+          optional :ph_value, type: Float
+          optional :vessel_size, type: Hash
+          optional :volume, type: BigDecimal
+        end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
@@ -265,6 +296,7 @@ module Chemotion
       post do
         attributes = declared(params, include_missing: false)
         materials = attributes.delete(:materials)
+        steps = attributes.delete(:reaction_steps)
         literatures = attributes.delete(:literatures)
         attributes.delete(:can_copy)
         collection_id = attributes.delete(:collection_id)
@@ -304,12 +336,17 @@ module Chemotion
           end
           reaction_vessel_size = attributes[:vessel_size]
 
-          reaction = Usecases::Reactions::UpdateMaterials.new(
-            reaction,
-            materials,
-            current_user,
-            reaction_vessel_size,
-          ).execute!
+          ActiveRecord::Base.transaction do
+            persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
+            step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction,
+              materials,
+              current_user,
+              reaction_vessel_size,
+              step_id_by_position,
+            ).execute!
+          end
           reaction.reload
 
           reaction.update!(variations: Usecases::Reactions::UpdateVariations.new(
