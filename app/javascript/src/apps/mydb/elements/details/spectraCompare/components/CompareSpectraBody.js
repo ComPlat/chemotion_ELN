@@ -4,6 +4,7 @@ import { Alert, Button, Spinner } from 'react-bootstrap';
 import { SpectraEditor } from '@complat/react-spectra-editor';
 
 import { COMPARE_STATUS } from '../hooks/useCompareSpectra';
+import { compareFileNames } from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
 import {
   formatPks as formatPksOps,
   formatMpy as formatMpyOps,
@@ -139,14 +140,7 @@ const CompareSpectraBody = ({
   onWriteCloseMpy,
   onDescriptionChanged,
 }) => {
-  const entityFileNames = useMemo(() => {
-    const attachments = container?.comparable_info?.list_attachments;
-    if (!Array.isArray(attachments)) return null;
-
-    return attachments
-      .filter((att) => !/\.png$/i.test(att.filename || ''))
-      .map((att) => att.filename);
-  }, [container]);
+  const entityFileNames = useMemo(() => compareFileNames(container), [container]);
 
   if (status === COMPARE_STATUS.LOADING) return renderLoading();
   if (status === COMPARE_STATUS.ERROR) {
