@@ -2411,8 +2411,8 @@ export default class ReactionDetailsScheme extends React.Component {
       // reaction-volume basis and recalculate concentrations for all materials
       if (newVolume != null && newVolume > 0) {
         const reactionVolumeMode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+        reaction.resetPreservedConcentrationExcept();
         if (reaction.concentration_mode !== reactionVolumeMode) {
-          reaction.resetPreservedConcentrationExcept();
           reaction.concentration_mode = reactionVolumeMode;
           onInputChange('concentrationMode', reactionVolumeMode);
         }

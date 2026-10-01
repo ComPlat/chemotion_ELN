@@ -5,7 +5,7 @@ import {
   updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange,
   updateVariationsRowOnConcentrationMaterialChange,
   cellIsEditable, getReactionMaterialsHashes, computeCombinedReactionVolume,
-  getReactionMaterialsIDsToLabels
+  getReactionMaterialsIDsToLabels, resolveReactionVolumeFromContext
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -18,6 +18,7 @@ import {
   materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
+import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 
 describe('ReactionVariationsMaterials', () => {
   it('applies concentration edit rules across every combination of lock mode, calculation mode, reference material, and feedstock', async () => {
@@ -416,6 +417,41 @@ describe('ReactionVariationsMaterials', () => {
     expect(updatedVariationsRow.reactants[reactantID].concentration.value).toBe(
       variationsRow.reactants[reactantID].concentration.value
     );
+  });
+  it('uses only solvent volume in solvents_only mode', async () => {
+    const reaction = await setUpReaction();
+    const row = cloneDeep(reaction.variations[0]);
+
+    Object.values(row.solvents).forEach((solvent) => { solvent.volume.value = 0; });
+    Object.values(row.startingMaterials).forEach((material) => { material.volume.value = 0; });
+    Object.values(row.reactants).forEach((material) => { material.volume.value = 0; });
+    Object.values(row.solvents)[0].volume.value = 2;
+    Object.values(row.reactants)[0].volume.value = 3;
+
+    const volume = resolveReactionVolumeFromContext({
+      concentrationMode: REACTION_CONCENTRATION_MODES.SOLVENTS_ONLY,
+      useReactionVolume: false,
+    }, row);
+
+    expect(volume).toBe(2);
+  });
+  it('falls back to solvent-only volume when reaction_volume has no positive entered volume', async () => {
+    const reaction = await setUpReaction();
+    const row = cloneDeep(reaction.variations[0]);
+
+    Object.values(row.solvents).forEach((solvent) => { solvent.volume.value = 0; });
+    Object.values(row.startingMaterials).forEach((material) => { material.volume.value = 0; });
+    Object.values(row.reactants).forEach((material) => { material.volume.value = 0; });
+    Object.values(row.solvents)[0].volume.value = 2;
+    Object.values(row.reactants)[0].volume.value = 3;
+
+    const volume = resolveReactionVolumeFromContext({
+      concentrationMode: REACTION_CONCENTRATION_MODES.REACTION_VOLUME,
+      useReactionVolume: true,
+      reactionVolumeByRowId: { [row.id]: null },
+    }, row);
+
+    expect(volume).toBe(2);
   });
   it('uses edit-scoped reaction volume for locked concentration propagation when edited volume changes', async () => {
     const reaction = await setUpReaction();

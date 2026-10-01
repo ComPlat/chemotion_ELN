@@ -763,10 +763,14 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.deriveVolumeFromSampleConcentration()', () => {
-    it('sets volume, switches to reaction_volume mode, and recalculates concentrations', () => {
+    it('releases stale preservation, switches to reaction_volume mode, and recalculates concentrations', () => {
       const sample = { amount_mol: 0.5 };
-      let updateCalled = false;
-      reaction.updateAllConcentrations = () => { updateCalled = true; };
+      const calls = [];
+      reaction.resetPreservedConcentrationExcept = (editedSample) => {
+        expect(editedSample).toBe(sample);
+        calls.push('reset');
+      };
+      reaction.updateAllConcentrations = () => { calls.push('update'); };
 
       const result = reaction.deriveVolumeFromSampleConcentration(sample, 2);
 
@@ -776,7 +780,7 @@ describe('Reaction', () => {
       });
       expect(reaction.volume).toBe(0.25);
       expect(reaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
-      expect(updateCalled).toBe(true);
+      expect(calls).toEqual(['reset', 'update']);
     });
 
     it('returns null when the concentration is not positive', () => {

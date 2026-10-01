@@ -1404,6 +1404,28 @@ describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
   });
 });
 
+describe('ReactionDetailsScheme#updateVolume', () => {
+  it('releases preserved concentrations when changing an existing reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = { props: { reaction, onInputChange } };
+
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+
+    expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(reaction.resetPreservedConcentrationExcept.calledBefore(
+      reaction.updateAllConcentrations
+    )).toBe(true);
+    expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
+    expect(onInputChange.calledWith('concentrationMode')).toBe(false);
+  });
+});
+
 describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
     const reaction = {};

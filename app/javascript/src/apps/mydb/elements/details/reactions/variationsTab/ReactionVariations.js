@@ -76,12 +76,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     initializeReactionVolumeByRowId(reaction.variations ?? [], defaultReactionVolume)
   );
   const [useReactionVolumeOverride, setUseReactionVolumeOverride] = useState(null);
-  const useReactionVolume = useReactionVolumeOverride ?? !!reaction.use_reaction_volume;
+  const reactionConcentrationMode = reaction.concentration_mode
+    ?? (reaction.use_reaction_volume
+      ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      : Reaction.CONCENTRATION_MODES.COMBINED);
+  const concentrationMode = useReactionVolumeOverride == null
+    ? reactionConcentrationMode
+    : (useReactionVolumeOverride
+      ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      : Reaction.CONCENTRATION_MODES.COMBINED);
+  const useReactionVolume = concentrationMode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
   const concentrationContext = useMemo(() => ({
+    concentrationMode,
     useReactionVolume,
     lockReactionVolume: reaction.lock_reaction_volume,
     reactionVolumeByRowIdRef,
-  }), [reaction.lock_reaction_volume, useReactionVolume]);
+  }), [concentrationMode, reaction.lock_reaction_volume, useReactionVolume]);
 
   const gridRef = useRef(null);
   const gridWrapperRef = useRef(null);

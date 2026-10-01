@@ -1527,6 +1527,7 @@ export default class Reaction extends Element {
 
     const newVolume = amountMol / concentration;
     this.volume = newVolume;
+    this.resetPreservedConcentrationExcept(sample);
     this.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
     this.updateAllConcentrations();
 
