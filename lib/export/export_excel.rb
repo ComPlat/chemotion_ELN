@@ -251,7 +251,7 @@ module Export
           elsif column == 'density'
             "#{sample['density']} g/ml"
           else
-            sample[column]
+            sample[header_key(column)]
           end
         end
         data[@image_index] = svg_path(sample) if @image_index
