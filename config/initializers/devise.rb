@@ -285,6 +285,24 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
         label: auth_config.dig('shibboleth', 'label') || 'Shibboleth',
       }
     end
+    if auth_config.key?('ldap') && auth_config.dig('ldap', 'enable') == true
+      # LDAP as an OmniAuth provider (omniauth-ldap). The request phase serves a
+      # username/password form at /users/auth/ldap; the callback binds against the
+      # directory and maps mail/givenName/sn into auth.info, uid into auth.uid.
+      config.omniauth :ldap,
+                      title: auth_config.dig('ldap', 'title') || 'LDAP login',
+                      host: auth_config.dig('ldap', 'host'),
+                      port: auth_config.dig('ldap', 'port') || 389,
+                      method: (auth_config.dig('ldap', 'method') || 'plain').to_sym,
+                      base: auth_config.dig('ldap', 'base'),
+                      uid: auth_config.dig('ldap', 'uid') || 'uid',
+                      bind_dn: auth_config.dig('ldap', 'bind_dn'),
+                      password: auth_config.dig('ldap', 'password'),
+                      filter: auth_config.dig('ldap', 'filter'),
+                      name_proc: proc { |name| name },
+                      icon: auth_config.dig('ldap', 'icon'),
+                      label: auth_config.dig('ldap', 'label') || 'LDAP'
+    end
     if auth_config.key?('github') && auth_config.dig('github', 'enable') == true
       config.omniauth :github,
                       auth_config.dig('github', 'client_id'), auth_config.dig('github', 'client_secret'),
