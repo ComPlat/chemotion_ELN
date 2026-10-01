@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/HasManyOrHasOneDependent, Metrics/ClassLength
+# rubocop:disable Rails/HasManyOrHasOneDependent, Rails/SkipsModelValidations, Metrics/ClassLength
 
 # == Schema Information
 #
@@ -39,6 +39,7 @@ class Collection < ApplicationRecord
   belongs_to :inventory, optional: true
   has_ancestry orphan_strategy: :adopt
 
+  after_save :add_inventory_sample_if_inventory_added
   has_many :collections_samples, dependent: :destroy
   has_many :collections_reactions, dependent: :destroy
   has_many :collections_wellplates, dependent: :destroy
@@ -344,5 +345,13 @@ class Collection < ApplicationRecord
                    .having(Arel.sql(having))
                    .pluck(:collection_id)
   end
+
+  private
+
+  def add_inventory_sample_if_inventory_added
+    return unless saved_change_to_inventory_id? && inventory_id.present?
+
+    samples.where(inventory_sample: [false, nil]).update_all(inventory_sample: true)
+  end
 end
-# rubocop:enable Rails/HasManyOrHasOneDependent, Metrics/ClassLength
+# rubocop:enable Rails/HasManyOrHasOneDependent, Rails/SkipsModelValidations, Metrics/ClassLength
