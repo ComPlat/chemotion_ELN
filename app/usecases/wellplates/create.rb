@@ -29,10 +29,13 @@ module Usecases
             CollectionsWellplate.create(wellplate: wellplate, collection: all_collection_of_sharer)
           end
 
-          CollectionsWellplate.create(
-            wellplate: wellplate,
-            collection: all_collection_of_current_user
-          ) unless is_shared_collection
+          # find_or_create_by: the chosen collection may itself be the user's "All" collection
+          unless is_shared_collection
+            CollectionsWellplate.find_or_create_by(
+              wellplate: wellplate,
+              collection: all_collection_of_current_user,
+            )
+          end
 
           WellplateUpdater
             .new(wellplate: wellplate, current_user: current_user)
