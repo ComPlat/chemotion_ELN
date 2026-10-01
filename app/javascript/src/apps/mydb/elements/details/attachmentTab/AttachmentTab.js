@@ -189,7 +189,7 @@ export class AttachmentTab extends Component {
           }
         );
       } else {
-        if (!Object.isFrozen(attachment)) {
+        if (!Object.isFrozen(attachment) && !attachment.preview) {
           attachment.preview = '/images/wild_card/not_available.svg';
         }
         if (!elementFrozen) {
