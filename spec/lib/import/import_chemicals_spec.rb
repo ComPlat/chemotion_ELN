@@ -12,6 +12,22 @@ RSpec.describe Import::ImportChemicals do
     end
   end
 
+  describe '.create_safety_sheet_path' do
+    let(:link) { 'https://www.sigmaaldrich.com/US/en/sds/sial/131377' }
+
+    before { allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_return(nil) }
+
+    it 'fetches the sheet for an accepted vendor and a product number that can name a file' do
+      described_class.create_safety_sheet_path('merck', link, '131377', {})
+      expect(Chemotion::ChemicalsService).to have_received(:create_sds_file).with(link, '131377', 'merck')
+    end
+
+    it 'skips a product number that cannot name a file' do
+      described_class.create_safety_sheet_path('merck', link, '../131377', {})
+      expect(Chemotion::ChemicalsService).not_to have_received(:create_sds_file)
+    end
+  end
+
   describe '.set_safety_phrases' do
     let(:chemical) { { 'chemical_data' => [{}] } }
 
