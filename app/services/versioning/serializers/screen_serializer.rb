@@ -31,11 +31,18 @@ class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseS
         label: 'Result',
         revert: %i[result],
       },
-      description: {
-        label: 'Description',
-        kind: :quill,
-        revert: %i[description],
-      },
+      description: description_field,
     }.with_indifferent_access
+  end
+
+  private
+
+  def description_field
+    {
+      label: 'Description',
+      kind: :quill,
+      revert: %i[description],
+      formatter: quill_formatter,
+    }
   end
 end

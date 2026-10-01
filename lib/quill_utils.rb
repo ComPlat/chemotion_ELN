@@ -23,6 +23,13 @@ module QuillUtils
     file&.close!
   end
 
+  # desc: whether the quill delta is visually empty (no text was ever typed), without spawning a
+  # nodejs process. Kept public (unlike blank_ops?) for callers that only need the emptiness
+  # check, e.g. deciding whether a content change is worth surfacing as a diff.
+  def blank_content?(content)
+    blank_ops?(content)
+  end
+
   private
 
   # rubocop:disable Style/StringLiterals
