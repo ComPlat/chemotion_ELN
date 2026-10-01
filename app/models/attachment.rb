@@ -225,7 +225,13 @@ class Attachment < ApplicationRecord
 
   # to allow reading of PDF files within research plan analyses tab
   def type_pdf?
-    attachment['mime_type'].to_s == 'application/pdf'
+    attachment.present? && attachment['mime_type'].to_s == 'application/pdf'
+  end
+
+  # Whether GET /attachments/image/:id (Usecases::Attachments::LoadImage) can serve this file.
+  # Exposed to the client as `previewable` so the rule lives in one place.
+  def previewable?
+    type_image? || type_pdf?
   end
 
   # @return [String] the path to the combined image file on disk
