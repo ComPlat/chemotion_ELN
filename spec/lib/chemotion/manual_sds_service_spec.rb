@@ -115,6 +115,14 @@ RSpec.describe Chemotion::ManualSdsService do
                       '{"productNumber": "ABC123", "productLink": "ftp://x.y/z"}', 'Invalid product link URL'
     end
 
+    it 'treats blank vendor links as absent' do
+      allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_return(nil)
+      vendor_info = { productNumber: 'AC123456', productLink: '', sdsLink: '' }.to_json
+      service = described_class.new(valid_params.merge(vendor_info: vendor_info))
+
+      expect(service.create).to eq({ error: 'Error processing SDS: File hash could not be generated' })
+    end
+
     it 'accepts a vendor SDS link longer than 100 characters' do
       link = 'https://www.fishersci.com/store/msds?partNumber=AC123456&productDescription=&language=EN&countryCode=US'
       allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_return(nil)
