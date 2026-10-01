@@ -61,7 +61,7 @@ class Attachment < ApplicationRecord
     end
   end
 
-  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
+  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :transferred
 
   has_ancestry ancestry_column: :version, orphan_strategy: :adopt
 
@@ -125,7 +125,11 @@ class Attachment < ApplicationRecord
   end
 
   def read_thumbnail
-    attachment(:thumbnail).read if attachment(:thumbnail)&.exists?
+    thumbnail = attachment(:thumbnail)
+    return unless thumbnail&.exists?
+
+    thumbnail.rewind if thumbnail.eof?
+    thumbnail.read
   end
 
   def abs_path
@@ -225,7 +229,7 @@ class Attachment < ApplicationRecord
 
   # to allow reading of PDF files within research plan analyses tab
   def type_pdf?
-    attachment['mime_type'].to_s == 'application/pdf'
+    attachment.present? && attachment['mime_type'].to_s == 'application/pdf'
   end
 
   # @return [String] the path to the combined image file on disk

@@ -68,6 +68,13 @@ RSpec.describe Attachment do
       it 'returns content of thumbnail file' do
         expect(attachment.read_thumbnail).not_to be_nil
       end
+
+      it 'returns the full content again on repeated reads' do
+        first_read = attachment.read_thumbnail
+
+        expect(first_read).not_to be_empty
+        expect(attachment.read_thumbnail).to eq first_read
+      end
     end
   end
 
@@ -236,6 +243,10 @@ RSpec.describe Attachment do
       expect(pdf_attachment.type_pdf?).to be true
       expect(attachment.type_pdf?).to be false
     end
+
+    it 'returns false when no file is attached' do
+      expect(described_class.new(filename: 'upload.pdf').type_pdf?).to be false
+    end
   end
 
   describe 'annotated?' do
@@ -303,12 +314,6 @@ RSpec.describe Attachment do
       expect(attachment.identifier).to be_present
     end
 
-    context 'when duplicated accessor is set' do
-      pending 'check if the copy method and the duplicated accessor are still used'
-      # it 'duplicates the file and thumbnail' do
-      # end
-    end
-
     # callbacks from the AttachmentJcampAasm concern
     context 'when AttachmentJcampAasm concern is included' do
       let(:attachment) { build(:attachment) }
@@ -347,6 +352,284 @@ RSpec.describe Attachment do
   end
 
   # Methods from AttachmentJcampAasm concern
+  describe '.variation_id_from' do
+    it 'extracts the variation number from a -vN suffix' do
+      expect(described_class.variation_id_from('JB-R23-v3.jdx')).to eq '3'
+      expect(described_class.variation_id_from('JB-R23-V12-nmr.jdx')).to eq '12'
+      expect(described_class.variation_id_from('JB-R23-v7')).to eq '7'
+    end
+
+    it 'returns nil without a variation suffix' do
+      expect(described_class.variation_id_from('JB-R23.jdx')).to be_nil
+      expect(described_class.variation_id_from('JB-R23-v3x.jdx')).to be_nil
+      expect(described_class.variation_id_from(nil)).to be_nil
+    end
+  end
+
+  describe '.strip_variation_suffix' do
+    it 'removes the -vN suffix and keeps the rest of the filename' do
+      expect(described_class.strip_variation_suffix('JB-R23-v3.jdx')).to eq 'JB-R23.jdx'
+    end
+
+    it 'leaves filenames without a suffix untouched' do
+      expect(described_class.strip_variation_suffix('JB-R23.jdx')).to eq 'JB-R23.jdx'
+    end
+  end
+
+  describe 'scopes' do
+    let(:research_plan) { create(:research_plan) }
+    let!(:plan_attachment) { create(:attachment, attachable: research_plan) }
+    let!(:container_attachment) { create(:attachment) }
+    let!(:report_attachment) do
+      create(:attachment).tap { |a| a.update_columns(attachable_type: 'Report', attachable_id: 42) } # rubocop:disable Rails/SkipsModelValidations
+    end
+    let!(:template_attachment) do
+      create(:attachment).tap { |a| a.update_columns(attachable_type: 'Template', attachable_id: nil) } # rubocop:disable Rails/SkipsModelValidations
+    end
+
+    it 'filters research plan attachments by id' do
+      expect(described_class.where_research_plan(research_plan.id)).to contain_exactly(plan_attachment)
+    end
+
+    it 'filters container attachments by id' do
+      expect(described_class.where_container(container_attachment.attachable_id))
+        .to contain_exactly(container_attachment)
+    end
+
+    it 'filters report attachments by id' do
+      expect(described_class.where_report(42)).to contain_exactly(report_attachment)
+    end
+
+    it 'returns all template attachments' do
+      expect(described_class.where_template).to contain_exactly(template_attachment)
+    end
+  end
+
+  describe '#root_element' do
+    let(:user) { create(:person) }
+
+    it 'returns the attachable when it is an element' do
+      research_plan = create(:research_plan)
+
+      expect(create(:attachment, attachable: research_plan).root_element).to eq research_plan
+    end
+
+    it "returns the container's root element when attached to a container" do
+      sample = create(:sample)
+      dataset = sample.container.analyses_container
+                      .children.create!(container_type: 'analysis')
+                      .children.create!(container_type: 'dataset')
+
+      expect(create(:attachment, attachable: dataset).root_element).to eq sample
+    end
+
+    it 'falls back to the recipient when not attached to an element' do
+      expect(described_class.new(created_for: user.id).root_element).to eq user
+    end
+
+    it 'returns nil without attachable or recipient' do
+      expect(described_class.new.root_element).to be_nil
+    end
+  end
+
+  describe '#annotated_image?' do
+    it 'returns true only for annotated images' do
+      expect(create(:attachment, :with_annotation).annotated_image?).to be true
+      expect(create(:attachment, :with_image).annotated_image?).to be false
+      expect(attachment.annotated_image?).to be false
+    end
+  end
+
+  describe '#annotated_filename' do
+    def annotate(attachment)
+      data = attachment.attachment_data
+      data['derivatives'] ||= {}
+      data['derivatives']['annotation'] = { 'annotated_file_location' => 'annotation.svg' }
+      attachment.update_columns(attachment_data: data) # rubocop:disable Rails/SkipsModelValidations
+      attachment
+    end
+
+    it 'returns an empty string when not annotated' do
+      expect(attachment.annotated_filename).to eq ''
+    end
+
+    it 'appends _annotated and keeps the original extension' do
+      expect(create(:attachment, :with_annotation).annotated_filename).to eq 'upload_annotated.jpg'
+    end
+
+    it 'uses .png for annotated tiff images' do
+      expect(annotate(create(:attachment, :with_tif_file)).annotated_filename).to eq 'upload_annotated.png'
+    end
+  end
+
+  describe '#file_extension' do
+    it 'returns the extension without the leading dot' do
+      expect(attachment.file_extension).to eq 'txt'
+    end
+
+    it 'returns nil for filenames without an extension' do
+      expect(described_class.new(filename: 'README').file_extension).to be_nil
+    end
+  end
+
+  describe '#thumbnail_base64 and #preview' do
+    context 'when a thumbnail exists' do
+      let(:attachment) { create(:attachment, :with_image) }
+
+      it 'returns the base64 encoded thumbnail and a data url' do
+        thumbnail = attachment.read_thumbnail
+
+        expect(Base64.decode64(attachment.thumbnail_base64)).to eq thumbnail
+        expect(attachment.preview).to eq "data:image/png;base64,#{Base64.encode64(thumbnail)}"
+      end
+    end
+
+    context 'when there is no thumbnail' do
+      it 'returns nil' do
+        expect(attachment.thumbnail_base64).to be_nil
+        expect(attachment.preview).to be_nil
+      end
+    end
+
+    context 'when thumb is set but the thumbnail file is missing' do
+      let(:attachment) { create(:attachment, :with_image) }
+
+      it 'returns nil instead of raising' do
+        allow(attachment).to receive(:read_thumbnail).and_raise(Errno::ENOENT)
+
+        expect(attachment.thumbnail_base64).to be_nil
+        expect(attachment.preview).to be_nil
+      end
+    end
+  end
+
+  describe '#editable_document?' do
+    let(:editors) { ActiveSupport::OrderedOptions.new.tap { |e| e.available_extensions = %w[docx xlsx] } }
+
+    before { allow(Rails.configuration).to receive(:editors).and_return(editors) }
+
+    it 'returns true for extensions the document editor supports, ignoring case' do
+      expect(described_class.new(filename: 'report.docx').editable_document?).to be true
+      expect(described_class.new(filename: 'REPORT.XLSX').editable_document?).to be true
+    end
+
+    it 'returns false for unsupported extensions or filenames without extension' do
+      expect(described_class.new(filename: 'upload.txt').editable_document?).to be false
+      expect(described_class.new(filename: 'README').editable_document?).to be false
+    end
+
+    it 'returns false when no editor extensions are configured' do
+      editors.available_extensions = []
+
+      expect(described_class.new(filename: 'report.docx').editable_document?).to be false
+    end
+  end
+
+  describe '#transferred?' do
+    it 'defaults to false and reflects the transferred accessor' do
+      expect(attachment.send(:transferred?)).to be false
+
+      attachment.transferred = true
+      expect(attachment.send(:transferred?)).to be true
+    end
+  end
+
+  describe '#inbox_auto_enabled?' do
+    let(:user) { create(:person) }
+    let(:attachment) do
+      create(:attachment).tap { |a| a.update_columns(created_for: user.id) } # rubocop:disable Rails/SkipsModelValidations
+    end
+
+    def update_profile_data(data)
+      user.profile.update_columns(data: data) # rubocop:disable Rails/SkipsModelValidations
+    end
+
+    it 'returns false without a recipient' do
+      expect(create(:attachment).send(:inbox_auto_enabled?)).to be false
+    end
+
+    it 'follows the inbox_auto profile setting' do
+      update_profile_data(user.profile.data.merge('inbox_auto' => false))
+      expect(attachment.send(:inbox_auto_enabled?)).to be false
+
+      update_profile_data(user.profile.data.merge('inbox_auto' => true))
+      expect(attachment.reload.send(:inbox_auto_enabled?)).to be true
+    end
+
+    it 'defaults to true when the profile has no inbox_auto key' do
+      update_profile_data(user.profile.data.except('inbox_auto'))
+
+      expect(attachment.send(:inbox_auto_enabled?)).to be true
+    end
+
+    it 'defaults to true when the recipient has no profile data' do
+      allow(attachment.recipient).to receive(:profile).and_return(nil)
+
+      expect(attachment.send(:inbox_auto_enabled?)).to be true
+    end
+
+    it 'short-circuits #resolve_unique_match when disabled' do
+      update_profile_data(user.profile.data.merge('inbox_auto' => false))
+      expect(InboxSearchElements).not_to receive(:call)
+
+      expect(attachment.resolve_unique_match).to eq [nil, nil]
+    end
+  end
+
+  describe 'upload limits' do
+    describe 'file size' do
+      it 'rejects files larger than the configured maximum size' do
+        allow(Rails.configuration.shrine_storage).to receive(:maximum_size).and_return(0)
+
+        expect { create(:attachment) }.to raise_error(/cannot be uploaded. File size must be less than 0 MB/)
+      end
+
+      it 'accepts files within the maximum size' do
+        expect { create(:attachment) }.to change(described_class, :count).by(1)
+      end
+    end
+
+    describe 'user quota' do
+      let(:user) { create(:person) }
+
+      def limit_space(user, allocated:, used: 0)
+        user.update_columns(allocated_space: allocated, used_space: used) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      it 'rejects uploads that exceed the allocated space of the uploader' do
+        limit_space(user, allocated: 5)
+
+        expect { create(:attachment, created_by: user.id) }.to raise_error('User quota exceeded')
+      end
+
+      it 'counts space already used by the uploader' do
+        limit_space(user, allocated: 1.megabyte, used: 1.megabyte)
+
+        expect { create(:attachment, created_by: user.id) }.to raise_error('User quota exceeded')
+      end
+
+      it 'checks the quota of the recipient instead of the uploader when created_for is set' do
+        recipient = create(:person)
+        limit_space(recipient, allocated: 5)
+
+        expect { create(:attachment, created_by: user.id, created_for: recipient.id) }
+          .to raise_error('User quota exceeded')
+      end
+
+      it 'treats an allocated space of 0 as unlimited' do
+        limit_space(user, allocated: 0, used: 1.gigabyte)
+
+        expect { create(:attachment, created_by: user.id) }.to change(described_class, :count).by(1)
+      end
+
+      it 'accepts uploads within the quota' do
+        limit_space(user, allocated: 1.megabyte)
+
+        expect { create(:attachment, created_by: user.id) }.to change(described_class, :count).by(1)
+      end
+    end
+  end
+
   describe '#filename_parts' do
     it 'returns the filename parts when split by .' do
       expect(attachment.filename_parts).to eq %w[upload txt]
@@ -1099,8 +1382,23 @@ RSpec.describe Attachment do
       end
     end
 
+    context 'with spc_type = CYCLIC VOLTAMMETRY' do
+      it 'returns the result of #auto_infer_n_clear_json without writing a prediction' do
+        expect(attachment).to receive(:auto_infer_n_clear_json).with('CYCLIC VOLTAMMETRY', true)
+        expect(attachment).not_to receive(:write_infer_to_file)
+
+        attachment.update_prediction({ 'predict' => 'foobar' }, 'CYCLIC VOLTAMMETRY', true)
+      end
+    end
+
     context 'with keep_pred in params hash' do
-      pending 'not yet implemented'
+      it 'calls #write_infer_to_file with the existing infer content instead of params["predict"]' do
+        allow(attachment).to receive(:get_infer_json_content).and_return('{"old":"prediction"}')
+        expect(attachment).to receive(:write_infer_to_file).with('{"old":"prediction"}')
+
+        params = { keep_pred: true, predict: 'new prediction' }.with_indifferent_access
+        attachment.update_prediction(params, 'foo', false)
+      end
     end
 
     context 'without keep_pred in params hash' do
@@ -1113,7 +1411,111 @@ RSpec.describe Attachment do
   end
 
   describe '#create_process' do
-    pending 'not yet implemented'
+    let(:attachment) { create(:attachment, filename: 'spectra_file.jdx', aasm_state: 'queueing') }
+    let(:tmp_jcamp) { Tempfile.new('spectrum.jdx') }
+    let(:tmp_img) { Tempfile.new('spectrum.png') }
+    let(:spc_type) { 'NMR' }
+    let(:arr_jcamp) { [tmp_jcamp] }
+    let(:invalid_molfile) { false }
+
+    before do
+      allow(attachment).to receive(:generate_spectrum_data).and_return(
+        [tmp_jcamp, tmp_img, arr_jcamp, [tmp_img], [], [], spc_type, invalid_molfile],
+      )
+    end
+
+    context 'when the attachment is an nmrium file' do
+      let(:attachment) { create(:attachment, :with_nmrium_file, aasm_state: 'queueing') }
+
+      it 'generates the spectrum from nmrium without calling the spectra service' do
+        allow(attachment).to receive(:generate_spectrum_from_nmrium).and_return(:nmrium_jcamp)
+
+        expect(attachment.create_process(false)).to eq :nmrium_jcamp
+        expect(attachment).not_to have_received(:generate_spectrum_data)
+      end
+    end
+
+    context 'when spc_type is lcms' do
+      let(:spc_type) { 'lcms' }
+
+      it 'delegates to #read_processed_data' do
+        expect(attachment).to receive(:read_processed_data).with(arr_jcamp, [tmp_img], 'lcms', true)
+
+        attachment.create_process(true)
+      end
+    end
+
+    context 'when spc_type is bagit' do
+      let(:spc_type) { 'bagit' }
+
+      it 'delegates to #read_bagit_data even for a single curve' do
+        expect(attachment).to receive(:read_bagit_data)
+          .with(arr_jcamp, [tmp_img], [], 'bagit', false, hash_including(ext: 'jdx'))
+
+        attachment.create_process(false)
+      end
+    end
+
+    context 'when a same-type archive returns several curves' do
+      let(:spc_type) { 'CYCLIC VOLTAMMETRY' }
+      let(:arr_jcamp) { [tmp_jcamp, Tempfile.new('spectrum2.jdx')] }
+
+      it 'delegates to #read_bagit_data' do
+        expect(attachment).to receive(:read_bagit_data)
+          .with(arr_jcamp, [tmp_img], [], 'CYCLIC VOLTAMMETRY', false, hash_including(ext: 'jdx'))
+
+        attachment.create_process(false)
+      end
+    end
+
+    context 'when a single curve is returned' do
+      let(:img_att) { instance_double(described_class) }
+      let(:jcamp_att) { instance_double(described_class, auto_infer_n_clear_json: nil) }
+
+      before do
+        allow(attachment).to receive(:generate_img_att).with(tmp_img, 'peak').and_return(img_att)
+        allow(attachment).to receive(:generate_jcamp_att).with(tmp_jcamp, 'peak').and_return(jcamp_att)
+        allow(attachment).to receive(:delete_related_imgs)
+      end
+
+      it 'returns the generated peak jcamp attachment' do
+        expect(attachment.create_process(false)).to eq jcamp_att
+      end
+
+      it 'runs the prediction on the generated jcamp' do
+        attachment.create_process(true)
+
+        expect(jcamp_att).to have_received(:auto_infer_n_clear_json).with('NMR', true)
+      end
+
+      it 'transitions self to done' do
+        attachment.create_process(false)
+
+        expect(attachment.aasm_state).to eq 'done'
+      end
+
+      it 'cleans up the temp files and superseded images' do
+        attachment.create_process(false)
+
+        expect(tmp_jcamp.path).to be_nil
+        expect(tmp_img.path).to be_nil
+        expect(attachment).to have_received(:delete_related_imgs).with(img_att)
+      end
+    end
+
+    context 'when the molfile is invalid' do
+      let(:invalid_molfile) { true }
+
+      it 'reports it via #check_invalid_molfile' do
+        allow(attachment).to receive_messages(generate_img_att: nil, delete_related_imgs: nil)
+        allow(attachment).to receive(:generate_jcamp_att).and_return(
+          instance_double(described_class, auto_infer_n_clear_json: nil),
+        )
+        expect(attachment).to receive(:check_invalid_molfile).with(true)
+
+        attachment.create_process(false)
+      end
+    end
   end
 
   describe '#read_processed_data' do
