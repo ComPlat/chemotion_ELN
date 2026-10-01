@@ -80,6 +80,7 @@ module Users
         provider: auth.provider,
         first_name: first_name,
         last_name: last_name,
+        name_abbreviation: name_abbreviation,
         groups: groups,
       }
       @user = User.from_omniauth(params)
