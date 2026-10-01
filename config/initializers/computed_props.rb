@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-ActiveSupport.on_load(:active_record) do
+# Runs in after_initialize so Matrice is not autoloaded during initialization (an
+# error in Rails 7). config.compute_config is read only at request time, so setting it
+# once after boot matches the previous on_load(:active_record) behaviour.
+Rails.application.config.after_initialize do
   Rails.application.configure do
     begin
       compute_config = ActiveRecord::Base.connection.table_exists?('matrices') ? (Matrice.find_by(name: 'computedProp')&.configs || {}) : {}

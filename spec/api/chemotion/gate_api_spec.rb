@@ -22,7 +22,7 @@ describe Chemotion::GateAPI do
       exp: 7.days.from_now.to_i,
     }
   end
-  let(:token) { JWT.encode payload, Rails.application.secrets.secret_key_base }
+  let(:token) { JWT.encode payload, Rails.application.secret_key_base }
   let(:headers) do
     { 'AUTHORIZATION' => "Bearer #{token}", 'Origin' => API::TARGET }
   end
@@ -50,7 +50,7 @@ describe Chemotion::GateAPI do
 
     it 'returns a jwt' do
       jwt = JSON.parse(response.body)&.fetch('jwt', nil)
-      secret = Rails.application.secrets.secret_key_base
+      secret = Rails.application.secret_key_base
       expect(JWT.decode(jwt, secret)[0]).to include(
         'collection' => c1.id, 'iss' => user.email, 'origin' => API::TARGET,
       )

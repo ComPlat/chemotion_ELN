@@ -36,7 +36,7 @@ module SVG
       sections[:arrow] = ""
       global_view_box_array[2] += 0
       @max_height_for_products = find_material_max_height(products)
-      sections[:products] = compose_material_group products, { start_at: global_view_box_array[2], y_center: y_center }
+      sections[:products] = compose_material_group products, start_at: global_view_box_array[2], y_center: y_center
       @sections=sections
     end
   end

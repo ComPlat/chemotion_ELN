@@ -84,7 +84,7 @@ module Chemotion
               },
             },
           }
-          only_office_token = JWT.encode only_office_payload, Rails.application.secrets.only_office_secret_key_base
+          only_office_token = JWT.encode only_office_payload, Rails.configuration.only_office_secret_key_base
 
           { token: token, only_office_token: only_office_token }
         end

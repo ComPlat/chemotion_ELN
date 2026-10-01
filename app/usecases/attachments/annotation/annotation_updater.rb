@@ -93,7 +93,7 @@ module Usecases
 
         class ThumbnailerWrapper
           def create_thumbnail(tmp_path)
-            Thumbnailer.create(tmp_path)
+            Usecases::Attachments::Thumbnail::ThumbnailGenerator.create(tmp_path)
           end
         end
       end

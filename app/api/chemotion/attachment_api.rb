@@ -74,7 +74,7 @@ module Chemotion
         export.export
         content_type('application/vnd.ms-excel')
         ds_filename = export.res_name
-        filename = URI.escape(ds_filename)
+        filename = URI::DEFAULT_PARSER.escape(ds_filename)
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         export.read
       end

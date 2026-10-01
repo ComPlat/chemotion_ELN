@@ -22,7 +22,8 @@ class Oauth::RadarController < ApplicationController
     # create random state and store it in the session
     session[:radar_oauth2_state] = state = Oauth2::Radar::state
 
-    redirect_to Oauth2::Radar::get_authorize_url(state)
+    # allow_other_host: authorize URL is an external host (Rails 7 raise_on_open_redirects).
+    redirect_to Oauth2::Radar::get_authorize_url(state), allow_other_host: true
   end
 
   def callback
@@ -108,7 +109,8 @@ class Oauth::RadarController < ApplicationController
     end
 
     unless collection.metadata.metadata['datasetUrl'].nil?
-      return redirect_to collection.metadata.metadata['datasetUrl']
+      # allow_other_host: datasetUrl is an external host (Rails 7 raise_on_open_redirects).
+      return redirect_to collection.metadata.metadata['datasetUrl'], allow_other_host: true
     else
       return render
     end

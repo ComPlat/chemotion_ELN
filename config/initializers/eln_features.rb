@@ -77,7 +77,9 @@ rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   Rails.logger.warn e.message
 end
 
-ActiveSupport.on_load(:active_record) do
+# Runs in after_initialize so Matrice / Labimotion::ElementKlass are not autoloaded
+# during initialization (an error in Rails 7). Regenerates the JSON caches once at boot.
+Rails.application.config.after_initialize do
   Matrice.gen_matrices_json if ActiveRecord::Base.connection.table_exists?('matrices')
   Labimotion::ElementKlass.gen_klasses_json if ActiveRecord::Base.connection.table_exists?('element_klasses')
 rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e

@@ -13,7 +13,7 @@ describe Usecases::Attachments::Thumbnail::ThumbnailCreator do
 
   describe '.create_derivative' do
     it 'successfully created thumbnail' do
-      allow_any_instance_of(Thumbnailer) # rubocop:disable RSpec/AnyInstance
+      allow(Usecases::Attachments::Thumbnail::ThumbnailGenerator)
         .to receive(:create)
         .and_return(temp_file)
       result = creator.create_derivative(temp_file, nil, nil, {}, attachment)
@@ -28,7 +28,7 @@ describe Usecases::Attachments::Thumbnail::ThumbnailCreator do
       let(:result) { creator.create_derivative(temp_file, nil, nil, {}, attachment) }
 
       it 'thumb flag at attachment is false' do
-        allow_any_instance_of(Thumbnailer) # rubocop:disable RSpec/AnyInstance
+        allow(Usecases::Attachments::Thumbnail::ThumbnailGenerator)
           .to receive(:create)
           .and_raise('An error occurred')
         expect(attachment.thumb).to be false

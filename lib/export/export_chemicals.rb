@@ -62,13 +62,22 @@ module Export
       gathered_selections << chemical_selections
     end
 
+    # The formatting pipeline below renames and drops columns in place. Since Rails 7.1
+    # ActiveRecord::Result freezes its columns on construction, so writing into
+    # result.columns raises FrozenError. The pipeline therefore works on this mutable
+    # stand-in and the caller gets a fresh Result back. The helpers only ever touch
+    # #columns and #rows, which is why their specs can drive them with an OpenStruct.
+    FormattableResult = Struct.new(:columns, :rows)
+
     def self.format_chemical_results(result)
+      table = FormattableResult.new(result.columns.dup, result.rows)
       columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
-      result.columns.map.with_index do |column_name, index|
+      table.columns.each_with_index do |column_name, index|
         column_name, columns_index = construct_column_name(column_name, index, columns_index)
-        result.columns[index] = column_name # Replace the value in the array
+        table.columns[index] = column_name
       end
-      format_chemical_results_row(result, columns_index)
+      formatted = format_chemical_results_row(table, columns_index)
+      ActiveRecord::Result.new(formatted.columns, formatted.rows, result.column_types)
     end
 
     def self.construct_column_name(column_name, index, columns_index)

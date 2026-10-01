@@ -1,7 +1,6 @@
-require "helper"
-
 module Cdx
   class Creator
+    # include autoloads helper.rb (defines Cdx::Helper + the sibling Cdx::* constants).
     include Cdx::Helper
     attr_reader :doc, :str, :bond_length
     def initialize(args)

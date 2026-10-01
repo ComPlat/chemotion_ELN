@@ -1,0 +1,31 @@
+# Safety-Net (Querschnitt Q) — automated dependency-update PRs.
+# Covers the Ruby bundle, the JS packages, and the GitHub Actions themselves.
+# See DEV_UPGRADING.md → "Querschnitt Q — Safety-Net".
+version: 2
+updates:
+  - package-ecosystem: bundler
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ruby
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci

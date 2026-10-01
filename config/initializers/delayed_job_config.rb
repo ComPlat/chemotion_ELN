@@ -22,21 +22,8 @@ Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 
-# NB: this initialiser is NOT idempotent (yet), do NOT use:  `Rails.application.reloader.to_prepare do` block
-# to supress:
-# ```
-# DEPRECATION WARNING: Initialization autoloaded the constants  ApplicationRecord
-#  ApplicationJob, CollectDataFromMailJob, CollectDataFromSftpJob, CollectDataFromLocalJob,
-#  CollectFileFromLocalJob, CollectFileFromSftpJob, PubchemCidJob, PubchemLcssJob,
-#  RefreshElementTagJob, ChemrepoIdJob, and InitCronJobsJob.
-#
-# Being able to do this is deprecated. Autoloading during initialization is going
-# to be an error condition in future versions of Rails.
-# ```
-# otherwise InitCronJobsJob will be called multiple times
-
 # Job classes removed from the codebase whose rows may still be queued. See the cleanup step
-# inside the on_load block. Plain strings, deliberately — the whole point is that no constant
+# inside the after_initialize block. Plain strings, deliberately — the whole point is that no constant
 # needs to survive for these to be recognised.
 OBSOLETE_JOB_CLASSES = %w[PubchemSingleLcssJob PubchemCidJob PubchemLcssJob].freeze
 
@@ -74,7 +61,10 @@ if ENV.fetch('CRON_CONFIG_PC_LCSS', nil).present?
   Rails.logger.warn msg
 end
 
-ActiveSupport.on_load(:active_record) do
+# Runs in after_initialize (not on_load(:active_record)) so the Job constants are not
+# autoloaded during initialization (an error in Rails 7). after_initialize also runs
+# once per boot, so — unlike to_prepare — InitCronJobsJob is not re-scheduled on reload.
+Rails.application.config.after_initialize do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 
   # List of recurring jobs with default attributes JobClass, enabled, cron_variable
