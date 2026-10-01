@@ -100,7 +100,7 @@ module Chemotion
     end
 
     # Validate optional URLs inside vendor_info.
-    # Only performs checks when vendor_info is a Hash. If present, validates:
+    # Only performs checks when vendor_info is a Hash. A blank link counts as absent. If present, validates:
     #  - productLink: must satisfy InputValidationUtils.valid_product_link_url?
     #  - sdsLink:     must satisfy InputValidationUtils.valid_safety_sheet_link_url?
     # @return [Array<String>]
@@ -108,11 +108,13 @@ module Chemotion
       return [] unless @vendor_info.is_a?(Hash)
 
       errors = []
-      if @vendor_info['productLink'] && !InputValidationUtils.valid_product_link_url?(@vendor_info['productLink'])
+      if @vendor_info['productLink'].present? &&
+         !InputValidationUtils.valid_product_link_url?(@vendor_info['productLink'])
         errors << 'Invalid product link URL'
       end
 
-      if @vendor_info['sdsLink'] && !InputValidationUtils.valid_safety_sheet_link_url?(@vendor_info['sdsLink'])
+      if @vendor_info['sdsLink'].present? &&
+         !InputValidationUtils.valid_safety_sheet_link_url?(@vendor_info['sdsLink'])
         errors << 'Invalid safety sheet link URL'
       end
       errors
