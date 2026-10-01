@@ -1270,8 +1270,6 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  // Brand keys are the vendor's own URL segments; a wrong one yields a 404 on their site.
-  // The number itself comes from Inventory Information, not from a field duplicated here.
   safetySheetLanguage() {
     const { safetySheetLanguage } = this.state;
     const languageOptions = [
