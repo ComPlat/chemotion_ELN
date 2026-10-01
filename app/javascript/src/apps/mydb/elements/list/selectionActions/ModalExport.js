@@ -5,10 +5,12 @@ import AppModal from 'src/components/common/AppModal';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 const filterUIState = (uiState) => {
   const {
-    currentCollection, sample, reaction, wellplate
+    currentCollection, sample, reaction, wellplate,
+    userLabel, fromDate, toDate, filterCreatedAt, productOnly
   } = uiState;
   return {
     sample: {
@@ -27,6 +29,12 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
+    // "All pages" sends no ids, so the list filters have to travel with it.
+    userLabel,
+    fromDate: fromDate ? dateToUnixTimestamp(fromDate) : null,
+    toDate: toDate ? dateToUnixTimestamp(toDate) : null,
+    filterCreatedAt,
+    productOnly,
   };
 };
 
