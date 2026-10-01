@@ -416,6 +416,16 @@ describe Chemotion::ChemicalsService do
       expect(described_class).not_to have_received(:create_sds_file)
     end
 
+    it 'trims the vendor and product number before fetching and keying the sheet', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file).and_return(held)
+      product_info.merge!('vendor' => " Merck\n", 'productNumber' => ' 179124 ')
+
+      chemical = save
+      expect(described_class).to have_received(:create_sds_file)
+        .with('https://www.sigmaaldrich.com/x', '179124', 'merck')
+      expect(chemical.chemical_data[0]['safetySheetPath']).to eq([{ '179124_aaaaaaaaaaaaaaaa_link' => held }])
+    end
+
     it 'refuses a sheet the sample already holds as final', :aggregate_failures do
       allow(described_class).to receive(:create_sds_file).and_return(held)
 
