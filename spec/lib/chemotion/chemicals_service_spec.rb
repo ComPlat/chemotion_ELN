@@ -21,6 +21,52 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe '.merck' do
+    let(:search_url) do
+      'https://www.sigmaaldrich.com/DE/de/search/Phenol' \
+        '?focus=products&page=1&perpage=30&sort=relevance&term=Phenol&type=product'
+    end
+
+    # Regression: Sigma-Aldrich answers its search endpoint with 429 once it
+    # decides the caller is automated. Reporting that as "could not find safety
+    # data sheet" sent users hunting for a compound that is really there.
+    it 'reports rate limiting instead of a missing sheet on HTTP 429' do
+      stub_request(:get, search_url).to_return(status: 429, body: '{}')
+
+      expect(described_class.merck('Phenol', 'de'))
+        .to include('rate-limiting automated SDS lookups (HTTP 429)')
+    end
+
+    it 'reports a refusal on HTTP 403' do
+      stub_request(:get, search_url).to_return(status: 403, body: '')
+
+      expect(described_class.merck('Phenol', 'de')).to include('refused the automated SDS lookup (HTTP 403)')
+    end
+
+    it 'reports a moved search endpoint on a redirect' do
+      stub_request(:get, search_url).to_return(status: 301, body: '', headers: { 'Location' => 'https://x' })
+
+      expect(described_class.merck('Phenol', 'de')).to include('moved its product search (HTTP 301)')
+    end
+
+    it 'names the search term when the page loads but holds no product' do
+      stub_request(:get, search_url).to_return(status: 200, body: '<html><body>no results</body></html>')
+
+      expect(described_class.merck('Phenol', 'de')).to eq('No Merck product matched "Phenol".')
+    end
+
+    it 'returns the sds and product links when a product is found' do
+      body = '<html><body><a href="/DE/de/product/sial/33009">Phenol</a></body></html>'
+      stub_request(:get, search_url).to_return(status: 200, body: body)
+
+      expect(described_class.merck('Phenol', 'de')).to eq(
+        'merck_link' => 'https://www.sigmaaldrich.com/DE/de/sds/sial/33009',
+        'merck_product_number' => '33009',
+        'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sial/33009',
+      )
+    end
+  end
+
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
       let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }
