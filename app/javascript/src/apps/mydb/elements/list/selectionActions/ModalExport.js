@@ -108,6 +108,7 @@ export default class ModalExport extends React.Component {
           { value: 'status', text: 'status', checked: false },
           { value: 'vendor', text: 'vendor', checked: false },
           { value: 'order_number', text: 'order number', checked: false },
+          { value: 'product_number', text: 'product number', checked: false },
           { value: 'amount', text: 'amount', checked: false },
           { value: 'price', text: 'price', checked: false },
           { value: 'person', text: 'person', checked: false },

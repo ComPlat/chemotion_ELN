@@ -89,21 +89,22 @@ module Chemotion
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
               vendor = data[:vendor]
               language = data[:language]
-              case data[:option]
-              when 'Common Name'
-                name = data[:searchStr] || molecule.names[0]
-              when 'CAS'
-                name = data[:searchStr] || molecule.cas[0]
-              end
+              # A product number narrows the vendor listing; PubChem is still reached by
+              # the molecule, so a name or CAS is needed either way.
+              name = data[:searchStr].presence ||
+                     (data[:option] == 'Common Name' ? molecule&.names&.first : molecule&.cas&.first)
+              number = data[:productNumber]
               case vendor
-              when 'Merck'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
+              when 'Merck', 'Sigma-Aldrich'
+                { merck_link: Chemotion::ChemicalsService.merck(name, language, number) }
               when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number) }
+              when 'All'
+                Chemotion::ChemicalsService.vendor_overview(name, language, number)
               else
                 {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
+                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number),
+                  merck_link: Chemotion::ChemicalsService.merck(name, language, number),
                 }
               end
             end
@@ -121,24 +122,19 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
-          Chemotion::ChemicalsService.handle_exceptions do
-            product_info = params[:chemical_data][0][params[:vendor_product]]
-            file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
-              product_info['sdsLink'],
-              product_info['vendor'].downcase,
-              product_info['productNumber'],
-            )
-            return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
-
-            Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
+          result = Chemotion::ChemicalsService.handle_exceptions do
+            Chemotion::ChemicalsService.save_vendor_sheet(
               sample_id: params[:sample_id],
               cas: params[:cas],
               chemical_data: params[:chemical_data],
-              file_path: file_path,
-              product_number: product_info['productNumber'],
-              vendor: product_info['vendor'].downcase,
+              product_info: params[:chemical_data].first.try(:[], params[:vendor_product]),
             )
           end
+          if result.is_a?(Hash) && result[:error].present?
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
+          end
+
+          result
         end
       end
 
@@ -166,7 +162,7 @@ module Chemotion
           )
 
           if result.is_a?(Hash) && result[:error].present?
-            error!({ error: result[:error] }, 400)
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
           else
             # Return the created/updated chemical
             present result
