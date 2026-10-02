@@ -91,6 +91,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.handleConcentrationModeChange = this.handleConcentrationModeChange.bind(this);
     this.switchVolumeLock = this.switchVolumeLock.bind(this);
     this.showReactionVolumeRequiredWarning = this.showReactionVolumeRequiredWarning.bind(this);
+    this.showConcentrationBasisNotice = this.showConcentrationBasisNotice.bind(this);
   }
 
   componentDidMount() {
@@ -1437,11 +1438,21 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   applyDerivedVolumeFromConcentration(reaction, sample, concentration) {
     const { onInputChange } = this.props;
+    const previousMode = reaction.concentration_mode;
     const applied = reaction.deriveVolumeFromSampleConcentration(sample, concentration);
 
     if (applied && onInputChange) {
       onInputChange('volume', applied.volume);
       onInputChange('concentrationMode', applied.concentrationMode);
+
+      // Typing a concentration directly defines the reaction volume, which only
+      // makes sense on the reaction-volume basis. The switch is intended, but
+      // surface it so the basis does not change silently under the user.
+      if (previousMode !== applied.concentrationMode) {
+        this.showConcentrationBasisNotice(
+          'Concentration basis switched to "Reaction volume" because you entered a concentration directly.'
+        );
+      }
     }
   }
 
@@ -2344,6 +2355,16 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  showConcentrationBasisNotice(message) {
+    this.context.notifications.add({
+      title: 'Concentration basis changed',
+      message,
+      level: 'info',
+      position: 'tc',
+      autoDismiss: 5,
+    });
+  }
+
   reactionVolume() {
     const { reaction } = this.props;
     const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
@@ -2402,24 +2423,27 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVolume(e) {
     const { reaction, onInputChange } = this.props;
-    if (e && e.value !== undefined) {
-      // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
-      const newVolume = e.value === '' ? null : e.value;
-      onInputChange('volume', newVolume);
+    if (!e || e.value === undefined) return;
 
-      // If a valid reaction volume is set, automatically switch to the
-      // reaction-volume basis and recalculate concentrations for all materials
-      if (newVolume != null && newVolume > 0) {
-        const reactionVolumeMode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
-        reaction.resetPreservedConcentrationExcept();
-        if (reaction.concentration_mode !== reactionVolumeMode) {
-          reaction.concentration_mode = reactionVolumeMode;
-          onInputChange('concentrationMode', reactionVolumeMode);
-        }
+    // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
+    const newVolume = e.value === '' ? null : e.value;
+    onInputChange('volume', newVolume);
 
-        // Recalculate concentrations for all materials
-        reaction.updateAllConcentrations();
-      }
+    // Entering, changing, or clearing the reaction volume must not change the
+    // chosen basis; the Conc dropdown is the only control for that. The volume
+    // field is a concentration denominator only on the reaction-volume basis, so
+    // recalculate (including when it is cleared) solely in that mode.
+    if (reaction.concentration_mode !== Reaction.CONCENTRATION_MODES.REACTION_VOLUME) return;
+
+    reaction.resetPreservedConcentrationExcept();
+    reaction.updateAllConcentrations();
+
+    // On the reaction-volume basis with no usable volume, concentrations fall
+    // back to the solvent volume; surface that instead of changing silently.
+    if (!(newVolume > 0)) {
+      this.showReactionVolumeRequiredWarning(
+        'No reaction volume is set, so concentrations use the solvent volume until you enter one.'
+      );
     }
   }
 

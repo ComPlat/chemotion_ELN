@@ -1424,6 +1424,42 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
     expect(onInputChange.calledWith('concentrationMode')).toBe(false);
   });
+
+  it('records the volume without changing the basis or recomputing on a non-reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = { props: { reaction, onInputChange } };
+
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+
+    expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
+    expect(onInputChange.calledWith('concentrationMode')).toBe(false);
+    expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
+    expect(reaction.updateAllConcentrations.called).toBe(false);
+  });
+
+  it('recomputes and warns when the reaction volume is cleared on the reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: '' });
+
+    expect(onInputChange.calledWith('volume', null)).toBe(true);
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+  });
 });
 
 describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
