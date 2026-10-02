@@ -207,10 +207,10 @@ describe Chemotion::AttachableAPI do
         expect(attachment.reload.attachable_id).to be_nil
       end
 
-      it "moves it to the uploader's Unsorted inbox" do
-        expect(attachment.reload.attachable_type).to eq('Container')
-        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil, created_for: attachment.created_for))
-          .to include(attachment)
+      # del_files is the frontend's delete path: a deleted file must not show up in the inbox.
+      it "keeps it out of the uploader's Unsorted inbox" do
+        expect(attachment.reload.attachable_type).to eq('Wellplate')
+        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil)).not_to include(attachment)
       end
     end
 

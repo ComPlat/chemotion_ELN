@@ -662,6 +662,12 @@ describe Chemotion::AttachmentAPI do
         get "/api/v1/attachments/#{format(route, foreign_attachment.id)}", params: own_element_params
         expect(response).to have_http_status(:unauthorized)
       end
+
+      it "rejects HEAD #{format(route, ':id')} for another user's attachment" do
+        head "/api/v1/attachments/#{format(route, foreign_attachment.id)}"
+        expect(response).to have_http_status(:unauthorized)
+        expect(response.headers['Content-Disposition']).to be_nil
+      end
     end
 
     context 'with an unsorted inbox file' do
@@ -705,6 +711,51 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # Attachments of a generic element are authorized against the element, like any other element.
+  describe 'GET an attachment of a generic element' do
+    let(:owner) { create(:person) }
+    let(:collection) { create(:collection, user: owner) }
+    let(:element) { create(:element, creator: owner, collections: [collection]) }
+    let(:attachment) { create(:attachment, :with_png_image, attachable: element, created_for: owner.id) }
+
+    it 'serves it to a user the element is shared with' do
+      create(:collection_share, collection: collection, shared_with: user, element_detail_level: 10)
+      get "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'rejects a user the element is not shared with' do
+      get "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  # Prediction lookups stay within the attachment's own attachable.
+  describe 'POST files for an Unsorted file' do
+    let(:own_inbox_file) do
+      create(:attachment, :with_png_image, attachable: nil, attachable_type: 'Container', created_for: user.id)
+    end
+    let(:other_users_json) do
+      Tempfile.new(%w[other .infer.json]).tap do |f|
+        f.write('{"output": "other"}')
+        f.flush
+      end
+    end
+
+    before do
+      create(:attachment, filename: 'other.infer.json', file_path: other_users_json.path, aasm_state: 'json',
+                          attachable: nil, attachable_type: 'Container', created_for: create(:person).id)
+      post '/api/v1/attachments/files', params: { ids: [own_inbox_file.id] }
+    end
+
+    after { other_users_json.close! }
+
+    it 'does not return predictions from another attachable' do
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['files'].first['predictions']).to eq({})
+    end
+  end
+
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
     let(:user) { create(:person) }
     let(:container) { create(:container, containable: user) }
@@ -742,10 +793,13 @@ describe Chemotion::AttachmentAPI do
     end
 
     # The previous file is looked up on the same attachable (type and id), not just the same id.
+    # The decoy is the user's own (a template attachment resolves to its created_for user), so only
+    # the attachable type keeps it from counting as a duplicate.
     context 'when an attachable of another type with the same id has a file of the same name' do
       let!(:same_name_elsewhere) do
-        create(:attachment, :with_spectra_file, filename: 'same_name.jdx', attachable_type: 'ResearchPlan',
-                                                attachable_id: container.id, created_for: create(:person).id)
+        create(:attachment, :with_spectra_file, filename: 'same_name.jdx', attachable: nil,
+                                                attachable_type: 'Template', attachable_id: container.id,
+                                                created_for: user.id)
       end
       let(:original_attachment) do
         create(:attachment, :with_spectra_file_failure, filename: 'same_name.jdx', attachable: container)
@@ -759,6 +813,26 @@ describe Chemotion::AttachmentAPI do
       it 'keeps that file' do
         expect(response).to have_http_status(:created)
         expect(Attachment.find_by(id: same_name_elsewhere.id)).not_to be_nil
+      end
+    end
+
+    context 'when regenerating an Unsorted file while another Unsorted file has the same name' do
+      let!(:other_inbox_file) do
+        create(:attachment, :with_spectra_file, filename: 'inbox.jdx', attachable: nil, attachable_type: 'Container',
+                                                created_for: user.id)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'inbox.jdx', attachable: nil,
+                                                        attachable_type: 'Container', created_for: user.id)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps the other file' do
+        expect(Attachment.find_by(id: other_inbox_file.id)).not_to be_nil
       end
     end
 
@@ -1074,9 +1148,9 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  # Regression: unsorted inbox files have attachable_type 'Container' but no attachable_id, so
-  # Attachment#root_element is nil and write_access? denies everyone - including the owner, who
-  # could no longer delete their own inbox files. No write_access? stub here on purpose.
+  # Regression: unsorted inbox files have attachable_type 'Container' but no attachable_id, so there
+  # is no root element to authorize against; they belong to their created_for user, who must be able
+  # to delete them. No write_access? stub here on purpose.
   describe 'deleting an unsorted inbox file' do
     let(:inbox_attachment) do
       post '/api/v1/attachments/upload_to_inbox',

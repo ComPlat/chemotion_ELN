@@ -96,6 +96,31 @@ RSpec.describe Usecases::Attachments::Access do
     end
   end
 
+  # Generic elements: attachments of the element itself, and uploads into an element or segment
+  # layer field, resolve to the element they belong to.
+  describe 'with a generic element attachment' do
+    it 'authorizes an attachment of the element against the element' do
+      element = create(:element, creator: user, collections: [own_collection])
+      attachment = create(:attachment, attachable: element)
+
+      expect([read?(attachment), read?(attachment, as: owner)]).to eq [true, false]
+    end
+
+    it 'authorizes an element field upload against the element' do
+      element = create(:element, creator: user, collections: [own_collection])
+      attachment = create(:attachment, attachable: nil, attachable_type: 'ElementProps', attachable_id: element.id)
+
+      expect([write?(attachment), write?(attachment, as: owner)]).to eq [true, false]
+    end
+
+    it 'authorizes a segment field upload against the element holding the segment' do
+      segment = create(:segment, element: create(:sample, collections: [own_collection]))
+      attachment = create(:attachment, attachable: nil, attachable_type: 'SegmentProps', attachable_id: segment.id)
+
+      expect([read?(attachment), read?(attachment, as: owner)]).to eq [true, false]
+    end
+  end
+
   describe 'with an attachment linked directly to a research plan' do
     let(:attachment) { create(:attachment, attachable: research_plan, created_for: owner.id) }
 

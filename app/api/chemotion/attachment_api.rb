@@ -69,13 +69,12 @@ module Chemotion
         { ok: false, statusText: 'File key is not valid' }
       end
 
-      # Drops the previous file of the same name on the same attachable, if the user may change it.
+      # Drops the other files of the same name on the same attachable that the user may change.
+      # An unattached file has no attachable, so nothing counts as its duplicate.
       def remove_duplicated(att)
-        old_att = Attachment.find_by(filename: att.filename, attachable_type: att.attachable_type,
-                                     attachable_id: att.attachable_id)
-        return if old_att.nil? || old_att.id == att.id || !writable?(old_att)
-
-        old_att.destroy
+        att.same_attachable.where(filename: att.filename).where.not(id: att.id).find_each do |old_att|
+          old_att.destroy if writable?(old_att)
+        end
       end
 
       def remove_generated_children(att)
@@ -121,7 +120,7 @@ module Chemotion
         case request.request_method
         when 'DELETE'
           error!('401 Unauthorized', 401) unless writable?(@attachment)
-        when 'GET'
+        when 'GET', 'HEAD'
           error!('401 Unauthorized', 401) unless get_request_readable?
         end
       end
@@ -452,9 +451,10 @@ module Chemotion
         requires :ids, type: [Integer]
       end
       post 'thumbnails' do
+        atts = Attachment.where(id: params[:ids]).index_by(&:id)
         thumbnails = params[:ids].map do |a_id|
-          att = Attachment.find(a_id)
-          readable?(att) ? thumbnail_obj(att) : nil
+          att = atts[a_id]
+          att && readable?(att) ? thumbnail_obj(att) : nil
         end
         { thumbnails: thumbnails }
       end
@@ -464,9 +464,10 @@ module Chemotion
         requires :ids, type: [Integer]
       end
       post 'files' do
+        atts = Attachment.where(id: params[:ids]).index_by(&:id)
         files = params[:ids].map do |a_id|
-          att = Attachment.find(a_id)
-          readable?(att) ? raw_file_obj(att) : nil
+          att = atts[a_id]
+          att && readable?(att) ? raw_file_obj(att) : nil
         end
         error!('401 Unauthorized', 401) if !files.empty? && files.compact.empty?
         { files: files }

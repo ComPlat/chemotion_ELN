@@ -83,6 +83,11 @@ class Attachment < ApplicationRecord
     SequenceBasedMacromolecule SequenceBasedMacromoleculeSample
   ].freeze
 
+  # Generic element (labimotion) attachment types. 'Labimotion::Element' points at the element;
+  # the *Props types are uploads into a layer field and point at the element, segment or dataset
+  # holding it (see Labimotion::Prop). #root_element resolves each to its element.
+  LABIMOTION_ATTACHABLE_TYPES = %w[Labimotion::Element ElementProps SegmentProps DatasetProps].freeze
+
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
   # rubocop:disable Rails/InverseOf
@@ -155,9 +160,29 @@ class Attachment < ApplicationRecord
       attachable
     when 'Container'
       attachable&.root_element
+    when *LABIMOTION_ATTACHABLE_TYPES
+      labimotion_root_element
     else
       recipient
     end
+  end
+
+  # Whether #root_element is derived from (attachable_type, attachable_id) alone, so it is the same
+  # for every attachment on that attachable; false for the created_for fallback.
+  def root_element_from_attachable?
+    attachable_id.present? &&
+      (attachable_type.in?(ELEMENT_ATTACHABLE_TYPES) || attachable_type.in?(LABIMOTION_ATTACHABLE_TYPES) ||
+       attachable_type == 'Container')
+  end
+
+  # Other attachments on the same attachable (this one included). Empty when there is no
+  # attachable_id: unattached files of different users share no attachable.
+  #
+  # @return [ActiveRecord::Relation<Attachment>]
+  def same_attachable
+    return Attachment.none if attachable_id.nil?
+
+    Attachment.where(attachable_type: attachable_type, attachable_id: attachable_id)
   end
 
   def for_research_plan?
@@ -289,6 +314,20 @@ class Attachment < ApplicationRecord
   end
 
   private
+
+  def labimotion_root_element
+    case attachable_type
+    when 'Labimotion::Element' then attachable
+    when 'ElementProps' then Labimotion::Element.find_by(id: attachable_id)
+    when 'SegmentProps' then Labimotion::Segment.find_by(id: attachable_id)&.element
+    when 'DatasetProps' then labimotion_dataset_root_element
+    end
+  end
+
+  # A generic dataset belongs to an analysis container.
+  def labimotion_dataset_root_element
+    Labimotion::Dataset.find_by(id: attachable_id)&.element&.root_element
+  end
 
   def matching_samples
     InboxSearchElements.call(search_string: filename, current_user: recipient, element: :sample)

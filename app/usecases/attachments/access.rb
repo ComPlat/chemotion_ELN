@@ -14,6 +14,7 @@ module Usecases
       def initialize(user)
         @user = user
         @results = {}
+        @roots = {}
       end
 
       # @param attachment [Attachment, nil]
@@ -22,7 +23,7 @@ module Usecases
         return false if attachment.blank? || @user.nil?
         return own_unattached?(attachment) if attachment.attachable_id.nil?
 
-        read_element?(attachment.root_element)
+        read_element?(root_of(attachment))
       end
 
       # On a SequenceBasedMacromolecule another user has a sample of, only the uploader may change
@@ -35,7 +36,7 @@ module Usecases
         return false if attachment.blank? || @user.nil?
         return own_unattached?(attachment) if attachment.attachable_id.nil?
 
-        write_on_element?(attachment, attachment.root_element)
+        write_on_element?(attachment, root_of(attachment))
       end
 
       # Read access to an element's attachments: the element itself and its datasets.
@@ -53,6 +54,16 @@ module Usecases
       end
 
       private
+
+      # Attachments on one attachable share their root element; resolve it once per attachable.
+      def root_of(attachment)
+        return attachment.root_element unless attachment.root_element_from_attachable?
+
+        key = [attachment.attachable_type, attachment.attachable_id]
+        return @roots[key] if @roots.key?(key)
+
+        @roots[key] = attachment.root_element
+      end
 
       def write_on_element?(attachment, element)
         return own_user_element?(element) if element.nil? || element.is_a?(User)
