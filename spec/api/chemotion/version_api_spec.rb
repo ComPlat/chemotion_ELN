@@ -117,4 +117,35 @@ describe Chemotion::VersionAPI do
       expect(Sample.find(sample.id).name).to eq old_name
     end
   end
+
+  describe 'POST /api/v1/versions/revert with a class that cannot be reverted' do
+    it 'rejects the request' do
+      post '/api/v1/versions/revert', params: { changes: [{ db_id: 1, klass_name: 'User', fields: [] }] }
+
+      expect(response.status).to eq 400
+    end
+  end
+
+  describe 'POST /api/v1/versions/revert for a literal' do
+    let(:literal) { create(:literal, literature: create(:literature), litype: 'referTo') }
+    let(:fields) { [{ value: nil, name: 'deleted_at' }, { value: 'citedOwn', name: 'litype' }] }
+    let(:params) { { changes: [{ db_id: literal.id, klass_name: 'Literal', fields: fields }] } }
+
+    before do
+      literal.destroy!
+    end
+
+    it 'restores the literal and its citation type' do
+      post '/api/v1/versions/revert', params: params
+
+      expect([response.status, Literal.find(literal.id).litype]).to eq [201, 'citedOwn']
+    end
+
+    it 'requires update permission on the element' do
+      allow(my_instance).to receive(:update?).and_return(false)
+      post '/api/v1/versions/revert', params: params
+
+      expect([response.status, Literal.with_deleted.find(literal.id)]).to match [401, be_deleted]
+    end
+  end
 end
