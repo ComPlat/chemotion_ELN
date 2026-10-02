@@ -92,7 +92,9 @@ export const SearchStore = types
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
     // within an action
     loadSearchResults: flow(function* loadSearchResults(params) {
-      let result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params);
+      const result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection({
+        ...params, applyListFilters: false
+      });
       if (result) {
         self.search_results.clear();
         self.tab_search_results.clear();

@@ -61,9 +61,12 @@ module Chemotion
           end
           optional :list_filter_params, type: Hash do
             optional :filter_created_at, type: Boolean
-            optional :from_date, type: Date
-            optional :to_date, type: Date
+            # Unix seconds, as the collection listing endpoints take them. A Date would be coerced
+            # from the browser's ISO string in UTC and land a day early east of Greenwich.
+            optional :from_date, type: Integer
+            optional :to_date, type: Integer
             optional :product_only, type: Boolean
+            optional :user_label, type: Integer
           end
         end
         requires :collection_id, type: String
@@ -94,6 +97,10 @@ module Chemotion
 
       def list_filter_params
         params[:selection][:list_filter_params]
+      end
+
+      def list_filters
+        Usecases::Search::ListFilter.from_params(params)
       end
 
       # TODO: move to Sample (DRY Usecases::Search::StructureSearch::basic_scope)
@@ -523,7 +530,7 @@ module Chemotion
         when DeviceDescription
           elements[:device_description_ids] = scope&.ids
         end
-        elements
+        Usecases::Search::ListFilter.apply(elements, list_filters)
       end
     end
 
