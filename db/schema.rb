@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_07_09_140001) do
+ActiveRecord::Schema.define(version: 2026_08_11_080000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -215,6 +215,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.integer "wellplate_detail_level", default: 0, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.jsonb "log_data"
     t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
     t.index ["collection_id", "shared_with_id"], name: "index_collection_shares_on_collection_id_and_shared_with_id", unique: true
     t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
@@ -232,6 +233,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "tabs_segment", default: {}
     t.bigint "inventory_id"
     t.boolean "shared", default: false, null: false
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -2778,7 +2780,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
       $function$
   SQL
 
-
+  create_trigger :logidze_on_collections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
@@ -2832,6 +2836,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   SQL
   create_trigger :logidze_on_wells, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_collection_shares, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collection_shares BEFORE INSERT OR UPDATE ON public.collection_shares FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
   create_view "literal_groups", sql_definition: <<-SQL
