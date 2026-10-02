@@ -747,6 +747,7 @@ describe('Import Data Validations', () => {
     it('should identify chemical fields', () => {
       expect(isChemicalField('status')).toBe(true);
       expect(isChemicalField('vendor')).toBe(true);
+      expect(isChemicalField('product_number')).toBe(true);
       expect(isChemicalField('chemical_data.some_property')).toBe(true);
     });
 

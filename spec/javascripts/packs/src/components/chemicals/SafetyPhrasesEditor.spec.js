@@ -1,5 +1,6 @@
 import React from 'react';
 import { configure, shallow } from 'enzyme';
+import { Button } from 'react-bootstrap';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
@@ -75,6 +76,44 @@ describe('SafetyPhrasesEditor', () => {
     expect(sectionWithPrefix(wrapper, 'safety-h-phrases').exists()).toBe(true);
     expect(sectionWithPrefix(wrapper, 'safety-p-phrases').exists()).toBe(true);
     expect(pictogramSection(wrapper).exists()).toBe(true);
+  });
+
+  describe('folding the three sections', () => {
+    // PhraseSection renders a CollapsibleSection, so the body is two levels down.
+    const bodyOf = (section) => section.shallow().shallow();
+
+    const editorWith = (value) => shallow(
+      React.createElement(SafetyPhrasesEditor, { value, onChange: sinon.spy() })
+    );
+
+    it('starts folded while a section holds nothing', () => {
+      const inner = bodyOf(sectionWithPrefix(editorWith(null), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(true);
+      expect(inner.text()).toEqual(expect.stringContaining('none added yet'));
+    });
+
+    it('starts open when the section already holds statements', () => {
+      const value = { h_statements: { H315: ' Causes skin irritation' } };
+      const inner = bodyOf(sectionWithPrefix(editorWith(value), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(false);
+      expect(inner.text()).toEqual(expect.stringContaining('1'));
+    });
+
+    it('folds pictograms on the same terms', () => {
+      const empty = bodyOf(pictogramSection(editorWith(null)));
+      expect(empty.find('div[hidden=true]').exists()).toBe(true);
+
+      const filled = bodyOf(pictogramSection(editorWith({ pictograms: ['GHS07'] })));
+      expect(filled.find('div[hidden=true]').exists()).toBe(false);
+    });
+
+    it('opens an empty section on the caret', () => {
+      const inner = bodyOf(sectionWithPrefix(editorWith(null), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(true);
+
+      inner.find(Button).simulate('click');
+      expect(inner.find('div[hidden=true]').exists()).toBe(false);
+    });
   });
 
   it('passes existing phrases through as section items', () => {

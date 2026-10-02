@@ -572,6 +572,7 @@ class Material extends Component {
         type: 'externalLabelChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
         externalLabel: value,
       };
       this.props.onChange(e);
@@ -868,6 +869,7 @@ class Material extends Component {
         type: 'amountTypeChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
       };
       this.props.onChange(event);
     }
@@ -961,6 +963,7 @@ class Material extends Component {
         isSbmm: this.isSbmm,
         equivalent,
         weightPercentageField: e.weightPercentageField || false,
+        isEquivalentEdit: e.isEquivalentEdit ?? true,
       };
       onChange(event);
     }
@@ -970,9 +973,13 @@ class Material extends Component {
     this.setState({ fieldToShow: field });
     if (field === 'weight percentage') {
       if (material.reference) {
-        this.handleEquivalentChange({ value: 1 });
+        this.handleEquivalentChange({ value: 1, isEquivalentEdit: false });
       } else if (!material.weight_percentage_reference) {
-        this.handleEquivalentChange({ value: 0, weightPercentageField: true });
+        this.handleEquivalentChange({
+          value: 0,
+          weightPercentageField: true,
+          isEquivalentEdit: false,
+        });
       }
     } else if (field === 'molar mass') {
       if (!material.reference) {

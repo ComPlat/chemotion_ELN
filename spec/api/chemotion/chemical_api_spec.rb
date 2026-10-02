@@ -106,7 +106,6 @@ describe Chemotion::ChemicalAPI do
     before do
       # Short-circuit SDS creation to avoid filesystem/network dependencies in this API spec
       allow(Chemotion::ChemicalsService).to receive_messages(
-        find_existing_file_by_vendor_product_number_signature: nil,
         create_sds_file: '/safety_sheets/thermofischer/A14672_web_1234567890abcdef.pdf',
       )
 
@@ -138,15 +137,16 @@ describe Chemotion::ChemicalAPI do
           'Access-Control-Request-Method' => 'GET',
         })
         .to_return(status: 200, body: '', headers: {})
-      stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
-        .with(headers:
-        {
-          'Accept' => '*/*',
-          'Accept-Encoding' => 'gzip, deflate, br',
-          'Access-Control-Request-Method' => 'GET',
-          'User-Agent' => 'Google Chrome',
-        })
-        .to_return(status: 200, body: '', headers: {})
+      # Absorbed the merck search scrape, which now resolves through PubChem instead.
+      # stub_request(:get, 'https://www.sigmaaldrich.com/US/en/search')
+      #   .with(headers:
+      #   {
+      #     'Accept' => '*/*',
+      #     'Accept-Encoding' => 'gzip, deflate, br',
+      #     'Access-Control-Request-Method' => 'GET',
+      #     'User-Agent' => 'Google Chrome',
+      #   })
+      #   .to_return(status: 200, body: '', headers: {})
       get(
         "/api/v1/chemicals/fetch_safetysheet/#{chemical.sample_id}?" \
         "data[vendor]=#{params[:vendor]}&" \
@@ -276,7 +276,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Chemotion::ChemicalsService)
-        .to receive(:find_existing_or_create_safety_sheet)
+        .to receive(:create_sds_file)
         .and_return({ error: 'download failed' })
       post '/api/v1/chemicals/save_safety_datasheet', params: params
     end
@@ -284,6 +284,31 @@ describe Chemotion::ChemicalAPI do
     it 'returns 400 with error body' do
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['error']).to eq 'download failed'
+    end
+  end
+
+  describe 'POST save safety data sheet refusals' do
+    let(:params) do
+      { chemical_data: [{ 'merckProductInfo' => { 'productNumber' => '1', 'vendor' => 'Merck',
+                                                  'sdsLink' => 'https://www.sigmaaldrich.com/x' } }],
+        cas: '629-59-4', sample_id: s.id, vendor_product: 'merckProductInfo' }
+    end
+
+    it 'passes the service status and final flag through' do
+      allow(Chemotion::ChemicalsService).to receive(:save_vendor_sheet)
+        .and_return({ error: 'already held', final: true, status: 422 })
+      post '/api/v1/chemicals/save_safety_datasheet', params: params
+
+      expect(response.status).to eq 422
+      expect(JSON.parse(response.body)).to eq('error' => 'already held', 'final' => true)
+    end
+
+    it 'reports an unexpected failure as a 400, not as a saved chemical' do
+      allow(Chemotion::ChemicalsService).to receive(:create_sds_file).and_raise(StandardError, 'boom')
+      post '/api/v1/chemicals/save_safety_datasheet', params: params
+
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['error']).to eq 'boom'
     end
   end
 
@@ -306,7 +331,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Chemotion::ChemicalsService).to receive_messages(
-        find_existing_file_by_vendor_product_number_signature: nil, create_sds_file: sds_path,
+        create_sds_file: sds_path,
       )
       post '/api/v1/chemicals/save_safety_datasheet', params: params
     end
@@ -319,6 +344,27 @@ describe Chemotion::ChemicalAPI do
       key = 'A14672_1234567890abcd12_link'
       mapped = safety_paths.map(&:keys).flatten
       expect(mapped).to include(key)
+    end
+  end
+
+  describe 'POST save safety data sheet at the sheet limit' do
+    let(:full_sheets) do
+      Array.new(Chemotion::ChemicalsService::MAX_SAVED_SDS) do |i|
+        { "p#{i}_link" => "/safety_sheets/merck/p#{i}_web_1234567890abcd1#{i}.pdf" }
+      end
+    end
+
+    # Posted as JSON, the way ChemicalFetcher does, so the sheet list stays a real array.
+    it 'refuses the save and names the cap' do
+      body = { sample_id: s.id, cas: '629-59-4', vendor_product: 'merckProductInfo',
+               chemical_data: [{ 'safetySheetPath' => full_sheets,
+                                 'merckProductInfo' => { 'productNumber' => '1',
+                                                         'vendor' => 'Merck',
+                                                         'sdsLink' => 'https://www.sigmaaldrich.com/x' } }] }
+      post '/api/v1/chemicals/save_safety_datasheet', params: body.to_json,
+                                                      headers: { 'CONTENT_TYPE' => 'application/json' }
+      expect(response.status).to eq 422
+      expect(JSON.parse(response.body)['error']).to include('at most 5')
     end
   end
 
@@ -441,7 +487,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(Molecule).to receive(:find).and_return(molecule)
-      allow(Chemotion::ChemicalsService).to receive_messages(alfa: { alfa_link: 'alfa' },
+      allow(Chemotion::ChemicalsService).to receive_messages(thermofisher: { fisher_link: 'fisher' },
                                                              merck: { merck_link: 'merck' })
       get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=Unknown&data[option]=CAS&data[language]=en"
     end
@@ -450,6 +496,40 @@ describe Chemotion::ChemicalAPI do
       body = JSON.parse(response.body)
       expect(body).to have_key('alfa_link')
       expect(body).to have_key('merck_link')
+    end
+  end
+
+  describe 'GET fetch_safetysheet with the All vendors option' do
+    let(:molecule) { create(:molecule, names: ['Water'], cas: ['7732-18-5']) }
+    let(:overview) do
+      { 'sds_vendors' => [{ 'vendor' => 'Sigma-Aldrich', 'count' => 2, 'sds_supported' => true,
+                            'products' => [{ 'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/1',
+                                             'merck_product_number' => '1' }] }],
+        'catalogue_vendors' => [{ 'vendor' => 'abcr GmbH', 'count' => 1, 'sds_supported' => false,
+                                  'products' => [{ 'label' => 'AB1',
+                                                   'product_link' => 'https://abcr.com/de_en/AB1' }] }],
+        'vendor_count' => 31,
+        'pubchem_url' => 'https://pubchem.ncbi.nlm.nih.gov/compound/962#section=Chemical-Vendors' }
+    end
+
+    before do
+      allow(Molecule).to receive(:find).and_return(molecule)
+      allow(Chemotion::ChemicalsService).to receive(:vendor_overview).and_return(overview)
+      get "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}?data[vendor]=All&data[option]=CAS&data[language]=en"
+    end
+
+    it 'answers with the two vendor sets separated' do
+      body = JSON.parse(response.body)
+      expect(body['sds_vendors'].first['vendor']).to eq('Sigma-Aldrich')
+      expect(body['catalogue_vendors'].first['vendor']).to eq('abcr GmbH')
+    end
+
+    it 'reports how many vendors PubChem lists in total' do
+      expect(JSON.parse(response.body)['vendor_count']).to eq(31)
+    end
+
+    it 'links to the compound Chemical Vendors section on PubChem' do
+      expect(JSON.parse(response.body)['pubchem_url']).to include('#section=Chemical-Vendors')
     end
   end
 
@@ -467,7 +547,7 @@ describe Chemotion::ChemicalAPI do
     end
 
     it 'returns alfa_link only for Thermofisher vendor' do
-      allow(Chemotion::ChemicalsService).to receive(:alfa).and_return('alfa_link_val')
+      allow(Chemotion::ChemicalsService).to receive(:thermofisher).and_return('alfa_link_val')
       path = "/api/v1/chemicals/fetch_safetysheet/#{molecule.id}" \
              '?data[vendor]=Thermofisher&data[option]=CAS&data[language]=en'
       get path
@@ -534,6 +614,19 @@ describe Chemotion::ChemicalAPI do
         post '/api/v1/chemicals/save_manual_sds', params: params
         expect(response.status).to eq 400
         expect(JSON.parse(response.body)['error']).to eq 'attached_file is missing'
+      end
+    end
+
+    context 'when the service refuses the upload' do
+      before do
+        allow(Chemotion::ManualSdsService).to receive(:create_manual_sds)
+          .and_return({ error: 'limit reached', final: true, status: 422 })
+      end
+
+      it 'passes its status and final flag through' do
+        post '/api/v1/chemicals/save_manual_sds', params: params.merge(attached_file: mock_file)
+        expect(response.status).to eq 422
+        expect(JSON.parse(response.body)).to eq('error' => 'limit reached', 'final' => true)
       end
     end
 

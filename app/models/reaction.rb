@@ -62,6 +62,9 @@ class Reaction < ApplicationRecord
     interaction: 'interaction',
   }
 
+  NUMERIC_TEMPERATURE_TEXT_PATTERN =
+    /\A-?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:\s*(?:~|-|–|to)\s*-?(?:\d+(?:[.,]\d*)?|[.,]\d+))?\z/i.freeze
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -204,23 +207,25 @@ class Reaction < ApplicationRecord
   end
 
   def temperature_display
-    userText = (temperature && temperature['userText']) || ''
-    return userText if userText != ''
+    user_text = (temperature && temperature['userText']) || ''
+    return user_text if user_text != ''
 
-    return '' if !temperature || !temperature['data'] || temperature['data'].empty?
-
-    arrayData = temperature['data']
-    maxTemp = (arrayData.max_by { |x| x['value'] })['value']
-    minTemp = (arrayData.min_by { |x| x['value'] })['value']
-
-    return '' if minTemp.nil? || maxTemp.nil?
-
-    "#{minTemp} ~ #{maxTemp}"
+    temperature_data_display
   end
 
+  # Returns the displayed temperature with its unit when the value is numeric.
+  #
+  # The numeric grammar is aligned with the JS +Reaction#temperature_display_with_unit+ getter,
+  # so the on-screen editor and server-composed outputs agree on whether to append a unit.
+  # Free text such as +reflux+ is returned unchanged.
+  #
+  # @return [String] the temperature display, with its unit appended when numeric
   def temperature_display_with_unit
     tp = temperature_display
-    tp.empty? ? '' : "#{tp} #{temperature['valueUnit']}"
+    return '' if tp.empty?
+
+    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(tp.strip)
+    numeric ? "#{tp} #{temperature['valueUnit']}" : tp
   end
 
   def description_contents
@@ -326,6 +331,20 @@ class Reaction < ApplicationRecord
   end
 
   private
+
+  def temperature_data_display
+    array_data = temperature&.[]('data')
+    return '' if array_data.blank?
+
+    min_entry, max_entry = array_data.minmax_by { |entry| entry['value'].to_f }
+    min_temp = min_entry['value']
+    max_temp = max_entry['value']
+
+    return '' if min_temp.nil? || max_temp.nil?
+    return min_temp.to_s if min_temp == max_temp
+
+    "#{min_temp} ~ #{max_temp}"
+  end
 
   def link_variation?(current_variations, variation_id, analysis_id)
     return false if variation_id.blank?

@@ -13,11 +13,22 @@ const JcampIds = (container) => {
         const ext = fns[fns.length - 1];
         const isJcamp = acceptables.indexOf(ext.toLowerCase()) >= 0;
         const typ = fns.length > 1 ? fns[fns.length - 2] : false;
-        const notOrig = typ === 'peak' || typ === 'edit';
+        // A bagit curve's own addon is "<n>_bagit" (see jcamp_peak_addon? on the Rails
+        // side) - it never gains a .peak./.edit. addon, so by filename shape alone it
+        // looks just like a genuine original upload. But it IS a generated/derived
+        // per-curve output of the archive, not something that should be independently
+        // resubmitted to regenerate_spectrum: doing so races the archive's own full
+        // reprocessing within the same request (both touching the same curve rows),
+        // spawning duplicate generations and can even leave the curve rows deleted
+        // entirely if the race's last writer is a cleanup/destroy call. Confirmed via
+        // real regenerate_spectrum traces on a Bruker archive holding a raw FID plus a
+        // pdata/1 subfolder - not archive-specific.
+        const isBagitCurve = typeof typ === 'string' && /^\d+_bagit$/.test(typ);
+        const notOrig = typ === 'peak' || typ === 'edit' || isBagitCurve;
         if (isJcamp) {
           if (notOrig) {
             geneJcampIds = [...geneJcampIds, att.id];
-            editedJcampsIds = [...editedJcampsIds, att.id];
+            if (!isBagitCurve) editedJcampsIds = [...editedJcampsIds, att.id];
           } else {
             origJcampIds = [...origJcampIds, att.id];
           }
@@ -306,9 +317,14 @@ const splitArchiveRef = (value) => {
   };
 };
 
-const entryUrl = (entry) => (
-  (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null
-);
+// The url a `sources[]` entry fetches. Entries this file writes split it into baseURL +
+// relativePath, but the entry NMRium creates itself when it loads a JCAMP by url has no baseURL
+// and carries the whole absolute url in relativePath. Missing that shape is how a 1D analysis got
+// saved with its download token as the only source, and then reopened empty.
+const entryUrl = (entry) => {
+  if (entry?.baseURL && entry?.relativePath) return `${entry.baseURL}${entry.relativePath}`;
+  return isAbsoluteUrl(entry?.relativePath) ? entry.relativePath : null;
+};
 
 // The member path a `sourceSelector.files` / `selector.files` entry addresses inside an archive,
 // or null when it addresses no member. Three shapes reach this and all of them matter: a live
@@ -488,10 +504,52 @@ const persistableSourceFile = (file, attachment) => {
 // Drops `root.spectra` / `root.molecules` entries off a `sources[]` id that is about to disappear.
 // Returns a new array with new items: the caller's own payload must come out of cleaning untouched,
 // and a spectrum copy still shares its `selector` object with the spectrum it was copied from.
+// selector.files goes too: it filters the file collection of the source named by selector.root,
+// so without a root it addresses nothing, and it is where the download url of that source sits.
 const cutLooseFromSources = (items, ids) => (items || []).map((item) => {
   if (!item?.selector?.root || !ids.has(item.selector.root)) return item;
   const selector = { ...item.selector };
   delete selector.root;
+  delete selector.files;
+  return { ...item, selector };
+});
+
+// Removes download urls from each item's selector.files on the way into a file. The display pass
+// only reduces selector.files for 2D spectra, while NMRium fills it for every spectrum it loads by
+// url, 1D included.
+// The same for the two per-spectrum references the reopen path writes on every spectrum, 1D
+// included: source.jcampURL becomes a reference to the attachment it points at (what
+// findMatchingJcamp and refreshPersistedSources resolve on the next open) or goes, and
+// sourceSelector.files keeps only what does not expire. The 2D branch above already did this for
+// the spectra it handles; for the rest a versioned file no longer has NMRium's migrations strip
+// `source`, so the token would be saved.
+const dropEphemeralSpectrumRefs = (spectra, attachments) => (spectra || []).map((spc) => {
+  const jcampURL = spc?.source?.jcampURL;
+  const ssFiles = spc?.sourceSelector?.files;
+  const staleJcamp = isEphemeralUrl(jcampURL);
+  const staleSs = Array.isArray(ssFiles) && ssFiles.some(isEphemeralUrl);
+  if (!staleJcamp && !staleSs) return spc;
+  const next = { ...spc };
+  if (staleJcamp) {
+    const ref = buildAttachmentRefUrl(findAttachmentForRef(attachments, jcampURL, { name: spectrumName(spc) }));
+    const source = { ...spc.source };
+    if (ref) source.jcampURL = ref; else delete source.jcampURL;
+    if (Object.keys(source).length) next.source = source; else delete next.source;
+  }
+  if (staleSs) {
+    const kept = ssFiles.filter((file) => !isEphemeralUrl(file));
+    if (kept.length) next.sourceSelector = { ...spc.sourceSelector, files: kept };
+    else delete next.sourceSelector;
+  }
+  return next;
+});
+
+const dropEphemeralSelectorFiles = (items) => (items || []).map((item) => {
+  const files = item?.selector?.files;
+  if (!Array.isArray(files) || !files.some(isEphemeralUrl)) return item;
+  const selector = { ...item.selector };
+  const kept = files.filter((file) => !isEphemeralUrl(file));
+  if (kept.length) selector.files = kept; else delete selector.files;
   return { ...item, selector };
 });
 
@@ -608,7 +666,16 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
         // URL/server path through the archive (`.../file.zip/exp1/...`, which has to be reduced to
         // the member path) or already as a bare member path. Anything else does not address a
         // member and is dropped.
-        const filesWithinSource = tmpSpc.sourceSelector?.files?.map(archiveMemberPath).filter(Boolean);
+        // The file collection NMRium filters holds the source entry's relativePath plus the member,
+        // so a bare member path matches nothing: on the way to NMRium each member is re-rooted on
+        // the entry registered under this spectrum's selector.root. Only a document being persisted
+        // keeps the bare member, since the archive it lives in is re-minted on every open.
+        const members = tmpSpc.sourceSelector?.files?.map(archiveMemberPath).filter(Boolean);
+        const archivePath = !forPersistence
+          && root.sources.find((source) => source.id === sourceId)?.entries?.[0]?.relativePath;
+        const filesWithinSource = archivePath
+          ? members?.map((member) => `${archivePath}/${member}`)
+          : members;
         tmpSpc.selector = {
           ...tmpSpc.selector,
           root: sourceId,
@@ -621,6 +688,18 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       // embedded `data` because no attachment backed it still has the same expiring urls written
       // all over it, and the file must not carry one either way.
       if (forPersistence) {
+        // selector.files is what NMRium does read, and when it loads a zip by url it fills the list
+        // in itself: every entry is the download url's path through the archive, token included.
+        // Only the member path survives an open - the reopen path re-points it onto the archive it
+        // mints (patchZipAndJcampReference) - so that is all that is kept. An entry naming no member
+        // only names the whole file, which the source already does.
+        if (Array.isArray(tmpSpc.selector?.files)) {
+          const members = tmpSpc.selector.files.map(archiveMemberPath).filter(Boolean);
+          const selector = { ...tmpSpc.selector };
+          if (members.length) selector.files = members; else delete selector.files;
+          tmpSpc.selector = selector;
+        }
+
         // sourceSelector is not what NMRium reads (selector is), but it IS what findMatchingJcamp
         // matches on when the document is reopened - and it holds the same token URLs. Keep the
         // part that identifies the file, drop the part that expires.
@@ -672,6 +751,10 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       if (Array.isArray(root.molecules)) root.molecules = cutLooseFromSources(root.molecules, expiring);
     }
   }
+  if (forPersistence) {
+    root.spectra = dropEphemeralSpectrumRefs(dropEphemeralSelectorFiles(root.spectra), attachments);
+    if (Array.isArray(root.molecules)) root.molecules = dropEphemeralSelectorFiles(root.molecules);
+  }
 
   // Drop every unreferenced entry, whoever minted it. This is not housekeeping: readNMRiumObject
   // fetches the whole sources[] array through a single `Promise.all`, so one entry nothing points
@@ -707,11 +790,11 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
     });
   }
 
-  // Deliberately not forcing a {version, data} wrap or an explicit version, even though a spectrum
-  // here may now depend on sources[] actually being processed on load: a real, working .nmrium
-  // capture has neither (flat top-level sources/spectra, no version at all) and reloads correctly,
-  // while an explicit version apparently opts a document out of whatever normalization an unversioned
-  // one gets put through on load. Forcing our own wrap previously broke exactly this case.
+  // The shape is returned as it came in; the version is the caller's to add. It has to be added
+  // whenever a spectrum depends on sources[]: NMRium reads an unversioned document as version 0, and
+  // its migration chain empties sources[] and rewrites each data-less 2D spectrum to
+  // `data: {rr: undefined}`. See nmriumDocumentToSave and versionFlatDocument in
+  // NMRiumDisplayer.js.
   return cleanedNMRiumData;
 };
 

@@ -815,4 +815,165 @@ describe('Reaction', () => {
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
     });
   });
+
+  describe('Reaction.temperature_display_with_unit', () => {
+    it('appends the unit to a single numeric value', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '25', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('25 °C');
+    });
+
+    it('appends the unit when a single datum produces a numeric display value', () => {
+      reaction.temperature = {
+        valueUnit: '°C', userText: '', data: [{ value: 25 }]
+      };
+
+      expect(reaction.temperature_display).toBe(25);
+      expect(reaction.temperature_display_with_unit).toBe('25 °C');
+    });
+
+    it('appends the unit to a generated range', () => {
+      reaction.temperature = {
+        valueUnit: '°C',
+        userText: '',
+        data: [{ value: 21 }, { value: 25 }],
+      };
+      expect(reaction.temperature_display_with_unit).toBe('21 ~ 25 °C');
+    });
+
+    [
+      '-',
+      '2|5',
+    ].forEach((value) => {
+      it(`does not append a unit to malformed chart data "${value}"`, () => {
+        reaction.temperature = {
+          valueUnit: '°C', userText: '', data: [{ value }, { value: '25' }]
+        };
+
+        expect(reaction.temperature_display_with_unit).not.toContain('°C');
+      });
+    });
+
+    [
+      ['20-25', '20-25 °C'],
+      ['21~25', '21~25 °C'],
+      ['21 – 25', '21 – 25 °C'],
+      ['-78 to 25', '-78 to 25 °C'],
+      ['25,5', '25,5 °C'],
+    ].forEach(([userText, expected]) => {
+      it(`appends the unit to common numeric format "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+        expect(reaction.temperature_display_with_unit).toBe(expected);
+      });
+    });
+
+    it('appends the unit to a negative range', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '-10 ~ 5', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('-10 ~ 5 °C');
+    });
+
+    ['reflux', '0x1A', '0b1010'].forEach((userText) => {
+      it(`leaves non-decimal text untouched: "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+        expect(reaction.temperature_display_with_unit).toBe(userText);
+      });
+    });
+
+    it('leaves an empty temperature empty', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('');
+    });
+
+    it('keeps the unit on values with three or more decimals', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '25.5678', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('25.5678 °C');
+    });
+
+    it('keeps the unit on a user-typed range with high-precision endpoints', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '21.333 ~ 25', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('21.333 ~ 25 °C');
+    });
+  });
+
+  describe('Reaction.convertTemperature', () => {
+    it('converts both endpoints and the unit of a user-entered range', () => {
+      reaction.temperature = {
+        valueUnit: '°C',
+        userText: '21 ~ 25',
+        data: [{ value: 21 }, { value: 25 }],
+      };
+
+      reaction.convertTemperature('°F');
+
+      expect(reaction.temperature_display_with_unit).toBe('69.80 ~ 77.00 °F');
+      expect(reaction.temperature.data).toEqual([{ value: '69.80' }, { value: '77.00' }]);
+    });
+
+    [
+      ['20-25', '68.00 ~ 77.00 °F'],
+      ['21~25', '69.80 ~ 77.00 °F'],
+      ['21 – 25', '69.80 ~ 77.00 °F'],
+      ['-78 to 25', '-108.40 ~ 77.00 °F'],
+      ['25,5', '77.90 °F'],
+    ].forEach(([userText, expected]) => {
+      it(`converts common numeric format "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+
+        reaction.convertTemperature('°F');
+
+        expect(reaction.temperature_display_with_unit).toBe(expected);
+      });
+    });
+
+    ['0x1A', '0b1010'].forEach((userText) => {
+      it(`does not convert non-decimal numeric literal "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+
+        reaction.convertTemperature('°F');
+
+        expect(reaction.temperature).toEqual({
+          valueUnit: '°F', userText, data: []
+        });
+        expect(reaction.temperature_display_with_unit).toBe(userText);
+      });
+    });
+  });
+
+  describe('Reaction.schemeSvgRequest', () => {
+    it('builds the complete SVG request for an interaction reaction', () => {
+      const startingMaterial = reaction.starting_materials[0];
+      const reactant = reaction.starting_materials[1];
+      const product = reaction.products[0];
+
+      startingMaterial.sample_svg_file = 'starting.svg';
+      reactant.sample_svg_file = 'reactant.svg';
+      product.sample_svg_file = 'product.svg';
+      product.equivalent = 0.75;
+      material.sample_svg_file = 'solvent.svg';
+      material.external_label = 'Water';
+
+      reaction.starting_materials = [startingMaterial];
+      reaction.reactants = [reactant];
+      reaction.reactant_sbmm_samples = [];
+      reaction.products = [product];
+      reaction.solvents = [material];
+      reaction.temperature = { valueUnit: '°C', userText: '-10 ~ 5', data: [] };
+      reaction.duration = '2 Hour(s)';
+      reaction.conditions = 'under nitrogen';
+      reaction.reaction_type = 'interaction';
+
+      expect(reaction.schemeSvgRequest()).toEqual({
+        materialsSvgPaths: {
+          starting_materials: ['/images/samples/starting.svg'],
+          reactants: ['/images/samples/reactant.svg'],
+          products: [['/images/samples/product.svg', 0.75]],
+        },
+        temperature: '-10 ~ 5 °C',
+        solvents: ['Water'],
+        duration: '2 Hour(s)',
+        conditions: 'under nitrogen',
+        productsOnly: true,
+        showYield: false,
+      });
+    });
+  });
 });

@@ -485,8 +485,12 @@ describe Chemotion::SampleAPI do
     end
 
     context 'with molecule_sort' do
-      let(:molecules) { create_list(:molecule, 2) { |m, i| m.sum_formular = "C#{i}" } }
-      let(:samples) { create_list(:sample, 2, collections: [personal_collection]) { |s, i| s.molecule = molecules[i] } }
+      let(:molecules) do
+        [0, 1].map { |i| create(:molecule, force_attributes: { sum_formular: "C#{i}" }) }
+      end
+      let(:samples) do
+        molecules.map { |molecule| create(:sample, collections: [personal_collection], molecule: molecule) }
+      end
 
       it 'returns samples in the right order' do
         sample_ids = samples.map(&:id)

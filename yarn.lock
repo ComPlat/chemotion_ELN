@@ -1186,10 +1186,10 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-spectra-editor@1.8.2":
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.8.2.tgz#70884ada6a38defc2deb27d7df6ff784d435a96a"
-  integrity sha512-6phCCzC6GU8qcG6d4ddin5yZaShtgVItHw/Uq1M+2FHYAsJJiiVIdOh5JbXxaZzGEse5puTCy6Dli1jZyYqteQ==
+"@complat/react-spectra-editor@1.8.4":
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.8.4.tgz#2cd2d1c10de6c413e1717433db82a8810890e0a5"
+  integrity sha512-5HqM4k5j1fIh/kewHxZya8shyzG3t01aWr7Gr6irHGhdXUEpncP3Sm2fFmBgzSVStxVcXKspNGxEUc+qQFK/Dw==
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.5"
     "@emotion/react" "^11.11.1"
@@ -5336,15 +5336,15 @@ cheerio@^1.0.0-rc.3:
     undici "^7.19.0"
     whatwg-mimetype "^4.0.0"
 
-chem-generic-ui@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.3.0.tgz#beaafa0cc989281137f80e8b6c3ce32c25096b44"
-  integrity sha512-abxIh8WPDJN6ZHf/zizN+YduoetG6gdGcJwTTSc+mAc0YMIk5Lt6uQml0KWpq3zme/Lgxb8j3byf5Lsxp2wN1Q==
+chem-generic-ui@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.3.1.tgz#9dd22c9d3556fc93e0637576102a42203dc94f89"
+  integrity sha512-TegQ+5SecwdOhq67P2O+YwXgUEiNpodOh0+hYpTqXGzHiNnL7WLmlzq63dr2gyd3m1uEAlJq9cR2a9Wp4LJqdw==
   dependencies:
     ajv "^8.18.0"
     copy-to-clipboard "^3.3.3"
     diff "^8.0.2"
-    generic-ui-core "2.5.0"
+    generic-ui-core "2.5.1"
     html-to-image "^1.11.11"
     humps "^2.0.1"
     jsondiffpatch "^0.7.3"
@@ -8312,10 +8312,10 @@ generator-function@^2.0.0:
   resolved "https://registry.yarnpkg.com/generator-function/-/generator-function-2.0.1.tgz#0e75dd410d1243687a0ba2e951b94eedb8f737a2"
   integrity sha512-SFdFmIJi+ybC0vjlHN0ZGVGHc3lgE0DxPAT0djjVg+kjOnSqclqmj0KQ7ykTOLP6YxoqOvuAODGdcHJn+43q3g==
 
-generic-ui-core@2.5.0:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-2.5.0.tgz#a825f650549a26861008224c9e289b62d1c7ae54"
-  integrity sha512-lHLq97BN9SowiPOJnfQDCXESOsY2BVf61ZJPHD5+wMLVTYHfVxyshkcfZ6hiUYAJlxdsEUDHTZp7s3OVztoacg==
+generic-ui-core@2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-2.5.1.tgz#8047d03daf7c256c612d22332e068491818816ef"
+  integrity sha512-/2nX5fVagVnaiC9ZKoKW0oTqX9/4/T0Xrp43sFce6SJQ9G7uUOTYr/DGFO+xEFU+IOQjruzFJbgvw/kNauwvUg==
   dependencies:
     chem-units "^2.2.0"
     lodash "^4.17.21"

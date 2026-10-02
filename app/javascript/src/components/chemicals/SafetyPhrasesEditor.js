@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, {
+  useEffect, useMemo, useState, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
@@ -82,12 +84,55 @@ const optionShape = PropTypes.shape({
   text: PropTypes.string,
 });
 
+// Folds the way the safety tab's own sections do, and starts closed while it holds
+// nothing so an untouched sample shows three headings rather than three empty forms.
+const CollapsibleSection = ({
+  title, count, className, dataComponent, children,
+}) => {
+  const [open, setOpen] = useState(count > 0);
+  const wasEmpty = useRef(count === 0);
+
+  // Fetching phrases fills a section from outside; it should not stay shut on its answer.
+  useEffect(() => {
+    if (wasEmpty.current && count > 0) setOpen(true);
+    wasEmpty.current = count === 0;
+  }, [count]);
+
+  return (
+    <div className={className} data-component={dataComponent}>
+      <h6 className="text-primary mb-2">
+        <Button
+          variant="link"
+          size="sm"
+          className="p-0 text-decoration-none text-reset align-baseline"
+          aria-expanded={open}
+          onClick={() => setOpen((wasOpen) => !wasOpen)}
+        >
+          <i className={`fa fa-caret-${open ? 'down' : 'right'} me-2`} />
+          {title}
+        </Button>
+        <span className="text-muted small fw-normal ms-2">{count === 0 ? 'none added yet' : count}</span>
+      </h6>
+      <div hidden={!open}>{children}</div>
+    </div>
+  );
+};
+
+CollapsibleSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  count: PropTypes.number.isRequired,
+  className: PropTypes.string,
+  dataComponent: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+CollapsibleSection.defaultProps = { className: 'mb-4' };
+
 const PhraseSection = ({
-  title, idPrefix, options, items, emptyText, onAdd, disabled,
+  title, idPrefix, options, items, onAdd, disabled,
 }) => {
   return (
-    <div className="mb-4" data-component={idPrefix}>
-      <h6 className="text-primary mb-2">{title}</h6>
+    <CollapsibleSection title={title} count={items.length} dataComponent={idPrefix}>
       <Select
         inputId={`${idPrefix}-select`}
         classNamePrefix={`${idPrefix}-select`}
@@ -99,9 +144,7 @@ const PhraseSection = ({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">{emptyText}</p>
-      ) : (
+      {items.length > 0 && (
         <ol className="list-group list-group-numbered mt-2" data-component={`${idPrefix}-list`}>
           {items.map((item) => (
             <PhraseListItem
@@ -113,7 +156,7 @@ const PhraseSection = ({
           ))}
         </ol>
       )}
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -122,7 +165,6 @@ PhraseSection.propTypes = {
   idPrefix: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(optionShape).isRequired,
   items: PropTypes.arrayOf(itemShape).isRequired,
-  emptyText: PropTypes.string.isRequired,
   onAdd: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
 };
@@ -170,8 +212,12 @@ const PictogramSection = ({
   options, items, onAdd, disabled,
 }) => {
   return (
-    <div className="mb-2" data-component="safety-pictograms">
-      <h6 className="text-primary mb-2">Pictograms</h6>
+    <CollapsibleSection
+      title="Pictograms"
+      count={items.length}
+      className="mb-2"
+      dataComponent="safety-pictograms"
+    >
       <Select
         inputId="safety-pictograms-select"
         classNamePrefix="safety-pictograms-select"
@@ -183,9 +229,7 @@ const PictogramSection = ({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">No pictograms added yet.</p>
-      ) : (
+      {items.length > 0 && (
         <div
           className="d-flex flex-wrap gap-2 mt-2"
           data-component="safety-pictograms-list"
@@ -200,7 +244,7 @@ const PictogramSection = ({
           ))}
         </div>
       )}
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -323,7 +367,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
 
   return (
     <div
-      className="border rounded p-3 mt-3 w-100 bg-body"
+      className="border rounded p-3 mt-1 w-100 bg-body"
       data-component="SafetyPhrasesEditor"
       style={{ maxHeight: '500px', overflow: 'auto' }}
     >
@@ -332,7 +376,6 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
         idPrefix="safety-h-phrases"
         options={hazardOptions}
         items={hazardItems}
-        emptyText="No hazard statements added yet."
         onAdd={handleAddH}
         disabled={loading}
       />
@@ -341,7 +384,6 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
         idPrefix="safety-p-phrases"
         options={precautionaryOptions}
         items={precautionaryItems}
-        emptyText="No precautionary statements added yet."
         onAdd={handleAddP}
         disabled={loading}
       />
