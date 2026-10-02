@@ -292,6 +292,44 @@ RSpec.describe Attachment do
       it 'generates a checksum of the file content' do
         expect(attachment.checksum).to be_present
       end
+
+      # Shrine's after_commit `persist` saves the record a second time, which must not
+      # attach the file again.
+      context 'when the file is attached' do
+        let(:store) { Shrine.storages[:store] }
+        let(:uploaded_ids) { [] }
+
+        before do
+          allow(store).to receive(:upload).and_wrap_original do |upload, io, id, **options|
+            uploaded_ids << id
+            upload.call(io, id, **options)
+          end
+        end
+
+        it 'stores the original file once' do
+          att = create(:attachment, :with_image)
+          expect(uploaded_ids.count(att.attachment.id)).to eq 1
+        end
+
+        it 'builds the derivatives once' do
+          expect_any_instance_of(AttachmentUploader::Attacher) # rubocop:disable RSpec/AnyInstance
+            .to receive(:create_derivatives).once.and_call_original
+          expect(create(:attachment, :with_image).read_thumbnail).not_to be_nil
+        end
+
+        it 'clears file_path' do
+          expect(create(:attachment, :with_image).file_path).to be_nil
+        end
+
+        it 'leaves no open handle on the stored file' do
+          GC.disable
+          att = create(:attachment, :with_image)
+          stored = store.path(att.attachment.id).to_s
+          expect(ObjectSpace.each_object(File).count { |f| !f.closed? && f.path == stored }).to eq 0
+        ensure
+          GC.enable
+        end
+      end
     end
 
     it 'determines the content type of the file' do

@@ -18,8 +18,7 @@ module AttachmentJcampAasm
 
   # Set by generate_att right before it re-saves a reused row with fresh content pending
   # attachment (see require_peaks_generation? below) - not a stand-in for "file_path is
-  # set", since file_path stays populated on the in-memory object long after its original
-  # attach, independent of any later, unrelated save.
+  # set": it marks this one re-save, not any save that happens to attach a file.
   attr_accessor :reattaching_derivative
 
   extend ActiveSupport::Concern
@@ -295,14 +294,8 @@ module AttachmentJcampProcess
       # :init_aasm instead.
       att.reattaching_derivative = true
       att.save!
-      # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
-      # attr_accessor that stays set on the object otherwise, so the final att.save! below
-      # (after the AASM set_* calls - non-bang, so persist: false: they only mutate
-      # aasm_state in memory and don't themselves trigger a save, see edit_process's
-      # set_backup comment) would re-run the full attach/create_derivatives/update_column
-      # pipeline and re-upload the same blob - clear it so that save is a plain
-      # state/column update instead.
-      att.file_path = nil
+      # after_save :attach_file uploaded meta_tmp's content and cleared file_path, so the final
+      # att.save! below is a plain state/column update.
       # Reset now too: att is generate_att's return value, so it can outlive this method in
       # caller code (edit_process/create_process/save_spectrum all hold onto it). Leaving
       # this true forever would silently no-op require_peaks_generation? on any future
