@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
+import { debounce } from 'lodash';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import Sample from 'src/models/Sample';
@@ -15,6 +16,7 @@ import { permitCls, permitOn } from 'src/components/common/uis';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import DeleteButton from 'src/components/common/DeleteButton';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -155,6 +157,10 @@ class SampleComponent extends Component {
 
     this.onComponentStoreChange = this.onComponentStoreChange.bind(this);
     this.handleAmountChange = this.handleAmountChange.bind(this);
+    // Debounce amount/volume/mass edits so multi-digit typing (e.g. "10") settles before
+    // the value propagates to the model, matching the reaction scheme (Material.js).
+    // The input shows the typed text immediately; only the model update waits.
+    this.debounceHandleAmountChange = debounce(this.handleAmountChange, 500);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleDensityChange = this.handleDensityChange.bind(this);
     this.handlePurityChange = this.handlePurityChange.bind(this);
@@ -170,6 +176,9 @@ class SampleComponent extends Component {
 
   componentWillUnmount() {
     ComponentStore.unlisten(this.onComponentStoreChange);
+    // Drop any pending debounced amount edit so it can't fire after unmount.
+    // Blur already flushes real edits, so cancelling here loses nothing.
+    this.debounceHandleAmountChange.cancel();
   }
 
   /**
@@ -460,7 +469,8 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixes}
           precision={3}
           disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
+          onChange={(e) => this.debounceHandleAmountChange(e, material.amount_l, '', false)}
+          onBlur={() => this.debounceHandleAmountChange.flush()}
           onMetricsChange={this.handleMetricsChange}
           variant="light"
           active={material.amount_unit === 'l'}
@@ -497,7 +507,8 @@ class SampleComponent extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={!permitOn(sample) || lockAmountColumnSolids}
-            onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
+            onChange={(e) => this.debounceHandleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
+            onBlur={() => this.debounceHandleAmountChange.flush()}
             onMetricsChange={this.handleMetricsChange}
             active={material.amount_unit === 'g'}
             isError={material.error_mass}
@@ -538,13 +549,33 @@ class SampleComponent extends Component {
               metricPrefixes={metricPrefixesMol}
               precision={4}
               disabled={!permitOn(sample)}
-              onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
+              onChange={(e) => this.debounceHandleAmountChange(e, material.amount_mol, '', false)}
+              onBlur={() => this.debounceHandleAmountChange.flush()}
               onMetricsChange={this.handleMetricsChange}
               variant="light"
               active={material.amount_unit === 'mol'}
             />
           </div>
         </OverlayTrigger>
+      </td>
+    );
+  }
+
+  /**
+   * Renders the delete button cell for a component row.
+   * @param {Object} material - The material object
+   * @returns {JSX.Element} The delete button cell
+   */
+  renderDeleteButton(material) {
+    const { sample, deleteMaterial } = this.props;
+
+    return (
+      <td className="component-delete-cell">
+        <DeleteButton
+          className="component-delete-btn"
+          disabled={!permitOn(sample)}
+          onClick={() => deleteMaterial(material)}
+        />
       </td>
     );
   }
@@ -713,7 +744,7 @@ class SampleComponent extends Component {
    */
   mixtureComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
+      sample, material, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
     const metricMol = getMetricMol(material);
     const metricMolConc = getMetricMolConc(material);
@@ -729,17 +760,6 @@ class SampleComponent extends Component {
 
         <td style={{ width: '10%', maxWidth: '50px', cursor: 'pointer' }}>
           {this.materialNameWithIupac(material)}
-        </td>
-
-        <td style={{ verticalAlign: 'top' }}>
-          <Button
-            disabled={!permitOn(sample)}
-            variant="danger"
-            size="sm"
-            onClick={() => deleteMaterial(material)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
         </td>
 
         {activeTab === 'concentration' && this.componentStartingConc(material, metricMolConc, metricPrefixesMolConc)}
@@ -767,6 +787,8 @@ class SampleComponent extends Component {
             </td>
           )
         }
+
+        {this.renderDeleteButton(material)}
       </tr>
     );
   }
@@ -779,7 +801,7 @@ class SampleComponent extends Component {
    */
   solidComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget, enableComponentPurity
+      sample, material, connectDragSource, connectDropTarget, enableComponentPurity
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
@@ -799,16 +821,6 @@ class SampleComponent extends Component {
           {this.materialNameWithIupac(material)}
         </td>
 
-        <td style={{ verticalAlign: 'top' }}>
-          <Button
-            disabled={!permitOn(sample)}
-            variant="danger"
-            size="sm"
-            onClick={() => deleteMaterial(material)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </td>
         <td />
 
         <td
@@ -837,6 +849,8 @@ class SampleComponent extends Component {
             </td>
           )
         }
+
+        {this.renderDeleteButton(material)}
       </tr>
     );
   }

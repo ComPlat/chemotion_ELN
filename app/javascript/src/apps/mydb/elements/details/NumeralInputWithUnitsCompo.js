@@ -106,14 +106,26 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   _handleInputValueBlur() {
-    const { value } = this.props;
-    const { metricPrefix } = this.state;
-    this.setState({
-      value,
-      currentPrecision: this.props.precision,
+    const { onBlur } = this.props;
+
+    // Reset the display to the model value. The updater form reads the latest
+    // props/state when the update is applied.
+    this.setState((state, props) => ({
+      value: props.value,
+      currentPrecision: props.precision,
       showString: false,
-      valueString: metPreConv(value, 'n', metricPrefix) || 0,
-    }, () => this._onChangeCallback());
+      valueString: metPreConv(props.value, 'n', state.metricPrefix) || 0,
+    }), () => {
+      // A parent blur handler flushes any pending (e.g. debounced) onChange so the
+      // typed value is committed to the model. Invoke it after the reset and skip the
+      // local _onChangeCallback, which would otherwise queue a second debounced change
+      // built from the just-reset (stale) value and overwrite the edit 500 ms later.
+      if (onBlur) {
+        onBlur();
+      } else {
+        this._onChangeCallback();
+      }
+    });
   }
 
   _onChangeCallback() {
@@ -312,6 +324,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 NumeralInputWithUnitsCompo.propTypes = {
   className: PropTypes.string,
   onChange: PropTypes.func,
+  onBlur: PropTypes.func,
   onMetricsChange: PropTypes.func,
   unit: PropTypes.string,
   units: PropTypes.array,
@@ -332,6 +345,7 @@ NumeralInputWithUnitsCompo.propTypes = {
 
 NumeralInputWithUnitsCompo.defaultProps = {
   className: '',
+  onBlur: null,
   unit: 'n',
   value: 0,
   units: [],
