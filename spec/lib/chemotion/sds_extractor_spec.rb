@@ -2,15 +2,23 @@
 
 require 'rails_helper'
 
-# Runs against the safety sheets saved under public/safety_sheets, so it measures the
-# extractor on real vendor PDFs rather than on a transcription of them.
+# Runs against vendor PDFs saved under public/safety_sheets where a checkout has them; the
+# folder is not in the repository, so those examples skip. Cf. sds_extractor_layouts_spec.rb.
 RSpec.describe Chemotion::SdsExtractor do
+  include SdsSheetHelpers
+
   def sheet(relative)
     Rails.public_path.join('safety_sheets', relative).to_s
   end
 
+  def vendor_sheet(relative)
+    path = sheet(relative)
+    skip("vendor sheet #{relative} is not on disk") unless File.file?(path)
+    path
+  end
+
   def extract(relative)
-    described_class.extract(sheet(relative))
+    described_class.extract(vendor_sheet(relative))
   end
 
   describe 'a Sigma sheet in the label-and-colon layout' do
@@ -185,13 +193,43 @@ RSpec.describe Chemotion::SdsExtractor do
     end
 
     it 'gives up on a file that keeps ghostscript busy past the time limit', :aggregate_failures do
-      timed_out = instance_double(Process::Status, success?: false, exitstatus: described_class::TIMED_OUT_STATUS)
+      timed_out = instance_double(Process::Status, success?: false, exitstatus: 124)
       allow(Open3).to receive(:capture3).and_return(['', '', timed_out])
 
       result = described_class.extract(Rails.root.join('spec/fixtures/upload.pdf').to_s)
       expect(result['diagnostics']['errors']).to include('ghostscript timed out')
       expect(Open3).to have_received(:capture3)
-        .with('timeout', described_class::GHOSTSCRIPT_TIMEOUT_SECONDS.to_s, 'gs', any_args)
+        .with('timeout', '-k', described_class::KILL_AFTER_SECONDS.to_s,
+              described_class::GHOSTSCRIPT_TIMEOUT_SECONDS.to_s, 'gs', any_args)
+    end
+
+    it 'counts a run the time limit had to kill as timed out' do
+      killed = instance_double(Process::Status, success?: false, exitstatus: 137)
+      allow(Open3).to receive(:capture3).and_return(['', '', killed])
+
+      result = described_class.extract(Rails.root.join('spec/fixtures/upload.pdf').to_s)
+      expect(result['diagnostics']['errors']).to eq(['ghostscript timed out'])
+    end
+
+    context 'when it runs ghostscript' do
+      let(:command) { [] }
+
+      before do
+        allow(Open3).to receive(:capture3).and_wrap_original do |original, *args|
+          command.replace(args)
+          original.call(*args)
+        end
+      end
+
+      it 'runs it in safe mode on a bounded number of pages' do
+        described_class.extract(Rails.root.join('spec/fixtures/upload.pdf').to_s)
+        expect(command).to include('-dSAFER', "-dLastPage=#{described_class::MAX_PAGES}")
+      end
+
+      it 'passes the sheet as an absolute path, never as an option' do
+        Dir.chdir(Rails.root.join('spec/fixtures')) { described_class.extract('upload.pdf') }
+        expect(command.last).to eq(Rails.root.join('spec/fixtures/upload.pdf').to_s)
+      end
     end
 
     it 'keeps the server path out of a ghostscript error', :aggregate_failures do
@@ -204,8 +242,10 @@ RSpec.describe Chemotion::SdsExtractor do
       expect(errors.join).not_to include(Rails.root.to_s)
     end
 
-    it 'reports a file ghostscript cannot open', :aggregate_failures do
-      result = extract('merck/131377_web_e2673f96a32fe5d8.pdf')
+    it 'reports a sheet with no text layer', :aggregate_failures do
+      dir = Dir.mktmpdir('sds_no_text')
+      result = described_class.extract(sds_pdf_without_text(dir: dir))
+      FileUtils.rm_rf(dir)
       expect(result['safetyPhrases'])
         .to eq('h_statements' => {}, 'p_statements' => {}, 'pictograms' => [])
       expect(result['diagnostics']['errors']).to include('ghostscript produced no text')
@@ -214,8 +254,11 @@ RSpec.describe Chemotion::SdsExtractor do
 
   describe '.extract_saved_sheet' do
     it 'reads a link as chemical_data stores it' do
-      result = described_class.extract_saved_sheet('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf')
-      expect(result['properties']['flash_point']).to eq('4 °C')
+      allow(described_class).to receive(:extract).and_return('read' => true)
+      expect(described_class.extract_saved_sheet('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
+        .to eq('read' => true)
+      expect(described_class).to have_received(:extract)
+        .with(Rails.public_path.join('safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf').to_s)
     end
 
     it 'refuses a path outside the safety sheet folder', :aggregate_failures do
@@ -228,10 +271,44 @@ RSpec.describe Chemotion::SdsExtractor do
       result = described_class.extract_saved_sheet('/safety_sheets/merck/../../../etc/passwd.pdf')
       expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
     end
+
+    it 'refuses a path that is not a PDF or carries a trailing line', :aggregate_failures do
+      expect(described_class.extract_saved_sheet('/safety_sheets/merck/sheet.txt')['diagnostics']['errors'])
+        .to eq(['not a saved safety sheet path'])
+      expect(described_class.extract_saved_sheet("/safety_sheets/merck/a.pdf\n/etc/passwd")['diagnostics']['errors'])
+        .to eq(['not a saved safety sheet path'])
+    end
+
+    context 'with a symlink in the sheet folder' do
+      let(:public_dir) { Pathname(Dir.mktmpdir('sds_public')) }
+      let(:outside) { Pathname(Dir.mktmpdir('sds_outside')) }
+
+      before do
+        FileUtils.mkdir_p(public_dir.join('safety_sheets/merck'))
+        FileUtils.cp(Rails.root.join('spec/fixtures/upload.pdf'), outside.join('secret.pdf'))
+        FileUtils.cp(Rails.root.join('spec/fixtures/upload.pdf'), public_dir.join('safety_sheets/merck/inside.pdf'))
+        File.symlink(outside.join('secret.pdf'), public_dir.join('safety_sheets/merck/link.pdf'))
+        allow(Rails).to receive(:public_path).and_return(public_dir)
+      end
+
+      after { FileUtils.rm_rf([public_dir, outside]) }
+
+      it 'refuses a link that leads out of it', :aggregate_failures do
+        allow(described_class).to receive(:extract)
+        result = described_class.extract_saved_sheet('/safety_sheets/merck/link.pdf')
+        expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+        expect(described_class).not_to have_received(:extract)
+      end
+
+      it 'reads a file that is inside it' do
+        allow(described_class).to receive(:extract).and_return('read' => true)
+        expect(described_class.extract_saved_sheet('/safety_sheets/merck/inside.pdf')).to eq('read' => true)
+      end
+    end
   end
 
   describe 'a German Sigma sheet' do
-    let(:result) { described_class.extract_saved_sheet('/safety_sheets/merck/45326_858ce38e0de45f17.pdf') }
+    let(:result) { extract('merck/45326_858ce38e0de45f17.pdf') }
 
     it 'finds all sixteen ABSCHNITT headings' do
       expect(result['diagnostics']['sections_found']).to eq((1..16).to_a)
@@ -269,17 +346,20 @@ RSpec.describe Chemotion::SdsExtractor do
   end
 
   describe 'a misfiled sheet' do
-    let(:misfiled) { Rails.root.join('tmp/sds_extractor_spec/merck/392693_web_deadbeef.pdf') }
-
-    before do
-      FileUtils.mkdir_p(File.dirname(misfiled))
-      FileUtils.cp(sheet('fisher/AC133710010_web_ebb6ada3e5083e64.pdf'), misfiled)
+    let(:dir) { Dir.mktmpdir('sds_misfiled') }
+    let(:misfiled) do
+      FileUtils.mkdir_p(File.join(dir, 'merck'))
+      sds_pdf_from_lines(['SAFETY DATA SHEET', '1. Identification', 'Fisher Scientific Company',
+                          '2. Hazard(s) identification', *(3..8).map { |number| "#{number}. Section" },
+                          '9. Physical and chemical properties',
+                          'Flash Point                  14 °C'],
+                         dir: File.join(dir, 'merck'), name: '392693_web_deadbeef.pdf')
     end
 
-    after { FileUtils.rm_rf(Rails.root.join('tmp/sds_extractor_spec')) }
+    after { FileUtils.rm_rf(dir) }
 
     it 'takes the vendor from the document, not from the path', :aggregate_failures do
-      result = described_class.extract(misfiled.to_s)
+      result = described_class.extract(misfiled)
       expect(result['diagnostics']['vendor']).to eq('thermofisher')
       expect(result['properties']['flash_point']).to eq('14 °C')
     end

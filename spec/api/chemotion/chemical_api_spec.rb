@@ -349,10 +349,29 @@ describe Chemotion::ChemicalAPI do
 
   describe 'GET extract_sds' do
     context 'with a saved sheet' do
+      include SdsSheetHelpers
+
+      let(:dir) { Dir.mktmpdir('sds_api') }
+      let(:saved) { Rails.public_path.join('safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf').to_s }
+      let(:pdf) do
+        sds_pdf_from_lines(['SAFETY DATA SHEET', 'SECTION 1: Identification', 'Sigma-Aldrich',
+                            'SECTION 2: Hazards identification', '2.2 Label elements',
+                            'Hazard statements', 'H225 Highly flammable liquid and vapour.', '2.3 Other hazards',
+                            *(3..8).map { |number| "SECTION #{number}: Section" },
+                            'SECTION 9: Physical and chemical properties', 'Flash point        :  4 °C'],
+                           dir: dir)
+      end
+
       before do
+        # The saved sheet stands in for the gitignored vendor file at that path.
+        allow(Chemotion::SdsExtractor).to receive(:extract).and_wrap_original do |original, path|
+          original.call(path == saved ? pdf : path)
+        end
         get '/api/v1/chemicals/extract_sds',
             params: { path: '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
       end
+
+      after { FileUtils.rm_rf(dir) }
 
       it 'returns the codes and properties read out of the file', :aggregate_failures do
         body = JSON.parse(response.body)

@@ -27,6 +27,10 @@ RSpec.describe Chemotion::SdsValueParser do
       expect(styled.decimal_style).to eq(:english)
     end
 
+    it 'stays unsettled when no number decides' do
+      expect(described_class.new('Flash point 70 °C Density 1,022 g/cm3').decimal_style).to eq(:unsettled)
+    end
+
     it 'refuses to choose when both conventions carry a decimal' do
       styled = described_class.new('a 0,5 °C b 0.5 °C')
       expect(styled.decimal_style).to eq(:ambiguous)
@@ -75,6 +79,13 @@ RSpec.describe Chemotion::SdsValueParser do
         .to eq('unparsed')
     end
 
+    it 'omits a lone three-digit group no number of the sheet settles', :aggregate_failures do
+      unsettled = described_class.new('Flash point 70 °C Density 1,022 g/cm3')
+      expect(unsettled.parse_quantity('1,022 g/cm3')['reason']).to eq('unparsed_number')
+      expect(unsettled.parse_quantity('1.013 hPa')['reason']).to eq('unparsed_number')
+      expect(unsettled.parse_quantity('0.770')['display']).to eq('0.770')
+    end
+
     it 'refuses every comma number while the convention is unsettled' do
       ambiguous = described_class.new('a 0,5 °C b 0.5 °C')
       expect(ambiguous.parse_quantity('1,5 °C')['reason']).to eq('unparsed_number')
@@ -83,6 +94,13 @@ RSpec.describe Chemotion::SdsValueParser do
     it 'drops the literature marker Sigma appends' do
       expect(parser.parse_quantity('0,861 g/cm3 at 20 °C - lit.')['display'])
         .to eq('0.861 g/cm3 (20 °C)')
+    end
+  end
+
+  describe 'on hostile text' do
+    it 'scans a long digit run without backtracking over every start' do
+      parser = described_class.new("#{'1' * 200_000} x")
+      expect(Benchmark.realtime { parser.decimal_style }).to be < 1
     end
   end
 

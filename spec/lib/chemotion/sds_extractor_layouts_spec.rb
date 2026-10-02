@@ -127,6 +127,52 @@ RSpec.describe Chemotion::SdsExtractor do
     end
   end
 
+  describe 'a German Sigma sheet' do
+    let(:result) do
+      extract_lines(['SICHERHEITSDATENBLATT', 'ABSCHNITT 1: Bezeichnung des Stoffs', 'Sigma-Aldrich Chemie GmbH',
+                     'ABSCHNITT 2: Mögliche Gefahren', '2.2 Kennzeichnungselemente',
+                     'H301 + H311 + H331 Giftig bei Verschlucken, Hautkontakt oder Einatmen.',
+                     'H360FD Kann die Fruchtbarkeit beeinträchtigen. Kann das Kind im Mutterleib schädigen.',
+                     'P305 + P351 + P338 BEI KONTAKT MIT DEN AUGEN: Einige Minuten lang behutsam mit Wasser spülen.',
+                     'Reduzierte Kennzeichnung (<= 125 ml)', 'H315 Verursacht Hautreizungen.',
+                     '2.3 Sonstige Gefahren', 'ABSCHNITT 3: Zusammensetzung',
+                     'H302 Gesundheitsschädlich bei Verschlucken.',
+                     *(4..8).map { |number| "ABSCHNITT #{number}: Abschnitt" },
+                     'ABSCHNITT 9: Physikalische und chemische Eigenschaften',
+                     'Flammpunkt                 :  70 °C', 'Dichte                     :  1,022 g/cm3 bei 25 °C',
+                     'Dampfdruck                 :  0,49 hPa bei 20 °C',
+                     'Viskosität                 :  Keine Daten verfügbar', 'ABSCHNITT 10: Stabilität'])
+    end
+
+    it 'reads the codes of section 2.2 alone, combined ones intact', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H301+H311+H331 H360FD])
+      expect(result['safetyPhrases']['p_statements'].keys).to eq(%w[P305+P351+P338])
+    end
+
+    it 'derives the pictograms through the category letters of a code' do
+      expect(result['safetyPhrases']['pictograms']).to contain_exactly('GHS06', 'GHS08')
+    end
+
+    it 'reads the German section 9 labels with a comma decimal and a "bei" condition', :aggregate_failures do
+      expect(result['properties']).to eq('flash_point' => '70 °C', 'density' => '1.022 g/cm3 (25 °C)',
+                                         'vapor_pressure' => '0.49 hPa (20 °C)')
+      expect(result['diagnostics']['properties']['skipped']['viscosity']['reason']).to eq('absent')
+    end
+  end
+
+  describe 'a US sheet with a negated statement' do
+    let(:result) do
+      extract_lines(us_sheet(['Hazard Statements', 'Causes skin irritation', 'Precautionary Statements',
+                              'Do not use water to extinguish']))
+    end
+
+    it 'matches the statement and leaves the negated one unmatched', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H315])
+      expect(result['safetyPhrases']['p_statements']).to be_empty
+      expect(result['diagnostics']['phrases']['unmatched_statements']).to eq(['Do not use water to extinguish'])
+    end
+  end
+
   describe 'a document with no vendor mark' do
     let(:result) { extract_lines(us_sheet(['Highly flammable liquid and vapor'], vendor: 'Some Supplier')) }
 

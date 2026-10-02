@@ -7,11 +7,19 @@ module Chemotion
   # Reads an already-saved SDS PDF and returns only what the sheet states unambiguously.
   # Every omission is recorded under 'diagnostics' rather than replaced by a guess.
   class SdsExtractor
-    GHOSTSCRIPT = ['gs', '-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=txtwrite'].freeze
+    # Sections 2 and 9 sit well inside the first pages; the cap bounds work on a hostile file.
+    MAX_PAGES = 40
+    GHOSTSCRIPT = ['gs', '-q', '-dNOPAUSE', '-dBATCH', '-dSAFER', '-sDEVICE=txtwrite',
+                   '-dFirstPage=1', "-dLastPage=#{MAX_PAGES}"].freeze
     # The PDF was uploaded by a user, so a file built to keep the interpreter busy must not
     # hold a worker for longer than this.
     GHOSTSCRIPT_TIMEOUT_SECONDS = 60
-    TIMED_OUT_STATUS = 124
+    KILL_AFTER_SECONDS = 5
+    # timeout(1) exits 124 after TERM and 137 when it has to KILL.
+    TIMED_OUT_STATUSES = [124, 137].freeze
+    # Bounds on the text layer, so every regex below runs on lines of a known size.
+    MAX_TEXT_BYTES = 2_000_000
+    MAX_LINE_LENGTH = 1000
     VENDORS = [
       {
         'name' => 'merck',
@@ -28,11 +36,13 @@ module Chemotion
     PROPERTIES_SECTION = 9
     LABEL_ELEMENTS = { sigma: /\A2\.2\b/, fisher: /\ALabel\s+Elements\b/i }.freeze
     SUBSECTION_END = { sigma: /\A2\.3\b/, fisher: /\AHazards\s+not\s+otherwise\s+classified/i }.freeze
-    REDUCED_LABELLING = /\AReduced\s+Label/i.freeze
+    REDUCED_LABELLING = /\A(?:Reduced\s+Label|Reduzierte\s+Kennzeichnung)/i.freeze
     NOT_HAZARDOUS = /not\s+a\s+hazardous\s+(substance|mixture)|\ANone\s+required\b|no\s+hazard\s+statement/i.freeze
     NOT_HAZARDOUS_NOTE = 'the sheet declares the substance non-hazardous, so no codes are expected'
     # The shape Chemical#chemical_data stores in safetySheetPath; nothing else reaches the disk.
     SAVED_SHEET = %r{\A/?safety_sheets/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+\.pdf\z}.freeze
+    SHEET_ROOT = 'safety_sheets'
+    NOT_A_SAVED_SHEET = 'not a saved safety sheet path'
 
     def self.extract(pdf_path)
       new(pdf_path).extract
@@ -40,13 +50,23 @@ module Chemotion
 
     # Entry point for a link held in chemical_data, which is client-supplied.
     def self.extract_saved_sheet(link)
-      return new(link.to_s).refuse('not a saved safety sheet path') unless link.to_s.match?(SAVED_SHEET)
+      link = link.to_s
+      path = Rails.public_path.join(link.delete_prefix('/'))
+      return new(link).refuse(NOT_A_SAVED_SHEET) unless link.match?(SAVED_SHEET) && inside_sheet_root?(path)
 
-      extract(Rails.public_path.join(link.to_s.delete_prefix('/')).to_s)
+      extract(path.to_s)
     end
 
+    # A symlink under the sheet folder must not lead the reader elsewhere on the disk.
+    def self.inside_sheet_root?(path)
+      return true unless path.exist?
+
+      path.realpath.to_s.start_with?("#{Rails.public_path.join(SHEET_ROOT).realpath}/")
+    end
+
+    # Absolute, so ghostscript cannot read a path as an option.
     def initialize(pdf_path)
-      @pdf_path = pdf_path.to_s
+      @pdf_path = File.expand_path(pdf_path.to_s)
       @diagnostics = { 'notes' => [], 'errors' => [] }
     end
 
@@ -106,7 +126,9 @@ module Chemotion
     def phrases_from_wording(lines)
       found = SdsPhraseMatcher.match(lines)
       h_codes, p_codes = found[:codes].partition { |code| code.match?(/\A(?:EU)?H/) }
-      if found[:codes].empty?
+      if found[:refused]
+        note("wording not matched: #{found[:refused]}")
+      elsif found[:codes].empty?
         note('no H or P codes in the text layer of the bounded section, and no statement matched')
       else
         note('the sheet prints no codes, so these were matched from the statement wording')
@@ -180,27 +202,32 @@ module Chemotion
       return fail_with("no such file: #{File.basename(@pdf_path)}") unless File.file?(@pdf_path)
 
       text = ghostscript_text
-      return fail_with('ghostscript produced no text') if text.nil? || text.strip.empty?
+      return nil if text.nil?
+      return fail_with('ghostscript produced no text') if text.strip.empty?
 
-      text.delete("\r").tr("\f", "\n").split("\n")
+      text.delete("\r").tr("\f", "\n").split("\n").map { |line| line[0, MAX_LINE_LENGTH] }
     end
 
     def ghostscript_text
       Tempfile.create(['sds', '.txt']) do |out|
-        command = ['timeout', GHOSTSCRIPT_TIMEOUT_SECONDS.to_s, *GHOSTSCRIPT, "-sOutputFile=#{out.path}", @pdf_path]
-        _stdout, stderr, status = Open3.capture3(*command)
-        next fail_with('ghostscript timed out') if status.exitstatus == TIMED_OUT_STATUS
-        next fail_with("ghostscript failed: #{first_line_without_path(stderr)}") unless status.success?
+        _stdout, stderr, status = Open3.capture3(*ghostscript_command(out.path))
+        next fail_with('ghostscript timed out') if TIMED_OUT_STATUSES.include?(status.exitstatus)
+        next fail_with("ghostscript failed: #{first_line_without_paths(stderr, out.path)}") unless status.success?
 
-        File.read(out.path, encoding: 'UTF-8').scrub
+        (+File.open(out.path, 'rb') { |file| file.read(MAX_TEXT_BYTES) }.to_s).force_encoding(Encoding::UTF_8).scrub
       end
     rescue SystemCallError => e
       fail_with("ghostscript unavailable: #{e.message}")
     end
 
+    def ghostscript_command(output)
+      ['timeout', '-k', KILL_AFTER_SECONDS.to_s, GHOSTSCRIPT_TIMEOUT_SECONDS.to_s,
+       *GHOSTSCRIPT, "-sOutputFile=#{output}", @pdf_path]
+    end
+
     # Diagnostics go back to the browser, so the server's file system stays out of them.
-    def first_line_without_path(stderr)
-      stderr.lines.first.to_s.strip.gsub(@pdf_path, File.basename(@pdf_path))
+    def first_line_without_paths(stderr, output)
+      stderr.lines.first.to_s.strip.gsub(@pdf_path, File.basename(@pdf_path)).gsub(output, File.basename(output))
     end
 
     def fail_with(message)

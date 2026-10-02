@@ -13,8 +13,10 @@ module Chemotion
     WILDCARD = :wildcard
     STOPWORDS = %w[a an the and or].freeze
     # Severity, route and negation: a near match that differs in one of these is a different hazard.
-    DECISIVE = %w[may suspected fatal toxic harmful very extremely highly serious severe not no
+    DECISIVE = %w[may suspected fatal toxic harmful very extremely highly serious severe mild not no never
                   immediately skin eye respiratory swallowed inhaled].freeze
+    # A placeholder never absorbs these: "Do not use water" is no fill-in of "Use … to extinguish".
+    NEGATIONS = %w[not no never].freeze
     SPELLING = {
       'vapour' => 'vapor', 'vapours' => 'vapors', 'centre' => 'center', 'colour' => 'color',
       'odour' => 'odor', 'sensitisation' => 'sensitization', 'aluminium' => 'aluminum',
@@ -33,7 +35,12 @@ module Chemotion
     # The label of a "label : statement" row, as Sigma prints the first statement of each block.
     LEADING_LABEL = /\A(?:hazard\s+statements?|precautionary(?:\s+statements?)?|prevention|response|storage|
                      disposal|supplemental\s+hazard(?:\s+statements?)?)\s*:\s*/ix.freeze
+    RUNNING_HEADER = /\bRevision\s+Date\b/i.freeze
+    PAGE_RULE = /\A_{5,}\z/.freeze
+    HEADER_WRAP_LINES = 2
     MAX_UNMATCHED_REPORTED = 20
+    # A label block holds a few dozen statements; beyond this the text is not one, and the DP cost grows.
+    MAX_FRAGMENTS = 400
     VARIANTS_FILE = File.expand_path('sds_phrase_variants.yml', __dir__)
     PHRASE_FILES = %w[json/hazardPhrases.json json/precautionaryPhrases.json].freeze
 
@@ -103,6 +110,8 @@ module Chemotion
     def match(lines)
       @ambiguous = {}
       fragments = fragment(lines)
+      return too_many(fragments) if fragments.length > MAX_FRAGMENTS
+
       hits, covered = segment(fragments)
       {
         codes: hits.map(&:code).uniq,
@@ -114,10 +123,30 @@ module Chemotion
 
     private
 
+    def too_many(fragments)
+      { codes: [], matched: [], unmatched: fragments.first(MAX_UNMATCHED_REPORTED), ambiguous: [],
+        refused: "more than #{MAX_FRAGMENTS} statements to match" }
+    end
+
     def fragment(lines)
-      Array(lines).flat_map { |line| line.to_s.strip.split(SENTENCE_END) }
-                  .map { |text| text.strip.sub(LEADING_LABEL, '') }
-                  .reject { |text| text.empty? || text.match?(SUBHEADING) || text.match?(PAGE_FURNITURE) }
+      without_page_furniture(lines).flat_map { |line| line.split(SENTENCE_END) }
+                                   .map { |text| text.strip.sub(LEADING_LABEL, '') }
+                                   .reject { |text| text.empty? || text.match?(SUBHEADING) }
+    end
+
+    # A long product name wraps the running header onto the lines before the page rule.
+    def without_page_furniture(lines)
+      stripped = Array(lines).map { |line| line.to_s.strip }
+      stripped.reject.with_index do |line, index|
+        line.match?(PAGE_FURNITURE) || header_continuation?(stripped, index)
+      end
+    end
+
+    def header_continuation?(lines, index)
+      header = (1..HEADER_WRAP_LINES).find { |back| index >= back && lines[index - back].match?(RUNNING_HEADER) }
+      return false if header.nil?
+
+      lines[(index + 1)..(index + HEADER_WRAP_LINES - header + 1)].to_a.any? { |line| line.match?(PAGE_RULE) }
     end
 
     # Best cover of the fragments by statements, where a statement may span a wrapped line
@@ -149,7 +178,8 @@ module Chemotion
       return nil if tokens.length < MIN_MATCHED_WORDS
 
       # Coverage first: a trailing placeholder must not let a shorter entry swallow a longer one's words.
-      top, runner_up = @catalog.filter_map { |entry| score(entry, tokens, text) }
+      pool = tokens.tally
+      top, runner_up = @catalog.filter_map { |entry| score(entry, tokens, pool, text) }
                                .sort_by { |hit| [-hit.value, -hit.score] }
       return top unless tied?(top, runner_up)
 
@@ -162,10 +192,10 @@ module Chemotion
     end
 
     # Dice overlap of the words, where the words a placeholder takes count on neither side.
-    def score(entry, tokens, text)
-      return nil unless decisive_words_agree?(entry, tokens)
+    def score(entry, tokens, pool, text)
+      return nil unless within_reach?(entry, tokens) && decisive_words_agree?(entry, tokens)
 
-      matched = shared_word_count(entry.words, tokens)
+      matched = shared_word_count(entry.words, pool)
       return nil if matched < MIN_MATCHED_WORDS
 
       unexplained = tokens.length - matched - [tokens.length - matched, entry.wildcards * WILDCARD_SPAN].min
@@ -175,9 +205,14 @@ module Chemotion
       Hit.new(code: entry.code, score: score, value: matched - unexplained, text: text)
     end
 
-    def shared_word_count(words, tokens)
-      pool = tokens.tally
-      words.count { |word| pool[word].to_i.positive? && (pool[word] -= 1) }
+    # Text longer than this cannot reach MIN_SCORE even if it holds every word of the entry.
+    def within_reach?(entry, tokens)
+      tokens.length <= (entry.words.length * ((2 / MIN_SCORE) - 1)) + (entry.wildcards * WILDCARD_SPAN)
+    end
+
+    def shared_word_count(words, pool)
+      left = pool.dup
+      words.count { |word| left[word].to_i.positive? && (left[word] -= 1) }
     end
 
     # Text may carry extra decisive words only where the entry has a placeholder to hold them.
@@ -185,7 +220,8 @@ module Chemotion
       decisive_in_entry = entry.words & DECISIVE
       return false unless (decisive_in_entry - tokens).empty?
 
-      entry.wildcards.positive? || ((tokens & DECISIVE) - decisive_in_entry).empty?
+      extra = (tokens & DECISIVE) - decisive_in_entry
+      extra.empty? || (entry.wildcards.positive? && (extra & NEGATIONS).empty?)
     end
 
     def unmatched(fragments, covered)

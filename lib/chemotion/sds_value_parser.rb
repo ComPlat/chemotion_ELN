@@ -18,7 +18,8 @@ module Chemotion
     DUAL_UNIT = %r{\A(#{NUM})\s*°C\s*/\s*#{NUM}\s*°F\z}.freeze
     RANGE = /\A(#{NUM})\s*(?:-|–|to)\s*(#{NUM})\s*(#{UNIT_RE})?\z/.freeze
     SINGLE = /\A(#{NUM})\s*(#{UNIT_RE})?\z/.freeze
-    UNIT_BEARING = /(#{NUM})\s*(?=#{UNIT_RE})/.freeze
+    # Starts only at the head of a number, so a long digit run costs linear time.
+    UNIT_BEARING = /(?<![\d.,])(#{NUM})\s*(?=#{UNIT_RE})/.freeze
     PLAIN_NUMBER = /\A-?\d+(\.\d+)?\z/.freeze
     BRACKETED = /\A(.*?)\s*\(([^()]*)\)\z/.freeze
     MEASURED_AT = /\A(.*?)(?:\s+at\s+|\s+bei\s+|\s*@\s*)(.+)\z/i.freeze
@@ -33,15 +34,16 @@ module Chemotion
       [/\d\.\d{3},\d/, /\d,\d{3}\.\d/],
       [/\A-?0,\d/, /\A-?0\.\d/],
       [/,\d{1,2}(?!\d)/, /\.\d{1,2}(?!\d)/],
-      [/\.\d{3}(?!\d)/, /,\d{3}(?!\d)/],
     ].freeze
+    # "1,022" or "1.022": a decimal in one convention, a thousands group in the other.
+    LONE_GROUP = /\A-?[1-9]\d{0,2}[.,]\d{3}\z/.freeze
 
     # +section_text+ decides the decimal convention; an English Sigma sheet still writes "0,791".
     def initialize(section_text)
       @section_text = section_text.to_s
     end
 
-    # :german, :english, or :ambiguous when the sheet uses both and settles neither.
+    # :german, :english, :ambiguous when the sheet uses both, or :unsettled when no number decides.
     def decimal_style
       @decimal_style ||= infer_decimal_style
     end
@@ -140,6 +142,7 @@ module Chemotion
       case decimal_style
       when :german then text.gsub(/(\d)\.(\d{3})/, '\1\2').tr(',', '.')
       when :english then text.gsub(/(\d),(\d{3})/, '\1\2')
+      when :unsettled then text.match?(LONE_GROUP) || text.include?(',') ? '' : text
       else text.include?(',') ? '' : text
       end
     end
@@ -151,7 +154,7 @@ module Chemotion
         style = signalled_style(numbers, marks)
         return style if style
       end
-      :english
+      :unsettled
     end
 
     def signalled_style(numbers, marks)

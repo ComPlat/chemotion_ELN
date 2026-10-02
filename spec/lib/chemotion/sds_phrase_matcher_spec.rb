@@ -18,6 +18,41 @@ RSpec.describe Chemotion::SdsPhraseMatcher do
     expect(codes('Causes eye irritation')).to eq(%w[H320])
   end
 
+  it 'tells the acute toxicity, reproductive and target organ categories apart', :aggregate_failures do
+    expect(codes('Fatal if swallowed', 'Harmful if swallowed', 'May be harmful if swallowed'))
+      .to eq(%w[H300 H302 H303])
+    expect(codes('May damage fertility or the unborn child')).to eq(%w[H360])
+    expect(codes('Suspected of damaging fertility or the unborn child')).to eq(%w[H361])
+    expect(codes('May cause damage to organs')).to eq(%w[H371])
+    expect(codes('May cause damage to organs through prolonged or repeated exposure')).to eq(%w[H373])
+    expect(codes('Immediately call a POISON CENTER or doctor/physician')).to eq(%w[P310])
+    expect(codes('Call a POISON CENTER or doctor/physician')).to eq(%w[P311])
+  end
+
+  it 'keeps a mild irritant apart from an irritant' do
+    expect(codes('Causes mild skin irritation')).to eq(%w[H316])
+  end
+
+  it 'matches nothing to a negated statement, placeholder or not', :aggregate_failures do
+    expect(codes('Does not cause skin irritation')).to be_empty
+    expect(codes('Do not use water to extinguish')).to be_empty
+    expect(codes('In case of fire: Do not use water jet to extinguish')).to be_empty
+    expect(codes('Do not wash hands after handling')).to be_empty
+    expect(codes('Never wear protective gloves')).to be_empty
+    expect(codes('Do not wear respiratory protection')).to be_empty
+  end
+
+  it 'still matches a catalogue statement that carries its own negation' do
+    expect(codes('IF SWALLOWED: Rinse mouth. Do NOT induce vomiting')).to eq(%w[P301+P330+P331])
+  end
+
+  it 'refuses a block too long to be a label block', :aggregate_failures do
+    lines = Array.new(described_class::MAX_FRAGMENTS + 1) { 'Highly flammable liquid and vapor' }
+    result = described_class.match(lines)
+    expect(result[:codes]).to be_empty
+    expect(result[:refused]).to include(described_class::MAX_FRAGMENTS.to_s)
+  end
+
   it 'leaves a statement with no catalogue code unmatched rather than taking the nearest one', :aggregate_failures do
     result = described_class.match(['May form combustible dust concentrations in air'])
     expect(result[:codes]).to be_empty
@@ -64,6 +99,19 @@ RSpec.describe Chemotion::SdsPhraseMatcher do
                                     'Hazard statements        :   Flammable liquid and vapour.'])
     expect(result[:codes]).to eq(%w[H226])
     expect(result[:unmatched]).to be_empty
+  end
+
+  it 'skips a running header that wraps or holds a sentence break', :aggregate_failures do
+    result = described_class.match(['Causes skin irritation', 'Page   1 / 10',
+                                    'Hydrobromic acid, ca. 48%        Revision Date  18-Dec-2025',
+                                    'Hydrogen bromide in glacial acetic        Revision Date  18-Dec-2025',
+                                    'acid', '_' * 40, 'Causes serious eye irritation'])
+    expect(result[:codes]).to eq(%w[H315 H319])
+    expect(result[:unmatched]).to be_empty
+  end
+
+  it 'keeps a statement that follows a running header without a rule' do
+    expect(codes('Aniline        Revision Date  19-Dec-2025', 'Causes skin irritation')).to eq(%w[H315])
   end
 
   it 'reports the score of each match' do

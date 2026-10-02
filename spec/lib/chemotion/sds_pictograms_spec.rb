@@ -26,6 +26,25 @@ describe Chemotion::SdsPictograms do
     expect(codes_for('H412', 'H413')).to eq([])
   end
 
+  it 'reads through the category letters of a code', :aggregate_failures do
+    expect(codes_for('H360FD')).to eq(['GHS08'])
+    expect(codes_for('H350i')).to eq(['GHS08'])
+    expect(codes_for('H361d')).to eq(['GHS08'])
+  end
+
+  it 'derives nothing from a code whose category alone decides the pictogram', :aggregate_failures do
+    expect(codes_for('H221')).to eq([])
+    expect(codes_for('H205')).to eq([])
+  end
+
+  it 'gives the ozone hazard the exclamation mark' do
+    expect(codes_for('H420')).to eq(['GHS07'])
+  end
+
+  it 'derives nothing from an EUH code' do
+    expect(codes_for('EUH066')).to eq([])
+  end
+
   describe 'Article 26 precedence' do
     it 'drops the exclamation mark when the skull applies' do
       expect(codes_for('H301', 'H317')).to eq(['GHS06'])
@@ -37,6 +56,14 @@ describe Chemotion::SdsPictograms do
 
     it 'keeps the exclamation mark for a hazard corrosion does not cover' do
       expect(codes_for('H318', 'H336')).to contain_exactly('GHS05', 'GHS07')
+    end
+
+    it 'keeps the exclamation mark for skin sensitisation under corrosion alone' do
+      expect(codes_for('H318', 'H317')).to contain_exactly('GHS05', 'GHS07')
+    end
+
+    it 'drops it when corrosion and respiratory sensitisation cover every reason between them' do
+      expect(codes_for('H314', 'H315', 'H317', 'H334')).to contain_exactly('GHS05', 'GHS08')
     end
 
     it 'drops the exclamation mark when respiratory sensitisation applies' do
