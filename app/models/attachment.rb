@@ -395,6 +395,8 @@ class Attachment < ApplicationRecord
     attachment_attacher.create_derivatives
 
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+    # attach once: Shrine's after_commit `persist` saves the record again, which would re-run this callback
+    self.file_path = nil
   end
 
   def check_file_size
