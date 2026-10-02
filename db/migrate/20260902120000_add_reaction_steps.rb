@@ -15,6 +15,8 @@ class AddReactionSteps < ActiveRecord::Migration[6.1]
       t.float :ph_value
       t.jsonb :vessel_size, default: { 'unit' => 'ml', 'amount' => nil }
       t.decimal :volume, precision: 10, scale: 4
+      t.boolean :use_reaction_volume, null: false, default: false
+      t.boolean :lock_reaction_volume, null: false, default: false
       t.datetime :deleted_at
       t.timestamps
       t.index :reaction_id

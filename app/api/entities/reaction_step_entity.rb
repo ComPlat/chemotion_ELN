@@ -14,5 +14,7 @@ module Entities
     expose! :ph_value
     expose! :vessel_size
     expose! :volume
+    expose! :use_reaction_volume
+    expose! :lock_reaction_volume
   end
 end

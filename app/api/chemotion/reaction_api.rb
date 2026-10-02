@@ -188,6 +188,8 @@ module Chemotion
           optional :ph_value, type: Float
           optional :vessel_size, type: Hash
           optional :volume, type: BigDecimal
+          optional :use_reaction_volume, type: Boolean
+          optional :lock_reaction_volume, type: Boolean
         end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
@@ -302,6 +304,8 @@ module Chemotion
           optional :ph_value, type: Float
           optional :vessel_size, type: Hash
           optional :volume, type: BigDecimal
+          optional :use_reaction_volume, type: Boolean
+          optional :lock_reaction_volume, type: Boolean
         end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
