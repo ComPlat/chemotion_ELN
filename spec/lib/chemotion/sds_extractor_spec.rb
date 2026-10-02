@@ -258,7 +258,7 @@ RSpec.describe Chemotion::SdsExtractor do
       expect(described_class.extract_saved_sheet('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
         .to eq('read' => true)
       expect(described_class).to have_received(:extract)
-        .with(Rails.public_path.join('safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf').to_s)
+        .with(Chemotion::GenerateFileHashUtils.safety_sheets_root.join('merck/392693_c4f307a89d9fd8c2.pdf').to_s)
     end
 
     it 'refuses a path outside the safety sheet folder', :aggregate_failures do
@@ -280,18 +280,17 @@ RSpec.describe Chemotion::SdsExtractor do
     end
 
     context 'with a symlink in the sheet folder' do
-      let(:public_dir) { Pathname(Dir.mktmpdir('sds_public')) }
+      let(:merck) { Chemotion::GenerateFileHashUtils.safety_sheets_root.join('merck') }
       let(:outside) { Pathname(Dir.mktmpdir('sds_outside')) }
 
       before do
-        FileUtils.mkdir_p(public_dir.join('safety_sheets/merck'))
+        FileUtils.mkdir_p(merck)
         FileUtils.cp(Rails.root.join('spec/fixtures/upload.pdf'), outside.join('secret.pdf'))
-        FileUtils.cp(Rails.root.join('spec/fixtures/upload.pdf'), public_dir.join('safety_sheets/merck/inside.pdf'))
-        File.symlink(outside.join('secret.pdf'), public_dir.join('safety_sheets/merck/link.pdf'))
-        allow(Rails).to receive(:public_path).and_return(public_dir)
+        FileUtils.cp(Rails.root.join('spec/fixtures/upload.pdf'), merck.join('inside.pdf'))
+        File.symlink(outside.join('secret.pdf'), merck.join('link.pdf'))
       end
 
-      after { FileUtils.rm_rf([public_dir, outside]) }
+      after { FileUtils.rm_rf(outside) }
 
       it 'refuses a link that leads out of it', :aggregate_failures do
         allow(described_class).to receive(:extract)

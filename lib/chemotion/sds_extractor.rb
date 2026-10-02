@@ -50,18 +50,26 @@ module Chemotion
 
     # Entry point for a link held in chemical_data, which is client-supplied.
     def self.extract_saved_sheet(link)
-      link = link.to_s
-      path = Rails.public_path.join(link.delete_prefix('/'))
-      return new(link).refuse(NOT_A_SAVED_SHEET) unless link.match?(SAVED_SHEET) && inside_sheet_root?(path)
+      path = saved_sheet_path(link)
+      return new(link.to_s).refuse(NOT_A_SAVED_SHEET) if path.nil?
 
       extract(path.to_s)
+    end
+
+    # The file a saved-sheet link names, or nil when the link could reach anything else.
+    def self.saved_sheet_path(link)
+      link = link.to_s
+      return nil unless link.match?(SAVED_SHEET)
+
+      path = GenerateFileHashUtils.safety_sheets_root.join(link.delete_prefix('/').delete_prefix("#{SHEET_ROOT}/"))
+      inside_sheet_root?(path) ? path : nil
     end
 
     # A symlink under the sheet folder must not lead the reader elsewhere on the disk.
     def self.inside_sheet_root?(path)
       return true unless path.exist?
 
-      path.realpath.to_s.start_with?("#{Rails.public_path.join(SHEET_ROOT).realpath}/")
+      path.realpath.to_s.start_with?("#{GenerateFileHashUtils.safety_sheets_root.realpath}/")
     end
 
     # Absolute, so ghostscript cannot read a path as an option.

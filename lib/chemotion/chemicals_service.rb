@@ -7,7 +7,6 @@ module Chemotion
     # the backstop for any client that does not.
     MAX_SAVED_SDS = 5
 
-    SAFETY_SHEETS_ROOT = Rails.public_path.join('safety_sheets')
     # A catalogue number becomes the first part of a file name, so only these characters.
     SHEET_PRODUCT_NUMBER_RE = /\A[A-Za-z0-9][A-Za-z0-9\-_.]{0,63}\z/.freeze
     # Sigma's SDS URL takes a two-letter language code in its path.
@@ -441,8 +440,9 @@ module Chemotion
         raise ArgumentError, "Not a safety sheet path: #{relative_path}"
       end
 
-      path = SAFETY_SHEETS_ROOT.join(File.basename(vendor_dir), File.basename(file_name)).cleanpath
-      raise ArgumentError, "Not a safety sheet path: #{relative_path}" unless path.dirname.dirname == SAFETY_SHEETS_ROOT
+      root = GenerateFileHashUtils.safety_sheets_root
+      path = root.join(File.basename(vendor_dir), File.basename(file_name)).cleanpath
+      raise ArgumentError, "Not a safety sheet path: #{relative_path}" unless path.dirname.dirname == root
 
       path
     end

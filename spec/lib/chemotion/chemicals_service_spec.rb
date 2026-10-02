@@ -3,6 +3,11 @@
 require 'rails_helper'
 
 describe Chemotion::ChemicalsService do
+  # The folder spec/support/isolated_safety_sheets.rb gives this example, never public/.
+  def sheet_file(relative = '')
+    Chemotion::GenerateFileHashUtils.safety_sheets_root.join(relative.delete_prefix('/safety_sheets/'))
+  end
+
   describe '.validate_product_number!' do
     it 'raises when product_number is nil' do
       expect { described_class.validate_product_number!(nil) }.to raise_error(StandardError)
@@ -22,7 +27,7 @@ describe Chemotion::ChemicalsService do
   end
 
   describe 'keeping sheet files inside the safety sheets folder' do
-    let(:root) { described_class::SAFETY_SHEETS_ROOT }
+    let(:root) { sheet_file }
 
     it 'maps a sheet path into its vendor folder' do
       expect(described_class.safety_sheet_disk_path('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
@@ -50,9 +55,7 @@ describe Chemotion::ChemicalsService do
 
   describe '.write_file with a Grape upload' do
     let(:relative_path) { '/safety_sheets/testvendor/upload.pdf' }
-    let(:full_path) { Rails.public_path.join('safety_sheets/testvendor/upload.pdf') }
-
-    after { FileUtils.rm_rf(Rails.public_path.join('safety_sheets/testvendor')) }
+    let(:full_path) { sheet_file(relative_path) }
 
     it 'writes the upload when the hash is keyed by symbol' do
       described_class.write_file(relative_path, { tempfile: StringIO.new('%PDF symbol') })
@@ -288,19 +291,16 @@ describe Chemotion::ChemicalsService do
   end
 
   describe 'saving a second sheet for one product number' do
-    # A folder of its own: the after hook removes it, and a real vendor folder holds saved sheets.
-    let(:vendor) { 'spec_second_sheet' }
+    let(:vendor) { 'merck' }
     let(:product) { '270709' }
     let(:link) { 'https://www.sigmaaldrich.com/sheet.pdf' }
     let(:first_initials) { Digest::MD5.hexdigest('%PDF first')[0..15] }
 
     before do
-      FileUtils.mkdir_p("public/safety_sheets/#{vendor}")
+      FileUtils.mkdir_p(sheet_file(vendor))
       # The name carries the content hash, which is how a duplicate is found.
-      File.write("public/safety_sheets/#{vendor}/#{product}_#{first_initials}.pdf", '%PDF first')
+      File.write(sheet_file("#{vendor}/#{product}_#{first_initials}.pdf"), '%PDF first')
     end
-
-    after { FileUtils.rm_rf("public/safety_sheets/#{vendor}") }
 
     # The old code globbed <product>_web_*.pdf and returned that file without ever
     # fetching, so a second language or revision could never be saved.
@@ -313,7 +313,7 @@ describe Chemotion::ChemicalsService do
       result = described_class.create_sds_file(link, product, vendor)
       expect(result).to match(%r{\A/safety_sheets/#{vendor}/#{product}_[a-f0-9]{16}\.pdf\z})
       expect(result).not_to end_with("#{first_initials}.pdf")
-      expect(File.read("public#{result}")).to eq('%PDF second')
+      expect(File.read(sheet_file(result))).to eq('%PDF second')
     end
 
     it 'hands back the file already held when the bytes repeat' do
@@ -602,9 +602,7 @@ describe Chemotion::ChemicalsService do
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
       let(:relative_path) { '/safety_sheets/merck/252549_test.pdf' }
-      let(:full_path) { File.join('public', relative_path) }
-
-      before { FileUtils.rm_f(full_path) }
+      let(:full_path) { sheet_file(relative_path) }
 
       it 'writes uploaded tempfile (hash with tempfile) returning bytes written' do
         io = StringIO.new('uploaded content')
@@ -637,7 +635,7 @@ describe Chemotion::ChemicalsService do
           instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }, body: '%PDF test'),
         )
         allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_return(full_hash)
-        FileUtils.mkdir_p('public/safety_sheets/thermofischer')
+        FileUtils.mkdir_p(sheet_file(vendor))
       end
 
       it 'reuses the file already on disk when the bytes are the same' do
@@ -652,7 +650,7 @@ describe Chemotion::ChemicalsService do
         result = described_class.create_sds_file(link, product_number, vendor)
         expect(result).to match(%r{^/safety_sheets/#{vendor}/#{product_number}_[a-f0-9]{16}\.pdf$})
         expect(result).not_to include('_web_')
-        expect(File.exist?(File.join('public', result))).to be true
+        expect(File.exist?(sheet_file(result))).to be true
       end
 
       it 'returns error hash when request_pdf_file returns error hash' do
