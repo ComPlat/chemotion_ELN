@@ -10,6 +10,9 @@ import {
   handleFloatNumbers,
 } from 'src/utilities/UnitsConversion';
 
+// Accepts a comma as decimal separator, as typed on a German-locale keyboard.
+const toNumber = (val) => (typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val);
+
 export default function NumericInputUnit(props) {
   const {
     numericValue,
@@ -20,11 +23,12 @@ export default function NumericInputUnit(props) {
     onInputChange
   } = props;
 
-  const [value, setValue] = useState(numericValue);
+  const [typedValue, setValue] = useState(numericValue);
   const [currentUnit, setUnit] = useState(unit);
 
   useEffect(() => {
-    setValue(numericValue);
+    // Keep the typed text (e.g. "2,5") while it still denotes the incoming number.
+    setValue((prev) => (toNumber(prev) === numericValue ? prev : numericValue));
     setUnit(unit);
   }, [numericValue, unit]);
 
@@ -55,6 +59,7 @@ export default function NumericInputUnit(props) {
   };
 
   const toggleInput = () => {
+    const value = typeof typedValue === 'string' ? typedValue.replace(',', '.') : typedValue;
     let [convertedValue, convertedUnit] = [value, currentUnit];
     switch (field) {
       case 'chemical_amount_in_g':
@@ -85,8 +90,8 @@ export default function NumericInputUnit(props) {
       return;
     }
 
-    // Allow optional leading minus, digits, and at most one decimal point
-    const isValidFormat = /^-?\d*\.?\d*$/.test(newInput);
+    // Allow optional leading minus, digits, and at most one decimal point or comma
+    const isValidFormat = /^-?\d*[.,]?\d*$/.test(newInput);
     if (!isValidFormat) {
       return;
     }
@@ -94,7 +99,7 @@ export default function NumericInputUnit(props) {
     setValue(newInput);
     // Only propagate when there's at least one digit and the value is parseable
     if (/\d/.test(newInput)) {
-      const parsedValue = parseFloat(newInput);
+      const parsedValue = toNumber(newInput);
       if (!Number.isNaN(parsedValue)) {
         onInputChange(parsedValue, currentUnit);
       }
@@ -110,7 +115,7 @@ export default function NumericInputUnit(props) {
         <Form.Control
           type="text"
           disabled={inputDisabled}
-          value={value}
+          value={typedValue}
           onChange={(event) => handleInputValueChange(event)}
           name={field}
           label={label}
