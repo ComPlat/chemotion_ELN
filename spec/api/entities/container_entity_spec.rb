@@ -50,5 +50,43 @@ describe Entities::ContainerEntity do
         )
       end
     end
+
+    context 'when an analysis container has nil extended_metadata' do
+      let(:container) { create(:analysis_container) }
+
+      before { container.update_column(:extended_metadata, nil) } # rubocop:disable Rails/SkipsModelValidations
+
+      it 'does not raise and returns the default comparable_info' do
+        expect { grape_entity_as_hash }.not_to raise_error
+        expect(grape_entity_as_hash[:comparable_info]).to include(
+          is_comparison: false,
+          list_attachments: [],
+          list_dataset: [],
+          list_analyses: [],
+          layout: '',
+        )
+      end
+    end
+
+    context 'when analyses_compared holds a malformed entry missing file/dataset/analysis ids' do
+      let(:container) do
+        create(
+          :analysis_container,
+          extended_metadata: {
+            'is_comparison' => 'true',
+            'analyses_compared' => [{ 'layout' => '1H NMR' }].to_s,
+          },
+        )
+      end
+
+      it 'does not raise and skips the entry' do
+        expect { grape_entity_as_hash }.not_to raise_error
+        expect(grape_entity_as_hash[:comparable_info]).to include(
+          is_comparison: true,
+          list_attachments: [],
+          layout: '1H NMR',
+        )
+      end
+    end
   end
 end

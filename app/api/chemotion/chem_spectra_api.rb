@@ -8,9 +8,9 @@ module Chemotion
   class ChemSpectraAPI < Grape::API
     format :json
 
-    helpers do # rubocop:disable BlockLength
+    helpers do
       def encode64(path)
-        target = File.exist?(path) && IO.binread(path) || false
+        target = (File.exist?(path) && File.binread(path)) || false
         Base64.encode64(target)
       end
 
@@ -31,9 +31,7 @@ module Chemotion
       end
 
       def get_molfile(params)
-        if params[:molfile].is_a? String
-          params[:molfile] = { tempfile: Tempfile.new }
-        end
+        params[:molfile] = { tempfile: Tempfile.new } if params[:molfile].is_a? String
         params[:molfile][:tempfile]
       end
 
@@ -46,7 +44,7 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
       end
 
@@ -58,7 +56,7 @@ module Chemotion
         )
         predict = JSON.parse(params['predict'])
         to_zip_file(params[:filename], params[:src], jcamp, img, predict)
-      rescue
+      rescue StandardError
         error!('Save files error!', 500)
       end
 
@@ -71,16 +69,14 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
       end
 
       def raw_file(att)
-        begin
-          Base64.encode64(att.read_file)
-        rescue StandardError
-          nil
-        end
+        Base64.encode64(att.read_file)
+      rescue StandardError
+        nil
       end
 
       def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
@@ -117,9 +113,48 @@ module Chemotion
       def save_data_types(file_path, current_data_types)
         File.write(file_path, JSON.pretty_generate(current_data_types))
       end
+
+      def combine_spectra(params)
+        list_file, list_file_names, container_id, combined_image_filename =
+          collect_spectra_combine_inputs(params)
+
+        _, image = Chemotion::Jcamp::CombineImg.combine(
+          list_file, params[:front_spectra_idx], list_file_names, params[:extras]
+        )
+
+        save_combined_spectra_image(image, combined_image_filename, container_id) if image
+        { status: true }
+      end
+
+      def collect_spectra_combine_inputs(params)
+        list_file = []
+        list_file_names = []
+        container_id = -1
+        combined_image_filename = ''
+        Attachment.where(id: params[:spectra_ids]).find_each do |att|
+          container = att.container
+          combined_image_filename = "#{container.name}.new_combined.png"
+          container_id = att.attachable_id
+          list_file_names.push(att.filename)
+          list_file.push(att.abs_path)
+        end
+        [list_file, list_file_names, container_id, combined_image_filename]
+      end
+
+      def save_combined_spectra_image(image, combined_image_filename, container_id)
+        Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)&.destroy!
+        Attachment.create!(
+          filename: combined_image_filename,
+          created_by: current_user.id,
+          created_for: current_user.id,
+          file_path: image.path,
+          attachable_type: 'Container',
+          attachable_id: container_id,
+        )
+      end
     end
 
-    resource :chemspectra do # rubocop:disable BlockLength
+    resource :chemspectra do
       resource :file do
         desc 'Convert file'
         params do
@@ -186,44 +221,37 @@ module Chemotion
         desc 'Combine spectra'
         params do
           requires :spectra_ids, type: [Integer]
-          requires :front_spectra_idx, type: Integer # index of front spectra
+          requires :front_spectra_idx, type: Integer
           optional :extras, type: String
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
-
-          list_file = []
-          list_file_names = []
-          container_id = -1
-          combined_image_filename = ''
-          Attachment.where(id: pm[:spectra_ids]).each do |att|
-            container = att.container
-            combined_image_filename = "#{container.name}.new_combined.png"
-            container_id = att.attachable_id
-            list_file_names.push(att.filename)
-            list_file.push(att.abs_path)
-          end
-
-          _, image = Chemotion::Jcamp::CombineImg.combine(
-            list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
-          )
-
           content_type('application/json')
-          unless image.nil?
-            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
-            att.destroy! unless att.nil?
-            att = Attachment.new(
-              filename: combined_image_filename,
-              created_by: current_user.id,
-              created_for: current_user.id,
-              file_path: image.path,
-              attachable_type: 'Container',
-              attachable_id: container_id,
-            )
-            att.save!
-          end
+          combine_spectra(pm)
+        rescue StandardError => e
+          Rails.logger.error "Error in combine_spectra: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error!({ error: 'Server Error', message: e.message }, 500)
+        end
 
-          { status: true }
+        desc 'Combine spectra for comparison containers'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer
+          requires :container_id, type: Integer
+          optional :edited_data_spectra, type: Array
+          optional :extras, type: String
+        end
+        post 'combine_spectra_comparison' do
+          pm = to_rails_snake_case(params)
+          content_type('application/json')
+          Usecases::Containers::ComparisonCombineSpectra.execute!(pm, current_user: current_user)
+        rescue Usecases::Containers::ComparisonCombineSpectra::ContainerNotFound
+          error!({ error: 'Container not found' }, 404)
+        rescue StandardError => e
+          Rails.logger.error "Error in combine_spectra_comparison: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error!({ error: 'Server Error', message: e.message }, 500)
         end
       end
 

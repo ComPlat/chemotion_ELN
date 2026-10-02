@@ -7,6 +7,10 @@ class SpectraActions {
     return null;
   }
 
+  ToggleCompareModal(container) {
+    return container;
+  }
+
   LoadSpectra(spcInfos) {
     const infos = Array.isArray(spcInfos) ? spcInfos : [];
     const groups = infos.reduce((acc, si) => {
@@ -223,6 +227,7 @@ class SpectraActions {
       }
     };
   }
+
 }
 
 export default alt.createActions(SpectraActions);
