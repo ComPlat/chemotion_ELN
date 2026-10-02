@@ -341,6 +341,19 @@ const ConcentrationBasisSelect = ({ reaction, onConcentrationModeChange }) => (
           {option.label}
         </Dropdown.Item>
       ))}
+      {reaction.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+        && !reaction.hasValidReactionVolume && (
+        <>
+          <Dropdown.Divider />
+          <Dropdown.ItemText
+            className="text-muted small"
+            style={{ maxWidth: '18rem', whiteSpace: 'normal' }}
+          >
+            <i className="fa fa-info-circle me-1" />
+            No reaction volume set; concentrations use the solvent volume until you enter one.
+          </Dropdown.ItemText>
+        </>
+      )}
     </Dropdown.Menu>
   </Dropdown>
 );

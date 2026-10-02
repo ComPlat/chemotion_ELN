@@ -1442,9 +1442,10 @@ describe('ReactionDetailsScheme#updateVolume', () => {
     expect(reaction.updateAllConcentrations.called).toBe(false);
   });
 
-  it('recomputes and warns when the reaction volume is cleared on the reaction-volume basis', () => {
+  it('recomputes and warns when a set reaction volume is cleared on the reaction-volume basis', () => {
     const reaction = {
       concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      volume: 5,
       resetPreservedConcentrationExcept: sinon.spy(),
       updateAllConcentrations: sinon.spy(),
     };
@@ -1454,11 +1455,31 @@ describe('ReactionDetailsScheme#updateVolume', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: '' });
+    // NumeralInputWithUnitsCompo reports a cleared field as numeric 0, not ''.
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
 
-    expect(onInputChange.calledWith('volume', null)).toBe(true);
     expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+  });
+
+  it('does not warn on a transient zero while typing a reaction volume from empty', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      volume: null,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    // Same callback shape as clearing (value 0), but no prior volume to remove.
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
+
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(instance.showReactionVolumeRequiredWarning.called).toBe(false);
   });
 });
 

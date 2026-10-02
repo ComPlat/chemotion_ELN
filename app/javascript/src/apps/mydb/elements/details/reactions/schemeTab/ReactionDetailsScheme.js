@@ -1419,10 +1419,22 @@ export default class ReactionDetailsScheme extends React.Component {
       return true;
     }
 
+    // With equivalents locked, a concentration edit is only allowed on the
+    // reaction-volume basis. If that is the reason it was rejected, point the
+    // user at switching the basis rather than at providing a volume they may
+    // already have on another basis.
+    if (reaction.concentration_mode !== Reaction.CONCENTRATION_MODES.REACTION_VOLUME) {
+      this.showReactionVolumeRequiredWarning(
+        'While equivalents are locked, concentration can only be edited on the '
+          + 'Reaction volume basis. Switch the Conc basis to Reaction volume, '
+          + 'or unlock equivalents.',
+        'Concentration basis'
+      );
+      return false;
+    }
+
     this.showReactionVolumeRequiredWarning(
-      'Please provide a reaction volume to update the concentration. '
-        + 'You can enter the calculated volume (e.g., from the solvents) '
-        + 'or use the detected material volume.'
+      'Please enter a reaction volume to update the concentration.'
     );
     return false;
   }
@@ -2345,9 +2357,9 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  showReactionVolumeRequiredWarning(message) {
+  showReactionVolumeRequiredWarning(message, title = 'Reaction Volume Required') {
     this.context.notifications.add({
-      title: 'Reaction Volume Required',
+      title,
       message,
       level: 'warning',
       position: 'tc',
@@ -2425,6 +2437,13 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction, onInputChange } = this.props;
     if (!e || e.value === undefined) return;
 
+    // Whether a usable volume existed before this change. NumeralInputWithUnitsCompo
+    // reports a cleared field as numeric 0 (not ''), so the new value alone cannot
+    // tell "cleared an existing volume" from "typing 0 toward 0.25". A prior usable
+    // volume distinguishes the two: clearing removes one, typing from empty does not.
+    const previousVolume = Number(reaction.volume);
+    const hadUsableVolume = Number.isFinite(previousVolume) && previousVolume > 0;
+
     // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
     const newVolume = e.value === '' ? null : e.value;
     onInputChange('volume', newVolume);
@@ -2438,9 +2457,10 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.resetPreservedConcentrationExcept();
     reaction.updateAllConcentrations();
 
-    // On the reaction-volume basis with no usable volume, concentrations fall
-    // back to the solvent volume; surface that instead of changing silently.
-    if (!(newVolume > 0)) {
+    // Warn only when a usable volume was removed (cleared/zeroed), not on the
+    // transient 0 seen while typing. The persistent inline hint covers the
+    // standing/load state (including an explicit 0 with no prior volume).
+    if (hadUsableVolume && !(newVolume > 0)) {
       this.showReactionVolumeRequiredWarning(
         'No reaction volume is set, so concentrations use the solvent volume until you enter one.'
       );
