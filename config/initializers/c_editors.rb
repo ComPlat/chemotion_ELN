@@ -7,7 +7,7 @@ begin
     config.editors = ActiveSupport::OrderedOptions.new
     config.editors.docserver = editors_config[:docserver] if editors_config
     config.editors.info = editors_config[:info] if editors_config
-    location = URI.join(editors_config[:docserver][:uri], editors_config[:docserver][:api])
+    location = URI.join(editors_config[:docserver][:uri])
     if location.is_a?(URI::HTTP)
       config.editors.docserver_api = location.to_s
     else

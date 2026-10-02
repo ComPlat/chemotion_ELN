@@ -13,7 +13,6 @@ import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
@@ -192,7 +191,7 @@ export default class Reaction extends Element {
   }
 
   static buildReactionShortLabel() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return 'New Reaction'; }
 
     const number = currentUser.reactions_count + 1;
@@ -808,7 +807,7 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup == "starting_materials") {
+    } else if (newGroup == 'starting_materials') {
       material.isSplit = true;
       material.reaction_product = false;
 

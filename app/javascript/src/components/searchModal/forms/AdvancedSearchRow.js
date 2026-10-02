@@ -1,8 +1,8 @@
+/* eslint-disable react/prop-types */
 import React, { useContext } from 'react';
-import { Form } from 'react-bootstrap'
+import { Form } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import TreeSelect from 'antd/lib/tree-select';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import SelectFieldData from 'src/components/searchModal/forms/SelectFieldData';
@@ -12,9 +12,9 @@ import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacro
 import { deviceDescriptionSelectOptions } from 'src/apps/mydb/elements/details/deviceDescriptions/SelectOptions';
 
 const AdvancedSearchRow = ({ idx }) => {
-  const searchStore = useContext(StoreContext).search;
+  const { searchStore, userStore } = useContext(StoreContext);
   const selection = searchStore.advancedSearchValues[idx];
-  const {searchElement} = searchStore;
+  const { searchElement } = searchStore;
   let mapperOptions = mapperFields;
   let fieldOptions = [];
 
@@ -24,9 +24,7 @@ const AdvancedSearchRow = ({ idx }) => {
     fieldOptions = SelectFieldData.fields[searchElement.table];
   }
 
-  fieldOptions = fieldOptions?.filter(f => {
-    return f.value.advanced === true && f.value.advanced !== undefined
-  });
+  fieldOptions = fieldOptions?.filter(f => f.value.advanced === true && f.value.advanced !== undefined);
 
   const specialMatcherFields = ['temperature', 'duration', 'sequence_length'];
   if (specialMatcherFields.includes(selection.field.column)) {
@@ -34,16 +32,17 @@ const AdvancedSearchRow = ({ idx }) => {
   }
 
   const linkSelectSpacer = selection.link === '' ? '' : 'visible';
-  const selectedFieldOption = selection.field.label == 'Name' && ['samples', 'cell_lines'].includes(searchElement.table)
+  const selectedFieldOption = selection.field.label === 'Name' && ['samples', 'cell_lines']
+    .includes(searchElement.table)
     ? fieldOptions[0].value
     : selection.field;
 
   const logicalOperators = [
-    { value: "AND", label: "AND" },
-    { value: "OR", label: "OR" }
+    { value: 'AND', label: 'AND' },
+    { value: 'OR', label: 'OR' }
   ];
 
-  const { rxnos } = UserStore.getState();
+  const { rxnos } = userStore;
   const functionOrApplicationOptions = selectOptions['sample_function_or_application'];
   const generalTagsOptions = deviceDescriptionSelectOptions['device_tags'];
 
@@ -61,7 +60,7 @@ const AdvancedSearchRow = ({ idx }) => {
       default:
         return e;
     }
-  }
+  };
 
   const temperatureConditions = (searchValues, column) => {
     if (searchValues['unit'] === '' || column === 'temperature') {
@@ -71,7 +70,7 @@ const AdvancedSearchRow = ({ idx }) => {
       searchValues['match'] = '=';
     }
     return searchValues;
-  }
+  };
 
   const durationConditions = (searchValues, column) => {
     if (searchValues['unit'] === '' || column === 'duration') {
@@ -81,13 +80,13 @@ const AdvancedSearchRow = ({ idx }) => {
       searchValues['match'] = '=';
     }
     return searchValues;
-  }
+  };
 
   const checkValueForNumber = (value) => {
     if (isNaN(Number(value))) {
       searchStore.addErrorMessage('Only numbers are allowed');
     }
-  }
+  };
 
   const onChange = (formElement) => (e) => {
     let searchValues = { ...searchStore.advancedSearchValues[idx] };
@@ -106,30 +105,30 @@ const AdvancedSearchRow = ({ idx }) => {
 
     const fieldColumn = searchValues.field.column;
 
-    if (searchElement.table == 'cell_lines' && selection.field.label == 'Name' && !searchValues.field.table) {
+    if (searchElement.table === 'cell_lines' && selection.field.label === 'Name' && !searchValues.field.table) {
       const searchValuesField = { ...searchValues.field };
       searchValuesField.table = selectedFieldOption.table;
       searchValues.field = searchValuesField;
     }
-    if (value.column === 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
-    if (value.column === 'duration') { searchValues = durationConditions(searchValues, value.column) }
-    if (specialMatcherFields.includes(searchValues.field.column)) { checkValueForNumber(searchValues.value) }
+    if (value.column === 'temperature') { searchValues = temperatureConditions(searchValues, value.column); }
+    if (value.column === 'duration') { searchValues = durationConditions(searchValues, value.column); }
+    if (specialMatcherFields.includes(searchValues.field.column)) { checkValueForNumber(searchValues.value); }
 
     const fieldNotSpecial = !specialMatcherFields.includes(fieldColumn);
     const valueNotSpecial = !specialMatcherFields.includes(value.column);
-    if (fieldNotSpecial && formElement != 'unit' && valueNotSpecial) {
+    if (fieldNotSpecial && formElement !== 'unit' && valueNotSpecial) {
       searchValues['unit'] = '';
     }
-    if (fieldNotSpecial && ['>', '<'].includes(searchValues['match']) && formElement != 'match') {
+    if (fieldNotSpecial && ['>', '<'].includes(searchValues['match']) && formElement !== 'match') {
       searchValues['match'] = '=';
     }
-    if (value.opt === 'rows' && searchValues['match'] !== 'ILIKE') { searchValues['match'] = 'ILIKE' }
+    if (value.opt === 'rows' && searchValues['match'] !== 'ILIKE') { searchValues['match'] = 'ILIKE'; }
     searchStore.addAdvancedSearchValue(idx, searchValues);
-  }
-
-  const filterTreeNode = (input, child) => {
-    return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
   };
+
+  const filterTreeNode = (input, child) => String(
+    child.props.search && child.props.search.toLowerCase()
+  ).indexOf(input && input.toLowerCase()) !== -1;
 
   const defaultValueField = (
     <Form.Control
@@ -142,7 +141,7 @@ const AdvancedSearchRow = ({ idx }) => {
   );
 
   const valueField = () => {
-    if (selection.field == '') { return defaultValueField }
+    if (selection.field === '') { return defaultValueField; }
 
     switch (selection.field.column) {
       case 'status':
@@ -151,7 +150,7 @@ const AdvancedSearchRow = ({ idx }) => {
             <Select
               options={statusOptions}
               placeholder="Select status"
-              value={statusOptions.filter(({ value }) => value == selection.value)}
+              value={statusOptions.filter(({ value }) => value === selection.value)}
               isClearable={false}
               onChange={onChange('value')}
             />
@@ -179,7 +178,7 @@ const AdvancedSearchRow = ({ idx }) => {
               <Select
                 options={temperatureOptions}
                 placeholder="Select unit"
-                value={temperatureOptions.filter(({ value }) => value == selection.unit)}
+                value={temperatureOptions.filter(({ value }) => value === selection.unit)}
                 isClearable={false}
                 onChange={onChange('unit')}
               />
@@ -204,7 +203,7 @@ const AdvancedSearchRow = ({ idx }) => {
               <Select
                 options={durationOptions}
                 placeholder="Select unit"
-                value={durationOptions.filter(({ value }) => value == selection.unit)}
+                value={durationOptions.filter(({ value }) => value === selection.unit)}
                 isClearable={false}
                 onChange={onChange('unit')}
               />
@@ -228,7 +227,7 @@ const AdvancedSearchRow = ({ idx }) => {
             <Select
               options={functionOrApplicationOptions}
               placeholder="Select function or application"
-              value={functionOrApplicationOptions.filter(({ value }) => value == selection.value)}
+              value={functionOrApplicationOptions.filter(({ value }) => value === selection.value)}
               isClearable={false}
               onChange={onChange('value')}
             />
@@ -240,7 +239,7 @@ const AdvancedSearchRow = ({ idx }) => {
             <Select
               options={generalTagsOptions}
               placeholder="Select tags"
-              value={generalTagsOptions.filter(({ value }) => value == selection.value)}
+              value={generalTagsOptions.filter(({ value }) => value === selection.value)}
               isClearable={false}
               onChange={onChange('value')}
             />
@@ -249,7 +248,7 @@ const AdvancedSearchRow = ({ idx }) => {
       default:
         return defaultValueField;
     }
-  }
+  };
 
   return (
     <div className="advanced-search-row">
@@ -257,7 +256,7 @@ const AdvancedSearchRow = ({ idx }) => {
         <div className={`link-select-spacer ${linkSelectSpacer}`}>
           <Select
             options={logicalOperators}
-            value={logicalOperators.filter(({ value }) => value == selection.link)}
+            value={logicalOperators.filter(({ value }) => value === selection.link)}
             isClearable={false}
             onChange={onChange('link')}
           />
@@ -267,7 +266,7 @@ const AdvancedSearchRow = ({ idx }) => {
         <Select
           options={mapperOptions}
           placeholder="Select search mapper"
-          value={mapperOptions.filter(({ value }) => value == selection.match)}
+          value={mapperOptions.filter(({ value }) => value === selection.match)}
           isClearable={false}
           className="match-select-options"
           onChange={onChange('match')} />
@@ -283,7 +282,7 @@ const AdvancedSearchRow = ({ idx }) => {
       </div>
       {valueField()}
     </div>
-  )
-}
+  );
+};
 
 export default AdvancedSearchRow;

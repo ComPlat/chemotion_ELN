@@ -37,6 +37,10 @@ export default class UsersFetcher {
     return ApiClient.getJson('/api/v1/public/omniauth_providers');
   }
 
+  static fetchDeviseMappings() {
+    return ApiClient.getJson('/api/v1/public/devise_mappings');
+  }
+
   static fetchUsersByName(name, type = 'Person') {
     return ApiClient.getJson(`/api/v1/users/name?${new URLSearchParams({ name, type })}`);
   }
@@ -62,7 +66,7 @@ export default class UsersFetcher {
     return ApiClient.postJson('/api/v1/groups', { body: params });
   }
 
-  static fetchCurrentGroup() {
+  static fetchCurrentGroups() {
     return ApiClient.getJson('/api/v1/groups');
   }
 
@@ -137,13 +141,13 @@ export default class UsersFetcher {
 
   static logoutUser() {
     return ApiClient.deleteRequest('/users/sign_out', {
-      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
+      body: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
       headers: {},
-      handleResponseSuccess: (response) => response
     });
   }
 
   static submitAsForm(url, method, body) {
+    body.append('authenticity_token', DocumentHelper.getMetaContent('csrf-token'));
     const options = {
       body,
       headers: {},
@@ -156,48 +160,34 @@ export default class UsersFetcher {
   }
 
   static fetchRevokeAuthTokens(params) {
-    return fetch('/api/v1/users/revoke_auth_token', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    })
-      .then((response) => {
+    return ApiClient.postJson('/api/v1/users/revoke_auth_token', {
+      body: params,
+      handleResponseSuccess: (response) => {
         if (!response.ok) {
           throw new ResponseError(response);
         }
-
         return response.json();
-      })
-      .catch((error) => {
-        console.error('Fetch error in users/revoke_auth_token:', error);
-        throw error;
-      });
+      },
+      handleResponseError: (exception) => {
+        console.error('Fetch error in users/revoke_auth_token:', exception);
+        throw exception;
+      }
+    });
   }
 
   static fetchNewAuthToken(params) {
-    return fetch('/api/v1/users/auth_token', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    })
-      .then((response) => {
+    return ApiClient.postJson('/api/v1/users/auth_token', {
+      body: params,
+      handleResponseSuccess: (response) => {
         if (!response.ok) {
           throw new ResponseError(response);
         }
-
         return response.json();
-      })
-      .catch((error) => {
-        console.error('Fetch error in public/token:', error);
-        throw error;
-      });
+      },
+      handleResponseError: (exception) => {
+        console.error('Fetch error in public/token:', exception);
+        throw exception;
+      }
+    });
   }
 }

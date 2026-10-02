@@ -1,8 +1,8 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class EditorFetcher {
-  static initial() {
-    return ApiClient.getJson('/api/v1/editor/initial.json');
+  static config() {
+    return ApiClient.getJson('/api/v1/editor/config.json');
   }
 
   static startEditing(params) {

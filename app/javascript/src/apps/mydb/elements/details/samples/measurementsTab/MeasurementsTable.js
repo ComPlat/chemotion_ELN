@@ -1,10 +1,10 @@
-import Aviator from 'aviator';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation, researchPlanShowOrNew } from 'src/utilities/routesUtils';
 import { isMttMeasurement } from 'src/utilities/mttDataProcessor';
 
 class MeasurementsTable extends Component {
@@ -15,13 +15,12 @@ class MeasurementsTable extends Component {
 
   constructor(props) {
     super(props);
-  };
+  }
 
   // currently only research plan is supported as source
   navigateToSource(measurement) {
-    const { uri } = Aviator.getCurrentRequest();
-    Aviator.navigate(`${uri}/${measurement.source_type}/${measurement.source_id}`, { silent: true });
-    if (measurement.source_type == 'research_plan') {
+    aviatorNavigation(measurement.source_type, measurement.source_id);
+    if (measurement.source_type === 'research_plan') {
       researchPlanShowOrNew({ params: { research_planID: measurement.source_id } });
     }
   }
@@ -34,23 +33,26 @@ class MeasurementsTable extends Component {
   //       Use list view for deleting individual measurements
 
   rows() {
-    const measurementsStore = this.context.measurementsStore;
-    let sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
+    const { measurementsStore } = this.context;
+    const sample_ids = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
     return sample_ids.map(sampleId => {
       if (!measurementsStore.dataForSampleAvailable(sampleId)) { return null; }
 
-      let sampleHeader = measurementsStore.sampleHeader(sampleId);
+      const sampleHeader = measurementsStore.sampleHeader(sampleId);
       const columnsForRow = [this._sampleOutput(sampleHeader)];
 
       // Filter out MTT measurements once per sample
       const nonMttMeasurements = measurementsStore.measurementsForSample(sampleId)
         .filter(m => !isMttMeasurement(m));
 
-      this._uniqueDescriptions().forEach((description, index) => {
+      this._uniqueDescriptions().forEach((description) => {
         const measurements = this._measurementsWithDescription(nonMttMeasurements, description);
 
         const descriptionColumn = (
-          <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sampleId}.${index}`}>
+          <td
+            className={'measurementTable--Sample--sortedReadout'}
+            key={`MeasurementTableSampleSortedReadout${sampleId}.${description}`}
+          >
             <ul className="list-unstyled">
               {measurements}
             </ul>
@@ -68,7 +70,8 @@ class MeasurementsTable extends Component {
   }
 
   render() {
-    const descriptionColumns = this._uniqueDescriptions().map(description => (<th key={description}>{description}</th>));
+    const descriptionColumns = this._uniqueDescriptions()
+      .map(description => (<th key={description}>{description}</th>));
     return (
       <table className="table measurementTable table-sm table-hover">
         <thead>
@@ -86,7 +89,7 @@ class MeasurementsTable extends Component {
 
   _uniqueDescriptions() {
     const descriptions = {};
-    let sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
+    const sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
     this.context.measurements
       .measurementsForSamples(sampleIds)
       .filter(m => !isMttMeasurement(m))
@@ -106,29 +109,21 @@ class MeasurementsTable extends Component {
   _measurementOutput(measurement) {
     return (
       <li key={`MeasurementSource${measurement.id}`}>
-        <a
+        <Button
           key={`MeasurementSourceLink${measurement.id}`}
           onClick={() => this.navigateToSource(measurement)}
-          role="button"
+          variant="neat"
         >
           {measurement.value} {measurement.unit}
-        </a>
+        </Button>
       </li>
     );
   }
 
   _measurementsWithDescription(measurements, description) {
     return measurements
-      .filter(measurement => measurement.description == description)
+      .filter(measurement => measurement.description === description)
       .map(measurement => this._measurementOutput(measurement));
-  }
-
-  _navigateToSource(measurement) {
-    const { uri } = Aviator.getCurrentRequest();
-    Aviator.navigate(`${uri}/${measurement.source_type}/${measurement.source_id}`, { silent: true });
-    if (measurement.source_type == 'research_plan') {
-      researchPlanShowOrNew({ params: { research_planID: measurement.source_id } });
-    }
   }
 }
 export default observer(MeasurementsTable);

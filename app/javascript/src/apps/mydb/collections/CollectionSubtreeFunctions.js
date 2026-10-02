@@ -7,8 +7,7 @@ import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
 import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
 import ModalExportRadarCollection from 'src/apps/mydb/collections/ModalExportRadarCollection';
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { collectionShow, elementShowOrNew } from 'src/utilities/routesUtils';
-import Aviator from 'aviator';
+import { collectionShow, elementShowOrNew, aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
   onClick,
@@ -65,7 +64,7 @@ const CollectionSubtreeFunctions = ({
   const canManageCollection = !sharedWithMe && !collection.is_locked;
 
   const editMetadata = () => {
-    Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });
+    aviatorNavigationToApp(`/mydb/collection/${collection.id}/metadata`, true);
     // Make the target collection current so the sidebar/element list follow the
     // metadata tab and Metadata.buildEmpty seeds the title from this collection.
     collectionShow({ params: { collectionID: collection.id } });

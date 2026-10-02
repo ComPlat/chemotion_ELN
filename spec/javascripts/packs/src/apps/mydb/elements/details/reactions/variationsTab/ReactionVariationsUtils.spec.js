@@ -1,6 +1,6 @@
 import expect from 'expect';
-import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
+import { protect, unprotect } from 'mobx-state-tree';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
@@ -10,7 +10,7 @@ import {
   getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
   getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import {
   getReactionMaterials, getMaterialColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
@@ -533,14 +533,14 @@ describe('ReactionVariationsUtils', () => {
   });
 
   describe('getInitialLayout', () => {
-    let userStoreStub;
-
     beforeEach(() => {
-      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+      unprotect(rootStore);
+      rootStore.userStore.currentUser = { id: 7 };
     });
 
     afterEach(() => {
-      userStoreStub.restore();
+      rootStore.userStore.currentUser = null;
+      protect(rootStore);
       localStorage.clear();
     });
 
@@ -770,14 +770,14 @@ describe('ReactionVariationsUtils', () => {
   });
 
   describe('setLayout', () => {
-    let userStoreStub;
-
     beforeEach(() => {
-      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+      unprotect(rootStore);
+      rootStore.userStore.currentUser = { id: 7 };
     });
 
     afterEach(() => {
-      userStoreStub.restore();
+      rootStore.userStore.currentUser = null;
+      protect(rootStore);
       localStorage.clear();
     });
 

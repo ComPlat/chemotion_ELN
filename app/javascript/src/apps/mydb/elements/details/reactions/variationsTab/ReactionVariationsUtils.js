@@ -18,7 +18,7 @@ import {
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { getGenSI } from 'chem-generic-ui';
 
 const PLACEHOLDER_CELL_TEXT = '_';
@@ -752,8 +752,8 @@ function getVariationsColumns(variations) {
 }
 
 function getGridStateId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsGridState`;
+  const { currentUser } = rootStore.userStore;
+  return `user${currentUser?.id}-reaction${reactionId}-reactionVariationsGridState`;
 }
 
 function getInitialGridState(reactionId) {
@@ -761,8 +761,8 @@ function getInitialGridState(reactionId) {
 }
 
 function getLayoutId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsLayout`;
+  const { currentUser } = rootStore.userStore;
+  return `user${currentUser?.id}-reaction${reactionId}-reactionVariationsLayout`;
 }
 
 function getInitialLayout(reactionId) {
@@ -770,8 +770,8 @@ function getInitialLayout(reactionId) {
 }
 
 function getRowOrderId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsRowOrder`;
+  const { currentUser } = rootStore.userStore;
+  return `user${currentUser?.id}-reaction${reactionId}-reactionVariationsRowOrder`;
 }
 
 function getInitialRowOrder(reactionId) {
@@ -946,7 +946,7 @@ function formatReactionSegments(segments) {
 
 async function getReactionSegments(reaction) {
   try {
-    const segments = UserStore.getState().segmentKlasses || [];
+    const segments = rootStore.userStore.segmentKlasses || [];
     const segmentLabels = new Set(
       segments
         .filter((s) => s.element_klass.name === 'reaction' && s.is_active)

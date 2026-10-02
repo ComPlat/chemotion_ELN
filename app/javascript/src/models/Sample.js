@@ -5,7 +5,6 @@ import _ from 'lodash';
 
 import Element from 'src/models/Element';
 import Molecule from 'src/models/Molecule';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -211,7 +210,7 @@ export default class Sample extends Element {
   }
 
   static buildNewShortLabel() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return 'NEW SAMPLE'; }
     return `${currentUser.initials}-${currentUser.samples_count + 1}`;
   }
@@ -271,9 +270,9 @@ export default class Sample extends Element {
       return `M${this.id}`;
     } else if (this.stereo == null) {
       return `M${this.molecule.id}_any_any`;
-    } else {
-      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
     }
+      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
+
   }
 
   isNoStructureSample() {
@@ -560,7 +559,7 @@ export default class Sample extends Element {
   }
 
   title() {
-    const { profile } = UserStore.getState();
+    const { profile } = rootStore.userStore;
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
     const show_sample_short_label = profile ? profile.show_sample_short_label : false;
@@ -1718,7 +1717,7 @@ export default class Sample extends Element {
 
   get polymer_formula() {
     if (!this.contains_residues || !this.residues?.[0]?.custom_info) return '';
-    const formula = this.residues[0].custom_info.formula;
+    const { formula } = this.residues[0].custom_info;
     return formula != null ? String(formula) : '';
   }
 

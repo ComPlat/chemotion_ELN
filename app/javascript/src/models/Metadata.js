@@ -1,12 +1,12 @@
 import Element from 'src/models/Element';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 export default class Metadata extends Element {
   static buildEmpty(collection_id) {
     const { currentCollection } = UIStore.getState();
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
 
     const metadata = new Metadata({
       collection_id,

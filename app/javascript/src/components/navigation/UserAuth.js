@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import 'whatwg-fetch';
 import propType from 'prop-types';
 import {
@@ -10,301 +10,170 @@ import {
   Col,
   Row,
 } from 'react-bootstrap';
-import _ from 'lodash';
+import { observer } from 'mobx-react';
 import AppModal from 'src/components/common/AppModal';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
-import UserActions from 'src/stores/alt/actions/UserActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import alt from 'src/stores/alt/alt';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import AccountProfile from 'src/apps/userSettings/AccountProfile';
+import AccountProfile from 'src/components/userSettings/AccountProfile';
 
-export default class UserAuth extends Component {
-  static contextType = StoreContext;
-  constructor(props) {
-    super(props);
-    this.state = {
-      currentUser: null,
-      showModal: false,
-      showLabelModal: false,
-      currentGroups: [],
-      currentDevices: [],
-      showSubscription: false,
-      showSettings: false,
-      currentSubscriptions: [],
-      showDeviceMetadataModal: false,
-      device: {},
-      deviceMetadata: {
-        dates: [],
-      },
+const UserAuth = ({ userMenuDropdownToggleVariant }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [currentGroups, setCurrentGroups] = useState([]);
+  const [currentDevices, setCurrentDevices] = useState([]);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [currentSubscriptions, setCurrentSubscriptions] = useState([]);
+  const [showDeviceMetadataModal, setShowDeviceMetadataModal] = useState(false);
+  const [device, setDevice] = useState({});
+  const [deviceMetadata, setDeviceMetadata] = useState({});
+  const [groupFirstName, setGroupFirstName] = useState('');
+  const [groupLastName, setGroupLastName] = useState('');
+  const [groupAbbreviation, setGroupAbbreviation] = useState('');
+
+  const { userStore, notifications, reset } = useContext(StoreContext);
+
+  const showSettingsFunction = () => setShowSettings(true);
+
+  useEffect(() => {
+    if (!userStore.currentUser) { userStore.fetchCurrentUser(); }
+    window.addEventListener('chemotion:open-settings', showSettingsFunction);
+
+    const onUnmount = () => {
+      window.removeEventListener('chemotion:open-settings', showSettingsFunction);
     };
+    return onUnmount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    this.onChange = this.onChange.bind(this);
-    this.handleShow = this.handleShow.bind(this);
-    this.handleClose = this.handleClose.bind(this);
-    this.handleLabelShow = this.handleLabelShow.bind(this);
-    this.handleLabelClose = this.handleLabelClose.bind(this);
-    this.handleSubscriptionShow = this.handleSubscriptionShow.bind(this);
-    this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
-    this.handleDeviceMetadataModalShow = this.handleDeviceMetadataModalShow.bind(this);
-    this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
-    this.handleSettingsShow = this.handleSettingsShow.bind(this);
-    this.handleSettingsHide = this.handleSettingsHide.bind(this);
-    this.renderSettings = this.renderSettings.bind(this);
+  const refetchCurrentGroups = () => UsersFetcher.fetchCurrentGroups().then((currentGroupsResult) => {
+    setCurrentGroups(currentGroupsResult.currentGroups);
+  });
 
-    this.promptTextCreator = this.promptTextCreator.bind(this);
-
-    this.handleInputChange = this.handleInputChange.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-  }
-
-  componentDidMount() {
-    UserStore.listen(this.onChange);
-    UserActions.fetchCurrentUser();
-    window.addEventListener('chemotion:open-settings', this.handleSettingsShow);
-  }
-
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-    window.removeEventListener('chemotion:open-settings', this.handleSettingsShow);
-  }
-
-  onChange(state) {
-    this.setState({
-      currentUser: state.currentUser,
-    });
-  }
-
-  logout() {
-    UserActions.logout();
-  }
-
-  promptTextCreator(label) {
-    return `Share with "${label}"`;
-  }
-
-  handlefetchDeviceMetadataByDeviceId(deviceID) {
+  const fetchDeviceMetadata = (deviceID) => {
     UsersFetcher.fetchDeviceMetadataByDeviceId(deviceID).then((result) => {
       if (result.device_metadata) {
-        this.setState({
-          deviceMetadata: result.device_metadata,
-        });
+        setDeviceMetadata(result.device_metadata);
       }
     });
-  }
+  };
 
   // show modal
-  handleShow() {
-    UsersFetcher.fetchCurrentGroup().then((result) => {
-      this.setState({
-        currentGroups: result.currentGroups,
-        showModal: true,
-        selectedUsers: null,
-      });
+  const handleShow = () => {
+    // eslint-disable-next-line no-unused-vars
+    refetchCurrentGroups().then((_result) => {
+      setShowModal(true);
     });
     UsersFetcher.fetchCurrentDevices().then((result) => {
-      this.setState({
-        currentDevices: result.currentDevices,
-      });
+      setCurrentDevices(result.currentDevices);
     });
-  }
+  };
 
-  // hide modal
-  handleClose() {
-    this.setState({ showModal: false, selectedUsers: null });
-  }
+  const handleDeviceMetadataModalShow = (currentDevice) => {
+    setShowDeviceMetadataModal(true);
+    setDevice(currentDevice);
+    fetchDeviceMetadata(currentDevice.id);
+  };
 
-  handleDeviceMetadataModalShow(device) {
-    this.setState({
-      showDeviceMetadataModal: true,
-      device,
-    });
-    this.handlefetchDeviceMetadataByDeviceId(device.id);
-  }
-
-  handleDeviceMetadataModalClose() {
-    this.setState({
-      showDeviceMetadataModal: false,
-      device: {},
-      deviceMetadata: {},
-    });
-  }
-
-  handleLabelShow() {
-    this.setState({
-      showLabelModal: true,
-    });
-  }
-
-  handleLabelClose() {
-    this.setState({ showLabelModal: false });
-  }
+  const handleDeviceMetadataModalClose = () => {
+    setShowDeviceMetadataModal(false);
+    setDevice({});
+    setDeviceMetadata({});
+  };
 
   // show modal Subscription
-  handleSubscriptionShow() {
-    MessagesFetcher.fetchChannelWithUser().then((result) => {
-      this.setState({
-        showSubscription: true,
-        currentSubscriptions: result.channels,
-      });
-    });
-  }
+  // const handleSubscriptionShow = () => {
+  //   MessagesFetcher.fetchChannelWithUser().then((result) => {
+  //     setShowSubscription(true);
+  //     setCurrentSubscriptions(result.channels)
+  //   });
+  // };
 
-  // hide modal Subscription
-  handleSubscriptionClose() {
-    this.setState({ showSubscription: false });
-  }
-
-  // tooltip of yes/no confirmation
-  handleClick() {
-    this.setState({ show: !this.state.show });
-  }
-
-  // inputs of create new group
-  handleInputChange(type, ev) {
-    switch (type) {
-      case 'first':
-        this.setState({ groupFirstName: ev.currentTarget.value });
-        break;
-      case 'last':
-        this.setState({ groupLastName: ev.currentTarget.value });
-        break;
-      case 'abbr':
-        this.setState({ groupAbbreviation: ev.currentTarget.value });
-        break;
-      default:
-        break;
-    }
-  }
-
-  subscribe(node) {
-    const { currentSubscriptions } = this.state;
-
+  const subscribe = (node) => {
     MessagesFetcher.subscribeChannel({
       channel_id: node.id,
       subscribe: node.user_id == null,
     }).then((result) => {
       if (result.error) {
         // alert(result.error);
-        this.context.notifications.add({
+        notifications.add({
           message: result.error,
           level: 'error',
         });
       } else {
-        const actSubscription = _.filter(
-          this.state.currentSubscriptions,
-          (o) => o.id === result.channel_id
+        const indexOfSubscriptionToUpdate = currentSubscriptions.findIndex(
+          (subscription) => subscription.id === result.channel_id
         );
-        if (node.user_id != null) {
-          actSubscription[0].user_id = null;
-        } else {
-          actSubscription[0].user_id = result.user_id;
-        }
-        const idx = _.findIndex(
-          this.state.currentSubscriptions,
-          (o) => o.id === result.channel_id
-        );
-        currentSubscriptions.splice(idx, 1, actSubscription[0]);
-        this.setState({ currentSubscriptions });
+
+        currentSubscriptions[indexOfSubscriptionToUpdate].user_id =
+          node.user_id != null
+          ? null
+          : result.user_id;
+
+        setCurrentSubscriptions(currentSubscriptions);
       }
     });
-  }
+  };
 
   // create new group
-  createGroup() {
-    const {
-      groupFirstName,
-      groupLastName,
-      groupAbbreviation,
-      currentUser,
-      currentGroups,
-    } = this.state;
+  // need to use the wording 'group_param' because of the definition of current api
+  const createGroup = () => {
     const groupParams = {
       first_name: groupFirstName,
       last_name: groupLastName,
       name_abbreviation: groupAbbreviation,
-      users: [currentUser.id],
+      users: [userStore.currentUser.id],
     };
 
     UsersFetcher.createGroup(groupParams).then((result) => {
       if (result.error) {
         alert(result.error);
       } else {
-        currentGroups.push(result.group);
-        this.setState({
-          currentGroups,
-        });
+        refetchCurrentGroups();
       }
     });
-  }
+  };
 
-  handleChange(currentGroups) {
-    this.setState({ currentGroups });
-  }
-
-  handleDeleteGroup = (currentGroupId) => {
-    const currentGroups = this.state.currentGroups.filter(
-      (cg) => cg.id !== currentGroupId
-    );
+  const handleDeleteGroup = (currentGroupId) => {
+    const groupsWithoutDeletionTarget = currentGroups.filter((cg) => cg.id !== currentGroupId);
     UsersFetcher.destroyGroup(currentGroupId);
-    this.setState({ currentGroups });
+    setCurrentGroups(groupsWithoutDeletionTarget);
   };
 
-  handleDeleteUser = (groupRec, userRec) => {
-    let { currentGroups, currentUser } = this.state;
-    UsersFetcher.removeMember(groupRec.id, userRec.id).then((result) => {
-      const findIdx = _.findIndex(
-        result.group.users,
-        (o) => o.id == currentUser.id
-      );
-      const findAdmin = _.findIndex(
-        result.group.admins,
-        (o) => o.id == currentUser.id
-      );
-      if (findIdx == -1 && findAdmin == -1) {
-        currentGroups = _.filter(
-          this.state.currentGroups,
-          (o) => o.id != result.group.id
-        );
-      } else {
-        const idx = _.findIndex(currentGroups, (o) => o.id == result.group.id);
-        currentGroups.splice(idx, 1, result.group);
-      }
-      this.setState({ currentGroups });
-    });
+  const logoutUser = () => {
+    UsersFetcher.logoutUser()
+      .then(() => {
+        reset();
+        alt.recycle('ElementStore');
+        aviatorNavigationToApp('/home');
+      });
   };
 
-  handleSettingsShow() {
-    this.setState({ showSettings: true });
-  }
-
-  handleSettingsHide = () => {
-    UserActions.fetchCurrentUser();
-    this.setState({ showSettings: false });
+  const handleDeleteUser = (group, user) => {
+    UsersFetcher.removeMember(group.id, user.id)
+      .then((result) => {
+        if (result.error) {
+          alert(result.error);
+        } else {
+          refetchCurrentGroups();
+        }
+      });
   };
 
-  renderAffiliations() {
-    const { showAffiliations } = this.state;
-    if (!showAffiliations) return null;
+  const handleSettingsHide = () => {
+    userStore.fetchCurrentUser();
+    setShowSettings(false);
+  };
 
-    return (
-      <Affiliations
-        show={showAffiliations}
-        onHide={this.handleAffiliationsHide}
-      />
-    );
-  }
-
-  renderSettings() {
-    const { showSettings, currentUser } = this.state;
-    if (!showSettings) {
-      return;
-    }
+  const renderSettings = () => {
+    if (!showSettings) return;
 
     return (
       <div style={{
@@ -320,26 +189,21 @@ export default class UserAuth extends Component {
         overflow: 'auto',
       }}
       >
-        <AccountProfile currentUser={currentUser} closeSettings={this.handleSettingsHide} />
+        <AccountProfile currentUser={userStore.currentUser} closeSettings={handleSettingsHide} />
       </div>
     );
-  }
+  };
 
   // render modal
-  renderModal() {
-    const {
-      showModal, currentUser, currentGroups, currentDevices
-    } = this.state;
-
-    const tBodyGroups = currentGroups.map((g) => (
+  const renderModal = () => {
+    const tBodyGroups = currentGroups.map((group) => (
       <GroupElement
-        groupElement={g}
-        key={g.id}
-        currentUser={currentUser}
-        currentGroup={currentGroups}
-        onDeleteGroup={this.handleDeleteGroup}
-        onDeleteUser={this.handleDeleteUser}
-        onChangeData={this.handleChange}
+        group={group}
+        key={group.id}
+        currentUser={userStore.currentUser}
+        onDeleteGroup={handleDeleteGroup}
+        onDeleteUser={handleDeleteUser}
+        onUpdateGroup={refetchCurrentGroups}
       />
     ));
 
@@ -357,7 +221,7 @@ export default class UserAuth extends Component {
               size="sm"
               type="button"
               variant="info"
-              onClick={() => this.handleDeviceMetadataModalShow(g)}
+              onClick={() => handleDeviceMetadataModalShow(g)}
             >
               <i className="fa fa-laptop" />
             </Button>
@@ -371,7 +235,7 @@ export default class UserAuth extends Component {
         title="My Groups & Devices"
         show={showModal}
         size="xl"
-        onHide={this.handleClose}
+        onHide={() => setShowModal(false) }
         closeLabel="Close"
         showFooter
       >
@@ -388,14 +252,20 @@ export default class UserAuth extends Component {
                     <Form.Control
                       type="text"
                       placeholder="eg: AK"
-                      onChange={this.handleInputChange.bind(this, 'first')}
+                      onChange={(event) => {
+                        console.debug('Changed First Name');
+                        setGroupFirstName(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Form.Group as={Col} controlId="formInlineLname">
                     <Form.Control
                       type="text"
                       placeholder="J. Moriarty"
-                      onChange={this.handleInputChange.bind(this, 'last')}
+                      onChange={(event) => {
+                        console.debug('Changed Last Name');
+                        setGroupLastName(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Form.Group as={Col} controlId="formInlineNameAbbr">
@@ -403,13 +273,16 @@ export default class UserAuth extends Component {
                     <Form.Control
                       type="text"
                       placeholder="AK-JM"
-                      onChange={this.handleInputChange.bind(this, 'abbr')}
+                      onChange={(event) => {
+                        console.debug('Changed Abbreviation');
+                        setGroupAbbreviation(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Col>
                     <Button
                       variant="success"
-                      onClick={() => this.createGroup()}
+                      onClick={createGroup}
                     >
                       Create new group
                     </Button>
@@ -458,19 +331,17 @@ export default class UserAuth extends Component {
         </div>
       </AppModal>
     );
-  }
+  };
 
   // render modal
-  renderSubscribeModal() {
-    const { currentSubscriptions, showSubscription } = this.state;
-
+  const renderSubscribeModal = () => {
     const tbody = currentSubscriptions.map((g) => (
       <tr key={`row_${g.id}`} className="fw-bold">
         <td width="10%" style={{ border: 'none' }}>
           <Button
             size="sm"
             variant={g.user_id == null ? 'success' : 'light'}
-            onClick={() => this.subscribe(g)}
+            onClick={() => subscribe(g)}
           >
             {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
           </Button>
@@ -485,7 +356,7 @@ export default class UserAuth extends Component {
       <AppModal
         title="My Subscription"
         show={showSubscription}
-        onHide={this.handleSubscriptionClose}
+        onHide={() => setShowSubscription(false)}
         closeLabel="Close"
         showFooter
       >
@@ -494,10 +365,9 @@ export default class UserAuth extends Component {
         </Table>
       </AppModal>
     );
-  }
+  };
 
-  renderDeviceMetadataModal() {
-    const { showDeviceMetadataModal, device, deviceMetadata } = this.state;
+  const renderDeviceMetadataModal = () => {
     const title = 'Device Metadata';
     return (
       <AppModal
@@ -509,7 +379,7 @@ export default class UserAuth extends Component {
           </>
         )}
         show={showDeviceMetadataModal}
-        onHide={this.handleDeviceMetadataModalClose}
+        onHide={handleDeviceMetadataModalClose}
         closeLabel="Close"
         showFooter
       >
@@ -579,8 +449,8 @@ export default class UserAuth extends Component {
               </Form.Group>
 
               {deviceMetadata.dates
-                && deviceMetadata.dates.map((dateItem, index) => (
-                  <div key={index}>
+                && deviceMetadata.dates.map((dateItem) => (
+                  <div key={dateItem.date}>
                     <Col smOffset={0} sm={6}>
                       <Form.Group>
                         <Form.Label>Date</Form.Label>
@@ -623,65 +493,61 @@ export default class UserAuth extends Component {
         </Card>
       </AppModal>
     );
-  }
+  };
 
-  render() {
-    const { currentUser, showLabelModal, showSubscription } = this.state;
-    const { userMenuDropdownToggleVariant } = this.props;
-    if (!currentUser) {
-      return <i className="fa fa-spinner" />;
-    }
+  if (!userStore.currentUser) return <i className="fa fa-spinner" />;
 
-    return (
-      <>
-        <Dropdown>
-          <Dropdown.Toggle variant={userMenuDropdownToggleVariant}>
-            <i className="fa fa-user me-1" />
-            {currentUser.name}
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item
-              eventKey="1"
-              onClick={this.handleSettingsShow}
-            >
-              Settings
+  return (
+    <>
+      <Dropdown>
+        <Dropdown.Toggle variant={userMenuDropdownToggleVariant}>
+          <i className="fa fa-user me-1" />
+          {userStore.currentUser.name}
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <Dropdown.Item
+            eventKey="1"
+            onClick={showSettingsFunction}
+          >
+            Settings
+          </Dropdown.Item>
+          <Dropdown.Item onClick={handleShow}>My Groups & Devices</Dropdown.Item>
+          <Dropdown.Item onClick={() => setShowLabelModal(true)}>My Labels</Dropdown.Item>
+          {/* <Dropdown.Item onClick={handleSubscriptionShow}>My Subscriptions</Dropdown.Item>
+                Disable for now as there is no subsciption channel yet (Paggy) */}
+          <Dropdown.Item eventKey="7" onClick={() => { aviatorNavigationToApp('/command_n_control'); }}>
+            My Devices
+          </Dropdown.Item>
+          {userStore.currentUser.molecule_editor && (
+            <Dropdown.Item eventKey="6" onClick={() => { aviatorNavigationToApp('/molecule_moderator'); }}>
+              Molecule Moderator
             </Dropdown.Item>
-            <Dropdown.Item onClick={this.handleShow}>My Groups & Devices</Dropdown.Item>
-            <Dropdown.Item onClick={this.handleLabelShow}>My Labels</Dropdown.Item>
-            {/* <Dropdown.Item onClick={this.handleSubscriptionShow}>My Subscriptions</Dropdown.Item>
-                  Disable for now as there is no subsciption channel yet (Paggy) */}
-            <Dropdown.Item eventKey="7" href="/command_n_control">
-              My Devices
-            </Dropdown.Item>
-            {currentUser.molecule_editor && (
-              <Dropdown.Item eventKey="6" href="/molecule_moderator">
-                Molecule Moderator
-              </Dropdown.Item>
-            )}
-            <Dropdown.Item eventKey="12" href="/converter_admin">
-              Converter Profile
-            </Dropdown.Item>
-            <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
+          )}
+          <Dropdown.Item eventKey="12" onClick={() => { aviatorNavigationToApp('/converter_admin'); }}>
+            Converter Profile
+          </Dropdown.Item>
+          <Dropdown.Item eventKey="8" onClick={() => { aviatorNavigationToApp('/generic_elements_admin'); }}>
+            Generic Designer
+          </Dropdown.Item>
 
-            <Dropdown.Item onClick={() => UserActions.logout()}>
-              <i className="fa fa-sign-out me-1" />
-              Log out
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
+          <Dropdown.Item onClick={() => { logoutUser(); }}>
+            <i className="fa fa-sign-out me-1" />
+            Log out
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
 
-        {this.renderModal()}
-        {this.renderSettings()}
-        <UserLabelModal
-          showLabelModal={showLabelModal}
-          onHide={() => this.handleLabelClose()}
-        />
-        {showSubscription && this.renderSubscribeModal()}
-        {this.renderDeviceMetadataModal()}
-      </>
-    );
-  }
-}
+      {renderModal()}
+      {renderSettings()}
+      <UserLabelModal
+        showLabelModal={showLabelModal}
+        onHide={() => setShowLabelModal(false)}
+      />
+      {showSubscription && renderSubscribeModal()}
+      {renderDeviceMetadataModal()}
+    </>
+  );
+};
 
 UserAuth.propTypes = {
   userMenuDropdownToggleVariant: propType.string,
@@ -690,3 +556,5 @@ UserAuth.propTypes = {
 UserAuth.defaultProps = {
   userMenuDropdownToggleVariant: 'topbar',
 };
+
+export default observer(UserAuth);

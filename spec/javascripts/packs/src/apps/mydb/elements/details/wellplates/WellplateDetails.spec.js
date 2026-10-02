@@ -1,18 +1,27 @@
 /* eslint-disable import/no-unresolved, no-undef */
 import React from 'react';
 import expect from 'expect';
-import { configure, shallow } from 'enzyme';
+import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import { protect, unprotect } from 'mobx-state-tree';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import Wellplate from 'src/models/Wellplate';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
 
 configure({ adapter: new Adapter() });
 
 describe('WellplateDetails', () => {
   beforeEach(() => {
-    UserStore.state.currentUser = { id: 1, name: 'Test User' };
+    unprotect(rootStore);
+    rootStore.userStore.currentUser = {
+      id: 1,
+      name: 'Test User',
+    };
+  });
+  afterEach(() => {
+    rootStore.userStore.currentUser = null;
+    protect(rootStore);
   });
 
   describe('componentDidUpdate()', () => {
@@ -20,7 +29,7 @@ describe('WellplateDetails', () => {
       const wellplate = new Wellplate({
         ...wellplate2x3EmptyJson, is_new: false, updated_at: '2024-01-01T00:00:00Z'
       });
-      const wrapper = shallow(
+      const wrapper = mount(
         <WellplateDetails wellplate={wellplate} openedFromCollectionId={1} />
       );
 
@@ -40,7 +49,7 @@ describe('WellplateDetails', () => {
       const wellplate = new Wellplate({
         ...wellplate2x3EmptyJson, is_new: false, updated_at: '2024-01-01T00:00:00Z'
       });
-      const wrapper = shallow(
+      const wrapper = mount(
         <WellplateDetails wellplate={wellplate} openedFromCollectionId={1} />
       );
 

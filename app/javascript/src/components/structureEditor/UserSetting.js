@@ -121,8 +121,3 @@ function UserSetting() {
 }
 
 export default UserSetting;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('StructureEditorUserSetting');
-  if (domElement) { ReactDOM.render(<UserSetting />, domElement); }
-});

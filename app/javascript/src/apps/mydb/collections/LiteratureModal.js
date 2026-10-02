@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion,
-  Table,
   Button,
   Row,
   Col
@@ -12,7 +11,6 @@ import { uniqBy } from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import {
   Citation,
-  CitationUserRow,
   sanitizeDoi,
   sortByElement,
   literatureContent
@@ -22,39 +20,8 @@ import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CopyButton from 'src/components/common/CopyButton';
-import ElementIcon from 'src/components/common/ElementIcon';
 
 const Cite = require('citation-js');
-
-const ElementLink = ({ literature }) => {
-  const {
-    external_label: externalLabel,
-    short_label: shortLabel,
-    name,
-    element_id: elementId,
-  } = literature;
-
-  return (
-    <Button
-      title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
-      variant="light"
-      onClick={() => {
-        const { uri } = Aviator.getCurrentRequest();
-        const uriArray = uri.split(/\//);
-        const elementType = literature.element_type && literature.element_type.toLowerCase();
-        if (elementType && elementId) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${elementType}/${elementId}`);
-        }
-      }}
-    >
-      <ElementIcon element={literature} className="me-2" />
-      {shortLabel}
-    </Button>
-  );
-};
-ElementLink.propTypes = {
-  literature: PropTypes.instanceOf(Literature).isRequired,
-};
 
 const ElementTypeLink = ({ literature, type }) => {
   const {
@@ -73,55 +40,6 @@ ElementTypeLink.propTypes = {
 };
 ElementTypeLink.defaultProps = {
   type: 'sample'
-};
-
-const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
-  <Table>
-    <tbody>
-      {sortedIds.map((id, k, ids) => {
-        const citation = rows.get(id);
-        const prevCit = (k > 0) ? rows.get(ids[k - 1]) : null;
-        const sameRef = prevCit?.id === citation.id;
-        const sameElement = prevCit
-          && prevCit.element_id === citation.element_id
-          && prevCit.element_type === citation.element_type;
-        return sameRef && sameElement ? (
-          <tr
-            key={`header-${id}-${citation.id}`}
-            className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}
-          >
-            <td />
-            <td className="padding-right">
-              <CitationUserRow literature={citation} userId={userId} />
-            </td>
-            <td>
-              <Button
-                size="xxsm"
-                variant="danger"
-                onClick={() => removeCitation(citation)}
-              >
-                <i className="fa fa-trash-o" />
-              </Button>
-            </td>
-          </tr>
-        ) : (
-          <tr key={id}>
-            <td>{sameElement ? null : <ElementLink literature={citation} />}</td>
-            <td className="padding-right">
-              <Citation literature={citation} />
-            </td>
-            <td />
-          </tr>
-        );
-      })}
-    </tbody>
-  </Table>
-);
-CitationTable.propTypes = {
-  sortedIds: PropTypes.arrayOf(PropTypes.number).isRequired,
-  rows: PropTypes.array.isRequired,
-  userId: PropTypes.number.isRequired,
-  removeCitation: PropTypes.func.isRequired,
 };
 
 export default class LiteratureModal extends Component {

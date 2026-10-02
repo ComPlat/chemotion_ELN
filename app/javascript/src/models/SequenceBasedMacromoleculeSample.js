@@ -2,7 +2,7 @@ import sha256 from 'sha256';
 import _ from 'lodash';
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import {
   convertUnits,
   defaultUnits,
@@ -1557,7 +1557,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   static buildNewShortLabel() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return 'NEW SEQUENCE BASED MACROMOLECULE'; }
     return `${currentUser.initials}-sbmmS${currentUser.sequence_based_macromolecule_samples_count + 1}`;
   }

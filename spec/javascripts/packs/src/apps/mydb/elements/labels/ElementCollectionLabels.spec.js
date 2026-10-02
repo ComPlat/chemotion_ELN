@@ -10,7 +10,6 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 // from src/models/Component.js). CollectionsStore.spec.js already relies on the same ordering.
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -24,7 +23,7 @@ Enzyme.configure({ adapter: new Adapter() });
 // are not mounted until hovered, so these must stay uncalled through render and open.
 const shareFetches = { own: sinon.spy(), sharedToMe: sinon.spy() };
 
-const storeFor = (collections) => ({
+const storeFor = (collections, currentUser = { id: 1 }) => ({
   collections: {
     find: (id) => collections.find((c) => c.id === id) || null,
     isOwnCollection: (id) => collections.some((c) => c.id === id && (c.own || c.repository)),
@@ -34,6 +33,10 @@ const storeFor = (collections) => ({
     getSharedWithUsers: shareFetches.own,
     getMySharesFor: shareFetches.sharedToMe,
   },
+  // ElementCollectionLabels reads useContext(StoreContext).userStore.currentUser
+  // (mobx-state-tree) directly - a plain object stand-in is enough, same as
+  // `collections` above, no need for a real UserStore instance.
+  userStore: { currentUser },
 });
 
 const elementWith = (ids) => ({
@@ -46,9 +49,9 @@ const elementWith = (ids) => ({
 // every mount has to be torn down or the menus of earlier cases stay attached for later specs.
 const mounted = [];
 
-const render = (collections, element) => {
+const render = (collections, element, currentUser = { id: 1 }) => {
   const wrapper = mount(
-    <StoreContext.Provider value={storeFor(collections)}>
+    <StoreContext.Provider value={storeFor(collections, currentUser)}>
       <ElementCollectionLabels element={element} />
     </StoreContext.Provider>
   );
@@ -57,24 +60,18 @@ const render = (collections, element) => {
 };
 
 describe('ElementCollectionLabels', () => {
-  let userStub;
-
   beforeEach(() => {
     shareFetches.own.resetHistory();
     shareFetches.sharedToMe.resetHistory();
-    userStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 1 } });
   });
 
   afterEach(() => {
     while (mounted.length > 0) mounted.pop().unmount();
-    userStub.restore();
   });
 
   describe('guards', () => {
     it('renders nothing without a signed-in user', () => {
-      userStub.returns({ currentUser: null });
-
-      const wrapper = render([{ id: 1, label: 'A', own: true }], elementWith([1]));
+      const wrapper = render([{ id: 1, label: 'A', own: true }], elementWith([1]), null);
 
       expect(wrapper.find('button')).toHaveLength(0);
     });

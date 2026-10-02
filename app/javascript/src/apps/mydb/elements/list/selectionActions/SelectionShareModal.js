@@ -10,7 +10,6 @@ import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActi
 import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -19,7 +18,7 @@ import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
-function SelectionShareModal({
+const SelectionShareModal = ({
   title = 'Sharing of Elements',
   collectionId = null,
   collectionShareId = null,
@@ -34,8 +33,9 @@ function SelectionShareModal({
   },
   showUserSelect = true,
   onHide,
-}) {
+}) => {
   const collectionsStore = useContext(StoreContext).collections;
+  const { currentUser } = useContext(StoreContext).userStore;
   const [permissions, setPermissions] = useState(collectionPermissions);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [newCollectionLabel, setNewCollectionLabel] = useState('');
@@ -45,7 +45,6 @@ function SelectionShareModal({
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
   const displayWarning = Number(permissions.permissionLevel) === PermissionConst.PassOwnership;
   // Ownership is an offer to a single person; the backend rejects a group (or multiple recipients)
@@ -336,7 +335,7 @@ function SelectionShareModal({
       </Form>
     </AppModal>
   );
-}
+};
 
 export default observer(SelectionShareModal);
 

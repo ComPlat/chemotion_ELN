@@ -32,7 +32,9 @@ module Entities
     expose :matrix, documentation: { type: 'Integer', desc: "User's matrix" }
     expose :counters
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
-    expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
+    expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' } do |user, _opts|
+      user.otp_required_for_login?
+    end
     expose :profile
     expose :api_tokens, as: :tokens, using: Entities::ApiTokenEntity,
                         if: ->(_user, opts) { opts[:with_tokens] } do |user, _options|

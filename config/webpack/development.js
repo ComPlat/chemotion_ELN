@@ -21,6 +21,17 @@ const developmentConfig = {
     }
   },
   */
+  devServer: {
+    client: {
+      overlay: {
+        // Harmless Chromium quirk (timing-dependent, browser/version-specific):
+        // fires when a ResizeObserver callback (e.g. from react-select's menu
+        // positioning) can't deliver within one frame. Doesn't affect
+        // functionality; suppressed here so it doesn't look like a real error.
+        runtimeErrors: (error) => error.message !== 'ResizeObserver loop completed with undelivered notifications.',
+      },
+    },
+  },
   target: 'web',
   watchOptions: {
     ignored: /node_modules/, // Ignore node_modules directory

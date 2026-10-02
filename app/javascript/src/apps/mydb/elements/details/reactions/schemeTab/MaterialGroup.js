@@ -19,8 +19,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
   from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 import CreateButton from 'src/components/common/CreateButton';
-import { StoreContext } from 'src/stores/mobx/RootStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore, StoreContext } from 'src/stores/mobx/RootStore';
 import { components as ReactSelectComponents } from 'react-select';
 
 const headers = {
@@ -178,7 +177,7 @@ function materialGroupClassNames({ isEmpty, isOver, canDrop }) {
 // Uses label as the storage key so molecules sharing the same SMILES are tracked separately.
 function createUsageTracker(storageSuffix) {
   function getKey() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser?.id) return null;
     return `user${currentUser.id}-${storageSuffix}`;
   }

@@ -1,8 +1,12 @@
-/* eslint-disable react/prop-types */
-import React, { useState, useCallback, useEffect } from 'react';
-import PropTypes from 'prop-types';
+/* eslint-disable react/prop-types, jsx-a11y/no-autofocus */
+import React, { useState, useCallback, useContext } from 'react';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
+
 import uuid from 'uuid';
 import {
+  Alert,
   Button,
   Form,
   OverlayTrigger,
@@ -24,33 +28,71 @@ function omniauthLabel(icon, name) {
 }
 
 const handleLoginSubmit = async ({ form, url }) => {
-  const res = await submitAsForm({
+  const response = await submitAsForm({
     url, form, prefix: 'user', method: 'POST'
   });
-  const { status, redirected } = res;
-  if (redirected) {
-    window.location = res.url;
-  }
-  let html;
-  let content;
-  if (status === 401) {
-    content = await res.json();
-  } else {
-    html = await res.text();
-  }
 
   return {
-    status,
-    content,
-    html
+    status: response.status,
+    ...(await response.json())
   };
 };
 
-const ExtendedSignInForm = ({
-  url, rememberable, username = '', fromInvalid = false
-}) => {
+const applyLoginResult = (loginResult, userStore) => {
+  userStore.setAuthToken(loginResult.token);
+  userStore.setRole(loginResult.role);
+  userStore.setLoginStatus('');
+  userStore.setDeviseErrorMessages('');
+
+  let route = '/mydb/collection/all';
+  if (loginResult.role === 'Group') {
+    route = '/command_n_control';
+  } else if (loginResult.role === 'Admin') {
+    route = '/admin';
+  }
+  aviatorNavigationToApp(route);
+};
+
+const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
+    (
+    <>
+      <hr />
+      <div className="d-flex align-items-start flex-column">
+        {currentRoute !== '/sign_in' && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_in')}>Sign in</Button>
+        )}
+        {currentRoute !== '/sign_up' && deviseMappings?.registerable && !extraRules.disable_signup === true && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_up')}>Sign up</Button>
+        )}
+        {!['/sign_up', '/password', '/edit_password'].includes(currentRoute) && deviseMappings?.recoverable
+          && !extraRules.disable_signup === true && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/password')}>
+            Forgot your password?
+          </Button>
+        )}
+        {currentRoute !== '/new_confirmation' && deviseMappings?.confirmable && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/new_confirmation')}>
+            Didn&apos;t receive confirmation instructions?
+          </Button>
+        )}
+        {currentRoute !== '/unlocks' && deviseMappings?.lockable && deviseMappings.unlock_strategy_enabled && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/unlocks')}>
+            Didn&apos;t receive unlock instructions?
+          </Button>
+        )}
+        {
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/home')}>Back</Button>
+        }
+      </div>
+    </>
+  );
+
+const ExtendedSignInForm = observer(() => {
+  const url = '/users/sign_in';
+  const userStore = useContext(StoreContext).user;
+  const { currentRoute, extraRules, deviseMappings } = userStore;
   const [form, setForm] = useFormValues({
-    login: username || '',
+    login: '',
     password: '',
     remember_me: false,
     otp_attempt: ''
@@ -59,49 +101,31 @@ const ExtendedSignInForm = ({
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
-  // Assume `htmlString` is the HTML response as a string
-  function replaceWarningsInLogin(htmlString) {
-    // Parse the HTML string into a DOM Document
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-
-    // Find the <div id="Home-Login"> in the response
-    const { body } = doc;
-    const oldAlerts = document.getElementsByClassName('alert');
-    while (oldAlerts[0]) {
-      oldAlerts[0].parentNode.removeChild(oldAlerts[0]);
-    }
-
-    const alerts = body.getElementsByClassName('alert');
-    const container = document.body.getElementsByClassName('container')[0];
-    Array.from(alerts).forEach((el) => {
-      container.prepend(el);
-      // Do something with each alert element
-    });
-  }
-
-  useEffect(() => {
-    if (fromInvalid) {
-      replaceWarningsInLogin('<body><div class="alert alert-warning">Invalid Login or password.</div></body>');
-    }
-  }, [fromInvalid]);
-
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
     setForm('otp_attempt', '');
-    const resText = await handleLoginSubmit({ form, url });
-    if (resText.html) {
-      setShowOtp(false);
-      setWrongOtp(false);
-      replaceWarningsInLogin(resText.html);
-    } else if (resText.content.otp_required) {
+    const loginResult = await handleLoginSubmit({ form, url });
+    if (loginResult.status === 200) {
+      applyLoginResult(loginResult, userStore);
+    } else if (loginResult.status === 400) {
+      // handle bad username/password combination
+      userStore.setLoginStatus('failed');
+      userStore.setDeviseErrorMessages(loginResult.message);
+    } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
-      setWrongOtp(resText.content.otp_wrong);
+      setWrongOtp(loginResult.otp_wrong);
     }
-  }, [form, setForm, url]);
+  }, [form, setForm, userStore]);
+
+  if (extraRules?.disable_db_login && !extraRules?.disable_db_login === true) {
+    return null;
+  }
 
   return (
     <>
+      {userStore?.deviseErrorMessages && (
+        <Alert variant="warning">{userStore.deviseErrorMessages}</Alert>
+      )}
       <h3 className="mb-3">Log in with registered account</h3>
       <OtpInput
         value={form.otp_attempt}
@@ -137,7 +161,7 @@ const ExtendedSignInForm = ({
           />
         </Form.Group>
 
-        {rememberable && (
+        {deviseMappings?.rememberable && (
           <Form.Group className="mb-3">
             <Form.Check
               type="checkbox"
@@ -149,27 +173,16 @@ const ExtendedSignInForm = ({
           </Form.Group>
         )}
 
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" className="mb-3">
           Log in
         </Button>
       </Form>
+      {LinksForDeviseForm(currentRoute, extraRules, deviseMappings)}
     </>
   );
-}
+});
 
-ExtendedSignInForm.propTypes = {
-  url: PropTypes.string.isRequired,
-  username: PropTypes.string,
-  rememberable: PropTypes.bool.isRequired,
-  fromInvalid: PropTypes.bool
-};
-
-ExtendedSignInForm.defaultProps = {
-  username: '',
-  fromInvalid: false
-};
-
-const SignInForm = ({ authenticityToken }) => {
+const SignInForm = () => {
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
@@ -178,23 +191,25 @@ const SignInForm = ({ authenticityToken }) => {
   const [showOtp, setShowOtp] = useState('');
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
+  const url = '/users/sign_in';
+  const userStore = useContext(StoreContext).user;
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
     setForm('otp_attempt', '');
-    const url = '/users/sign_in';
-    const resText = await handleLoginSubmit({ form, url });
-
-    if (resText.content?.otp_required) {
+    const loginResult = await handleLoginSubmit({ form, url });
+    if (loginResult.status === 200) {
+      applyLoginResult(loginResult, userStore);
+    } else if (loginResult.status === 400) {
+      // handle bad username/password combination
+      userStore.setLoginStatus('failed');
+      userStore.setDeviseErrorMessages(loginResult.message);
+      aviatorNavigationToApp('/sign_in');
+    } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
-      console.log(resText.content);
-      setWrongOtp(resText.content.otp_wrong);
-    } else if (resText.html) {
-      setShowOtp(false);
-      setWrongOtp(false);
-      window.location = `${url}?login=${form.login}&invalid=1`;
+      setWrongOtp(loginResult.otp_wrong);
     }
-  }, [form, setForm]);
+  }, [form, setForm, userStore]);
 
   return (
     <Form id="new_user" className="new_user" action="" acceptCharset="UTF-8" method="post" onSubmit={handleSubmit}>
@@ -207,7 +222,6 @@ const SignInForm = ({ authenticityToken }) => {
         isWrongOtp={wrongOtp}
       />
       <input name="utf8" value="✓" type="hidden" />
-      <input name="authenticity_token" value={authenticityToken} type="hidden" />
 
       <Row className="g-1 align-items-center">
         <Col xs="auto">
@@ -253,14 +267,13 @@ const SignInForm = ({ authenticityToken }) => {
       </Row>
     </Form>
   );
-}
-
-SignInForm.propTypes = {
-  authenticityToken: PropTypes.string.isRequired,
 };
 
-const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {} }) => {
-  const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
+const NewSession = () => {
+  const { userStore } = useContext(StoreContext);
+  const { omniauthProviders, extraRules } = userStore;
+
+  const items = Object.keys(omniauthProviders).length > 0 && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}
       className="omniauth-btn"
@@ -281,40 +294,20 @@ const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {}
       {items.length !== 0 && <Col xs="auto">{items}</Col>}
       {showSignIn && (
         <Col xs="auto">
-          <SignInForm authenticityToken={authenticityToken} />
+          <SignInForm />
         </Col>
       )}
       {showSignUp && (
         <Col xs="auto">
-          <a href="/users/sign_up">
+          <a href="/sign_up">
             or Sign Up
           </a>
         </Col>
       )}
     </Row>
   );
-}
-
-NewSession.propTypes = {
-  authenticityToken: PropTypes.string.isRequired,
-  omniauthProviders: PropTypes.PropTypes.objectOf(
-    PropTypes.shape({
-      icon: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-    })
-  ),
-  extraRules: PropTypes.shape({
-    disable_db_login: PropTypes.bool.isRequired,
-    disable_signup: PropTypes.bool.isRequired,
-  }).isRequired
 };
 
-NewSession.defaultProps = {
-  omniauthProviders: {}
-};
+export default observer(NewSession);
 
-export default NewSession;
-
-export {
-  ExtendedSignInForm
-};
+export { ExtendedSignInForm, LinksForDeviseForm };
