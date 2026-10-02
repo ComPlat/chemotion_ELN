@@ -1070,9 +1070,14 @@ describe Chemotion::AttachmentAPI do
       expect(Attachment.find_by(id: attachment.id)).not_to be_nil
     end
 
+    # The SBMM is then a shared reference record: the user passes ElementPolicy#update? through the
+    # share, but may only change their own uploads on it.
     context 'when its sample is in a collection shared with the user with edit rights' do
+      let(:owner) { create(:person) }
+      let!(:own_upload) { create(:attachment, :with_spectra_file, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_upload) { create(:attachment, :with_spectra_file, attachable: sbmm, created_for: owner.id) }
+
       before do
-        owner = create(:person)
         collection = create(:collection, user: owner)
         create(:collection_share, collection: collection, shared_with: user,
                                   permission_level: CollectionShare.permission_level(:edit_elements))
@@ -1080,9 +1085,32 @@ describe Chemotion::AttachmentAPI do
                                                      collections: [collection])
       end
 
-      it 'allows delete' do
-        delete "/api/v1/attachments/#{attachment.id}"
+      it 'allows deleting their own upload' do
+        delete "/api/v1/attachments/#{own_upload.id}"
         expect(response).to have_http_status(:ok)
+      end
+
+      it "rejects deleting another user's upload" do
+        delete "/api/v1/attachments/#{foreign_upload.id}"
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.find_by(id: foreign_upload.id)).not_to be_nil
+      end
+
+      it "rejects bulk_delete including another user's upload" do
+        delete '/api/v1/attachments/bulk_delete', params: { ids: [own_upload.id, foreign_upload.id] }
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.where(id: [own_upload.id, foreign_upload.id]).count).to eq 2
+      end
+
+      it "skips another user's upload on regenerate_spectrum" do
+        post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [foreign_upload.id] }
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: foreign_upload.id)).not_to be_nil
+      end
+
+      it "rejects updating the annotation of another user's upload" do
+        post "/api/v1/attachments/#{foreign_upload.id}/annotation", params: { updated_svg_string: '<svg/>' }
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

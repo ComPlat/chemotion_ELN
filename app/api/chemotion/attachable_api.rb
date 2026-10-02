@@ -4,19 +4,6 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
-    helpers do
-      # An SBMM is a shared reference record: Usecases::Sbmm::Finder reuses it across users by
-      # accession/sequence, and ElementPolicy#update? passes for anyone owning a sample of it. Once
-      # another user has a sample of it, only their own uploads may be detached - mirroring
-      # Usecases::Sbmm::Sample#raise_if_sbmm_is_not_writable!, which locks the SBMM's fields then.
-      def sbmm_shared_with_other_users?(attachable)
-        return false unless attachable.is_a?(SequenceBasedMacromolecule)
-
-        SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: attachable.id, except_user_id: current_user.id)
-                                        .positive?
-      end
-    end
-
     resource :attachable do
       params do
         optional :files, type: [File], desc: 'files', default: []
@@ -68,7 +55,11 @@ module Chemotion
         # root element and even its owner can no longer download it).
         if params[:del_files].any?
           detachable = Attachment.where(id: params[:del_files], attachable: @attachable)
-          detachable = detachable.where(created_for: current_user.id) if sbmm_shared_with_other_users?(@attachable)
+          # On an SBMM another user has a sample of, only one's own uploads (see
+          # Usecases::Attachments::Access#write?).
+          if @attachable.is_a?(SequenceBasedMacromolecule) && @attachable.used_by_other_users?(current_user)
+            detachable = detachable.where(created_for: current_user.id)
+          end
           detachable.update_all(attachable_id: nil)
         end
         true

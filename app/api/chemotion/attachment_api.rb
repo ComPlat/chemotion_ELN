@@ -29,38 +29,19 @@ module Chemotion
         }
       end
 
-      # Resolves the element via Attachment#root_element, which covers both container-nested
-      # attachments and ones linked directly to an element through attachable (ResearchPlan,
-      # Wellplate, DeviceDescription, SBMM). The former AttachmentPolicy#write? only followed
-      # the container chain, so collaborators with update rights on the element were locked out
-      # of directly-linked attachments.
-      #
-      # Unsorted inbox files (upload_to_inbox, Usecases::Attachments::Unlink, detached via
-      # update_attachments_attachable) keep an attachable_type but have no attachable_id, so
-      # there is no element to authorize against; they are writable by the user they belong to.
-      # Keyed on attachable_id rather than root_element being nil, so an attachment whose
-      # element was deleted does not fall back to its uploader.
-      #
-      # Memoized per request (Grape dups the endpoint for each one), because the regenerate loops,
-      # bulk_delete and remove_generated_children call it per attachment: attachments sharing an
-      # attachable resolve root_element once, and each root element runs ElementPolicy once.
-      def writable?(attachment)
-        return false if attachment.blank?
-        return attachment.created_for == current_user.id if attachment.attachable_id.nil?
-
-        @writable_by_attachable ||= {}
-        @writable_by_attachable.fetch([attachment.attachable_type, attachment.attachable_id]) do |key|
-          @writable_by_attachable[key] = root_element_writable?(attachment.root_element)
-        end
+      # One instance per request (Grape dups the endpoint for each one): the regenerate loops,
+      # bulk_delete and remove_generated_children check many attachments, and each root element
+      # runs ElementPolicy once.
+      def attachment_access
+        @attachment_access ||= Usecases::Attachments::Access.new(current_user)
       end
 
-      def root_element_writable?(element)
-        return false if element.nil?
+      def writable?(attachment)
+        attachment_access.write?(attachment)
+      end
 
-        @writable_by_root_element ||= {}
-        @writable_by_root_element.fetch([element.class.name, element.id]) do |key|
-          @writable_by_root_element[key] = element_write_access?(element, current_user)
-        end
+      def readable?(attachment)
+        attachment_access.read?(attachment)
       end
 
       def upload_chunk_error_message
