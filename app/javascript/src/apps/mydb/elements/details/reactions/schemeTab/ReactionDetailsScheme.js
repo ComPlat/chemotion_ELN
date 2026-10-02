@@ -546,11 +546,6 @@ export default class ReactionDetailsScheme extends React.Component {
           this.updatedReactionForMetricsChange(changeEvent)
         );
         break;
-      case 'loadingChanged':
-        onReactionChange(
-          this.updatedReactionForLoadingChange(changeEvent)
-        );
-        break;
       case 'coefficientChanged':
         onReactionChange(
           this.updatedReactionForCoefficientChange(changeEvent)
@@ -753,7 +748,7 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.setAmountAndNormalizeToGram(amount);
 
     const updatedReaction =
-      this.propagateReferenceAmountChange(updatedSample, true);
+      this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
@@ -811,7 +806,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     const updatedReaction =
-      this.propagateReferenceAmountChange(updatedSample, true);
+      this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
@@ -880,19 +875,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Handles loading/amountType changes for both regular and SBMM samples.
-   */
-  updatedReactionForLoadingChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, amountType, isSbmm } = changeEvent;
-    // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
-    updatedSample.amountType = amountType;
-
-    return this.propagateReferenceAmountChange(updatedSample, true);
-  }
-
-  /**
    * Handles amount type changes for both regular and SBMM samples.
    */
   updatedReactionForAmountTypeChange(changeEvent) {
@@ -902,7 +884,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
     updatedSample.amountType = amountType;
 
-    return this.propagateReferenceAmountChange(updatedSample, true);
+    return this.propagateReferenceAmountChange(updatedSample);
   }
 
   /**
@@ -1403,7 +1385,7 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.preserveConcentration = true;
     updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
 
-    const updatedReaction = this.propagateReferenceAmountChange(updatedSample, true);
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // Locked-equivalent propagation changed the dependent samples' amounts,
@@ -1519,7 +1501,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Always include SBMM samples so their equivalents are rebased when the
     // reference's amount changes (the edited sample may be a regular reference,
     // not the SBMM itself). Mirrors updatedReactionForAmountChange.
-    const updatedReaction = this.propagateReferenceAmountChange(updatedSample, true);
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
     // except the currently edited sample. The edited sample keeps its manually-entered
@@ -2225,17 +2207,19 @@ export default class ReactionDetailsScheme extends React.Component {
    * no "previous reference amount" snapshot is needed (see
    * Reaction#updateSolventVolumesForReference).
    *
+   * SBMM reactant samples are always rebased too: the edited sample may be a regular
+   * reference whose change must still propagate to SBMM equivalents.
+   *
    * @param {Sample} updatedSample - the edited sample driving the change
-   * @param {boolean} [includeSbmm=false] - also rebase SBMM reactant samples
    * @returns {Reaction}
    */
-  propagateReferenceAmountChange(updatedSample, includeSbmm = false) {
+  propagateReferenceAmountChange(updatedSample) {
     const { lockEquivColumn } = this.state;
     const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForAmountChange.bind(this),
       updatedSample,
       undefined,
-      includeSbmm
+      true
     );
 
     if (lockEquivColumn) {
