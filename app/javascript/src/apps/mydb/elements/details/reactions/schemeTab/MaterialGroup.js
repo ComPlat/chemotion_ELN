@@ -300,8 +300,9 @@ const ConcentrationBasisTooltip = (
 
 // Custom toggle: a single subtle caret that signals the dropdown without
 // restyling the "Conc" header text or doubling the built-in caret.
-const ConcentrationBasisCaretToggle = React.forwardRef(({ onClick, disabled }, ref) => (
+const ConcentrationBasisCaretToggle = React.forwardRef(({ onClick, disabled, ...toggleProps }, ref) => (
   <button
+    {...toggleProps}
     type="button"
     ref={ref}
     disabled={disabled}

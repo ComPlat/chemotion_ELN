@@ -421,6 +421,8 @@ describe('ReactionVariationsMaterials', () => {
   it('uses only solvent volume in solvents_only mode', async () => {
     const reaction = await setUpReaction();
     const row = cloneDeep(reaction.variations[0]);
+    // The fixture has no solvents; add one by cloning a material entry so the cell shape matches.
+    row.solvents = { 'solvent-1': cloneDeep(Object.values(row.reactants)[0]) };
 
     Object.values(row.solvents).forEach((solvent) => { solvent.volume.value = 0; });
     Object.values(row.startingMaterials).forEach((material) => { material.volume.value = 0; });
@@ -438,6 +440,8 @@ describe('ReactionVariationsMaterials', () => {
   it('falls back to solvent-only volume when reaction_volume has no positive entered volume', async () => {
     const reaction = await setUpReaction();
     const row = cloneDeep(reaction.variations[0]);
+    // The fixture has no solvents; add one by cloning a material entry so the cell shape matches.
+    row.solvents = { 'solvent-1': cloneDeep(Object.values(row.reactants)[0]) };
 
     Object.values(row.solvents).forEach((solvent) => { solvent.volume.value = 0; });
     Object.values(row.startingMaterials).forEach((material) => { material.volume.value = 0; });

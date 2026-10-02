@@ -140,6 +140,9 @@ class Import::ImportJson
           { collection_id: all_collection.id }
         ]
       )
+      if !attribs.key?('concentration_mode') && attribs.key?('use_reaction_volume')
+        attribs['concentration_mode'] = attribs['use_reaction_volume'] ? 'reaction_volume' : 'solvents_only'
+      end
       create_element(el['uuid'], attribs, Reaction, 'reaction', el['literatures'])
     end
   end
