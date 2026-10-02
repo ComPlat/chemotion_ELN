@@ -5,11 +5,15 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { Select } from 'src/components/common/Select';
+import CopyButton from 'src/components/common/CopyButton';
 import {
   loadHazardPhrases,
   loadPrecautionaryPhrases,
   loadPictograms,
 } from 'src/utilities/chemicalDataValidations';
+import {
+  formatPhrase, formatPhraseSections, safetyPhraseSections, SECTION_TITLES,
+} from 'src/utilities/sdsClipboardFormat';
 
 const trim = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -41,17 +45,62 @@ const buildOptions = (dictionary, excluded, formatLabel) => (
     .map(([code, v]) => ({ value: code, text: trim(v), label: formatLabel(code, v) }))
 );
 
+// Header copy controls are inline link buttons so the heading keeps its height.
+const HEADER_COPY_CLASS = 'p-0 ms-2 border-0 align-baseline lh-1 text-muted';
+
+// Copies one section, heading included; disabled while the section is empty.
+const SectionCopyButton = ({ title, items, idPrefix }) => {
+  const { text, html } = formatPhraseSections([{ title, items }]);
+  const label = `Copy ${title.toLowerCase()}`;
+  return (
+    <CopyButton
+      text={text}
+      html={html}
+      disabled={!text}
+      variant="link"
+      size="sm"
+      className={HEADER_COPY_CLASS}
+      tooltip={label}
+      tooltipId={`${idPrefix}-copy-tooltip`}
+      ariaLabel={label}
+    />
+  );
+};
+
+SectionCopyButton.propTypes = {
+  title: PropTypes.string.isRequired,
+  idPrefix: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string, text: PropTypes.string })).isRequired,
+};
+
+// The row's copy control stays in the tab order and only fades in on hover or focus.
 const PhraseListItem = ({ code, text, onDelete }) => {
+  const [revealed, setRevealed] = useState(false);
+  const { text: plain, html } = formatPhrase(code, text);
   return (
     <li
       className="list-group-item d-flex align-items-center gap-2 py-1"
       data-component="SafetyPhraseRow"
       data-code={code}
+      onMouseEnter={() => setRevealed(true)}
+      onMouseLeave={() => setRevealed(false)}
+      onFocus={() => setRevealed(true)}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setRevealed(false); }}
     >
       <div className="me-auto text-break">
         <strong>{`${code}:`}</strong>
         {` ${text}`}
       </div>
+      <CopyButton
+        text={plain}
+        html={html}
+        variant="light"
+        size="xsm"
+        className={revealed ? 'opacity-100' : 'opacity-0'}
+        tooltip={`Copy ${code}`}
+        tooltipId={`copy-${code}-tooltip`}
+        ariaLabel={`Copy ${code}`}
+      />
       <Button
         size="xsm"
         variant="danger"
@@ -64,7 +113,7 @@ const PhraseListItem = ({ code, text, onDelete }) => {
       </Button>
     </li>
   );
-}
+};
 
 PhraseListItem.propTypes = {
   code: PropTypes.string.isRequired,
@@ -87,7 +136,7 @@ const optionShape = PropTypes.shape({
 // Folds the way the safety tab's own sections do, and starts closed while it holds
 // nothing so an untouched sample shows three headings rather than three empty forms.
 const CollapsibleSection = ({
-  title, count, className, dataComponent, children,
+  title, count, className, dataComponent, actions, children,
 }) => {
   const [open, setOpen] = useState(count > 0);
   const wasEmpty = useRef(count === 0);
@@ -112,6 +161,7 @@ const CollapsibleSection = ({
           {title}
         </Button>
         <span className="text-muted small fw-normal ms-2">{count === 0 ? 'none added yet' : count}</span>
+        {actions}
       </h6>
       <div hidden={!open}>{children}</div>
     </div>
@@ -123,16 +173,22 @@ CollapsibleSection.propTypes = {
   count: PropTypes.number.isRequired,
   className: PropTypes.string,
   dataComponent: PropTypes.string.isRequired,
+  actions: PropTypes.node,
   children: PropTypes.node.isRequired,
 };
 
-CollapsibleSection.defaultProps = { className: 'mb-4' };
+CollapsibleSection.defaultProps = { className: 'mb-4', actions: null };
 
 const PhraseSection = ({
   title, idPrefix, options, items, onAdd, disabled,
 }) => {
   return (
-    <CollapsibleSection title={title} count={items.length} dataComponent={idPrefix}>
+    <CollapsibleSection
+      title={title}
+      count={items.length}
+      dataComponent={idPrefix}
+      actions={<SectionCopyButton title={title} items={items} idPrefix={idPrefix} />}
+    >
       <Select
         inputId={`${idPrefix}-select`}
         classNamePrefix={`${idPrefix}-select`}
@@ -213,10 +269,11 @@ const PictogramSection = ({
 }) => {
   return (
     <CollapsibleSection
-      title="Pictograms"
+      title={SECTION_TITLES.pictograms}
       count={items.length}
       className="mb-2"
       dataComponent="safety-pictograms"
+      actions={<SectionCopyButton title={SECTION_TITLES.pictograms} items={items} idPrefix="safety-pictograms" />}
     >
       <Select
         inputId="safety-pictograms-select"
@@ -372,7 +429,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
       style={{ maxHeight: '500px', overflow: 'auto' }}
     >
       <PhraseSection
-        title="Hazard Statements"
+        title={SECTION_TITLES.h}
         idPrefix="safety-h-phrases"
         options={hazardOptions}
         items={hazardItems}
@@ -380,7 +437,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
         disabled={loading}
       />
       <PhraseSection
-        title="Precautionary Statements"
+        title={SECTION_TITLES.p}
         idPrefix="safety-p-phrases"
         options={precautionaryOptions}
         items={precautionaryItems}
@@ -407,6 +464,44 @@ SafetyPhrasesEditor.propTypes = {
 };
 
 SafetyPhrasesEditor.defaultProps = {
+  value: null,
+};
+
+// Copies every non-empty section; sits beside the section heading that holds the editor.
+export const SafetyPhrasesCopyButton = ({ value }) => {
+  const [pictogramDict, setPictogramDict] = useState({});
+
+  useEffect(() => {
+    let mounted = true;
+    loadPictograms().then((dict) => { if (mounted) setPictogramDict(dict || {}); });
+    return () => { mounted = false; };
+  }, []);
+
+  const { text, html } = useMemo(
+    () => formatPhraseSections(safetyPhraseSections(normalizeSafetyPhrases(value), pictogramDict)),
+    [value, pictogramDict],
+  );
+
+  return (
+    <CopyButton
+      text={text}
+      html={html}
+      disabled={!text}
+      variant="link"
+      size="sm"
+      className={HEADER_COPY_CLASS}
+      tooltip="Copy all safety phrases and pictograms"
+      tooltipId="safety-phrases-copy-all-tooltip"
+      ariaLabel="Copy all safety phrases and pictograms"
+    />
+  );
+};
+
+SafetyPhrasesCopyButton.propTypes = {
+  value: SafetyPhrasesEditor.propTypes.value,
+};
+
+SafetyPhrasesCopyButton.defaultProps = {
   value: null,
 };
 

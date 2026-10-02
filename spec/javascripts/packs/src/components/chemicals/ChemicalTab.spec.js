@@ -8,8 +8,10 @@ import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import AppModal from 'src/components/common/AppModal';
-import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
+import SafetyPhrasesEditor, { SafetyPhrasesCopyButton } from 'src/components/chemicals/SafetyPhrasesEditor';
+import CopyButton from 'src/components/common/CopyButton';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -166,8 +168,7 @@ describe('ChemicalTab component', () => {
       const newChemical = createChemical(chemicalData, '7681-82-5');
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
-      // Assert via a stable method to avoid shallow-render side effects
-      expect(wrapper.instance().isSavedSds()).toBe(true);
+      expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
     });
 
     it('Simulate clicking on the modal close button ', () => {
@@ -185,7 +186,7 @@ describe('ChemicalTab component', () => {
       sinon.assert.calledOnce(setStateStub);
       sinon.assert.calledWith(setStateStub, {
         viewChemicalPropertiesModal: false,
-        viewModalForVendor: ''
+        viewPropertiesForSheet: ''
       });
       setStateStub.restore();
     });
@@ -635,12 +636,11 @@ describe('ChemicalTab component', () => {
       expect(instance.atSavedSdsLimit()).toBe(false);
     });
 
-    it('calls querySafetySheets() when fetch safety phrases button is clicked', () => {
-      const fetchSafetyPhrasesSpy = sinon.spy(wrapper.instance(), 'fetchSafetyPhrases');
-      // Directly invoke to avoid DOM find flakiness in shallow render
-      wrapper.instance().fetchSafetyPhrases('merck');
-      expect(fetchSafetyPhrasesSpy.called).toBe(true);
-      fetchSafetyPhrasesSpy.restore();
+    it('leaves the extract button disabled for a sheet that is not saved yet', () => {
+      const button = shallow(
+        <div>{wrapper.instance().renderSdsExtraction('https://vendor.example/sheet.pdf')}</div>
+      ).find('#extract-sds');
+      expect(button.prop('disabled')).toBe(true);
     });
 
     it('calls renderSafetySheets() when query safety sheets button is clicked', () => {
@@ -661,27 +661,39 @@ describe('ChemicalTab component', () => {
       renderChildElementsSpy.restore();
     });
 
-    it('calls fetchChemicalProperties() when fetch chemical properties button is clicked', () => {
-      const fetchChemicalPropertiesSpy = sinon.spy(wrapper.instance(), 'fetchChemicalProperties');
+    it('sends the saved sheet path to the extractor and stores what came back', async () => {
+      const sheetPath = '/safety_sheets/merck/252549_web_c0161049cda26386.pdf';
+      const extracted = {
+        safetyPhrases: { h_statements: { H225: ' x' }, p_statements: {}, pictograms: [] },
+        properties: { flash_point: '4 °C', form: 'liquid' },
+        diagnostics: { notes: [], errors: [] }
+      };
+      const fetcherStub = sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted);
+      instance.setState({ chemical: createChemical([{ safetySheetPath: [{ merck_link: sheetPath }] }]) });
 
-      // Set up the component state with a chemical object and displayWell
-      const chemicalData = [{
-        safetySheetPath: [
-          { merck_link: '/safety_sheets/252549_Merck.pdf' }
-        ]
-      }];
-      const newChemical = createChemical(chemicalData, '7681-82-5');
-      instance.setState({
-        chemical: newChemical,
-        displayWell: true,
-        viewModalForVendor: 'merck'
+      await instance.extractFromSheet(sheetPath);
+
+      expect(fetcherStub.calledWith(sheetPath)).toBe(true);
+      expect(instance.state.chemical.chemical_data[0].sdsExtractedProperties)
+        .toEqual({ [sheetPath]: extracted.properties });
+      expect(instance.extractedPropertiesFor(sheetPath)).toEqual(extracted.properties);
+      expect(instance.state.chemical.chemical_data[0].safetyPhrases).toEqual(extracted.safetyPhrases);
+      fetcherStub.restore();
+    });
+
+    it('reports the reason when the sheet yields nothing', async () => {
+      const sheetPath = '/safety_sheets/merck/empty_0000000000000000.pdf';
+      const fetcherStub = sinon.stub(ChemicalFetcher, 'extractFromSds').resolves({
+        safetyPhrases: { h_statements: {}, p_statements: {}, pictograms: [] },
+        properties: {},
+        diagnostics: { notes: [], errors: ['ghostscript produced no text'] }
       });
 
-      // Directly call the method instead of simulating button click
-      instance.fetchChemicalProperties('merck');
+      await instance.extractFromSheet(sheetPath);
 
-      expect(fetchChemicalPropertiesSpy.called).toBe(true);
-      fetchChemicalPropertiesSpy.restore();
+      expect(instance.state.warningMessage)
+        .toBe('Nothing could be read from this sheet: ghostscript produced no text');
+      fetcherStub.restore();
     });
 
     it('calls textInput() when field input is changed', () => {
@@ -908,12 +920,195 @@ describe('Manual SDS attachment functionality', () => {
     expect(saveManualAttachedSafetySheetStub.calledOnce).toBe(true);
     expect(saveManualAttachedSafetySheetStub.firstCall.args[0]).toBeTruthy();
 
-    // Ensure the well is displayed and saved SDS detected
+    // Ensure the well is displayed and the sheet list renders
     instance.setState({ displayWell: true });
     wrapper.update();
-    expect(wrapper.instance().isSavedSds()).toBe(true);
-    // renderSafetySheets should produce content (not null)
     expect(wrapper.instance().renderSafetySheets()).not.toBe(null);
+  });
+});
+
+describe('ChemicalTab extraction from a saved sheet', () => {
+  const sheetPath = '/safety_sheets/merck/252549_c0161049cda26386.pdf';
+  let instance;
+  let freshSample;
+  let handleUpdateSample;
+  let notify;
+
+  const mount = (props = {}) => {
+    freshSample = Sample.buildEmpty(2);
+    handleUpdateSample = sinon.spy();
+    instance = shallow(
+      React.createElement(ChemicalTab, {
+        sample: freshSample,
+        type: 'sample',
+        saveInventory: false,
+        editChemical: sinon.spy(),
+        setSaveInventory: sinon.spy(),
+        handleUpdateSample,
+        ...props,
+      })
+    ).instance();
+    notify = sinon.stub(instance, 'notify');
+    instance.setState({ chemical: createChemical([{ safetySheetPath: [{ merck_link: sheetPath }] }]) });
+  };
+  const extracted = (overrides = {}) => ({
+    safetyPhrases: { h_statements: { H225: ' Highly flammable' }, p_statements: { P210: ' Keep away' }, pictograms: [] },
+    properties: {},
+    diagnostics: { notes: [], errors: [], phrases: { source: 'codes' } },
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(createChemical());
+    sinon.stub(ElementActions, 'updateSample');
+    mount();
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('maps ranges, negative values and conditions onto the sample', async () => {
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted({
+      properties: {
+        melting_point: '-98 °C', boiling_point: '64 - 65 °C (1013 hPa)', flash_point: '9.7 °C (closed cup)',
+        density: '0.791 g/cm3 (25 °C)', form: 'liquid', color: 'colourless',
+      },
+    }));
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(freshSample.melting_point_lowerbound).toEqual(-98);
+    expect(freshSample.melting_point_display).toEqual('-98');
+    expect(freshSample.boiling_point_lowerbound).toEqual(64);
+    expect(freshSample.boiling_point_upperbound).toEqual(65);
+    expect(freshSample.xref.flash_point).toEqual({ unit: '°C', value: 9.7 });
+    expect(freshSample.density).toEqual(0.791);
+    expect(freshSample.xref.form).toEqual('liquid');
+    expect(handleUpdateSample.calledOnceWith(freshSample)).toBe(true);
+  });
+
+  it('leaves a field alone when the sheet gives it in a unit the field cannot hold', async () => {
+    freshSample.updateRange('boiling_point', 100, 100);
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted({
+      properties: { boiling_point: '147 °F', density: '791 kg/m3' },
+    }));
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(freshSample.boiling_point_lowerbound).toEqual(100);
+    expect(freshSample.density).toEqual(0);
+    expect(handleUpdateSample.called).toBe(false);
+    expect(notify.firstCall.args[0].message).toEqual(expect.stringContaining('boiling point, density'));
+  });
+
+  it('says when sheet phrases replace phrases the chemical already held', async () => {
+    instance.handleFieldChanged('safetyPhrases', { h_statements: { H302: ' x' }, p_statements: {}, pictograms: [] });
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted());
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(instance.state.chemical.chemical_data[0].safetyPhrases.h_statements).toEqual({ H225: ' Highly flammable' });
+    const payload = notify.firstCall.args[0];
+    expect(payload.level).toEqual('success');
+    expect(payload.message).toEqual(expect.stringContaining('2 H and P phrases replaced the previous ones'));
+  });
+
+  it('flags phrases that were matched from the statement wording', async () => {
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted({
+      diagnostics: {
+        notes: [], errors: [], phrases: { source: 'wording', unmatched_statements: ['Keep cool.'] },
+      },
+    }));
+
+    await instance.extractFromSheet(sheetPath);
+
+    const payload = notify.firstCall.args[0];
+    expect(payload.level).toEqual('warning');
+    expect(payload.message).toEqual(expect.stringContaining('matched from the statement wording'));
+    expect(payload.message).toEqual(expect.stringContaining('1 statements matched no known phrase'));
+  });
+
+  it('keeps the existing phrases when the sheet yields only properties', async () => {
+    const own = { h_statements: { H302: ' x' }, p_statements: {}, pictograms: [] };
+    instance.handleFieldChanged('safetyPhrases', own);
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted({
+      safetyPhrases: { h_statements: {}, p_statements: {}, pictograms: [] },
+      properties: { form: 'solid' },
+    }));
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(instance.state.chemical.chemical_data[0].safetyPhrases).toEqual(own);
+    expect(notify.firstCall.args[0].message).toEqual(expect.stringContaining('existing ones are kept'));
+  });
+
+  it('shows the reason a request failed', async () => {
+    sinon.stub(ChemicalFetcher, 'extractFromSds').rejects(new Error('path is missing'));
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(instance.state.extractingSheet).toEqual('');
+    expect(instance.state.warningMessage).toEqual('Could not read this safety data sheet: path is missing');
+  });
+
+  it('treats an error body from the endpoint as a failure', async () => {
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves({ error: 'boom' });
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(instance.state.warningMessage).toEqual('Could not read this safety data sheet: boom');
+  });
+
+  it('starts no second extraction while one is running', () => {
+    const stub = sinon.stub(ChemicalFetcher, 'extractFromSds').returns(new Promise(() => {}));
+
+    instance.extractFromSheet(sheetPath);
+    instance.extractFromSheet('/safety_sheets/merck/other_0000000000000000.pdf');
+
+    expect(stub.calledOnce).toBe(true);
+    const button = shallow(
+      <div>{instance.renderSdsExtraction('/safety_sheets/merck/other_0000000000000000.pdf')}</div>
+    ).find('#extract-sds');
+    expect(button.prop('disabled')).toBe(true);
+  });
+
+  it('drops a result that arrives after the tab unmounted', async () => {
+    let resolve;
+    sinon.stub(ChemicalFetcher, 'extractFromSds').returns(new Promise((r) => { resolve = r; }));
+
+    const pending = instance.extractFromSheet(sheetPath);
+    instance.componentWillUnmount();
+    resolve(extracted({ properties: { form: 'liquid' } }));
+    await pending;
+
+    expect(freshSample.xref.form).toBeUndefined();
+    expect(handleUpdateSample.called).toBe(false);
+    expect(notify.called).toBe(false);
+  });
+
+  it('fills the phrases of an SBMM sample without touching its properties', async () => {
+    const sbmm = { id: 7, xref: {} };
+    instance = shallow(
+      React.createElement(ChemicalTab, {
+        sample: sbmm, type: 'SBMM', saveInventory: false, editChemical: sinon.spy(), setSaveInventory: sinon.spy(),
+      })
+    ).instance();
+    sinon.stub(instance, 'notify');
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves(extracted({ properties: { form: 'liquid' } }));
+
+    await instance.extractFromSheet(sheetPath);
+
+    expect(instance.state.warningMessage).toEqual('');
+    expect(sbmm.xref).toEqual({});
+    expect(instance.state.chemical.chemical_data[0].safetyPhrases.h_statements).toEqual({ H225: ' Highly flammable' });
+  });
+
+  it('enables the button only for a path the extractor accepts', () => {
+    const disabledFor = (path) => shallow(<div>{instance.renderSdsExtraction(path)}</div>)
+      .find('#extract-sds').prop('disabled');
+
+    expect(disabledFor(sheetPath)).toBe(false);
+    expect(disabledFor('https://evil.example/safety_sheets/merck/x.pdf')).toBe(true);
+    expect(disabledFor('/safety_sheets/../config/x.pdf')).toBe(true);
   });
 });
 
@@ -1025,7 +1220,6 @@ describe('ChemicalTab helpers', () => {
       };
       expect(ChemicalTab.describeSheet(row, 0, [])).toEqual({
         link: row.fisher_link,
-        vendorKey: 'fisher',
         title: 'Safety Data Sheet from Thermofisher - AC327840025',
       });
     });
@@ -1048,7 +1242,7 @@ describe('ChemicalTab helpers', () => {
 
     it('describes a row with no usable link without throwing', () => {
       expect(ChemicalTab.describeSheet({}, 0, [])).toEqual({
-        link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor',
+        link: null, title: 'Safety Data Sheet from queried vendor',
       });
     });
 
@@ -1098,5 +1292,77 @@ describe('ChemicalTab helpers', () => {
       expect(ChemicalTab.ensureSafetySheetPath(chemical)).toEqual([]);
       expect(chemical._chemical_data).toEqual([{ safetySheetPath: [] }]);
     });
+  });
+});
+
+describe('ChemicalTab fetched properties copy button', () => {
+  const SHEET = '/safety_sheets/merck/252549_web_8996a8681115b875.pdf';
+  let wrapper;
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(null);
+    wrapper = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    }));
+  });
+
+  afterEach(() => sinon.restore());
+
+  const copyButton = () => shallow(<div>{wrapper.find(AppModal).prop('title')}</div>).find(CopyButton);
+
+  it('is disabled until a sheet has been extracted', () => {
+    expect(copyButton()).toHaveLength(1);
+    expect(copyButton().prop('disabled')).toBe(true);
+    expect(copyButton().prop('ariaLabel')).toEqual('Copy all properties');
+  });
+
+  it('puts copy all for the safety phrases in their section heading', () => {
+    const phrases = { h_statements: { H225: ' x' }, p_statements: {}, pictograms: [] };
+    wrapper.setState({ chemical: createChemical([{ safetyPhrases: phrases }]) });
+    const heading = shallow(<div>{wrapper.instance().renderSafetyPhrases()}</div>).find('h6');
+    expect(heading.text()).toContain('Safety phrases and pictograms');
+    expect(heading.find(SafetyPhrasesCopyButton).prop('value')).toEqual(phrases);
+  });
+
+  it('sits in the modal title, next to the heading text', () => {
+    expect(shallow(<div>{wrapper.find(AppModal).prop('title')}</div>).text()).toContain('Fetched Chemical Properties');
+  });
+
+  it('keeps the properties of a saved chemical viewable after a fresh render', () => {
+    const remounted = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    }));
+    remounted.setState({ chemical: createChemical([{ sdsExtractedProperties: { [SHEET]: { form: 'Liquid' } } }]) });
+    const viewButton = shallow(<div>{remounted.instance().renderSdsExtraction(SHEET)}</div>)
+      .find(Button).filterWhere((b) => b.find('i.fa-file-text').exists());
+    expect(viewButton.prop('disabled')).toBe(false);
+    remounted.unmount();
+  });
+
+  it('copies the shown properties with human labels', () => {
+    wrapper.setState({
+      viewChemicalPropertiesModal: true,
+      viewPropertiesForSheet: SHEET,
+      chemical: createChemical([{
+        sdsExtractedProperties: {
+          [SHEET]: { form: 'Liquid', boiling_point: '85 °C', vapor_pressure: '83 hPa (20 °C)' },
+        },
+      }]),
+    });
+
+    expect(copyButton().prop('disabled')).toBe(false);
+    expect(copyButton().prop('text'))
+      .toEqual('Form: Liquid\nBoiling point: 85 °C\nVapor pressure: 83 hPa (20 °C)');
+    expect(copyButton().prop('html')).toContain('<td style="padding:2pt 12pt 2pt 0;vertical-align:top;font-weight:bold;">Form</td>');
   });
 });

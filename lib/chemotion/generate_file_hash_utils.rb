@@ -5,7 +5,13 @@ require 'digest'
 module Chemotion
   # Utility module for file hash operations shared across safety sheet processing
   module GenerateFileHashUtils
-    SAFETY_SHEETS_DIR = 'public/safety_sheets'
+    # Every reader and writer of saved sheets resolves against this, so specs can point it elsewhere.
+    SAFETY_SHEETS_ROOT = Rails.public_path.join('safety_sheets')
+
+    def self.safety_sheets_root
+      SAFETY_SHEETS_ROOT
+    end
+
     # Generate full MD5 hash for file content
     # @param file_path [String] Path to the file
     # @return [String, nil] Full MD5 hash or nil if error
@@ -51,9 +57,10 @@ module Chemotion
       # Every saved sheet carries the first 16 characters of its own content hash in its
       # name, so the candidates come from a glob rather than from hashing the whole folder.
       # A file renamed by hand is missed and stored again, which costs space, not accuracy.
-      candidates = Dir.glob("#{SAFETY_SHEETS_DIR}/**/*#{hash[0..15]}.pdf")
+      root = safety_sheets_root
+      candidates = Dir.glob(root.join('**', "*#{hash[0..15]}.pdf").to_s)
       match = candidates.find { |candidate| generate_full_hash(candidate) == hash }
-      match&.delete_prefix('public')
+      match && "/safety_sheets/#{Pathname.new(match).relative_path_from(root)}"
     end
   end
 end
