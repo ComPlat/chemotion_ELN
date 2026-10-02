@@ -50,7 +50,8 @@ RUN --mount=type=cache,target=/asdf/cache,sharing=locked \
     # asdf install ruby "${RUBY_VERSION}" && \
     gem install bundler -v "${BUNDLER_VERSION}" && \
     bundle add --skip-install 'factory_bot' && \
-    bundle install --jobs="$(nproc)" --retry=3
+    bundle install --jobs="$(nproc)" --retry=3 && \
+    bundle clean --force
 
 RUN ./prepare-nodejs.sh
 RUN asdf current && sleep 5s
@@ -74,7 +75,6 @@ ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/con
 ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
 ADD https://payload.chemserv.scc.kit.edu/indigo.yml /chemotion/app/config/indigo_service.yml
 ADD https://payload.chemserv.scc.kit.edu/ketcher.yml /chemotion/app/config/ketcher_service.yml
-RUN bundle clean --force
 
 # stop check for ketcherails
 RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh
