@@ -4,6 +4,19 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
+    helpers do
+      # An SBMM is a shared reference record: Usecases::Sbmm::Finder reuses it across users by
+      # accession/sequence, and ElementPolicy#update? passes for anyone owning a sample of it. Once
+      # another user has a sample of it, only their own uploads may be detached - mirroring
+      # Usecases::Sbmm::Sample#raise_if_sbmm_is_not_writable!, which locks the SBMM's fields then.
+      def sbmm_shared_with_other_users?(attachable)
+        return false unless attachable.is_a?(SequenceBasedMacromolecule)
+
+        SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: attachable.id, except_user_id: current_user.id)
+                                        .positive?
+      end
+    end
+
     resource :attachable do
       params do
         optional :files, type: [File], desc: 'files', default: []
@@ -13,20 +26,17 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        case params[:attachable_type]
-        when 'ResearchPlan'
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(
-            current_user,
-            ResearchPlan.find_by(id: params[:attachable_id]),
-          ).update?
+        # Only element types Attachment#root_element resolves directly; anything else (including
+        # 'Container') is rejected rather than silently skipping authorization.
+        attachable_type = params[:attachable_type]
+        if Attachment::ELEMENT_ATTACHABLE_TYPES.include?(attachable_type)
+          @attachable = attachable_type.constantize.find_by(id: params[:attachable_id])
         end
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachable).update?
       end
 
       desc 'Update attachable records'
       post 'update_attachments_attachable' do
-        attachable_type = params[:attachable_type]
-        attachable_id = params[:attachable_id]
-
         if params.fetch(:files, []).any?
           params[:files].each_with_index do |file, index|
             next unless (tempfile = file[:tempfile])
@@ -39,8 +49,7 @@ module Chemotion
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: file[:type],
-              attachable_type: attachable_type,
-              attachable_id: attachable_id,
+              attachable: @attachable,
             )
 
             begin
@@ -53,9 +62,14 @@ module Chemotion
             end
           end
         end
+        # Scope the detach to the record authorized above, not just its type: otherwise an
+        # attachable_id the caller owns plus someone else's attachment ids in del_files would
+        # unlink the victim's attachments (unrecoverable, since an unlinked attachment has no
+        # root element and even its owner can no longer download it).
         if params[:del_files].any?
-          Attachment.where(id: params[:del_files].map!(&:to_i), attachable_type: attachable_type)
-                    .update_all(attachable_id: nil)
+          detachable = Attachment.where(id: params[:del_files], attachable: @attachable)
+          detachable = detachable.where(created_for: current_user.id) if sbmm_shared_with_other_users?(@attachable)
+          detachable.update_all(attachable_id: nil)
         end
         true
       end
