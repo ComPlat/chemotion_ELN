@@ -288,7 +288,8 @@ describe Chemotion::ChemicalsService do
   end
 
   describe 'saving a second sheet for one product number' do
-    let(:vendor) { 'merck' }
+    # A folder of its own: the after hook removes it, and a real vendor folder holds saved sheets.
+    let(:vendor) { 'spec_second_sheet' }
     let(:product) { '270709' }
     let(:link) { 'https://www.sigmaaldrich.com/sheet.pdf' }
     let(:first_initials) { Digest::MD5.hexdigest('%PDF first')[0..15] }
