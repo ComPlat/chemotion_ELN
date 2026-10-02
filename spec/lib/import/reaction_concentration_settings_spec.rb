@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Imported reaction concentration settings' do
+RSpec.describe 'Imported reaction concentration settings' do # rubocop:disable RSpec/DescribeClass
   let(:user) { create(:person) }
   let(:collection) { create(:collection, user: user) }
   let(:uuid) { SecureRandom.uuid }
@@ -26,7 +26,7 @@ RSpec.describe 'Imported reaction concentration settings' do
     end
   end
 
-  context 'through the gate JSON importer' do
+  context 'when importing through the gate JSON importer' do
     def import_reaction(settings)
       importer = Import::ImportJson.new(
         data: { 'reactions' => { uuid => settings.merge('uuid' => uuid) } },
@@ -37,10 +37,10 @@ RSpec.describe 'Imported reaction concentration settings' do
       Reaction.find(importer.new_data.fetch(uuid).fetch('id'))
     end
 
-    include_examples 'preserves concentration settings'
+    it_behaves_like 'preserves concentration settings'
   end
 
-  context 'through the collection ZIP reaction importer' do
+  context 'when importing through the collection ZIP reaction importer' do
     let(:importer) { Import::ImportCollections.new(nil, user.id) }
 
     after do
@@ -48,14 +48,13 @@ RSpec.describe 'Imported reaction concentration settings' do
     end
 
     def import_reaction(settings)
-      importer.instance_variable_set(:@data, {
-        'Reaction' => { uuid => settings.merge('reaction_svg_file' => '') },
-      })
+      data = { 'Reaction' => { uuid => settings.merge('reaction_svg_file' => '') } }
+      importer.instance_variable_set(:@data, data)
       importer.send(:import_reactions)
       importer.instance_variable_get(:@instances).fetch('Reaction').fetch(uuid)
     end
 
-    include_examples 'preserves concentration settings'
+    it_behaves_like 'preserves concentration settings'
 
     %w[combined reaction_volume].each do |mode|
       it "retains #{mode} and volume from exported reaction attributes" do

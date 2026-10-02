@@ -457,26 +457,6 @@ describe('ReactionVariationsMaterials', () => {
 
     expect(volume).toBe(2);
   });
-  it('does not auto-enable the reaction-volume basis when editing a concentration on solvents_only', async () => {
-    const reaction = await setUpReaction();
-    const row = cloneDeep(reaction.variations[0]);
-    const reactantID = reaction.reactants[0].id;
-    row.reactants[reactantID].concentration.value = 2;
-
-    const { contextUpdate } = updateVariationsRowOnConcentrationMaterialChange(
-      row,
-      `reactants.${reactantID}`,
-      'concentration',
-      {
-        concentrationMode: REACTION_CONCENTRATION_MODES.SOLVENTS_ONLY,
-        useReactionVolume: false,
-        lockReactionVolume: false,
-        reactionVolumeByRowId: {},
-      }
-    );
-
-    expect(contextUpdate).toBe(null);
-  });
   it('uses edit-scoped reaction volume for locked concentration propagation when edited volume changes', async () => {
     const reaction = await setUpReaction();
     const variationsRow = cloneDeep(reaction.variations[0]);

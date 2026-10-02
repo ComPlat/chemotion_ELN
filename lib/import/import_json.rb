@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Import::ImportJson
+class Import::ImportJson # rubocop:disable Metrics/ClassLength,Style/ClassAndModuleChildren
   attr_accessor :data,  :force_uuid
   attr_reader :user_id, :collection_id, :collection, :all_collection, :user,
               :new_data, :log, :new_attachments

@@ -93,6 +93,11 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     reactionVolumeByRowIdRef,
   }), [concentrationMode, reaction.lock_reaction_volume, useReactionVolume]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUseReactionVolumeOverride(null);
+  }, [reactionConcentrationMode]);
+
   const gridRef = useRef(null);
   const gridWrapperRef = useRef(null);
   const [gridToken, setGridToken] = useState(0);
