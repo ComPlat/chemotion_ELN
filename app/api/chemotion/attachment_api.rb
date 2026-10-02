@@ -44,6 +44,27 @@ module Chemotion
         attachment_access.read?(attachment)
       end
 
+      # GET routes of the attachments resource, by declared route path. The analyses downloads
+      # read the element named in their path (and set it for the route); every other GET reads
+      # the attachment it serves.
+      def get_request_readable? # rubocop:disable Metrics/AbcSize
+        case options[:path].first
+        when 'zip/:container_id'
+          @container = Container.find(params[:container_id])
+          attachment_access.read_element?(@container.root_element)
+        when 'sample_analyses/:sample_id'
+          attachment_access.read_element?(@sample = Sample.find(params[:sample_id]))
+        when 'device_description_analyses/:device_description_id'
+          attachment_access.read_element?(@device_description = DeviceDescription.find(params[:device_description_id]))
+        when 'sequence_based_macromolecule_sample_analyses/:sequence_based_macromolecule_sample_id'
+          @sequence_based_macromolecule_sample =
+            SequenceBasedMacromoleculeSample.find(params[:sequence_based_macromolecule_sample_id])
+          attachment_access.read_element?(@sequence_based_macromolecule_sample)
+        else
+          readable?(@attachment)
+        end
+      end
+
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
@@ -72,11 +93,7 @@ module Chemotion
     resource :export_ds do
       before do
         @container = Container.find_by(id: params[:container_id])
-        element = @container.root.containable
-        policy = ElementPolicy.new(current_user, element)
-        can_read = policy.read?
-        can_dwnld = can_read && policy.read_dataset?
-        error!('401 Unauthorized', 401) unless can_dwnld
+        error!('401 Unauthorized', 401) unless @container && attachment_access.read_element?(@container.root_element)
       end
       desc 'Download the dataset attachment file'
       get 'dataset/:container_id' do
@@ -99,64 +116,12 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
-        # rubocop:disable Performance/StringInclude, Metrics/BlockNesting
-        case request.env['REQUEST_METHOD']
-        when /delete/i
+        case request.request_method
+        when 'DELETE'
           error!('401 Unauthorized', 401) unless writable?(@attachment)
-        when /get/i
-          can_dwnld = false
-          if /zip/.match?(request.url)
-            @container = Container.find(params[:container_id])
-            if (element = @container.root.containable)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read &&
-                          policy.read_dataset?
-            end
-          elsif /\bsample_analyses\b/.match?(request.url)
-            @sample = Sample.find(params[:sample_id])
-            if (element = @sample)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
-            end
-          elsif /device_description_analyses/.match?(request.url)
-            @device_description = DeviceDescription.find(params[:device_description_id])
-            if (element = @device_description)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
-            end
-          elsif /\bsequence_based_macromolecule_sample_analyses\b/.match?(request.url)
-            @sequence_based_macromolecule_sample =
-              SequenceBasedMacromoleculeSample.find(params[:sequence_based_macromolecule_sample_id])
-            if (element = @sequence_based_macromolecule_sample)
-              can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-            end
-          elsif @attachment
-            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
-
-            if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
-              can_dwnld = if element.is_a?(Container)
-                            false
-                          else
-                            # I have no idea on how to fix this code? a User is not an element so it
-                            # makes no sense to even try using ElementPolicy.
-                            # So I just replaced ElementPermissionProxy with ElementPolicy, so it won't crash
-                            policy = ElementPolicy.new(current_user, element)
-                            (element.is_a?(User) && (element == current_user)) ||
-                              (
-                                policy.read? &&
-                                policy.read_dataset?
-                              )
-                          end
-            end
-          end
-          error!('401 Unauthorized', 401) unless can_dwnld
+        when 'GET'
+          error!('401 Unauthorized', 401) unless get_request_readable?
         end
-        # rubocop:enable Performance/StringInclude, Metrics/BlockNesting
       end
 
       desc 'Bulk Delete Attachments'
@@ -487,13 +452,7 @@ module Chemotion
       post 'thumbnails' do
         thumbnails = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
-          can_dwnld = if att
-                        element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
-                      end
-          can_dwnld ? thumbnail_obj(att) : nil
+          readable?(att) ? thumbnail_obj(att) : nil
         end
         { thumbnails: thumbnails }
       end
@@ -505,13 +464,7 @@ module Chemotion
       post 'files' do
         files = params[:ids].map do |a_id|
           att = Attachment.find(a_id)
-          can_dwnld = if att
-                        element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
-                      end
-          can_dwnld ? raw_file_obj(att) : nil
+          readable?(att) ? raw_file_obj(att) : nil
         end
         error!('401 Unauthorized', 401) if !files.empty? && files.compact.empty?
         { files: files }

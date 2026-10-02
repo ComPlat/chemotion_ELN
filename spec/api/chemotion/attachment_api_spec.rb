@@ -647,6 +647,64 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # Each by-id GET checks the attachment it serves.
+  describe 'GET routes serving an attachment by id' do
+    let(:own_sample) { create(:sample, collections: [create(:collection, user: user)]) }
+    let(:other_user) { create(:person) }
+    let(:foreign_sample) do
+      create(:sample_with_image_in_analysis, collections: [create(:collection, user: other_user)])
+    end
+    let(:foreign_attachment) { foreign_sample.container.children[0].children[0].attachments.first }
+    let(:own_element_params) { { container_id: own_sample.container.id, sample_id: own_sample.id } }
+
+    %w[%s image/%s thumbnail/%s].each do |route|
+      it "rejects GET #{format(route, ':id')} for another user's attachment" do
+        get "/api/v1/attachments/#{format(route, foreign_attachment.id)}", params: own_element_params
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with an unsorted inbox file' do
+      let(:attachment) do
+        create(:attachment, :with_png_image, attachable: nil, attachable_type: 'Container', created_for: owner.id)
+      end
+
+      before { get "/api/v1/attachments/#{attachment.id}" }
+
+      context 'when it is the user\'s' do
+        let(:owner) { user }
+
+        it { expect(response).to have_http_status(:ok) }
+      end
+
+      context 'when it is another user\'s' do
+        let(:owner) { other_user }
+
+        it { expect(response).to have_http_status(:unauthorized) }
+      end
+    end
+  end
+
+  # thumbnails/files resolve each attachment through its root element, so attachments linked
+  # directly to an element are served like ones in an analysis container.
+  describe 'POST thumbnails and files with an attachment linked directly to a research plan' do
+    let(:attachment) { create(:attachment, :with_png_image) }
+
+    before { create(:research_plan, attachments: [attachment], collections: [create(:collection, user: user)]) }
+
+    it 'returns its thumbnail' do
+      post '/api/v1/attachments/thumbnails', params: { ids: [attachment.id] }
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['thumbnails'].first['id']).to eq(attachment.id)
+    end
+
+    it 'returns its file' do
+      post '/api/v1/attachments/files', params: { ids: [attachment.id] }
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['files'].first['id']).to eq(attachment.id)
+    end
+  end
+
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
     let(:user) { create(:person) }
     let(:container) { create(:container, containable: user) }
