@@ -398,12 +398,12 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
 
 // Regression tests for the solvent volume calculation:
 // - Eq unlocked: a solvent's volume stays fixed; only its (derived) equivalent updates.
-// - Eq locked: a solvent's volume scales with the reference (equivalent * ref.amount_mol).
+// - Eq locked: this mole-based pass EXCLUDES solvents; their volumes are derived from a
+//   stored reference ratio in Reaction#updateSolventVolumesForReference, not scaled here.
 // The historical glitch: editing a solvent volume set its equivalent via amount_g / maxAmount
-// (NaN, because a solvent has no maxAmount), and the correction block excluded solvents, so
-// the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
-// The correction block now includes solvents, so the equivalent is always a valid
-// amount_mol / reference.amount_mol ratio before it is used to scale.
+// (NaN, because a solvent has no maxAmount). The correction block (further down) still derives
+// a valid amount_mol / reference.amount_mol equivalent for display, but the locked volume
+// itself no longer scales through moles in this pass.
 describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
   let gasStoreStub;
 
@@ -1129,10 +1129,9 @@ describe('ReactionDetailsScheme amount-change handlers — solvent volume scalin
 });
 
 // Switching between target and real amounts can change the active amount without an amount-field
-// edit. These handlers must therefore use the same reference propagation path as direct edits.
+// edit. This handler must therefore use the same reference propagation path as direct edits.
 describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling wiring', () => {
   const handlers = [
-    'updatedReactionForLoadingChange',
     'updatedReactionForAmountTypeChange',
   ];
 
@@ -1245,7 +1244,7 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
     const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: true });
 
     const result = ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
-      ctx, updatedSample, true
+      ctx, updatedSample
     );
 
     expect(updatedReaction.updateSolventVolumesForReference.calledOnceWith(updatedSample)).toBe(true);
@@ -1256,17 +1255,17 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
     const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: false });
 
     ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
-      ctx, updatedSample, true
+      ctx, updatedSample
     );
 
     expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
   });
 
-  it('forwards includeSbmm to updatedReactionWithSample', () => {
+  it('always includes SBMM reactant samples when rebasing', () => {
     const { ctx } = buildCtx({ lockEquivColumn: true });
 
     ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
-      ctx, updatedSample, true
+      ctx, updatedSample
     );
 
     // signature: updatedReactionWithSample(updateFunction, updatedSample, type, includeSbmm)
@@ -1276,10 +1275,13 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
   });
 });
 
-// Regression: the concentration and reference-component paths also change the reference
-// amount under locked equivalents, but previously never scaled solvent volumes (only the
-// two direct amount handlers did). They now route through propagateReferenceAmountChange,
-// so solvent volumes are derived from the updated reference on every such path.
+// Regression: the concentration handlers also change the reference amount under locked
+// equivalents, but previously never scaled solvent volumes (only the two direct amount
+// handlers did). They now route through propagateReferenceAmountChange, so solvent volumes
+// are derived from the updated reference on these paths too.
+// Not covered here: the reference-component switch (updatedReactionForComponentReferenceChange)
+// still calls updatedSamplesForAmountChange directly and does NOT derive solvents under lock.
+// That bypass is scoped to the stacked #3584.
 describe('ReactionDetailsScheme reference-changing handlers — solvent volume scaling (regression)', () => {
   let gasStoreStub;
 
