@@ -1,0 +1,22 @@
+# US wordings (OSHA HCS 2024, GHS Rev. 7 onward) that differ from the EU text by more than spelling.
+# Read by Chemotion::SdsPhraseMatcher; a code missing from public/json is ignored.
+P243:
+  - Take action to prevent static discharges.
+P280:
+  - Wear protective gloves.
+  - Wear protective clothing.
+  - Wear eye protection/face protection.
+  - Wear eye/face protection.
+  - Wear protective gloves/protective clothing.
+  - Wear protective gloves/eye protection/face protection.
+P381:
+  - In case of leakage, eliminate all ignition sources.
+# Target organ statements, with the organs or route the sheet names in parentheses.
+H370:
+  - Causes damage to organs (…).
+H371:
+  - May cause damage to organs (…).
+H372:
+  - Causes damage to organs (…) through prolonged or repeated exposure.
+H373:
+  - May cause damage to organs (…) through prolonged or repeated exposure.

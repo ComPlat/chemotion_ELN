@@ -9,8 +9,16 @@ module Chemotion
     }.freeze
     MAX_SECTION = 16
 
+    attr_reader :style
+
+    # The layout is read off the headings, since one vendor prints both.
+    def self.detect(lines)
+      HEADINGS.keys.map { |style| new(lines, style) }.max_by { |sections| sections.found.length }
+    end
+
     def initialize(lines, style)
       @lines = Array(lines)
+      @style = style
       @pattern = HEADINGS.fetch(style)
     end
 

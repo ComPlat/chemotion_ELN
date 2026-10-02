@@ -15,26 +15,22 @@ module Chemotion
     VENDORS = [
       {
         'name' => 'merck',
-        'style' => :sigma,
         'marks' => [/The life science business of Merck/i, /MilliporeSigma/i, /Sigma-?Aldrich/i],
-        'regulation' => %r{REGULATION\s+\(EC\)\s+No\.?\s+1272/2008}i,
       },
       {
         'name' => 'thermofisher',
-        'style' => :fisher,
         'marks' => [/Thermo\s+Fisher\s+Scientific/i, /Fisher\s+Scientific/i,
                     /Acros\s+Organics/i, /Alfa\s+Aesar/i],
-        'regulation' => /29\s+CFR\s+1910\.1200|\bOSHA\b/i,
       },
     ].freeze
-    REGULATION_WEIGHT = 3
-    MIN_VENDOR_SCORE = 3
+    MIN_VENDOR_SCORE = 1
     HAZARDS_SECTION = 2
     PROPERTIES_SECTION = 9
     LABEL_ELEMENTS = { sigma: /\A2\.2\b/, fisher: /\ALabel\s+Elements\b/i }.freeze
     SUBSECTION_END = { sigma: /\A2\.3\b/, fisher: /\AHazards\s+not\s+otherwise\s+classified/i }.freeze
     REDUCED_LABELLING = /\AReduced\s+Label/i.freeze
-    NOT_HAZARDOUS = /not\s+a\s+hazardous\s+(substance|mixture)/i.freeze
+    NOT_HAZARDOUS = /not\s+a\s+hazardous\s+(substance|mixture)|\ANone\s+required\b|no\s+hazard\s+statement/i.freeze
+    NOT_HAZARDOUS_NOTE = 'the sheet declares the substance non-hazardous, so no codes are expected'
     # The shape Chemical#chemical_data stores in safetySheetPath; nothing else reaches the disk.
     SAVED_SHEET = %r{\A/?safety_sheets/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+\.pdf\z}.freeze
 
@@ -66,9 +62,10 @@ module Chemotion
       vendor = detect_vendor(lines.join("\n"))
       return result({}) if vendor.nil?
 
-      sections = SdsSections.new(lines, vendor['style'])
+      sections = SdsSections.detect(lines)
+      @diagnostics['layout'] = sections.style.to_s
       @diagnostics['sections_found'] = sections.found
-      result(properties(sections), phrases(sections, vendor['style']))
+      result(properties(sections), phrases(sections, sections.style))
     end
 
     private
@@ -99,25 +96,39 @@ module Chemotion
 
       h_codes = SdsPhraseParser.codes(lines, 'H')
       p_codes = SdsPhraseParser.codes(lines, 'P')
-      note(empty_reason(lines)) if (h_codes + p_codes).empty?
-      statements(h_codes, p_codes)
+      return statements(h_codes, p_codes, 'codes') if (h_codes + p_codes).any?
+      return phrases_from_wording(lines) unless non_hazardous?(lines)
+
+      note(NOT_HAZARDOUS_NOTE)
+      statements([], [], 'none')
     end
 
-    def empty_reason(lines)
-      return 'the sheet declares the substance non-hazardous, so no codes are expected' \
-        if lines.any? { |line| line.match?(NOT_HAZARDOUS) }
-
-      'no H or P codes in the text layer of the bounded section'
+    def phrases_from_wording(lines)
+      found = SdsPhraseMatcher.match(lines)
+      h_codes, p_codes = found[:codes].partition { |code| code.match?(/\A(?:EU)?H/) }
+      if found[:codes].empty?
+        note('no H or P codes in the text layer of the bounded section, and no statement matched')
+      else
+        note('the sheet prints no codes, so these were matched from the statement wording')
+      end
+      phrases = statements(h_codes, p_codes, 'wording')
+      @diagnostics['phrases'].merge!('matched' => found[:matched], 'unmatched_statements' => found[:unmatched],
+                                     'ambiguous_statements' => found[:ambiguous])
+      phrases
     end
 
-    def statements(h_codes, p_codes)
+    def non_hazardous?(lines)
+      lines.any? { |line| line.strip.match?(NOT_HAZARDOUS) }
+    end
+
+    def statements(h_codes, p_codes, source)
       pictograms = SdsPictograms.new(h_codes).codes
       note('pictograms are images, so these are derived from the hazard codes') if pictograms.any?
       phrases = { 'h_statements' => ChemicalsService.construct_h_statements(h_codes),
                   'p_statements' => ChemicalsService.construct_p_statements(p_codes),
                   'pictograms' => ChemicalsService.construct_pictograms(pictograms) }
       known = phrases['h_statements'].keys + phrases['p_statements'].keys
-      @diagnostics['phrases'] = { 'h_codes' => h_codes, 'p_codes' => p_codes,
+      @diagnostics['phrases'] = { 'source' => source, 'h_codes' => h_codes, 'p_codes' => p_codes,
                                   'pictograms_derived' => pictograms,
                                   'unknown_codes' => (h_codes + p_codes) - known }
       phrases
@@ -162,8 +173,7 @@ module Chemotion
     end
 
     def score(vendor, text)
-      marks = vendor['marks'].count { |mark| text.match?(mark) }
-      marks + (text.match?(vendor['regulation']) ? REGULATION_WEIGHT : 0)
+      vendor['marks'].count { |mark| text.match?(mark) }
     end
 
     def text_lines

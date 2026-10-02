@@ -113,11 +113,21 @@ RSpec.describe Chemotion::SdsExtractor do
       expect(result['diagnostics']['vendor']).to eq('thermofisher')
     end
 
-    it 'degrades to no phrases because the sheet carries no codes', :aggregate_failures do
-      expect(result['safetyPhrases']['h_statements']).to be_empty
+    it 'matches the codes from the statement wording and says so', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225 H314 H370 H301+H311+H331])
+      expect(result['diagnostics']['phrases']['source']).to eq('wording')
       expect(result['diagnostics']['notes'])
-        .to include('no H or P codes in the text layer of the bounded section')
+        .to include('the sheet prints no codes, so these were matched from the statement wording')
       expect(result['diagnostics']['errors']).to be_empty
+    end
+
+    it 'leaves no statement of the label block unmatched', :aggregate_failures do
+      expect(result['safetyPhrases']['p_statements'].keys).to include('P243', 'P305+P351+P338', 'P403+P233', 'P501')
+      expect(result['diagnostics']['phrases']['unmatched_statements']).to be_empty
+    end
+
+    it 'derives the pictograms from the matched codes' do
+      expect(result['safetyPhrases']['pictograms']).to contain_exactly('GHS02', 'GHS05', 'GHS06', 'GHS08')
     end
 
     it 'reads the whitespace-column section 9, preferring Celsius' do
@@ -125,6 +135,45 @@ RSpec.describe Chemotion::SdsExtractor do
                                          'color' => 'Clear Colorless - Light yellow',
                                          'odor' => 'Ammonia-like', 'flash_point' => '14 °C',
                                          'density' => '0.770')
+    end
+  end
+
+  describe 'a second Thermo Fisher US sheet' do
+    let(:result) { extract('fisher/AC119341000_0f7f0f2ff78e6ab4.pdf') }
+
+    it 'reads the hazard and precautionary statements', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225 H318])
+      expect(result['safetyPhrases']['p_statements'].keys)
+        .to eq(%w[P280 P210 P233 P240 P241 P243 P242 P303+P361+P353 P305+P351+P338 P310 P370+P378 P403+P235 P501])
+      expect(result['safetyPhrases']['pictograms']).to contain_exactly('GHS02', 'GHS05')
+    end
+
+    it 'stops before the hazards OSHA does not classify' do
+      expect(result['safetyPhrases']['h_statements']).not_to have_key('H411')
+    end
+  end
+
+  describe 'a Thermo Fisher sheet in the EU layout' do
+    let(:result) { extract('thermofischer/342353_6595a345c109efaa.pdf') }
+
+    it 'takes the layout from the headings rather than from the vendor', :aggregate_failures do
+      expect(result['diagnostics']['vendor']).to eq('thermofisher')
+      expect(result['diagnostics']['layout']).to eq('sigma')
+      expect(result['diagnostics']['sections_found']).to eq((1..16).to_a)
+    end
+
+    it 'reads the printed codes', :aggregate_failures do
+      expect(result['diagnostics']['phrases']['source']).to eq('codes')
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H315 H318 H302+H312+H332])
+    end
+  end
+
+  describe 'a Thermo Fisher sheet whose label elements are "None required"' do
+    let(:result) { extract('fisher/ALFAAJ67413_272e40ab2224c050.pdf') }
+
+    it 'treats the substance as non-hazardous', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements']).to be_empty
+      expect(result['diagnostics']['notes']).to include(described_class::NOT_HAZARDOUS_NOTE)
     end
   end
 
