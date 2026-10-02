@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import SafetyPhrasesEditor, { normalizeSafetyPhrases } from 'src/components/chemicals/SafetyPhrasesEditor';
+import SafetyPhrasesEditor, { normalizeSafetyPhrases, SafetyPhrasesCopyButton } from 'src/components/chemicals/SafetyPhrasesEditor';
 import CopyButton from 'src/components/common/CopyButton';
 
 configure({ adapter: new Adapter() });
@@ -266,6 +266,11 @@ describe('SafetyPhrasesEditor', () => {
       await flush();
       wrapper.update();
     };
+    const mountCopyAll = async (value) => {
+      wrapper = mount(React.createElement(SafetyPhrasesCopyButton, { value }));
+      await flush();
+      wrapper.update();
+    };
     const copyButton = (label) => wrapper.find(`button[aria-label="${label}"]`);
     const clickAndRead = async (label) => {
       copyButton(label).simulate('click');
@@ -287,9 +292,10 @@ describe('SafetyPhrasesEditor', () => {
       delete navigator.clipboard;
     });
 
-    it('renders a copy button per section, per phrase and for the whole block', async () => {
+    it('renders a copy button per section and per phrase, leaving copy all to the heading', async () => {
       await mountEditor(PHRASES);
-      ['Copy all safety phrases and pictograms', 'Copy hazard statements',
+      expect(copyButton('Copy all safety phrases and pictograms')).toHaveLength(0);
+      ['Copy hazard statements',
         'Copy precautionary statements', 'Copy pictograms', 'Copy H225', 'Copy H301+H311']
         .forEach((label) => expect(copyButton(label)).toHaveLength(1));
     });
@@ -301,8 +307,11 @@ describe('SafetyPhrasesEditor', () => {
       wrapper.unmount();
 
       await mountEditor(null);
-      expect(copyButton('Copy all safety phrases and pictograms').prop('disabled')).toBe(true);
       expect(wrapper.find(CopyButton).everyWhere((b) => b.prop('disabled'))).toBe(true);
+      wrapper.unmount();
+
+      await mountCopyAll(null);
+      expect(copyButton('Copy all safety phrases and pictograms').prop('disabled')).toBe(true);
     });
 
     it('copies a single phrase as "code: text"', async () => {
@@ -318,7 +327,7 @@ describe('SafetyPhrasesEditor', () => {
     });
 
     it('copies every shown section and skips the empty one', async () => {
-      await mountEditor(PHRASES);
+      await mountCopyAll(PHRASES);
       expect(await clickAndRead('Copy all safety phrases and pictograms')).toEqual([
         'Hazard Statements',
         'H225: Highly flammable liquid and vapour.',

@@ -10,7 +10,7 @@ import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import AppModal from 'src/components/common/AppModal';
-import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
+import SafetyPhrasesEditor, { SafetyPhrasesCopyButton } from 'src/components/chemicals/SafetyPhrasesEditor';
 import CopyButton from 'src/components/common/CopyButton';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
@@ -674,7 +674,9 @@ describe('ChemicalTab component', () => {
       await instance.extractFromSheet(sheetPath);
 
       expect(fetcherStub.calledWith(sheetPath)).toBe(true);
-      expect(instance.state.extractedProperties[sheetPath]).toEqual(extracted.properties);
+      expect(instance.state.chemical.chemical_data[0].sdsExtractedProperties)
+        .toEqual({ [sheetPath]: extracted.properties });
+      expect(instance.extractedPropertiesFor(sheetPath)).toEqual(extracted.properties);
       expect(instance.state.chemical.chemical_data[0].safetyPhrases).toEqual(extracted.safetyPhrases);
       fetcherStub.restore();
     });
@@ -1311,7 +1313,7 @@ describe('ChemicalTab fetched properties copy button', () => {
 
   afterEach(() => sinon.restore());
 
-  const copyButton = () => wrapper.find(AppModal).find(CopyButton);
+  const copyButton = () => shallow(<div>{wrapper.find(AppModal).prop('title')}</div>).find(CopyButton);
 
   it('is disabled until a sheet has been extracted', () => {
     expect(copyButton()).toHaveLength(1);
@@ -1319,13 +1321,43 @@ describe('ChemicalTab fetched properties copy button', () => {
     expect(copyButton().prop('ariaLabel')).toEqual('Copy all properties');
   });
 
+  it('puts copy all for the safety phrases in their section heading', () => {
+    const phrases = { h_statements: { H225: ' x' }, p_statements: {}, pictograms: [] };
+    wrapper.setState({ chemical: createChemical([{ safetyPhrases: phrases }]) });
+    const heading = shallow(<div>{wrapper.instance().renderSafetyPhrases()}</div>).find('h6');
+    expect(heading.text()).toContain('Safety phrases and pictograms');
+    expect(heading.find(SafetyPhrasesCopyButton).prop('value')).toEqual(phrases);
+  });
+
+  it('sits in the modal title, next to the heading text', () => {
+    expect(shallow(<div>{wrapper.find(AppModal).prop('title')}</div>).text()).toContain('Fetched Chemical Properties');
+  });
+
+  it('keeps the properties of a saved chemical viewable after a fresh render', () => {
+    const remounted = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    }));
+    remounted.setState({ chemical: createChemical([{ sdsExtractedProperties: { [SHEET]: { form: 'Liquid' } } }]) });
+    const viewButton = shallow(<div>{remounted.instance().renderSdsExtraction(SHEET)}</div>)
+      .find(Button).filterWhere((b) => b.find('i.fa-file-text').exists());
+    expect(viewButton.prop('disabled')).toBe(false);
+    remounted.unmount();
+  });
+
   it('copies the shown properties with human labels', () => {
     wrapper.setState({
       viewChemicalPropertiesModal: true,
       viewPropertiesForSheet: SHEET,
-      extractedProperties: {
-        [SHEET]: { form: 'Liquid', boiling_point: '85 °C', vapor_pressure: '83 hPa (20 °C)' },
-      },
+      chemical: createChemical([{
+        sdsExtractedProperties: {
+          [SHEET]: { form: 'Liquid', boiling_point: '85 °C', vapor_pressure: '83 hPa (20 °C)' },
+        },
+      }]),
     });
 
     expect(copyButton().prop('disabled')).toBe(false);

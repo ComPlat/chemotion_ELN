@@ -15,7 +15,7 @@ import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
-import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
+import SafetyPhrasesEditor, { SafetyPhrasesCopyButton } from 'src/components/chemicals/SafetyPhrasesEditor';
 import CopyButton from 'src/components/common/CopyButton';
 import { formatProperties } from 'src/utilities/sdsClipboardFormat';
 import Chemical from 'src/models/Chemical';
@@ -112,7 +112,6 @@ export default class ChemicalTab extends React.Component {
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: {},
       extractingSheet: '',
-      extractedProperties: {},
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewPropertiesForSheet: '',
@@ -505,9 +504,7 @@ export default class ChemicalTab extends React.Component {
         return;
       }
 
-      this.setState((state) => ({
-        extractedProperties: { ...state.extractedProperties, [sheetPath]: properties }
-      }));
+      this.handleFieldChanged('sdsExtractedProperties', { ...this.allExtractedProperties(), [sheetPath]: properties });
       const replacedPhrases = codeCount > 0 && !this.safetyPhrasesEmpty();
       if (codeCount) this.handleFieldChanged('safetyPhrases', phrases);
       const mapped = this.mapToSampleProperties(properties);
@@ -1371,7 +1368,7 @@ export default class ChemicalTab extends React.Component {
   // Every sheet section folds the same way, so the header is built once. Sections start
   // open, which is how they behaved before they could be collapsed.
   sectionHeader(id, title, {
-    meta = null, metaTooltip = null, className = '', defaultOpen = true,
+    meta = null, metaTooltip = null, className = '', defaultOpen = true, actions = null,
   } = {}) {
     const isOpen = this.isSectionOpen(id, defaultOpen);
     const counter = <span className="text-muted small fw-normal ms-2">{meta}</span>;
@@ -1398,6 +1395,7 @@ export default class ChemicalTab extends React.Component {
           </OverlayTrigger>
         )}
         {meta && !metaTooltip && counter}
+        {actions}
       </h6>
     );
   }
@@ -1738,6 +1736,7 @@ export default class ChemicalTab extends React.Component {
           metaTooltip: 'No H or P statement and no pictogram is set. '
             + 'Fetch them from a saved sheet, or type them in here.',
           defaultOpen: startsOpen,
+          actions: <SafetyPhrasesCopyButton value={phrases} />,
         })}
         <div hidden={!this.isSectionOpen('safetyPhrases', startsOpen)}>
           <SafetyPhrasesEditor
@@ -1756,10 +1755,22 @@ export default class ChemicalTab extends React.Component {
     });
   }
 
+  // Kept on the chemical, keyed by sheet path, so the view survives a reload once the chemical is saved.
+  allExtractedProperties() {
+    const { chemical } = this.state;
+    const stored = chemical?._chemical_data?.[0]?.sdsExtractedProperties;
+    return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+  }
+
+  extractedPropertiesFor(sheetPath) {
+    return sheetPath ? this.allExtractedProperties()[sheetPath] : undefined;
+  }
+
   // Reads the saved PDF itself, so it works for a manually attached sheet as much as a
   // fetched one. A search result has no file yet, hence the saved-path gate.
   renderSdsExtraction = (sheetPath) => {
-    const { loadingQuerySafetySheets, extractingSheet, extractedProperties } = this.state;
+    const { loadingQuerySafetySheets, extractingSheet } = this.state;
+    const extracted = this.extractedPropertiesFor(sheetPath);
     const isSaved = EXTRACTABLE_SHEET.test(sheetPath || '');
     const isLoading = extractingSheet === sheetPath;
     const hint = isSaved
@@ -1793,7 +1804,7 @@ export default class ChemicalTab extends React.Component {
             placement="top"
             overlay={(
               <Tooltip id="viewChemProp">
-                {extractedProperties[sheetPath]
+                {extracted
                   ? 'Click to view the properties read from this sheet'
                   : 'Extract from this sheet first'}
               </Tooltip>
@@ -1804,7 +1815,7 @@ export default class ChemicalTab extends React.Component {
                 active
                 onClick={() => this.handlePropertiesModal(sheetPath)}
                 variant="light"
-                disabled={!extractedProperties[sheetPath]}
+                disabled={!extracted}
               >
                 <i className="fa fa-file-text" />
               </Button>
@@ -2051,8 +2062,8 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderPropertiesModal() {
-    const { viewChemicalPropertiesModal, viewPropertiesForSheet, extractedProperties } = this.state;
-    const properties = extractedProperties[viewPropertiesForSheet];
+    const { viewChemicalPropertiesModal, viewPropertiesForSheet } = this.state;
+    const properties = this.extractedPropertiesFor(viewPropertiesForSheet);
     const fetchedChemicalProperties = properties
       ? JSON.stringify(properties, null, '\n')
       : 'Please extract from a safety data sheet first to view results';
@@ -2060,26 +2071,29 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <AppModal
-        title="Fetched Chemical Properties"
+        title={(
+          <span className="d-inline-flex align-items-center">
+            Fetched Chemical Properties
+            <CopyButton
+              text={copy.text}
+              html={copy.html}
+              disabled={!copy.text}
+              variant="link"
+              size="sm"
+              className="p-0 ms-2 border-0 lh-1 text-muted"
+              tooltip="Copy all properties"
+              tooltipId="chemical-properties-copy-tooltip"
+              ariaLabel="Copy all properties"
+            />
+          </span>
+        )}
         show={viewChemicalPropertiesModal}
         onHide={() => this.closePropertiesModal()}
         size="lg"
         closeLabel="Close"
         showFooter
       >
-        <Form.Group controlId="propertiesModal" className="position-relative">
-          <div className="position-absolute top-0 end-0 m-2">
-            <CopyButton
-              text={copy.text}
-              html={copy.html}
-              disabled={!copy.text}
-              variant="light"
-              size="sm"
-              tooltip="Copy all properties"
-              tooltipId="chemical-properties-copy-tooltip"
-              ariaLabel="Copy all properties"
-            />
-          </div>
+        <Form.Group controlId="propertiesModal">
           <Form.Control
             as="textarea"
             className="w-100"

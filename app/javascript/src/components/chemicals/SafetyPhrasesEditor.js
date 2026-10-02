@@ -11,7 +11,9 @@ import {
   loadPrecautionaryPhrases,
   loadPictograms,
 } from 'src/utilities/chemicalDataValidations';
-import { formatPhrase, formatPhraseSections, SECTION_TITLES } from 'src/utilities/sdsClipboardFormat';
+import {
+  formatPhrase, formatPhraseSections, safetyPhraseSections, SECTION_TITLES,
+} from 'src/utilities/sdsClipboardFormat';
 
 const trim = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -420,30 +422,12 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
     buildOptions(pictogramDict, new Set(data.pictograms), (code, file) => `${code}: ${prettyPictogramName(file)}`)
   ), [pictogramDict, data.pictograms]);
 
-  const copyAll = formatPhraseSections([
-    { title: SECTION_TITLES.h, items: hazardItems },
-    { title: SECTION_TITLES.p, items: precautionaryItems },
-    { title: SECTION_TITLES.pictograms, items: pictogramItems },
-  ]);
-
   return (
     <div
-      className="border rounded p-3 mt-1 w-100 bg-body position-relative"
+      className="border rounded p-3 mt-1 w-100 bg-body"
       data-component="SafetyPhrasesEditor"
       style={{ maxHeight: '500px', overflow: 'auto' }}
     >
-      <div className="position-absolute top-0 end-0 m-2">
-        <CopyButton
-          text={copyAll.text}
-          html={copyAll.html}
-          disabled={!copyAll.text}
-          variant="light"
-          size="xsm"
-          tooltip="Copy all safety phrases and pictograms"
-          tooltipId="safety-phrases-copy-all-tooltip"
-          ariaLabel="Copy all safety phrases and pictograms"
-        />
-      </div>
       <PhraseSection
         title={SECTION_TITLES.h}
         idPrefix="safety-h-phrases"
@@ -480,6 +464,44 @@ SafetyPhrasesEditor.propTypes = {
 };
 
 SafetyPhrasesEditor.defaultProps = {
+  value: null,
+};
+
+// Copies every non-empty section; sits beside the section heading that holds the editor.
+export const SafetyPhrasesCopyButton = ({ value }) => {
+  const [pictogramDict, setPictogramDict] = useState({});
+
+  useEffect(() => {
+    let mounted = true;
+    loadPictograms().then((dict) => { if (mounted) setPictogramDict(dict || {}); });
+    return () => { mounted = false; };
+  }, []);
+
+  const { text, html } = useMemo(
+    () => formatPhraseSections(safetyPhraseSections(normalizeSafetyPhrases(value), pictogramDict)),
+    [value, pictogramDict],
+  );
+
+  return (
+    <CopyButton
+      text={text}
+      html={html}
+      disabled={!text}
+      variant="link"
+      size="sm"
+      className={HEADER_COPY_CLASS}
+      tooltip="Copy all safety phrases and pictograms"
+      tooltipId="safety-phrases-copy-all-tooltip"
+      ariaLabel="Copy all safety phrases and pictograms"
+    />
+  );
+};
+
+SafetyPhrasesCopyButton.propTypes = {
+  value: SafetyPhrasesEditor.propTypes.value,
+};
+
+SafetyPhrasesCopyButton.defaultProps = {
   value: null,
 };
 
