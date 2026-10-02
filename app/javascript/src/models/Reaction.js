@@ -1598,6 +1598,93 @@ export default class Reaction extends Element {
     }
   }
 
+  /**
+   * Keeps solvent volumes in step with the reference amount under locked equivalents by
+   * DERIVING each volume from a stored volume-per-mol-of-reference ratio, rather than
+   * multiplying the current volume by an incremental reference ratio:
+   *
+   *   solvent volume = referenceVolumeRatio * reference.amount_mol
+   *
+   * Deriving from a stored ratio is robust where an incremental scale was not:
+   *  - it recovers exactly after the reference passes through 0 or an empty value,
+   *    instead of drifting out of sync permanently;
+   *  - it works for a solvent with neither density nor molarity (pure volume, never
+   *    converted to moles);
+   *  - it needs no "previous reference amount" snapshot, so it runs the same on every
+   *    path, including the render-time editedSample path.
+   *
+   * The just-edited solvent (editedSample) is the source of truth for this pass: its
+   * typed volume is kept, and its ratio is (re)captured from it (editing a solvent does
+   * not move the reference, so the current reference amount is the right denominator,
+   * including a deliberate clear to zero). Every other solvent is re-derived.
+   *
+   * A solvent with no ratio yet is left untouched: ratios must be captured against the
+   * reference in effect BEFORE a reference edit, so they are seeded by
+   * captureSolventReferenceRatios (on lock, and on load/reload while locked) rather than
+   * reconstructed here from the already-updated reference. referenceVolumeRatio is a
+   * transient field (not serialized).
+   *
+   * @param {Sample} [editedSample] - the sample the user just changed, if any.
+   * @returns {void}
+   */
+  updateSolventVolumesForReference(editedSample) {
+    const referenceMol = Number(this.referenceMaterial?.amount_mol);
+
+    (this.solvents || []).forEach((solvent) => {
+      const isEditedSolvent = solvent.id != null
+        && editedSample?.id != null
+        && solvent.id === editedSample.id;
+
+      // The edited solvent keeps the volume the user just typed, and its ratio is recaptured
+      // from it (the reference did not move). A zero volume is captured too, so a deliberate
+      // clear sticks instead of being resurrected by the next reference edit.
+      if (isEditedSolvent) {
+        const volumeL = Number(solvent.amount_l);
+        if (referenceMol > 0 && Number.isFinite(volumeL)) {
+          solvent.referenceVolumeRatio = volumeL / referenceMol;
+        }
+        return;
+      }
+
+      // Derive every other solvent from its stored ratio and the updated reference. Without a
+      // ratio the volume is left as-is (see captureSolventReferenceRatios) rather than seeded
+      // from the post-edit reference, which would bake in the wrong ratio.
+      if (!(referenceMol > 0) || !Number.isFinite(solvent.referenceVolumeRatio)) return;
+
+      solvent.setAmount({ value: solvent.referenceVolumeRatio * referenceMol, unit: 'l' });
+
+      if (solvent.isMixture && solvent.isMixture() && solvent.hasComponents && solvent.hasComponents()) {
+        solvent.updateMixtureComponentAmounts();
+      }
+    });
+  }
+
+  /**
+   * Seeds each solvent's volume-per-mol-of-reference ratio from its current volume and the
+   * current reference amount. Called when the volume-to-reference relationship is first
+   * established under locked equivalents: on lock, and on load/reload while already locked.
+   *
+   * Capturing here (before any reference edit) is what makes the derivation in
+   * updateSolventVolumesForReference correct: the denominator is the reference amount that
+   * the current volumes were set against. A zero volume is captured as a zero ratio so an
+   * empty solvent stays empty. Solvents are skipped while the reference amount is not
+   * positive, since the ratio is undefined then.
+   *
+   * @param {Sample[]} [solvents] - capture only these solvents when adding new materials.
+   * @returns {void}
+   */
+  captureSolventReferenceRatios(solvents = this.solvents || []) {
+    const referenceMol = Number(this.referenceMaterial?.amount_mol);
+    if (!(referenceMol > 0)) return;
+
+    solvents.forEach((solvent) => {
+      const volumeL = Number(solvent.amount_l);
+      if (Number.isFinite(volumeL)) {
+        solvent.referenceVolumeRatio = volumeL / referenceMol;
+      }
+    });
+  }
+
   isFeedstockMaterialPresent() {
     const materials = [...this.starting_materials, ...this.reactants];
     return materials.some((material) => material.gas_type === 'feedstock');

@@ -1,5 +1,6 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -975,5 +976,187 @@ describe('Reaction', () => {
         showYield: false,
       });
     });
+  });
+});
+
+// Under locked equivalents a reference-amount change rescales the solvents. Each solvent volume
+// is DERIVED from a stored volume-per-mol-of-reference ratio (volume = ratio * reference.amount_mol)
+// rather than multiplied incrementally, so it works for a solvent with neither a density nor a
+// molarity (volume only, never converted to moles) and recovers exactly after the reference passes
+// through 0 or an empty value.
+describe('Reaction#updateSolventVolumesForReference', () => {
+  const makeSolvent = (amountL, extra = {}) => ({
+    id: 'solv-1',
+    amount_l: amountL,
+    setAmount: sinon.spy(),
+    ...extra,
+  });
+
+  const buildReaction = (currentRefMol, solvents) => ({
+    referenceMaterial: { amount_mol: currentRefMol },
+    solvents,
+  });
+
+  it('derives a solvent volume from its stored ratio and the current reference amount', () => {
+    // ratio 500 L/mol * 0.01 mol -> 5 L
+    const solvent = makeSolvent(999, { referenceVolumeRatio: 500 });
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(solvent.setAmount.calledOnce).toBe(true);
+    const arg = solvent.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('l');
+    expect(Math.abs(arg.value - 5) < 1e-9).toBe(true);
+  });
+
+  it('recovers exactly from a drifted volume once the reference is positive again (no drift)', () => {
+    // amount_l is garbage (would compound under an incremental scaler) but the stored ratio wins.
+    const solvent = makeSolvent(0.123, { referenceVolumeRatio: 500 });
+    const ctx = buildReaction(0.02, [solvent]); // 500 * 0.02 -> 10 L
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(Math.abs(solvent.setAmount.firstCall.args[0].value - 10) < 1e-9).toBe(true);
+  });
+
+  it('leaves a non-edited solvent with no ratio untouched (never seeds from the post-edit reference)', () => {
+    // Seeding here would capture ratio = volume / NEW reference and bake in the wrong ratio,
+    // so a solvent without a ratio is left as-is until captureSolventReferenceRatios seeds it.
+    const solvent = makeSolvent(10); // no referenceVolumeRatio yet
+    const ctx = buildReaction(0.02, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(solvent.setAmount.called).toBe(false);
+    expect(solvent.referenceVolumeRatio).toBe(undefined);
+  });
+
+  it('derives a density/molarity-less solvent the same way (volume path, no moles)', () => {
+    // amount_l is the stored liter value for a volume-only solvent; no mole conversion is used.
+    const solvent = makeSolvent(8, { referenceVolumeRatio: 200 });
+    const ctx = buildReaction(0.04, [solvent]); // 200 * 0.04 -> 8 L
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(Math.abs(solvent.setAmount.firstCall.args[0].value - 8) < 1e-9).toBe(true);
+  });
+
+  it('keeps the edited solvent\'s typed volume and (re)captures its ratio', () => {
+    // The user just typed 8 L for this solvent; it must not be overwritten by derivation.
+    const solvent = makeSolvent(8, { referenceVolumeRatio: 500 });
+    const ctx = buildReaction(0.04, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx, { id: 'solv-1' });
+
+    expect(solvent.setAmount.called).toBe(false);
+    expect(Math.abs(solvent.referenceVolumeRatio - 200) < 1e-9).toBe(true); // 8 / 0.04
+  });
+
+  it('does nothing when the reference amount is not positive', () => {
+    const solvent = makeSolvent(10, { referenceVolumeRatio: 500 });
+    const ctx = buildReaction(0, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(solvent.setAmount.called).toBe(false);
+  });
+
+  it('captures a zero ratio when the edited solvent is deliberately cleared to zero', () => {
+    // Clearing a solvent must stick: a zero ratio keeps it at zero on the next reference edit
+    // instead of resurrecting the old nonzero volume.
+    const solvent = makeSolvent(0, { referenceVolumeRatio: 500 });
+    const ctx = buildReaction(0.04, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx, { id: 'solv-1' });
+
+    expect(solvent.setAmount.called).toBe(false);
+    expect(solvent.referenceVolumeRatio).toBe(0);
+  });
+
+  it('resyncs mixture components after deriving a mixture solvent', () => {
+    const updateMixtureComponentAmounts = sinon.spy();
+    const solvent = makeSolvent(10, {
+      referenceVolumeRatio: 500,
+      isMixture: () => true,
+      hasComponents: () => true,
+      updateMixtureComponentAmounts,
+    });
+    const ctx = buildReaction(0.01, [solvent]);
+
+    Reaction.prototype.updateSolventVolumesForReference.call(ctx);
+
+    expect(solvent.setAmount.calledOnce).toBe(true);
+    expect(updateMixtureComponentAmounts.calledOnce).toBe(true);
+  });
+});
+
+// Ratios are seeded here (on lock, and on load/reload while locked) against the reference amount
+// the current volumes were set against, so that a later reference edit derives correctly even for
+// the very first edit of a reaction that loaded already locked.
+describe('Reaction#captureSolventReferenceRatios', () => {
+  const makeSolvent = (amountL, extra = {}) => ({
+    id: 'solv-1',
+    amount_l: amountL,
+    ...extra,
+  });
+
+  const buildReaction = (currentRefMol, solvents) => ({
+    referenceMaterial: { amount_mol: currentRefMol },
+    solvents,
+  });
+
+  it('seeds each solvent ratio from its current volume and the current reference amount', () => {
+    const solvent = makeSolvent(10); // 10 L / 1 mmol -> ratio 10 per mmol
+    const ctx = buildReaction(0.001, [solvent]);
+
+    Reaction.prototype.captureSolventReferenceRatios.call(ctx);
+
+    expect(Math.abs(solvent.referenceVolumeRatio - 10000) < 1e-6).toBe(true); // 10 / 0.001
+  });
+
+  it('overwrites a stale ratio (e.g. after the volume changed while unlocked)', () => {
+    // Previously 10 L/mmol; volume is now 30 L at the same reference, so relocking must re-seed 30.
+    const solvent = makeSolvent(30, { referenceVolumeRatio: 10000 });
+    const ctx = buildReaction(0.001, [solvent]);
+
+    Reaction.prototype.captureSolventReferenceRatios.call(ctx);
+
+    expect(Math.abs(solvent.referenceVolumeRatio - 30000) < 1e-6).toBe(true);
+  });
+
+  it('seeds a zero ratio for an empty solvent so it stays empty', () => {
+    const solvent = makeSolvent(0);
+    const ctx = buildReaction(0.001, [solvent]);
+
+    Reaction.prototype.captureSolventReferenceRatios.call(ctx);
+
+    expect(solvent.referenceVolumeRatio).toBe(0);
+  });
+
+  it('does nothing when the reference amount is not positive', () => {
+    const solvent = makeSolvent(10);
+    const ctx = buildReaction(0, [solvent]);
+
+    Reaction.prototype.captureSolventReferenceRatios.call(ctx);
+
+    expect(solvent.referenceVolumeRatio).toBe(undefined);
+  });
+});
+
+
+describe('Reaction#captureSolventReferenceRatios — added solvents', () => {
+  it('seeds an added solvent without overwriting existing ratios, then scales both', () => {
+    const existing = { id: 'existing', amount_l: 0.01, referenceVolumeRatio: 10, setAmount: sinon.spy() };
+    const added = { id: 'added', amount_l: 0.02, setAmount: sinon.spy() };
+    const reaction = { referenceMaterial: { amount_mol: 0.002 }, solvents: [existing, added] };
+
+    Reaction.prototype.captureSolventReferenceRatios.call(reaction, [added]);
+    expect(existing.referenceVolumeRatio).toBe(10);
+    expect(added.referenceVolumeRatio).toBe(10);
+    reaction.referenceMaterial.amount_mol = 0.004;
+    Reaction.prototype.updateSolventVolumesForReference.call(reaction);
+    expect(existing.setAmount.calledOnceWith({ value: 0.04, unit: 'l' })).toBe(true);
+    expect(added.setAmount.calledOnceWith({ value: 0.04, unit: 'l' })).toBe(true);
   });
 });

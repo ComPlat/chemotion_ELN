@@ -185,7 +185,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
   });
 
   it('calls checkMassPolymer when the polymer product IS the updated sample', () => {
-    // Ensures the pre-existing if-branch (sample.id === updatedSample.id) still works
+    // Ensures the edited-object branch still works.
     const ref = makePolymerReference();
     const ctx = buildCtx(ref);
     const product = makePolymerProduct();
@@ -249,12 +249,10 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
         isSbmm ? sbmmSample : regularSample
       )),
     };
-    const updatedReactionWithSample = sinon.stub().returns(reaction);
+    const propagateReferenceAmountChange = sinon.stub().returns(reaction);
     const ctx = {
       props: { reaction },
-      updatedReactionWithSample,
-      updatedSamplesForAmountChange:
-        ReactionDetailsScheme.prototype.updatedSamplesForAmountChange,
+      propagateReferenceAmountChange,
     };
 
     ReactionDetailsScheme.prototype.updatedReactionForAmountTypeChange.call(ctx, {
@@ -266,7 +264,9 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
     expect(reaction.findReactionSample.calledWith('shared-id', true)).toBe(true);
     expect(regularSample.amountType).toBe('target');
     expect(sbmmSample.amountType).toBe('real');
-    expect(updatedReactionWithSample.firstCall.args[3]).toBe(true);
+    expect(propagateReferenceAmountChange.calledOnceWith(
+      sbmmSample, undefined, true
+    )).toBe(true);
   });
 });
 
@@ -354,16 +354,55 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
 
     expect(sample.equivalent).toBe(2);
   });
+
+  it('rebases a distinct SBMM material whose ID matches the edited regular reference', () => {
+    const referenceMaterial = {
+      id: 'shared-id',
+      reference: true,
+      amount_value: 100,
+      amount_mol: 0.1,
+      coefficient: 1,
+    };
+    const sbmmMaterial = {
+      id: 'shared-id',
+      type: 'sequence_based_macromolecule_sample',
+      reference: false,
+      equivalent: 2,
+      coefficient: 1,
+      applyAmountFromEquivalent: sinon.spy(),
+    };
+    const ctx = {
+      props: {
+        reaction: {
+          referenceMaterial,
+          updateReferenceAmountForLockedEquivalents: sinon.stub(),
+        },
+      },
+      state: { lockEquivColumn: true },
+      handleEquivalentBasedAmountUpdate:
+        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+    };
+
+    const result = ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [sbmmMaterial],
+      referenceMaterial,
+      'reactants'
+    );
+
+    expect(sbmmMaterial.applyAmountFromEquivalent.calledOnceWith(0.2)).toBe(true);
+    expect(result[0]).toBe(sbmmMaterial);
+  });
 });
 
 // Regression tests for the solvent volume calculation:
 // - Eq unlocked: a solvent's volume stays fixed; only its (derived) equivalent updates.
-// - Eq locked: a solvent's volume scales with the reference (equivalent * ref.amount_mol).
+// - Eq locked: this mole-based pass EXCLUDES solvents; their volumes are derived from a
+//   stored reference ratio in Reaction#updateSolventVolumesForReference, not scaled here.
 // The historical glitch: editing a solvent volume set its equivalent via amount_g / maxAmount
-// (NaN, because a solvent has no maxAmount), and the correction block excluded solvents, so
-// the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
-// The correction block now includes solvents, so the equivalent is always a valid
-// amount_mol / reference.amount_mol ratio before it is used to scale.
+// (NaN, because a solvent has no maxAmount). The correction block (further down) still derives
+// a valid amount_mol / reference.amount_mol equivalent for display, but the locked volume
+// itself no longer scales through moles in this pass.
 describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
   let gasStoreStub;
 
@@ -406,7 +445,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     gasStoreStub.restore();
   });
 
-  it('scales a solvent volume from its equivalent when Eq is locked and the reference changes', () => {
+  it('leaves locked solvent scaling to the reference-ratio scaler', () => {
     const ctx = buildCtx({ lockEquivColumn: true });
     const solvent = makeSolvent({ equivalent: 0.5 });
 
@@ -417,11 +456,10 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
       'solvents'
     );
 
-    // equivalent (0.5) * reference amount_mol (0.1) = 0.05 mol
-    expect(solvent.setAmountAndNormalizeToGram.calledOnce).toBe(true);
-    const arg = solvent.setAmountAndNormalizeToGram.firstCall.args[0];
-    expect(arg.unit).toBe('mol');
-    expect(Math.abs(arg.value - 0.05) < 1e-9).toBe(true);
+    // Reaction#updateSolventVolumesForReference derives locked solvent volumes from the reference
+    // ratio; this mole-based collection pass must not update them a second time.
+    expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(solvent.amount_value).toBe(0.01);
   });
 
   it('keeps a solvent volume fixed but refreshes its equivalent when Eq is unlocked and the reference changes', () => {
@@ -1019,6 +1057,309 @@ describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculat
   });
 });
 
+// Handler-level regression tests for the solvent volume scaling wiring.
+// The model-level derivation (Reaction#updateSolventVolumesForReference) is unit-tested in
+// Reaction.spec.js; these prove the two amount-change handlers route through the centralized
+// helper so solvent volumes are derived only under locked equivalents, and only after locked
+// propagation has updated the reference amount.
+describe('ReactionDetailsScheme amount-change handlers — solvent volume scaling wiring', () => {
+  // editMethod is the sample mutator each handler calls (setAmountAndNormalizeToGram vs setAmount).
+  const buildCtx = ({ lockEquivColumn, editMethod }) => {
+    const referenceMaterial = { amount_mol: 0.1 };
+    const updatedReaction = {
+      updateSolventVolumesForReference: sinon.spy(),
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+      gaseous: false,
+    };
+    const updatedSample = {
+      sample_details: {},
+      initializeSampleDetails: sinon.spy(),
+      [editMethod]: sinon.spy(),
+    };
+    const reaction = {
+      referenceMaterial,
+      gaseous: false,
+      weight_percentage: false,
+      findReactionSample: sinon.stub().returns(updatedSample),
+    };
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn },
+      // Use the real helper so these tests exercise the handler -> helper -> derivation path.
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+    return { ctx, updatedReaction, updatedSample };
+  };
+
+  const changeEvent = { sampleID: 'solv-1', amount: { value: 5, unit: 'mg' }, isSbmm: false };
+
+  const cases = [
+    { handler: 'updatedReactionForAmountChange', editMethod: 'setAmountAndNormalizeToGram' },
+    { handler: 'updatedReactionForAmountUnitChange', editMethod: 'setAmount' },
+  ];
+
+  cases.forEach(({ handler, editMethod }) => {
+    describe(`#${handler}`, () => {
+      it('derives solvent volumes from the edited sample when equivalents are locked', () => {
+        const { ctx, updatedReaction, updatedSample } = buildCtx({ lockEquivColumn: true, editMethod });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        const scaler = updatedReaction.updateSolventVolumesForReference;
+        // The edited sample is passed so its own solvent volume is kept and other solvents derive.
+        expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+        // The edit and locked propagation both precede the derivation call.
+        expect(updatedSample[editMethod].calledBefore(scaler)).toBe(true);
+        expect(ctx.updatedReactionWithSample.calledBefore(scaler)).toBe(true);
+      });
+
+      it('leaves solvent volume untouched when equivalents are unlocked', () => {
+        const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: false, editMethod });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+      });
+    });
+  });
+});
+
+// Switching between target and real amounts can change the active amount without an amount-field
+// edit. This handler must therefore use the same reference propagation path as direct edits.
+describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling wiring', () => {
+  const handlers = [
+    'updatedReactionForAmountTypeChange',
+  ];
+
+  const buildCtx = ({ lockEquivColumn, updatedSampleIsReference }) => {
+    const updatedSample = {
+      id: 'sample-1',
+      amountType: 'target',
+      get amount_mol() {
+        return this.amountType === 'target' ? 0.1 : 0.2;
+      },
+    };
+    const referenceMaterial = updatedSampleIsReference ? updatedSample : { amount_mol: 0.1 };
+    const updatedReaction = { updateSolventVolumesForReference: sinon.spy() };
+    const reaction = {
+      referenceMaterial,
+      findReactionSample: sinon.stub().returns(updatedSample),
+    };
+    const updatedSamplesForAmountChange = sinon.spy(() => {
+      // A locked edit to a dependent material rebases the reaction reference amount inside
+      // updatedSamplesForAmountChange. Simulate that before the centralized derivation runs.
+      if (!updatedSampleIsReference) referenceMaterial.amount_mol = 0.2;
+      return [];
+    });
+    const updatedReactionWithSample = sinon.stub().callsFake((updateFunction, sample) => {
+      // Keep the stub faithful to production: execute the supplied rebase callback before
+      // returning the reaction that the centralized helper passes to the solvent derivation.
+      updateFunction([], sample, 'reactants');
+      return updatedReaction;
+    });
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn },
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      updatedReactionWithSample,
+      updatedSamplesForAmountChange,
+    };
+
+    return {
+      ctx,
+      updatedReaction,
+      updatedSample,
+      updatedReactionWithSample,
+      updatedSamplesForAmountChange,
+    };
+  };
+
+  const changeEvent = { sampleID: 'sample-1', amountType: 'real', isSbmm: false };
+
+  handlers.forEach((handler) => {
+    describe(`#${handler}`, () => {
+      it('derives solvents from the edited sample when the reference sample changes', () => {
+        const { ctx, updatedReaction, updatedSample, updatedReactionWithSample } = buildCtx({
+          lockEquivColumn: true,
+          updatedSampleIsReference: true,
+        });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        const scaler = updatedReaction.updateSolventVolumesForReference;
+        expect(updatedSample.amountType).toBe('real');
+        expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+        expect(updatedReactionWithSample.calledBefore(scaler)).toBe(true);
+        expect(updatedReactionWithSample.firstCall.args[3]).toBe(true);
+      });
+
+      it('derives solvents after a dependent sample rebases the reference', () => {
+        const { ctx, updatedReaction, updatedSample, updatedSamplesForAmountChange } = buildCtx({
+          lockEquivColumn: true,
+          updatedSampleIsReference: false,
+        });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        const scaler = updatedReaction.updateSolventVolumesForReference;
+        expect(updatedSamplesForAmountChange.calledOnce).toBe(true);
+        expect(updatedSamplesForAmountChange.calledBefore(scaler)).toBe(true);
+        expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+      });
+
+      it('leaves solvent volumes untouched when equivalents are unlocked', () => {
+        const { ctx, updatedReaction } = buildCtx({
+          lockEquivColumn: false,
+          updatedSampleIsReference: true,
+        });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+      });
+    });
+  });
+});
+
+// Unit tests for the centralized propagation helper. Every reference-changing edit
+// routes through this method so solvent scaling can never be forgotten at a call site.
+describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
+  const buildCtx = ({ lockEquivColumn }) => {
+    const updatedReaction = { updateSolventVolumesForReference: sinon.spy() };
+    const ctx = {
+      state: { lockEquivColumn },
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+    return { ctx, updatedReaction };
+  };
+
+  const updatedSample = { id: 's-1' };
+
+  it('derives solvent volumes from the edited sample when equivalents are locked', () => {
+    const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: true });
+
+    const result = ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
+      ctx, updatedSample
+    );
+
+    expect(updatedReaction.updateSolventVolumesForReference.calledOnceWith(updatedSample)).toBe(true);
+    expect(result).toBe(updatedReaction);
+  });
+
+  it('does not derive solvent volumes when equivalents are unlocked', () => {
+    const { ctx, updatedReaction } = buildCtx({ lockEquivColumn: false });
+
+    ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
+      ctx, updatedSample
+    );
+
+    expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+  });
+
+  it('always includes SBMM reactant samples when rebasing', () => {
+    const { ctx } = buildCtx({ lockEquivColumn: true });
+
+    ReactionDetailsScheme.prototype.propagateReferenceAmountChange.call(
+      ctx, updatedSample
+    );
+
+    // signature: updatedReactionWithSample(updateFunction, updatedSample, type, includeSbmm)
+    const call = ctx.updatedReactionWithSample.firstCall;
+    expect(call.args[1]).toBe(updatedSample);
+    expect(call.args[3]).toBe(true);
+  });
+});
+
+// Regression: the concentration handlers also change the reference amount under locked
+// equivalents, but previously never scaled solvent volumes (only the two direct amount
+// handlers did). They now route through propagateReferenceAmountChange, so solvent volumes
+// are derived from the updated reference on these paths too.
+// Not covered here: the reference-component switch (updatedReactionForComponentReferenceChange)
+// still calls updatedSamplesForAmountChange directly and does NOT derive solvents under lock.
+// That bypass is scoped to the stacked #3584.
+describe('ReactionDetailsScheme reference-changing handlers — solvent volume scaling (regression)', () => {
+  let gasStoreStub;
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({ reactionVesselSizeValue: 2 });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  const buildUpdatedReaction = () => ({
+    updateSolventVolumesForReference: sinon.spy(),
+    resetPreservedConcentrationExcept: sinon.spy(),
+    updateAllConcentrations: sinon.spy(),
+  });
+
+  it('handleFixedVolumeConcentrationChange derives solvents from the edited sample', () => {
+    const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
+    const updatedReaction = buildUpdatedReaction();
+    const updatedSample = {
+      setAmountFromConcentrationAndPreserve: sinon.spy(() => { referenceMaterial.amount_mol = 0.2; }),
+    };
+    const ctx = {
+      props: { reaction: { referenceMaterial } },
+      state: { lockEquivColumn: true },
+      resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(0.01),
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.handleFixedVolumeConcentrationChange.call(ctx, updatedSample, 2);
+
+    const scaler = updatedReaction.updateSolventVolumesForReference;
+    expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+    expect(updatedSample.setAmountFromConcentrationAndPreserve.calledBefore(scaler)).toBe(true);
+  });
+
+  it('handleFixedVolumeConcentrationChange leaves solvent volumes untouched when unlocked', () => {
+    const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
+    const updatedReaction = buildUpdatedReaction();
+    const updatedSample = { setAmountFromConcentrationAndPreserve: sinon.spy() };
+    const ctx = {
+      props: { reaction: { referenceMaterial } },
+      state: { lockEquivColumn: false },
+      resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(0.01),
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.handleFixedVolumeConcentrationChange.call(ctx, updatedSample, 2);
+
+    expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+  });
+
+  it('handleFeedstockConcentrationChange derives solvents from the edited sample', () => {
+    const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
+    const updatedReaction = buildUpdatedReaction();
+    const updatedSample = {
+      setAmount: sinon.spy(() => { referenceMaterial.amount_mol = 0.2; }),
+    };
+    const ctx = {
+      props: { reaction: { referenceMaterial } },
+      state: { lockEquivColumn: true },
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
+      updatedReactionWithSample: sinon.stub().returns(updatedReaction),
+      updatedSamplesForAmountChange: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.handleFeedstockConcentrationChange.call(ctx, updatedSample, 0.5);
+
+    const scaler = updatedReaction.updateSolventVolumesForReference;
+    expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+    expect(updatedSample.setAmount.calledBefore(scaler)).toBe(true);
+  });
+});
+
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
@@ -1389,6 +1730,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       props: { reaction },
       state: { lockEquivColumn: false },
       resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(null),
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
       updatedReactionWithSample: sinon.spy(),
       updatedSamplesForAmountChange: () => {},
     };
@@ -1413,6 +1755,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       props: { reaction },
       state: { lockEquivColumn: false },
       resolveReactionVolumeForConcentrationOrWarn: sinon.stub().returns(0.01),
+      propagateReferenceAmountChange: ReactionDetailsScheme.prototype.propagateReferenceAmountChange,
       updatedReactionWithSample: sinon.stub().returns(updatedReaction),
       updatedSamplesForAmountChange: () => {},
     };
@@ -1605,5 +1948,51 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
     instance.calculateEquivalent(ref, buildProduct());
     expect(notificationStub.calledOnce).toBe(true);
     expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-loading-55');
+  });
+});
+
+
+describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
+  [false, true].forEach((isSbmm) => {
+    it(`recaptures ratios after selecting a ${isSbmm ? 'SBMM' : 'regular'} reference while locked`, () => {
+      const sample = { id: 'new-ref', amount_mol: 0.002 };
+      const reaction = {
+        findReactionSample: sinon.stub().returns(sample),
+        markSampleAsReference: sinon.spy(),
+        markSbmmSampleAsReference: sinon.spy(),
+        captureSolventReferenceRatios: sinon.spy(),
+      };
+      const ctx = {
+        props: { reaction },
+        getReactionEquivLockState: () => true,
+        updatedSamplesForReferenceChange: () => {},
+        updatedReactionWithSample: sinon.stub().returns(reaction),
+      };
+
+      ReactionDetailsScheme.prototype.updatedReactionForReferenceChange.call(ctx, { sampleID: sample.id, isSbmm });
+
+      const markReference = isSbmm ? reaction.markSbmmSampleAsReference : reaction.markSampleAsReference;
+      expect(markReference.calledBefore(reaction.captureSolventReferenceRatios)).toBe(true);
+      expect(reaction.captureSolventReferenceRatios.calledOnce).toBe(true);
+    });
+  });
+
+  it('captures only the newly added solvent while locked', () => {
+    const sample = { id: 'added-solvent' };
+    const reaction = { captureSolventReferenceRatios: sinon.spy() };
+    const ctx = { props: { reaction }, getReactionEquivLockState: () => true };
+
+    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, sample, 'solvents');
+
+    expect(reaction.captureSolventReferenceRatios.calledOnceWith([sample])).toBe(true);
+  });
+
+  it('does not capture added solvents while unlocked or added reagents', () => {
+    const reaction = { captureSolventReferenceRatios: sinon.spy() };
+    const ctx = { props: { reaction }, getReactionEquivLockState: () => false };
+    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, {}, 'solvents');
+    ctx.getReactionEquivLockState = () => true;
+    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, {}, 'reactants');
+    expect(reaction.captureSolventReferenceRatios.called).toBe(false);
   });
 });

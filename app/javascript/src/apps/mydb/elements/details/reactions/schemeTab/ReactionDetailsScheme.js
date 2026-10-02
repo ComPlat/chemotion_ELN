@@ -100,6 +100,13 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Deserialize components for any existing samples in the reaction
     this.deserializeReactionMaterialComponents();
+
+    // A reaction can load with equivalents already locked (the lock state is persisted per
+    // reaction). Seed solvent ratios now so the first reference edit derives from the loaded
+    // volumes rather than from the post-edit reference.
+    if (this.state.lockEquivColumn) {
+      this.props.reaction.captureSolventReferenceRatios();
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -110,6 +117,11 @@ export default class ReactionDetailsScheme extends React.Component {
       // Update lock state when reaction changes
       const lockEquivColumn = this.getReactionEquivLockState(reaction);
       this.setState({ lockEquivColumn });
+      // Re-seed solvent ratios after a reload/switch while locked: the replacement reaction
+      // carries persisted (consistent) volumes but not the transient ratios.
+      if (lockEquivColumn) {
+        reaction.captureSolventReferenceRatios();
+      }
     }
   }
 
@@ -180,6 +192,7 @@ export default class ReactionDetailsScheme extends React.Component {
           this.setEquivalentForMixture(splitSample, tagGroup);
 
           reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+          this.captureAddedSolventRatio(splitSample, tagGroup);
           onReactionChange(reaction, { updateGraphic: true });
         })
         .catch((errorMessage) => {
@@ -188,7 +201,15 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
       reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+      this.captureAddedSolventRatio(splitSample, tagGroup);
       onReactionChange(reaction, { updateGraphic: true });
+    }
+  }
+
+  captureAddedSolventRatio(sample, materialGroup) {
+    if (materialGroup === 'solvents' && this.getReactionEquivLockState(this.props.reaction)) {
+      // Capture only the added solvent; existing ratios must survive a cleared reference.
+      this.props.reaction.captureSolventReferenceRatios([sample]);
     }
   }
 
@@ -275,6 +296,12 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const currentLockState = this.getReactionEquivLockState(reaction);
     const newLockState = !currentLockState;
+    if (newLockState) {
+      // Seed each solvent's volume-per-mol-of-reference ratio from the volumes in effect at
+      // lock time, so later reference edits derive from those (not from a volume that may have
+      // changed while unlocked).
+      reaction.captureSolventReferenceRatios();
+    }
     ComponentActions.toggleReactionEquivLock(newLockState, reaction.id);
     // Also update local state for UI rendering
     this.setState({ lockEquivColumn: newLockState });
@@ -519,11 +546,6 @@ export default class ReactionDetailsScheme extends React.Component {
           this.updatedReactionForMetricsChange(changeEvent)
         );
         break;
-      case 'loadingChanged':
-        onReactionChange(
-          this.updatedReactionForLoadingChange(changeEvent)
-        );
-        break;
       case 'coefficientChanged':
         onReactionChange(
           this.updatedReactionForCoefficientChange(changeEvent)
@@ -688,6 +710,11 @@ export default class ReactionDetailsScheme extends React.Component {
       reaction.markSampleAsReference(sampleID);
     }
 
+    if (this.getReactionEquivLockState(reaction)) {
+      // Selecting a reference rebases equivalents without changing solvent volumes.
+      reaction.captureSolventReferenceRatios();
+    }
+
     return this.updatedReactionWithSample(
       this.updatedSamplesForReferenceChange.bind(this),
       sample,
@@ -720,12 +747,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction =
+      this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
@@ -782,12 +805,8 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction =
+      this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
@@ -856,20 +875,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Handles loading/amountType changes for both regular and SBMM samples.
-   */
-  updatedReactionForLoadingChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, amountType, isSbmm } = changeEvent;
-    // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
-
-    updatedSample.amountType = amountType;
-
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
-  }
-
-  /**
    * Handles amount type changes for both regular and SBMM samples.
    */
   updatedReactionForAmountTypeChange(changeEvent) {
@@ -877,15 +882,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
-
     updatedSample.amountType = amountType;
 
-    return this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    return this.propagateReferenceAmountChange(updatedSample);
   }
 
   /**
@@ -1386,12 +1385,7 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.preserveConcentration = true;
     updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
 
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // Locked-equivalent propagation changed the dependent samples' amounts,
@@ -1507,12 +1501,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Always include SBMM samples so their equivalents are rebased when the
     // reference's amount changes (the edited sample may be a regular reference,
     // not the SBMM itself). Mirrors updatedReactionForAmountChange.
-    const updatedReaction = this.updatedReactionWithSample(
-      this.updatedSamplesForAmountChange.bind(this),
-      updatedSample,
-      undefined,
-      true
-    );
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
     // except the currently edited sample. The edited sample keeps its manually-entered
@@ -1735,17 +1724,19 @@ export default class ReactionDetailsScheme extends React.Component {
                   sample.equivalent = 0.0;
                 }
               }
-            } else {
-              if (!lockEquivColumn) {
-                sample.equivalent = sample.amount_g / sample.maxAmount;
-              } else {
-                if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock') {
-                  const newAmountMol = sample.equivalent * referenceMaterial.amount_mol;
-                  this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
-                } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
-                  const newAmountMol = sample.equivalent * sample.amount_mol;
-                  this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
-                }
+            } else if (!lockEquivColumn) {
+              sample.equivalent = sample.amount_g / sample.maxAmount;
+            } else if (materialGroup !== 'solvents') {
+              // A solvent that is itself the edited sample must keep the volume the user
+              // typed: its equivalent is 0 (display-only), so the mole-based update below
+              // would collapse it to 0. Locked solvent volumes are derived from the
+              // reference ratio in Reaction#updateSolventVolumesForReference instead.
+              if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock') {
+                const newAmountMol = sample.equivalent * referenceMaterial.amount_mol;
+                this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
+              } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
+                const newAmountMol = sample.equivalent * sample.amount_mol;
+                this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
               }
             }
           } else {
@@ -1774,19 +1765,24 @@ export default class ReactionDetailsScheme extends React.Component {
             }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
-            if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
+            // Solvent volumes are derived from the reference ratio
+            // (Reaction#updateSolventVolumesForReference), not through moles, so they are
+            // excluded from the mole-based locked scale-up here.
+            if (referenceMaterial && referenceMaterial.amount_value
+              && updatedSample.gas_type !== 'feedstock'
+              && sample.gas_type !== 'gas'
+              && materialGroup !== 'solvents') {
               const newAmountMol = sample.equivalent * referenceMaterial.amount_mol;
               this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
             }
           }
         }
 
-        // Solvents are included here so that editing a solvent volume (Eq unlocked) derives
-        // its equivalent from the real amount (amount_mol / reference.amount_mol). Otherwise
-        // the updated-sample branch above leaves it as amount_g / maxAmount, which is NaN for
-        // a solvent (no maxAmount); the next locked scale-up then multiplies NaN by the
-        // reference and shows the volume as "n.d.". This block is skipped while Eq is locked,
-        // so the solvent still scales from its (now valid) equivalent under lock.
+        // A solvent volume edit (Eq unlocked) derives the solvent's equivalent from its real
+        // amount (amount_mol / reference.amount_mol). Without this the updated-sample branch
+        // above leaves it as amount_g / maxAmount, which is NaN for a solvent (no maxAmount).
+        // The equivalent is display-only for solvents; under lock the solvent volume is derived
+        // from the reference ratio in Reaction#updateSolventVolumesForReference, not from here.
         if ((materialGroup === 'starting_materials'
           || materialGroup === 'reactants'
           || materialGroup === 'solvents') && !sample.reference && !lockEquivColumn) {
@@ -2197,6 +2193,42 @@ export default class ReactionDetailsScheme extends React.Component {
     return reaction;
   }
 
+  /**
+   * Single entry point for any edit that changes the reference amount. It rebases
+   * every dependent sample's amount (updatedSamplesForAmountChange) and, under
+   * locked equivalents, derives solvent volumes from the updated reference amount.
+   *
+   * updatedSamplesForAmountChange deliberately skips solvents (they are scaled by
+   * volume, not moles), so solvent scaling must be paired with it here rather than
+   * at each call site. Routing every reference-changing path through this method
+   * keeps solvent volumes from drifting from the reference.
+   *
+   * The new reference amount is read from the already-updated reference material, so
+   * no "previous reference amount" snapshot is needed (see
+   * Reaction#updateSolventVolumesForReference).
+   *
+   * SBMM reactant samples are always rebased too: the edited sample may be a regular
+   * reference whose change must still propagate to SBMM equivalents.
+   *
+   * @param {Sample} updatedSample - the edited sample driving the change
+   * @returns {Reaction}
+   */
+  propagateReferenceAmountChange(updatedSample) {
+    const { lockEquivColumn } = this.state;
+    const updatedReaction = this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample,
+      undefined,
+      true
+    );
+
+    if (lockEquivColumn) {
+      updatedReaction.updateSolventVolumesForReference(updatedSample);
+    }
+
+    return updatedReaction;
+  }
+
   // eslint-disable-next-line class-methods-use-this
   normalizeVesselSizeValue(raw) {
     let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
@@ -2531,6 +2563,12 @@ export default class ReactionDetailsScheme extends React.Component {
         materialGroups.forEach((group) => {
           reaction[group] = this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
         });
+        if (lockEquivColumn) {
+          // The group loop above rebases non-solvents through their equivalents but skips
+          // solvents; derive their volumes from the (now updated) reference so a real-amount
+          // edit made in the sample-detail modal scales solvents too, matching the table path.
+          reaction.updateSolventVolumesForReference(reaction.editedSample);
+        }
       }
       reaction.editedSample = undefined;
     } else {
