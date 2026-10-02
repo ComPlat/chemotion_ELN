@@ -415,6 +415,169 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'when walking a full multi-step lifecycle' do
+      def r
+        Reaction.find(reaction1.id)
+      end
+
+      def material(sample, position, extra = {})
+        {
+          'id' => sample.id, 'target_amount_unit' => 'mg', 'target_amount_value' => 100.0,
+          'equivalent' => 1, 'reference' => false, 'is_new' => false,
+          'reaction_step_position' => position
+        }.merge(extra)
+      end
+
+      def put_reaction(steps, materials, type: 'multi_step')
+        params = {
+          'id' => reaction1.id, 'name' => 'flow', 'reaction_type' => type,
+          'container' => reaction_container, 'reaction_steps' => steps,
+          'materials' => materials
+        }
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+      end
+
+      it 'creates steps, links materials, carries a product, deletes a step, then leaves multi-step' do
+        # 1. two steps; sample1/2 in step 1, sample3 carried out of step 1, sample4 in step 2
+        put_reaction(
+          [{ 'position' => 1, 'conditions' => 'stir' }, { 'position' => 2, 'conditions' => 'warm' }],
+          {
+            'starting_materials' => [material(sample1, 1, 'reference' => true)],
+            'reactants' => [material(sample2, 1)],
+            'products' => [material(sample3, 1, 'carry_on' => true), material(sample4, 2)],
+          },
+        )
+        expect(response.status).to eq(200)
+        expect(r.reaction_steps.map(&:position)).to eq([1, 2])
+        step1, step2 = r.reaction_steps.to_a
+        expect(r.reactions_samples.find_by(sample_id: sample1.id).reaction_step_id).to eq(step1.id)
+        expect(r.reactions_samples.find_by(sample_id: sample4.id).reaction_step_id).to eq(step2.id)
+        expect(r.reactions_samples.find_by(sample_id: sample3.id).carry_on).to be true
+
+        # 2. the carried product must stay out of the generated picture
+        expect(r.send(:scheme_material_svg_paths, :reactions_product_samples, :products).length).to eq(1)
+
+        # 3. delete step 1 by omitting it and its materials; step 2 becomes position 1
+        put_reaction(
+          [{ 'id' => step2.id, 'position' => 1, 'conditions' => 'warm' }],
+          { 'products' => [material(sample4, 1)] },
+        )
+        expect(response.status).to eq(200)
+        expect(r.reaction_steps.map(&:position)).to eq([1])
+        expect(r.reaction_steps.first.id).to eq(step2.id)
+        expect(Sample.where(id: sample1.id)).to be_empty
+
+        # 4. leave multi-step entirely
+        put_reaction([], { 'products' => [material(sample4, nil)] }, type: 'standard')
+        expect(response.status).to eq(200)
+        expect(r.reaction_type).to eq('standard')
+        expect(r.reaction_steps).to be_empty
+        expect(r.reactions_samples.where(carry_on: true)).to be_empty
+      end
+    end
+
+    context 'when saving reaction steps' do
+      let(:base_params) do
+        {
+          'id' => reaction1.id,
+          'name' => 'test reaction',
+          'reaction_type' => 'multi_step',
+          'container' => reaction_container,
+          'materials' => {
+            'starting_materials' => [
+              {
+                'id' => sample1.id,
+                'target_amount_unit' => 'mg',
+                'target_amount_value' => 76.09596,
+                'equivalent' => 1,
+                'reference' => true,
+                'is_new' => false,
+              },
+            ],
+          },
+        }
+      end
+      let(:r) { Reaction.find(reaction1.id) }
+
+      it 'creates the steps that were sent and numbers them in order' do
+        params = base_params.merge(
+          'reaction_steps' => [
+            { 'position' => 1, 'conditions' => 'stirred', 'duration' => '2 h', 'description' => 'first' },
+            { 'position' => 2, 'conditions' => 'warmed', 'duration' => '12 h' },
+          ],
+        )
+
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+
+        expect(r.reaction_steps.map(&:position)).to eq([1, 2])
+        expect(r.reaction_steps.map(&:conditions)).to eq(%w[stirred warmed])
+        expect(r.reaction_steps.map(&:description)).to eq(['first', nil])
+      end
+
+      it 'lets a reaction leave Multi-step when the same request removes its steps' do
+        reaction1.update!(reaction_type: 'multi_step')
+        ReactionStep.create!(reaction: reaction1, position: 1)
+        ReactionStep.create!(reaction: reaction1, position: 2)
+
+        params = base_params.merge('reaction_type' => 'standard', 'reaction_steps' => [])
+
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+
+        expect(response.status).to eq(200)
+        expect(r.reaction_type).to eq('standard')
+        expect(r.reaction_steps).to be_empty
+      end
+
+      it 'lets a reaction leave Multi-step when a carried product is still linked' do
+        reaction1.update!(reaction_type: 'multi_step')
+        ReactionStep.create!(reaction: reaction1, position: 1)
+        second = ReactionStep.create!(reaction: reaction1, position: 2)
+        ReactionsProductSample.create!(
+          reaction: reaction1, sample: create(:sample, collections: [collection1]),
+          reaction_step_id: second.id, carry_on: true
+        )
+
+        params = base_params.merge('reaction_type' => 'standard', 'reaction_steps' => [])
+
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+
+        expect(response.status).to eq(200)
+        expect(r.reaction_type).to eq('standard')
+        expect(r.reactions_samples.where(carry_on: true)).to be_empty
+      end
+
+      it 'links a material to the step created in the same request via its position' do
+        params = base_params.merge(
+          'reaction_steps' => [{ 'position' => 1, 'conditions' => 'stirred' }],
+        )
+        params['materials']['starting_materials'][0]['reaction_step_position'] = 1
+
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+
+        step = r.reaction_steps.first
+        row = r.reactions_samples.find_by(sample_id: sample1.id)
+        expect(row.reaction_step_id).to eq(step.id)
+      end
+
+      it 'deletes a step that was not sent back and closes the numbering up' do
+        first = ReactionStep.create!(reaction: reaction1, position: 1, conditions: 'one')
+        ReactionStep.create!(reaction: reaction1, position: 2, conditions: 'two')
+        third = ReactionStep.create!(reaction: reaction1, position: 3, conditions: 'three')
+
+        params = base_params.merge(
+          'reaction_steps' => [
+            { 'id' => first.id, 'position' => 1, 'conditions' => 'one' },
+            { 'id' => third.id, 'position' => 2, 'conditions' => 'three' },
+          ],
+        )
+
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+
+        expect(r.reaction_steps.map(&:conditions)).to eq(%w[one three])
+        expect(r.reaction_steps.map(&:position)).to eq([1, 2])
+      end
+    end
+
     context 'when creating new materials' do
       let(:params) do
         {

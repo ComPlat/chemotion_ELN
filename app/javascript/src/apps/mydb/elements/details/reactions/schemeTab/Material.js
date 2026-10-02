@@ -1207,7 +1207,9 @@ class Material extends Component {
       showLoadingColumn,
       reaction,
       dropRef,
+      onToggleCarryOn,
     } = this.props;
+    const showCarryOn = materialGroup === 'products' && reaction.isMultiStep() && !!onToggleCarryOn;
 
     const metricPrefixes = ['m', 'n', 'u'];
     let metric = 'm';
@@ -1289,6 +1291,18 @@ class Material extends Component {
             {this.materialLoading(material, showLoadingColumn)}
             {this.materialConcentration(material)}
             {this.equivalentOrYield(material)}
+            {showCarryOn && (
+              <div className="reaction-material__carry-on d-flex align-items-center px-1">
+                <Form.Check
+                  type="switch"
+                  id={`carry-on-${material.id}`}
+                  title="Carry on to next step"
+                  checked={!!material.carry_on}
+                  disabled={!permitOn(reaction)}
+                  onChange={() => onToggleCarryOn(material)}
+                />
+              </div>
+            )}
             <div className="reaction-material__delete-data">
               <DeleteButton
                 disabled={!permitOn(reaction)}
@@ -1804,6 +1818,7 @@ Material.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   isDragging: PropTypes.bool.isRequired,
+  onToggleCarryOn: PropTypes.func,
 };
 
 Material.defaultProps = {
@@ -1812,4 +1827,5 @@ Material.defaultProps = {
   isDragging: false,
   canDrop: false,
   isOver: false,
+  onToggleCarryOn: null,
 };

@@ -1607,3 +1607,26 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
     expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-loading-55');
   });
 });
+
+describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — multi-step reference', () => {
+  it('measures a later step against the single reaction reference', () => {
+    const referenceMaterial = {
+      id: 'ref', reference: true, amount_mol: 0.01, coefficient: 1, molecule: { molecular_weight: 100 },
+    };
+    const stepTwoReagent = {
+      id: 's2',
+      reference: false,
+      amount_mol: 0.02,
+      coefficient: 1,
+      reaction_step_id: 2,
+      molecule: { molecular_weight: 100 },
+    };
+    const instance = { props: { reaction: { referenceMaterial } }, state: {} };
+
+    const [updated] = ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      instance, [stepTwoReagent], { id: 'other' }, 'reactants'
+    );
+
+    expect(updated.equivalent).toEqual(2);
+  });
+});

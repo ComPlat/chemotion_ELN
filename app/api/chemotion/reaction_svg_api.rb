@@ -13,6 +13,7 @@ module Chemotion
         optional :conditions, type: String, desc: 'conditions which is placed under the reaction-arrow'
         optional :products_only, type: Boolean, default: false
         optional :show_yield, type: Boolean, default: true
+        optional :steps, type: Array, desc: 'per-step materials and conditions for multi-step schemes'
       end
       post do
         paths = params[:materials_svg_paths]
@@ -23,6 +24,7 @@ module Chemotion
           duration: params[:duration],
           conditions: params[:conditions],
           show_yield: params[:show_yield],
+          steps: Array(params[:steps]).map { |step| step.to_h.symbolize_keys },
         }
 
         composer = composer_class.new(paths, composer_options)

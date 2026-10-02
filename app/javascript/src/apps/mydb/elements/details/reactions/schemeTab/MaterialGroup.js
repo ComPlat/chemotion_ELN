@@ -43,7 +43,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled
+  switchYield, dndEnabled, onToggleCarryOn
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -65,6 +65,7 @@ const MaterialGroup = ({
       materialGroup={materialGroup}
       showLoadingColumn={showLoadingColumn}
       deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
+      onToggleCarryOn={onToggleCarryOn}
       index={index + 1}
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
@@ -618,6 +619,7 @@ MaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
+  onToggleCarryOn: PropTypes.func,
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -659,6 +661,7 @@ MaterialGroup.defaultProps = {
   displayYieldField: null,
   headIndex: 0,
   dndEnabled: true,
+  onToggleCarryOn: null,
 };
 
 GeneralMaterialGroup.defaultProps = {
