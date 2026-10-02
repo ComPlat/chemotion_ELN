@@ -79,7 +79,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const reactionConcentrationMode = reaction.concentration_mode
     ?? (reaction.use_reaction_volume
       ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
-      : Reaction.CONCENTRATION_MODES.COMBINED);
+      : Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
   const concentrationMode = useReactionVolumeOverride == null
     ? reactionConcentrationMode
     : (useReactionVolumeOverride

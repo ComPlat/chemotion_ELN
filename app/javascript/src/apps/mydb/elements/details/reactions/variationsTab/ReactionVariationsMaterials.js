@@ -220,8 +220,12 @@ function updateVariationsRowOnConcentrationMaterialChange(
     return { row: updatedRow, contextUpdate: null };
   }
 
+  // On an explicit solvents-only basis the reaction volume is fixed (the solvent
+  // volume), so editing a concentration must not auto-enable the reaction-volume
+  // basis by deriving a volume from the edited material.
   const shouldAutoEnableConcentration = !concentrationContext.lockReactionVolume
     && !concentrationContext.useReactionVolume
+    && concentrationContext.concentrationMode !== REACTION_CONCENTRATION_MODES.SOLVENTS_ONLY
     && changedEntry === 'concentration'
     && material.aux.gasType !== 'feedstock';
 
