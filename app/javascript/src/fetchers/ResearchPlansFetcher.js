@@ -142,7 +142,6 @@ export default class ResearchPlansFetcher {
       return new ResearchPlan({ id: `${id}:error:ResearchPlan ${id} is not accessible!` });
     }
     const researchPlan = new ResearchPlan(json.research_plan);
-    researchPlan.attachments = json.attachments;
     if (json.literatures && json.literatures.length > 0) {
       const tliteratures = json.literatures.map((literature) => new Literature(literature));
       const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());

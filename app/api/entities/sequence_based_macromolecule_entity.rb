@@ -33,7 +33,7 @@ module Entities
                                              unless: :uniprot_protein?
     expose! :post_translational_modifications, using: 'Entities::PostTranslationalModificationsEntity',
                                                unless: :uniprot_protein?
-    expose! :attachments, using: 'Entities::AttachmentEntity'
+    expose! :attachments, unless: :displayed_in_list, using: 'Entities::AttachmentEntity'
     expose_timestamps
 
     private
