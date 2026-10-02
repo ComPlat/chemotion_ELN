@@ -14,6 +14,37 @@ describe('Reaction multi-step', () => {
     expect(reaction.products.every((m) => m.reaction_step_id === firstId)).toEqual(true);
   });
 
+  it('copies the reaction values into step 1 on entering multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.duration = '34 Hour(s)';
+    reaction.conditions = 'under nitrogen';
+    reaction.ph_value = 7;
+    reaction.volume = 0.5;
+    reaction.use_reaction_volume = true;
+
+    reaction.enterMultiStep();
+
+    const [step] = reaction.reaction_steps;
+    expect(step.duration).toEqual('34 Hour(s)');
+    expect(step.conditions).toEqual('under nitrogen');
+    expect(step.ph_value).toEqual(7);
+    expect(step.volume).toEqual(0.5);
+    expect(step.use_reaction_volume).toEqual(true);
+  });
+
+  it('divides a step material by that step volume, not the whole reaction', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+    const step = reaction.reaction_steps[0];
+    step.volume = 0.5;
+    step.use_reaction_volume = true;
+
+    expect(reaction.stepContext(step).reactionVolumeForConcentration()).toEqual(0.5);
+    expect(reaction.volumeContextFor(reaction.starting_materials[0])
+      .reactionVolumeForConcentration()).toEqual(0.5);
+  });
+
   it('drops a deleted step and its materials from the save payload and renumbers', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';

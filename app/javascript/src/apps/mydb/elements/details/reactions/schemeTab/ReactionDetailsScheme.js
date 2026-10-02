@@ -8,7 +8,7 @@ import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
 import ReactionStep from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionStep';
 import Sample from 'src/models/Sample';
-import Reaction from 'src/models/Reaction';
+import Reaction, { STEP_FIELD_DEFAULTS } from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
@@ -44,18 +44,6 @@ import Component from 'src/models/Component';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
-
-const STEP_FIELD_DEFAULTS = {
-  temperature: () => ({ data: [], userText: '', valueUnit: '\u00b0C' }),
-  vessel_size: () => ({ unit: 'ml', amount: null }),
-  duration: () => '',
-  timestamp_start: () => '',
-  timestamp_stop: () => '',
-  ph_operator: () => '=',
-  ph_value: () => null,
-  volume: () => null,
-  conditions: () => '',
-};
 
 const STEP_EVENT_VALUE_TYPES = ['temperature', 'timestampStart', 'timestampStop'];
 
@@ -754,7 +742,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
       // A feedstock's concentration is derived from the gas vessel size,
       // so it must be refreshed whenever its own amount changes.
-      updatedSample.updateConcentrationFromSolvent(updatedReaction);
+      updatedSample.updateConcentrationFromSolvent(updatedReaction.volumeContextFor(updatedSample));
     }
 
     return updatedReaction;
@@ -816,7 +804,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
       // A feedstock's concentration is derived from the gas vessel volume,
       // so it must be refreshed whenever its own amount changes.
-      updatedSample.updateConcentrationFromSolvent(updatedReaction);
+      updatedSample.updateConcentrationFromSolvent(updatedReaction.volumeContextFor(updatedSample));
     }
 
     return updatedReaction;
@@ -2361,11 +2349,13 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
-  switchVolumeLock() {
+  switchVolumeLock(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
-    const willLockVolume = !reaction.isVolumeLocked;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    const willLockVolume = !target.isVolumeLocked;
 
-    if (willLockVolume && !reaction.hasValidReactionVolume) {
+    if (willLockVolume && !target.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before locking the reaction volume.'
       );
@@ -2379,7 +2369,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // session while every other material updates.
     reaction.resetPreservedConcentrationExcept();
 
-    onInputChange('lockReactionVolume', !reaction.isVolumeLocked);
+    change('lockReactionVolume', !target.isVolumeLocked);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -2393,8 +2383,9 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  reactionVolume() {
+  reactionVolume(source = null, onChange = null) {
     const { reaction } = this.props;
+    const target = source || reaction;
     const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
 
     const metricPrefixes = ['m', 'u', 'n'];
@@ -2402,7 +2393,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const prefix = 'm';
 
     if (!isDisabled) {
-      const volumeValue = ReactionDetailsScheme.parseVolumeValue(reaction.volume);
+      const volumeValue = ReactionDetailsScheme.parseVolumeValue(target.volume);
 
       return (
         <Form.Group>
@@ -2421,11 +2412,11 @@ export default class ReactionDetailsScheme extends React.Component {
               <Button
                 id="lock_reaction_volume_btn"
                 size="sm"
-                variant={reaction.isVolumeLocked ? 'warning' : 'light'}
-                onClick={this.switchVolumeLock}
+                variant={target.isVolumeLocked ? 'warning' : 'light'}
+                onClick={() => this.switchVolumeLock(target, onChange)}
                 className="ms-1 py-0 px-1"
               >
-                <i className={reaction.isVolumeLocked ? 'fa fa-lock' : 'fa fa-unlock'} />
+                <i className={target.isVolumeLocked ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
             </OverlayTrigger>
           </Form.Label>
@@ -2440,15 +2431,15 @@ export default class ReactionDetailsScheme extends React.Component {
             id="numInput_reaction_volume_l"
             disabled={reaction.isVolumeLocked}
             disableUnitButtonPadding
-            onChange={(e) => this.updateVolume(e)}
-            onMetricsChange={(e) => this.updateVolume(e)}
+            onChange={(e) => this.updateVolume(e, target, onChange)}
+            onMetricsChange={(e) => this.updateVolume(e, target, onChange)}
           />
           <Form.Check
             className="mt-2"
             type="checkbox"
-            id="use_reaction_volume"
-            checked={reaction.use_reaction_volume || false}
-            onChange={this.handleVolumeCheckboxChange}
+            id={`use_reaction_volume_${target.stepId ?? 'reaction'}`}
+            checked={target.use_reaction_volume || false}
+            onChange={(event) => this.handleVolumeCheckboxChange(event, target, onChange)}
             label={(
               <span>
                 Use for concentration
@@ -2467,20 +2458,22 @@ export default class ReactionDetailsScheme extends React.Component {
     return null;
   }
 
-  updateVolume(e) {
+  updateVolume(e, source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
     if (e && e.value !== undefined) {
       // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
       const newVolume = e.value === '' ? null : e.value;
-      onInputChange('volume', newVolume);
+      change('volume', newVolume);
 
       // If a valid reaction volume is set, automatically enable it for concentration calculation
       // and recalculate concentrations for all materials
       if (newVolume != null && newVolume > 0) {
         // Enable the checkbox if not already enabled
-        if (!reaction.use_reaction_volume) {
-          reaction.use_reaction_volume = true;
-          onInputChange('useReactionVolumeForConcentration', true);
+        if (!target.use_reaction_volume) {
+          target.use_reaction_volume = true;
+          change('useReactionVolumeForConcentration', true);
         }
 
         // Recalculate concentrations for all materials
@@ -2489,12 +2482,14 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  handleVolumeCheckboxChange(event) {
+  handleVolumeCheckboxChange(event, source = null, onChange = null) {
     const { checked } = event.target;
     const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
 
     // Show notification if checkbox is selected but volume is 0 or null
-    if (checked && !reaction.hasValidReactionVolume) {
+    if (checked && !target.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before enabling concentration calculation '
           + 'based on reaction volume.'
@@ -2504,10 +2499,10 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // Update the reaction property
-    reaction.use_reaction_volume = checked;
+    target.use_reaction_volume = checked;
 
     // Trigger update through onInputChange
-    onInputChange('useReactionVolumeForConcentration', checked);
+    change('useReactionVolumeForConcentration', checked);
 
     // Recalculate concentrations when checkbox state changes
     reaction.updateAllConcentrations();
@@ -2574,11 +2569,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   stepView(step) {
     const { reaction } = this.props;
-    const view = Object.create(reaction);
-    Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
-      view[field] = step[field] ?? fallback();
-    });
-    return view;
+    return reaction.stepContext(step);
   }
 
   handleStepInputChange(step, type, event) {
@@ -2648,6 +2639,7 @@ export default class ReactionDetailsScheme extends React.Component {
         onStepInputChange={stepChange}
         phField={step ? this.renderPhConditionProperty(stepSource, stepChange) : null}
         vesselSizeField={step ? this.reactionVesselSize(stepSource, stepChange) : null}
+        reactionVolumeField={step ? this.reactionVolume(stepSource, stepChange) : null}
         isInteractionReaction={reaction.isInteractionReaction()}
         lockEquivColumn={lockEquivColumn}
         displayYieldField={displayYieldField}
@@ -2709,7 +2701,7 @@ export default class ReactionDetailsScheme extends React.Component {
         this.recalculateEquivalentsForMaterials(reaction);
       }
       reaction.products.map((sample) => {
-        sample.updateConcentrationFromSolvent(reaction);
+        sample.updateConcentrationFromSolvent(reaction.volumeContextFor(sample));
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -2722,7 +2714,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Update concentrations for all materials when volumes change
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
       reaction.allReactionMaterials.forEach((sample) => {
-        sample.updateConcentrationFromSolvent(reaction);
+        sample.updateConcentrationFromSolvent(reaction.volumeContextFor(sample));
       });
     }
 

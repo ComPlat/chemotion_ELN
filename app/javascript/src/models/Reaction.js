@@ -20,6 +20,20 @@ import { rootStore } from 'src/stores/mobx/RootStore';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
+export const STEP_FIELD_DEFAULTS = {
+  temperature: () => ({ data: [], userText: '', valueUnit: '°C' }),
+  vessel_size: () => ({ unit: 'ml', amount: null }),
+  duration: () => '',
+  timestamp_start: () => '',
+  timestamp_stop: () => '',
+  ph_operator: () => '=',
+  ph_value: () => null,
+  volume: () => null,
+  use_reaction_volume: () => false,
+  lock_reaction_volume: () => false,
+  conditions: () => '',
+};
+
 const TemperatureDefault = {
   valueUnit: '°C',
   userText: '',
@@ -280,6 +294,8 @@ export default class Reaction extends Element {
         ph_value: step.ph_value,
         vessel_size: step.vessel_size,
         volume: step.volume,
+        use_reaction_volume: step.use_reaction_volume,
+        lock_reaction_volume: step.lock_reaction_volume,
       };
       return Object.fromEntries(
         Object.entries(fields).filter(([, value]) => value !== null && value !== undefined)
@@ -1024,6 +1040,32 @@ export default class Reaction extends Element {
     return this[group].filter((material) => material.reaction_step_id === stepId);
   }
 
+  stepContext(step) {
+    const context = Object.create(this);
+    context.stepId = step.id;
+    Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
+      context[field] = step[field] ?? fallback();
+    });
+    ['starting_materials', 'reactants', 'solvents', 'products'].forEach((group) => {
+      Object.defineProperty(context, group, {
+        get: () => this.materialsForStep(group, step.id),
+        configurable: true,
+      });
+    });
+    const firstStep = this.reaction_steps.filter((entry) => !entry._destroy)[0];
+    Object.defineProperty(context, 'reactant_sbmm_samples', {
+      get: () => (firstStep && firstStep.id === step.id ? (this._reactant_sbmm_samples || []) : []),
+      configurable: true,
+    });
+    return context;
+  }
+
+  volumeContextFor(sample) {
+    if (!this.isMultiStep()) return this;
+    const step = this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id);
+    return step ? this.stepContext(step) : this;
+  }
+
   stepsSvgPaths() {
     if (!this.isMultiStep()) return [];
 
@@ -1063,25 +1105,31 @@ export default class Reaction extends Element {
     );
   }
 
-  addStep() {
+  addStep(values = {}) {
     const nextPosition = this.reaction_steps.length + 1;
-    const step = { id: `new-${nextPosition}-${this.reaction_steps.length}`, position: nextPosition };
+    const step = {
+      id: `new-${nextPosition}-${this.reaction_steps.length}`,
+      position: nextPosition,
+      ...values,
+    };
     this.reaction_steps = [...this.reaction_steps, step];
-    return step;
+    return this.reaction_steps[this.reaction_steps.length - 1];
   }
 
   seedFirstStep() {
-    const step = this.addStep();
-    step.conditions = this.conditions;
-    step.duration = this.duration;
-    step.timestamp_start = this.timestamp_start;
-    step.timestamp_stop = this.timestamp_stop;
-    step.temperature = this.temperature ? { ...this.temperature } : this.temperature;
-    step.ph_operator = this.ph_operator;
-    step.ph_value = this.ph_value;
-    step.vessel_size = this.vessel_size ? { ...this.vessel_size } : this.vessel_size;
-    step.volume = this.volume;
-    return step;
+    return this.addStep({
+      conditions: this.conditions,
+      duration: this.duration,
+      timestamp_start: this.timestamp_start,
+      timestamp_stop: this.timestamp_stop,
+      temperature: this.temperature ? { ...this.temperature } : this.temperature,
+      ph_operator: this.ph_operator,
+      ph_value: this.ph_value,
+      vessel_size: this.vessel_size ? { ...this.vessel_size } : this.vessel_size,
+      volume: this.volume,
+      use_reaction_volume: this.use_reaction_volume,
+      lock_reaction_volume: this.lock_reaction_volume,
+    });
   }
 
   enterMultiStep() {
@@ -1636,6 +1684,18 @@ export default class Reaction extends Element {
    * @returns {void}
    */
   updateAllConcentrations({ includeProducts = true } = {}) {
+    const liveSteps = this.isMultiStep() ? this.reaction_steps.filter((step) => !step._destroy) : [];
+    if (liveSteps.length) {
+      liveSteps.forEach((step) => {
+        const context = this.stepContext(step);
+        [
+          ...context.allReactionMaterials,
+          ...(includeProducts ? (context.products || []) : []),
+        ].forEach((material) => material.updateConcentrationFromSolvent(context));
+      });
+      return;
+    }
+
     const allMaterials = [
       ...this.allReactionMaterials,
       ...(includeProducts ? (this.products || []) : []),
