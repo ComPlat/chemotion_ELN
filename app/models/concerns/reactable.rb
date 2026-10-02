@@ -43,7 +43,8 @@ module Reactable
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
-              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE ||
+              ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
 
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
