@@ -348,11 +348,13 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'GET extract_sds' do
+    let(:link) { '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
+    let(:body) { JSON.parse(response.body) }
+
     context 'with a saved sheet' do
       include SdsSheetHelpers
 
       let(:dir) { Dir.mktmpdir('sds_api') }
-      let(:saved) { Rails.public_path.join('safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf').to_s }
       let(:pdf) do
         sds_pdf_from_lines(['SAFETY DATA SHEET', 'SECTION 1: Identification', 'Sigma-Aldrich',
                             'SECTION 2: Hazards identification', '2.2 Label elements',
@@ -363,18 +365,14 @@ describe Chemotion::ChemicalAPI do
       end
 
       before do
-        # The saved sheet stands in for the gitignored vendor file at that path.
-        allow(Chemotion::SdsExtractor).to receive(:extract).and_wrap_original do |original, path|
-          original.call(path == saved ? pdf : path)
-        end
-        get '/api/v1/chemicals/extract_sds',
-            params: { path: '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
+        # The synthetic sheet stands in for the gitignored vendor file the link names.
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).with(link).and_return(Pathname.new(pdf))
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
       after { FileUtils.rm_rf(dir) }
 
       it 'returns the codes and properties read out of the file', :aggregate_failures do
-        body = JSON.parse(response.body)
         expect(response.status).to eq 200
         expect(body['safetyPhrases']['h_statements'].keys).to include('H225')
         expect(body['properties']['flash_point']).to eq('4 °C')
@@ -382,15 +380,51 @@ describe Chemotion::ChemicalAPI do
     end
 
     context 'with a path outside the safety sheet folder' do
+      before { get '/api/v1/chemicals/extract_sds', params: { path: '/etc/passwd' } }
+
+      it 'refuses it as a bad request', :aggregate_failures do
+        expect(response.status).to eq 400
+        expect(body['error']).to eq(Chemotion::SdsExtractor::NOT_A_SAVED_SHEET)
+      end
+    end
+
+    context 'with a saved-sheet link whose file is gone' do
+      before { get '/api/v1/chemicals/extract_sds', params: { path: '/safety_sheets/merck/gone_0000000000000000.pdf' } }
+
+      it 'answers not found' do
+        expect(response.status).to eq 404
+      end
+    end
+
+    context 'with a sheet ghostscript cannot read' do
       before do
-        get '/api/v1/chemicals/extract_sds', params: { path: '/etc/passwd' }
+        allow(Chemotion::SdsExtractor).to receive_messages(
+          saved_sheet_path: Rails.root.join('spec/fixtures/upload.pdf'),
+          extract: { 'safetyPhrases' => {}, 'properties' => {},
+                     'diagnostics' => { 'errors' => ['ghostscript produced no text'], 'notes' => [] } },
+        )
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
-      it 'refuses to read it', :aggregate_failures do
-        body = JSON.parse(response.body)
-        expect(response.status).to eq 200
-        expect(body['properties']).to be_empty
-        expect(body['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+      it 'answers unprocessable with the reason and the diagnostics', :aggregate_failures do
+        expect(response.status).to eq 422
+        expect(body['error']).to eq('ghostscript produced no text')
+        expect(body['diagnostics']['errors']).to eq(['ghostscript produced no text'])
+      end
+    end
+
+    context 'when the extractor raises' do
+      before do
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
+          .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
+        allow(Chemotion::SdsExtractor).to receive(:extract).and_raise(StandardError, 'boom at /srv/secret/path')
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
+      end
+
+      it 'answers a server error without the exception text', :aggregate_failures do
+        expect(response.status).to eq 500
+        expect(body['error']).to eq('the safety data sheet could not be read')
+        expect(response.body).not_to include('/srv/secret/path')
       end
     end
   end

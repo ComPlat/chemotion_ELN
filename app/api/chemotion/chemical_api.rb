@@ -180,10 +180,20 @@ module Chemotion
           requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
 
+        # 400 for a path that is not a saved sheet, 404 when it is gone, 422 when the PDF cannot be
+        # read; a readable sheet that yields nothing is a 200 whose diagnostics say why.
         get do
-          Chemotion::ChemicalsService.handle_exceptions do
-            Chemotion::SdsExtractor.extract_saved_sheet(params[:path])
-          end
+          path = Chemotion::SdsExtractor.saved_sheet_path(params[:path])
+          error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400) if path.nil?
+          error!({ error: 'the safety data sheet is no longer on the server' }, 404) unless path.file?
+
+          result = Chemotion::SdsExtractor.extract(path.to_s)
+          failure = result.dig('diagnostics', 'errors')&.first
+          error!({ error: failure, diagnostics: result['diagnostics'] }, 422) if failure
+          result
+        rescue StandardError => e
+          Rails.logger.error("extract_sds failed: #{e.class}: #{e.message}")
+          error!({ error: 'the safety data sheet could not be read' }, 500)
         end
       end
     end
