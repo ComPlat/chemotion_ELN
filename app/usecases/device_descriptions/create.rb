@@ -29,8 +29,9 @@ module Usecases
                                                 collection: all_collection_of_sharer)
           end
 
+          # find_or_create_by: the chosen collection may itself be the user's "All" collection
           unless is_shared_collection
-            CollectionsDeviceDescription.create(
+            CollectionsDeviceDescription.find_or_create_by(
               device_description: device_description,
               collection: all_collection_of_current_user,
             )

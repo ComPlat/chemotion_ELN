@@ -114,7 +114,8 @@ module Chemotion
 
         unless is_shared_collection
           all_coll = Collection.get_all_collection_for_user(current_user.id)
-          research_plan.collections << all_coll
+          # the chosen collection may itself be the user's "All" collection
+          research_plan.collections << all_coll if research_plan.collections.exclude?(all_coll)
         end
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)

@@ -294,9 +294,10 @@ module Chemotion
           end
         end
 
+        # find_or_create_by: the chosen collection may itself be the user's "All" collection
         unless is_shared_collection
-          CollectionsReaction.create(reaction: reaction,
-                                     collection: Collection.get_all_collection_for_user(current_user.id))
+          CollectionsReaction.find_or_create_by(reaction: reaction,
+                                                collection: Collection.get_all_collection_for_user(current_user.id))
         end
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
         if reaction

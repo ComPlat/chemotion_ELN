@@ -214,7 +214,11 @@ module Chemotion
           end
         end
 
-        screen.collections << Collection.get_all_collection_for_user(current_user.id) unless is_shared_collection
+        unless is_shared_collection
+          # the chosen collection may itself be the user's "All" collection
+          all_collection = Collection.get_all_collection_for_user(current_user.id)
+          screen.collections << all_collection if screen.collections.exclude?(all_collection)
+        end
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
