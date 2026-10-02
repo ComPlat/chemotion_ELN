@@ -31,6 +31,7 @@ const ReactionStep = ({
   onStepInputChange,
   phField,
   vesselSizeField,
+  reactionVolumeField,
 }) => {
   const [open, setOpen] = useState(true);
   const stepId = step ? step.id : null;
@@ -180,6 +181,7 @@ const ReactionStep = ({
             showSchemeFields
             phField={phField}
             vesselSizeField={vesselSizeField}
+            reactionVolumeField={reactionVolumeField}
           />
           <div className="mt-3">
             <ReactionDetailsDuration
@@ -245,6 +247,7 @@ ReactionStep.propTypes = {
   onStepInputChange: PropTypes.func,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
+  reactionVolumeField: PropTypes.node,
 };
 
 ReactionStep.defaultProps = {
@@ -255,6 +258,7 @@ ReactionStep.defaultProps = {
   onStepInputChange: () => {},
   phField: null,
   vesselSizeField: null,
+  reactionVolumeField: null,
 };
 
 export default ReactionStep;
