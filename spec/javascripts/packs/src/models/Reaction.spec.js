@@ -2,6 +2,8 @@ import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
+  from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 function randFloat(min, max, precision) {
@@ -160,15 +162,24 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction.CONCENTRATION_MODES', () => {
+    it('exposes the shared frozen concentration modes object', () => {
+      expect(Reaction.CONCENTRATION_MODES).toBe(REACTION_CONCENTRATION_MODES);
+      expect(Object.isFrozen(Reaction.CONCENTRATION_MODES)).toBe(true);
+      expect(isReactionConcentrationMode(REACTION_CONCENTRATION_MODES.COMBINED)).toBe(true);
+      expect(isReactionConcentrationMode('invalid')).toBe(false);
+    });
+  });
+
   describe('Reaction.buildEmpty()', () => {
     it('should initialize volume as null', () => {
       const emptyReaction = Reaction.buildEmpty(1);
       expect(emptyReaction.volume).toBe(null);
     });
 
-    it('should initialize use_reaction_volume as false', () => {
+    it('should initialize concentration_mode as solvents_only', () => {
       const emptyReaction = Reaction.buildEmpty(1);
-      expect(emptyReaction.use_reaction_volume).toBe(false);
+      expect(emptyReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
     });
 
     it('should initialize lock_reaction_volume as false', () => {
@@ -184,10 +195,16 @@ describe('Reaction', () => {
       expect(serialized.volume).toBe(0.5);
     });
 
-    it('should include use_reaction_volume in serialized output', () => {
-      reaction.use_reaction_volume = true;
+    it('should include concentration_mode in serialized output', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       const serialized = reaction.serialize();
-      expect(serialized.use_reaction_volume).toBe(true);
+      expect(serialized.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.COMBINED);
+    });
+
+    it('should not include use_reaction_volume in serialized output', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+      const serialized = reaction.serialize();
+      expect(Object.prototype.hasOwnProperty.call(serialized, 'use_reaction_volume')).toBe(false);
     });
 
     it('should include lock_reaction_volume in serialized output', () => {
@@ -354,8 +371,8 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.reactionVolumeForConcentration()', () => {
-    it('uses explicit reaction volume when enabled and valid', () => {
-      reaction.use_reaction_volume = true;
+    it('uses explicit reaction volume in reaction_volume mode when valid', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
 
@@ -364,8 +381,8 @@ describe('Reaction', () => {
       expect(result).toBe(0.5);
     });
 
-    it('uses combined volume when explicit reaction volume is disabled', () => {
-      reaction.use_reaction_volume = false;
+    it('uses combined volume in combined mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
 
@@ -374,14 +391,36 @@ describe('Reaction', () => {
       expect(result).toBe(0.2);
     });
 
-    it('falls back to combined volume when explicit reaction volume is invalid', () => {
-      reaction.use_reaction_volume = true;
-      reaction.volume = 0;
+    it('uses solvent volume in solvents_only mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+      reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
 
       const result = reaction.reactionVolumeForConcentration();
 
-      expect(result).toBe(0.2);
+      expect(result).toBe(0.05);
+    });
+
+    it('falls back to solvent volume in reaction_volume mode when the volume is invalid', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+      reaction.volume = 0;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.05);
+    });
+
+    it('defaults to solvent volume when concentration_mode is missing', () => {
+      reaction.concentration_mode = undefined;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.05);
     });
   });
 
@@ -405,20 +444,17 @@ describe('Reaction', () => {
 
   describe('Reaction.canUpdateConcentration()', () => {
     it('always allows updates when equivalents are unlocked', () => {
-      reaction.use_reaction_volume = false;
       reaction.volume = null;
       expect(reaction.canUpdateConcentration(false)).toBe(true);
     });
 
-    it('requires use_reaction_volume and a valid volume when equivalents are locked', () => {
-      reaction.use_reaction_volume = true;
+    it('requires reaction_volume mode and a valid volume when equivalents are locked', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
       expect(reaction.canUpdateConcentration(true)).toBe(true);
-
-      reaction.use_reaction_volume = false;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       expect(reaction.canUpdateConcentration(true)).toBe(false);
-
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0;
       expect(reaction.canUpdateConcentration(true)).toBe(false);
     });
@@ -727,17 +763,24 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.deriveVolumeFromSampleConcentration()', () => {
-    it('sets volume, enables use_reaction_volume, and recalculates concentrations', () => {
+    it('releases stale preservation, switches to reaction_volume mode, and recalculates concentrations', () => {
       const sample = { amount_mol: 0.5 };
-      let updateCalled = false;
-      reaction.updateAllConcentrations = () => { updateCalled = true; };
+      const calls = [];
+      reaction.resetPreservedConcentrationExcept = (editedSample) => {
+        expect(editedSample).toBe(sample);
+        calls.push('reset');
+      };
+      reaction.updateAllConcentrations = () => { calls.push('update'); };
 
       const result = reaction.deriveVolumeFromSampleConcentration(sample, 2);
 
-      expect(result).toEqual({ volume: 0.25, useReactionVolume: true });
+      expect(result).toEqual({
+        volume: 0.25,
+        concentrationMode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      });
       expect(reaction.volume).toBe(0.25);
-      expect(reaction.use_reaction_volume).toBe(true);
-      expect(updateCalled).toBe(true);
+      expect(reaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
+      expect(calls).toEqual(['reset', 'update']);
     });
 
     it('returns null when the concentration is not positive', () => {
@@ -781,7 +824,6 @@ describe('Reaction', () => {
       reaction.starting_materials = [material1];
       reaction.reactants = [material2];
       reaction.volume = 0.5;
-      reaction.use_reaction_volume = false;
 
       reaction.updateAllConcentrations();
 
@@ -807,12 +849,21 @@ describe('Reaction', () => {
       reaction.reactants = [];
       reaction.products = [];
       reaction.reactant_sbmm_samples = [sbmmReactant];
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       reaction.updateAllConcentrations();
 
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
+
+      Object.defineProperty(reaction, 'solventVolume', {
+        get: () => 0.1,
+        configurable: true,
+      });
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+      reaction.updateAllConcentrations();
+
+      expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.2, 8);
     });
   });
 

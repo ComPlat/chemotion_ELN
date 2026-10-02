@@ -1388,13 +1388,13 @@ describe('Sample', async () => {
       // and `calculateCombinedReactionVolume` exercise their production logic.
       reaction = Reaction.buildEmpty();
       reaction.volume = 0.5;
-      reaction.use_reaction_volume = false;
-      // Default combined volume = 0.2 L (single solvent)
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
+      // Combined volume = 0.2 L (single solvent)
       reaction.solvents = [buildSolvent(0.2)];
     });
 
-    it('uses reaction volume when checkbox is checked', () => {
-      reaction.use_reaction_volume = true;
+    it('uses reaction volume in reaction_volume mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1402,8 +1402,8 @@ describe('Sample', async () => {
       expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
     });
 
-    it('uses combined volume when checkbox is unchecked', () => {
-      reaction.use_reaction_volume = false;
+    it('uses combined volume in combined mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       reaction.solvents = [buildSolvent(0.2)];
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1411,10 +1411,21 @@ describe('Sample', async () => {
       expect(sample.concn).toBeCloseTo(0.5, 5); // 0.1 mol / 0.2 L = 0.5 mol/L
     });
 
-    it('sets concn to null when volume is null and combined volume is also null', () => {
-      reaction.use_reaction_volume = true;
+    it('uses solvent volume only in solvents_only mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+      // Solvent volume is 0.1 L; a reactant volume must be ignored in this mode.
+      reaction.solvents = [buildSolvent(0.1)];
+      reaction.reactants = [buildSolvent(0.3)];
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(1.0, 5); // 0.1 mol / 0.1 L = 1.0 mol/L
+    });
+
+    it('sets concn to null when reaction volume is null and solvent volume is also null', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = null;
-      // When reaction.volume is null, it falls back to calculateCombinedReactionVolume
+      // When reaction.volume is null, it falls back to the solvent volume
       reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1422,10 +1433,10 @@ describe('Sample', async () => {
       expect(sample.concn).toBe(null);
     });
 
-    it('sets concn to null when volume is 0 and combined volume is also null', () => {
-      reaction.use_reaction_volume = true;
+    it('sets concn to null when reaction volume is 0 and solvent volume is also null', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0;
-      // When reaction.volume is 0, it falls back to calculateCombinedReactionVolume
+      // When reaction.volume is 0, it falls back to the solvent volume
       reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1433,8 +1444,7 @@ describe('Sample', async () => {
       expect(sample.concn).toBe(null);
     });
 
-    it('sets concn to null when combined volume is null', () => {
-      reaction.use_reaction_volume = false;
+    it('sets concn to null when the default solvent volume is null', () => {
       reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1455,7 +1465,7 @@ describe('Sample', async () => {
       refComp.component_properties = {};
       mixtureSample.initialComponents([refComp]);
       mixtureSample.sample_details = { reference_component_changed: true };
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       mixtureSample.updateConcentrationFromSolvent(reaction);
@@ -1469,7 +1479,7 @@ describe('Sample', async () => {
         sample_type: 'Micromolecule',
         molecule: { molecular_weight: 18.015 }
       });
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       nonMixtureSample.updateConcentrationFromSolvent(reaction);
@@ -1484,7 +1494,7 @@ describe('Sample', async () => {
         amount_unit: 'mol',
         sample_type: 'Mixture',
       });
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       sampleWithNullMol.updateConcentrationFromSolvent(reaction);
@@ -1501,7 +1511,7 @@ describe('Sample', async () => {
     it('keeps manually-entered concentration when preserveConcentration is set', () => {
       sample.concn = 1.23;
       sample.preserveConcentration = true;
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1512,7 +1522,7 @@ describe('Sample', async () => {
     it('resumes auto-updating concentration after preserveConcentration is cleared', () => {
       sample.concn = 1.23;
       sample.preserveConcentration = true;
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       sample.updateConcentrationFromSolvent(reaction);
@@ -1538,7 +1548,7 @@ describe('Sample', async () => {
       gasProduct.gas_type = 'gas';
       gasProduct.gas_phase_data = { part_per_million: 10000 };
       gasProduct.concn = null;
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       gasProduct.updateConcentrationFromSolvent(reaction);
@@ -1558,7 +1568,7 @@ describe('Sample', async () => {
       });
       feedstock.gas_type = 'feedstock';
       reaction.gaseous = true;
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5; // reaction volume is intentionally different to confirm it's not used
 
       const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
@@ -1616,7 +1626,7 @@ describe('Sample', async () => {
       });
       sample.gas_type = 'feedstock';
       reaction.gaseous = false;
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       sample.updateConcentrationFromSolvent(reaction);

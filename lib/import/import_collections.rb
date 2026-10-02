@@ -414,7 +414,11 @@ module Import
 
     def import_reactions
       sort_data(@data.fetch('Reaction', {})).each do |uuid, fields|
-        # create the sample
+        if !fields.key?('concentration_mode') && fields.key?('use_reaction_volume')
+          fields = fields.merge(
+            'concentration_mode' => fields['use_reaction_volume'] ? 'reaction_volume' : 'solvents_only',
+          )
+        end
         reaction = Reaction.create!(fields.slice(
           'name',
           'description',
@@ -440,6 +444,8 @@ module Import
           'vessel_size',
           'gaseous',
           'weight_percentage',
+          'concentration_mode',
+          'volume',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
