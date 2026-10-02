@@ -69,11 +69,13 @@ module Chemotion
         { ok: false, statusText: 'File key is not valid' }
       end
 
+      # Drops the previous file of the same name on the same attachable, if the user may change it.
       def remove_duplicated(att)
-        old_att = Attachment.find_by(filename: att.filename, attachable_id: att.attachable_id)
-        return unless old_att.id != att.id
+        old_att = Attachment.find_by(filename: att.filename, attachable_type: att.attachable_type,
+                                     attachable_id: att.attachable_id)
+        return if old_att.nil? || old_att.id == att.id || !writable?(old_att)
 
-        old_att&.destroy
+        old_att.destroy
       end
 
       def remove_generated_children(att)

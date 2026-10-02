@@ -206,6 +206,12 @@ describe Chemotion::AttachableAPI do
         expect(response).to have_http_status(:created)
         expect(attachment.reload.attachable_id).to be_nil
       end
+
+      it "moves it to the uploader's Unsorted inbox" do
+        expect(attachment.reload.attachable_type).to eq('Container')
+        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil, created_for: attachment.created_for))
+          .to include(attachment)
+      end
     end
 
     # Regression: the detach query filtered del_files by attachable_type only, never by the

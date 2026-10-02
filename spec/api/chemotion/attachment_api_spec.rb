@@ -741,6 +741,27 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
+    # The previous file is looked up on the same attachable (type and id), not just the same id.
+    context 'when an attachable of another type with the same id has a file of the same name' do
+      let!(:same_name_elsewhere) do
+        create(:attachment, :with_spectra_file, filename: 'same_name.jdx', attachable_type: 'ResearchPlan',
+                                                attachable_id: container.id, created_for: create(:person).id)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'same_name.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps that file' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: same_name_elsewhere.id)).not_to be_nil
+      end
+    end
+
     context 'when a derived curve is sent as an original' do
       let(:root_attachment) { create(:attachment, filename: 'x_lcms.zip', attachable: container, aasm_state: 'done') }
       let(:derived_curve) do

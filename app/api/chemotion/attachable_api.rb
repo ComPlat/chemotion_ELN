@@ -60,7 +60,8 @@ module Chemotion
           if @attachable.is_a?(SequenceBasedMacromolecule) && @attachable.used_by_other_users?(current_user)
             detachable = detachable.where(created_for: current_user.id)
           end
-          detachable.update_all(attachable_id: nil)
+          # Back to the user's Unsorted inbox, like Usecases::Attachments::Unlink.
+          detachable.update_all(attachable_id: nil, attachable_type: 'Container')
         end
         true
       end
