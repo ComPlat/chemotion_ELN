@@ -11,6 +11,7 @@ import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import AppModal from 'src/components/common/AppModal';
 import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
+import CopyButton from 'src/components/common/CopyButton';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -1289,5 +1290,47 @@ describe('ChemicalTab helpers', () => {
       expect(ChemicalTab.ensureSafetySheetPath(chemical)).toEqual([]);
       expect(chemical._chemical_data).toEqual([{ safetySheetPath: [] }]);
     });
+  });
+});
+
+describe('ChemicalTab fetched properties copy button', () => {
+  const SHEET = '/safety_sheets/merck/252549_web_8996a8681115b875.pdf';
+  let wrapper;
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(null);
+    wrapper = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    }));
+  });
+
+  afterEach(() => sinon.restore());
+
+  const copyButton = () => wrapper.find(AppModal).find(CopyButton);
+
+  it('is disabled until a sheet has been extracted', () => {
+    expect(copyButton()).toHaveLength(1);
+    expect(copyButton().prop('disabled')).toBe(true);
+    expect(copyButton().prop('ariaLabel')).toEqual('Copy all properties');
+  });
+
+  it('copies the shown properties with human labels', () => {
+    wrapper.setState({
+      viewChemicalPropertiesModal: true,
+      viewPropertiesForSheet: SHEET,
+      extractedProperties: {
+        [SHEET]: { form: 'Liquid', boiling_point: '85 °C', vapor_pressure: '83 hPa (20 °C)' },
+      },
+    });
+
+    expect(copyButton().prop('disabled')).toBe(false);
+    expect(copyButton().prop('text'))
+      .toEqual('Form: Liquid\nBoiling point: 85 °C\nVapor pressure: 83 hPa (20 °C)');
+    expect(copyButton().prop('html')).toContain('<td style="padding:2pt 12pt 2pt 0;vertical-align:top;font-weight:bold;">Form</td>');
   });
 });

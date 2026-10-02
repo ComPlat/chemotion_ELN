@@ -16,6 +16,8 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
 import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
+import CopyButton from 'src/components/common/CopyButton';
+import { formatProperties } from 'src/utilities/sdsClipboardFormat';
 import Chemical from 'src/models/Chemical';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -2054,6 +2056,7 @@ export default class ChemicalTab extends React.Component {
     const fetchedChemicalProperties = properties
       ? JSON.stringify(properties, null, '\n')
       : 'Please extract from a safety data sheet first to view results';
+    const copy = formatProperties(properties);
 
     return (
       <AppModal
@@ -2064,7 +2067,19 @@ export default class ChemicalTab extends React.Component {
         closeLabel="Close"
         showFooter
       >
-        <Form.Group controlId="propertiesModal">
+        <Form.Group controlId="propertiesModal" className="position-relative">
+          <div className="position-absolute top-0 end-0 m-2">
+            <CopyButton
+              text={copy.text}
+              html={copy.html}
+              disabled={!copy.text}
+              variant="light"
+              size="sm"
+              tooltip="Copy all properties"
+              tooltipId="chemical-properties-copy-tooltip"
+              ariaLabel="Copy all properties"
+            />
+          </div>
           <Form.Control
             as="textarea"
             className="w-100"
