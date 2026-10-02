@@ -70,6 +70,21 @@ const parseSavedSheetPath = (path) => {
   return { vendor: parts[2] || '', productNumber: match ? match[1] : null };
 };
 
+// Cf. Chemotion::SdsExtractor::SAVED_SHEET, which refuses any other path.
+const EXTRACTABLE_SHEET = /^\/safety_sheets\/[A-Za-z0-9_-]+\/[A-Za-z0-9._-]+\.pdf$/;
+
+// The display string SdsValueParser builds: "12 - 13 °C (1013 hPa)", "-98 °C", "0.79 g/cm3".
+const SHEET_QUANTITY = /^(-?\d+(?:\.\d+)?)(?: - (-?\d+(?:\.\d+)?))?(?: ([^\s(]+))?(?: \(.*\))?$/;
+const parseSheetQuantity = (display) => {
+  const match = String(display ?? '').match(SHEET_QUANTITY);
+  if (!match) return null;
+  const low = parseFloat(match[1]);
+  return { low, high: match[2] === undefined ? low : parseFloat(match[2]), unit: match[3] || null };
+};
+
+// Sample density is g/mL; a unitless value is a specific gravity, which equals it numerically.
+const DENSITY_UNITS = [null, 'g/cm3', 'g/cm³', 'g/mL', 'g/ml', 'kg/L'];
+
 const vendorDisplayName = (name) => {
   if (!name) return name;
   return VENDOR_DISPLAY_NAMES[name.toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
@@ -113,6 +128,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   componentWillUnmount() {
+    this.unmounted = true;
     clearTimeout(this.copyFeedbackTimer);
   }
 
@@ -464,10 +480,17 @@ export default class ChemicalTab extends React.Component {
 
   // One pass over the saved PDF: H and P codes land on the chemical, section 9 values on
   // the sample. Cf. Chemotion::SdsExtractor.
+  // A result arriving after unmount belongs to a sample no longer shown, so it is dropped.
   extractFromSheet = (sheetPath) => {
+    const { extractingSheet } = this.state;
+    if (extractingSheet) return Promise.resolve();
+
     this.setState({ warningMessage: '', extractingSheet: sheetPath });
 
-    ChemicalFetcher.extractFromSds(sheetPath).then((result) => {
+    return ChemicalFetcher.extractFromSds(sheetPath).then((result) => {
+      if (this.unmounted) return;
+      if (result?.error) throw new Error(result.error);
+
       this.setState({ extractingSheet: '' });
       const properties = result?.properties ?? {};
       const phrases = result?.safetyPhrases;
@@ -483,16 +506,46 @@ export default class ChemicalTab extends React.Component {
       this.setState((state) => ({
         extractedProperties: { ...state.extractedProperties, [sheetPath]: properties }
       }));
+      const replacedPhrases = codeCount > 0 && !this.safetyPhrasesEmpty();
       if (codeCount) this.handleFieldChanged('safetyPhrases', phrases);
-      this.mapToSampleProperties(properties);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
+      const mapped = this.mapToSampleProperties(properties);
+      this.notify(ChemicalTab.extractionSummary(result, codeCount, replacedPhrases, mapped));
+    }).catch((error) => {
+      if (this.unmounted) return;
+      console.log(error);
       this.setState({
         extractingSheet: '',
-        warningMessage: 'Could not read this safety data sheet'
+        warningMessage: error?.message
+          ? `Could not read this safety data sheet: ${error.message}`
+          : 'Could not read this safety data sheet'
       });
     });
   };
+
+  // Says what was overwritten, and flags phrases matched from wording since no code was printed.
+  static extractionSummary(result, codeCount, replacedPhrases, { written, skipped }) {
+    const phrases = result?.diagnostics?.phrases ?? {};
+    const fromWording = codeCount > 0 && phrases.source === 'wording';
+    const unmatched = (phrases.unmatched_statements ?? []).length;
+    const parts = [];
+    if (!codeCount) parts.push('No H or P phrases found; the existing ones are kept');
+    if (codeCount) {
+      parts.push(`${codeCount} H and P phrases ${replacedPhrases ? 'replaced the previous ones' : 'filled in'}`);
+    }
+    if (fromWording) {
+      parts.push('The sheet prints no codes, so they were matched from the statement wording; check them');
+    }
+    if (fromWording && unmatched) parts.push(`${unmatched} statements matched no known phrase`);
+    if (written.length) parts.push(`Sample properties set: ${written.join(', ')}`);
+    if (skipped.length) parts.push(`Not in a unit the sample takes: ${skipped.join(', ')}`);
+
+    return {
+      title: 'Read from the safety data sheet',
+      message: `${parts.join('. ')}.`,
+      level: fromWording ? 'warning' : 'success',
+      position: 'tc',
+    };
+  }
 
   // The extractor omits rather than guesses, so say which step stopped short.
   static extractionWarning(result) {
@@ -641,44 +694,58 @@ export default class ChemicalTab extends React.Component {
   }
 
   /* eslint-disable prefer-destructuring */
+  // Returns the labels written and those whose unit the sample field cannot hold.
+  // Only a Sample has the range and xref fields these map onto; an SBMM sample gets none.
   mapToSampleProperties(properties) {
     const { sample, handleUpdateSample } = this.props;
+    const written = [];
+    const skipped = [];
+    if (!(sample instanceof Sample)) return { written, skipped };
 
-    const updateSampleProperty = (propertyName, propertyValue) => {
-      if (propertyValue) {
-        const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
-        // replace hyphen with minus sign and parse
-        const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
-        const upperBound = rangeValues.length === 2
-          ? parseFloat(rangeValues[1].replace('−', '-'))
-          : Number.POSITIVE_INFINITY;
-        sample.updateRange(propertyName, lowerBound, upperBound);
-      }
+    // Melting, boiling and flash point fields are Celsius only.
+    const celsius = (key, label) => {
+      if (!properties[key]) return null;
+      const quantity = parseSheetQuantity(properties[key]);
+      if (quantity?.unit === '°C') return quantity;
+      skipped.push(label);
+      return null;
     };
 
-    updateSampleProperty('boiling_point', properties.boiling_point);
-    updateSampleProperty('melting_point', properties.melting_point);
+    [['boiling_point', 'boiling point'], ['melting_point', 'melting point']].forEach(([key, label]) => {
+      const quantity = celsius(key, label);
+      if (!quantity) return;
+      sample.updateRange(key, quantity.low, quantity.high);
+      written.push(label);
+    });
 
-    // The unit field is fixed, so only a Celsius reading may be written into it.
-    const flashPoint = properties.flash_point?.match(/^(-?[\d.]+)\s*°C$/);
+    const flashPoint = celsius('flash_point', 'flash point');
     if (flashPoint) {
-      sample.xref.flash_point = { unit: '°C', value: parseFloat(flashPoint[1]) };
+      sample.xref.flash_point = { unit: '°C', value: flashPoint.low };
+      written.push('flash point');
     }
 
-    const densityNumber = properties.density?.match(/[0-9.]+/g);
-    if (densityNumber) {
-      sample.density = densityNumber[0];
+    if (properties.density) {
+      const density = parseSheetQuantity(properties.density);
+      if (density && density.low === density.high && DENSITY_UNITS.includes(density.unit)) {
+        sample.density = density.low;
+        written.push('density');
+      } else {
+        skipped.push('density');
+      }
     }
 
-    sample.xref.form = properties.form || sample.xref.form;
-    sample.xref.color = properties.color || sample.xref.color;
-    sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
-    sample.xref.solubility = properties.solubility || sample.xref.solubility;
+    [['form', 'form'], ['color', 'color'], ['refractive_index', 'refractive index'], ['solubility', 'solubility']]
+      .forEach(([key, label]) => {
+        if (!properties[key]) return;
+        sample.xref[key] = properties[key];
+        written.push(label);
+      });
 
-    if (handleUpdateSample) {
+    if (handleUpdateSample && written.length) {
       handleUpdateSample(sample);
       ElementActions.updateSample(new Sample(sample), false);
     }
+    return { written, skipped };
   }
 
   chemicalStatus(data) {
@@ -1156,24 +1223,23 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  // What a sheet row shows: its link, the vendor key its phrases and properties use, and
-  // a title with " vN" when the sample holds several sheets for one vendor and number.
+  // What a sheet row shows: its link, and a title with " vN" when the sample holds several
+  // sheets for one vendor and number.
   static describeSheet(document, index, savedSds) {
     const linkKey = Object.keys(document).find((key) => key.endsWith('_link')
       && !key.includes('_product_link') && document[key]);
     const link = linkKey ? safeHref(document[linkKey]) : null;
-    if (!link) return { link: null, vendorKey: '', title: 'Safety Data Sheet from queried vendor' };
+    if (!link) return { link: null, title: 'Safety Data Sheet from queried vendor' };
 
     if (!link.includes('/safety_sheets/')) {
       const vendorKey = linkKey.replace('_link', '').toLowerCase();
       const number = document[`${vendorKey}_product_number`] || '';
-      return { link, vendorKey, title: `Safety Data Sheet from ${vendorDisplayName(vendorKey)} - ${number}` };
+      return { link, title: `Safety Data Sheet from ${vendorDisplayName(vendorKey)} - ${number}` };
     }
 
     const { vendor, productNumber } = parseSavedSheetPath(link);
     const name = vendor ? vendorDisplayName(vendor) : 'queried vendor';
-    const vendorKey = vendor.toLowerCase();
-    if (!productNumber) return { link, vendorKey, title: `Safety Data Sheet from ${name}` };
+    if (!productNumber) return { link, title: `Safety Data Sheet from ${name}` };
 
     const isSameProduct = (sheet) => {
       const path = Object.entries(sheet || {}).find(([key, value]) => key.endsWith('_link') && value)?.[1];
@@ -1184,7 +1250,7 @@ export default class ChemicalTab extends React.Component {
     const version = savedSds.filter(isSameProduct).length > 1
       ? ` v${savedSds.slice(0, index).filter(isSameProduct).length + 1}`
       : '';
-    return { link, vendorKey, title: `Safety Data Sheet from ${name} - ${productNumber}${version}` };
+    return { link, title: `Safety Data Sheet from ${name} - ${productNumber}${version}` };
   }
 
   renderChildElements = (document, index) => {
@@ -1692,7 +1758,7 @@ export default class ChemicalTab extends React.Component {
   // fetched one. A search result has no file yet, hence the saved-path gate.
   renderSdsExtraction = (sheetPath) => {
     const { loadingQuerySafetySheets, extractingSheet, extractedProperties } = this.state;
-    const isSaved = !!sheetPath && sheetPath.includes('/safety_sheets/');
+    const isSaved = EXTRACTABLE_SHEET.test(sheetPath || '');
     const isLoading = extractingSheet === sheetPath;
     const hint = isSaved
       ? 'Reads H and P phrases and section 9 properties out of the saved sheet'
@@ -1709,7 +1775,7 @@ export default class ChemicalTab extends React.Component {
               <Button
                 id="extract-sds"
                 onClick={() => this.extractFromSheet(sheetPath)}
-                disabled={!isSaved || isLoading || !!loadingQuerySafetySheets}
+                disabled={!isSaved || !!extractingSheet || !!loadingQuerySafetySheets}
                 variant="light"
               >
                 {isLoading ? (

@@ -74,7 +74,16 @@ export default class ChemicalFetcher {
     return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
 
+  // Rejects on a failed request so the caller can tell it from a sheet that yielded nothing.
   static extractFromSds(sheetPath) {
-    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?path=${encodeURIComponent(sheetPath)}`);
+    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?${new URLSearchParams({ path: sheetPath })}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) return response.json();
+        return response.json().catch(() => ({})).then((errorData) => {
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        });
+      },
+      handleResponseError: (error) => { throw error; },
+    });
   }
 }

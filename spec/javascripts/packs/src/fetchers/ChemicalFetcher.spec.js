@@ -218,6 +218,29 @@ describe('ChemicalFetcher methods', () => {
       sinon.assert.calledOnce(fetchStub);
       expect(result).toEqual(expectedResponse);
     });
+
+    it('sends the path as one encoded query parameter', async () => {
+      fetchStub.resolves(new Response('{}'));
+
+      await ChemicalFetcher.extractFromSds('/safety_sheets/merck/a&b=c_0000000000000000.pdf');
+
+      const url = new URL(fetchStub.firstCall.args[0], 'http://localhost');
+      expect(url.pathname).toEqual('/api/v1/chemicals/extract_sds');
+      expect([...url.searchParams.keys()]).toEqual(['path']);
+      expect(url.searchParams.get('path')).toEqual('/safety_sheets/merck/a&b=c_0000000000000000.pdf');
+    });
+
+    it('rejects with the reason the server gave for a failed request', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({ error: 'path is missing' }), { status: 400 }));
+
+      await expect(ChemicalFetcher.extractFromSds('')).rejects.toThrow('path is missing');
+    });
+
+    it('rejects when the request does not reach the server', async () => {
+      fetchStub.rejects(new TypeError('Failed to fetch'));
+
+      await expect(ChemicalFetcher.extractFromSds(sheetPath)).rejects.toThrow('Failed to fetch');
+    });
   });
 });
 
