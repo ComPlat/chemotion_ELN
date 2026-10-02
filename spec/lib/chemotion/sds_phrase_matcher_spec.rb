@@ -80,6 +80,10 @@ RSpec.describe Chemotion::SdsPhraseMatcher do
     expect(codes('Causes damage to organs through prolonged or repeated exposure')).to eq(%w[H372])
   end
 
+  it 'matches the spillage statement of a corrosive to metals' do
+    expect(codes('Absorb spillage to prevent material damage')).to eq(%w[P390])
+  end
+
   it 'reads the US wording of a statement the EU text words differently' do
     expect(codes('Take action to prevent static discharges', 'Wear protective gloves')).to eq(%w[P243 P280])
   end

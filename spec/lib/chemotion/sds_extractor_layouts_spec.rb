@@ -39,7 +39,7 @@ RSpec.describe Chemotion::SdsExtractor do
                               'Eyes',
                               'IF IN EYES: Rinse cautiously with water for several minutes. ' \
                               'Remove contact lenses, if present and easy to do. Continue rinsing',
-                              'Absorb spillage to prevent material damage']))
+                              'May form combustible dust concentrations in air']))
     end
 
     it 'matches the codes from the wording', :aggregate_failures do
@@ -62,7 +62,7 @@ RSpec.describe Chemotion::SdsExtractor do
 
     it 'reports the statement it could not match, and each match with its score', :aggregate_failures do
       expect(result['diagnostics']['phrases']['unmatched_statements'])
-        .to eq(['Absorb spillage to prevent material damage'])
+        .to eq(['May form combustible dust concentrations in air'])
       expect(result['diagnostics']['phrases']['matched'].first)
         .to eq('text' => 'Highly flammable liquid and vapor', 'code' => 'H225', 'score' => 1.0)
     end
