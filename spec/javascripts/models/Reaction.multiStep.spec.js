@@ -45,6 +45,21 @@ describe('Reaction multi-step', () => {
       .reactionVolumeForConcentration()).toEqual(0.5);
   });
 
+  it('mirrors step 1 onto the reaction so other tabs read current values', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.duration = '34 Hour(s)';
+    reaction.enterMultiStep();
+    reaction.addStep();
+
+    reaction.reaction_steps[0].duration = '2 Hour(s)';
+    reaction.mirrorFirstStep();
+    expect(reaction.duration).toEqual('2 Hour(s)');
+
+    reaction.reaction_steps[1].duration = '9 Hour(s)';
+    reaction.mirrorFirstStep();
+    expect(reaction.duration).toEqual('2 Hour(s)');
+  });
+
   it('drops a deleted step and its materials from the save payload and renumbers', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
