@@ -1064,6 +1064,12 @@ export default class Reaction extends Element {
     return context;
   }
 
+  mirrorFirstStep() {
+    const first = this.reaction_steps.filter((step) => !step._destroy)[0];
+    if (!first) return;
+    Object.keys(STEP_FIELD_DEFAULTS).forEach((field) => { this[field] = first[field]; });
+  }
+
   volumeContextFor(sample) {
     if (!this.isMultiStep()) return this;
     const step = this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id);

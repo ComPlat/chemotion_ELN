@@ -2597,6 +2597,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const step = reaction.reaction_steps.find((entry) => entry.id === stepId);
     if (!step) return;
     step[field] = value;
+    reaction.mirrorFirstStep();
     reaction.changed = true;
   }
 
