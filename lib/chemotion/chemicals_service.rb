@@ -177,6 +177,7 @@ module Chemotion
     def self.save_vendor_sheet(sample_id:, cas:, chemical_data:, product_info:)
       return sds_limit_error('saving') if sds_limit_reached?(chemical_data)
 
+      product_info = trimmed_product_info(product_info)
       invalid = product_info_error(product_info)
       return { error: invalid, status: 400 } if invalid
 
@@ -190,6 +191,16 @@ module Chemotion
       find_or_create_chemical_with_safety_data(sample_id: sample_id, cas: cas, chemical_data: chemical_data,
                                                file_path: file_path, product_number: product_info['productNumber'],
                                                vendor: vendor)
+    end
+
+    # Product numbers are read from vendor page text, so surrounding whitespace is dropped
+    # before the fields are checked and used for the fetch, the file name and the sheet key.
+    def self.trimmed_product_info(product_info)
+      return product_info unless product_info.is_a?(Hash)
+
+      %w[vendor productNumber].each_with_object(product_info.dup) do |key, info|
+        info[key] = info[key].strip if info[key].is_a?(String)
+      end
     end
 
     # The row the client points at is its own copy of a search result, so every field the
