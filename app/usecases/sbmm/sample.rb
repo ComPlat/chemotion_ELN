@@ -79,12 +79,7 @@ module Usecases
         return unless sbmm.persisted? # new objects are fine, the finder took care of checking if a duplicate exists
         return if current_user.is_a?(Admin)
 
-        # there is at least one other user that uses this SBMM
-        more_than_one_user =
-          SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: sbmm.id, except_user_id: current_user.id)
-                                          .positive?
-        sbmm_has_changes = sbmm.changes.any?
-        return unless sbmm_has_changes && more_than_one_user
+        return unless sbmm.changes.any? && sbmm.used_by_other_users?(current_user)
 
         raise Errors::SbmmUpdateNotAllowedError.new(
           original_sbmm: SequenceBasedMacromolecule.find(sbmm.id),

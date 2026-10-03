@@ -647,6 +647,135 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  # Each by-id GET checks the attachment it serves.
+  describe 'GET routes serving an attachment by id' do
+    let(:own_sample) { create(:sample, collections: [create(:collection, user: user)]) }
+    let(:other_user) { create(:person) }
+    let(:foreign_sample) do
+      create(:sample_with_image_in_analysis, collections: [create(:collection, user: other_user)])
+    end
+    let(:foreign_attachment) { foreign_sample.container.children[0].children[0].attachments.first }
+    let(:own_element_params) { { container_id: own_sample.container.id, sample_id: own_sample.id } }
+
+    %w[%s image/%s thumbnail/%s].each do |route|
+      it "rejects GET #{format(route, ':id')} for another user's attachment" do
+        get "/api/v1/attachments/#{format(route, foreign_attachment.id)}", params: own_element_params
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "rejects HEAD #{format(route, ':id')} for another user's attachment" do
+        head "/api/v1/attachments/#{format(route, foreign_attachment.id)}"
+        expect(response).to have_http_status(:unauthorized)
+        expect(response.headers['Content-Disposition']).to be_nil
+      end
+    end
+
+    context 'with an unsorted inbox file' do
+      let(:attachment) do
+        create(:attachment, :with_png_image, attachable: nil, attachable_type: 'Container', created_for: owner.id)
+      end
+
+      before { get "/api/v1/attachments/#{attachment.id}" }
+
+      context 'when it is the user\'s' do
+        let(:owner) { user }
+
+        it { expect(response).to have_http_status(:ok) }
+      end
+
+      context 'when it is another user\'s' do
+        let(:owner) { other_user }
+
+        it { expect(response).to have_http_status(:unauthorized) }
+      end
+    end
+  end
+
+  # thumbnails/files resolve each attachment through its root element, so attachments linked
+  # directly to an element are served like ones in an analysis container.
+  describe 'POST thumbnails and files with an attachment linked directly to a research plan' do
+    let(:attachment) { create(:attachment, :with_png_image) }
+
+    before { create(:research_plan, attachments: [attachment], collections: [create(:collection, user: user)]) }
+
+    it 'returns its thumbnail' do
+      post '/api/v1/attachments/thumbnails', params: { ids: [attachment.id] }
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['thumbnails'].first['id']).to eq(attachment.id)
+    end
+
+    it 'returns its file' do
+      post '/api/v1/attachments/files', params: { ids: [attachment.id] }
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['files'].first['id']).to eq(attachment.id)
+    end
+  end
+
+  # Attachments of a generic element are authorized against the element, like any other element.
+  describe 'GET an attachment of a generic element' do
+    let(:owner) { create(:person) }
+    let(:collection) { create(:collection, user: owner) }
+    let(:element) { create(:element, creator: owner, collections: [collection]) }
+    let(:attachment) { create(:attachment, :with_png_image, attachable: element, created_for: owner.id) }
+
+    it 'serves it to a user the element is shared with' do
+      create(:collection_share, collection: collection, shared_with: user, element_detail_level: 10)
+      get "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'rejects a user the element is not shared with' do
+      get "/api/v1/attachments/#{attachment.id}"
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  # Prediction lookups stay within the attachment's own attachable.
+  describe 'POST files for an Unsorted file' do
+    let(:own_inbox_file) do
+      create(:attachment, :with_png_image, attachable: nil, attachable_type: 'Container', created_for: user.id)
+    end
+    let(:other_users_json) do
+      Tempfile.new(%w[other .infer.json]).tap do |f|
+        f.write('{"output": "other"}')
+        f.flush
+      end
+    end
+
+    before do
+      create(:attachment, filename: 'other.infer.json', file_path: other_users_json.path, aasm_state: 'json',
+                          attachable: nil, attachable_type: 'Container', created_for: create(:person).id)
+      post '/api/v1/attachments/files', params: { ids: [own_inbox_file.id] }
+    end
+
+    after { other_users_json.close! }
+
+    it 'does not return predictions from another attachable' do
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response['files'].first['predictions']).to eq({})
+    end
+  end
+
+  describe 'POST files with unknown ids only' do
+    it 'answers not found' do
+      post '/api/v1/attachments/files', params: { ids: [Attachment.maximum(:id).to_i + 1000] }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'HEAD /api/v1/attachments/sample_analyses/{sample_id}' do
+    let(:sample) { create(:sample, collections: [create(:collection, user: user)]) }
+
+    it 'answers with headers only, without building the archive' do
+      allow(DownloadAnalysesJob).to receive(:perform_now)
+      allow(DownloadAnalysesJob).to receive(:perform_later)
+      head "/api/v1/attachments/sample_analyses/#{sample.id}"
+      expect(response).to have_http_status(:ok)
+      expect(DownloadAnalysesJob).not_to have_received(:perform_now)
+      expect(DownloadAnalysesJob).not_to have_received(:perform_later)
+    end
+  end
+
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
     let(:user) { create(:person) }
     let(:container) { create(:container, containable: user) }
@@ -680,6 +809,87 @@ describe Chemotion::AttachmentAPI do
       it 'old files have been deleted' do
         atts = Attachment.where(filename: original_attachment.filename)
         expect(atts.length).to eq(1)
+      end
+    end
+
+    # The previous file is looked up on the same attachable (type and id), not just the same id.
+    # The decoy is the user's own (a template attachment resolves to its created_for user), so only
+    # the attachable type keeps it from counting as a duplicate.
+    context 'when an attachable of another type with the same id has a file of the same name' do
+      let!(:same_name_elsewhere) do
+        create(:attachment, :with_spectra_file, filename: 'same_name.jdx', attachable: nil,
+                                                attachable_type: 'Template', attachable_id: container.id,
+                                                created_for: user.id)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'same_name.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps that file' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: same_name_elsewhere.id)).not_to be_nil
+      end
+    end
+
+    # Two same-named roots sent together: each is regenerated, neither removes the other.
+    context 'when two same-named files are regenerated together' do
+      let(:first_copy) { create(:attachment, :with_spectra_file_failure, filename: 'twin.jdx', attachable: container) }
+      let(:second_copy) do
+        create(:attachment, :with_spectra_file_failure, filename: 'twin.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [first_copy.id, second_copy.id]
+        execute_request
+      end
+
+      it 'keeps both' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.where(id: [first_copy.id, second_copy.id]).count).to eq 2
+      end
+    end
+
+    # A same-named file of another lineage is a distinct file, not an older copy.
+    context 'when another lineage on the same container has a file of the same name' do
+      let!(:other_lineage) do
+        create(:attachment, :with_spectra_file, filename: 'lineage.jdx', attachable: container)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'lineage.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps it' do
+        expect(Attachment.find_by(id: other_lineage.id)).not_to be_nil
+      end
+    end
+
+    context 'when regenerating an Unsorted file while another Unsorted file has the same name' do
+      let!(:other_inbox_file) do
+        create(:attachment, :with_spectra_file, filename: 'inbox.jdx', attachable: nil, attachable_type: 'Container',
+                                                created_for: user.id)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'inbox.jdx', attachable: nil,
+                                                        attachable_type: 'Container', created_for: user.id)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps the other file' do
+        expect(Attachment.find_by(id: other_inbox_file.id)).not_to be_nil
       end
     end
 
@@ -939,10 +1149,9 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  # GET /api/v1/attachments/svgs (QR code SVG) has no frontend caller left, and the shared
-  # `before` block above only grants can_dwnld for zip/*_analyses/plain-attachment URLs - any
-  # request to /svgs falls through with can_dwnld staying false, so it unconditionally 401s.
-  # Dead and already unreachable; not worth a spec pretending it works.
+  # GET /api/v1/attachments/svgs (QR code SVG) has no frontend caller left. The resource's GET check
+  # (get_request_readable?) has no branch for it and reads the request's attachment, which /svgs
+  # does not have, so it answers 401. Dead and unreachable; not worth a spec pretending it works.
 
   describe 'POST /api/v1/attachments/:attachment_id/annotation' do
     let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
@@ -995,9 +1204,9 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  # Regression: unsorted inbox files have attachable_type 'Container' but no attachable_id, so
-  # Attachment#root_element is nil and write_access? denies everyone - including the owner, who
-  # could no longer delete their own inbox files. No write_access? stub here on purpose.
+  # Regression: unsorted inbox files have attachable_type 'Container' but no attachable_id, so there
+  # is no root element to authorize against; they belong to their created_for user, who must be able
+  # to delete them. No write_access? stub here on purpose.
   describe 'deleting an unsorted inbox file' do
     let(:inbox_attachment) do
       post '/api/v1/attachments/upload_to_inbox',
@@ -1070,9 +1279,14 @@ describe Chemotion::AttachmentAPI do
       expect(Attachment.find_by(id: attachment.id)).not_to be_nil
     end
 
+    # The SBMM is then a shared reference record: the user passes ElementPolicy#update? through the
+    # share, but may only change their own uploads on it.
     context 'when its sample is in a collection shared with the user with edit rights' do
+      let(:owner) { create(:person) }
+      let!(:own_upload) { create(:attachment, :with_spectra_file, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_upload) { create(:attachment, :with_spectra_file, attachable: sbmm, created_for: owner.id) }
+
       before do
-        owner = create(:person)
         collection = create(:collection, user: owner)
         create(:collection_share, collection: collection, shared_with: user,
                                   permission_level: CollectionShare.permission_level(:edit_elements))
@@ -1080,9 +1294,32 @@ describe Chemotion::AttachmentAPI do
                                                      collections: [collection])
       end
 
-      it 'allows delete' do
-        delete "/api/v1/attachments/#{attachment.id}"
+      it 'allows deleting their own upload' do
+        delete "/api/v1/attachments/#{own_upload.id}"
         expect(response).to have_http_status(:ok)
+      end
+
+      it "rejects deleting another user's upload" do
+        delete "/api/v1/attachments/#{foreign_upload.id}"
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.find_by(id: foreign_upload.id)).not_to be_nil
+      end
+
+      it "rejects bulk_delete including another user's upload" do
+        delete '/api/v1/attachments/bulk_delete', params: { ids: [own_upload.id, foreign_upload.id] }
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.where(id: [own_upload.id, foreign_upload.id]).count).to eq 2
+      end
+
+      it "skips another user's upload on regenerate_spectrum" do
+        post '/api/v1/attachments/regenerate_spectrum', params: { original: [], generated: [foreign_upload.id] }
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: foreign_upload.id)).not_to be_nil
+      end
+
+      it "rejects updating the annotation of another user's upload" do
+        post "/api/v1/attachments/#{foreign_upload.id}/annotation", params: { updated_svg_string: '<svg/>' }
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
