@@ -65,16 +65,24 @@ module Chemotion
         end
       end
 
+      # Whether get_request_readable? resolved one of the analyses downloads.
+      def element_download_request?
+        [@container, @sample, @device_description, @sequence_based_macromolecule_sample].any?
+      end
+
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
 
-      # Drops the other files of the same name on the same attachable that the user may change.
-      # An unattached file has no attachable, so nothing counts as its duplicate.
-      def remove_duplicated(att)
-        att.same_attachable.where(filename: att.filename).where.not(id: att.id).find_each do |old_att|
-          old_att.destroy if writable?(old_att)
-        end
+      # Drops older copies of +att+: same attachable, same filename and same lineage (ancestry root),
+      # if the user may change them. Rows named in the current request (+batch_ids+) are left to
+      # their own iteration, and same-named files of other lineages are distinct files, as in
+      # generate_att. An unattached file has no attachable, so nothing counts as its duplicate.
+      def remove_duplicated(att, batch_ids = [])
+        att.same_attachable.where(filename: att.filename)
+           .merge(Attachment.subtree_of(att.root_id))
+           .where.not(id: [att.id, *batch_ids])
+           .find_each { |old_att| old_att.destroy if writable?(old_att) }
       end
 
       def remove_generated_children(att)
@@ -122,6 +130,8 @@ module Chemotion
           error!('401 Unauthorized', 401) unless writable?(@attachment)
         when 'GET', 'HEAD'
           error!('401 Unauthorized', 401) unless get_request_readable?
+          # The analyses downloads build their archive in the route body; a HEAD only gets headers.
+          error!('', 200) if request.head? && element_download_request?
         end
       end
 
@@ -465,6 +475,7 @@ module Chemotion
       end
       post 'files' do
         atts = Attachment.where(id: params[:ids]).index_by(&:id)
+        error!('Could not find attachment', 404) if params[:ids].any? && atts.empty?
         files = params[:ids].map do |a_id|
           att = atts[a_id]
           att && readable?(att) ? raw_file_obj(att) : nil
@@ -493,7 +504,7 @@ module Chemotion
           # skipped rather than raising AASM::InvalidTransition for the whole request.
           next unless att.root? && att.may_set_regenerating?
 
-          remove_duplicated(att)
+          remove_duplicated(att, pm[:original])
           remove_generated_children(att)
 
           att.set_regenerating
@@ -519,7 +530,7 @@ module Chemotion
         Attachment.where(id: pm[:edited]).each do |att|
           next unless writable?(att)
 
-          remove_duplicated(att)
+          remove_duplicated(att, pm[:edited])
 
           # TODO: do not use abs_path
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(

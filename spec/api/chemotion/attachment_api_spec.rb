@@ -756,6 +756,26 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'POST files with unknown ids only' do
+    it 'answers not found' do
+      post '/api/v1/attachments/files', params: { ids: [Attachment.maximum(:id).to_i + 1000] }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'HEAD /api/v1/attachments/sample_analyses/{sample_id}' do
+    let(:sample) { create(:sample, collections: [create(:collection, user: user)]) }
+
+    it 'answers with headers only, without building the archive' do
+      allow(DownloadAnalysesJob).to receive(:perform_now)
+      allow(DownloadAnalysesJob).to receive(:perform_later)
+      head "/api/v1/attachments/sample_analyses/#{sample.id}"
+      expect(response).to have_http_status(:ok)
+      expect(DownloadAnalysesJob).not_to have_received(:perform_now)
+      expect(DownloadAnalysesJob).not_to have_received(:perform_later)
+    end
+  end
+
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
     let(:user) { create(:person) }
     let(:container) { create(:container, containable: user) }
@@ -813,6 +833,43 @@ describe Chemotion::AttachmentAPI do
       it 'keeps that file' do
         expect(response).to have_http_status(:created)
         expect(Attachment.find_by(id: same_name_elsewhere.id)).not_to be_nil
+      end
+    end
+
+    # Two same-named roots sent together: each is regenerated, neither removes the other.
+    context 'when two same-named files are regenerated together' do
+      let(:first_copy) { create(:attachment, :with_spectra_file_failure, filename: 'twin.jdx', attachable: container) }
+      let(:second_copy) do
+        create(:attachment, :with_spectra_file_failure, filename: 'twin.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [first_copy.id, second_copy.id]
+        execute_request
+      end
+
+      it 'keeps both' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.where(id: [first_copy.id, second_copy.id]).count).to eq 2
+      end
+    end
+
+    # A same-named file of another lineage is a distinct file, not an older copy.
+    context 'when another lineage on the same container has a file of the same name' do
+      let!(:other_lineage) do
+        create(:attachment, :with_spectra_file, filename: 'lineage.jdx', attachable: container)
+      end
+      let(:original_attachment) do
+        create(:attachment, :with_spectra_file_failure, filename: 'lineage.jdx', attachable: container)
+      end
+
+      before do
+        spectrum_params[:original] = [original_attachment.id]
+        execute_request
+      end
+
+      it 'keeps it' do
+        expect(Attachment.find_by(id: other_lineage.id)).not_to be_nil
       end
     end
 
@@ -1092,10 +1149,9 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
-  # GET /api/v1/attachments/svgs (QR code SVG) has no frontend caller left, and the shared
-  # `before` block above only grants can_dwnld for zip/*_analyses/plain-attachment URLs - any
-  # request to /svgs falls through with can_dwnld staying false, so it unconditionally 401s.
-  # Dead and already unreachable; not worth a spec pretending it works.
+  # GET /api/v1/attachments/svgs (QR code SVG) has no frontend caller left. The resource's GET check
+  # (get_request_readable?) has no branch for it and reads the request's attachment, which /svgs
+  # does not have, so it answers 401. Dead and unreachable; not worth a spec pretending it works.
 
   describe 'POST /api/v1/attachments/:attachment_id/annotation' do
     let(:attachment) { create(:attachment, :with_image, created_for: user.id, attachable_type: '') }
