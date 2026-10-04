@@ -13,6 +13,7 @@ namespace :attachments do
     counts = results.group_by(&:action).transform_values(&:size)
     puts "#{dry_run ? 'Would repair' : 'Repaired'} #{results.size} attachment(s): " \
          "#{counts.fetch(:rewritten, 0)} entry(ies) rewritten, " \
-         "#{counts.fetch(:removed, 0)} removed (PNG missing, regenerated on next preview)."
+         "#{counts.fetch(:removed, 0)} removed (PNG missing, regenerated on next preview), " \
+         "#{counts.fetch(:skipped, 0)} skipped (storage not configured or not reachable from this host)."
   end
 end

@@ -56,13 +56,30 @@ RSpec.describe RepairConversionDerivativesTask do
       expect(described_class.broken_attachments.pluck(:id)).not_to include(attachment.id)
     end
 
+    it 'skips, without writing or raising, a storage that is not configured' do
+      attachment.attachment_data['storage'] = 'unknown'
+      attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
+
+      expect(described_class.execute!(dry_run: false).map(&:action)).to eq([:skipped])
+      expect(Attachment.find(attachment.id).attachment_data.dig('derivatives', 'conversion'))
+        .to eq('id' => "/#{valid_entry['id']}")
+    end
+
+    it 'skips, rather than removes, when the storage directory is not on this host' do
+      allow(File).to receive(:directory?).and_call_original
+      allow(File).to receive(:directory?).with(Shrine.storages[:store].directory.to_s).and_return(false)
+
+      expect(described_class.execute!(dry_run: false).map(&:action)).to eq([:skipped])
+      expect(Attachment.find(attachment.id).attachment_data['derivatives']).to have_key('conversion')
+    end
+
     it 'removes the entry when the converted file is gone, so the next preview converts again' do
       File.delete(attachment.attachment(:conversion).url)
       described_class.execute!(dry_run: false)
       repaired = Attachment.find(attachment.id)
 
       expect(repaired.attachment_data['derivatives']).not_to have_key('conversion')
-      expect(Usecases::Attachments::LoadImage.execute!(repaired, false).bytesize).to be > 0
+      expect(Usecases::Attachments::LoadImage.execute!(repaired, annotated: false).bytesize).to be > 0
     end
   end
 end

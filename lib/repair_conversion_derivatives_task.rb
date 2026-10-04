@@ -9,7 +9,10 @@
 # For each such entry:
 # - the PNG is still on disk: the entry is rewritten in the shape Shrine writes on upload
 #   (+id+ relative to the storage directory, +storage+, +metadata+);
-# - the PNG is gone: the entry is removed, and the next preview converts the TIFF again.
+# - the PNG is gone: the entry is removed, and the next preview converts the TIFF again;
+# - the storage isn't configured, or its directory isn't reachable from this host (e.g. the
+#   uploads volume isn't mounted where the migration runs): the entry is left alone, so a later
+#   run can repair it. It never aborts the run.
 #
 # The attacher is never loaded here (it would raise on these entries); only the raw
 # +attachment_data+ column is read and written.
@@ -17,13 +20,14 @@ module RepairConversionDerivativesTask
   Result = Struct.new(:attachment_id, :action, :entry)
 
   # @param dry_run [Boolean] when true, nothing is written
-  # @return [Array<Result>] one result per broken entry; +action+ is +:rewritten+ or +:removed+
+  # @return [Array<Result>] one result per broken entry; +action+ is +:rewritten+, +:removed+
+  #   or +:skipped+
   def self.execute!(dry_run: true)
     results = []
     # in batches: it runs as a migration on instances with many attachments
     broken_attachments.find_each do |attachment|
       result = repair(attachment)
-      persist(attachment) unless dry_run
+      persist(attachment) unless dry_run || result.action == :skipped
       log(result, dry_run)
       results << result
     end
@@ -46,8 +50,11 @@ module RepairConversionDerivativesTask
   def self.repair(attachment)
     data = attachment.attachment_data
     storage_key = data['storage'] || 'store'
+    directory = storage_directory(storage_key)
+    return Result.new(attachment.id, :skipped, nil) unless directory
+
     id = data.dig('derivatives', 'conversion', 'id').to_s.sub(%r{\A/+}, '')
-    path = File.join(Shrine.storages[storage_key.to_sym].directory.to_s, id)
+    path = File.join(directory, id)
 
     if id.present? && File.file?(path)
       data['derivatives']['conversion'] = shrine_entry(id, storage_key, path)
@@ -56,6 +63,16 @@ module RepairConversionDerivativesTask
       data['derivatives'].delete('conversion')
       Result.new(attachment.id, :removed, nil)
     end
+  end
+
+  # @return [String, nil] the storage's directory, or nil when the storage isn't a configured
+  #   file system storage or its directory isn't on this host
+  def self.storage_directory(storage_key)
+    storage = Shrine.storages[storage_key.to_sym]
+    return unless storage.respond_to?(:directory)
+
+    directory = storage.directory.to_s
+    directory if File.directory?(directory)
   end
 
   def self.shrine_entry(id, storage_key, path)
