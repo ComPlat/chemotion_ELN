@@ -45,13 +45,27 @@ module Usecases
         raise Errors::ConversionFailed, "could not convert attachment #{attachment.id}: #{e.message}"
       end
 
+      # Records the converted PNG as the +conversion+ derivative. The converter already wrote it
+      # where Shrine stores derivatives, so only the entry is written, in the shape Shrine reads
+      # back (+id+ relative to the storage directory, +storage+, +metadata+); an entry without
+      # +storage+ makes every later load of the attachment's derivatives raise.
+      #
+      # @param attachment [Attachment]
+      # @param result [Hash] the converter result; +:conversion+ is the (closed) PNG file
       def self.update_attachment_data_column(attachment, result)
+        path = File.path(result[:conversion])
+        root_path = attachment.attachment.storage.directory.to_s
         # a TIFF stored before derivatives were generated has none yet
         attachment.attachment_data['derivatives'] ||= {}
-        attachment.attachment_data['derivatives']['conversion'] = {}
-        root_path = attachment.attachment.storage.directory.to_s
-        attachment.attachment_data['derivatives']['conversion']['id'] =
-          File.path(result[:conversion]).split(root_path).last
+        attachment.attachment_data['derivatives']['conversion'] = {
+          'id' => Pathname.new(path).relative_path_from(Pathname.new(root_path)).to_s,
+          'storage' => attachment.attachment.storage_key.to_s,
+          'metadata' => {
+            'filename' => File.basename(path),
+            'size' => File.size(path),
+            'mime_type' => 'image/png',
+          },
+        }
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 

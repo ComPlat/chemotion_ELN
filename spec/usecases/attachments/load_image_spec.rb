@@ -103,6 +103,14 @@ RSpec.describe Usecases::Attachments::LoadImage do
       it 'size of returned image equals size of converted image' do
         expect(tmp_file.size).to eq File.open(attachment.attachment(:conversion).url).size
       end
+
+      it 'records a conversion derivative Shrine can load again' do
+        loaded_image
+        reloaded = Attachment.find(attachment.id)
+        expect(reloaded.attachment_data.dig('derivatives', 'conversion')).to include('storage' => 'store')
+        expect(reloaded.attachment_attacher.derivatives[:conversion].exists?).to be true
+        expect(described_class.execute!(reloaded, false).bytesize).to eq File.size(reloaded.attachment(:conversion).url)
+      end
     end
 
     context 'with image attachment(tif, stored without any derivatives)' do
@@ -115,9 +123,11 @@ RSpec.describe Usecases::Attachments::LoadImage do
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      it 'converts the image and records the conversion' do
+      it 'converts the image and records a conversion Shrine can load again' do
         expect(tmp_file.size).to be > 0
-        expect(updated_attachment.attachment_data.dig('derivatives', 'conversion', 'id')).to be_present
+        reloaded = Attachment.find(attachment.id)
+        expect(reloaded.attachment_attacher.derivatives[:conversion].exists?).to be true
+        expect(described_class.execute!(reloaded, false).bytesize).to be > 0
       end
     end
 
