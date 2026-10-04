@@ -278,17 +278,14 @@ RSpec.describe Chemotion::GenerateFileHashUtils do
   end
 
   describe '.find_identical_sheet' do
-    let(:base_dir) { Chemotion::GenerateFileHashUtils::SAFETY_SHEETS_DIR }
+    let(:base_dir) { described_class.safety_sheets_root.to_s }
     let(:vendor_dir) { File.join(base_dir, 'dupvendor') }
     let(:other_dir) { File.join(base_dir, 'othervendor') }
     let(:source) { File.join(Dir.mktmpdir, 'incoming.pdf') }
 
     before { FileUtils.mkdir_p([vendor_dir, other_dir]) }
 
-    after do
-      FileUtils.rm_rf([vendor_dir, other_dir])
-      FileUtils.rm_f(source)
-    end
+    after { FileUtils.rm_f(source) }
 
     # A saved sheet is named for its own content, which is what makes the lookup a glob.
     def saved_as(dir, product, content)

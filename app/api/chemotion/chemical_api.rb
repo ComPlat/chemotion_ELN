@@ -173,51 +173,27 @@ module Chemotion
         end
       end
 
-      resources :safety_phrases do
-        desc 'H and P safety phrases'
+      resources :extract_sds do
+        desc 'Read H and P codes and section 9 properties out of a saved safety data sheet'
 
         params do
-          requires :vendor, type: String, desc: 'params'
+          requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
 
-        route_param :sample_id do
-          get do
-            Chemotion::ChemicalsService.handle_exceptions do
-              chemical = Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
-              if chemical.chemical_data.present?
-                if params[:vendor] == 'thermofischer' && chemical.chemical_data[0]['alfaProductInfo']
-                  product_number = chemical.chemical_data[0]['alfaProductInfo']['productNumber']
-                  Chemotion::ChemicalsService.safety_phrases_thermofischer(product_number)
-                elsif params[:vendor] == 'merck' && chemical.chemical_data[0]['merckProductInfo']
-                  product_link = chemical.chemical_data[0]['merckProductInfo']['productLink']
-                  Chemotion::ChemicalsService.safety_phrases_merck(product_link)
-                else
-                  err_body = 'No safety phrases could be found'
-                  err_body
-                end
-              else
-                status 204
-              end
-            end
-          end
-        end
-      end
-
-      resources :chemical_properties do
-        desc 'additional chemical properties'
-
-        params do
-          requires :link, type: String, desc: 'vendor product link'
-        end
-
+        # 400 for a path that is not a saved sheet, 404 when it is gone, 422 when the PDF cannot be
+        # read; a readable sheet that yields nothing is a 200 whose diagnostics say why.
         get do
-          Chemotion::ChemicalsService.handle_exceptions do
-            if params[:link].include? 'alfa'
-              Chemotion::ChemicalsService.chemical_properties_alfa(params[:link])
-            elsif params[:link].include? 'sigmaaldrich'
-              Chemotion::ChemicalsService.chemical_properties_merck(params[:link])
-            end
-          end
+          path = Chemotion::SdsExtractor.saved_sheet_path(params[:path])
+          error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400) if path.nil?
+          error!({ error: 'the safety data sheet is no longer on the server' }, 404) unless path.file?
+
+          result = Chemotion::SdsExtractor.extract(path.to_s)
+          failure = result.dig('diagnostics', 'errors')&.first
+          error!({ error: failure, diagnostics: result['diagnostics'] }, 422) if failure
+          result
+        rescue StandardError => e
+          Rails.logger.error("extract_sds failed: #{e.class}: #{e.message}")
+          error!({ error: 'the safety data sheet could not be read' }, 500)
         end
       end
     end

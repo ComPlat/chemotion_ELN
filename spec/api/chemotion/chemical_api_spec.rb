@@ -161,37 +161,6 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
-  describe 'GET safety phrases /api/v1/chemicals/safety_phrases' do
-    let(:chemical) { create(:chemical, id: 1, sample_id: s.id) }
-    let(:params) { { vendor: 'Thermofisher' } }
-
-    before do
-      get "/api/v1/chemicals/safety_phrases/#{chemical.sample_id}?vendor=#{params[:vendor]}"
-    end
-
-    it 'returns no content' do
-      expect(response).to have_http_status(:no_content)
-    end
-  end
-
-  describe 'GET chemical properties /api/v1/chemicals/chemical_properties' do
-    let(:params) { { link: 'alfa' } }
-
-    before { get '/api/v1/chemicals/chemical_properties', params: params }
-
-    it 'response is ok with params as link' do
-      expect(response).to have_http_status(:ok)
-    end
-
-    context 'when link unsupported' do
-      it 'returns empty body' do
-        get '/api/v1/chemicals/chemical_properties', params: { link: 'unknownvendor' }
-        expect(response.status).to eq 200
-        expect(response.body).to be_empty.or eq('null')
-      end
-    end
-  end
-
   describe 'PUT update chemicals with no changes' do
     context 'when chemical_data param omitted (validation error)' do
       before do
@@ -378,107 +347,85 @@ describe Chemotion::ChemicalAPI do
     end
   end
 
-  describe 'GET safety_phrases thermofischer' do
-    context 'when product info present (returns phrases)' do
-      let(:chemical_tf) do
-        create(:chemical, chemical_data: [{ 'alfaProductInfo' => { 'productNumber' => 'A14672' } }])
+  describe 'GET extract_sds' do
+    let(:link) { '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
+    let(:body) { JSON.parse(response.body) }
+
+    context 'with a saved sheet' do
+      include SdsSheetHelpers
+
+      let(:dir) { Dir.mktmpdir('sds_api') }
+      let(:pdf) do
+        sds_pdf_from_lines(['SAFETY DATA SHEET', 'SECTION 1: Identification', 'Sigma-Aldrich',
+                            'SECTION 2: Hazards identification', '2.2 Label elements',
+                            'Hazard statements', 'H225 Highly flammable liquid and vapour.', '2.3 Other hazards',
+                            *(3..8).map { |number| "SECTION #{number}: Section" },
+                            'SECTION 9: Physical and chemical properties', 'Flash point        :  4 °C'],
+                           dir: dir)
       end
 
       before do
-        allow(Chemotion::ChemicalsService)
-          .to receive(:safety_phrases_thermofischer)
-          .and_return({ 'h_statements' => { 'H200' => ' test' } })
-        get "/api/v1/chemicals/safety_phrases/#{chemical_tf.sample_id}?vendor=thermofischer"
+        # The synthetic sheet stands in for the gitignored vendor file the link names.
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).with(link).and_return(Pathname.new(pdf))
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
-      it 'returns 200 with hazard statements' do
-        parsed = response.body&.start_with?('{') ? JSON.parse(response.body) : nil
+      after { FileUtils.rm_rf(dir) }
+
+      it 'returns the codes and properties read out of the file', :aggregate_failures do
         expect(response.status).to eq 200
-        expect(parsed['h_statements']).to have_key('H200')
+        expect(body['safetyPhrases']['h_statements'].keys).to include('H225')
+        expect(body['properties']['flash_point']).to eq('4 °C')
       end
     end
 
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
+    context 'with a path outside the safety sheet folder' do
+      before { get '/api/v1/chemicals/extract_sds', params: { path: '/etc/passwd' } }
 
+      it 'refuses it as a bad request', :aggregate_failures do
+        expect(response.status).to eq 400
+        expect(body['error']).to eq(Chemotion::SdsExtractor::NOT_A_SAVED_SHEET)
+      end
+    end
+
+    context 'with a saved-sheet link whose file is gone' do
+      before { get '/api/v1/chemicals/extract_sds', params: { path: '/safety_sheets/merck/gone_0000000000000000.pdf' } }
+
+      it 'answers not found' do
+        expect(response.status).to eq 404
+      end
+    end
+
+    context 'with a sheet ghostscript cannot read' do
       before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=thermofischer"
+        allow(Chemotion::SdsExtractor).to receive_messages(
+          saved_sheet_path: Rails.root.join('spec/fixtures/upload.pdf'),
+          extract: { 'safetyPhrases' => {}, 'properties' => {},
+                     'diagnostics' => { 'errors' => ['ghostscript produced no text'], 'notes' => [] } },
+        )
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
+      it 'answers unprocessable with the reason and the diagnostics', :aggregate_failures do
+        expect(response.status).to eq 422
+        expect(body['error']).to eq('ghostscript produced no text')
+        expect(body['diagnostics']['errors']).to eq(['ghostscript produced no text'])
       end
     end
-  end
 
-  describe 'GET safety_phrases merck' do
-    context 'when product info present (returns pictograms)' do
-      let(:chemical_merck) do
-        create(:chemical,
-               chemical_data: [{ 'merckProductInfo' => { 'productLink' => 'https://sigmaaldrich.com/product' } }])
-      end
-
+    context 'when the extractor raises' do
       before do
-        allow(Chemotion::ChemicalsService).to receive(:safety_phrases_merck).and_return({ 'pictograms' => %w[GHS01] })
-        get "/api/v1/chemicals/safety_phrases/#{chemical_merck.sample_id}?vendor=merck"
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
+          .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
+        allow(Chemotion::SdsExtractor).to receive(:extract).and_raise(StandardError, 'boom at /srv/secret/path')
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
-      it 'returns 200 with pictograms' do
-        parsed = response.body&.start_with?('{') ? JSON.parse(response.body) : nil
-        expect(response.status).to eq 200
-        expect(parsed['pictograms']).to include('GHS01')
+      it 'answers a server error without the exception text', :aggregate_failures do
+        expect(response.status).to eq 500
+        expect(body['error']).to eq('the safety data sheet could not be read')
+        expect(response.body).not_to include('/srv/secret/path')
       end
-    end
-
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=merck"
-      end
-
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
-      end
-    end
-  end
-
-  describe 'GET safety_phrases unknown vendor' do
-    context 'when chemical_data exists but vendor info missing (returns message)' do
-      let(:chemical_empty) { create(:chemical, chemical_data: [{ 'otherInfo' => {} }]) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chemical_empty.sample_id}?vendor=unknown"
-      end
-
-      it 'returns informative not found message with 200' do
-        expect(response.status).to eq 200
-        expect(response.body).to include('No safety phrases could be found')
-      end
-    end
-
-    context 'when chemical has no chemical_data (returns 204)' do
-      let(:chem_no_data) { create(:chemical, chemical_data: []) }
-
-      before do
-        get "/api/v1/chemicals/safety_phrases/#{chem_no_data.sample_id}?vendor=unknown"
-      end
-
-      it 'returns 204 no content' do
-        expect(response.status).to eq 204
-      end
-    end
-  end
-
-  describe 'GET chemical_properties merck link' do
-    before do
-      allow(Chemotion::ChemicalsService).to receive(:chemical_properties_merck).and_return({ 'grade' => '200' })
-      get '/api/v1/chemicals/chemical_properties', params: { link: 'https://www.sigmaaldrich.com/item' }
-    end
-
-    it 'returns merck properties' do
-      body = JSON.parse(response.body)
-      expect(body['grade']).to eq('200')
     end
   end
 
