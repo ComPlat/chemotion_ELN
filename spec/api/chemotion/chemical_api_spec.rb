@@ -413,21 +413,38 @@ describe Chemotion::ChemicalAPI do
       end
     end
 
-    context 'when the configured PDF text service is busy' do
-      before do
+    context 'with the PDF text service' do
+      def extract_through_service(misconfigured: nil)
         settings = ActiveSupport::OrderedOptions.new
-        settings.url = 'http://pdftext:8080'
+        settings.url = misconfigured ? nil : 'http://pdftext:8080'
         settings.timeout = 25
+        settings.misconfigured = misconfigured
         allow(Rails.configuration).to receive(:sds_text_service).and_return(settings)
-        stub_request(:post, 'http://pdftext:8080/text').to_return(status: 429, body: "busy\n")
         allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
           .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
         get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
-      it 'answers unprocessable with the reason', :aggregate_failures do
-        expect(response.status).to eq 422
+      it 'answers a busy service as unavailable, with when to retry', :aggregate_failures do
+        stub_request(:post, 'http://pdftext:8080/text')
+          .to_return(status: 429, body: "busy\n", headers: { 'Retry-After' => '5' })
+        extract_through_service
+        expect(response.status).to eq 503
+        expect(response.headers['Retry-After']).to eq('5')
         expect(body['error']).to eq('the PDF text service is busy, try again shortly')
+      end
+
+      it 'answers a misconfigured service as unavailable', :aggregate_failures do
+        extract_through_service(misconfigured: true)
+        expect(response.status).to eq 503
+        expect(body['error']).to eq('the PDF text service is misconfigured')
+      end
+
+      it 'still answers a sheet that timed Ghostscript out as unprocessable', :aggregate_failures do
+        stub_request(:post, 'http://pdftext:8080/text').to_return(status: 504, body: "timed out\n")
+        extract_through_service
+        expect(response.status).to eq 422
+        expect(body['error']).to eq('ghostscript timed out')
       end
     end
 

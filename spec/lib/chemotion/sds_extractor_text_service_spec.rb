@@ -22,10 +22,11 @@ RSpec.describe Chemotion::SdsExtractor do
   end
   let(:diagnostics) { result['diagnostics'] }
 
-  def configure(url:, timeout: 25)
+  def configure(url:, timeout: 25, misconfigured: nil)
     settings = ActiveSupport::OrderedOptions.new
     settings.url = url
     settings.timeout = timeout
+    settings.misconfigured = misconfigured
     allow(Rails.configuration).to receive(:sds_text_service).and_return(settings)
   end
 
@@ -72,12 +73,14 @@ RSpec.describe Chemotion::SdsExtractor do
     end
 
     {
-      429 => 'the PDF text service is busy, try again shortly',
-      504 => 'ghostscript timed out',
-      413 => 'the safety data sheet is too large for the PDF text service',
-      415 => 'the PDF text service did not accept the file as a PDF',
-      500 => 'the PDF text service answered HTTP 500',
-    }.each do |status, message|
+      429 => ['the PDF text service is busy, try again shortly', true],
+      502 => ['the PDF text service is unavailable', true],
+      503 => ['the PDF text service is unavailable', true],
+      504 => ['ghostscript timed out', nil],
+      413 => ['the safety data sheet is too large for the PDF text service', nil],
+      415 => ['the PDF text service did not accept the file as a PDF', nil],
+      500 => ['the PDF text service answered HTTP 500', nil],
+    }.each do |status, (message, unavailable)|
       context "when it answers #{status}" do
         before { stub_request(:post, endpoint).to_return(status: status, body: "whatever\n") }
 
@@ -85,9 +88,74 @@ RSpec.describe Chemotion::SdsExtractor do
 
         it 'reports it and does not fall back to ghostscript', :aggregate_failures do
           expect(diagnostics['errors']).to eq([message])
+          expect(diagnostics['service_unavailable']).to eq(unavailable)
           expect(result['properties']).to eq({})
           expect(Open3).not_to have_received(:capture3)
         end
+      end
+    end
+
+    context 'when it is busy and says when to come back' do
+      before { stub_request(:post, endpoint).to_return(status: 429, body: "busy\n", headers: { 'Retry-After' => '7' }) }
+
+      it 'passes the delay on' do
+        expect(described_class.extract(pdf)['diagnostics']['retry_after']).to eq(7)
+      end
+    end
+
+    context 'when it is busy without saying when to come back' do
+      before { stub_request(:post, endpoint).to_return(status: 429, body: "busy\n") }
+
+      it 'suggests a short delay' do
+        expect(described_class.extract(pdf)['diagnostics']['retry_after']).to eq(5)
+      end
+    end
+
+    [EOFError, Net::HTTPBadResponse, OpenSSL::SSL::SSLError, HTTParty::Error, Errno::ECONNRESET].each do |error|
+      context "when the connection fails with #{error}" do
+        before { stub_request(:post, endpoint).to_raise(error) }
+
+        let(:result) { described_class.extract(pdf) }
+
+        it 'reports it unavailable instead of raising', :aggregate_failures do
+          expect(diagnostics['errors']).to eq(['the PDF text service is unavailable'])
+          expect(diagnostics['service_unavailable']).to be(true)
+          expect(Open3).not_to have_received(:capture3)
+        end
+      end
+    end
+
+    context 'when sending the sheet times out' do
+      before { stub_request(:post, endpoint).to_raise(Net::WriteTimeout) }
+
+      it 'reports the timeout', :aggregate_failures do
+        diagnostics = described_class.extract(pdf)['diagnostics']
+        expect(diagnostics['errors']).to eq(['the PDF text service timed out'])
+        expect(diagnostics['service_unavailable']).to be(true)
+      end
+    end
+
+    context 'when the host has a proxy configured' do
+      before do
+        allow(HTTParty).to receive(:post).and_call_original
+        stub_request(:post, endpoint).to_return(status: 200, body: sheet_text)
+      end
+
+      it 'talks to the service directly' do
+        described_class.extract(pdf)
+        expect(HTTParty).to have_received(:post).with(endpoint, hash_including(http_proxyaddr: nil))
+      end
+    end
+
+    context 'when the request as a whole takes too long' do
+      before do
+        allow(Timeout).to receive(:timeout).and_call_original
+        stub_request(:post, endpoint).to_return(status: 200, body: sheet_text)
+      end
+
+      it 'bounds it by the configured timeout' do
+        described_class.extract(pdf)
+        expect(Timeout).to have_received(:timeout).with(25)
       end
     end
 
@@ -131,6 +199,19 @@ RSpec.describe Chemotion::SdsExtractor do
         described_class.extract(pdf)
         expect(a_request(:post, endpoint)).to have_been_made.once
       end
+    end
+  end
+
+  context 'when the text service configuration is invalid' do
+    before { configure(url: nil, misconfigured: true) }
+
+    let(:result) { described_class.extract(pdf) }
+
+    it 'refuses to read the sheet rather than running ghostscript here', :aggregate_failures do
+      expect(diagnostics['errors']).to eq(['the PDF text service is misconfigured'])
+      expect(diagnostics['service_unavailable']).to be(true)
+      expect(Open3).not_to have_received(:capture3)
+      expect(a_request(:post, endpoint)).not_to have_been_made
     end
   end
 
