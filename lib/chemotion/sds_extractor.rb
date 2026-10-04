@@ -216,7 +216,22 @@ module Chemotion
       text.delete("\r").tr("\f", "\n").split("\n").map { |line| line[0, MAX_LINE_LENGTH] }
     end
 
+    # A configured text service replaces the local run outright, so a sheet it refused or
+    # failed on never reaches Ghostscript in this container.
     def ghostscript_text
+      SdsTextService.configured? ? service_text : local_ghostscript_text
+    end
+
+    def service_text
+      answer = SdsTextService.read(@pdf_path)
+      return fail_with(answer.error) if answer.error
+
+      note('text read by the PDF text service')
+      note('the PDF text service cut the text short') if answer.truncated
+      (+answer.text.byteslice(0, MAX_TEXT_BYTES)).force_encoding(Encoding::UTF_8).scrub
+    end
+
+    def local_ghostscript_text
       Tempfile.create(['sds', '.txt']) do |out|
         _stdout, stderr, status = Open3.capture3(*ghostscript_command(out.path))
         next fail_with('ghostscript timed out') if TIMED_OUT_STATUSES.include?(status.exitstatus)

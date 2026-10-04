@@ -1,0 +1,16 @@
+# PDF text service for reading safety data sheets (the `pdftext` container of the
+# chemotion images). Rails merges `shared:` into every environment.
+#
+# With a :url:, the ELN posts each sheet to <url>/text and reads the text it returns;
+# it never runs Ghostscript itself, and a refusal or an unreachable service is
+# reported, not retried locally. Without this file, or with an empty :url:, the ELN
+# runs Ghostscript (gs) in its own container.
+#
+# :timeout is in seconds; keep it above the service's own Ghostscript limit
+# (PDFTEXT_TIMEOUT, 20 s by default) plus its 5 s kill grace.
+shared:
+  :url: 'http://pdftext:8080'
+  :timeout: 30
+
+test:
+  :url:
