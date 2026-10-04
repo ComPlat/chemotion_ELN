@@ -261,7 +261,7 @@ class Attachment < ApplicationRecord
   end
 
   # Whether GET /attachments/image/:id (Usecases::Attachments::LoadImage) can serve this file.
-  # Exposed to the client as `previewable` so the rule lives in one place.
+  # Exposed to the client as +previewable+ so the rule lives in one place.
   def previewable?
     type_image? || type_pdf?
   end

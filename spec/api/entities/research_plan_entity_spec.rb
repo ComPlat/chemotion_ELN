@@ -36,18 +36,6 @@ describe Entities::ResearchPlanEntity do
         )
       end
 
-      context 'with a non-image attachment as preview' do
-        before { create(:attachment, attachable: research_plan) } # upload.txt
-
-        it 'exposes the preview attachment with its previewable flag' do
-          expect(grape_entity_as_hash[:preview_attachment]).to include(
-            id: research_plan.attachments.first.id,
-            filename: 'upload.txt',
-            previewable: false,
-          )
-        end
-      end
-
       it 'returns a research_plan with research_plan_metadata' do
         expect(grape_entity_as_hash[:research_plan_metadata]).not_to be_empty
       end
@@ -68,6 +56,20 @@ describe Entities::ResearchPlanEntity do
         pending 'Segments are an empty array because a segments factory is missing'
         raise 'missing segments factory'
         # expect(grape_entity_as_hash[:segments]).not_to be_empty
+      end
+    end
+
+    context 'with a non-image attachment as preview' do
+      let(:detail_level) { 10 }
+
+      before { create(:attachment, attachable: research_plan) } # upload.txt
+
+      it 'exposes the preview attachment with its previewable flag' do
+        expect(grape_entity_as_hash[:preview_attachment]).to include(
+          id: research_plan.attachments.first.id,
+          filename: 'upload.txt',
+          previewable: false,
+        )
       end
     end
 
