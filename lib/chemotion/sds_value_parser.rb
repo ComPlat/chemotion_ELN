@@ -4,11 +4,12 @@ module Chemotion
   # Turns one value cell from an SDS section 9 into a display string plus its parsed
   # {value, unit}, or into a reason the cell was left out.
   class SdsValueParser
-    ABSENT = %r{\A(no\s+data\s+available|no\s+information\s+available|not\s+available|
+    # A dash is absent only as the whole cell, so -98 °C stays a value.
+    ABSENT = %r{\A(?:(?:no\s+data\s+available|no\s+information\s+available|not\s+available|
                   not\s+applicable|not\s+determined|not\s+specified|not\s+established|
-                  keine\s+daten\s+verf(ü|ue)gbar|nicht\s+anwendbar|nicht\s+verf(ü|ue)gbar|
+                  keine\s+daten\s+verf(?:ü|ue)gbar|nicht\s+anwendbar|nicht\s+verf(?:ü|ue)gbar|
                   nicht\s+bestimmt|keine\s+angaben|
-                  none|n/?a|[-–—])\b}xi.freeze
+                  none|n/?a)\b|[-–—]\z)}xi.freeze
     QUALIFIER = /[<>≤≥~]|\b(ca|approx|approximately|about|est|estimated)\b/i.freeze
     UNITS = ['°C', '°F', 'K', 'hPa', 'kPa', 'MPa', 'mPa.s', 'mPa·s', 'Pa', 'mbar', 'bar',
              'mmHg', 'atm', 'psi', 'g/cm3', 'g/cm³', 'g/mL', 'g/ml', 'kg/m3', 'kg/L', 'g/L',
