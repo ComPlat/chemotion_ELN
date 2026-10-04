@@ -184,6 +184,9 @@ end
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
+  # How much of a JCAMP file is read to find its dimension: the header labels come first.
+  JCAMP_HEADER_BYTES = 64 * 1024
+
   def jcamp_files_already_present?
     _first_part, extname = extension_parts
     return true  if filename.include?('processed_')
@@ -422,6 +425,14 @@ module AttachmentJcampProcess
 
     return generate_spectrum_from_nmrium if params[:ext] == 'nmrium'
 
+    # ChemSpectra reads a 1D curve out of a 2D NMR JCAMP and returns it as the spectrum. NMRium
+    # reads (and, for an FID, processes) the 2D data itself, and +failure+ is the state that keeps
+    # an upload out of the spectra editor but hands it to NMRium.
+    if multi_dimensional_nmr_jcamp?
+      set_failure if may_set_failure?
+      return nil
+    end
+
     spectrum_data = generate_spectrum_data(params, is_regen)
     tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, _arr_nmrium, spc_type, invalid_molfile = spectrum_data
 
@@ -454,6 +465,21 @@ module AttachmentJcampProcess
 
       jcamp_att
     end
+  end
+
+  # Whether the file is a JCAMP-DX holding NMR data in more than one dimension (a 2D FID or
+  # spectrum, e.g. +##DATA TYPE= nD NMR FID+ with +##NUM DIM= 2+).
+  #
+  # @return [Boolean] false for other extensions, for 1D data and when the file cannot be read
+  def multi_dimensional_nmr_jcamp?
+    _, extname = extension_parts
+    return false unless %w[dx jdx jcamp].include?(extname.downcase)
+
+    path = abs_path
+    return false if path.blank? || !File.file?(path)
+
+    header = File.open(path, 'rb') { |f| f.read(JCAMP_HEADER_BYTES) }.to_s
+    header[/^##NUM\s*DIM\s*=\s*(\d+)/i, 1].to_i > 1 || header.match?(/^##DATA\s*TYPE\s*=\s*nD\s+NMR/i)
   end
 
   def edit_process(is_regen, orig_params)
