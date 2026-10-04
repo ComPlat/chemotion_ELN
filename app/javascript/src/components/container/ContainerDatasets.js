@@ -6,6 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import { isPreviewableAttachment } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -90,12 +91,13 @@ export default class ContainerDatasets extends Component {
   };
 
   reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs that actually have thumbnails
+    // Get all saved, non-deleted attachment IDs the preview modal can show: the same rule as
+    // the carousel candidates in getContainerImageData, or the stored preference is ignored
     const allAttachments = analysisContainer?.children?.flatMap(
       (child) => (child.attachments || [])
     ) || [];
     const savedAttachments = allAttachments.filter(
-      (att) => !att.is_deleted && !att.is_new && att.thumb === true
+      (att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att)
     );
     const validAttachmentIds = savedAttachments
       .map((att) => Number(att.id))
