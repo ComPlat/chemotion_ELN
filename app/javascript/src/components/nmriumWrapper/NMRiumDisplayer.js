@@ -20,6 +20,10 @@ import {
 // sources[] away. Follows the wrapper pin: the wrapper refuses to open a version above its own.
 const FLAT_NMRIUM_DOC_VERSION = 19;
 
+// A spectrum (or molecule) saved with its data in the document can open from it without a source.
+const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
+  && Object.keys(item.data).length > 0;
+
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {
     super(props);
@@ -519,8 +523,6 @@ export default class NMRiumDisplayer extends React.Component {
     // while these documents went through NMRium's version-0 migrations.
     if (Array.isArray(root.sources) && root.sources.length > 0) {
       const items = [...(root.spectra || []), ...(root.molecules || [])];
-      const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
-        && Object.keys(item.data).length > 0;
       const isWholeFileSource = (source) => Array.isArray(source?.entries) && source.entries.length > 0
         && source.entries.every((entry) => {
           const url = entryUrl(entry);
@@ -656,6 +658,13 @@ export default class NMRiumDisplayer extends React.Component {
       const spectrumZipLabel = spectrumZip?.label ?? effectiveZipLabel;
       const spectrumZipUrlWithFile = spectrumZipUrl ? `${spectrumZipUrl}/file.zip` : undefined;
       let spectrumSourceUrl = (isZipBased && spectrumZipUrlWithFile) || preferredUrl;
+
+      // The fallback below hands a spectrum the dataset's first JCAMP when none is its own. Two
+      // kinds of spectrum must not get it: one that has no source and carries its data (a document
+      // saved before sources[] existed opens from that data), and a 2D one, which no 1D or
+      // derived JCAMP of the dataset can stand in for. Either way the cleaning pass would register
+      // the borrowed file as the source and drop the data, and NMRium would get an empty matrix.
+      if (!isZipBased && !match && (isSpectrum2D(s) || (!oldUrl && hasEmbeddedData(s)))) return;
 
       if (!isZipBased) {
         if (!s.source || typeof s.source !== 'object') s.source = {};
