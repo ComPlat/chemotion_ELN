@@ -82,6 +82,20 @@ describe('ImageModal', () => {
       id: 12, filename: 'slides.pptx', thumb: true, previewable: false, updated_at: '02.01.2026, 10:00:00 +0000',
     };
 
+    it('shows the default thumbnail when the preferred file has none, but opens on the preferred', () => {
+      const png = {
+        id: 13, filename: 'plot.png', thumb: true, previewable: true, updated_at: '03.01.2026, 10:00:00 +0000',
+      };
+      const analysis = { ...container([pdf, png]), extended_metadata: { preferred_thumbnail: '11' } };
+      const wrapper = render({ container: analysis });
+
+      expect(AttachmentFetcher.fetchThumbnail.calledWith({ id: 13 })).toBe(true);
+      expect(AttachmentFetcher.fetchThumbnail.calledWith({ id: 11 })).toBe(false);
+
+      wrapper.instance().handleModalShow({ preventDefault() {}, stopPropagation() {} });
+      expect(wrapper.state('selectedId')).toBe(11);
+    });
+
     it('falls back to the first candidate when no default can be previewed', () => {
       const wrapper = render({ container: container([pptx, pdf]) });
       wrapper.instance().handleModalShow({ preventDefault() {}, stopPropagation() {} });

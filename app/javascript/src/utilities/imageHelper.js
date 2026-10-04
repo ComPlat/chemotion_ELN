@@ -73,7 +73,7 @@ const getAttachmentFromContainer = (container) => {
  * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
  *   candidateIds: number[], preferredId: (number|null)}}
  *   previewAttachment - the default preview attachment (see getAttachmentFromContainer);
- *   candidates - selectable attachments ({ id, filename }) for the carousel;
+ *   candidates - selectable attachments ({ id, filename, thumb }) for the carousel;
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
@@ -84,7 +84,7 @@ const getContainerImageData = (container) => {
   const candidates = datasetChildren
     .flatMap((child) => child.attachments || [])
     .filter((att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att))
-    .map((att) => ({ id: Number(att.id), filename: att.filename }))
+    .map((att) => ({ id: Number(att.id), filename: att.filename, thumb: att.thumb === true }))
     .filter((c) => !Number.isNaN(c.id) && c.id > 0);
   const candidateIds = candidates.map((c) => c.id);
 

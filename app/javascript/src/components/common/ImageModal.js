@@ -136,9 +136,13 @@ export default class ImageModal extends Component {
 
   // grey-area preview (preferred, else default attachment)
   async fetchPreviewThumbnail() {
-    const { attachment, preferredId } = ImageModal.derive(this.props);
+    const { attachment, candidates, preferredId } = ImageModal.derive(this.props);
     try {
-      if (preferredId) {
+      // A preferred file without a thumbnail (e.g. a PDF whose thumbnail wasn't generated) has
+      // nothing to show here, so the header falls back to the default attachment; the
+      // preference still decides what the modal opens on.
+      const preferred = candidates.find((c) => c.id === preferredId);
+      if (preferred?.thumb) {
         const src = await fetchImageSrcByAttachmentId(preferredId);
         this.setState({ thumbnail: src });
         return;
