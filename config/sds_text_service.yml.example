@@ -2,12 +2,17 @@
 # chemotion images). Rails merges `shared:` into every environment.
 #
 # With a :url:, the ELN posts each sheet to <url>/text and reads the text it returns;
-# it never runs Ghostscript itself, and a refusal or an unreachable service is
-# reported, not retried locally. Without this file, or with an empty :url:, the ELN
-# runs Ghostscript (gs) in its own container.
+# it never runs Ghostscript itself. A busy, unreachable or failing service is reported
+# to the user (HTTP 503), not retried locally. The call ignores the host's proxy settings.
 #
-# :timeout is in seconds; keep it above the service's own Ghostscript limit
-# (PDFTEXT_TIMEOUT, 20 s by default) plus its 5 s kill grace.
+# Without this file, or with an empty :url:, the ELN runs Ghostscript (gs) in its own
+# container. A file that is present but unusable (no section for the environment, a url
+# without http(s):// and a host, a timeout that is not a positive number of seconds)
+# is logged at boot and refuses extraction; delete the file to run gs locally instead.
+#
+# :timeout is the whole request, in seconds; keep it above the service's own Ghostscript
+# limit (PDFTEXT_TIMEOUT, 20 s by default) plus its 5 s kill grace. The service also caps
+# the pages it reads (PDFTEXT_MAX_PAGES, 40 by default, as the local run does).
 shared:
   :url: 'http://pdftext:8080'
   :timeout: 30

@@ -224,7 +224,7 @@ module Chemotion
 
     def service_text
       answer = SdsTextService.read(@pdf_path)
-      return fail_with(answer.error) if answer.error
+      return fail_with(answer.error, answer.flags) if answer.error
 
       note('text read by the PDF text service')
       note('the PDF text service cut the text short') if answer.truncated
@@ -253,7 +253,8 @@ module Chemotion
       stderr.lines.first.to_s.strip.gsub(@pdf_path, File.basename(@pdf_path)).gsub(output, File.basename(output))
     end
 
-    def fail_with(message)
+    def fail_with(message, flags = {})
+      @diagnostics.merge!(flags)
       @diagnostics['errors'] << message
       nil
     end
