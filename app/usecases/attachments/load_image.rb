@@ -11,12 +11,14 @@ module Usecases
       # @param attachment [Attachment]
       # @param annotated [Boolean] serve the annotated image when there is one
       # @return [String] the binary file content
-      # @raise [Errors::NotPreviewable] if the attachment is neither an image nor a PDF
-      # @raise [Errors::FileMissing] if the stored file is gone
-      # @raise [Errors::ConversionFailed] if a TIFF can't be converted to PNG
+      # @raise [Usecases::Attachments::Errors::NotPreviewable] if the attachment is neither an image nor a PDF
+      # @raise [Usecases::Attachments::Errors::FileMissing] if the stored file is gone
+      # @raise [Usecases::Attachments::Errors::ConversionFailed] if a TIFF can't be converted to PNG
       def self.execute!(attachment, annotated)
         # to allow reading of PDF files
-        raise Errors::NotPreviewable, "no image / PDF attachment: #{attachment.id}" unless attachment.previewable?
+        unless attachment.previewable?
+          raise Usecases::Attachments::Errors::NotPreviewable, "no image / PDF attachment: #{attachment.id}"
+        end
 
         path = if annotated && attachment.annotated?
                  annotated_image_path(attachment)
@@ -28,7 +30,7 @@ module Usecases
 
         File.binread(path)
       rescue Errno::ENOENT => e
-        raise Errors::FileMissing, "file of attachment #{attachment.id} not found: #{e.message}"
+        raise Usecases::Attachments::Errors::FileMissing, "file of attachment #{attachment.id} not found: #{e.message}"
       end
 
       def self.create_converted_image(attachment)
@@ -42,7 +44,8 @@ module Usecases
         # the attacher still holds the derivatives it loaded, so use the converter's path
         File.path(result[:conversion])
       rescue MiniMagick::Error, MiniMagick::Invalid => e
-        raise Errors::ConversionFailed, "could not convert attachment #{attachment.id}: #{e.message}"
+        raise Usecases::Attachments::Errors::ConversionFailed,
+              "could not convert attachment #{attachment.id}: #{e.message}"
       end
 
       # Records the converted PNG as the +conversion+ derivative. The converter already wrote it
