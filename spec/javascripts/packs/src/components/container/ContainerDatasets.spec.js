@@ -42,7 +42,12 @@ describe('ContainerDatasets#reassignPreferredThumbnailIfNeeded', () => {
 
   it('auto-assigns a file with a thumbnail before a PDF without one', () => {
     expect(reassign(analysis([pdf, png], null)).preferred).toBe('2');
-    expect(reassign(analysis([pdf], null)).preferred).toBe('3');
+  });
+
+  it('never auto-assigns a PDF without a thumbnail', () => {
+    // the header keeps showing the thumbnailed docx instead of a broken image
+    expect(reassign(analysis([docx, pdf], null)).preferred).toBe(null);
+    expect(reassign(analysis([pdf], null)).preferred).toBe(null);
   });
 
   it('clears the preference when nothing can be previewed', () => {

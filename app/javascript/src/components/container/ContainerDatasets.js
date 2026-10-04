@@ -109,18 +109,20 @@ export default class ContainerDatasets extends Component {
 
     if (!preferredIsValid) {
       // Need to reassign
-      if (validAttachmentIds.length > 0) {
-        // Assign the first one with a thumbnail, so the header has an image to show; a PDF
-        // without a generated thumbnail is only used when there is nothing else
-        const thumbnailed = savedAttachments.find(
-          (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
-        );
+      // Auto-assign only a file with a thumbnail, so the header has an image to show. Without
+      // one (e.g. a PDF whose thumbnail wasn't generated), leave it unset: the header keeps its
+      // default attachment and the modal opens on the first candidate. A PDF chosen by hand
+      // still counts as valid above.
+      const thumbnailed = savedAttachments.find(
+        (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
+      );
+      if (thumbnailed) {
         analysisContainer.extended_metadata = {
           ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(thumbnailed ? Number(thumbnailed.id) : validAttachmentIds[0]),
+          preferred_thumbnail: String(Number(thumbnailed.id)),
         };
       } else {
-        // No attachments available - clear preferred
+        // Nothing with a thumbnail - clear preferred
         analysisContainer.extended_metadata = {
           ...analysisContainer.extended_metadata,
           preferred_thumbnail: null,
