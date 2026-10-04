@@ -5,44 +5,49 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
+      # Reads the bytes GET image/:id serves: the annotated image if requested and present,
+      # the PNG conversion for a TIFF, else the original file.
+      #
+      # @param attachment [Attachment]
+      # @param annotated [Boolean] serve the annotated image when there is one
+      # @return [String] the binary file content
+      # @raise [Errors::NotPreviewable] if the attachment is neither an image nor a PDF
+      # @raise [Errors::FileMissing] if the stored file is gone
+      # @raise [Errors::ConversionFailed] if a TIFF can't be converted to PNG
       def self.execute!(attachment, annotated)
         # to allow reading of PDF files
-        raise "no image / PDF attachment: #{attachment.id}" unless attachment.previewable?
+        raise Errors::NotPreviewable, "no image / PDF attachment: #{attachment.id}" unless attachment.previewable?
 
-        conversion = attachment.type_image_tiff?
+        path = if annotated && attachment.annotated?
+                 annotated_image_path(attachment)
+               elsif attachment.type_image_tiff?
+                 converted_image_path(attachment)
+               else
+                 attachment.attachment.url
+               end
 
-        attachment_file = if annotated
-                            if attachment.annotated?
-                              load_annotated_image(attachment, attachment_file)
-                            elsif conversion
-                              get_file_of_converted_image(attachment)
-                            else
-                              File.open(attachment.attachment.url)
-                            end
-                          elsif conversion
-                            get_file_of_converted_image(attachment)
-                          else
-                            File.open(attachment.attachment.url)
-                          end
-
-        data = nil
-
-        File.open(attachment_file) do |file|
-          data = file.read
-        end
-        data
+        File.binread(path)
+      rescue Errno::ENOENT => e
+        raise Errors::FileMissing, "file of attachment #{attachment.id} not found: #{e.message}"
       end
 
       def self.create_converted_image(attachment)
         converter = Usecases::Attachments::Converter::FileConverter.new
         result = converter.create_converted_file(attachment.attachment.url)
+        # only the path is kept; close the handle the converter opened
+        result[:conversion].close
 
         update_attachment_data_column(attachment, result)
 
-        File.open(attachment.attachment(:conversion).url)
+        # the attacher still holds the derivatives it loaded, so use the converter's path
+        File.path(result[:conversion])
+      rescue MiniMagick::Error, MiniMagick::Invalid => e
+        raise Errors::ConversionFailed, "could not convert attachment #{attachment.id}: #{e.message}"
       end
 
       def self.update_attachment_data_column(attachment, result)
+        # a TIFF stored before derivatives were generated has none yet
+        attachment.attachment_data['derivatives'] ||= {}
         attachment.attachment_data['derivatives']['conversion'] = {}
         root_path = attachment.attachment.storage.directory.to_s
         attachment.attachment_data['derivatives']['conversion']['id'] =
@@ -50,23 +55,17 @@ module Usecases
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      def self.load_annotated_image(attachment, _attachment_file)
-        return File.open(attachment.attachment.url) unless attachment.annotated?
-
+      def self.annotated_image_path(attachment)
         store = Rails.application.config_for :shrine
         store = store[:store]
         annotated_file_path = "#{store}/#{attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available'}" # rubocop:disable Layout/LineLength
-        annotated_file_exists = annotated_file_path && File.file?(annotated_file_path)
-        if annotated_file_exists
-          File.open(annotated_file_path)
-        else
-          File.open(attachment.attachment.url)
-        end
+        File.file?(annotated_file_path) ? annotated_file_path : attachment.attachment.url
       end
 
-      def self.get_file_of_converted_image(attachment)
-        create_converted_image(attachment) unless attachment.attachment_data['derivatives']['conversion']
-        File.open(attachment.attachment(:conversion).url)
+      def self.converted_image_path(attachment)
+        return create_converted_image(attachment) unless attachment.attachment_data.dig('derivatives', 'conversion')
+
+        attachment.attachment(:conversion).url
       end
     end
   end

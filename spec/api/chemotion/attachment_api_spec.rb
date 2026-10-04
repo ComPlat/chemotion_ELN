@@ -581,6 +581,16 @@ describe Chemotion::AttachmentAPI do
         expect(JSON.parse(response.body)).to include('code' => 'not_previewable')
       end
     end
+
+    context 'when the stored file is missing' do
+      let(:attachment_id) do
+        readable_attachment.tap { |att| File.delete(att.attachment.url) }.id
+      end
+
+      it('returning error 404') do
+        expect(response).to have_http_status(:not_found)
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/thumbnail/{attachment_id}' do

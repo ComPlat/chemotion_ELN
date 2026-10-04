@@ -99,6 +99,19 @@ module Chemotion
       error!(message, 404)
     end
 
+    # Usecases::Attachments::LoadImage (GET image/:id) only serves images and PDFs.
+    rescue_from Usecases::Attachments::Errors::NotPreviewable do |_error|
+      error!({ error: 'Attachment is not an image or PDF', code: 'not_previewable' }, 422)
+    end
+
+    rescue_from Usecases::Attachments::Errors::FileMissing do |_error|
+      error!('Could not find attachment file', 404)
+    end
+
+    rescue_from Usecases::Attachments::Errors::ConversionFailed do |_error|
+      error!({ error: 'Attachment image could not be converted', code: 'conversion_failed' }, 422)
+    end
+
     resource :export_ds do
       before do
         @container = Container.find_by(id: params[:container_id])
@@ -442,12 +455,8 @@ module Chemotion
       end
 
       get 'image/:attachment_id' do
-        # LoadImage only serves images and PDFs and raises for anything else (e.g. a thumbnailed
-        # office file); answer that with a 4xx instead of letting it surface as a 500.
-        unless @attachment.previewable?
-          error!({ error: 'Attachment is not an image or PDF', code: 'not_previewable' }, 422)
-        end
-
+        # LoadImage raises a typed error for a file it can't serve (not an image or PDF, missing
+        # on disk, failed TIFF conversion); the rescue_froms above answer those with a 4xx.
         annotated = @attachment.attachment_attacher.derivatives.key?(:annotation)
         data = Usecases::Attachments::LoadImage.execute!(@attachment, annotated)
         content_type @attachment.content_type
