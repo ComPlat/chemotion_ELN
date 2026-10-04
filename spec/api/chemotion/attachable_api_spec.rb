@@ -19,6 +19,44 @@ describe Chemotion::AttachableAPI do
   end
 
   describe 'POST /api/v1/attachable/update_attachments_attachable' do
+    context 'when attachable_type is not a recognized element type' do
+      let(:attachable_type) { 'Container' }
+      let(:attachable_id) { 0 }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'is rejected as unauthorized and creates no attachment' do
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.count).to eq(0)
+      end
+    end
+
+    # attachable_type is checked against Attachment::ELEMENT_ATTACHABLE_TYPES, the list
+    # Attachment#root_element resolves, instead of a separately maintained copy.
+    context 'when attachable_type is any element root_element resolves directly' do
+      let(:attachable_type) { 'Sample' }
+      let(:attachable_id) { sample.id }
+      let(:sample) { create(:sample, collections: [collection]) }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'authorizes it through the element policy and attaches the file' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.last).to have_attributes(attachable_type: 'Sample', attachable_id: sample.id)
+      end
+    end
+
+    context 'when attachable_type is not a constant at all' do
+      let(:attachable_type) { 'NoSuchClass' }
+      let(:attachable_id) { 1 }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'is rejected as unauthorized, not a server error' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     context 'when attachable_type is ResearchPlan and it is in the current user\'s own collection' do
       let(:attachable_type) { 'ResearchPlan' }
       let(:attachable_id) { research_plan.id }
@@ -48,6 +86,8 @@ describe Chemotion::AttachableAPI do
       end
     end
 
+    # Every accepted attachable_type (Wellplate, DeviceDescription, SBMM samples and macromolecules,
+    # not only ResearchPlan) is checked with ElementPolicy#update? before attaching or detaching.
     context 'when attachable_type is Wellplate and it is in the current user\'s own collection' do
       let(:attachable_type) { 'Wellplate' }
       let(:attachable_id) { wellplate.id }
@@ -59,6 +99,93 @@ describe Chemotion::AttachableAPI do
         expect(response).to have_http_status(:created)
         expect(Attachment.count).to eq(1)
         expect(Attachment.last).to have_attributes(attachable_type: 'Wellplate', attachable_id: wellplate.id)
+      end
+    end
+
+    context 'when attachable_type is Wellplate and it belongs to another user' do
+      let(:attachable_type) { 'Wellplate' }
+      let(:attachable_id) { wellplate.id }
+      let(:wellplate) { create(:wellplate, collections: [other_collection]) }
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'is rejected as unauthorized and creates no attachment' do
+        expect(response).to have_http_status(:unauthorized)
+        expect(Attachment.count).to eq(0)
+      end
+    end
+
+    # Regression: ElementPolicy derived the detail-level column from the record class, and there
+    # is no sequencebasedmacromolecule_detail_level column, so a sharee saving an SBMM with
+    # attachments got a 500 (PG::UndefinedColumn) instead of the upload succeeding.
+    context 'when attachable_type is SequenceBasedMacromolecule and its sample is shared with edit rights' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+
+      before do
+        create(:collection_share, collection: other_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it 'attaches the file to the sbmm' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.last).to have_attributes(
+          attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id,
+        )
+      end
+    end
+
+    # An SBMM is reused across users (Usecases::Sbmm::Finder), so it is a shared record: once another
+    # user has a sample of it, a user detaches only their own uploads on it.
+    context 'when detaching from an SBMM that another user also has a sample of' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+      let!(:own_attachment) { create(:attachment, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+      let(:params) do
+        {
+          attachable_type: attachable_type,
+          attachable_id: attachable_id,
+          del_files: [own_attachment.id, foreign_attachment.id],
+        }
+      end
+
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                     collections: [collection])
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it "detaches only the caller's own upload" do
+        expect(response).to have_http_status(:created)
+        expect(own_attachment.reload.attachable_id).to be_nil
+        expect(foreign_attachment.reload.attachable_id).to eq(sbmm.id)
+      end
+    end
+
+    context 'when detaching from an SBMM no other user has a sample of' do
+      let(:attachable_type) { 'SequenceBasedMacromolecule' }
+      let(:attachable_id) { sbmm.id }
+      let(:sbmm) { create(:uniprot_sbmm) }
+      let!(:attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+      let(:params) { { attachable_type: attachable_type, attachable_id: attachable_id, del_files: [attachment.id] } }
+
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                     collections: [collection])
+        post '/api/v1/attachable/update_attachments_attachable', params: params
+      end
+
+      it 'detaches it regardless of who uploaded it' do
+        expect(response).to have_http_status(:created)
+        expect(attachment.reload.attachable_id).to be_nil
       end
     end
 
@@ -76,6 +203,56 @@ describe Chemotion::AttachableAPI do
       it 'unlinks the attachment' do
         expect(response).to have_http_status(:created)
         expect(attachment.reload.attachable_id).to be_nil
+      end
+
+      # del_files is the frontend's delete path: a deleted file must not show up in the inbox.
+      it "keeps it out of the uploader's Unsorted inbox" do
+        expect(attachment.reload.attachable_type).to eq('Wellplate')
+        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil)).not_to include(attachment)
+      end
+    end
+
+    # del_files only unlinks attachments of the record authorized by after_validation (type and id).
+    %w[ResearchPlan Wellplate].each do |type|
+      context "when del_files also lists an attachment of another #{type}" do
+        let(:attachable_type) { type }
+        let(:attachable_id) { own_element.id }
+        let(:own_element) { create(type.underscore.to_sym, collections: [collection]) }
+        let(:other_element) { create(type.underscore.to_sym, collections: [other_collection]) }
+        let!(:own_attachment) { create(:attachment, attachable: own_element) }
+        let!(:other_attachment) { create(:attachment, attachable: other_element) }
+        let(:params) do
+          {
+            attachable_type: attachable_type,
+            attachable_id: attachable_id,
+            del_files: [own_attachment.id, other_attachment.id],
+          }
+        end
+
+        before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+        it 'unlinks only the attachment of the authorized record' do
+          expect(response).to have_http_status(:created)
+          expect(own_attachment.reload.attachable_id).to be_nil
+          expect(other_attachment.reload).to have_attributes(attachable_type: type, attachable_id: other_element.id)
+        end
+      end
+    end
+
+    context 'when deleting an attachment from a wellplate belonging to another user' do
+      let(:attachable_type) { 'Wellplate' }
+      let(:attachable_id) { wellplate.id }
+      let(:wellplate) { create(:wellplate, collections: [other_collection]) }
+      let!(:attachment) { create(:attachment, attachable: wellplate) }
+      let(:params) do
+        { attachable_type: attachable_type, attachable_id: attachable_id, del_files: [attachment.id] }
+      end
+
+      before { post '/api/v1/attachable/update_attachments_attachable', params: params }
+
+      it 'is rejected as unauthorized and leaves the attachment linked' do
+        expect(response).to have_http_status(:unauthorized)
+        expect(attachment.reload.attachable_id).to eq(wellplate.id)
       end
     end
   end

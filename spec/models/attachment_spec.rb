@@ -78,6 +78,31 @@ RSpec.describe Attachment do
     end
   end
 
+  describe 'ELEMENT_ATTACHABLE_TYPES' do
+    # AttachableAPI authorizes these through ElementPolicy, which needs a collected element.
+    it 'lists only element classes with collections' do
+      described_class::ELEMENT_ATTACHABLE_TYPES.each do |type|
+        expect(type.safe_constantize.reflect_on_association(:collections)).to be_present, type
+      end
+    end
+  end
+
+  describe '#root_element' do
+    it 'is the attachable itself for a directly linked element' do
+      research_plan = create(:research_plan)
+      expect(described_class.new(attachable: research_plan).root_element).to eq(research_plan)
+    end
+
+    it 'is the element a container belongs to' do
+      sample = create(:sample)
+      expect(described_class.new(attachable: create(:container, containable: sample)).root_element).to eq(sample)
+    end
+
+    it 'is nil for an unsorted inbox attachment' do
+      expect(described_class.new(attachable_type: 'Container').root_element).to be_nil
+    end
+  end
+
   describe '#for_research_plan?' do
     subject(:reseachplan) { attachment.for_research_plan? }
 

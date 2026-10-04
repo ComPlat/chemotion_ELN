@@ -29,19 +29,60 @@ module Chemotion
         }
       end
 
+      # One instance per request (Grape dups the endpoint for each one): the regenerate loops,
+      # bulk_delete and remove_generated_children check many attachments, and each root element
+      # runs ElementPolicy once.
+      def attachment_access
+        @attachment_access ||= Usecases::Attachments::Access.new(current_user)
+      end
+
       def writable?(attachment)
-        AttachmentPolicy.can_delete?(current_user, attachment)
+        attachment_access.write?(attachment)
+      end
+
+      def readable?(attachment)
+        attachment_access.read?(attachment)
+      end
+
+      # GET routes of the attachments resource, by declared route path. The analyses downloads
+      # read the element named in their path (and set it for the route); every other GET reads
+      # the attachment it serves.
+      def get_request_readable? # rubocop:disable Metrics/AbcSize
+        case options[:path].first
+        when 'zip/:container_id'
+          @container = Container.find(params[:container_id])
+          attachment_access.read_element?(@container.root_element)
+        when 'sample_analyses/:sample_id'
+          attachment_access.read_element?(@sample = Sample.find(params[:sample_id]))
+        when 'device_description_analyses/:device_description_id'
+          attachment_access.read_element?(@device_description = DeviceDescription.find(params[:device_description_id]))
+        when 'sequence_based_macromolecule_sample_analyses/:sequence_based_macromolecule_sample_id'
+          @sequence_based_macromolecule_sample =
+            SequenceBasedMacromoleculeSample.find(params[:sequence_based_macromolecule_sample_id])
+          attachment_access.read_element?(@sequence_based_macromolecule_sample)
+        else
+          readable?(@attachment)
+        end
+      end
+
+      # Whether get_request_readable? resolved one of the analyses downloads.
+      def element_download_request?
+        [@container, @sample, @device_description, @sequence_based_macromolecule_sample].any?
       end
 
       def upload_chunk_error_message
         { ok: false, statusText: 'File key is not valid' }
       end
 
-      def remove_duplicated(att)
-        old_att = Attachment.find_by(filename: att.filename, attachable_id: att.attachable_id)
-        return unless old_att.id != att.id
-
-        old_att&.destroy
+      # Drops older copies of +att+: same attachable, same filename and same lineage, if the user may
+      # change them. Rows named in the current request (+batch_ids+) are left to their own iteration,
+      # and same-named files of other lineages are distinct files, as in generate_att. The lineage is
+      # compared through root_id (read from the stored ancestry path), so a file whose root row has
+      # been removed is still handled. An unattached file has no attachable, so it has no duplicates.
+      def remove_duplicated(att, batch_ids = [])
+        att.same_attachable.where(filename: att.filename).where.not(id: [att.id, *batch_ids])
+           .select { |old_att| old_att.root_id == att.root_id }
+           .each { |old_att| old_att.destroy if writable?(old_att) }
       end
 
       def remove_generated_children(att)
@@ -61,11 +102,7 @@ module Chemotion
     resource :export_ds do
       before do
         @container = Container.find_by(id: params[:container_id])
-        element = @container.root.containable
-        policy = ElementPolicy.new(current_user, element)
-        can_read = policy.read?
-        can_dwnld = can_read && policy.read_dataset?
-        error!('401 Unauthorized', 401) unless can_dwnld
+        error!('401 Unauthorized', 401) unless @container && attachment_access.read_element?(@container.root_element)
       end
       desc 'Download the dataset attachment file'
       get 'dataset/:container_id' do
@@ -88,64 +125,14 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
-        # rubocop:disable Performance/StringInclude, Metrics/BlockNesting
-        case request.env['REQUEST_METHOD']
-        when /delete/i
+        case request.request_method
+        when 'DELETE'
           error!('401 Unauthorized', 401) unless writable?(@attachment)
-        when /get/i
-          can_dwnld = false
-          if /zip/.match?(request.url)
-            @container = Container.find(params[:container_id])
-            if (element = @container.root.containable)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read &&
-                          policy.read_dataset?
-            end
-          elsif /\bsample_analyses\b/.match?(request.url)
-            @sample = Sample.find(params[:sample_id])
-            if (element = @sample)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
-            end
-          elsif /device_description_analyses/.match?(request.url)
-            @device_description = DeviceDescription.find(params[:device_description_id])
-            if (element = @device_description)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
-            end
-          elsif /\bsequence_based_macromolecule_sample_analyses\b/.match?(request.url)
-            @sequence_based_macromolecule_sample =
-              SequenceBasedMacromoleculeSample.find(params[:sequence_based_macromolecule_sample_id])
-            if (element = @sequence_based_macromolecule_sample)
-              can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-            end
-          elsif @attachment
-            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
-
-            if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
-              can_dwnld = if element.is_a?(Container)
-                            false
-                          else
-                            # I have no idea on how to fix this code? a User is not an element so it
-                            # makes no sense to even try using ElementPolicy.
-                            # So I just replaced ElementPermissionProxy with ElementPolicy, so it won't crash
-                            policy = ElementPolicy.new(current_user, element)
-                            (element.is_a?(User) && (element == current_user)) ||
-                              (
-                                policy.read? &&
-                                policy.read_dataset?
-                              )
-                          end
-            end
-          end
-          error!('401 Unauthorized', 401) unless can_dwnld
+        when 'GET', 'HEAD'
+          error!('401 Unauthorized', 401) unless get_request_readable?
+          # The analyses downloads build their archive in the route body; a HEAD only gets headers.
+          error!('', 200) if request.head? && element_download_request?
         end
-        # rubocop:enable Performance/StringInclude, Metrics/BlockNesting
       end
 
       desc 'Bulk Delete Attachments'
@@ -246,10 +233,12 @@ module Chemotion
       end
 
       desc 'update_annotation_of_attachment'
+      params do
+        requires :updated_svg_string, type: String
+      end
       post ':attachment_id/annotation' do
-        params do
-          require :updated_svg_string, type: String
-        end
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
         updater.update_annotation(
           params['updated_svg_string'],
@@ -472,15 +461,10 @@ module Chemotion
         requires :ids, type: [Integer]
       end
       post 'thumbnails' do
+        atts = Attachment.where(id: params[:ids]).index_by(&:id)
         thumbnails = params[:ids].map do |a_id|
-          att = Attachment.find(a_id)
-          can_dwnld = if att
-                        element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
-                      end
-          can_dwnld ? thumbnail_obj(att) : nil
+          att = atts[a_id]
+          att && readable?(att) ? thumbnail_obj(att) : nil
         end
         { thumbnails: thumbnails }
       end
@@ -490,15 +474,11 @@ module Chemotion
         requires :ids, type: [Integer]
       end
       post 'files' do
+        atts = Attachment.where(id: params[:ids]).index_by(&:id)
+        error!('Could not find attachment', 404) if params[:ids].any? && atts.empty?
         files = params[:ids].map do |a_id|
-          att = Attachment.find(a_id)
-          can_dwnld = if att
-                        element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
-                      end
-          can_dwnld ? raw_file_obj(att) : nil
+          att = atts[a_id]
+          att && readable?(att) ? raw_file_obj(att) : nil
         end
         error!('401 Unauthorized', 401) if !files.empty? && files.compact.empty?
         { files: files }
@@ -524,7 +504,7 @@ module Chemotion
           # skipped rather than raising AASM::InvalidTransition for the whole request.
           next unless att.root? && att.may_set_regenerating?
 
-          remove_duplicated(att)
+          remove_duplicated(att, pm[:original])
           remove_generated_children(att)
 
           att.set_regenerating
@@ -542,35 +522,34 @@ module Chemotion
       post 'regenerate_edited_spectrum' do
         pm = to_rails_snake_case(params)
 
-        molfile = pm[:molfile]
-        t_molfile = Tempfile.create('molfile')
-        t_molfile.write(molfile)
-        t_molfile.rewind
+        # The block form closes and removes the molfile, also when a regeneration raises.
+        Tempfile.create('molfile') do |t_molfile|
+          t_molfile.write(pm[:molfile])
+          t_molfile.rewind
 
-        Attachment.where(id: pm[:edited]).each do |att|
-          next unless writable?(att)
+          Attachment.where(id: pm[:edited]).find_each do |att|
+            next unless writable?(att)
 
-          remove_duplicated(att)
+            remove_duplicated(att, pm[:edited])
 
-          # TODO: do not use abs_path
-          result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
-            att.abs_path, t_molfile.path
-          )
-          io = StringIO.new(result)
-          io.rewind
+            # TODO: do not use abs_path
+            result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
+              att.abs_path, t_molfile.path
+            )
+            io = StringIO.new(result)
+            io.rewind
 
-          att.attachment_attacher.attach(
-            io,
-            metadata: {
-              'filename' => att.filename,
-              'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
-            },
-          )
+            att.attachment_attacher.attach(
+              io,
+              metadata: {
+                'filename' => att.filename,
+                'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
+              },
+            )
 
-          att.save!
+            att.save!
+          end
         end
-        t_molfile.close
-        t_molfile.unlink
 
         { status: true }
       end
@@ -604,6 +583,8 @@ module Chemotion
         optional :lcms_integrals_str, type: String
       end
       post 'save_spectrum' do
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         lcms_data = params[:lcms_mz_page_data]
         if lcms_data.respond_to?(:read)
           params[:lcms_mz_page_data] = lcms_data.read
@@ -682,6 +663,8 @@ module Chemotion
         optional :layout, type: String
       end
       post 'infer' do
+        error!('401 Unauthorized', 401) unless writable?(@attachment)
+
         predict = @attachment.infer_spectrum(params)
         params[:predict] = predict.to_json
         jcamp_att = @attachment.generate_spectrum(
