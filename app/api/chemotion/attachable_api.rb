@@ -4,19 +4,6 @@
 
 module Chemotion
   class AttachableAPI < Grape::API
-    helpers do
-      # An SBMM is a shared reference record: Usecases::Sbmm::Finder reuses it across users by
-      # accession/sequence, and ElementPolicy#update? passes for anyone owning a sample of it. Once
-      # another user has a sample of it, only their own uploads may be detached - mirroring
-      # Usecases::Sbmm::Sample#raise_if_sbmm_is_not_writable!, which locks the SBMM's fields then.
-      def sbmm_shared_with_other_users?(attachable)
-        return false unless attachable.is_a?(SequenceBasedMacromolecule)
-
-        SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: attachable.id, except_user_id: current_user.id)
-                                        .positive?
-      end
-    end
-
     resource :attachable do
       params do
         optional :files, type: [File], desc: 'files', default: []
@@ -62,14 +49,14 @@ module Chemotion
             end
           end
         end
-        # Scope the detach to the record authorized above, not just its type: otherwise an
-        # attachable_id the caller owns plus someone else's attachment ids in del_files would
-        # unlink the victim's attachments (unrecoverable, since an unlinked attachment has no
-        # root element and even its owner can no longer download it).
+        # The frontend's delete path for attachments of these elements: the rows are unlinked (left
+        # to their uploader), not moved to the Unsorted inbox. Only attachments of the record
+        # authorized above, and only those the user may change (Usecases::Attachments::Access#write?,
+        # e.g. own uploads on an SBMM another user has a sample of).
         if params[:del_files].any?
-          detachable = Attachment.where(id: params[:del_files], attachable: @attachable)
-          detachable = detachable.where(created_for: current_user.id) if sbmm_shared_with_other_users?(@attachable)
-          detachable.update_all(attachable_id: nil)
+          access = Usecases::Attachments::Access.new(current_user)
+          writable = Attachment.where(id: params[:del_files], attachable: @attachable).select { |a| access.write?(a) }
+          Attachment.where(id: writable.map(&:id)).update_all(attachable_id: nil)
         end
         true
       end
