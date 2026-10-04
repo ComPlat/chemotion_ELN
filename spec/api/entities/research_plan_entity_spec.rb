@@ -36,6 +36,18 @@ describe Entities::ResearchPlanEntity do
         )
       end
 
+      context 'with a non-image attachment as preview' do
+        before { create(:attachment, attachable: research_plan) } # upload.txt
+
+        it 'exposes the preview attachment with its previewable flag' do
+          expect(grape_entity_as_hash[:preview_attachment]).to include(
+            id: research_plan.attachments.first.id,
+            filename: 'upload.txt',
+            previewable: false,
+          )
+        end
+      end
+
       it 'returns a research_plan with research_plan_metadata' do
         expect(grape_entity_as_hash[:research_plan_metadata]).not_to be_empty
       end

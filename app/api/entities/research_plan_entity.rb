@@ -13,7 +13,7 @@ module Entities
       expose! :id
       expose! :is_restricted
       expose! :name
-      expose! :preview_attachment
+      expose! :preview_attachment,                           using: 'Entities::AttachmentEntity'
       expose! :type
       expose! :comment_count
       expose! :user_labels

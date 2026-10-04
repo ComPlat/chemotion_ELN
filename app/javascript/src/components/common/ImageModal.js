@@ -93,8 +93,16 @@ export default class ImageModal extends Component {
     this.setState({ showModal: false });
   }
 
+  // A single attachment the server marked as not previewable (e.g. a thumbnailed office or
+  // video file) keeps its thumbnail and hover preview, but GET image/:id can't serve it, so
+  // the click is left to the parent instead of opening an empty modal.
+  isClickable() {
+    if (this.props.disableClick) return false;
+    return Boolean(this.props.container) || isPreviewableAttachment(this.props.attachment);
+  }
+
   handleModalShow(e) {
-    if (this.props.disableClick) return;
+    if (!this.isClickable()) return;
     stopEvent(e);
     const { attachment, candidateIds, preferredId } = ImageModal.derive(this.props);
 
@@ -359,14 +367,18 @@ export default class ImageModal extends Component {
       return <div className="preview-table">{this.renderPreviewBox()}</div>;
     }
 
+    const clickProps = this.isClickable() ? {
+      onClick: this.handleModalShow,
+      onKeyPress: this.handleModalShow,
+      role: 'button',
+      tabIndex: 0,
+    } : {};
+
     return (
       <div>
         <div
           className="preview-table"
-          onClick={this.handleModalShow}
-          onKeyPress={this.handleModalShow}
-          role="button"
-          tabIndex={0}
+          {...clickProps}
         >
           {isLoading ? this.renderPreviewBox() : (
             <OverlayTrigger placement={placement} overlay={this.showPopObject()}>
