@@ -413,6 +413,24 @@ describe Chemotion::ChemicalAPI do
       end
     end
 
+    context 'when the configured PDF text service is busy' do
+      before do
+        settings = ActiveSupport::OrderedOptions.new
+        settings.url = 'http://pdftext:8080'
+        settings.timeout = 25
+        allow(Rails.configuration).to receive(:sds_text_service).and_return(settings)
+        stub_request(:post, 'http://pdftext:8080/text').to_return(status: 429, body: "busy\n")
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
+          .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
+        get '/api/v1/chemicals/extract_sds', params: { path: link }
+      end
+
+      it 'answers unprocessable with the reason', :aggregate_failures do
+        expect(response.status).to eq 422
+        expect(body['error']).to eq('the PDF text service is busy, try again shortly')
+      end
+    end
+
     context 'when the extractor raises' do
       before do
         allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
