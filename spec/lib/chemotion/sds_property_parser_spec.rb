@@ -40,6 +40,24 @@ RSpec.describe Chemotion::SdsPropertyParser do
     end
   end
 
+  describe 'values below zero' do
+    let(:section) do
+      <<~SECTION
+        9.1 Information on basic physical and chemical properties
+              Physical state                           :  liquid
+              Melting point/freezing point             :  -114 °C
+              Boiling point/boiling range              :  78 °C
+              Flash point                              :  -20 °C
+      SECTION
+    end
+
+    it 'reads them as values, not as absence markers', :aggregate_failures do
+      properties, diagnostics = parse(section)
+      expect(properties).to include('melting_point' => '-114 °C', 'flash_point' => '-20 °C')
+      expect(diagnostics['skipped'].to_h.keys).not_to include('melting_point', 'flash_point')
+    end
+  end
+
   describe 'the Sigma lettered layout' do
     let(:section) do
       <<~SECTION
