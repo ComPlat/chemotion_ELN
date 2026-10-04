@@ -59,6 +59,20 @@ describe Entities::ResearchPlanEntity do
       end
     end
 
+    context 'with a non-image attachment as preview' do
+      let(:detail_level) { 10 }
+
+      before { create(:attachment, attachable: research_plan) } # upload.txt
+
+      it 'exposes the preview attachment with its previewable flag' do
+        expect(grape_entity_as_hash[:preview_attachment]).to include(
+          id: research_plan.attachments.first.id,
+          filename: 'upload.txt',
+          previewable: false,
+        )
+      end
+    end
+
     context 'when detail level for ResearchPlan is 0' do
       let(:detail_level) { 0 }
 

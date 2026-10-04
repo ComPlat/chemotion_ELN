@@ -3,6 +3,12 @@ import moment from 'moment';
 
 const parseDateWithMoment = (dateStr) => moment(dateStr, 'DD.MM.YYYY, HH:mm:ss Z');
 
+// The server decides what GET image/:id can serve (Attachment#previewable?, exposed by
+// Entities::AttachmentEntity). Only skip attachments it has marked as not previewable: unsaved
+// ones and raw-serialized ones (e.g. an element's preview_attachment) don't carry the flag, and
+// the endpoint answers those with a handled 422 if they turn out not to be images or PDFs.
+const isPreviewableAttachment = (att) => att?.previewable !== false;
+
 const previewContainerImage = (
   container,
   noAttSvg = '/images/wild_card/no_attachment.svg',
@@ -29,20 +35,26 @@ const previewContainerImage = (
  * - Otherwise, the most recently updated attachment.
  * - If none are found, returns `null`.
  *
+ * Attachments the modal can open (see isPreviewableAttachment) are searched first, so the
+ * header and the modal show the same file. Thumbnailed files that can't be previewed (office,
+ * video, 3D) are only used when there is nothing else, to keep their thumbnail in the header.
+ *
  * @param {Object} container - The container object containing potential children.
  * @param {Array<Object>} container.children - An array of child container objects.
  * @returns {Object|null} The selected attachment object with a thumbnail, or `null` if none are found.
  */
 const getAttachmentFromContainer = (container) => {
   const datasetChildren = container.children?.filter((child) => child.container_type === 'dataset') || [];
-  const attachments = datasetChildren
+  const thumbnailed = datasetChildren
     .flatMap((child) => child.attachments || [])
     .filter((att) => att.thumb);
+  const previewable = thumbnailed.filter(isPreviewableAttachment);
+  const attachments = previewable.length ? previewable : thumbnailed;
+  const byLatest = (a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf();
   const combinedImageAttachment = attachments
     .filter((att) => att.filename?.toLowerCase().includes('combined'))
-    .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
-  const latestImageAttachment = attachments
-    .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
+    .sort(byLatest)[0];
+  const latestImageAttachment = [...attachments].sort(byLatest)[0];
   return combinedImageAttachment || latestImageAttachment || null;
 };
 
@@ -54,22 +66,17 @@ const getAttachmentFromContainer = (container) => {
  * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
  * all viewers, so it must reference a persisted attachment.
  *
- * Candidates are previewable saved attachments — images and PDFs (plus anything that already
- * has a thumbnail) — so PDFs are selectable even when their thumbnail wasn't generated.
+ * Candidates are previewable saved attachments — images and PDFs, i.e. what GET image/:id can
+ * serve — so PDFs are selectable even when their thumbnail wasn't generated.
  *
  * @param {Object} container - The analysis container with children[].attachments[].
  * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
  *   candidateIds: number[], preferredId: (number|null)}}
  *   previewAttachment - the default preview attachment (see getAttachmentFromContainer);
- *   candidates - selectable attachments ({ id, filename }) for the carousel;
+ *   candidates - selectable attachments ({ id, filename, thumb }) for the carousel;
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
-const isPreviewableAttachment = (att) => att.thumb === true
-  || (att.content_type || '').startsWith('image/')
-  || att.content_type === 'application/pdf'
-  || /\.pdf$/i.test(att.filename || '');
-
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);
 
@@ -77,7 +84,7 @@ const getContainerImageData = (container) => {
   const candidates = datasetChildren
     .flatMap((child) => child.attachments || [])
     .filter((att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att))
-    .map((att) => ({ id: Number(att.id), filename: att.filename }))
+    .map((att) => ({ id: Number(att.id), filename: att.filename, thumb: att.thumb === true }))
     .filter((c) => !Number.isNaN(c.id) && c.id > 0);
   const candidateIds = candidates.map((c) => c.id);
 
@@ -132,4 +139,5 @@ export {
   fetchImageSrcByAttachmentId,
   getAttachmentFromContainer,
   getContainerImageData,
+  isPreviewableAttachment,
 };

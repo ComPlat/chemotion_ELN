@@ -564,6 +564,43 @@ describe Chemotion::AttachmentAPI do
         expect(response).to have_http_status(:ok)
       end
     end
+
+    context 'when loading a PDF' do
+      let(:attachment_id) { create(:attachment, :with_pdf, created_for: user.id, attachable_type: '').id }
+
+      it('returning status 200') do
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when the attachment is neither an image nor a PDF' do
+      let(:attachment_id) { create(:attachment, created_for: user.id, attachable_type: '').id }
+
+      it('returning error 422') do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)).to include('code' => 'not_previewable')
+      end
+    end
+
+    context 'when the stored file is missing' do
+      let(:attachment_id) do
+        readable_attachment.tap { |att| File.delete(att.attachment.url) }.id
+      end
+
+      it('returning error 404') do
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'when loading a TIFF' do
+      let(:attachment_id) { create(:attachment, :with_tif_file, created_for: user.id, attachable_type: '').id }
+
+      it('serves the converted PNG under a .png name') do
+        expect(response).to have_http_status(:ok)
+        expect(response.headers['Content-Type']).to eq 'image/png'
+        expect(response.headers['Content-Disposition']).to eq 'attachment; filename="upload.png"'
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/thumbnail/{attachment_id}' do

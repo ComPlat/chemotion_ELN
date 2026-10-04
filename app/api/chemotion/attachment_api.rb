@@ -99,6 +99,19 @@ module Chemotion
       error!(message, 404)
     end
 
+    # Usecases::Attachments::LoadImage (GET image/:id) only serves images and PDFs.
+    rescue_from Usecases::Attachments::Errors::NotPreviewable do |_error|
+      error!({ error: 'Attachment is not an image or PDF', code: 'not_previewable' }, 422)
+    end
+
+    rescue_from Usecases::Attachments::Errors::FileMissing do |_error|
+      error!('Could not find attachment file', 404)
+    end
+
+    rescue_from Usecases::Attachments::Errors::ConversionFailed do |_error|
+      error!({ error: 'Attachment image could not be converted', code: 'conversion_failed' }, 422)
+    end
+
     resource :export_ds do
       before do
         @container = Container.find_by(id: params[:container_id])
@@ -442,13 +455,15 @@ module Chemotion
       end
 
       get 'image/:attachment_id' do
-        annotated = @attachment.attachment_attacher.derivatives.key?(:annotation)
-        data = Usecases::Attachments::LoadImage.execute!(@attachment, annotated)
-        content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+        # LoadImage raises a typed error for a file it can't serve (not an image or PDF, missing
+        # on disk, failed TIFF conversion); the rescue_froms above answer those with a 4xx.
+        # A converted TIFF or an annotated image is served as the PNG it is, under a .png name.
+        image = Usecases::Attachments::LoadImage.read(@attachment)
+        content_type image.content_type
+        header['Content-Disposition'] = "attachment; filename=\"#{image.filename}\""
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        data
+        image.data
       end
 
       desc 'Return Base64 encoded thumbnail'
