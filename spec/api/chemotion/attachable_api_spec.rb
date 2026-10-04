@@ -86,9 +86,8 @@ describe Chemotion::AttachableAPI do
       end
     end
 
-    # Regression: authorization used to only run for attachable_type == 'ResearchPlan'; every
-    # other type (Wellplate, DeviceDescription, sbmm samples/macromolecules) let any authenticated
-    # user attach files to, or detach attachments from, elements they had no access to.
+    # Every accepted attachable_type (Wellplate, DeviceDescription, SBMM samples and macromolecules,
+    # not only ResearchPlan) is checked with ElementPolicy#update? before attaching or detaching.
     context 'when attachable_type is Wellplate and it is in the current user\'s own collection' do
       let(:attachable_type) { 'Wellplate' }
       let(:attachable_id) { wellplate.id }
@@ -140,9 +139,8 @@ describe Chemotion::AttachableAPI do
       end
     end
 
-    # Regression: an SBMM is reused across users (Usecases::Sbmm::Finder), and ElementPolicy#update?
-    # passes for anyone owning a sample of it, so owning a sample of the same SBMM let a user detach
-    # attachments another user had uploaded to it.
+    # An SBMM is reused across users (Usecases::Sbmm::Finder), so it is a shared record: once another
+    # user has a sample of it, a user detaches only their own uploads on it.
     context 'when detaching from an SBMM that another user also has a sample of' do
       let(:attachable_type) { 'SequenceBasedMacromolecule' }
       let(:attachable_id) { sbmm.id }
@@ -214,31 +212,29 @@ describe Chemotion::AttachableAPI do
       end
     end
 
-    # Regression: the detach query filtered del_files by attachable_type only, never by the
-    # attachable_id that after_validation had just authorized. Passing an attachable_id the caller
-    # owns together with another user's attachment ids therefore detached the victim's files.
+    # del_files only unlinks attachments of the record authorized by after_validation (type and id).
     %w[ResearchPlan Wellplate].each do |type|
-      context "when del_files targets another user's #{type} attachment but attachable_id is the caller's own" do
+      context "when del_files also lists an attachment of another #{type}" do
         let(:attachable_type) { type }
         let(:attachable_id) { own_element.id }
         let(:own_element) { create(type.underscore.to_sym, collections: [collection]) }
-        let(:victim_element) { create(type.underscore.to_sym, collections: [other_collection]) }
+        let(:other_element) { create(type.underscore.to_sym, collections: [other_collection]) }
         let!(:own_attachment) { create(:attachment, attachable: own_element) }
-        let!(:victim_attachment) { create(:attachment, attachable: victim_element) }
+        let!(:other_attachment) { create(:attachment, attachable: other_element) }
         let(:params) do
           {
             attachable_type: attachable_type,
             attachable_id: attachable_id,
-            del_files: [own_attachment.id, victim_attachment.id],
+            del_files: [own_attachment.id, other_attachment.id],
           }
         end
 
         before { post '/api/v1/attachable/update_attachments_attachable', params: params }
 
-        it "detaches only the caller's own attachment and leaves the victim's linked" do
+        it 'unlinks only the attachment of the authorized record' do
           expect(response).to have_http_status(:created)
           expect(own_attachment.reload.attachable_id).to be_nil
-          expect(victim_attachment.reload).to have_attributes(attachable_type: type, attachable_id: victim_element.id)
+          expect(other_attachment.reload).to have_attributes(attachable_type: type, attachable_id: other_element.id)
         end
       end
     end

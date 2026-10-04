@@ -74,15 +74,15 @@ module Chemotion
         { ok: false, statusText: 'File key is not valid' }
       end
 
-      # Drops older copies of +att+: same attachable, same filename and same lineage (ancestry root),
-      # if the user may change them. Rows named in the current request (+batch_ids+) are left to
-      # their own iteration, and same-named files of other lineages are distinct files, as in
-      # generate_att. An unattached file has no attachable, so nothing counts as its duplicate.
+      # Drops older copies of +att+: same attachable, same filename and same lineage, if the user may
+      # change them. Rows named in the current request (+batch_ids+) are left to their own iteration,
+      # and same-named files of other lineages are distinct files, as in generate_att. The lineage is
+      # compared through root_id (read from the stored ancestry path), so a file whose root row has
+      # been removed is still handled. An unattached file has no attachable, so it has no duplicates.
       def remove_duplicated(att, batch_ids = [])
-        att.same_attachable.where(filename: att.filename)
-           .merge(Attachment.subtree_of(att.root_id))
-           .where.not(id: [att.id, *batch_ids])
-           .find_each { |old_att| old_att.destroy if writable?(old_att) }
+        att.same_attachable.where(filename: att.filename).where.not(id: [att.id, *batch_ids])
+           .select { |old_att| old_att.root_id == att.root_id }
+           .each { |old_att| old_att.destroy if writable?(old_att) }
       end
 
       def remove_generated_children(att)
@@ -522,35 +522,34 @@ module Chemotion
       post 'regenerate_edited_spectrum' do
         pm = to_rails_snake_case(params)
 
-        molfile = pm[:molfile]
-        t_molfile = Tempfile.create('molfile')
-        t_molfile.write(molfile)
-        t_molfile.rewind
+        # The block form closes and removes the molfile, also when a regeneration raises.
+        Tempfile.create('molfile') do |t_molfile|
+          t_molfile.write(pm[:molfile])
+          t_molfile.rewind
 
-        Attachment.where(id: pm[:edited]).each do |att|
-          next unless writable?(att)
+          Attachment.where(id: pm[:edited]).find_each do |att|
+            next unless writable?(att)
 
-          remove_duplicated(att, pm[:edited])
+            remove_duplicated(att, pm[:edited])
 
-          # TODO: do not use abs_path
-          result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
-            att.abs_path, t_molfile.path
-          )
-          io = StringIO.new(result)
-          io.rewind
+            # TODO: do not use abs_path
+            result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
+              att.abs_path, t_molfile.path
+            )
+            io = StringIO.new(result)
+            io.rewind
 
-          att.attachment_attacher.attach(
-            io,
-            metadata: {
-              'filename' => att.filename,
-              'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
-            },
-          )
+            att.attachment_attacher.attach(
+              io,
+              metadata: {
+                'filename' => att.filename,
+                'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
+              },
+            )
 
-          att.save!
+            att.save!
+          end
         end
-        t_molfile.close
-        t_molfile.unlink
 
         { status: true }
       end

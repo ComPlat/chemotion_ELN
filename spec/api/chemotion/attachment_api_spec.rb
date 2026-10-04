@@ -776,6 +776,36 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'POST /api/v1/attachments/regenerate_edited_spectrum' do
+    let(:container) { create(:container, containable: user) }
+    let(:root) { create(:attachment, :with_spectra_file, filename: 'trace.jdx', attachable: container) }
+    let(:edited) do
+      create(:attachment, :with_spectra_file, filename: 'trace.edit.jdx', attachable: container, parent: root)
+    end
+    let!(:other_lineage) do
+      create(:attachment, :with_spectra_file, filename: 'trace.edit.jdx', attachable: container)
+    end
+
+    before do
+      allow(Chemotion::Jcamp::RegenerateJcamp).to receive(:spectrum)
+        .and_return(Rails.root.join('spec/fixtures/spectra_file.jdx').read)
+    end
+
+    # The edited file's root row was removed without re-parenting its derived files.
+    context 'when the root of the edited file has been removed' do
+      before do
+        edited
+        root.delete
+        post '/api/v1/attachments/regenerate_edited_spectrum', params: { edited: [edited.id], molfile: '' }
+      end
+
+      it 'regenerates the edited file and keeps the same-named file of another lineage' do
+        expect(response).to have_http_status(:created)
+        expect(Attachment.find_by(id: other_lineage.id)).not_to be_nil
+      end
+    end
+  end
+
   describe 'POST /api/v1/attachments/regenerate_spectrum' do
     let(:user) { create(:person) }
     let(:container) { create(:container, containable: user) }
@@ -993,8 +1023,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user regenerate/overwrite spectrum data for an attachment they don't own.
+    # Saving spectrum data requires write access to the attachment.
     context 'when the attachment belongs to another user' do
       let(:attachment) { create(:attachment, :with_spectra_file) }
       let(:spectrum_params) { { attachment_id: attachment.id } }
@@ -1095,9 +1124,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user run spectrum inference against - and read the raw file content of -
-    # an attachment they don't own.
+    # Spectrum inference requires write access to the attachment.
     context 'when the attachment belongs to another user' do
       let(:attachment) { create(:attachment, :with_spectra_file) }
 
@@ -1191,8 +1218,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    # Regression: this endpoint used to run with no authorization check at all, letting any
-    # authenticated user overwrite the annotation SVG of an attachment they don't own.
+    # Updating the annotation requires write access to the attachment.
     context 'when the attachment belongs to another user' do
       let(:attachment) { create(:attachment, :with_image) }
 
