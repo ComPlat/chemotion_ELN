@@ -13,11 +13,12 @@ describe('quillToolbarSymbol.SpectraOps', () => {
     });
   });
 
-  it('PLAIN adds nothing around the peaks', () => {
+  it('PLAIN adds no prefix and closes the peaks like the other layouts', () => {
+    // writeCommon appends to the existing ops, so the tail keeps repeated writes apart.
     expect([
       ...SpectraOps.PLAIN.head('400 MHz, ', ''),
       { insert: 'peaks' },
       ...SpectraOps.PLAIN.tail(),
-    ]).toEqual([{ insert: 'peaks' }]);
+    ]).toEqual([{ insert: 'peaks' }, { insert: '. ' }]);
   });
 });
