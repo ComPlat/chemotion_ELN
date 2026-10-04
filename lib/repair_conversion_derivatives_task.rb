@@ -19,12 +19,15 @@ module RepairConversionDerivativesTask
   # @param dry_run [Boolean] when true, nothing is written
   # @return [Array<Result>] one result per broken entry; +action+ is +:rewritten+ or +:removed+
   def self.execute!(dry_run: true)
-    broken_attachments.map do |attachment|
+    results = []
+    # in batches: it runs as a migration on instances with many attachments
+    broken_attachments.find_each do |attachment|
       result = repair(attachment)
       persist(attachment) unless dry_run
       log(result, dry_run)
-      result
+      results << result
     end
+    results
   end
 
   # Attachments (soft-deleted ones included) whose +conversion+ entry has no +storage+ key.
@@ -34,7 +37,6 @@ module RepairConversionDerivativesTask
     Attachment.with_deleted
               .where("attachment_data -> 'derivatives' -> 'conversion' IS NOT NULL")
               .where.not("attachment_data -> 'derivatives' -> 'conversion' ? 'storage'")
-              .order(:id)
   end
 
   # Fixes the entry in memory (+attachment.attachment_data+); {.persist} writes it.
