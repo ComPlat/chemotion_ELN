@@ -888,10 +888,8 @@ export default class Sample extends Element {
    * Updates the sample's concentration (`concn`) based on its total amount in moles
    * and the reaction-level volume selected by `reaction.reactionVolumeForConcentration()`.
    *
-   * Volume selection is delegated to the reaction model and follows this priority:
-   * 1. Explicit reaction volume (`reaction.volume`) when `reaction.use_reaction_volume` is enabled
-   *    and the value is valid (> 0).
-   * 2. Otherwise, the combined reaction volume calculated from materials.
+   * Volume selection is delegated to the reaction model according to its
+   * `concentration_mode` setting.
    *
    * - For mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.
    * - For non-mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.

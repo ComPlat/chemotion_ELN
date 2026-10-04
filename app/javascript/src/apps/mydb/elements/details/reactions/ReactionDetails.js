@@ -430,7 +430,7 @@ export default class ReactionDetails extends Component {
       || type === 'phOperator'
       || type === 'phValue'
       || type === 'volume'
-      || type === 'useReactionVolumeForConcentration'
+      || type === 'concentrationMode'
       || type === 'lockReactionVolume'
       || type === 'weight_percentage'
       || type === 'reactionType'
