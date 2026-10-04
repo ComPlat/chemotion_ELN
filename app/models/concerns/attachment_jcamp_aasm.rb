@@ -190,7 +190,7 @@ module AttachmentJcampProcess
     return true  if filename.include?('processed_')
     return false if extname.casecmp('nmrium').zero?
 
-    attachments = Attachment.where(attachable_id: self[:attachable_id])
+    attachments = same_attachable
     num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
     jcamp_attachments = file_match(attachments, num)
     jcamp_attachments.any?
@@ -405,7 +405,7 @@ module AttachmentJcampProcess
 
   # TODO: Fix bugs and improve code
   def get_infer_json_content
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
 
     infers = atts.map do |att|
       keyword, _extname = att.extension_parts
@@ -546,11 +546,7 @@ module AttachmentJcampProcess
     return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
     return nil unless filename_lower.match?(/(?:^|[._-])uvvis(?:[._-]|$)/)
 
-    base_scope = Attachment.where(attachable_id: attachable_id)
-    if respond_to?(:attachable_type) && attachable_type.present?
-      base_scope = base_scope.where(attachable_type: attachable_type)
-    end
-    sibs = base_scope.where.not(id: id)
+    sibs = same_attachable.where.not(id: id)
 
     tics = sibs.select do |a|
       name = a.filename.to_s.downcase
@@ -727,7 +723,7 @@ module AttachmentJcampProcess
   def delete_related_edit_peak_with_att(attachment)
     return unless attachment
 
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       att.delete if related_edit_peak_to_delete?(att, attachment, valid_name)
@@ -766,7 +762,7 @@ module AttachmentJcampProcess
     # across the whole dataset, would also catch an independently-uploaded curve that happens
     # to derive the same target name, deleting it as collateral of an unrelated edit.
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_peak_file = att.filename_parts.include?('peak')
@@ -791,7 +787,7 @@ module AttachmentJcampProcess
     return unless img_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.image? &&
@@ -808,7 +804,7 @@ module AttachmentJcampProcess
     arr_img.each do |img_att|
       next unless img_att
 
-      atts = Attachment.where(attachable_id: attachable_id)
+      atts = same_attachable
       valid_name = fname_wo_ext(img_att)
       atts.each do |att|
         att.delete if related_arr_img_to_delete?(att, img_att, valid_name)
@@ -826,7 +822,7 @@ module AttachmentJcampProcess
     return unless csv_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.csv? &&
@@ -841,7 +837,7 @@ module AttachmentJcampProcess
     return unless nmrium_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = filename_parts[0]
     atts.each do |att|
       is_delete = att.nmrium? &&
@@ -860,7 +856,7 @@ module AttachmentJcampProcess
     # name such as "740.1H.edit.jdx" shares only the first dot-token the save is named after. An
     # "N_bagit" second token marks another curve of a multi-curve archive, which it must not take.
     valid_name = fname_wo_ext(self)
-    atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
+    atts = jcamp_att.same_attachable
     atts.each do |att|
       is_delete = att.edited? &&
                   att.id != jcamp_att.id &&
@@ -923,7 +919,7 @@ module AttachmentJcampProcess
   def delete_related_jsons(target, is_reg = false)
     return unless target
 
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
 
     atts.each do |att|
       is_delete = att.json? &&

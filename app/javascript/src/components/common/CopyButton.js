@@ -7,7 +7,7 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 // swapping the clipboard icon for a check. Failure feedback (a toast) is handled by
 // copyToClipboard itself, so callers get it for free.
 const CopyButton = ({
-  text, tooltip, tooltipId, placement, variant, size, disabled, className, active, ariaLabel,
+  text, html, tooltip, tooltipId, placement, variant, size, disabled, className, active, ariaLabel,
 }) => {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef(null);
@@ -17,7 +17,7 @@ const CopyButton = ({
 
   const handleCopy = async (e) => {
     e?.stopPropagation();
-    const ok = await copyToClipboard(text);
+    const ok = html ? await copyToClipboard(text, { html }) : await copyToClipboard(text);
     if (!ok) return;
     setCopied(true);
     clearTimeout(resetTimer.current);
@@ -44,7 +44,7 @@ const CopyButton = ({
         disabled={disabled}
         className={className}
         active={active}
-        aria-label={label}
+        aria-label={copied ? 'Copied' : label}
         onClick={handleCopy}
       >
         <i className={`fa ${copied ? 'fa-check' : 'fa-clipboard'}`} aria-hidden="true" />
@@ -55,6 +55,8 @@ const CopyButton = ({
 
 CopyButton.propTypes = {
   text: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  // Optional text/html flavour written alongside `text` where the browser supports it.
+  html: PropTypes.string,
   tooltip: PropTypes.node,
   tooltipId: PropTypes.string,
   placement: PropTypes.string,
@@ -68,6 +70,7 @@ CopyButton.propTypes = {
 
 CopyButton.defaultProps = {
   text: '',
+  html: undefined,
   tooltip: 'copy to clipboard',
   tooltipId: 'copy-to-clipboard-tooltip',
   placement: 'top',

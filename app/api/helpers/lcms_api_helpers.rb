@@ -4,7 +4,6 @@
 # endpoint. Picks the closest `##PAGE=` block to a requested retention
 # time across sibling mz/ms JCamp attachments, using `Lcms::PageIndexer`
 # to avoid re-parsing whole attachments at each request.
-# rubocop:disable Metrics/ModuleLength
 module LcmsApiHelpers
   extend Grape::API::Helpers
 
@@ -79,11 +78,7 @@ module LcmsApiHelpers
   end
 
   def lcms_sibling_attachments(att)
-    scope = Attachment.where(attachable_id: att.attachable_id)
-    if att.respond_to?(:attachable_type) && att.attachable_type.present?
-      scope = scope.where(attachable_type: att.attachable_type)
-    end
-    scope.where.not(id: att.id)
+    att.same_attachable.where.not(id: att.id)
   end
 
   def lcms_mz_attachments(att)
@@ -135,4 +130,3 @@ module LcmsApiHelpers
     best
   end
 end
-# rubocop:enable Metrics/ModuleLength

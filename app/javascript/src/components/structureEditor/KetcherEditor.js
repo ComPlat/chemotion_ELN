@@ -38,7 +38,6 @@ import {
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
-  buttonClickForRectangleSelection,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -182,6 +181,9 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   const iframeRef = useRef();
   const eventCleanupRef = useRef(() => { });
+  // Prevent duplicate 'init' messages from Ketcher (fired on iframe resize/recomposite
+  // triggered by parent-document reflows) from resetting the canvas mid-session.
+  const initHandledRef = useRef(false);
   useEffect(() => {
     canvasIframeRefSetter(iframeRef);
     return () => canvasIframeRefSetter(null);
@@ -302,10 +304,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
     [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => {
-      // Clear _selection before clicking so the rect-select change event does not
-      // queue a MOVE_ATOM that races with the upcoming onPasteNewShapes call.
+      // Do NOT click rect-select here — that fires a Ketcher change event which
+      // triggers onTemplateMove → setMolecule → visible restart flash.
+      // rect-select is activated at the end of onPasteNewShapes, which is the
+      // only place it's actually needed.
       try { editor._structureDef.editor.editor._selection = null; } catch (e) { /* ignore */ }
-      await buttonClickForRectangleSelection(iframeRef);
       setShowShapes(!showShapes);
     },
     [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => {
@@ -324,6 +327,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // attach click listeners to the iframe and initialize the editor
   useEffect(() => {
     if (!editor) return () => { };
+    initHandledRef.current = false; // fresh editor — allow the next 'init' through
 
     const cleanup = setupEditorIframe({
       iframeRef,
@@ -459,8 +463,7 @@ const KetcherEditor = forwardRef((props, ref) => {
             try {
               const content = JSON.parse(selectedTextNode.data.content);
               selectedTextKey = content.blocks[0].key;
-              // Extract the text content
-              selectedTextContent = content.blocks[0].text || '';
+              selectedTextContent = JSON.stringify(content);
 
               // Find associated image index from alias
               for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
@@ -543,6 +546,13 @@ const KetcherEditor = forwardRef((props, ref) => {
   const loadContent = async (event) => {
     try {
       if (event?.data?.eventType === 'init') {
+        // Ignore spurious duplicate 'init' messages — Ketcher re-fires 'init' when
+        // the iframe is resized by a parent-document reflow (e.g. modal image loads).
+        // Responding to a second 'init' would call prepareKetcherData(initMol) and
+        // wipe every polymer shape the user drew.
+        if (initHandledRef.current) return;
+        initHandledRef.current = true;
+
         window.editor = editor;
         if (editor && editor.structureDef) {
           // Store cleanup function in ref for later use
@@ -643,19 +653,40 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          // Convert Delta object to plain text
-          const deltaToText = (delta) => {
-            if (!delta || !delta.ops) return '';
-            return delta.ops
-              .filter((op) => typeof op.insert === 'string')
-              .map((op) => op.insert)
-              .join('');
+          const deltaToContentJson = (delta, existingKey) => {
+            const ops = delta?.ops || [];
+            const key = existingKey || Math.random().toString(36).substring(2, 8);
+            const fontSize = 10;
+            let text = '';
+            const inlineStyleRanges = [];
+            let offset = 0;
+            for (const op of ops) {
+              if (typeof op.insert !== 'string') continue;
+              const chunk = op.insert.replace(/\n$/, '');
+              if (!chunk) continue;
+              const len = chunk.length;
+              text += chunk;
+              if (op.attributes?.bold) inlineStyleRanges.push({ style: 'BOLD', offset, length: len });
+              if (op.attributes?.italic) inlineStyleRanges.push({ style: 'ITALIC', offset, length: len });
+              if (op.attributes?.underline) inlineStyleRanges.push({ style: 'UNDERLINE', offset, length: len });
+              offset += len;
+            }
+            if (text.length > 0) inlineStyleRanges.push({ style: `fontsize-${fontSize}`, offset: 0, length: text.length });
+            return JSON.stringify({
+              blocks: [{ key, text, type: 'unstyled', depth: 0, inlineStyleRanges, entityRanges: [], data: { fontSize } }],
+              entityMap: {},
+            });
           };
-          const text = deltaToText(contents);
 
-          // Use the improved function that handles text node creation/update and positioning
-          await onAddTextFromEditor(editor, text, selectedImageForTextNode, selectedTextNodeContent !== null);
-          // Update button state after text is added/updated
+          let existingKey;
+          try {
+            const existing = selectedTextNodeContent ? JSON.parse(selectedTextNodeContent) : null;
+            existingKey = existing?.blocks?.[0]?.key;
+          } catch { /* new node */ }
+
+          const contentJson = deltaToContentJson(contents, existingKey);
+
+          await onAddTextFromEditor(editor, contentJson, selectedImageForTextNode, selectedTextNodeContent !== null);
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
           setSelectedTextNodeContent(null);

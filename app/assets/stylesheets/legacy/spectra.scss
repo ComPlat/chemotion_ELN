@@ -2,10 +2,6 @@
   z-index: 1998;
 }
 
-.react-spectrum-editor div[class^='InfoPanel-panelDetail'] {
-  max-width: 22vw;
-}
-
 .spectra-editor-modal-body__editor {
   height: 100%;
   min-height: 0;
@@ -61,10 +57,21 @@
       // LayerContent/Panel render an unstyled wrapper <div> here before the
       // d3-mounted / InfoPanel content; without this it's a block box with
       // auto height, which breaks the percentage-height chain below it.
-      > div {
+      // Only that first wrapper grows: the CV chart column also stacks the
+      // voltammetry table under the chart, and growing it too hands it a share
+      // of the chart's height - which the chart, sizing itself to its own
+      // wrapper, then keeps. The table takes its natural height instead.
+      > div:first-child {
         flex: 1 1 auto;
         min-height: 0;
       }
+    }
+
+    // The xs-3 column stacks the Graph/Info/Multiplicity accordions. When Info
+    // expands the stack outgrows the column; scroll so Multiplicity stays
+    // reachable. The xs-9 chart column stays clipped.
+    .MuiGrid-grid-xs-3 > div {
+      overflow-y: auto;
     }
 
     .d3Line, .d3Rect, .d3Multi, .d3Svg, .d3SvgRect, .d3SvgMulti {

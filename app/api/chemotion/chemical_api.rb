@@ -89,21 +89,22 @@ module Chemotion
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
               vendor = data[:vendor]
               language = data[:language]
-              case data[:option]
-              when 'Common Name'
-                name = data[:searchStr] || molecule.names[0]
-              when 'CAS'
-                name = data[:searchStr] || molecule.cas[0]
-              end
+              # A product number narrows the vendor listing; PubChem is still reached by
+              # the molecule, so a name or CAS is needed either way.
+              name = data[:searchStr].presence ||
+                     (data[:option] == 'Common Name' ? molecule&.names&.first : molecule&.cas&.first)
+              number = data[:productNumber]
               case vendor
-              when 'Merck'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
+              when 'Merck', 'Sigma-Aldrich'
+                { merck_link: Chemotion::ChemicalsService.merck(name, language, number) }
               when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+                { alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number) }
+              when 'All'
+                Chemotion::ChemicalsService.vendor_overview(name, language, number)
               else
                 {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
+                  alfa_link: Chemotion::ChemicalsService.thermofisher(name, language, number),
+                  merck_link: Chemotion::ChemicalsService.merck(name, language, number),
                 }
               end
             end
@@ -121,24 +122,19 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
-          Chemotion::ChemicalsService.handle_exceptions do
-            product_info = params[:chemical_data][0][params[:vendor_product]]
-            file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
-              product_info['sdsLink'],
-              product_info['vendor'].downcase,
-              product_info['productNumber'],
-            )
-            return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
-
-            Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
+          result = Chemotion::ChemicalsService.handle_exceptions do
+            Chemotion::ChemicalsService.save_vendor_sheet(
               sample_id: params[:sample_id],
               cas: params[:cas],
               chemical_data: params[:chemical_data],
-              file_path: file_path,
-              product_number: product_info['productNumber'],
-              vendor: product_info['vendor'].downcase,
+              product_info: params[:chemical_data].first.try(:[], params[:vendor_product]),
             )
           end
+          if result.is_a?(Hash) && result[:error].present?
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
+          end
+
+          result
         end
       end
 
@@ -166,7 +162,7 @@ module Chemotion
           )
 
           if result.is_a?(Hash) && result[:error].present?
-            error!({ error: result[:error] }, 400)
+            error!({ error: result[:error], final: result[:final] }, result[:status] || 400)
           else
             # Return the created/updated chemical
             present result
@@ -177,51 +173,27 @@ module Chemotion
         end
       end
 
-      resources :safety_phrases do
-        desc 'H and P safety phrases'
+      resources :extract_sds do
+        desc 'Read H and P codes and section 9 properties out of a saved safety data sheet'
 
         params do
-          requires :vendor, type: String, desc: 'params'
+          requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
 
-        route_param :sample_id do
-          get do
-            Chemotion::ChemicalsService.handle_exceptions do
-              chemical = Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
-              if chemical.chemical_data.present?
-                if params[:vendor] == 'thermofischer' && chemical.chemical_data[0]['alfaProductInfo']
-                  product_number = chemical.chemical_data[0]['alfaProductInfo']['productNumber']
-                  Chemotion::ChemicalsService.safety_phrases_thermofischer(product_number)
-                elsif params[:vendor] == 'merck' && chemical.chemical_data[0]['merckProductInfo']
-                  product_link = chemical.chemical_data[0]['merckProductInfo']['productLink']
-                  Chemotion::ChemicalsService.safety_phrases_merck(product_link)
-                else
-                  err_body = 'No safety phrases could be found'
-                  err_body
-                end
-              else
-                status 204
-              end
-            end
-          end
-        end
-      end
-
-      resources :chemical_properties do
-        desc 'additional chemical properties'
-
-        params do
-          requires :link, type: String, desc: 'vendor product link'
-        end
-
+        # 400 for a path that is not a saved sheet, 404 when it is gone, 422 when the PDF cannot be
+        # read; a readable sheet that yields nothing is a 200 whose diagnostics say why.
         get do
-          Chemotion::ChemicalsService.handle_exceptions do
-            if params[:link].include? 'alfa'
-              Chemotion::ChemicalsService.chemical_properties_alfa(params[:link])
-            elsif params[:link].include? 'sigmaaldrich'
-              Chemotion::ChemicalsService.chemical_properties_merck(params[:link])
-            end
-          end
+          path = Chemotion::SdsExtractor.saved_sheet_path(params[:path])
+          error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400) if path.nil?
+          error!({ error: 'the safety data sheet is no longer on the server' }, 404) unless path.file?
+
+          result = Chemotion::SdsExtractor.extract(path.to_s)
+          failure = result.dig('diagnostics', 'errors')&.first
+          error!({ error: failure, diagnostics: result['diagnostics'] }, 422) if failure
+          result
+        rescue StandardError => e
+          Rails.logger.error("extract_sds failed: #{e.class}: #{e.message}")
+          error!({ error: 'the safety data sheet could not be read' }, 500)
         end
       end
     end
