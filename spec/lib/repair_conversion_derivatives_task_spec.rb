@@ -65,12 +65,15 @@ RSpec.describe RepairConversionDerivativesTask do
         .to eq('id' => "/#{valid_entry['id']}")
     end
 
-    it 'skips, rather than removes, when the storage directory is not on this host' do
+    it 'removes the entry when the storage directory is not on this host, so the element loads' do
+      store = Shrine.storages[:store].directory.to_s
       allow(File).to receive(:directory?).and_call_original
-      allow(File).to receive(:directory?).with(Shrine.storages[:store].directory.to_s).and_return(false)
+      allow(File).to receive(:directory?).with(store).and_return(false)
+      allow(File).to receive(:file?).and_call_original
+      allow(File).to receive(:file?).with(start_with(store)).and_return(false)
 
-      expect(described_class.execute!(dry_run: false).map(&:action)).to eq([:skipped])
-      expect(Attachment.find(attachment.id).attachment_data['derivatives']).to have_key('conversion')
+      expect(described_class.execute!(dry_run: false).map(&:action)).to eq([:removed])
+      expect(Attachment.find(attachment.id).attachment_data['derivatives']).not_to have_key('conversion')
     end
 
     it 'removes the entry when the converted file is gone, so the next preview converts again' do

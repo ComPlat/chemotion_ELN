@@ -14,6 +14,6 @@ namespace :attachments do
     puts "#{dry_run ? 'Would repair' : 'Repaired'} #{results.size} attachment(s): " \
          "#{counts.fetch(:rewritten, 0)} entry(ies) rewritten, " \
          "#{counts.fetch(:removed, 0)} removed (PNG missing, regenerated on next preview), " \
-         "#{counts.fetch(:skipped, 0)} skipped (storage not configured or not reachable from this host)."
+         "#{counts.fetch(:skipped, 0)} skipped (storage not configured)."
   end
 end

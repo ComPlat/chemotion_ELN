@@ -9,10 +9,12 @@
 # For each such entry:
 # - the PNG is still on disk: the entry is rewritten in the shape Shrine writes on upload
 #   (+id+ relative to the storage directory, +storage+, +metadata+);
-# - the PNG is gone: the entry is removed, and the next preview converts the TIFF again;
-# - the storage isn't configured, or its directory isn't reachable from this host (e.g. the
-#   uploads volume isn't mounted where the migration runs): the entry is left alone, so a later
-#   run can repair it. It never aborts the run.
+# - the PNG is gone, or can't be seen from this host (e.g. the uploads volume isn't mounted
+#   where the migration runs): the entry is removed, and the next preview converts the TIFF
+#   again. Removing is always safe; leaving an entry Shrine can't load is not, as it keeps the
+#   element from loading;
+# - the attachment's storage isn't configured: the entry is left alone (its main file can't be
+#   loaded either). It never aborts the run.
 #
 # The attacher is never loaded here (it would raise on these entries); only the raw
 # +attachment_data+ column is read and written.
@@ -53,6 +55,7 @@ module RepairConversionDerivativesTask
     directory = storage_directory(storage_key)
     return Result.new(attachment.id, :skipped, nil) unless directory
 
+    warn_if_unreachable(directory)
     id = data.dig('derivatives', 'conversion', 'id').to_s.sub(%r{\A/+}, '')
     path = File.join(directory, id)
 
@@ -66,13 +69,17 @@ module RepairConversionDerivativesTask
   end
 
   # @return [String, nil] the storage's directory, or nil when the storage isn't a configured
-  #   file system storage or its directory isn't on this host
+  #   file system storage
   def self.storage_directory(storage_key)
     storage = Shrine.storages[storage_key.to_sym]
-    return unless storage.respond_to?(:directory)
+    storage.directory.to_s if storage.respond_to?(:directory)
+  end
 
-    directory = storage.directory.to_s
-    directory if File.directory?(directory)
+  def self.warn_if_unreachable(directory)
+    return if File.directory?(directory)
+
+    Rails.logger.warn("[RepairConversionDerivativesTask] storage directory #{directory} not found " \
+                      'on this host; conversion entries are removed and regenerated on preview')
   end
 
   def self.shrine_entry(id, storage_key, path)
