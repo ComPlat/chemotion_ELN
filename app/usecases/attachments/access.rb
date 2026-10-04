@@ -27,8 +27,9 @@ module Usecases
       end
 
       # On a SequenceBasedMacromolecule another user has a sample of, only the uploader may change
-      # an attachment: the SBMM is a shared reference record, and update? passes for anyone owning
-      # one of its samples (see {Usecases::Sbmm::Sample#raise_if_sbmm_is_not_writable!}).
+      # an attachment, also once they no longer have a sample of it: the SBMM is a shared reference
+      # record, and update? passes for anyone owning one of its samples
+      # (see {Usecases::Sbmm::Sample#raise_if_sbmm_is_not_writable!}).
       #
       # @param attachment [Attachment, nil]
       # @return [Boolean]
@@ -65,11 +66,13 @@ module Usecases
         @roots[key] = attachment.root_element
       end
 
+      # On a shared SBMM the uploader decides, before ElementPolicy#update?: they keep write access to
+      # their own files after removing their own sample of it, since nobody else may change them.
       def write_on_element?(attachment, element)
         return own_user_element?(element) if element.nil? || element.is_a?(User)
-        return false unless cached(element, :update) { ElementPolicy.new(@user, element).update? }
+        return attachment.created_for == @user.id if shared_sbmm?(element)
 
-        !shared_sbmm?(element) || attachment.created_for == @user.id
+        cached(element, :update) { ElementPolicy.new(@user, element).update? }
       end
 
       # Unsorted inbox files and detached files have no element to authorize against; they belong

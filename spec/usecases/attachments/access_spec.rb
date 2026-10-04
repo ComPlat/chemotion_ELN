@@ -193,6 +193,31 @@ RSpec.describe Usecases::Attachments::Access do
       end
     end
 
+    # The uploader keeps write access to their own files after removing their own sample, since no
+    # other user of the shared SBMM may change them.
+    context 'when the uploader no longer has a sample of it' do
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                     collections: [own_collection])
+      end
+
+      it 'lets the uploader change it while other users still have samples' do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: owner,
+                                                     collections: [owners_collection])
+        uploader = create(:person)
+        attachment = create(:attachment, attachable: sbmm, created_for: uploader.id)
+
+        expect([write?(attachment, as: uploader), write?(attachment)]).to eq [true, false]
+      end
+
+      it 'lets the only user left with a sample change it too' do
+        uploader = create(:person)
+        attachment = create(:attachment, attachable: sbmm, created_for: uploader.id)
+
+        expect([write?(attachment, as: uploader), write?(attachment)]).to eq [true, true]
+      end
+    end
+
     context "when the user reaches it through a share of another user's sample" do
       before do
         create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: owner,

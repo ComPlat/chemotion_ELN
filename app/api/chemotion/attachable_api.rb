@@ -13,8 +13,8 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        # Only element types Attachment#root_element resolves directly; anything else (including
-        # 'Container') is rejected rather than silently skipping authorization.
+        # Accepts the element types Attachment#root_element resolves directly, each checked with
+        # ElementPolicy#update?; other types (including 'Container') are rejected.
         attachable_type = params[:attachable_type]
         if Attachment::ELEMENT_ATTACHABLE_TYPES.include?(attachable_type)
           @attachable = attachable_type.constantize.find_by(id: params[:attachable_id])

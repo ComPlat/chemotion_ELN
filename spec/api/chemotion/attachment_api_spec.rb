@@ -1348,6 +1348,16 @@ describe Chemotion::AttachmentAPI do
         expect(response).to have_http_status(:unauthorized)
       end
     end
+
+    # Without a sample of the SBMM, the uploader still controls their own files on it.
+    context 'when the user uploaded to it but no longer has a sample of it' do
+      let!(:own_upload) { create(:attachment, :with_spectra_file, attachable: sbmm, created_for: user.id) }
+
+      it 'allows deleting the upload' do
+        delete "/api/v1/attachments/#{own_upload.id}"
+        expect(response).to have_http_status(:ok)
+      end
+    end
   end
 
   # Regression: writable? used to resolve the element only via the container chain
