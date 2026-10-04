@@ -17,6 +17,7 @@ import {
   detailFooterButton,
 } from 'src/apps/mydb/elements/details/DetailCardButton';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ReactionEditorLink from 'src/apps/mydb/elements/details/reactions/reactionProcessEditor/ReactionEditorLink';
 
 export default function ElementDetailCard({
   children,
@@ -163,6 +164,8 @@ export default function ElementDetailCard({
   // Build header toolbar with header comment + print/calendar buttons + copy + save buttons + original toolbar
   const elementHeaderToolbar = (
     <>
+      <ReactionEditorLink reaction={element} />
+      {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {headerToolbar}
       {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {showPrintCode && <PrintCodeButton element={element} size="sm" variant="secondary" />}
