@@ -591,6 +591,16 @@ describe Chemotion::AttachmentAPI do
         expect(response).to have_http_status(:not_found)
       end
     end
+
+    context 'when loading a TIFF' do
+      let(:attachment_id) { create(:attachment, :with_tif_file, created_for: user.id, attachable_type: '').id }
+
+      it('serves the converted PNG under a .png name') do
+        expect(response).to have_http_status(:ok)
+        expect(response.headers['Content-Type']).to eq 'image/png'
+        expect(response.headers['Content-Disposition']).to eq 'attachment; filename="upload.png"'
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/thumbnail/{attachment_id}' do

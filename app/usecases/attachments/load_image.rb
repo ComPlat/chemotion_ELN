@@ -5,32 +5,53 @@ module Usecases
     class LoadImage
       @@types_convert = ['.tif', '.tiff'] # rubocop:disable Style/ClassVars
 
-      # Reads the bytes GET image/:id serves: the annotated image if requested and present,
-      # the PNG conversion for a TIFF, else the original file.
+      # What GET image/:id serves: the bytes, and the type and name of the file they come from,
+      # which differ from the attachment's own for a converted TIFF or an annotated PNG.
+      Image = Struct.new(:data, :content_type, :filename)
+
+      # Loads what GET image/:id serves: the annotated image if requested and present, the PNG
+      # conversion for a TIFF, else the original file.
       #
       # @param attachment [Attachment]
       # @param annotated [Boolean] serve the annotated image when there is one
-      # @return [String] the binary file content
+      # @return [Image] the binary content with the content type and filename it is served as
       # @raise [Usecases::Attachments::Errors::NotPreviewable] if the attachment is neither an image nor a PDF
       # @raise [Usecases::Attachments::Errors::FileMissing] if the stored file is gone
       # @raise [Usecases::Attachments::Errors::ConversionFailed] if a TIFF can't be converted to PNG
-      def self.execute!(attachment, annotated)
+      def self.read(attachment, annotated: true)
         # to allow reading of PDF files
         unless attachment.previewable?
           raise Usecases::Attachments::Errors::NotPreviewable, "no image / PDF attachment: #{attachment.id}"
         end
 
-        path = if annotated && attachment.annotated?
-                 annotated_image_path(attachment)
-               elsif attachment.type_image_tiff?
-                 converted_image_path(attachment)
-               else
-                 attachment.attachment.url
-               end
+        # a missing annotated file falls back to what is served without annotation
+        path = (annotated_image_path(attachment) if annotated)
+        path ||= attachment.type_image_tiff? ? converted_image_path(attachment) : attachment.attachment.url
 
-        File.binread(path)
+        Image.new(File.binread(path), *served_type_and_name(attachment, path))
       rescue Errno::ENOENT => e
         raise Usecases::Attachments::Errors::FileMissing, "file of attachment #{attachment.id} not found: #{e.message}"
+      end
+
+      # @return [String] the binary content served by {.read}
+      def self.execute!(attachment, annotated: true)
+        read(attachment, annotated: annotated).data
+      end
+
+      # The original file keeps the attachment's type and name (it may have no extension on
+      # disk); a derived file (TIFF conversion, annotated image) is typed and named after its
+      # own extension.
+      #
+      # @return [Array(String, String)] +[content_type, filename]+
+      def self.served_type_and_name(attachment, path)
+        served_ext = File.extname(path)
+        original_ext = File.extname(attachment.filename.to_s)
+        if path == attachment.attachment.url || served_ext.casecmp?(original_ext)
+          return [attachment.content_type, attachment.filename]
+        end
+
+        [Rack::Mime.mime_type(served_ext, attachment.content_type),
+         "#{File.basename(attachment.filename.to_s, original_ext)}#{served_ext}"]
       end
 
       def self.create_converted_image(attachment)
@@ -72,11 +93,10 @@ module Usecases
         attachment.update_column('attachment_data', attachment.attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
+      # @return [String, nil] the annotated image's path, or nil when there is none on disk
       def self.annotated_image_path(attachment)
-        store = Rails.application.config_for :shrine
-        store = store[:store]
-        annotated_file_path = "#{store}/#{attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] || 'not available'}" # rubocop:disable Layout/LineLength
-        File.file?(annotated_file_path) ? annotated_file_path : attachment.attachment.url
+        path = attachment.annotated_file_location
+        path if path.present? && File.file?(path)
       end
 
       def self.converted_image_path(attachment)

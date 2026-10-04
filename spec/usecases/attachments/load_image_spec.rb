@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Attachments::LoadImage do
   describe '.execute!' do
-    let(:loaded_image) { described_class.execute!(attachment, annotated) }
+    let(:loaded_image) { described_class.execute!(attachment, annotated: annotated) }
     let(:annotated) { false }
     let(:tmp_file) do
       tmp_file = Tempfile.new
@@ -109,14 +109,15 @@ RSpec.describe Usecases::Attachments::LoadImage do
         reloaded = Attachment.find(attachment.id)
         expect(reloaded.attachment_data.dig('derivatives', 'conversion')).to include('storage' => 'store')
         expect(reloaded.attachment_attacher.derivatives[:conversion].exists?).to be true
-        expect(described_class.execute!(reloaded, false).bytesize).to eq File.size(reloaded.attachment(:conversion).url)
+        expect(described_class.execute!(reloaded, annotated: false).bytesize)
+          .to eq File.size(reloaded.attachment(:conversion).url)
       end
     end
 
     context 'with image attachment(tif, stored without any derivatives)' do
       let(:attachment) { create(:attachment, :with_tif_file) }
       let(:updated_attachment) { Attachment.find(attachment.id) }
-      let(:loaded_image) { described_class.execute!(updated_attachment, annotated) }
+      let(:loaded_image) { described_class.execute!(updated_attachment, annotated: annotated) }
 
       before do
         attachment.attachment_data.delete('derivatives')
@@ -127,7 +128,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
         expect(tmp_file.size).to be > 0
         reloaded = Attachment.find(attachment.id)
         expect(reloaded.attachment_attacher.derivatives[:conversion].exists?).to be true
-        expect(described_class.execute!(reloaded, false).bytesize).to be > 0
+        expect(described_class.execute!(reloaded, annotated: false).bytesize).to be > 0
       end
     end
 
@@ -144,7 +145,7 @@ RSpec.describe Usecases::Attachments::LoadImage do
       let(:attachment) { create(:attachment, :with_tif_file) }
       let(:annotated) { true }
       let(:updated_attachment) { Attachment.find(attachment.id) }
-      let(:loaded_image) { described_class.execute!(updated_attachment, annotated) }
+      let(:loaded_image) { described_class.execute!(updated_attachment, annotated: annotated) }
 
       before do
         annotation = Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg').read
@@ -155,6 +156,49 @@ RSpec.describe Usecases::Attachments::LoadImage do
       it 'size of returned image equals size of converted image' do
         annotated_file_location = updated_attachment.attachment_data['derivatives']['annotation']['annotated_file_location'] # rubocop:disable  Layout/LineLength
         expect(tmp_file.size).to eq File.open(updated_attachment.attachment.storage.directory + annotated_file_location).size # rubocop:disable  Layout/LineLength
+      end
+    end
+  end
+
+  describe '.read' do
+    it 'serves the original file under its own type and name' do
+      attachment = create(:attachment, :with_image)
+      image = described_class.read(attachment)
+
+      expect(image.content_type).to eq attachment.content_type
+      expect(image.filename).to eq 'upload.jpg'
+    end
+
+    it 'serves a TIFF as the PNG it is converted to' do
+      image = described_class.read(create(:attachment, :with_tif_file))
+
+      expect(image.content_type).to eq 'image/png'
+      expect(image.filename).to eq 'upload.png'
+      expect(image.data.byteslice(0, 8)).to eq "\x89PNG\r\n\x1A\n".b
+    end
+
+    context 'with an annotated TIFF' do
+      let(:attachment) { create(:attachment, :with_tif_file) }
+
+      before do
+        annotation = Rails.root.join('spec/fixtures/annotations/20221207_valide_annotation_edited.svg').read
+        annotation = annotation.gsub('/46', "/#{attachment.id}")
+        Usecases::Attachments::Annotation::AnnotationUpdater.new.update_annotation(annotation, attachment.id)
+      end
+
+      it 'serves the annotated image as PNG' do
+        reloaded = Attachment.find(attachment.id)
+        image = described_class.read(reloaded)
+
+        expect(image.data.bytesize).to eq File.size(reloaded.annotated_file_location)
+        expect(image).to have_attributes(content_type: 'image/png', filename: 'upload.png')
+      end
+
+      it 'falls back to the PNG conversion, not the raw TIFF, when the annotated file is gone' do
+        reloaded = Attachment.find(attachment.id)
+        File.delete(reloaded.annotated_file_location)
+
+        expect(described_class.read(reloaded).data.bytesize).to eq File.size(reloaded.attachment(:conversion).url)
       end
     end
   end

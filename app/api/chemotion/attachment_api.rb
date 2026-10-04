@@ -457,13 +457,13 @@ module Chemotion
       get 'image/:attachment_id' do
         # LoadImage raises a typed error for a file it can't serve (not an image or PDF, missing
         # on disk, failed TIFF conversion); the rescue_froms above answer those with a 4xx.
-        annotated = @attachment.attachment_attacher.derivatives.key?(:annotation)
-        data = Usecases::Attachments::LoadImage.execute!(@attachment, annotated)
-        content_type @attachment.content_type
-        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+        # A converted TIFF or an annotated image is served as the PNG it is, under a .png name.
+        image = Usecases::Attachments::LoadImage.read(@attachment)
+        content_type image.content_type
+        header['Content-Disposition'] = "attachment; filename=\"#{image.filename}\""
         header['Content-Transfer-Encoding'] = 'binary'
         env['api.format'] = :binary
-        data
+        image.data
       end
 
       desc 'Return Base64 encoded thumbnail'
