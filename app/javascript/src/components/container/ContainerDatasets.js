@@ -110,10 +110,14 @@ export default class ContainerDatasets extends Component {
     if (!preferredIsValid) {
       // Need to reassign
       if (validAttachmentIds.length > 0) {
-        // Assign first available
+        // Assign the first one with a thumbnail, so the header has an image to show; a PDF
+        // without a generated thumbnail is only used when there is nothing else
+        const thumbnailed = savedAttachments.find(
+          (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
+        );
         analysisContainer.extended_metadata = {
           ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(validAttachmentIds[0]),
+          preferred_thumbnail: String(thumbnailed ? Number(thumbnailed.id) : validAttachmentIds[0]),
         };
       } else {
         // No attachments available - clear preferred

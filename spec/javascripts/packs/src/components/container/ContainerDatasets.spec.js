@@ -40,6 +40,11 @@ describe('ContainerDatasets#reassignPreferredThumbnailIfNeeded', () => {
     expect(reassign(analysis([docx, pdf], '3')).preferred).toBe('3');
   });
 
+  it('auto-assigns a file with a thumbnail before a PDF without one', () => {
+    expect(reassign(analysis([pdf, png], null)).preferred).toBe('2');
+    expect(reassign(analysis([pdf], null)).preferred).toBe('3');
+  });
+
   it('clears the preference when nothing can be previewed', () => {
     const { preferred, onChange } = reassign(analysis([docx], '1'));
     expect(preferred).toBe(null);
