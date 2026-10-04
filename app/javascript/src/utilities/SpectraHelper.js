@@ -614,12 +614,15 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       // Nothing may be recoverable at all (a spectrum written by the cleaner that deleted all
       // three): leave `info` absent rather than writing an empty object, so NMRium sees a spectrum
       // with no info and rebuilds it from the source instead of one that claims to have none.
-      const backfilledInfo = { ...tmpSpc.originalInfo, ...tmpSpc.info };
-      ['dimension', 'isFid'].forEach((key) => {
-        if (backfilledInfo[key] === undefined && tmpSpc.meta?.[key] !== undefined) {
-          backfilledInfo[key] = tmpSpc.meta[key];
-        }
-      });
+      const { originalInfo } = tmpSpc;
+      const backfill = (info) => {
+        ['dimension', 'isFid'].forEach((key) => {
+          if (info[key] === undefined && tmpSpc.meta?.[key] !== undefined) {
+            info[key] = tmpSpc.meta[key];
+          }
+        });
+        return info;
+      };
       delete tmpSpc.originalInfo;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
@@ -647,6 +650,23 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       const preferredId = buildSourceId(resolvedName || attachment?.label);
       const sourceId = ensureSource(root, preferredId, sourceEntry, claimedSources);
 
+      // With its data dropped below, NMRium re-reads the spectrum from the source and runs the
+      // saved filters on it again, so `info` has to describe what the source holds (originalInfo),
+      // not the processed result. A 2D FID saved after its FFT would otherwise reopen as an FT
+      // spectrum with no matrix, and NMRium throws drawing its contours. A spectrum keeping its
+      // data keeps the info that describes that data.
+      // A file saved before this held only the processed info. Without originalInfo to restore,
+      // a spectrum whose own filters Fourier-transformed it gets no info at all, which NMRium
+      // rebuilds from the source.
+      const transformedByFilters = (tmpSpc.filters || []).some((f) => /^fft/i.test(f?.name || ''));
+      let backfilledInfo;
+      if (!sourceId) {
+        backfilledInfo = backfill({ ...originalInfo, ...tmpSpc.info });
+      } else if (originalInfo || !transformedByFilters) {
+        backfilledInfo = backfill({ ...tmpSpc.info, ...originalInfo });
+      } else {
+        backfilledInfo = {};
+      }
       if (Object.keys(backfilledInfo).length) {
         tmpSpc.info = backfilledInfo;
       } else if (sourceId) {
