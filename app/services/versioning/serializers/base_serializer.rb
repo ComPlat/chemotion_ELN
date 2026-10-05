@@ -142,14 +142,15 @@ module Versioning
         ->(_key, value) { value }
       end
 
+      def quill_formatter
+        ->(key, value) { normalize_quill_delta(default_formatter.call(key, value)) }
+      end
+
       # An untouched Quill editor still autosaves a delta like {"ops"=>[{"insert"=>"\n"}]}, which
       # isn't the same value as nil/{} but is visually just as empty - normalize it so it doesn't
       # get treated as a real content change in the history view.
-      def quill_formatter
-        lambda do |key, value|
-          parsed = default_formatter.call(key, value)
-          Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
-        end
+      def normalize_quill_delta(delta)
+        Chemotion::QuillToPlainText.blank_content?(delta) ? {} : delta
       end
 
       # The creation snapshot stores object-typed columns as JSON strings, which the column's own type
