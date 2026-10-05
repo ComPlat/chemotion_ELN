@@ -151,6 +151,20 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       expect(UserAffiliation.where(user: user).count).to eq(1)
     end
 
+    it 'clears an end date the user removed in the edit', :aggregate_failures do
+      original = Affiliation.create!(organization: 'KIT', department: 'IBCS', country: 'Germany')
+      ua = UserAffiliation.create!(user: user, affiliation: original, from: Date.new(2026, 10, 5),
+                                   to: Date.new(2026, 10, 30))
+      sugg = create(:affiliation_suggestion,
+                    user: user, organization: 'KIT', department: 'IBCS', group: 'Levkin', country: 'Germany',
+                    from: Date.new(2026, 10, 5), to: nil, target_user_affiliation_id: ua.id)
+
+      put "/api/v1/admin/affiliation_suggestions/#{sugg.id}/approve"
+
+      expect(ua.reload.to).to be_nil
+      expect(ua.from).to eq(Date.new(2026, 10, 5))
+    end
+
     it 'drops the edited row when the user already holds the target affiliation', :aggregate_failures do
       target = Affiliation.create!(organization: 'KIT', department: 'IOC', country: 'Germany')
       edited = Affiliation.create!(organization: 'KIT', department: 'IBCS', country: 'Germany')
