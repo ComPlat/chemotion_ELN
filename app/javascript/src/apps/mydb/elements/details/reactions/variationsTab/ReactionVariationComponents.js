@@ -346,23 +346,53 @@ as state only to drive the checkboxes and to seed `hide` when the columns really
 
 The popover is portalled to the body because the grid header clips its own overflow, which would cut
 an inline menu off.
+
+"Hide all" only clears the checkboxes while the popover is open. Hiding every column of a group would
+take its header - and with it this popover - off the grid at once, where the point of clearing them
+is mostly to tick the one column to keep. Ticking one hides the others; closing the popover with none
+ticked hides them all.
 */
 const ColumnVisibilityHeader = ({
   displayName, columns, movable, label
 }) => {
   const { hiddenColumns, setColumnsHidden } = useContext(VariationsGridContext);
+  const [show, setShow] = useState(false);
+  const [allCleared, setAllCleared] = useState(false);
   const colIds = columns.map((column) => column.colId);
   const hiddenCount = colIds.filter((colId) => hiddenColumns.includes(colId)).length;
+
+  const showAll = () => {
+    setAllCleared(false);
+    setColumnsHidden(colIds, false);
+  };
+
+  const toggleColumn = (colId, visible) => {
+    if (allCleared) {
+      setAllCleared(false);
+      setColumnsHidden(colIds.filter((id) => id !== colId), true);
+      setColumnsHidden([colId], !visible);
+      return;
+    }
+    setColumnsHidden([colId], !visible);
+  };
+
+  const onToggle = (nextShow) => {
+    if (!nextShow && allCleared) {
+      setAllCleared(false);
+      setColumnsHidden(colIds, true);
+    }
+    setShow(nextShow);
+  };
 
   const popover = (
     <Popover className="reaction-variations-grid__column-picker">
       <Popover.Header as="h3">{displayName}</Popover.Header>
       <Popover.Body>
         <div className="d-flex gap-2 mb-2">
-          <Button size="sm" variant="link" className="p-0" onClick={() => setColumnsHidden(colIds, false)}>
+          <Button size="sm" variant="link" className="p-0" onClick={showAll}>
             Show all
           </Button>
-          <Button size="sm" variant="link" className="p-0" onClick={() => setColumnsHidden(colIds, true)}>
+          <Button size="sm" variant="link" className="p-0" onClick={() => setAllCleared(true)}>
             Hide all
           </Button>
         </div>
@@ -372,8 +402,8 @@ const ColumnVisibilityHeader = ({
             type="checkbox"
             id={`toggle-column-${column.colId}`}
             label={column.headerName}
-            checked={!hiddenColumns.includes(column.colId)}
-            onChange={(event) => setColumnsHidden([column.colId], !event.target.checked)}
+            checked={!allCleared && !hiddenColumns.includes(column.colId)}
+            onChange={(event) => toggleColumn(column.colId, event.target.checked)}
           />
         ))}
       </Popover.Body>
@@ -393,6 +423,8 @@ const ColumnVisibilityHeader = ({
       <OverlayTrigger
         trigger="click"
         rootClose
+        show={show}
+        onToggle={onToggle}
         placement="top-start"
         overlay={popover}
         container={typeof document === 'undefined' ? undefined : document.body}
@@ -1341,6 +1373,7 @@ VariationSchemaTable.defaultProps = {
 };
 
 export {
+  ColumnVisibilityHeader,
   isInputKeyboardEvent,
   READ_ONLY_CELL_CLASS,
   STICKY_NAME_CLASS
