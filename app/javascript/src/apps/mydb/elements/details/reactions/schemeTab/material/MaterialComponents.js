@@ -1067,7 +1067,19 @@ GaseousProductRow.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired
 };
 
+/*
+Density and purity are shown, not edited, in the material row. A material without a density reads
+"n.d." like any other value that is not defined; one without a purity reads 1, which is what every
+calculation takes it to be (`purity || 1`).
+*/
+const densityText = (material) => (material.has_density ? material.density : 'n.d.');
+
+const isMissing = (value) => value === null || value === undefined || value === '';
+const purityValue = (material) => (isMissing(material.purity) ? 1 : material.purity);
+
 export {
+  densityText,
+  purityValue,
   ProductReference,
   MaterialConcentration,
   NestedReferenceRadios,
