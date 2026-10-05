@@ -12,6 +12,16 @@ import {
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ComponentModel from 'src/models/Component';
 
+// Whether a material has an amount at all. SBMM samples keep theirs in other fields.
+const hasAmount = (material) => {
+  if (!('amount_value' in material)) {
+    return true;
+  }
+  const { amount_value: amountValue } = material;
+  return amountValue !== null && amountValue !== undefined && amountValue !== ''
+    && Number.isFinite(Number(amountValue));
+};
+
 export default class MaterialHandler {
   constructor({
                 variations = [],
@@ -208,13 +218,22 @@ export default class MaterialHandler {
     return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
   }
 
-  findMinMayUnit = ( defaultUnit, valueGetter) => {
+  /*
+  With `needsAmount`, a variation whose material has no amount is left out of the range: the values
+  derived from the amount - mass, volume, moles, concentration, equivalent - are not missing there
+  but 0 (convertGramToUnit takes a missing mass for 0 g), which would pull the range down to 0 while
+  the mass itself reads "n.d.". SBMM samples keep their amount elsewhere and are not filtered.
+  */
+  findMinMayUnit = (defaultUnit, valueGetter, { needsAmount = false } = {}) => {
     const { material, variations, materialGroup, index } = this;
     if (variations.length > 0) {
       const defaultMatValue =  valueGetter(material);
       const values = variations.map((v) => {
         const vMat = v.data[materialGroup]?.[index];
-        return vMat ? valueGetter(vMat) : null;
+        if (!vMat || (needsAmount && !hasAmount(vMat))) {
+          return null;
+        }
+        return valueGetter(vMat);
       }).filter((x) => Number.isFinite(x));
       // No variation carries the value (e.g. concentration unset everywhere): nothing to range over.
       if (values.length === 0) {
