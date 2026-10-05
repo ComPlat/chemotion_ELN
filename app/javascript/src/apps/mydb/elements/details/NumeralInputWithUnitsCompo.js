@@ -155,6 +155,11 @@ const NumeralInputWithUnitsCompo = ({
     return valueString;
   });
 
+  // Variations that agree with each other, but not with the reaction, give one value, not a range of one.
+  const rangeText = displayRangeStart === displayRangeEnd
+    ? `${displayRangeStart}`
+    : `${displayRangeStart}-${displayRangeEnd}`;
+
   const inputDisabled = disabled ? true : block;
   const alwaysAllowDisplayUnit = [
     'TON', 'TON/h', 'TON/m', 'TON/s',
@@ -250,7 +255,9 @@ const NumeralInputWithUnitsCompo = ({
                 type="text"
                 disabled={true}
                 size={size}
-                value={ `${displayRangeStart}-${displayRangeEnd}` }
+                value={rangeText}
+                // A range is often longer than the input is wide.
+                title={rangeText}
                 name={name}
                 className="flex-grow-1"
               /> }
