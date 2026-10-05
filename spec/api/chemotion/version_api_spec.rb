@@ -93,6 +93,47 @@ describe Chemotion::VersionAPI do
     end
   end
 
+  describe 'GET /api/v1/versions/cellline_samples/:id' do
+    let(:cellline_sample) { create(:cellline_sample) }
+    let(:changes) { parsed_json_response['versions'].flat_map { |version| version['changes'] } }
+    let(:material_fields) { changes.select { |change| change['klass_name'] == 'CelllineMaterial' }.pluck('fields') }
+
+    before do
+      # each with_responsible! call starts a new history entry, like a separate API request
+      Logidze.with_responsible!(user.id)
+      cellline_sample
+      Logidze.with_responsible!(user.id)
+      cellline_sample.cellline_material.update!(description: 'updated material', organism: 'rat')
+      Logidze.clear_responsible!
+      get "/api/v1/versions/cellline_samples/#{cellline_sample.id}"
+    end
+
+    it 'returns 200 status code' do
+      expect(response.status).to eq 200
+    end
+
+    it 'includes changes of the cell line material' do
+      expect(material_fields.pluck('description')).to include(
+        a_hash_including('old_value' => 'a cell', 'new_value' => 'updated material'),
+      )
+    end
+
+    it 'includes changes of jsonb material fields' do
+      expect(material_fields.pluck('organism')).to include(
+        a_hash_including('old_value' => 'mouse', 'new_value' => 'rat', 'current_value' => 'rat'),
+      )
+    end
+
+    it 'names cell line material changes by name and source' do
+      material_names = changes.select { |change| change['klass_name'] == 'CelllineMaterial' }.pluck('name')
+      expect(material_names).to all(eq(['Cell line material: name-001 (IPB)']))
+    end
+
+    it 'does not allow reverting cell line material changes' do
+      expect(material_fields.flat_map(&:values).pluck('revert')).to all(be_empty)
+    end
+  end
+
   describe 'POST /api/v1/versions/revert' do
     let(:sample) { create(:sample) }
     let(:old_name) { 'Sample 1' }

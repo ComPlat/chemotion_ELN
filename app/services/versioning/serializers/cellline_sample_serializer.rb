@@ -9,6 +9,10 @@ module Versioning
 
       def field_definitions
         {
+          cellline_material_id: {
+            label: 'Cell line',
+            formatter: material_formatter,
+          },
           amount: {
             label: 'Amount',
             revert: %i[amount],
@@ -34,6 +38,17 @@ module Versioning
             revert: %i[description],
           },
         }.with_indifferent_access
+      end
+
+      private
+
+      def material_formatter
+        lambda do |_key, value|
+          next if value.blank?
+
+          material = CelllineMaterial.with_deleted.find_by(id: value)
+          material ? "#{material.name} (#{material.source})" : value
+        end
       end
     end
   end
