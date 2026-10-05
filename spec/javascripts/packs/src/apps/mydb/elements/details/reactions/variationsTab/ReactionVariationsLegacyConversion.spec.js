@@ -59,17 +59,24 @@ describe('ReactionVariationsLegacyConversion', () => {
     const [row] = convertVariationDatasetToInternalVariations(reaction);
     const variationReaction = row.data;
 
-    expect(variationReaction.starting_materials[1].amount_g).toBeCloseTo(0.5);
-    expect(variationReaction.starting_materials[1].equivalent).toBe(0.3);
-    expect(variationReaction.products[0].amount_g).toBeCloseTo(2);
-    expect(variationReaction.products[0].equivalent).toBeCloseTo(0.4);
+    const [reference, converted] = variationReaction.starting_materials;
+    const [convertedProduct] = variationReaction.products;
+    expect(converted.amount_g).toBeCloseTo(0.5);
+    // Equivalent and yield follow the old amounts, as the previous table computed them - not the
+    // values this row's legacy body happens to hold.
+    const equivalent = converted.amount_mol / reference.amount_mol;
+    expect(converted.equivalent).toBeCloseTo(equivalent, 9);
+    expect(convertedProduct.amount_g).toBeCloseTo(2);
+    const stoichiometryCoeff = (convertedProduct.coefficient || 1) / (reference.coefficient || 1);
+    expect(convertedProduct.equivalent)
+      .toBeCloseTo(convertedProduct.amount_mol / reference.amount_mol / stoichiometryCoeff, 9);
     // The parent is not touched.
     expect(reaction.starting_materials[1].amount_g).not.toBeCloseTo(0.5);
     // The stored row now carries a real diff, keeping its identity and the legacy body.
     const [stored] = reaction.variations;
     expect(stored.data.id).toBe('row-reaction');
     expect(stored.data._starting_materials[0]).toBeNull();
-    expect(stored.data._starting_materials[1]._equivalent).toBe(0.3);
+    expect(stored.data._starting_materials[1]._equivalent).toBeCloseTo(equivalent, 9);
     expect(stored.legacy_data).toBeTruthy();
   });
 
