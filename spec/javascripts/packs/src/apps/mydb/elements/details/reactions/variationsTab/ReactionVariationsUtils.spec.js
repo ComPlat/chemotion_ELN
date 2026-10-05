@@ -152,6 +152,87 @@ describe('ReactionVariationsUtils', () => {
     });
   });
 
+  /*
+  A row's equivalents and yields follow from its amounts. Stored in its diff, they went stale when
+  the parent changed what the row inherits - the reference amount above all.
+  */
+  describe('equivalents and yields of a variation', () => {
+    let reaction;
+    beforeEach(async () => {
+      reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const [reference, other] = reaction.starting_materials;
+      reference.reference = true;
+      other.equivalent = other.amount_mol / reference.amount_mol;
+    });
+
+    const changeReferenceMass = (target, grams) => {
+      target.starting_materials[0].setAmount({ value: grams, unit: 'g' });
+    };
+
+    it('takes the equivalent of the parent for a material it did not change', () => {
+      reaction.starting_materials[1].equivalent = 0.75;
+      const variationReaction = makeVariationReaction(reaction, {});
+
+      expect(variationReaction.starting_materials[1].equivalent).toBe(0.75);
+    });
+
+    it('works out the equivalent of a material whose amount it changed', () => {
+      const parentRow = makeVariationReaction(reaction, {});
+      parentRow.starting_materials[1].setAmount({ value: 50, unit: 'g' });
+      const diff = variationDiffOf(reaction, parentRow);
+
+      // The parent's reference amount changes afterwards, in the scheme tab.
+      changeReferenceMass(reaction, 200);
+      const variationReaction = makeVariationReaction(reaction, diff);
+      const [reference, other] = variationReaction.starting_materials;
+
+      expect(reference.amount_g).toBeCloseTo(200, 6);
+      expect(other.equivalent).toBeCloseTo(other.amount_mol / reference.amount_mol, 9);
+      expect(other.equivalent).toBeCloseTo(0.25, 6);
+    });
+
+    it('works out the yield of a product against its own reference amount', () => {
+      const edited = makeVariationReaction(reaction, {});
+      changeReferenceMass(edited, 400);
+      const variationReaction = makeVariationReaction(reaction, variationDiffOf(reaction, edited));
+      const [reference] = variationReaction.starting_materials;
+      const [product] = variationReaction.products;
+      const stoichiometryCoeff = (product.coefficient || 1) / (reference.coefficient || 1);
+
+      expect(reference.amount_g).toBeCloseTo(400, 6);
+      expect(product.equivalent)
+        .toBeCloseTo(product.amount_mol / reference.amount_mol / stoichiometryCoeff, 9);
+    });
+
+    it('brings a stale stored equivalent up to date in the diff', () => {
+      const edited = makeVariationReaction(reaction, { id: 'row-reaction' });
+      edited.starting_materials[1].setAmount({ value: 50, unit: 'g' });
+      // As stored before the parent's reference amount changed.
+      edited.starting_materials[1].equivalent = 0.9;
+      const data = variationDiffOf(reaction, edited);
+      expect(data._starting_materials[1]._equivalent).toBe(0.9);
+      reaction.variations = [{ id: 'row', idx: 0, group: [0, 0], analyses: [], notes: '', data }];
+
+      const [row] = convertVariationDatasetToInternalVariations(reaction);
+      const [reference, other] = row.data.starting_materials;
+      const expected = other.amount_mol / reference.amount_mol;
+
+      expect(expected).toBeCloseTo(0.5, 6);
+      expect(other.equivalent).toBeCloseTo(expected, 9);
+      expect(reaction.variations[0].data._starting_materials[1]._equivalent).toBeCloseTo(expected, 9);
+    });
+
+    it('stores nothing for a row that changed nothing', () => {
+      reaction.variations = [{
+        id: 'row', idx: 0, group: [0, 0], analyses: [], notes: '', data: { id: 'row-reaction' },
+      }];
+
+      convertVariationDatasetToInternalVariations(reaction);
+
+      expect(reaction.variations[0].data).toEqual({ id: 'row-reaction' });
+    });
+  });
+
   describe('concentrations of a variation', () => {
     let reaction;
     beforeEach(async () => {
