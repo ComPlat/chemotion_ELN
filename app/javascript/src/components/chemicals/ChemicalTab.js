@@ -488,7 +488,7 @@ export default class ChemicalTab extends React.Component {
 
     this.setState({ warningMessage: '', extractingSheet: sheetPath });
 
-    return ChemicalFetcher.extractFromSds(sheetPath).then((result) => {
+    return ChemicalFetcher.extractFromSds(sheetPath, { cancelled: () => this.unmounted }).then((result) => {
       if (this.unmounted) return;
       if (result?.error) throw new Error(result.error);
 

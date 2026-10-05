@@ -350,6 +350,16 @@ describe Chemotion::ChemicalAPI do
   describe 'GET extract_sds' do
     let(:link) { '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf' }
     let(:body) { JSON.parse(response.body) }
+    let(:upload) { Rails.root.join('spec/fixtures/upload.pdf') }
+
+    def extract_sds
+      get '/api/v1/chemicals/extract_sds', params: { path: link }
+    end
+
+    # Request specs queue on the ActiveJob test adapter; this runs what a worker would.
+    def work_off_extractions
+      perform_enqueued_jobs(only: SdsExtractionJob)
+    end
 
     context 'with a saved sheet' do
       include SdsSheetHelpers
@@ -367,15 +377,35 @@ describe Chemotion::ChemicalAPI do
       before do
         # The synthetic sheet stands in for the gitignored vendor file the link names.
         allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).with(link).and_return(Pathname.new(pdf))
-        get '/api/v1/chemicals/extract_sds', params: { path: link }
       end
 
       after { FileUtils.rm_rf(dir) }
 
-      it 'returns the codes and properties read out of the file', :aggregate_failures do
+      it 'answers pending and queues one run however often it is asked', :aggregate_failures do
+        allow(SdsExtractionJob).to receive(:pending?).and_return(false, true)
+        extract_sds
+        expect(response.status).to eq 202
+        expect(body['status']).to eq('pending')
+        expect { extract_sds }.not_to have_enqueued_job(SdsExtractionJob)
+        expect(SdsExtractionJob).to have_been_enqueued.exactly(:once).with(link, String)
+      end
+
+      it 'returns the codes and properties once the run is done', :aggregate_failures do
+        extract_sds
+        work_off_extractions
+        extract_sds
         expect(response.status).to eq 200
         expect(body['safetyPhrases']['h_statements'].keys).to include('H225')
         expect(body['properties']['flash_point']).to eq('4 °C')
+      end
+
+      it 'answers a second request for the same sheet from the cache', :aggregate_failures do
+        extract_sds
+        work_off_extractions
+        allow(Chemotion::SdsExtractor).to receive(:extract)
+        expect { extract_sds }.not_to have_enqueued_job(SdsExtractionJob)
+        expect(response.status).to eq 200
+        expect(Chemotion::SdsExtractor).not_to have_received(:extract)
       end
     end
 
@@ -399,11 +429,13 @@ describe Chemotion::ChemicalAPI do
     context 'with a sheet ghostscript cannot read' do
       before do
         allow(Chemotion::SdsExtractor).to receive_messages(
-          saved_sheet_path: Rails.root.join('spec/fixtures/upload.pdf'),
+          saved_sheet_path: upload,
           extract: { 'safetyPhrases' => {}, 'properties' => {},
                      'diagnostics' => { 'errors' => ['ghostscript produced no text'], 'notes' => [] } },
         )
-        get '/api/v1/chemicals/extract_sds', params: { path: link }
+        extract_sds
+        work_off_extractions
+        extract_sds
       end
 
       it 'answers unprocessable with the reason and the diagnostics', :aggregate_failures do
@@ -420,9 +452,10 @@ describe Chemotion::ChemicalAPI do
         settings.timeout = 25
         settings.misconfigured = misconfigured
         allow(Rails.configuration).to receive(:sds_text_service).and_return(settings)
-        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
-          .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
-        get '/api/v1/chemicals/extract_sds', params: { path: link }
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).and_return(upload)
+        extract_sds
+        work_off_extractions
+        extract_sds
       end
 
       it 'answers a busy service as unavailable, with when to retry', :aggregate_failures do
@@ -448,12 +481,27 @@ describe Chemotion::ChemicalAPI do
       end
     end
 
-    context 'when the extractor raises' do
+    context 'when the extractor raises in the job' do
       before do
-        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path)
-          .and_return(Rails.root.join('spec/fixtures/upload.pdf'))
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).and_return(upload)
         allow(Chemotion::SdsExtractor).to receive(:extract).and_raise(StandardError, 'boom at /srv/secret/path')
-        get '/api/v1/chemicals/extract_sds', params: { path: link }
+        extract_sds
+        work_off_extractions
+        extract_sds
+      end
+
+      it 'answers the fixed reason without the exception text', :aggregate_failures do
+        expect(response.status).to eq 422
+        expect(body['error']).to eq('the safety data sheet could not be read')
+        expect(response.body).not_to include('/srv/secret/path')
+      end
+    end
+
+    context 'when the request itself fails' do
+      before do
+        allow(Chemotion::SdsExtractor).to receive(:saved_sheet_path).and_return(upload)
+        allow(Chemotion::SdsExtractionCache).to receive(:key).and_raise(StandardError, 'boom at /srv/secret/path')
+        extract_sds
       end
 
       it 'answers a server error without the exception text', :aggregate_failures do
