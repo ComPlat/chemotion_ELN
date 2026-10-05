@@ -174,6 +174,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
         .map((a) => a.identifier)
     );
     if (deletedInlineIds.size > 0 && deviceDescription.container) {
+      const clonedContainer = JSON.parse(JSON.stringify(deviceDescription.container));
       const walkContainers = (container) => {
         if (container.extended_metadata && container.extended_metadata.content) {
           container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
@@ -182,16 +183,18 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
         }
         (container.children || []).forEach(walkContainers);
       };
-      walkContainers(deviceDescription.container);
+      walkContainers(clonedContainer);
+      deviceDescriptionsStore.changeDeviceDescription('container', clonedContainer);
     }
     LoadingActions.start();
-    if (deviceDescription.is_new) {
-      DetailActions.close(deviceDescription, true);
-      ElementActions.createDeviceDescription(deviceDescription);
+    const elementToSave = deviceDescriptionsStore.device_description;
+    if (elementToSave.is_new) {
+      DetailActions.close(elementToSave, true);
+      ElementActions.createDeviceDescription(elementToSave);
     } else {
-      ElementActions.updateDeviceDescription(deviceDescription);
+      ElementActions.updateDeviceDescription(elementToSave);
     }
-    deviceDescriptionsStore.setCurrentDeviceDescriptionIdToSave(`${deviceDescription.id}`);
+    deviceDescriptionsStore.setCurrentDeviceDescriptionIdToSave(`${elementToSave.id}`);
   };
 
   const deviceDescriptionIsValid = () => true; // TODO: validation

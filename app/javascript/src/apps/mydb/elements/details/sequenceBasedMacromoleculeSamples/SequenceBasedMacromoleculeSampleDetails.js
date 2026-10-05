@@ -301,7 +301,9 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         .filter((a) => a && a.is_deleted && a.identifier)
         .map((a) => a.identifier)
     );
+    let sampleToSave = sbmmSample;
     if (deletedInlineIds.size > 0 && sbmmSample.container) {
+      const clonedContainer = JSON.parse(JSON.stringify(sbmmSample.container));
       const walkContainers = (container) => {
         if (container.extended_metadata && container.extended_metadata.content) {
           container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
@@ -310,9 +312,11 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         }
         (container.children || []).forEach(walkContainers);
       };
-      walkContainers(sbmmSample.container);
+      walkContainers(clonedContainer);
+      sbmmStore.setSequenceBasedMacromoleculeSample({ ...sbmmSample, container: clonedContainer });
+      sampleToSave = sbmmStore.sequence_based_macromolecule_sample;
     }
-    sbmmStore.saveSample(sbmmSample);
+    sbmmStore.saveSample(sampleToSave);
   };
 
   // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)
