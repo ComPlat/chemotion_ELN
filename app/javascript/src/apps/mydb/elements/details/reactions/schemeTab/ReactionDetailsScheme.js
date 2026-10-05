@@ -1181,6 +1181,8 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Preserve the mixture mass before selecting the new component reference.
     const mixtureMassG = Number(updatedSample.amount_g);
+    const referenceComponent = updatedSample.components[referenceComponentIndex];
+    const relativeWeight = Number(referenceComponent.relative_molecular_weight);
 
     // Set the reference component to true and all others to false
     updatedSample.components.forEach((component, index) => {
@@ -1188,22 +1190,15 @@ export default class ReactionDetailsScheme extends React.Component {
       component.reference = (index === referenceComponentIndex);
     });
 
-    const referenceComponent = updatedSample.components[referenceComponentIndex];
-
-    // Clear the "reference changed" flag now that the new reference is selected, then take the
-    // snapshot. With the flag off, amount_mol is derived from the mixture mass and the new
-    // reference (mass / new relMW), so the snapshot stores the NEW reference's amount, not the
-    // old one. Snapshotting the old amount here would corrupt the mixture mass under lock,
-    // because the locked handler multiplies that snapshot back by the new relMW.
+    // Derive both snapshots explicitly from the pre-switch mass. For mol-stored mixtures,
+    // reading amount_g or amount_mol after selecting the new reference uses the old mol value
+    // with the new relative MW and would change the mixture mass.
     updatedSample.sample_details.reference_component_changed = false;
-    updatedSample.storePreviousAmountState();
-
-    // storePreviousAmountState() runs after the new reference is selected, so with amount_unit
-    // 'mol' it recomputes previous_amount_g as amount_value * new relMW instead of the real
-    // pre-switch mixture mass. Restore the pre-switch mass captured above so the unlocked handler
-    // rebases amount_mol as mass / new relMW (and the preserved mass stays correct under render).
-    if (Number.isFinite(mixtureMassG)) {
+    if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {
       updatedSample.sample_details.previous_amount_g = mixtureMassG;
+      if (Number.isFinite(relativeWeight) && relativeWeight > 0) {
+        updatedSample.sample_details.previous_amount_mol = mixtureMassG / relativeWeight;
+      }
     }
 
     if (referenceComponent?.molecule?.molecular_weight) {
@@ -1211,7 +1206,6 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // Set the reference relative molecular weight
-    const relativeWeight = referenceComponent.relative_molecular_weight;
     if (relativeWeight) {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
@@ -1291,23 +1285,22 @@ export default class ReactionDetailsScheme extends React.Component {
 
   /**
    * Handles reference component change when equivalent is locked.
-   * Keeps amount_mol and equivalent unchanged, recalculates amount_g from preserved amount_mol.
+   * Keeps the pre-switch mass and equivalent, deriving amount_mol from the selected component.
    * @param {Sample} updatedSample - The mixture sample being updated
    * @param {Component} referenceComponent - The new reference component
    */
   // eslint-disable-next-line class-methods-use-this
   handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent) {
-    // For a reference-component switch, previous_amount_mol is captured after the new
-    // component is selected. Multiplying it by the new relative MW therefore reconstructs
-    // the existing amount_g. Keep this normalization call for now because setAmount also
-    // applies mixture state updates; removing that coupling belongs in a separate cleanup.
-    const preservedAmountMol = updatedSample.sample_details?.previous_amount_mol;
-    const newRelMolWeight = referenceComponent.relative_molecular_weight;
+    const preservedAmountG = updatedSample.sample_details?.previous_amount_g;
+    const newRelMolWeight = Number(referenceComponent.relative_molecular_weight);
 
-    if (Number.isFinite(preservedAmountMol) && preservedAmountMol > 0
-        && newRelMolWeight && newRelMolWeight > 0) {
-      const newAmountG = preservedAmountMol * newRelMolWeight;
-      updatedSample.setAmount({ value: newAmountG, unit: 'g' });
+    if (Number.isFinite(preservedAmountG) && preservedAmountG >= 0
+        && Number.isFinite(newRelMolWeight) && newRelMolWeight > 0) {
+      // Normalize directly: setAmount would snapshot the getters under the new reference
+      // as a user amount edit and overwrite the explicitly preserved pre-switch mass.
+      updatedSample.amount_value = preservedAmountG;
+      updatedSample.amount_unit = 'g';
+      updatedSample.updateMixtureComponentAmounts();
     }
   }
 

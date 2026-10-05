@@ -2146,9 +2146,10 @@ export default class Sample extends Element {
   initialComponents(components) {
     this.components = components.sort((a, b) => a.position - b.position);
 
-    // Calculate relative molecular weights for all components when initializing
     if (this.isMixture() && this.hasComponents()) {
-      this.calculateRelativeMolecularWeightsForComponents();
+      // Preserve loaded relative MWs: reaction children retain the stock's total mixture mass,
+      // while their component amounts reflect the portion used. Recalculate only when the
+      // editor derives total mass from those same component amounts in calculateTotalMixtureMass.
       // Ensure a default reference is set (first by position) and ratios updated
       this.updateMixtureComponentEquivalent();
     }

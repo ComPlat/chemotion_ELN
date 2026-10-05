@@ -209,6 +209,59 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.initialComponents()', () => {
+    it('preserves stock relative molecular weights when a scaled reaction child is saved and reloaded', () => {
+      const stock = new Sample({
+        id: 'stock',
+        short_label: 'stock',
+        children_count: 0,
+        sample_type: 'Mixture',
+        sample_details: { total_mixture_mass_g: 1000 },
+      });
+      stock.initialComponents([
+        new Component({
+          id: 'secondary', position: 1, amount_mol: 10, relative_molecular_weight: 100,
+          molecule: { id: 102, molecular_weight: 20 },
+        }),
+        new Component({
+          id: 'primary', position: 0, amount_mol: 20, relative_molecular_weight: 50,
+          molecule: { id: 101, molecular_weight: 40 },
+        }),
+      ]);
+      const child = stock.buildChildWithoutCounter();
+      child.setAmount({ value: 5, unit: 'g' });
+      child.updateMixtureComponentAmounts();
+      child.prepareMixtureForSave();
+
+      const payload = JSON.parse(JSON.stringify(child.serializeMaterial()));
+      expect(payload.sample_details.total_mixture_mass_g).toBe(1000);
+      expect(payload.components[0].component_properties.amount_mol).toBeCloseTo(0.1, 10);
+      expect(payload.components[1].component_properties.amount_mol).toBeCloseTo(0.05, 10);
+
+      const reloaded = new Sample(payload);
+      const components = payload.components.map(Component.deserializeData);
+      reloaded.initialComponents(components);
+
+      expect(reloaded.components.map((component) => component.relative_molecular_weight)).toEqual([50, 100]);
+      expect(reloaded.amount_g).toBe(5);
+      expect(reloaded.amount_mol).toBeCloseTo(0.1, 10);
+      expect(reloaded.components[1].equivalent).toBeCloseTo(0.5, 10);
+      expect(reloaded.isEdited).toBe(false);
+      reloaded.calculateEquivalentFromReferenceMaterial({ amount_mol: 0.001 });
+      expect(reloaded.equivalent).toBeCloseTo(100, 10);
+
+      reloaded.setReferenceComponent(1);
+      reloaded.initialComponents(reloaded.components);
+      expect(reloaded.amount_mol).toBeCloseTo(0.05, 10);
+      expect(reloaded.components[0].equivalent).toBeCloseTo(2, 10);
+      expect(reloaded.components.map((component) => component.relative_molecular_weight)).toEqual([50, 100]);
+      expect(reloaded.isEdited).toBe(false);
+
+      reloaded.setReferenceComponent(0);
+      expect(reloaded.amount_mol).toBeCloseTo(0.1, 10);
+    });
+  });
+
   describe('Sample.updateComponentAmounts()', () => {
     it('keeps component amounts and ratios stable when the reference changes', () => {
       const sample = new Sample({ amount_value: 1000.124, amount_unit: 'g' });
@@ -1275,6 +1328,34 @@ describe('Sample', async () => {
   });
 
   describe('Sample.calculateTotalMixtureMass()', () => {
+    it('recalculates canonical relative molecular weights from the editor component amounts', () => {
+      const sample = new Sample({ sample_type: 'Mixture', sample_details: {} });
+      sample.components = [
+        new Component({
+          position: 0, reference: true, material_group: 'solid',
+          amount_g: 36, amount_mol: 2, relative_molecular_weight: 999,
+        }),
+        new Component({
+          position: 1, material_group: 'solid',
+          amount_g: 14, amount_mol: 0.5, relative_molecular_weight: 333,
+        }),
+      ];
+
+      sample.calculateTotalMixtureMass();
+
+      expect(sample.total_mixture_mass_g).toBe(50);
+      expect(sample.components.map((component) => component.relative_molecular_weight)).toEqual([25, 100]);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(25);
+
+      sample.components[0].amount_g = 72;
+      sample.components[0].amount_mol = 4;
+      sample.calculateTotalMixtureMass();
+
+      expect(sample.total_mixture_mass_g).toBe(86);
+      expect(sample.components.map((component) => component.relative_molecular_weight)).toEqual([21.5, 172]);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(21.5);
+    });
+
     it('sums solids and liquids, and includes solvents when total volume is NOT present', () => {
       const s = new Sample();
       s.sample_type = 'Mixture';
