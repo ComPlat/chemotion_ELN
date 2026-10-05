@@ -289,6 +289,29 @@ export default class MaterialHandler {
     };
   }
 
+  /*
+  The yield the amounts give before calculateYield caps it at 100 %: the product's mass over the most
+  the reference material allows for it. Only for the products calculateYield caps that way - not for
+  gas products, polymers or decoupled materials, whose yield is worked out differently. Null where
+  there is nothing to work it out from.
+  */
+  uncappedYield() {
+    const { material, reaction } = this;
+    if (!this.isProduct || this.isSbmm || material.gas_type === 'gas' || reaction.hasPolymers()) {
+      return null;
+    }
+    const refMaterial = reaction.getReferenceMaterial();
+    if (!refMaterial || refMaterial.decoupled || material.decoupled) {
+      return null;
+    }
+
+    const stoichiometryCoeff = (material.coefficient || 1.0) / (refMaterial.coefficient || 1.0);
+    const maxAmount = (refMaterial.amount_mol || 0) * stoichiometryCoeff
+      * material.molecule_molecular_weight / (material.purity || 1);
+    const yieldValue = material.amount_g / maxAmount;
+    return Number.isFinite(yieldValue) && maxAmount > 0 ? yieldValue : null;
+  }
+
   calculateYield() {
     const { material, reaction } = this;
     const refMaterial = reaction.getReferenceMaterial();
