@@ -1247,7 +1247,8 @@ export default class Reaction extends Element {
    * @returns {boolean}
    */
   get hasValidReactionVolume() {
-    return this.volume != null && this.volume !== '' && Number(this.volume) > 0;
+    const volume = Number(this.volume);
+    return Number.isFinite(volume) && volume > 0;
   }
 
   /**

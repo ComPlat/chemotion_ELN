@@ -868,6 +868,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
+    const previousReferenceAmountMol = Number(reaction.referenceMaterial?.amount_mol);
     updatedSample.amountType = amountType;
 
     // Switching the target/real view changes the active amount, so dependent amounts
@@ -879,6 +880,12 @@ export default class ReactionDetailsScheme extends React.Component {
     );
 
     if (lockEquivColumn) {
+      // The view may change the reference directly or through a dependent's locked Eq.
+      // Anchor unchanged volumes to that new amount, preserving existing ratios when
+      // the reference did not move (including an unrelated toggle at zero).
+      if (!Object.is(previousReferenceAmountMol, Number(updatedReaction.referenceMaterial?.amount_mol))) {
+        updatedReaction.captureSolventReferenceRatios();
+      }
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
     }
@@ -1522,14 +1529,11 @@ export default class ReactionDetailsScheme extends React.Component {
     // reference's amount changes (the edited sample may be a regular reference,
     // not the SBMM itself). Mirrors updatedReactionForAmountChange.
     //
-    // The reaction volume is fixed here (volume locked, or the solvent sum that
-    // defines the concentration in solvents_only/combined mode). Rescaling solvents
-    // would move that very divisor, so the typed concentration would not hold. Keep
-    // the stored solvent volumes put and only rebase dependent amounts.
-    const updatedReaction = this.propagateReferenceAmountChange(
-      updatedSample,
-      { rescaleSolvents: false }
-    );
+    // Under locked equivalents this edit is only reachable on the reaction-volume
+    // basis (canUpdateConcentration), where the divisor is the explicit reaction
+    // volume, not the solvent sum. So scaling solvents with the reference keeps the
+    // typed concentration intact; the divisor cannot move out from under it.
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
     // except the currently edited sample. The edited sample keeps its manually-entered
@@ -2238,9 +2242,8 @@ export default class ReactionDetailsScheme extends React.Component {
       true
     );
 
-    // Solvent volumes follow the reference only on paths that actually change an
-    // amount. A view toggle or a fixed-volume concentration edit must keep the
-    // stored volumes put, so callers opt out via rescaleSolvents: false.
+    // Amount edits derive solvent volumes from the reference. Display-only
+    // amount-type toggles opt out so switching views keeps stored volumes put.
     if (lockEquivColumn && rescaleSolvents) {
       updatedReaction.updateSolventVolumesForReference(updatedSample);
     }

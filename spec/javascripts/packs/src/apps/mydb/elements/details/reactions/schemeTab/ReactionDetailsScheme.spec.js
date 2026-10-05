@@ -1155,6 +1155,8 @@ describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling 
     };
     const referenceMaterial = updatedSampleIsReference ? updatedSample : { amount_mol: 0.1 };
     const updatedReaction = {
+      referenceMaterial,
+      captureSolventReferenceRatios: sinon.spy(),
       updateSolventVolumesForReference: sinon.spy(),
       resetPreservedConcentrationExcept: sinon.spy(),
       updateAllConcentrations: sinon.spy(),
@@ -1251,6 +1253,81 @@ describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling 
   });
 });
 
+describe('ReactionDetailsScheme amount-type toggles — solvent ratio anchors', () => {
+  const attributes = (id, amount, extra = {}) => ({
+    id, amountType: 'target', target_amount_value: amount, target_amount_unit: 'mol',
+    real_amount_value: amount * 2, real_amount_unit: 'mol',
+    molecule: { molecular_weight: 100 }, purity: 1, density: 0, molarity_value: 0,
+    gas_type: 'off', coefficient: 1, ...extra,
+  });
+  const buildCtx = () => {
+    const reaction = new Reaction({
+      id: 91,
+      starting_materials: [attributes('reference', 1, { reference: true })],
+      reactants: [attributes('reactant', 2, { equivalent: 2 })],
+      products: [attributes('product', 0.1)],
+      solvents: [attributes('solvent', 10, { target_amount_unit: 'l' })],
+    });
+    reaction.captureSolventReferenceRatios();
+    const ctx = Object.create(ReactionDetailsScheme.prototype);
+    ctx.props = { reaction };
+    ctx.state = { lockEquivColumn: true };
+    ctx.warnIfMixtureMassExceeded = sinon.spy();
+    ctx.triggerNotification = sinon.spy();
+    return ctx;
+  };
+
+  ['reference', 'reactant'].forEach((sampleID) => {
+    it(`re-anchors unchanged solvent volumes after the ${sampleID} view changes the reference amount`, () => {
+      const ctx = buildCtx();
+      const { reaction } = ctx.props;
+
+      ctx.updatedReactionForAmountTypeChange({ sampleID, amountType: 'real' });
+
+      expect(reaction.referenceMaterial.amount_mol).toBe(2);
+      expect(reaction.solvents[0].amount_l).toBe(10);
+      expect(reaction.solvents[0].referenceVolumeRatio).toBe(5);
+      ctx.updatedReactionForAmountChange({ sampleID: 'reference', amount: { value: 4, unit: 'mol' } });
+      expect(reaction.solvents[0].amount_l).toBe(20);
+
+      ctx.updatedReactionForAmountTypeChange({ sampleID, amountType: 'target' });
+      expect(reaction.referenceMaterial.amount_mol).toBe(1);
+      expect(reaction.solvents[0].amount_l).toBe(20);
+      ctx.updatedReactionForAmountChange({ sampleID: 'reference', amount: { value: 2, unit: 'mol' } });
+      expect(reaction.solvents[0].amount_l).toBe(40);
+    });
+  });
+
+  it('preserves an existing anchor during an unrelated toggle while the reference is zero', () => {
+    const ctx = buildCtx();
+    const { reaction } = ctx.props;
+    reaction.referenceMaterial.setAmount({ value: 0, unit: 'mol' });
+
+    ctx.updatedReactionForAmountTypeChange({ sampleID: 'product', amountType: 'real' });
+
+    expect(reaction.referenceMaterial.amount_mol).toBe(0);
+    expect(reaction.solvents[0].referenceVolumeRatio).toBe(10);
+    expect(reaction.solvents[0].referenceVolumeRatioPending).toBe(false);
+    ctx.updatedReactionForAmountChange({ sampleID: 'reference', amount: { value: 2, unit: 'mol' } });
+    expect(reaction.solvents[0].amount_l).toBe(20);
+  });
+
+  it('anchors the current volume when toggling to an empty reference amount', () => {
+    const ctx = buildCtx();
+    const { reaction } = ctx.props;
+    reaction.referenceMaterial.real_amount_value = 0;
+
+    ctx.updatedReactionForAmountTypeChange({ sampleID: 'reference', amountType: 'real' });
+
+    expect(reaction.solvents[0].amount_l).toBe(10);
+    expect(reaction.solvents[0].referenceVolumeRatioPending).toBe(true);
+    ctx.updatedReactionForAmountChange({ sampleID: 'reference', amount: { value: 2, unit: 'mol' } });
+    expect(reaction.solvents[0].amount_l).toBe(10);
+    ctx.updatedReactionForAmountChange({ sampleID: 'reference', amount: { value: 4, unit: 'mol' } });
+    expect(reaction.solvents[0].amount_l).toBe(20);
+  });
+});
+
 // Unit tests for the centralized propagation helper. Every reference-changing edit
 // routes through this method so solvent scaling can never be forgotten at a call site.
 describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
@@ -1301,12 +1378,8 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
   });
 });
 
-// Regression: both concentration handlers change the reference amount under locked equivalents
-// and route through propagateReferenceAmountChange. The feedstock path derives solvent volumes
-// from the updated reference. The fixed-volume path deliberately opts out (rescaleSolvents:
-// false): its reaction volume is fixed (volume locked, or the solvent sum that defines the
-// concentration), so rescaling solvents would move the very divisor the typed concentration
-// depends on. Dependent concentrations are still refreshed on that path.
+// Locked concentration edits use the explicit reaction-volume basis, so solvents may
+// scale without changing the divisor. Feedstock edits preserve solvent volumes.
 // Not covered here: the reference-component switch (updatedReactionForComponentReferenceChange)
 // still calls updatedSamplesForAmountChange directly and does NOT derive solvents under lock.
 // That bypass is scoped to the stacked #3584.
@@ -1327,7 +1400,7 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
     updateAllConcentrations: sinon.spy(),
   });
 
-  it('handleFixedVolumeConcentrationChange keeps the fixed volume, so solvents are not rescaled', () => {
+  it('handleFixedVolumeConcentrationChange derives solvents from the edited sample', () => {
     const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
     const updatedReaction = buildUpdatedReaction();
     const updatedSample = {
@@ -1344,10 +1417,9 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
 
     ReactionDetailsScheme.prototype.handleFixedVolumeConcentrationChange.call(ctx, updatedSample, 2);
 
-    // The reaction volume is the divisor for the typed concentration, so the stored solvent
-    // volumes must stay put even under locked equivalents...
-    expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
-    // ...while dependent concentrations are still refreshed from the rebased amounts.
+    const scaler = updatedReaction.updateSolventVolumesForReference;
+    expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+    expect(updatedSample.setAmountFromConcentrationAndPreserve.calledBefore(scaler)).toBe(true);
     expect(updatedReaction.resetPreservedConcentrationExcept.calledOnceWith(updatedSample)).toBe(true);
     expect(updatedReaction.updateAllConcentrations.calledOnce).toBe(true);
   });
@@ -2098,13 +2170,13 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
 
 
 describe('ReactionDetailsScheme — concentration edits preserve their volume basis', () => {
-  const buildCtx = (mode) => {
+  const buildCtx = (mode, { lockEquivColumn = true, lockReactionVolume = true, amount = 0.001 } = {}) => {
     const reaction = new Reaction({
       starting_materials: [{
         id: 'reference',
         reference: true,
         amountType: 'target',
-        target_amount_value: 0.001,
+        target_amount_value: amount,
         target_amount_unit: 'mol',
         molecule: { molecular_weight: 100 },
         purity: 1,
@@ -2116,12 +2188,12 @@ describe('ReactionDetailsScheme — concentration edits preserve their volume ba
       solvents: [{ target_amount_value: 0.005, target_amount_unit: 'l' }],
       concentration_mode: mode,
       volume: 0.01,
-      lock_reaction_volume: true,
+      lock_reaction_volume: lockReactionVolume,
     });
     reaction.captureSolventReferenceRatios();
     const ctx = Object.create(ReactionDetailsScheme.prototype);
     ctx.props = { reaction };
-    ctx.state = { lockEquivColumn: true };
+    ctx.state = { lockEquivColumn };
     ctx.showReactionVolumeRequiredWarning = sinon.spy();
     return ctx;
   };
@@ -2146,6 +2218,57 @@ describe('ReactionDetailsScheme — concentration edits preserve their volume ba
       expect(ctx.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
       expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.001, 10);
       expect(reaction.solvents[0].amount_l).toBe(0.005);
+      expect(reaction.referenceMaterial.concn).not.toBe(0.2);
+    });
+  });
+
+  Object.values(Reaction.CONCENTRATION_MODES).forEach((mode) => {
+    it(`keeps solvent volumes fixed during a ${mode} concentration edit with equivalents unlocked`, () => {
+      const ctx = buildCtx(mode, { lockEquivColumn: false });
+      const { reaction } = ctx.props;
+      const volume = reaction.reactionVolumeForConcentration();
+
+      ctx.updatedReactionForConcentrationChange({ sampleID: 'reference', concentration: { value: 0.4 } });
+
+      expect(ctx.showReactionVolumeRequiredWarning.called).toBe(false);
+      expect(reaction.solvents[0].amount_l).toBe(0.005);
+      expect(reaction.reactionVolumeForConcentration()).toBe(volume);
+      expect(reaction.referenceMaterial.amount_mol / volume).toBeCloseTo(0.4, 10);
+      expect(reaction.referenceMaterial.concn).toBeCloseTo(0.4, 10);
+    });
+
+    it(`checks the ${mode} basis before setting a missing amount with equivalents locked`, () => {
+      const ctx = buildCtx(mode, { lockReactionVolume: false, amount: 0 });
+      const { reaction } = ctx.props;
+
+      ctx.updatedReactionForConcentrationChange({ sampleID: 'reference', concentration: { value: 0.2 } });
+
+      if (mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME) {
+        expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.002, 10);
+        expect(reaction.reactionVolumeForConcentration()).toBe(0.01);
+        expect(reaction.solvents[0].amount_l).toBe(0.005);
+        expect(reaction.solvents[0].referenceVolumeRatioPending).toBe(false);
+        expect(reaction.referenceMaterial.concn).toBeCloseTo(0.2, 10);
+      } else {
+        expect(ctx.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+        expect(reaction.referenceMaterial.amount_mol).toBe(0);
+        expect(reaction.solvents[0].amount_l).toBe(0.005);
+      }
+    });
+  });
+
+  it('rejects invalid explicit volumes under lock instead of falling back to a moving solvent sum', () => {
+    [null, '', 0, -1, 'invalid', Infinity].forEach((volume) => {
+      const ctx = buildCtx(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
+      const { reaction } = ctx.props;
+      reaction.volume = volume;
+
+      ctx.updatedReactionForConcentrationChange({ sampleID: 'reference', concentration: { value: 0.2 } });
+
+      expect(ctx.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+      expect(reaction.referenceMaterial.amount_mol).toBe(0.001);
+      expect(reaction.solvents[0].amount_l).toBe(0.005);
+      expect(reaction.referenceMaterial.concn).not.toBe(0.2);
     });
   });
 });
