@@ -19,6 +19,23 @@ import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
 
+const hasSolventVolumeConversion = (solvent) => (
+  solvent.amount_unit === 'l' || Number(solvent.density) > 0 || solvent.has_molarity
+);
+
+const solventAmountForVolume = (solvent, volumeL) => {
+  const { amount_unit: unit } = solvent;
+  if (unit === 'l') return volumeL;
+
+  if (solvent.has_molarity) {
+    // Convert the derived volume, not the current amount_l read by convertGramToUnit('mol').
+    const amountMol = volumeL * solvent.molarity_value;
+    return unit === 'mol' ? amountMol : solvent.convertToGram(amountMol, 'mol');
+  }
+
+  return solvent.convertGramToUnit(volumeL * Number(solvent.density) * 1000, unit);
+};
+
 const TemperatureUnit = ['°C', '°F', 'K'];
 
 const TemperatureDefault = {
@@ -1648,18 +1665,22 @@ export default class Reaction extends Element {
    * captureSolventReferenceRatios (on lock, and on load/reload while locked) rather than
    * reconstructed here from the already-updated reference. referenceVolumeRatio is a
    * transient field (not serialized). Ratios belong to a reference ID and sample type.
-   * Mass/mole solvents without density are left alone, and scaling preserves the stored unit.
+   * Mass/mole solvents without density or molarity are left alone; scaling preserves the stored unit.
    *
    * @param {Sample} [editedSample] - the sample the user just changed, if any.
    * @returns {void}
    */
   updateSolventVolumesForReference(editedSample) {
+    // The amount-change pipeline leaves dependents fixed for feedstock edits. Apply the
+    // same exception here, including the render-time sample-detail path.
+    if (editedSample?.gas_type === 'feedstock') return;
+
     const reference = this.referenceMaterial;
     const referenceMol = Number(reference?.amount_mol);
     const referenceKey = reference && JSON.stringify([isSbmmSample(reference), reference.id]);
 
     (this.solvents || []).forEach((solvent) => {
-      if (solvent.amount_unit !== 'l' && !(Number(solvent.density) > 0)) {
+      if (!hasSolventVolumeConversion(solvent)) {
         delete solvent.referenceVolumeRatio;
         return;
       }
@@ -1694,14 +1715,15 @@ export default class Reaction extends Element {
 
       const volumeL = solvent.referenceVolumeRatio * referenceMol;
       const unit = solvent.amount_unit;
-      const value = unit === 'l'
-        ? volumeL
-        : solvent.convertGramToUnit(volumeL * Number(solvent.density) * 1000, unit);
+      const value = solventAmountForVolume(solvent, volumeL);
       if (!Number.isFinite(value)) return;
-      solvent.setAmount({ value, unit });
-
-      if (solvent.isMixture && solvent.isMixture() && solvent.hasComponents && solvent.hasComponents()) {
-        solvent.updateMixtureComponentAmounts();
+      if (solvent.isMixture?.()) {
+        // Programmatic scaling must preserve the mixture's reference-component edit state.
+        solvent.amount_value = value;
+        solvent.amount_unit = unit;
+        if (solvent.hasComponents()) solvent.updateMixtureComponentAmounts();
+      } else {
+        solvent.setAmount({ value, unit });
       }
     });
   }
@@ -1716,7 +1738,7 @@ export default class Reaction extends Element {
    * the current volumes were set against. A zero volume is captured as a zero ratio so an
    * empty solvent stays empty. An empty reference clears the old ratio; its first positive
    * amount anchors the current solvent volume without scaling it. Mass/mole solvents without
-   * density cannot supply a volume ratio and are left untouched.
+   * density or molarity cannot supply a volume ratio and are left untouched.
    *
    * @param {Sample[]} [solvents] - capture only these solvents when adding new materials.
    * @returns {void}
@@ -1730,13 +1752,13 @@ export default class Reaction extends Element {
       delete solvent.referenceVolumeRatio;
       solvent.referenceVolumeRatioReferenceKey = referenceKey;
       solvent.referenceVolumeRatioPending = false;
-      if (solvent.amount_unit !== 'l' && !(Number(solvent.density) > 0)) return;
+      if (!hasSolventVolumeConversion(solvent)) return;
       if (!Number.isFinite(referenceMol) || referenceMol <= 0) {
         solvent.referenceVolumeRatioPending = true;
         return;
       }
 
-      const volumeL = solvent.amount_unit === 'l'
+      const volumeL = solvent.amount_unit === 'l' || solvent.has_molarity
         ? Number(solvent.amount_l)
         : Number(solvent.amount_g) / (Number(solvent.density) * 1000);
       if (Number.isFinite(volumeL)) {

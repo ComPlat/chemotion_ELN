@@ -1156,7 +1156,9 @@ describe('Reaction#updateSolventVolumesForReference', () => {
 
     Reaction.prototype.updateSolventVolumesForReference.call(ctx);
 
-    expect(solvent.setAmount.calledOnce).toBe(true);
+    expect(solvent.setAmount.called).toBe(false);
+    expect(solvent.amount_value).toBe(5);
+    expect(solvent.amount_unit).toBe('l');
     expect(updateMixtureComponentAmounts.calledOnce).toBe(true);
   });
 });
@@ -1287,6 +1289,76 @@ describe('Reaction solvent scaling — units and reference changes', () => {
       expect(solvent.amount_value).toBeCloseTo(amount * 2, 10);
       expect(solvent.amount_unit).toBe(unit);
       expect(solvent.amount_l).toBeCloseTo(0.00125, 10);
+    });
+
+    [1, 0.8].forEach((purity) => {
+      it(`scales a molarity-only solvent stored in ${unit} with purity ${purity}`, () => {
+        const reaction = buildReaction(makeSample('solvent', amount, unit, {
+          molarity_value: 2,
+          purity,
+        }));
+        const solvent = reaction.solvents[0];
+        const initialVolume = solvent.amount_l;
+        reaction.captureSolventReferenceRatios();
+        expect(solvent.referenceVolumeRatio).toBeCloseTo(initialVolume / 0.001, 10);
+
+        reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+        reaction.updateSolventVolumesForReference();
+
+        expect(solvent.amount_value).toBeCloseTo(amount * 2, 10);
+        expect(solvent.amount_unit).toBe(unit);
+        expect(solvent.amount_l).toBeCloseTo(initialVolume * 2, 10);
+        expect(solvent.amount_mol).toBeCloseTo(solvent.amount_l * 2, 10);
+
+        reaction.referenceMaterial.setAmount({ value: 0.001, unit: 'mol' });
+        reaction.updateSolventVolumesForReference();
+        expect(solvent.amount_value).toBeCloseTo(amount, 10);
+      });
+    });
+  });
+
+  it('leaves solvent amounts and ratios unchanged for a feedstock edit', () => {
+    const reaction = buildReaction(makeSample('solvent', 0.01, 'l'));
+    const reference = reaction.referenceMaterial;
+    reference.gas_type = 'feedstock';
+    reaction.captureSolventReferenceRatios();
+    reference.setAmount({ value: 0.002, unit: 'mol' });
+
+    reaction.updateSolventVolumesForReference(reference);
+
+    expect(reaction.solvents[0].amount_l).toBe(0.01);
+    expect(reaction.solvents[0].referenceVolumeRatio).toBeCloseTo(10, 10);
+  });
+
+  ['g', 'l'].forEach((unit) => {
+    it(`scales a mixture solvent in ${unit} without changing its user-edit state`, () => {
+      const amount = unit === 'g' ? 0.5 : 0.001;
+      const reaction = buildReaction(makeSample('solvent', amount, unit, {
+        sample_type: 'Mixture',
+        density: 0.8,
+      }));
+      const solvent = reaction.solvents[0];
+      solvent.components = [{ reference: true, relative_molecular_weight: 50 }];
+      solvent.sample_details = {
+        reference_component_changed: true,
+        previous_amount_g: 0.25,
+        previous_amount_mol: 0.005,
+      };
+      const userEdit = sinon.spy(solvent, 'handleMixtureAmountChange');
+      const updateComponents = sinon.spy(solvent, 'updateMixtureComponentAmounts');
+      reaction.captureSolventReferenceRatios();
+
+      reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+      reaction.updateSolventVolumesForReference();
+
+      expect(solvent.amount_value).toBeCloseTo(amount * 2, 10);
+      expect(solvent.amount_unit).toBe(unit);
+      expect(userEdit.called).toBe(false);
+      expect(updateComponents.calledOnce).toBe(true);
+      expect(solvent.components[0].amount_mol).toBeCloseTo(solvent.amount_g / 50, 10);
+      expect(solvent.sample_details.reference_component_changed).toBe(true);
+      expect(solvent.sample_details.previous_amount_g).toBe(0.25);
+      expect(solvent.sample_details.previous_amount_mol).toBe(0.005);
     });
   });
 

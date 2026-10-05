@@ -5,7 +5,6 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
-import Reaction from 'src/models/Reaction';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
@@ -1338,10 +1337,17 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
     expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
   });
 
-  it('handleFeedstockConcentrationChange derives solvents from the edited sample', () => {
+  it('handleFeedstockConcentrationChange preserves solvents like the other dependents', () => {
     const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
     const updatedReaction = buildUpdatedReaction();
+    const solvent = {
+      id: 'solvent', amount_unit: 'l', amount_l: 0.01, referenceVolumeRatio: 0.1, setAmount: sinon.spy()
+    };
+    updatedReaction.referenceMaterial = referenceMaterial;
+    updatedReaction.solvents = [solvent];
+    updatedReaction.updateSolventVolumesForReference = sinon.spy(Reaction.prototype.updateSolventVolumesForReference);
     const updatedSample = {
+      gas_type: 'feedstock',
       setAmount: sinon.spy(() => { referenceMaterial.amount_mol = 0.2; }),
     };
     const ctx = {
@@ -1357,6 +1363,8 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
     const scaler = updatedReaction.updateSolventVolumesForReference;
     expect(scaler.calledOnceWith(updatedSample)).toBe(true);
     expect(updatedSample.setAmount.calledBefore(scaler)).toBe(true);
+    expect(solvent.setAmount.called).toBe(false);
+    expect(solvent.referenceVolumeRatio).toBe(0.1);
   });
 });
 
@@ -2055,6 +2063,59 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
   });
 });
 
+
+describe('ReactionDetailsScheme — concentration edits preserve their volume basis', () => {
+  const buildCtx = (mode) => {
+    const reaction = new Reaction({
+      starting_materials: [{
+        id: 'reference',
+        reference: true,
+        amountType: 'target',
+        target_amount_value: 0.001,
+        target_amount_unit: 'mol',
+        molecule: { molecular_weight: 100 },
+        purity: 1,
+        gas_type: 'off',
+      }],
+      reactants: [],
+      products: [],
+      purification_solvents: [],
+      solvents: [{ target_amount_value: 0.005, target_amount_unit: 'l' }],
+      concentration_mode: mode,
+      volume: 0.01,
+      lock_reaction_volume: true,
+    });
+    reaction.captureSolventReferenceRatios();
+    const ctx = Object.create(ReactionDetailsScheme.prototype);
+    ctx.props = { reaction };
+    ctx.state = { lockEquivColumn: true };
+    ctx.showReactionVolumeRequiredWarning = sinon.spy();
+    return ctx;
+  };
+
+  it('retains the typed concentration when solvent volumes scale on the explicit volume basis', () => {
+    const ctx = buildCtx(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
+    const { reaction } = ctx.props;
+    ctx.updatedReactionForConcentrationChange({ sampleID: 'reference', concentration: { value: 0.2 } });
+
+    expect(reaction.solvents[0].amount_l).toBeCloseTo(0.01, 10);
+    expect(reaction.reactionVolumeForConcentration()).toBe(0.01);
+    expect(reaction.referenceMaterial.amount_mol / reaction.reactionVolumeForConcentration()).toBeCloseTo(0.2, 10);
+    expect(reaction.referenceMaterial.concn).toBeCloseTo(0.2, 10);
+  });
+
+  [Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY, Reaction.CONCENTRATION_MODES.COMBINED].forEach((mode) => {
+    it(`rejects concentration edits on the ${mode} basis while equivalents are locked`, () => {
+      const ctx = buildCtx(mode);
+      const { reaction } = ctx.props;
+      ctx.updatedReactionForConcentrationChange({ sampleID: 'reference', concentration: { value: 0.2 } });
+
+      expect(ctx.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+      expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.001, 10);
+      expect(reaction.solvents[0].amount_l).toBe(0.005);
+    });
+  });
+});
 
 describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
   [false, true].forEach((isSbmm) => {
