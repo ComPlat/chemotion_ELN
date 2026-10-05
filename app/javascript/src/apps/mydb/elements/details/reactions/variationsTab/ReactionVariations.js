@@ -21,7 +21,7 @@ import
   copyVariationDataset,
   reorderVariationDatasets,
   parseVariationGroup,
-  variationDiffOf, getReactionSegments,
+  variationDiffOf, getReactionSegments, refreshConcentrations,
   exportVariationsToCsv,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
@@ -117,6 +117,8 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
 
   const handleReactionChange = (variationReaction, idx) => {
     variationReaction.updateMaxAmountOfProducts();
+    // An amount or volume edit changes the concentrations of the row's other materials too.
+    refreshConcentrations(variationReaction);
 
     const variationDiff = variationDiffOf(reaction, variationReaction);
 

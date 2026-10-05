@@ -4,7 +4,10 @@ import Container from 'src/models/Container';
 import uuid from 'uuid';
 import { cloneDeep } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { markAsVariationOf } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
+import {
+  markAsVariationOf,
+  withReactionGasPhase,
+} from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 import {
   applyLegacyVariationData,
   needsLegacyConversion,
@@ -80,6 +83,36 @@ function deepPatch(target, patch) {
   return structuredClone(patch);
 }
 
+/*
+Works out the concentration of every material of a variation from that variation's own amounts and
+volume basis. `concn` is not stored, so nothing else sets it for a row: the scheme tab derives the
+parent's while it renders, which no grid row goes through. A gas feedstock's concentration depends on
+the vessel size, so the row's own gas phase values are loaded for it.
+
+With `releasePreserved`, a concentration the user typed is recomputed as well - right for a row just
+rebuilt from its diff, whose typed concentration has already been turned into an amount or a volume,
+and whose preserve flags are only copies of the parent's.
+*/
+const refreshConcentrations = (variationReaction, { releasePreserved = false } = {}) => {
+  const materials = [
+    ...variationReaction.allReactionMaterials,
+    ...(variationReaction.products || []),
+  ].filter((material) => typeof material?.updateConcentrationFromSolvent === 'function');
+
+  const refresh = () => materials.forEach((material) => {
+    if (releasePreserved) {
+      material.preserveConcentration = false;
+    }
+    material.updateConcentrationFromSolvent(variationReaction);
+  });
+
+  if (variationReaction.gaseous) {
+    withReactionGasPhase(variationReaction, refresh);
+  } else {
+    refresh();
+  }
+};
+
 const makeVariationReaction = (reaction, reactionData) => {
   const clonedReaction = deepPatch(reaction, reactionData);
   clonedReaction.variations = [];
@@ -96,10 +129,12 @@ const makeVariationReaction = (reaction, reactionData) => {
     );
   });
   // Marked so that its edits are computed against its own gas phase values - see GasPhaseContext.
-  return markAsVariationOf(
+  const variationReaction = markAsVariationOf(
     Object.assign(Object.create(Reaction.prototype), clonedReaction),
     reaction
   );
+  refreshConcentrations(variationReaction, { releasePreserved: true });
+  return variationReaction;
 };
 
 // The [major, minor] group typed as e.g. "2.1": its numbers, at most two; null without any.
@@ -289,11 +324,17 @@ structuredClone the variations are rebuilt with.
 Nor the containers: makeVariationReaction gives every material a fresh one on each rebuild, so they
 always differ from the parent's and the rebuild would replace whatever the diff held anyway.
 Analyses stay on the parent reaction.
+
+Nor the concentrations: makeVariationReaction works them out from the row's amounts and volume on
+every rebuild (see refreshConcentrations), and `preserveConcentration` only matters during an edit.
 */
 const variationDiffOf = (reaction, variationReaction) => diffObjects(
   reaction,
   variationReaction,
-  ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container']
+  [
+    '_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container',
+    'concn', 'preserveConcentration',
+  ]
 );
 
 /*
@@ -494,6 +535,7 @@ export {
   reorderVariationDatasets,
   parseVariationGroup,
   makeVariationReaction,
+  refreshConcentrations,
   diffObjects,
   variationDiffOf,
   getVariationsRowName,
