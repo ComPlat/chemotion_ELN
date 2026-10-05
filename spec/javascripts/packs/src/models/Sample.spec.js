@@ -2725,6 +2725,17 @@ describe('Sample', async () => {
       expect(sample.serializeMaterial().components).toBe(null);
     });
 
+    it('settles the serialized reference flag even when components are not loaded', () => {
+      const sample = makeMixture();
+      sample.sample_details = { reference_component_changed: true, previous_amount_g: 5 };
+
+      const serialized = sample.serializeMaterial();
+
+      expect(serialized.components).toBe(null);
+      expect(serialized.sample_details).toEqual({ reference_component_changed: false, previous_amount_g: 5 });
+      expect(sample.sample_details.reference_component_changed).toBe(true);
+    });
+
     it('serializes an explicitly emptied component list as [] (delete-all instruction)', () => {
       const sample = makeMixture();
       sample.components = [];

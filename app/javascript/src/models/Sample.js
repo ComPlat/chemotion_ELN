@@ -1974,6 +1974,10 @@ export default class Sample extends Element {
 
   serializeMaterial() {
     const params = this.serialize();
+    if (this.isMixture() && params.sample_details) {
+      // Reaction saves persist the settled basis, without changing the live editor state.
+      params.sample_details = { ...params.sample_details, reference_component_changed: false };
+    }
     const extra_params = {
       equivalent: this.equivalent,
       position: this.position,

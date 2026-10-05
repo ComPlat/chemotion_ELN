@@ -1176,6 +1176,14 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    const { lockEquivColumn } = this.state;
+    // Sample getters consult the store. Align it with the UI before taking snapshots,
+    // including for a new reaction's temporary ID, so the whole switch uses one lock state.
+    if (this.getReactionEquivLockState(reaction) !== lockEquivColumn) {
+      ComponentActions.toggleReactionEquivLock(lockEquivColumn, reaction.id);
+    }
+    updatedSample.belongTo = reaction;
+
     // Make sure sample_details exists before we read and write mixture bookkeeping on it.
     updatedSample.initializeSampleDetails();
 
@@ -1216,7 +1224,7 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.sample_details.reference_component_changed = true;
 
     // Perform calculations when the reference component changes
-    this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent);
+    this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent, lockEquivColumn);
 
     // If the updated sample is the reference material, update equivalents of all other samples
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
@@ -1231,7 +1239,7 @@ export default class ReactionDetailsScheme extends React.Component {
       // matching every other reference-amount-changing path (amount and concentration edits).
       const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
-      if (this.state.lockEquivColumn) {
+      if (lockEquivColumn) {
         updatedReaction.resetPreservedConcentrationExcept(updatedSample);
         updatedReaction.updateAllConcentrations();
       }
@@ -1257,8 +1265,9 @@ export default class ReactionDetailsScheme extends React.Component {
    *
    * @param {Sample} updatedSample - The mixture sample being updated.
    * @param {Component} referenceComponent - The new reference component.
+   * @param {boolean} lockEquivColumn - The lock state captured for this operation.
    */
-  calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent) {
+  calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent, lockEquivColumn) {
     if (!updatedSample || !referenceComponent) {
       console.warn('Missing sample or reference component for calculation');
       return;
@@ -1266,15 +1275,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
     const { reaction } = this.props;
     if (!reaction) return;
-
-    // Query ComponentStore directly to get the current lock state for this reaction
-    // This ensures we always have the latest state, even if it was changed elsewhere
-    const lockEquivColumn = this.getReactionEquivLockState(reaction);
-
-    // Ensure the sample has the reaction reference for lock state checks
-    if (!updatedSample.belongTo) {
-      updatedSample.belongTo = reaction;
-    }
 
     if (lockEquivColumn) {
       this.handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent, reaction);
