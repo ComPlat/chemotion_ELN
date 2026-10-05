@@ -72,6 +72,12 @@ RemoveVariationsModal.propTypes = {
   onRemoveAll: PropTypes.func.isRequired,
 };
 
+/*
+The views of the grid: the reaction scheme, or one segment klass picked instead of it. 'Schema' stays
+the scheme's key - it also names its stored column layout - but the tab it mirrors is called Scheme.
+*/
+const viewLabel = (view) => (view === 'Schema' ? 'Scheme' : view);
+
 const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
   const [selectedVariation, setActiveVariation] = useState(null);
@@ -300,23 +306,26 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
             onReactionChange(reaction);
           }}
         />
-        <Select
-          className="ms-auto"
-          // Matches the small buttons it shares the row with; without a minimum the control would
-          // collapse onto its own text.
-          size="sm"
-          minWidth="180px"
-          options={Object.entries(allSegment).map(([label, value]) => ({ label, value }))}
-          value={
-            currentSegment && allSegment[currentSegment]
-              ? { value: allSegment[currentSegment], label: currentSegment }
-              : null
-          }
-          onChange={({ label }) => {
-            setCurrentSegment(label);
-          }}
-          isSearchable
-        />
+        <div className="ms-auto d-flex align-items-center gap-1">
+          <label htmlFor="reaction-variations-view" className="mb-0 text-nowrap">Show:</label>
+          <Select
+            inputId="reaction-variations-view"
+            // Matches the small buttons it shares the row with; without a minimum the control would
+            // collapse onto its own text.
+            size="sm"
+            minWidth="180px"
+            options={Object.keys(allSegment).map((view) => ({ value: view, label: viewLabel(view) }))}
+            value={
+              currentSegment && allSegment[currentSegment]
+                ? { value: currentSegment, label: viewLabel(currentSegment) }
+                : null
+            }
+            onChange={({ value }) => {
+              setCurrentSegment(value);
+            }}
+            isSearchable
+          />
+        </div>
       </ButtonGroup>
       <VariationSchemaTable
         /*
@@ -397,5 +406,6 @@ ReactionVariations.propTypes = {
 export default ReactionVariations;
 
 export {
-  REACTION_VARIATIONS_TAB_KEY
+  REACTION_VARIATIONS_TAB_KEY,
+  viewLabel,
 };
