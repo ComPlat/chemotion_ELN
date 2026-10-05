@@ -60,6 +60,23 @@ const STICKY_GROUP_LABEL_CLASS = 'variations-sticky-group-label';
 // Keys that move a text caret, and the elements that have one - see suppressKeyboardEvent below.
 const CARET_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
 const CARET_ELEMENTS = ['INPUT', 'TEXTAREA'];
+// Ctrl/Cmd shortcuts of a text field - select all, copy, paste, cut, undo, redo - which the grid
+// would otherwise claim for its rows (Ctrl+A selects them all, and swallows the key doing so).
+const TEXT_SHORTCUT_KEYS = ['a', 'c', 'v', 'x', 'z', 'y'];
+
+/*
+Whether a key pressed in a cell belongs to the input under the cursor rather than to the grid: a
+caret key, or a text shortcut. Only from an input, so the read-only cells still work as grid cells.
+*/
+const isInputKeyboardEvent = (event) => {
+  if (!CARET_ELEMENTS.includes(event.target?.tagName)) {
+    return false;
+  }
+  if (CARET_KEYS.includes(event.key)) {
+    return true;
+  }
+  return Boolean(event.ctrlKey || event.metaKey) && TEXT_SHORTCUT_KEYS.includes(event.key?.toLowerCase());
+};
 
 // Element by element, numerically: [2,1] sorts before [10,2].
 const compareGroups = (a, b) => {
@@ -536,17 +553,16 @@ const DEFAULT_COL_DEF = {
   autoHeight: true,
   cellStyle: { display: 'flex', alignItems: 'center', overflow: 'visible' },
   /*
-  Hands the caret keys back to the input under the cursor.
+  Hands the caret keys and the text shortcuts back to the input under the cursor.
 
   A cell holds a live input rather than an AG Grid editor, so `cellCtrl.editing` is never true, and
   the early return that normally keeps arrow keys working inside an editor never fires: the grid
   reads every arrow as "move to the next cell" and preventDefaults it, caret and all. Only keys
   aimed at a caret are taken back, and only from an input, so arrowing across the read-only cells
-  still walks the grid as before.
+  still walks the grid as before. The same goes for Ctrl/Cmd+A and the other text shortcuts, which
+  the grid would otherwise run as row operations - see isInputKeyboardEvent.
   */
-  suppressKeyboardEvent: ({ event }) => (
-    CARET_KEYS.includes(event.key) && CARET_ELEMENTS.includes(event.target?.tagName)
-  ),
+  suppressKeyboardEvent: ({ event }) => isInputKeyboardEvent(event),
 };
 
 /*
@@ -1325,6 +1341,7 @@ VariationSchemaTable.defaultProps = {
 };
 
 export {
+  isInputKeyboardEvent,
   READ_ONLY_CELL_CLASS,
   STICKY_NAME_CLASS
 };
