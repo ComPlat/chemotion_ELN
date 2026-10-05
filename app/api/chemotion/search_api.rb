@@ -53,8 +53,10 @@ module Chemotion
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
               sample reaction wellplate screen element research_plan sequence_based_macromolecule_sample
-              device_descriptions cell_lines
+              device_description cell_lines
             ]
+            # Generic klass name, which keys the result. Cf. SharedMethods#serialize_generic_elements
+            optional :element_klass, type: String, regexp: /\A\w+\z/
             requires :ids, type: Array
             optional :total_elements, type: Integer
             optional :with_filter, type: Boolean

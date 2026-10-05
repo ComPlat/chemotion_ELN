@@ -664,6 +664,139 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/by_ids for the second page of an unfiltered refetch' do
+    let(:url) { '/api/v1/search/by_ids' }
+    let(:samples) { create_list(:sample, 5, creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :by_ids,
+          id_params: { model_name: 'sample', ids: samples.map(&:id), total_elements: 5, with_filter: true },
+          list_filter_params: {},
+          search_by_method: 'search_by_ids',
+          page_size: 2,
+        },
+        collection_id: collection.id,
+        page: 2,
+        page_size: 2,
+        per_page: 2,
+        molecule_sort: false,
+      }
+    end
+
+    before { do_request }
+
+    it 'returns exactly the ids of page two' do
+      expect(parsed_json_response.dig('samples', 'elements').pluck('id')).to eq samples[2, 2].map(&:id)
+    end
+  end
+
+  describe 'POST /api/v1/search/by_ids under the model name the element list sends' do
+    let(:url) { '/api/v1/search/by_ids' }
+    let(:research_plan) { create(:research_plan, creator: user, collections: [collection]) }
+    let(:params) do
+      {
+        selection: {
+          elementType: :by_ids,
+          id_params: { model_name: model_name, ids: [element.id], total_elements: 1, with_filter: false },
+          list_filter_params: {},
+          search_by_method: 'search_by_ids',
+        },
+        collection_id: collection.id,
+        page: 1,
+        page_size: 15,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
+
+    {
+      'sample' => %i[sample_a samples],
+      'reaction' => %i[reaction reactions],
+      'wellplate' => %i[wellplate wellplates],
+      'screen' => %i[screen screens],
+      'research_plan' => %i[research_plan research_plans],
+      'cell_lines' => %i[cell_line cell_lines],
+      'device_description' => %i[device_description device_descriptions],
+      'sequence_based_macromolecule_sample' => %i[sbmm_sample_uniprot sequence_based_macromolecule_samples],
+    }.each do |sent_model_name, (element_name, result_key)|
+      context "with model_name #{sent_model_name}" do
+        let(:model_name) { sent_model_name }
+        let(:element) { public_send(element_name) }
+
+        it "returns the element under #{result_key}" do
+          do_request
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(result_key.to_s, 'elements').pluck('id')).to eq [element.id]
+        end
+      end
+    end
+
+    context 'with a generic element' do
+      let(:element_klass) { create(:element_klass, name: 'zzmixture') }
+      let(:element) { create(:element, element_klass: element_klass, creator: user, collections: [collection]) }
+      let(:params) do
+        {
+          selection: {
+            elementType: :by_ids,
+            id_params: {
+              model_name: 'element', element_klass: 'zzmixture', ids: [element.id], total_elements: 1,
+              with_filter: false
+            },
+            list_filter_params: {},
+            search_by_method: 'search_by_ids',
+          },
+          collection_id: collection.id,
+          page: 1,
+          page_size: 15,
+          per_page: 15,
+          molecule_sort: true,
+        }
+      end
+
+      it 'returns the element under its klass list key' do
+        do_request
+        expect(parsed_json_response.dig('zzmixtures', 'elements').pluck('id')).to eq [element.id]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/by_ids with a label filter on a type the list does not label-filter' do
+    let(:url) { '/api/v1/search/by_ids' }
+    let(:user_label) { UserLabel.create!(user_id: user.id, title: 'My Label', color: '#aabbcc') }
+    let(:params) do
+      {
+        selection: {
+          elementType: :by_ids,
+          id_params: { model_name: model_name, ids: [element.id], total_elements: 1, with_filter: true },
+          list_filter_params: { user_label: user_label.id },
+          search_by_method: 'search_by_ids',
+        },
+        collection_id: collection.id,
+        page: 1,
+        page_size: 15,
+        per_page: 15,
+        molecule_sort: true,
+      }
+    end
+
+    {
+      'cell_lines' => %i[cell_line cell_lines],
+      'device_description' => %i[device_description device_descriptions],
+      'sequence_based_macromolecule_sample' => %i[sbmm_sample_uniprot sequence_based_macromolecule_samples],
+    }.each do |sent_model_name, (element_name, result_key)|
+      context "with model_name #{sent_model_name}" do
+        let(:model_name) { sent_model_name }
+        let(:element) { public_send(element_name) }
+
+        it 'keeps the element, as the collection listing does' do
+          do_request
+          expect(parsed_json_response.dig(result_key.to_s, 'totalElements')).to eq 1
+        end
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/advanced' do
     let(:url) { '/api/v1/search/advanced' }
     let(:advanced_params) do

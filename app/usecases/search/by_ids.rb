@@ -89,7 +89,7 @@ module Usecases
           else
             @params[:page_size].to_i * (@params[:page].to_i - 1)
           end
-        @id_params[:ids][start_number, start_number + @params[:page_size].to_i]
+        @id_params[:ids][start_number, @params[:page_size].to_i]
       end
 
       def serialize_result_by_ids(scope)
@@ -98,7 +98,7 @@ module Usecases
         scope = scope.page(page).per(@params[:page_size]) if page != @params[:page] || @filter_params.present?
         serialized_scope = serialized_scope_for_result_by_id(scope)
 
-        @result[@id_params[:model_name].pluralize] = {
+        @result[result_key] = {
           elements: serialized_scope,
           ids: @id_params[:ids],
           page: page,
@@ -107,6 +107,13 @@ module Usecases
           totalElements: @total_elements,
         }
         @result
+      end
+
+      # Same key the element list uses for this type, so the refetch replaces the visible list.
+      def result_key
+        return "#{@id_params[:element_klass]}s" if @model_name == Labimotion::Element && @id_params[:element_klass]
+
+        @id_params[:model_name].pluralize
       end
 
       def serialized_scope_for_result_by_id(scope)

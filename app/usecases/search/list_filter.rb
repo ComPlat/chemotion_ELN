@@ -18,10 +18,13 @@ module Usecases
         device_description_ids: 'DeviceDescription',
         element_ids: 'Labimotion::Element',
       }.freeze
+      # The cell line, device description and SBMM listings do not filter by label, so neither does search.
+      LABELLED_MODELS = %w[Sample Reaction Wellplate Screen ResearchPlan Labimotion::Element].freeze
 
       module_function
 
-      # Reads the active filters out of the search request.
+      # @param params [Hash] search request params; filters are read from selection.list_filter_params
+      # @return [Hash] fixed keys :user_label, :from_date, :to_date (unix seconds), :by_created_at, :product_only
       def from_params(params)
         filters = params.dig(:selection, :list_filter_params) || {}
 
@@ -48,6 +51,10 @@ module Usecases
       end
 
       # Keeps the incoming order, which the serializers rely on for paging.
+      # @param model_name [String, nil] class name, e.g. 'Sample'; blank returns ids unchanged
+      # @param ids [Array<Integer, String>] candidate ids
+      # @param filters [Hash] as returned by .from_params
+      # @return [Array<Integer, String>] the subset of ids that pass the filters, in their original order
       def matching_ids(model_name, ids, filters)
         return ids if model_name.blank? || ids.blank? || !active?(filters)
 
@@ -56,7 +63,8 @@ module Usecases
       end
 
       def narrow(scope, model_name, filters)
-        scope = scope.by_user_label(filters[:user_label]) if filters[:user_label].present?
+        label = filters[:user_label] if LABELLED_MODELS.include?(model_name)
+        scope = scope.by_user_label(label) if label.present?
         scope = scope.product_only if filters[:product_only].present? && model_name == 'Sample'
         by_date(scope, filters)
       end
