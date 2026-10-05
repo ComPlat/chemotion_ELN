@@ -32,6 +32,13 @@ RSpec.describe Chemotion::AffiliationAPI do
       get '/api/v1/public/affiliations/departments', params: { ror_id: '04t3en479' }
       expect(parsed_json_response).to eq(['IFG'])
     end
+
+    it 'also lists departments of a legacy row with the same name and no ROR id yet' do
+      Affiliation.create!(organization: 'Karlsruhe Institute of Technology', department: 'IOC')
+      get '/api/v1/public/affiliations/departments',
+          params: { ror_id: '04t3en479', organization: 'Karlsruhe Institute of Technology' }
+      expect(parsed_json_response).to eq(['IOC'])
+    end
   end
 
   describe 'GET /api/v1/public/affiliations/ror_search' do
@@ -265,9 +272,20 @@ RSpec.describe Chemotion::AffiliationAPI do
       expect(response).to have_http_status(422)
     end
 
-    it 'refuses a country the organization is not registered in' do
-      post '/api/v1/affiliations', params: { organization: 'KIT', country: 'France' }
-      expect(response).to have_http_status(422)
+    it 'files a suggestion for a known organization in a new country', :aggregate_failures do
+      expect do
+        post '/api/v1/affiliations', params: { organization: 'KIT', country: 'France' }
+      end.not_to change(Affiliation, :count)
+      expect(response).to have_http_status(:accepted)
+      expect(AffiliationSuggestion.last).to have_attributes(organization: 'KIT', country: 'France', user_id: user.id)
+    end
+
+    it 'files an edit suggestion targeting the row when the country changes', :aggregate_failures do
+      ua = UserAffiliation.create!(user: user, affiliation: Affiliation.first)
+      put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', department: 'IOC', country: 'France' }
+      expect(response).to have_http_status(:accepted)
+      expect(AffiliationSuggestion.last.target_user_affiliation_id).to eq(ua.id)
+      expect(ua.reload.affiliation.country).to eq('Germany')
     end
 
     it 'links a known combination, matching case and accents', :aggregate_failures do
@@ -305,6 +323,36 @@ RSpec.describe Chemotion::AffiliationAPI do
       allow(Chemotion::RorService).to receive(:find).and_return(nil)
       post '/api/v1/affiliations', params: { organization: 'Fake Org', ror_id: '0abcdef12' }
       expect(response).to have_http_status(422)
+    end
+
+    it 'links a ROR pick to the legacy row instead of creating a duplicate', :aggregate_failures do
+      legacy = Affiliation.create!(organization: 'Karlsruhe Institute of Technology', department: 'ITC',
+                                   country: 'Germany')
+      allow(Chemotion::RorService).to receive(:find)
+        .and_return({ ror_id: '04t3en479', name: 'Karlsruhe Institute of Technology', country: 'Germany' })
+      expect do
+        post '/api/v1/affiliations', params: { organization: 'Karlsruhe Institute of Technology',
+                                               ror_id: '04t3en479', department: 'ITC', country: 'Germany' }
+      end.not_to change(Affiliation, :count)
+      expect(response).to have_http_status(:created)
+      expect(user.reload.affiliations).to eq([legacy])
+    end
+
+    it 'reuses the ROR-tagged row when the organization is picked by name', :aggregate_failures do
+      tagged = Affiliation.create!(organization: 'Karlsruhe Institute of Technology', department: 'IBCS',
+                                   country: 'Germany', ror_id: '04t3en479')
+      expect do
+        post '/api/v1/affiliations', params: { organization: 'Karlsruhe Institute of Technology',
+                                               department: 'IBCS', country: 'Germany' }
+      end.not_to change(Affiliation, :count)
+      expect(user.reload.affiliations).to eq([tagged])
+    end
+
+    it 'says to try again later when ROR is down', :aggregate_failures do
+      allow(Chemotion::RorService).to receive(:find).and_raise(Chemotion::RorService::Unavailable)
+      post '/api/v1/affiliations', params: { organization: 'x', ror_id: '02jz4aj89' }
+      expect(response).to have_http_status(503)
+      expect(parsed_json_response['error']).to include('try again later')
     end
 
     it 'refuses a department under a new ROR organization' do

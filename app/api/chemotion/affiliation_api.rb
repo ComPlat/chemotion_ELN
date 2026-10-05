@@ -8,11 +8,24 @@ module Chemotion
       def scope_by_organization(scope, prms)
         if prms[:ror_id].present?
           scope.where(ror_id: prms[:ror_id])
+               .or(scope.where(ror_id: nil).where('LOWER(organization) = LOWER(?)', prms[:organization].to_s))
         elsif prms[:organization].present?
           scope.where('LOWER(organization) = LOWER(?)', prms[:organization])
         else
           scope
         end
+      end
+
+      # A known organization in a new country is a legitimate request, so it goes to review.
+      def suggest_new_country(prms, target_user_affiliation_id = nil)
+        Usecases::AffiliationSuggestions::Suggestion.new(current_user).create(
+          prms.slice(:organization, :department, :group, :country, :ror_id, :from, :to)
+              .merge(target_user_affiliation_id: target_user_affiliation_id),
+        )
+        status 202
+        { message: 'Your affiliation will be added once an admin approves it.' }
+      rescue Usecases::AffiliationSuggestions::Errors::DuplicateSuggestion => e
+        error!({ error: e.message }, 422)
       end
     end
 
@@ -89,6 +102,10 @@ module Chemotion
       post do
         Usecases::Affiliations::UserAffiliations.new(current_user).create(declared(params, include_missing: false))
         status 201
+      rescue Usecases::Affiliations::Errors::CountryNotInRegistry
+        suggest_new_country(declared(params, include_missing: false))
+      rescue Chemotion::RorService::Unavailable
+        error!({ error: 'ROR could not be reached to confirm this organization. Please try again later.' }, 503)
       rescue Usecases::Affiliations::Errors::DuplicateAffiliation, Usecases::Affiliations::Errors::NotInRegistry,
              ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
@@ -107,8 +124,12 @@ module Chemotion
       end
       put do
         Usecases::Affiliations::UserAffiliations.new(current_user).update(declared(params, include_missing: false))
+      rescue Usecases::Affiliations::Errors::CountryNotInRegistry
+        suggest_new_country(declared(params, include_missing: false), params[:id])
       rescue ActiveRecord::RecordNotFound
         error!({ error: 'Not found' }, 404)
+      rescue Chemotion::RorService::Unavailable
+        error!({ error: 'ROR could not be reached to confirm this organization. Please try again later.' }, 503)
       rescue Usecases::Affiliations::Errors::DuplicateAffiliation, Usecases::Affiliations::Errors::NotInRegistry,
              ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)

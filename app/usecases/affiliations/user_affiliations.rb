@@ -53,7 +53,14 @@ module Usecases
         attributes = affiliation_attributes(params)
         rows = attributes[:ror_id] ? rows_for_ror!(attributes) : rows_for_name!(attributes)
         %i[country department group].each { |field| rows = narrow!(rows, attributes, field) }
+        attributes[:ror_id] = registry_ror_id(rows, attributes[:ror_id])
         attributes
+      end
+
+      # Reuse the ror_id the matching rows already carry, so a pick never mints a copy with or without it.
+      def registry_ror_id(rows, requested)
+        ror_ids = rows.distinct.pluck(:ror_id)
+        ror_ids.empty? || ror_ids.include?(requested) ? requested : ror_ids.first
       end
 
       def rows_for_name!(attributes)
@@ -62,17 +69,17 @@ module Usecases
       end
 
       def rows_for_ror!(attributes)
-        not_in_registry!(attributes[:ror_id]) unless attributes[:ror_id].match?(ROR_ID_FORMAT)
-        rows = Affiliation.where(ror_id: attributes[:ror_id])
-        if (row = rows.first)
-          attributes[:organization] = row.organization
-          return rows
-        end
+        ror_id = attributes[:ror_id]
+        not_in_registry!(ror_id) unless ror_id.match?(ROR_ID_FORMAT)
+        name = Affiliation.find_by(ror_id: ror_id)&.organization || ror_name!(attributes)
+        attributes[:organization] = name
+        Affiliation.where(ror_id: ror_id).or(Affiliation.where(ror_id: nil, organization: name))
+      end
 
+      def ror_name!(attributes)
         ror = Chemotion::RorService.find(attributes[:ror_id]) || not_in_registry!(attributes[:ror_id])
-        attributes[:organization] = ror[:name]
         attributes[:country] = ror[:country]
-        rows
+        Affiliation.canonical(:organization, ror[:name])
       end
 
       def narrow!(rows, attributes, field)
@@ -82,15 +89,15 @@ module Usecases
 
         key = Affiliation.normalize_key(value)
         match = rows.distinct.pluck(field).compact.find { |stored| Affiliation.normalize_key(stored) == key }
-        not_in_registry!(value) unless match
+        not_in_registry!(value, field) unless match
 
         attributes[field] = match
         rows.where(field => match)
       end
 
-      def not_in_registry!(value)
-        raise Usecases::Affiliations::Errors::NotInRegistry,
-              "'#{value}' is not in the affiliation registry yet. Please suggest it instead."
+      def not_in_registry!(value, field = nil)
+        error = field == :country ? Errors::CountryNotInRegistry : Errors::NotInRegistry
+        raise error, "'#{value}' is not in the affiliation registry yet. Please suggest it instead."
       end
 
       # Full identity with explicit nils: a blank department must match rows

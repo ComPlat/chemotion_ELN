@@ -4,6 +4,8 @@ module Chemotion
   class RorService
     include HTTParty
 
+    class Unavailable < StandardError; end
+
     ROR_API_BASE = 'https://api.ror.org/v2/organizations'
     REQUEST_TIMEOUT = 10
 
@@ -22,10 +24,13 @@ module Chemotion
 
       def find(ror_id)
         response = HTTParty.get("#{ROR_API_BASE}/#{ror_id}", request_options)
-        parse_item(JSON.parse(response.body)) if response.success?
+        return if response.code == 404
+        raise Unavailable, "ROR returned #{response.code}" unless response.success?
+
+        parse_item(JSON.parse(response.body))
       rescue StandardError => e
         Rails.logger.error "ROR API error: #{e.message}"
-        nil
+        raise Unavailable, e.message
       end
 
       private
