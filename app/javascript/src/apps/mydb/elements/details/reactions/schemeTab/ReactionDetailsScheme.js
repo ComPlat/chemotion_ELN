@@ -474,6 +474,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const actualTagGroup = Reaction.storageGroupFor(tagMat, tagGroup);
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
+    // A material moved into solvents under locked equivalents needs its reference ratio seeded,
+    // or it would never scale with the reference (mirrors dropSample's captureAddedSolventRatio).
+    this.captureAddedSolventRatio(srcMat, actualTagGroup);
     onReactionChange(reaction, { updateGraphic: true });
   }
 
