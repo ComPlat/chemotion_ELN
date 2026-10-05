@@ -37,6 +37,23 @@ const useColumnSort = (column, enableSorting) => {
 };
 
 /*
+What a click on the header does next, said in its title: clicks go ascending, descending, and then
+back to no sort at all - where the rows are in their own order, the one they were dragged into, which
+can look like a shuffle after a sorted view.
+*/
+const sortTitle = (displayName, sort) => {
+  switch (sort) {
+    case 'asc':
+      return `Sorted by ${displayName}, ascending. Click to sort descending.`;
+    case 'desc':
+      return `Sorted by ${displayName}, descending. Click to remove the sort: the variations go back `
+        + 'to their own order, the one they were added or dragged into.';
+    default:
+      return `Click to sort by ${displayName}, ascending. Shift-click adds it to the current sort.`;
+  }
+};
+
+/*
 The column name, clickable when the column sorts. Shift-click adds the column to the sort instead of
 replacing it, which is what AG Grid's own header does with `progressSort`.
 */
@@ -53,7 +70,7 @@ const SortableHeaderName = ({
     <button
       type="button"
       className="variations-sort-header text-truncate"
-      title={`Sort by ${displayName}`}
+      title={sortTitle(displayName, sort)}
       onClick={(event) => progressSort(event.shiftKey)}
     >
       <span className="text-truncate">{displayName}</span>
@@ -81,4 +98,4 @@ SortableHeaderName.defaultProps = {
 };
 
 export default SortableHeaderName;
-export { SortableHeaderName, useColumnSort };
+export { SortableHeaderName, sortTitle, useColumnSort };
