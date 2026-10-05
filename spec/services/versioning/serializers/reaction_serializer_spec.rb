@@ -45,4 +45,16 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
     expect(changes.last[:old_value]).to eq({ 'ops' => [{ 'insert' => 'first' }] })
     expect(changes.last[:new_value]).to eq({ 'ops' => [{ 'insert' => 'second' }] })
   end
+
+  it 'returns complete previous and updated variations when one is edited and another deleted' do
+    first = { 'uuid' => 'a', 'properties' => { 'temperature' => { 'value' => 20, 'unit' => '°C' } } }
+    second = { 'uuid' => 'b', 'properties' => { 'temperature' => { 'value' => 30, 'unit' => '°C' } } }
+    edited = first.deep_merge('properties' => { 'temperature' => { 'value' => 25 } })
+    reaction = create(:reaction, variations: [first, second])
+    as_request { reaction.update!(variations: [edited]) }
+
+    change = field_changes(reaction, :variations).last
+    expect(change[:old_value]).to eq('a' => first, 'b' => second)
+    expect(change[:new_value]).to eq('a' => edited)
+  end
 end
