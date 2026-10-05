@@ -15,7 +15,7 @@
 # override. Instead every converted variation starts out with a diff that changes nothing - i.e. it
 # reads as identical to its parent reaction - and keeps its former body verbatim under
 # `legacy_data`. Nothing is lost and `down` puts it back. The next migration,
-# 20260929120000_convert_legacy_reaction_variation_values.rb, then writes the old values into the
+# 20261005120000_convert_legacy_reaction_variation_values.rb, then writes the old values into the
 # diff (Usecases::Reactions::ConvertLegacyVariations); the client converts whatever that left on
 # read (variationsTab/ReactionVariationsLegacyConversion.js).
 #
