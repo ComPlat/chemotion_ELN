@@ -1763,7 +1763,26 @@ export default class ChemicalTab extends React.Component {
   }
 
   extractedPropertiesFor(sheetPath) {
-    return sheetPath ? this.allExtractedProperties()[sheetPath] : undefined;
+    if (!sheetPath) return undefined;
+
+    return this.allExtractedProperties()[sheetPath] ?? this.legacyPropertiesFor(sheetPath);
+  }
+
+  // Chemicals saved by the vendor-page lookup keep them in <vendor>ProductInfo.properties,
+  // matched to the sheet by its product number.
+  legacyPropertiesFor(sheetPath) {
+    const { chemical } = this.state;
+    const info = chemical?._chemical_data?.[0] ?? {};
+    const { productNumber } = parseSavedSheetPath(sheetPath);
+    if (!productNumber) return undefined;
+
+    const product = Object.keys(info)
+      .filter((key) => key.endsWith('ProductInfo'))
+      .map((key) => info[key])
+      .find((entry) => String(entry?.productNumber ?? '') === productNumber
+        && entry.properties && typeof entry.properties === 'object' && !Array.isArray(entry.properties)
+        && Object.keys(entry.properties).length > 0);
+    return product?.properties;
   }
 
   // Reads the saved PDF itself, so it works for a manually attached sheet as much as a

@@ -1349,6 +1349,28 @@ describe('ChemicalTab fetched properties copy button', () => {
     remounted.unmount();
   });
 
+  it('shows the properties an earlier vendor lookup stored for the same product', () => {
+    const productNumber = SHEET.split('/').pop().split('_')[0];
+    wrapper.setState({
+      chemical: createChemical([{
+        merckProductInfo: { productNumber, properties: { boiling_point: '78 °C' } },
+        alfaProductInfo: { productNumber: 'other', properties: { boiling_point: '1 °C' } },
+      }]),
+    });
+    expect(wrapper.instance().extractedPropertiesFor(SHEET)).toEqual({ boiling_point: '78 °C' });
+  });
+
+  it('prefers what extraction stored over an earlier vendor lookup', () => {
+    const productNumber = SHEET.split('/').pop().split('_')[0];
+    wrapper.setState({
+      chemical: createChemical([{
+        merckProductInfo: { productNumber, properties: { boiling_point: '78 °C' } },
+        sdsExtractedProperties: { [SHEET]: { boiling_point: '79 °C' } },
+      }]),
+    });
+    expect(wrapper.instance().extractedPropertiesFor(SHEET)).toEqual({ boiling_point: '79 °C' });
+  });
+
   it('copies the shown properties with human labels', () => {
     wrapper.setState({
       viewChemicalPropertiesModal: true,
