@@ -472,8 +472,9 @@ module AttachmentJcampProcess
   #
   # Labels are compared the JCAMP way (spaces, underscores, hyphens and slashes ignored, case
   # folded), so +##NUM_DIM=+ and +##NUMDIM=+ count too. The data has to be NMR: an NMR data type or
-  # an observed nucleus. An explicit +NUM DIM+ decides the dimension; without one, a data type such
-  # as +nD NMR FID+ or +2D NMR SPECTRUM+ does.
+  # an observed nucleus. An explicit, non-empty +NUM DIM+ decides the dimension. Without one, only a
+  # data type naming the dimension, such as +2D NMR SPECTRUM+, does: the generic +nD+ form can also
+  # hold 1D data, and JCAMP-DX 6 requires +NUM DIM+ with it.
   #
   # @return [Boolean] false for other extensions, for 1D or non-NMR data and when there is no file
   def multi_dimensional_nmr_jcamp?
@@ -487,21 +488,23 @@ module AttachmentJcampProcess
     data_types = labels.fetch('DATATYPE', [])
     return false unless data_types.any? { |t| t.match?(/NMR/i) } || labels.key?('.OBSERVENUCLEUS')
 
-    num_dim = labels['NUMDIM']&.first
+    num_dim = labels['NUMDIM']&.first.presence
     return num_dim.to_i > 1 if num_dim
 
-    data_types.any? { |t| t.match?(/\A(n|[2-9])D\s*NMR/i) }
+    data_types.any? { |t| t.match?(/\A[2-9]D\s*NMR/i) }
   end
 
-  # @param header [String] the start of a JCAMP-DX file
+  # @param header [String] the start of a JCAMP-DX file; a leading UTF-8 byte order mark and
+  #   indentation before +##+ are ignored
   # @return [Hash{String => Array<String>}] every value of each +##LABEL=+, keyed by the label
   #   normalised as JCAMP compares labels (no spaces, underscores, hyphens or slashes; upper case)
   def jcamp_header_labels(header)
-    header.split(/\r\n|\r|\n/).each_with_object(Hash.new { |h, k| h[k] = [] }) do |line, labels|
-      match = line.match(/\A##([^=]+)=(.*)\z/)
+    header = header.b.delete_prefix("\xEF\xBB\xBF".b)
+    header.split(/\r\n|\r|\n/).each_with_object({}) do |line, labels|
+      match = line.match(/\A\s*##([^=]+)=(.*)\z/)
       next unless match
 
-      labels[match[1].gsub(%r{[\s_\-/]}, '').upcase] << match[2].strip
+      (labels[match[1].gsub(%r{[\s_\-/]}, '').upcase] ||= []) << match[2].strip
     end
   end
 

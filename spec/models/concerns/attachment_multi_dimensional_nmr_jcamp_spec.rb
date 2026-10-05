@@ -118,6 +118,25 @@ RSpec.describe Attachment, '#multi_dimensional_nmr_jcamp?' do
       expect(jcamp_upload('a.dx', nd_fid.tr("\n", "\r")).multi_dimensional_nmr_jcamp?).to be true
     end
 
+    it 'falls back to the data type when NUM DIM is empty' do
+      text = nd_fid.sub('##NUM DIM= 2', '##NUM DIM=').gsub('nD NMR FID', '2D NMR FID')
+      expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be true
+    end
+
+    it 'does not take the generic nD data type alone for 2D' do
+      expect(jcamp_upload('a.dx', nd_fid.sub("##NUM DIM= 2\n", '')).multi_dimensional_nmr_jcamp?).to be false
+    end
+
+    # The mark sits in front of the first label: here the data type that makes the file NMR.
+    it 'reads a file starting with a byte order mark' do
+      text = "\xEF\xBB\xBF#{nd_fid.lines.drop(2).join}"
+      expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be true
+    end
+
+    it 'reads indented labels' do
+      expect(jcamp_upload('a.dx', nd_fid.gsub(/^##/, '  ##')).multi_dimensional_nmr_jcamp?).to be true
+    end
+
     it 'ignores multi-dimensional data that is not NMR' do
       text = nd_fid.gsub('nD NMR FID', 'UV/VIS SPECTRUM')
       expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be false
