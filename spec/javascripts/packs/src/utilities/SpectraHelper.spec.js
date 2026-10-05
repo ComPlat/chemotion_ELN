@@ -1,7 +1,4 @@
 import expect from 'expect';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
@@ -10,19 +7,9 @@ import {
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
-import sinon from 'sinon';
-import InventoryFetcher from 'src/fetchers/InventoryFetcher';
-import { chmosFixture } from '../../../fixture/chmos';
+import { chmosFixture } from 'fixture/chmos';
 
 describe('SpectraHelper', () => {
-  beforeEach(() => {
-    sinon.stub(InventoryFetcher, 'fetchInventoryOfCollection').resolves([]);
-  });
-
-  afterEach(() => {
-    sinon.restore();
-  });
-
   describe('.isNMRKind()', () => {
     describe('when container is null or undefined:', () => {
       it('container is null', () => {

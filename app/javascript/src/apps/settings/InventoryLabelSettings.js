@@ -6,7 +6,6 @@ import {
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
-import { find } from 'lodash';
 
 function InventoryLabelSettings() {
   const [prefixValue, setPrefixValue] = useState('');
@@ -20,6 +19,7 @@ function InventoryLabelSettings() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [showCreateConfirmation, setShowCreateConfirmation] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [confirmationCollections, setConfirmationCollections] = useState([]);
 
   const assignOptions = (inventoryCollections) => {
     const assignedOptions = [];
@@ -141,9 +141,13 @@ function InventoryLabelSettings() {
     .map((item) => item.value)
     .filter(Boolean);
 
-  const collectCollectionTitles = (selectedOptions) => resolveSelectedItems(selectedOptions)
-    .map((item) => item.title)
-    .filter(Boolean);
+  const collectConfirmationItems = (selectedOptions) => resolveSelectedItems(selectedOptions)
+    .filter((item) => item.value && item.title)
+    .map((item) => ({ id: item.value, title: item.title }));
+
+  const hasInventoryLabel = (collectionId) => (currentInventoryCollection || []).some(
+    ({ inventory, collections }) => inventory?.prefix && collections.some((c) => c.id === collectionId)
+  );
 
   const updateUserSettings = () => {
     setUpdateSpinner(true);
@@ -253,15 +257,12 @@ function InventoryLabelSettings() {
     });
   };
 
-  const handleUpdateConfirmation = async () => {
+  const handleUpdateConfirmation = () => {
     const collectionIds = collectCollectionIds(selectedCollections);
-    const results = await Promise.all(
-      collectionIds.map((collectionId) => InventoryFetcher.fetchInventoryOfCollection(collectionId))
-    );
-
-    const isCreate = results.some((result) => !result?.prefix);
+    const isCreate = collectionIds.some((collectionId) => !hasInventoryLabel(collectionId));
 
     if (isCreate) {
+      setConfirmationCollections(collectConfirmationItems(selectedCollections));
       setShowCreateConfirmation(true);
     } else {
       updateUserSettings();
@@ -284,6 +285,7 @@ function InventoryLabelSettings() {
       setErrorMessage('Please select collection(s) to reset');
       setResetSpinner(false);
     } else {
+      setConfirmationCollections(collectConfirmationItems(selectedCollections));
       setShowResetConfirmation(true);
     }
   };
@@ -411,7 +413,7 @@ function InventoryLabelSettings() {
       >
         You are about to create the inventory label for:
         <ul>
-          {collectCollectionTitles(selectedCollections).map((col) => <li key={col}>{col}</li>)}
+          {confirmationCollections.map(({ id, title }) => <li key={id}>{title}</li>)}
         </ul>
         This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
       </AppModal>
@@ -425,7 +427,7 @@ function InventoryLabelSettings() {
       >
         You are about to delete the inventory label for:
         <ul>
-          {collectCollectionTitles(selectedCollections).map((x) => <li key={x}>{x}</li>)}
+          {confirmationCollections.map(({ id, title }) => <li key={id}>{title}</li>)}
         </ul>
         Are you sure you want to delete the assigned prefix, name and counter?
       </AppModal>
