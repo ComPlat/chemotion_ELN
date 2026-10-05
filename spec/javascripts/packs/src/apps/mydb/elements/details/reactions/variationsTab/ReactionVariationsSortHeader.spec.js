@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
-  SortableHeaderName
+  SortableHeaderName, sortTitle
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 
 configure({ adapter: new Adapter() });
@@ -46,5 +46,21 @@ describe('ReactionVariationsSortHeader', () => {
 
     wrapper.find('button').simulate('click', { shiftKey: true });
     expect(progressSort.calledOnceWith(true)).toBe(true);
+  });
+
+  // Clicks go ascending, descending, then back to no sort; the title says which comes next.
+  describe('title', () => {
+    it('offers the ascending sort on an unsorted column', () => {
+      expect(sortTitle('Mass', null)).toContain('Click to sort by Mass, ascending');
+    });
+
+    it('offers the descending sort on an ascending one', () => {
+      expect(sortTitle('Mass', 'asc')).toContain('Click to sort descending');
+    });
+
+    it('says the next click removes the sort and restores the variations\' own order', () => {
+      expect(sortTitle('Mass', 'desc')).toContain('Click to remove the sort');
+      expect(sortTitle('Mass', 'desc')).toContain('their own order');
+    });
   });
 });
