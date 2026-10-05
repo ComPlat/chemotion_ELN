@@ -397,7 +397,11 @@ function Affiliations() {
             ...r,
             organization: trimmed,
             ror_id: '',
-            pendingFields: addPending(r),
+            department: '',
+            group: '',
+            deptOptions: [],
+            groupOptions: [],
+            pendingFields: ['organization'],
           }
           : r));
       });

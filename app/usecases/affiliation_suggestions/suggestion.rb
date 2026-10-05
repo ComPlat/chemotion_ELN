@@ -17,7 +17,7 @@ module Usecases
         ensure_not_in_registry!(params)
 
         suggestion = AffiliationSuggestion.create!(params.merge(user_id: @current_user.id))
-        AffiliationMailer.suggestion_submitted(suggestion)&.deliver_later
+        AffiliationMailer.suggestion_submitted(suggestion.id).deliver_later
         suggestion
       end
 
@@ -84,11 +84,12 @@ module Usecases
       # the submitter blocks a forged target_user_affiliation_id from repointing
       # someone else's affiliation on approval.
       def apply_affiliation(suggestion, affiliation)
-        dates = { from: suggestion.from, to: suggestion.to }.compact
+        dates = { from: suggestion.from, to: suggestion.to }
         target = suggestion.user.user_affiliations.find_by(id: suggestion.target_user_affiliation_id)
         if target
           repoint(target, affiliation, dates)
         else
+          dates = dates.compact
           link = UserAffiliation.find_or_create_by!(user_id: suggestion.user_id, affiliation_id: affiliation.id)
           link.update!(dates) if dates.any?
         end
