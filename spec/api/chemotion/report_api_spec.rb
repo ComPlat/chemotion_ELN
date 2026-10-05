@@ -501,6 +501,33 @@ describe Chemotion::ReportAPI do
         end
       end
 
+      context 'with a collection the user cannot read' do
+        let(:foreign) { create(:collection, user_id: other.id) }
+
+        before { create(:sample, name: 'foreign', collections: [foreign]) }
+
+        it 'answers 401 for select-all, whether or not the filter matches' do
+          export({ sample: select_all, currentCollection: foreign.id })
+          expect(response).to have_http_status(:unauthorized)
+
+          export({ sample: select_all, userLabel: label.id, currentCollection: foreign.id })
+          expect(response).to have_http_status(:unauthorized)
+        end
+
+        it 'answers 401 for explicit ids' do
+          export({ sample: { checkedIds: [s1.id], uncheckedIds: [], checkedAll: false },
+                   currentCollection: foreign.id })
+
+          expect(response).to have_http_status(:unauthorized)
+        end
+
+        it 'answers 401 for a collection id that does not exist' do
+          export({ sample: select_all, currentCollection: 0 })
+
+          expect(response).to have_http_status(:unauthorized)
+        end
+      end
+
       context 'with a date filter sent as unix seconds' do
         before do
           create(:sample, name: 'old', collections: [collection])
@@ -640,6 +667,31 @@ describe Chemotion::ReportAPI do
           export_smiles({ reaction: select_all, userLabel: label.id + 1 })
 
           expect(response).to have_http_status(:no_content)
+        end
+      end
+    end
+
+    describe 'GET /api/v1/reports/excel_reaction and excel_wellplate' do
+      let(:wellplate) { create(:wellplate, collections: [collection]) }
+
+      it 'exports the samples of a reaction' do
+        get '/api/v1/reports/excel_reaction', params: { id: r1.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.header['Content-Type']).to eq excel_mime_type
+      end
+
+      it 'exports the samples of a wellplate' do
+        get '/api/v1/reports/excel_wellplate', params: { id: wellplate.id }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'rejects an id that is not an integer' do
+        %w[excel_reaction excel_wellplate].each do |route|
+          get "/api/v1/reports/#{route}", params: { id: "#{r1.id},#{r2.id}" }
+
+          expect(response).to have_http_status(:bad_request)
         end
       end
     end

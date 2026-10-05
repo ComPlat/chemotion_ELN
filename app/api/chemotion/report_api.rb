@@ -20,6 +20,15 @@ module Chemotion
         Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
 
+      # @param c_id [Integer] a collection id sent by the client
+      # @return [Integer] the id, once the user is known to own the collection or have it shared
+      # @raise [Grape exception] 401 if the collection is missing or not readable
+      def readable_collection_id!(c_id)
+        collection = Collection.accessible_for(current_user).find_by(id: c_id)
+        error!('401 Unauthorized', 401) unless collection
+        collection.id
+      end
+
       # Rejects the request unless the caller may read every element referenced in +objTags+.
       # Without this a report is an IDOR: the generator does a bare +Model.find(id)+ with no
       # ownership/collection check, so any authenticated user could pull any element's data.
@@ -62,6 +71,7 @@ module Chemotion
         use :export_params
       end
       post :export_samples_from_selections do
+        c_id = readable_collection_id!(params[:uiState][:currentCollection])
         env['api.format'] = :binary
         t = time_now
         case params[:exportType]
@@ -71,7 +81,6 @@ module Chemotion
           export = Export::ExportSdf.new(time: t)
           force_molfile_selection
         end
-        c_id = params[:uiState][:currentCollection]
 
         table_params = { c_id: c_id, selections: export_selections(params[:uiState], c_id) }
         return status 204 if table_params[:selections].empty?
@@ -138,9 +147,8 @@ module Chemotion
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
 
-      # not usesed anymore???
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
       get :excel_wellplate do
         env['api.format'] = :binary
@@ -161,10 +169,8 @@ module Chemotion
       end
 
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
-
-      # not usesed anymore???
       get :excel_reaction do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
