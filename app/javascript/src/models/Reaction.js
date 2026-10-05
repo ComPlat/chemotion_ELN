@@ -49,13 +49,24 @@ const solventAmountForVolume = (solvent, volumeL) => {
   const { amount_unit: unit } = solvent;
   if (unit === 'l') return volumeL;
 
+  let amountG;
   if (solvent.has_molarity) {
-    // Convert the derived volume, not the current amount_l read by convertGramToUnit('mol').
     const amountMol = volumeL * solvent.molarity_value;
-    return unit === 'mol' ? amountMol : solvent.convertToGram(amountMol, 'mol');
+    if (!solvent.isMixture?.()) {
+      return unit === 'mol' ? amountMol : solvent.convertToGram(amountMol, 'mol');
+    }
+
+    // Invert Sample#calculateMixtureVolume using the molecular weight and purity.
+    // The mixture's relative MW is used only to convert the derived mass to stored mol.
+    const molecularWeight = Number(solvent.molecule_molecular_weight);
+    const purity = Number(solvent.purity || 1);
+    if (!Number.isFinite(molecularWeight) || molecularWeight <= 0
+      || !Number.isFinite(purity) || purity <= 0) return NaN;
+    amountG = amountMol * molecularWeight / purity;
+  } else {
+    amountG = volumeL * Number(solvent.density) * 1000;
   }
 
-  const amountG = volumeL * Number(solvent.density) * 1000;
   if (unit === 'mol' && solvent.isMixture?.()) {
     // Mixture convertGramToUnit('mol') reads the current amount rather than the derived mass.
     const relativeMolecularWeight = Number(solvent.reference_component?.relative_molecular_weight);
