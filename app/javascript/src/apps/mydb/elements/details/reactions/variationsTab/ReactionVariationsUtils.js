@@ -84,6 +84,103 @@ function deepPatch(target, patch) {
 }
 
 /*
+Works out what a variation's amounts imply - the equivalents of the starting materials, reactants and
+solvents, and the yields of the products - the way the scheme tab does with equivalents unlocked. A
+variation records what was done, so its amounts are what counts; the equivalents and yields its diff
+holds were computed at the time and go stale once the parent changes what the row inherits, the
+reference amount above all.
+
+A material whose amount, coefficient and purity - and whose reaction's reference amount - are those
+of the parent takes the parent's equivalent or yield, so a row shows what the scheme tab shows for
+everything it did not change, and stores nothing for it. Only the others are computed here.
+
+Left alone: SBMM samples, gas products (their yield is computed from the vessel while rendering), and
+reactions with polymers or a decoupled reference, whose equivalents come from loading or are not
+defined. A gas product is not even read: its amount getters recompute its moles and turnover number
+from the gas phase store. For the rest of a gas reaction, the store holds the row's own values.
+*/
+const DERIVED_VALUE_TOLERANCE = 1e-9;
+
+const sameNumber = (first, second) => (
+  typeof first === 'number' && typeof second === 'number'
+    ? Math.abs(first - second) <= DERIVED_VALUE_TOLERANCE * Math.max(1, Math.abs(first), Math.abs(second))
+    : first === second
+);
+
+const setDerived = (material, key, value) => {
+  if (!sameNumber(material[key], value)) {
+    material[key] = value;
+  }
+};
+
+const sameInputs = (material, parentMaterial) => Boolean(parentMaterial)
+  && parentMaterial.id === material.id
+  && sameNumber(material.amount_mol, parentMaterial.amount_mol)
+  && sameNumber(material.amount_g, parentMaterial.amount_g)
+  && sameNumber(material.coefficient, parentMaterial.coefficient)
+  && sameNumber(material.purity, parentMaterial.purity);
+
+const productYield = (product, referenceMaterial) => {
+  if (product.amount_mol === 0 && product.amount_g === 0) return 0;
+  if (!(referenceMaterial.amount_mol > 0)) return 0;
+
+  const stoichiometryCoeff = (product.coefficient || 1.0) / (referenceMaterial.coefficient || 1.0);
+  const maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff
+    * product.molecule_molecular_weight / (product.purity || 1);
+  if (product.amount_g > maxAmount) return 1;
+
+  const equivalent = product.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+  return Number.isFinite(equivalent) && equivalent >= 0 ? equivalent : 1;
+};
+
+const refreshDerivedValuesOf = (variationReaction, parentReaction) => {
+  const { referenceMaterial } = variationReaction;
+  if (!(referenceMaterial instanceof Sample) || referenceMaterial.decoupled || variationReaction.hasPolymers()) {
+    return;
+  }
+  const parentReference = parentReaction.referenceMaterial;
+  const sameReference = parentReference instanceof Sample && sameInputs(referenceMaterial, parentReference);
+
+  const refresh = (group, derive, applies = () => true) => {
+    variationReaction[group].forEach((material, index) => {
+      if (!(material instanceof Sample) || !applies(material)) return;
+      const parentMaterial = parentReaction[group]?.[index];
+      if (sameReference && sameInputs(material, parentMaterial)) {
+        setDerived(material, 'equivalent', parentMaterial.equivalent);
+      } else {
+        derive(material);
+      }
+    });
+  };
+
+  const deriveEquivalent = (material) => {
+    if (material.reference || !Number.isFinite(material.amount_mol)) return;
+    setDerived(
+      material,
+      'equivalent',
+      referenceMaterial.amount_mol > 0 ? material.amount_mol / referenceMaterial.amount_mol : 0
+    );
+  };
+  ['starting_materials', 'reactants', 'solvents'].forEach((group) => refresh(group, deriveEquivalent));
+
+  refresh('products', (product) => {
+    if (product.weight_percentage_reference) {
+      product.updateYieldForWeightPercentageReference();
+      return;
+    }
+    setDerived(product, 'equivalent', productYield(product, referenceMaterial));
+  }, (product) => !product.isGas() && !product.decoupled);
+
+  variationReaction.updateMaxAmountOfProducts();
+};
+
+const refreshDerivedValues = (variationReaction, parentReaction) => (
+  variationReaction.gaseous
+    ? withReactionGasPhase(variationReaction, () => refreshDerivedValuesOf(variationReaction, parentReaction))
+    : refreshDerivedValuesOf(variationReaction, parentReaction)
+);
+
+/*
 Works out the concentration of every material of a variation from that variation's own amounts and
 volume basis. `concn` is not stored, so nothing else sets it for a row: the scheme tab derives the
 parent's while it renders, which no grid row goes through. A gas feedstock's concentration depends on
@@ -139,6 +236,7 @@ const makeVariationReaction = (reaction, reactionData) => {
     Object.assign(Object.create(Reaction.prototype), clonedReaction),
     reaction
   );
+  refreshDerivedValues(variationReaction, reaction);
   refreshConcentrations(variationReaction, { releasePreserved: true });
   return variationReaction;
 };
@@ -253,6 +351,16 @@ const convertVariationDatasetToInternalVariations = (reaction) => {
       convertLegacyVariation(reaction, v);
     }
     addInternalVariationObject(internalVariation, reaction, v);
+    /*
+    The row may have just worked out other equivalents or yields than its diff holds (see
+    refreshDerivedValues). The diff is what the report reads and the history keeps, so it is brought
+    up to date as well, and reaches the database with the reaction's next save.
+    */
+    // eslint-disable-next-line no-use-before-define
+    const freshDiff = variationDiffOf(reaction, internalVariation[internalVariation.length - 1].data);
+    if (JSON.stringify(freshDiff) !== JSON.stringify(v.data)) {
+      v.data = freshDiff;
+    }
   });
 
   return internalVariation;
@@ -333,14 +441,15 @@ Analyses stay on the parent reaction.
 
 Nor the concentrations: makeVariationReaction works them out from the row's amounts and volume on
 every rebuild (see refreshConcentrations), and `preserveConcentration` only matters during an edit.
-Nor the duration display, which is derived from `_duration` the same way.
+Nor the duration display, which is derived from `_duration` the same way, nor the products' maximum
+amounts, which makeVariationReaction derives from the reference.
 */
 const variationDiffOf = (reaction, variationReaction) => diffObjects(
   reaction,
   variationReaction,
   [
     '_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container',
-    'concn', 'preserveConcentration', '_durationDisplay',
+    'concn', 'preserveConcentration', '_durationDisplay', '_maxAmount',
   ]
 );
 
@@ -543,6 +652,7 @@ export {
   parseVariationGroup,
   makeVariationReaction,
   refreshConcentrations,
+  refreshDerivedValues,
   diffObjects,
   variationDiffOf,
   getVariationsRowName,
