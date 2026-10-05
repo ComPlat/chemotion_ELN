@@ -1362,6 +1362,65 @@ describe('Reaction solvent scaling — units and reference changes', () => {
     });
   });
 
+  it('scales a density-backed mixture solvent in mol and restores its original amount', () => {
+    const reaction = buildReaction(makeSample('solvent', 0.01, 'mol', {
+      sample_type: 'Mixture',
+      density: 0.8,
+    }));
+    const solvent = reaction.solvents[0];
+    solvent.components = [{ reference: true, relative_molecular_weight: 50, amount_mol: 0.01 }];
+    solvent.sample_details = {
+      reference_component_changed: false,
+      previous_amount_g: 0.25,
+      previous_amount_mol: 0.005,
+    };
+    const initialVolume = solvent.amount_l;
+    const userEdit = sinon.spy(solvent, 'handleMixtureAmountChange');
+    reaction.captureSolventReferenceRatios();
+
+    reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+
+    expect(solvent.amount_unit).toBe('mol');
+    expect(solvent.amount_value).toBeCloseTo(0.02, 10);
+    expect(solvent.amount_l).toBeCloseTo(initialVolume * 2, 10);
+    expect(solvent.components[0].amount_mol).toBeCloseTo(0.02, 10);
+
+    reaction.referenceMaterial.setAmount({ value: 0.001, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+
+    expect(solvent.amount_value).toBeCloseTo(0.01, 10);
+    expect(solvent.amount_l).toBeCloseTo(initialVolume, 10);
+    expect(solvent.components[0].amount_mol).toBeCloseTo(0.01, 10);
+    expect(userEdit.called).toBe(false);
+    expect(solvent.sample_details.reference_component_changed).toBe(false);
+    expect(solvent.sample_details.previous_amount_g).toBe(0.25);
+    expect(solvent.sample_details.previous_amount_mol).toBe(0.005);
+  });
+
+  it('leaves a mixture solvent in mol unchanged when its relative molecular weight becomes invalid', () => {
+    [0, -1, NaN, Infinity].forEach((relativeMolecularWeight) => {
+      const reaction = buildReaction(makeSample('solvent', 0.01, 'mol', {
+        sample_type: 'Mixture',
+        density: 0.8,
+      }));
+      const solvent = reaction.solvents[0];
+      solvent.components = [{ reference: true, relative_molecular_weight: 50, amount_mol: 0.01 }];
+      solvent.sample_details = { reference_component_changed: false };
+      reaction.captureSolventReferenceRatios();
+      solvent.components[0].relative_molecular_weight = relativeMolecularWeight;
+      const updateComponents = sinon.spy(solvent, 'updateMixtureComponentAmounts');
+
+      reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+      reaction.updateSolventVolumesForReference();
+
+      expect(solvent.amount_value).toBe(0.01);
+      expect(solvent.amount_unit).toBe('mol');
+      expect(solvent.components[0].amount_mol).toBe(0.01);
+      expect(updateComponents.called).toBe(false);
+    });
+  });
+
   it('discards an old volume ratio after a solvent is edited to mass without density', () => {
     const reaction = buildReaction(makeSample('solvent', 0.01, 'l'));
     reaction.captureSolventReferenceRatios();

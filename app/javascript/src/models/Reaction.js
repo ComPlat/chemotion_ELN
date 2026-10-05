@@ -33,7 +33,15 @@ const solventAmountForVolume = (solvent, volumeL) => {
     return unit === 'mol' ? amountMol : solvent.convertToGram(amountMol, 'mol');
   }
 
-  return solvent.convertGramToUnit(volumeL * Number(solvent.density) * 1000, unit);
+  const amountG = volumeL * Number(solvent.density) * 1000;
+  if (unit === 'mol' && solvent.isMixture?.()) {
+    // Mixture convertGramToUnit('mol') reads the current amount rather than the derived mass.
+    const relativeMolecularWeight = Number(solvent.reference_component?.relative_molecular_weight);
+    return Number.isFinite(relativeMolecularWeight) && relativeMolecularWeight > 0
+      ? amountG / relativeMolecularWeight
+      : NaN;
+  }
+  return solvent.convertGramToUnit(amountG, unit);
 };
 
 const TemperatureUnit = ['°C', '°F', 'K'];
