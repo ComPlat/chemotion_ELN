@@ -1,5 +1,11 @@
 # Chemotion_ELN Changelog
 
+# [Unreleased]
+
+## Features and enhancements
+
+* **chemicals:** SDS extraction runs as a background job, cached per sheet, and reads any supplier's sheet; copy phrases and properties to the clipboard ([#3625](https://github.com/ComPlat/chemotion_ELN/pull/3625))
+
 # [v4.0.0]
 > (2026-10-13)
 
