@@ -149,7 +149,11 @@ const MaterialConcentration = ({ mh }) => {
     min: rangeStart,
     max: rangeEnd,
     isRangeField
-  } = mh.findMinMayUnit('mol/l', (m) => (mh.isSbmm ? m.concentration_rt_value : m.concn));
+  } = mh.findMinMayUnit(
+    'mol/l',
+    (m) => (mh.isSbmm ? m.concentration_rt_value : m.concn),
+    { needsAmount: true }
+  );
   return (
     <NumeralInputWithUnitsCompo
       value={mh.concentrationValue}
@@ -516,7 +520,7 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('g', (m) => m.amount_g);
+  } = mh.findMinMayUnit('g', (m) => m.amount_g, { needsAmount: true });
   const isAmountDisabledByWeightPercentage = reaction.weight_percentage
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
   return (
@@ -585,7 +589,7 @@ const MaterialVolume = ({ mh, className }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('l', (m) => m.amount_l);
+  } = mh.findMinMayUnit('l', (m) => m.amount_l, { needsAmount: true });
 
   return (
     <OverlayTrigger overlay={tooltip}>
@@ -637,7 +641,7 @@ const MaterialAmountMol = ({ mh }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('mol', (m) => m.amount_mol);
+  } = mh.findMinMayUnit('mol', (m) => m.amount_mol, { needsAmount: true });
 
   return (
     <NumeralInputWithUnitsCompo
@@ -859,7 +863,7 @@ const EquivalentOrYield = ({ mh, displayYieldField }) => {
     min: rangeStart,
     max: rangeEnd,
     isRangeField
-  } = mh.findMinMayUnit('', (m) => m.equivalent);
+  } = mh.findMinMayUnit('', (m) => m.equivalent, { needsAmount: true });
 
   if (reaction.weight_percentage && !isSbmm) {
     return <CustomFieldValueSelector mh={mh}/>;
