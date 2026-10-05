@@ -30,6 +30,8 @@ import {
   persistColumnState,
   isHiddenByDefault,
   persistUserColumnKinds,
+  getUserGridHeight,
+  persistUserGridHeight,
   GROUP_ID_SEPARATOR
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import VariationsGridContext
@@ -720,17 +722,27 @@ TopHorizontalScrollbar.propTypes = {
 
 const useGridHeightCap = (gridElementRef) => {
   const [gridHeight, setGridHeight] = useState(null);
+  // Set by dragging the handle below the grid, and remembered per user; null for the automatic cap.
+  const [userHeight, setUserHeightState] = useState(getUserGridHeight);
+
+  // Saved once a drag ends rather than on every step of it.
+  const setUserHeight = useCallback((height, { persist = true } = {}) => {
+    setUserHeightState(height);
+    if (persist) {
+      persistUserGridHeight(height);
+    }
+  }, []);
 
   const syncGridHeight = useCallback(() => {
     const wrapper = gridElementRef.current;
     const scrollContainer = wrapper?.closest('.detail-card__scroll-container');
-    if (!wrapper || !scrollContainer) {
+    if (!wrapper || (!scrollContainer && !userHeight)) {
       return;
     }
 
-    const tabBar = scrollContainer.querySelector('ul.nav-tabs.has-config-overlay');
+    const tabBar = scrollContainer?.querySelector('ul.nav-tabs.has-config-overlay');
     const buttonGroup = wrapper.parentElement?.querySelector('.btn-group');
-    const cap = Math.floor(
+    const cap = userHeight ?? Math.floor(
       (scrollContainer.clientHeight - (tabBar?.offsetHeight ?? 0) - (buttonGroup?.offsetHeight ?? 0))
       * GRID_HEIGHT_SHARE
     );
@@ -750,7 +762,11 @@ const useGridHeightCap = (gridElementRef) => {
     const naturalHeight = headerHeight + rowsHeight + scrollbarHeight + 2;
 
     setGridHeight(naturalHeight > cap ? cap : null);
-  }, [gridElementRef]);
+  }, [gridElementRef, userHeight]);
+
+  useEffect(() => {
+    syncGridHeight();
+  }, [syncGridHeight]);
 
   useEffect(() => {
     const scrollContainer = gridElementRef.current?.closest('.detail-card__scroll-container');
@@ -762,7 +778,58 @@ const useGridHeightCap = (gridElementRef) => {
     return () => observer.disconnect();
   }, [gridElementRef, syncGridHeight]);
 
-  return { gridHeight, syncGridHeight };
+  return {
+    gridHeight, syncGridHeight, userHeight, setUserHeight
+  };
+};
+
+const MIN_GRID_HEIGHT = 120;
+
+/*
+The bar below the grid: dragged, it sets how tall the grid may grow before it scrolls its rows;
+double-clicked, it goes back to the automatic share of the detail card.
+*/
+const GridResizeHandle = ({ gridElementRef, userHeight, setUserHeight }) => {
+  const onMouseDown = (event) => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = gridElementRef.current?.offsetHeight ?? MIN_GRID_HEIGHT;
+    let height = startHeight;
+
+    const onMouseMove = (moveEvent) => {
+      height = Math.max(MIN_GRID_HEIGHT, Math.round(startHeight + moveEvent.clientY - startY));
+      setUserHeight(height, { persist: false });
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      setUserHeight(height);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className="reaction-variations-grid__resize-handle"
+      title={userHeight
+        ? 'Drag to change the height of the grid. Double-click to size it automatically again.'
+        : 'Drag to change the height of the grid.'}
+      onMouseDown={onMouseDown}
+      onDoubleClick={() => setUserHeight(null)}
+    />
+  );
+};
+
+GridResizeHandle.propTypes = {
+  gridElementRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  userHeight: PropTypes.number,
+  setUserHeight: PropTypes.func.isRequired,
+};
+
+GridResizeHandle.defaultProps = {
+  userHeight: null,
 };
 
 const VariationSchemaTable = ({
@@ -820,7 +887,9 @@ const VariationSchemaTable = ({
   const [gridToken, setGridToken] = useState(0);
   const toolbarRef = useRef(null);
   const scrollThumbRef = useRef(null);
-  const { gridHeight, syncGridHeight } = useGridHeightCap(gridElementRef);
+  const {
+    gridHeight, syncGridHeight, userHeight, setUserHeight
+  } = useGridHeightCap(gridElementRef);
 
   /*
   Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
@@ -1370,6 +1439,7 @@ const VariationSchemaTable = ({
           }}
         />
       </div>
+      <GridResizeHandle gridElementRef={gridElementRef} userHeight={userHeight} setUserHeight={setUserHeight} />
     </VariationsGridContext.Provider>
   );
 };
@@ -1411,6 +1481,7 @@ VariationSchemaTable.defaultProps = {
 
 export {
   ColumnVisibilityHeader,
+  GridResizeHandle,
   isInputKeyboardEvent,
   READ_ONLY_CELL_CLASS,
   STICKY_NAME_CLASS

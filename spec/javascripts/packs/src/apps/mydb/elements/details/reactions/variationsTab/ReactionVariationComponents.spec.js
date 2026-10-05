@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils';
 import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
-  ColumnVisibilityHeader, isInputKeyboardEvent
+  ColumnVisibilityHeader, GridResizeHandle, isInputKeyboardEvent
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
@@ -96,5 +96,48 @@ describe('ReactionVariationComponents ColumnVisibilityHeader', () => {
     expect(setColumnsHidden.calledWith(['volume'], false)).toBe(true);
     expect(setColumnsHidden.calledWith(['mass', 'volume', 'amount'], true)).toBe(false);
     wrapper.detach();
+  });
+});
+
+// The bar below the grid sets how tall it may grow; a double-click goes back to the automatic height.
+describe('ReactionVariationComponents GridResizeHandle', () => {
+  const render = (userHeight = null) => {
+    const setUserHeight = sinon.spy();
+    const gridElementRef = { current: { offsetHeight: 300 } };
+    const wrapper = mount(
+      <GridResizeHandle gridElementRef={gridElementRef} userHeight={userHeight} setUserHeight={setUserHeight} />
+    );
+    return { wrapper, setUserHeight };
+  };
+
+  const mouse = (type, clientY) => document.dispatchEvent(new window.MouseEvent(type, { clientY }));
+
+  it('follows a drag, and saves the height once the drag ends', () => {
+    const { wrapper, setUserHeight } = render();
+    wrapper.find('div').simulate('mousedown', { clientY: 100 });
+    mouse('mousemove', 250);
+
+    expect(setUserHeight.lastCall.args).toEqual([450, { persist: false }]);
+    mouse('mouseup', 250);
+    expect(setUserHeight.lastCall.args).toEqual([450]);
+    wrapper.unmount();
+  });
+
+  it('does not let the grid get shorter than a few rows', () => {
+    const { wrapper, setUserHeight } = render();
+    wrapper.find('div').simulate('mousedown', { clientY: 400 });
+    mouse('mousemove', 0);
+    mouse('mouseup', 0);
+
+    expect(setUserHeight.lastCall.args).toEqual([120]);
+    wrapper.unmount();
+  });
+
+  it('goes back to the automatic height on double-click', () => {
+    const { wrapper, setUserHeight } = render(450);
+    wrapper.find('div').simulate('doubleclick');
+
+    expect(setUserHeight.calledOnceWith(null)).toBe(true);
+    wrapper.unmount();
   });
 });
