@@ -640,7 +640,7 @@ module Reporter
         # Get metric prefixes from component metrics string
         # Index 2 for amount_mol, index 3 for concn
         amount_mol_prefix = component_metric_pref(comp_props, 2, %w[m n], parent_material)
-        concn_prefix = component_metric_pref(comp_props, 3, %w[m n], parent_material)
+        concn_prefix = component_metric_pref(comp_props, 3, %w[m n u], parent_material)
 
         # Convert from base units (mol, mol/l) to target metric prefix
         # Base unit for mol is 'n' (none), base unit for mol/l is 'n' (none)
@@ -659,7 +659,7 @@ module Reporter
         # Get metric prefixes from component metrics string
         # Index 2 for amount_mol, index 3 for concn
         amount_mol_prefix = component_metric_pref(comp_props, 2, %w[m n], parent_material)
-        concn_prefix = component_metric_pref(comp_props, 3, %w[m n], parent_material)
+        concn_prefix = component_metric_pref(comp_props, 3, %w[m n u], parent_material)
 
         # Build unit strings
         amount_mol_unit = met_pref(amount_mol_prefix, 'mol')

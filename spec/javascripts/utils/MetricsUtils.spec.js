@@ -58,7 +58,18 @@ describe('MetricsUtils', () => {
     });
   });
 
+  describe('metricPrefixesMolConc', () => {
+    it('offers mmol/l, mol/l and µmol/l', () => {
+      assert.deepStrictEqual(metricPrefixesMolConc, ['m', 'n', 'u']);
+    });
+  });
+
   describe('getMetricMolConc', () => {
+    it('returns micro prefix (u) for µmol/l from metrics index 3', () => {
+      const component = { metrics: ['m', 'm', 'm', 'u'] };
+      assert.strictEqual(getMetricMolConc(component), 'u');
+    });
+
     it('returns the prefix at metrics index 3', () => {
       const component = { metrics: ['m', 'm', 'm', 'n'] };
       assert.strictEqual(getMetricMolConc(component), 'n');
