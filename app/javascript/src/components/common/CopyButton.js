@@ -17,7 +17,7 @@ const CopyButton = ({
 
   const handleCopy = async (e) => {
     e?.stopPropagation();
-    const ok = html ? await copyToClipboard(text, { html }) : await copyToClipboard(text);
+    const ok = await copyToClipboard(text, { html });
     if (!ok) return;
     setCopied(true);
     clearTimeout(resetTimer.current);
