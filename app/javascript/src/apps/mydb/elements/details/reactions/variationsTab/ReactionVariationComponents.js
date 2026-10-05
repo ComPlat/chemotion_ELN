@@ -35,7 +35,8 @@ import VariationsGridContext
 import { SortableHeaderName }
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 import {
-  schemaBuildColumnGroups
+  schemaBuildColumnGroups,
+  switchRowToUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationSchemaComponents';
 import {
   segmentBuildColumnGroups
@@ -1032,6 +1033,42 @@ const VariationSchemaTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [columnSignature]
   );
+
+  /*
+  A row added after a column's unit was switched from its header - a new or a copied variation - is
+  built from the parent's materials and so comes in the parent's unit. It is brought to the column's
+  unit here, so a column never shows mixed units. Only rows the grid has not seen before are touched:
+  a unit switched in a single cell of an existing row stays as it is.
+  */
+  const knownRowIdsRef = useRef(null);
+  const rowIdsKey = variations.map((variation) => variation.data?.id).join('|');
+  useEffect(() => {
+    const knownRowIds = knownRowIdsRef.current;
+    knownRowIdsRef.current = new Set(variations.map((variation) => variation.data?.id));
+    if (!knownRowIds) {
+      return;
+    }
+
+    const addedRows = variations.filter((variation) => !knownRowIds.has(variation.data?.id));
+    if (addedRows.length === 0) {
+      return;
+    }
+
+    const switchedColumns = [];
+    const collect = (definitions = []) => definitions.forEach((definition) => {
+      const params = definition.headerComponentParams;
+      if (params?.unitToggle && params.matGroup && columnUnits[definition.colId]) {
+        switchedColumns.push({ ...params, unit: columnUnits[definition.colId] });
+      }
+      collect(definition.children);
+    });
+    collect(columnDefs);
+
+    addedRows.forEach((variation) => {
+      switchedColumns.forEach((column) => switchRowToUnit(variation, getRowHandler, column, column.unit));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowIdsKey]);
 
   // Writes order, widths and hidden columns back to storage.
   const saveColumnState = () => {

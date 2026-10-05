@@ -1,7 +1,8 @@
 import expect from 'expect';
 import ReactionFactory from 'factories/ReactionFactory';
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import {
-  isGasProductMaterial, schemaBuildColumnGroups
+  isGasProductMaterial, schemaBuildColumnGroups, switchRowToUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationSchemaComponents';
 
 /*
@@ -26,6 +27,58 @@ describe('ReactionVariationSchemaComponents', () => {
       expect(isGasProductMaterial({ gaseous: false }, { gas_type: 'gas' })).toBe(false);
       expect(isGasProductMaterial({ gaseous: true }, { gas_type: 'catalyst' })).toBe(false);
       expect(isGasProductMaterial(null, null)).toBe(false);
+    });
+  });
+
+  /*
+  A row added after a column's unit was switched from its header is brought to that unit, through the
+  handler calls the header makes.
+  */
+  describe('switchRowToUnit', () => {
+    const getRowHandler = (variation) => new ReactionUpdateHandler({
+      reaction: variation.data,
+      onReactionChange: () => {},
+      onLockEquivColChange: () => {},
+    });
+    const massColumn = (variations) => columnOf(
+      schemaBuildColumnGroups(variations),
+      'starting_materials::0',
+      'starting_materials_0_mass'
+    ).headerComponentParams;
+    const massPrefixOf = (variation) => variation.data.starting_materials[0].metrics[0];
+
+    it('switches the mass of the row to the column unit, keeping the amount', async () => {
+      const variations = await buildVariations();
+      const [row] = variations;
+      const target = massPrefixOf(row) === 'm' ? 'n' : 'm';
+      const amountG = row.data.starting_materials[0].amount_g;
+
+      switchRowToUnit(row, getRowHandler, massColumn(variations), target);
+
+      expect(massPrefixOf(row)).toBe(target);
+      expect(row.data.starting_materials[0].amount_g).toBeCloseTo(amountG, 9);
+    });
+
+    it('leaves a row alone that is already in the column unit', async () => {
+      const variations = await buildVariations();
+      const [row] = variations;
+      let calls = 0;
+      const countingHandler = (variation) => {
+        calls += 1;
+        return getRowHandler(variation);
+      };
+
+      switchRowToUnit(row, countingHandler, massColumn(variations), massPrefixOf(row));
+
+      expect(calls).toBe(0);
+    });
+
+    it('leaves a row alone that does not have the material', async () => {
+      const variations = await buildVariations();
+      const column = massColumn(variations);
+      const row = { idx: 1, data: { starting_materials: [] } };
+
+      expect(() => switchRowToUnit(row, getRowHandler, column, 'n')).not.toThrow();
     });
   });
 
