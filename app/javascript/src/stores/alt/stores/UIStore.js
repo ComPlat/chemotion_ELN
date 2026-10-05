@@ -6,8 +6,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import { allElnElementsForSearch, allElnElements } from 'src/apps/generic/Utils';
-import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
+import { allElnElements } from 'src/apps/generic/Utils';
+import { listFilterParams, byIdsModelParams } from 'src/utilities/searchRequestParams';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -474,9 +474,8 @@ class UIStore {
     this.state.currentSearchSelection = selection;
 
     // The result set shrinks or grows with the filter, so the old page number no longer applies.
-    Object.keys(state).forEach((key) => {
-      const entry = state[key];
-      if (entry && typeof entry === 'object' && typeof entry.page === 'number') entry.page = 1;
+    [...allElnElements, ...(state.klasses || [])].forEach((type) => {
+      if (state[type]) state[type].page = 1;
     });
 
     ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
@@ -484,43 +483,24 @@ class UIStore {
       collectionId: collection.id,
       page: 1,
       moleculeSort,
+      listFilters: listFilterParams(state),
     });
   }
 
   handleSelectCollectionForSearchById(layout, collection) {
     const { state } = this;
     const searchResult = { ...state.currentSearchByID };
-    const {
-      filterCreatedAt, fromDate, toDate, userLabel, productOnly
-    } = state;
     const { moleculeSort } = ElementStore.getState();
     const per_page = state.number_of_results;
+    const filterParams = listFilterParams(state);
+    const with_filter = Object.keys(filterParams).length >= 1;
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return; }
-        let filterParams = {};
-        // allElnElementsForSearch holds plurals, so the plural key is what decides whether this is a
-        // built-in type. Testing the singular never matched and sent every type as a generic element.
-        let modelName = !allElnElementsForSearch.includes(key) ? 'element' : key.slice(0, -1);
-        modelName = key === 'cell_lines' ? 'cell_lines' : modelName;
-
-        if (fromDate || toDate || productOnly || userLabel) {
-          filterParams = {
-            filter_created_at: filterCreatedAt,
-            from_date: fromDate ? dateToUnixTimestamp(fromDate) : null,
-            to_date: toDate ? dateToUnixTimestamp(toDate) : null,
-            user_label: userLabel,
-            product_only: productOnly,
-          };
-        }
-
-        const with_filter = Object.keys(filterParams).length >= 1;
-
         const selection = {
           elementType: 'by_ids',
           id_params: {
-            model_name: modelName,
+            ...byIdsModelParams(key.slice(0, -1)),
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
             with_filter,

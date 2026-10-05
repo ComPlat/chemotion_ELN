@@ -17,6 +17,30 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
+import { listFilterParams } from 'src/utilities/searchRequestParams';
+
+// The modal result ignores the list filter chips, so with a chip active the lists stay empty
+// until the by-ids refetch (UIStore#handleSelectCollectionForSearchById) fills them.
+const adoptSearchResult = (preparedResult) => {
+  const uiState = UIStore.getState();
+  const { currentCollection } = uiState;
+  UIActions.setSearchById(preparedResult);
+  ElementActions.changeSorting(true);
+
+  if (!currentCollection || Object.keys(listFilterParams(uiState)).length === 0) {
+    ElementActions.dispatchSearchResult(preparedResult);
+    return;
+  }
+
+  const emptyLists = {};
+  Object.keys(preparedResult).forEach((key) => {
+    emptyLists[key] = {
+      ...preparedResult[key], elements: [], ids: [], totalElements: 0
+    };
+  });
+  ElementActions.dispatchSearchResult(emptyLists);
+  UIActions.selectCollection(currentCollection);
+};
 
 const SearchResult = ({ handleClear }) => {
   const searchStore = useContext(StoreContext).search;
@@ -70,18 +94,8 @@ const SearchResult = ({ handleClear }) => {
   };
 
   const handleAdoptResult = () => {
-    const preparedResult = prepareResultForDispatch();
-    UIActions.setSearchById(preparedResult);
-    ElementActions.changeSorting(true);
-    ElementActions.dispatchSearchResult(preparedResult);
+    adoptSearchResult(prepareResultForDispatch());
     searchStore.handleAdopt();
-
-    // The modal result is unfiltered; the by-ids refetch narrows it to the active list filters.
-    const uiState = UIStore.getState();
-    const { userLabel, fromDate, toDate, productOnly } = uiState;
-    if (uiState.currentCollection && (userLabel || fromDate || toDate || productOnly)) {
-      UIActions.selectCollection(uiState.currentCollection);
-    }
   };
 
   const adoptResultAndOpenDetail = (element) => {
@@ -287,3 +301,4 @@ const SearchResult = ({ handleClear }) => {
 }
 
 export default observer(SearchResult);
+export { adoptSearchResult };

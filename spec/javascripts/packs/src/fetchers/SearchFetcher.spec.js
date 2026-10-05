@@ -22,20 +22,20 @@ describe('SearchFetcher with an active My Labels filter', () => {
     uiStateStub.restore();
   });
 
-  it('adds the label to a new search', async () => {
+  it('adds the list filters the caller passes', async () => {
     await SearchFetcher.fetchBasedOnSearchSelectionAndCollection({
       selection: { elementType: 'advanced', page_size: 15 },
       collectionId: 1,
+      listFilters: { user_label: 7 },
     });
 
     expect(sentSelection().list_filter_params.user_label).toEqual(7);
   });
 
-  it('sends the search modal query unfiltered so its adopted ids stay complete', async () => {
+  it('does not pick up the list filters on its own', async () => {
     await SearchFetcher.fetchBasedOnSearchSelectionAndCollection({
       selection: { elementType: 'advanced', page_size: 15 },
       collectionId: 1,
-      applyListFilters: false,
     });
 
     expect(sentSelection().list_filter_params).toEqual(undefined);

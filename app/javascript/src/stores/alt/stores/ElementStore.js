@@ -12,7 +12,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ClipboardStore from 'src/stores/alt/stores/ClipboardStore';
-import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
+import { listFilterParams, byIdsModelParams } from 'src/utilities/searchRequestParams';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -35,7 +35,6 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { SameEleTypId } from 'src/utilities/ElementUtils';
 import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
-import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -1350,7 +1349,8 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        moleculeSort
+        moleculeSort,
+        listFilters: listFilterParams(uiState),
       });
     } else if (currentSearchByID != null) {
       this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
@@ -1397,30 +1397,14 @@ class ElementStore {
 
   handleRefreshElementsForSearchById(type, uiState, currentSearchByID) {
     currentSearchByID.page_size = uiState.number_of_results;
-    const {
-      filterCreatedAt, fromDate, toDate, userLabel, productOnly
-    } = uiState;
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
-    let filterParams = {};
-    const elnElements = allElnElementsForSearch;
-    let modelName = !elnElements.includes(`${type}s`) ? 'element' : type;
-    modelName = type === 'cell_line' ? 'cell_lines' : modelName;
-
-    if (fromDate || toDate || userLabel || productOnly) {
-      filterParams = {
-        filter_created_at: filterCreatedAt,
-        from_date: fromDate ? dateToUnixTimestamp(fromDate) : null,
-        to_date: toDate ? dateToUnixTimestamp(toDate) : null,
-        user_label: userLabel,
-        product_only: productOnly,
-      };
-    }
+    const filterParams = listFilterParams(uiState);
 
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: `${modelName}`,
+        ...byIdsModelParams(type),
         ids: currentSearchByID[`${type}s`].ids,
         total_elements: currentSearchByID[`${type}s`].totalElements,
         with_filter: true,

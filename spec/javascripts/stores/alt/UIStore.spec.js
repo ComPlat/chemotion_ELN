@@ -49,6 +49,20 @@ describe('UItStore', () => {
       UIActions.setUserLabel(null);
     });
 
+    it('hands the active list filters to the search explicitly', () => {
+      UIActions.setUserLabel(7);
+
+      expect(searchFetch.firstCall.args[0].listFilters.user_label).toEqual(7);
+    });
+
+    it('resets the page of generic element lists too', () => {
+      alt.dispatch(UIActions.initialize.id, { klasses: ['mixture'] });
+      UIStore.getState().mixture.page = 4;
+      UIActions.setUserLabel(7);
+
+      expect(UIStore.getState().mixture.page).toEqual(1);
+    });
+
     it('re-runs the search when a user label is applied', () => {
       UIActions.setUserLabel(7);
 
@@ -158,6 +172,70 @@ describe('UItStore', () => {
       const { list_filter_params: filters } = byIdsFetch.firstCall.args[0].selection;
       expect(filters.user_label).toEqual(7);
       expect(filters.from_date).toEqual(Math.floor(from.getTime() / 1000));
+    });
+  });
+
+  describe('with an adopted search result over several element types', () => {
+    const collection = { id: 42 };
+    const types = {
+      samples: 'sample',
+      reactions: 'reaction',
+      wellplates: 'wellplate',
+      screens: 'screen',
+      research_plans: 'research_plan',
+      cell_lines: 'cell_lines',
+      device_descriptions: 'device_description',
+      sequence_based_macromolecule_samples: 'sequence_based_macromolecule_sample',
+      mixtures: 'element',
+    };
+    let byIdsFetch;
+    let userStub;
+
+    const sentFor = (key) => byIdsFetch.getCalls()
+      .map((call) => call.args[0].selection.id_params)
+      .find((idParams) => idParams.ids[0] === key);
+
+    beforeEach(() => {
+      byIdsFetch = sinon.stub(ElementActions.fetchBasedOnSearchResultIds, 'defer');
+      const layout = {};
+      Object.keys(types).forEach((key, i) => { layout[key.slice(0, -1)] = i + 1; });
+      userStub = sinon.stub(UserStore, 'getState').returns({ profile: { data: { layout } } });
+      UIActions.selectCollectionWithoutUpdating(collection);
+      const result = {};
+      Object.keys(types).forEach((key) => {
+        result[key] = {
+          ids: [key], totalElements: 1, page: 1, pages: 1, perPage: 15, elements: []
+        };
+      });
+      UIActions.setSearchById(result);
+    });
+
+    afterEach(() => {
+      byIdsFetch.restore();
+      userStub.restore();
+      UIActions.clearSearchById();
+      UIActions.setUserLabel(null);
+      UIActions.setProductOnly(false);
+    });
+
+    Object.entries(types).forEach(([key, modelName]) => {
+      it(`requests the adopted ${key} as ${modelName}`, () => {
+        UIActions.setUserLabel(7);
+
+        expect(sentFor(key).model_name).toEqual(modelName);
+      });
+    });
+
+    it('names the klass of a generic element so the result lands on its list', () => {
+      UIActions.setUserLabel(7);
+
+      expect(sentFor('mixtures').element_klass).toEqual('mixture');
+    });
+
+    it('refetches the non-sample lists under product only as well', () => {
+      UIActions.setProductOnly(true);
+
+      expect(byIdsFetch.callCount).toEqual(Object.keys(types).length);
     });
   });
 });
