@@ -565,6 +565,7 @@ export default class ReactionDetailsScheme extends React.Component {
           additionQuillRef={this.additionQuillRef}
           onChange={(event) => this.reactionUpdateHandler.handleMaterialsChange(event)}
           isInteractionReaction={isInteractionReaction}
+          canChangeMaterialList={canChangeMaterialList}
         />
       </>
     );
