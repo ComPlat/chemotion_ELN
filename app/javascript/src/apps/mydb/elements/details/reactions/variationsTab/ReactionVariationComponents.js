@@ -489,6 +489,8 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
         {
           colId: 'variation_group',
           headerName: 'Group',
+          headerTooltip: 'Groups variations, e.g. a screening series: enter a number such as 2 or 2.1. '
+            + 'Sorting by this column orders 2.1 before 10.2.',
           width: 110,
           valueGetter: ({ data }) => data.group,
           // "10.2" after "2.1", not before it: a group is a sequence of numbers, so it is compared

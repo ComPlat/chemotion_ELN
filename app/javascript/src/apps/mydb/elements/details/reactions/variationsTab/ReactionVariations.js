@@ -290,15 +290,26 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
           <i className="fa fa-download me-1"/>
           Export to CSV
         </Button>
-        <Button
-          className="mb-2"
-          size="sm"
-          variant="info"
-          onClick={() => setAdvancedMode(!advancedMode)}
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="advanced-mode-tooltip">
+              Advanced mode adds a toolbar above the grid to show, hide and reorder the material groups,
+              and shows more in the cells: IUPAC names, the concentration basis next to the reaction
+              volume, and the duration taken from start and stop time.
+            </Tooltip>
+          )}
         >
-          <i className="fa fa-wrench"></i>
-          {advancedMode ? 'Disable advanced mode' : 'Enable advanced mode'}
-        </Button>
+          <Button
+            className="mb-2"
+            size="sm"
+            variant="info"
+            onClick={() => setAdvancedMode(!advancedMode)}
+          >
+            <i className="fa fa-wrench"></i>
+            {advancedMode ? 'Disable advanced mode' : 'Enable advanced mode'}
+          </Button>
+        </OverlayTrigger>
         <RemoveVariationsModal
           onRemoveAll={() => {
             reaction.variations = [];
