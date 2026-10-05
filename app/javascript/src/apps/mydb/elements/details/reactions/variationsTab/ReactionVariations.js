@@ -3,7 +3,7 @@ import React, {
   useState, useEffect, useRef
 } from 'react';
 import {
-  Button, OverlayTrigger, Tooltip,
+  Alert, Button, OverlayTrigger, Tooltip,
   ButtonGroup
 } from 'react-bootstrap';
 import Reaction from 'src/models/Reaction';
@@ -279,6 +279,16 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   );
 
   return (<>
+    {/*
+    Variations can be added before the reaction is created; they are sent along with it. Said here,
+    so nobody is left wondering where they went or whether they need saving of their own.
+    */}
+    {reaction.isNew && (
+      <Alert variant="info" className="py-2 mb-2" data-testid="unsaved-reaction-notice">
+        This reaction has not been created yet. The variations you add are saved together with it
+        when you create the reaction.
+      </Alert>
+    )}
     <div style={{ position: 'relative' }}>
       <ButtonGroup>
         {addVariation()}
