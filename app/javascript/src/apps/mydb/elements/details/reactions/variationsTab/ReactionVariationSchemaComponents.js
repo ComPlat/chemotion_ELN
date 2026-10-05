@@ -30,6 +30,7 @@ import { SortableHeaderName }
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 import {
   CoefficientField,
+  densityText,
   DrySolventCheckBox,
   EquivalentOrYield,
   GaseousInputFields,
@@ -45,7 +46,8 @@ import {
   VolumeRatio,
   VOLUME_METRIC_PREFIXES,
   volumeMetricPrefix,
-  molMetricPrefix
+  molMetricPrefix,
+  purityValue,
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialComponents';
 import { GROUP_ID_SEPARATOR } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import REACTION_FIELDS from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationReactionFields';
@@ -318,18 +320,15 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.density,
     width: 80,
     sortValue: (material) => (material.has_density ? material.density : null),
-    render: (mh) => <PlainValue>{mh.material.has_density ? mh.material.density : 'undefined'}</PlainValue>,
+    render: (mh) => <PlainValue>{densityText(mh.material)}</PlainValue>,
   },
   {
     key: 'purity',
     readOnly: () => true,
     header: MATERIAL_HEADER.purity,
     width: 80,
-    sortValue: (material) => material.purity,
-    render: (mh) => {
-      const { purity } = mh.material;
-      return <PlainValue>{(purity === null || purity === undefined || purity === '') ? 0 : purity}</PlainValue>;
-    },
+    sortValue: purityValue,
+    render: (mh) => <PlainValue>{purityValue(mh.material)}</PlainValue>,
   },
   {
     key: 'loading',

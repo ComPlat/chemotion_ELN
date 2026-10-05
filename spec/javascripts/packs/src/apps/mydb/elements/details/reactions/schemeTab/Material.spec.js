@@ -4,6 +4,8 @@ import { describe, it } from 'mocha';
 import {
   MaterialAmountMol,
   MaterialActivity,
+  densityText,
+  purityValue,
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialComponents';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 
@@ -159,5 +161,25 @@ describe('Material — equivalent change source', () => {
 
     expect(events[0].isEquivalentEdit).toBe(true);
     expect(events[1].isEquivalentEdit).toBe(false);
+  });
+});
+
+// Shown in the material row of the scheme tab and in the variations grid alike.
+describe('Material - density and purity display', () => {
+  it('shows a density only where the material has one, "n.d." otherwise', () => {
+    expect(densityText({ has_density: true, density: 0.789 })).toBe(0.789);
+    expect(densityText({ has_density: false, density: 0 })).toBe('n.d.');
+    expect(densityText({})).toBe('n.d.');
+  });
+
+  it('shows a missing purity as 1, the value the calculations use', () => {
+    expect(purityValue({ purity: null })).toBe(1);
+    expect(purityValue({ purity: undefined })).toBe(1);
+    expect(purityValue({ purity: '' })).toBe(1);
+  });
+
+  it('shows a purity that is set as it is', () => {
+    expect(purityValue({ purity: 0.95 })).toBe(0.95);
+    expect(purityValue({ purity: 1 })).toBe(1);
   });
 });

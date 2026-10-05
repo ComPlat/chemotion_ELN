@@ -26,7 +26,7 @@ import {
   MassField, MaterialActivity, VolumeRatio,
   MaterialConcentration, MaterialNameWithIupac,
   MaterialVolume, MaterialAmountMol, MaterialLoading, EquivalentOrYield, SwitchTargetReal,
-  DrySolventCheckBox, MaterialRef, GaseousProductRow
+  DrySolventCheckBox, MaterialRef, GaseousProductRow, densityText, purityValue,
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialComponents';
 
 const refreshSvgTooltip = (
@@ -260,12 +260,10 @@ const GeneralMaterial = ({
             </div>
           )}
           <div className="reaction-material__density-data">
-            {material.has_density ? material.density : 'undefined'}
+            {densityText(material)}
           </div>
           <div className="reaction-material__purity-data">
-            {(material.purity === null || material.purity === undefined || material.purity === '')
-              ? 0
-              : material.purity}
+            {purityValue(material)}
           </div>
           <MaterialLoading mh={mh} showLoadingColumn={showLoadingColumn}/>
           <MaterialConcentration mh={mh}/>
