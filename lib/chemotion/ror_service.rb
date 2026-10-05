@@ -20,6 +20,14 @@ module Chemotion
         []
       end
 
+      def find(ror_id)
+        response = HTTParty.get("#{ROR_API_BASE}/#{ror_id}", request_options)
+        parse_item(JSON.parse(response.body)) if response.success?
+      rescue StandardError => e
+        Rails.logger.error "ROR API error: #{e.message}"
+        nil
+      end
+
       private
 
       def build_url(query, country)

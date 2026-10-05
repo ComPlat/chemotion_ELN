@@ -202,6 +202,7 @@ RSpec.describe Chemotion::AffiliationAPI do
     before do
       allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
       allow(warden_instance).to receive(:current_user).and_return(user)
+      Affiliation.create!(organization: 'KIT', department: 'IOC', country: 'Germany')
     end
 
     it 'accepts a create when department and group are sent blank', :aggregate_failures do
@@ -241,6 +242,79 @@ RSpec.describe Chemotion::AffiliationAPI do
     end
   end
 
+  describe 'direct create/update only links registry values' do
+    let(:user) { create(:person) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
+
+    before do
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
+      Affiliation.create!(organization: 'KIT', department: 'IOC', group: 'Bräse', country: 'Germany')
+    end
+
+    it 'refuses an unknown organization', :aggregate_failures do
+      expect do
+        post '/api/v1/affiliations', params: { organization: 'Fake Org', department: 'X' }
+      end.not_to change(Affiliation, :count)
+      expect(response).to have_http_status(422)
+      expect(parsed_json_response['error']).to include('suggest it instead')
+    end
+
+    it 'refuses an unknown department of a known organization' do
+      post '/api/v1/affiliations', params: { organization: 'KIT', department: 'Typo Dept' }
+      expect(response).to have_http_status(422)
+    end
+
+    it 'refuses a country the organization is not registered in' do
+      post '/api/v1/affiliations', params: { organization: 'KIT', country: 'France' }
+      expect(response).to have_http_status(422)
+    end
+
+    it 'links a known combination, matching case and accents', :aggregate_failures do
+      post '/api/v1/affiliations',
+           params: { organization: 'kit', department: 'ioc', group: 'Brase', country: 'Germany' }
+      expect(response).to have_http_status(:created)
+      expect(user.reload.affiliations.last.group).to eq('Bräse')
+    end
+
+    it 'refuses an update to an unknown department and keeps the row', :aggregate_failures do
+      ua = UserAffiliation.create!(user: user, affiliation: Affiliation.first)
+      put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', department: 'Typo Dept' }
+      expect(response).to have_http_status(422)
+      expect(ua.reload.affiliation.department).to eq('IOC')
+    end
+
+    it 'refuses a malformed ROR id without calling ROR' do
+      allow(Chemotion::RorService).to receive(:find)
+      post '/api/v1/affiliations', params: { organization: 'Fake Org', ror_id: '../../x' }
+      expect(response).to have_http_status(422)
+      expect(Chemotion::RorService).not_to have_received(:find)
+    end
+
+    it 'takes name and country from ROR for a new ROR pick, not from the request', :aggregate_failures do
+      allow(Chemotion::RorService).to receive(:find).with('02jz4aj89')
+                                                    .and_return({ ror_id: '02jz4aj89', name: 'Maastricht University',
+                                                                  country: 'Netherlands' })
+      post '/api/v1/affiliations', params: { organization: 'Fake Org', country: 'France', ror_id: '02jz4aj89' }
+      expect(response).to have_http_status(:created)
+      expect(Affiliation.find_by(ror_id: '02jz4aj89')).to have_attributes(organization: 'Maastricht University',
+                                                                          country: 'Netherlands')
+    end
+
+    it 'refuses a ROR id that ROR does not know' do
+      allow(Chemotion::RorService).to receive(:find).and_return(nil)
+      post '/api/v1/affiliations', params: { organization: 'Fake Org', ror_id: '0abcdef12' }
+      expect(response).to have_http_status(422)
+    end
+
+    it 'refuses a department under a new ROR organization' do
+      allow(Chemotion::RorService).to receive(:find)
+        .and_return({ ror_id: '02jz4aj89', name: 'Maastricht University', country: 'Netherlands' })
+      post '/api/v1/affiliations', params: { organization: 'x', ror_id: '02jz4aj89', department: 'New Dept' }
+      expect(response).to have_http_status(422)
+    end
+  end
+
   describe 'from/to dates on a user affiliation' do
     let(:user) { create(:person) }
     let(:warden_instance) { instance_double(WardenAuthentication) }
@@ -248,6 +322,8 @@ RSpec.describe Chemotion::AffiliationAPI do
     before do
       allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
       allow(warden_instance).to receive(:current_user).and_return(user)
+      Affiliation.create!(organization: 'KIT')
+      Affiliation.create!(organization: 'MIT')
     end
 
     it 'stores from and to on the link, not on the shared affiliation', :aggregate_failures do
@@ -259,7 +335,6 @@ RSpec.describe Chemotion::AffiliationAPI do
     end
 
     it 'rejects editing one affiliation into another the user already has', :aggregate_failures do
-      Affiliation.create!(organization: 'KIT')
       post '/api/v1/affiliations', params: { organization: 'KIT' }
       post '/api/v1/affiliations', params: { organization: 'MIT' }
       mit = user.user_affiliations.find_by(affiliation: Affiliation.find_by(organization: 'MIT'))

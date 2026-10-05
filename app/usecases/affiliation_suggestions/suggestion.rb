@@ -133,16 +133,18 @@ module Usecases
           (params[:ror_id].present? && ror == params[:ror_id])
       end
 
-      def registry_match?(params, org, dept, group, ror)
+      def registry_match?(params, row)
+        org, dept, group, ror, country = row
         organization_match?(params, org, ror) &&
           (params[:department].blank? || same_value?(dept, params[:department])) &&
-          (params[:group].blank? || same_value?(group, params[:group]))
+          (params[:group].blank? || same_value?(group, params[:group])) &&
+          (params[:country].blank? || same_value?(country, params[:country]))
       end
 
       def ensure_not_in_registry!(params)
         exists = Affiliation.in_batches(of: 1_000).any? do |batch|
-          batch.pluck(:organization, :department, :group, :ror_id)
-               .any? { |org, dept, group, ror| registry_match?(params, org, dept, group, ror) }
+          batch.pluck(:organization, :department, :group, :ror_id, :country)
+               .any? { |row| registry_match?(params, row) }
         end
         return unless exists
 

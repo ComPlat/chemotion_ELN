@@ -6,19 +6,21 @@ module Usecases
     # row when the normalized attributes already exist, and cleans up an
     # Affiliation once no user references it.
     class UserAffiliations
+      ROR_ID_FORMAT = /\A0[a-z0-9]{6}\d{2}\z/.freeze
+
       def initialize(current_user)
         @current_user = current_user
       end
 
       def create(params)
-        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params))
+        affiliation = Affiliation.find_or_create_by!(registry_attributes(params))
         ensure_not_duplicate!(affiliation.id)
         scope.create!(affiliation_id: affiliation.id, **params.slice(:from, :to))
       end
 
       def update(params)
-        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params))
         user_affiliation = scope.find(params[:id])
+        affiliation = Affiliation.find_or_create_by!(registry_attributes(params))
         ensure_not_duplicate!(affiliation.id, except: user_affiliation.id)
         user_affiliation.update!(affiliation_id: affiliation.id, **params.slice(:from, :to))
       end
@@ -44,6 +46,51 @@ module Usecases
         return unless relation.exists?
 
         raise Usecases::Affiliations::Errors::DuplicateAffiliation, 'You already have this affiliation.'
+      end
+
+      # Only known values link directly; new ones go through a suggestion, except a ROR-confirmed org.
+      def registry_attributes(params)
+        attributes = affiliation_attributes(params)
+        rows = attributes[:ror_id] ? rows_for_ror!(attributes) : rows_for_name!(attributes)
+        %i[country department group].each { |field| rows = narrow!(rows, attributes, field) }
+        attributes
+      end
+
+      def rows_for_name!(attributes)
+        rows = Affiliation.where(organization: attributes[:organization])
+        rows.exists? ? rows : not_in_registry!(attributes[:organization])
+      end
+
+      def rows_for_ror!(attributes)
+        not_in_registry!(attributes[:ror_id]) unless attributes[:ror_id].match?(ROR_ID_FORMAT)
+        rows = Affiliation.where(ror_id: attributes[:ror_id])
+        if (row = rows.first)
+          attributes[:organization] = row.organization
+          return rows
+        end
+
+        ror = Chemotion::RorService.find(attributes[:ror_id]) || not_in_registry!(attributes[:ror_id])
+        attributes[:organization] = ror[:name]
+        attributes[:country] = ror[:country]
+        rows
+      end
+
+      def narrow!(rows, attributes, field)
+        value = attributes[field]
+        return rows if value.nil?
+        return rows if field == :country && rows.where.not(country: nil).none?
+
+        key = Affiliation.normalize_key(value)
+        match = rows.distinct.pluck(field).compact.find { |stored| Affiliation.normalize_key(stored) == key }
+        not_in_registry!(value) unless match
+
+        attributes[field] = match
+        rows.where(field => match)
+      end
+
+      def not_in_registry!(value)
+        raise Usecases::Affiliations::Errors::NotInRegistry,
+              "'#{value}' is not in the affiliation registry yet. Please suggest it instead."
       end
 
       # Full identity with explicit nils: a blank department must match rows
