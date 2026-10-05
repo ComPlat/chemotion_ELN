@@ -82,6 +82,39 @@ describe('ReactionVariationSchemaComponents', () => {
     });
   });
 
+  // A product's Eq column holds its yield or conversion rate, and is named for what it holds.
+  describe('header of the Eq column', () => {
+    const headerOf = (variations, groupId, colId) => columnOf(
+      schemaBuildColumnGroups(variations),
+      groupId,
+      colId
+    ).headerName;
+    const productEq = (variations) => headerOf(variations, 'products::0', 'products_0_eq');
+
+    it('reads Eq for a starting material and Yield for a product', async () => {
+      const variations = await buildVariations();
+
+      expect(headerOf(variations, 'starting_materials::0', 'starting_materials_0_eq')).toBe('Eq');
+      expect(productEq(variations)).toBe('Yield');
+    });
+
+    it('reads Conv. where the rows show conversion rates', async () => {
+      const variations = await buildVariations();
+      variations[0].data.products[0].conversion_rate = 40;
+
+      expect(productEq(variations)).toBe('Conv.');
+    });
+
+    it('names both where some rows show the yield and others the conversion rate', async () => {
+      const [first] = await buildVariations();
+      const [second] = await buildVariations();
+      second.idx = 1;
+      second.data.products[0].conversion_rate = 40;
+
+      expect(productEq([first, second])).toBe('Yield / Conv.');
+    });
+  });
+
   // Cells that cannot be edited get the grey background of the previous variations table.
   describe('read-only cells', () => {
     const READ_ONLY = 'variations-cell--read-only';
