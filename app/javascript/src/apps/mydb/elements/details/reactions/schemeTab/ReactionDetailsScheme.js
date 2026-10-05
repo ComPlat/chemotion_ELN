@@ -193,7 +193,6 @@ export default class ReactionDetailsScheme extends React.Component {
           this.setEquivalentForMixture(splitSample, tagGroup);
 
           reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-          this.captureAddedSolventRatio(splitSample, tagGroup);
           onReactionChange(reaction, { updateGraphic: true });
         })
         .catch((errorMessage) => {
@@ -202,21 +201,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
       reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-      this.captureAddedSolventRatio(splitSample, tagGroup);
       onReactionChange(reaction, { updateGraphic: true });
-    }
-  }
-
-  captureAddedSolventRatio(sample, materialGroup) {
-    if (materialGroup === 'solvents' && this.getReactionEquivLockState(this.props.reaction)) {
-      // addMaterialAt stores a fresh Sample copy (set solvents -> _coerceToSamples -> new Sample),
-      // so `sample` is detached from the solvent now in the reaction. Resolve the stored solvent by
-      // id and capture on it; otherwise the stored solvent keeps no ratio and the next locked
-      // reference edit leaves it unscaled. Capture only the added one; existing ratios must survive.
-      const addedSolvent = (this.props.reaction.solvents || []).find((solvent) => solvent.id === sample.id);
-      if (addedSolvent) {
-        this.props.reaction.captureSolventReferenceRatios([addedSolvent]);
-      }
     }
   }
 
@@ -474,9 +459,6 @@ export default class ReactionDetailsScheme extends React.Component {
     const actualTagGroup = Reaction.storageGroupFor(tagMat, tagGroup);
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
-    // A material moved into solvents under locked equivalents needs its reference ratio seeded,
-    // or it would never scale with the reference (mirrors dropSample's captureAddedSolventRatio).
-    this.captureAddedSolventRatio(srcMat, actualTagGroup);
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -720,11 +702,6 @@ export default class ReactionDetailsScheme extends React.Component {
       reaction.markSampleAsReference(sampleID);
     }
 
-    if (this.getReactionEquivLockState(reaction)) {
-      // Selecting a reference rebases equivalents without changing solvent volumes.
-      reaction.captureSolventReferenceRatios();
-    }
-
     return this.updatedReactionWithSample(
       this.updatedSamplesForReferenceChange.bind(this),
       sample,
@@ -757,8 +734,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    const updatedReaction =
-      this.propagateReferenceAmountChange(updatedSample);
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
@@ -815,8 +791,7 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
-    const updatedReaction =
-      this.propagateReferenceAmountChange(updatedSample);
+    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
 
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
@@ -2225,21 +2200,9 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Single entry point for any edit that changes the reference amount. It rebases
-   * every dependent sample's amount (updatedSamplesForAmountChange) and, under
-   * locked equivalents, derives solvent volumes from the updated reference amount.
-   *
-   * updatedSamplesForAmountChange deliberately skips solvents (they are scaled by
-   * volume, not moles), so solvent scaling must be paired with it here rather than
-   * at each call site. Routing every reference-changing path through this method
-   * keeps solvent volumes from drifting from the reference.
-   *
-   * The new reference amount is read from the already-updated reference material, so
-   * no "previous reference amount" snapshot is needed (see
-   * Reaction#updateSolventVolumesForReference).
-   *
-   * SBMM reactant samples are always rebased too: the edited sample may be a regular
-   * reference whose change must still propagate to SBMM equivalents.
+   * Rebases dependent amounts, including SBMM samples, after an amount edit.
+   * The amount updater skips locked solvents; derive their volumes separately
+   * from the updated reference and the ratios maintained by Reaction.
    *
    * @param {Sample} updatedSample - the edited sample driving the change
    * @returns {Reaction}
