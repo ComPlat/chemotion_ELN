@@ -144,17 +144,20 @@ const SolventMaterial = ({ mh,
       </InputGroup>
       <MaterialVolume mh={mh} className={'reaction-material__solvent-volume-data'}/>
       <VolumeRatio mh={mh} />
-      <DeleteButton
-        disabled={!permitOn(reaction)}
-        onClick={() => deleteMaterial(material)}
-      />
+      {deleteMaterial && (
+        <DeleteButton
+          disabled={!permitOn(reaction)}
+          onClick={() => deleteMaterial(material)}
+        />
+      )}
     </div>
   );
 };
 
 SolventMaterial.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired,
-  deleteMaterial: PropTypes.func.isRequired,
+  // Absent where the material list cannot be changed - see MaterialGroup#canChangeMaterialList.
+  deleteMaterial: PropTypes.func,
   dragRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) })
@@ -268,10 +271,12 @@ const GeneralMaterial = ({
           <MaterialConcentration mh={mh}/>
           <EquivalentOrYield mh={mh} displayYieldField={displayYieldField}/>
           <div className="reaction-material__delete-data">
-            <DeleteButton
-              disabled={!permitOn(reaction)}
-              onClick={() => deleteMaterial(material)}
-            />
+            {deleteMaterial && (
+              <DeleteButton
+                disabled={!permitOn(reaction)}
+                onClick={() => deleteMaterial(material)}
+              />
+            )}
           </div>
         </div>
         {materialGroup === 'products' && (
@@ -320,7 +325,8 @@ const GeneralMaterial = ({
 
 GeneralMaterial.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired,
-  deleteMaterial: PropTypes.func.isRequired,
+  // Absent where the material list cannot be changed - see MaterialGroup#canChangeMaterialList.
+  deleteMaterial: PropTypes.func,
   showLoadingColumn: PropTypes.bool.isRequired,
   dragRef: PropTypes.oneOfType([
     PropTypes.func,
@@ -454,7 +460,8 @@ Material.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   material: PropTypes.instanceOf(Sample).isRequired,
   materialGroup: PropTypes.string.isRequired,
-  deleteMaterial: PropTypes.func.isRequired,
+  // Absent where the material list cannot be changed - see MaterialGroup#canChangeMaterialList.
+  deleteMaterial: PropTypes.func,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.bool.isRequired,
   index: PropTypes.number.isRequired,
@@ -479,6 +486,7 @@ Material.propTypes = {
 };
 
 Material.defaultProps = {
+  deleteMaterial: null,
   lockEquivColumn: false,
   displayYieldField: false,
   isDragging: false,

@@ -49,7 +49,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex, variations,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled, showAddSampleButton, onConcentrationModeChange
+  switchYield, dndEnabled, canChangeMaterialList, onConcentrationModeChange
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -78,7 +78,7 @@ const MaterialGroup = ({
       material={material}
       materialGroup={materialGroup}
       showLoadingColumn={showLoadingColumn}
-      deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
+      deleteMaterial={canChangeMaterialList ? (m) => deleteMaterial(m, materialGroup) : null}
       index={index + 1}
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
@@ -129,7 +129,7 @@ const MaterialGroup = ({
         headIndex={headIndex}
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
-        showAddSampleButton={showAddSampleButton}
+        canChangeMaterialList={canChangeMaterialList}
       />
     );
   }
@@ -151,7 +151,7 @@ const MaterialGroup = ({
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
       onConcentrationModeChange={onConcentrationModeChange}
-      showAddSampleButton={showAddSampleButton}
+      canChangeMaterialList={canChangeMaterialList}
     />
   );
 };
@@ -383,7 +383,7 @@ const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, showAddSampleButton,
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, canChangeMaterialList,
   onConcentrationModeChange
 }) => {
   const isReactants = materialGroup === 'reactants';
@@ -541,9 +541,9 @@ const GeneralMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {showAddSampleButton && addSampleButton}
+                {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                {isReactants && reagentDd}
+                {isReactants && canChangeMaterialList && reagentDd}
               </div>
             </div>
             <div className="reaction-material__ref-header">{refTHead}</div>
@@ -608,7 +608,7 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled, showAddSampleButton
+  dropSample, onDrop, onReorder, dndEnabled, canChangeMaterialList
 }) => {
   const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
@@ -685,26 +685,28 @@ const SolventsMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {showAddSampleButton && addSampleButton}
+                {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                <Select
-                  isDisabled={!permitOn(reaction)}
-                  options={solventOptions}
-                  value={null}
-                  placeholder="Add solvent..."
-                  onChange={createDefaultSolventsForReaction}
-                  filterOption={filterSolvents}
-                  hasMostUsed={topSolvents.length > 0}
-                  activeTab={effectiveTab}
-                  onSetActiveTab={setActiveTab}
-                  allOptions={allSolventOptions}
-                  topOptions={topSolvents}
-                  filterFn={filterSolvents}
-                  allTabLabel="All Solvents"
-                  components={{ MenuList: ReagentMenuList }}
-                  classNames={{ menu: () => 'solvent-menu' }}
-                  size="xsm"
-                />
+                {canChangeMaterialList && (
+                  <Select
+                    isDisabled={!permitOn(reaction)}
+                    options={solventOptions}
+                    value={null}
+                    placeholder="Add solvent..."
+                    onChange={createDefaultSolventsForReaction}
+                    filterOption={filterSolvents}
+                    hasMostUsed={topSolvents.length > 0}
+                    activeTab={effectiveTab}
+                    onSetActiveTab={setActiveTab}
+                    allOptions={allSolventOptions}
+                    topOptions={topSolvents}
+                    filterFn={filterSolvents}
+                    allTabLabel="All Solvents"
+                    components={{ MenuList: ReagentMenuList }}
+                    classNames={{ menu: () => 'solvent-menu' }}
+                    size="xsm"
+                  />
+                )}
               </div>
             </div>
             <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
@@ -738,7 +740,7 @@ MaterialGroup.propTypes = {
   dndEnabled: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
   // Off in the variations tab, where materials follow the parent reaction's scheme.
-  showAddSampleButton: PropTypes.bool,
+  canChangeMaterialList: PropTypes.bool,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
@@ -769,14 +771,14 @@ GeneralMaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
-  showAddSampleButton: PropTypes.bool,
+  canChangeMaterialList: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
 };
 
 GeneralMaterialGroup.defaultProps = {
   switchEquiv: () => {},
   switchYield: () => {},
-  showAddSampleButton: true,
+  canChangeMaterialList: true,
   displayYieldField: null
 };
 
@@ -790,12 +792,12 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
-  showAddSampleButton: PropTypes.bool,
+  canChangeMaterialList: PropTypes.bool,
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
-  showAddSampleButton: true,
+  canChangeMaterialList: true,
 };
 
 MaterialGroup.defaultProps = {
@@ -806,7 +808,7 @@ MaterialGroup.defaultProps = {
   dndEnabled: true,
   onConcentrationModeChange: null,
   variations: null,
-  showAddSampleButton: true,
+  canChangeMaterialList: true,
 };
 
 GeneralMaterialGroup.defaultProps = {
