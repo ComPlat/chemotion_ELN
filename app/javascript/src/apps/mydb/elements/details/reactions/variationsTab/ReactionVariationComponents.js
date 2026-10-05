@@ -1072,7 +1072,9 @@ const VariationSchemaTable = ({
     .map((group) => {
       // `labelKey` marks a group whose heading depends on its data, e.g. the shared-sample name.
       const label = group.labelKey ? `=${group.labelKey}` : '';
-      return `${group.groupId}${label}[${group.columns.map((column) => column.colId).join(',')}]`;
+      // With the heading, which for a product's Eq column follows its rows - Yield or Conv.
+      const columns = group.columns.map((column) => `${column.colId}=${column.headerName}`);
+      return `${group.groupId}${label}[${columns.join(',')}]`;
     })
     .join('|');
 

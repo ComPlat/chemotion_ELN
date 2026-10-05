@@ -240,6 +240,16 @@ const displaysYield = (reaction) => reaction.products.every(
   (product) => !(product.conversion_rate && product.conversion_rate !== 0)
 );
 
+/*
+What a product's Eq column holds, named as the scheme tab's toggle names it: each row shows the yield
+or the conversion rate of its own products, so the column says which - or both, where the rows differ.
+*/
+const productEquivalentHeader = (reactions) => {
+  const shown = new Set(reactions.map((reaction) => displaysYield(reaction)));
+  if (shown.size === 2) return 'Yield / Conv.';
+  return shown.has(false) ? 'Conv.' : 'Yield';
+};
+
 const GENERAL_MATERIAL_SETTIGS_FIELDS = [
   NAME_FIELD,
   {
@@ -357,6 +367,9 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
   {
     key: 'eq',
     header: MATERIAL_HEADER.eq,
+    headerFor: (matGroup, reactions) => (
+      matGroup === 'products' ? productEquivalentHeader(reactions) : MATERIAL_HEADER.eq
+    ),
     width: 150,
     // A product's yield is computed; so is the reference material's equivalent.
     readOnly: (material, reaction, materialGroup) => (
@@ -888,7 +901,9 @@ const schemaBuildColumnGroups = (variations) => {
 
             return {
               colId,
-              headerName: field.header,
+              headerName: field.headerFor
+                ? field.headerFor(matGroup, slotEntries.map(({ reaction }) => reaction))
+                : field.header,
               width: field.width,
               // Sorting needs a value of its own: the cells are renderers, so without this AG Grid
               // would be comparing undefined against undefined for every row. The CSV export writes
