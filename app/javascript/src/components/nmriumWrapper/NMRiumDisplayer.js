@@ -11,7 +11,7 @@ import { FN } from '@complat/react-spectra-editor';
 import {
   cleaningNMRiumData, isSpectrum2D, spectrumName,
   isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
-  entryUrl, urlToEntry, findAttachmentForRef,
+  entryUrl, urlToEntry, findAttachmentForRef, hasEmbeddedData,
 } from 'src/utilities/SpectraHelper';
 
 // The NMRium schema version of a document this wrapper saved flat - without `version` and without the
@@ -19,10 +19,6 @@ import {
 // state of the pinned wrapper (v1.2.0, schema 19); NMRium would read them as version 0 and migrate
 // sources[] away. Follows the wrapper pin: the wrapper refuses to open a version above its own.
 const FLAT_NMRIUM_DOC_VERSION = 19;
-
-// A spectrum (or molecule) saved with its data in the document can open from it without a source.
-const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
-  && Object.keys(item.data).length > 0;
 
 export default class NMRiumDisplayer extends React.Component {
   constructor(props) {

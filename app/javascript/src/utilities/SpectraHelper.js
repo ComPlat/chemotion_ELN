@@ -222,6 +222,10 @@ const isNMRKind = (container, chmos = []) => {
 // info/originalInfo/meta from a source-backed 2D spectrum before writing it out, so on reopen
 // display.dimension is the only surviving record that it was 2D — and without that this whole
 // migration is skipped for exactly the files that most need it.
+// A spectrum (or molecule) saved with its data in the document can open from it without a source.
+const hasEmbeddedData = (item) => !!item?.data && typeof item.data === 'object'
+  && Object.keys(item.data).length > 0;
+
 // The `info` keys NMRium's processing filters change (an FFT turns an FID into a spectrum). Taken
 // from the live info/originalInfo of a 2D FID processed in the pinned wrapper.
 const PROCESSING_INFO_KEYS = ['isFid', 'isFt', 'isComplex', 'isFtDimensionOne'];
@@ -640,12 +644,23 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       // real reference so `data` can finally be dropped instead of duplicated into the saved JSON.
       // If no URL can be resolved, leave `data` embedded: that's the same safe fallback this file
       // relied on before this was wired up, not a regression.
-      const sourceUrl = resolveSpectrumSourceUrl(tmpSpc, root);
+      // A spectrum that carries its data keeps it unless its own reference names the file it came
+      // from: a jcampURL, a sourceSelector/selector entry naming a file or a member inside an
+      // archive, or a selector.root registered in sources[]. A document-wide source or a match on
+      // the name alone is only a guess at that file, and binding the spectrum to a wrong guess
+      // (another curve, a whole archive) loses its data for good on the next save.
+      const namesFile = (f) => typeof f === 'string' && (isAbsoluteUrl(f) || !!archiveMemberPath(f));
+      const ownReference = !!(spc?.source?.jcampURL
+        || spc?.sourceSelector?.files?.some(namesFile)
+        || spc?.selector?.files?.some(namesFile)
+        || (spc?.selector?.root && root.sources?.some((source) => source.id === spc.selector.root)));
+      const keepEmbeddedData = hasEmbeddedData(tmpSpc) && !ownReference;
+      const sourceUrl = keepEmbeddedData ? null : resolveSpectrumSourceUrl(tmpSpc, root);
       // On the way to a file, never register the live download URL: resolve which attachment it
       // addresses and persist a reference to *that*, for the next open to re-mint. A spectrum no
       // attachment backs has nothing that can be re-minted, so it registers no source at all and
       // keeps its embedded `data` below - a bigger file, but one that still opens.
-      const attachment = forPersistence
+      const attachment = forPersistence && !keepEmbeddedData
         ? findAttachmentForRef(attachments, sourceUrl, { name: resolvedName })
         : null;
       const sourceEntry = forPersistence
@@ -925,4 +940,5 @@ export {
   cleaningNMRiumData, inlineNotation,
   isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
   entryUrl, urlToEntry, findAttachmentForRef,
+  hasEmbeddedData,
 }; // eslint-disable-line

@@ -1066,6 +1066,69 @@ describe('SpectraHelper', () => {
         });
       });
 
+      // A 2D spectrum that carries its data keeps it unless its own reference names its file. The
+      // document-wide source, a sole JCAMP re-minted into it, or the dataset's zip matched by name
+      // are only guesses, and a wrong one loses the data for good on the next save.
+      describe('a 2D spectrum carrying its data, without a reference of its own', () => {
+        const TPA = 'https://eln.test/api/v1/public/third_party_apps';
+        const attachments = [
+          { id: 51, label: 'hmbc.zip', url: `${TPA}/ZIP` },
+          { id: 52, label: 'hmbc.dx', url: `${TPA}/DX` },
+        ];
+        // Reopened legacy document: the FID is re-read from its own .dx, the FT still carries its
+        // matrix and, renamed on reopen, the zip's label.
+        const reopened = () => ({
+          spectra: [
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFt: true },
+              display: { name: 'hmbc.zip' },
+              data: { rr: { z: [[1.0]] } },
+            },
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFid: true },
+              display: { name: 'hmbc.zip' },
+              source: { jcampURL: `${TPA}/DX/file.dx` },
+              data: { re: { z: [[2.0]] } },
+            },
+          ],
+        });
+        const save = (doc) => cleaningNMRiumData(doc, { attachments, forPersistence: true });
+
+        it('is not bound to the zip its name matches when saved', () => {
+          const [ft, fid] = save(reopened()).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+          expect(fid.data).toEqual(undefined);
+          expect(fid.selector.root).toBeTruthy();
+        });
+
+        it('still carries its data after a second save', () => {
+          const once = save(reopened());
+          const twice = save(cleaningNMRiumData(once));
+          expect(twice.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+          expect(twice.sources.map((source) => source.entries[0].relativePath)).toEqual(['/52/hmbc.dx']);
+        });
+
+        it('is not bound to the document-wide source', () => {
+          const doc = reopened();
+          doc.source = { entries: [{ baseURL: 'https://old.test', relativePath: '/old/file.zip' }] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+        });
+
+        it('is not bound to a derived JCAMP re-minted into the document-wide source', () => {
+          const doc = reopened();
+          const peak = { baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/PEAK/file.jdx' };
+          doc.source = { entries: [peak] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(JSON.stringify(ft)).not.toContain('PEAK');
+        });
+      });
+
       it('names a 2D spectrum from meta.TITLE when display.name is only its own uuid', () => {
         // Real shape of a spectrum NMRium loaded straight from a jcamp: display.name defaults to
         // the spectrum id, info carries no name, and the source file's stem survives only in the
