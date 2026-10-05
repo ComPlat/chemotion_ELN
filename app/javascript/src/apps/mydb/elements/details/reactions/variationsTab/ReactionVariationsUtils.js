@@ -536,6 +536,31 @@ const isHiddenByDefault = (colId, view = SCHEMA_VIEW, userKinds = getUserColumnK
   return userKinds[kind] ?? isHiddenInCompactLayout(kind, view);
 };
 
+// The height the user dragged the grid to, per user and for every reaction; null for automatic.
+const getUserGridHeightId = () => {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser?.id}-reactionVariationsGridHeight`;
+};
+
+const getUserGridHeight = () => {
+  try {
+    const height = Number(window.localStorage.getItem(getUserGridHeightId()));
+    return Number.isFinite(height) && height > 0 ? height : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const persistUserGridHeight = (height) => {
+  try {
+    if (height) {
+      window.localStorage.setItem(getUserGridHeightId(), String(height));
+    } else {
+      window.localStorage.removeItem(getUserGridHeightId());
+    }
+  } catch (e) { /* ignore storage errors */ }
+};
+
 /*
 What the variations table before the diff-based format kept in the browser, per user and reaction:
 
@@ -700,6 +725,8 @@ export {
   columnKind,
   isHiddenByDefault,
   persistUserColumnKinds,
+  getUserGridHeight,
+  persistUserGridHeight,
   convertVariationDatasetToInternalVariations,
   addInternalVariationObject,
   addNewVariationDataset,

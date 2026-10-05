@@ -11,7 +11,8 @@ import {
   makeVariationReaction, refreshConcentrations, addNewVariationDataset, parseVariationGroup,
   copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
   adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
-  exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds
+  exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds,
+  getUserGridHeight, persistUserGridHeight
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
 
@@ -434,6 +435,22 @@ describe('ReactionVariationsUtils', () => {
         expect(isHiddenByDefault('starting_materials_3_density')).toBe(false);
         expect(isHiddenByDefault('products_1_mass')).toBe(true);
         expect(Object.keys(storage)).toEqual(['user7-reactionVariationsColumnKinds']);
+      });
+    });
+
+    // The height the user dragged the grid to holds for every reaction, until reset.
+    describe('grid height of the user', () => {
+      it('is automatic until the user sets one', () => {
+        expect(getUserGridHeight()).toBe(null);
+      });
+
+      it('is kept per user, and reset by null', () => {
+        persistUserGridHeight(480);
+        expect(storage['user7-reactionVariationsGridHeight']).toBe('480');
+        expect(getUserGridHeight()).toBe(480);
+
+        persistUserGridHeight(null);
+        expect(getUserGridHeight()).toBe(null);
       });
     });
 
