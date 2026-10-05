@@ -243,7 +243,8 @@ function Affiliations() {
       const updated = { ...row, [field]: value };
       if (field === 'department') updated.group = '';
       // Choosing from a dropdown means this field is an existing value, not a suggestion.
-      if (row.pendingFields) updated.pendingFields = row.pendingFields.filter((f) => f !== field);
+      const cleared = field === 'department' ? [field, 'group'] : [field];
+      if (row.pendingFields) updated.pendingFields = row.pendingFields.filter((f) => !cleared.includes(f));
       return updated;
     }));
 
