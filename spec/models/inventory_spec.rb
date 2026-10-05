@@ -91,14 +91,26 @@ RSpec.describe Inventory do
       it 'does not flag samples when the label of part of an inventory is reset' do
         label(nil, nil, [collection_a.id])
 
-        expect(collection_a.reload.inventory.prefix).to be_nil
+        expect(collection_a.reload.inventory).to be_nil
+        expect(collection_b.reload.inventory.prefix).to eq('ABC')
         expect([sample_a, sample_b].map { |s| s.reload.inventory_sample }).to all(be false)
       end
 
-      it 'does not flag samples when the label of a whole inventory is reset' do
+      it 'detaches the collections and removes the inventory when a whole inventory is reset' do
+        inventory = collection_a.reload.inventory
         label(nil, nil, [collection_a.id, collection_b.id])
 
+        expect([collection_a, collection_b].map { |c| c.reload.inventory_id }).to all(be_nil)
+        expect(described_class.exists?(inventory.id)).to be false
         expect([sample_a, sample_b].map { |s| s.reload.inventory_sample }).to all(be false)
+      end
+
+      it 'flags samples again when a reset collection gets a new label' do
+        label(nil, nil, [collection_a.id, collection_b.id])
+        label('DEF', 'Inventory DEF', [collection_a.id])
+
+        expect(sample_a.reload.inventory_sample).to be true
+        expect(sample_b.reload.inventory_sample).to be false
       end
     end
 

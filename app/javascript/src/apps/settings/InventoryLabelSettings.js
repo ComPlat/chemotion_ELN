@@ -259,7 +259,7 @@ function InventoryLabelSettings() {
       collectionIds.map((collectionId) => InventoryFetcher.fetchInventoryOfCollection(collectionId))
     );
 
-    const isCreate = results.some((result) => !result);
+    const isCreate = results.some((result) => !result?.prefix);
 
     if (isCreate) {
       setShowCreateConfirmation(true);

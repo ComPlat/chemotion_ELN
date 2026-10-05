@@ -512,7 +512,7 @@ class ElementActions {
     const inventorySample = !!(
       currentCollection
       && String(currentCollection.id) === String(collection_id)
-      && currentCollection.inventory_id
+      && currentCollection.inventory_prefix
     );
     return Sample.buildEmpty(collection_id, inventorySample);
   }
