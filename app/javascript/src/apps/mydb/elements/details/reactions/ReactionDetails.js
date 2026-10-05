@@ -220,9 +220,10 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     }
     notifications?.add({
       title: 'Variations changed as well',
-      message: `This change also applies to ${labels.length === 1 ? 'variation' : 'variations'} `
-        + `${labels.map((label) => `#${label}`).join(', ')}, which ${labels.length === 1 ? 'has' : 'have'} `
-        + 'no value of its own for it.',
+      message: labels.length === 1
+        ? `This change also applies to variation #${labels[0]}, which has no value of its own for it.`
+        : `This change also applies to variations ${labels.map((label) => `#${label}`).join(', ')}, `
+          + 'which have no value of their own for it.',
       level: 'warning',
       position: 'tc',
       autoDismiss: 6,
