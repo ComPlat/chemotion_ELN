@@ -53,12 +53,6 @@ class Affiliation < ApplicationRecord
     match || value
   end
 
-  # Locks and destroys the row if no UserAffiliation references it anymore.
-  def self.destroy_if_orphaned!(id)
-    affiliation = lock.find_by(id: id)
-    affiliation&.destroy! if affiliation && UserAffiliation.where(affiliation_id: id).empty?
-  end
-
   def output_array_full
     [group, department, organization, country]
   end

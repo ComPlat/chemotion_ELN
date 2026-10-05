@@ -99,11 +99,7 @@ module Usecases
       def repoint(user_affiliation, affiliation, dates = {})
         duplicate = UserAffiliation.where(user_id: user_affiliation.user_id, affiliation_id: affiliation.id)
                                    .where.not(id: user_affiliation.id).exists?
-        old_affiliation_id = user_affiliation.affiliation_id
-        ActiveRecord::Base.transaction do
-          duplicate ? user_affiliation.destroy! : user_affiliation.update!(affiliation_id: affiliation.id, **dates)
-          Affiliation.destroy_if_orphaned!(old_affiliation_id) if old_affiliation_id != affiliation.id
-        end
+        duplicate ? user_affiliation.destroy! : user_affiliation.update!(affiliation_id: affiliation.id, **dates)
       end
 
       # Case/accent-insensitive comparison via Affiliation.normalize_key, done in
