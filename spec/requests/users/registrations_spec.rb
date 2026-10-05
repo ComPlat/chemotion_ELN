@@ -45,4 +45,18 @@ RSpec.describe 'User registration affiliation routing', type: :request do
 
     expect(User.find_by(email: 'kit@example.com').affiliations.map(&:organization)).to include('KIT')
   end
+
+  it 'files a suggestion when the signup country differs from the registry', :aggregate_failures do
+    Affiliation.create!(organization: 'KIT', department: 'IOC', country: 'Germany')
+
+    expect do
+      post user_registration_path, params: { user: base_params.merge(
+        email: 'fr@example.com', name_abbreviation: 'fr1',
+        affiliations_attributes: { '0' => { organization: 'KIT', country: 'France' } }
+      ) }
+    end.not_to change(Affiliation, :count)
+
+    expect(User.find_by(email: 'fr@example.com').affiliations).to be_empty
+    expect(AffiliationSuggestion.last).to have_attributes(organization: 'KIT', country: 'France')
+  end
 end

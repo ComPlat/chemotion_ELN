@@ -89,7 +89,8 @@ module Chemotion
       post do
         Usecases::Affiliations::UserAffiliations.new(current_user).create(declared(params, include_missing: false))
         status 201
-      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, ActiveRecord::RecordInvalid => e
+      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, Usecases::Affiliations::Errors::NotInRegistry,
+             ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
 
@@ -108,7 +109,8 @@ module Chemotion
         Usecases::Affiliations::UserAffiliations.new(current_user).update(declared(params, include_missing: false))
       rescue ActiveRecord::RecordNotFound
         error!({ error: 'Not found' }, 404)
-      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, ActiveRecord::RecordInvalid => e
+      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, Usecases::Affiliations::Errors::NotInRegistry,
+             ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
 

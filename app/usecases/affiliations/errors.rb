@@ -4,6 +4,7 @@ module Usecases
   module Affiliations
     module Errors
       class DuplicateAffiliation < StandardError; end
+      class NotInRegistry < StandardError; end
     end
   end
 end
