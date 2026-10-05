@@ -3,6 +3,7 @@ import expect from 'expect';
 import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
 import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
   from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -18,6 +19,93 @@ function randFromArray(array) {
 function randMaterialGroup() {
   return randFromArray(Reaction.materialGroups);
 }
+
+describe('Reaction solvent ratios — material lifecycle and checksums', () => {
+  const attributes = (id, value, unit, extra = {}) => ({
+    id, amountType: 'target', target_amount_value: value, target_amount_unit: unit,
+    molecule: { molecular_weight: 100 }, purity: 1, density: 0, molarity_value: 0,
+    gas_type: 'off', coefficient: 1, ...extra,
+  });
+  const build = () => new Reaction({
+    id: 91, short_label: 'reaction',
+    starting_materials: [attributes('reference', 0.001, 'mol', { reference: true })],
+    reactants: [], products: [], solvents: [attributes('existing', 0.01, 'l')],
+  });
+
+  ['addMaterial', 'addMaterialAt'].forEach((method) => {
+    it(`captures new solvents through ${method} and preserves existing ratios across Sample copies`, () => {
+      const reaction = build();
+      reaction.captureSolventReferenceRatios();
+      const added = new Sample(attributes('added', 0.005, 'l'));
+      const second = new Sample(attributes('second', 0.003, 'l'));
+      const add = (sample) => {
+        if (method === 'addMaterial') reaction.addMaterial(sample, 'solvents');
+        else reaction.addMaterialAt(sample, null, null, 'solvents');
+      };
+      add(added);
+      add(second);
+
+      expect(reaction.solvents.find((sample) => sample.id === added.id)).not.toBe(added);
+      expect(reaction.solvents.map((sample) => sample.referenceVolumeRatio)).toEqual([10, 5, 3]);
+      reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+      reaction.updateSolventVolumesForReference();
+      expect(reaction.solvents.map((sample) => sample.amount_l)).toEqual([0.02, 0.01, 0.006]);
+    });
+  });
+
+  it('recaptures a replaced solvent without changing other ratios while the reference is empty', () => {
+    const reaction = build();
+    reaction.solvents = [...reaction.solvents, attributes('other', 0.03, 'l')];
+    reaction.captureSolventReferenceRatios();
+    reaction.referenceMaterial.setAmount({ value: 0, unit: 'mol' });
+    reaction.updateMaterial(new Sample(attributes('existing', 0.02, 'l')));
+
+    expect(reaction.solvents[0].referenceVolumeRatioPending).toBe(true);
+    expect(reaction.solvents[1].referenceVolumeRatio).toBe(30);
+    reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+    expect(reaction.solvents[0].amount_l).toBe(0.02);
+    expect(reaction.solvents[1].amount_l).toBe(0.06);
+    reaction.referenceMaterial.setAmount({ value: 0.004, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+    expect(reaction.solvents[0].amount_l).toBe(0.04);
+    expect(reaction.solvents[1].amount_l).toBe(0.12);
+  });
+
+  it('preserves pending anchors when adding multiple solvents before the reference has an amount', () => {
+    const reaction = build();
+    reaction.referenceMaterial.setAmount({ value: 0, unit: 'mol' });
+    reaction.captureSolventReferenceRatios();
+    reaction.addMaterial(new Sample(attributes('added', 0.005, 'l')), 'solvents');
+
+    expect(reaction.solvents.every((sample) => sample.referenceVolumeRatioPending)).toBe(true);
+    reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+    expect(reaction.solvents.map((sample) => sample.amount_l)).toEqual([0.01, 0.005]);
+    reaction.referenceMaterial.setAmount({ value: 0.004, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+    expect(reaction.solvents.map((sample) => sample.amount_l)).toEqual([0.02, 0.01]);
+  });
+
+  ['l', 'g'].forEach((unit) => {
+    it(`excludes ratio bookkeeping from checksums for a ${unit} solvent while retaining real edits`, () => {
+      const reaction = build();
+      reaction.solvents = [attributes('solvent', unit === 'l' ? 0.01 : 0.5, unit)];
+      reaction.updateChecksum();
+      const checksum = reaction.checksum();
+      const solventChecksum = reaction.solvents[0].checksum();
+      reaction.captureSolventReferenceRatios();
+
+      expect(reaction.checksum()).toBe(checksum);
+      expect(reaction.solvents[0].checksum()).toBe(solventChecksum);
+      expect(reaction.isEdited).toBe(false);
+      expect(JSON.stringify(reaction)).not.toContain('referenceVolumeRatio');
+      reaction.name = 'edited name';
+      reaction.captureSolventReferenceRatios();
+      expect(reaction.isEdited).toBe(true);
+    });
+  });
+});
 
 describe('Reaction', () => {
   let reaction;

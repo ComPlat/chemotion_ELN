@@ -23,6 +23,22 @@ const hasSolventVolumeConversion = (solvent) => (
   solvent.amount_unit === 'l' || Number(solvent.density) > 0 || solvent.has_molarity
 );
 
+const SOLVENT_REFERENCE_RATIO_FIELDS = [
+  'referenceVolumeRatio', 'referenceVolumeRatioReferenceKey', 'referenceVolumeRatioPending',
+];
+
+const copySolventReferenceRatios = (source, target) => {
+  if (!source) return;
+  SOLVENT_REFERENCE_RATIO_FIELDS.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(source, field)) {
+      // Keep runtime ratios out of JSON and checksums, including when Sample setters clone them.
+      Object.defineProperty(target, field, {
+        value: source[field], enumerable: false, writable: true, configurable: true,
+      });
+    }
+  });
+};
+
 const solventAmountForVolume = (solvent, volumeL) => {
   const { amount_unit: unit } = solvent;
   if (unit === 'l') return volumeL;
@@ -684,6 +700,16 @@ export default class Reaction extends Element {
 
     this.rebuildReference(newMaterial);
     this.setPositions(group);
+    this.captureSolventRatioForMaterial(newMaterial, group);
+  }
+
+  captureSolventRatioForMaterial(material, group) {
+    if (group !== Reaction.SOLVENTS) return;
+
+    // Group setters store Sample copies. Capture only the actual added/replaced solvent;
+    // other ratios must survive a cleared reference. Locking later recaptures all solvents.
+    const solvent = this.solvents.find((sample) => sample.id === material.id);
+    if (solvent) this.captureSolventReferenceRatios([solvent]);
   }
 
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
@@ -714,6 +740,7 @@ export default class Reaction extends Element {
 
     this.rebuildReference(newSrcMaterial);
     this.setPositions(tagGp);
+    this.captureSolventRatioForMaterial(newSrcMaterial, tagGp);
   }
 
   deleteMaterial(material, group) {
@@ -789,9 +816,11 @@ export default class Reaction extends Element {
   }
 
   setPositions(group) {
-    this[group] = this[group].map((m, idx) => (
-      { ...m, position: idx }
-    ));
+    this[group] = this[group].map((material, position) => {
+      const positioned = { ...material, position };
+      copySolventReferenceRatios(material, positioned);
+      return positioned;
+    });
   }
 
   userLabels() {
@@ -949,7 +978,11 @@ export default class Reaction extends Element {
   }
 
   _coerceToSamples(samples) {
-    return samples && samples.map((s) => new Sample(s)) || [];
+    return samples && samples.map((source) => {
+      const sample = new Sample(source);
+      copySolventReferenceRatios(source, sample);
+      return sample;
+    }) || [];
   }
 
   _coerceToSbmmSamples(samples) {
@@ -1141,6 +1174,7 @@ export default class Reaction extends Element {
       i += 1;
     }
     this.refreshEquivalent(material, refreshCoefficient);
+    this.captureSolventRatioForMaterial(material, cats[i]);
   }
 
   refreshEquivalent(material, refreshCoefficient) {
@@ -1757,9 +1791,11 @@ export default class Reaction extends Element {
     const referenceKey = reference && JSON.stringify([isSbmmSample(reference), reference.id]);
 
     solvents.forEach((solvent) => {
-      delete solvent.referenceVolumeRatio;
-      solvent.referenceVolumeRatioReferenceKey = referenceKey;
-      solvent.referenceVolumeRatioPending = false;
+      copySolventReferenceRatios({
+        referenceVolumeRatio: undefined,
+        referenceVolumeRatioReferenceKey: referenceKey,
+        referenceVolumeRatioPending: false,
+      }, solvent);
       if (!hasSolventVolumeConversion(solvent)) return;
       if (!Number.isFinite(referenceMol) || referenceMol <= 0) {
         solvent.referenceVolumeRatioPending = true;

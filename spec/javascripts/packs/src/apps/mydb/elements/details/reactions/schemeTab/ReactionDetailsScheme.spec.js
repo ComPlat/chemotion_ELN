@@ -6,6 +6,11 @@ import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
@@ -2118,6 +2123,110 @@ describe('ReactionDetailsScheme — concentration edits preserve their volume ba
 });
 
 describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
+  const attributes = (id, value, unit, extra = {}) => ({
+    id, amountType: 'target', target_amount_value: value, target_amount_unit: unit,
+    molecule: { molecular_weight: 100 }, purity: 1, density: 0, molarity_value: 0,
+    gas_type: 'off', coefficient: 1, equivalent: 0, ...extra,
+  });
+  const buildModalContext = (unit = 'l') => {
+    const reaction = new Reaction({
+      id: 91, short_label: 'reaction',
+      starting_materials: [attributes('reference', 0.001, 'mol', { reference: true })],
+      reactants: [], products: [],
+      solvents: [
+        attributes('solvent', unit === 'l' ? 0.01 : 1, unit, { density: unit === 'g' ? 1 : 0 }),
+        attributes('other', 0.03, 'l'),
+      ],
+    });
+    const ctx = Object.create(ReactionDetailsScheme.prototype);
+    ctx.props = { reaction, onInputChange: sinon.spy(), onReactionChange: sinon.spy() };
+    ctx.state = { lockEquivColumn: true, displayYieldField: false, reactionDescTemplate: {} };
+    ctx.warnIfMixtureMassExceeded = sinon.spy();
+    ctx.renderPhConditionProperty = () => null;
+    ctx.reactionVesselSize = () => null;
+    ctx.reactionVolume = () => null;
+    ctx.renderRole = () => null;
+    return ctx;
+  };
+
+  ['target', 'real'].forEach((amountType) => {
+    ['l', 'g'].forEach((unit) => {
+      it(`preserves a ${unit} solvent after a ${amountType} modal save and scales it on the next reference edit`, () => {
+        const ctx = buildModalContext(unit);
+        const { reaction } = ctx.props;
+        reaction.captureSolventReferenceRatios();
+        const edited = reaction.solvents[0];
+        edited.amountType = amountType;
+        edited.setAmount({ value: unit === 'l' ? 0.02 : 2, unit });
+        const serverJson = JSON.parse(JSON.stringify(edited.serializeMaterial()));
+        serverJson.molecule = { molecular_weight: 100 };
+        serverJson.name = 'saved name';
+        reaction.editedSample = edited;
+        reaction.updateMaterial(new Sample(serverJson));
+        ctx.render();
+
+        const volume = unit === 'l' ? 0.02 : 0.002;
+        expect(reaction.solvents[0].amount_unit).toBe(unit);
+        expect(reaction.solvents[0].amount_l).toBeCloseTo(volume, 10);
+        expect(reaction.solvents[0].referenceVolumeRatio).toBeCloseTo(volume / 0.001, 10);
+        expect(reaction.solvents[1].referenceVolumeRatio).toBe(30);
+        reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+        ctx.propagateReferenceAmountChange(reaction.referenceMaterial);
+        expect(reaction.solvents[0].amount_l).toBeCloseTo(volume * 2, 10);
+        expect(reaction.solvents[1].amount_l).toBeCloseTo(0.06, 10);
+      });
+    });
+  });
+
+  it('captures a solvent created through ElementStore and retains its volume through the target render path', () => {
+    const ctx = buildModalContext();
+    const { reaction } = ctx.props;
+    reaction.captureSolventReferenceRatios();
+    const newSample = new Sample(attributes('created', 0.005, 'l'));
+    reaction.editedSample = newSample;
+    const store = { handleRefreshElements: sinon.spy(), changeCurrentElement: sinon.spy() };
+    const sandbox = sinon.createSandbox();
+    try {
+      sandbox.stub(UserActions, 'fetchCurrentUser');
+      sandbox.stub(ElementActions, 'handleSvgReactionChange');
+      ElementStore.StoreModel.prototype.handleCreateSampleForReaction.call(store, {
+        newSample, reaction, materialGroup: 'solvents',
+      });
+    } finally {
+      sandbox.restore();
+    }
+    ctx.render();
+    expect(reaction.solvents.find((sample) => sample.id === newSample.id).referenceVolumeRatio).toBe(5);
+    reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+    ctx.propagateReferenceAmountChange(reaction.referenceMaterial);
+    expect(reaction.solvents.find((sample) => sample.id === newSample.id).amount_l).toBe(0.01);
+    expect(reaction.solvents[0].amount_l).toBe(0.02);
+  });
+
+  ['mount', 'update'].forEach((lifecycle) => {
+    it(`does not change a clean reaction checksum when capturing locked ratios on ${lifecycle}`, () => {
+      const ctx = buildModalContext();
+      const { reaction } = ctx.props;
+      reaction.updateChecksum();
+      const checksum = reaction.checksum();
+      ctx.getReactionEquivLockState = () => true;
+      ctx.setState = (state) => { ctx.state = { ...ctx.state, ...state }; };
+      const sandbox = sinon.createSandbox();
+      try {
+        sandbox.stub(TextTemplateStore, 'listen');
+        sandbox.stub(TextTemplateActions, 'fetchTextTemplates');
+        if (lifecycle === 'mount') ctx.componentDidMount();
+        else ctx.componentDidUpdate({ reaction: {} });
+      } finally {
+        sandbox.restore();
+      }
+      expect(reaction.solvents[0].referenceVolumeRatio).toBe(10);
+      expect(reaction.checksum()).toBe(checksum);
+      expect(reaction.isEdited).toBe(false);
+      expect(reaction.isPendingToSave).toBe(false);
+    });
+  });
+
   [false, true].forEach((isSbmm) => {
     it(`recaptures ratios after selecting a ${isSbmm ? 'SBMM' : 'regular'} reference while locked`, () => {
       const sample = { id: 'new-ref', amount_mol: 0.002 };

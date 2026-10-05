@@ -1949,7 +1949,7 @@ export default class ReactionDetailsScheme extends React.Component {
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       const isUpdatedSample = isSameMaterial(sample, updatedSample);
-      if (isUpdatedSample && updatedSample.equivalent != null) {
+      if (isUpdatedSample && updatedSample.equivalent != null && materialGroup !== 'solvents') {
         sample.equivalent = updatedSample.equivalent;
         if (hasReferenceAmountMol && updatedSample.gas_type !== 'feedstock') {
           const newAmountMol = Number(updatedSample.equivalent) * referenceAmountMol;
@@ -2583,12 +2583,11 @@ export default class ReactionDetailsScheme extends React.Component {
         materialGroups.forEach((group) => {
           reaction[group] = this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
         });
-        if (lockEquivColumn) {
-          // The group loop above rebases non-solvents through their equivalents but skips
-          // solvents; derive their volumes from the (now updated) reference so a real-amount
-          // edit made in the sample-detail modal scales solvents too, matching the table path.
-          reaction.updateSolventVolumesForReference(reaction.editedSample);
-        }
+      }
+      if (lockEquivColumn) {
+        // Both modal paths preserve solvent amounts. Recapture the edited solvent's saved
+        // volume and derive the others after any reference change, matching the table path.
+        reaction.updateSolventVolumesForReference(reaction.editedSample);
       }
       reaction.editedSample = undefined;
     } else {
