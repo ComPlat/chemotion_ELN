@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe Versioning::Serializers::SampleSerializer do
+  let(:user) { create(:user) }
+
+  def as_request
+    Logidze.with_responsible!(user.id)
+    yield
+  ensure
+    Logidze.clear_responsible!
+  end
+
+  def xref_changes(sample, field)
+    sample_with_log_data = Sample.with_log_data.find(sample.id)
+    described_class.call(sample_with_log_data)
+                   .filter_map { |entry| entry[:changes]["xref.#{field}"] }
+                   .map { |change| change.values_at(:old_value, :new_value, :revertible_value) }
+  end
+
+  # jsonb_diff logs a removed object-valued sub-key as the marker string 'deleted'.
+  it 'treats a removed object-valued sub-key as gone rather than as the string "deleted"' do
+    sample = create(:sample, xref: { 'cas' => '7732-18-5', 'flash_point' => { 'value' => 12, 'unit' => '°C' } })
+    as_request { sample.update!(xref: { 'cas' => '7732-18-5' }) }
+    as_request { sample.update!(xref: { 'cas' => '64-17-5' }) }
+    as_request { sample.update!(xref: { 'cas' => '64-17-5', 'flash_point' => { 'value' => 13, 'unit' => '°C' } }) }
+
+    expect(xref_changes(sample, 'flash_point')).to eq(
+      [
+        [nil, 12, nil],
+        [12, nil, 12],
+        [nil, 13, nil],
+      ],
+    )
+  end
+end

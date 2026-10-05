@@ -155,7 +155,16 @@ module Versioning
 
         value = stringified_hash(value)
         previous_value = stringified_hash(previous_value)
-        previous_value.is_a?(Hash) && value.is_a?(Hash) ? previous_value.deep_merge(value) : value
+        previous_value.is_a?(Hash) && value.is_a?(Hash) ? merge_hashes(previous_value, value) : value
+      end
+
+      # Deep merge that honours jsonb_diff's marker for a removed object-valued sub-key ('deleted'), dropping
+      # the key instead of storing the marker as its value.
+      def merge_hashes(previous_value, value)
+        merged = previous_value.merge(value) do |_sub_key, old, new|
+          old.is_a?(Hash) && new.is_a?(Hash) ? merge_hashes(old, new) : new
+        end
+        merged.reject { |sub_key, new| new == 'deleted' && previous_value[sub_key].is_a?(Hash) }
       end
 
       def hash_column?(key)

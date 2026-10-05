@@ -66,6 +66,17 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
     )
   end
 
+  it 'keeps every sub-key change when one request saves the container more than once' do
+    container = create(:container, extended_metadata: { 'content' => content_before })
+    as_request do
+      edit_metadata(container, 'content' => content_after)
+      edit_metadata(container, 'status' => 'Confirmed')
+    end
+
+    expect(content_changes(container).last.values_at(:old_value, :new_value))
+      .to eq [JSON.parse(content_before), JSON.parse(content_after)]
+  end
+
   it 'surfaces clearing the whole column, even though the logged diff for it is empty' do
     container = create(:container, extended_metadata: { 'content' => content_before, 'status' => 'Confirmed' })
     as_request { container.update!(extended_metadata: {}) }
