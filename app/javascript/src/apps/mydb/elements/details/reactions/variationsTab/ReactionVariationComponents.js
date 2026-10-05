@@ -28,6 +28,8 @@ import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/sche
 import {
   getInitialColumnState,
   persistColumnState,
+  isHiddenByDefault,
+  persistUserColumnKinds,
   GROUP_ID_SEPARATOR
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import VariationsGridContext
@@ -784,13 +786,21 @@ const VariationSchemaTable = ({
 }) => {
   /*
   Seeded from the stored layout so the very first column definitions already carry the right `hide`
-  flags; the order is restored from the same state once the grid is ready.
+  flags; the order is restored from the same state once the grid is ready. A column the stored layout
+  does not know - a reaction without one, or a slot added since - starts as isHiddenByDefault says.
   */
-  const [hiddenColumns, setHiddenColumns] = useState(() => (
-    (getInitialColumnState(reactionId, currentSegmentName) ?? [])
-      .filter((column) => column.hide)
-      .map((column) => column.colId)
-  ));
+  const [hiddenColumns, setHiddenColumns] = useState(() => {
+    const storedState = getInitialColumnState(reactionId, currentSegmentName) ?? [];
+    const storedColIds = new Set(storedState.map((column) => column.colId));
+    const unknownColIds = buildColumnGroups(variations, currentSegmentName, currentSegment)
+      .flatMap((group) => group.columns.map((column) => column.colId))
+      .filter((colId) => !storedColIds.has(colId));
+
+    return [
+      ...storedState.filter((column) => column.hide).map((column) => column.colId),
+      ...unknownColIds.filter((colId) => isHiddenByDefault(colId, currentSegmentName)),
+    ];
+  });
   /*
   Unit a whole column has been switched to from its header, by column id. This is state of the grid
   rather than something read back from the materials on every render: the inputs seed their unit
@@ -865,7 +875,9 @@ const VariationSchemaTable = ({
       colIds.forEach((colId) => (hidden ? next.add(colId) : next.delete(colId)));
       return [...next];
     });
-  }, []);
+    // Also the user's choice for reactions that have no layout of their own yet.
+    persistUserColumnKinds(colIds, hidden, currentSegmentName);
+  }, [currentSegmentName]);
 
   /*
   Keeps each material's name cell at the left edge of the scrolled area for as long as its own group
@@ -1054,6 +1066,27 @@ const VariationSchemaTable = ({
   }, []);
 
   const columnGroups = buildColumnGroups(variations, currentSegmentName, currentSegment);
+
+  /*
+  A column that appears while the grid is open - the slot of a material added to the reaction - starts
+  as isHiddenByDefault says, like one the stored layout does not know.
+  */
+  const knownColIdsRef = useRef(null);
+  const colIdsKey = columnGroups.flatMap((group) => group.columns.map((column) => column.colId)).join(',');
+  useEffect(() => {
+    const colIds = colIdsKey ? colIdsKey.split(',') : [];
+    const known = knownColIdsRef.current;
+    knownColIdsRef.current = new Set(colIds);
+    if (!known) {
+      return;
+    }
+    const added = colIds.filter((colId) => !known.has(colId) && isHiddenByDefault(colId, currentSegmentName));
+    if (added.length > 0) {
+      gridApiRef.current?.setColumnsVisible(added, false);
+      setHiddenColumns((previous) => [...new Set([...previous, ...added])]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colIdsKey]);
 
   /*
   The pinned material column only ever shows the material of the slot currently at the left edge, so

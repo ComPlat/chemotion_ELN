@@ -11,7 +11,7 @@ import {
   makeVariationReaction, refreshConcentrations, addNewVariationDataset, parseVariationGroup,
   copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
   adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
-  exportVariationsToCsv
+  exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
 
@@ -399,6 +399,42 @@ describe('ReactionVariationsUtils', () => {
       } else {
         delete window.localStorage;
       }
+    });
+
+    /*
+    A reaction without a layout of its own starts compact, or with what the user last chose for each
+    kind of column - so the grid is not some twelve columns wide per material from the start.
+    */
+    describe('columns of a reaction without a layout of its own', () => {
+      it('takes a material column by its kind, without the slot', () => {
+        expect(columnKind('starting_materials_2_density')).toBe('starting_materials_density');
+        expect(columnKind('reaction_duration')).toBe('reaction_duration');
+      });
+
+      it('starts the scheme view with only the main material columns', () => {
+        ['mass', 'amount', 'eq', 'ref', 'name'].forEach((field) => {
+          expect(isHiddenByDefault(`starting_materials_0_${field}`)).toBe(false);
+        });
+        ['density', 'purity', 'molar_mass', 'volume', 'concn', 'coefficient'].forEach((field) => {
+          expect(isHiddenByDefault(`reactants_1_${field}`)).toBe(true);
+        });
+      });
+
+      it('keeps solvent, gas phase and reaction columns, and segment views as they are', () => {
+        expect(isHiddenByDefault('solvents_0_volume')).toBe(false);
+        expect(isHiddenByDefault('products_0_gas_ppm')).toBe(false);
+        expect(isHiddenByDefault('reaction_duration')).toBe(false);
+        expect(isHiddenByDefault('starting_materials_0_density', 'Some segment')).toBe(false);
+      });
+
+      it('follows what the user last chose for that kind of column, in any slot', () => {
+        persistUserColumnKinds(['starting_materials_0_density'], false);
+        persistUserColumnKinds(['products_0_mass'], true);
+
+        expect(isHiddenByDefault('starting_materials_3_density')).toBe(false);
+        expect(isHiddenByDefault('products_1_mass')).toBe(true);
+        expect(Object.keys(storage)).toEqual(['user7-reactionVariationsColumnKinds']);
+      });
     });
 
     it('keeps the scheme layout under the key it always had', () => {

@@ -484,6 +484,59 @@ const persistColumnState = (reactionId, columnState, view = SCHEMA_VIEW) => {
 };
 
 /*
+Which columns a reaction without a stored layout of its own starts with. A material takes some twelve
+columns, which makes the grid very wide, so the scheme view starts compact: the starting materials,
+reactants and products show their name, Ref, Mass, Amount and Eq or Yield, and everything else is a
+tick away in the column pickers.
+
+Whatever the user shows or hides there is also remembered per user - by kind of column, e.g. "density
+of a starting material" rather than the column of one slot - and a reaction without a layout of its
+own starts from that instead.
+*/
+const MATERIAL_COLUMN_ID = /^(starting_materials|reactants|products|solvents)_\d+_(.+)$/;
+const COMPACT_GROUPS = ['starting_materials', 'reactants', 'products'];
+const COMPACT_HIDDEN_FIELDS = ['tr', 'coefficient', 'volume', 'molar_mass', 'density', 'purity', 'loading', 'concn'];
+
+// The kind of a column: a material column without its slot, any other column as it is.
+const columnKind = (colId) => {
+  const match = MATERIAL_COLUMN_ID.exec(colId);
+  return match ? `${match[1]}_${match[2]}` : colId;
+};
+
+const isHiddenInCompactLayout = (kind, view) => view === SCHEMA_VIEW && COMPACT_GROUPS.some(
+  (group) => COMPACT_HIDDEN_FIELDS.some((field) => kind === `${group}_${field}`)
+);
+
+const getUserColumnKindsId = (view = SCHEMA_VIEW) => {
+  const { currentUser } = UserStore.getState();
+  const id = `user${currentUser?.id}-reactionVariationsColumnKinds`;
+  return view === SCHEMA_VIEW ? id : `${id}-segment-${view}`;
+};
+
+// Shown (false) or hidden (true), by column kind, as the user last set it.
+const getUserColumnKinds = (view = SCHEMA_VIEW) => {
+  try {
+    return JSON.parse(window.localStorage.getItem(getUserColumnKindsId(view))) || {};
+  } catch (e) {
+    return {};
+  }
+};
+
+const persistUserColumnKinds = (colIds, hidden, view = SCHEMA_VIEW) => {
+  try {
+    const kinds = getUserColumnKinds(view);
+    colIds.forEach((colId) => { kinds[columnKind(colId)] = hidden; });
+    window.localStorage.setItem(getUserColumnKindsId(view), JSON.stringify(kinds));
+  } catch (e) { /* ignore storage errors */ }
+};
+
+// Whether a column the reaction's own layout says nothing about starts hidden.
+const isHiddenByDefault = (colId, view = SCHEMA_VIEW, userKinds = getUserColumnKinds(view)) => {
+  const kind = columnKind(colId);
+  return userKinds[kind] ?? isHiddenInCompactLayout(kind, view);
+};
+
+/*
 What the variations table before the diff-based format kept in the browser, per user and reaction:
 
 - `…GridState` and `…Layout`: widths, order, sort, shown entries and units of its columns, keyed by
@@ -644,6 +697,9 @@ export {
   adoptLegacyVariationsLayout,
   getInitialColumnState,
   persistColumnState,
+  columnKind,
+  isHiddenByDefault,
+  persistUserColumnKinds,
   convertVariationDatasetToInternalVariations,
   addInternalVariationObject,
   addNewVariationDataset,
