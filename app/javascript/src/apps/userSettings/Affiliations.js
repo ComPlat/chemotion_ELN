@@ -202,6 +202,17 @@ function Affiliations() {
           setAffiliations((prev) => prev.map((r, i) => (i === index ? { ...r, disabled: false } : r)));
           return;
         }
+        if (result && result.message) {
+          rootStore.notificationsStore.add({
+            title: 'Affiliation request submitted',
+            message: result.message,
+            level: 'info',
+            position: 'tc',
+            dismissible: 'button',
+            autoDismiss: 5,
+          });
+          refreshSuggestions();
+        }
         getAllAffiliations();
       })
       .catch((error) => {
