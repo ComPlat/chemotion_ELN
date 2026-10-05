@@ -181,15 +181,22 @@ module Chemotion
         end
 
         # 400 for a path that is not a saved sheet, 404 when it is gone, 422 when the PDF cannot be
-        # read; a readable sheet that yields nothing is a 200 whose diagnostics say why.
+        # read, 503 when the PDF text service is busy, down or misconfigured (with Retry-After when
+        # known); a readable sheet that yields nothing is a 200 whose diagnostics say why.
         get do
           path = Chemotion::SdsExtractor.saved_sheet_path(params[:path])
           error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400) if path.nil?
           error!({ error: 'the safety data sheet is no longer on the server' }, 404) unless path.file?
 
           result = Chemotion::SdsExtractor.extract(path.to_s)
-          failure = result.dig('diagnostics', 'errors')&.first
-          error!({ error: failure, diagnostics: result['diagnostics'] }, 422) if failure
+          diagnostics = result['diagnostics']
+          failure = diagnostics&.dig('errors')&.first
+          if failure && diagnostics['service_unavailable']
+            retry_after = diagnostics['retry_after']
+            error!({ error: failure, diagnostics: diagnostics }, 503,
+                   retry_after ? { 'Retry-After' => retry_after.to_s } : {})
+          end
+          error!({ error: failure, diagnostics: diagnostics }, 422) if failure
           result
         rescue StandardError => e
           Rails.logger.error("extract_sds failed: #{e.class}: #{e.message}")
