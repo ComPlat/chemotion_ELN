@@ -184,6 +184,9 @@ end
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
+  # How much of a JCAMP file is read to find its dimension: the header labels come first.
+  JCAMP_HEADER_BYTES = 64 * 1024
+
   def jcamp_files_already_present?
     _first_part, extname = extension_parts
     return true  if filename.include?('processed_')
@@ -456,6 +459,57 @@ module AttachmentJcampProcess
     end
   end
 
+  # ChemSpectra reads a 1D curve out of a 2D NMR JCAMP and returns it as the spectrum. NMRium
+  # reads (and, for an FID, processes) the 2D data itself, and +failure+ is the state that keeps
+  # an upload out of the spectra editor but hands it to NMRium.
+  def leave_to_nmrium
+    set_failure if may_set_failure?
+    nil
+  end
+
+  # Whether the file is a JCAMP-DX holding NMR data in more than one dimension (a 2D FID or
+  # spectrum, e.g. +##DATA TYPE= nD NMR FID+ with +##NUM DIM= 2+).
+  #
+  # Labels are compared the JCAMP way (spaces, underscores, hyphens and slashes ignored, case
+  # folded), so +##NUM_DIM=+ and +##NUMDIM=+ count too. The data has to be NMR: an NMR data type or
+  # an observed nucleus. An explicit, numeric +NUM DIM+ decides the dimension. Without one, only a
+  # data type naming the dimension, such as +2D NMR SPECTRUM+, does: the generic +nD+ form can also
+  # hold 1D data, and JCAMP-DX 6 requires +NUM DIM+ with it.
+  #
+  # @return [Boolean] false for other extensions, for 1D or non-NMR data and when there is no file
+  def multi_dimensional_nmr_jcamp?
+    _, extname = extension_parts
+    return false unless %w[dx jdx jcamp].include?(extname.downcase)
+
+    path = abs_path
+    return false if path.blank? || !File.file?(path)
+
+    labels = jcamp_header_labels(File.open(path, 'rb') { |f| f.read(JCAMP_HEADER_BYTES) }.to_s)
+    data_types = labels.fetch('DATATYPE', [])
+    return false unless data_types.any? { |t| t.match?(/NMR/i) } || labels.key?('.OBSERVENUCLEUS')
+
+    # The first NUM DIM whose value starts with a whole number: an empty one, or one holding only a
+    # +$$+ comment, says nothing and leaves it to the data type (as ChemSpectra reads it too).
+    num_dim = labels['NUMDIM']&.filter_map { |value| value[/\A(\d+)(?:\s|\z)/, 1] }&.first
+    return num_dim.to_i > 1 if num_dim
+
+    data_types.any? { |t| t.match?(/\A[2-9]D\s*NMR/i) }
+  end
+
+  # @param header [String] the start of a JCAMP-DX file; a leading UTF-8 byte order mark and
+  #   indentation before +##+ are ignored
+  # @return [Hash{String => Array<String>}] every value of each +##LABEL=+, keyed by the label
+  #   normalised as JCAMP compares labels (no spaces, underscores, hyphens or slashes; upper case)
+  def jcamp_header_labels(header)
+    header = header.b.delete_prefix("\xEF\xBB\xBF".b)
+    header.split(/\r\n|\r|\n/).each_with_object({}) do |line, labels|
+      match = line.match(/\A\s*##([^=]+)=(.*)\z/)
+      next unless match
+
+      (labels[match[1].gsub(%r{[\s_\-/]}, '').upcase] ||= []) << match[2].strip
+    end
+  end
+
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
     data = generate_spectrum_data(params, is_regen)
@@ -560,6 +614,9 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
+    # Ahead of the sibling check below: a 2D file is never processed, so a JCAMP already in the
+    # dataset is no reason to leave it queueing (and out of NMRium).
+    return leave_to_nmrium if is_create && multi_dimensional_nmr_jcamp?
     return if is_create && !is_regen && jcamp_files_already_present?
 
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
