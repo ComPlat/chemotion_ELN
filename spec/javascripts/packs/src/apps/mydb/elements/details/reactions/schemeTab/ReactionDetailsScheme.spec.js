@@ -1477,8 +1477,7 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
 // component must clear that transient state BEFORE dependents are rebased (so they rebase on the
 // settled molar amount), include SBMM reactants in the rebase like every sibling amount path, derive
 // the new amount from the unchanged mixture mass, and scale solvents / refresh concentrations under
-// lock. Real Sample and Component instances exercise the getters, setAmount, and previous_amount
-// restore that stubs would otherwise hide.
+// lock. Real Sample and Component instances exercise amount conversions and component updates.
 describe('ReactionDetailsScheme reference mixture component switch (real Sample)', () => {
   const massG = 1000.124;
   const icosaneRelMW = 2825825.158875;
@@ -1708,16 +1707,15 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
         try {
           // A new reaction may have no store entry; also cover a stale locked entry after unlocking.
           if (!lockEquivColumn) ComponentActions.toggleReactionEquivLock(true, reaction.id);
-          const locked = sandbox.spy(scheme, 'handleReferenceComponentChangeWithLockedEquiv');
-          const unlocked = sandbox.spy(scheme, 'handleReferenceComponentChangeWithUnlockedEquiv');
+          const updates = sandbox.spy(mixture, 'updateMixtureComponentAmounts');
           const getter = sandbox.spy(mixture, 'getLockReactionEquivColumn');
           const refresh = sandbox.spy(reaction, 'updateAllConcentrations');
 
           scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 'r2' });
 
           expect(reaction.isNew).toBe(true);
-          expect(locked.calledOnce).toBe(lockEquivColumn);
-          expect(unlocked.calledOnce).toBe(!lockEquivColumn);
+          expect(updates.calledOnceWith(1)).toBe(true);
+          expect(mixture.amount_unit).toBe(lockEquivColumn ? 'g' : unit);
           expect(getter.called).toBe(true);
           expect(getter.returnValues.every((value) => value === lockEquivColumn)).toBe(true);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
@@ -1744,8 +1742,9 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
     const reaction = new Reaction({
       starting_materials: [sample('reference', 0.01, 'mol', { reference: true })],
       reactants: [
-        sample('mixture', unit === 'g' ? 1 : 0.02, unit, {
-          sample_type: 'Mixture', equivalent: 2, sample_details: { reference_component_changed: false },
+        sample('mixture', { g: 1, mol: 0.02, l: 0.001 }[unit], unit, {
+          sample_type: 'Mixture', density: 1, equivalent: 2,
+          sample_details: { reference_component_changed: false },
         }),
         sample('dependent', 0.02, 'mol', { equivalent: 2 }),
       ],
@@ -1771,14 +1770,14 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
       it(`persists the settled ${unit} mixture on reaction save with lock=${lockEquivColumn}`, () => {
         const { reaction, mixture, scheme } = build(unit, lockEquivColumn);
         scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 'r2' });
-        expect(mixture.sample_details.reference_component_changed).toBe(true);
+        expect(mixture.sample_details.reference_component_changed).toBe(false);
         const checksum = mixture.checksum();
 
         // Save the reaction directly, without going through the sample editor.
         const payload = JSON.parse(JSON.stringify(reaction.serialize()));
         const savedMixture = payload.materials.reactants[0];
         expect(savedMixture.sample_details.reference_component_changed).toBe(false);
-        expect(mixture.sample_details.reference_component_changed).toBe(true);
+        expect(mixture.sample_details.reference_component_changed).toBe(false);
         expect(mixture.checksum()).toBe(checksum);
 
         const reopened = new Reaction({ ...payload, ...payload.materials });
@@ -1814,6 +1813,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
 
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
+          expect(mixture.sample_details.reference_component_changed).toBe(false);
           expect(mixture.equivalent).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
@@ -1824,6 +1824,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
 
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.02, 10);
+          expect(mixture.sample_details.reference_component_changed).toBe(false);
           expect(mixture.equivalent).toBeCloseTo(2, 10);
           expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
@@ -1844,6 +1845,68 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
       expect(reaction.reactants[0].equivalent).toBeCloseTo(1, 10);
       expect(reaction.reactants[1].amount_mol).toBeCloseTo(0.04, 10);
       expect(reaction.solvents[0].amount_l).toBeCloseTo(0.02, 10);
+    });
+  });
+
+  ['g', 'mol', 'l'].forEach((unit) => {
+    [true, false].forEach((lockEquivColumn) => {
+      it(`settles a ${unit} mixture once without moving internal solvent volumes with lock=${lockEquivColumn}`, () => {
+        const { mixture, scheme } = build(unit, lockEquivColumn);
+        // Loaded components can describe the stock while the sample is a smaller reaction portion.
+        mixture.components.forEach((component) => { component.amount_mol *= 10; });
+        mixture.solvent = [{ amount_l: 0.0005 }];
+        const updates = sinon.spy(mixture, 'updateMixtureComponentAmounts');
+        try {
+          ['r2', 'r1'].forEach((componentId) => {
+            updates.resetHistory();
+            scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId });
+
+            expect(updates.calledOnceWith(1)).toBe(true);
+            expect(mixture.sample_details.reference_component_changed).toBe(false);
+            expect(mixture.amount_unit).toBe(lockEquivColumn ? 'g' : unit);
+            expect(mixture.amount_g).toBeCloseTo(1, 10);
+            expect(mixture.amount_l).toBeCloseTo(0.001, 10);
+            expect(mixture.amount_mol).toBeCloseTo(componentId === 'r2' ? 0.01 : 0.02, 10);
+            expect(mixture.equivalent).toBeCloseTo(componentId === 'r2' ? 1 : 2, 10);
+            expect(mixture.components[0].amount_mol).toBeCloseTo(0.02, 10);
+            expect(mixture.components[1].amount_mol).toBeCloseTo(0.01, 10);
+            expect(mixture.solvent[0].amount_l).toBeCloseTo(0.0005, 10);
+          });
+        } finally {
+          updates.restore();
+        }
+      });
+    });
+  });
+
+  ['g', 'mol'].forEach((unit) => {
+    [true, false].forEach((lockEquivColumn) => {
+      it(`keeps a zero ${unit} amount on a component switch with lock=${lockEquivColumn}`, () => {
+        const { mixture, scheme } = build(unit, lockEquivColumn);
+        mixture.amount_value = 0;
+
+        scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 'r2' });
+
+        expect(mixture.amount_g).toBe(0);
+        expect(mixture.amount_mol).toBe(0);
+        expect(mixture.equivalent).toBe(0);
+        expect(mixture.components.every((component) => component.amount_mol === 0)).toBe(true);
+        expect(mixture.sample_details.reference_component_changed).toBe(false);
+      });
+
+      it(`retains ${unit} mass with no selected component relative MW and lock=${lockEquivColumn}`, () => {
+        const { mixture, scheme } = build(unit, lockEquivColumn);
+        mixture.components[1].relative_molecular_weight = 0;
+
+        scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 'r2' });
+
+        expect(mixture.reference_component.id).toBe('r2');
+        expect(mixture.amount_unit).toBe('g');
+        expect(mixture.amount_g).toBeCloseTo(1, 10);
+        expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
+        expect(mixture.equivalent).toBeCloseTo(1, 10);
+        expect(mixture.sample_details.reference_component_changed).toBe(false);
+      });
     });
   });
 });

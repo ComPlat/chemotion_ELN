@@ -1177,7 +1177,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     const { lockEquivColumn } = this.state;
-    // Sample getters consult the store. Align it with the UI before taking snapshots,
+    // Sample getters consult the store. Align it with the UI before reading the mass,
     // including for a new reaction's temporary ID, so the whole switch uses one lock state.
     if (this.getReactionEquivLockState(reaction) !== lockEquivColumn) {
       ComponentActions.toggleReactionEquivLock(lockEquivColumn, reaction.id);
@@ -1191,6 +1191,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const mixtureMassG = Number(updatedSample.amount_g);
     const referenceComponent = updatedSample.components[referenceComponentIndex];
     const relativeWeight = Number(referenceComponent.relative_molecular_weight);
+    const canDeriveAmount = Number.isFinite(mixtureMassG) && mixtureMassG >= 0
+      && Number.isFinite(relativeWeight) && relativeWeight > 0;
+    const newAmountMol = canDeriveAmount ? mixtureMassG / relativeWeight : undefined;
 
     // Set the reference component to true and all others to false
     updatedSample.components.forEach((component, index) => {
@@ -1198,14 +1201,11 @@ export default class ReactionDetailsScheme extends React.Component {
       component.reference = (index === referenceComponentIndex);
     });
 
-    // Derive both snapshots explicitly from the pre-switch mass. For mol-stored mixtures,
-    // reading amount_g or amount_mol after selecting the new reference uses the old mol value
-    // with the new relative MW and would change the mixture mass.
-    updatedSample.sample_details.reference_component_changed = false;
+    // Keep legacy snapshots consistent, but derive the settled amount without consulting them.
     if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {
       updatedSample.sample_details.previous_amount_g = mixtureMassG;
-      if (Number.isFinite(relativeWeight) && relativeWeight > 0) {
-        updatedSample.sample_details.previous_amount_mol = mixtureMassG / relativeWeight;
+      if (canDeriveAmount) {
+        updatedSample.sample_details.previous_amount_mol = newAmountMol;
       }
     }
 
@@ -1218,23 +1218,36 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
 
-    // For a mixture that is NOT the reaction's reference material, leave the "changed" flag set
-    // so its amount stays derived from the new reference until the next save. The
-    // reaction-reference branch below clears it right away so the amount settles immediately.
-    updatedSample.sample_details.reference_component_changed = true;
+    // Assign the final stored amount before updating components. Locked switches retain
+    // gram normalization; unlocked switches retain the stored unit, including mol and volume.
+    if (canDeriveAmount) {
+      if (lockEquivColumn) {
+        updatedSample.amount_value = mixtureMassG;
+        updatedSample.amount_unit = 'g';
+      } else if (updatedSample.amount_unit === 'mol') {
+        updatedSample.amount_value = newAmountMol;
+      }
+    } else if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {
+      // Without a usable relative MW, retain the physical mass in grams. The mol getter
+      // falls back to the selected component's amount without a transient flag.
+      updatedSample.amount_value = mixtureMassG;
+      updatedSample.amount_unit = 'g';
+    }
+    updatedSample.sample_details.reference_component_changed = false;
+    if (canDeriveAmount) {
+      // The mass did not change: do not scale internal solvent volumes from stale component amounts.
+      updatedSample.updateMixtureComponentAmounts(mixtureMassG);
+    }
 
-    // Perform calculations when the reference component changes
-    this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent, lockEquivColumn);
+    const { referenceMaterial } = reaction;
+    if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
+      updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
+    }
 
     // If the updated sample is the reference material, update equivalents of all other samples
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
     // other samples' equivalents are recalculated, just like when amount_g or amount_l changes
-    if (reaction.referenceMaterial && isSameMaterial(updatedSample, reaction.referenceMaterial)) {
-      // This mixture is the reaction's reference. Clear the "changed" flag so its amount settles
-      // to mass / new reference relMW before we rebase the other samples and refresh
-      // concentrations. render() does not refresh concentrations while equivalents are locked.
-      updatedSample.sample_details.reference_component_changed = false;
-
+    if (referenceMaterial && isSameMaterial(updatedSample, referenceMaterial)) {
       // Include SBMM reactant samples so their amounts rebase against the new reference amount,
       // matching every other reference-amount-changing path (amount and concentration edits).
       const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
@@ -1251,93 +1264,6 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.changed = true;
 
     return reaction;
-  }
-
-  /**
-   * When the reference component changes, adjust only derived values:
-   * - Set sample's effective amount_mol to the reference component's amount_mol
-   *   (via `reference_component_changed` so getters use it).
-   * - For a non-reference sample, recalculate `equivalent` against the reaction
-   *   reference, including under lock: switching the component changes the molar
-   *   basis of the same physical mixture rather than editing its amount.
-   *
-   * Note: Mass (amount_g) and volume (amount_l) remain unchanged.
-   *
-   * @param {Sample} updatedSample - The mixture sample being updated.
-   * @param {Component} referenceComponent - The new reference component.
-   * @param {boolean} lockEquivColumn - The lock state captured for this operation.
-   */
-  calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent, lockEquivColumn) {
-    if (!updatedSample || !referenceComponent) {
-      console.warn('Missing sample or reference component for calculation');
-      return;
-    }
-
-    const { reaction } = this.props;
-    if (!reaction) return;
-
-    if (lockEquivColumn) {
-      this.handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent, reaction);
-    } else {
-      this.handleReferenceComponentChangeWithUnlockedEquiv(updatedSample, referenceComponent, reaction);
-    }
-  }
-
-  /**
-   * Handles reference component change when equivalent is locked.
-   * Keeps the pre-switch mass, derives amount_mol from the selected component, and
-   * refreshes the equivalent for a non-reference mixture on the new molar basis.
-   * @param {Sample} updatedSample - The mixture sample being updated
-   * @param {Component} referenceComponent - The new reference component
-   * @param {Reaction} reaction - The reaction containing the sample
-   */
-  // eslint-disable-next-line class-methods-use-this
-  handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent, reaction) {
-    const preservedAmountG = updatedSample.sample_details?.previous_amount_g;
-    const newRelMolWeight = Number(referenceComponent.relative_molecular_weight);
-
-    if (Number.isFinite(preservedAmountG) && preservedAmountG >= 0
-        && Number.isFinite(newRelMolWeight) && newRelMolWeight > 0) {
-      // Normalize directly: setAmount would snapshot the getters under the new reference
-      // as a user amount edit and overwrite the explicitly preserved pre-switch mass.
-      updatedSample.amount_value = preservedAmountG;
-      updatedSample.amount_unit = 'g';
-      updatedSample.updateMixtureComponentAmounts();
-
-      const referenceMaterial = reaction?.referenceMaterial;
-      if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
-        updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
-      }
-    }
-  }
-
-  /**
-   * Handles reference component change when equivalent is NOT locked.
-   * Recalculates amount_mol from preserved amount_g and updates equivalent.
-   * @param {Sample} updatedSample - The mixture sample being updated
-   * @param {Component} referenceComponent - The new reference component
-   * @param {Reaction} reaction - The reaction containing the sample
-   */
-  // eslint-disable-next-line class-methods-use-this
-  handleReferenceComponentChangeWithUnlockedEquiv(updatedSample, referenceComponent, reaction) {
-    const preservedAmountG = updatedSample.sample_details?.previous_amount_g;
-    const newRelMolWeight = referenceComponent.relative_molecular_weight;
-
-    if (updatedSample.amount_unit === 'mol' && Number.isFinite(preservedAmountG) && preservedAmountG > 0
-      && newRelMolWeight && newRelMolWeight > 0) {
-      // Calculate new amount_mol from preserved amount_g and new reference component's relMolWeight
-      const newAmountMol = preservedAmountG / newRelMolWeight;
-      updatedSample.amount_value = newAmountMol;
-    } else if (updatedSample.amount_unit === 'mol' && referenceComponent.amount_mol != null) {
-      // Fallback: use reference component's amount_mol if we can't calculate from preserved amount_g
-      updatedSample.amount_value = referenceComponent.amount_mol;
-    }
-
-    // Calculate equivalent relative to the reaction's reference material since the amount_mol gets updated
-    const referenceMaterial = reaction?.referenceMaterial;
-    if (referenceMaterial?.amount_mol > 0) {
-      updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
-    }
   }
 
   updatedReactionForVesselSizeChange(changeEvent) {

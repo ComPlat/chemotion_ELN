@@ -26,8 +26,7 @@ module Reactable # rubocop:disable Metrics/ModuleLength
     PER_HOUR: 'TON/h',
   }.freeze
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
-  def update_equivalent
+  def update_equivalent # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
        !reference && !weight_percentage_reference
       ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
@@ -114,7 +113,6 @@ module Reactable # rubocop:disable Metrics/ModuleLength
     # Persist equivalent using update! so model validations run
     update!(equivalent: equivalent_value)
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
 
   def detect_amount_type
     target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?

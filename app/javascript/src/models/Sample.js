@@ -813,12 +813,12 @@ export default class Sample extends Element {
 
   /**
    * Updates component and solvent data for a mixture.
+   * @param {number} [previousMassG] - Mass represented by the current internal solvent volumes.
    * @returns {void}
    */
-  updateMixtureComponentAmounts() {
+  updateMixtureComponentAmounts(previousMassG = this.mixtureComponentMassG) {
     if (!this.isMixture() || !this.hasComponents()) return;
 
-    const previousMassG = this.mixtureComponentMassG;
     this.updateComponentAmounts();
     this.updateSolventVolumes(previousMassG);
   }
