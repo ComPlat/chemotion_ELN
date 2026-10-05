@@ -3,8 +3,8 @@
 module Usecases
   module Affiliations
     # CRUD for the current user's affiliations. Reuses an existing Affiliation
-    # row when the normalized attributes already exist, and cleans up an
-    # Affiliation once no user references it.
+    # row when the normalized attributes already exist; registry rows are kept
+    # even when no user references them.
     class UserAffiliations
       ROR_ID_FORMAT = /\A0[a-z0-9]{6}\d{2}\z/.freeze
 
@@ -26,12 +26,7 @@ module Usecases
       end
 
       def destroy(params)
-        user_affiliation = scope.find(params[:id])
-        affiliation_id = user_affiliation.affiliation_id
-        ActiveRecord::Base.transaction do
-          user_affiliation.destroy!
-          Affiliation.destroy_if_orphaned!(affiliation_id)
-        end
+        scope.find(params[:id]).destroy!
       end
 
       private

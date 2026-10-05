@@ -181,15 +181,23 @@ RSpec.describe Chemotion::AffiliationAPI do
       allow(warden_instance).to receive(:current_user).and_return(user)
     end
 
-    it 'removes the orphaned affiliation once no user references it', :aggregate_failures do
+    it 'keeps the registry entry after its last user leaves', :aggregate_failures do
       user_affiliation = UserAffiliation.create!(user: user, affiliation: affiliation)
 
       expect do
         delete "/api/v1/affiliations/#{user_affiliation.id}"
-      end.to change(Affiliation, :count).by(-1)
+      end.not_to change(Affiliation, :count)
 
       expect(response).to have_http_status(:ok)
-      expect(Affiliation.find_by(id: affiliation.id)).to be_nil
+      expect(user.user_affiliations).to be_empty
+    end
+
+    it 'keeps the old registry entry when an edit moves the user elsewhere' do
+      Affiliation.create!(organization: 'KIT', department: 'ITC')
+      user_affiliation = UserAffiliation.create!(user: user, affiliation: affiliation)
+
+      put '/api/v1/affiliations', params: { id: user_affiliation.id, organization: 'KIT', department: 'ITC' }
+      expect(Affiliation.exists?(affiliation.id)).to be(true)
     end
 
     it 'keeps the affiliation while another user still references it' do
