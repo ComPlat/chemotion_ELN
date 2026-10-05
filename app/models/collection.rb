@@ -348,8 +348,13 @@ class Collection < ApplicationRecord
 
   private
 
+  # Flag samples only when the collection gets its first labelled inventory. Moving a collection
+  # to another inventory or resetting its label leaves the samples' inventory flag untouched.
   def add_inventory_sample_if_inventory_added
-    return unless saved_change_to_inventory_id? && inventory_id.present?
+    return unless saved_change_to_inventory_id?
+
+    previous_id, new_id = saved_change_to_inventory_id
+    return unless previous_id.nil? && new_id.present? && inventory&.prefix.present?
 
     samples.where(inventory_sample: [false, nil]).update_all(inventory_sample: true)
   end
