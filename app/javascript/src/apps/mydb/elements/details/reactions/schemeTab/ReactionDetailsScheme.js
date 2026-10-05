@@ -1249,9 +1249,9 @@ export default class ReactionDetailsScheme extends React.Component {
    * When the reference component changes, adjust only derived values:
    * - Set sample's effective amount_mol to the reference component's amount_mol
    *   (via `reference_component_changed` so getters use it).
-   * - If the parent sample is NOT the reaction reference and a valid
-   *   reaction reference material exists, recalculate `equivalent` as
-   *   `sample.amount_mol / reaction.referenceMaterial.amount_mol`.
+   * - For a non-reference sample, recalculate `equivalent` against the reaction
+   *   reference, including under lock: switching the component changes the molar
+   *   basis of the same physical mixture rather than editing its amount.
    *
    * Note: Mass (amount_g) and volume (amount_l) remain unchanged.
    *
@@ -1277,7 +1277,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     if (lockEquivColumn) {
-      this.handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent);
+      this.handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent, reaction);
     } else {
       this.handleReferenceComponentChangeWithUnlockedEquiv(updatedSample, referenceComponent, reaction);
     }
@@ -1285,12 +1285,14 @@ export default class ReactionDetailsScheme extends React.Component {
 
   /**
    * Handles reference component change when equivalent is locked.
-   * Keeps the pre-switch mass and equivalent, deriving amount_mol from the selected component.
+   * Keeps the pre-switch mass, derives amount_mol from the selected component, and
+   * refreshes the equivalent for a non-reference mixture on the new molar basis.
    * @param {Sample} updatedSample - The mixture sample being updated
    * @param {Component} referenceComponent - The new reference component
+   * @param {Reaction} reaction - The reaction containing the sample
    */
   // eslint-disable-next-line class-methods-use-this
-  handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent) {
+  handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent, reaction) {
     const preservedAmountG = updatedSample.sample_details?.previous_amount_g;
     const newRelMolWeight = Number(referenceComponent.relative_molecular_weight);
 
@@ -1301,6 +1303,11 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.amount_value = preservedAmountG;
       updatedSample.amount_unit = 'g';
       updatedSample.updateMixtureComponentAmounts();
+
+      const referenceMaterial = reaction?.referenceMaterial;
+      if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
+        updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
+      }
     }
   }
 

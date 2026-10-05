@@ -1712,6 +1712,96 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
   });
 });
 
+describe('ReactionDetailsScheme non-reference mixture component switch', () => {
+  const build = (unit, lockEquivColumn) => {
+    const sample = (id, value, amountUnit, extra = {}) => ({
+      id, amountType: 'target', target_amount_value: value, target_amount_unit: amountUnit,
+      molecule: { molecular_weight: 100 }, purity: 1, density: 0,
+      molarity_value: 0, gas_type: 'off', coefficient: 1, ...extra,
+    });
+    const reaction = new Reaction({
+      starting_materials: [sample('reference', 0.01, 'mol', { reference: true })],
+      reactants: [
+        sample('mixture', unit === 'g' ? 1 : 0.02, unit, {
+          sample_type: 'Mixture', equivalent: 2, sample_details: { reference_component_changed: false },
+        }),
+        sample('dependent', 0.02, 'mol', { equivalent: 2 }),
+      ],
+      solvents: [sample('solvent', 0.01, 'l')],
+      products: [],
+    });
+    const mixture = reaction.reactants[0];
+    mixture.initialComponents([
+      new Component({ id: 'r1', position: 0, reference: true, amount_mol: 0.02, relative_molecular_weight: 50 }),
+      new Component({ id: 'r2', position: 1, reference: false, amount_mol: 0.01, relative_molecular_weight: 100 }),
+    ]);
+    mixture.getLockReactionEquivColumn = () => lockEquivColumn;
+    reaction.captureSolventReferenceRatios();
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn };
+    scheme.getReactionEquivLockState = () => lockEquivColumn;
+    return { reaction, mixture, scheme };
+  };
+
+  ['g', 'mol'].forEach((unit) => {
+    [true, false].forEach((lockEquivColumn) => {
+      ['handler', 'UI'].forEach((path) => {
+        it(`refreshes the equivalent of a ${unit} mixture via ${path} with lock=${lockEquivColumn}`, () => {
+          const { reaction, mixture, scheme } = build(unit, lockEquivColumn);
+          const switchReference = (componentId) => {
+            const event = { type: 'componentReferenceChanged', sampleID: mixture.id, componentId };
+            if (path === 'handler') {
+              scheme.updatedReactionForComponentReferenceChange(event);
+            } else {
+              const row = new Material({
+                material: mixture, materialGroup: 'reactants',
+                onChange: (change) => scheme.updatedReactionForComponentReferenceChange(change),
+              });
+              row.setState = (state) => { row.state = { ...row.state, ...state }; };
+              row.fetchMixtureComponentsIfNeeded(mixture);
+              row.handleComponentReferenceChange(event);
+            }
+          };
+
+          switchReference('r2');
+
+          expect(mixture.amount_g).toBeCloseTo(1, 10);
+          expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
+          expect(mixture.equivalent).toBeCloseTo(1, 10);
+          expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);
+          expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
+          expect(reaction.reactants[1].amount_mol).toBeCloseTo(0.02, 10);
+          expect(reaction.solvents[0].amount_l).toBeCloseTo(0.01, 10);
+
+          switchReference('r1');
+
+          expect(mixture.amount_g).toBeCloseTo(1, 10);
+          expect(mixture.amount_mol).toBeCloseTo(0.02, 10);
+          expect(mixture.equivalent).toBeCloseTo(2, 10);
+          expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);
+          expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
+          expect(reaction.solvents[0].amount_l).toBeCloseTo(0.01, 10);
+        });
+      });
+    });
+
+    it(`uses the refreshed equivalent for the next locked ${unit} mixture amount edit`, () => {
+      const { reaction, mixture, scheme } = build(unit, true);
+      scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 'r2' });
+
+      mixture.setAmount({ value: 2, unit: 'g' });
+      scheme.propagateReferenceAmountChange(mixture);
+
+      expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.02, 10);
+      expect(reaction.reactants[0].amount_mol).toBeCloseTo(0.02, 10);
+      expect(reaction.reactants[0].equivalent).toBeCloseTo(1, 10);
+      expect(reaction.reactants[1].amount_mol).toBeCloseTo(0.04, 10);
+      expect(reaction.solvents[0].amount_l).toBeCloseTo(0.02, 10);
+    });
+  });
+});
+
 describe('ReactionDetailsScheme mixture amounts and internal solvents', () => {
   const build = (unit, group) => {
     const material = (id, value, amountUnit, extra = {}) => ({

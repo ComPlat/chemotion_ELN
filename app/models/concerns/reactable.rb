@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Reactable module
-module Reactable
+module Reactable # rubocop:disable Metrics/ModuleLength
   extend ActiveSupport::Concern
 
   IDEAL_GAS_CONSTANT = 0.0821
@@ -26,6 +26,7 @@ module Reactable
     PER_HOUR: 'TON/h',
   }.freeze
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
   def update_equivalent
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
        !reference && !weight_percentage_reference
@@ -42,9 +43,26 @@ module Reactable
     end
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
-    return if ref_record.nil? ||
-              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE ||
-              ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+    return if ref_record.nil?
+
+    # Gas equivalents use gas-phase data, not the reference sample's molar amount.
+    if gas_type == 'gas'
+      return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
+
+      temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
+      return update!(equivalent: calculate_equivalent_for_gas_material(
+        sample.purity || 1,
+        temperature_in_kelvin,
+        gas_phase_data['ppm'],
+      ))
+    end
+
+    # Preserve client-calculated mixture stoichiometry only when it depends on the
+    # reaction reference. A weight-percentage-reference product uses its own amounts.
+    uses_reaction_reference = !is_a?(ReactionsProductSample) || !weight_percentage_reference
+    return if uses_reaction_reference &&
+              (sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE ||
+               ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE)
 
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
@@ -86,27 +104,17 @@ module Reactable
       amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
       ref_amount = condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
     end
-    if gas_type == 'gas'
-      return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
+    # compute equivalent safely (avoid calling `zero?` on nil)
+    equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
+                         0
+                       else
+                         amount / ref_amount
+                       end
 
-      temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
-      update!(equivalent: calculate_equivalent_for_gas_material(
-        sample.purity || 1,
-        temperature_in_kelvin,
-        gas_phase_data['ppm'],
-      ))
-    else
-      # compute equivalent safely (avoid calling `zero?` on nil)
-      equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
-                           0
-                         else
-                           amount / ref_amount
-                         end
-
-      # Persist equivalent using update! so model validations run
-      update!(equivalent: equivalent_value)
-    end
+    # Persist equivalent using update! so model validations run
+    update!(equivalent: equivalent_value)
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
 
   def detect_amount_type
     target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
