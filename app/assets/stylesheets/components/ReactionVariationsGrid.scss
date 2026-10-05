@@ -29,6 +29,14 @@
 .reaction-variations-grid {
   width: 100%;
 
+  // The Scheme tab's fixed width for this input cuts "100.0%" off in a grid cell; there it fills the cell.
+  .ag-cell .reaction-material__volume-ratio-data {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
   &__simple-mode {
       .ag-cell .reaction-material__iupac-name {
         display: None !important;
