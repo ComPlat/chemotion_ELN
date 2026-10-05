@@ -116,6 +116,12 @@ const refreshConcentrations = (variationReaction, { releasePreserved = false } =
 const makeVariationReaction = (reaction, reactionData) => {
   const clonedReaction = deepPatch(reaction, reactionData);
   clonedReaction.variations = [];
+  /*
+  The duration display is a cache the durationDisplay getter derives from `_duration`. Copied from
+  the parent, it shows the parent's duration; patched from an older diff, which held only the keys
+  that changed, it lacks its unit. Dropped, it is derived from the row's own `_duration`.
+  */
+  delete clonedReaction._durationDisplay;
 
   clonedReaction.id = reactionData.id || uuid.v4();
   ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'].forEach((key) => {
@@ -327,13 +333,14 @@ Analyses stay on the parent reaction.
 
 Nor the concentrations: makeVariationReaction works them out from the row's amounts and volume on
 every rebuild (see refreshConcentrations), and `preserveConcentration` only matters during an edit.
+Nor the duration display, which is derived from `_duration` the same way.
 */
 const variationDiffOf = (reaction, variationReaction) => diffObjects(
   reaction,
   variationReaction,
   [
     '_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container',
-    'concn', 'preserveConcentration',
+    'concn', 'preserveConcentration', '_durationDisplay',
   ]
 );
 

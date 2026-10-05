@@ -111,6 +111,47 @@ describe('ReactionVariationsUtils', () => {
   `concn` is not stored, and the scheme tab only works it out for the reaction it renders - so a row
   has to derive its own, from its own amounts and volume, or the grid shows 0 or the parent's values.
   */
+  /*
+  The duration display is a cache of `_duration`. A row rebuilt with the parent's cache, or with the
+  partial one older diffs held, lost its unit or showed the parent's duration.
+  */
+  describe('duration of a variation', () => {
+    let reaction;
+    beforeEach(async () => {
+      reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      reaction.duration = '5 Minute(s)';
+      // As loaded: the display is worked out from the duration when first read.
+      delete reaction._durationDisplay;
+    });
+
+    it('is derived from its own duration, not the display the parent has worked out', () => {
+      expect(reaction.durationDisplay.dispUnit).toBe('Minute(s)');
+      const variationReaction = makeVariationReaction(reaction, { _duration: '2 Hour(s)' });
+
+      expect(variationReaction.durationDisplay.dispValue).toBe('2');
+      expect(variationReaction.durationUnit).toBe('Hour(s)');
+    });
+
+    it('keeps its unit when an older diff holds only part of the display', () => {
+      const diff = {
+        _duration: '2 Hour(s)',
+        _durationDisplay: { dispValue: '2', memValue: '2' },
+      };
+      const variationReaction = makeVariationReaction(reaction, diff);
+
+      expect(variationReaction.durationUnit).toBe('Hour(s)');
+    });
+
+    it('is stored as the duration alone', () => {
+      const variationReaction = makeVariationReaction(reaction, {});
+      variationReaction.durationDisplay = { nextValue: '3' };
+
+      const diff = variationDiffOf(reaction, variationReaction);
+      expect(diff._duration).toBe('3 Minute(s)');
+      expect(diff).not.toHaveProperty('_durationDisplay');
+    });
+  });
+
   describe('concentrations of a variation', () => {
     let reaction;
     beforeEach(async () => {
