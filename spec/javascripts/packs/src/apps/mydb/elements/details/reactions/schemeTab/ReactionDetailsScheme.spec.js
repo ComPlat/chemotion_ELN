@@ -5,6 +5,7 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
@@ -265,9 +266,7 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
     expect(reaction.findReactionSample.calledWith('shared-id', true)).toBe(true);
     expect(regularSample.amountType).toBe('target');
     expect(sbmmSample.amountType).toBe('real');
-    expect(propagateReferenceAmountChange.calledOnceWith(
-      sbmmSample, undefined, true
-    )).toBe(true);
+    expect(propagateReferenceAmountChange.calledOnceWithExactly(sbmmSample)).toBe(true);
   });
 });
 
@@ -2082,14 +2081,20 @@ describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
     });
   });
 
-  it('captures only the newly added solvent while locked', () => {
-    const sample = { id: 'added-solvent' };
-    const reaction = { captureSolventReferenceRatios: sinon.spy() };
+  it('captures the stored solvent instance (not the detached input) while locked', () => {
+    // addMaterialAt stores a fresh Sample copy, so captureAddedSolventRatio must resolve the
+    // stored solvent by id and capture on it, not on the detached input object.
+    const input = { id: 'added-solvent' };
+    const stored = { id: 'added-solvent' };
+    const reaction = { solvents: [stored], captureSolventReferenceRatios: sinon.spy() };
     const ctx = { props: { reaction }, getReactionEquivLockState: () => true };
 
-    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, sample, 'solvents');
+    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, input, 'solvents');
 
-    expect(reaction.captureSolventReferenceRatios.calledOnceWith([sample])).toBe(true);
+    expect(reaction.captureSolventReferenceRatios.calledOnce).toBe(true);
+    const captured = reaction.captureSolventReferenceRatios.firstCall.args[0];
+    expect(captured[0]).toBe(stored);
+    expect(captured[0]).not.toBe(input);
   });
 
   it('does not capture added solvents while unlocked or added reagents', () => {
@@ -2099,5 +2104,62 @@ describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
     ctx.getReactionEquivLockState = () => true;
     ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, {}, 'reactants');
     expect(reaction.captureSolventReferenceRatios.called).toBe(false);
+  });
+
+  // End-to-end regression over a real Reaction: addMaterialAt runs the solvents setter
+  // (_coerceToSamples -> new Sample), which is what detaches the added sample from the stored
+  // one. Proves the added solvent actually scales on a later reference change, while an
+  // existing solvent's ratio is left untouched.
+  it('scales a solvent added via real addMaterialAt when the reference later changes', () => {
+    const makeSample = (props) => {
+      const sample = new Sample(props);
+      sample.amountType = 'real';
+      return sample;
+    };
+    // molecular_weight 1 so amount_mol (g) == amount_value: 1 g -> 1 mol, 2 g -> 2 mol.
+    const reference = makeSample({
+      molecule: { molecular_weight: 1 },
+      reference: true,
+      real_amount_value: 1,
+      real_amount_unit: 'g',
+    });
+    const existingSolvent = makeSample({ real_amount_value: 20, real_amount_unit: 'l' });
+
+    const reaction = new Reaction({
+      starting_materials: [reference],
+      reactants: [],
+      products: [],
+      solvents: [existingSolvent],
+      purification_solvents: [],
+    });
+
+    // The solvents/starting_materials setters coerced to fresh Sample copies, so resolve the
+    // stored instances by id for everything that follows.
+    const storedRef = reaction.starting_materials.find((s) => s.reference);
+    expect(storedRef.amount_mol).toBeCloseTo(1, 9);
+
+    // Seed existing solvent's ratio at lock time (20 L / 1 mol).
+    reaction.captureSolventReferenceRatios();
+    const existingId = reaction.solvents[0].id;
+    expect(reaction.solvents[0].referenceVolumeRatio).toBeCloseTo(20, 9);
+
+    // Add a new solvent while locked, then capture via the component handler.
+    const addedInput = makeSample({ real_amount_value: 5, real_amount_unit: 'l' });
+    reaction.addMaterialAt(addedInput, null, null, 'solvents');
+    const ctx = { props: { reaction }, getReactionEquivLockState: () => true };
+    ReactionDetailsScheme.prototype.captureAddedSolventRatio.call(ctx, addedInput, 'solvents');
+
+    const storedAdded = reaction.solvents.find((s) => s.id === addedInput.id);
+    expect(storedAdded.referenceVolumeRatio).toBeCloseTo(5, 9); // 5 L / 1 mol
+
+    // Double the reference amount (1 -> 2 mol) and rescale.
+    storedRef.real_amount_value = 2;
+    reaction.updateSolventVolumesForReference();
+
+    const existingAfter = reaction.solvents.find((s) => s.id === existingId);
+    const addedAfter = reaction.solvents.find((s) => s.id === addedInput.id);
+    expect(addedAfter.amount_l).toBeCloseTo(10, 9); // 5 * (2 / 1)
+    expect(existingAfter.amount_l).toBeCloseTo(40, 9); // 20 * (2 / 1)
+    expect(existingAfter.referenceVolumeRatio).toBeCloseTo(20, 9); // ratio unchanged
   });
 });

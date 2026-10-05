@@ -209,8 +209,14 @@ export default class ReactionDetailsScheme extends React.Component {
 
   captureAddedSolventRatio(sample, materialGroup) {
     if (materialGroup === 'solvents' && this.getReactionEquivLockState(this.props.reaction)) {
-      // Capture only the added solvent; existing ratios must survive a cleared reference.
-      this.props.reaction.captureSolventReferenceRatios([sample]);
+      // addMaterialAt stores a fresh Sample copy (set solvents -> _coerceToSamples -> new Sample),
+      // so `sample` is detached from the solvent now in the reaction. Resolve the stored solvent by
+      // id and capture on it; otherwise the stored solvent keeps no ratio and the next locked
+      // reference edit leaves it unscaled. Capture only the added one; existing ratios must survive.
+      const addedSolvent = (this.props.reaction.solvents || []).find((solvent) => solvent.id === sample.id);
+      if (addedSolvent) {
+        this.props.reaction.captureSolventReferenceRatios([addedSolvent]);
+      }
     }
   }
 

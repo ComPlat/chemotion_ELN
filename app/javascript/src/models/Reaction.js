@@ -977,6 +977,8 @@ export default class Reaction extends Element {
     this.reactant_sbmm_samples.forEach((sample) => {
       sample.reference = false;
     });
+
+    this.captureSolventReferenceRatios();
   }
 
   /**
@@ -995,6 +997,8 @@ export default class Reaction extends Element {
     this.reactant_sbmm_samples.forEach((sample) => {
       sample.reference = sample.id === sampleID;
     });
+
+    this.captureSolventReferenceRatios();
   }
 
   markWeightPercentageSampleAsReference(sampleID) {
@@ -1013,6 +1017,7 @@ export default class Reaction extends Element {
   _setAsReferenceMaterial(sample) {
     sample.equivalent = 1;
     sample.reference = true;
+    this.captureSolventReferenceRatios();
   }
 
   _updateEquivalentForMaterial(sample) {
@@ -1642,27 +1647,43 @@ export default class Reaction extends Element {
    * reference in effect BEFORE a reference edit, so they are seeded by
    * captureSolventReferenceRatios (on lock, and on load/reload while locked) rather than
    * reconstructed here from the already-updated reference. referenceVolumeRatio is a
-   * transient field (not serialized).
+   * transient field (not serialized). Ratios belong to a reference ID and sample type.
+   * Mass/mole solvents without density are left alone, and scaling preserves the stored unit.
    *
    * @param {Sample} [editedSample] - the sample the user just changed, if any.
    * @returns {void}
    */
   updateSolventVolumesForReference(editedSample) {
-    const referenceMol = Number(this.referenceMaterial?.amount_mol);
+    const reference = this.referenceMaterial;
+    const referenceMol = Number(reference?.amount_mol);
+    const referenceKey = reference && JSON.stringify([isSbmmSample(reference), reference.id]);
 
     (this.solvents || []).forEach((solvent) => {
+      if (solvent.amount_unit !== 'l' && !(Number(solvent.density) > 0)) {
+        delete solvent.referenceVolumeRatio;
+        return;
+      }
+
       const isEditedSolvent = solvent.id != null
         && editedSample?.id != null
-        && solvent.id === editedSample.id;
+        && solvent.id === editedSample.id
+        && isSbmmSample(solvent) === isSbmmSample(editedSample);
 
       // The edited solvent keeps the volume the user just typed, and its ratio is recaptured
       // from it (the reference did not move). A zero volume is captured too, so a deliberate
       // clear sticks instead of being resurrected by the next reference edit.
       if (isEditedSolvent) {
-        const volumeL = Number(solvent.amount_l);
-        if (referenceMol > 0 && Number.isFinite(volumeL)) {
-          solvent.referenceVolumeRatio = volumeL / referenceMol;
-        }
+        this.captureSolventReferenceRatios([solvent]);
+        return;
+      }
+
+      // A different reference cannot reuse the old ratio, including when regular and
+      // SBMM references share an ID. Keep the volume and anchor against the new reference.
+      // After selecting an empty reference, its first positive amount establishes the ratio.
+      if ((solvent.referenceVolumeRatioReferenceKey !== undefined
+          && solvent.referenceVolumeRatioReferenceKey !== referenceKey)
+        || (solvent.referenceVolumeRatioPending && referenceMol > 0)) {
+        this.captureSolventReferenceRatios([solvent]);
         return;
       }
 
@@ -1671,7 +1692,13 @@ export default class Reaction extends Element {
       // from the post-edit reference, which would bake in the wrong ratio.
       if (!(referenceMol > 0) || !Number.isFinite(solvent.referenceVolumeRatio)) return;
 
-      solvent.setAmount({ value: solvent.referenceVolumeRatio * referenceMol, unit: 'l' });
+      const volumeL = solvent.referenceVolumeRatio * referenceMol;
+      const unit = solvent.amount_unit;
+      const value = unit === 'l'
+        ? volumeL
+        : solvent.convertGramToUnit(volumeL * Number(solvent.density) * 1000, unit);
+      if (!Number.isFinite(value)) return;
+      solvent.setAmount({ value, unit });
 
       if (solvent.isMixture && solvent.isMixture() && solvent.hasComponents && solvent.hasComponents()) {
         solvent.updateMixtureComponentAmounts();
@@ -1687,18 +1714,31 @@ export default class Reaction extends Element {
    * Capturing here (before any reference edit) is what makes the derivation in
    * updateSolventVolumesForReference correct: the denominator is the reference amount that
    * the current volumes were set against. A zero volume is captured as a zero ratio so an
-   * empty solvent stays empty. Solvents are skipped while the reference amount is not
-   * positive, since the ratio is undefined then.
+   * empty solvent stays empty. An empty reference clears the old ratio; its first positive
+   * amount anchors the current solvent volume without scaling it. Mass/mole solvents without
+   * density cannot supply a volume ratio and are left untouched.
    *
    * @param {Sample[]} [solvents] - capture only these solvents when adding new materials.
    * @returns {void}
    */
   captureSolventReferenceRatios(solvents = this.solvents || []) {
-    const referenceMol = Number(this.referenceMaterial?.amount_mol);
-    if (!(referenceMol > 0)) return;
+    const reference = this.referenceMaterial;
+    const referenceMol = Number(reference?.amount_mol);
+    const referenceKey = reference && JSON.stringify([isSbmmSample(reference), reference.id]);
 
     solvents.forEach((solvent) => {
-      const volumeL = Number(solvent.amount_l);
+      delete solvent.referenceVolumeRatio;
+      solvent.referenceVolumeRatioReferenceKey = referenceKey;
+      solvent.referenceVolumeRatioPending = false;
+      if (solvent.amount_unit !== 'l' && !(Number(solvent.density) > 0)) return;
+      if (!Number.isFinite(referenceMol) || referenceMol <= 0) {
+        solvent.referenceVolumeRatioPending = true;
+        return;
+      }
+
+      const volumeL = solvent.amount_unit === 'l'
+        ? Number(solvent.amount_l)
+        : Number(solvent.amount_g) / (Number(solvent.density) * 1000);
       if (Number.isFinite(volumeL)) {
         solvent.referenceVolumeRatio = volumeL / referenceMol;
       }
