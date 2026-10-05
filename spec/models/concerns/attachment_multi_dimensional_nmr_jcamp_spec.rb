@@ -123,6 +123,16 @@ RSpec.describe Attachment, '#multi_dimensional_nmr_jcamp?' do
       expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be true
     end
 
+    it 'falls back to the data type when NUM DIM holds only a comment' do
+      text = nd_fid.sub('##NUM DIM= 2', '##NUM DIM= $$ see below').gsub('nD NMR FID', '2D NMR FID')
+      expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be true
+    end
+
+    it 'reads a NUM DIM followed by a comment' do
+      text = nd_fid.sub('##NUM DIM= 2', '##NUM DIM= 2 $$ two axes').gsub('nD NMR FID', 'NMR FID')
+      expect(jcamp_upload('a.dx', text).multi_dimensional_nmr_jcamp?).to be true
+    end
+
     it 'does not take the generic nD data type alone for 2D' do
       expect(jcamp_upload('a.dx', nd_fid.sub("##NUM DIM= 2\n", '')).multi_dimensional_nmr_jcamp?).to be false
     end

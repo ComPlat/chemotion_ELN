@@ -472,7 +472,7 @@ module AttachmentJcampProcess
   #
   # Labels are compared the JCAMP way (spaces, underscores, hyphens and slashes ignored, case
   # folded), so +##NUM_DIM=+ and +##NUMDIM=+ count too. The data has to be NMR: an NMR data type or
-  # an observed nucleus. An explicit, non-empty +NUM DIM+ decides the dimension. Without one, only a
+  # an observed nucleus. An explicit, numeric +NUM DIM+ decides the dimension. Without one, only a
   # data type naming the dimension, such as +2D NMR SPECTRUM+, does: the generic +nD+ form can also
   # hold 1D data, and JCAMP-DX 6 requires +NUM DIM+ with it.
   #
@@ -488,7 +488,9 @@ module AttachmentJcampProcess
     data_types = labels.fetch('DATATYPE', [])
     return false unless data_types.any? { |t| t.match?(/NMR/i) } || labels.key?('.OBSERVENUCLEUS')
 
-    num_dim = labels['NUMDIM']&.first.presence
+    # The first NUM DIM whose value starts with a whole number: an empty one, or one holding only a
+    # +$$+ comment, says nothing and leaves it to the data type (as ChemSpectra reads it too).
+    num_dim = labels['NUMDIM']&.filter_map { |value| value[/\A(\d+)(?:\s|\z)/, 1] }&.first
     return num_dim.to_i > 1 if num_dim
 
     data_types.any? { |t| t.match?(/\A[2-9]D\s*NMR/i) }
