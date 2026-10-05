@@ -11,7 +11,7 @@ import { FN } from '@complat/react-spectra-editor';
 import {
   cleaningNMRiumData, isSpectrum2D, spectrumName,
   isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
-  entryUrl, urlToEntry, findAttachmentForRef,
+  entryUrl, urlToEntry, findAttachmentForRef, hasEmbeddedData,
 } from 'src/utilities/SpectraHelper';
 
 // The NMRium schema version of a document this wrapper saved flat - without `version` and without the
@@ -519,8 +519,6 @@ export default class NMRiumDisplayer extends React.Component {
     // while these documents went through NMRium's version-0 migrations.
     if (Array.isArray(root.sources) && root.sources.length > 0) {
       const items = [...(root.spectra || []), ...(root.molecules || [])];
-      const hasEmbeddedData = (item) => item?.data && typeof item.data === 'object'
-        && Object.keys(item.data).length > 0;
       const isWholeFileSource = (source) => Array.isArray(source?.entries) && source.entries.length > 0
         && source.entries.every((entry) => {
           const url = entryUrl(entry);
@@ -657,15 +655,33 @@ export default class NMRiumDisplayer extends React.Component {
       const spectrumZipUrlWithFile = spectrumZipUrl ? `${spectrumZipUrl}/file.zip` : undefined;
       let spectrumSourceUrl = (isZipBased && spectrumZipUrlWithFile) || preferredUrl;
 
-      if (!isZipBased) {
+      // The fallback below hands a spectrum the dataset's first JCAMP when none is its own. A
+      // spectrum that carries its data and is 2D, or has no source at all, opens from that data
+      // instead: the cleaning pass would register the borrowed file as its source and drop the
+      // data. A 2D spectrum with no data left can only be read again from a file, but never from
+      // ChemSpectra's 1D .peak/.edit derivatives: it falls back onto a raw upload, or is left alone.
+      let fallbackJdxUrl = jdxUrl;
+      let keepOwnSource = false;
+      if (!isZipBased && !match) {
+        if (hasEmbeddedData(s) && (isSpectrum2D(s) || !oldUrl)) {
+          keepOwnSource = true;
+        } else if (isSpectrum2D(s)) {
+          const raw = jcampSpectra.find((c) => !/\.(peak|edit)\.[^.]+$/i.test(c.label || ''));
+          if (raw) fallbackJdxUrl = `${raw.url}/file.${this.getFileExtension(raw.label) || 'jdx'}`;
+          else keepOwnSource = true;
+        }
+      }
+
+      if (!isZipBased && !keepOwnSource) {
         if (!s.source || typeof s.source !== 'object') s.source = {};
         const ext = this.getFileExtension(oldUrl)
           || this.getFileExtension(match?.label)
           || (jcampSpectra.length === 1 ? this.getFileExtension(jcampSpectra[0].label) : '')
           || 'jdx';
-        const fallbackJcampUrl = match
-          ? `${match.url}/file.${ext}`
-          : (jdxUrl ? `${jdxUrl}/file.${ext}` : jdxUrlWithFile);
+        let fallbackJcampUrl;
+        if (match) fallbackJcampUrl = `${match.url}/file.${ext}`;
+        else if (fallbackJdxUrl !== jdxUrl) fallbackJcampUrl = fallbackJdxUrl;
+        else fallbackJcampUrl = jdxUrl ? `${jdxUrl}/file.${ext}` : jdxUrlWithFile;
         if (fallbackJcampUrl) {
           s.source.jcampURL = fallbackJcampUrl;
           spectrumSourceUrl = fallbackJcampUrl;
@@ -675,7 +691,9 @@ export default class NMRiumDisplayer extends React.Component {
         }
       }
 
-      if (sourceRoot?.entries?.[0]) {
+      // The document-wide source is left as it is for a spectrum keeping its own source, for the
+      // same reason: re-pointed, it would stand in for that spectrum's data.
+      if (sourceRoot?.entries?.[0] && !keepOwnSource) {
         const sourceUrl = new URL(spectrumSourceUrl);
         sourceRoot.entries[0].relativePath = sourceUrl.pathname;
         sourceRoot.entries[0].baseURL = sourceUrl.origin;
