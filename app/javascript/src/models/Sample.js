@@ -426,6 +426,12 @@ export default class Sample extends Element {
 
   buildChildWithoutCounter() {
     const splitSample = this.clone();
+    if (this.isMixture()) {
+      // A reaction portion must not rescale the stock's components or internal solvents.
+      splitSample.components = _.cloneDeep(this.components);
+      splitSample.sample_details = _.cloneDeep(this.sample_details);
+      splitSample.solvent = _.cloneDeep(this.solvent);
+    }
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
     splitSample.starting_molarity_value = this.molarity_value;
@@ -810,10 +816,17 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateMixtureComponentAmounts() {
-    if (!(this.isMixture && this.hasComponents)) return;
+    if (!this.isMixture() || !this.hasComponents()) return;
 
+    const previousMassG = this.mixtureComponentMassG;
     this.updateComponentAmounts();
-    this.updateSolventVolumes();
+    this.updateSolventVolumes(previousMassG);
+  }
+
+  /** Mass represented by the component amounts before the next amount assignment. */
+  get mixtureComponentMassG() {
+    const referenceComponent = this.reference_component;
+    return Number(referenceComponent?.amount_mol) * Number(referenceComponent?.relative_molecular_weight);
   }
 
   /**
@@ -830,6 +843,7 @@ export default class Sample extends Element {
       if (!Number.isFinite(relMw) || relMw <= 0) return;
 
       component.amount_mol = totalMassG / relMw;
+      component.updatePhysicalAmounts?.();
     });
   }
 
@@ -837,18 +851,17 @@ export default class Sample extends Element {
    * Scales solvent volumes (L) relative to change in total mass.
    * @returns {void}
    */
-  updateSolventVolumes() {
-    // Scale solvent volumes based on change in total mass (amount_g)
-    // Uses factor = current amount_g / previous_amount_g, if previous is provided
-    const prevAmountG = this.sample_details && Number(this.sample_details.previous_amount_g);
-
+  updateSolventVolumes(previousMassG) {
+    // Component amounts describe the mass already represented by the current volumes.
+    // After updating them, a repeated call has a factor of 1. Reference-switch snapshots
+    // remain untouched and are not reused as a scaling baseline on subsequent edits.
     if (
       Array.isArray(this.solvent)
-      && Number.isFinite(prevAmountG)
-      && prevAmountG > 0
+      && Number.isFinite(previousMassG)
+      && previousMassG > 0
       && Number.isFinite(this.amount_g) && this.amount_g >= 0
     ) {
-      const scaleFactor = this.amount_g / prevAmountG;
+      const scaleFactor = this.amount_g / previousMassG;
       this.solvent.forEach((solvent) => {
         const baseVolumeL = Number(solvent && solvent.amount_l);
         if (Number.isFinite(baseVolumeL)) {
@@ -943,7 +956,7 @@ export default class Sample extends Element {
 
   /**
    * Handles mixture-specific logic when amount changes.
-   * Captures previous state, clears reference_component_changed flag, and updates component amounts.
+   * Captures previous state and clears the reference_component_changed flag.
    * @returns {void}
    */
   handleMixtureAmountChange() {
@@ -953,17 +966,11 @@ export default class Sample extends Element {
     // For mixture samples, always capture the previous state before changing amount
     this.storePreviousAmountState();
     this.sample_details.reference_component_changed = false;
-
-    // Update mixture components' amount_mol based on new total mass and reference component
-    this.updateMixtureComponentAmounts();
   }
 
   /**
    * Sets the amount and unit for the sample.
-   * For mixture samples with components, automatically triggers recalculation of:
-   * - Component volumes (when setting liters)
-   * - Mixture density (when setting liters)
-   * - Component relative molecular weights (when setting grams)
+   * For mixtures, updates components and internal solvents after assigning the final amount.
    *
    * @param {Object} amount - The amount object containing value and unit
    * @param {number} amount.value - The numeric value of the amount
@@ -982,6 +989,7 @@ export default class Sample extends Element {
     // Set the basic amount properties
     this.amount_value = amount.value;
     this.amount_unit = amount.unit;
+    if (this.isMixture()) this.updateMixtureComponentAmounts();
   }
 
   /**
@@ -1116,6 +1124,7 @@ export default class Sample extends Element {
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
+    if (this.isMixture()) this.updateMixtureComponentAmounts();
   }
 
   setMetrics(metrics) {
@@ -1861,7 +1870,7 @@ export default class Sample extends Element {
     // updates the mass and density
     // Note: calculateTotalMixtureMass() sets amount_unit to 'g' and amount_value to mass,
     // so we need to restore volume values after it runs
-    this.calculateTotalMixtureMass();
+    this.calculateTotalMixtureMass({ totalVolumeL: totalVolume });
 
     // Restore volume values after mass calculation
     // This ensures amount_l getter returns the correct volume value
@@ -2152,6 +2161,10 @@ export default class Sample extends Element {
       // editor derives total mass from those same component amounts in calculateTotalMixtureMass.
       // Ensure a default reference is set (first by position) and ratios updated
       this.updateMixtureComponentEquivalent();
+      if (this.parent_id != null) {
+        // Older reaction children persisted portion moles alongside stock masses/volumes.
+        this.components.forEach((component) => component.updatePhysicalAmounts?.());
+      }
     }
 
     // Update checksum AFTER all initialization calculations are complete
@@ -2761,7 +2774,7 @@ export default class Sample extends Element {
    * - If at least one component is liquid, also calculates and stores mixture density (g/ml) as
    *   total_mixture_mass_g/total_volume in the sample.
    */
-  calculateTotalMixtureMass() {
+  calculateTotalMixtureMass({ totalVolumeL: editedTotalVolumeL } = {}) {
     this.initializeSampleDetails();
 
     if (!this.isMixture()) {
@@ -2790,9 +2803,20 @@ export default class Sample extends Element {
 
     // --- Step 2: Determine total/solvent volume info ---
     // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
-    const totalVolumeL = (this.sample_details.total_mixture_volume_l != null)
+    let totalVolumeL = editedTotalVolumeL ?? ((this.sample_details.total_mixture_volume_l != null)
       ? this.sample_details.total_mixture_volume_l
-      : (this.amount_l || 0);
+      : (this.amount_l || 0));
+    const storedMassG = Number(this.total_mixture_mass_g);
+    const portionMassG = Number(this.amount_g);
+    if (editedTotalVolumeL === undefined && this.parent_id != null
+      && this.sample_details.total_mixture_volume_l != null
+      && Number.isFinite(storedMassG) && storedMassG > 0
+      && Number.isFinite(portionMassG) && portionMassG >= 0) {
+      // The cloned total volume describes the stock. Match it to the portion's component
+      // masses before calculating a new total and relative MWs in the composition editor.
+      totalVolumeL *= portionMassG / storedMassG;
+      this.sample_details.total_mixture_volume_l = totalVolumeL;
+    }
     const totalVolumeML = (parseFloat(totalVolumeL) || 0) * 1000;
     const hasTotalVolume = totalVolumeML > 0;
     const hasSolvents = Array.isArray(this.solvent) && this.solvent.length > 0;

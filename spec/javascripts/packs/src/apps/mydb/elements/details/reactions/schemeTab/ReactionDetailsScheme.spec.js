@@ -1712,6 +1712,85 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
   });
 });
 
+describe('ReactionDetailsScheme mixture amounts and internal solvents', () => {
+  const build = (unit, group) => {
+    const material = (id, value, amountUnit, extra = {}) => ({
+      id, amountType: 'target', target_amount_value: value, target_amount_unit: amountUnit,
+      molecule: { molecular_weight: 100 }, purity: 1, density: 0,
+      molarity_value: 0, gas_type: 'off', coefficient: 1, ...extra,
+    });
+    const reaction = new Reaction({
+      starting_materials: [material('reference', 0.001, 'mol', { reference: true })],
+      reactants: [], solvents: [], products: [],
+      [group]: [material('mixture', unit === 'g' ? 1 : 0.01, unit, {
+        sample_type: 'Mixture', density: 1, equivalent: 10,
+        sample_details: { reference_component_changed: false, previous_amount_g: 0.25, previous_amount_mol: 0.0025 },
+        solvent: [{ amount_l: 0.0005 }],
+      })],
+    });
+    reaction[group][0].initialComponents([new Component({
+      id: 'component', reference: true, position: 0, material_group: 'solid',
+      relative_molecular_weight: 100, amount_mol: 0.01, amount_g: 0.5,
+      molecule: { molecular_weight: 50 },
+    })]);
+    reaction.captureSolventReferenceRatios();
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn: true };
+    return { reaction, scheme };
+  };
+
+  ['g', 'mol'].forEach((unit) => {
+    ['solvents', 'reactants'].forEach((group) => {
+      it(`updates a ${unit} mixture in ${group} once per final amount, without compounding internal volumes`, () => {
+        const { reaction, scheme } = build(unit, group);
+        const updates = sinon.spy(Sample.prototype, 'updateMixtureComponentAmounts');
+        try {
+          [0.002, 0.004, 0.001].forEach((referenceMol) => {
+            updates.resetHistory();
+            reaction.referenceMaterial.setAmount({ value: referenceMol, unit: 'mol' });
+            scheme.propagateReferenceAmountChange(reaction.referenceMaterial);
+
+            const mixture = reaction[group][0];
+            const expectedMass = referenceMol / 0.001;
+            expect(updates.calledOnce).toBe(true);
+            expect(mixture.amount_g).toBeCloseTo(expectedMass, 10);
+            expect(mixture.components[0].amount_mol).toBeCloseTo(expectedMass / 100, 10);
+            expect(mixture.components[0].amount_g).toBeCloseTo(expectedMass / 2, 10);
+            expect(mixture.solvent[0].amount_l).toBeCloseTo(expectedMass * 0.0005, 10);
+            expect(mixture.sample_details.previous_amount_g).toBe(0.25);
+            expect(mixture.sample_details.previous_amount_mol).toBe(0.0025);
+
+            // A second synchronization at the same amount cannot multiply the volume again.
+            mixture.updateMixtureComponentAmounts();
+            expect(mixture.solvent[0].amount_l).toBeCloseTo(expectedMass * 0.0005, 10);
+          });
+        } finally {
+          updates.restore();
+        }
+      });
+    });
+  });
+
+  it('updates a user-edited mixture solvent after the amount assignment and recaptures its ratio', () => {
+    const { reaction, scheme } = build('g', 'solvents');
+    const updates = sinon.spy(Sample.prototype, 'updateMixtureComponentAmounts');
+    try {
+      const mixture = reaction.solvents[0];
+      mixture.setAmount({ value: 2, unit: 'g' });
+      scheme.propagateReferenceAmountChange(mixture);
+
+      expect(updates.calledOnce).toBe(true);
+      expect(reaction.solvents[0].components[0].amount_mol).toBeCloseTo(0.02, 10);
+      expect(reaction.solvents[0].solvent[0].amount_l).toBeCloseTo(0.001, 10);
+      expect(reaction.solvents[0].referenceVolumeRatio).toBeCloseTo(2, 10);
+      expect(reaction.solvents[0].sample_details.previous_amount_g).toBe(1);
+    } finally {
+      updates.restore();
+    }
+  });
+});
+
 // Regression tests for the second polymer code path:
 // calculateEquivalentForProduct must route polymer products through checkMassPolymer
 // instead of the MW-based equivalent formula (which gives 0 when amount_g is null).

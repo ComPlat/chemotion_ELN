@@ -1884,10 +1884,12 @@ export default class ReactionDetailsScheme extends React.Component {
         }
       }
 
-      // For mixture samples, when amount_g changes, update components' amount_mol
-      // This ensures that when the reference sample changes and causes amount_g to update,
-      // the components within the mixture are recalculated based on the new total mass
-      if (sample.isMixture && sample.isMixture() && sample.hasComponents && sample.hasComponents()) {
+      // Refresh mixtures only after their final mass changes. Locked solvent amounts are
+      // assigned later by the volume scaler; user amount edits already refresh themselves.
+      if (sample.isMixture && sample.isMixture() && sample.hasComponents && sample.hasComponents()
+        && !(lockEquivColumn && materialGroup === 'solvents' && !isSameMaterial(sample, updatedSample))
+        && sample.reference_component?.amount_mol !== Number(sample.amount_g)
+          / Number(sample.reference_component?.relative_molecular_weight)) {
         sample.updateMixtureComponentAmounts();
       }
 
