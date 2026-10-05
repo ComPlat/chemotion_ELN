@@ -119,10 +119,11 @@ RSpec.describe Chemotion::AffiliationAPI do
       expect(AffiliationSuggestion.last.organization).to eq('KIT')
     end
 
-    it 'creates a pending suggestion with only department (no organization)' do
-      post '/api/v1/affiliation_suggestions', params: { department: 'New Dept' }
-      expect(response).to have_http_status(:created)
-      expect(AffiliationSuggestion.last.department).to eq('New Dept')
+    it 'refuses a suggestion without an organization' do
+      expect do
+        post '/api/v1/affiliation_suggestions', params: { department: 'New Dept' }
+      end.not_to change(AffiliationSuggestion, :count)
+      expect(response).to have_http_status(422)
     end
 
     it 'creates a pending suggestion with a working group ("group" is a reserved SQL word)' do
