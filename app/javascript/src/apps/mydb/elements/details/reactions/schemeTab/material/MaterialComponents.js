@@ -809,8 +809,14 @@ ConversionRateField.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired
 };
 
+// Above this, the amounts give more product than the reference material allows for.
+const YIELD_LIMIT = 1 + 1e-9;
+
 const YieldOrConversionRate = ({ mh, displayYieldField }) => {
   if (displayYieldField === true || displayYieldField === null) {
+    const yieldText = mh.calculateYield() || 'n.d.';
+    const uncappedYield = mh.uncappedYield();
+    const exceedsLimit = uncappedYield !== null && uncappedYield > YIELD_LIMIT;
     const yieldMessage = (
       <div>
         The final yield value calculated upon saving the reaction
@@ -818,7 +824,7 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
       </div>
     );
     return (
-      <div>
+      <div className="d-flex align-items-center gap-1">
         <OverlayTrigger
           overlay={(
             <Tooltip id="yield-tooltip">
@@ -831,10 +837,27 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
             name="yield"
             type="text"
             size="sm"
-            value={mh.calculateYield() || 'n.d.'}
+            value={yieldText}
             disabled
           />
         </OverlayTrigger>
+        {exceedsLimit && (
+          <OverlayTrigger
+            overlay={(
+              <Tooltip id="yield-above-limit-tooltip">
+                {`The amounts give a yield of ${(uncappedYield * 100).toFixed(0)} %, more than 100 %`}
+                {yieldText === '100%' ? ', and it is shown as 100 %' : ''}
+                . Please check the amounts of this product and of the reference material.
+              </Tooltip>
+            )}
+          >
+            <i
+              className="fa fa-exclamation-triangle text-warning"
+              aria-label="Yield above 100 %"
+              data-testid="yield-above-limit"
+            />
+          </OverlayTrigger>
+        )}
       </div>
     );
   }
