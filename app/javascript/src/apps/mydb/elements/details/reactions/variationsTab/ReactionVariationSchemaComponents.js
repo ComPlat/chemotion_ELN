@@ -641,6 +641,47 @@ const nextUnitOf = (unit, unitToggle) => {
 };
 
 /*
+Brings one row's material of a unit switchable column to `targetUnit`, through the same handler calls
+the column header makes. The amount fields take the prefix directly; a gas phase field can only be
+advanced one step of its cycle at a time, so it is stepped until it arrives. A row without the
+material, or whose product is not the gaseous one for a gas phase field, is left alone.
+*/
+const switchRowToUnit = (variation, getRowHandler, { matGroup, sampleIdx, unitToggle }, targetUnit) => {
+  const cycleLength = unitToggle.gasField ? GAS_UNIT_CYCLES[unitToggle.gasField].length : 1;
+
+  for (let step = 0; step < cycleLength; step += 1) {
+    const material = variation.data?.[matGroup]?.[sampleIdx];
+    if (!material || (unitToggle.gasField && !isGasProductMaterial(variation.data, material))) {
+      return;
+    }
+    const currentUnit = materialUnitOf(material, unitToggle);
+    if (currentUnit === targetUnit) {
+      return;
+    }
+
+    const mh = new MaterialHandler({
+      index: sampleIdx,
+      material,
+      reaction: variation.data,
+      materialGroup: matGroup,
+      onChange: getRowHandler(variation).handleMaterialsChange,
+    });
+
+    if (!unitToggle.gasField) {
+      mh.handler.metricsChange({ metricUnit: unitToggle.unit, metricPrefix: targetUnit });
+      return;
+    }
+
+    const { value, unit: rowUnit } = mh.getFieldData(
+      unitToggle.gasField,
+      material.gas_phase_data || {},
+      currentUnit
+    );
+    mh.handler.gasFieldsUnitsChanged({ metricUnit: rowUnit, value }, unitToggle.gasField);
+  }
+};
+
+/*
 Header of a column whose cells carry a unit switch, e.g. mass or volume.
 
 In the scheme tab a unit is switched one material at a time, which in a grid of variations means
@@ -914,4 +955,5 @@ export {
   isGasProductMaterial,
   isReadOnlyMaterialCell,
   schemaBuildColumnGroups,
+  switchRowToUnit,
 };
