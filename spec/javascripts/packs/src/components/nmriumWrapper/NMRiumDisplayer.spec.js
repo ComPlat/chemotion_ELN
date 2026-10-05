@@ -315,6 +315,52 @@ describe('NMRiumDisplayer', () => {
       displayer.patchZipAndJcampReference(doc, fetched[0].url);
       expect(doc.spectra[0].source.jcampURL).toEqual(`${TPA}/PEAK-TOKEN/file.jdx`);
     });
+
+    // A 2D spectrum saved with only an expired download url (no data, no name to match): it can
+    // only be read again from a file, and a raw upload is the one that can hold 2D data.
+    describe('a 2D spectrum left with only an expired url', () => {
+      const expired = () => ({
+        source: { entries: [{ baseURL: '', relativePath: `${TPA}/OLD-TOKEN/file.dx` }] },
+        spectra: [{
+          id: 'x',
+          display: { name: 'hmbc.zip', dimension: 2 },
+          sourceSelector: { files: [`${TPA}/OLD-TOKEN/file.dx`] },
+          filters: [{ name: 'fftDimension1' }],
+        }],
+      });
+      const raw = { id: 41, label: 'hmbc.dx', kind: 'jcamp', url: `${TPA}/DX-TOKEN` };
+
+      it('is pointed at the raw JCAMP upload of the dataset', () => {
+        const displayer = displayerWith([fetched[0], raw]);
+        const doc = expired();
+        displayer.patchZipAndJcampReference(doc, fetched[0].url);
+        expect(doc.spectra[0].source.jcampURL).toEqual(`${TPA}/DX-TOKEN/file.dx`);
+        expect(doc.spectra[0].sourceSelector.files).toEqual([`${TPA}/DX-TOKEN/file.dx`]);
+        expect(doc.source.entries[0].relativePath).toEqual('/api/v1/public/third_party_apps/DX-TOKEN/file.dx');
+      });
+
+      it('is not pointed at a derived JCAMP', () => {
+        const displayer = displayerWith([fetched[0]]);
+        const doc = expired();
+        displayer.patchZipAndJcampReference(doc, fetched[0].url);
+        expect(doc.spectra[0].source).toEqual(undefined);
+        expect(doc.source.entries[0].relativePath).toEqual(`${TPA}/OLD-TOKEN/file.dx`);
+      });
+    });
+
+    // Only the JCAMP fallback is skipped for a spectrum that keeps its own source: the rest of the
+    // per-spectrum patching (the zip label) still applies, and the document-wide source stays.
+    it('still names a spectrum kept off the fallback after the dataset zip', () => {
+      const displayer = displayerWith(fetched);
+      const doc = legacyDocument();
+      doc.data.source = { entries: [{ baseURL: 'https://old.test', relativePath: '/old/file.zip' }] };
+      displayer.patchZipAndJcampReference(doc, fetched[0].url, fetched[1].url, fetched[1].label);
+      const [ft, fid] = doc.data.spectra;
+      expect(ft.info.name).toEqual('hmbc.zip');
+      expect(fid.display.name).toEqual('hmbc.zip');
+      expect(ft.source).toEqual(undefined);
+      expect(doc.data.source.entries[0]).toEqual({ baseURL: 'https://old.test', relativePath: '/old/file.zip' });
+    });
   });
 
   describe('.receiveMessage() keeping the schema version', () => {

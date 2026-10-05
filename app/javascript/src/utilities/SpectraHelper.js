@@ -222,6 +222,10 @@ const isNMRKind = (container, chmos = []) => {
 // info/originalInfo/meta from a source-backed 2D spectrum before writing it out, so on reopen
 // display.dimension is the only surviving record that it was 2D — and without that this whole
 // migration is skipped for exactly the files that most need it.
+// The `info` keys NMRium's processing filters change (an FFT turns an FID into a spectrum). Taken
+// from the live info/originalInfo of a 2D FID processed in the pinned wrapper.
+const PROCESSING_INFO_KEYS = ['isFid', 'isFt', 'isComplex', 'isFtDimensionOne'];
+
 const isSpectrum2D = (spc) => (
   spc?.info?.dimension === 2
   || spc?.originalInfo?.dimension === 2
@@ -597,11 +601,11 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
     // originalData is safe to drop: NMRium's own loader always recomputes it fresh from `data`.
     delete tmpSpc.originalData;
 
-    // Keep the spectrum name in display.name and drop the stale originalInfo duplicate (NMRium's
-    // loader always recomputes it fresh from `info`, same as originalData). `meta` is NOT dropped:
-    // unlike originalData/originalInfo, NMRium just passes it through as-is rather than regenerating
-    // it, so we can't assume it's safe to lose. `info` itself must stay fully intact; NMRium relies
-    // on it (e.g. dimension, isFid) to read `data`.
+    // Keep the spectrum name in display.name and fold originalInfo into `info` (NMRium recomputes
+    // originalInfo from `info` on load, same as originalData). `meta` is NOT dropped: unlike
+    // originalData/originalInfo, NMRium just passes it through as-is rather than regenerating it,
+    // so we can't assume it's safe to lose. NMRium relies on `info` (e.g. dimension, isFid) to read
+    // the spectrum, so it has to describe whatever NMRium will read: see below.
     if (is2DWithSource) {
       const resolvedName = spectrumName(tmpSpc);
       if (resolvedName) {
@@ -658,14 +662,22 @@ const cleaningNMRiumData = (nmriumData, options = {}) => {
       // A file saved before this held only the processed info. Without originalInfo to restore,
       // a spectrum whose own filters Fourier-transformed it gets no info at all, which NMRium
       // rebuilds from the source.
-      const transformedByFilters = (tmpSpc.filters || []).some((f) => /^fft/i.test(f?.name || ''));
+      // Only the keys processing changes come from originalInfo: the rest of `info`, such as the
+      // name a zip's label was written into, is the document's own.
+      // A just-saved FID already says isFid; only a processed claim with an FFT among the enabled
+      // filters is stale.
+      const fftEnabled = Array.isArray(tmpSpc.filters)
+        && tmpSpc.filters.some((f) => f?.enabled !== false && /^fft/i.test(f?.name || ''));
       let backfilledInfo;
       if (!sourceId) {
         backfilledInfo = backfill({ ...originalInfo, ...tmpSpc.info });
-      } else if (originalInfo || !transformedByFilters) {
-        backfilledInfo = backfill({ ...tmpSpc.info, ...originalInfo });
-      } else {
+      } else if (!originalInfo && fftEnabled && tmpSpc.info?.isFid !== true) {
         backfilledInfo = {};
+      } else {
+        const sourceFacts = PROCESSING_INFO_KEYS
+          .filter((key) => originalInfo && originalInfo[key] !== undefined)
+          .reduce((facts, key) => ({ ...facts, [key]: originalInfo[key] }), {});
+        backfilledInfo = backfill({ ...originalInfo, ...tmpSpc.info, ...sourceFacts });
       }
       if (Object.keys(backfilledInfo).length) {
         tmpSpc.info = backfilledInfo;

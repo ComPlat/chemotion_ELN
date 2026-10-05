@@ -1033,6 +1033,37 @@ describe('SpectraHelper', () => {
           expect('info' in spectrum).toEqual(false);
           expect(spectrum.selector).toEqual({ root: 'nmrium-src-hmbc' });
         });
+
+        // What a save writes is cleaned again on every reopen: the FID info it holds must survive.
+        it('keeps the FID info through a save and the reopens after it', () => {
+          const saved = cleaningNMRiumData(processedFid());
+          const reopened = cleaningNMRiumData(cleaningNMRiumData(saved));
+          expect(reopened.spectra[0].info).toEqual({
+            dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+          });
+        });
+
+        // Only what processing changed comes back from originalInfo: a name the reopen path wrote
+        // into info (the zip's label) is kept.
+        it('takes only the processing keys from originalInfo', () => {
+          const renamed = processedFid();
+          renamed.spectra[0].info.name = 'hmbc.zip';
+          renamed.spectra[0].info.isComplex = false;
+          renamed.spectra[0].originalInfo.isComplex = true;
+          const [spectrum] = cleaningNMRiumData(renamed).spectra;
+          expect(spectrum.info).toEqual({
+            dimension: 2, name: 'hmbc.zip', isFid: true, isFt: false, isComplex: true,
+          });
+        });
+
+        it('ignores a disabled FFT when telling a stale processed info', () => {
+          const saved = processedFid();
+          delete saved.spectra[0].originalInfo;
+          delete saved.spectra[0].data;
+          saved.spectra[0].filters = saved.spectra[0].filters.map((f) => ({ ...f, enabled: false }));
+          const [spectrum] = cleaningNMRiumData(saved).spectra;
+          expect(spectrum.info.isFt).toEqual(true);
+        });
       });
 
       it('names a 2D spectrum from meta.TITLE when display.name is only its own uuid', () => {
