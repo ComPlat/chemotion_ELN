@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import React from 'react';
-import { Form } from 'react-bootstrap';
+import { Form, Overlay, Tooltip } from 'react-bootstrap';
 import Enzyme, { shallow, mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
@@ -225,6 +225,43 @@ describe('NumericInputUnit component', () => {
       ui.blur();
       expect(ui.shown()).toBe(5);
       expect(ui.sent).toEqual([]);
+    });
+
+    describe('separator hint', () => {
+      let clock;
+      beforeEach(() => { clock = sinon.useFakeTimers(); });
+      afterEach(() => { clock.restore(); });
+
+      const hintShown = (ui) => { ui.wrapper.update(); return ui.wrapper.find(Overlay).prop('show'); };
+
+      it('says how a comma before three digits was read, then hides it', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ui.type('1,234');
+        expect(hintShown(ui)).toBe(false);
+        ui.blur();
+        expect(hintShown(ui)).toBe(true);
+        expect(ui.wrapper.find(Tooltip).text()).toBe('Read as 1.234 g');
+        expect(ui.shown()).toBe('1,234');
+        act(() => { clock.tick(3000); });
+        expect(hintShown(ui)).toBe(false);
+      });
+
+      it('hides the hint as soon as the user types again', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ui.type('1,234');
+        ui.blur();
+        ui.type('1,2345');
+        expect(hintShown(ui)).toBe(false);
+      });
+
+      it('gives no hint for other decimals', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ['2,5', '1,23', '1,2345', '1.234'].forEach((text) => {
+          ui.type(text);
+          ui.blur();
+          expect(hintShown(ui)).toBe(false);
+        });
+      });
     });
 
     it('renders a controlled empty input when no value is given', () => {

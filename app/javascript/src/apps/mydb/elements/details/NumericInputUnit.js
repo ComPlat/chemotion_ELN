@@ -1,8 +1,8 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable no-shadow */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  InputGroup, Button, Form
+  InputGroup, Button, Form, Overlay, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
@@ -14,6 +14,9 @@ import {
 const toNumber = (val) => (typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val);
 // Optional leading minus, digits, and at most one decimal point or comma.
 const TYPED_NUMBER = /^-?\d*[.,]?\d*$/;
+// "1,234" could be meant as a thousands separator, so say how it was read.
+const LOOKS_LIKE_THOUSANDS = /^-?\d+,\d{3}$/;
+const HINT_MS = 3000;
 
 export default function NumericInputUnit(props) {
   const {
@@ -27,12 +30,20 @@ export default function NumericInputUnit(props) {
 
   const [typedValue, setTypedValue] = useState(numericValue ?? '');
   const [currentUnit, setUnit] = useState(unit);
+  const [hint, setHint] = useState(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     // Keep the typed text (e.g. "2,5") while it still denotes the incoming number.
     setTypedValue((prev) => (toNumber(prev) === numericValue ? prev : (numericValue ?? '')));
     setUnit(unit);
   }, [numericValue, unit]);
+
+  useEffect(() => {
+    if (!hint) return undefined;
+    const timer = setTimeout(() => setHint(null), HINT_MS);
+    return () => clearTimeout(timer);
+  }, [hint]);
 
   const weightConversion = (value, multiplier) => value * multiplier;
   const isValidNumber = (val) => (typeof val === 'string' || typeof val === 'number')
@@ -86,6 +97,7 @@ export default function NumericInputUnit(props) {
 
   const handleInputValueChange = (event) => {
     const newInput = event.target.value;
+    setHint(null);
     if (newInput.trim() === '') {
       onInputChange('', currentUnit);
       setTypedValue('');
@@ -116,6 +128,7 @@ export default function NumericInputUnit(props) {
     }
     const normalized = String(parsed);
     if (normalized.includes('e')) return;
+    if (LOOKS_LIKE_THOUSANDS.test(typedValue)) setHint(`Read as ${normalized} ${currentUnit}`);
     setTypedValue(typedValue.includes(',') ? normalized.replace('.', ',') : normalized);
   };
 
@@ -131,6 +144,7 @@ export default function NumericInputUnit(props) {
           value={typedValue}
           onChange={(event) => handleInputValueChange(event)}
           onBlur={handleBlur}
+          ref={inputRef}
           name={field}
           label={label}
         />
@@ -142,6 +156,9 @@ export default function NumericInputUnit(props) {
           {currentUnit}
         </Button>
       </InputGroup>
+      <Overlay target={inputRef} show={!!hint} placement="bottom">
+        <Tooltip id={`${field}-separator-hint`}>{hint}</Tooltip>
+      </Overlay>
     </div>
   );
 }
