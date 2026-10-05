@@ -26,11 +26,28 @@ module QuillUtils
   # desc: whether the quill delta is visually empty (no text was ever typed), without spawning a
   # nodejs process. Kept public (unlike blank_ops?) for callers that only need the emptiness
   # check, e.g. deciding whether a content change is worth surfacing as a diff.
+  # Structural rather than exact-match: every insert has to be a whitespace-only string, whatever its
+  # attributes (a formatted but empty line, or a leading {"insert":""}). Embeds such as images count as content.
   def blank_content?(content)
-    blank_ops?(content)
+    return true if blank_ops?(content)
+
+    ops = delta_ops_array(content)
+    ops.is_a?(Array) && ops.all? { |operation| blank_insert?(operation) }
   end
 
   private
+
+  # desc: the ops array of a quill delta given as json string, hash or array; nil if it is none of these
+  def delta_ops_array(content)
+    ops = content.is_a?(String) ? JSON.parse(content) : content
+    ops.is_a?(Hash) ? ops['ops'] : ops
+  rescue JSON::ParserError
+    nil
+  end
+
+  def blank_insert?(operation)
+    operation.is_a?(Hash) && operation['insert'].is_a?(String) && operation['insert'].match?(/\A[[:space:]]*\z/)
+  end
 
   # rubocop:disable Style/StringLiterals
 
