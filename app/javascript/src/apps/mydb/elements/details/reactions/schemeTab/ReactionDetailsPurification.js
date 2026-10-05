@@ -106,6 +106,7 @@ export default class ReactionDetailsPurification extends Component {
       onChange,
       isInteractionReaction,
       variations,
+      canChangeMaterialList,
     } = this.props;
     return (
       <>
@@ -140,6 +141,7 @@ export default class ReactionDetailsPurification extends Component {
                   showLoadingColumn={!!reaction.hasPolymers()}
                   onChange={onChange}
                   dndEnabled={permitOn(reaction)}
+                  canChangeMaterialList={canChangeMaterialList}
                 />
               </Col>
             </Row>
@@ -179,6 +181,8 @@ ReactionDetailsPurification.propTypes = {
   additionQuillRef: PropTypes.object,
   onChange: PropTypes.func,
   isInteractionReaction: PropTypes.bool,
+  // Off in a variation's Open panel, whose purification solvents follow the reaction's.
+  canChangeMaterialList: PropTypes.bool,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
@@ -192,4 +196,5 @@ ReactionDetailsPurification.defaultProps = {
   onChange: () => {},
   additionQuillRef: {},
   isInteractionReaction: false,
+  canChangeMaterialList: true,
 };
