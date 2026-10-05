@@ -1224,6 +1224,27 @@ const VariationSchemaTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowIdsKey]);
 
+  /*
+  The variations are rebuilt from the reaction whenever it changes, as new row objects under the same
+  ids. AG Grid then hands a cell its new row only where the cell's value changed - so a cell showing
+  more than its value, like the gas type next to a material's name, would keep showing the old row
+  after e.g. a gas type change in the Scheme tab. A rebuilt list therefore redraws every cell.
+  */
+  useEffect(() => {
+    gridApiRef.current?.refreshCells({ force: true });
+  }, [variations]);
+
+  /*
+  Simple mode hides parts of the cells by stylesheet - the IUPAC name, the concentration basis, the
+  second duration line - which changes how tall they are without AG Grid noticing: its autoHeight
+  rows keep the height they were measured at, and clip what advanced mode adds. So the rows are
+  measured again when the mode changes.
+  */
+  useEffect(() => {
+    gridApiRef.current?.resetRowHeights();
+    syncGridHeight();
+  }, [advancedMode, syncGridHeight]);
+
   // Writes order, widths and hidden columns back to storage.
   const saveColumnState = () => {
     const api = gridApiRef.current;
