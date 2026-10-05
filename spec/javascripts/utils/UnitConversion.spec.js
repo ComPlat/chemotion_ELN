@@ -49,6 +49,23 @@ describe('Testing React Utility Functions', () => {
     assert.strictEqual(unit, TEMPERATURE_UNITS.CELSIUS);
   });
 
+  it('converts a temperature with a leading separator', () => {
+    assert.deepEqual(convertTemperature('-.5', TEMPERATURE_UNITS.CELSIUS), ['31.1', TEMPERATURE_UNITS.FAHRENHEIT]);
+    assert.deepEqual(convertTemperature(',5', TEMPERATURE_UNITS.CELSIUS), ['32.9', TEMPERATURE_UNITS.FAHRENHEIT]);
+  });
+
+  it('converts a temperature with a trailing or comma separator', () => {
+    assert.deepEqual(convertTemperature('2.', TEMPERATURE_UNITS.CELSIUS), ['35.6', TEMPERATURE_UNITS.FAHRENHEIT]);
+    assert.deepEqual(convertTemperature('2,5', TEMPERATURE_UNITS.CELSIUS), ['36.5', TEMPERATURE_UNITS.FAHRENHEIT]);
+  });
+
+  it('keeps the text after a temperature value', () => {
+    assert.deepEqual(
+      convertTemperature('25 approx', TEMPERATURE_UNITS.CELSIUS),
+      ['77 approx', TEMPERATURE_UNITS.FAHRENHEIT]
+    );
+  });
+
   it('should convert temperature to Kelvin correctly', () => {
     assert.strictEqual(convertTemperatureToKelvin({ value: 32, unit: TEMPERATURE_UNITS.FAHRENHEIT }), 273.15);
     assert.strictEqual(convertTemperatureToKelvin({ value: 21, unit: TEMPERATURE_UNITS.CELSIUS }), 294.15);
