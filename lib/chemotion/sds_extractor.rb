@@ -39,37 +39,21 @@ module Chemotion
     REDUCED_LABELLING = /\A(?:Reduced\s+Label|Reduzierte\s+Kennzeichnung)/i.freeze
     NOT_HAZARDOUS = /not\s+a\s+hazardous\s+(substance|mixture)|\ANone\s+required\b|no\s+hazard\s+statement/i.freeze
     NOT_HAZARDOUS_NOTE = 'the sheet declares the substance non-hazardous, so no codes are expected'
-    # The shape Chemical#chemical_data stores in safetySheetPath; nothing else reaches the disk.
-    SAVED_SHEET = %r{\A/?safety_sheets/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+\.pdf\z}.freeze
-    SHEET_ROOT = 'safety_sheets'
     NOT_A_SAVED_SHEET = 'not a saved safety sheet path'
 
     def self.extract(pdf_path)
       new(pdf_path).extract
     end
 
-    # Entry point for a link held in chemical_data, which is client-supplied.
-    def self.extract_saved_sheet(link)
-      path = saved_sheet_path(link)
-      return new(link.to_s).refuse(NOT_A_SAVED_SHEET) if path.nil?
-
-      extract(path.to_s)
-    end
-
     # The file a saved-sheet link names, or nil when the link could reach anything else.
+    # @param link [String] "/safety_sheets/<vendor>/<file>.pdf" as chemical_data stores it
+    # @return [Pathname, nil]
     def self.saved_sheet_path(link)
-      link = link.to_s
-      return nil unless link.match?(SAVED_SHEET)
+      return nil unless link.to_s.end_with?('.pdf')
 
-      path = GenerateFileHashUtils.safety_sheets_root.join(link.delete_prefix('/').delete_prefix("#{SHEET_ROOT}/"))
-      inside_sheet_root?(path) ? path : nil
-    end
-
-    # A symlink under the sheet folder must not lead the reader elsewhere on the disk.
-    def self.inside_sheet_root?(path)
-      return true unless path.exist?
-
-      path.realpath.to_s.start_with?("#{GenerateFileHashUtils.safety_sheets_root.realpath}/")
+      ChemicalsService.safety_sheet_disk_path(link)
+    rescue ArgumentError
+      nil
     end
 
     # Absolute, so ghostscript cannot read a path as an option.
@@ -78,18 +62,11 @@ module Chemotion
       @diagnostics = { 'notes' => [], 'errors' => [] }
     end
 
-    def refuse(message)
-      fail_with(message)
-      result({})
-    end
-
     def extract
       lines = text_lines
       return result({}) if lines.nil?
 
-      vendor = detect_vendor(lines.join("\n"))
-      return result({}) if vendor.nil?
-
+      detect_vendor(lines.join("\n"))
       sections = SdsSections.detect(lines)
       @diagnostics['layout'] = sections.style.to_s
       @diagnostics['sections_found'] = sections.found
@@ -124,7 +101,12 @@ module Chemotion
 
       h_codes = SdsPhraseParser.codes(lines, 'H')
       p_codes = SdsPhraseParser.codes(lines, 'P')
-      return statements(h_codes, p_codes, 'codes') if (h_codes + p_codes).any?
+      if (h_codes + p_codes).any?
+        printed = statements(h_codes, p_codes, 'codes')
+        return printed if printed['h_statements'].any? || printed['p_statements'].any?
+
+        note("no printed code is a known one (#{(h_codes + p_codes).join(', ')}); reading the wording instead")
+      end
       return phrases_from_wording(lines) unless non_hazardous?(lines)
 
       note(NOT_HAZARDOUS_NOTE)
@@ -189,17 +171,17 @@ module Chemotion
       last ? section[first, last] : section[first..]
     end
 
+    # A diagnostic only: the layout comes from the headings, so any supplier's sheet is read.
     def detect_vendor(text)
       scored = VENDORS.map { |vendor| [vendor, score(vendor, text)] }.sort_by { |_, points| -points }
       best, points = scored.first
       @diagnostics['vendor_scores'] = scored.to_h { |vendor, value| [vendor['name'], value] }
       if points < MIN_VENDOR_SCORE || points == scored.dig(1, 1)
         note('vendor fingerprint inconclusive')
-        return nil
+        return
       end
 
       @diagnostics['vendor'] = best['name']
-      best
     end
 
     def score(vendor, text)

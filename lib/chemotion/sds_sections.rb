@@ -31,8 +31,10 @@ module Chemotion
       first > last ? [] : @lines[first..last]
     end
 
+    # Only a second run of the chain after the first counts, as in a sheet printed twice;
+    # a numbered body line the chain skipped does not.
     def ambiguous?(number)
-      candidates.many? { |candidate| candidate[:num] == number }
+      repeated_headings.key?(number)
     end
 
     def title(number)
@@ -52,8 +54,21 @@ module Chemotion
 
     # Only a run 1, 2, 3, ... counts, so a numbered list inside the body cannot pose as a heading.
     def headings
-      @headings ||= candidates.each_with_object({}) do |candidate, chain|
-        chain[candidate[:num]] = candidate if candidate[:num] == chain.length + 1
+      @headings ||= chain(candidates)
+    end
+
+    # A repeat must restate at least half the chain, so a short numbered list in section 16 is no copy.
+    def repeated_headings
+      @repeated_headings ||= begin
+        last = headings.values.pluck(:index).max
+        repeat = last ? chain(candidates.select { |candidate| candidate[:index] > last }) : {}
+        repeat.length > 1 && repeat.length * 2 >= headings.length ? repeat : {}
+      end
+    end
+
+    def chain(found)
+      found.each_with_object({}) do |candidate, run|
+        run[candidate[:num]] = candidate if candidate[:num] == run.length + 1
       end
     end
 
