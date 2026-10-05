@@ -51,6 +51,48 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
     )
   end
 
+  it 'keeps the creation-snapshot content when the first edit only touches a sibling sub-key' do
+    # Logidze's creation snapshot stores object-typed columns as JSON strings rather than
+    # hashes, so the first update is the one that has to merge onto a stringified base.
+    container = create(:container, extended_metadata: { 'content' => content_before })
+    as_request { edit_metadata(container, 'status' => 'Confirmed') }
+    as_request { edit_metadata(container, 'content' => content_after) }
+
+    expect(content_changes(container).map { |change| [change[:old_value], change[:new_value]] }).to eq(
+      [
+        [{}, JSON.parse(content_before)],
+        [JSON.parse(content_before), JSON.parse(content_after)],
+      ],
+    )
+  end
+
+  it 'surfaces clearing the whole column, even though the logged diff for it is empty' do
+    container = create(:container, extended_metadata: { 'content' => content_before, 'status' => 'Confirmed' })
+    as_request { container.update!(extended_metadata: {}) }
+    as_request { edit_metadata(container, 'kind' => 'NMR') }
+
+    expect(content_changes(container).map { |change| [change[:old_value], change[:new_value]] }).to eq(
+      [
+        [{}, JSON.parse(content_before)],
+        [JSON.parse(content_before), {}],
+      ],
+    )
+  end
+
+  it 'drops a removed sub-key while keeping its siblings' do
+    container = create(:container, extended_metadata: { 'content' => content_before, 'status' => 'Confirmed' })
+    as_request { container.update!(extended_metadata: container.extended_metadata.except('status')) }
+    as_request { edit_metadata(container, 'content' => content_after) }
+
+    entries = described_class.call(Container.with_log_data.find(container.id), 'Dataset')
+    status_changes = entries.filter_map { |entry| entry[:changes]['extended_metadata.status'] }
+    expect(status_changes.map { |change| [change[:old_value], change[:new_value]] }).to eq(
+      [[nil, 'Confirmed'], ['Confirmed', nil]],
+    )
+    expect(content_changes(container).last.values_at(:old_value, :new_value))
+      .to eq [JSON.parse(content_before), JSON.parse(content_after)]
+  end
+
   it 'does not surface a diff when the editor autosaves its empty-delta placeholder' do
     # A Quill editor that nobody typed into still autosaves {"ops":[{"insert":"\n"}]} - visually
     # empty, but not the same JSON value as the nil the container started with.

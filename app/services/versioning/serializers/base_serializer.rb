@@ -15,12 +15,17 @@ module Versioning
           base = {} # track current version data
           return [] unless log_data
 
-          log_data.versions.group_by { |version| version.data.dig('m', 'uuid') }.each do |uuid, versions|
+          groups = log_data.versions.group_by { |version| version.data.dig('m', 'uuid') }.map do |uuid, versions|
+            changes = versions.each_with_object({}) do |version, hash|
+              hash.merge!(version.changes) { |key, previous, value| merge_change(key, previous, value) }
+            end
+            [uuid, versions, changes]
+          end
+          removals = sub_key_removals(groups.map(&:last))
+
+          groups.each_with_index do |(uuid, versions, changes), index|
             user_id = versions.first.data.dig('m', '_r')
             time = versions.first.data['ts'] / 1000
-            changes = versions.each_with_object({}) do |version, hash|
-              hash.merge!(version.changes)
-            end
             changes_comparison_hash = {} # hash for changes comparison
             revertible = changes.none? { |key, _v| key == 'created_at' }
             changes.each do |key, value|
@@ -31,7 +36,8 @@ module Versioning
               # `value` here may be a partial hash - merge it onto the previous full value so both the stored
               # `base` and the "new" side of the comparison below reflect the complete, current state instead
               # of losing (or, on the "new" side, spuriously blanking) sub-keys this version didn't touch.
-              value = previous_value.deep_merge(value) if previous_value.is_a?(Hash) && value.is_a?(Hash)
+              value = merge_change(key, previous_value, value)
+              value = value.except(*removals[index][key]) if value.is_a?(Hash) && removals.dig(index, key)
               base[key] = value
 
               next if value == previous_value # ignore if value is same as in last version
@@ -140,6 +146,63 @@ module Versioning
           parsed = default_formatter.call(key, value)
           Chemotion::QuillToPlainText.blank_content?(parsed) ? {} : parsed
         end
+      end
+
+      # The creation snapshot stores object-typed columns as JSON strings, which the column's own type
+      # can't deserialize, so parse those back into hashes before merging.
+      def merge_change(key, previous_value, value)
+        return value unless hash_column?(key)
+
+        value = stringified_hash(value)
+        previous_value = stringified_hash(previous_value)
+        previous_value.is_a?(Hash) && value.is_a?(Hash) ? previous_value.deep_merge(value) : value
+      end
+
+      def hash_column?(key)
+        record.has_attribute?(key) && %i[hstore jsonb json].include?(record.type_for_attribute(key).type)
+      end
+
+      # jsonb_diff only records a removed sub-key when its old value was an object. In an hstore every value
+      # is a string, so removals leave no trace, and a removal-only write is logged as a bare {}. Recover them
+      # from the record's current value, the only complete state available: a sub-key that is gone now was
+      # removed after its last mention, attributed to the first removal-only write after that, or failing
+      # that, to the first later write touching the column. Returns { group index => { column => [sub-keys] } }.
+      # A sub-key that was removed and later re-added cannot be detected this way.
+      def sub_key_removals(change_groups)
+        removals = Hash.new { |hash, index| hash[index] = Hash.new { |columns, column| columns[column] = [] } }
+        change_groups.flat_map(&:keys).uniq.each do |column|
+          next unless hash_column?(column)
+
+          current = record.read_attribute(column)
+          next unless current.nil? || current.is_a?(Hash)
+
+          touched = change_groups.each_index.select { |index| change_groups[index].key?(column) }
+          last_mention = {}
+          touched.each do |index|
+            sub_keys = stringified_hash(change_groups[index][column])
+            sub_keys.each_key { |sub_key| last_mention[sub_key] = index } if sub_keys.is_a?(Hash)
+          end
+
+          last_mention.each do |sub_key, mentioned_at|
+            next if current&.key?(sub_key)
+
+            later = touched.select { |index| index > mentioned_at }
+            removed_at = later.find { |index| change_groups[index][column] == {} } || later.first
+            removals[removed_at][column] << sub_key if removed_at
+          end
+        end
+        removals
+      end
+
+      # Logidze's snapshot (and full-snapshot logging) stringifies object-typed columns, e.g.
+      # '{"content": "..."}' instead of a hash; return such a value as a hash, anything else as is.
+      def stringified_hash(value)
+        return value unless value.is_a?(String) && value.start_with?('{')
+
+        parsed = JSON.parse(value)
+        parsed.is_a?(Hash) ? parsed : value
+      rescue JSON::ParserError
+        value
       end
 
       def fix_malformed_value_formatter
