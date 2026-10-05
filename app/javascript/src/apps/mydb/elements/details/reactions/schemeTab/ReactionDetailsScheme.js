@@ -864,12 +864,26 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   updatedReactionForAmountTypeChange(changeEvent) {
     const { reaction } = this.props;
+    const { lockEquivColumn } = this.state;
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
     updatedSample.amountType = amountType;
 
-    return this.propagateReferenceAmountChange(updatedSample);
+    // Switching the target/real view changes the active amount, so dependent amounts
+    // are rebased, but the stored solvent volumes must not be rewritten by a view
+    // toggle. Skip the solvent rescale and refresh the dependent concentrations.
+    const updatedReaction = this.propagateReferenceAmountChange(
+      updatedSample,
+      { rescaleSolvents: false }
+    );
+
+    if (lockEquivColumn) {
+      updatedReaction.resetPreservedConcentrationExcept(updatedSample);
+      updatedReaction.updateAllConcentrations();
+    }
+
+    return updatedReaction;
   }
 
   /**
@@ -1507,7 +1521,15 @@ export default class ReactionDetailsScheme extends React.Component {
     // Always include SBMM samples so their equivalents are rebased when the
     // reference's amount changes (the edited sample may be a regular reference,
     // not the SBMM itself). Mirrors updatedReactionForAmountChange.
-    const updatedReaction = this.propagateReferenceAmountChange(updatedSample);
+    //
+    // The reaction volume is fixed here (volume locked, or the solvent sum that
+    // defines the concentration in solvents_only/combined mode). Rescaling solvents
+    // would move that very divisor, so the typed concentration would not hold. Keep
+    // the stored solvent volumes put and only rebase dependent amounts.
+    const updatedReaction = this.propagateReferenceAmountChange(
+      updatedSample,
+      { rescaleSolvents: false }
+    );
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
     // except the currently edited sample. The edited sample keeps its manually-entered
@@ -2207,7 +2229,7 @@ export default class ReactionDetailsScheme extends React.Component {
    * @param {Sample} updatedSample - the edited sample driving the change
    * @returns {Reaction}
    */
-  propagateReferenceAmountChange(updatedSample) {
+  propagateReferenceAmountChange(updatedSample, { rescaleSolvents = true } = {}) {
     const { lockEquivColumn } = this.state;
     const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForAmountChange.bind(this),
@@ -2216,7 +2238,10 @@ export default class ReactionDetailsScheme extends React.Component {
       true
     );
 
-    if (lockEquivColumn) {
+    // Solvent volumes follow the reference only on paths that actually change an
+    // amount. A view toggle or a fixed-volume concentration edit must keep the
+    // stored volumes put, so callers opt out via rescaleSolvents: false.
+    if (lockEquivColumn && rescaleSolvents) {
       updatedReaction.updateSolventVolumesForReference(updatedSample);
     }
 

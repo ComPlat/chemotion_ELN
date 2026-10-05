@@ -259,6 +259,7 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
     const propagateReferenceAmountChange = sinon.stub().returns(reaction);
     const ctx = {
       props: { reaction },
+      state: { lockEquivColumn: false },
       propagateReferenceAmountChange,
     };
 
@@ -271,7 +272,11 @@ describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', (
     expect(reaction.findReactionSample.calledWith('shared-id', true)).toBe(true);
     expect(regularSample.amountType).toBe('target');
     expect(sbmmSample.amountType).toBe('real');
-    expect(propagateReferenceAmountChange.calledOnceWithExactly(sbmmSample)).toBe(true);
+    // A view toggle must not rewrite stored solvent volumes.
+    expect(propagateReferenceAmountChange.calledOnceWithExactly(
+      sbmmSample,
+      { rescaleSolvents: false }
+    )).toBe(true);
   });
 });
 
@@ -1132,8 +1137,9 @@ describe('ReactionDetailsScheme amount-change handlers — solvent volume scalin
   });
 });
 
-// Switching between target and real amounts can change the active amount without an amount-field
-// edit. This handler must therefore use the same reference propagation path as direct edits.
+// Switching between target and real amounts rebases the active amount, so dependent amounts
+// and their concentrations are refreshed. But a view toggle must NOT rewrite the stored solvent
+// volumes, so this handler opts out of the solvent rescale that direct amount edits perform.
 describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling wiring', () => {
   const handlers = [
     'updatedReactionForAmountTypeChange',
@@ -1148,7 +1154,11 @@ describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling 
       },
     };
     const referenceMaterial = updatedSampleIsReference ? updatedSample : { amount_mol: 0.1 };
-    const updatedReaction = { updateSolventVolumesForReference: sinon.spy() };
+    const updatedReaction = {
+      updateSolventVolumesForReference: sinon.spy(),
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
     const reaction = {
       referenceMaterial,
       findReactionSample: sinon.stub().returns(updatedSample),
@@ -1186,36 +1196,47 @@ describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling 
 
   handlers.forEach((handler) => {
     describe(`#${handler}`, () => {
-      it('derives solvents from the edited sample when the reference sample changes', () => {
-        const { ctx, updatedReaction, updatedSample, updatedReactionWithSample } = buildCtx({
+      it('does not rewrite solvent volumes on a view toggle (reference sample)', () => {
+        const { ctx, updatedReaction, updatedSample } = buildCtx({
           lockEquivColumn: true,
           updatedSampleIsReference: true,
         });
 
         ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
 
-        const scaler = updatedReaction.updateSolventVolumesForReference;
         expect(updatedSample.amountType).toBe('real');
-        expect(scaler.calledOnceWith(updatedSample)).toBe(true);
-        expect(updatedReactionWithSample.calledBefore(scaler)).toBe(true);
-        expect(updatedReactionWithSample.firstCall.args[3]).toBe(true);
+        expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
       });
 
-      it('derives solvents after a dependent sample rebases the reference', () => {
-        const { ctx, updatedReaction, updatedSample, updatedSamplesForAmountChange } = buildCtx({
+      it('does not rewrite solvent volumes after a dependent rebases the reference', () => {
+        const { ctx, updatedReaction, updatedSamplesForAmountChange } = buildCtx({
           lockEquivColumn: true,
           updatedSampleIsReference: false,
         });
 
         ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
 
-        const scaler = updatedReaction.updateSolventVolumesForReference;
         expect(updatedSamplesForAmountChange.calledOnce).toBe(true);
-        expect(updatedSamplesForAmountChange.calledBefore(scaler)).toBe(true);
-        expect(scaler.calledOnceWith(updatedSample)).toBe(true);
+        expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
       });
 
-      it('leaves solvent volumes untouched when equivalents are unlocked', () => {
+      it('refreshes dependent concentrations under locked equivalents', () => {
+        const { ctx, updatedReaction, updatedSample } = buildCtx({
+          lockEquivColumn: true,
+          updatedSampleIsReference: true,
+        });
+
+        ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
+
+        expect(updatedReaction.resetPreservedConcentrationExcept.calledOnceWith(updatedSample)).toBe(true);
+        expect(updatedReaction.updateAllConcentrations.calledOnce).toBe(true);
+        expect(
+          updatedReaction.resetPreservedConcentrationExcept
+            .calledBefore(updatedReaction.updateAllConcentrations)
+        ).toBe(true);
+      });
+
+      it('leaves solvent volumes and concentrations untouched when equivalents are unlocked', () => {
         const { ctx, updatedReaction } = buildCtx({
           lockEquivColumn: false,
           updatedSampleIsReference: true,
@@ -1224,6 +1245,7 @@ describe('ReactionDetailsScheme amount-type handlers — solvent volume scaling 
         ReactionDetailsScheme.prototype[handler].call(ctx, changeEvent);
 
         expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+        expect(updatedReaction.updateAllConcentrations.called).toBe(false);
       });
     });
   });
@@ -1279,10 +1301,12 @@ describe('ReactionDetailsScheme#propagateReferenceAmountChange', () => {
   });
 });
 
-// Regression: the concentration handlers also change the reference amount under locked
-// equivalents, but previously never scaled solvent volumes (only the two direct amount
-// handlers did). They now route through propagateReferenceAmountChange, so solvent volumes
-// are derived from the updated reference on these paths too.
+// Regression: both concentration handlers change the reference amount under locked equivalents
+// and route through propagateReferenceAmountChange. The feedstock path derives solvent volumes
+// from the updated reference. The fixed-volume path deliberately opts out (rescaleSolvents:
+// false): its reaction volume is fixed (volume locked, or the solvent sum that defines the
+// concentration), so rescaling solvents would move the very divisor the typed concentration
+// depends on. Dependent concentrations are still refreshed on that path.
 // Not covered here: the reference-component switch (updatedReactionForComponentReferenceChange)
 // still calls updatedSamplesForAmountChange directly and does NOT derive solvents under lock.
 // That bypass is scoped to the stacked #3584.
@@ -1303,7 +1327,7 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
     updateAllConcentrations: sinon.spy(),
   });
 
-  it('handleFixedVolumeConcentrationChange derives solvents from the edited sample', () => {
+  it('handleFixedVolumeConcentrationChange keeps the fixed volume, so solvents are not rescaled', () => {
     const referenceMaterial = { id: 'ref-1', amount_mol: 0.1 };
     const updatedReaction = buildUpdatedReaction();
     const updatedSample = {
@@ -1320,9 +1344,12 @@ describe('ReactionDetailsScheme reference-changing handlers — solvent volume s
 
     ReactionDetailsScheme.prototype.handleFixedVolumeConcentrationChange.call(ctx, updatedSample, 2);
 
-    const scaler = updatedReaction.updateSolventVolumesForReference;
-    expect(scaler.calledOnceWith(updatedSample)).toBe(true);
-    expect(updatedSample.setAmountFromConcentrationAndPreserve.calledBefore(scaler)).toBe(true);
+    // The reaction volume is the divisor for the typed concentration, so the stored solvent
+    // volumes must stay put even under locked equivalents...
+    expect(updatedReaction.updateSolventVolumesForReference.called).toBe(false);
+    // ...while dependent concentrations are still refreshed from the rebased amounts.
+    expect(updatedReaction.resetPreservedConcentrationExcept.calledOnceWith(updatedSample)).toBe(true);
+    expect(updatedReaction.updateAllConcentrations.calledOnce).toBe(true);
   });
 
   it('handleFixedVolumeConcentrationChange leaves solvent volumes untouched when unlocked', () => {
@@ -2177,6 +2204,31 @@ describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
         expect(reaction.solvents[1].amount_l).toBeCloseTo(0.06, 10);
       });
     });
+  });
+
+  it('preserves a density-less volume solvent on a target modal save when equivalents are unlocked', () => {
+    // Regression (S3): with Eq unlocked the lock-path solvent derivation does not run, so only the
+    // `materialGroup !== 'solvents'` guard in updatedSamplesForEquivalentChange protects the volume.
+    // Without it the solvent's equivalent (0, no density/molarity) would drive
+    // handleEquivalentBasedAmountUpdate(sample, 0) and collapse the volume to 0.
+    const ctx = buildModalContext('l');
+    ctx.state.lockEquivColumn = false;
+    const { reaction } = ctx.props;
+    const edited = reaction.solvents[0];
+    edited.amountType = 'target';
+    edited.setAmount({ value: 0.02, unit: 'l' });
+    const serverJson = JSON.parse(JSON.stringify(edited.serializeMaterial()));
+    serverJson.molecule = { molecular_weight: 100 };
+    serverJson.name = 'saved name';
+    reaction.editedSample = edited;
+    reaction.updateMaterial(new Sample(serverJson));
+
+    ctx.render();
+
+    expect(reaction.solvents[0].amount_unit).toBe('l');
+    expect(reaction.solvents[0].amount_l).toBeCloseTo(0.02, 10);
+    // The equivalent is recomputed to 0 for a density-less solvent, but the volume must survive.
+    expect(reaction.solvents[0].equivalent).toBe(0);
   });
 
   it('captures a solvent created through ElementStore and retains its volume through the target render path', () => {

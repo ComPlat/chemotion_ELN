@@ -1405,6 +1405,29 @@ describe('Reaction solvent scaling — units and reference changes', () => {
     });
   });
 
+  it('skips a density solvent carrying a stale non-zero molarity (matches Sample#has_density)', () => {
+    // density > 0 but molarity_value > 0, so Sample#has_density is false and amount_l reads 0
+    // everywhere. Volume scaling must not pick it up through density alone.
+    const reaction = buildReaction(makeSample('solvent', 0.5, 'g', {
+      density: 0.8,
+      molarity_value: 2,
+    }));
+    const solvent = reaction.solvents[0];
+    expect(solvent.has_density).toBe(false);
+    expect(solvent.has_molarity).toBe(false);
+    expect(solvent.amount_l).toBe(0);
+
+    reaction.captureSolventReferenceRatios();
+    expect(solvent.referenceVolumeRatio).toBe(undefined);
+
+    reaction.referenceMaterial.setAmount({ value: 0.002, unit: 'mol' });
+    reaction.updateSolventVolumesForReference();
+
+    expect(solvent.amount_value).toBe(0.5);
+    expect(solvent.amount_unit).toBe('g');
+    expect(solvent.referenceVolumeRatio).toBe(undefined);
+  });
+
   it('leaves solvent amounts and ratios unchanged for a feedstock edit', () => {
     const reaction = buildReaction(makeSample('solvent', 0.01, 'l'));
     const reference = reaction.referenceMaterial;

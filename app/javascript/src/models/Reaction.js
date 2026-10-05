@@ -19,9 +19,15 @@ import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
 
-const hasSolventVolumeConversion = (solvent) => (
-  solvent.amount_unit === 'l' || Number(solvent.density) > 0 || solvent.has_molarity
-);
+const hasSolventVolumeConversion = (solvent) => {
+  if (solvent.amount_unit === 'l') return true;
+  // Mixtures derive their volume from their own density/components, so keep the plain
+  // density check for them (independent of the stale-molarity guard applied below).
+  if (solvent.isMixture?.()) return Number(solvent.density) > 0 || solvent.has_molarity;
+  // Match Sample#has_density: a stale non-zero molarity makes amount_l read 0 everywhere,
+  // so a density alone is not enough to scale by volume unless the molarity is cleared.
+  return solvent.has_density || solvent.has_molarity;
+};
 
 const SOLVENT_REFERENCE_RATIO_FIELDS = [
   'referenceVolumeRatio', 'referenceVolumeRatioReferenceKey', 'referenceVolumeRatioPending',
