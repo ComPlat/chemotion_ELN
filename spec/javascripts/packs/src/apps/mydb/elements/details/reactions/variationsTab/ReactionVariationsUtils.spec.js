@@ -8,7 +8,7 @@ import ReactionFactory from 'factories/ReactionFactory';
 import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
-  makeVariationReaction, addNewVariationDataset, parseVariationGroup,
+  makeVariationReaction, refreshConcentrations, addNewVariationDataset, parseVariationGroup,
   copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
   adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv
@@ -104,6 +104,61 @@ describe('ReactionVariationsUtils', () => {
       const one = makeVariationReaction(reaction, {});
       const other = makeVariationReaction(reaction, {});
       expect(one.container).not.toBe(other.container);
+    });
+  });
+
+  /*
+  `concn` is not stored, and the scheme tab only works it out for the reaction it renders - so a row
+  has to derive its own, from its own amounts and volume, or the grid shows 0 or the parent's values.
+  */
+  describe('concentrations of a variation', () => {
+    let reaction;
+    beforeEach(async () => {
+      reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+      reaction.volume = 2;
+      // As on load: nothing has worked out the parent's concentrations yet.
+      [...reaction.starting_materials, ...reaction.products].forEach((material) => {
+        material.concn = 0;
+      });
+    });
+
+    it('works them out when the row is built, products included', () => {
+      const variationReaction = makeVariationReaction(reaction, {});
+      const [startingMaterial] = variationReaction.starting_materials;
+      const [product] = variationReaction.products;
+
+      expect(startingMaterial.concn).toBeCloseTo(startingMaterial.amount_mol / 2, 6);
+      expect(product.concn).toBeCloseTo(product.amount_mol / 2, 6);
+    });
+
+    it('uses the volume of the variation, not the parent', () => {
+      const variationReaction = makeVariationReaction(reaction, { volume: 4 });
+      const [startingMaterial] = variationReaction.starting_materials;
+
+      expect(startingMaterial.concn).toBeCloseTo(startingMaterial.amount_mol / 4, 6);
+    });
+
+    it('does not keep a concentration the parent preserved', () => {
+      reaction.starting_materials[0].preserveConcentration = true;
+      const variationReaction = makeVariationReaction(reaction, {});
+      const [startingMaterial] = variationReaction.starting_materials;
+
+      expect(startingMaterial.preserveConcentration).toBe(false);
+      expect(startingMaterial.concn).toBeCloseTo(startingMaterial.amount_mol / 2, 6);
+    });
+
+    it('follows an amount edit of the row, keeping a concentration typed in that edit', () => {
+      const variationReaction = makeVariationReaction(reaction, {});
+      const [first, second] = variationReaction.starting_materials;
+      first.setAmount({ value: 200, unit: 'g' });
+      second.concn = 1.5;
+      second.preserveConcentration = true;
+
+      refreshConcentrations(variationReaction);
+
+      expect(first.concn).toBeCloseTo(first.amount_mol / 2, 6);
+      expect(second.concn).toBe(1.5);
     });
   });
 
