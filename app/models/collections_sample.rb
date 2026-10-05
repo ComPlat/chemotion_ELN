@@ -23,6 +23,8 @@ class CollectionsSample < ApplicationRecord
   include Tagging
   include Collecting
 
+  after_create :flag_inventory_sample
+
   def self.remove_in_collection(element_ids, collection_ids)
     # Remove from collections; returns the ids kept back because they are still linked to a
     # reaction or wellplate in the collection (see delete_in_collection_with_filter).
@@ -75,6 +77,7 @@ class CollectionsSample < ApplicationRecord
     # upsert in target collection
     # update sample tag with collection info
     static_create_in_collection(element_ids, collection_ids)
+    flag_inventory_samples(element_ids, collection_ids)
   end
 
   def self.move_to_collection(element_ids, from_col_ids, to_col_ids)
@@ -82,7 +85,25 @@ class CollectionsSample < ApplicationRecord
     delete_in_collection_with_filter(element_ids, from_col_ids)
     # Upsert in target collection
     insert_in_collection(element_ids, to_col_ids)
+    flag_inventory_samples(element_ids, to_col_ids)
     # Update element tag with collection info
     update_tag_by_element_ids(element_ids)
+  end
+
+  # Samples placed in a collection with a labelled inventory are inventory samples. The bulk
+  # upserts above skip model callbacks, so they flag the samples here.
+  def self.flag_inventory_samples(sample_ids, collection_ids)
+    return unless Collection.where(id: collection_ids).joins(:inventory)
+                            .where.not(inventories: { prefix: [nil, ''] }).exists?
+
+    Sample.where(id: sample_ids, inventory_sample: [false, nil]).update_all(inventory_sample: true) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  private
+
+  def flag_inventory_sample
+    return if deleted_at.present? || sample.inventory_sample || collection&.inventory&.prefix.blank?
+
+    sample.update_column(:inventory_sample, true) # rubocop:disable Rails/SkipsModelValidations
   end
 end
