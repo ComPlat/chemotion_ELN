@@ -32,32 +32,38 @@ FactoryBot.define do
     factory :reaction_with_variations do
       after(:build) do |reaction|
         reaction.variations = Array.new(2) do |i|
+          data = {
+            'id' => SecureRandom.uuid,
+            # Underscore prefixed, as the client's diff of its accessor backed attributes is.
+            '_temperature' => {
+              'valueUnit' => '°C',
+              'userText' => (42 + i).to_s,
+              'data' => [],
+            },
+          }
+          # A material list in a diff sizes the variation's list, so an empty one would hide materials
+          # added to the reaction after it was built - left out when there is nothing to change yet.
+          if reaction.starting_materials.any?
+            data['_starting_materials'] = reaction.starting_materials.map.with_index do |sample, index|
+              # Only the material this row changes is present; the others stay as the holes that
+              # a positional diff leaves behind.
+              next nil unless index.zero?
+
+              {
+                'id' => sample.id,
+                '_target_amount_value' => 42 + i,
+                '_target_amount_unit' => 'g',
+              }
+            end
+          end
+
           {
             'id' => SecureRandom.uuid,
             'idx' => i,
             'group' => [i + 1, 0],
             'analyses' => [],
             'notes' => "I am variation #{i}",
-            'data' => {
-              'id' => SecureRandom.uuid,
-              # Underscore prefixed, as the client's diff of its accessor backed attributes is.
-              '_temperature' => {
-                'valueUnit' => '°C',
-                'userText' => (42 + i).to_s,
-                'data' => [],
-              },
-              '_starting_materials' => reaction.starting_materials.map.with_index do |sample, index|
-                # Only the material this row changes is present; the others stay as the holes that
-                # a positional diff leaves behind.
-                next nil unless index.zero?
-
-                {
-                  'id' => sample.id,
-                  '_target_amount_value' => 42 + i,
-                  '_target_amount_unit' => 'g',
-                }
-              end,
-            },
+            'data' => data,
           }
         end
       end
