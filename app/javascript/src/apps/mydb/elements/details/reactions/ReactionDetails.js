@@ -205,12 +205,15 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   changed - intended, but easy to miss, and it can change an experiment already recorded. So when the
   parent's own values change and with them what some variations come to, a notice names them. One
   notice per reaction, replaced while the user keeps typing.
+
+  Only for an edit (`isEdit`): the reaction also changes when it is loaded, saved or handed over by
+  the store, which the user did not do here. The baseline is kept up to date either way.
   */
-  const noticeVariationsReached = useCallback((nextReaction, nextVariations) => {
+  const noticeVariationsReached = useCallback((nextReaction, nextVariations, isEdit) => {
     const fingerprint = variationFingerprint(nextReaction);
     const previous = parentFingerprintRef.current;
     parentFingerprintRef.current = { id: nextReaction.id, fingerprint };
-    if (previous.id !== nextReaction.id || previous.fingerprint === fingerprint) {
+    if (!isEdit || previous.id !== nextReaction.id || previous.fingerprint === fingerprint) {
       return;
     }
 
@@ -235,14 +238,14 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   The reaction model is mutated in place by the update handlers, so the state setter alone would bail
   out on the unchanged identity - every assignment is therefore paired with a forced re-render.
   */
-  const setReaction = useCallback((nextReaction) => {
+  const setReaction = useCallback((nextReaction, { isEdit = false } = {}) => {
     reactionRef.current = nextReaction;
     setReactionState(nextReaction);
     // Re-derived from the reaction being set - the variations are diffs against it, so a change to
     // the parent shifts what every row resolves to. Not from the prop, which goes stale after the
     // first store handover.
     const nextVariations = convertVariationDatasetToInternalVariations(nextReaction);
-    noticeVariationsReached(nextReaction, nextVariations);
+    noticeVariationsReached(nextReaction, nextVariations, isEdit);
     variationsRef.current = nextVariations;
     setVariationsState(nextVariations);
     forceUpdate();
@@ -348,7 +351,7 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     changedReaction.updateMaxAmountOfProducts();
     changedReaction.changed = true;
     // ReactionSchemeGraphic reloads the image on its own, so plain changes only need the state update
-    setReaction(changedReaction);
+    setReaction(changedReaction, { isEdit: true });
     if (options.updateGraphic && !isUpdatingGraphicRef.current) {
       // Only call updateGraphic if we're not already updating to prevent infinite loops
       updateGraphic(changedReaction);
