@@ -252,35 +252,29 @@ RSpec.describe Chemotion::SdsExtractor do
     end
   end
 
-  describe '.extract_saved_sheet' do
-    it 'reads a link as chemical_data stores it' do
-      allow(described_class).to receive(:extract).and_return('read' => true)
-      expect(described_class.extract_saved_sheet('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
-        .to eq('read' => true)
-      expect(described_class).to have_received(:extract)
-        .with(Chemotion::GenerateFileHashUtils.safety_sheets_root.join('merck/392693_c4f307a89d9fd8c2.pdf').to_s)
+  describe '.saved_sheet_path' do
+    let(:root) { Chemotion::GenerateFileHashUtils.safety_sheets_root }
+
+    it 'resolves a link as chemical_data stores it' do
+      expect(described_class.saved_sheet_path('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
+        .to eq(root.join('merck/392693_c4f307a89d9fd8c2.pdf'))
     end
 
-    it 'refuses a path outside the safety sheet folder', :aggregate_failures do
-      result = described_class.extract_saved_sheet('../../../etc/passwd')
-      expect(result['properties']).to be_empty
-      expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+    it 'refuses a path outside the safety sheet folder' do
+      expect(described_class.saved_sheet_path('../../../etc/passwd')).to be_nil
     end
 
     it 'refuses a nested path that escapes the vendor folder' do
-      result = described_class.extract_saved_sheet('/safety_sheets/merck/../../../etc/passwd.pdf')
-      expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
+      expect(described_class.saved_sheet_path('/safety_sheets/merck/../../../etc/passwd.pdf')).to be_nil
     end
 
     it 'refuses a path that is not a PDF or carries a trailing line', :aggregate_failures do
-      expect(described_class.extract_saved_sheet('/safety_sheets/merck/sheet.txt')['diagnostics']['errors'])
-        .to eq(['not a saved safety sheet path'])
-      expect(described_class.extract_saved_sheet("/safety_sheets/merck/a.pdf\n/etc/passwd")['diagnostics']['errors'])
-        .to eq(['not a saved safety sheet path'])
+      expect(described_class.saved_sheet_path('/safety_sheets/merck/sheet.txt')).to be_nil
+      expect(described_class.saved_sheet_path("/safety_sheets/merck/a.pdf\n/etc/passwd")).to be_nil
     end
 
     context 'with a symlink in the sheet folder' do
-      let(:merck) { Chemotion::GenerateFileHashUtils.safety_sheets_root.join('merck') }
+      let(:merck) { root.join('merck') }
       let(:outside) { Pathname(Dir.mktmpdir('sds_outside')) }
 
       before do
@@ -292,16 +286,12 @@ RSpec.describe Chemotion::SdsExtractor do
 
       after { FileUtils.rm_rf(outside) }
 
-      it 'refuses a link that leads out of it', :aggregate_failures do
-        allow(described_class).to receive(:extract)
-        result = described_class.extract_saved_sheet('/safety_sheets/merck/link.pdf')
-        expect(result['diagnostics']['errors']).to eq(['not a saved safety sheet path'])
-        expect(described_class).not_to have_received(:extract)
+      it 'refuses a link that leads out of it' do
+        expect(described_class.saved_sheet_path('/safety_sheets/merck/link.pdf')).to be_nil
       end
 
-      it 'reads a file that is inside it' do
-        allow(described_class).to receive(:extract).and_return('read' => true)
-        expect(described_class.extract_saved_sheet('/safety_sheets/merck/inside.pdf')).to eq('read' => true)
+      it 'resolves a file that is inside it' do
+        expect(described_class.saved_sheet_path('/safety_sheets/merck/inside.pdf')).to eq(merck.join('inside.pdf'))
       end
     end
   end

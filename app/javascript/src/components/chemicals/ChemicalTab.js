@@ -72,7 +72,7 @@ const parseSavedSheetPath = (path) => {
   return { vendor: parts[2] || '', productNumber: match ? match[1] : null };
 };
 
-// Cf. Chemotion::SdsExtractor::SAVED_SHEET, which refuses any other path.
+// Cf. Chemotion::ChemicalsService.safety_sheet_disk_path, which refuses any other path.
 const EXTRACTABLE_SHEET = /^\/safety_sheets\/[A-Za-z0-9_-]+\/[A-Za-z0-9._-]+\.pdf$/;
 
 // The display string SdsValueParser builds: "12 - 13 °C (1013 hPa)", "-98 °C", "0.79 g/cm3".
