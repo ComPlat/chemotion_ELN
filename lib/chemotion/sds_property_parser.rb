@@ -68,6 +68,7 @@ module Chemotion
       @skipped = {}
     end
 
+    # @return [Array(Hash, Hash)] display strings by property key, and the diagnostics
     def parse
       rows.each { |row| absorb(row) }
       [@properties, diagnostics]
