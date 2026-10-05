@@ -2566,19 +2566,29 @@ export default class ReactionDetailsScheme extends React.Component {
     const isInteractionReaction = reaction.isInteractionReaction();
     if (reaction.editedSample !== undefined) {
       const { materialGroups } = Reaction;
-      if (reaction.editedSample.amountType === 'target') {
+      // The fetched edited sample is detached from the reaction: SamplesFetcher.fetchById returns
+      // a fresh instance and updateMaterial has since replaced the stored one. Resolve it back to
+      // the stored instance so identity-based group classification works downstream (e.g. the
+      // solvent-driver check in updateReferenceAmountForLockedEquivalents). Without this an edited
+      // solvent is misread as a reactant driver and the reference is rebased from its amount,
+      // deriving every solvent volume from the wrong reference.
+      const fetchedSample = reaction.editedSample;
+      const editedSample = materialGroups
+        .flatMap((group) => reaction[group] || [])
+        .find((material) => isSameMaterial(material, fetchedSample)) || fetchedSample;
+      if (fetchedSample.amountType === 'target') {
         materialGroups.forEach((group) => {
-          reaction[group] = this.updatedSamplesForEquivalentChange(reaction[group] || [], reaction.editedSample, group);
+          reaction[group] = this.updatedSamplesForEquivalentChange(reaction[group] || [], editedSample, group);
         });
       } else { // real amount, so that we update amount in mmol
         materialGroups.forEach((group) => {
-          reaction[group] = this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
+          reaction[group] = this.updatedSamplesForAmountChange(reaction[group] || [], editedSample, group);
         });
       }
       if (lockEquivColumn) {
         // Both modal paths preserve solvent amounts. Recapture the edited solvent's saved
         // volume and derive the others after any reference change, matching the table path.
-        reaction.updateSolventVolumesForReference(reaction.editedSample);
+        reaction.updateSolventVolumesForReference(editedSample);
       }
       reaction.editedSample = undefined;
     } else {

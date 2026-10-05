@@ -2354,6 +2354,45 @@ describe('ReactionDetailsScheme — solvent ratio lifecycle', () => {
     expect(reaction.solvents[0].equivalent).toBe(0);
   });
 
+  it('does not rebase the reference from an edited density solvent on a real modal save (detached instance)', () => {
+    // Regression: SamplesFetcher returns a fresh editedSample and updateMaterial replaces the
+    // stored solvent, so an identity-based classification would misread the edited solvent as a
+    // reactant driver and rebase the reference from its amount. Resolving editedSample back to the
+    // stored instance keeps it classified as a non-reactant driver, so the reference is untouched.
+    const reaction = new Reaction({
+      id: 92,
+      short_label: 'reaction',
+      starting_materials: [attributes('reference', 0.001, 'mol', { reference: true })],
+      reactants: [],
+      products: [],
+      solvents: [attributes('solvent', 2, 'g', { density: 1, equivalent: 2 })],
+    });
+    const ctx = Object.create(ReactionDetailsScheme.prototype);
+    ctx.props = { reaction, onInputChange: sinon.spy(), onReactionChange: sinon.spy() };
+    ctx.state = { lockEquivColumn: true, displayYieldField: false, reactionDescTemplate: {} };
+    ctx.warnIfMixtureMassExceeded = sinon.spy();
+    ctx.renderPhConditionProperty = () => null;
+    ctx.reactionVesselSize = () => null;
+    ctx.reactionVolume = () => null;
+    ctx.renderRole = () => null;
+
+    reaction.captureSolventReferenceRatios();
+    const edited = reaction.solvents[0];
+    edited.amountType = 'real';
+    edited.setAmount({ value: 3, unit: 'g' });
+    edited.equivalent = 2;
+    const serverJson = JSON.parse(JSON.stringify(edited.serializeMaterial()));
+    serverJson.molecule = { molecular_weight: 100 };
+    reaction.editedSample = edited; // the detached, fetched instance
+    reaction.updateMaterial(new Sample(serverJson)); // replaces the stored solvent with a new instance
+    expect(reaction.solvents[0]).not.toBe(edited); // the detachment the bug needs
+
+    ctx.render();
+
+    // Without the fix the reference would be rebased to solvent.amount_mol / equivalent = 0.03 / 2.
+    expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.001, 10);
+  });
+
   it('captures a solvent created through ElementStore and retains its volume through the target render path', () => {
     const ctx = buildModalContext();
     const { reaction } = ctx.props;
