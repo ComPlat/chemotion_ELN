@@ -77,16 +77,23 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       expect(Affiliation.find(suggestion.affiliation_id).department).to eq('ITC')
     end
 
-    it 'approves a name-only suggestion without creating an affiliation', :aggregate_failures do
-      name_only = create(:affiliation_suggestion, user: user, organization: nil, department: 'New Dept')
-
+    it 'refuses to approve when the reviewer clears the organization', :aggregate_failures do
       expect do
-        put "/api/v1/admin/affiliation_suggestions/#{name_only.id}/approve"
+        put "/api/v1/admin/affiliation_suggestions/#{suggestion.id}/approve", params: { organization: '' }
       end.not_to change(UserAffiliation, :count)
 
+      expect(response).to have_http_status(422)
+      expect(suggestion.reload).to be_pending
+      expect(mail_double).not_to have_received(:deliver_later)
+    end
+
+    it 'drops the old ROR id when the reviewer clears it', :aggregate_failures do
+      suggestion.update!(ror_id: '04t3en479')
+      put "/api/v1/admin/affiliation_suggestions/#{suggestion.id}/approve",
+          params: { organization: 'Foo GmbH', ror_id: '' }
       expect(response).to have_http_status(:ok)
-      expect(name_only.reload).to be_approved
-      expect(name_only.affiliation_id).to be_nil
+      expect(Affiliation.find(suggestion.reload.affiliation_id)).to have_attributes(organization: 'Foo GmbH',
+                                                                                    ror_id: nil)
     end
 
     it 'reuses the registry row matched by ROR id instead of duplicating the organization', :aggregate_failures do

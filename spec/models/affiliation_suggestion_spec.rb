@@ -34,9 +34,9 @@ RSpec.describe AffiliationSuggestion, type: :model do
   let(:user) { create(:person) }
 
   describe 'validations' do
-    it 'is valid without organization (department-only suggestion)' do
+    it 'is invalid without organization' do
       suggestion = build(:affiliation_suggestion, user: user, organization: nil, department: 'IOC')
-      expect(suggestion).to be_valid
+      expect(suggestion).not_to be_valid
     end
 
     it 'is valid with organization and user' do

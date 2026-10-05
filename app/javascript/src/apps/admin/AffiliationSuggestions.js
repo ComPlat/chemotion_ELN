@@ -158,8 +158,9 @@ const AffiliationSuggestions = () => {
           department: editSug.department || '',
           group: editSug.group || '',
           country: editSug.country || '',
-          ...(editSug.ror_id ? { ror_id: editSug.ror_id } : {}),
+          ror_id: editSug.ror_id || '',
         })}
+        primaryActionDisabled={!editSug?.organization}
       >
         {editSug && (
           <div className="d-flex flex-column gap-3">

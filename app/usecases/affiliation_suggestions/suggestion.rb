@@ -26,14 +26,10 @@ module Usecases
           s.assign_attributes(
             edits.slice(:organization, :department, :group, :country, :ror_id).transform_values(&:presence),
           )
-          # A name-only suggestion (department/working group) is approved without an affiliation.
-          if s.organization.present?
-            affiliation = registry_row_for(s)
-            apply_affiliation(s, affiliation)
-            s.update!(status: :approved, affiliation_id: affiliation.id)
-          else
-            s.update!(status: :approved)
-          end
+          s.validate!
+          affiliation = registry_row_for(s)
+          apply_affiliation(s, affiliation)
+          s.update!(status: :approved, affiliation_id: affiliation.id)
         end
         AffiliationMailer.suggestion_approved(suggestion).deliver_later
         suggestion
