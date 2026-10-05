@@ -47,7 +47,7 @@ const TEMPERATURE_UNITS = ['°C', 'K', '°F'];
 
 const MASS_FACTORS = { g: 1, mg: 1e-3, μg: 1e-6 };
 const VOLUME_FACTORS = { l: 1, ml: 1e-3, μl: 1e-6 };
-const AMOUNT_FACTORS = { mol: 1, mmol: 1e-3 };
+const AMOUNT_FACTORS = { mol: 1, mmol: 1e-3, μmol: 1e-6 };
 
 // Gas time units the scheme writes into `gas_phase_data.time`, spelled the way convertDuration reads them.
 const GAS_TIME_UNITS = ['s', 'm', 'h', 'd', 'w'];
