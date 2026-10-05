@@ -73,16 +73,8 @@ module Chemotion
         end
         c_id = params[:uiState][:currentCollection]
 
-        table_params = {
-          ui_state: params[:uiState],
-          c_id: c_id,
-        }
-
-        ui_state = table_params[:ui_state].select do |_, v|
-          v.is_a?(Hash) && v.key?('checkedIds') && v.key?('checkedAll')
-        end
-
-        return status 204 if ui_state.all? { |_, v| v['checkedIds'].to_a.empty? && !v['checkedAll'] }
+        table_params = { c_id: c_id, selections: export_selections(params[:uiState], c_id) }
+        return status 204 if table_params[:selections].empty?
 
         if params[:columns][:chemicals].blank?
           generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
@@ -132,16 +124,16 @@ module Chemotion
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         collection = Collection.accessible_for(current_user).find(params[:uiState][:currentCollection])
 
-        reaction_state = params[:uiState][:reaction]
-        unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
-          return status 204
-        end
+        selection = export_selection(:reaction, params[:uiState], collection.id)
+        return status 204 unless selection
 
-        results = reaction_smiles_hash(
-          collection.id,
-          (reaction_state[:checkedAll] && reaction_state[:uncheckedIds]) || reaction_state[:checkedIds],
-          reaction_state[:checkedAll],
-        ) || {}
+        ids = selection[:ids]
+        if selection[:checked_all]
+          scope = list_scope(:reaction, params[:uiState], collection.id) || collection.reactions
+          ids = scope.where.not(id: ids).order(:id).pluck(:id)
+          return status 204 if ids.empty?
+        end
+        results = reaction_smiles_hash(collection.id, ids) || {}
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
@@ -160,7 +152,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_wellplate, current_user.id)
-        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)
@@ -183,7 +175,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_reaction, current_user.id)
-        sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_reaction_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)

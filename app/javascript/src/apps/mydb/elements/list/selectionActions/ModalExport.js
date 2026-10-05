@@ -7,7 +7,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
-const filterUIState = (uiState) => {
+// Shared with ModalReactionExport, so both exports send the same selection and list filters.
+export const filterUIState = (uiState) => {
   const {
     currentCollection, sample, reaction, wellplate,
     userLabel, fromDate, toDate, filterCreatedAt, productOnly

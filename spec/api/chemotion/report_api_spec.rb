@@ -383,44 +383,264 @@ describe Chemotion::ReportAPI do
 
     describe 'ReportHelpers list filters' do
       let(:helpers) { Class.new { |inst| inst.extend(ReportHelpers) } }
+
+      it 'counts productOnly as a filter for samples only' do
+        expect([helpers.list_filtered?(:sample, { productOnly: true }),
+                helpers.list_filtered?(:reaction, { productOnly: true })]).to eq [true, false]
+      end
+
+      it 'counts a label or a date as a filter for every table' do
+        expect(%i[sample reaction wellplate].map { |t| helpers.list_filtered?(t, { fromDate: 1 }) }).to all(be true)
+      end
+
+      it 'leaves an unfiltered reaction list to the collection join' do
+        expect(helpers.list_scope(:reaction, {}, collection.id)).to be_nil
+      end
+    end
+
+    describe 'select-all export with list filters' do
       let(:label) { UserLabel.create!(user_id: user.id, access_level: 0, title: 'Shelf A', color: '#aaa') }
-      let(:labelled) { create(:sample, collections: [collection]) }
-      let(:unlabelled) { create(:sample, collections: [collection]) }
+      let(:other_collection) { create(:collection, user_id: user.id) }
+      let(:sample_columns) { { sample: %w[name] } }
+      let(:none_selected) { { checkedIds: [], uncheckedIds: [], checkedAll: false } }
 
-      before do
-        tag = labelled.reload.tag
+      def add_label(element)
+        tag = element.reload.tag
         tag.update!(taggable_data: (tag.taggable_data || {}).merge('user_labels' => [label.id]))
-        unlabelled
       end
 
-      it 'reports an unfiltered list as unfiltered' do
-        expect(helpers).not_to be_list_filtered({ userLabel: nil, productOnly: false })
+      def export(ui_state, columns: sample_columns, export_type: 1)
+        params = {
+          exportType: export_type,
+          uiState: { sample: none_selected, reaction: none_selected, wellplate: none_selected,
+                     currentCollection: collection.id }.merge(ui_state),
+          columns: columns,
+        }
+        post '/api/v1/reports/export_samples_from_selections', params: params, as: :json
       end
 
-      it 'reports a label filter as filtering' do
-        expect(helpers).to be_list_filtered({ userLabel: label.id })
+      def sheet_names(sheet)
+        file = Tempfile.new(['export', '.xlsx'])
+        file.binmode
+        file.write(response.body)
+        file.flush
+        rows = Roo::Spreadsheet.open(file.path, extension: :xlsx).sheet(sheet).to_a
+        column = rows.first.index('sample name')
+        rows.drop(1).filter_map { |row| row[column] }
       end
 
-      it 'resolves select-all to only the samples carrying the active label' do
-        ids = helpers.filtered_element_ids(:sample, { userLabel: label.id }, collection.id)
-
-        expect(ids).to eq [labelled.id]
+      def select_all(unchecked = [])
+        { checkedIds: [], uncheckedIds: unchecked, checkedAll: true }
       end
 
-      it 'excludes solvent-only samples the list hides' do
-        solvent = create(:sample, collections: [collection])
-        solvent.tag.update!(taggable_data: (solvent.tag.taggable_data || {}).merge('user_labels' => [label.id]))
-        create(:reactions_solvent_sample, reaction: create(:reaction), sample: solvent)
+      context 'with labelled and unlabelled samples' do
+        let!(:first) { create(:sample, name: 'first', collections: [collection]) }
+        let!(:second) { create(:sample, name: 'second', collections: [collection]) }
 
-        ids = helpers.filtered_element_ids(:sample, { userLabel: label.id }, collection.id)
+        before do
+          create(:sample, name: 'plain', collections: [collection])
+          add_label(second)
+          add_label(first)
+        end
 
-        expect(ids).to eq [labelled.id]
+        it 'exports the labelled samples minus the unchecked ones' do
+          export({ sample: select_all([second.id]), userLabel: label.id })
+
+          expect(sheet_names('sample')).to eq ['first']
+        end
+
+        it 'orders the rows by id' do
+          export({ sample: select_all, userLabel: label.id })
+
+          expect(sheet_names('sample')).to eq %w[first second]
+        end
+
+        it 'answers 204 when the filter matches nothing' do
+          export({ sample: select_all([first.id, second.id]), userLabel: label.id })
+
+          expect(response).to have_http_status(:no_content)
+        end
+
+        it 'answers 204 for an SDF export when the filter matches nothing' do
+          export({ sample: select_all([first.id, second.id]), userLabel: label.id }, export_type: 2)
+
+          expect(response).to have_http_status(:no_content)
+        end
+
+        it 'applies the filter to the analyses sheet' do
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(analyses: %w[name]))
+
+          expect(sheet_names('sample_analyses')).to eq %w[first second]
+        end
+
+        it 'applies the filter to the chemicals sheet' do
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(chemicals: %w[status]))
+
+          expect(sheet_names('sample_chemicals')).to eq %w[first second]
+        end
+
+        it 'applies the filter to the components sheet' do
+          Sample.find_each { |sample| create(:component, sample: sample) }
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(components: %w[name]))
+
+          expect(sheet_names('sample_components')).to eq %w[first second]
+        end
+
+        it 'exports the checked samples to the components sheet' do
+          Sample.find_each { |sample| create(:component, sample: sample) }
+          export({ sample: { checkedIds: [second.id], uncheckedIds: [], checkedAll: false } },
+                 columns: sample_columns.merge(components: %w[name]))
+
+          expect(sheet_names('sample_components')).to eq ['second']
+        end
+
+        it 'only accepts integer ids' do
+          export({ sample: { checkedIds: ['x'], uncheckedIds: [], checkedAll: false } })
+
+          expect(response).to have_http_status(:bad_request)
+        end
       end
 
-      it 'leaves a table it cannot filter to the collection-wide query' do
-        ids = helpers.filtered_element_ids(:screen, { userLabel: label.id }, collection.id)
+      context 'with a date filter sent as unix seconds' do
+        before do
+          create(:sample, name: 'old', collections: [collection])
+            .update_columns(created_at: 10.days.ago, updated_at: 10.days.ago) # rubocop:disable Rails/SkipsModelValidations
+          create(:sample, name: 'new', collections: [collection])
+        end
 
-        expect(ids).to be_nil
+        it 'keeps the samples created inside the range, including the whole of the end day' do
+          export({ sample: select_all, fromDate: 2.days.ago.to_i, toDate: Time.zone.now.beginning_of_day.to_i,
+                   filterCreatedAt: true })
+
+          expect(sheet_names('sample')).to eq ['new']
+        end
+      end
+
+      context 'with reaction samples' do
+        let!(:reaction) { create(:reaction, collections: [collection]) }
+        let!(:solvent) { create(:sample, name: 'solvent', collections: [collection]) }
+        let!(:product) { create(:sample, name: 'product', collections: [collection]) }
+
+        before do
+          create(:sample, name: 'standalone', collections: [collection])
+          create(:reactions_solvent_sample, reaction: reaction, sample: solvent)
+          create(:reactions_product_sample, reaction: reaction, sample: product)
+        end
+
+        it 'leaves solvent-only samples out of an unfiltered select-all' do
+          export({ sample: select_all })
+
+          expect(sheet_names('sample')).to contain_exactly('product', 'standalone')
+        end
+
+        it 'exports only products with productOnly' do
+          export({ sample: select_all, productOnly: true })
+
+          expect(sheet_names('sample')).to eq ['product']
+        end
+      end
+
+      context 'with a reaction whose product sits in another collection' do
+        let!(:reaction) { create(:reaction, collections: [collection]) }
+
+        before do
+          add_label(reaction)
+          create(:reactions_solvent_sample, reaction: reaction,
+                                            sample: create(:sample, name: 'here', collections: [collection]))
+          elsewhere = create(:sample, name: 'elsewhere', collections: [other_collection])
+          create(:reactions_product_sample, reaction: reaction, sample: elsewhere)
+          # Saving the reaction sample files it into the reaction's collection too.
+          CollectionsSample.where(sample: elsewhere, collection: collection).delete_all
+        end
+
+        it 'leaves out samples outside the collection without a filter' do
+          export({ reaction: select_all })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+
+        it 'keeps the collection restriction when a label filter is set' do
+          export({ reaction: select_all, userLabel: label.id })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+
+        it 'ignores productOnly for reactions' do
+          export({ reaction: select_all, productOnly: true })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+      end
+
+      context 'with a labelled and an unlabelled reaction sharing a sample' do
+        before do
+          shared = create(:sample, name: 'shared', collections: [collection])
+          %w[labelled plain].each do |name|
+            reaction = create(:reaction, collections: [collection])
+            create(:reactions_solvent_sample, reaction: reaction, sample: shared)
+            create(:reactions_product_sample, reaction: reaction,
+                                              sample: create(:sample, name: name, collections: [collection]))
+            add_label(reaction) if name == 'labelled'
+          end
+        end
+
+        it 'exports the rows of the labelled reaction only' do
+          export({ reaction: select_all, userLabel: label.id })
+
+          expect(sheet_names('reaction')).to eq %w[shared labelled]
+        end
+      end
+
+      context 'with wellplates' do
+        let!(:labelled) { create(:wellplate, collections: [collection]) }
+
+        before do
+          add_label(labelled)
+          unlabelled = create(:wellplate, collections: [collection])
+          create(:well, wellplate: labelled, sample: create(:sample, name: 'in labelled', collections: [collection]))
+          create(:well, wellplate: unlabelled, sample: create(:sample, name: 'in plain', collections: [collection]))
+        end
+
+        it 'exports the samples of the labelled wellplates only' do
+          export({ wellplate: select_all, userLabel: label.id })
+
+          expect(sheet_names('wellplate')).to eq ['in labelled']
+        end
+      end
+
+      describe 'reaction SMILES' do
+        let(:molfile) { build(:molfile, type: 'test_2') }
+
+        def export_smiles(ui_state)
+          params = {
+            exportType: 0,
+            uiState: { sample: none_selected, reaction: none_selected, wellplate: none_selected,
+                       currentCollection: collection.id }.merge(ui_state),
+            columns: {},
+          }
+          post '/api/v1/reports/export_reactions_from_selections', params: params, as: :json
+        end
+
+        before do
+          2.times do |i|
+            reaction = create(:reaction, collections: [collection])
+            create(:reactions_product_sample, reaction: reaction,
+                                              sample: create(:sample, molfile: molfile, collections: [collection]))
+            add_label(reaction) if i.zero?
+          end
+        end
+
+        it 'exports only the labelled reactions' do
+          export_smiles({ reaction: select_all, userLabel: label.id })
+
+          expect(response.body.split("\r\n").size).to eq 1
+        end
+
+        it 'answers 204 when the filter matches nothing' do
+          export_smiles({ reaction: select_all, userLabel: label.id + 1 })
+
+          expect(response).to have_http_status(:no_content)
+        end
       end
     end
 
