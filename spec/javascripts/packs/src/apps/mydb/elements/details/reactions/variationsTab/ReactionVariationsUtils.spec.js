@@ -9,6 +9,7 @@ import SampleFactory from 'factories/SampleFactory';
 import {
   diffObjects, variationDiffOf, formatReactionSegments, getVariationsRowName,
   makeVariationReaction, refreshConcentrations, addNewVariationDataset, parseVariationGroup,
+  variationFingerprint, variationsChangedBetween,
   copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
   adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds,
@@ -231,6 +232,50 @@ describe('ReactionVariationsUtils', () => {
       convertVariationDatasetToInternalVariations(reaction);
 
       expect(reaction.variations[0].data).toEqual({ id: 'row-reaction' });
+    });
+  });
+
+  /*
+  A change in the Scheme tab reaches every variation without a value of its own for what it changed;
+  those are named in a notice, so a recorded experiment does not change unnoticed.
+  */
+  describe('variations reached by a change of the parent', () => {
+    let reaction;
+    beforeEach(async () => {
+      reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    });
+
+    const rowsOf = (diffs) => diffs.map((diff, idx) => ({
+      idx, label: idx + 1, data: makeVariationReaction(reaction, { id: `row-${idx}`, ...diff }),
+    }));
+
+    const ownMass = () => {
+      const edited = makeVariationReaction(reaction, {});
+      edited.starting_materials[1].setAmount({ value: 7, unit: 'g' });
+      return variationDiffOf(reaction, edited);
+    };
+
+    it('names the variations that come to something else after the change', () => {
+      const diffs = [{}, ownMass()];
+      const before = rowsOf(diffs);
+      reaction.starting_materials[1].setAmount({ value: 60, unit: 'g' });
+      const after = rowsOf(diffs);
+
+      expect(variationsChangedBetween(before, after)).toEqual([1]);
+    });
+
+    it('names none for a change of something no variation inherits', () => {
+      const before = rowsOf([ownMass()]);
+      reaction.starting_materials[1].setAmount({ value: 60, unit: 'g' });
+
+      expect(variationsChangedBetween(before, rowsOf([ownMass()]))).toEqual([]);
+    });
+
+    it('tells a change of a condition apart', () => {
+      const unchanged = variationFingerprint(reaction);
+      reaction.duration = '3 Hour(s)';
+
+      expect(variationFingerprint(reaction)).not.toBe(unchanged);
     });
   });
 

@@ -454,6 +454,42 @@ const variationDiffOf = (reaction, variationReaction) => diffObjects(
 );
 
 /*
+What a variation comes to, in the values the Scheme tab edits - its materials' amounts, equivalents
+and kinds, and the reaction conditions - as a string to compare. Computed values like concentration
+are left out: they follow from these.
+*/
+const MATERIAL_GROUPS_OF_A_VARIATION = ['starting_materials', 'reactants', 'solvents', 'products'];
+
+const variationFingerprint = (reaction) => JSON.stringify({
+  materials: MATERIAL_GROUPS_OF_A_VARIATION.map((group) => (reaction[group] || []).map((material) => [
+    material.id, material.amount_value, material.amount_unit, material.equivalent, material.coefficient,
+    material.purity, material.gas_type, material.reference,
+  ])),
+  temperature: [reaction.temperature?.userText, reaction.temperature?.valueUnit],
+  duration: reaction.duration ?? null,
+  volume: reaction.volume ?? null,
+  concentrationMode: reaction.concentration_mode ?? null,
+  vesselSize: reaction.vessel_size ?? null,
+  ph: [reaction.ph_operator ?? null, reaction.ph_value ?? null],
+  gaseous: !!reaction.gaseous,
+});
+
+/*
+The labels of the variations a change of the parent reaction reached: those that now come to something
+else than before. A variation's own values are kept by its diff, so one that changed every value the
+change touched stays as it was.
+*/
+const variationsChangedBetween = (previousVariations, nextVariations) => {
+  const before = new Map(previousVariations.map((variation) => [
+    variation.data?.id, variationFingerprint(variation.data),
+  ]));
+  return nextVariations
+    .filter((variation) => before.has(variation.data?.id)
+      && before.get(variation.data?.id) !== variationFingerprint(variation.data))
+    .map((variation) => variation.label);
+};
+
+/*
 Column layout of the variations grid - order, hidden columns and widths - kept per user and per
 reaction, following the key convention of the previous variations table. Storage can be unavailable
 (private mode, quota), in which case the layout simply is not remembered.
@@ -734,6 +770,8 @@ export {
   reorderVariationDatasets,
   parseVariationGroup,
   makeVariationReaction,
+  variationFingerprint,
+  variationsChangedBetween,
   refreshConcentrations,
   refreshDerivedValues,
   diffObjects,

@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, {
-  memo, useCallback, useEffect, useMemo, useReducer, useRef, useState
+  memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -23,8 +23,11 @@ import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
-import { adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations }
-  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
+  variationFingerprint, variationsChangedBetween,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties
   from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
@@ -189,6 +192,43 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   const schemeDropdownRef = useRef(null);
   const headerNameInputRef = useRef(null);
   const [, forceUpdate] = useReducer((count) => count + 1, 0);
+  const { notifications } = useContext(StoreContext);
+  // The variations and the parent's own values as of the last update, to tell what an update reached.
+  const variationsRef = useRef(variations);
+  const parentFingerprintRef = useRef({
+    id: reactionFromProps.id,
+    fingerprint: variationFingerprint(reactionFromProps),
+  });
+
+  /*
+  An edit in the Scheme tab reaches every variation that has not been given its own value for what it
+  changed - intended, but easy to miss, and it can change an experiment already recorded. So when the
+  parent's own values change and with them what some variations come to, a notice names them. One
+  notice per reaction, replaced while the user keeps typing.
+  */
+  const noticeVariationsReached = useCallback((nextReaction, nextVariations) => {
+    const fingerprint = variationFingerprint(nextReaction);
+    const previous = parentFingerprintRef.current;
+    parentFingerprintRef.current = { id: nextReaction.id, fingerprint };
+    if (previous.id !== nextReaction.id || previous.fingerprint === fingerprint) {
+      return;
+    }
+
+    const labels = variationsChangedBetween(variationsRef.current, nextVariations);
+    if (labels.length === 0) {
+      return;
+    }
+    notifications?.add({
+      title: 'Variations changed as well',
+      message: `This change also applies to ${labels.length === 1 ? 'variation' : 'variations'} `
+        + `${labels.map((label) => `#${label}`).join(', ')}, which ${labels.length === 1 ? 'has' : 'have'} `
+        + 'no value of its own for it.',
+      level: 'warning',
+      position: 'tc',
+      autoDismiss: 6,
+      uid: `variations-reached-by-scheme-change-${nextReaction.id}`,
+    });
+  }, [notifications]);
 
   /*
   The reaction model is mutated in place by the update handlers, so the state setter alone would bail
@@ -200,12 +240,16 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     // Re-derived from the reaction being set - the variations are diffs against it, so a change to
     // the parent shifts what every row resolves to. Not from the prop, which goes stale after the
     // first store handover.
-    setVariationsState(convertVariationDatasetToInternalVariations(nextReaction));
+    const nextVariations = convertVariationDatasetToInternalVariations(nextReaction);
+    noticeVariationsReached(nextReaction, nextVariations);
+    variationsRef.current = nextVariations;
+    setVariationsState(nextVariations);
     forceUpdate();
-  }, []);
+  }, [noticeVariationsReached]);
 
   // Same for the variations list, which the variations tab edits in place and hands straight back.
   const setVariations = useCallback((nextVariations) => {
+    variationsRef.current = nextVariations;
     setVariationsState(nextVariations);
     forceUpdate();
   }, []);
