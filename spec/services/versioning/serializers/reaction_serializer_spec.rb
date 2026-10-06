@@ -46,6 +46,16 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
     expect(changes.last[:new_value]).to eq({ 'ops' => [{ 'insert' => 'second' }] })
   end
 
+  it 'reverts a description to the stored delta, not to its normalized display value' do
+    blank = { 'ops' => [{ 'insert' => "\n" }] }
+    reaction = create(:reaction, description: blank)
+    as_request { reaction.update!(description: { 'ops' => [{ 'insert' => 'typed' }] }) }
+
+    change = field_changes(reaction, :description).last
+    expect(change[:old_value]).to eq({})
+    expect(change[:revertible_value]).to eq blank
+  end
+
   it 'returns complete previous and updated variations when one is edited and another deleted' do
     first = { 'uuid' => 'a', 'properties' => { 'temperature' => { 'value' => 20, 'unit' => '°C' } } }
     second = { 'uuid' => 'b', 'properties' => { 'temperature' => { 'value' => 30, 'unit' => '°C' } } }

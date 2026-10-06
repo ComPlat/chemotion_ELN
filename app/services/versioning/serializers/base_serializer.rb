@@ -53,7 +53,9 @@ module Versioning
               fields = [fields] unless fields.is_a?(Array)
               fields.each do |field|
                 formatter = field[:formatter] || default_formatter
-                revertible_value_formatter = field[:revertible_value_formatter] || formatter
+                # A Quill field's formatter normalizes blank deltas for display; revert to the stored value instead.
+                revertible_value_formatter = field[:revertible_value_formatter] ||
+                                             (field[:kind] == :quill ? default_formatter : formatter)
 
                 old_value = formatter.call(key, previous_value)
                 new_value = formatter.call(key, value)
