@@ -56,6 +56,8 @@ export default class VersionsTable extends Component {
       case 'sample': {
         SamplesFetcher.fetchById(id).then((result) => {
           parent.setState({ sample: result });
+          // The inventory tab stays mounted and keeps its own copy of the chemical, which a revert may have changed.
+          parent.chemicalTabRef?.current?.fetchChemical(result);
         });
         break;
       }

@@ -6,6 +6,7 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 configure({ adapter: new Adapter() });
 
@@ -91,6 +92,25 @@ describe('VersionsTable', () => {
       ]);
 
       expect(selected.revertibleValue).toEqual(composition);
+    });
+  });
+
+  describe('reloadEntity()', () => {
+    it("reloads a sample's inventory tab too, since it keeps its own copy of the chemical", async () => {
+      sinon.stub(VersionsFetcher, 'fetch').returns(new Promise(() => {}));
+      const reloaded = { id: 1 };
+      sinon.stub(SamplesFetcher, 'fetchById').resolves(reloaded);
+      const fetchChemical = sinon.spy();
+      const parent = { setState: sinon.spy(), chemicalTabRef: { current: { fetchChemical } } };
+      const wrapper = shallow(
+        <VersionsTable type="samples" id={1} element={{}} parent={parent} isEdited={false} />
+      );
+
+      wrapper.instance().reloadEntity();
+      await SamplesFetcher.fetchById.firstCall.returnValue;
+
+      expect(parent.setState.calledWith({ sample: reloaded })).toBe(true);
+      expect(fetchChemical.calledWith(reloaded)).toBe(true);
     });
   });
 });
