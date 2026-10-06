@@ -41,6 +41,60 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
     expect(sample.boiling_point).to eq 1.0..2.0
   end
 
+  it 'reverts boiling and melting points back to not set' do
+    sample = create(:sample) # stores "not set" as the unbounded range
+    not_set = sample.reload.boiling_point
+    round_trip(sample, Versioning::Serializers::SampleSerializer, Versioning::Reverters::SampleReverter,
+               'boiling_point', boiling_point: 3.0..4.0)
+
+    expect(sample.boiling_point).to eq not_set
+  end
+
+  it 'reverts boiling and melting points back to NULL, as older rows store them' do
+    sample = create(:sample)
+    sample.update_columns(boiling_point: nil, melting_point: nil) # rubocop:disable Rails/SkipsModelValidations
+    round_trip(sample, Versioning::Serializers::SampleSerializer, Versioning::Reverters::SampleReverter,
+               'boiling_point', boiling_point: 3.0..4.0)
+    round_trip(sample, Versioning::Serializers::SampleSerializer, Versioning::Reverters::SampleReverter,
+               'melting_point', melting_point: 1.0..2.0)
+
+    expect([sample.boiling_point, sample.melting_point]).to eq [nil, nil]
+  end
+
+  it 'reverts the label shown for a range together with the range' do
+    sample = create(:sample, boiling_point: 1.0..2.0, xref: { 'boiling_point_label' => '1 – 2' },
+                             collections: [create(:collection, user: user)])
+    as_request { sample.update!(boiling_point: 3.0..4.0, xref: { 'boiling_point_label' => '3 – 4' }) }
+    history = Versioning::Serializers::SampleSerializer.call(Sample.with_log_data.find(sample.id))
+    change = history.filter_map { |entry| entry[:changes]['boiling_point'] }.last
+    fields = [{ 'name' => 'boiling_point', 'value' => change[:revertible_value] }] +
+             change.fetch(:linked_revertible_values, {}).map { |name, value| { 'name' => name, 'value' => value } }
+    revert = { 'klass_name' => 'Sample', 'db_id' => sample.id, 'fields' => fields }
+
+    expect(VersionRevertPolicy.new(user, [revert]).allowed?).to be true
+    Versioning::Reverters::SampleReverter.call(revert)
+    expect([sample.reload.boiling_point, sample.xref['boiling_point_label']]).to eq [1.0..2.0, '1 – 2']
+  end
+
+  it 'reverts an empty range to not set rather than parsing it' do
+    sample = create(:sample)
+    sample.update_columns(melting_point: 'empty') # rubocop:disable Rails/SkipsModelValidations
+    round_trip(sample, Versioning::Serializers::SampleSerializer, Versioning::Reverters::SampleReverter,
+               'melting_point', melting_point: 1.0..2.0)
+
+    expect(sample.melting_point).to be_nil
+  end
+
+  it 'reverts device description setup descriptions to the stored hash' do
+    setup = { 'setup' => [{ 'name' => 'Laser', 'description' => 'green' }] }
+    device = create(:device_description, created_by: user.id, setup_descriptions: setup)
+    round_trip(device, Versioning::Serializers::DeviceDescriptionSerializer,
+               Versioning::Reverters::DeviceDescriptionReverter, 'setup_descriptions',
+               setup_descriptions: { 'setup' => [{ 'name' => 'Lamp' }] })
+
+    expect(device.setup_descriptions).to eq setup
+  end
+
   it 'reverts chemical data to the stored array' do
     chemical_data = [{ 'safetySheetPath' => [{ 'merck_link' => 'x' }] }]
     chemical = create(:chemical, chemical_data: chemical_data)

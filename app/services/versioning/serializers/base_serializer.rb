@@ -11,7 +11,7 @@ module Versioning
       # Part of the cache version: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again. It goes into the version, not the
       # key, so a bump replaces each record's entry in place instead of leaving the old generation behind.
-      CACHE_VERSION = 3
+      CACHE_VERSION = 4
 
       attr_accessor :record, :name
 

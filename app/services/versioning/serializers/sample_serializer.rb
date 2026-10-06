@@ -60,14 +60,15 @@ module Versioning
           boiling_point: {
             label: 'Boiling point',
             kind: :numrange,
-            revert: %i[boiling_point],
+            # The label the form shows for the range (as typed) is reverted with it.
+            revert: %i[boiling_point xref.boiling_point_label],
             formatter: non_formatter,
             revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           melting_point: {
             label: 'Melting point',
             kind: :numrange,
-            revert: %i[melting_point],
+            revert: %i[melting_point xref.melting_point_label],
             formatter: non_formatter,
             revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
