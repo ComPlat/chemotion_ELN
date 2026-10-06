@@ -8,7 +8,6 @@ class VersionRevertPolicy
   # The elements a sub-record belongs to; records not listed here are elements themselves. A ReactionsSample
   # needs both the reaction and its sample.
   OWNING_ELEMENTS = {
-    'Attachment' => ->(record) { [record.root_element] },
     'Chemical' => ->(record) { [record.sample || record.sequence_based_macromolecule_sample] },
     'Component' => ->(record) { [record.sample] },
     'Container' => ->(record) { [VersionRevertPolicy.container_element(record)] },
@@ -66,15 +65,20 @@ class VersionRevertPolicy
     return false unless change.is_a?(Hash)
 
     klass_name = change['klass_name']
-    return false unless Versioning::Reverter::ALLOWED_REVERTERS.include?(klass_name)
+    record = revertible_record(klass_name, change['db_id'])
+    fields = change['fields']
+    return false if record.nil? || !fields.is_a?(Array) || fields.empty?
 
-    # Looked up like the reverter does, so deleted records the History offers to restore are found too.
-    record = "Versioning::Reverters::#{klass_name}Reverter".constantize.scope.find_by(id: change['db_id'])
-    return false if record.nil?
-    return false unless RECORD_CONDITIONS.fetch(klass_name, ->(_) { true }).call(record)
+    owning_elements_editable?(klass_name, record) && fields.all? { |field| field_allowed?(klass_name, record, field) }
+  end
 
-    owning_elements_editable?(klass_name, record) &&
-      Array.wrap(change['fields']).all? { |field| field_allowed?(klass_name, record, field) }
+  # The record a change targets, if its type has a reverter and the History can offer to revert it. Looked up like
+  # the reverter does, so deleted records the History offers to restore are found too.
+  def revertible_record(klass_name, id)
+    return unless Versioning::Reverter::ALLOWED_REVERTERS.include?(klass_name)
+
+    record = "Versioning::Reverters::#{klass_name}Reverter".constantize.scope.find_by(id: id)
+    record if record && RECORD_CONDITIONS.fetch(klass_name, ->(_) { true }).call(record)
   end
 
   def owning_elements_editable?(klass_name, record)

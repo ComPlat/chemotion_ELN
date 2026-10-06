@@ -64,6 +64,12 @@ describe VersionRevertPolicy do
     expect(allowed?({ 'klass_name' => 'Sample', 'db_id' => 0, 'fields' => [] })).to be false
   end
 
+  it 'requires each change to name at least one field' do
+    [nil, [], 'name'].each do |fields|
+      expect(allowed?({ 'klass_name' => 'Sample', 'db_id' => own_sample.id, 'fields' => fields })).to be false
+    end
+  end
+
   it 'requires a non-empty list of changes' do
     expect(described_class.new(user, []).allowed?).to be false
     expect(described_class.new(user, nil).allowed?).to be false
