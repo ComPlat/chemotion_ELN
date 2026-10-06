@@ -60,6 +60,22 @@ describe('VersionsTable', () => {
       expect(selected.revertibleValue).toEqual({ a: { value: 1 }, b: { value: 2 }, c: { value: 4 } });
     });
 
+    it('keeps a nested key whose previous value was empty when reverting an object-valued field', () => {
+      const [selected] = selectVersion([
+        field({
+          name: 'variations',
+          label: 'Variations',
+          kind: 'json',
+          oldValue: { a: { metadata: {}, value: 1 } },
+          newValue: { a: { metadata: { notes: 'x' }, value: 2 } },
+          currentValue: { a: { metadata: { notes: 'x' }, value: 2 } },
+          revertibleValue: { a: { metadata: {}, value: 1 } },
+        }),
+      ]);
+
+      expect(selected.revertibleValue).toEqual({ a: { metadata: { notes: 'x' }, value: 1 } });
+    });
+
     it('reverts to the server value as is when the current value is a formatted string', () => {
       const composition = { C: '50', H: '5', O: '45' };
       const [selected] = selectVersion([

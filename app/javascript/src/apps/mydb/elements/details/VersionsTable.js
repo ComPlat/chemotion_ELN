@@ -16,6 +16,26 @@ import moment from 'moment';
 
 const isPlainObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Previous values win, nested objects are merged, and entries only the current value has are kept. A nested
+// previous value of {} therefore keeps the current nested value rather than dropping the key.
+const overlayRevertible = (revertibleValue, currentValue) => {
+  const result = {};
+  Object.entries(revertibleValue).forEach(([key, revertTo]) => {
+    if (revertTo === 'deleted') return;
+    const currentVal = currentValue[key];
+    result[key] = isPlainObject(revertTo) && isPlainObject(currentVal)
+      ? overlayRevertible(revertTo, currentVal)
+      : revertTo;
+  });
+
+  Object.entries(currentValue).forEach(([key, value]) => {
+    if (!(key in revertibleValue)) {
+      result[key] = value;
+    }
+  });
+  return result;
+};
+
 export default class VersionsTable extends Component {
   constructor(props) {
     super(props);
@@ -168,27 +188,7 @@ export default class VersionsTable extends Component {
       return null;
     }
 
-    const result = {};
-    Object.entries(revertibleValue).forEach(([key, revertTo]) => {
-      if (revertTo === 'deleted') return;
-      const currentVal = currentValue?.[key];
-
-      if (isPlainObject(revertTo) && isPlainObject(currentVal)) {
-        const nested = this.calcRevertible(revertTo, currentVal);
-        if (nested !== null) {
-          result[key] = nested;
-        }
-      } else {
-        result[key] = revertTo;
-      }
-    });
-
-    Object.entries(currentValue).forEach(([key, value]) => {
-      if (!(key in revertibleValue)) {
-        result[key] = value;
-      }
-    });
-    return result;
+    return overlayRevertible(revertibleValue, currentValue);
   }
 
   render() {
