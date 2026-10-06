@@ -56,6 +56,20 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
     expect(change[:revertible_value]).to eq blank
   end
 
+  it 'keeps a nested removal when the same request edited that value first' do
+    temperature = { 'value' => 20, 'unit' => '°C' }
+    variation = { 'uuid' => 'a', 'properties' => { 'temperature' => temperature, 'duration' => { 'value' => 1 } } }
+    reaction = create(:reaction, variations: [variation])
+    as_request do
+      reaction.update!(variations: [variation.deep_merge('properties' => { 'temperature' => { 'value' => 25 } })])
+      reaction.update!(variations: [variation.merge('properties' => { 'duration' => { 'value' => 1 } })])
+    end
+
+    change = field_changes(reaction, :variations).last
+    expect(change[:old_value]).to eq('a' => variation)
+    expect(change[:new_value]).to eq('a' => variation.merge('properties' => { 'duration' => { 'value' => 1 } }))
+  end
+
   it 'returns complete previous and updated variations when one is edited and another deleted' do
     first = { 'uuid' => 'a', 'properties' => { 'temperature' => { 'value' => 20, 'unit' => '°C' } } }
     second = { 'uuid' => 'b', 'properties' => { 'temperature' => { 'value' => 30, 'unit' => '°C' } } }

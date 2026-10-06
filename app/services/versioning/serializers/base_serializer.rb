@@ -6,6 +6,7 @@ module Versioning
   module Serializers
     class BaseSerializer
       include ActiveModel::Model
+      include ChangeMerging
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
@@ -27,7 +28,9 @@ module Versioning
           end
           groups = chunks.map do |versions|
             changes = versions.each_with_object({}) do |version, hash|
-              hash.merge!(version.changes) { |key, previous, value| merge_change(key, previous, value) }
+              hash.merge!(version.changes) do |key, previous, value|
+                merge_change(key, previous, value, within_request: true)
+              end
             end
             [versions.first.data.dig('m', 'uuid'), versions, changes]
           end
@@ -159,78 +162,6 @@ module Versioning
       # get treated as a real content change in the history view.
       def normalize_quill_delta(delta)
         Chemotion::QuillToPlainText.blank_content?(delta) ? {} : delta
-      end
-
-      # The creation snapshot stores object-typed columns as JSON strings, which the column's own type
-      # can't deserialize, so parse those back into hashes before merging.
-      def merge_change(key, previous_value, value)
-        return value unless hash_column?(key)
-
-        value = stringified_hash(value)
-        previous_value = stringified_hash(previous_value)
-        previous_value.is_a?(Hash) && value.is_a?(Hash) ? merge_hashes(previous_value, value) : value
-      end
-
-      # Deep merge that honours jsonb_diff's marker for a removed object-valued sub-key ('deleted'), dropping
-      # the key instead of storing the marker as its value.
-      def merge_hashes(previous_value, value)
-        merged = previous_value.merge(value) do |_sub_key, old, new|
-          old.is_a?(Hash) && new.is_a?(Hash) ? merge_hashes(old, new) : new
-        end
-        merged.reject { |sub_key, new| new == 'deleted' && previous_value[sub_key].is_a?(Hash) }
-      end
-
-      def hash_column?(key)
-        record.has_attribute?(key) && %i[hstore jsonb json].include?(record.type_for_attribute(key).type)
-      end
-
-      # jsonb_diff only records a removed sub-key when its old value was an object. In an hstore every value
-      # is a string, so removals leave no trace, and a removal-only write is logged as a bare {}. Recover them
-      # from the record's current value, the only complete state available: a sub-key that is gone now was
-      # removed after its last mention, attributed to the first removal-only write after that, or failing
-      # that, to the first later write touching the column. Returns { group index => { column => [sub-keys] } }.
-      #
-      # This is a best guess, because the log holds nothing that says when a removal happened:
-      # - a removal made in the same save as other changes to the column shows under the first later save that
-      #   touched the column, which may be an earlier one;
-      # - sub-keys removed in different removal-only saves all show under the first of them;
-      # - a sub-key that was removed and later re-added is not detected at all.
-      # Getting this exact would need jsonb_diff to log removed keys.
-      def sub_key_removals(change_groups)
-        removals = Hash.new { |hash, index| hash[index] = Hash.new { |columns, column| columns[column] = [] } }
-        change_groups.flat_map(&:keys).uniq.each do |column|
-          next unless hash_column?(column)
-
-          current = record.read_attribute(column)
-          next unless current.nil? || current.is_a?(Hash)
-
-          touched = change_groups.each_index.select { |index| change_groups[index].key?(column) }
-          last_mention = {}
-          touched.each do |index|
-            sub_keys = stringified_hash(change_groups[index][column])
-            sub_keys.each_key { |sub_key| last_mention[sub_key] = index } if sub_keys.is_a?(Hash)
-          end
-
-          last_mention.each do |sub_key, mentioned_at|
-            next if current&.key?(sub_key)
-
-            later = touched.select { |index| index > mentioned_at }
-            removed_at = later.find { |index| change_groups[index][column] == {} } || later.first
-            removals[removed_at][column] << sub_key if removed_at
-          end
-        end
-        removals
-      end
-
-      # Logidze's snapshot (and full-snapshot logging) stringifies object-typed columns, e.g.
-      # '{"content": "..."}' instead of a hash; return such a value as a hash, anything else as is.
-      def stringified_hash(value)
-        return value unless value.is_a?(String) && value.start_with?('{')
-
-        parsed = JSON.parse(value)
-        parsed.is_a?(Hash) ? parsed : value
-      rescue JSON::ParserError
-        value
       end
 
       def fix_malformed_value_formatter
