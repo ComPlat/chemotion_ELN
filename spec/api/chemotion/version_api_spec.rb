@@ -117,4 +117,20 @@ describe Chemotion::VersionAPI do
       expect(Sample.find(sample.id).name).to eq old_name
     end
   end
+
+  describe 'POST /api/v1/versions/revert permissions' do
+    let(:other_collection) { create(:collection, user: create(:person)) }
+    let(:sample) { create(:sample, name: 'current', collections: [other_collection]) }
+
+    before do
+      allow(ElementPolicy).to receive(:new).and_call_original
+      post '/api/v1/versions/revert',
+           params: { changes: [{ db_id: sample.id, klass_name: 'Sample', fields: [{ name: 'name', value: 'old' }] }] }
+    end
+
+    it 'requires edit permission on the element' do
+      expect(response.status).to eq 401
+      expect(sample.reload.name).to eq 'current'
+    end
+  end
 end
