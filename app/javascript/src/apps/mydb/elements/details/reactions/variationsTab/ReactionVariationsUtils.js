@@ -916,12 +916,8 @@ function setLayout(reactionId, columnDefinitions) {
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
-  const { api, state: gridState } = event;
-
-  const rowOrder = [];
-  api.forEachNode((node) => rowOrder.push(node.data.id));
-  persistRowOrder(reactionId, rowOrder);
-
+  // Row order is persisted on drag only (`handleRowDrag`); without a manual order, rows are shown in id order.
+  const { state: gridState } = event;
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
   localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
 };
