@@ -61,6 +61,18 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
     expect([device.operators, device.general_tags]).to eq [operators, %w[first]]
   end
 
+  it 'reverts a blank json column to blank, not to a placeholder list' do
+    device = create(:device_description, created_by: user.id, setup_descriptions: nil)
+    round_trip(device, Versioning::Serializers::DeviceDescriptionSerializer,
+               Versioning::Reverters::DeviceDescriptionReverter, 'setup_descriptions',
+               setup_descriptions: { 'setup' => [{ 'name' => 'Laser' }] })
+    chemical = create(:chemical, chemical_data: nil)
+    round_trip(chemical, Versioning::Serializers::ChemicalSerializer, Versioning::Reverters::ChemicalReverter,
+               'chemical_data', chemical_data: [{ 'safetySheetPath' => [] }])
+
+    expect([device.setup_descriptions, chemical.chemical_data]).to eq [nil, nil]
+  end
+
   it 'reverts a research plan metadata list to the stored array' do
     metadata = create(:research_plan_metadata, research_plan: create(:research_plan))
     stored = metadata.alternate_identifier
