@@ -14,6 +14,8 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import moment from 'moment';
 
+const isPlainObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+
 export default class VersionsTable extends Component {
   constructor(props) {
     super(props);
@@ -155,10 +157,12 @@ export default class VersionsTable extends Component {
     });
   }
 
+  // Overlays the previous value onto the current one, so entries added since then are kept. Only applies when
+  // both are plain objects; otherwise (e.g. a current value formatted as a string) the server's revertible value
+  // is used as is.
   calcRevertible(revertibleValue, currentValue) {
-    if (typeof revertibleValue !== 'object'
-    || revertibleValue === null
-    || Array.isArray(revertibleValue)
+    if (!isPlainObject(revertibleValue)
+    || !isPlainObject(currentValue)
     || Object.keys(revertibleValue).length === 0
     ) {
       return null;
@@ -169,13 +173,7 @@ export default class VersionsTable extends Component {
       if (revertTo === 'deleted') return;
       const currentVal = currentValue?.[key];
 
-      if (typeof revertTo === 'object'
-      && revertTo !== null
-      && !Array.isArray(revertTo)
-      && typeof currentVal === 'object'
-      && currentVal !== null
-      && !Array.isArray(currentVal)
-      ) {
+      if (isPlainObject(revertTo) && isPlainObject(currentVal)) {
         const nested = this.calcRevertible(revertTo, currentVal);
         if (nested !== null) {
           result[key] = nested;
@@ -185,7 +183,7 @@ export default class VersionsTable extends Component {
       }
     });
 
-    Object.entries(currentValue || {}).forEach(([key, value]) => {
+    Object.entries(currentValue).forEach(([key, value]) => {
       if (!(key in revertibleValue)) {
         result[key] = value;
       }

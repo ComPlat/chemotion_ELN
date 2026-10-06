@@ -60,6 +60,23 @@ describe('VersionsTable', () => {
       expect(selected.revertibleValue).toEqual({ a: { value: 1 }, b: { value: 2 }, c: { value: 4 } });
     });
 
+    it('reverts to the server value as is when the current value is a formatted string', () => {
+      const composition = { C: '50', H: '5', O: '45' };
+      const [selected] = selectVersion([
+        field({
+          name: 'data',
+          label: 'Found',
+          kind: 'string',
+          oldValue: 'C: 50, H: 5, O: 45',
+          newValue: 'C: 60.0, H: 6.0',
+          currentValue: 'C: 60.0, H: 6.0',
+          revertibleValue: composition,
+        }),
+      ]);
+
+      expect(selected.revertibleValue).toEqual(composition);
+    });
+
     it('does not fail when an object-valued field has no current value', () => {
       const text = { ops: [{ insert: 'some text\n' }] };
       const [selected] = selectVersion([
