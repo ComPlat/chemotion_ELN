@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/MethodLength
+
 class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseSerializer
   def self.call(record, name = ['Screen Properties'])
     new(record: record, name: name).call
@@ -31,17 +33,13 @@ class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseS
         label: 'Result',
         revert: %i[result],
       },
-      description: description_field,
+      description: {
+        label: 'Description',
+        kind: :quill,
+        revert: %i[description],
+      },
     }.with_indifferent_access
   end
-
-  private
-
-  def description_field
-    {
-      label: 'Description',
-      kind: :quill,
-      revert: %i[description],
-    }
-  end
 end
+
+# rubocop:enable Metrics/MethodLength

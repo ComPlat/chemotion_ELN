@@ -128,8 +128,8 @@ module Versioning
       private
 
       # Each xref entry follows the same shape: it reads/writes a single key under
-      # the sample's jsonb `xref` column. flash_point is the only one that targets a
-      # nested path ('value'), so the formatter path is passed through verbatim.
+      # the sample's jsonb `xref` column. flash_point is the only one with its own
+      # display formatter ("<value> <unit>"); every entry reverts its whole key.
       def xref_field_definitions
         [
           xref_field('cas', 'CAS'),

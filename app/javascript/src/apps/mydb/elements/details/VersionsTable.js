@@ -13,28 +13,17 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import moment from 'moment';
-
-const isPlainObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+import { isPlainObject, mergeWith } from 'lodash';
 
 // Previous values win, nested objects are merged, and entries only the current value has are kept. A nested
-// previous value of {} therefore keeps the current nested value rather than dropping the key.
-const overlayRevertible = (revertibleValue, currentValue) => {
-  const result = {};
-  Object.entries(revertibleValue).forEach(([key, revertTo]) => {
-    if (revertTo === 'deleted') return;
-    const currentVal = currentValue[key];
-    result[key] = isPlainObject(revertTo) && isPlainObject(currentVal)
-      ? overlayRevertible(revertTo, currentVal)
-      : revertTo;
-  });
-
-  Object.entries(currentValue).forEach(([key, value]) => {
-    if (!(key in revertibleValue)) {
-      result[key] = value;
-    }
-  });
-  return result;
-};
+// previous value of {} therefore keeps the current nested value rather than dropping the key. Anything that
+// isn't a plain object on both sides (arrays included) is replaced by the previous value as a whole.
+const overlayRevertible = (revertibleValue, currentValue) => mergeWith(
+  {},
+  currentValue,
+  revertibleValue,
+  (current, revertTo) => (isPlainObject(current) && isPlainObject(revertTo) ? undefined : revertTo),
+);
 
 export default class VersionsTable extends Component {
   constructor(props) {

@@ -76,6 +76,20 @@ describe('VersionsTable', () => {
       expect(selected.revertibleValue).toEqual({ a: { metadata: { notes: 'x' }, value: 1 } });
     });
 
+    it('replaces arrays as a whole and keeps a real "deleted" string when reverting', () => {
+      const previous = { ops: [{ insert: 'old\n' }], status: 'deleted' };
+      const [selected] = selectVersion([
+        field({
+          oldValue: previous,
+          newValue: { ops: [{ insert: 'new ' }, { insert: 'text\n' }] },
+          currentValue: { ops: [{ insert: 'new ' }, { insert: 'text\n' }] },
+          revertibleValue: previous,
+        }),
+      ]);
+
+      expect(selected.revertibleValue).toEqual(previous);
+    });
+
     it('reverts to the server value as is when the current value is a formatted string', () => {
       const composition = { C: '50', H: '5', O: '45' };
       const [selected] = selectVersion([
