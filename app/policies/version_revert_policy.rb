@@ -106,9 +106,15 @@ class VersionRevertPolicy
       logged = record.class.unscoped.with_log_data.find(record.id)
       history = "Versioning::Serializers::#{klass_name}Serializer".constantize.new(record: logged, name: []).call
       history.each_with_object(Hash.new { |values, field| values[field] = [] }) do |entry, values|
-        entry[:changes].each { |field, change| values[field.to_s] << json_normalized(change[:revertible_value]) }
+        entry[:changes].each { |field, change| collect_offered_values(values, field, change) }
       end
     end
+  end
+
+  # A change offers its field's revertible value, plus those of the columns linked to it.
+  def collect_offered_values(values, field, change)
+    values[field.to_s] << json_normalized(change[:revertible_value])
+    change.fetch(:linked_revertible_values, {}).each { |linked, value| values[linked.to_s] << json_normalized(value) }
   end
 
   # Compares values the way the client sends them back: as the JSON the API rendered them to.
@@ -134,9 +140,16 @@ class VersionRevertPolicy
     @revertible_fields[[klass_name, record.id]] ||= begin
       serializer = "Versioning::Serializers::#{klass_name}Serializer".constantize.new(record: record)
       serializer.field_definitions.flat_map do |key, definitions|
-        revertible = Array.wrap(definitions).select { |definition| definition[:revert].present? }
-        revertible.map { |definition| (definition[:name] || key).to_s }
+        Array.wrap(definitions).flat_map { |definition| revert_names(key, definition) }
       end
     end
+  end
+
+  # A field's own name plus its revert: list, which names the columns restored together with it (e.g. a
+  # structure's molfile); nothing for a field that can't be reverted.
+  def revert_names(key, definition)
+    return [] if definition[:revert].blank?
+
+    [(definition[:name] || key).to_s, *definition[:revert].map(&:to_s)]
   end
 end

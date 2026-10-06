@@ -141,5 +141,13 @@ describe VersionRevertPolicy do
       expect(described_class.new(user, [change(sample, %w[name first])]).allowed?).to be true
       expect(described_class.new(user, [change(sample, %w[name never-had])]).allowed?).to be false
     end
+
+    it 'accepts a linked column only with a value the History offers for it' do
+      sample = create(:sample, purity: 0.5, density: 1.0, collections: [own_collection])
+      as_request { sample.update!(purity: 0.9, density: 2.0) }
+
+      expect(described_class.new(user, [change(sample, ['purity', 0.5], ['density', 1.0])]).allowed?).to be true
+      expect(described_class.new(user, [change(sample, ['purity', 0.5], ['density', 7.0])]).allowed?).to be false
+    end
   end
 end

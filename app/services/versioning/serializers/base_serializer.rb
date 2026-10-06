@@ -10,7 +10,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 8
+      CACHE_VERSION = 9
 
       attr_accessor :record, :name
 
@@ -41,6 +41,7 @@ module Versioning
             time = Rational(versions.first.data['ts'], 1000) # keep the milliseconds for ordering
             changes_comparison_hash = {} # hash for changes comparison
             revertible = changes.none? { |key, _v| key == 'created_at' }
+            previous_state = base.dup # the state before this request, for linked revert values
             changes.each do |key, value|
               previous_value = base[key]
 
@@ -83,7 +84,8 @@ module Versioning
                   kind: field[:kind] || :string,
                   revert: (revertible && field[:revert]) || [],
                   revertible_value: revertible_value,
-                }
+                  linked_revertible_values: linked_revertible_values(field, key, previous_state),
+                }.compact
               end
             end
             next if changes_comparison_hash.empty?
@@ -153,6 +155,19 @@ module Versioning
 
       def non_formatter
         ->(_key, value) { value }
+      end
+
+      # The stored values, from before this change, of the other columns a field's revert: list links to it (e.g. a
+      # structure's molfile), so a revert can restore them together. nil when there are none.
+      def linked_revertible_values(field, key, previous_state)
+        name = (field[:name] || key).to_s
+        linked = Array(field[:revert]).map(&:to_s) - [name]
+        return if linked.empty?
+
+        linked.index_with do |linked_name|
+          column = linked_name.split('.').first
+          stored_value_formatter(linked_name).call(column, previous_state[column])
+        end
       end
 
       # The stored value of a field: the column's, or for a dotted name (column.sub_key) that sub-key's.
