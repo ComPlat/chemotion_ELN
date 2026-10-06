@@ -94,8 +94,8 @@ describe Chemotion::VersionAPI do
   end
 
   describe 'POST /api/v1/versions/revert' do
-    let(:sample) { create(:sample) }
     let(:old_name) { 'Sample 1' }
+    let(:sample) { create(:sample, name: old_name) }
     let(:params) do
       {
         changes: [{ db_id: sample.id, klass_name: 'Sample', fields: [] }],
@@ -131,6 +131,31 @@ describe Chemotion::VersionAPI do
     it 'requires edit permission on the element' do
       expect(response.status).to eq 401
       expect(sample.reload.name).to eq 'current'
+    end
+  end
+
+  describe 'POST /api/v1/versions/revert with a value from GET /api/v1/versions' do
+    let!(:sample) do
+      create(:sample, name: 'first', boiling_point: 1.0..2.0, collections: [create(:collection, user: user)])
+    end
+
+    before do
+      allow(ElementPolicy).to receive(:new).and_call_original
+      Logidze.with_responsible!(user.id)
+      sample.update!(name: 'second', boiling_point: 3.0..4.0)
+      Logidze.clear_responsible!
+    end
+
+    it 'accepts the revertible values the History rendered' do
+      get "/api/v1/versions/samples/#{sample.id}"
+      changes = JSON.parse(response.body)['versions'].first['changes']
+      fields = changes.find { |change| change['klass_name'] == 'Sample' }['fields']
+      reverted = %w[name boiling_point].map { |name| { name: name, value: fields[name]['revertible_value'] } }
+      changes = [{ db_id: sample.id, klass_name: 'Sample', fields: reverted }]
+      post '/api/v1/versions/revert', params: { changes: changes.to_json }, as: :json
+
+      expect(response.status).to eq 201
+      expect(sample.reload.name).to eq 'first'
     end
   end
 end

@@ -18,8 +18,12 @@ describe VersionRevertPolicy do
     }
   end
 
+  # The rules below are about records, fields and permissions; whether the History offers a value is covered
+  # separately at the end, with real history.
   def allowed?(*changes)
-    described_class.new(user, changes).allowed?
+    policy = described_class.new(user, changes)
+    allow(policy).to receive(:offered_value?).and_return(true)
+    policy.allowed?
   end
 
   def shared_collection(permission_level)
@@ -112,12 +116,30 @@ describe VersionRevertPolicy do
     expect(allowed?(change(material, ['deleted_at', nil]))).to be false
   end
 
-  it 'requires read access to a sample placed into a well' do
+  it 'requires edit access to a sample placed into a well' do
     wellplate = create(:wellplate, collections: [own_collection])
     well = create(:well, wellplate: wellplate, sample: own_sample)
+    read_only = create(:sample, collections: [shared_collection(:read_elements)])
 
     expect(allowed?(change(well, ['sample_id', own_sample.id]))).to be true
     expect(allowed?(change(well, ['sample_id', nil]))).to be true
-    expect(allowed?(change(well, ['sample_id', other_sample.id]))).to be false
+    expect(allowed?(change(well, ['sample_id', read_only.id]))).to be false
+  end
+
+  describe 'values' do
+    def as_request
+      Logidze.with_responsible!(user.id)
+      yield
+    ensure
+      Logidze.clear_responsible!
+    end
+
+    it 'only accepts values the History offers, i.e. previous values from the record\'s own history' do
+      sample = create(:sample, name: 'first', collections: [own_collection])
+      as_request { sample.update!(name: 'second') }
+
+      expect(described_class.new(user, [change(sample, %w[name first])]).allowed?).to be true
+      expect(described_class.new(user, [change(sample, %w[name never-had])]).allowed?).to be false
+    end
   end
 end
