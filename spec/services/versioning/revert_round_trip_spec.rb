@@ -97,14 +97,27 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
     expect([sample.reload.purity, sample.density]).to eq [0.5, 1.0]
   end
 
-  it 'offers the linked columns of a structure change' do
+  it 'only links columns that changed in the same version, so later edits to them are kept' do
+    sample = create(:sample, purity: 0.5, density: 1.0, collections: [create(:collection, user: user)])
+    as_request { sample.update!(purity: 0.9) }
+    as_request { sample.update!(density: 2.0) }
+    history = Versioning::Serializers::SampleSerializer.call(Sample.with_log_data.find(sample.id))
+    change = history.filter_map { |entry| entry[:changes]['purity'] }.last
+    Versioning::Reverters::SampleReverter.call(
+      'db_id' => sample.id, 'fields' => [{ 'name' => 'purity', 'value' => change[:revertible_value] }],
+    )
+
+    expect(change).not_to have_key(:linked_revertible_values)
+    expect([sample.reload.purity, sample.density]).to eq [0.5, 2.0]
+  end
+
+  it 'does not link the structure columns to a change of the picture alone' do
     sample = create(:sample)
     as_request { sample.update!(sample_svg_file: "#{'a' * 128}.svg") }
     history = Versioning::Serializers::SampleSerializer.call(Sample.with_log_data.find(sample.id))
-    linked = history.filter_map { |entry| entry[:changes]['sample_svg_file'] }.last[:linked_revertible_values]
+    change = history.filter_map { |entry| entry[:changes]['sample_svg_file'] }.last
 
-    expect(linked).to include('molfile' => sample.molfile, 'molecule_id' => sample.molecule_id)
-    expect(linked.keys).to contain_exactly('molfile', 'molecule_id', 'fingerprint_id')
+    expect(change).not_to have_key(:linked_revertible_values)
   end
 
   it 'reverts one sub-key of a hash column to its stored value' do

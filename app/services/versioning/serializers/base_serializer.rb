@@ -11,7 +11,7 @@ module Versioning
       # Part of the cache version: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again. It goes into the version, not the
       # key, so a bump replaces each record's entry in place instead of leaving the old generation behind.
-      CACHE_VERSION = 2
+      CACHE_VERSION = 3
 
       attr_accessor :record, :name
 
@@ -89,6 +89,7 @@ module Versioning
                 }.compact
               end
             end
+            keep_changed_linked_values(changes_comparison_hash, base)
             next if changes_comparison_hash.empty?
 
             result << {
@@ -168,6 +169,18 @@ module Versioning
         linked.index_with do |linked_name|
           column = linked_name.split('.').first
           stored_value_formatter(linked_name).call(column, previous_state[column])
+        end
+      end
+
+      # Keeps only the linked columns that changed in the same request, so a revert doesn't overwrite later edits
+      # to a column this version didn't touch (e.g. density, when only purity changed here).
+      def keep_changed_linked_values(changes_comparison_hash, state)
+        changes_comparison_hash.each_value do |change|
+          linked = change[:linked_revertible_values]&.reject do |name, previous|
+            column = name.split('.').first
+            stored_value_formatter(name).call(column, state[column]) == previous
+          end
+          linked.present? ? change[:linked_revertible_values] = linked : change.delete(:linked_revertible_values)
         end
       end
 
