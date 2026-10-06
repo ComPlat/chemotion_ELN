@@ -9,8 +9,13 @@ import PropTypes from 'prop-types';
 import isEqual from 'lodash/isEqual';
 
 import Quill from 'quill';
+import QuillResize from 'quill-resize-module';
 
 import { stripImages } from 'src/utilities/quillFormat';
+
+// Register the resize module once so any Quill instance (ReactQuill-based or
+// QuillEditor-based) can enable it via modules: { resize: { ... } }.
+Quill.register('modules/resize', QuillResize, true);
 
 function postpone(fn) {
   Promise.resolve().then(fn);

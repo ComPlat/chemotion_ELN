@@ -25,6 +25,7 @@ const toolbarOptions = [
   'header', 'script',
   'list', 'bullet',
   'attachment-image', 'attachment-file',
+  'resize-inline', 'resize-block',
 ];
 
 export default class AnalysisEditor extends React.Component {

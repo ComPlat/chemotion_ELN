@@ -7,7 +7,6 @@ import Delta from 'quill-delta';
 
 import _ from 'lodash';
 import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
-import QuillResize from 'quill-resize-module';
 // resize.css is inlined into app/assets/stylesheets/components/QuillResize.scss
 // so the Sprockets asset pipeline serves it — avoids adding a CSS require-hook
 // to the mocha test setup for a single third-party stylesheet.
@@ -17,8 +16,8 @@ import 'src/components/reactQuill/AttachmentImageBlot';
 import 'src/components/reactQuill/AttachmentFileBlot';
 import { createQuillImageHandler } from 'src/utilities/quillImageHandler';
 
-// Register the resize module once. Idempotent under Quill.register(overwrite=true).
-Quill.register('modules/resize', QuillResize, true);
+// quill-resize-module is registered once in ReactQuill.js which is always
+// loaded first, so no second registration needed here.
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],

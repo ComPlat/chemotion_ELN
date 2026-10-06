@@ -35,6 +35,7 @@ const insertAttachmentAtCursor = (quill, attachment, file) => {
       attachment_identifier: attachment.identifier,
       filename,
       preview,
+      width: '150',
     }, 'user');
   } else {
     quill.insertEmbed(range.index, 'attachment-file', {

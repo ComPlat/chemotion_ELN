@@ -630,9 +630,24 @@ module Export
       end
     end
 
+    def extract_container_inline_identifiers(container)
+      return [] unless container
+
+      identifiers = []
+      queue = [container]
+      until queue.empty?
+        node = queue.shift
+        content = node.extended_metadata&.dig('content')
+        identifiers += extract_quill_richtext_identifiers(content) if content.present?
+        queue.concat(node.children.to_a)
+      end
+      identifiers
+    end
+
     def fetch_reaction_richtext_attachments(reaction)
       identifiers = extract_quill_richtext_identifiers(reaction.observation) +
-                    extract_quill_richtext_identifiers(reaction.description)
+                    extract_quill_richtext_identifiers(reaction.description) +
+                    extract_container_inline_identifiers(reaction.container)
       return if identifiers.empty?
 
       attachments = Attachment.where(identifier: identifiers, attachable_id: reaction.id, attachable_type: 'Reaction')
@@ -643,7 +658,8 @@ module Export
     end
 
     def fetch_wellplate_richtext_attachments(wellplate)
-      identifiers = extract_quill_richtext_identifiers(wellplate.description)
+      identifiers = extract_quill_richtext_identifiers(wellplate.description) +
+                    extract_container_inline_identifiers(wellplate.container)
       return if identifiers.empty?
 
       attachments = Attachment.where(identifier: identifiers, attachable_id: wellplate.id, attachable_type: 'Wellplate')
@@ -654,7 +670,8 @@ module Export
     end
 
     def fetch_screen_richtext_attachments(screen)
-      identifiers = extract_quill_richtext_identifiers(screen.description)
+      identifiers = extract_quill_richtext_identifiers(screen.description) +
+                    extract_container_inline_identifiers(screen.container)
       return if identifiers.empty?
 
       attachments = Attachment.where(identifier: identifiers, attachable_id: screen.id, attachable_type: 'Screen')

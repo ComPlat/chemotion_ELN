@@ -28,7 +28,17 @@ class DynamicToolbarEditor extends React.Component {
             }
           }
         }
-      }
+      },
+      resize: {
+        modules: ['Resize', 'DisplaySize', 'Toolbar'],
+        tools: ['left', 'center', 'right', 'full'],
+        parchment: {
+          'attachment-image': {
+            attribute: ['width'],
+            limit: { minWidth: 50 },
+          },
+        },
+      },
     };
   }
 
