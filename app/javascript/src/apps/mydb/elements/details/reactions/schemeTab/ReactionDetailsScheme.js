@@ -2717,6 +2717,11 @@ export default class ReactionDetailsScheme extends React.Component {
                       value={reaction.description}
                       updateTextTemplates={this.updateTextTemplates}
                       onChange={(event) => onInputChange('description', event)}
+                      getAttachments={() => reaction.attachments || []}
+                      onAttachmentsChange={(next) => {
+                        reaction.attachments = next;
+                        onReactionChange(reaction);
+                      }}
                     />
                   ) : <QuillViewer value={reaction.description} />
               }

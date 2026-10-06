@@ -907,7 +907,7 @@ module Import
           next unless payload.is_a?(Hash)
 
           old_id = payload['attachment_identifier']
-          payload['attachment_identifier'] = identifier_map[old_id] if identifier_map.key?(old_id)
+          insert[blot_key] = payload.merge('attachment_identifier' => identifier_map[old_id]) if identifier_map.key?(old_id)
         end
       end
     end

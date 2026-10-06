@@ -27,7 +27,7 @@ module QuillInlineAttachmentRemappable
       payload = insert[blot_key]
       next unless payload.is_a?(Hash) && payload['attachment_identifier'] == original_identifier
 
-      payload['attachment_identifier'] = copy_identifier
+      insert[blot_key] = payload.merge('attachment_identifier' => copy_identifier)
     end
   end
 end

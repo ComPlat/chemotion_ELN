@@ -25,6 +25,7 @@ import {
   setAttachmentDeleted,
   replaceAttachment,
   collectInlineAttachmentIdentifiers,
+  collectInlineAttachmentIdentifiersFromContainers,
   stripDeletedInlineBlotsFromBody,
   stripDeletedInlineBlotsFromDelta,
 } from 'src/utilities/attachmentUtils';
@@ -499,7 +500,10 @@ export default class ResearchPlanDetails extends Component {
         isDeleteProtected={this.isAttachmentInBody.bind(this)}
         deleteProtectedTooltip="This attachment is used in the research plan body"
         readOnly={researchPlan.isReadOnly}
-        inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiers(researchPlan.body)}
+        inlineAttachmentIdentifiers={new Set([
+          ...collectInlineAttachmentIdentifiers(researchPlan.body),
+          ...collectInlineAttachmentIdentifiersFromContainers(researchPlan.container),
+        ])}
       />
     );
   } /* eslint-enable */

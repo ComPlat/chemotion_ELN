@@ -6,11 +6,30 @@ describe Chemotion::AttachableAPI do
   include_context 'api request authorization context'
 
   let(:collection) { create(:collection, user: user) }
+  let(:other_user) { create(:person) }
+  let(:other_collection) { create(:collection, user: other_user) }
 
   def post_update(attachable_type:, attachable_id:, del_files: [])
     params = { attachable_type: attachable_type, attachable_id: attachable_id }
     params[:del_files] = del_files unless del_files.empty?
     post '/api/v1/attachable/update_attachments_attachable', params: params
+  end
+
+  context 'with a missing or unknown attachable_type' do
+    it 'returns 400 for an unknown type' do
+      post_update(attachable_type: 'UnknownType', attachable_id: 1)
+      expect(response.status).to eq(400)
+    end
+
+    it 'returns 400 for a Container type' do
+      post_update(attachable_type: 'Container', attachable_id: 1)
+      expect(response.status).to eq(400)
+    end
+
+    it 'returns 400 when attachable_type is missing' do
+      post '/api/v1/attachable/update_attachments_attachable', params: { attachable_id: 1 }
+      expect(response.status).to eq(400)
+    end
   end
 
   context 'with attachable_type Sample' do
@@ -23,21 +42,26 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: sample)
+        attachment = create(:attachment, attachable: sample, created_for: user.id)
         post_update(attachable_type: 'Sample', attachable_id: sample.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
       end
 
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: sample, created_for: other_user.id)
+        post_update(attachable_type: 'Sample', attachable_id: sample.id, del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(sample.id)
+      end
+
       it 'does not nullify attachments belonging to a different sample' do
-        other_sample = create(:sample, collections: [create(:collection, user: create(:person))])
-        other_attachment = create(:attachment, attachable: other_sample)
+        other_sample = create(:sample, collections: [other_collection])
+        other_attachment = create(:attachment, attachable: other_sample, created_for: user.id)
         post_update(attachable_type: 'Sample', attachable_id: sample.id, del_files: [other_attachment.id])
         expect(Attachment.unscoped.find(other_attachment.id).attachable_id).to eq(other_sample.id)
       end
     end
 
     context 'when the sample belongs to another user' do
-      let(:other_collection) { create(:collection, user: create(:person)) }
       let(:other_sample) { create(:sample, collections: [other_collection]) }
 
       it 'returns 401' do
@@ -66,15 +90,20 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: reaction)
+        attachment = create(:attachment, attachable: reaction, created_for: user.id)
         post_update(attachable_type: 'Reaction', attachable_id: reaction.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
+      end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: reaction, created_for: other_user.id)
+        post_update(attachable_type: 'Reaction', attachable_id: reaction.id, del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(reaction.id)
       end
     end
 
     context 'when the reaction belongs to another user' do
       let(:other_reaction) { create(:reaction) }
-      let(:other_collection) { create(:collection, user: create(:person)) }
 
       before { CollectionsReaction.create!(collection: other_collection, reaction: other_reaction) }
 
@@ -104,15 +133,20 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: screen)
+        attachment = create(:attachment, attachable: screen, created_for: user.id)
         post_update(attachable_type: 'Screen', attachable_id: screen.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
+      end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: screen, created_for: other_user.id)
+        post_update(attachable_type: 'Screen', attachable_id: screen.id, del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(screen.id)
       end
     end
 
     context 'when the screen belongs to another user' do
       let(:other_screen) { create(:screen) }
-      let(:other_collection) { create(:collection, user: create(:person)) }
 
       before { CollectionsScreen.create!(collection: other_collection, screen: other_screen) }
 
@@ -143,16 +177,20 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: cellline)
+        attachment = create(:attachment, attachable: cellline, created_for: user.id)
         post_update(attachable_type: 'CelllineSample', attachable_id: cellline.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
+      end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: cellline, created_for: other_user.id)
+        post_update(attachable_type: 'CelllineSample', attachable_id: cellline.id, del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(cellline.id)
       end
     end
 
     context 'when the cellline belongs to another user' do
-      let(:other_user) { create(:person) }
       let(:other_cellline) { create(:cellline_sample, creator: other_user, cellline_material: cellline_material) }
-      let(:other_collection) { create(:collection, user: other_user) }
 
       before { CollectionsCellline.create!(collection: other_collection, cellline_sample: other_cellline) }
 
@@ -182,23 +220,28 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: wellplate)
+        attachment = create(:attachment, attachable: wellplate, created_for: user.id)
         post_update(attachable_type: 'Wellplate', attachable_id: wellplate.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
       end
 
-      # del_files is the frontend's delete path: a deleted file must not show up in the inbox.
-      it "keeps deleted attachments out of the uploader's Unsorted inbox" do
-        attachment = create(:attachment, attachable: wellplate)
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: wellplate, created_for: other_user.id)
         post_update(attachable_type: 'Wellplate', attachable_id: wellplate.id, del_files: [attachment.id])
-        expect(attachment.reload.attachable_type).to eq('Wellplate')
-        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil)).not_to include(attachment)
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(wellplate.id)
+      end
+
+      it "keeps deleted attachments out of the uploader's Unsorted inbox" do
+        attachment = create(:attachment, attachable: wellplate, created_for: user.id)
+        post_update(attachable_type: 'Wellplate', attachable_id: wellplate.id, del_files: [attachment.id])
+        reloaded = Attachment.unscoped.find(attachment.id)
+        expect(reloaded.attachable_id).to be_nil
+        expect(reloaded.attachable_type).to eq('Wellplate')
       end
     end
 
     context 'when the wellplate belongs to another user' do
       let(:other_wellplate) { create(:wellplate) }
-      let(:other_collection) { create(:collection, user: create(:person)) }
 
       before { CollectionsWellplate.create!(collection: other_collection, wellplate: other_wellplate) }
 
@@ -234,15 +277,20 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: research_plan)
+        attachment = create(:attachment, attachable: research_plan, created_for: user.id)
         post_update(attachable_type: 'ResearchPlan', attachable_id: research_plan.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
+      end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: research_plan, created_for: other_user.id)
+        post_update(attachable_type: 'ResearchPlan', attachable_id: research_plan.id, del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(research_plan.id)
       end
     end
 
     context 'when the research plan belongs to another user' do
       let(:other_research_plan) { create(:research_plan) }
-      let(:other_collection) { create(:collection, user: create(:person)) }
 
       before { CollectionsResearchPlan.create!(collection: other_collection, research_plan: other_research_plan) }
 
@@ -272,17 +320,22 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: device_description)
+        attachment = create(:attachment, attachable: device_description, created_for: user.id)
         post_update(attachable_type: 'DeviceDescription', attachable_id: device_description.id,
                     del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
       end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: device_description, created_for: other_user.id)
+        post_update(attachable_type: 'DeviceDescription', attachable_id: device_description.id,
+                    del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(device_description.id)
+      end
     end
 
     context 'when the device description belongs to another user' do
-      let(:other_user) { create(:person) }
       let(:other_device_description) { create(:device_description, creator: other_user) }
-      let(:other_collection) { create(:collection, user: create(:person)) }
 
       before do
         CollectionsDeviceDescription.create!(collection: other_collection,
@@ -319,19 +372,24 @@ describe Chemotion::AttachableAPI do
       end
 
       it 'nullifies requested attachment records' do
-        attachment = create(:attachment, attachable: sbmm_sample)
+        attachment = create(:attachment, attachable: sbmm_sample, created_for: user.id)
         post_update(attachable_type: 'SequenceBasedMacromoleculeSample', attachable_id: sbmm_sample.id,
                     del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
       end
+
+      it 'does not nullify attachments uploaded by another user' do
+        attachment = create(:attachment, attachable: sbmm_sample, created_for: other_user.id)
+        post_update(attachable_type: 'SequenceBasedMacromoleculeSample', attachable_id: sbmm_sample.id,
+                    del_files: [attachment.id])
+        expect(Attachment.unscoped.find(attachment.id).attachable_id).to eq(sbmm_sample.id)
+      end
     end
 
     context 'when the sample belongs to another user' do
-      let(:other_user) { create(:person) }
       let(:other_sample) do
         create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user)
       end
-      let(:other_collection) { create(:collection, user: other_user) }
 
       before do
         CollectionsSequenceBasedMacromoleculeSample.create!(collection: other_collection,
@@ -365,6 +423,67 @@ describe Chemotion::AttachableAPI do
       it 'returns 200' do
         post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id)
         expect(response.status).to be_between(200, 299)
+      end
+    end
+
+    context 'when only another user has a sample of the macromolecule, shared with the current user' do
+      let(:other_sbmm) { create(:uniprot_sbmm) }
+      let!(:other_sample) do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: other_sbmm, user: other_user)
+      end
+
+      before do
+        CollectionsSequenceBasedMacromoleculeSample.create!(collection: other_collection,
+                                                            sequence_based_macromolecule_sample: other_sample)
+        create(:collection_share, collection: other_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+      end
+
+      it 'returns 401 (access via shared collection does not grant SBMM attachment rights)' do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: other_sbmm.id)
+        expect(response.status).to eq(401)
+      end
+    end
+
+    # Regression: ElementPolicy derived the detail-level column from the record class, and there
+    # is no sequencebasedmacromolecule_detail_level column, so a sharee saving an SBMM with
+    # attachments got a 500 (PG::UndefinedColumn) instead of the upload succeeding.
+    context 'when the macromolecule sample is shared with another user with edit rights' do
+      let(:other_sbmm) { create(:uniprot_sbmm) }
+
+      before do
+        create(:collection_share, collection: other_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: other_sbmm, user: other_user,
+                                                     collections: [other_collection])
+        CollectionsSequenceBasedMacromoleculeSample.where(
+          sequence_based_macromolecule_sample: sbmm_sample,
+        ).update_all(collection_id: other_collection.id)
+      end
+
+      it 'attaches the file to the sbmm without a PG error' do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id)
+        expect(response.status).to be_between(200, 299)
+      end
+    end
+
+    context 'when detaching from the macromolecule' do
+      let!(:own_attachment) { create(:attachment, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+      let!(:other_sample) do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user)
+      end
+
+      before do
+        CollectionsSequenceBasedMacromoleculeSample.create!(collection: other_collection,
+                                                            sequence_based_macromolecule_sample: other_sample)
+      end
+
+      it "detaches only the caller's own upload" do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id,
+                    del_files: [own_attachment.id, foreign_attachment.id])
+        expect(Attachment.unscoped.find(own_attachment.id).attachable_id).to be_nil
+        expect(Attachment.unscoped.find(foreign_attachment.id).attachable_id).to eq(sbmm.id)
       end
     end
 
@@ -457,15 +576,21 @@ describe Chemotion::AttachableAPI do
     end
   end
 
-  context 'with a missing or unknown attachable_type' do
-    it 'returns 400 for an unknown type' do
-      post_update(attachable_type: 'UnknownType', attachable_id: 1)
-      expect(response.status).to eq(400)
-    end
+  # del_files only unlinks attachments of the record authorized by after_validation (type + id).
+  %w[ResearchPlan Wellplate].each do |type|
+    context "when del_files also lists an attachment of another #{type}" do
+      let(:own_element) { create(type.underscore.to_sym, collections: [collection]) }
+      let(:other_element) { create(type.underscore.to_sym, collections: [other_collection]) }
+      let!(:own_attachment) { create(:attachment, attachable: own_element) }
+      let!(:other_attachment) { create(:attachment, attachable: other_element) }
 
-    it 'returns 400 when attachable_type is missing' do
-      post '/api/v1/attachable/update_attachments_attachable', params: { attachable_id: 1 }
-      expect(response.status).to eq(400)
+      it 'unlinks only the attachment of the authorized record' do
+        post_update(attachable_type: type, attachable_id: own_element.id,
+                    del_files: [own_attachment.id, other_attachment.id])
+        expect(response.status).to be_between(200, 299)
+        expect(Attachment.unscoped.find(own_attachment.id).attachable_id).to be_nil
+        expect(Attachment.unscoped.find(other_attachment.id).attachable_id).to eq(other_element.id)
+      end
     end
   end
 end
