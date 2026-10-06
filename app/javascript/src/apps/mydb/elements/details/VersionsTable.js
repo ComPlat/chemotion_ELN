@@ -12,6 +12,7 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
+import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import moment from 'moment';
 
 export default class VersionsTable extends Component {
@@ -84,6 +85,17 @@ export default class VersionsTable extends Component {
       case 'device_description': {
         DeviceDescriptionFetcher.fetchById(id).then((result) => {
           parent.setDeviceDescription(result);
+        });
+        break;
+      }
+      case 'cellline_sample': {
+        CellLinesFetcher.fetchById(id).then((result) => {
+          parent.changeAmount(result.id, result.amount);
+          parent.changeUnit(result.id, result.unit);
+          parent.changePassage(result.id, result.passage);
+          parent.changeContamination(result.id, result.contamination);
+          parent.changeItemName(result.id, result.name);
+          parent.changeItemDescription(result.id, result.description);
         });
         break;
       }

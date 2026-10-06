@@ -25,6 +25,7 @@
 #  index_cellline_samples_on_ancestry  (ancestry) WHERE (deleted_at IS NULL)
 #
 class CelllineSample < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   has_ancestry orphan_strategy: :adopt
 
