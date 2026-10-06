@@ -1,5 +1,7 @@
 # Chemotion_ELN Changelog
 
+* ReactionProcessEditor enhancements ([#3626] https://github.com/ComPlat/chemotion_ELN/pull/3626)
+
 # [v4.0.0-rc]
 > (2026-07-14)
 
