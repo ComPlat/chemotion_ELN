@@ -40,10 +40,11 @@ const convertTemperature = (valueToFormat, currentUnit) => {
 
   const decimalPlaces = 4;
   if (typeof valueToFormat === 'string' && valueToFormat !== '') {
-    const regex = /(-?\d+\.\d+|-?\d+)(.*)/;
+    // Accepts "2.5", "2,5", ".5" and "2." as the leading number.
+    const regex = /(-?(?:\d+[.,]?\d*|[.,]\d+))(.*)/;
     const match = valueToFormat.match(regex);
     if (match) {
-      formattedValue = match[1];
+      formattedValue = Number(match[1].replace(',', '.'));
       restOfString = ` ${match[2].trim()}` || '';
     }
   }
