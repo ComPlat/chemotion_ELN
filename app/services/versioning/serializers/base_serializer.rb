@@ -10,7 +10,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 6
+      CACHE_VERSION = 7
 
       attr_accessor :record, :name
 
@@ -38,7 +38,7 @@ module Versioning
 
           groups.each_with_index do |(uuid, versions, changes), index|
             user_id = versions.first.data.dig('m', '_r')
-            time = versions.first.data['ts'] / 1000
+            time = Rational(versions.first.data['ts'], 1000) # keep the milliseconds for ordering
             changes_comparison_hash = {} # hash for changes comparison
             revertible = changes.none? { |key, _v| key == 'created_at' }
             changes.each do |key, value|
