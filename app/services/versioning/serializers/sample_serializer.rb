@@ -62,12 +62,14 @@ module Versioning
             kind: :numrange,
             revert: %i[boiling_point],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           melting_point: {
             label: 'Melting point',
             kind: :numrange,
             revert: %i[melting_point],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           purity: {
             label: 'Purity/Concentration',

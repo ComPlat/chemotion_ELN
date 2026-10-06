@@ -10,7 +10,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 7
+      CACHE_VERSION = 8
 
       attr_accessor :record, :name
 
@@ -62,12 +62,11 @@ module Versioning
 
               fields = [fields] unless fields.is_a?(Array)
               fields.each do |field|
-                # Quill fields default to quill_formatter, which normalizes blank deltas for display, and revert to
-                # the stored value instead.
-                quill = field[:kind] == :quill
-                formatter = field[:formatter] || (quill ? quill_formatter : default_formatter)
+                # Quill fields default to quill_formatter, which normalizes blank deltas for display. A revert writes
+                # the value back, so it defaults to the stored value rather than to what is displayed.
+                formatter = field[:formatter] || (field[:kind] == :quill ? quill_formatter : default_formatter)
                 revertible_value_formatter = field[:revertible_value_formatter] ||
-                                             (quill ? default_formatter : formatter)
+                                             stored_value_formatter(field[:name] || key)
 
                 old_value = formatter.call(key, previous_value)
                 new_value = formatter.call(key, value)
@@ -154,6 +153,12 @@ module Versioning
 
       def non_formatter
         ->(_key, value) { value }
+      end
+
+      # The stored value of a field: the column's, or for a dotted name (column.sub_key) that sub-key's.
+      def stored_value_formatter(name)
+        _column, sub_key = name.to_s.split('.', 2)
+        sub_key ? jsonb_formatter(sub_key) : default_formatter
       end
 
       def quill_formatter

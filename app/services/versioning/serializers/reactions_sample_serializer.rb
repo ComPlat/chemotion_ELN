@@ -25,7 +25,6 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         label: 'Position',
         revert: %i[position],
         formatter: ->(_key, value) { (value && (value + 1)) || '' },
-        revertible_formatter: default_formatter,
       },
       coefficient: {
         label: 'Coeff',

@@ -20,6 +20,7 @@ module Versioning
       def handle_json
         lambda do |value|
           return [{}] if value.blank?
+          return value if value.is_a?(Array) # the stored value, as the history sends it
 
           begin
             value.split("\n").map { |data| JSON.parse(data.gsub('=>', ':').gsub('nil', 'null')) }
