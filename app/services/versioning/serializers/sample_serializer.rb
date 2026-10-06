@@ -134,7 +134,7 @@ module Versioning
         [
           xref_field('cas', 'CAS'),
           xref_field('inventory_label', 'Inventory label'),
-          xref_field('flash_point', 'Flash Point', 'value'),
+          xref_field('flash_point', 'Flash Point', flash_point_formatter),
           xref_field('form', 'Form'),
           xref_field('color', 'Color'),
           xref_field('solubility', 'Solubility'),
@@ -145,13 +145,26 @@ module Versioning
         ]
       end
 
-      def xref_field(key, label, *path)
+      def xref_field(key, label, formatter = jsonb_formatter(key))
         {
           name: "xref.#{key}",
           label: label,
           revert: [:"xref.#{key}"],
-          formatter: jsonb_formatter(key, *path),
+          formatter: formatter,
+          # The revert writes the whole xref sub-key, so revert to all of it, not just the displayed text.
+          revertible_value_formatter: jsonb_formatter(key),
         }
+      end
+
+      # Stored as {value, unit}; shown like the exports show it, e.g. "12 °C".
+      def flash_point_formatter
+        lambda do |key, value|
+          flash_point = jsonb_formatter('flash_point').call(key, value)
+          next flash_point unless flash_point.is_a?(Hash)
+          next if flash_point['value'].blank?
+
+          "#{flash_point['value']} #{flash_point['unit']}".strip
+        end
       end
 
       def molecule_names_lookup

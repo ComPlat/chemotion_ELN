@@ -10,7 +10,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 3
+      CACHE_VERSION = 4
 
       attr_accessor :record, :name
 

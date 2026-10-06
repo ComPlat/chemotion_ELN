@@ -28,10 +28,25 @@ RSpec.describe Versioning::Serializers::SampleSerializer do
 
     expect(xref_changes(sample, 'flash_point')).to eq(
       [
-        [nil, 12, nil],
-        [12, nil, 12],
-        [nil, 13, nil],
+        [nil, '12 °C', nil],
+        ['12 °C', nil, { 'value' => 12, 'unit' => '°C' }],
+        [nil, '13 °C', nil],
       ],
     )
+  end
+
+  it 'shows the flash point with its unit and reverts it as a whole' do
+    flash_point = { 'value' => 12, 'unit' => '°F' }
+    sample = create(:sample, xref: { 'flash_point' => flash_point })
+    as_request { sample.update!(xref: { 'flash_point' => { 'value' => 20, 'unit' => '°C' } }) }
+
+    old_value, new_value, revertible_value = xref_changes(sample, 'flash_point').last
+    expect([old_value, new_value]).to eq ['12 °F', '20 °C']
+
+    Versioning::Reverters::SampleReverter.call(
+      'db_id' => sample.id, 'fields' => [{ 'name' => 'xref.flash_point', 'value' => revertible_value }],
+    )
+
+    expect(sample.reload.xref['flash_point']).to eq flash_point
   end
 end
