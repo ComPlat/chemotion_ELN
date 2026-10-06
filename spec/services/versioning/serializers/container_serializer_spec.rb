@@ -120,6 +120,22 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
       .to eq [JSON.parse(content_before), JSON.parse(content_after)]
   end
 
+  describe 'parsing stringified hashes' do
+    let(:serializer) { described_class.new(record: create(:container)) }
+
+    {
+      '{"status": "Confirmed"}' => { 'status' => 'Confirmed' }, # JSON
+      '{status: Confirmed}' => { 'status' => 'Confirmed' }, # not JSON, read as YAML
+      '{not: [valid' => '{not: [valid', # neither: left as is
+      'plain text' => 'plain text',
+      nil => nil,
+    }.each do |value, expected|
+      it "parses #{value.inspect} to #{expected.inspect}" do
+        expect(serializer.send(:stringified_hash, value)).to eq expected
+      end
+    end
+  end
+
   it 'does not surface a diff when the editor autosaves its empty-delta placeholder' do
     # A Quill editor that nobody typed into still autosaves {"ops":[{"insert":"\n"}]} - visually
     # empty, but not the same JSON value as the nil the container started with.

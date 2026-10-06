@@ -10,7 +10,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 4
+      CACHE_VERSION = 5
 
       attr_accessor :record, :name
 
@@ -50,7 +50,8 @@ module Versioning
               # `base` and the "new" side of the comparison below reflect the complete, current state instead
               # of losing (or, on the "new" side, spuriously blanking) sub-keys this version didn't touch.
               value = merge_change(key, previous_value, value)
-              value = value.except(*removals[index][key]) if value.is_a?(Hash) && removals.dig(index, key)
+              removed_sub_keys = removals.dig(index, key)
+              value = value.except(*removed_sub_keys) if removed_sub_keys && value.is_a?(Hash)
               base[key] = value
 
               next if value == previous_value # ignore if value is same as in last version
@@ -168,11 +169,8 @@ module Versioning
 
       def fix_malformed_value_formatter
         lambda do |key, value|
-          if value.is_a?(String) && value.start_with?('{')
-            YAML.safe_load(value)
-          else
-            default_formatter.call(key, value)
-          end
+          parsed = stringified_hash(value)
+          parsed.is_a?(Hash) ? parsed : default_formatter.call(key, value)
         end
       end
 

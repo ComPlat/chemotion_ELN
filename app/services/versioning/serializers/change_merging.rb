@@ -31,7 +31,8 @@ module Versioning
       # the key instead of storing the marker as its value.
       def merge_hashes(previous_value, value)
         merged = previous_value.merge(value) { |_sub_key, old, new| merge_sub_value(old, new) }
-        merged.reject { |sub_key, new| removal?(previous_value[sub_key], new) }
+        # merged is already a fresh copy, so drop removed keys from it in place.
+        merged.delete_if { |sub_key, new| removal?(previous_value[sub_key], new) }
       end
 
       def merge_sub_value(old, new)
@@ -68,7 +69,11 @@ module Versioning
       end
 
       def hash_column?(key)
-        record.has_attribute?(key) && %i[hstore jsonb json].include?(record.type_for_attribute(key).type)
+        @hash_columns ||= {}
+        return @hash_columns[key] if @hash_columns.key?(key)
+
+        @hash_columns[key] =
+          record.has_attribute?(key) && %i[hstore jsonb json].include?(record.type_for_attribute(key).type)
       end
 
       # jsonb_diff only records a removed sub-key when its old value was an object. In an hstore every value
@@ -84,9 +89,11 @@ module Versioning
       # - a sub-key that was removed and later re-added is not detected at all.
       # Getting this exact would need jsonb_diff to log removed keys.
       def sub_key_removals(change_groups)
-        removals = Hash.new { |hash, index| hash[index] = Hash.new { |columns, column| columns[column] = [] } }
+        removals = {}
         change_groups.flat_map(&:keys).uniq.each do |column|
-          column_removals(change_groups, column).each { |sub_key, index| removals[index][column] << sub_key }
+          column_removals(change_groups, column).each do |sub_key, index|
+            ((removals[index] ||= {})[column] ||= []) << sub_key
+          end
         end
         removals
       end
@@ -126,12 +133,17 @@ module Versioning
 
       # Logidze's snapshot (and full-snapshot logging) stringifies object-typed columns, e.g.
       # '{"content": "..."}' instead of a hash; return such a value as a hash, anything else as is.
+      # Values that aren't valid JSON (e.g. unquoted keys) fall back to YAML, which reads such flow mappings.
       def stringified_hash(value)
         return value unless value.is_a?(String) && value.start_with?('{')
 
-        parsed = JSON.parse(value)
+        parsed = begin
+          JSON.parse(value)
+        rescue JSON::ParserError
+          YAML.safe_load(value)
+        end
         parsed.is_a?(Hash) ? parsed : value
-      rescue JSON::ParserError
+      rescue Psych::Exception
         value
       end
     end
