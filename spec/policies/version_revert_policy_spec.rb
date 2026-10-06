@@ -75,6 +75,14 @@ describe VersionRevertPolicy do
     expect(allowed?(change(analysis_of(other_sample), %w[name old]))).to be false
   end
 
+  it 'checks a deleted analysis container against the element it belongs to, so it can be restored' do
+    own_analysis = analysis_of(own_sample).tap(&:destroy)
+    other_analysis = analysis_of(other_sample).tap(&:destroy)
+
+    expect(allowed?(change(own_analysis, ['deleted_at', nil]))).to be true
+    expect(allowed?(change(other_analysis, ['deleted_at', nil]))).to be false
+  end
+
   it 'only accepts the containers the history shows (analyses and datasets)' do
     expect(allowed?(change(own_sample.container, ['deleted_at', Time.current.iso8601]))).to be false
     analyses = own_sample.container.children.find_by(container_type: 'analyses')

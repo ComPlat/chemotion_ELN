@@ -10,7 +10,7 @@ class VersionRevertPolicy
     'Attachment' => ->(record) { [record.root_element] },
     'Chemical' => ->(record) { [record.sample || record.sequence_based_macromolecule_sample] },
     'Component' => ->(record) { [record.sample] },
-    'Container' => ->(record) { [record.root_element] },
+    'Container' => ->(record) { [VersionRevertPolicy.container_element(record)] },
     'ElementalComposition' => ->(record) { [record.sample] },
     'ReactionsSample' => ->(record) { [record.reaction, record.sample] },
     'ResearchPlanMetadata' => ->(record) { [record.research_plan] },
@@ -36,6 +36,20 @@ class VersionRevertPolicy
 
   attr_reader :user, :changes
 
+  # The element a container belongs to. Walks up by parent_id, deleted containers included: closure_tree drops a
+  # deleted container's hierarchy rows, so Container#root_element is nil for the deleted analyses and datasets the
+  # History offers to restore.
+  def self.container_element(container)
+    node = container
+    4.times do # dataset -> analysis -> analyses -> root
+      return node.containable if node.containable_id
+
+      node = Container.with_deleted.find_by(id: node.parent_id)
+      return if node.nil?
+    end
+    nil
+  end
+
   def initialize(user, changes)
     @user = user
     @changes = changes
@@ -53,7 +67,8 @@ class VersionRevertPolicy
     klass_name = change['klass_name']
     return false unless Versioning::Reverter::ALLOWED_REVERTERS.include?(klass_name)
 
-    record = klass_name.constantize.find_by(id: change['db_id'])
+    # Looked up like the reverter does, so deleted records the History offers to restore are found too.
+    record = "Versioning::Reverters::#{klass_name}Reverter".constantize.scope.find_by(id: change['db_id'])
     return false if record.nil?
     return false unless RECORD_CONDITIONS.fetch(klass_name, ->(_) { true }).call(record)
 
