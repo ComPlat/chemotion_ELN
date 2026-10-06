@@ -63,7 +63,6 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         label: 'Description',
         revert: %i[description],
         kind: :quill,
-        formatter: quill_formatter,
       },
       purification: {
         label: 'Purification',
@@ -73,7 +72,6 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         label: 'Additional information for publication and purification details',
         revert: %i[observation],
         kind: :quill,
-        formatter: quill_formatter,
       },
       duration: {
         label: 'Duration',

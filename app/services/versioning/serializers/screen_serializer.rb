@@ -42,7 +42,6 @@ class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseS
       label: 'Description',
       kind: :quill,
       revert: %i[description],
-      formatter: quill_formatter,
     }
   end
 end
