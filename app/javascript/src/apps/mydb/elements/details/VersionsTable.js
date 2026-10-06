@@ -13,17 +13,6 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import moment from 'moment';
-import { isPlainObject, mergeWith } from 'lodash';
-
-// Previous values win, nested objects are merged, and entries only the current value has are kept. A nested
-// previous value of {} therefore keeps the current nested value rather than dropping the key. Anything that
-// isn't a plain object on both sides (arrays included) is replaced by the previous value as a whole.
-const overlayRevertible = (revertibleValue, currentValue) => mergeWith(
-  {},
-  currentValue,
-  revertibleValue,
-  (current, revertTo) => (isPlainObject(current) && isPlainObject(revertTo) ? undefined : revertTo),
-);
 
 export default class VersionsTable extends Component {
   constructor(props) {
@@ -135,7 +124,6 @@ export default class VersionsTable extends Component {
         fields: change.fields.map((field) => ({
           ...field,
           previousValue: field.oldValue,
-          revertibleValue: this.calcRevertible(field.revertibleValue, field.currentValue) ?? field.revertibleValue,
         }))
       }))
     };
@@ -164,20 +152,6 @@ export default class VersionsTable extends Component {
         totalElements: result.totalElements || 0,
       });
     });
-  }
-
-  // Overlays the previous value onto the current one, so entries added since then are kept. Only applies when
-  // both are plain objects; otherwise (e.g. a current value formatted as a string) the server's revertible value
-  // is used as is.
-  calcRevertible(revertibleValue, currentValue) {
-    if (!isPlainObject(revertibleValue)
-    || !isPlainObject(currentValue)
-    || Object.keys(revertibleValue).length === 0
-    ) {
-      return null;
-    }
-
-    return overlayRevertible(revertibleValue, currentValue);
   }
 
   render() {

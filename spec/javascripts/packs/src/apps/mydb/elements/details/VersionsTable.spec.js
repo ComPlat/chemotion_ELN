@@ -43,46 +43,16 @@ describe('VersionsTable', () => {
       expect(selected.revertibleValue).toEqual(text);
     });
 
-    it('keeps entries added since then when reverting an object-valued field', () => {
+    it('reverts to the complete previous state, undoing additions made since', () => {
+      const previous = { a: { metadata: {}, value: 1 } };
       const [selected] = selectVersion([
         field({
           name: 'variations',
           label: 'Variations',
           kind: 'json',
-          oldValue: { a: { value: 1 }, b: { value: 2 } },
-          newValue: { a: { value: 3 } },
-          currentValue: { a: { value: 3 }, c: { value: 4 } },
-          revertibleValue: { a: { value: 1 }, b: { value: 2 } },
-        }),
-      ]);
-
-      expect(selected.previousValue).toEqual({ a: { value: 1 }, b: { value: 2 } });
-      expect(selected.revertibleValue).toEqual({ a: { value: 1 }, b: { value: 2 }, c: { value: 4 } });
-    });
-
-    it('keeps a nested key whose previous value was empty when reverting an object-valued field', () => {
-      const [selected] = selectVersion([
-        field({
-          name: 'variations',
-          label: 'Variations',
-          kind: 'json',
-          oldValue: { a: { metadata: {}, value: 1 } },
-          newValue: { a: { metadata: { notes: 'x' }, value: 2 } },
-          currentValue: { a: { metadata: { notes: 'x' }, value: 2 } },
-          revertibleValue: { a: { metadata: {}, value: 1 } },
-        }),
-      ]);
-
-      expect(selected.revertibleValue).toEqual({ a: { metadata: { notes: 'x' }, value: 1 } });
-    });
-
-    it('replaces arrays as a whole and keeps a real "deleted" string when reverting', () => {
-      const previous = { ops: [{ insert: 'old\n' }], status: 'deleted' };
-      const [selected] = selectVersion([
-        field({
           oldValue: previous,
-          newValue: { ops: [{ insert: 'new ' }, { insert: 'text\n' }] },
-          currentValue: { ops: [{ insert: 'new ' }, { insert: 'text\n' }] },
+          newValue: { a: { metadata: { notes: 'x' }, value: 2 } },
+          currentValue: { a: { metadata: { notes: 'x' }, value: 2 }, b: { value: 3 } },
           revertibleValue: previous,
         }),
       ]);
@@ -90,7 +60,23 @@ describe('VersionsTable', () => {
       expect(selected.revertibleValue).toEqual(previous);
     });
 
-    it('reverts to the server value as is when the current value is a formatted string', () => {
+    it('reverts to an empty previous state as is', () => {
+      const [selected] = selectVersion([
+        field({
+          name: 'variations',
+          label: 'Variations',
+          kind: 'json',
+          oldValue: {},
+          newValue: { a: { value: 1 } },
+          currentValue: { a: { value: 1 } },
+          revertibleValue: {},
+        }),
+      ]);
+
+      expect(selected.revertibleValue).toEqual({});
+    });
+
+    it('sends the server value as is when the current value is formatted differently', () => {
       const composition = { C: '50', H: '5', O: '45' };
       const [selected] = selectVersion([
         field({
@@ -105,17 +91,6 @@ describe('VersionsTable', () => {
       ]);
 
       expect(selected.revertibleValue).toEqual(composition);
-    });
-
-    it('does not fail when an object-valued field has no current value', () => {
-      const text = { ops: [{ insert: 'some text\n' }] };
-      const [selected] = selectVersion([
-        field({
-          oldValue: text, newValue: null, currentValue: null, revertibleValue: text,
-        }),
-      ]);
-
-      expect(selected.revertibleValue).toEqual(text);
     });
   });
 });
