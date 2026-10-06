@@ -1,4 +1,4 @@
-import { set, cloneDeep } from 'lodash';
+import { set, cloneDeep, isEqual } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
@@ -782,6 +782,13 @@ function persistRowOrder(reactionId, rowOrder) {
   localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
 }
 
+// Row order is a per-browser view preference (see `setRowOrder`), not persisted with the reaction,
+// so a different order alone must not count as a change.
+function areVariationsEqualIgnoringOrder(variationsA = [], variationsB = []) {
+  const byId = (a, b) => a.id - b.id;
+  return isEqual([...variationsA].sort(byId), [...variationsB].sort(byId));
+}
+
 function setRowOrder(reactionId, reactionVariations) {
   const rowOrder = getInitialRowOrder(reactionId);
   let updatedReactionVariations = cloneDeep(reactionVariations);
@@ -1030,6 +1037,7 @@ export {
   getInitialRowOrder,
   persistRowOrder,
   setRowOrder,
+  areVariationsEqualIgnoringOrder,
   setLayout,
   persistTableLayout,
   getUserFacingEntryName,
