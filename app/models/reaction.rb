@@ -305,8 +305,9 @@ class Reaction < ApplicationRecord
 
   def variations
     # We need to return raw.values because the frontend expects the variations to be an array of objects.
+    # The jsonb hash is keyed by uuid, so its order is arbitrary: sort by the sequential variation id (creation order).
     raw = self[:variations]
-    return raw.values if raw.is_a?(Hash)
+    return raw.values.sort_by { |variation| variation['id'].to_i } if raw.is_a?(Hash)
 
     raw || []
   end
