@@ -16,10 +16,8 @@ RSpec.describe Versioning::Reverters::WellplateReverter do
     expect(wellplate.name).to eq 'Reverted name'
   end
 
-  # BaseReverter writes with update_columns, bypassing validations and
-  # callbacks, so the FORBIDDEN_FIELDS filter is the only thing standing between
-  # a crafted payload and a grid resized behind Usecases::Wellplates::Resize's
-  # occupied-well guard.
+  # Resizing goes through Usecases::Wellplates::Resize, which checks for occupied
+  # wells; a revert must not change the grid size directly.
   it 'ignores width' do
     expect { revert([{ 'name' => 'width', 'value' => 2 }]) }.not_to change(wellplate, :width)
   end

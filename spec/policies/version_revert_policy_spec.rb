@@ -66,9 +66,24 @@ describe VersionRevertPolicy do
     expect(described_class.new(user, change(own_sample, %w[name old])).allowed?).to be false
   end
 
-  it 'checks a container against the element it belongs to' do
-    expect(allowed?(change(own_sample.container, %w[name old]))).to be true
-    expect(allowed?(change(other_sample.container, %w[name old]))).to be false
+  def analysis_of(sample)
+    sample.container.descendants.find_by(container_type: 'analysis')
+  end
+
+  it 'checks an analysis container against the element it belongs to' do
+    expect(allowed?(change(analysis_of(own_sample), %w[name old]))).to be true
+    expect(allowed?(change(analysis_of(other_sample), %w[name old]))).to be false
+  end
+
+  it 'only accepts the containers the history shows (analyses and datasets)' do
+    expect(allowed?(change(own_sample.container, ['deleted_at', Time.current.iso8601]))).to be false
+    analyses = own_sample.container.children.find_by(container_type: 'analyses')
+    expect(allowed?(change(analyses, %w[name old]))).to be false
+  end
+
+  it 'only accepts a stored image name when reverting a structure' do
+    expect(allowed?(change(own_sample, ['sample_svg_file', "#{'a' * 128}.svg"]))).to be true
+    expect(allowed?(change(own_sample, ['sample_svg_file', 'subfolder/structure.svg']))).to be false
   end
 
   it 'requires edit permission on both the reaction and the sample of a reaction material' do
@@ -80,6 +95,13 @@ describe VersionRevertPolicy do
 
     expect(allowed?(change(own_material, ['coefficient', 2]))).to be true
     expect(allowed?(change(other_material, ['coefficient', 2]))).to be false
+  end
+
+  it 'does not revert whether a reaction material is removed' do
+    reaction = create(:reaction, collections: [own_collection])
+    material = create(:reactions_sample, reaction: reaction, sample: own_sample)
+
+    expect(allowed?(change(material, ['deleted_at', nil]))).to be false
   end
 
   it 'requires read access to a sample placed into a well' do

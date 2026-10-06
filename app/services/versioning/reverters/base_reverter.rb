@@ -14,9 +14,9 @@ class Versioning::Reverters::BaseReverter
     end
   end
 
+  # Saves through the model, so a revert runs the same validations and callbacks as a normal edit (e.g. the
+  # plain-text copies of Quill fields, SVG files, sanitizing).
   def call
-    attributes = { updated_at: Time.current }
-
     fields.each do |field|
       name = field['name']
       value = field['value']
@@ -24,17 +24,16 @@ class Versioning::Reverters::BaseReverter
       field_definition = field_definitions[name]
 
       if field_definition
-        attributes[name] = field_definition.call(value)
+        record[name] = field_definition.call(value)
       elsif name.include?('.')
-        name, key = name.split('.')
-
-        attributes[name] ||= record[name]
-        attributes[name][key] = value
+        column, key = name.split('.')
+        # A changed copy rather than an in-place edit, so the change is tracked.
+        record[column] = (record[column] || {}).merge(key => value)
       else
-        attributes[name] = value
+        record[name] = value
       end
     end
-    record.update_columns(attributes) # rubocop:disable Rails/SkipsModelValidations
+    record.save!
   end
 
   def field_definitions

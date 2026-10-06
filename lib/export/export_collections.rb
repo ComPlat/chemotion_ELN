@@ -964,8 +964,10 @@ module Export
 
     def fetch_image(image_path, image_file_name)
       return if image_file_name.blank?
+      # Only plain file names, so an image path always stays inside public/images/<image_path>.
+      return unless File.basename(image_file_name) == image_file_name
 
-      return unless File.exist?(Rails.public_path.join('images', image_path, image_file_name)) # rubocop: disable Rails/RootPathnameMethods
+      return unless File.file?(Rails.public_path.join('images', image_path, image_file_name)) # rubocop: disable Rails/RootPathnameMethods
 
       @images << File.join('images', image_path, image_file_name)
     end

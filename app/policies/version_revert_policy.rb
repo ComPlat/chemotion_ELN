@@ -5,7 +5,7 @@
 # fields the History tab shows a revert checkbox for), and belong to elements the user may edit.
 class VersionRevertPolicy
   # The elements a sub-record belongs to; records not listed here are elements themselves. A ReactionsSample
-  # needs both: reverting it can also restore its sample.
+  # needs both the reaction and its sample.
   OWNING_ELEMENTS = {
     'Attachment' => ->(record) { [record.root_element] },
     'Chemical' => ->(record) { [record.sample || record.sequence_based_macromolecule_sample] },
@@ -21,6 +21,17 @@ class VersionRevertPolicy
   # Revertible fields that point at another element, which the user has to be able to read.
   REFERENCES = {
     'Well' => { 'sample_id' => Sample },
+  }.freeze
+
+  # Revertible fields whose value has to be a stored file name (or blank).
+  VALUE_FORMATS = {
+    'Sample' => { 'sample_svg_file' => /\A\h{128}\.svg\z/ },
+  }.freeze
+
+  # Records of a type that can only be reverted in some forms: the History shows only analysis and dataset
+  # containers, never an element's root or analyses container.
+  RECORD_CONDITIONS = {
+    'Container' => ->(record) { %w[analysis dataset].include?(record.container_type) },
   }.freeze
 
   attr_reader :user, :changes
@@ -44,6 +55,7 @@ class VersionRevertPolicy
 
     record = klass_name.constantize.find_by(id: change['db_id'])
     return false if record.nil?
+    return false unless RECORD_CONDITIONS.fetch(klass_name, ->(_) { true }).call(record)
 
     owning_elements_editable?(klass_name, record) &&
       Array.wrap(change['fields']).all? { |field| field_allowed?(klass_name, record, field) }
@@ -60,7 +72,14 @@ class VersionRevertPolicy
     return false unless field.is_a?(Hash)
 
     name = field['name'].to_s
-    revertible_fields(klass_name, record).include?(name) && reference_readable?(klass_name, name, field['value'])
+    revertible_fields(klass_name, record).include?(name) &&
+      value_format_valid?(klass_name, name, field['value']) &&
+      reference_readable?(klass_name, name, field['value'])
+  end
+
+  def value_format_valid?(klass_name, name, value)
+    format = VALUE_FORMATS.dig(klass_name, name)
+    format.nil? || value.blank? || (value.is_a?(String) && format.match?(value))
   end
 
   def reference_readable?(klass_name, name, value)
