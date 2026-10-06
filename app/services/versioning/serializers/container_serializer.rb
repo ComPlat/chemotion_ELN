@@ -80,10 +80,6 @@ class Versioning::Serializers::ContainerSerializer < Versioning::Serializers::Ba
         normalize_quill_delta(JSON.parse(jsonb_formatter('content').call(key, value) || '{}'))
       },
       revert: %i[extended_metadata.content],
-      revertible_value_formatter: lambda { |key, value|
-        value = fix_malformed_value_formatter.call(key, value)
-        jsonb_formatter('content').call(key, value) || '{}'
-      },
     }
   end
 
@@ -98,7 +94,6 @@ class Versioning::Serializers::ContainerSerializer < Versioning::Serializers::Ba
         JSON.parse(result).join("\n")
       },
       revert: %i[extended_metadata.hyperlinks],
-      revertible_value_formatter: ->(key, value) { JSON.parse(jsonb_formatter('hyperlinks').call(key, value) || '[]') },
     }
   end
 end

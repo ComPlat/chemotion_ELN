@@ -85,6 +85,24 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
     expect(sample.melting_point).to be_nil
   end
 
+  it 'reverts container hyperlinks to the stored JSON' do
+    links = ['https://example.org/search?q=#{term}'].to_json # rubocop:disable Lint/InterpolationCheck
+    container = create(:container, extended_metadata: { 'hyperlinks' => links })
+    round_trip(container, Versioning::Serializers::ContainerSerializer, Versioning::Reverters::ContainerReverter,
+               'extended_metadata.hyperlinks', extended_metadata: { 'hyperlinks' => ['https://example.org'].to_json })
+
+    expect(container.extended_metadata['hyperlinks']).to eq links
+  end
+
+  it 'reverts container content back to none when there was none' do
+    container = create(:container, extended_metadata: { 'status' => 'Confirmed' })
+    round_trip(container, Versioning::Serializers::ContainerSerializer, Versioning::Reverters::ContainerReverter,
+               'extended_metadata.content',
+               extended_metadata: { 'status' => 'Confirmed', 'content' => '{"ops":[{"insert":"typed\\n"}]}' })
+
+    expect(container.extended_metadata['content']).to be_nil
+  end
+
   it 'reverts device description setup descriptions to the stored hash' do
     setup = { 'setup' => [{ 'name' => 'Laser', 'description' => 'green' }] }
     device = create(:device_description, created_by: user.id, setup_descriptions: setup)
