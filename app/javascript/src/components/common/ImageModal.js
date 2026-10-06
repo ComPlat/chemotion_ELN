@@ -8,6 +8,7 @@ import { stopEvent } from 'src/utilities/DomHelper';
 import {
   fetchImageSrcByAttachmentId,
   getContainerImageData,
+  isPreviewableAttachment,
 } from 'src/utilities/imageHelper';
 
 const DEFAULT_NO_ATTACHMENT = '/images/wild_card/no_attachment.svg';
@@ -18,7 +19,7 @@ const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
 const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
 // Font-awesome icon for an attachment that has no rendered thumbnail, by extension.
-const fileIconClass = (filename) => {
+export const fileIconClass = (filename) => {
   const ext = (filename || '').split('.').pop().toLowerCase();
   if (ext === 'pdf') return 'fa-file-pdf-o';
   if (['doc', 'docx', 'odt'].includes(ext)) return 'fa-file-word-o';
@@ -92,8 +93,16 @@ export default class ImageModal extends Component {
     this.setState({ showModal: false });
   }
 
+  // A single attachment the server marked as not previewable (e.g. a thumbnailed office or
+  // video file) keeps its thumbnail and hover preview, but GET image/:id can't serve it, so
+  // the click is left to the parent instead of opening an empty modal.
+  isClickable() {
+    if (this.props.disableClick) return false;
+    return Boolean(this.props.container) || isPreviewableAttachment(this.props.attachment);
+  }
+
   handleModalShow(e) {
-    if (this.props.disableClick) return;
+    if (!this.isClickable()) return;
     stopEvent(e);
     const { attachment, candidateIds, preferredId } = ImageModal.derive(this.props);
 
@@ -112,8 +121,10 @@ export default class ImageModal extends Component {
 
     // Fall back to the first candidate so a PDF-only analysis (no thumbnailed default) still
     // opens on a selectable attachment.
+    // The default attachment is picked by thumb, which office/video/3D files also have, so
+    // don't open on it if the server has marked it as not previewable.
     const selectedId = preferredId
-      || (attachment?.id ? Number(attachment.id) : null)
+      || (attachment?.id && isPreviewableAttachment(attachment) ? Number(attachment.id) : null)
       || candidateIds[0]
       || null;
     this.setState({
@@ -125,9 +136,13 @@ export default class ImageModal extends Component {
 
   // grey-area preview (preferred, else default attachment)
   async fetchPreviewThumbnail() {
-    const { attachment, preferredId } = ImageModal.derive(this.props);
+    const { attachment, candidates, preferredId } = ImageModal.derive(this.props);
     try {
-      if (preferredId) {
+      // A preferred file without a thumbnail (e.g. a PDF whose thumbnail wasn't generated) has
+      // nothing to show here, so the header falls back to the default attachment; the
+      // preference still decides what the modal opens on.
+      const preferred = candidates.find((c) => c.id === preferredId);
+      if (preferred?.thumb) {
         const src = await fetchImageSrcByAttachmentId(preferredId);
         this.setState({ thumbnail: src });
         return;
@@ -356,14 +371,18 @@ export default class ImageModal extends Component {
       return <div className="preview-table">{this.renderPreviewBox()}</div>;
     }
 
+    const clickProps = this.isClickable() ? {
+      onClick: this.handleModalShow,
+      onKeyPress: this.handleModalShow,
+      role: 'button',
+      tabIndex: 0,
+    } : {};
+
     return (
       <div>
         <div
           className="preview-table"
-          onClick={this.handleModalShow}
-          onKeyPress={this.handleModalShow}
-          role="button"
-          tabIndex={0}
+          {...clickProps}
         >
           {isLoading ? this.renderPreviewBox() : (
             <OverlayTrigger placement={placement} overlay={this.showPopObject()}>

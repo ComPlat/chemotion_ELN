@@ -988,6 +988,147 @@ describe('SpectraHelper', () => {
         expect('info' in spectrum).toEqual(false);
       });
 
+      // A 2D FID NMRium Fourier-transformed: info describes the transformed spectrum, originalInfo
+      // the FID the source holds. Once the data is dropped, NMRium re-reads the FID and runs the
+      // filters again, so the info that goes with it is the FID's.
+      describe('a 2D FID processed in NMRium', () => {
+        const processedFid = () => ({
+          spectra: [{
+            source: { jcampURL: 'https://example.com/hmbc.dx' },
+            info: {
+              dimension: 2, name: 'hmbc', isFid: false, isFt: true,
+            },
+            originalInfo: {
+              dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+            },
+            display: { name: 'hmbc' },
+            filters: [{ name: 'apodizationDimension1' }, { name: 'fftDimension1' }, { name: 'fftDimension2' }],
+            data: { rr: { z: [[1.0]] }, ir: { z: [[2.0]] } },
+          }],
+        });
+
+        it('describes the source, not the processed result, once its data is dropped', () => {
+          const [spectrum] = cleaningNMRiumData(processedFid()).spectra;
+          expect(spectrum.data).toEqual(undefined);
+          expect(spectrum.info).toEqual({
+            dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+          });
+          expect(spectrum.filters.map((f) => f.name))
+            .toEqual(['apodizationDimension1', 'fftDimension1', 'fftDimension2']);
+        });
+
+        it('keeps the processed info for a spectrum that keeps its data', () => {
+          const [spectrum] = cleaningNMRiumData(processedFid(), { attachments: [], forPersistence: true }).spectra;
+          expect(spectrum.data).toEqual({ rr: { z: [[1.0]] }, ir: { z: [[2.0]] } });
+          expect(spectrum.info.isFt).toEqual(true);
+        });
+
+        // Written before originalInfo was kept: only the processed info is left, which no longer
+        // matches the source. Without it NMRium rebuilds the info from the source it reads.
+        it('drops the processed info a file saved without originalInfo holds', () => {
+          const saved = processedFid();
+          delete saved.spectra[0].originalInfo;
+          delete saved.spectra[0].data;
+          const [spectrum] = cleaningNMRiumData(saved).spectra;
+          expect('info' in spectrum).toEqual(false);
+          expect(spectrum.selector).toEqual({ root: 'nmrium-src-hmbc' });
+        });
+
+        // What a save writes is cleaned again on every reopen: the FID info it holds must survive.
+        it('keeps the FID info through a save and the reopens after it', () => {
+          const saved = cleaningNMRiumData(processedFid());
+          const reopened = cleaningNMRiumData(cleaningNMRiumData(saved));
+          expect(reopened.spectra[0].info).toEqual({
+            dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+          });
+        });
+
+        // Only what processing changed comes back from originalInfo: a name the reopen path wrote
+        // into info (the zip's label) is kept.
+        it('takes only the processing keys from originalInfo', () => {
+          const renamed = processedFid();
+          renamed.spectra[0].info.name = 'hmbc.zip';
+          renamed.spectra[0].info.isComplex = false;
+          renamed.spectra[0].originalInfo.isComplex = true;
+          const [spectrum] = cleaningNMRiumData(renamed).spectra;
+          expect(spectrum.info).toEqual({
+            dimension: 2, name: 'hmbc.zip', isFid: true, isFt: false, isComplex: true,
+          });
+        });
+
+        it('ignores a disabled FFT when telling a stale processed info', () => {
+          const saved = processedFid();
+          delete saved.spectra[0].originalInfo;
+          delete saved.spectra[0].data;
+          saved.spectra[0].filters = saved.spectra[0].filters.map((f) => ({ ...f, enabled: false }));
+          const [spectrum] = cleaningNMRiumData(saved).spectra;
+          expect(spectrum.info.isFt).toEqual(true);
+        });
+      });
+
+      // A 2D spectrum that carries its data keeps it unless its own reference names its file. The
+      // document-wide source, a sole JCAMP re-minted into it, or the dataset's zip matched by name
+      // are only guesses, and a wrong one loses the data for good on the next save.
+      describe('a 2D spectrum carrying its data, without a reference of its own', () => {
+        const TPA = 'https://eln.test/api/v1/public/third_party_apps';
+        const attachments = [
+          { id: 51, label: 'hmbc.zip', url: `${TPA}/ZIP` },
+          { id: 52, label: 'hmbc.dx', url: `${TPA}/DX` },
+        ];
+        // Reopened legacy document: the FID is re-read from its own .dx, the FT still carries its
+        // matrix and, renamed on reopen, the zip's label.
+        const reopened = () => ({
+          spectra: [
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFt: true },
+              display: { name: 'hmbc.zip' },
+              data: { rr: { z: [[1.0]] } },
+            },
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFid: true },
+              display: { name: 'hmbc.zip' },
+              source: { jcampURL: `${TPA}/DX/file.dx` },
+              data: { re: { z: [[2.0]] } },
+            },
+          ],
+        });
+        const save = (doc) => cleaningNMRiumData(doc, { attachments, forPersistence: true });
+
+        it('is not bound to the zip its name matches when saved', () => {
+          const [ft, fid] = save(reopened()).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+          expect(fid.data).toEqual(undefined);
+          expect(fid.selector.root).toBeTruthy();
+        });
+
+        it('still carries its data after a second save', () => {
+          const once = save(reopened());
+          const twice = save(cleaningNMRiumData(once));
+          expect(twice.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+          expect(twice.sources.map((source) => source.entries[0].relativePath)).toEqual(['/52/hmbc.dx']);
+        });
+
+        it('is not bound to the document-wide source', () => {
+          const doc = reopened();
+          doc.source = { entries: [{ baseURL: 'https://old.test', relativePath: '/old/file.zip' }] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+        });
+
+        it('is not bound to a derived JCAMP re-minted into the document-wide source', () => {
+          const doc = reopened();
+          const peak = { baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/PEAK/file.jdx' };
+          doc.source = { entries: [peak] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(JSON.stringify(ft)).not.toContain('PEAK');
+        });
+      });
+
       it('names a 2D spectrum from meta.TITLE when display.name is only its own uuid', () => {
         // Real shape of a spectrum NMRium loaded straight from a jcamp: display.name defaults to
         // the spectrum id, info carries no name, and the source file's stem survives only in the

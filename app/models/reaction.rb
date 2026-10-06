@@ -5,6 +5,7 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
+#  concentration_mode     :string           default("solvents_only"), not null
 #  conditions             :string
 #  created_by             :integer
 #  dangerous_products     :string           default([]), is an Array
@@ -175,6 +176,7 @@ class Reaction < ApplicationRecord
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
 
   before_validation :set_default_reaction_type
+  before_validation :synchronize_legacy_reaction_volume_flag
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
@@ -187,7 +189,15 @@ class Reaction < ApplicationRecord
 
   has_one :container, as: :containable
 
+  CONCENTRATION_MODES = %w[solvents_only combined reaction_volume].freeze
+
   validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
+  validates :concentration_mode, inclusion: { in: CONCENTRATION_MODES }
+
+  # Temporary compatibility API. concentration_mode remains authoritative.
+  def use_reaction_volume # rubocop:disable Naming/PredicateMethod
+    concentration_mode == 'reaction_volume'
+  end
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
@@ -420,6 +430,10 @@ class Reaction < ApplicationRecord
 
   def set_default_reaction_type
     self.reaction_type = 'standard' if reaction_type.blank?
+  end
+
+  def synchronize_legacy_reaction_volume_flag
+    self[:use_reaction_volume] = concentration_mode == 'reaction_volume'
   end
 
   def scrubber(value)

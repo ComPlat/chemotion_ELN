@@ -4,6 +4,21 @@
 module ReportHelpers
   extend Grape::API::Helpers
 
+  params :element_selection do
+    requires :checkedIds, type: Array[Integer]
+    requires :uncheckedIds, type: Array[Integer]
+    requires :checkedAll, type: Boolean
+  end
+
+  # Cf. the index params of {Chemotion::SampleAPI}; dates are unix seconds.
+  params :list_filters do
+    optional :userLabel, type: Integer
+    optional :fromDate, type: Integer
+    optional :toDate, type: Integer
+    optional :filterCreatedAt, type: Boolean
+    optional :productOnly, type: Boolean
+  end
+
   params :export_params do
     requires :columns, type: Hash do
       optional :sample, type: Array[String]
@@ -13,22 +28,11 @@ module ReportHelpers
     end
     requires :exportType, type: Integer
     requires :uiState, type: Hash do
-      requires :sample, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
-        requires :checkedAll, type: Boolean
-      end
-      requires :reaction, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
-        requires :checkedAll, type: Boolean
-      end
-      requires :wellplate, type: Hash do
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
-        requires :checkedAll, type: Boolean
-      end
+      requires(:sample, type: Hash) { use :element_selection }
+      requires(:reaction, type: Hash) { use :element_selection }
+      requires(:wellplate, type: Hash) { use :element_selection }
       requires :currentCollection, type: Integer
+      use :list_filters
     end
     # requires :columns, type: Array
   end
@@ -239,12 +243,6 @@ module ReportHelpers
     + (v['2'] || []).join('.') + ' , ' + (v['3'] || []).join('.')
   end
 
-  def build_sql(table, columns, c_id, ids, checkedAll = false)
-    return unless %i[sample reaction wellplate].include?(table)
-
-    send("build_sql_#{table}_sample", columns, c_id, ids, checkedAll)
-  end
-
   # desc: sql to view sample info (#columns)
   # for given sample list (#s_ids) and a user (or u + groups) (#u_ids).
   # use to generate sql view given user id(s) wellplate ids and selected columns
@@ -283,22 +281,80 @@ module ReportHelpers
     type ||= :sample
     filter_selections = filter_column_selection(filter_parameter)
     column_query = build_column_query(filter_selections, current_user.id)
-    send("build_sql_#{table}_#{type}", column_query, sql_params[:c_id], sql_params[:ids], sql_params[:checked_all])
+    send("build_sql_#{table}_#{type}", column_query, sql_params[:c_id], sql_params[:ids],
+         checked_all: sql_params[:checked_all], scope_sql: sql_params[:scope_sql])
+  end
+
+  LIST_FILTER_MODELS = { sample: 'Sample', reaction: 'Reaction', wellplate: 'Wellplate' }.freeze
+
+  # @return [Boolean] whether the list of +table+ is narrowed by a filter; productOnly narrows samples only
+  def list_filtered?(table, ui_state)
+    return true if table.to_sym == :sample && ui_state[:productOnly].present?
+
+    ui_state[:userLabel].present? || ui_state[:fromDate].present? || ui_state[:toDate].present?
+  end
+
+  # Elements the list of +table+ shows, with the scopes of the listing endpoints ({Chemotion::SampleAPI}).
+  # @return [ActiveRecord::Relation] for samples, and for a filtered reaction or wellplate list
+  # @return [nil] for an unfiltered reaction or wellplate list, which the collection join already covers
+  def list_scope(table, ui_state, c_id)
+    table = table.to_sym
+    return unless table == :sample || list_filtered?(table, ui_state)
+
+    scope = LIST_FILTER_MODELS.fetch(table).constantize.by_collection_id(c_id)
+    if table == :sample
+      scope = ui_state[:productOnly] ? scope.product_only : scope.sample_or_startmat_or_products
+    end
+    scope = scope.by_user_label(ui_state[:userLabel]) if ui_state[:userLabel]
+    apply_list_time_filter(scope, ui_state)
+  end
+
+  def apply_list_time_filter(scope, ui_state)
+    from = ui_state[:fromDate]
+    to = ui_state[:toDate]
+    by_created_at = ui_state[:filterCreatedAt] || false
+
+    scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+    scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+    scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+    scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+    scope
+  end
+
+  # Resolves each table's selection once, so every sheet of one export shares it.
+  # @return [Hash{Symbol=>Hash}] +:ids+, +:checked_all+ and +:scope_sql+ per table; empty if nothing is selected
+  def export_selections(ui_state, c_id)
+    LIST_FILTER_MODELS.keys.each_with_object({}) do |table, selections|
+      selection = export_selection(table, ui_state, c_id)
+      selections[table] = selection if selection
+    end
+  end
+
+  # @return [Hash] the table's ids and select-all flag, plus the list scope as SQL under select-all
+  # @return [nil] if nothing of the table is selected, or select-all matches no element
+  def export_selection(table, ui_state, c_id)
+    state = ui_state[table]
+    return if state.nil? || (!state[:checkedAll] && state[:checkedIds].blank?)
+    return { ids: state[:checkedIds], checked_all: false } unless state[:checkedAll]
+
+    ids = state[:uncheckedIds] || []
+    scope = list_scope(table, ui_state, c_id)
+    return { ids: ids, checked_all: true } unless scope
+    return unless scope.where.not(id: ids).exists?
+
+    { ids: ids, checked_all: true, scope_sql: scope.select(:id).to_sql }
+  end
+
+  # @return [String] a where-clause prefix restricting +column+ to the list scope, '' without one
+  def list_scope_condition(column, scope_sql)
+    scope_sql.present? ? "#{column} in (#{scope_sql}) and " : ''
   end
 
   def generate_sheets_for_tables(tables, table_params, export, columns_params = nil, type = nil)
     tables.each do |table|
-      next unless (p_t = table_params[:ui_state][table])
+      next unless (selection = table_params[:selections][table])
 
-      checked_all = p_t[:checkedAll]
-
-      ids = checked_all ? p_t[:uncheckedIds] : p_t[:checkedIds]
-      next unless checked_all || ids.present?
-
-      sql_params = {
-        c_id: table_params[:c_id], ids: ids, checked_all: checked_all
-      }
-      sql_query = build_sql_query(table, current_user, sql_params, type)
+      sql_query = build_sql_query(table, current_user, selection.merge(c_id: table_params[:c_id]), type)
       next unless sql_query
 
       result = db_exec_query(sql_query)
@@ -329,18 +385,18 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_sample_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_sample_sample(columns, c_id, ids, checked_all: false, scope_sql: nil)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && s_ids.empty?
+    return if !checked_all && s_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
 
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
-      selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
+      selection = list_scope_condition('s.id', scope_sql) + ((s_ids.empty? && '') || "s.id not in (#{s_ids}) and")
     else
       order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
       selection = "s.id in (#{s_ids}) and"
@@ -399,8 +455,8 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_sample_chemicals(columns, c_id, ids, checked_all)
-    sample_query = build_sql_sample_sample(columns[0], c_id, ids, checked_all)
+  def build_sql_sample_chemicals(columns, c_id, ids, checked_all: false, scope_sql: nil)
+    sample_query = build_sql_sample_sample(columns[0], c_id, ids, checked_all: checked_all, scope_sql: scope_sql)
     return nil if sample_query.blank?
 
     chemical_query_sql = chemical_query(columns[1].join(','), c_id, ids, checked_all)
@@ -414,7 +470,7 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_sample_components(columns, c_id, ids, checked_all)
+  def build_sql_sample_components(columns, c_id, ids, checked_all: false, scope_sql: nil)
     return if columns.blank? || columns[0].blank? || columns[1].blank?
 
     u_ids = [user_ids].flatten.join(',')
@@ -429,23 +485,8 @@ module ReportHelpers
     # Check if we need molecule properties
     needs_molecule_join = component_columns.include?('m.')
 
-    if checked_all
-      return unless c_id
-
-      # For "All pages" - get all samples from the collection except excluded ones
-      excluded_ids = [ids].flatten.join(',')
-      collection_condition = "INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{c_id}"
-      where_condition = excluded_ids.empty? ? '' : "AND s.id NOT IN (#{excluded_ids})"
-      order_clause = 's.id ASC'
-    else
-      # For specific sample selection
-      sample_ids = [ids].flatten.join(',')
-      return if sample_ids.empty?
-
-      collection_condition = ''
-      where_condition = "AND s.id IN (#{sample_ids})"
-      order_clause = "position(','||s.id::text||',' in '(,#{sample_ids},)')"
-    end
+    collection_condition, where_condition, order_clause = components_row_selection(c_id, ids, checked_all, scope_sql)
+    return unless order_clause
 
     <<~SQL.squish
       SELECT
@@ -486,25 +527,43 @@ module ReportHelpers
     SQL
   end
 
+  # @return [Array(String, String, String)] join, where and order clauses of the components sheet
+  # @return [nil] if nothing is selected
+  def components_row_selection(c_id, ids, checked_all, scope_sql)
+    id_list = [ids].flatten.join(',')
+    unless checked_all
+      return if id_list.empty?
+
+      return ['', "AND s.id IN (#{id_list})", "position(','||s.id::text||',' in '(,#{id_list},)')"]
+    end
+    return unless c_id
+
+    join = 'INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL ' \
+           "AND cs.collection_id = #{c_id}"
+    where = id_list.empty? ? '' : "AND s.id NOT IN (#{id_list})"
+    where = "#{where} AND s.id IN (#{scope_sql})" if scope_sql
+    [join, where, 's.id ASC']
+  end
+
   def build_sample_columns(columns)
     columns.unshift('s.id as "id"') unless columns.any? { |col| col.include?('id as') }
     columns.join(', ')
   end
 
-  def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
+  def build_sql_sample_analyses(columns, c_id, ids, checked_all: false, scope_sql: nil)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && s_ids.empty?
+    return if !checked_all && s_ids.empty?
 
     t = 's' # table samples
     cont_type = 'Sample' # containable_type
-    if checkedAll
+    if checked_all
       return unless c_id
 
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
-      selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
+      selection = list_scope_condition('s.id', scope_sql) + ((s_ids.empty? && '') || "s.id not in (#{s_ids}) and")
     else
       order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
       selection = "s.id in (#{s_ids}) and"
@@ -570,18 +629,19 @@ module ReportHelpers
   # is_shared == false => sample in at least 1 own collection
   # is_shared == true => sample in at least 1 shared collection, no own coll
   # 'collections.id is not null or collection_shares.id is not null' : validate associations with user
-  def build_sql_wellplate_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_wellplate_sample(columns, c_id, ids, checked_all: false, scope_sql: nil)
     wp_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && wp_ids.empty?
+    return if !checked_all && wp_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
 
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'wp_id asc'
-      selection = (wp_ids.empty? && '') || "w.wellplate_id not in (#{wp_ids}) and"
+      selection = list_scope_condition('w.wellplate_id', scope_sql) +
+                  ((wp_ids.empty? && '') || "w.wellplate_id not in (#{wp_ids}) and")
     else
       order = "position(','||wp_id::text||',' in '(,#{wp_ids},)')"
       selection = "w.wellplate_id in (#{wp_ids}) and"
@@ -630,18 +690,19 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_reaction_sample(columns, c_id, ids, checkedAll = false)
+  def build_sql_reaction_sample(columns, c_id, ids, checked_all: false, scope_sql: nil)
     r_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
     return if columns.empty? || u_ids.empty?
-    return if !checkedAll && r_ids.empty?
+    return if !checked_all && r_ids.empty?
 
-    if checkedAll
+    if checked_all
       return unless c_id
 
       order = 'r_s.reaction_id asc'
       selection = (r_ids.empty? && '') || "r_s.reaction_id not in (#{r_ids}) and"
       reaction_filter = (r_ids.empty? && '') || "and reaction_id not in (#{r_ids})"
+      reaction_filter += " and reaction_id in (#{scope_sql})" if scope_sql
       collection_join = <<~SQL.squish
         left join collections_samples c_s on (
           s.source_type = 'sample' and s.id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id}

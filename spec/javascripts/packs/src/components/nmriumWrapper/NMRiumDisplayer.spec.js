@@ -235,6 +235,134 @@ describe('NMRiumDisplayer', () => {
     });
   });
 
+  // A document saved before sources[] existed: every spectrum carries its data and nothing points at
+  // a file. Its dataset may since have gained JCAMPs that are not any spectrum's own - a raw upload,
+  // a ChemSpectra derivative - and the fallback used to hand the first of them to every spectrum,
+  // after which cleaning dropped the 2D matrices in favour of that borrowed file.
+  describe('reopening a legacy document with embedded 2D data', () => {
+    const legacyDocument = () => ({
+      version: 7,
+      data: {
+        spectra: [
+          {
+            id: 'ft',
+            info: { dimension: 2, isFt: true, name: 'hmbc.zip/exp/26' },
+            display: { name: 'hmbc.zip/exp/26' },
+            data: { rr: { z: [[1, 2], [3, 4]] } },
+          },
+          {
+            id: 'fid',
+            info: { dimension: 2, isFid: true, name: 'hmbc' },
+            display: { name: 'hmbc' },
+            data: { re: { z: [[1, 2]] }, im: { z: [[3, 4]] } },
+          },
+        ],
+        molecules: [],
+      },
+    });
+    const fetched = [
+      { id: 31, label: 'hmbc.peak.jdx', kind: 'jcamp', url: `${TPA}/PEAK-TOKEN` },
+      { id: 32, label: 'hmbc.zip', kind: 'zip', url: `${TPA}/ZIP-TOKEN` },
+    ];
+
+    const reopen = async (fetchedSpectra, doc = legacyDocument()) => {
+      const displayer = displayerWith(fetchedSpectra);
+      displayer.setState = () => {};
+      displayer.postToNMRium = () => {};
+      let loaded = null;
+      displayer.buildPatchedNmriumFile = (label, content) => { loaded = content; return {}; };
+      const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
+      const zip = fetchedSpectra.find((s) => s.kind === 'zip');
+      await displayer.sendPatchedNmrium({ file: btoa(JSON.stringify(doc)) }, jdx, zip, null);
+      return loaded;
+    };
+
+    it('opens every 2D spectrum from its embedded data', async () => {
+      const loaded = await reopen(fetched);
+      const [ft, fid] = loaded.data.spectra;
+      expect(ft.data).toEqual({ rr: { z: [[1, 2], [3, 4]] } });
+      expect(fid.data).toEqual({ re: { z: [[1, 2]] }, im: { z: [[3, 4]] } });
+    });
+
+    it('points no spectrum at a JCAMP that is not its own', async () => {
+      const loaded = await reopen(fetched);
+      loaded.data.spectra.forEach((s) => {
+        expect(s.source?.jcampURL).toEqual(undefined);
+        expect(s.selector?.root).toEqual(undefined);
+      });
+      expect(JSON.stringify(loaded)).not.toContain('PEAK-TOKEN');
+    });
+
+    it('still re-points a spectrum onto the JCAMP that is its own', () => {
+      const displayer = displayerWith([{ id: 33, label: 'hmbc.dx', kind: 'jcamp', url: `${TPA}/DX-TOKEN` }]);
+      const doc = legacyDocument();
+      displayer.patchZipAndJcampReference(doc, `${TPA}/DX-TOKEN`);
+      const [ft, fid] = doc.data.spectra;
+      expect(fid.source.jcampURL).toEqual(`${TPA}/DX-TOKEN/file.dx`);
+      expect(ft.source).toEqual(undefined);
+    });
+
+    it('leaves a 2D spectrum without data off the 1D JCAMP fallback', () => {
+      const displayer = displayerWith([fetched[0]]);
+      const doc = { spectra: [{ id: 'x', info: { dimension: 2, name: 'other' } }] };
+      displayer.patchZipAndJcampReference(doc, fetched[0].url);
+      expect(doc.spectra[0].source).toEqual(undefined);
+    });
+
+    it('keeps the fallback for a 1D spectrum that has neither a source nor data', () => {
+      const displayer = displayerWith([fetched[0]]);
+      const doc = { spectra: [{ id: 'x', info: { dimension: 1, name: 'other' } }] };
+      displayer.patchZipAndJcampReference(doc, fetched[0].url);
+      expect(doc.spectra[0].source.jcampURL).toEqual(`${TPA}/PEAK-TOKEN/file.jdx`);
+    });
+
+    // A 2D spectrum saved with only an expired download url (no data, no name to match): it can
+    // only be read again from a file, and a raw upload is the one that can hold 2D data.
+    describe('a 2D spectrum left with only an expired url', () => {
+      const expired = () => ({
+        source: { entries: [{ baseURL: '', relativePath: `${TPA}/OLD-TOKEN/file.dx` }] },
+        spectra: [{
+          id: 'x',
+          display: { name: 'hmbc.zip', dimension: 2 },
+          sourceSelector: { files: [`${TPA}/OLD-TOKEN/file.dx`] },
+          filters: [{ name: 'fftDimension1' }],
+        }],
+      });
+      const raw = { id: 41, label: 'hmbc.dx', kind: 'jcamp', url: `${TPA}/DX-TOKEN` };
+
+      it('is pointed at the raw JCAMP upload of the dataset', () => {
+        const displayer = displayerWith([fetched[0], raw]);
+        const doc = expired();
+        displayer.patchZipAndJcampReference(doc, fetched[0].url);
+        expect(doc.spectra[0].source.jcampURL).toEqual(`${TPA}/DX-TOKEN/file.dx`);
+        expect(doc.spectra[0].sourceSelector.files).toEqual([`${TPA}/DX-TOKEN/file.dx`]);
+        expect(doc.source.entries[0].relativePath).toEqual('/api/v1/public/third_party_apps/DX-TOKEN/file.dx');
+      });
+
+      it('is not pointed at a derived JCAMP', () => {
+        const displayer = displayerWith([fetched[0]]);
+        const doc = expired();
+        displayer.patchZipAndJcampReference(doc, fetched[0].url);
+        expect(doc.spectra[0].source).toEqual(undefined);
+        expect(doc.source.entries[0].relativePath).toEqual(`${TPA}/OLD-TOKEN/file.dx`);
+      });
+    });
+
+    // Only the JCAMP fallback is skipped for a spectrum that keeps its own source: the rest of the
+    // per-spectrum patching (the zip label) still applies, and the document-wide source stays.
+    it('still names a spectrum kept off the fallback after the dataset zip', () => {
+      const displayer = displayerWith(fetched);
+      const doc = legacyDocument();
+      doc.data.source = { entries: [{ baseURL: 'https://old.test', relativePath: '/old/file.zip' }] };
+      displayer.patchZipAndJcampReference(doc, fetched[0].url, fetched[1].url, fetched[1].label);
+      const [ft, fid] = doc.data.spectra;
+      expect(ft.info.name).toEqual('hmbc.zip');
+      expect(fid.display.name).toEqual('hmbc.zip');
+      expect(ft.source).toEqual(undefined);
+      expect(doc.data.source.entries[0]).toEqual({ baseURL: 'https://old.test', relativePath: '/old/file.zip' });
+    });
+  });
+
   describe('.receiveMessage() keeping the schema version', () => {
     it('keeps the last reported version when a data-change report carries none', () => {
       const displayer = displayerWith([]);

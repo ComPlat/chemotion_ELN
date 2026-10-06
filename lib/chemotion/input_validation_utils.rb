@@ -5,7 +5,7 @@ module Chemotion
   # Input sanitization and validation utilities for secure data processing
   module InputValidationUtils
     # URL validation constants (match frontend rules)
-    URL_MAX_LENGTH = 100
+    URL_MAX_LENGTH = 2048
     SAFE_URL_RE = %r{\Ahttps?://(?:[a-z0-9-]+\.)+[a-z]{2,}(/[^\s#]*)?\z}i.freeze
     ALLOWED_SCHEMES = %w[https http].freeze
 

@@ -52,12 +52,49 @@ services:
       - 8002:80
     command: supervisord -n
 
+  # PDF text service for reading safety data sheets. Optional in development:
+  # the dev image has Ghostscript, and without config/sds_text_service.yml the
+  # ELN runs it in the app container. Start this to exercise the service path:
+  #     docker compose -f docker-compose.dev.yml -f docker-compose.services.yml \
+  #       --env-file .dockerenv --profile pdftext up -d pdftext
+  # then `cp config/sds_text_service.yml.example config/sds_text_service.yml`
+  # (its url is http://pdftext:8080) and restart the app. Remove the yml again
+  # to go back to local Ghostscript: with the yml and no running service,
+  # extraction answers 503.
+  #
+  # Behind a profile because the image is only published from the release that
+  # ships it on; until then, set IMG_PDFTEXT=complat/dev:pdftext (see
+  # .dockerenv.example).
+  # The hardening below matches the production stack, so development sees the
+  # same read-only root and limits.
+  pdftext:
+    profiles: ["pdftext"]
+    image: ${IMG_PDFTEXT:-${SERVICE_REPO}:pdftext-${ELN_VERSION}}
+    restart: unless-stopped
+    hostname: pdftext
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 64
+    # environment:
+    #   - PDFTEXT_TIMEOUT=20
+    #   - PDFTEXT_CONCURRENCY=2
+    networks:
+      - chemotion
+
   # Unlike its neighbours this is not a running service: it copies the
   # precompiled NMRium wrapper build out of the pinned image into
   # public/nmrium/<version>/, points public/nmrium/default at it, and exits.
   # The wrapper's own nginx never runs — Rails serves the assets from public/
   # at /nmrium/default/, which is what config/spectra.yml.example sets
-  # :nmriumwrapper: :url: to for development.
+  # :nmriumwrapper: :url: to in every environment (the production images ship
+  # the same assets).
   #
   # Run it (or don't — the ELN falls back to any wrapper url in spectra.yml):
   #     docker compose -f docker-compose.dev.yml -f docker-compose.services.yml \

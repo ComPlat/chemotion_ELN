@@ -11,12 +11,17 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import DeviceDescription from 'src/models/DeviceDescription';
 
 export default class SearchFetcher {
+  // listFilters: the element list's active chips (Cf. listFilterParams), passed only by callers that own the list.
   static fetchBasedOnSearchSelectionAndCollection(params) {
     const {
-      selection, collectionId, page, moleculeSort, isPublic
+      selection, collectionId, page, moleculeSort, isPublic, listFilters = {}
     } = params;
+    const filteredSelection = Object.keys(listFilters).length === 0 ? selection : {
+      ...selection,
+      list_filter_params: { ...selection.list_filter_params, ...listFilters },
+    };
     const body = {
-      selection,
+      selection: filteredSelection,
       collection_id: collectionId,
       page: page || 1,
       per_page: selection.page_size,

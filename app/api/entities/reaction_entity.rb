@@ -58,6 +58,7 @@ module Entities
       # detail level 10 render as a gas-phase reaction with a locked/derived volume.
       expose! :use_reaction_volume,   anonymize_with: false
       expose! :lock_reaction_volume,  anonymize_with: false
+      expose! :concentration_mode,    anonymize_with: -> { Reaction.column_defaults['concentration_mode'] }
       expose! :gaseous,               anonymize_with: false
       expose! :weight_percentage,     anonymize_with: false
       expose! :attachments,           anonymize_with: [],  unless: :displayed_in_list,   using: 'Entities::AttachmentEntity'

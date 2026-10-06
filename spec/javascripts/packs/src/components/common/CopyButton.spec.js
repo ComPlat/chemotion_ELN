@@ -48,6 +48,15 @@ describe('CopyButton', () => {
     expect(copyStub.calledOnceWith('hello')).toBe(true);
   });
 
+  it('passes an html flavour through when given one', async () => {
+    copyStub.resolves(true);
+    wrapper = buildWrapper({ text: 'plain', html: '<b>rich</b>' });
+
+    await clickCopy();
+
+    expect(copyStub.calledOnceWithExactly('plain', { html: '<b>rich</b>' })).toBe(true);
+  });
+
   it('swaps the clipboard icon for a check icon on success', async () => {
     copyStub.resolves(true);
     wrapper = buildWrapper();

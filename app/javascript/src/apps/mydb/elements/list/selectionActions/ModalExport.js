@@ -5,10 +5,13 @@ import AppModal from 'src/components/common/AppModal';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
-const filterUIState = (uiState) => {
+// Shared with ModalReactionExport, so both exports send the same selection and list filters.
+export const filterUIState = (uiState) => {
   const {
-    currentCollection, sample, reaction, wellplate
+    currentCollection, sample, reaction, wellplate,
+    userLabel, fromDate, toDate, filterCreatedAt, productOnly
   } = uiState;
   return {
     sample: {
@@ -27,6 +30,12 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
+    // "All pages" sends no ids, so the list filters have to travel with it.
+    userLabel,
+    fromDate: fromDate ? dateToUnixTimestamp(fromDate) : null,
+    toDate: toDate ? dateToUnixTimestamp(toDate) : null,
+    filterCreatedAt,
+    productOnly,
   };
 };
 
@@ -108,6 +117,7 @@ export default class ModalExport extends React.Component {
           { value: 'status', text: 'status', checked: false },
           { value: 'vendor', text: 'vendor', checked: false },
           { value: 'order_number', text: 'order number', checked: false },
+          { value: 'product_number', text: 'product number', checked: false },
           { value: 'amount', text: 'amount', checked: false },
           { value: 'price', text: 'price', checked: false },
           { value: 'person', text: 'person', checked: false },

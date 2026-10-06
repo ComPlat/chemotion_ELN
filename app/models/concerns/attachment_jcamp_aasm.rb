@@ -18,8 +18,7 @@ module AttachmentJcampAasm
 
   # Set by generate_att right before it re-saves a reused row with fresh content pending
   # attachment (see require_peaks_generation? below) - not a stand-in for "file_path is
-  # set", since file_path stays populated on the in-memory object long after its original
-  # attach, independent of any later, unrelated save.
+  # set": it marks this one re-save, not any save that happens to attach a file.
   attr_accessor :reattaching_derivative
 
   extend ActiveSupport::Concern
@@ -185,12 +184,15 @@ end
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
+  # How much of a JCAMP file is read to find its dimension: the header labels come first.
+  JCAMP_HEADER_BYTES = 64 * 1024
+
   def jcamp_files_already_present?
     _first_part, extname = extension_parts
     return true  if filename.include?('processed_')
     return false if extname.casecmp('nmrium').zero?
 
-    attachments = Attachment.where(attachable_id: self[:attachable_id])
+    attachments = same_attachable
     num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
     jcamp_attachments = file_match(attachments, num)
     jcamp_attachments.any?
@@ -295,14 +297,8 @@ module AttachmentJcampProcess
       # :init_aasm instead.
       att.reattaching_derivative = true
       att.save!
-      # after_save :attach_file just uploaded meta_tmp's content; file_path is a plain
-      # attr_accessor that stays set on the object otherwise, so the final att.save! below
-      # (after the AASM set_* calls - non-bang, so persist: false: they only mutate
-      # aasm_state in memory and don't themselves trigger a save, see edit_process's
-      # set_backup comment) would re-run the full attach/create_derivatives/update_column
-      # pipeline and re-upload the same blob - clear it so that save is a plain
-      # state/column update instead.
-      att.file_path = nil
+      # after_save :attach_file uploaded meta_tmp's content and cleared file_path, so the final
+      # att.save! below is a plain state/column update.
       # Reset now too: att is generate_att's return value, so it can outlive this method in
       # caller code (edit_process/create_process/save_spectrum all hold onto it). Leaving
       # this true forever would silently no-op require_peaks_generation? on any future
@@ -405,7 +401,7 @@ module AttachmentJcampProcess
 
   # TODO: Fix bugs and improve code
   def get_infer_json_content
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
 
     infers = atts.map do |att|
       keyword, _extname = att.extension_parts
@@ -460,6 +456,57 @@ module AttachmentJcampProcess
       delete_edit_peak_after_done
 
       jcamp_att
+    end
+  end
+
+  # ChemSpectra reads a 1D curve out of a 2D NMR JCAMP and returns it as the spectrum. NMRium
+  # reads (and, for an FID, processes) the 2D data itself, and +failure+ is the state that keeps
+  # an upload out of the spectra editor but hands it to NMRium.
+  def leave_to_nmrium
+    set_failure if may_set_failure?
+    nil
+  end
+
+  # Whether the file is a JCAMP-DX holding NMR data in more than one dimension (a 2D FID or
+  # spectrum, e.g. +##DATA TYPE= nD NMR FID+ with +##NUM DIM= 2+).
+  #
+  # Labels are compared the JCAMP way (spaces, underscores, hyphens and slashes ignored, case
+  # folded), so +##NUM_DIM=+ and +##NUMDIM=+ count too. The data has to be NMR: an NMR data type or
+  # an observed nucleus. An explicit, numeric +NUM DIM+ decides the dimension. Without one, only a
+  # data type naming the dimension, such as +2D NMR SPECTRUM+, does: the generic +nD+ form can also
+  # hold 1D data, and JCAMP-DX 6 requires +NUM DIM+ with it.
+  #
+  # @return [Boolean] false for other extensions, for 1D or non-NMR data and when there is no file
+  def multi_dimensional_nmr_jcamp?
+    _, extname = extension_parts
+    return false unless %w[dx jdx jcamp].include?(extname.downcase)
+
+    path = abs_path
+    return false if path.blank? || !File.file?(path)
+
+    labels = jcamp_header_labels(File.open(path, 'rb') { |f| f.read(JCAMP_HEADER_BYTES) }.to_s)
+    data_types = labels.fetch('DATATYPE', [])
+    return false unless data_types.any? { |t| t.match?(/NMR/i) } || labels.key?('.OBSERVENUCLEUS')
+
+    # The first NUM DIM whose value starts with a whole number: an empty one, or one holding only a
+    # +$$+ comment, says nothing and leaves it to the data type (as ChemSpectra reads it too).
+    num_dim = labels['NUMDIM']&.filter_map { |value| value[/\A(\d+)(?:\s|\z)/, 1] }&.first
+    return num_dim.to_i > 1 if num_dim
+
+    data_types.any? { |t| t.match?(/\A[2-9]D\s*NMR/i) }
+  end
+
+  # @param header [String] the start of a JCAMP-DX file; a leading UTF-8 byte order mark and
+  #   indentation before +##+ are ignored
+  # @return [Hash{String => Array<String>}] every value of each +##LABEL=+, keyed by the label
+  #   normalised as JCAMP compares labels (no spaces, underscores, hyphens or slashes; upper case)
+  def jcamp_header_labels(header)
+    header = header.b.delete_prefix("\xEF\xBB\xBF".b)
+    header.split(/\r\n|\r|\n/).each_with_object({}) do |line, labels|
+      match = line.match(/\A\s*##([^=]+)=(.*)\z/)
+      next unless match
+
+      (labels[match[1].gsub(%r{[\s_\-/]}, '').upcase] ||= []) << match[2].strip
     end
   end
 
@@ -546,11 +593,7 @@ module AttachmentJcampProcess
     return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
     return nil unless filename_lower.match?(/(?:^|[._-])uvvis(?:[._-]|$)/)
 
-    base_scope = Attachment.where(attachable_id: attachable_id)
-    if respond_to?(:attachable_type) && attachable_type.present?
-      base_scope = base_scope.where(attachable_type: attachable_type)
-    end
-    sibs = base_scope.where.not(id: id)
+    sibs = same_attachable.where.not(id: id)
 
     tics = sibs.select do |a|
       name = a.filename.to_s.downcase
@@ -571,6 +614,9 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
+    # Ahead of the sibling check below: a 2D file is never processed, so a JCAMP already in the
+    # dataset is no reason to leave it queueing (and out of NMRium).
+    return leave_to_nmrium if is_create && multi_dimensional_nmr_jcamp?
     return if is_create && !is_regen && jcamp_files_already_present?
 
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
@@ -727,7 +773,7 @@ module AttachmentJcampProcess
   def delete_related_edit_peak_with_att(attachment)
     return unless attachment
 
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       att.delete if related_edit_peak_to_delete?(att, attachment, valid_name)
@@ -766,7 +812,7 @@ module AttachmentJcampProcess
     # across the whole dataset, would also catch an independently-uploaded curve that happens
     # to derive the same target name, deleting it as collateral of an unrelated edit.
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_peak_file = att.filename_parts.include?('peak')
@@ -791,7 +837,7 @@ module AttachmentJcampProcess
     return unless img_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.image? &&
@@ -808,7 +854,7 @@ module AttachmentJcampProcess
     arr_img.each do |img_att|
       next unless img_att
 
-      atts = Attachment.where(attachable_id: attachable_id)
+      atts = same_attachable
       valid_name = fname_wo_ext(img_att)
       atts.each do |att|
         att.delete if related_arr_img_to_delete?(att, img_att, valid_name)
@@ -826,7 +872,7 @@ module AttachmentJcampProcess
     return unless csv_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = fname_wo_ext(self)
     atts.each do |att|
       is_delete = att.csv? &&
@@ -841,7 +887,7 @@ module AttachmentJcampProcess
     return unless nmrium_att
 
     lineage_root = root_id
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
     valid_name = filename_parts[0]
     atts.each do |att|
       is_delete = att.nmrium? &&
@@ -860,7 +906,7 @@ module AttachmentJcampProcess
     # name such as "740.1H.edit.jdx" shares only the first dot-token the save is named after. An
     # "N_bagit" second token marks another curve of a multi-curve archive, which it must not take.
     valid_name = fname_wo_ext(self)
-    atts = Attachment.where(attachable_id: jcamp_att.attachable_id)
+    atts = jcamp_att.same_attachable
     atts.each do |att|
       is_delete = att.edited? &&
                   att.id != jcamp_att.id &&
@@ -923,7 +969,7 @@ module AttachmentJcampProcess
   def delete_related_jsons(target, is_reg = false)
     return unless target
 
-    atts = Attachment.where(attachable_id: attachable_id)
+    atts = same_attachable
 
     atts.each do |att|
       is_delete = att.json? &&

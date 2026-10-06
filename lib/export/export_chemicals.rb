@@ -3,7 +3,7 @@
 module Export
   class ExportChemicals
     CHEMICAL_FIELDS = %w[
-      chemical_sample_id cas status vendor order_number amount volume price person required_date
+      chemical_sample_id cas status vendor order_number product_number amount volume price person required_date
       ordered_date storage_temperature expiration_date delivery_date opening_date required_by pictograms h_statements p_statements
       safety_sheet_link_merck safety_sheet_link_thermofischer product_link_merck product_link_thermofischer
       host_building host_room host_cabinet host_group owner borrowed_by current_building
@@ -22,6 +22,7 @@ module Export
       amount: ['c."chemical_data"->0->\'amount\'', '"amount"', nil],
       volume: ['c."chemical_data"->0->\'volume\'', '"volume"', nil],
       order_number: ['c."chemical_data"->0->\'order_number\'', '"order_number"', nil],
+      product_number: ['c."chemical_data"->0->\'product_number\'', '"product_number"', nil],
       required_date: ['c."chemical_data"->0->\'required_date\'', '"required_date"', nil],
       expiration_date: ['c."chemical_data"->0->\'expiration_date\'', '"expiration_date"', nil],
       delivery_date: ['c."chemical_data"->0->\'delivery_date\'', '"delivery_date"', nil],

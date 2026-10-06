@@ -43,6 +43,18 @@ require 'rails_helper'
 RSpec.describe Attachment do
   let(:attachment) { create(:attachment) }
 
+  describe '#previewable?' do
+    it 'is true for images and PDFs' do
+      expect(create(:attachment, :with_png_image)).to be_previewable
+      expect(create(:attachment, :with_pdf)).to be_previewable
+    end
+
+    it 'is false for other files, even with a thumbnail' do
+      attachment.update_column(:thumb, true) # rubocop:disable Rails/SkipsModelValidations
+      expect(attachment).not_to be_previewable
+    end
+  end
+
   describe '#extname' do
     it 'returns filename extension' do
       expect(attachment.extname).to eq('.txt')
@@ -75,6 +87,31 @@ RSpec.describe Attachment do
     it 'returns the absolute path of file' do
       expected_path = Rails.root.join("uploads/test/1/#{attachment.identifier}").to_s
       expect(attachment.abs_path).to eq(expected_path)
+    end
+  end
+
+  describe 'ELEMENT_ATTACHABLE_TYPES' do
+    # AttachableAPI authorizes these through ElementPolicy, which needs a collected element.
+    it 'lists only element classes with collections' do
+      described_class::ELEMENT_ATTACHABLE_TYPES.each do |type|
+        expect(type.safe_constantize.reflect_on_association(:collections)).to be_present, type
+      end
+    end
+  end
+
+  describe '#root_element' do
+    it 'is the attachable itself for a directly linked element' do
+      research_plan = create(:research_plan)
+      expect(described_class.new(attachable: research_plan).root_element).to eq(research_plan)
+    end
+
+    it 'is the element a container belongs to' do
+      sample = create(:sample)
+      expect(described_class.new(attachable: create(:container, containable: sample)).root_element).to eq(sample)
+    end
+
+    it 'is nil for an unsorted inbox attachment' do
+      expect(described_class.new(attachable_type: 'Container').root_element).to be_nil
     end
   end
 
@@ -291,6 +328,44 @@ RSpec.describe Attachment do
 
       it 'generates a checksum of the file content' do
         expect(attachment.checksum).to be_present
+      end
+
+      # Shrine's after_commit `persist` saves the record a second time, which must not
+      # attach the file again.
+      context 'when the file is attached' do
+        let(:store) { Shrine.storages[:store] }
+        let(:uploaded_ids) { [] }
+
+        before do
+          allow(store).to receive(:upload).and_wrap_original do |upload, io, id, **options|
+            uploaded_ids << id
+            upload.call(io, id, **options)
+          end
+        end
+
+        it 'stores the original file once' do
+          att = create(:attachment, :with_image)
+          expect(uploaded_ids.count(att.attachment.id)).to eq 1
+        end
+
+        it 'builds the derivatives once' do
+          expect_any_instance_of(AttachmentUploader::Attacher) # rubocop:disable RSpec/AnyInstance
+            .to receive(:create_derivatives).once.and_call_original
+          expect(create(:attachment, :with_image).read_thumbnail).not_to be_nil
+        end
+
+        it 'clears file_path' do
+          expect(create(:attachment, :with_image).file_path).to be_nil
+        end
+
+        it 'leaves no open handle on the stored file' do
+          GC.disable
+          att = create(:attachment, :with_image)
+          stored = store.path(att.attachment.id).to_s
+          expect(ObjectSpace.each_object(File).count { |f| !f.closed? && f.path == stored }).to eq 0
+        ensure
+          GC.enable
+        end
       end
     end
 

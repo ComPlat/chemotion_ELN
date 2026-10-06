@@ -5,6 +5,7 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
+#  concentration_mode     :string           default("solvents_only"), not null
 #  conditions             :string
 #  created_by             :integer
 #  dangerous_products     :string           default([]), is an Array
@@ -104,6 +105,27 @@ RSpec.describe Reaction, type: :model do
 
       expect(reaction).to be_interaction
       expect(reaction).not_to be_standard
+    end
+  end
+
+  describe 'legacy concentration compatibility' do
+    it 'derives the legacy reader and stored flag from concentration_mode' do
+      reaction = build(:reaction, concentration_mode: 'reaction_volume')
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(true)
+      expect(reaction[:use_reaction_volume]).to be(true)
+    end
+
+    it 'keeps concentration_mode authoritative over a stale stored flag' do
+      reaction = build(:reaction, concentration_mode: 'combined')
+      reaction[:use_reaction_volume] = true
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(false)
+      expect(reaction[:use_reaction_volume]).to be(false)
     end
   end
 

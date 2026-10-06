@@ -20,6 +20,15 @@ module Chemotion
         Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
 
+      # @param c_id [Integer] a collection id sent by the client
+      # @return [Integer] the id, once the user is known to own the collection or have it shared
+      # @raise [Grape exception] 401 if the collection is missing or not readable
+      def readable_collection_id!(c_id)
+        collection = Collection.accessible_for(current_user).find_by(id: c_id)
+        error!('401 Unauthorized', 401) unless collection
+        collection.id
+      end
+
       # Rejects the request unless the caller may read every element referenced in +objTags+.
       # Without this a report is an IDOR: the generator does a bare +Model.find(id)+ with no
       # ownership/collection check, so any authenticated user could pull any element's data.
@@ -62,6 +71,7 @@ module Chemotion
         use :export_params
       end
       post :export_samples_from_selections do
+        c_id = readable_collection_id!(params[:uiState][:currentCollection])
         env['api.format'] = :binary
         t = time_now
         case params[:exportType]
@@ -71,18 +81,9 @@ module Chemotion
           export = Export::ExportSdf.new(time: t)
           force_molfile_selection
         end
-        c_id = params[:uiState][:currentCollection]
 
-        table_params = {
-          ui_state: params[:uiState],
-          c_id: c_id,
-        }
-
-        ui_state = table_params[:ui_state].select do |_, v|
-          v.is_a?(Hash) && v.key?('checkedIds') && v.key?('checkedAll')
-        end
-
-        return status 204 if ui_state.all? { |_, v| v['checkedIds'].to_a.empty? && !v['checkedAll'] }
+        table_params = { c_id: c_id, selections: export_selections(params[:uiState], c_id) }
+        return status 204 if table_params[:selections].empty?
 
         if params[:columns][:chemicals].blank?
           generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
@@ -132,23 +133,22 @@ module Chemotion
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         collection = Collection.accessible_for(current_user).find(params[:uiState][:currentCollection])
 
-        reaction_state = params[:uiState][:reaction]
-        unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
-          return status 204
-        end
+        selection = export_selection(:reaction, params[:uiState], collection.id)
+        return status 204 unless selection
 
-        results = reaction_smiles_hash(
-          collection.id,
-          (reaction_state[:checkedAll] && reaction_state[:uncheckedIds]) || reaction_state[:checkedIds],
-          reaction_state[:checkedAll],
-        ) || {}
+        ids = selection[:ids]
+        if selection[:checked_all]
+          scope = list_scope(:reaction, params[:uiState], collection.id) || collection.reactions
+          ids = scope.where.not(id: ids).order(:id).pluck(:id)
+          return status 204 if ids.empty?
+        end
+        results = reaction_smiles_hash(collection.id, ids) || {}
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
 
-      # not usesed anymore???
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
       get :excel_wellplate do
         env['api.format'] = :binary
@@ -160,7 +160,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_wellplate, current_user.id)
-        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)
@@ -169,10 +169,8 @@ module Chemotion
       end
 
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
-
-      # not usesed anymore???
       get :excel_reaction do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
@@ -183,7 +181,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_reaction, current_user.id)
-        sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_reaction_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)

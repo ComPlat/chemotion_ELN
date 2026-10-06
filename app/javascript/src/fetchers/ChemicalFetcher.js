@@ -26,6 +26,9 @@ export default class ChemicalFetcher {
       'data[language]': queryParams.language,
       'data[searchStr]': queryParams.string
     };
+    if (queryParams.productNumber) {
+      searchTerm['data[productNumber]'] = queryParams.productNumber;
+    }
     const path = `/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?${new URLSearchParams(searchTerm)}`;
 
     return ApiClient.getJson(path, {
@@ -42,26 +45,45 @@ export default class ChemicalFetcher {
       handleResponseSuccess: (response) => {
         if (response.ok) { return response.json(); }
         return response.json().then((errorData) => {
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          const error = new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          // A refusal the other save route would meet as well; trying it only wastes a fetch.
+          error.final = !!errorData.final;
+          throw error;
         });
       },
+      // The client's default handler logs and resolves undefined, which turned every
+      // reason the server gave into a bare "could not retrieve" on the way out.
+      handleResponseError: (error) => { throw error; },
     });
+  }
+
+  // Reads a sheet straight from the vendor, for vendors that refuse the server but allow CORS.
+  static fetchVendorSheet(sdsLink, fileName) {
+    return fetch(sdsLink)
+      .then((response) => {
+        if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
+        return new File([blob], fileName, { type: 'application/pdf' });
+      });
   }
 
   static saveManualAttachedSafetySheet(params) {
     return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
   }
 
-  static safetyPhrases(queryParams) {
-    return ApiClient.getJson(`/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
+  // Rejects on a failed request so the caller can tell it from a sheet that yielded nothing.
+  static extractFromSds(sheetPath) {
+    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?${new URLSearchParams({ path: sheetPath })}`, {
       handleResponseSuccess: (response) => {
-        if (response.status === 204) { return response.status; }
-        return response.json();
+        if (response.ok) return response.json();
+        return response.json().catch(() => ({})).then((errorData) => {
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        });
       },
+      handleResponseError: (error) => { throw error; },
     });
-  }
-
-  static chemicalProperties(productLink) {
-    return ApiClient.getJson(`/api/v1/chemicals/chemical_properties?link=${productLink}`);
   }
 }

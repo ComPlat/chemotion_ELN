@@ -186,6 +186,14 @@ describe Chemotion::AttachableAPI do
         post_update(attachable_type: 'Wellplate', attachable_id: wellplate.id, del_files: [attachment.id])
         expect(Attachment.unscoped.find(attachment.id).attachable_id).to be_nil
       end
+
+      # del_files is the frontend's delete path: a deleted file must not show up in the inbox.
+      it "keeps deleted attachments out of the uploader's Unsorted inbox" do
+        attachment = create(:attachment, attachable: wellplate)
+        post_update(attachable_type: 'Wellplate', attachable_id: wellplate.id, del_files: [attachment.id])
+        expect(attachment.reload.attachable_type).to eq('Wellplate')
+        expect(Attachment.where(attachable_type: 'Container', attachable_id: nil)).not_to include(attachment)
+      end
     end
 
     context 'when the wellplate belongs to another user' do
@@ -197,6 +205,12 @@ describe Chemotion::AttachableAPI do
       it 'returns 401' do
         post_update(attachable_type: 'Wellplate', attachable_id: other_wellplate.id)
         expect(response.status).to eq(401)
+      end
+
+      it 'leaves attachment linked when deletion is rejected' do
+        attachment = create(:attachment, attachable: other_wellplate)
+        post_update(attachable_type: 'Wellplate', attachable_id: other_wellplate.id, del_files: [attachment.id])
+        expect(attachment.reload.attachable_id).to eq(other_wellplate.id)
       end
     end
 
@@ -365,6 +379,78 @@ describe Chemotion::AttachableAPI do
       it 'returns 401' do
         post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: 0)
         expect(response.status).to eq(401)
+      end
+    end
+
+    # Regression: ElementPolicy derived the detail-level column from the record class, and there
+    # is no sequencebasedmacromolecule_detail_level column, so a sharee saving an SBMM with
+    # attachments got a 500 (PG::UndefinedColumn) instead of the upload succeeding.
+    context 'when its sample is shared with edit rights' do
+      let(:other_user) { create(:person) }
+      let(:other_collection) { create(:collection, user: other_user) }
+
+      before do
+        create(:collection_share, collection: other_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+      end
+
+      it 'returns 200 (not 500)' do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id)
+        expect(response.status).to be_between(200, 299)
+      end
+    end
+
+    # An SBMM is reused across users (Usecases::Sbmm::Finder), so it is a shared record: once another
+    # user has a sample of it, a user detaches only their own uploads on it.
+    context 'when detaching and another user also has a sample of the same SBMM' do
+      let(:other_user) { create(:person) }
+      let(:other_collection) { create(:collection, user: other_user) }
+      let!(:own_attachment) { create(:attachment, attachable: sbmm, created_for: user.id) }
+      let!(:foreign_attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [other_collection])
+      end
+
+      it "detaches only the caller's own upload" do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id,
+                    del_files: [own_attachment.id, foreign_attachment.id])
+        expect(own_attachment.reload.attachable_id).to be_nil
+        expect(foreign_attachment.reload.attachable_id).to eq(sbmm.id)
+      end
+    end
+
+    context 'when detaching and no other user has a sample of the SBMM' do
+      let(:other_user) { create(:person) }
+      let!(:attachment) { create(:attachment, attachable: sbmm, created_for: other_user.id) }
+
+      it 'detaches regardless of who uploaded it' do
+        post_update(attachable_type: 'SequenceBasedMacromolecule', attachable_id: sbmm.id,
+                    del_files: [attachment.id])
+        expect(attachment.reload.attachable_id).to be_nil
+      end
+    end
+  end
+
+  # del_files only unlinks attachments of the record authorized by after_validation (type and id).
+  %w[ResearchPlan Wellplate].each do |type|
+    context "with attachable_type #{type}: del_files does not cross element boundaries" do
+      let(:other_user) { create(:person) }
+      let(:other_collection) { create(:collection, user: other_user) }
+      let(:own_element) { create(type.underscore.to_sym, collections: [collection]) }
+      let(:other_element) { create(type.underscore.to_sym, collections: [other_collection]) }
+      let!(:own_attachment) { create(:attachment, attachable: own_element) }
+      let!(:other_attachment) { create(:attachment, attachable: other_element) }
+
+      it 'unlinks only the attachment of the authorized record' do
+        post_update(attachable_type: type, attachable_id: own_element.id,
+                    del_files: [own_attachment.id, other_attachment.id])
+        expect(response.status).to be_between(200, 299)
+        expect(own_attachment.reload.attachable_id).to be_nil
+        expect(other_attachment.reload).to have_attributes(attachable_type: type, attachable_id: other_element.id)
       end
     end
   end
