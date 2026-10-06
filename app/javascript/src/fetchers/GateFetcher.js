@@ -24,6 +24,8 @@ export default class GateFetcher {
             }
           } else if (!response.ok) {
             newState.status = 'unavailable';
+          } else if (isPost) {
+            newState.status = 'queued';
           } else {
             newState.status = 'confirm';
           }

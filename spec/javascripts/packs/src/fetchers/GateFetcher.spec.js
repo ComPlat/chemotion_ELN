@@ -38,7 +38,15 @@ describe('GateFetcher', () => {
       const [url, options] = fetchStub.firstCall.args;
       expect(url).toEqual('/api/v1/gate/transmitting/5');
       expect(options.method).toEqual('POST');
-      expect(state.overlayTarget).toBeNull();
+      expect(state).toEqual({ overlayTarget: null, status: 'queued', target: undefined });
+    });
+
+    it('does not report a failed POST as queued', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({ target, error: 'down' }), { status: 503 }));
+
+      const state = await GateFetcher.transmittingByCollectionId('POST', 5, reference);
+
+      expect(state.status).toEqual('unavailable');
     });
 
     it('accepts the method in lower case', async () => {
