@@ -24,6 +24,17 @@ RSpec.describe Versioning::Reverters::BaseReverter do
     expect(sample.reload.purity).to eq 0.5
   end
 
+  it 'only validates what the revert changes, so a record invalid for another reason can still be reverted' do
+    sample = create(:sample, name: 'current')
+    sample.update_column(:purity, 1.5) # rubocop:disable Rails/SkipsModelValidations -- stored before the validation
+
+    Versioning::Reverters::SampleReverter.call(
+      'db_id' => sample.id, 'fields' => [{ 'name' => 'name', 'value' => 'old' }],
+    )
+
+    expect(sample.reload.name).to eq 'old'
+  end
+
   it 'only keeps a stored image name when reverting a structure' do
     sample = create(:sample)
     stored = "#{'b' * 128}.svg"

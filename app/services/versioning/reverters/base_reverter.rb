@@ -14,8 +14,8 @@ class Versioning::Reverters::BaseReverter
     end
   end
 
-  # Saves through the model, so a revert runs the same validations and callbacks as a normal edit (e.g. the
-  # plain-text copies of Quill fields, SVG files, sanitizing).
+  # Saves through the model, so a revert runs the same callbacks as a normal edit (e.g. the plain-text copies of
+  # Quill fields, SVG files, sanitizing) and the validations of the attributes it changes.
   def call
     fields.each do |field|
       name = field['name']
@@ -33,10 +33,22 @@ class Versioning::Reverters::BaseReverter
         record[name] = value
       end
     end
-    record.save!
+    save_record!
   end
 
   def field_definitions
     {}
+  end
+
+  private
+
+  # Validates only the attributes the revert changes, so a record that is invalid for another reason (e.g. a value
+  # stored before a validation existed) can still be reverted. Callbacks run as for a normal save.
+  def save_record!
+    record.validate
+    (record.errors.attribute_names - record.changed.map(&:to_sym)).each { |attribute| record.errors.delete(attribute) }
+    raise ActiveRecord::RecordInvalid, record if record.errors.any?
+
+    record.save!(validate: false)
   end
 end
