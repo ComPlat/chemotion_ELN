@@ -5,13 +5,6 @@ require 'rails_helper'
 RSpec.describe Versioning::Serializers::ReactionSerializer do
   let(:user) { create(:user) }
 
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   def field_changes(reaction, field)
     reaction_with_log_data = Reaction.with_log_data.find(reaction.id)
     described_class.call(reaction_with_log_data)

@@ -5,13 +5,6 @@ require 'rails_helper'
 RSpec.describe Versioning::Serializers::SampleSerializer do
   let(:user) { create(:user) }
 
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   def xref_changes(sample, field)
     sample_with_log_data = Sample.with_log_data.find(sample.id)
     described_class.call(sample_with_log_data)

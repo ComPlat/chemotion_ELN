@@ -141,9 +141,7 @@ describe Chemotion::VersionAPI do
 
     before do
       allow(ElementPolicy).to receive(:new).and_call_original
-      Logidze.with_responsible!(user.id)
-      sample.update!(name: 'second', boiling_point: 3.0..4.0)
-      Logidze.clear_responsible!
+      as_request { sample.update!(name: 'second', boiling_point: 3.0..4.0) }
     end
 
     it 'accepts the revertible values the History rendered' do

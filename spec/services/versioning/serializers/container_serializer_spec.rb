@@ -8,16 +8,6 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
   let(:content_mid) { '{"ops":[{"insert":"second"}]}' }
   let(:content_after) { '{"ops":[{"insert":"third"}]}' }
 
-  # Each block simulates one HTTP request: LogidzeModule wraps every request in
-  # Logidze.with_responsible!/clear_responsible!, which is what gives each update its own
-  # version uuid so the history view groups them into separate entries.
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   def edit_metadata(container, changes)
     container.update!(extended_metadata: container.extended_metadata.merge(changes))
   end

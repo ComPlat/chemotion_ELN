@@ -133,13 +133,6 @@ describe VersionRevertPolicy do
   end
 
   describe 'values' do
-    def as_request
-      Logidze.with_responsible!(user.id)
-      yield
-    ensure
-      Logidze.clear_responsible!
-    end
-
     it 'only accepts values the History offers, i.e. previous values from the record\'s own history' do
       sample = create(:sample, name: 'first', collections: [own_collection])
       as_request { sample.update!(name: 'second') }

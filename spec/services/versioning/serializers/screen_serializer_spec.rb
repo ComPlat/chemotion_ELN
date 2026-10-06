@@ -5,13 +5,6 @@ require 'rails_helper'
 RSpec.describe Versioning::Serializers::ScreenSerializer do
   let(:user) { create(:user) }
 
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   def description_changes(screen)
     screen_with_log_data = Screen.with_log_data.find(screen.id)
     described_class.call(screen_with_log_data)

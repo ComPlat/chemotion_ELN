@@ -8,14 +8,15 @@ module Versioning
       include ActiveModel::Model
       include ChangeMerging
 
-      # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
-      # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 9
+      # Part of the cache version: bump it whenever the way histories are computed changes, so entries built by
+      # older code aren't served until each record happens to be touched again. It goes into the version, not the
+      # key, so a bump replaces each record's entry in place instead of leaving the old generation behind.
+      CACHE_VERSION = 2
 
       attr_accessor :record, :name
 
       def call
-        Rails.cache.fetch("versions/v#{CACHE_VERSION}/#{record.cache_key}", version: record.cache_version) do
+        Rails.cache.fetch("versions/#{record.cache_key}", version: "#{CACHE_VERSION}-#{record.cache_version}") do
           result = [] # result data
           base = {} # track current version data
           return [] unless log_data

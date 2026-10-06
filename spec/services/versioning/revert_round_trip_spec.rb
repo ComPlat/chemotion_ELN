@@ -7,13 +7,6 @@ require 'rails_helper'
 RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeClass
   let(:user) { create(:person) }
 
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   # Edits the record within a request, then reverts the field to the value the history offers.
   def round_trip(record, serializer, reverter, field, edit)
     as_request { record.update!(edit) }

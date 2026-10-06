@@ -5,13 +5,6 @@ require 'rails_helper'
 RSpec.describe Versioning::Serializers::WellplateSerializer do
   let(:user) { create(:user) }
 
-  def as_request
-    Logidze.with_responsible!(user.id)
-    yield
-  ensure
-    Logidze.clear_responsible!
-  end
-
   def description_changes(wellplate)
     wellplate_with_log_data = Wellplate.with_log_data.find(wellplate.id)
     described_class.call(wellplate_with_log_data)
