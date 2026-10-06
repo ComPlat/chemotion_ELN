@@ -30,8 +30,10 @@ module Versioning
       # Deep merge that honours jsonb_diff's marker for a removed object-valued sub-key ('deleted'), dropping
       # the key instead of storing the marker as its value.
       def merge_hashes(previous_value, value)
-        merged = previous_value.merge(value) { |_sub_key, old, new| merge_sub_value(old, new) }
-        # merged is already a fresh copy, so drop removed keys from it in place.
+        # Every key of the new value goes through merge_sub_value, also the ones previous_value doesn't have
+        # (Hash#merge's block would skip those), so no REMOVED marker is left in a newly added sub-tree.
+        merged = previous_value.dup
+        value.each { |sub_key, new| merged[sub_key] = merge_sub_value(previous_value[sub_key], new) }
         merged.delete_if { |sub_key, new| removal?(previous_value[sub_key], new) }
       end
 

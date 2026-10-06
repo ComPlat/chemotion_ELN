@@ -70,6 +70,18 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
     expect(change[:new_value]).to eq('a' => variation.merge('properties' => { 'duration' => { 'value' => 1 } }))
   end
 
+  it 'applies a removal inside a variation that the same request added' do
+    first = { 'uuid' => 'a', 'properties' => { 'duration' => { 'value' => 1 } } }
+    added = { 'uuid' => 'b', 'properties' => { 'duration' => { 'value' => 2 } } }
+    reaction = create(:reaction, variations: [first])
+    as_request do
+      reaction.update!(variations: [first, added.deep_merge('properties' => { 'temperature' => { 'value' => 20 } })])
+      reaction.update!(variations: [first, added])
+    end
+
+    expect(field_changes(reaction, :variations).last[:new_value]).to eq('a' => first, 'b' => added)
+  end
+
   it 'returns complete previous and updated variations when one is edited and another deleted' do
     first = { 'uuid' => 'a', 'properties' => { 'temperature' => { 'value' => 20, 'unit' => '°C' } } }
     second = { 'uuid' => 'b', 'properties' => { 'temperature' => { 'value' => 30, 'unit' => '°C' } } }
