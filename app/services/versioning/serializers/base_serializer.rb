@@ -9,7 +9,7 @@ module Versioning
 
       # Part of the cache key: bump it whenever the way histories are computed changes, so entries built by
       # older code aren't served until each record happens to be touched again.
-      CACHE_VERSION = 2
+      CACHE_VERSION = 3
 
       attr_accessor :record, :name
 
@@ -19,11 +19,17 @@ module Versioning
           base = {} # track current version data
           return [] unless log_data
 
-          groups = log_data.versions.group_by { |version| version.data.dig('m', 'uuid') }.map do |uuid, versions|
+          # Group consecutive versions saved by the same request. Versions saved outside a request (background
+          # jobs, rake tasks) have no uuid and each stand alone, so the running state is built in time order.
+          chunks = log_data.versions.chunk_while do |previous, version|
+            uuid = previous.data.dig('m', 'uuid')
+            uuid.present? && uuid == version.data.dig('m', 'uuid')
+          end
+          groups = chunks.map do |versions|
             changes = versions.each_with_object({}) do |version, hash|
               hash.merge!(version.changes) { |key, previous, value| merge_change(key, previous, value) }
             end
-            [uuid, versions, changes]
+            [versions.first.data.dig('m', 'uuid'), versions, changes]
           end
           removals = sub_key_removals(groups.map(&:last))
 
@@ -183,7 +189,13 @@ module Versioning
       # from the record's current value, the only complete state available: a sub-key that is gone now was
       # removed after its last mention, attributed to the first removal-only write after that, or failing
       # that, to the first later write touching the column. Returns { group index => { column => [sub-keys] } }.
-      # A sub-key that was removed and later re-added cannot be detected this way.
+      #
+      # This is a best guess, because the log holds nothing that says when a removal happened:
+      # - a removal made in the same save as other changes to the column shows under the first later save that
+      #   touched the column, which may be an earlier one;
+      # - sub-keys removed in different removal-only saves all show under the first of them;
+      # - a sub-key that was removed and later re-added is not detected at all.
+      # Getting this exact would need jsonb_diff to log removed keys.
       def sub_key_removals(change_groups)
         removals = Hash.new { |hash, index| hash[index] = Hash.new { |columns, column| columns[column] = [] } }
         change_groups.flat_map(&:keys).uniq.each do |column|

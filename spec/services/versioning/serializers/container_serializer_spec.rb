@@ -77,6 +77,22 @@ RSpec.describe Versioning::Serializers::ContainerSerializer do
       .to eq [JSON.parse(content_before), JSON.parse(content_after)]
   end
 
+  it 'keeps changes made outside a request (no version uuid) in time order' do
+    container = create(:container, extended_metadata: { 'content' => content_before })
+    edit_metadata(container, 'content' => content_mid) # e.g. a background job
+    as_request { edit_metadata(container, 'content' => content_after) }
+    edit_metadata(container, 'content' => content_before)
+
+    expect(content_changes(container).map { |change| [change[:old_value], change[:new_value]] }).to eq(
+      [
+        [{}, JSON.parse(content_before)],
+        [JSON.parse(content_before), JSON.parse(content_mid)],
+        [JSON.parse(content_mid), JSON.parse(content_after)],
+        [JSON.parse(content_after), JSON.parse(content_before)],
+      ],
+    )
+  end
+
   it 'surfaces clearing the whole column, even though the logged diff for it is empty' do
     container = create(:container, extended_metadata: { 'content' => content_before, 'status' => 'Confirmed' })
     as_request { container.update!(extended_metadata: {}) }

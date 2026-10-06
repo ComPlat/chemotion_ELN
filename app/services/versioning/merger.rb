@@ -13,7 +13,7 @@ class Versioning::Merger
     # sort versions with the latest changes in the first place
     versions.sort_by! { |version| -version[:time].to_i }
 
-    grouped_versions = versions.group_by { |version| version[:uuid] }
+    grouped_versions = group_by_request(versions)
 
     merged_versions = []
     grouped_versions.each_with_index do |(_, v), index|
@@ -34,5 +34,21 @@ class Versioning::Merger
       }
     end
     merged_versions
+  end
+
+  private
+
+  # One entry per request, across the element and its sub-records. Changes saved outside a request (background
+  # jobs, rake tasks) have no uuid; consecutive ones form one entry, so e.g. an element created by a job together
+  # with its containers stays one entry, while a request in between keeps the entries apart and in time order.
+  def group_by_request(sorted_versions)
+    run = 0
+    previous_uuid = :none
+    sorted_versions.group_by do |version|
+      uuid = version[:uuid]
+      run += 1 if uuid.nil? && !previous_uuid.nil?
+      previous_uuid = uuid
+      uuid || [:without_request, run]
+    end
   end
 end
