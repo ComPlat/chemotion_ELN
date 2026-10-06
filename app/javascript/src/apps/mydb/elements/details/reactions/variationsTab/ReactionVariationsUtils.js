@@ -790,22 +790,20 @@ function areVariationsEqualIgnoringOrder(variationsA = [], variationsB = []) {
 }
 
 function setRowOrder(reactionId, reactionVariations) {
-  const rowOrder = getInitialRowOrder(reactionId);
-  let updatedReactionVariations = cloneDeep(reactionVariations);
+  const rowOrder = getInitialRowOrder(reactionId) ?? [];
+  const positions = new Map(rowOrder.map((id, index) => [id, index]));
+  const position = (row) => positions.get(row.id) ?? Infinity;
 
-  if (rowOrder) {
-    updatedReactionVariations = updatedReactionVariations.sort(
-      (a, b) => {
-        const indexA = rowOrder.indexOf(a.id);
-        const indexB = rowOrder.indexOf(b.id);
-        const posA = indexA === -1 ? Infinity : indexA;
-        const posB = indexB === -1 ? Infinity : indexB;
-        return posA - posB;
-      }
-    );
-  }
-
-  return updatedReactionVariations;
+  // Rows without a stored position (no manual order yet, or added since) follow in id order, i.e., creation order:
+  // the server returns variations in arbitrary order.
+  return cloneDeep(reactionVariations).sort((a, b) => {
+    const positionA = position(a);
+    const positionB = position(b);
+    if (positionA !== positionB) {
+      return positionA < positionB ? -1 : 1;
+    }
+    return a.id - b.id;
+  });
 }
 
 function traverseColDefs(colDef, callback, path = []) {
