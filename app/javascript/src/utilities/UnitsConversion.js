@@ -247,23 +247,34 @@ const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defa
   }
 };
 
+/*
+Switches a turnover frequency to the next unit of the cycle TON/h -> TON/m -> TON/s -> TON/h. It is a
+rate, so a shorter time unit divides: 2 TON/h is 2/60 TON/m, not 120. Not rounded to a number of
+decimals, which would wipe out a rate per second; the input formats it for display.
+*/
+const SECONDS_PER_TON_UNIT = {
+  [TON_UNITS.PER_SECOND]: 1,
+  [TON_UNITS.PER_MINUTE]: 60,
+  [TON_UNITS.PER_HOUR]: 3600,
+};
+const NEXT_TON_UNIT = {
+  [TON_UNITS.PER_HOUR]: TON_UNITS.PER_MINUTE,
+  [TON_UNITS.PER_MINUTE]: TON_UNITS.PER_SECOND,
+  [TON_UNITS.PER_SECOND]: TON_UNITS.PER_HOUR,
+};
+
 const convertTurnoverFrequency = (valueToFormat, currentUnit) => {
   const numericValue = Number(valueToFormat);
   if (Number.isNaN(numericValue)) return null;
 
-  const decimalPlaces = 4;
+  const convertedUnit = NEXT_TON_UNIT[currentUnit];
+  if (!convertedUnit) return null;
+  if (valueToFormat === '' || valueToFormat === null || valueToFormat === undefined) {
+    return ['', convertedUnit];
+  }
 
-  const conversions = {
-    'TON/h': { convertedUnit: TON_UNITS.PER_MINUTE, conversionFunc: hoursToMinutes },
-    'TON/m': { convertedUnit: TON_UNITS.PER_SECOND, conversionFunc: minutesToSeconds },
-    'TON/s': { convertedUnit: TON_UNITS.PER_HOUR, conversionFunc: secondsToHours },
-  };
-
-  const { convertedUnit, conversionFunc } = conversions[currentUnit];
-  const convertedValue = conversionFunc(valueToFormat);
-  let formattedValue = valueToFormat !== '' ? convertedValue : '';
-  formattedValue = handleFloatNumbers(formattedValue, decimalPlaces);
-  return [formattedValue, convertedUnit];
+  const convertedValue = numericValue * (SECONDS_PER_TON_UNIT[convertedUnit] / SECONDS_PER_TON_UNIT[currentUnit]);
+  return [Number(convertedValue.toPrecision(12)), convertedUnit];
 };
 
 export {

@@ -1,942 +1,700 @@
-import { set, cloneDeep } from 'lodash';
-import { convertTemperature, convertDuration } from 'src/models/Reaction';
-import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
-import {
-  updateVariationsRowOnReferenceMaterialChange,
-  updateVariationsRowOnCatalystMaterialChange,
-  updateVariationsRowOnConcentrationMaterialChange,
-  getMaterialData, backfillMaterialDataEntries, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {
-  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
-import {
-  PropertyFormatter, PropertyParser,
-  MaterialFormatter, MaterialParser,
-  GroupCellRenderer, GroupCellEditor,
-  SegmentFormatter, SegmentParser, SegmentSelectEditor,
-  EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, EntrySelectionHeader, UnitToggleHeader,
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
+import Container from 'src/models/Container';
+import uuid from 'uuid';
+import { cloneDeep } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { getGenSI } from 'chem-generic-ui';
+import {
+  markAsVariationOf,
+  withReactionGasPhase,
+} from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
+import {
+  applyLegacyVariationData,
+  needsLegacyConversion,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsLegacyConversion';
 
-const PLACEHOLDER_CELL_TEXT = '_';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
-const DISPLAY_PRECISION = 4;
-const temperatureUnits = ['°C', 'K', '°F'];
-const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
-const massUnits = ['g', 'mg', 'μg'];
-const volumeUnits = ['l', 'ml', 'μl'];
-const amountUnits = ['mol', 'mmol', 'μmol'];
-const concentrationUnits = ['mol/l'];
-const gasConcentrationUnits = ['ppm'];
-const yieldUnits = ['%'];
-const materialTypes = {
-  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
-  reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
-  products: { label: 'Products', reactionAttributeName: 'products' },
-  solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
-};
-const nestedColumnGroups = ['segments', ...Object.keys(materialTypes)];
-const cellDataTypes = {
-  property: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: PropertyFormatter,
-    valueParser: PropertyParser,
-  },
-  material: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: MaterialFormatter,
-    valueParser: MaterialParser,
-  },
-  equivalent: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(DISPLAY_PRECISION)),
-    valueParser: EquivalentParser,
-  },
-  yield: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(DISPLAY_PRECISION)),
-  },
-  gas: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: MaterialFormatter,
-    valueParser: GasParser,
-  },
-  feedstock: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: MaterialFormatter,
-    valueParser: FeedstockParser,
-  },
-  segment: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: SegmentFormatter,
-    valueParser: SegmentParser,
-  },
-};
+const GROUP_ID_SEPARATOR = '::';
 
-function convertUnit(value, fromUnit, toUnit) {
-  if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
-    const convertedValue = convertTemperature(value, fromUnit, toUnit);
-    if (toUnit === 'K' && convertedValue < 0) {
-      return 0;
+function safeStructuredClone(obj) {
+
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(safeStructuredClone);
+  }
+
+  const result = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    try {
+      result[key] = structuredClone(value);
+    } catch {
+      // ignore this property
     }
-    if (toUnit === '°C' && convertedValue < -273.15) {
-      return -273.15;
-    }
-    if (toUnit === '°F' && convertedValue < -459.67) {
-      return -459.67;
-    }
-    return convertedValue;
-  }
-  if (durationUnits.includes(fromUnit) && durationUnits.includes(toUnit)) {
-    return convertDuration(value, fromUnit, toUnit);
-  }
-  if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
-  }
-  if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
-  }
-  if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { mol: 'n', mmol: 'm', μmol: 'u' };
-    return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
 
-  return value;
-}
-
-const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
-  const unitConfigs = getGenSI(genericQuantity);
-  if (!unitConfigs || unitConfigs.length === 0) return null;
-
-  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
-  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
-  if (!fromUnitConfig || !toUnitConfig) return null;
-
-  return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
-};
-
-function getStandardUnits(entry, gasType = 'off') {
-  switch (entry) {
-    case 'volume':
-      return volumeUnits;
-    case 'mass':
-      return massUnits;
-    case 'amount':
-      return amountUnits;
-    case 'temperature':
-      return temperatureUnits;
-    case 'duration':
-      return durationUnits;
-    case 'concentration':
-      return gasType === 'gas' ? gasConcentrationUnits : concentrationUnits;
-    case 'yield':
-      return yieldUnits;
-    default:
-      return [null];
-  }
-}
-
-function getGenericStandardUnits(genericQuantity) {
-  const unitConfigs = getGenSI(genericQuantity);
-  if (!unitConfigs || unitConfigs.length === 0) return [null];
-  return unitConfigs.map((config) => config.key);
-}
-
-function getInternalUnit(unit) {
-  switch (unit) {
-    case 's':
-      return 'Second(s)';
-    case 'm':
-      return 'Minute(s)';
-    case 'h':
-      return 'Hour(s)';
-    case 'd':
-      return 'Day(s)';
-    case 'w':
-      return 'Week(s)';
-    default:
-      return unit;
-  }
-}
-
-function getStandardValue(entry, material) {
-  switch (entry) {
-    case 'volume':
-      return material.amount_l ?? null;
-    case 'mass':
-      return material.amount_g ?? null;
-    case 'amount':
-      return material.amount_mol ?? null;
-    case 'equivalent':
-      return (material.reference ?? false) ? 1 : 0;
-    case 'temperature': {
-      const { value = null, unit = null } = material.gas_phase_data?.temperature ?? {};
-      return convertUnit(value, unit, getStandardUnits('temperature')[0]);
-    }
-    case 'duration': {
-      const { value = null, unit = null } = material.gas_phase_data?.time ?? {};
-      return convertUnit(value, getInternalUnit(unit), getStandardUnits('duration')[0]);
-    }
-    case 'concentration':
-      return material.gas_type === 'gas'
-        ? (material.gas_phase_data?.part_per_million ?? null)
-        : (material.concn ?? null);
-    case 'turnoverNumber':
-      return material.gas_phase_data?.turnover_number ?? null;
-    case 'turnoverFrequency':
-      return material.gas_phase_data?.turnover_frequency?.value ?? null;
-    default:
-      return null;
-  }
-}
-
-function parseGenericEntryName(entry) {
-  const genericEntryMatch = entry.match(/(?:layer<([^>]*)>)?(?:field<([^>]*)>)?/);
-  if ((genericEntryMatch[1] || genericEntryMatch[2])) {
-    return { layer: genericEntryMatch[1], field: genericEntryMatch[2] };
-  }
-  return null;
-}
-
-function getCellDataType(entry, gasType = 'off') {
-  if (parseGenericEntryName(entry)) {
-    return 'segment';
-  }
-  switch (entry) {
-    case 'temperature':
-    case 'duration':
-      return gasType === 'off' ? 'property' : 'gas';
-    case 'equivalent':
-      return gasType === 'feedstock' ? 'feedstock' : 'equivalent';
-    case 'mass':
-    case 'volume':
-    case 'amount':
-      switch (gasType) {
-        case 'feedstock':
-          return 'feedstock';
-        case 'gas':
-          return 'gas';
-        default:
-          return 'material';
-      }
-    case 'concentration':
-      switch (gasType) {
-        case 'feedstock':
-          return 'feedstock';
-        case 'gas':
-          return 'gas';
-        default:
-          return 'material';
-      }
-    case 'turnoverNumber':
-    case 'turnoverFrequency':
-      return 'gas';
-    case 'yield':
-      return 'yield';
-    default:
-      return null;
-  }
-}
-
-function getUserFacingEntryName(entry) {
-  const genericEntryMatch = parseGenericEntryName(entry);
-  if (genericEntryMatch) {
-    return `${genericEntryMatch.layer} / ${genericEntryMatch.field}`;
-  }
-
-  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
-}
-
-function processHeaderForCsvExport({ column: { colDef } }) {
-  const {
-    colId, entry, displayUnit, headerName
-  } = colDef;
-  if (colId === 'tools') return 'ID';
-  if (entry) {
-    return `${getUserFacingEntryName(entry)}${displayUnit ? ` (${displayUnit})` : ''}`;
-  }
-  return headerName;
+  return result;
 }
 
 function getVariationsRowName(reactionLabel, variationsRowId) {
-  return `${reactionLabel}-${variationsRowId}`;
+  return `${reactionLabel}-V#${variationsRowId}`;
 }
 
-function getSequentialId(variations) {
-  const ids = variations.map((row) => (row.id));
-  return (ids.length === 0) ? 1 : Math.max(...ids) + 1;
-}
-
-function getPropertyData(propertyType, durationValue, durationUnit, temperatureValue, temperatureUnit) {
-  switch (propertyType) {
-    case 'temperature':
-      return {
-        value: convertUnit(temperatureValue, temperatureUnit, getStandardUnits('temperature')[0]),
-        unit: getStandardUnits('temperature')[0]
-      };
-    case 'duration':
-      return {
-        value: convertUnit(durationValue, durationUnit, getStandardUnits('duration')[0]),
-        unit: getStandardUnits('duration')[0],
-      };
-    default:
-      return { value: null, unit: null };
+function deepPatch(target, patch) {
+  if (patch === null || patch === undefined) {
+    return safeStructuredClone(target);
   }
-}
 
-function getMetaData(metadataType) {
-  switch (metadataType) {
-    case 'analyses':
-      return [];
-    case 'notes':
-      return '';
-    case 'group':
-      return { group: 1, subgroup: 1 };
-    default:
-      return null;
-  }
-}
-
-function getSegmentData(segment) {
-  return Object.fromEntries(
-    Object.entries(segment).map(([layerField, layerFieldData]) => [
-      layerField,
-      {
-        type: layerFieldData.type,
-        label: layerFieldData.label,
-        ...(layerFieldData.options && { options: layerFieldData.options.map((option) => option.label) }),
-        value: (layerFieldData.options && layerFieldData.options.length > 0) ? layerFieldData.options[0].label : null,
-        unit: layerFieldData.value_system || null,
-        quantity: layerFieldData.option_layers || null,
+  // Arrays: merge by index
+  if (Array.isArray(target) && Array.isArray(patch)) {
+    return patch.map((pVal, i) => {
+      const value = target[i] ?? pVal;
+      if (value === null) {
+        return value;
       }
-    ])
-  );
-}
-
-function createVariationsRow({
-  materials,
-  segments,
-  selectedColumns,
-  variations,
-  reactionHasPolymers = false,
-  durationValue = null,
-  durationUnit = 'None',
-  temperatureValue = null,
-  temperatureUnit = 'None',
-  gasMode = false,
-  vesselVolume = null
-}) {
-  const row = {
-    id: getSequentialId(variations),
-    properties: Object.fromEntries(
-      selectedColumns.properties.map((propertyType) => [propertyType, getPropertyData(
-        propertyType,
-        durationValue,
-        durationUnit,
-        temperatureValue,
-        temperatureUnit
-      )])
-    ),
-    metadata: Object.fromEntries(
-      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
-    ),
-    segments: Object.fromEntries(
-      selectedColumns.segments.map((segmentLabel) => [segmentLabel, getSegmentData(segments[segmentLabel])])
-    ),
-  };
-  Object.keys(materialTypes).forEach((materialType) => {
-    row[materialType] = {};
-    selectedColumns[materialType].forEach((materialID) => {
-      const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
-      row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
+      return deepPatch(value, pVal);
     });
-  });
+  }
 
-  // Compute dependent values that aren't supplied by initial data.
-  return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
-}
+  // Objects: merge recursively
+  if (
+    target &&
+    patch &&
+    typeof target === 'object' &&
+    typeof patch === 'object' &&
+    !Array.isArray(target) &&
+    !Array.isArray(patch)
+  ) {
+    const result = safeStructuredClone(target);
 
-function copyVariationsRow(row, variations) {
-  const copiedRow = cloneDeep(row);
-  copiedRow.id = getSequentialId(variations);
-  copiedRow.uuid = undefined; // UUID is generated server-side.
-  ['notes', 'analyses', 'group'].forEach((key) => {
-    if (Object.hasOwn(copiedRow.metadata, key)) {
-      copiedRow.metadata[key] = getMetaData(key);
+    for (const key of Object.keys(patch)) {
+      result[key] = key in target
+        ? deepPatch(target[key], patch[key])
+        : safeStructuredClone(patch[key]);
     }
-  });
 
-  return copiedRow;
-}
-
-function updateVariationsRow(row, field, value, reactionHasPolymers, options = {}) {
-  /*
-  Some attributes of a material need to be updated in response to changes in other attributes:
-
-  attribute         | needs to be updated in response to change in
-  ------------------|---------------------------------------------
-  volume            | equivalent^, mass^, amount^, concentration^, temperature^
-  mass              | amount^, equivalent^, concentration^, temperature^, volume^
-  amount            | mass^, equivalent^, concentration^, temperature^, volume^
-  equivalent        | mass^, amount^, volume^, reference material's mass~, reference material's amount~, reference material's volume~
-  yield             | mass^, amount^x, concentration^, temperature^, volume^, reference material's mass~, reference material's amount~, reference material's volume~
-  turnoverNumber    | concentration^, temperature^, catalyst material's amount~
-  turnoverFrequency | concentration^, temperature^, duration^, turnoverNumber^, catalyst material's amount~
-
-  ^: handled in cell parsers (changes within single material)
-  ~: handled here (row-wide changes across materials)
-  ^x: not permitted according to business logic
-  */
-  let updatedRow = cloneDeep(row);
-  set(updatedRow, field, value);
-
-  const { changedEntry, concentrationContext, onConcentrationContextUpdate } = options;
-
-  const concentrationUpdate = updateVariationsRowOnConcentrationMaterialChange(
-    updatedRow,
-    field,
-    changedEntry,
-    concentrationContext
-  );
-
-  updatedRow = concentrationUpdate.row;
-  if (concentrationUpdate.contextUpdate && typeof onConcentrationContextUpdate === 'function') {
-    onConcentrationContextUpdate(concentrationUpdate.contextUpdate);
+    return result;
   }
 
-  if (value.aux?.isReference) {
-    updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reactionHasPolymers);
+  // Primitive: replace
+  return structuredClone(patch);
+}
+
+/*
+Works out what a variation's amounts imply - the equivalents of the starting materials, reactants and
+solvents, and the yields of the products - the way the scheme tab does with equivalents unlocked. A
+variation records what was done, so its amounts are what counts; the equivalents and yields its diff
+holds were computed at the time and go stale once the parent changes what the row inherits, the
+reference amount above all.
+
+A material whose amount, coefficient and purity - and whose reaction's reference amount - are those
+of the parent takes the parent's equivalent or yield, so a row shows what the scheme tab shows for
+everything it did not change, and stores nothing for it. Only the others are computed here.
+
+Left alone: SBMM samples, gas products (their yield is computed from the vessel while rendering), and
+reactions with polymers or a decoupled reference, whose equivalents come from loading or are not
+defined. A gas product is not even read: its amount getters recompute its moles and turnover number
+from the gas phase store. For the rest of a gas reaction, the store holds the row's own values.
+*/
+const DERIVED_VALUE_TOLERANCE = 1e-9;
+
+const sameNumber = (first, second) => (
+  typeof first === 'number' && typeof second === 'number'
+    ? Math.abs(first - second) <= DERIVED_VALUE_TOLERANCE * Math.max(1, Math.abs(first), Math.abs(second))
+    : first === second
+);
+
+const setDerived = (material, key, value) => {
+  if (!sameNumber(material[key], value)) {
+    material[key] = value;
   }
-  if (value.aux?.gasType === 'catalyst') {
-    updatedRow = updateVariationsRowOnCatalystMaterialChange(updatedRow);
-  }
-
-  return updatedRow;
-}
-
-function addMissingColumnsToVariations({
-  materials,
-  segments,
-  selectedColumns,
-  variations,
-  reactionHasPolymers = false,
-  durationValue = null,
-  durationUnit = 'None',
-  temperatureValue = null,
-  temperatureUnit = 'None',
-  gasMode = false,
-  vesselVolume = null
-}) {
-  const updatedVariations = cloneDeep(variations);
-  updatedVariations.forEach((row) => {
-    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-      columnGroupChildIDs.forEach((childID) => {
-        if (Object.keys(materialTypes).includes(columnGroupID)) {
-          if (row[columnGroupID][childID]) {
-            row[columnGroupID][childID] = backfillMaterialDataEntries(row[columnGroupID][childID], columnGroupID);
-            return;
-          }
-
-          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
-          row[columnGroupID][childID] = getMaterialData(
-            material,
-            columnGroupID,
-            gasMode,
-            vesselVolume
-          );
-          return;
-        }
-
-        if (row[columnGroupID][childID]) {
-          return;
-        }
-
-        if (columnGroupID === 'properties') {
-          row.properties[childID] = getPropertyData(
-            childID,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit
-          );
-        }
-        if (columnGroupID === 'metadata') {
-          row.metadata[childID] = getMetaData(childID);
-        }
-        if (columnGroupID === 'segments') {
-          row[columnGroupID][childID] = getSegmentData(segments[childID]);
-        }
-      });
-    });
-    return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
-  });
-
-  return updatedVariations;
-}
-
-function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
-  const updatedVariations = cloneDeep(variations);
-  updatedVariations.forEach((row) => {
-    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-      row[columnGroupID] = Object.fromEntries(
-        Object.entries(row[columnGroupID]).filter(([key]) => columnGroupChildIDs.includes(key))
-      );
-    });
-  });
-
-  return updatedVariations;
-}
-
-function getPropertyColumnGroupChild(propertyType, gasMode) {
-  const field = `properties.${propertyType}`;
-  const cellDataType = getCellDataType(propertyType);
-  const units = getStandardUnits(propertyType);
-  const entry = propertyType;
-
-  switch (propertyType) {
-    case 'temperature':
-      return {
-        field,
-        colId: field,
-        cellDataType,
-        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
-        displayUnit: units[0],
-        units,
-        entry
-      };
-    case 'duration':
-      return {
-        field,
-        colId: field,
-        cellDataType,
-        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
-        displayUnit: units[0],
-        units,
-        entry,
-        editable: !gasMode,
-      };
-    default:
-      return {};
-  }
-}
-
-function getMetadataColumnGroupChild(metadataType) {
-  switch (metadataType) {
-    case 'notes':
-      return {
-        headerName: 'Notes',
-        field: 'metadata.notes',
-        cellRenderer: NoteCellRenderer,
-        sortable: false,
-        cellDataType: 'text',
-        cellEditor: NoteCellEditor,
-      };
-    case 'analyses':
-      return {
-        headerName: 'Analyses',
-        field: 'metadata.analyses',
-        tooltipValueGetter: getAnalysesOverlay,
-        tooltipComponent: AnalysisOverlay,
-        cellRenderer: AnalysesCellRenderer,
-        cellEditor: AnalysesCellEditor,
-        cellDataType: false,
-        sortable: false,
-      };
-    case 'group':
-      return {
-        field: 'metadata.group',
-        headerName: 'Group',
-        valueFormatter: GroupCellRenderer,
-        cellRenderer: GroupCellRenderer,
-        cellEditor: GroupCellEditor,
-        cellDataType: false,
-        comparator: (valueA, valueB) => {
-          // Sort groups lexicographically.
-          if (valueA.group === valueB.group) {
-            return (valueA.subgroup > valueB.subgroup) ? 1 : -1;
-          }
-          return (valueA.group > valueB.group) ? 1 : -1;
-        }
-      };
-    default:
-      return {};
-  }
-}
-
-function getSegmentEditor({ colDef: { entry }, value: cellData }) {
-  switch (cellData[entry].type) {
-    case 'select':
-      return { component: SegmentSelectEditor };
-    case 'integer':
-    case 'text':
-    case 'system-defined':
-    default:
-      return { component: 'agTextCellEditor' };
-  }
-}
-
-function getSegmentColumnGroupChild(segmentLabel, segment) {
-  return {
-    headerGroupComponent: EntrySelectionHeader,
-    headerGroupComponentParams: { names: [] },
-    headerName: segmentLabel,
-    groupId: segmentLabel,
-    children: Object.entries(segment).reduce((_children, [entryKey, entry], index) => [
-      ..._children,
-      {
-        field: `segments.${segmentLabel}`,
-        colId: `segments.${segmentLabel}.${entryKey}`,
-        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
-        cellEditorSelector: (params) => getSegmentEditor(params),
-        cellDataType: 'segment',
-        displayUnit: entry.value_system || null,
-        units: entry.type === 'system-defined' ? getGenericStandardUnits(entry.option_layers) : [null],
-        entry: entryKey,
-        hide: index !== 0,
-      }
-    ], [])
-
-  };
-}
-
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, segments, gasMode) {
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-
-  Object.entries(selectedColumns).forEach(([groupId, subGroupIds]) => {
-    const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
-
-    subGroupIds.forEach((subGroupId) => {
-      const subGroupIdExists = group.children.some(
-        (child) => (
-          nestedColumnGroups.includes(groupId)
-            ? (child.groupId === subGroupId)
-            : (child.field === `${groupId}.${subGroupId}`)
-        )
-      );
-      if (subGroupIdExists) {
-        return;
-      }
-
-      if (Object.keys(materialTypes).includes(groupId)) {
-        const material = materials[groupId].find((m) => m.id.toString() === subGroupId.toString());
-        group.children.push(getMaterialColumnGroupChild(material, groupId, gasMode));
-      } else if (groupId === 'properties') {
-        group.children.push(getPropertyColumnGroupChild(subGroupId, gasMode));
-      } else if (groupId === 'metadata') {
-        group.children.push(getMetadataColumnGroupChild(subGroupId));
-      } else if (groupId === 'segments') {
-        group.children.push(getSegmentColumnGroupChild(subGroupId, segments[subGroupId]));
-      }
-    });
-  });
-
-  return updatedColumnDefinitions;
-}
-
-function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-
-  const getChildId = (child) => child.field.split('.').slice(1).join('.');
-
-  Object.entries(selectedColumns).forEach(([groupId, subGroupIds]) => {
-    const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
-
-    const groupIsNested = nestedColumnGroups.includes(groupId);
-
-    group.children = group.children.filter(
-      (child) => subGroupIds.includes(groupIsNested ? child.groupId : getChildId(child))
-    );
-  });
-
-  return updatedColumnDefinitions;
-}
-
-function setGroupColDefAttribute(columnDefinitions, groupId, subGroupId, attribute, update) {
-  if (!nestedColumnGroups.includes(groupId)) { return columnDefinitions; }
-
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-  const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
-  const subGroup = group.children.find((child) => child.groupId === subGroupId);
-  subGroup[attribute] = update;
-
-  return updatedColumnDefinitions;
-}
-
-function setLeafColDefAttribute(columnDefinitions, colId, attribute, update) {
-  function updateLeaf(columns) {
-    return columns.some((col) => {
-      if (col.colId === colId) { col[attribute] = update; return true; }
-      return col.children && updateLeaf(col.children);
-    });
-  }
-
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-  updateLeaf(updatedColumnDefinitions);
-
-  return updatedColumnDefinitions;
-}
-
-function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
-  return [
-    {
-      headerName: 'Tools',
-      cellRenderer: RowToolsCellRenderer,
-      colId: 'tools',
-      field: 'id',
-      lockPosition: 'left',
-      rowDrag: true,
-      editable: false,
-
-    },
-    {
-      headerName: 'Metadata',
-      groupId: 'metadata',
-      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
-    },
-    {
-      headerName: 'Properties',
-      groupId: 'properties',
-      marryChildren: true,
-      children: selectedColumns.properties.map(
-        (entry) => getPropertyColumnGroupChild(entry, gasMode)
-      )
-    },
-    {
-      headerName: 'Segments',
-      groupId: 'segments',
-      children: selectedColumns.segments.map(
-        (entry) => getSegmentColumnGroupChild(entry, segments[entry])
-      )
-    }
-  ].concat(
-    Object.entries(materialTypes).map(([materialType, { label }]) => ({
-      headerName: label,
-      groupId: materialType,
-      marryChildren: true,
-      children: selectedColumns[materialType].map(
-        (materialID) => getMaterialColumnGroupChild(
-          materials[materialType].find((material) => material.id.toString() === materialID),
-          materialType,
-          gasMode,
-        )
-      )
-    }))
-  );
-}
-
-function getVariationsColumns(variations) {
-  const variationsRow = variations[0];
-  const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
-    materialsByType[materialType] = Object.keys(variationsRow ? variationsRow[materialType] : []);
-    return materialsByType;
-  }, {});
-  const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
-  const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
-  const segmentColumns = Object.keys(variationsRow ? variationsRow.segments : {});
-
-  return {
-    ...materialColumns, properties: propertyColumns, metadata: metadataColumns, segments: segmentColumns
-  };
-}
-
-function getGridStateId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsGridState`;
-}
-
-function getInitialGridState(reactionId) {
-  return JSON.parse(localStorage.getItem(getGridStateId(reactionId))) || {};
-}
-
-function getLayoutId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsLayout`;
-}
-
-function getInitialLayout(reactionId) {
-  return JSON.parse(localStorage.getItem(getLayoutId(reactionId))) || {};
-}
-
-function getRowOrderId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsRowOrder`;
-}
-
-function getInitialRowOrder(reactionId) {
-  return JSON.parse(localStorage.getItem(getRowOrderId(reactionId))) || null;
-}
-
-function persistRowOrder(reactionId, rowOrder) {
-  localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
-}
-
-function setRowOrder(reactionId, reactionVariations) {
-  const rowOrder = getInitialRowOrder(reactionId);
-  let updatedReactionVariations = cloneDeep(reactionVariations);
-
-  if (rowOrder) {
-    updatedReactionVariations = updatedReactionVariations.sort(
-      (a, b) => {
-        const indexA = rowOrder.indexOf(a.id);
-        const indexB = rowOrder.indexOf(b.id);
-        const posA = indexA === -1 ? Infinity : indexA;
-        const posB = indexB === -1 ? Infinity : indexB;
-        return posA - posB;
-      }
-    );
-  }
-
-  return updatedReactionVariations;
-}
-
-function traverseColDefs(colDef, callback, path = []) {
-  const { groupId } = colDef;
-  if (groupId) {
-    path.push(groupId);
-  }
-
-  if (colDef.children) {
-    colDef.children.forEach((child) => traverseColDefs(child, callback, [...path]));
-  } else if (colDef.entry) {
-    const key = [...path, colDef.entry].join('.');
-    callback(colDef, key);
-  }
-}
-
-function getEntryVisibility(columnDefinitions) {
-  const entryVisibility = {};
-
-  columnDefinitions
-    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
-      entryVisibility[key] = colDef.hide ?? true;
-    }));
-
-  return entryVisibility;
-}
-
-function setEntryVisibility(columnDefinition, entryVisibility) {
-  const updatedColumnDefinition = cloneDeep(columnDefinition);
-  updatedColumnDefinition
-    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
-      if (key in entryVisibility) {
-        colDef.hide = entryVisibility[key];
-      }
-    }));
-
-  return updatedColumnDefinition;
-}
-
-function getEntryDisplayUnits(columnDefinitions) {
-  const displayUnits = {};
-
-  columnDefinitions.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
-    if (colDef.displayUnit !== undefined) {
-      displayUnits[key] = colDef.displayUnit;
-    }
-  }));
-
-  return displayUnits;
-}
-
-function setEntryDisplayUnits(columnDefinition, displayUnits) {
-  const updatedColumnDefinition = cloneDeep(columnDefinition);
-  updatedColumnDefinition.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
-    if (key in displayUnits) {
-      colDef.displayUnit = displayUnits[key];
-    }
-  }));
-
-  return updatedColumnDefinition;
-}
-
-function getGroupHeaderNames(columnDefinitions) {
-  const headerNames = {};
-  columnDefinitions
-    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => {
-      groupColDef.children.forEach((subGroup) => {
-        headerNames[`${groupColDef.groupId}.${subGroup.groupId}`] = subGroup.headerName;
-      });
-    });
-
-  return headerNames;
-}
-
-function setGroupHeaderNames(columnDefinition, headerNames) {
-  const updatedColumnDefinition = cloneDeep(columnDefinition);
-  updatedColumnDefinition
-    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => {
-      groupColDef.children.forEach((subGroup) => {
-        const key = `${groupColDef.groupId}.${subGroup.groupId}`;
-        if (key in headerNames) {
-          subGroup.headerName = headerNames[key];
-        }
-      });
-    });
-
-  return updatedColumnDefinition;
-}
-
-function getLayout(columnDefinitions) {
-  return {
-    entries: getEntryVisibility(columnDefinitions),
-    displayUnits: getEntryDisplayUnits(columnDefinitions),
-    groupHeaderNames: getGroupHeaderNames(columnDefinitions),
-  };
-}
-
-function setLayout(reactionId, columnDefinitions) {
-  const layout = getInitialLayout(reactionId);
-
-  let updated = setEntryVisibility(columnDefinitions, layout.entries ?? {});
-  updated = setEntryDisplayUnits(updated, layout.displayUnits ?? {});
-  updated = setGroupHeaderNames(updated, layout.groupHeaderNames ?? {});
-
-  return updated;
-}
-
-const persistTableLayout = (reactionId, event, columnDefinitions) => {
-  const { state: gridState } = event;
-  localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
-  localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
 };
 
+const sameInputs = (material, parentMaterial) => Boolean(parentMaterial)
+  && parentMaterial.id === material.id
+  && sameNumber(material.amount_mol, parentMaterial.amount_mol)
+  && sameNumber(material.amount_g, parentMaterial.amount_g)
+  && sameNumber(material.coefficient, parentMaterial.coefficient)
+  && sameNumber(material.purity, parentMaterial.purity);
+
+const productYield = (product, referenceMaterial) => {
+  if (product.amount_mol === 0 && product.amount_g === 0) return 0;
+  if (!(referenceMaterial.amount_mol > 0)) return 0;
+
+  const stoichiometryCoeff = (product.coefficient || 1.0) / (referenceMaterial.coefficient || 1.0);
+  const maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff
+    * product.molecule_molecular_weight / (product.purity || 1);
+  if (product.amount_g > maxAmount) return 1;
+
+  const equivalent = product.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+  return Number.isFinite(equivalent) && equivalent >= 0 ? equivalent : 1;
+};
+
+const refreshDerivedValuesOf = (variationReaction, parentReaction) => {
+  const { referenceMaterial } = variationReaction;
+  if (!(referenceMaterial instanceof Sample) || referenceMaterial.decoupled || variationReaction.hasPolymers()) {
+    return;
+  }
+  const parentReference = parentReaction.referenceMaterial;
+  const sameReference = parentReference instanceof Sample && sameInputs(referenceMaterial, parentReference);
+
+  const refresh = (group, derive, applies = () => true) => {
+    variationReaction[group].forEach((material, index) => {
+      if (!(material instanceof Sample) || !applies(material)) return;
+      const parentMaterial = parentReaction[group]?.[index];
+      if (sameReference && sameInputs(material, parentMaterial)) {
+        setDerived(material, 'equivalent', parentMaterial.equivalent);
+      } else {
+        derive(material);
+      }
+    });
+  };
+
+  const deriveEquivalent = (material) => {
+    // The reference itself is 1, as the scheme tab sets it - also for one that was not the reference
+    // when its equivalent was stored.
+    if (material.reference) {
+      setDerived(material, 'equivalent', 1);
+      return;
+    }
+    if (!Number.isFinite(material.amount_mol)) return;
+    setDerived(
+      material,
+      'equivalent',
+      referenceMaterial.amount_mol > 0 ? material.amount_mol / referenceMaterial.amount_mol : 0
+    );
+  };
+  ['starting_materials', 'reactants', 'solvents'].forEach((group) => refresh(group, deriveEquivalent));
+
+  refresh('products', (product) => {
+    if (product.weight_percentage_reference) {
+      product.updateYieldForWeightPercentageReference();
+      return;
+    }
+    setDerived(product, 'equivalent', productYield(product, referenceMaterial));
+  }, (product) => !product.isGas() && !product.decoupled);
+
+  variationReaction.updateMaxAmountOfProducts();
+};
+
+const refreshDerivedValues = (variationReaction, parentReaction) => (
+  variationReaction.gaseous
+    ? withReactionGasPhase(variationReaction, () => refreshDerivedValuesOf(variationReaction, parentReaction))
+    : refreshDerivedValuesOf(variationReaction, parentReaction)
+);
+
+/*
+Works out the concentration of every material of a variation from that variation's own amounts and
+volume basis. `concn` is not stored, so nothing else sets it for a row: the scheme tab derives the
+parent's while it renders, which no grid row goes through. A gas feedstock's concentration depends on
+the vessel size, so the row's own gas phase values are loaded for it.
+
+With `releasePreserved`, a concentration the user typed is recomputed as well - right for a row just
+rebuilt from its diff, whose typed concentration has already been turned into an amount or a volume,
+and whose preserve flags are only copies of the parent's.
+*/
+const refreshConcentrations = (variationReaction, { releasePreserved = false } = {}) => {
+  const materials = [
+    ...variationReaction.allReactionMaterials,
+    ...(variationReaction.products || []),
+  ].filter((material) => typeof material?.updateConcentrationFromSolvent === 'function');
+
+  const refresh = () => materials.forEach((material) => {
+    if (releasePreserved) {
+      material.preserveConcentration = false;
+    }
+    material.updateConcentrationFromSolvent(variationReaction);
+  });
+
+  if (variationReaction.gaseous) {
+    withReactionGasPhase(variationReaction, refresh);
+  } else {
+    refresh();
+  }
+};
+
+const makeVariationReaction = (reaction, reactionData) => {
+  const clonedReaction = deepPatch(reaction, reactionData);
+  clonedReaction.variations = [];
+  /*
+  The duration display is a cache the durationDisplay getter derives from `_duration`. Copied from
+  the parent, it shows the parent's duration; patched from an older diff, which held only the keys
+  that changed, it lacks its unit. Dropped, it is derived from the row's own `_duration`.
+  */
+  delete clonedReaction._durationDisplay;
+
+  clonedReaction.id = reactionData.id || uuid.v4();
+  ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'].forEach((key) => {
+    clonedReaction[`_${key}`] = clonedReaction[`_${key}`].map((sampleData) => {
+        sampleData.container = Container.init();
+        return Object.assign(
+          Object.create(Sample.prototype),
+          sampleData
+        );
+      }
+    );
+  });
+  /*
+  The reference is set in the Scheme tab only (see MaterialRef), so a variation has the reaction's,
+  whatever a diff saved before that says. Equal to the parent's, the flags drop out of the diff.
+  */
+  const parentMaterials = new Map(
+    [...reaction.allReactionMaterials, ...(reaction.products || [])].map((material) => [material.id, material])
+  );
+  ['starting_materials', 'reactants', 'products'].forEach((key) => {
+    clonedReaction[`_${key}`].forEach((material) => {
+      const parentMaterial = parentMaterials.get(material.id);
+      ['reference', 'weight_percentage_reference'].forEach((flag) => {
+        // The parent's value as it is - undefined included - so that an unchanged flag is no change.
+        if (parentMaterial) {
+          material[flag] = parentMaterial[flag];
+        } else if (material[flag]) {
+          material[flag] = false;
+        }
+      });
+    });
+  });
+  // Marked so that its edits are computed against its own gas phase values - see GasPhaseContext.
+  const variationReaction = markAsVariationOf(
+    Object.assign(Object.create(Reaction.prototype), clonedReaction),
+    reaction
+  );
+  refreshDerivedValues(variationReaction, reaction);
+  refreshConcentrations(variationReaction, { releasePreserved: true });
+  return variationReaction;
+};
+
+// The [major, minor] group typed as e.g. "2.1": its numbers, at most two; null without any.
+const parseVariationGroup = (text) => {
+  const numbers = String(text ?? '').split(/[^\d]+/).filter(Boolean).slice(0, 2).map(Number);
+  return numbers.length > 0 ? numbers : null;
+};
+
+const addNewVariationDataset = ({ reaction: { variations } }) => {
+  const id = uuid.v4();
+  const majorGroup = Math.max(0, ...variations.map(({ group }) => Number(group?.[0]) || 0)) + 1;
+  const nextIdx = Math.max(0, ...variations.map(({ idx }) => idx)) + 1;
+  const group = [majorGroup, 0];
+
+  const newVariation = {
+    idx: nextIdx,
+    id, group,
+      analyses: [],
+    notes: '',
+    // The identity of the reaction the row stands for, which the row is addressed by (getRowId, the
+    // open variation panel). Without it every rebuild would make one up afresh.
+    data: { id: uuid.v4() }
+  };
+  variations.push(newVariation);
+  return newVariation;
+};
+
+/*
+Appends a copy of the variation at `sourceIdx` (a position in the list): its values and its group -
+a copy is a repetition of the same experiment - under a number and identity of its own. Linked
+analyses and the note belong to the original's run, not to the copy.
+*/
+const copyVariationDataset = ({ reaction }, sourceIdx) => {
+  const source = reaction.variations[sourceIdx];
+  const copy = addNewVariationDataset({ reaction });
+  copy.group = [...(source.group ?? copy.group)];
+  copy.data = { ...cloneDeep(source.data ?? {}), id: uuid.v4() };
+  return copy;
+};
+
+/*
+Puts the variations in a new order: `order` lists their current positions in the order they should
+have. The list order is what orders the rows - `idx`, the number a row is known by, stays with it.
+*/
+const reorderVariationDatasets = ({ reaction }, order) => {
+  reaction.variations = order.map((position) => reaction.variations[position]);
+};
+
+const addInternalVariationObject = (
+  variations,
+  reaction,
+  { data = { id: uuid.v4() }, group = [0,0], idx, analyses = [], notes = '' }
+) => {
+  variations.push({
+    analyses,
+    notes,
+    group,
+    data: makeVariationReaction(reaction, data),
+    idx: variations.length,
+    label: idx
+  });
+};
+
+/*
+A row still holding its old values only under `legacy_data` gets them written into its diff here.
+The migration 20261005120000_convert_legacy_reaction_variation_values.rb does the same on the
+server, so this only catches rows it found nothing to write for, and databases that have not run it.
+The row's stored diff is updated in place and reaches the database with the reaction's next save.
+*/
+const convertLegacyVariation = (reaction, variation) => {
+  const variationReaction = applyLegacyVariationData(
+    makeVariationReaction(reaction, variation.data ?? {}),
+    variation.legacy_data
+  );
+  // eslint-disable-next-line no-use-before-define
+  variation.data = variationDiffOf(reaction, variationReaction);
+};
+
+/*
+A variation links analyses of its reaction by id. Once an analysis is deleted - marked in the Analyses
+tab, or already gone from the reaction - the link goes too, and with the reaction's next save out of
+the database, as the previous variations table did. The container tree is read as it is: going
+through Element#analysesContainers would add an analyses container to a reaction that has none.
+*/
+const unlinkMissingAnalyses = (reaction) => {
+  const analysesContainers = (reaction.container?.children ?? [])
+    .filter((container) => container.container_type === 'analyses');
+  if (analysesContainers.length === 0) return;
+
+  const available = new Set(
+    analysesContainers
+      .flatMap((container) => container.children ?? [])
+      .filter((analysis) => analysis.container_type === 'analysis' && !analysis.is_deleted)
+      .map((analysis) => String(analysis.id))
+  );
+  reaction.variations.forEach((variation) => {
+    if (!Array.isArray(variation.analyses)) return;
+    const linked = variation.analyses.filter((id) => available.has(String(id)));
+    if (linked.length !== variation.analyses.length) {
+      variation.analyses = linked;
+    }
+  });
+};
+
+const convertVariationDatasetToInternalVariations = (reaction) => {
+  const internalVariation = [];
+  unlinkMissingAnalyses(reaction);
+  reaction.variations.forEach((v) => {
+    if (needsLegacyConversion(v)) {
+      convertLegacyVariation(reaction, v);
+    }
+    addInternalVariationObject(internalVariation, reaction, v);
+    /*
+    The row may have just worked out other equivalents or yields than its diff holds (see
+    refreshDerivedValues). The diff is what the report reads and the history keeps, so it is brought
+    up to date as well, and reaches the database with the reaction's next save.
+    */
+    // eslint-disable-next-line no-use-before-define
+    const freshDiff = variationDiffOf(reaction, internalVariation[internalVariation.length - 1].data);
+    if (JSON.stringify(freshDiff) !== JSON.stringify(v.data)) {
+      v.data = freshDiff;
+    }
+  });
+
+  return internalVariation;
+};
+
+/*
+Whether a nested diff says nothing changed. A list diff keeps a null hole per unchanged entry, so an
+unchanged list comes back as all holes - but only one as long as the original counts as unchanged:
+a variation's list is sized by its diff (see deepPatch), so a shorter or longer one is a change.
+*/
+const isUnchanged = (nestedDiff, original) => {
+  if (Array.isArray(nestedDiff)) {
+    return Array.isArray(original)
+      && nestedDiff.length === original.length
+      && nestedDiff.every((entry) => entry === null);
+  }
+  return Object.keys(nestedDiff).length === 0;
+};
+
+const diffObjects = (obj1, obj2, ignoreList = []) => {
+  let result, keys;
+  const isArray = Array.isArray(obj2);
+  if (isArray) {
+    keys = obj2.map((x, i) => i);
+    result = [];
+  } else {
+    keys = Object.keys(obj2);
+    result = {};
+  }
+  for (const key of keys) {
+    // Ignore configured keys
+    if (ignoreList.includes(key)) {
+      continue;
+    }
+
+    const value1 = obj1?.[key];
+    const value2 = obj2[key] instanceof Sample ? { ...obj2[key] } : obj2[key];
+
+    // Ignore functions
+    if (typeof value2 === 'function') {
+      continue;
+    }
+
+    // Recursively compare plain objects
+    if (
+      value2 !== null &&
+      typeof value2 === 'object' &&
+      value1 !== null &&
+      typeof value1 === 'object'
+    ) {
+      const nestedDiff = diffObjects(value1, value2, ignoreList);
+
+      if (!isUnchanged(nestedDiff, value1)) {
+        result[key] = nestedDiff;
+      } else if (isArray) {
+        result[key] = null;
+      }
+    } else if (!Object.is(value1, value2)) {
+      result[key] = value2;
+    } else if (isArray) {
+      result[key] = null;
+    }
+  }
+
+  return result;
+};
+
+/*
+What a variation stores: its reaction diffed against the parent. Beyond the structural exclusions,
+the diff must not capture editor bookkeeping: `belongTo`, `matGroup` and `editedSample` are
+transient references the sample flows hang onto reactions and samples, and diffObjects would copy
+them - and through them the whole variation clone - into the diff by reference, breaking the
+structuredClone the variations are rebuilt with.
+
+Nor the containers: makeVariationReaction gives every material a fresh one on each rebuild, so they
+always differ from the parent's and the rebuild would replace whatever the diff held anyway.
+Analyses stay on the parent reaction.
+
+Nor the concentrations: makeVariationReaction works them out from the row's amounts and volume on
+every rebuild (see refreshConcentrations), and `preserveConcentration` only matters during an edit.
+Nor the duration display, which is derived from `_duration` the same way, nor the products' maximum
+amounts, which makeVariationReaction derives from the reference.
+*/
+const variationDiffOf = (reaction, variationReaction) => diffObjects(
+  reaction,
+  variationReaction,
+  [
+    '_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample', 'container',
+    'concn', 'preserveConcentration', '_durationDisplay', '_maxAmount',
+  ]
+);
+
+/*
+What a variation comes to, in the values the Scheme tab edits - its materials' amounts, equivalents
+and kinds, and the reaction conditions - as a string to compare. Computed values like concentration
+are left out: they follow from these.
+*/
+const MATERIAL_GROUPS_OF_A_VARIATION = ['starting_materials', 'reactants', 'solvents', 'products'];
+
+const variationFingerprint = (reaction) => JSON.stringify({
+  materials: MATERIAL_GROUPS_OF_A_VARIATION.map((group) => (reaction[group] || []).map((material) => [
+    material.id, material.amount_value, material.amount_unit, material.equivalent, material.coefficient,
+    material.purity, material.gas_type, material.reference,
+  ])),
+  temperature: [reaction.temperature?.userText, reaction.temperature?.valueUnit],
+  duration: reaction.duration ?? null,
+  volume: reaction.volume ?? null,
+  concentrationMode: reaction.concentration_mode ?? null,
+  vesselSize: reaction.vessel_size ?? null,
+  ph: [reaction.ph_operator ?? null, reaction.ph_value ?? null],
+  gaseous: !!reaction.gaseous,
+});
+
+/*
+The labels of the variations a change of the parent reaction reached: those that now come to something
+else than before. A variation's own values are kept by its diff, so one that changed every value the
+change touched stays as it was.
+*/
+const variationsChangedBetween = (previousVariations, nextVariations) => {
+  const before = new Map(previousVariations.map((variation) => [
+    variation.data?.id, variationFingerprint(variation.data),
+  ]));
+  return nextVariations
+    .filter((variation) => before.has(variation.data?.id)
+      && before.get(variation.data?.id) !== variationFingerprint(variation.data))
+    .map((variation) => variation.label);
+};
+
+/*
+Column layout of the variations grid - order, hidden columns and widths - kept per user and per
+reaction, following the key convention of the previous variations table. Storage can be unavailable
+(private mode, quota), in which case the layout simply is not remembered.
+
+Each view of the grid - the scheme, or one segment klass picked instead of it - has columns of its
+own and so a layout of its own. The scheme keeps the key it always had.
+*/
+const SCHEMA_VIEW = 'Schema';
+
+const getColumnStateId = (reactionId, view = SCHEMA_VIEW) => {
+  const { currentUser } = UserStore.getState();
+  const id = `user${currentUser?.id}-reaction${reactionId}-reactionVariationsColumnState`;
+  return view === SCHEMA_VIEW ? id : `${id}-segment-${view}`;
+};
+
+const getInitialColumnState = (reactionId, view = SCHEMA_VIEW) => {
+  try {
+    return JSON.parse(window.localStorage.getItem(getColumnStateId(reactionId, view))) || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+/*
+A stored layout knows the columns there were when it was saved. AG Grid puts the columns it does not
+know - those of a material added to the reaction since - after all the others, behind the products and
+the reaction fields. They go where the definitions have them instead: right after the column that
+precedes them there, so that a second reactant follows the first, wherever the user has moved that.
+*/
+const placeUnknownColumns = (columnState, colIdsInDefinitionOrder) => {
+  const placed = [...columnState];
+  const known = new Set(placed.map(({ colId }) => colId));
+  colIdsInDefinitionOrder.forEach((colId, index) => {
+    if (known.has(colId)) return;
+    const predecessor = colIdsInDefinitionOrder.slice(0, index).reverse().find((id) => known.has(id));
+    const position = predecessor ? placed.findIndex((entry) => entry.colId === predecessor) + 1 : 0;
+    placed.splice(position, 0, { colId });
+    known.add(colId);
+  });
+  return placed;
+};
+
+const persistColumnState = (reactionId, columnState, view = SCHEMA_VIEW) => {
+  try {
+    window.localStorage.setItem(getColumnStateId(reactionId, view), JSON.stringify(columnState));
+  } catch (e) { /* ignore storage errors */ }
+};
+
+/*
+Which columns a reaction without a stored layout of its own starts with. A material takes some twelve
+columns, which makes the grid very wide, so the scheme view starts compact: the starting materials,
+reactants and products show their name, Ref, Mass, Amount and Eq or Yield, and everything else is a
+tick away in the column pickers.
+
+Whatever the user shows or hides there is also remembered per user - by kind of column, e.g. "density
+of a starting material" rather than the column of one slot - and a reaction without a layout of its
+own starts from that instead.
+*/
+const MATERIAL_COLUMN_ID = /^(starting_materials|reactants|products|solvents)_\d+_(.+)$/;
+const COMPACT_GROUPS = ['starting_materials', 'reactants', 'products'];
+const COMPACT_HIDDEN_FIELDS = ['tr', 'coefficient', 'volume', 'molar_mass', 'density', 'purity', 'loading', 'concn'];
+
+// The kind of a column: a material column without its slot, any other column as it is.
+const columnKind = (colId) => {
+  const match = MATERIAL_COLUMN_ID.exec(colId);
+  return match ? `${match[1]}_${match[2]}` : colId;
+};
+
+const isHiddenInCompactLayout = (kind, view) => view === SCHEMA_VIEW && COMPACT_GROUPS.some(
+  (group) => COMPACT_HIDDEN_FIELDS.some((field) => kind === `${group}_${field}`)
+);
+
+const getUserColumnKindsId = (view = SCHEMA_VIEW) => {
+  const { currentUser } = UserStore.getState();
+  const id = `user${currentUser?.id}-reactionVariationsColumnKinds`;
+  return view === SCHEMA_VIEW ? id : `${id}-segment-${view}`;
+};
+
+// Shown (false) or hidden (true), by column kind, as the user last set it.
+const getUserColumnKinds = (view = SCHEMA_VIEW) => {
+  try {
+    return JSON.parse(window.localStorage.getItem(getUserColumnKindsId(view))) || {};
+  } catch (e) {
+    return {};
+  }
+};
+
+const persistUserColumnKinds = (colIds, hidden, view = SCHEMA_VIEW) => {
+  try {
+    const kinds = getUserColumnKinds(view);
+    colIds.forEach((colId) => { kinds[columnKind(colId)] = hidden; });
+    window.localStorage.setItem(getUserColumnKindsId(view), JSON.stringify(kinds));
+  } catch (e) { /* ignore storage errors */ }
+};
+
+// Whether a column the reaction's own layout says nothing about starts hidden.
+const isHiddenByDefault = (colId, view = SCHEMA_VIEW, userKinds = getUserColumnKinds(view)) => {
+  const kind = columnKind(colId);
+  return userKinds[kind] ?? isHiddenInCompactLayout(kind, view);
+};
+
+/*
+What the variations table before the diff-based format kept in the browser, per user and reaction:
+
+- `…GridState` and `…Layout`: widths, order, sort, shown entries and units of its columns, keyed by
+  column ids (`startingMaterials.<sample id>.mass`, …) that the grid no longer has and that do not
+  map onto its material slots. They are removed.
+- `…RowOrder`: the ids of the rows in the order they had been dragged into. That order was not kept
+  anywhere else - the old column was a jsonb object, whose keys sort - and a row's old id is its
+  `idx` now (see 20260731120000_convert_reaction_variations_to_diff_list.rb), so it is carried over:
+  the rows are put in that order, which the reaction's next save stores, and the entry is removed
+  once a load finds them in it already.
+*/
+const legacyLayoutKey = (reactionId, name) => {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser?.id}-reaction${reactionId}-reactionVariations${name}`;
+};
+
+const rankIn = (rowOrder) => (variation) => {
+  const rank = rowOrder.findIndex((id) => Number(id) === Number(variation.idx));
+  return rank === -1 ? rowOrder.length : rank;
+};
+
+const adoptLegacyVariationsLayout = (reaction) => {
+  if (!reaction || reaction.isNew) return;
+
+  try {
+    const storage = window.localStorage;
+    storage.removeItem(legacyLayoutKey(reaction.id, 'GridState'));
+    storage.removeItem(legacyLayoutKey(reaction.id, 'Layout'));
+
+    const rowOrderKey = legacyLayoutKey(reaction.id, 'RowOrder');
+    const rowOrder = JSON.parse(storage.getItem(rowOrderKey));
+    if (!Array.isArray(rowOrder)) {
+      storage.removeItem(rowOrderKey);
+      return;
+    }
+
+    // Rows the stored order does not know go last, keeping their own order.
+    const rank = rankIn(rowOrder);
+    const ordered = [...reaction.variations].sort((a, b) => rank(a) - rank(b));
+    if (ordered.every((variation, index) => variation === reaction.variations[index])) {
+      storage.removeItem(rowOrderKey);
+    } else {
+      reaction.variations = ordered;
+    }
+  } catch (e) { /* storage unavailable or unreadable: nothing to carry over */ }
+};
+
+/*
+The editable fields of each segment klass, by segment label, ready to be turned into grid columns.
+
+`layerKey` is the key the layer sits under in `layers`, not `layer.key`: the two can differ, and it
+is the former that a segment instance is addressed by - see how the fields are read back in
+ReactionVariationSegmentComponents.
+
+The field is copied rather than referenced: `segmentKlasses` in the store is shared with everything
+else that reads the klass, and the select options resolved here would otherwise be written into it.
+*/
 function formatReactionSegments(segments) {
   return segments.reduce((acc, segment) => {
     const segmentLabel = segment.label;
     const layers = segment.properties_release?.layers ?? {};
 
-    Object.values(layers).forEach((layer) => {
-      const layerKey = layer.key;
-
+    Object.entries(layers).forEach(([layerKey, layer]) => {
       (layer.fields ?? [])
-        .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+        .filter((field) => ['number', 'system-defined', 'select', 'text'].includes(field.type))
         .forEach((field) => {
           const entryKey = `layer<${layerKey}>field<${field.field}>`;
           acc[segmentLabel] ??= {};
-          acc[segmentLabel][entryKey] ??= {};
-          acc[segmentLabel][entryKey] = field;
-
-          if (field.type === 'select') {
-            acc[segmentLabel][entryKey].options = segment.properties_release?.select_options?.[
-              field.option_layers
-            ]?.options ?? [];
-          }
+          acc[segmentLabel][entryKey] = {
+            ...field,
+            layerKey,
+            layerLabel: layer.label || layerKey,
+            fieldKey: field.field,
+            ...(field.type === 'select' ? {
+              options: segment.properties_release?.select_options?.[field.option_layers]?.options ?? []
+            } : {}),
+          };
         });
     });
 
@@ -944,7 +702,51 @@ function formatReactionSegments(segments) {
   }, {});
 }
 
-async function getReactionSegments(reaction) {
+/*
+CSV export, as before the diff-based schema: AG Grid writes what the columns' valueGetters hold -
+which since the sorting work is every column's value in a fixed unit - and only the headers need
+spelling out, since the header cells are React components the exporter cannot read.
+*/
+const CSV_EXCLUDED_COLUMNS = ['variation_control', 'variation_analyses'];
+
+function csvHeaderOf(column) {
+  const colDef = column.getColDef();
+  if (colDef.colId === 'variation_index') {
+    return 'ID';
+  }
+
+  const groupName = column.getParent()?.getColGroupDef()?.headerName;
+  const unit = colDef.context?.exportUnit;
+  return `${groupName ? `${groupName} / ` : ''}${colDef.headerName}${unit ? ` (${unit})` : ''}`;
+}
+
+function csvCellOf({ value, column, node }) {
+  // The timestamps sort as epoch milliseconds; the CSV gets the string the user entered.
+  if (column.getColId() === 'reaction_timestamp_start') {
+    return node.data?.data?.timestamp_start ?? '';
+  }
+  if (column.getColId() === 'reaction_timestamp_stop') {
+    return node.data?.data?.timestamp_stop ?? '';
+  }
+  if (Array.isArray(value)) {
+    return value.join('.'); // The group, shown the way its cell shows it.
+  }
+  return value ?? '';
+}
+
+function exportVariationsToCsv(api, reactionShortLabel) {
+  api.exportDataAsCsv({
+    fileName: `${reactionShortLabel || 'reaction'}-variations.csv`,
+    // Buttons have no value to export; everything else does.
+    columnKeys: api.getAllDisplayedColumns()
+      .map((column) => column.getColId())
+      .filter((colId) => !CSV_EXCLUDED_COLUMNS.includes(colId)),
+    processHeaderCallback: ({ column }) => csvHeaderOf(column),
+    processCellCallback: csvCellOf,
+  });
+}
+
+async function getReactionSegments(reaction_segments) {
   try {
     const segments = UserStore.getState().segmentKlasses || [];
     const segmentLabels = new Set(
@@ -953,7 +755,7 @@ async function getReactionSegments(reaction) {
         .map((s) => s.label)
     ); // Segments that can be added to a reaction.
     const selectedSegmentLabels = new Set(
-      (reaction?.segments ?? []).map((s) => s.klass_label)
+      (reaction_segments ?? []).map((s) => s.klass_label)
     ); // Segment that are currently added to the reaction.
     // We want the segments that are currently added to the reaction to occur in the selection first,
     // followed by the segments that could be added to a reaction, but aren't currently added to the reaction.
@@ -972,75 +774,31 @@ async function getReactionSegments(reaction) {
   }
 }
 
-function sanitizeGroupEntry(entry) {
-  // Remove input other than digits and period.
-  const val = entry.replace(/[^0-9.]/g, '');
-
-  // Extract the group (first item) and the rest of the parts.
-  const [group, ...subParts] = val.split('.');
-  const subGroup = subParts.join('');
-
-  // Remove leading zeros from both parts.
-  const cleanGroup = group.replace(/^0+/, '');
-  const cleanSub = subGroup.replace(/^0+/, '');
-
-  // Reassemble, preserving the period if it existed in the cleaned string.
-  return val.includes('.')
-    ? `${cleanGroup}.${cleanSub}`
-    : cleanGroup;
-}
-
 export {
-  massUnits,
-  volumeUnits,
-  amountUnits,
-  temperatureUnits,
-  durationUnits,
-  concentrationUnits,
-  gasConcentrationUnits,
-  getStandardUnits,
-  convertUnit,
-  convertGenericUnit,
-  materialTypes,
-  cellDataTypes,
+  adoptLegacyVariationsLayout,
+  getInitialColumnState,
+  persistColumnState,
+  placeUnknownColumns,
+  columnKind,
+  isHiddenByDefault,
+  persistUserColumnKinds,
+  convertVariationDatasetToInternalVariations,
+  addInternalVariationObject,
+  addNewVariationDataset,
+  copyVariationDataset,
+  reorderVariationDatasets,
+  parseVariationGroup,
+  makeVariationReaction,
+  variationFingerprint,
+  variationsChangedBetween,
+  refreshConcentrations,
+  refreshDerivedValues,
+  diffObjects,
+  variationDiffOf,
   getVariationsRowName,
-  getVariationsColumns,
-  createVariationsRow,
-  copyVariationsRow,
-  updateVariationsRow,
-  getColumnDefinitions,
-  getCellDataType,
-  getStandardValue,
-  addMissingColumnsToVariations,
-  removeObsoleteColumnsFromVariations,
-  addMissingColumnDefinitions,
-  removeObsoleteColumnDefinitions,
-  getMetadataColumnGroupChild,
-  getPropertyColumnGroupChild,
-  PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
-  DISPLAY_PRECISION,
-  getInitialGridState,
-  getInitialLayout,
-  getInitialRowOrder,
-  persistRowOrder,
-  setRowOrder,
-  setLayout,
-  persistTableLayout,
-  getUserFacingEntryName,
+  GROUP_ID_SEPARATOR,
   getReactionSegments,
-  parseGenericEntryName,
-  getSegmentData,
   formatReactionSegments,
-  sanitizeGroupEntry,
-  setGroupColDefAttribute,
-  setLeafColDefAttribute,
-  getEntryVisibility,
-  setEntryVisibility,
-  getEntryDisplayUnits,
-  setEntryDisplayUnits,
-  getGroupHeaderNames,
-  setGroupHeaderNames,
-  getLayout,
-  processHeaderForCsvExport,
+  exportVariationsToCsv
 };

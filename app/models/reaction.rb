@@ -179,7 +179,7 @@ class Reaction < ApplicationRecord
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
-  before_save :transform_variations
+  before_save :normalize_variations
   around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
@@ -313,19 +313,20 @@ class Reaction < ApplicationRecord
     # scrub_xml would strip them. Conditions are escaped at display time.
   end
 
+  # Variations are a list, ordered by `idx`: see db/schemas/reaction_variations.schema.json.
+  # Rows written before that change were an object keyed by variation UUID, which is only still
+  # reachable here for a database that has not run
+  # db/migrate/20260731120000_convert_reaction_variations_to_diff_list.rb yet.
   def variations
-    # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
-    return raw.values if raw.is_a?(Hash)
-
-    raw || []
+    raw.is_a?(Hash) ? raw.values : (raw || [])
   end
 
-  def assign_attachment_to_variation(variation_id, analysis_id)
-    assign_attachments_to_variations([[variation_id, analysis_id]])
+  def assign_attachment_to_variation(variation_number, analysis_id)
+    assign_attachments_to_variations([[variation_number, analysis_id]])
   end
 
-  # Batches multiple [variation_id, analysis_id] links into a single save, so bulk
+  # Batches multiple [variation_number, analysis_id] links into a single save, so bulk
   # attachment uploads don't pay a separate Reaction#update (and logidze version) per file.
   #
   # TODO: this is a non-atomic read-modify-write on the whole `variations` column - two
@@ -335,7 +336,7 @@ class Reaction < ApplicationRecord
   # worth revisiting (optimistic locking via lock_version, or a targeted jsonb update).
   def assign_attachments_to_variations(pairs)
     current_variations = variations
-    changed = pairs.count { |variation_id, analysis_id| link_variation?(current_variations, variation_id, analysis_id) }
+    changed = pairs.count { |number, analysis_id| link_variation?(current_variations, number, analysis_id) }
 
     update(variations: current_variations) if changed.positive?
   end
@@ -356,17 +357,21 @@ class Reaction < ApplicationRecord
     "#{min_temp} ~ #{max_temp}"
   end
 
-  def link_variation?(current_variations, variation_id, analysis_id)
-    return false if variation_id.blank?
+  # `variation_number` is the N of a `-vN` file name suffix (or the inbox's "V<N>"): the number the
+  # grid labels a row by, which is its `idx`. The row's `id` is a UUID nobody types into a file name.
+  def link_variation?(current_variations, variation_number, analysis_id)
+    number = variation_number.to_s
+    return false unless number.match?(/\A\d+\z/)
 
-    variation = current_variations.find { |v| v['id'].to_s == variation_id.to_s }
+    # to_i then to_s, so a zero padded suffix ('-v03') still names row 3.
+    variation = current_variations.find { |v| v['idx'].to_s == number.to_i.to_s }
     return false unless variation
 
-    variation['metadata'] ||= {}
-    variation['metadata']['analyses'] ||= []
-    return false if variation['metadata']['analyses'].include?(analysis_id)
+    # Linked analyses sit on the variation itself now, not under `metadata`.
+    variation['analyses'] ||= []
+    return false if variation['analyses'].include?(analysis_id)
 
-    variation['metadata']['analyses'] << analysis_id
+    variation['analyses'] << analysis_id
     true
   end
 
@@ -438,13 +443,10 @@ class Reaction < ApplicationRecord
     Chemotion::Sanitizer.scrub_xml(value)
   end
 
-  def transform_variations
-    return unless variations.is_a?(Array)
-
-    self.variations = variations.each_with_object({}) do |item, hash|
-      item['uuid'] = SecureRandom.uuid if item['uuid'].blank?
-      hash[item['uuid']] = item
-    end
+  # Keeps the column at the shape db/schemas/reaction_variations.schema.json describes: a list whose
+  # rows each have an id, a number and a diff - see Usecases::Reactions::NormalizeVariations.
+  def normalize_variations
+    self[:variations] = Usecases::Reactions::NormalizeVariations.call(self[:variations])
   end
 
   def update_fields_to_plain_text

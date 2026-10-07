@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger, Dropdown
@@ -14,6 +14,7 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
+import { parentReactionOf } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 import ToggleButton from 'src/components/common/ToggleButton';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
@@ -23,7 +24,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { components as ReactSelectComponents } from 'react-select';
 
-const headers = {
+const MATERIAL_HEADER = {
   ref: 'Ref',
   group: 'Starting materials',
   tr: 'T/R',
@@ -39,15 +40,40 @@ const headers = {
   eq: 'Eq'
 };
 
+// The reaction as seen by a row that must not change it: everything reads through, write
+// permission reads as missing, and anything written lands on the view rather than the reaction.
+const readOnlyViewOf = (reaction) => Object.create(reaction, {
+  can_update: { value: false, writable: true, configurable: true },
+});
+
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
-  showLoadingColumn, reaction, headIndex,
+  showLoadingColumn, reaction, headIndex, variations,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled, onConcentrationModeChange
+  switchYield, dndEnabled, canChangeMaterialList, onConcentrationModeChange
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
-
+  /*
+  Next to its own materials, a group also lists those only some of the reaction's variations have
+  (see ReactionDetailsScheme). They are not the reaction's to edit - its handlers would look for them
+  among its own materials - so they get a read-only view of the reaction, which every input of a
+  material row already checks, and are edited in the Variations tab.
+  */
+  const ownMaterials = (materialGroup === 'reactants' ? reaction.reactantsWithSbmm : reaction[materialGroup]) || [];
+  /*
+  A variation's Open panel cannot change the material list it shares with the reaction, but it offers the
+  reagent and solvent selects: a molecule picked there is added to that variation only, as a sample
+  dropped in is. Such a material - one the reaction does not have - can be deleted there again.
+  */
+  const parentReaction = parentReactionOf(reaction);
+  const parentMaterials = parentReaction
+    && ((materialGroup === 'reactants' ? parentReaction.reactantsWithSbmm : parentReaction[materialGroup]) || []);
+  const isVariationOnly = (material) => Boolean(parentMaterials)
+    && !parentMaterials.some((parentMaterial) => parentMaterial.id === material.id);
+  const canSelectMaterials = canChangeMaterialList
+    || (Boolean(parentReaction) && materialGroup !== 'purification_solvents');
+  const readOnlyReaction = useMemo(() => readOnlyViewOf(reaction), [reaction]);
   const getMaterialComponent = ({
     dragRef,
     dropRef,
@@ -59,12 +85,15 @@ const MaterialGroup = ({
   }) => (
     <Material
       key={material.id}
-      reaction={reaction}
+      variations={variations}
+      reaction={ownMaterials.includes(material) ? reaction : readOnlyReaction}
       onChange={onChange}
       material={material}
       materialGroup={materialGroup}
       showLoadingColumn={showLoadingColumn}
-      deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
+      deleteMaterial={
+        canChangeMaterialList || isVariationOnly(material) ? (m) => deleteMaterial(m, materialGroup) : null
+      }
       index={index + 1}
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
@@ -115,6 +144,8 @@ const MaterialGroup = ({
         headIndex={headIndex}
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
+        canChangeMaterialList={canChangeMaterialList}
+        canSelectMaterials={canSelectMaterials}
       />
     );
   }
@@ -136,6 +167,8 @@ const MaterialGroup = ({
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
       onConcentrationModeChange={onConcentrationModeChange}
+      canChangeMaterialList={canChangeMaterialList}
+      canSelectMaterials={canSelectMaterials}
     />
   );
 };
@@ -367,13 +400,13 @@ const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled,
-  onConcentrationModeChange
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, canChangeMaterialList,
+  canSelectMaterials, onConcentrationModeChange
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
   const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   const [activeTab, setActiveTab] = useState('all');
   const [topReagents, setTopReagents] = useState(() => reagentTracker.getTop());
 
@@ -525,9 +558,9 @@ const GeneralMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                {isReactants && reagentDd}
+                {isReactants && canSelectMaterials && reagentDd}
               </div>
             </div>
             <div className="reaction-material__ref-header">{refTHead}</div>
@@ -592,9 +625,9 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled
+  dropSample, onDrop, onReorder, dndEnabled, canChangeMaterialList, canSelectMaterials
 }) => {
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
   const [activeTab, setActiveTab] = useState('all');
   const [topSolvents, setTopSolvents] = useState(() => solventTracker.getTop());
@@ -669,26 +702,28 @@ const SolventsMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                <Select
-                  isDisabled={!permitOn(reaction)}
-                  options={solventOptions}
-                  value={null}
-                  placeholder="Add solvent..."
-                  onChange={createDefaultSolventsForReaction}
-                  filterOption={filterSolvents}
-                  hasMostUsed={topSolvents.length > 0}
-                  activeTab={effectiveTab}
-                  onSetActiveTab={setActiveTab}
-                  allOptions={allSolventOptions}
-                  topOptions={topSolvents}
-                  filterFn={filterSolvents}
-                  allTabLabel="All Solvents"
-                  components={{ MenuList: ReagentMenuList }}
-                  classNames={{ menu: () => 'solvent-menu' }}
-                  size="xsm"
-                />
+                {canSelectMaterials && (
+                  <Select
+                    isDisabled={!permitOn(reaction)}
+                    options={solventOptions}
+                    value={null}
+                    placeholder="Add solvent..."
+                    onChange={createDefaultSolventsForReaction}
+                    filterOption={filterSolvents}
+                    hasMostUsed={topSolvents.length > 0}
+                    activeTab={effectiveTab}
+                    onSetActiveTab={setActiveTab}
+                    allOptions={allSolventOptions}
+                    topOptions={topSolvents}
+                    filterFn={filterSolvents}
+                    allTabLabel="All Solvents"
+                    components={{ MenuList: ReagentMenuList }}
+                    classNames={{ menu: () => 'solvent-menu' }}
+                    size="xsm"
+                  />
+                )}
               </div>
             </div>
             <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
@@ -715,12 +750,27 @@ MaterialGroup.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
+  // Off in the variations tab, where materials follow the parent reaction's scheme.
+  canChangeMaterialList: PropTypes.bool,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }))
+};
+
+/*
+Not every caller has the toggles: the yield/conversion switch only exists on the products group, and
+the purification solvents have no equivalent lock either.
+*/
+MaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -733,12 +783,23 @@ GeneralMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+  canChangeMaterialList: PropTypes.bool,
+  // The reagent select; also on in a variation, see MaterialGroup.
+  canSelectMaterials: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
+};
+
+GeneralMaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
+  canChangeMaterialList: true,
+  canSelectMaterials: false,
+  displayYieldField: null
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -751,10 +812,15 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
+  canChangeMaterialList: PropTypes.bool,
+  // The solvent select; also on in a variation, see MaterialGroup.
+  canSelectMaterials: PropTypes.bool,
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
+  canChangeMaterialList: true,
+  canSelectMaterials: false,
 };
 
 MaterialGroup.defaultProps = {
@@ -764,6 +830,8 @@ MaterialGroup.defaultProps = {
   headIndex: 0,
   dndEnabled: true,
   onConcentrationModeChange: null,
+  variations: null,
+  canChangeMaterialList: true,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -775,3 +843,7 @@ GeneralMaterialGroup.defaultProps = {
 };
 
 export default MaterialGroup;
+
+export {
+  MATERIAL_HEADER
+};
