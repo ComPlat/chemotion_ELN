@@ -2,24 +2,15 @@
 
 # Background job for LLM-based SDS (Safety Data Sheet) extraction.
 #
-# Extraction strategy (first available wins):
-#
-#   1. Provider path (SF-05) — used when the user has an LLM provider configured
-#      in Profile → AI Settings.  The PDF is converted to text locally via
-#      Ghostscript and then passed to LlmTaskRunner, which resolves the provider
-#      and model through LlmProviderResolver using the following priority:
-#        a) User's task-specific model override for 'sds_extraction'
-#           (set in the "Task → Model" table in Profile → AI Settings)
-#        b) User's default provider/model
-#        c) Admin's global provider/model
-#
-#   2. Legacy path (ai4chemotion microservice) — currently disabled; the code is
-#      commented out below and re-enabled in a separate commit.
+# The PDF is converted to text locally and passed to LlmTaskRunner, which picks the
+# provider and model through LlmProviderResolver: the task's own override, then the
+# user's default provider, then the institution's.
 #
 # Usage:
 #   ExtractSdsJob.perform_later(
 #     sample_id: chemical.sample_id,
 #     user_id: current_user.id,
+#     sheet_path: '/safety_sheets/merck/33009_0123456789abcdef.pdf', # optional
 #   )
 #
 # rubocop:disable Metrics/ClassLength -- this job owns the whole SDS pipeline end
@@ -92,9 +83,6 @@ class ExtractSdsJob < ApplicationJob
     # before spending an LLM call on it.
     return unless claim_extraction(chemical)
 
-    # SF-05: use the user's configured LLM provider.
-    # Legacy ai4chemotion fallback (re-enabled in a separate commit):
-    #   run_with_ai4chemotion(chemical, file_path, sample_id)
     user = User.find_by(id: user_id)
     return fail_with(NO_PROVIDER_MESSAGE) unless user && provider_path_available?(user)
 
@@ -182,10 +170,6 @@ class ExtractSdsJob < ApplicationJob
 
   # Every failure reaches the user as the same notification; only the log line
   # differs by error class.
-  #
-  # Legacy ai4chemotion branches (re-enabled in a separate commit):
-  #   when Chemotion::Ai4ChemotionService::ServiceUnavailableError
-  #     'SDS extraction unavailable'
   def handle_perform_error(error)
     case error
     when Errors::LlmNotConfiguredError, Errors::LlmProviderError
@@ -253,35 +237,6 @@ class ExtractSdsJob < ApplicationJob
     @notification_action  = 'ElementActions.fetchSampleById'
   end
 
-  # Legacy ai4chemotion microservice path — disabled for now; re-enabled in a
-  # separate commit together with lib/chemotion/ai4_chemotion_service.rb.
-  #
-  # # Legacy: submit the PDF to the ai4chemotion microservice and poll for result.
-  # def run_with_ai4chemotion(chemical, file_path, sample_id)
-  #   vendor = detect_vendor(chemical)
-  #
-  #   progress.progress = 5
-  #   status[:stage] = 'submitting'
-  #   submission = Chemotion::Ai4ChemotionService.extract_sds(
-  #     file_path, sample_id: sample_id, vendor: vendor
-  #   )
-  #   job_id = submission['job_id']
-  #
-  #   result = poll_until_complete(job_id)
-  #
-  #   if result['status'] == 'SUCCESS' && result['result'].present?
-  #     progress.progress = 90
-  #     status[:stage] = 'updating_record'
-  #     update_chemical_data(chemical, result['result'])
-  #     @notification_message = "SDS extraction completed. Safety data has been updated for sample #{sample_id}."
-  #     @notification_action = 'ElementActions.fetchSampleById'
-  #   else
-  #     errors = result['errors']&.join(', ') || result['message'] || 'Unknown error'
-  #     @notification_message = "SDS extraction failed: #{errors}"
-  #     @notification_level = 'error'
-  #   end
-  # end
-
   # The named sheet, else the one chemical_data records last.
   def sds_file_for(chemical, sheet_path)
     sheet_path ? existing_public_file(sheet_path) : resolve_sds_path(chemical)
@@ -340,61 +295,6 @@ class ExtractSdsJob < ApplicationJob
 
     abs_path if File.exist?(abs_path)
   end
-
-  # Legacy ai4chemotion helpers — disabled for now; re-enabled in a separate
-  # commit together with lib/chemotion/ai4_chemotion_service.rb.
-  #
-  # # Detect vendor from chemical_data.
-  # def detect_vendor(chemical)
-  #   return nil unless chemical.chemical_data.is_a?(Array) && chemical.chemical_data[0].is_a?(Hash)
-  #
-  #   data = chemical.chemical_data[0]
-  #   return 'merck' if data['merckProductInfo'].present?
-  #   return 'thermofischer' if data['alfaProductInfo'].present?
-  #
-  #   # Fallback: extract vendor from safetySheetPath file path
-  #   if data['safetySheetPath'].is_a?(Array) && data['safetySheetPath'].any?
-  #     entry = data['safetySheetPath'].last
-  #     link = entry.is_a?(Hash) ? entry.values.find { |v| v.is_a?(String) && v.include?('/safety_sheets/') } : entry
-  #     if link.present?
-  #       match = link.match(%r{/safety_sheets/([^/]+)/})
-  #       return match[1] if match
-  #     end
-  #   end
-  #
-  #   nil
-  # end
-  #
-  # # Poll ai4chemotion job until SUCCESS or FAILURE, with backoff.
-  # def poll_until_complete(job_id)
-  #   max_polls = 120
-  #   interval = 5 # seconds
-  #
-  #   max_polls.times do |i|
-  #     sleep(interval)
-  #
-  #     status_resp = Chemotion::Ai4ChemotionService.job_status(job_id)
-  #     current_status = status_resp['status']
-  #     remote_progress = status_resp['progress'] || 0
-  #
-  #     # Map remote progress (0.0-1.0) to our percent (10-85)
-  #     mapped_percent = 10 + (remote_progress * 75).to_i
-  #     progress.progress = mapped_percent
-  #     status[:stage] = "extracting (#{current_status})"
-  #
-  #     case current_status
-  #     when 'SUCCESS'
-  #       return Chemotion::Ai4ChemotionService.job_result(job_id)
-  #     when 'FAILURE'
-  #       return Chemotion::Ai4ChemotionService.job_result(job_id)
-  #     end
-  #
-  #     # Increase interval after first few polls
-  #     interval = 10 if i > 10
-  #   end
-  #
-  #   { 'status' => 'FAILURE', 'errors' => ['Extraction timed out after polling'] }
-  # end
 
   # Merge LLM extraction result into chemical_data.
   #
