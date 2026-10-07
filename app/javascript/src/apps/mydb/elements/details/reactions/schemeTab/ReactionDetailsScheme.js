@@ -32,6 +32,25 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
+/*
+A group lists the reaction's own materials and, after them, those only some of its variations have -
+matched by id, not by position: two variations that each added a different solvent have both in the
+same slot, and both are listed. One sample several variations share is listed once.
+*/
+const materialsIncludingVariations = (reaction, variations, materialGroup) => {
+  const materials = [...reaction[materialGroup]];
+  const listed = new Set(materials.map((material) => material.id));
+  variations.forEach(({ data: variation }) => {
+    (variation[materialGroup] || []).forEach((material) => {
+      if (material && !listed.has(material.id)) {
+        listed.add(material.id);
+        materials.push(material);
+      }
+    });
+  });
+  return materials;
+};
+
 export default class ReactionDetailsScheme extends React.Component {
   static contextType = StoreContext;
 
@@ -408,16 +427,9 @@ export default class ReactionDetailsScheme extends React.Component {
       (material) => !(material.conversion_rate && material.conversion_rate !== 0)
     );
 
-    const getMaterialsIncludingVariations = (materialGroup) => {
-      const materials = [...reaction[materialGroup]];
-      variations.forEach(({ data: variation }) => {
-        while (materials.length < variation[materialGroup].length) {
-          materials.push(variation[materialGroup][materials.length]);
-        }
-      });
-
-      return materials;
-    };
+    const getMaterialsIncludingVariations = (materialGroup) => (
+      materialsIncludingVariations(reaction, variations, materialGroup)
+    );
 
     return (
       <>
@@ -597,3 +609,5 @@ ReactionDetailsScheme.propTypes = {
 ReactionDetailsScheme.defaultProps = {
   canChangeMaterialList: true,
 };
+
+export { materialsIncludingVariations };
