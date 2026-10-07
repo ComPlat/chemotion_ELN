@@ -152,7 +152,7 @@ export default class SelectionActions extends React.Component {
         return <SelectionTransferModal
           title="Assign to Collection"
           action="assign"
-          withShared={false}
+          withShared={true}
           withRepository={true}
           onHide={this.hideModal}
         />;
