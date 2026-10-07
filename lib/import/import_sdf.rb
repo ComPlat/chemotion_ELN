@@ -849,6 +849,8 @@ class Import::ImportSdf < Import::ImportSamples
 
   def sanitize_molfile(mf)
     # TODO: check for residue polymer thingy
-    mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
+    mf = mf.dup.force_encoding('UTF-8')
+    mf = mf.valid_encoding? ? mf : mf.encode('UTF-8', 'binary', invalid: :replace, undef: :replace)
+    mf.encode('UTF-8', universal_newline: true).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
   end
 end

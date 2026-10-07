@@ -319,10 +319,26 @@ describe Entities::SampleEntity do
     # .b simulates bytea → ASCII-8BIT as returned by PostgreSQL
     let(:binary_molfile) { textnode_molfile.b }
 
+    def represent_sample(sample)
+      described_class.represent(
+        sample,
+        detail_levels: { Sample => 10 },
+        displayed_in_list: false,
+      ).serializable_hash[:molfile]
+    end
+
+    def stub_sample_associations(sample)
+      molecule = build_stubbed(:molecule)
+      allow(sample).to receive(:molecule).and_return(molecule)
+      allow(sample).to receive(:molecule_computed_props).and_return({})
+      allow(sample).to receive(:reactions_samples).and_return([])
+    end
+
     subject(:molfile_output) do
       sample = build_stubbed(:sample)
+      stub_sample_associations(sample)
       allow(sample).to receive(:molfile).and_return(binary_molfile)
-      described_class.represent(sample, detail_levels: { Sample => 10 }, displayed_in_list: false).serializable_hash[:molfile]
+      represent_sample(sample)
     end
 
     it 'preserves non-ASCII characters when molfile bytes are ASCII-8BIT' do
@@ -340,9 +356,9 @@ describe Entities::SampleEntity do
 
     it 'returns nil when molfile is nil' do
       sample = build_stubbed(:sample)
+      stub_sample_associations(sample)
       allow(sample).to receive(:molfile).and_return(nil)
-      result = described_class.represent(sample, detail_levels: { Sample => 10 }, displayed_in_list: false).serializable_hash[:molfile]
-      expect(result).to be_nil
+      expect(represent_sample(sample)).to be_nil
     end
   end
 end
