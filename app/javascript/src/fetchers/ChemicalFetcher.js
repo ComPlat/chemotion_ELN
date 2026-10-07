@@ -96,7 +96,8 @@ export default class ChemicalFetcher {
       .catch(() => false);
   }
 
-  static extractSds(sampleId) {
+  // Queues the AI extraction job; sheetPath picks the saved sheet, else the job takes the last one.
+  static extractSds(sampleId, sheetPath) {
     return fetch('/api/v1/chemicals/extract_sds', {
       credentials: 'same-origin',
       method: 'POST',
@@ -104,7 +105,7 @@ export default class ChemicalFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ sample_id: sampleId })
+      body: JSON.stringify({ sample_id: sampleId, ...(sheetPath ? { path: sheetPath } : {}) })
     }).then((response) => {
       if (response.ok) {
         return response.json();
