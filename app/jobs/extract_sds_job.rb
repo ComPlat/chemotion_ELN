@@ -78,14 +78,14 @@ class ExtractSdsJob < ApplicationJob
   # The only directory under public/ an SDS may be read from.
   SAFETY_SHEET_DIR = 'safety_sheets'
 
-  def perform(sample_id:, user_id:)
+  def perform(sample_id:, user_id:, sheet_path: nil)
     self.priority = self.class.default_priority
     start_notification(sample_id, user_id)
 
     chemical = Chemical.find_by(sample_id: sample_id)
     return fail_with("SDS extraction failed: no chemical record for sample #{sample_id}.") unless chemical
 
-    file_path = resolve_sds_path(chemical)
+    file_path = sds_file_for(chemical, sheet_path)
     return fail_with('SDS extraction failed: no SDS file found for this chemical.') unless file_path
 
     # A second execution of this same job is doing the work already; bail out
@@ -272,6 +272,11 @@ class ExtractSdsJob < ApplicationJob
   #     @notification_level = 'error'
   #   end
   # end
+
+  # The named sheet, else the one chemical_data records last.
+  def sds_file_for(chemical, sheet_path)
+    sheet_path ? existing_public_file(sheet_path) : resolve_sds_path(chemical)
+  end
 
   # Find the SDS file on disk from chemical_data. Two places record one:
   # safetySheetPath (written by save_safety_datasheet / save_manual_sds), and a

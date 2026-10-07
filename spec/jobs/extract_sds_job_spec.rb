@@ -99,6 +99,24 @@ RSpec.describe ExtractSdsJob do
       #   described_class.new.perform(sample_id: sample.id, user_id: user.id)
       # end
 
+      it 'reads the sheet it is given rather than the last saved one' do
+        other = Rails.public_path.join('safety_sheets/merck/other.pdf').to_s
+        allow(File).to receive(:exist?).with(other).and_return(true)
+        allow(SdsPdfTextExtractor).to receive(:extract).with(other).and_return('SDS text content')
+
+        described_class.new.perform(sample_id: sample.id, user_id: user.id,
+                                    sheet_path: '/safety_sheets/merck/other.pdf')
+
+        expect(SdsPdfTextExtractor).to have_received(:extract).with(other)
+      end
+
+      it 'refuses a given sheet outside the safety sheets folder' do
+        job = described_class.new
+        job.perform(sample_id: sample.id, user_id: user.id, sheet_path: '/safety_sheets/../../config/database.yml')
+
+        expect(job.instance_variable_get(:@notification_message)).to include('no SDS file found')
+      end
+
       it 'updates the chemical record with extracted data' do
         described_class.new.perform(sample_id: sample.id, user_id: user.id)
 

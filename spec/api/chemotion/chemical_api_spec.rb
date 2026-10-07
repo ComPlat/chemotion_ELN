@@ -810,5 +810,32 @@ describe Chemotion::ChemicalAPI do
 
       expect(response).to have_http_status(:service_unavailable)
     end
+
+    context 'with a provider configured' do
+      let(:link) { '/safety_sheets/merck/33009_0123456789abcdef.pdf' }
+
+      before { allow(LlmProviderResolver).to receive(:resolve).and_return(true) }
+
+      def extract(params)
+        post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id, **params }.to_json,
+                                              headers: { 'CONTENT_TYPE' => 'application/json' }
+      end
+
+      it 'queues the job for the sheet the caller names' do
+        expect { extract(path: link) }.to have_enqueued_job(ExtractSdsJob)
+          .with(sample_id: own_sample.id, user_id: unauthorized_user.id, sheet_path: link)
+        expect(response).to have_http_status(:accepted)
+      end
+
+      it 'leaves the sheet to the job when none is named' do
+        expect { extract({}) }.to have_enqueued_job(ExtractSdsJob)
+          .with(sample_id: own_sample.id, user_id: unauthorized_user.id, sheet_path: nil)
+      end
+
+      it 'refuses a path that is not a saved sheet, without queueing a job' do
+        expect { extract(path: '/etc/passwd') }.not_to have_enqueued_job(ExtractSdsJob)
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
   end
 end
