@@ -220,18 +220,6 @@ full name as a tooltip).
 // The scroll position of the grid, drawn onto the toolbar table: the header row is the track and
 // this is the thumb. updateToolbarScrollIndicator places it; without horizontal overflow it stays
 // hidden.
-.reaction-variations-grid__resize-handle {
-  height: 8px;
-  margin-top: 2px;
-  border-radius: 4px;
-  cursor: ns-resize;
-  background-color: var(--bs-gray-200);
-
-  &:hover {
-    background-color: var(--bs-gray-400);
-  }
-}
-
 .reaction-variations-grid__scroll-thumb {
   display: none;
   position: absolute;

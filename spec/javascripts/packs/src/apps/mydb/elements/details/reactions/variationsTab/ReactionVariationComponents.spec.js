@@ -5,7 +5,7 @@ import { act } from 'react-dom/test-utils';
 import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
-  ColumnVisibilityHeader, GridResizeHandle, isInputKeyboardEvent
+  ColumnVisibilityHeader, isInputKeyboardEvent, useGridHeightCap
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
@@ -99,45 +99,68 @@ describe('ReactionVariationComponents ColumnVisibilityHeader', () => {
   });
 });
 
-// The bar below the grid sets how tall it may grow; a double-click goes back to the automatic height.
-describe('ReactionVariationComponents GridResizeHandle', () => {
-  const render = (userHeight = null) => {
-    const setUserHeight = sinon.spy();
-    const gridElementRef = { current: { offsetHeight: 300 } };
-    const wrapper = mount(
-      <GridResizeHandle gridElementRef={gridElementRef} userHeight={userHeight} setUserHeight={setUserHeight} />
-    );
-    return { wrapper, setUserHeight };
+/*
+The grid takes as much height as one screen leaves it below the tab bar and the toolbars, and only once
+its rows need more; it never gets shorter than a few rows.
+*/
+describe('ReactionVariationComponents useGridHeightCap', () => {
+  let container;
+
+  const rect = (top) => () => ({ top, bottom: top, left: 0, right: 0, width: 0, height: 0 });
+  const withHeight = (element, height) => Object.defineProperty(element, 'offsetHeight', { value: height });
+
+  // A detail card showing `visible` px, with the tab bar at the top and the grid `above` px below it.
+  const buildCard = ({ visible, above, content }) => {
+    container = document.createElement('div');
+    container.className = 'detail-card__scroll-container';
+    Object.defineProperty(container, 'clientHeight', { value: visible });
+    const tabBar = document.createElement('ul');
+    tabBar.className = 'nav-tabs has-config-overlay';
+    tabBar.getBoundingClientRect = rect(0);
+    const grid = document.createElement('div');
+    grid.getBoundingClientRect = rect(above);
+    const header = document.createElement('div');
+    header.className = 'ag-header';
+    withHeight(header, 50);
+    const rows = document.createElement('div');
+    rows.className = 'ag-center-cols-container';
+    withHeight(rows, content - 52);
+    grid.append(header, rows);
+    container.append(tabBar, grid);
+    document.body.append(container);
+    return grid;
   };
 
-  const mouse = (type, clientY) => document.dispatchEvent(new window.MouseEvent(type, { clientY }));
-
-  it('follows a drag, and saves the height once the drag ends', () => {
-    const { wrapper, setUserHeight } = render();
-    wrapper.find('div').simulate('mousedown', { clientY: 100 });
-    mouse('mousemove', 250);
-
-    expect(setUserHeight.lastCall.args).toEqual([450, { persist: false }]);
-    mouse('mouseup', 250);
-    expect(setUserHeight.lastCall.args).toEqual([450]);
+  const heightFor = (card) => {
+    const grid = buildCard(card);
+    let result;
+    const Harness = () => {
+      result = useGridHeightCap({ current: grid }, { current: null });
+      return null;
+    };
+    const wrapper = mount(<Harness />);
+    act(() => { result.syncGridHeight(); });
+    const { gridHeight } = result;
     wrapper.unmount();
+    container.remove();
+    return gridHeight;
+  };
+
+  it('fills the screen below the tab bar and the toolbars once the rows need more', () => {
+    expect(heightFor({ visible: 800, above: 150, content: 2000 })).toBe(800 - 150 - 16);
   });
 
-  it('does not let the grid get shorter than a few rows', () => {
-    const { wrapper, setUserHeight } = render();
-    wrapper.find('div').simulate('mousedown', { clientY: 400 });
-    mouse('mousemove', 0);
-    mouse('mouseup', 0);
-
-    expect(setUserHeight.lastCall.args).toEqual([120]);
-    wrapper.unmount();
+  it('leaves a grid whose rows fit as tall as they are', () => {
+    expect(heightFor({ visible: 800, above: 150, content: 300 })).toBe(null);
   });
 
-  it('goes back to the automatic height on double-click', () => {
-    const { wrapper, setUserHeight } = render(450);
-    wrapper.find('div').simulate('doubleclick');
+  it('keeps a few rows in a short window', () => {
+    expect(heightFor({ visible: 200, above: 150, content: 2000 })).toBe(200);
+  });
 
-    expect(setUserHeight.calledOnceWith(null)).toBe(true);
-    wrapper.unmount();
+  it('pays no attention to a height dragged in an earlier version', () => {
+    window.localStorage.setItem('userundefined-reactionVariationsGridHeight', '120');
+    expect(heightFor({ visible: 800, above: 150, content: 2000 })).toBe(634);
+    window.localStorage.removeItem('userundefined-reactionVariationsGridHeight');
   });
 });
