@@ -312,6 +312,23 @@ export default class MaterialHandler {
     return Number.isFinite(yieldValue) && maxAmount > 0 ? yieldValue : null;
   }
 
+  /*
+  The yields of the reaction's variations, as { min, max } fractions, where they are not all the
+  reaction's own - null otherwise. refreshDerivedValues keeps a variation's yield in its product's
+  `equivalent`, worked out from the variation's own amounts. It leaves gas products, polymers and
+  decoupled materials alone, so those have no range here either.
+  */
+  yieldRange() {
+    const { material, reaction } = this;
+    const refMaterial = reaction.getReferenceMaterial();
+    if (!this.isProduct || this.isSbmm || material.gas_type === 'gas' || reaction.hasPolymers()
+      || !refMaterial || refMaterial.decoupled || material.decoupled) {
+      return null;
+    }
+    const { min, max, isRangeField } = this.findMinMayUnit('', (m) => m.equivalent, { needsAmount: true });
+    return isRangeField ? { min, max } : null;
+  }
+
   calculateYield() {
     const { material, reaction } = this;
     const refMaterial = reaction.getReferenceMaterial();

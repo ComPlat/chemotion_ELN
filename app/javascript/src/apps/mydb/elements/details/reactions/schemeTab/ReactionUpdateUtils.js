@@ -103,7 +103,9 @@ variations grid's, which share them and accept a leading minus sign.
 */
 const withoutNegativeValues = (changeEvent) => {
   switch (changeEvent.type) {
+    // `amountUnitChanged` is what the mass, volume, moles and activity inputs send.
     case 'amountChanged':
+    case 'amountUnitChanged':
       return changeEvent.amount
         ? { ...changeEvent, amount: { ...changeEvent.amount, value: nonNegative(changeEvent.amount.value) } }
         : changeEvent;

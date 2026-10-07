@@ -13,7 +13,7 @@ import {
   copyVariationDataset, reorderVariationDatasets, getInitialColumnState, persistColumnState,
   adoptLegacyVariationsLayout, convertVariationDatasetToInternalVariations,
   exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds,
-  getUserGridHeight, persistUserGridHeight
+  getUserGridHeight, persistUserGridHeight, placeUnknownColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
 
@@ -777,5 +777,51 @@ describe('ReactionVariationsUtils', () => {
       const types = Object.values(formatted.foo).map((field) => field.type);
       expect(types.every((type) => ['integer', 'system-defined', 'select', 'text'].includes(type))).toBe(true);
     });
+  });
+});
+
+/*
+A material added to the reaction after its grid layout was stored gets columns the layout does not
+know. They go next to the columns before them in the definitions, not behind everything else.
+*/
+describe('placeUnknownColumns', () => {
+  const definitions = [
+    'variation_index', 'variation_group',
+    'reactants_0_mass', 'reactants_0_eq',
+    'reactants_1_mass', 'reactants_1_eq',
+    'products_0_mass', 'reaction_temperature',
+  ];
+  const ids = (state) => state.map(({ colId }) => colId);
+
+  it('puts a second reactant right after the first', () => {
+    const stored = ['variation_index', 'variation_group', 'reactants_0_mass', 'reactants_0_eq', 'products_0_mass',
+      'reaction_temperature'].map((colId) => ({ colId, width: 100 }));
+
+    expect(ids(placeUnknownColumns(stored, definitions))).toEqual(definitions);
+  });
+
+  it('follows the first reactant where the user has moved it', () => {
+    const stored = ['variation_index', 'variation_group', 'products_0_mass', 'reactants_0_mass', 'reactants_0_eq',
+      'reaction_temperature'].map((colId) => ({ colId }));
+
+    expect(ids(placeUnknownColumns(stored, definitions))).toEqual([
+      'variation_index', 'variation_group', 'products_0_mass', 'reactants_0_mass', 'reactants_0_eq',
+      'reactants_1_mass', 'reactants_1_eq', 'reaction_temperature',
+    ]);
+  });
+
+  it('keeps what the stored layout says of the columns it knows', () => {
+    const stored = [{ colId: 'variation_index', width: 60, hide: false }, { colId: 'reactants_0_mass', hide: true }];
+
+    const placed = placeUnknownColumns(stored, ['variation_index', 'reactants_0_mass', 'reactants_0_eq']);
+    expect(placed).toEqual([
+      { colId: 'variation_index', width: 60, hide: false },
+      { colId: 'reactants_0_mass', hide: true },
+      { colId: 'reactants_0_eq' },
+    ]);
+  });
+
+  it('puts a column with nothing known before it first', () => {
+    expect(ids(placeUnknownColumns([{ colId: 'b' }], ['a', 'b']))).toEqual(['a', 'b']);
   });
 });
