@@ -1923,7 +1923,7 @@ export default class ChemicalTab extends React.Component {
         className={`sds-mode-picker__option${badge ? ' sds-mode-picker__option--default' : ''}`}
         onClick={() => this.runExtraction(sheetPath, mode)}
       >
-        <i className={`fa ${icon} fa-fw sds-mode-picker__icon`} />
+        {icon}
         <span>
           <span className="sds-mode-picker__title">
             {title}
@@ -1941,7 +1941,7 @@ export default class ChemicalTab extends React.Component {
           {option(
             'extract-sds-builtin',
             'builtin',
-            'fa-file-text-o',
+            <i className="fa fa-file-text-o fa-fw sds-mode-picker__icon" />,
             'Built-in reader',
             'Parses the sheet on the server in seconds',
             'Default'
@@ -1949,7 +1949,7 @@ export default class ChemicalTab extends React.Component {
           {option(
             'extract-sds-ai',
             'ai',
-            'fa-magic',
+            <span className="sds-mode-picker__icon sds-mode-picker__icon--sparkle" aria-hidden="true">✨</span>,
             'AI extraction',
             'Your AI provider reads the sheet; takes up to a minute, review the result'
           )}
