@@ -65,8 +65,15 @@
   }
 
   &__icon {
+    width: 1.25em;
     margin-top: 0.2rem;
+    text-align: center;
     color: var(--bs-primary);
+  }
+
+  &__icon--sparkle {
+    margin-top: 0;
+    line-height: 1.4;
   }
 
   &__title {
