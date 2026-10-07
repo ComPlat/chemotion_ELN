@@ -139,19 +139,15 @@ export default class SampleDetailsComponents extends React.Component {
   }
 
   /**
-   * Updates reference component based on purity changes.
-   * @param {boolean} lockAmountColumnSolids - Whether solid amounts are locked
-   * @param {string} materialGroup - The material group type
+   * Updates dependent amounts and ratios, then mixture totals, after the reference's
+   * molar amount changes through an amount, density or purity edit.
    */
-  handleReferenceComponentUpdateFromPurity(lockAmountColumnSolids, materialGroup) {
+  updateMixtureAfterReferenceAmountChange() {
     const { sample } = this.props;
 
-    // Update equivalent only if:
-    // - Liquid: Always update
-    // - Solid: Update if amount column is locked (user has manually entered a value)
-    if (materialGroup === 'liquid' || (materialGroup === 'solid' && lockAmountColumnSolids)) {
-      sample.updateMixtureComponentEquivalent();
-    }
+    // Initialize missing amounts from ratios; preserve existing component quantities.
+    sample.updateMixtureComponentsFromReferenceAmount();
+    sample.calculateTotalMixtureMass();
   }
 
   /**
@@ -333,16 +329,15 @@ export default class SampleDetailsComponents extends React.Component {
     const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
 
     if (isReferenceComponent) {
-      // Reference amount changed → fill/scale the other components from it. The amount
-      // input is debounced (SampleComponent), so this fires once with the settled value.
-      sample.updateMixtureComponentsFromReferenceAmount();
-    } else if (referenceComponent) {
-      // Non-reference changed → only update its own equivalent against the reference
-      currentComponent.updateRatioFromReference(referenceComponent);
+      // Debouncing groups rapid keystrokes; pauses or later edits trigger another update.
+      this.updateMixtureAfterReferenceAmountChange();
+    } else {
+      if (referenceComponent) {
+        // Non-reference changed → only update its own equivalent against the reference
+        currentComponent.updateRatioFromReference(referenceComponent);
+      }
+      sample.calculateTotalMixtureMass();
     }
-
-    // Update sample total mass for the reaction scheme
-    sample.calculateTotalMixtureMass();
   }
 
   /**
@@ -364,17 +359,13 @@ export default class SampleDetailsComponents extends React.Component {
     const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
 
     if (isReferenceComponent) {
-      // A density edit can give the reference an amount (volume + density), just like a
-      // reference amount change → fill/scale the other components from it so a typed ratio
-      // on an amount-less component fills in its amount instead of collapsing to 0.
-      sample.updateMixtureComponentsFromReferenceAmount();
+      // Density can derive a reference amount from volume, so apply the same reference policy.
+      this.updateMixtureAfterReferenceAmountChange();
     } else {
       // Non-reference (or no reference set) → recompute ratios from amounts.
       sample.updateMixtureComponentEquivalent();
+      sample.calculateTotalMixtureMass();
     }
-
-    // update sample total mass for the reaction scheme
-    sample.calculateTotalMixtureMass();
   }
 
   /**
@@ -404,6 +395,7 @@ export default class SampleDetailsComponents extends React.Component {
 
     currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
     SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+    sample.calculateTotalMixtureMass();
   }
 
   /**
@@ -432,9 +424,15 @@ export default class SampleDetailsComponents extends React.Component {
 
     SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
 
-    // Check if the component is the reference component
-    if (referenceComponent && referenceComponent.id === sampleID) {
-      this.handleReferenceComponentUpdateFromPurity(lockAmountColumnSolids, materialGroup);
+    const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
+    // Purity changes moles for liquids and solids with locked mass. An unlocked solid
+    // keeps its moles and changes mass, so only the mixture total needs recalculation.
+    const purityChangesAmount = materialGroup === 'liquid'
+      || (materialGroup === 'solid' && lockAmountColumnSolids);
+    if (isReferenceComponent && purityChangesAmount) {
+      this.updateMixtureAfterReferenceAmountChange();
+    } else {
+      sample.calculateTotalMixtureMass();
     }
   }
 
@@ -679,6 +677,7 @@ export default class SampleDetailsComponents extends React.Component {
             <strong>Warning:</strong> These components share the same molecule.
             Merging will remove the source component and reset the target&apos;s
             amounts (mol, mass, volume, molarity, concentration) to zero.
+            {' '}Its ratio will reset to 0, or 1 if it is the reference component.
           </p>
         ) : (
           <p className="text-warning">
