@@ -197,6 +197,7 @@ module Chemotion
         desc 'Extract safety data from an SDS PDF using the configured LLM provider'
         params do
           requires :sample_id, type: Integer, desc: 'Sample ID'
+          optional :path, type: String, desc: 'safetySheetPath link of the sheet to read; the last saved one if omitted'
         end
 
         post do
@@ -218,10 +219,14 @@ module Chemotion
 
             chemical = Chemical.find_by(sample_id: sample.id)
             error!({ error: 'Chemical not found for this sample' }, 404) unless chemical
+            if params[:path].present? && Chemotion::SdsExtractor.saved_sheet_path(params[:path]).nil?
+              error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400)
+            end
 
             ExtractSdsJob.perform_later(
               sample_id: params[:sample_id],
               user_id: current_user.id,
+              sheet_path: params[:path].presence,
             )
 
             status 202
