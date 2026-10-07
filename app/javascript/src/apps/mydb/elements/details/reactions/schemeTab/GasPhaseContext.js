@@ -41,6 +41,9 @@ const markAsVariationOf = (variationReaction, reaction) => {
   return variationReaction;
 };
 
+// Whether `reaction` is a variation's copy rather than a reaction of its own.
+const isVariationReaction = (reaction) => Boolean(reaction?.[VARIATION_OF]);
+
 // Runs `change` - an edit of `reaction` - against the gas phase values of that reaction.
 const withReactionGasPhase = (reaction, change) => {
   const parent = reaction?.[VARIATION_OF];
@@ -60,6 +63,7 @@ const withReactionGasPhase = (reaction, change) => {
 };
 
 export {
+  isVariationReaction,
   markAsVariationOf,
   withReactionGasPhase,
 };
