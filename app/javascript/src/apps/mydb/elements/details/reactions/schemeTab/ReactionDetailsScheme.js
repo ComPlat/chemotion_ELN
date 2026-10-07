@@ -1218,13 +1218,10 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
 
-    // Assign the final stored amount before updating components. Locked switches retain
-    // gram normalization; unlocked switches retain the stored unit, including mol and volume.
+    // Preserve the stored unit regardless of the equivalent lock. A mol-stored mixture
+    // needs the new reference amount to keep its physical mass unchanged.
     if (canDeriveAmount) {
-      if (lockEquivColumn) {
-        updatedSample.amount_value = mixtureMassG;
-        updatedSample.amount_unit = 'g';
-      } else if (updatedSample.amount_unit === 'mol') {
+      if (updatedSample.amount_unit === 'mol') {
         updatedSample.amount_value = newAmountMol;
       }
     } else if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {

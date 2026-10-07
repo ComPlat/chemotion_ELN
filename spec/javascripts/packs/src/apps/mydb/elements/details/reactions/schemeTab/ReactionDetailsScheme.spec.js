@@ -1574,11 +1574,14 @@ describe('ReactionDetailsScheme reference mixture component switch (real Sample)
     });
 
     it(`restores the icosane amount and original solvent volumes on the reverse ${unit} switch`, () => {
-      const { reaction, mixture, scheme } = build(unit, true);
+      const { reaction, scheme } = build(unit, true);
 
       scheme.updatedReactionForComponentReferenceChange({ sampleID: 'ref-1', componentId: 'c-2' });
       scheme.updatedReactionForComponentReferenceChange({ sampleID: 'ref-1', componentId: 'c-1' });
 
+      // Propagation replaces Sample instances; check the current sample's settled amount.
+      const mixture = reaction.referenceMaterial;
+      expect(mixture.amount_unit).toBe(unit);
       expect(mixture.amount_g).toBeCloseTo(massG, 10);
       expect(mixture.amount_mol).toBeCloseTo(massG / icosaneRelMW, 12);
       expect(reaction.solvents[0].amount_l).toBeCloseTo(4, 10);
@@ -1659,6 +1662,7 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
             } else {
               const oldReferenceId = mixture.reference_component.id;
               const row = new Material({
+                reaction,
                 material: mixture,
                 materialGroup: 'starting_materials',
                 onChange: (event) => {
@@ -1671,11 +1675,14 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
               expect(row.state.mixtureComponents[0]).toBe(mixture.components[0]);
               row.handleComponentReferenceChange(changeEvent);
               expect(row.state.mixtureComponents.find((component) => component.reference).id).toBe(componentId);
+              expect(row.materialAmountMol(mixture).props.active).toBe(unit === 'mol');
+              expect(row.materialAmountMol(mixture).props.metricPrefix).toBe('m');
             }
           };
 
           switchReference('r2');
 
+          expect(reaction.referenceMaterial.amount_unit).toBe(unit);
           expect(reaction.referenceMaterial.amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
           expect(reaction.referenceMaterial.sample_details.previous_amount_g).toBeCloseTo(1, 10);
@@ -1686,6 +1693,7 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
 
           switchReference('r1');
 
+          expect(reaction.referenceMaterial.amount_unit).toBe(unit);
           expect(reaction.referenceMaterial.amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.02, 10);
           expect(reaction.referenceMaterial.sample_details.previous_amount_g).toBeCloseTo(1, 10);
@@ -1715,7 +1723,7 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
 
           expect(reaction.isNew).toBe(true);
           expect(updates.calledOnceWith(1)).toBe(true);
-          expect(mixture.amount_unit).toBe(lockEquivColumn ? 'g' : unit);
+          expect(mixture.amount_unit).toBe(unit);
           expect(getter.called).toBe(true);
           expect(getter.returnValues.every((value) => value === lockEquivColumn)).toBe(true);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
@@ -1786,6 +1794,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
         reopenedMixture.initialComponents(savedMixture.components.map(Component.deserializeData));
 
         expect(reopenedMixture.reference_component.id).toBe('r2');
+        expect(reopenedMixture.amount_unit).toBe(unit);
         expect(reopenedMixture.amount_g).toBeCloseTo(1, 10);
         expect(reopenedMixture.amount_mol).toBeCloseTo(0.01, 10);
         expect(reopenedMixture.equivalent).toBeCloseTo(1, 10);
@@ -1800,17 +1809,20 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
               scheme.updatedReactionForComponentReferenceChange(event);
             } else {
               const row = new Material({
-                material: mixture, materialGroup: 'reactants',
+                reaction, material: mixture, materialGroup: 'reactants',
                 onChange: (change) => scheme.updatedReactionForComponentReferenceChange(change),
               });
               row.setState = (state) => { row.state = { ...row.state, ...state }; };
               row.fetchMixtureComponentsIfNeeded(mixture);
               row.handleComponentReferenceChange(event);
+              expect(row.materialAmountMol(mixture).props.active).toBe(unit === 'mol');
+              expect(row.materialAmountMol(mixture).props.metricPrefix).toBe('m');
             }
           };
 
           switchReference('r2');
 
+          expect(mixture.amount_unit).toBe(unit);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
           expect(mixture.sample_details.reference_component_changed).toBe(false);
@@ -1822,6 +1834,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
 
           switchReference('r1');
 
+          expect(mixture.amount_unit).toBe(unit);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.02, 10);
           expect(mixture.sample_details.reference_component_changed).toBe(false);
@@ -1863,7 +1876,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
 
             expect(updates.calledOnceWith(1)).toBe(true);
             expect(mixture.sample_details.reference_component_changed).toBe(false);
-            expect(mixture.amount_unit).toBe(lockEquivColumn ? 'g' : unit);
+            expect(mixture.amount_unit).toBe(unit);
             expect(mixture.amount_g).toBeCloseTo(1, 10);
             expect(mixture.amount_l).toBeCloseTo(0.001, 10);
             expect(mixture.amount_mol).toBeCloseTo(componentId === 'r2' ? 0.01 : 0.02, 10);
