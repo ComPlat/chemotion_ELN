@@ -147,6 +147,14 @@ const ReactionStep = ({
 
   if (!step) return groups;
 
+  const stepButtonTitle = (() => {
+    if (isFirstStep) return 'The first step cannot be deleted';
+    if (reaction.canToggleStep(step)) return destroyed ? 'Restore this step' : 'Delete this step';
+    return destroyed
+      ? 'Restore the step before it and carry its product on first'
+      : 'Delete the later steps first';
+  })();
+
   return (
     <div className={`reaction-step border rounded p-2 mb-3${destroyed ? ' opacity-50' : ''}`}>
       <div className="d-flex justify-content-between align-items-center mb-2">
@@ -161,15 +169,16 @@ const ReactionStep = ({
           </span>
         </button>
         {permitOn(reaction) && (
-          <Button
-            variant={destroyed ? 'outline-secondary' : 'outline-danger'}
-            size="sm"
-            disabled={isFirstStep}
-            title={isFirstStep ? 'The first step cannot be deleted' : 'Delete this step'}
-            onClick={() => onDeleteStep(step)}
-          >
-            {destroyed ? 'Undo' : <i className="fa fa-trash" />}
-          </Button>
+          <span title={stepButtonTitle}>
+            <Button
+              variant={destroyed ? 'outline-secondary' : 'outline-danger'}
+              size="sm"
+              disabled={!reaction.canToggleStep(step)}
+              onClick={() => onDeleteStep(step)}
+            >
+              {destroyed ? 'Undo' : <i className="fa fa-trash" />}
+            </Button>
+          </span>
         )}
       </div>
       <Collapse in={open && !destroyed}>

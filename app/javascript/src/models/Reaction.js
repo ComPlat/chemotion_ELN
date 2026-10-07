@@ -1115,6 +1115,32 @@ export default class Reaction extends Element {
     );
   }
 
+  isCarryOnLocked(product) {
+    if (!product.carry_on) return false;
+    const liveSteps = this.reaction_steps.filter((step) => !step._destroy);
+    const index = liveSteps.findIndex((step) => step.id === product.reaction_step_id);
+    if (index < 0 || index === liveSteps.length - 1) return false;
+    return this.carriedProductsIntoStep(liveSteps[index + 1].id).length === 1;
+  }
+
+  prepareCarriedMove(material, targetGroup, targetStepId) {
+    const staysInStepProducts = targetGroup === 'products' && targetStepId === material.reaction_step_id;
+    if (!material.carry_on || staysInStepProducts) return true;
+    if (this.isCarryOnLocked(material)) return false;
+    material.carry_on = false;
+    return true;
+  }
+
+  canToggleStep(step) {
+    const steps = this.reaction_steps;
+    const index = steps.findIndex((entry) => entry.id === step.id);
+    if (index <= 0 || steps.slice(index + 1).some((entry) => !entry._destroy)) return false;
+    if (!step._destroy) return true;
+    const previous = steps[index - 1];
+    return !previous._destroy
+      && this.products.some((product) => product.reaction_step_id === previous.id && product.carry_on);
+  }
+
   addStep(values = {}) {
     const nextPosition = this.reaction_steps.length + 1;
     const step = {
@@ -1162,9 +1188,13 @@ export default class Reaction extends Element {
   }
 
   clearMultiStep() {
+    const destroyedStepIds = new Set(
+      this.reaction_steps.filter((step) => step._destroy).map((step) => step.id)
+    );
     this.reaction_steps = [];
     ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((group) => {
       if (this[group]) {
+        this[group] = this[group].filter((material) => !destroyedStepIds.has(material.reaction_step_id));
         this[group].forEach((material) => {
           material.reaction_step_id = null;
           material.carry_on = false;

@@ -440,8 +440,17 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
+    const targetStepId = this.activeDropStepId ?? null;
+    if (!reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
+      this.context.notifications.add({
+        title: 'Cannot move this product',
+        message: 'The next step needs it as its starting material. Delete that step first.',
+        level: 'warning'
+      });
+      return;
+    }
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
-    srcMat.reaction_step_id = this.activeDropStepId ?? null;
+    srcMat.reaction_step_id = targetStepId;
 
     // Translate UI group names to actual storage arrays for SBMM samples
     const actualSrcGroup = Reaction.storageGroupFor(srcMat, srcGroup);
@@ -2552,12 +2561,6 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
-  handleAddStep() {
-    const { reaction, onReactionChange } = this.props;
-    reaction.addStep();
-    onReactionChange(reaction, { updateGraphic: true });
-  }
-
   handleToggleCarryOn(product, step) {
     const { reaction, onReactionChange } = this.props;
     reaction.toggleCarryOn(product.id);
@@ -2673,17 +2676,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   renderSteps() {
     const { reaction } = this.props;
-    return (
-      <>
-        {reaction.reaction_steps.map((step) => this.renderStep(step))}
-        {permitOn(reaction) && (
-          <Button variant="outline-primary" size="sm" className="mb-3" onClick={() => this.handleAddStep()}>
-            <i className="fa fa-plus me-1" />
-            Add step
-          </Button>
-        )}
-      </>
-    );
+    return reaction.reaction_steps.map((step) => this.renderStep(step));
   }
 
   render() {
