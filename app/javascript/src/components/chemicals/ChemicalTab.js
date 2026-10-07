@@ -2004,12 +2004,13 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <ButtonGroup size="sm" className="sds-extract">
-        {llmAvailable && isSaved && !busy ? (
+        {/* Same trigger while busy: swapping it out mid-close leaves the Overlay without a target. */}
+        {llmAvailable && isSaved ? (
           <OverlayTrigger
             trigger="click"
             placement="bottom-end"
             rootClose
-            show={modePickerSheet === sheetPath}
+            show={modePickerSheet === sheetPath && !busy}
             onToggle={(open) => this.setState({ modePickerSheet: open ? sheetPath : '' })}
             overlay={this.renderModePicker(sheetPath)}
           >
