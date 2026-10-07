@@ -154,7 +154,13 @@ const refreshDerivedValuesOf = (variationReaction, parentReaction) => {
   };
 
   const deriveEquivalent = (material) => {
-    if (material.reference || !Number.isFinite(material.amount_mol)) return;
+    // The reference itself is 1, as the scheme tab sets it - also for one that was not the reference
+    // when its equivalent was stored.
+    if (material.reference) {
+      setDerived(material, 'equivalent', 1);
+      return;
+    }
+    if (!Number.isFinite(material.amount_mol)) return;
     setDerived(
       material,
       'equivalent',
@@ -230,6 +236,26 @@ const makeVariationReaction = (reaction, reactionData) => {
         );
       }
     );
+  });
+  /*
+  The reference is set in the Scheme tab only (see MaterialRef), so a variation has the reaction's,
+  whatever a diff saved before that says. Equal to the parent's, the flags drop out of the diff.
+  */
+  const parentMaterials = new Map(
+    [...reaction.allReactionMaterials, ...(reaction.products || [])].map((material) => [material.id, material])
+  );
+  ['starting_materials', 'reactants', 'products'].forEach((key) => {
+    clonedReaction[`_${key}`].forEach((material) => {
+      const parentMaterial = parentMaterials.get(material.id);
+      ['reference', 'weight_percentage_reference'].forEach((flag) => {
+        // The parent's value as it is - undefined included - so that an unchanged flag is no change.
+        if (parentMaterial) {
+          material[flag] = parentMaterial[flag];
+        } else if (material[flag]) {
+          material[flag] = false;
+        }
+      });
+    });
   });
   // Marked so that its edits are computed against its own gas phase values - see GasPhaseContext.
   const variationReaction = markAsVariationOf(

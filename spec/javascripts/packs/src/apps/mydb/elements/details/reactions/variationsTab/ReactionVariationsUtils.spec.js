@@ -15,6 +15,7 @@ import {
   exportVariationsToCsv, columnKind, isHiddenByDefault, persistUserColumnKinds,
   getUserGridHeight, persistUserGridHeight, placeUnknownColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import { reactionSegments } from 'fixture/reaction';
 
 describe('ReactionVariationsUtils', () => {
@@ -823,5 +824,91 @@ describe('placeUnknownColumns', () => {
 
   it('puts a column with nothing known before it first', () => {
     expect(ids(placeUnknownColumns([{ colId: 'b' }], ['a', 'b']))).toEqual(['a', 'b']);
+  });
+});
+
+/*
+The reference material is set in the Scheme tab only, and every variation follows it: a change of the
+reference recomputes each variation's equivalents and yields against the new one, from the variation's
+own amounts.
+*/
+describe('Reference change of a reaction with variations', () => {
+  let reaction;
+
+  const datasetOf = (variationReaction, idx) => ({
+    id: `row-${idx}`, idx, group: [idx, 0], analyses: [], notes: '', data: variationDiffOf(reaction, variationReaction),
+  });
+
+  const switchReferenceTo = (sample) => {
+    let changed = null;
+    const handler = new ReactionUpdateHandler({
+      reaction,
+      onReactionChange: (r) => { changed = r; },
+      onLockEquivColChange: () => {},
+    });
+    handler.handleMaterialsChange({ type: 'referenceChanged', sampleID: sample.id, materialGroup: 'starting_materials' });
+    return changed;
+  };
+
+  beforeEach(async () => {
+    reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.starting_materials[0].reference = true;
+    reaction.starting_materials[0].equivalent = 1;
+    reaction.starting_materials[1].equivalent = 1;
+
+    // A: less of the second starting material; B: less product.
+    const lessOther = makeVariationReaction(reaction, { id: 'a' });
+    lessOther.starting_materials[1].setAmount({ value: reaction.starting_materials[1].amount_g / 2, unit: 'g' });
+    const lessProduct = makeVariationReaction(reaction, { id: 'b' });
+    lessProduct.products[0].setAmount({ value: reaction.products[0].amount_g / 4, unit: 'g' });
+    // Rebuilt once, as the grid stores them: with the equivalents and yields their amounts give.
+    const asStored = (variation) => makeVariationReaction(reaction, variationDiffOf(reaction, variation));
+    reaction.variations = [datasetOf(asStored(lessOther), 0), datasetOf(asStored(lessProduct), 1)];
+  });
+
+  it('recomputes the equivalents and yields of every variation against the new reference', () => {
+    const changed = switchReferenceTo(reaction.starting_materials[1]);
+    const rows = convertVariationDatasetToInternalVariations(changed);
+
+    rows.forEach(({ data: variation }) => {
+      const [former, reference] = variation.starting_materials;
+      const [product] = variation.products;
+      expect(reference.reference).toBe(true);
+      expect(reference.equivalent).toBe(1);
+      expect(former.reference).toBe(false);
+      expect(former.equivalent).toBeCloseTo(former.amount_mol / reference.amount_mol, 9);
+
+      const stoichiometryCoeff = (product.coefficient || 1) / (reference.coefficient || 1);
+      const maxAmount = reference.amount_mol * stoichiometryCoeff * product.molecule_molecular_weight
+        / (product.purity || 1);
+      const expectedYield = product.amount_g > maxAmount
+        ? 1 : product.amount_mol / reference.amount_mol / stoichiometryCoeff;
+      expect(product.equivalent).toBeCloseTo(expectedYield, 9);
+    });
+    // Variation A has half as much of the new reference, so the former one comes to 2 equivalents.
+    expect(rows[0].data.starting_materials[0].equivalent).toBeCloseTo(2, 9);
+  });
+
+  it('stores no reference of its own in a variation', () => {
+    const changed = switchReferenceTo(reaction.starting_materials[1]);
+    convertVariationDatasetToInternalVariations(changed);
+
+    changed.variations.forEach(({ data }) => {
+      (data._starting_materials || []).forEach((entry) => {
+        expect(entry && 'reference' in entry).toBeFalsy();
+        expect(entry && '_reference' in entry).toBeFalsy();
+      });
+    });
+  });
+
+  it('gives a variation saved with a reference of its own the reaction\'s', () => {
+    const own = makeVariationReaction(reaction, { id: 'own' });
+    own.starting_materials[0].reference = false;
+    own.starting_materials[1].reference = true;
+    reaction.variations = [datasetOf(own, 0)];
+
+    const [row] = convertVariationDatasetToInternalVariations(reaction);
+    expect(row.data.starting_materials.map((material) => !!material.reference)).toEqual([true, false]);
+    expect(row.data.starting_materials[0].equivalent).toBe(1);
   });
 });

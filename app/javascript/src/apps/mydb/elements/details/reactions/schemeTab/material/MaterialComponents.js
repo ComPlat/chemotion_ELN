@@ -13,6 +13,7 @@ import SampleName from 'src/components/common/SampleName';
 import { SampleCode } from 'src/utilities/ElementUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import { permitOn } from 'src/components/common/uis';
+import { isVariationReaction } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
@@ -106,6 +107,7 @@ const addToDescTooltip = (
 const ProductReference = ({ mh }) => {
   const { reaction, material } = mh;
   const { handler } = mh;
+  const inVariation = isVariationReaction(reaction);
   return (
     reaction.weight_percentage && !mh.isSbmm ? (
       <div>
@@ -115,10 +117,12 @@ const ProductReference = ({ mh }) => {
               Select as reference product for weight percentage
             </Tooltip>
           )}
+          // In a variation the cell says why it cannot be chosen instead - see MaterialRef.
+          show={inVariation ? false : undefined}
         >
           <Form.Check
             type="radio"
-            disabled={!permitOn(reaction)}
+            disabled={!permitOn(reaction) || inVariation}
             name="weightPercentageReference"
             checked={material.weight_percentage_reference}
             onChange={(e) => handler.referenceChange(e, 'weightPercentageReferenceChanged')}
@@ -205,7 +209,8 @@ MaterialConcentration.propTypes = {
 const NestedReferenceRadios = ({ mh }) => {
   const { reaction, material } = mh;
 
-  const isDisabled = !permitOn(reaction);
+  const inVariation = isVariationReaction(reaction);
+  const isDisabled = !permitOn(reaction) || inVariation;
 
   const outerClassNames = [
     'reaction-material__nested-radio-outer',
@@ -252,6 +257,8 @@ const NestedReferenceRadios = ({ mh }) => {
           Inner Circle: Select Molar Reference
         </Tooltip>
       )}
+      // In a variation the cell says why they cannot be chosen instead - see MaterialRef.
+      show={inVariation ? false : undefined}
     >
       <div className="reaction-material__nested-radio-container m-1">
         <div
@@ -997,28 +1004,46 @@ VolumeRatio.propTypes = {
 The Ref cell takes the width of its header whatever it holds - a product's is mostly empty - so that
 the columns after it line up across starting materials, reactants and products.
 */
+/*
+The reference material is what every equivalent and yield is worked out from, so it is chosen once, for
+the reaction, in its Scheme tab. A variation - a row of the Variations tab or its Open panel - shows it
+but cannot change it, and says where to: its radios are disabled, which also takes them out of the
+mouse events (see `&__ref-data--locked`), so the tooltip goes on the cell.
+*/
+const VARIATION_REFERENCE_TOOLTIP = 'The reference material is set in the Scheme tab of the reaction '
+  + 'and applies to all of its variations.';
+
+const refCell = (reaction, content, hasRadio = true) => {
+  if (!hasRadio || !isVariationReaction(reaction)) {
+    return <div className="reaction-material__ref-data">{content}</div>;
+  }
+  return (
+    <OverlayTrigger overlay={<Tooltip id="variation-reference-tooltip">{VARIATION_REFERENCE_TOOLTIP}</Tooltip>}>
+      <div className="reaction-material__ref-data reaction-material__ref-data--locked">{content}</div>
+    </OverlayTrigger>
+  );
+};
+
 const MaterialRef = ({ mh }) => {
   const { materialGroup, reaction, material } = mh;
   if (materialGroup === 'products') {
-    return <div className="reaction-material__ref-data"><ProductReference mh={mh}/></div>;
+    return refCell(reaction, <ProductReference mh={mh}/>, reaction.weight_percentage && !mh.isSbmm);
   }
 
   if (reaction.weight_percentage && !mh.isSbmm) {
-    return <div className="reaction-material__ref-data"><NestedReferenceRadios mh={mh}/></div>;
+    return refCell(reaction, <NestedReferenceRadios mh={mh}/>);
   }
 
-  return (
-    <div className="reaction-material__ref-data">
-      <Form.Check
-        type="radio"
-        disabled={!permitOn(reaction)}
-
-        checked={material.reference}
-        onChange={(e) => mh.handler.referenceChange(e)}
-        size="sm"
-        className="m-1"
-      />
-    </div>
+  return refCell(
+    reaction,
+    <Form.Check
+      type="radio"
+      disabled={!permitOn(reaction) || isVariationReaction(reaction)}
+      checked={material.reference}
+      onChange={(e) => mh.handler.referenceChange(e)}
+      size="sm"
+      className="m-1"
+    />
   );
 };
 
