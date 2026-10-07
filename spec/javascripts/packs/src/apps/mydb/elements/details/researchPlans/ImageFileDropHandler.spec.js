@@ -7,6 +7,11 @@ import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/r
 
 Enzyme.configure({ adapter: new Adapter() });
 
+// URL.createObjectURL is a browser API; stub for the node test env.
+if (typeof global.URL === 'undefined') global.URL = {};
+global.URL.createObjectURL = () => 'blob:test-created';
+global.URL.revokeObjectURL = () => {};
+
 describe('ImageFileDropHandler', () => {
   const attachmentInBody = new Attachment();
   const attachmentInBodyButNoImage = new Attachment();
@@ -20,7 +25,7 @@ describe('ImageFileDropHandler', () => {
       value: {
         file_name: 'xyz.png',
         public_name: attachmentInBody.identifier,
-      }
+      },
     };
 
     const fieldWithoutImage = {
@@ -28,31 +33,27 @@ describe('ImageFileDropHandler', () => {
       type: 'no-image',
       value: {
         file_name: 'xyz.png',
-        public_name: attachmentInBodyButNoImage.identifier
-      }
+        public_name: attachmentInBodyButNoImage.identifier,
+      },
     };
-    it('drop first image', async () => {
+
+    it('drop first image', () => {
       const replacedFieldWasEmpty = {
-        value: {
-          file_name: null,
-          public_name: null,
-          zoom: null
-        }
+        value: { file_name: null, public_name: null, zoom: null },
       };
       researchPlan.body = [fieldWithImage, fieldWithoutImage];
-      const file = { name: 'dummyFile', preview: 'publicName' };
+      const file = new File([''], 'dummyFile', { type: 'image/png' });
 
-      const attachments = [];
-      const value = filter.handleDrop([file], replacedFieldWasEmpty, attachments);
+      const { nextAttachments, fieldValue } = filter.handleDrop([file], replacedFieldWasEmpty, []);
 
-      expect(attachments.length).toEqual(1);
-      expect(attachments[0].is_image_field).toEqual(true);
-      expect(attachments[0].ancestor).toEqual(null);
+      expect(nextAttachments.length).toEqual(1);
+      expect(nextAttachments[0].is_image_field).toEqual(true);
+      expect(nextAttachments[0].ancestor).toBeUndefined();
 
-      expect(value.identifier).toEqual(attachments[0].identifier);
-      expect(value.public_name).toEqual('publicName');
-      expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldWasEmpty);
+      expect(fieldValue.identifier).toEqual(nextAttachments[0].identifier);
+      expect(fieldValue.public_name).toEqual('blob:test-created');
+      expect(fieldValue.file_name).toEqual('dummyFile');
+      expect(fieldValue.old_value).toEqual(replacedFieldWasEmpty);
     });
 
     it('drop image after another image dropped', () => {
@@ -63,30 +64,28 @@ describe('ImageFileDropHandler', () => {
         value: {
           file_name: replacedAttachment.name,
           public_name: 'blob://http://...',
-          identifier: replacedAttachment.identifier
-        }
+          identifier: replacedAttachment.identifier,
+        },
       };
 
       researchPlan.body = [fieldWithImage, fieldWithoutImage];
       researchPlan.attachments = [replacedAttachment];
-      const dropedFile = { name: 'dummyFile', preview: 'anotherPublicName' };
+      const droppedFile = new File([''], 'dummyFile', { type: 'image/png' });
 
-      const value = filter.handleDrop(
-        [dropedFile],
-        replacedFieldTemporayImage,
-        researchPlan.attachments
+      const { nextAttachments, fieldValue } = filter.handleDrop(
+        [droppedFile], replacedFieldTemporayImage, researchPlan.attachments,
       );
 
-      expect(researchPlan.attachments.length).toEqual(2);
-      expect(researchPlan.attachments[0].is_deleted).toEqual(true);
-      expect(researchPlan.attachments[1].is_image_field).toEqual(true);
-      expect(researchPlan.attachments[1].is_deleted).toEqual(false);
-      expect(researchPlan.attachments[1].ancestor).toEqual(researchPlan.attachments[0].identifier);
+      expect(nextAttachments.length).toEqual(2);
+      expect(nextAttachments[0].is_deleted).toEqual(true);
+      expect(nextAttachments[1].is_image_field).toEqual(true);
+      expect(nextAttachments[1].is_deleted).toEqual(false);
+      expect(nextAttachments[1].ancestor).toEqual(nextAttachments[0].identifier);
 
-      expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
-      expect(value.public_name).toEqual('anotherPublicName');
-      expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldTemporayImage);
+      expect(fieldValue.identifier).toEqual(nextAttachments[1].identifier);
+      expect(fieldValue.public_name).toEqual('blob:test-created');
+      expect(fieldValue.file_name).toEqual('dummyFile');
+      expect(fieldValue.old_value).toEqual(replacedFieldTemporayImage);
     });
 
     it('drop image on image which is saved on server', () => {
@@ -96,31 +95,28 @@ describe('ImageFileDropHandler', () => {
       const replacedFieldTemporayImage = {
         value: {
           file_name: replacedAttachment.name,
-          public_name: replacedAttachment.identifier
-        }
+          public_name: replacedAttachment.identifier,
+        },
       };
 
       researchPlan.body = [fieldWithImage, fieldWithoutImage];
       researchPlan.attachments = [replacedAttachment];
+      const droppedFile = new File([''], 'dummyFile', { type: 'image/png' });
 
-      const dropedFile = { name: 'dummyFile', preview: 'anotherPublicName' };
-
-      const value = filter.handleDrop(
-        [dropedFile],
-        replacedFieldTemporayImage,
-        researchPlan.attachments
+      const { nextAttachments, fieldValue } = filter.handleDrop(
+        [droppedFile], replacedFieldTemporayImage, researchPlan.attachments,
       );
 
-      expect(researchPlan.attachments.length).toEqual(2);
-      expect(researchPlan.attachments[0].is_deleted).toEqual(true);
-      expect(researchPlan.attachments[1].is_image_field).toEqual(true);
-      expect(researchPlan.attachments[1].is_deleted).toEqual(false);
-      expect(researchPlan.attachments[1].ancestor).toEqual(researchPlan.attachments[0].identifier);
+      expect(nextAttachments.length).toEqual(2);
+      expect(nextAttachments[0].is_deleted).toEqual(true);
+      expect(nextAttachments[1].is_image_field).toEqual(true);
+      expect(nextAttachments[1].is_deleted).toEqual(false);
+      expect(nextAttachments[1].ancestor).toEqual(nextAttachments[0].identifier);
 
-      expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
-      expect(value.public_name).toEqual('anotherPublicName');
-      expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldTemporayImage);
+      expect(fieldValue.identifier).toEqual(nextAttachments[1].identifier);
+      expect(fieldValue.public_name).toEqual('blob:test-created');
+      expect(fieldValue.file_name).toEqual('dummyFile');
+      expect(fieldValue.old_value).toEqual(replacedFieldTemporayImage);
     });
   });
 });

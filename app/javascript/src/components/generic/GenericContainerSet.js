@@ -143,6 +143,10 @@ function GenericContainerSet(props) {
             toggleAddToReport={toggleAddToReport}
             noAct={noAct}
             handleSubmit={handleSubmit}
+            onAttachmentsChange={(next) => {
+              generic.attachments = next;
+              fnChange();
+            }}
           />
         );
       })}

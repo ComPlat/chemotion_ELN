@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { Accordion, Card } from 'react-bootstrap';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
-const EditModeRow = ({ container, handleChange, element, readOnly, index, rootContainer, isFirst }) => (
+const EditModeRow = ({ container, handleChange, element, readOnly, index, rootContainer, isFirst, onAttachmentsChange }) => (
   <Card className={`rounded-0 border-0${isFirst ? '' : ' border-top'}`}>
     <Card.Header className="rounded-0 p-0 border-bottom-0">
       <AccordionHeaderWithButtons eventKey={container.id}>
@@ -31,6 +31,9 @@ const EditModeRow = ({ container, handleChange, element, readOnly, index, rootCo
           onChange={() => handleChange(container)}
           rootContainer={rootContainer}
           index={index}
+          attachments={element.attachments || []}
+          getAttachments={() => element.attachments || []}
+          onAttachmentsChange={onAttachmentsChange}
         />
       </Card.Body>
     </Accordion.Collapse>
@@ -46,6 +49,7 @@ EditModeRow.propTypes = {
   element: PropTypes.object.isRequired,
   readOnly: PropTypes.bool.isRequired,
   isFirst: PropTypes.bool,
+  onAttachmentsChange: PropTypes.func,
 };
 
 export default EditModeRow;

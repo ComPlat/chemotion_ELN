@@ -319,7 +319,7 @@ export default class ReactionDetailsContainers extends Component {
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = { ...x };
-          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
+          if (typeof c.insert === 'string') c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
@@ -471,6 +471,12 @@ export default class ReactionDetailsContainers extends Component {
                               onChange={(_, variations) => this.handleChange(container, variations)}
                               rootContainer={reaction.container}
                               index={key}
+                              attachments={reaction.attachments || []}
+                              getAttachments={() => reaction.attachments || []}
+                              onAttachmentsChange={(next) => {
+                                reaction.attachments = next;
+                                this.props.handleReactionChange(reaction);
+                              }}
                             />
                           </Card.Body>
                         </Accordion.Collapse>

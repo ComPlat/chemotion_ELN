@@ -506,6 +506,8 @@ module Export
 
         # collect the reaction_svg_file
         fetch_image('reactions', reaction.reaction_svg_file)
+
+        fetch_reaction_richtext_attachments(reaction)
       end
     end
 
@@ -542,6 +544,8 @@ module Export
         @attachments += upload_att if upload_att&.length&.positive?
 
         fetch_containers(wellplate)
+
+        fetch_wellplate_richtext_attachments(wellplate)
       end
     end
 
@@ -570,6 +574,8 @@ module Export
 
         # fetch containers and attachments
         fetch_containers(screen)
+
+        fetch_screen_richtext_attachments(screen)
       end
     end
 
@@ -609,6 +615,70 @@ module Export
           fetch_image('research_plans', svg_file)
         end
       end
+    end
+
+    def extract_quill_richtext_identifiers(delta)
+      ops = delta.is_a?(Hash) ? delta['ops'] : nil
+      return [] unless ops.is_a?(Array)
+
+      ops.filter_map do |op|
+        insert = op.is_a?(Hash) ? op['insert'] : nil
+        next unless insert.is_a?(Hash)
+
+        insert.dig('attachment-image', 'attachment_identifier') ||
+          insert.dig('attachment-file', 'attachment_identifier')
+      end
+    end
+
+    def extract_container_inline_identifiers(container)
+      return [] unless container
+
+      identifiers = []
+      queue = [container]
+      until queue.empty?
+        node = queue.shift
+        content = node.extended_metadata&.dig('content')
+        identifiers += extract_quill_richtext_identifiers(content) if content.present?
+        queue.concat(node.children.to_a)
+      end
+      identifiers
+    end
+
+    def fetch_reaction_richtext_attachments(reaction)
+      identifiers = extract_quill_richtext_identifiers(reaction.observation) +
+                    extract_quill_richtext_identifiers(reaction.description) +
+                    extract_container_inline_identifiers(reaction.container)
+      return if identifiers.empty?
+
+      attachments = Attachment.where(identifier: identifiers, attachable_id: reaction.id, attachable_type: 'Reaction')
+      return if attachments.empty?
+
+      fetch_many(attachments, { 'attachable_id' => 'Reaction', 'created_by' => 'User', 'created_for' => 'User' })
+      @attachments += attachments
+    end
+
+    def fetch_wellplate_richtext_attachments(wellplate)
+      identifiers = extract_quill_richtext_identifiers(wellplate.description) +
+                    extract_container_inline_identifiers(wellplate.container)
+      return if identifiers.empty?
+
+      attachments = Attachment.where(identifier: identifiers, attachable_id: wellplate.id, attachable_type: 'Wellplate')
+      return if attachments.empty?
+
+      fetch_many(attachments, { 'attachable_id' => 'Wellplate', 'created_by' => 'User', 'created_for' => 'User' })
+      @attachments += attachments
+    end
+
+    def fetch_screen_richtext_attachments(screen)
+      identifiers = extract_quill_richtext_identifiers(screen.description) +
+                    extract_container_inline_identifiers(screen.container)
+      return if identifiers.empty?
+
+      attachments = Attachment.where(identifier: identifiers, attachable_id: screen.id, attachable_type: 'Screen')
+      return if attachments.empty?
+
+      fetch_many(attachments, { 'attachable_id' => 'Screen', 'created_by' => 'User', 'created_for' => 'User' })
+      @attachments += attachments
     end
 
     def fetch_research_plan_body_attachments(research_plan)

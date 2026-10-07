@@ -6,6 +6,10 @@ import { OverlayTrigger, Popover } from 'react-bootstrap';
 import _ from 'lodash';
 import Delta from 'quill-delta';
 
+import { createQuillImageHandler } from 'src/utilities/quillImageHandler';
+import 'src/components/reactQuill/AttachmentImageBlot';
+import 'src/components/reactQuill/AttachmentFileBlot';
+
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
@@ -19,6 +23,8 @@ const toolbarOptions = [
   'bold', 'italic', 'underline',
   'header', 'script',
   'list',
+  'attachment-image', 'attachment-file',
+  'resize-inline', 'resize-block',
 ];
 
 export default class ReactionDescriptionEditor extends React.Component {
@@ -51,9 +57,15 @@ export default class ReactionDescriptionEditor extends React.Component {
 
     TextTemplateActions.fetchPredefinedTemplateNames();
 
-    const { template } = this.props;
+    const { template, getAttachments, onAttachmentsChange } = this.props;
     const namesToFetch = Object.values(template).flat();
     this.fetchPredefinedTemplates(namesToFetch);
+
+    if (getAttachments && onAttachmentsChange && this.reactQuillRef && this.reactQuillRef.current) {
+      const quill = this.reactQuillRef.current.getEditor();
+      const handler = createQuillImageHandler({ getAttachments, onAttachmentsChange });
+      handler.install(quill);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -222,7 +234,9 @@ ReactionDescriptionEditor.propTypes = {
   readOnly: PropTypes.bool,
   onChange: PropTypes.func,
   updateTextTemplates: PropTypes.func,
-  reactQuillRef: PropTypes.object
+  reactQuillRef: PropTypes.object,
+  getAttachments: PropTypes.func,
+  onAttachmentsChange: PropTypes.func,
 };
 
 ReactionDescriptionEditor.defaultProps = {
@@ -231,5 +245,7 @@ ReactionDescriptionEditor.defaultProps = {
   value: {},
   onChange: null,
   updateTextTemplates: null,
-  reactQuillRef: {}
+  reactQuillRef: {},
+  getAttachments: null,
+  onAttachmentsChange: null,
 };

@@ -236,6 +236,9 @@ export const DeviceDescriptionsStore = types
     setAttachmentSortDirectory(value) {
       self.attachment_sort_direction = value;
     },
+    changeAttachments(next) {
+      self.setDeviceDescription({ ...self.device_description, attachments: next });
+    },
     changeAttachment(index, key, value, initial = false) {
       let device_description = { ...self.device_description };
       let attachment = { ...device_description.attachments[index] };

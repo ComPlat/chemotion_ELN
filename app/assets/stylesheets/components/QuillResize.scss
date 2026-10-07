@@ -1,0 +1,192 @@
+// Inline images inside the Quill editor and viewer. `blots/embed`
+// renders as inline (default vertical-align: baseline), which makes
+// tall images stick out oddly against surrounding text. Center-align
+// visually and cap max-width so a huge screenshot doesn't overflow.
+.quill-inline-attachment-image {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+}
+
+// Applied by QuillEditor.syncDeletedBlotVisualState when the tab-side
+// Delete flips the matching attachment's is_deleted flag. Purely visual
+// until save; the delta ops still hold the blot. On save, the body ops
+// are stripped via stripDeletedInlineBlotsFromBody and the visual state
+// becomes irrelevant.
+.quill-inline-attachment-image.inline-blot-deleted {
+  opacity: 0.4;
+}
+
+// Wrapper around a deleted <img>. JS inserts this so we can position an
+// overlay trash badge — <img> is a replaced element and can't render
+// ::before/::after content directly.
+// URL-encoded SVG trash icon for the file-pill overlay. Anchor elements
+// (unlike <img>) can host ::after pseudo-elements, so no DOM wrapping is
+// needed here.
+$trash-icon-red: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23dc3545'%3E%3Cpath d='M9 3v1H4v2h1v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm2 5h2v10h-2V8zm-4 0h2v10H7V8zm8 0h2v10h-2V8z'/%3E%3C/svg%3E";
+
+.quill-inline-attachment-file.inline-blot-deleted {
+  position: relative;
+  opacity: 0.6;
+  border-color: #dc3545 !important;
+  padding-right: 28px;
+
+  .quill-inline-attachment-file__name,
+  .quill-inline-attachment-file__size {
+    text-decoration: line-through;
+  }
+
+  &::after {
+    content: '';
+    background-image: url($trash-icon-red);
+    background-size: 14px 14px;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 14px;
+    height: 14px;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}
+
+// Styles for the `quill-resize-module` resize overlay.
+//
+// The vendor ships its CSS under `node_modules/quill-resize-module/dist/resize.css`.
+// Instead of adding a raw JS `import 'quill-resize-module/dist/resize.css'` (which
+// forces the mocha test harness to grow a `.css` require-hook), we inline the
+// vendor rules here — 1.5 KB — and layer our Bootstrap-primary-blue overrides
+// on top. Everything Sprockets-compiled, no Node-side test infra changes.
+
+$quill-resize-blue: #0d6efd; // Bootstrap 5 primary
+$quill-resize-blue-hover: #0b5ed7;
+
+// --- Vendor base rules (from quill-resize-module 2.1.3 dist/resize.css) --- //
+.ql-resize-overlay {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px dashed #444;
+  pointer-events: none;
+}
+
+.ql-resize-toolbar {
+  position: absolute;
+  top: -12px;
+  right: 0;
+  left: 0;
+  height: 0;
+  min-width: 120px;
+  text-align: center;
+  color: #333;
+  box-sizing: border-box;
+  cursor: default;
+  pointer-events: all;
+
+  button {
+    display: inline-block;
+    min-width: 24px;
+    height: 24px;
+    padding: 2px;
+    background-color: #fff;
+    border: 1px solid #999;
+    vertical-align: middle;
+
+    &:first-child {
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+    }
+
+    &:last-child {
+      border-bottom-right-radius: 3px;
+      border-top-right-radius: 3px;
+    }
+
+    &:not(:first-child) {
+      border-left: none;
+    }
+
+    &.active {
+      filter: invert(20%);
+    }
+  }
+
+  svg {
+    width: 18px;
+  }
+}
+
+.ql-resize-handle {
+  position: absolute;
+  height: 12px;
+  width: 12px;
+  background-color: #fff;
+  border: 1px solid #777;
+  box-sizing: border-box;
+  opacity: .8;
+  pointer-events: all;
+
+  &.tl { top: -6px; left: -6px; cursor: nwse-resize; }
+  &.tr { top: -6px; right: -6px; cursor: nesw-resize; }
+  &.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
+  &.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+}
+
+.ql-resize-display {
+  position: absolute;
+  padding: 4px 8px;
+  text-align: center;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #777;
+  box-sizing: border-box;
+  opacity: .8;
+  cursor: default;
+  line-height: 1;
+}
+
+.ql-resize-style-left { float: left; margin: 0 1em 1em 0; }
+.ql-resize-style-center { display: block; margin: auto; text-align: center; }
+.ql-resize-style-right { float: right; margin: 0 0 1em 1em; }
+.ql-resize-style-full { width: 100% !important; }
+.ql-resize-style-full > * { width: 100%; }
+
+// --- Brand overrides — swap grey defaults for Bootstrap primary blue --- //
+.ql-resize-overlay {
+  border-color: $quill-resize-blue;
+}
+
+.ql-resize-handle {
+  background-color: $quill-resize-blue;
+  border-color: $quill-resize-blue;
+
+  &:hover {
+    background-color: $quill-resize-blue-hover;
+    border-color: $quill-resize-blue-hover;
+  }
+}
+
+.ql-resize-display {
+  background-color: $quill-resize-blue;
+  color: #fff;
+  border-color: $quill-resize-blue;
+}
+
+.ql-resize-toolbar {
+  button {
+    border-color: $quill-resize-blue;
+    color: $quill-resize-blue;
+
+    &.active,
+    &:hover {
+      background-color: $quill-resize-blue;
+      color: #fff;
+    }
+  }
+
+  svg {
+    fill: currentColor;
+  }
+}

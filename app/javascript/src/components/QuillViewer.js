@@ -4,6 +4,11 @@ import Quill from 'quill';
 import _ from 'lodash';
 
 import { keepSupSub, stripImages } from 'src/utilities/quillFormat';
+// Side-effect import — registers AttachmentImageBlot + AttachmentFileBlot
+// globally on the Quill singleton so both the editor and viewer can render
+// inline attachment references.
+import 'src/components/reactQuill/AttachmentImageBlot';
+import 'src/components/reactQuill/AttachmentFileBlot';
 
 export default class QuillViewer extends React.Component {
   constructor(props) {
@@ -27,7 +32,7 @@ export default class QuillViewer extends React.Component {
     if (!this.viewer) {
       const { quillViewer } = this;
       const defaultOptions = {
-        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent'],
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent', 'attachment-image', 'attachment-file', 'resize-inline', 'resize-block'],
         theme: this.theme,
         readOnly: this.readOnly,
       };

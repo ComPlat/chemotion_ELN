@@ -64,6 +64,7 @@
     "quill-delta": "^5.1.0",
     "quill-delta-to-html": "^0.12.1",
     "quill-delta-to-plaintext": "^1.0.0",
+    "quill-resize-module": "^2.1.3",
     "raw-loader": "^4.0.2",
     "react": "^17.0.2",
     "react-barcode": "^1.1.0",

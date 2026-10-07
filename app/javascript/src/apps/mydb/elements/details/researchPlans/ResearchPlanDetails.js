@@ -20,7 +20,15 @@ import ResearchPlan from 'src/models/ResearchPlan';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from
   'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import {
+  addAttachmentsFromFiles,
+  setAttachmentDeleted,
+  replaceAttachment,
+  collectInlineAttachmentIdentifiers,
+  collectInlineAttachmentIdentifiersFromContainers,
+  stripDeletedInlineBlotsFromBody,
+  stripDeletedInlineBlotsFromDelta,
+} from 'src/utilities/attachmentUtils';
 import ResearchPlanDetailsBody from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from
@@ -109,6 +117,32 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.state;
     LoadingActions.start();
     this.context.attachmentNotificationStore.clearMessages();
+
+    // Cascade: strip any richtext inline blot whose backing attachment was
+    // deleted from the Attachments tab (`is_deleted: true` but still
+    // referenced in body ops). Without this, the persisted body would
+    // reference a soft-deleted attachment and render as a broken image
+    // after reload.
+    const deletedInlineIds = new Set(
+      (researchPlan.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0) {
+      researchPlan.body = stripDeletedInlineBlotsFromBody(researchPlan.body, deletedInlineIds);
+
+      if (researchPlan.container) {
+        const walkContainers = (container) => {
+          if (container.extended_metadata && container.extended_metadata.content) {
+            container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+              container.extended_metadata.content, deletedInlineIds
+            );
+          }
+          (container.children || []).forEach(walkContainers);
+        };
+        walkContainers(researchPlan.container);
+      }
+    }
 
     if (researchPlan.isNew) {
       ElementActions.createResearchPlan(researchPlan);
@@ -466,6 +500,10 @@ export default class ResearchPlanDetails extends Component {
         isDeleteProtected={this.isAttachmentInBody.bind(this)}
         deleteProtectedTooltip="This attachment is used in the research plan body"
         readOnly={researchPlan.isReadOnly}
+        inlineAttachmentIdentifiers={new Set([
+          ...collectInlineAttachmentIdentifiers(researchPlan.body),
+          ...collectInlineAttachmentIdentifiersFromContainers(researchPlan.container),
+        ])}
       />
     );
   } /* eslint-enable */

@@ -64,7 +64,7 @@ export default class Header extends React.Component {
     const contentOneLine = {
       ops: content.ops.map((x) => {
         const c = { ...x };
-        if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+        if (typeof c.insert === 'string') c.insert = c.insert.replace(/\n/g, ' ');
         return c;
       }),
     };

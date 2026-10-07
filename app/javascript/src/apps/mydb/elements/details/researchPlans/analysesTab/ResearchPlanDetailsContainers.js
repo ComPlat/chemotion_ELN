@@ -215,7 +215,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       const contentOneLine = {
         ops: content.ops.map((x) => {
           const c = Object.assign({}, x);
-          if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
+          if (typeof c.insert === 'string') c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
       };
@@ -356,6 +356,12 @@ export default class ResearchPlanDetailsContainers extends Component {
                               onChange={this.handleChange}
                               rootContainer={researchPlan.container}
                               index={key}
+                              attachments={researchPlan.attachments || []}
+                              getAttachments={() => researchPlan.attachments || []}
+                              onAttachmentsChange={(next) => {
+                                researchPlan.attachments = next;
+                                this.props.handleResearchPlanChange(researchPlan);
+                              }}
                             />
                           </Card.Body>
                         </Accordion.Collapse>

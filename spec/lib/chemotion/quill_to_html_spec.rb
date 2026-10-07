@@ -35,4 +35,27 @@ RSpec.describe 'QuillToHtml' do
       expect(quill_to_html.convert(delta_ops_as_hash.with_indifferent_access)).to match(html)
     end
   end
+
+  describe 'filter_image strips attachment ops before HTML rendering' do
+    # Locks the regex additions in lib/quill_utils.rb#filter_image. Without
+    # them, `attachment-image` / `attachment-file` ops would leak into the
+    # HTML output as raw JSON fragments and break every exporter that uses
+    # QuillToHtml (export_research_plan, export_excel, ...).
+    it 'strips current Embed-shape attachment-image and attachment-file ops' do
+      delta = [
+        { insert: 'Kept ' },
+        { insert: { 'attachment-image' => { attachment_identifier: 'abc', filename: 'foo.png' } } },
+        { insert: { 'attachment-file' => { attachment_identifier: 'def', filename: 'bar.pdf', filesize: 42 } } },
+        { insert: "text\n" },
+      ]
+      html = quill_to_html.convert(delta.to_json)
+      aggregate_failures do
+        expect(html).to include('Kept ')
+        expect(html).to include('text')
+        expect(html).not_to include('attachment-image')
+        expect(html).not_to include('attachment-file')
+        expect(html).not_to include('attachment_identifier')
+      end
+    end
+  end
 end

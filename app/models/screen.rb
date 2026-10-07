@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: screens
@@ -28,6 +30,7 @@ class Screen < ApplicationRecord
   include Collectable
   include ElementCodes
   include Taggable
+  include QuillInlineAttachmentRemappable
   include Labimotion::Segmentable
 
   serialize :description, Hash
@@ -68,6 +71,10 @@ class Screen < ApplicationRecord
 
   def analyses
     self.container ? self.container.analyses : []
+  end
+
+  def remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    remap_delta_op_identifiers(description, original_identifier, copy_identifier)
   end
 
   private

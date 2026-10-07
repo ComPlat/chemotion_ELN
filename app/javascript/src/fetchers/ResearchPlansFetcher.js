@@ -3,6 +3,7 @@ import { Map } from 'immutable';
 
 import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { invalidateInlineImagePreviewBatch } from 'src/utilities/attachmentPreviewCache';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
@@ -153,11 +154,21 @@ export default class ResearchPlansFetcher {
   }
 
   static researchPlanAttachments(researchPlan, id) {
+    const newAttachments = researchPlan.getNewAttachments();
+    const deletedAttachments = researchPlan.getMarkedAsDeletedAttachments();
     return AttachmentFetcher.updateAttachables(
-      researchPlan.getNewAttachments(),
+      newAttachments,
       'ResearchPlan',
       id,
-      researchPlan.getMarkedAsDeletedAttachments()
-    );
+      deletedAttachments,
+    ).then((response) => {
+      // Client-minted identifiers may be re-stamped server-side on create; also
+      // invalidate deleted-identifier previews so a fresh open re-fetches.
+      const touched = [...newAttachments, ...deletedAttachments]
+        .map((a) => a.identifier)
+        .filter(Boolean);
+      invalidateInlineImagePreviewBatch(touched);
+      return response;
+    });
   }
 }

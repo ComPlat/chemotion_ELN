@@ -23,7 +23,7 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, stripDeletedInlineBlotsFromDelta, collectInlineAttachmentIdentifiersFromContainers } from 'src/utilities/attachmentUtils';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -50,6 +50,23 @@ class CellLineDetails extends React.Component {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     cellLineItem.adoptPropsFromMobXModel(mobXItem);
+
+    const deletedInlineIds = new Set(
+      (cellLineItem.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0 && cellLineItem.container) {
+      const walkContainers = (container) => {
+        if (container.extended_metadata && container.extended_metadata.content) {
+          container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+            container.extended_metadata.content, deletedInlineIds
+          );
+        }
+        (container.children || []).forEach(walkContainers);
+      };
+      walkContainers(cellLineItem.container);
+    }
 
     if (cellLineItem.is_new) {
       DetailActions.close(cellLineItem, true);
@@ -179,6 +196,7 @@ class CellLineDetails extends React.Component {
                     onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
                     onEdit={this.handleAttachmentEdit.bind(this)}
                     readOnly={readOnly}
+                    inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiersFromContainers(cellLineItem.container)}
                   />
                 </ListGroupItem>
               </ListGroup>

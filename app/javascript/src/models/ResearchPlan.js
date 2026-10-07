@@ -4,6 +4,7 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import Wellplate from 'src/models/Wellplate';
 import Attachment from './Attachment';
+import { markInlineAttachmentDeleted } from 'src/utilities/attachmentUtils';
 
 const uuidv4 = require('uuid/v4');
 
@@ -240,15 +241,7 @@ export default class ResearchPlan extends Element {
   }
 
   markAttachmentAsDeleted(identifier) {
-    if (!identifier) { return; }
-    const attachmentToDelete = this.attachments
-      .find((attachment) => attachment.identifier === identifier);
-
-    if (attachmentToDelete) {
-      attachmentToDelete.is_deleted = true;
-      attachmentToDelete.is_image_field = true;
-      this.markAttachmentAsDeleted(attachmentToDelete.ancestor);
-    }
+    this.attachments = markInlineAttachmentDeleted(this.attachments, identifier);
   }
 
   removeFieldFromBody(fieldId) {

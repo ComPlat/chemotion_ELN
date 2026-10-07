@@ -272,6 +272,12 @@ export default class WellplateDetailsContainers extends Component {
                           onChange={(c) => this.handleChange(c)}
                           rootContainer={wellplate.container}
                           index={key}
+                          attachments={wellplate.attachments || []}
+                          getAttachments={() => wellplate.attachments || []}
+                          onAttachmentsChange={(next) => {
+                            wellplate.attachments = next;
+                            this.handleChange();
+                          }}
                         />
                       </Card.Body>
                     </Accordion.Collapse>

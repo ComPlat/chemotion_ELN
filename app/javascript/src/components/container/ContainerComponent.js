@@ -158,7 +158,8 @@ export default class ContainerComponent extends Component {
   render() {
     const { container, textTemplate, includeDescription } = this.state;
     const {
-      readOnly, disabled, onChange, rootContainer, index, element
+      readOnly, disabled, onChange, rootContainer, index, element,
+      attachments, getAttachments, onAttachmentsChange,
     } = this.props;
     const includeDescriptionId = `includeDescription-${index ?? this.includeDescriptionIdSuffix}`;
 
@@ -175,6 +176,9 @@ export default class ContainerComponent extends Component {
           analysis={container}
           updateTextTemplates={this.updateTextTemplates}
           onChangeContent={(e) => this.handleInputChange('content', e)}
+          attachments={attachments}
+          getAttachments={getAttachments}
+          onAttachmentsChange={onAttachmentsChange}
         />
       );
     }
@@ -280,7 +284,10 @@ ContainerComponent.propTypes = {
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  container: PropTypes.object
+  container: PropTypes.object,
+  attachments: PropTypes.arrayOf(PropTypes.object),
+  getAttachments: PropTypes.func,
+  onAttachmentsChange: PropTypes.func,
 };
 
 ContainerComponent.defaultProps = {
@@ -290,5 +297,8 @@ ContainerComponent.defaultProps = {
   readOnly: false,
   disabled: false,
   container: {},
-  element: {}
+  element: {},
+  attachments: [],
+  getAttachments: null,
+  onAttachmentsChange: null,
 };

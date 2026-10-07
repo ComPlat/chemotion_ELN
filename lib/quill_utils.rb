@@ -2,9 +2,10 @@
 
 module QuillUtils
   # desc: convert quill delta ops to html or plain text
-  # without_image: remove image inserts from quill ops string.
-  #   Images are anyway discarded for plain text output
-  def convert(content, without_image: false)
+  # without_image: remove image and file-attachment inserts from quill ops
+  #   string. Both have no plain-text representation; keeping them just adds
+  #   bytes to the payload sent to the Node bridge for no downstream benefit.
+  def convert(content, without_image: true)
     # avoid spwaning a nodejs process if the content is empty
     return '' if blank_ops?(content)
 
@@ -52,9 +53,29 @@ module QuillUtils
     delta_ops.gsub('{"insert":""},', '').gsub('{"insert":""}]', ']')
   end
 
-  # remove image inserts from quill ops string
+  # remove image and file-attachment inserts from quill ops string.
+  # Handles all shapes produced across the field's history:
+  #   - legacy raw URL:       {"insert":{"image":"data:image/png;base64,..."}}
+  #   - legacy object image:  {"insert":{"image":{"attachment_identifier":"...","filename":"..."}}}
+  #   - legacy inline file:   {"insert":"...","attributes":{"attachment-file":{...}}}
+  #   - Embed image (current):
+  #     {"insert":{"attachment-image":{"attachment_identifier":"...","filename":"...","width":"..."}}}
+  #   - Embed file  (current):
+  #     {"insert":{"attachment-file":{"attachment_identifier":"...","filename":"...","filesize":...}}}
+  # The current shapes come from AttachmentImageBlot / AttachmentFileBlot
+  # (blots/embed) — Quill uses each blot's `blotName` as the insert key.
   def filter_image(delta_string)
-    delta_string.gsub(/\{"insert":\{"image":.*"\}\},/, '').gsub(/\{"insert":\{"image":.*"\}\}\]/, ']')
+    ops = JSON.parse(delta_string)
+    return delta_string unless ops.is_a?(Array)
+
+    ops.reject { |op|
+      insert = op['insert']
+      (insert.is_a?(Hash) &&
+        (insert.key?('image') || insert.key?('attachment-image') || insert.key?('attachment-file'))) ||
+        op.dig('attributes', 'attachment-file').is_a?(Hash)
+    }.to_json
+  rescue JSON::ParserError
+    delta_string
   end
 
   def input_as_file(input)

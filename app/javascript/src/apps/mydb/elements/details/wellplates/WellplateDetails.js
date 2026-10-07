@@ -18,7 +18,7 @@ import WellplateDetailsContainers from
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from
   'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, collectInlineAttachmentIdentifiers, collectInlineAttachmentIdentifiersFromContainers, stripDeletedInlineBlotsFromBody, stripDeletedInlineBlotsFromDelta } from 'src/utilities/attachmentUtils';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -119,6 +119,31 @@ export default class WellplateDetails extends Component {
     const { wellplate } = this.state;
     if (wellplate.isReadOnly) { return; }
 
+    const deletedInlineIds = new Set(
+      (wellplate.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0) {
+      const stripped = stripDeletedInlineBlotsFromBody(
+        [{ type: 'richtext', value: wellplate.description }],
+        deletedInlineIds
+      );
+      wellplate.description = stripped[0].value;
+
+      if (wellplate.container) {
+        const walkContainers = (container) => {
+          if (container.extended_metadata && container.extended_metadata.content) {
+            container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+              container.extended_metadata.content, deletedInlineIds
+            );
+          }
+          (container.children || []).forEach(walkContainers);
+        };
+        walkContainers(wellplate.container);
+      }
+    }
+
     this.context.attachmentNotificationStore.clearMessages();
     LoadingActions.start();
     if (wellplate.isNew) {
@@ -184,6 +209,7 @@ export default class WellplateDetails extends Component {
     if (type === 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
     if (type === 'description') wellplate.description = value;
     if (type === 'readoutTitles') wellplate.readout_titles = value;
+    if (type === 'attachments') wellplate.attachments = value;
     if (type === 'size') {
       this.handleSizeChange(value.width, value.height);
       return;
@@ -356,6 +382,8 @@ export default class WellplateDetails extends Component {
             changeProperties={(c) => this.handleChangeProperties(c)}
             handleAddReadout={(c) => this.handleAddReadout(c)}
             handleRemoveReadout={(c) => this.handleRemoveReadout(c)}
+            attachments={wellplate.attachments || []}
+            onAttachmentsChange={(next) => this.handleChangeProperties({ type: 'attachments', value: next })}
           />
           <EditUserLabels
             element={wellplate}
@@ -397,6 +425,12 @@ export default class WellplateDetails extends Component {
                 onTemplateDownload={this.handleTemplateDownload.bind(this)}
                 templateInfoContent={wellplateTemplateInfo}
                 readOnly={wellplate.isReadOnly}
+                inlineAttachmentIdentifiers={new Set([
+                  ...collectInlineAttachmentIdentifiers(
+                    [{ type: 'richtext', value: wellplate.description }]
+                  ),
+                  ...collectInlineAttachmentIdentifiersFromContainers(wellplate.container),
+                ])}
               />
             </ListGroupItem>
           </ListGroup>

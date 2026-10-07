@@ -365,6 +365,57 @@ RSpec.describe 'ImportCollection' do
     end
   end
 
+  describe '#remap_container_richtext_identifiers' do
+    let(:import_id) { 'collection_samples' }
+    let(:importer) { Import::ImportCollections.new(nil, user.id) }
+
+    let(:data_with_container) do
+      {
+        'id' => 1,
+        'extended_metadata' => { 'content' => nil },
+        'children' => [
+          {
+            'id' => 2,
+            'extended_metadata' => { 'content' => nil },
+            'children' => [
+              {
+                'id' => 3,
+                'extended_metadata' => {
+                  'content' => {
+                    'ops' => [
+                      { 'insert' => { 'attachment-image' => { 'attachment_identifier' => 'old-uuid' } } }
+                    ]
+                  }
+                },
+                'children' => []
+              }
+            ]
+          }
+        ]
+      }
+    end
+
+    let(:identifier_map) { { 'old-uuid' => 'new-uuid' } }
+
+    it 'remaps attachment_identifier in deeply nested container content' do
+      elements_by_type = { '1' => { 'container' => data_with_container } }
+      importer.send(:remap_container_richtext_identifiers, elements_by_type, identifier_map)
+      content = data_with_container.dig('children', 0, 'children', 0, 'extended_metadata', 'content')
+      expect(content['ops'][0]['insert']['attachment-image']['attachment_identifier']).to eq('new-uuid')
+    end
+
+    it 'does not raise when container content is nil' do
+      elements_by_type = { '1' => { 'container' => data_with_container } }
+      data_with_container['children'][0]['children'][0]['extended_metadata']['content'] = nil
+      expect { importer.send(:remap_container_richtext_identifiers, elements_by_type, identifier_map) }.not_to raise_error
+    end
+
+    it 'does not raise when container is nil' do
+      elements_by_type = { '1' => { 'container' => nil } }
+      expect { importer.send(:remap_container_richtext_identifiers, elements_by_type, identifier_map) }.not_to raise_error
+    end
+  end
+
   def copy_target_to_import_folder(import_id)
     src_location = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
     FileUtils.mkdir_p(File.join('tmp', 'import'))

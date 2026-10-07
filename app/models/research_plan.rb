@@ -111,7 +111,39 @@ class ResearchPlan < ApplicationRecord
       attach['value']['public_name'] = copy_identifier
     end
 
+    remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+
     save!
+  end
+
+  # Rewrite inline attachment identifiers inside every richtext field's delta
+  # ops so a duplicated RP's Quill content points at the copy's new
+  # Attachment rows instead of the source's. Without this, deleting the
+  # original later breaks the copy's inline images/file pills, and the A1
+  # orphan reconciler can't match removed blots against the copy's
+  # attachments array.
+  def remap_richtext_attachment_identifiers(original_identifier, copy_identifier)
+    return unless body.is_a?(Array)
+
+    body.each do |field|
+      next unless field.is_a?(Hash) && field['type'] == 'richtext'
+
+      ops = field.dig('value', 'ops')
+      next unless ops.is_a?(Array)
+
+      ops.each do |op|
+        insert = op.is_a?(Hash) ? op['insert'] : nil
+        next unless insert.is_a?(Hash)
+
+        %w[attachment-image attachment-file].each do |blot_key|
+          payload = insert[blot_key]
+          next unless payload.is_a?(Hash)
+          next unless payload['attachment_identifier'] == original_identifier
+
+          payload['attachment_identifier'] = copy_identifier
+        end
+      end
+    end
   end
 
   def set_short_label

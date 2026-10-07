@@ -28,7 +28,7 @@ import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, stripDeletedInlineBlotsFromDelta, collectInlineAttachmentIdentifiersFromContainers } from 'src/utilities/attachmentUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -177,6 +177,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         onUndoDelete={handleAttachmentUndoDelete}
         onEdit={handleAttachmentEdit}
         readOnly={isReadOnly()}
+        inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiersFromContainers(sbmmSample.container)}
       />
     </Tab>
   );
@@ -295,7 +296,27 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   };
 
   const handleSubmit = () => {
-    sbmmStore.saveSample(sbmmSample);
+    const deletedInlineIds = new Set(
+      (sbmmSample.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    let sampleToSave = sbmmSample;
+    if (deletedInlineIds.size > 0 && sbmmSample.container) {
+      const clonedContainer = JSON.parse(JSON.stringify(sbmmSample.container));
+      const walkContainers = (container) => {
+        if (container.extended_metadata && container.extended_metadata.content) {
+          container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+            container.extended_metadata.content, deletedInlineIds
+          );
+        }
+        (container.children || []).forEach(walkContainers);
+      };
+      walkContainers(clonedContainer);
+      sbmmStore.setSequenceBasedMacromoleculeSample({ ...sbmmSample, container: clonedContainer });
+      sampleToSave = sbmmStore.sequence_based_macromolecule_sample;
+    }
+    sbmmStore.saveSample(sampleToSave);
   };
 
   // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)

@@ -42,6 +42,10 @@ const GenericContainerGroup = (props) => {
             fnRemove={fnRemove}
             noAct={noAct}
             handleSubmit={handleSubmit}
+            onAttachmentsChange={(next) => {
+              generic.attachments = next;
+              fnChange();
+            }}
           />
         );
       })}

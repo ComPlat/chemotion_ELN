@@ -53,7 +53,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 // eslint-disable-next-line import/no-named-as-default
 import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
-import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment, stripDeletedInlineBlotsFromDelta, collectInlineAttachmentIdentifiersFromContainers } from 'src/utilities/attachmentUtils';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
 import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
@@ -431,6 +431,23 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample, this.context.notifications)) return;
     if (!rangeCheck('boiling_point', sample, this.context.notifications)) return;
     if (!rangeCheck('melting_point', sample, this.context.notifications)) return;
+
+    const deletedInlineIds = new Set(
+      (sample.attachments || [])
+        .filter((a) => a && a.is_deleted && a.identifier)
+        .map((a) => a.identifier)
+    );
+    if (deletedInlineIds.size > 0 && sample.container) {
+      const walkContainers = (container) => {
+        if (container.extended_metadata && container.extended_metadata.content) {
+          container.extended_metadata.content = stripDeletedInlineBlotsFromDelta(
+            container.extended_metadata.content, deletedInlineIds
+          );
+        }
+        (container.children || []).forEach(walkContainers);
+      };
+      walkContainers(sample.container);
+    }
 
     // Prepare mixture samples for saving using Sample.js method
     sample.prepareMixtureForSave();
@@ -1553,6 +1570,7 @@ export default class SampleDetails extends React.Component {
                 onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
                 onEdit={this.handleAttachmentEdit.bind(this)}
                 readOnly={!sample.can_update}
+                inlineAttachmentIdentifiers={collectInlineAttachmentIdentifiersFromContainers(sample.container)}
               />
             </ListGroupItem>
           </ListGroup>

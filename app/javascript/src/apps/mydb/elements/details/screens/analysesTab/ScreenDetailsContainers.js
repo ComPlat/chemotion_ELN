@@ -198,6 +198,12 @@ export default class ScreenDetailsContainers extends Component {
             onChange={() => this.handleChange()}
             rootContainer={screen.container}
             index={key}
+            attachments={screen.attachments || []}
+            getAttachments={() => screen.attachments || []}
+            onAttachmentsChange={(next) => {
+              screen.attachments = next;
+              this.handleChange();
+            }}
           />
         </Card.Body>
       </Accordion.Collapse>

@@ -182,7 +182,7 @@ function AnalysesHeader({
   const contentOneLine = {
     ops: content.ops.map((x) => {
       const c = Object.assign({}, x);
-      if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+      if (typeof c.insert === 'string') c.insert = c.insert.replace(/\n/g, ' ');
       return c;
     }),
   };
