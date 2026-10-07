@@ -123,6 +123,12 @@ describe('Reaction Variations', () => {
     firstGroup().should('have.value', '1.0');
   });
 
+  it('shows the sort icon on the Group column', () => {
+    cy.get('.ag-header [col-id="variation_group"] .variations-sort-header .fa-sort').should('exist');
+    cy.get('.ag-header [col-id="variation_group"] .variations-sort-header').click();
+    cy.get('.ag-header [col-id="variation_group"] .variations-sort-header .fa-sort-asc').should('exist');
+  });
+
   it('writes the table to .csv', () => {
     cy.contains('button', 'Export to CSV').click();
     cy.readFile('cypress/downloads/RV1-variations.csv').should('contain', 'Group');

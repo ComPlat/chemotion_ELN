@@ -51,12 +51,35 @@ const formatRangeValue = (value) => (
   Number.isInteger(value) ? `${value}` : `${parseFloat(value.toFixed(4))}`
 );
 
+/*
+The material inputs are narrower still, so there a range's ends are cut to four significant digits -
+fewer decimals the larger the number, never fewer than its whole digits: 183.6726 is 183.7 and 12345.6
+is 12346. The full range is in the field's tooltip (see VariationRangeInput).
+*/
+const compactRangeNumber = (value) => {
+  if (!Number.isFinite(value)) return 'n.d.';
+  const magnitude = Math.abs(value);
+  if (magnitude === 0) return '0';
+  if (magnitude < 0.0001) return value.toExponential(2);
+  if (magnitude < 1) return `${parseFloat(value.toPrecision(4))}`;
+  const wholeDigits = Math.floor(Math.log10(magnitude)) + 1;
+  return value.toLocaleString('en-US', {
+    maximumFractionDigits: Math.max(0, 4 - wholeDigits),
+    useGrouping: false,
+  });
+};
+
+const joinRange = (min, max, format) => (min === max ? format(min) : `${format(min)}-${format(max)}`);
+
 /**
  * What a ranged field shows in place of its value. Variations that agree with each other but not
  * with the reaction give a single value rather than a range of one.
  */
-const variationRangeText = ({ min, max }) => (
-  min === max ? formatRangeValue(min) : `${formatRangeValue(min)}-${formatRangeValue(max)}`
-);
+const variationRangeText = ({ min, max }) => joinRange(min, max, formatRangeValue);
 
-export { findVariationRange, variationRangeText };
+// The same, shortened to fit a material input.
+const compactVariationRangeText = ({ min, max }) => joinRange(min, max, compactRangeNumber);
+
+export {
+  findVariationRange, variationRangeText, compactVariationRangeText, compactRangeNumber,
+};

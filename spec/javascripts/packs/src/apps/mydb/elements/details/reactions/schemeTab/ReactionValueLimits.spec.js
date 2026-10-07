@@ -62,6 +62,24 @@ describe('reaction value limits', () => {
       expect(changed.starting_materials[1].amount_value).toBe(0);
     });
 
+    // The mass, volume and moles inputs send `amountUnitChanged`, not `amountChanged`.
+    [0, 1].forEach((index) => {
+      it(`reads a negative mass typed for starting material ${index} as 0`, () => {
+        const sample = reaction.starting_materials[index];
+        handler.handleMaterialsChange({
+          type: 'amountUnitChanged',
+          materialGroup: 'starting_materials',
+          sampleID: sample.id,
+          amount: { value: -0.007, unit: 'g' },
+        });
+
+        const changedSample = changed.starting_materials[index];
+        expect(changedSample.amount_value).toBe(0);
+        expect(changedSample.amount_g).toBe(0);
+        expect(changedSample.amount_mol).toBe(0);
+      });
+    });
+
     it('holds a typed reaction temperature to absolute zero', () => {
       handleInputChange('temperature', { target: { value: '-500' } }, reaction, (r) => { changed = r; });
 
