@@ -8,15 +8,13 @@ import sinon from 'sinon';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ResearchPlanFactory from 'factories/ResearchPlanFactory';
-// eslint-disable-next-line no-unused-vars
-
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import ResearchPlanDetailsAttachments from
-  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+import { AttachmentTab } from
+  'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
 
 configure({ adapter: new Adapter() });
 
-describe('ResearchPlanDetailsAttachments', () => {
+describe('ResearchPlan attachments tab (AttachmentTab)', () => {
   describe('.createAttachmentPreviews()', () => {
     describe('.when preview was changed', () => {
       it('new preview is rendered', async () => {
@@ -33,15 +31,14 @@ describe('ResearchPlanDetailsAttachments', () => {
 
         const wrapper = mount(
           React.createElement(
-            ResearchPlanDetailsAttachments,
+            AttachmentTab,
             {
-              researchPlan: researchPlanWithAttachment,
+              element: researchPlanWithAttachment,
+              elementType: 'ResearchPlan',
               attachments: researchPlanWithAttachment.attachments,
               onDrop: (() => {}),
               onDelete: (() => {}),
               onUndoDelete: (() => {}),
-              onDownload: (() => {}),
-              onAttachmentImportComplete: (() => {}),
               onEdit: (() => {}),
               readOnly: false,
             }

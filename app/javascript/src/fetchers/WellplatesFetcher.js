@@ -34,20 +34,16 @@ export default class WellplatesFetcher {
       .then((json) => {
         const { id } = json.wellplate;
         return this.wellplateAttachments(wellplate, id)
-          .then(() => this.wellplateElement(json, id));
+          .then(() => this.fetchById(id));
       });
   }
 
   static update(wellplate) {
-    const tasks = [
-      AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container),
-      this.wellplateAttachments(wellplate, wellplate.id),
-    ];
-
-    return Promise.all(tasks)
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container)
       .then(() => AnnotationsFetcher.updateAnnotations(wellplate))
       .then(() => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() }))
-      .then((json) => this.wellplateElement(json, wellplate.id));
+      .then(() => this.wellplateAttachments(wellplate, wellplate.id))
+      .then(() => this.fetchById(wellplate.id));
   }
 
   static fetchWellplatesByUIState(params) {
@@ -135,7 +131,6 @@ export default class WellplatesFetcher {
       return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!` });
     }
     const wellplate = new Wellplate(json.wellplate);
-    wellplate.attachments = json.attachments;
     // eslint-disable-next-line no-underscore-dangle
     wellplate._checksum = wellplate.checksum();
     return wellplate;

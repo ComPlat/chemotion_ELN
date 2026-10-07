@@ -25,16 +25,20 @@ export default class ScreensFetcher {
   }
 
   static create(screen) {
+    const newFiles = (screen.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container)
       .then(() => ApiClient.postJson('/api/v1/screens', { body: screen.serialize() }))
       .then((json) => {
         const { id } = json.screen;
         return GenericElsFetcher.uploadGenericFiles(screen, id, 'Screen')
-          .then(() => this.screenElement(json, id));
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Screen', id, []))
+          .then(() => this.fetchById(id));
       });
   }
 
   static update(screen) {
+    const newFiles = (screen.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (screen.attachments || []).filter((a) => !a.is_new && a.is_deleted);
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container),
       GenericElsFetcher.uploadGenericFiles(screen, screen.id, 'Screen'),
@@ -43,7 +47,8 @@ export default class ScreensFetcher {
     return Promise.all(tasks)
       .then(() => AnnotationsFetcher.updateAnnotationsInContainer(screen))
       .then(() => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() }))
-      .then((json) => this.screenElement(json, screen.id));
+      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Screen', json.screen.id, delFiles))
+      .then(() => this.fetchById(screen.id));
   }
 
   static addResearchPlan(screenId, collectionId) {

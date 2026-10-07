@@ -46,6 +46,7 @@ const CellLineItem = types
     itemDescription: '',
     itemName: '',
     created_by: '',
+    attachments: types.optional(types.array(types.frozen({})), []),
     changed: false
   }).views((self) => ({
     isAmountValid() {
@@ -142,6 +143,10 @@ export const CellLineDetailsStore = types
       self.cellLineItem.get(id).changed = true;
       self.cellLineItem.get(id).cellType = newType;
     },
+    changeAttachments(id, newAttachments) {
+      self.cellLineItem.get(id).changed = true;
+      self.cellLineItem.get(id).attachments = newAttachments;
+    },
     removeCellLineFromStore(id) {
       self.cellLineItem.delete(id);
     },
@@ -207,6 +212,7 @@ export const CellLineDetailsStore = types
         itemName: jsCellLineModel.itemName,
         shortLabel: jsCellLineModel.short_label,
         created_by: jsCellLineModel.created_by?.toString(),
+        attachments: jsCellLineModel.attachments || [],
       }));
     }
   }))
