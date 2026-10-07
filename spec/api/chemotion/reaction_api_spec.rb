@@ -576,6 +576,20 @@ describe Chemotion::ReactionAPI do
         expect(row.reaction_step_id).to eq(step.id)
       end
 
+      it 'keeps steps and material links when the request leaves reaction_steps out' do
+        reaction1.update!(reaction_type: 'multi_step')
+        first = ReactionStep.create!(reaction: reaction1, position: 1, conditions: 'one')
+        ReactionStep.create!(reaction: reaction1, position: 2, conditions: 'two')
+        ReactionsStartingMaterialSample.find_or_create_by!(reaction: reaction1, sample: sample1)
+                                       .update!(reaction_step_id: first.id)
+
+        put "/api/v1/reactions/#{reaction1.id}", params: base_params, as: :json
+
+        expect(response.status).to eq(200)
+        expect(r.reaction_steps.map(&:conditions)).to eq(%w[one two])
+        expect(r.reactions_samples.find_by(sample_id: sample1.id).reaction_step_id).to eq(first.id)
+      end
+
       it 'deletes a step that was not sent back and closes the numbering up' do
         first = ReactionStep.create!(reaction: reaction1, position: 1, conditions: 'one')
         ReactionStep.create!(reaction: reaction1, position: 2, conditions: 'two')

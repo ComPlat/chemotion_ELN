@@ -224,8 +224,11 @@ module Chemotion
           reaction_vessel_size = attributes[:vessel_size]
           ActiveRecord::Base.transaction do
             # Steps sync first so leaving Multi-step validates against the removed rows.
-            persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
-            step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            step_id_by_position = nil
+            unless steps.nil?
+              persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
+              step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            end
             reaction.update!(attributes)
             reaction.touch
             reaction = Usecases::Reactions::UpdateMaterials.new(
