@@ -819,12 +819,12 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
     if (yieldRange) {
       const [min, max] = [yieldRange.min, yieldRange.max].map((value) => (value * 100).toFixed(0));
       return (
-        <div className="d-flex align-items-center gap-1">
+        <div className="reaction-material__yield-data d-flex align-items-center gap-1">
           <VariationRangeInput
             text={min === max ? `${min}%` : `${min}-${max}%`}
             size="sm"
             name="yield"
-            className="reaction-material__yield-data bs-form--compact"
+            className="flex-grow-1 bs-form--compact"
           />
         </div>
       );
@@ -838,8 +838,12 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
         is based on the real amount field value of this product.
       </div>
     );
+    /*
+    The cell, not the input, is the column: the columns of a row line up from its right edge, so the
+    warning next to the input must not make the cell wider than the Yield header above it.
+    */
     return (
-      <div className="d-flex align-items-center gap-1">
+      <div className="reaction-material__yield-data d-flex align-items-center gap-1">
         <OverlayTrigger
           overlay={(
             <Tooltip id="yield-tooltip">
@@ -848,7 +852,7 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
           )}
         >
           <Form.Control
-            className="reaction-material__yield-data bs-form--compact"
+            className="flex-grow-1 bs-form--compact"
             name="yield"
             type="text"
             size="sm"
