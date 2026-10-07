@@ -14,6 +14,7 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
+import { parentReactionOf } from 'src/apps/mydb/elements/details/reactions/schemeTab/GasPhaseContext';
 import ToggleButton from 'src/components/common/ToggleButton';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
@@ -60,6 +61,18 @@ const MaterialGroup = ({
   material row already checks, and are edited in the Variations tab.
   */
   const ownMaterials = (materialGroup === 'reactants' ? reaction.reactantsWithSbmm : reaction[materialGroup]) || [];
+  /*
+  A variation's Open panel cannot change the material list it shares with the reaction, but it offers the
+  reagent and solvent selects: a molecule picked there is added to that variation only, as a sample
+  dropped in is. Such a material - one the reaction does not have - can be deleted there again.
+  */
+  const parentReaction = parentReactionOf(reaction);
+  const parentMaterials = parentReaction
+    && ((materialGroup === 'reactants' ? parentReaction.reactantsWithSbmm : parentReaction[materialGroup]) || []);
+  const isVariationOnly = (material) => Boolean(parentMaterials)
+    && !parentMaterials.some((parentMaterial) => parentMaterial.id === material.id);
+  const canSelectMaterials = canChangeMaterialList
+    || (Boolean(parentReaction) && materialGroup !== 'purification_solvents');
   const readOnlyReaction = useMemo(() => readOnlyViewOf(reaction), [reaction]);
   const getMaterialComponent = ({
     dragRef,
@@ -78,7 +91,9 @@ const MaterialGroup = ({
       material={material}
       materialGroup={materialGroup}
       showLoadingColumn={showLoadingColumn}
-      deleteMaterial={canChangeMaterialList ? (m) => deleteMaterial(m, materialGroup) : null}
+      deleteMaterial={
+        canChangeMaterialList || isVariationOnly(material) ? (m) => deleteMaterial(m, materialGroup) : null
+      }
       index={index + 1}
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
@@ -130,6 +145,7 @@ const MaterialGroup = ({
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
         canChangeMaterialList={canChangeMaterialList}
+        canSelectMaterials={canSelectMaterials}
       />
     );
   }
@@ -152,6 +168,7 @@ const MaterialGroup = ({
       dndEnabled={effectiveDndEnabled}
       onConcentrationModeChange={onConcentrationModeChange}
       canChangeMaterialList={canChangeMaterialList}
+      canSelectMaterials={canSelectMaterials}
     />
   );
 };
@@ -384,7 +401,7 @@ const GeneralMaterialGroup = ({
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
   switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, canChangeMaterialList,
-  onConcentrationModeChange
+  canSelectMaterials, onConcentrationModeChange
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
@@ -543,7 +560,7 @@ const GeneralMaterialGroup = ({
               <div className="material-group__header-title">
                 {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                {isReactants && canChangeMaterialList && reagentDd}
+                {isReactants && canSelectMaterials && reagentDd}
               </div>
             </div>
             <div className="reaction-material__ref-header">{refTHead}</div>
@@ -608,7 +625,7 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled, canChangeMaterialList
+  dropSample, onDrop, onReorder, dndEnabled, canChangeMaterialList, canSelectMaterials
 }) => {
   const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
@@ -687,7 +704,7 @@ const SolventsMaterialGroup = ({
               <div className="material-group__header-title">
                 {canChangeMaterialList && addSampleButton}
                 {groupHeaders.group}
-                {canChangeMaterialList && (
+                {canSelectMaterials && (
                   <Select
                     isDisabled={!permitOn(reaction)}
                     options={solventOptions}
@@ -772,6 +789,8 @@ GeneralMaterialGroup.propTypes = {
   switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
   canChangeMaterialList: PropTypes.bool,
+  // The reagent select; also on in a variation, see MaterialGroup.
+  canSelectMaterials: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
 };
 
@@ -779,6 +798,7 @@ GeneralMaterialGroup.defaultProps = {
   switchEquiv: () => {},
   switchYield: () => {},
   canChangeMaterialList: true,
+  canSelectMaterials: false,
   displayYieldField: null
 };
 
@@ -793,11 +813,14 @@ SolventsMaterialGroup.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
   canChangeMaterialList: PropTypes.bool,
+  // The solvent select; also on in a variation, see MaterialGroup.
+  canSelectMaterials: PropTypes.bool,
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
   canChangeMaterialList: true,
+  canSelectMaterials: false,
 };
 
 MaterialGroup.defaultProps = {
