@@ -1292,20 +1292,29 @@ class Material extends Component {
             {this.materialConcentration(material)}
             {this.equivalentOrYield(material)}
             {showCarryOn && (
-              <div className="reaction-material__carry-on d-flex align-items-center px-1">
+              <div
+                className="reaction-material__carry-on d-flex align-items-center px-1"
+                title={reaction.isCarryOnLocked(material)
+                  ? 'The next step needs a starting material. Delete that step first.'
+                  : 'Carry on to next step'}
+              >
                 <Form.Check
                   type="switch"
                   id={`carry-on-${material.id}`}
-                  title="Carry on to next step"
                   checked={!!material.carry_on}
-                  disabled={!permitOn(reaction)}
+                  disabled={!permitOn(reaction) || reaction.isCarryOnLocked(material)}
                   onChange={() => onToggleCarryOn(material)}
                 />
               </div>
             )}
-            <div className="reaction-material__delete-data">
+            <div
+              className="reaction-material__delete-data"
+              title={reaction.isCarryOnLocked(material)
+                ? 'The next step needs this starting material. Delete that step first.'
+                : undefined}
+            >
               <DeleteButton
-                disabled={!permitOn(reaction)}
+                disabled={!permitOn(reaction) || reaction.isCarryOnLocked(material)}
                 onClick={() => deleteMaterial(material)}
               />
             </div>
