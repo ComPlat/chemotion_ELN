@@ -1172,10 +1172,8 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
-    // Store the current amount_mol and amount_g BEFORE switching reference component
-    // This ensures we preserve the values calculated with the OLD reference component
+    // Make sure sample_details exists before we read and write mixture bookkeeping on it.
     updatedSample.initializeSampleDetails();
-    updatedSample.storePreviousAmountState();
 
     // Set the reference component to true and all others to false
     updatedSample.components.forEach((component, index) => {
@@ -1184,6 +1182,14 @@ export default class ReactionDetailsScheme extends React.Component {
     });
 
     const referenceComponent = updatedSample.components[referenceComponentIndex];
+
+    // Clear the "reference changed" flag now that the new reference is selected, then take the
+    // snapshot. With the flag off, amount_mol is derived from the mixture mass and the new
+    // reference (mass / new relMW), so the snapshot stores the NEW reference's amount, not the
+    // old one. Snapshotting the old amount here would corrupt the mixture mass under lock,
+    // because the locked handler multiplies that snapshot back by the new relMW.
+    updatedSample.sample_details.reference_component_changed = false;
+    updatedSample.storePreviousAmountState();
 
     if (referenceComponent?.molecule?.molecular_weight) {
       updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
@@ -1195,7 +1201,9 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
 
-    // Mark that the reference component has been changed (for calculation logic)
+    // For a mixture that is NOT the reaction's reference material, leave the "changed" flag set
+    // so its amount stays derived from the new reference until the next save. The
+    // reaction-reference branch below clears it right away so the amount settles immediately.
     updatedSample.sample_details.reference_component_changed = true;
 
     // Perform calculations when the reference component changes
@@ -1205,7 +1213,23 @@ export default class ReactionDetailsScheme extends React.Component {
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
     // other samples' equivalents are recalculated, just like when amount_g or amount_l changes
     if (reaction.referenceMaterial && isSameMaterial(updatedSample, reaction.referenceMaterial)) {
-      return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+      // This mixture is the reaction's reference. Clear the "changed" flag so its amount settles
+      // to mass / new reference relMW before we rebase the other samples and refresh
+      // concentrations. render() does not refresh concentrations while equivalents are locked.
+      updatedSample.sample_details.reference_component_changed = false;
+
+      // Include SBMM reactant samples so their amounts rebase against the new reference amount,
+      // matching every other reference-amount-changing path (amount and concentration edits).
+      const updatedReaction = this.updatedReactionWithSample(
+        this.updatedSamplesForAmountChange.bind(this), updatedSample, undefined, true
+      );
+
+      if (this.state.lockEquivColumn) {
+        updatedReaction.resetPreservedConcentrationExcept(updatedSample);
+        updatedReaction.updateAllConcentrations();
+      }
+
+      return updatedReaction;
     }
 
     // Mark the sample as changed for persistence
