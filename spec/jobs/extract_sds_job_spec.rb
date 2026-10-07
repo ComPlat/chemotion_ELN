@@ -17,6 +17,7 @@ RSpec.describe ExtractSdsJob do
       model_used:      'kit.qwen3.5-397b-A17b',
       requested_model: nil,
       fell_back?:      false,
+      resolution:      resolution,
     )
   end
   let(:resolution) do
@@ -274,6 +275,19 @@ RSpec.describe ExtractSdsJob do
         job.perform(sample_id: sample.id, user_id: user.id)
         expect(job.instance_variable_get(:@notification_level)).to eq('error')
         expect(job.instance_variable_get(:@notification_message)).to include('API timeout')
+      end
+
+      it 'names the model and provider that refused the request' do
+        provider = instance_double(LlmProvider, name: 'KIT KI-Toolbox')
+        allow(runner).to receive(:resolution).and_return(
+          LlmProviderResolver::LlmResolution.new(provider: provider, model: 'gemini-3.6-flash',
+                                                 api_key: 'k', base_url: 'u', protocol: 'openai'),
+        )
+        job = described_class.new
+        job.perform(sample_id: sample.id, user_id: user.id)
+
+        expect(job.instance_variable_get(:@notification_message))
+          .to end_with('API timeout (model gemini-3.6-flash on KIT KI-Toolbox)')
       end
 
       it 'notifies the user and records the failure marker' do
