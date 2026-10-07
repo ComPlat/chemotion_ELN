@@ -31,8 +31,6 @@ import {
   placeUnknownColumns,
   isHiddenByDefault,
   persistUserColumnKinds,
-  getUserGridHeight,
-  persistUserGridHeight,
   GROUP_ID_SEPARATOR
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import VariationsGridContext
@@ -649,14 +647,6 @@ const useRowHandlerFactory = (onReactionChange) => {
   }, []);
 };
 
-// Share of the detail card's free height (below the tab bar and the toolbar) the grid may take up.
-const GRID_HEIGHT_SHARE = 0.8;
-
-/*
-The grid grows with its rows (autoHeight), but only up to 80% of what the detail card offers below
-the tab bar and the button group. Past that it gets a fixed height and scrolls its rows itself, so
-the header stays in view. Returns the fixed height to apply, or null while the grid still fits.
-*/
 /*
 A second horizontal scrollbar above the grid, kept in step with AG Grid's own at the bottom - as the
 previous variations table had - so a wide table can be scrolled without first scrolling down to its
@@ -726,36 +716,32 @@ TopHorizontalScrollbar.propTypes = {
   gridToken: PropTypes.number.isRequired,
 };
 
-const useGridHeightCap = (gridElementRef) => {
-  const [gridHeight, setGridHeight] = useState(null);
-  // Set by dragging the handle below the grid, and remembered per user; null for the automatic cap.
-  const [userHeight, setUserHeightState] = useState(getUserGridHeight);
+// Room left below the grid, so that its border and scrollbar do not sit on the card's edge.
+const GRID_BOTTOM_GAP = 16;
+// Never less than a few rows, however short the window.
+const MIN_GRID_HEIGHT = 200;
 
-  // Saved once a drag ends rather than on every step of it.
-  const setUserHeight = useCallback((height, { persist = true } = {}) => {
-    setUserHeightState(height);
-    if (persist) {
-      persistUserGridHeight(height);
-    }
-  }, []);
+/*
+The grid grows with its rows (autoHeight), but only as far as one screen: with the Variations tab
+scrolled to the top of the detail card, the tab bar, the toolbars and the whole grid fit what the card
+shows. Past that the grid gets that fixed height and scrolls its rows itself, so the header and the
+horizontal scrollbar stay in view. Returns the fixed height to apply, or null while the grid still fits.
+*/
+const useGridHeightCap = (gridElementRef, toolbarRef) => {
+  const [gridHeight, setGridHeight] = useState(null);
 
   const syncGridHeight = useCallback(() => {
     const wrapper = gridElementRef.current;
     const scrollContainer = wrapper?.closest('.detail-card__scroll-container');
-    if (!wrapper || (!scrollContainer && !userHeight)) {
+    if (!wrapper || !scrollContainer) {
       return;
     }
 
-    const tabBar = scrollContainer?.querySelector('ul.nav-tabs.has-config-overlay');
-    const buttonGroup = wrapper.parentElement?.querySelector('.btn-group');
-    const cap = userHeight ?? Math.floor(
-      (scrollContainer.clientHeight - (tabBar?.offsetHeight ?? 0) - (buttonGroup?.offsetHeight ?? 0))
-      * GRID_HEIGHT_SHARE
-    );
-    if (cap <= 0) {
-      setGridHeight(null);
-      return;
-    }
+    // The tab bar, the toolbar, the group buttons and the top scrollbar: everything from the tab bar
+    // down to the grid, measured as the distance between the two, which scrolling does not change.
+    const tabBar = scrollContainer.querySelector('ul.nav-tabs.has-config-overlay');
+    const above = wrapper.getBoundingClientRect().top - (tabBar ?? wrapper).getBoundingClientRect().top;
+    const cap = Math.max(MIN_GRID_HEIGHT, Math.floor(scrollContainer.clientHeight - above - GRID_BOTTOM_GAP));
 
     /*
     The height the grid wants for all of its content. `.ag-center-cols-container` is sized to the
@@ -768,74 +754,25 @@ const useGridHeightCap = (gridElementRef) => {
     const naturalHeight = headerHeight + rowsHeight + scrollbarHeight + 2;
 
     setGridHeight(naturalHeight > cap ? cap : null);
-  }, [gridElementRef, userHeight]);
+  }, [gridElementRef]);
 
   useEffect(() => {
     syncGridHeight();
   }, [syncGridHeight]);
 
+  // The card resized with the window, or the toolbar above the grid wrapped onto another line. Not
+  // the grid itself, which changes its height in answer.
   useEffect(() => {
     const scrollContainer = gridElementRef.current?.closest('.detail-card__scroll-container');
     if (!scrollContainer || typeof ResizeObserver === 'undefined') {
       return undefined;
     }
     const observer = new ResizeObserver(syncGridHeight);
-    observer.observe(scrollContainer);
+    [scrollContainer, toolbarRef?.current].filter(Boolean).forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  }, [gridElementRef, syncGridHeight]);
+  }, [gridElementRef, toolbarRef, syncGridHeight]);
 
-  return {
-    gridHeight, syncGridHeight, userHeight, setUserHeight
-  };
-};
-
-const MIN_GRID_HEIGHT = 120;
-
-/*
-The bar below the grid: dragged, it sets how tall the grid may grow before it scrolls its rows;
-double-clicked, it goes back to the automatic share of the detail card.
-*/
-const GridResizeHandle = ({ gridElementRef, userHeight, setUserHeight }) => {
-  const onMouseDown = (event) => {
-    event.preventDefault();
-    const startY = event.clientY;
-    const startHeight = gridElementRef.current?.offsetHeight ?? MIN_GRID_HEIGHT;
-    let height = startHeight;
-
-    const onMouseMove = (moveEvent) => {
-      height = Math.max(MIN_GRID_HEIGHT, Math.round(startHeight + moveEvent.clientY - startY));
-      setUserHeight(height, { persist: false });
-    };
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      setUserHeight(height);
-    };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  };
-
-  return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className="reaction-variations-grid__resize-handle"
-      title={userHeight
-        ? 'Drag to change the height of the grid. Double-click to size it automatically again.'
-        : 'Drag to change the height of the grid.'}
-      onMouseDown={onMouseDown}
-      onDoubleClick={() => setUserHeight(null)}
-    />
-  );
-};
-
-GridResizeHandle.propTypes = {
-  gridElementRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
-  userHeight: PropTypes.number,
-  setUserHeight: PropTypes.func.isRequired,
-};
-
-GridResizeHandle.defaultProps = {
-  userHeight: null,
+  return { gridHeight, syncGridHeight };
 };
 
 const VariationSchemaTable = ({
@@ -893,9 +830,7 @@ const VariationSchemaTable = ({
   const [gridToken, setGridToken] = useState(0);
   const toolbarRef = useRef(null);
   const scrollThumbRef = useRef(null);
-  const {
-    gridHeight, syncGridHeight, userHeight, setUserHeight
-  } = useGridHeightCap(gridElementRef);
+  const { gridHeight, syncGridHeight } = useGridHeightCap(gridElementRef, toolbarRef);
 
   /*
   Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
@@ -1477,7 +1412,6 @@ const VariationSchemaTable = ({
           }}
         />
       </div>
-      <GridResizeHandle gridElementRef={gridElementRef} userHeight={userHeight} setUserHeight={setUserHeight} />
     </VariationsGridContext.Provider>
   );
 };
@@ -1519,8 +1453,8 @@ VariationSchemaTable.defaultProps = {
 
 export {
   ColumnVisibilityHeader,
-  GridResizeHandle,
   isInputKeyboardEvent,
+  useGridHeightCap,
   READ_ONLY_CELL_CLASS,
   STICKY_NAME_CLASS
 };
