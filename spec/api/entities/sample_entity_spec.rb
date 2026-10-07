@@ -315,6 +315,17 @@ describe Entities::SampleEntity do
   end
 
   describe '#molfile' do
+    subject(:molfile_output) do
+      sample = build_stubbed(:sample)
+      allow(sample).to receive_messages(
+        molecule: build_stubbed(:molecule),
+        molecule_computed_props: {},
+        reactions_samples: [],
+        molfile: binary_molfile,
+      )
+      represent_sample(sample)
+    end
+
     let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read }
     # .b simulates bytea → ASCII-8BIT as returned by PostgreSQL
     let(:binary_molfile) { textnode_molfile.b }
@@ -327,20 +338,6 @@ describe Entities::SampleEntity do
       ).serializable_hash[:molfile]
     end
 
-    def stub_sample_associations(sample)
-      molecule = build_stubbed(:molecule)
-      allow(sample).to receive(:molecule).and_return(molecule)
-      allow(sample).to receive(:molecule_computed_props).and_return({})
-      allow(sample).to receive(:reactions_samples).and_return([])
-    end
-
-    subject(:molfile_output) do
-      sample = build_stubbed(:sample)
-      stub_sample_associations(sample)
-      allow(sample).to receive(:molfile).and_return(binary_molfile)
-      represent_sample(sample)
-    end
-
     it 'preserves non-ASCII characters when molfile bytes are ASCII-8BIT' do
       expect(molfile_output).to include('α-Al2O3')
     end
@@ -351,13 +348,17 @@ describe Entities::SampleEntity do
     end
 
     it 'does not replace non-ASCII bytes with U+FFFD' do
-      expect(molfile_output).not_to include("�")
+      expect(molfile_output).not_to include("\u{FFFD}")
     end
 
     it 'returns nil when molfile is nil' do
       sample = build_stubbed(:sample)
-      stub_sample_associations(sample)
-      allow(sample).to receive(:molfile).and_return(nil)
+      allow(sample).to receive_messages(
+        molecule: build_stubbed(:molecule),
+        molecule_computed_props: {},
+        reactions_samples: [],
+        molfile: nil,
+      )
       expect(represent_sample(sample)).to be_nil
     end
   end

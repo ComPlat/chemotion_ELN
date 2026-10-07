@@ -596,6 +596,8 @@ RSpec.describe Import::ImportSdf do
     describe '#sanitize_molfile' do
       # A minimal CTAB with a non-ASCII molecule name in the header (line 1, before M  END).
       # .b simulates bytea → ASCII-8BIT as returned by PostgreSQL.
+      subject(:result) { mapper.send(:sanitize_molfile, non_ascii_molfile) }
+
       let(:non_ascii_molfile) do
         <<~MOL.b
           10 wt.% α-Al2O3
@@ -608,8 +610,6 @@ RSpec.describe Import::ImportSdf do
         MOL
       end
 
-      subject(:result) { mapper.send(:sanitize_molfile, non_ascii_molfile) }
-
       it 'preserves non-ASCII characters in the molfile header' do
         expect(result).to include('α-Al2O3')
       end
@@ -620,12 +620,12 @@ RSpec.describe Import::ImportSdf do
       end
 
       it 'does not replace non-ASCII bytes with U+FFFD' do
-        expect(result).not_to include("�")
+        expect(result).not_to include("\u{FFFD}")
       end
 
-      it 'still trims everything after M  END' do
+      it 'trims everything after the molfile end marker' do
         expect(result).not_to include('$$$$')
-        expect(result).to end_with("M  END")
+        expect(result).to end_with('M  END')
       end
     end
 

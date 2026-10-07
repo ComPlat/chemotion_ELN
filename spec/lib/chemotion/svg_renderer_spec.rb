@@ -399,7 +399,7 @@ RSpec.describe Chemotion::SvgRenderer do
     it 'does not replace non-ASCII bytes with empty string or U+FFFD' do
       result = described_class.parse_text_nodes(textnode_molfile)
       expect(result[0]).not_to include('?')
-      expect(result[0]).not_to include("�")
+      expect(result[0]).not_to include("\u{FFFD}")
     end
 
     it 'handles binary-encoded molfile bytes without raising' do
