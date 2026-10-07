@@ -197,7 +197,16 @@ class ExtractSdsJob < ApplicationJob
       Rails.logger.error error.backtrace&.first(5)&.join("\n")
     end
 
-    fail_with("SDS extraction error: #{error.message}")
+    fail_with("SDS extraction error: #{error.message}#{attempted_model_note}")
+  end
+
+  # Names the model and provider that refused, so a misrouted task is visible in the notification.
+  def attempted_model_note
+    resolution = @runner&.resolution
+    return '' unless resolution&.model
+
+    provider = resolution.provider&.name
+    " (model #{resolution.model}#{" on #{provider}" if provider})"
   end
 
   # Returns true when a user has a working LLM provider configured for SDS extraction.
@@ -223,7 +232,7 @@ class ExtractSdsJob < ApplicationJob
     status[:stage] = 'calling_llm'
     # task_name: 'sds_extraction' is passed so LlmProviderResolver picks the model
     # the user assigned to this specific task in their AI Settings profile.
-    runner = LlmTaskRunner.new(
+    runner = @runner = LlmTaskRunner.new(
       task_name: 'sds_extraction',
       user: user,
       context: pdf_text,
