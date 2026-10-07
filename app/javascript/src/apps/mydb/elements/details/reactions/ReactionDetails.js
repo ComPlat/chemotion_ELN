@@ -164,7 +164,7 @@ export default class ReactionDetails extends Component {
         pendingReactionType: nextType,
         reactionTypeConfirmMessage: (
           <>
-            Leaving Multi-step deletes the extra steps and the carried-on products.
+            Leaving Multi-step removes the extra steps. Their materials are kept and merged into this reaction.
             <br />
             Switch reaction type?
           </>
@@ -172,6 +172,7 @@ export default class ReactionDetails extends Component {
       });
       return;
     }
+    if (leavingMultiStep) reaction.clearMultiStep();
     this.handleInputChange('reactionType', nextType);
   }
 

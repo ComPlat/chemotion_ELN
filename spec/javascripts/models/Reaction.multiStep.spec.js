@@ -124,6 +124,68 @@ describe('Reaction multi-step', () => {
     expect(carried[0].id).toEqual(reaction.products[0].id);
   });
 
+  it('locks carry-on only on the last product feeding a live next step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const [first, second] = reaction.products;
+    reaction.products.forEach((product) => { product.reaction_step_id = 1; });
+
+    first.carry_on = true;
+    second.carry_on = true;
+    expect(reaction.isCarryOnLocked(first)).toEqual(false);
+
+    second.carry_on = false;
+    expect(reaction.isCarryOnLocked(first)).toEqual(true);
+    expect(reaction.isCarryOnLocked(second)).toEqual(false);
+
+    reaction.reaction_steps[1]._destroy = true;
+    expect(reaction.isCarryOnLocked(first)).toEqual(false);
+  });
+
+  it('refuses to move the product the next step depends on, and un-carries others that move', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const [first, second] = reaction.products;
+    reaction.products.forEach((product) => { product.reaction_step_id = 1; });
+    first.carry_on = true;
+
+    expect(reaction.prepareCarriedMove(first, 'products', 1)).toEqual(true);
+    expect(reaction.prepareCarriedMove(first, 'reactants', 1)).toEqual(false);
+    expect(reaction.prepareCarriedMove(first, 'products', 2)).toEqual(false);
+    expect(first.carry_on).toEqual(true);
+
+    second.carry_on = true;
+    expect(reaction.prepareCarriedMove(second, 'reactants', 1)).toEqual(true);
+    expect(second.carry_on).toEqual(false);
+    expect(first.carry_on).toEqual(true);
+  });
+
+  it('lets only the last live step be deleted and only the next one be restored', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }, { id: 3, position: 3 }];
+    const [first, second] = reaction.products;
+    first.reaction_step_id = 1;
+    first.carry_on = true;
+    second.reaction_step_id = 2;
+    second.carry_on = true;
+    const step = (id) => reaction.reaction_steps.find((entry) => entry.id === id);
+
+    expect(reaction.canToggleStep(step(1))).toEqual(false);
+    expect(reaction.canToggleStep(step(2))).toEqual(false);
+    expect(reaction.canToggleStep(step(3))).toEqual(true);
+
+    step(3)._destroy = true;
+    step(2)._destroy = true;
+    expect(reaction.canToggleStep(step(3))).toEqual(false);
+    expect(reaction.canToggleStep(step(2))).toEqual(true);
+
+    first.carry_on = false;
+    expect(reaction.canToggleStep(step(2))).toEqual(false);
+  });
+
   it('reports multi-step data only with extra steps or a carried product', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
@@ -145,6 +207,22 @@ describe('Reaction multi-step', () => {
     expect(reaction.reaction_steps).toEqual([]);
     expect(reaction.allReactionMaterials.every((m) => m.reaction_step_id === null)).toEqual(true);
     expect(reaction.products.every((p) => p.carry_on === false)).toEqual(true);
+  });
+
+  it('drops a deleted step materials and merges live ones when leaving multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2, _destroy: true }];
+    reaction.starting_materials.forEach((m) => { m.reaction_step_id = 1; });
+    reaction.reactants.forEach((m) => { m.reaction_step_id = 1; });
+    const [kept, deleted] = reaction.products;
+    kept.reaction_step_id = 1;
+    deleted.reaction_step_id = 2;
+
+    reaction.clearMultiStep();
+
+    expect(reaction.products.map((p) => p.id)).toEqual([kept.id]);
+    expect(reaction.serialize().materials.products.map((p) => p.id)).toEqual([kept.id]);
   });
 
   it('omits unset step fields so the database defaults apply', async () => {
