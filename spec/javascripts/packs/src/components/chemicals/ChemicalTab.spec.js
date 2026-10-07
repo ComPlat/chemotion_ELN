@@ -1191,6 +1191,44 @@ describe('ChemicalTab extraction mode picker', () => {
   });
 });
 
+describe('ChemicalTab AI result modal', () => {
+  let instance;
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(createChemical());
+    sinon.stub(ChemicalFetcher, 'llmAvailable').resolves(true);
+    instance = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      editChemical: sinon.spy(),
+    })).instance();
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('renders nothing before an AI extraction has run', () => {
+    instance.setState({ chemical: createChemical([{}]) });
+
+    expect(instance.renderAiResultModal()).toBe(null);
+  });
+
+  it('shows the result stored under aiExtraction', () => {
+    instance.setState({
+      chemical: createChemical([{
+        aiExtraction: { extracted_at: '2026-10-07T09:00:00Z', chemical_name: 'Phenol', model: 'kit.glm-5.3-flash' },
+        extractedProperties: { boiling_point: '181.7 °C' },
+      }]),
+    });
+
+    const modal = shallow(<div>{instance.renderAiResultModal()}</div>).find(AppModal);
+    expect(modal.prop('title')).toEqual('Extracted Data using AI');
+    const metadata = modal.find({ controlId: 'aiMetadataSection' }).find({ as: 'textarea' });
+    expect(metadata.prop('value')).toEqual('Chemical: Phenol');
+  });
+});
+
 describe('ChemicalTab LLM property mapping', () => {
   // Verbatim from an extraction of a p-Xylene sheet: the sheet's wording, comma decimals.
   const extractedProperties = {
