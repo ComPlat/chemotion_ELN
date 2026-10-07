@@ -339,8 +339,7 @@ module Usecases
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
-            reaction_step_id: resolved_step_id(sample),
-            carry_on: sample.carry_on,
+            **step_link(sample, existing_association),
           )
         # sample was moved to other materialgroup
         else
@@ -359,10 +358,17 @@ module Usecases
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
-            reaction_step_id: resolved_step_id(sample),
-            carry_on: sample.carry_on,
+            **step_link(sample),
           )
         end
+      end
+
+      def step_link(sample, existing = nil)
+        if @step_id_by_position.nil?
+          return existing ? { reaction_step_id: existing.reaction_step_id, carry_on: existing.carry_on } : {}
+        end
+
+        { reaction_step_id: resolved_step_id(sample), carry_on: sample.carry_on }
       end
 
       def resolved_step_id(sample)
