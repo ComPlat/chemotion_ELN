@@ -386,4 +386,37 @@ RSpec.describe Chemotion::SvgRenderer do
       expect(described_class.parse_polymers_line(nil)).to eq([])
     end
   end
+
+  describe '.parse_text_nodes' do
+    # .b simulates bytea → ASCII-8BIT read from PostgreSQL — this is the actual bug trigger
+    let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read.b }
+
+    it 'preserves non-ASCII characters in TextNode labels' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).to include('α-Al2O3')
+    end
+
+    it 'does not replace non-ASCII bytes with empty string or U+FFFD' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).not_to include('?')
+      expect(result[0]).not_to include("\u{FFFD}")
+    end
+
+    it 'handles binary-encoded molfile bytes without raising' do
+      expect { described_class.parse_text_nodes(textnode_molfile) }.not_to raise_error
+    end
+
+    context 'when the TextNode label mixes valid UTF-8 sequences with a stray invalid byte' do
+      # \xB0 is a stray Latin-1 byte (invalid in UTF-8); forces valid_encoding? → false
+      # TextNode line format: INDEX#KEY#ID#CONTENT
+      let(:mixed_label_molfile) do
+        "M  END\n\n> <TextNode>\n0#k#i#10 wt.% \xCE\xB1-Al2O3 \xB0C\n\n> </TextNode>\n".b
+      end
+
+      it 'preserves valid UTF-8 sequences in the label' do
+        result = described_class.parse_text_nodes(mixed_label_molfile)
+        expect(result[0]).to include('α-Al2O3')
+      end
+    end
+  end
 end

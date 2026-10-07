@@ -284,8 +284,8 @@ module Chemotion
         index = Integer(parts[0], exception: false)
         next if index.nil?
 
-        text = parts[3].to_s.encode('UTF-8', invalid: :replace, undef: :replace, replace: '').strip
-        memo[index] = text unless text.empty?
+        label = parts[3].to_s.dup.force_encoding('UTF-8').scrub('').strip
+        memo[index] = label unless label.empty?
       end
     end
 
