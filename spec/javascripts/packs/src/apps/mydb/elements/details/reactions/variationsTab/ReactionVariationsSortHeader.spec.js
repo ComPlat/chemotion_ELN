@@ -48,6 +48,17 @@ describe('ReactionVariationsSortHeader', () => {
     expect(progressSort.calledOnceWith(true)).toBe(true);
   });
 
+  // The Group column: it explains itself in the same title, and shows the sort icon like the others.
+  it('leads the title with a description of the column', () => {
+    const wrapper = shallow(
+      <SortableHeaderName displayName="Group" column={column} enableSorting description="Groups variations." />
+    );
+    const title = wrapper.find('button').prop('title');
+    expect(title.startsWith('Groups variations.\n')).toBe(true);
+    expect(title).toContain('Click to sort by Group, ascending');
+    expect(wrapper.find('i.fa-sort').length).toBe(1);
+  });
+
   // Clicks go ascending, descending, then back to no sort; the title says which comes next.
   describe('title', () => {
     it('offers the ascending sort on an unsorted column', () => {
