@@ -38,9 +38,11 @@ module Entities
 
     def molfile
       return unless object.respond_to?(:molfile)
-      return if object.molfile.nil?
 
-      mf = object.molfile.dup.force_encoding('UTF-8')
+      mf = object.molfile
+      return if mf.nil?
+
+      mf = mf.dup.force_encoding('UTF-8')
       if mf.valid_encoding?
         mf.encode('UTF-8', universal_newline: true)
       else
