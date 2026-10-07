@@ -246,8 +246,12 @@ export default class MaterialHandler {
     return { min: null, max: null, unit: defaultUnit, isRangeField: false };
   };
 
-  // eslint-disable-next-line class-methods-use-this
-  recalculateYieldForGasProduct() {
+  /*
+  A gas product's yield, as a fraction: its moles over those of the feedstock filling the vessel. Null
+  without a feedstock. Everything comes from the material and the reaction handed in, not from the gas
+  phase store, so a variation's handler gives that variation's yield, rendering or not.
+  */
+  gasYieldFraction() {
     const { material, reaction } = this;
     // The reaction's own vessel size rather than the store's: shown while rendering, a variation's
     // yield has to come from the variation's vessel - see GasPhaseContext.
@@ -258,7 +262,14 @@ export default class MaterialHandler {
     }
     const purity = refMaterial?.purity || 1;
     const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
-    const result = material.amount_mol / feedstockMolValue;
+    return material.amount_mol / feedstockMolValue;
+  }
+
+  recalculateYieldForGasProduct() {
+    const result = this.gasYieldFraction();
+    if (result === null) {
+      return null;
+    }
     if (!result) return 'n.a.';
     return result > 1 ? '100%' : `${(result * 100).toFixed(0)}%`;
   }
@@ -320,13 +331,42 @@ export default class MaterialHandler {
   */
   yieldRange() {
     const { material, reaction } = this;
+    if (this.isProduct && material.gas_type === 'gas') {
+      return this.gasYieldRange();
+    }
     const refMaterial = reaction.getReferenceMaterial();
-    if (!this.isProduct || this.isSbmm || material.gas_type === 'gas' || reaction.hasPolymers()
+    if (!this.isProduct || this.isSbmm || reaction.hasPolymers()
       || !refMaterial || refMaterial.decoupled || material.decoupled) {
       return null;
     }
     const { min, max, isRangeField } = this.findMinMayUnit('', (m) => m.equivalent, { needsAmount: true });
     return isRangeField ? { min, max } : null;
+  }
+
+  /*
+  yieldRange for a gas product, whose yield is not stored: each variation's is worked out from its own
+  product and reaction. Capped at 100 % and compared in whole percent, as the field shows them; a
+  variation without a yield (no feedstock, no product moles) is left out, as it shows "n.a.".
+  */
+  gasYieldRange() {
+    const { variations, index } = this;
+    const percent = (fraction) => Math.round(Math.min(fraction, 1) * 100);
+    const values = variations.map(({ data: variationReaction }) => {
+      const variationProduct = variationReaction?.products?.[index];
+      if (variationProduct?.gas_type !== 'gas') return null;
+      return new MaterialHandler({
+        material: variationProduct, reaction: variationReaction, materialGroup: 'products', index,
+      }).gasYieldFraction();
+    }).filter((fraction) => Number.isFinite(fraction) && fraction > 0).map((fraction) => Math.min(fraction, 1));
+    if (values.length === 0) {
+      return null;
+    }
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const own = this.gasYieldFraction();
+    const ownPercent = Number.isFinite(own) && own > 0 ? percent(own) : null;
+    const isRange = percent(min) !== percent(max) || percent(min) !== ownPercent;
+    return isRange ? { min, max } : null;
   }
 
   calculateYield() {
