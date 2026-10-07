@@ -47,6 +47,19 @@ const normalizeMappings = (mappings) => JSON.stringify(
 );
 
 // Map a list of model-name strings to react-select options.
+// The mode and default provider the server actually routes by. Cf. LlmProviderResolver
+// #default_personal_provider: a stale default falls to the oldest enabled provider, none to the institution.
+export const effectiveProviderChoice = (setting, ownProviders, { personal, institutionOk }) => {
+  const usable = (ownProviders || []).filter((p) => p.enabled !== false);
+  const preferred = usable.find((p) => p.id === setting.default_llm_provider_id);
+  const defaultProviderId = (preferred || usable[0] || {}).id || null;
+
+  let type = setting.provider_type || 'global';
+  if (type === 'custom' && (!personal || !defaultProviderId)) type = institutionOk ? 'global' : 'custom';
+  if (type === 'global' && !institutionOk) type = personal ? 'custom' : 'global';
+  return { type, defaultProviderId };
+};
+
 const toModelOptions = (models) => (models || []).map((m) => ({ value: m, label: m }));
 
 // Tasks are loaded from the server-side LLM Task Registry (SF-04). This is only
@@ -201,22 +214,23 @@ const LlmSettings = ({ userId }) => {
     const personal = !!keyAllowed;
     const institutionOk = !!instAllowed;
 
-    // Choose a valid initial provider mode given the user's granted gates.
-    let type = setting.provider_type || 'global';
     if (setting.provider_type === 'custom' && !personal) setLegacyCustomNotice(true);
-    if (type === 'custom' && !personal) type = institutionOk ? 'global' : 'custom';
-    if (type === 'global' && !institutionOk) type = personal ? 'custom' : 'global';
+    const { type, defaultProviderId: defaultId } = effectiveProviderChoice(
+      setting,
+      ownProviders,
+      { personal, institutionOk },
+    );
 
     setProviderType(type);
     setProviders(ownProviders || []);
-    setDefaultProviderId(setting.default_llm_provider_id || null);
+    setDefaultProviderId(defaultId);
     setInstitutionProviderId(setting.institution_llm_provider_id || null);
     setTaskMappings(mappings || []);
     setInstitutionProviders(institution || []);
     setCustomKeyAllowed(personal);
     setInstitutionAllowed(institutionOk);
     setSavedProviderType(type);
-    setSavedDefaultProviderId(setting.default_llm_provider_id || null);
+    setSavedDefaultProviderId(defaultId);
     setSavedInstitutionProviderId(setting.institution_llm_provider_id || null);
     setSavedTaskMappings(mappings || []);
     return { type, institution: institution || [], providers: ownProviders || [] };
