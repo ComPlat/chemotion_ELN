@@ -171,6 +171,16 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   });
   // Bumped when the graphic is updated so the <ReactionSchemeGraphic> key changes (we mutate reaction in place)
   const [reactionSvgVersion, setReactionSvgVersion] = useState(0);
+  // The variation whose scheme the graphic shows (its data.id); null for the reaction's own. Kept here,
+  // as the graphic is remounted with every new scheme of the reaction.
+  const [graphicVariationId, setGraphicVariationId] = useState(null);
+  // Back to the reaction's scheme once the variation shown is removed, or another reaction is open.
+  useEffect(() => {
+    if (graphicVariationId && !variations.some(({ data }) => data?.id === graphicVariationId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setGraphicVariationId(null);
+    }
+  }, [variations, graphicVariationId]);
   const [isRefreshingGraphic, setIsRefreshingGraphic] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
   const [headerNameDraft, setHeaderNameDraft] = useState(reactionFromProps.name || '');
@@ -1120,6 +1130,9 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
         }}
         onRefresh={refreshGraphic}
         isRefreshing={isRefreshingGraphic || false}
+        variations={variations}
+        selectedVariationId={graphicVariationId}
+        onSelectVariation={setGraphicVariationId}
       />
       <AppModal
         show={showWtInfoModal}
