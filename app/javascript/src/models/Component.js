@@ -360,7 +360,7 @@ export default class Component extends Sample {
   }
 
   /**
-   * Resets all amount and concentration fields to zero.
+   * Resets all amount and concentration fields, and the component ratio, to zero.
    * Used when a same-molecule merge collapses a duplicate component into this one.
    */
   resetAmounts() {
@@ -369,6 +369,7 @@ export default class Component extends Sample {
     this.amount_l = 0;
     this.molarity_value = 0;
     this.concn = 0;
+    this.equivalent = 0;
   }
 
   /**

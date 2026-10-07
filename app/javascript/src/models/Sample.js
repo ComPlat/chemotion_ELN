@@ -822,23 +822,28 @@ export default class Sample extends Element {
     this.updateSolventVolumes();
   }
 
+  /** Checks whether a component has a known ratio and usable molar mass and purity. */
+  static hasValidComponentComposition(component) {
+    const ratio = Number.isFinite(component.equivalent)
+      ? component.equivalent : (component.reference ? 1 : null);
+    const molarMass = Number(component.molecule_molecular_weight);
+    const purity = Number(component.purity ?? 1);
+    return ratio != null && ratio >= 0 && Number.isFinite(molarMass) && molarMass > 0
+      && Number.isFinite(purity) && purity > 0;
+  }
+
   /**
-   * Updates each component's amount (in mol) from the mixture's total mass, using its
-   * ratio (equivalent) and its own molar mass.
+   * Updates component amounts (in mol) from the mixture's total mass using stored
+   * relative molecular weights, which include solvent mass and component purity.
    *
-   * The total mass is split across components in proportion to their ratios:
-   *   amount_mol_i = (ratio_i * totalMass) / Σ_j (ratio_j * molar_mass_j)
-   * which keeps the component mole ratios equal to their ratios and conserves the
-   * total mass (Σ amount_mol_i * molar_mass_i === totalMass).
+   * If no component has a usable relative molecular weight, a solvent-free composition
+   * without a total-volume mass basis can initialize from known ratios and molar masses:
+   *   amount_mol_i = (ratio_i * totalMass) / Σ_j (ratio_j * molar_mass_j / purity_j)
+   * This fallback assumes all mixture mass belongs to the components, preserves their
+   * mole ratios and conserves their physical mass, including impurities.
    *
-   * The split is only performed when every component has a KNOWN ratio and a usable molar
-   * mass. An 'n.d' (unknown) ratio means the composition is unknown, not zero, so the
-   * amounts are left unchanged rather than silently assigning that component 0 moles and
-   * reallocating its share to the others.
-   *
-   * This is self-contained (ratios + molar masses only), so it also works when the
-   * components have no prior amounts, i.e. when a mass is first entered on a mixture used
-   * as a reaction material.
+   * Missing weights in a loaded mixture and unknown ratios in a new composition leave
+   * the affected amounts unchanged; their mass must not be redistributed to other components.
    * @returns {void}
    */
   updateComponentAmounts() {
@@ -848,42 +853,46 @@ export default class Sample extends Element {
     const components = this.components || [];
     if (components.length === 0) return;
 
-    // Loaded mixtures use canonical relative MWs so changing the reference does not
-    // apply the component ratio a second time. New compositions can still initialize
-    // their amounts from ratios and molar masses below.
-    if (components.every((component) => {
+    const hasRelativeWeight = (component) => {
       const relativeWeight = Number(component.relative_molecular_weight);
       return Number.isFinite(relativeWeight) && relativeWeight > 0;
-    })) {
+    };
+
+    // A missing weight must not discard the solvent-aware weights of the other components.
+    if (components.some(hasRelativeWeight)) {
       components.forEach((component) => {
+        if (!hasRelativeWeight(component)) return;
+
         component.amount_mol = totalMassG / Number(component.relative_molecular_weight);
         component.updatePhysicalAmounts?.();
       });
       return;
     }
 
+    // Ratio initialization assumes no solvent mass. Match the volume basis used by
+    // calculateTotalMixtureMass, including its fallback to the sample's own volume.
+    const totalVolumeL = Number(this.sample_details?.total_mixture_volume_l ?? this.amount_l);
+    if ((Array.isArray(this.solvent) && this.solvent.length > 0)
+      || !Number.isFinite(totalVolumeL) || totalVolumeL !== 0) return;
+
     const ratioOf = (component) => {
       const isRef = !!component.reference;
       return Number.isFinite(component.equivalent) ? component.equivalent : (isRef ? 1 : 0);
     };
     const molarMassOf = (component) => Number(component.molecule_molecular_weight);
+    const purityOf = (component) => Number(component.purity ?? 1);
 
     // Bail when any component's composition is unknown: an 'n.d' (non-numeric) ratio or a
     // missing/invalid molar mass makes the distribution indeterminate, so we must not
     // silently assign that component 0 moles and reallocate its share to the others.
-    const hasUnknownComposition = components.some((component) => {
-      const ratioKnown = !!component.reference || Number.isFinite(component.equivalent);
-      const molarMass = molarMassOf(component);
-      return !ratioKnown || !Number.isFinite(molarMass) || molarMass <= 0;
-    });
-    if (hasUnknownComposition) return;
+    if (!components.every(Sample.hasValidComponentComposition)) return;
 
-    // Weighted molar-mass sum: Σ (ratio_j * molar_mass_j).
+    // Physical mass per ratio unit: Σ (ratio_j * molar_mass_j / purity_j).
     const weighted = components.reduce(
-      (sum, component) => sum + (ratioOf(component) * molarMassOf(component)),
+      (sum, component) => sum + (ratioOf(component) * molarMassOf(component) / purityOf(component)),
       0
     );
-    if (!(weighted > 0)) return;
+    if (!Number.isFinite(weighted) || weighted <= 0) return;
 
     components.forEach((component) => {
       component.amount_mol = (ratioOf(component) * totalMassG) / weighted;
@@ -2368,8 +2377,9 @@ export default class Sample extends Element {
   }
 
   /**
-   * Removes the source component and resets the target's amounts and concentration
-   * to zero, then recalculates mixture totals. Used when both components share the
+   * Removes the source component and resets the target's amounts, concentration and
+   * ratio to zero, then recalculates mixture totals. The reference component keeps
+   * a ratio of one. Used when both components share the
    * same molecule so no new molecule fetch is required.
    * @param {Object} srcMat - The duplicate component to remove.
    * @param {Object} tagMat - The component to keep, whose amounts will be cleared.

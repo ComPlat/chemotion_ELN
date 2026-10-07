@@ -327,6 +327,23 @@ describe('Sample', async () => {
   });
 
   describe('Sample.updateComponentAmounts()', () => {
+    it('rescales from a valid relative molecular weight without a molecule MW', () => {
+      const sample = new Sample({ sample_type: 'Mixture', amount_value: 0.2, amount_unit: 'g' });
+      const component = new Component({
+        reference: true,
+        equivalent: 1,
+        amount_mol: 0.1,
+        relative_molecular_weight: 50,
+      });
+      sample.initialComponents([component]);
+
+      expect(component.molecule_molecular_weight).toBeFalsy();
+      sample.updateComponentAmounts();
+
+      expect(component.amount_mol).toBeCloseTo(0.004, 10);
+      expect(component.relative_molecular_weight).toBe(50);
+    });
+
     it('keeps component amounts and ratios stable when the reference changes', () => {
       const sample = new Sample({ amount_value: 1000.124, amount_unit: 'g' });
       sample.components = [
@@ -537,6 +554,77 @@ describe('Sample', async () => {
       s.updateComponentAmounts();
       const massBack = (ref.amount_mol * 282.55) + (other.amount_mol * 114.23);
       expect(massBack).toBeCloseTo(0.5, 9);
+    });
+
+    it('includes component purity when initializing amounts from ratios', () => {
+      const { s, ref, other } = buildMixture(1);
+      ref.purity = 0.5;
+      other.purity = 0.8;
+      const denominator = (282.55 / 0.5) + (2 * 114.23 / 0.8);
+
+      s.updateComponentAmounts();
+
+      expect(ref.amount_mol).toBeCloseTo(1 / denominator, 10);
+      expect(other.amount_mol).toBeCloseTo(2 / denominator, 10);
+      expect(ref.amount_g + other.amount_g).toBeCloseTo(1, 10);
+    });
+
+    [
+      { name: 'solvent mass', totalVolumeL: 0, solvent: [{ amount_l: 0.01, density: 1 }] },
+      { name: 'total-volume mass', totalVolumeL: 0.01, solvent: [] },
+    ].forEach(({ name, totalVolumeL, solvent }) => {
+      const buildSolution = () => {
+        const mixture = buildMixture(0);
+        const { s, ref, other } = mixture;
+        ref.molecule = { molecular_weight: 100 };
+        other.molecule = { molecular_weight: 200 };
+        ref.amount_mol = 0.001;
+        other.amount_mol = 0.002;
+        ref.updatePhysicalAmounts();
+        other.updatePhysicalAmounts();
+        s.solvent = solvent.map((entry) => ({ ...entry }));
+        s.sample_details = { total_mixture_volume_l: totalVolumeL };
+        s.calculateTotalMixtureMass();
+        expect(s.total_mixture_mass_g).toBeCloseTo(10.5, 10);
+        return mixture;
+      };
+
+      it(`retains ${name} in relative-MW scaling`, () => {
+        const { s, ref, other } = buildSolution();
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.0005, 10);
+        expect(other.amount_mol).toBeCloseTo(0.001, 10);
+        expect(ref.amount_g + other.amount_g).toBeCloseTo(0.25, 10);
+        expect(other.amount_mol / ref.amount_mol).toBeCloseTo(2, 10);
+      });
+
+      it(`preserves valid relative-MW scaling with ${name} when another weight is missing`, () => {
+        const { s, ref, other } = buildSolution();
+        other.relative_molecular_weight = 0;
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.0005, 10);
+        expect(other.amount_mol).toBeCloseTo(0.002, 10);
+        expect(other.amount_g).toBeCloseTo(0.4, 10);
+      });
+
+      it(`does not allocate ${name} to solutes when all relative weights are missing`, () => {
+        const { s, ref, other } = buildSolution();
+        ref.relative_molecular_weight = 0;
+        other.relative_molecular_weight = 0;
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.001, 10);
+        expect(other.amount_mol).toBeCloseTo(0.002, 10);
+        expect(ref.amount_g + other.amount_g).toBeCloseTo(0.5, 10);
+      });
     });
 
     it('works from zero prior amounts (no dependence on relative_molecular_weight)', () => {
