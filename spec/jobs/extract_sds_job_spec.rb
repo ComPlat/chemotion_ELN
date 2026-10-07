@@ -117,8 +117,8 @@ RSpec.describe ExtractSdsJob do
 
         chemical.reload
         entry = chemical.chemical_data[0]
-        expect(entry['ai4chemotion']['chemical_name']).to eq('Phenol')
-        expect(entry['ai4chemotion']['cas_number']).to eq('108-95-2')
+        expect(entry['aiExtraction']['chemical_name']).to eq('Phenol')
+        expect(entry['aiExtraction']['cas_number']).to eq('108-95-2')
         expect(entry['extractedProperties']['boiling_point']).to eq('181.7 °C')
       end
 

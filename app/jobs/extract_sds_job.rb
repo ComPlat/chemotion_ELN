@@ -317,7 +317,7 @@ class ExtractSdsJob < ApplicationJob
     properties = extraction_result['properties']
     entry['extractedProperties'] = properties if properties.is_a?(Hash) && properties.any?
 
-    entry['ai4chemotion'] = extraction_metadata(extraction_result, model_used, requested_model)
+    entry['aiExtraction'] = extraction_metadata(extraction_result, model_used, requested_model)
     entry.delete('extraction_error') # clear any prior failure marker on success
 
     data[0] = entry
