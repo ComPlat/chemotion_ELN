@@ -94,12 +94,6 @@ RSpec.describe ExtractSdsJob do
         )
       end
 
-      # Legacy ai4chemotion assertion (re-enabled in a separate commit):
-      # it 'does NOT call ai4chemotion service' do
-      #   expect(Chemotion::Ai4ChemotionService).not_to receive(:extract_sds)
-      #   described_class.new.perform(sample_id: sample.id, user_id: user.id)
-      # end
-
       it 'reads the sheet it is given rather than the last saved one' do
         other = Rails.public_path.join('safety_sheets/merck/other.pdf').to_s
         allow(File).to receive(:exist?).with(other).and_return(true)
@@ -165,42 +159,6 @@ RSpec.describe ExtractSdsJob do
         expect(job.instance_variable_get(:@notification_action)).to eq('ElementActions.fetchSampleById')
       end
     end
-
-    # Legacy ai4chemotion fallback path — disabled for now; re-enabled together
-    # with lib/chemotion/ai4_chemotion_service.rb in a separate commit.
-    #
-    # context 'when no LLM provider is configured and ai4chemotion is available (legacy path)' do
-    #   before do
-    #     allow(LlmProviderResolver).to receive(:resolve)
-    #       .with(user: user, task_name: 'sds_extraction')
-    #       .and_raise(Errors::LlmNotConfiguredError)
-    #
-    #     submission = { 'job_id' => 'job-abc', 'status' => 'PENDING' }
-    #     job_result = { 'status' => 'SUCCESS', 'result' => extraction_result }
-    #
-    #     allow(Chemotion::Ai4ChemotionService).to receive(:extract_sds).and_return(submission)
-    #     allow_any_instance_of(ExtractSdsJob).to receive(:poll_until_complete).and_return(job_result)
-    #   end
-    #
-    #   it 'calls ai4chemotion service' do
-    #     expect(Chemotion::Ai4ChemotionService).to receive(:extract_sds)
-    #       .with(file_path, sample_id: sample.id, vendor: anything)
-    #       .and_return('job_id' => 'job-abc', 'status' => 'PENDING')
-    #     described_class.new.perform(sample_id: sample.id, user_id: user.id)
-    #   end
-    #
-    #   it 'does NOT call LlmTaskRunner' do
-    #     expect(LlmTaskRunner).not_to receive(:run)
-    #     described_class.new.perform(sample_id: sample.id, user_id: user.id)
-    #   end
-    #
-    #   it 'updates the chemical record with extracted data' do
-    #     described_class.new.perform(sample_id: sample.id, user_id: user.id)
-    #
-    #     chemical.reload
-    #     expect(chemical.chemical_data[0]['ai4chemotion']['chemical_name']).to eq('Phenol')
-    #   end
-    # end
 
     context 'when no LLM provider is configured (no provider path)' do
       before do

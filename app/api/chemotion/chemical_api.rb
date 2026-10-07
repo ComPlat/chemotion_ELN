@@ -208,9 +208,6 @@ module Chemotion
             error!({ error: 'Sample not found' }, 404) unless sample
             error!({ error: '403 Forbidden' }, 403) unless ElementPolicy.new(current_user, sample).update?
 
-            # Require a configured LLM provider (SF-05). The legacy ai4chemotion
-            # microservice check is re-enabled in a separate commit:
-            #   unless Chemotion::Ai4ChemotionService.available? || llm_provider_available?
             unless llm_provider_available?
               error!({ error: 'No LLM extraction service is configured. ' \
                               'Set up an LLM provider in Profile → AI Settings, ' \
