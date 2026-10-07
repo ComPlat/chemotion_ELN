@@ -548,7 +548,7 @@ export default class ChemicalTab extends React.Component {
       .then((fresh) => fresh?._chemical_data?.[0] ?? null)
       .catch(() => stateData ?? null)
       .then((data) => ({
-        extractedAt: data?.ai4chemotion?.extracted_at ?? null,
+        extractedAt: data?.aiExtraction?.extracted_at ?? null,
         failedAt: data?.extraction_error?.failed_at ?? null,
       }));
   };
@@ -615,7 +615,7 @@ export default class ChemicalTab extends React.Component {
 
       ChemicalFetcher.fetchChemical(sampleId, type).then((chemical) => {
         const data = chemical?._chemical_data?.[0];
-        const newExtractedAt = data?.ai4chemotion?.extracted_at ?? null;
+        const newExtractedAt = data?.aiExtraction?.extracted_at ?? null;
         const newFailedAt = data?.extraction_error?.failed_at ?? null;
 
         if (chemical !== null && newExtractedAt && newExtractedAt !== prevExtractedAt) {
@@ -1915,7 +1915,7 @@ export default class ChemicalTab extends React.Component {
 
   renderModePicker = (sheetPath) => {
     const { chemical } = this.state;
-    const hasAiResult = !!chemical?._chemical_data?.[0]?.ai4chemotion?.extracted_at;
+    const hasAiResult = !!chemical?._chemical_data?.[0]?.aiExtraction?.extracted_at;
     const option = (id, mode, icon, title, hint, badge) => (
       <button
         type="button"
@@ -2289,9 +2289,9 @@ export default class ChemicalTab extends React.Component {
   renderAiResultModal() {
     const { showAiResultModal, chemical } = this.state;
     const entry = chemical?._chemical_data?.[0];
-    if (!entry?.ai4chemotion?.extracted_at) return null;
+    if (!entry?.aiExtraction?.extracted_at) return null;
 
-    const aiData = entry.ai4chemotion;
+    const aiData = entry.aiExtraction;
     const extractedProps = entry.extractedProperties || {};
     const extractedAt = new Date(aiData.extracted_at).toLocaleString();
 
