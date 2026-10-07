@@ -8,9 +8,11 @@ import {
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 import { formatDisplayValue } from 'src/utilities/MathUtils';
 import CopyButton from 'src/components/common/CopyButton';
+import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
+import { compactRangeNumber } from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeUtils';
 
 const NumeralInputWithUnitsCompo = ({
-  isRangeField = false, rangeEnd = null, rangeStart = null,
+  isRangeField = false, rangeEnd = null, rangeStart = null, rangeHint = null,
   value: valueProp, block: blockProp, metricPrefix: metricPrefixProp, precision,
   size, disabled, label, unit, name,
   showInfoTooltipTotalVol, showInfoTooltipRequiredVol,
@@ -159,6 +161,22 @@ const NumeralInputWithUnitsCompo = ({
   const rangeText = displayRangeStart === displayRangeEnd
     ? `${displayRangeStart}`
     : `${displayRangeStart}-${displayRangeEnd}`;
+  // The field is too narrow for most ranges in full, which are left to the tooltip.
+  const [compactRangeStart, compactRangeEnd] = [rangeStart, rangeEnd]
+    .map((v) => compactRangeNumber(metPreConv(v, 'n', metricPrefix)));
+  const compactRangeText = compactRangeStart === compactRangeEnd
+    ? compactRangeStart
+    : `${compactRangeStart}-${compactRangeEnd}`;
+  const rangeInput = (rangeUnit) => (
+    <VariationRangeInput
+      text={compactRangeText}
+      fullText={rangeText}
+      unit={rangeUnit}
+      hint={rangeHint}
+      size={size}
+      name={name}
+    />
+  );
 
   const inputDisabled = disabled ? true : block;
   const alwaysAllowDisplayUnit = [
@@ -238,29 +256,20 @@ const NumeralInputWithUnitsCompo = ({
         {(() => {
           const inputGroup = (
             <InputGroup className="w-100">
-              { !isRangeField ?
-              <Form.Control
-                type="text"
-                disabled={inputDisabled}
-                variant={hasErrorState ? 'danger' : undefined}
-                size={size}
-                value={displayValue || ''}
-                onChange={(event) => handleInputValueChange(event)}
-                onFocus={(event) => handleInputValueFocus(event)}
-                onBlur={(event) => handleInputValueBlur(event)}
-                name={name}
-                className="flex-grow-1"
-              /> :
-              <Form.Control
-                type="text"
-                disabled={true}
-                size={size}
-                value={rangeText}
-                // A range is often longer than the input is wide.
-                title={rangeText}
-                name={name}
-                className="flex-grow-1"
-              /> }
+              {!isRangeField ? (
+                <Form.Control
+                  type="text"
+                  disabled={inputDisabled}
+                  variant={hasErrorState ? 'danger' : undefined}
+                  size={size}
+                  value={displayValue || ''}
+                  onChange={(event) => handleInputValueChange(event)}
+                  onFocus={(event) => handleInputValueFocus(event)}
+                  onBlur={(event) => handleInputValueBlur(event)}
+                  name={name}
+                  className="flex-grow-1"
+                />
+              ) : rangeInput(mp + unit)}
               {prefixSwitch}
               {showInfoTooltipRequiredVol && (
                 <CopyButton
@@ -293,18 +302,20 @@ const NumeralInputWithUnitsCompo = ({
     <div className={className}>
       {label && <Form.Label className="me-2" column="sm">{label}</Form.Label>}
       <div>
-        <Form.Control
-          type="text"
-          disabled={inputDisabled}
-          variant={hasErrorState ? 'danger' : undefined}
-          size={size}
-          value={displayValue || ''}
-          onChange={(event) => handleInputValueChange(event)}
-          onFocus={(event) => handleInputValueFocus(event)}
-          onBlur={(event) => handleInputValueBlur(event)}
-          name={name}
-          className="flex-grow-1"
-        />
+        {isRangeField ? rangeInput('') : (
+          <Form.Control
+            type="text"
+            disabled={inputDisabled}
+            variant={hasErrorState ? 'danger' : undefined}
+            size={size}
+            value={displayValue || ''}
+            onChange={(event) => handleInputValueChange(event)}
+            onFocus={(event) => handleInputValueFocus(event)}
+            onBlur={(event) => handleInputValueBlur(event)}
+            name={name}
+            className="flex-grow-1"
+          />
+        )}
       </div>
     </div>
   );
@@ -323,6 +334,7 @@ function areEqual(prevProps, nextProps) {
     && prevProps.isRangeField === nextProps.isRangeField
     && prevProps.rangeStart === nextProps.rangeStart
     && prevProps.rangeEnd === nextProps.rangeEnd
+    && prevProps.rangeHint === nextProps.rangeHint
     && prevProps.unit === nextProps.unit;
 }
 
@@ -330,6 +342,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   isRangeField: PropTypes.bool,
   rangeEnd: PropTypes.number,
   rangeStart: PropTypes.number,
+  // Shown under the range in its tooltip, e.g. what the field's own tooltip says.
+  rangeHint: PropTypes.string,
   className: PropTypes.string,
   // Numbers usually, but the gas phase fields hand in 'n.d' for a value that is not determined.
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -357,6 +371,7 @@ NumeralInputWithUnitsCompo.defaultProps = {
   isRangeField: false,
   rangeStart: null,
   rangeEnd: null,
+  rangeHint: null,
   className: '',
   unit: 'n',
   value: 0,

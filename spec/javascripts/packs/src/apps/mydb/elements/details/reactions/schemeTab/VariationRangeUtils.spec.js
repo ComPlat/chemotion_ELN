@@ -1,6 +1,6 @@
 import expect from 'expect';
 import {
-  findVariationRange, variationRangeText
+  findVariationRange, variationRangeText, compactVariationRangeText
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeUtils';
 
 /*
@@ -51,6 +51,15 @@ describe('VariationRangeUtils', () => {
 
     it('rounds to four decimals without trailing zeros', () => {
       expect(variationRangeText({ min: 0.123456, max: 2.5 })).toBe('0.1235-2.5');
+    });
+  });
+
+  describe('compactVariationRangeText', () => {
+    it('keeps four significant digits, so that a range fits a material input', () => {
+      expect(compactVariationRangeText({ min: 183.6726, max: 367.3452 })).toBe('183.7-367.3');
+      expect(compactVariationRangeText({ min: 106.9835, max: 427.934 })).toBe('107-427.9');
+      expect(compactVariationRangeText({ min: 0.53494, max: 2.41831 })).toBe('0.5349-2.418');
+      expect(compactVariationRangeText({ min: 12345.6, max: 12345.6 })).toBe('12346');
     });
   });
 });

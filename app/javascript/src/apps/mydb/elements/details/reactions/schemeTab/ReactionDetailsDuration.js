@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import { permitOn } from 'src/components/common/uis';
+import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
 import CopyButton from 'src/components/common/CopyButton';
 import { convertDuration } from 'src/models/Reaction';
 import {
@@ -77,6 +78,7 @@ export default class ReactionDetailsDuration extends Component {
     const durationValue = durationRange.isRangeField
       ? variationRangeText(durationRange)
       : (reaction.durationDisplay.dispValue || '');
+    const durationRangeInput = <VariationRangeInput text={durationValue} unit={reaction.durationUnit} />;
 
     if (isInteractionReaction) {
       // Interaction reactions use a single incubation-time input instead of
@@ -85,14 +87,16 @@ export default class ReactionDetailsDuration extends Component {
         <Form.Group>
           <Form.Label>Time (incubation)</Form.Label>
           <InputGroup>
-            <Form.Control
-              disabled={isDurationDisabled}
-              type="text"
-              value={durationValue}
-              ref={this.refDuration}
-              placeholder="Input duration..."
-              onChange={(event) => this.handleDurationChange(event)}
-            />
+            {durationRange.isRangeField ? durationRangeInput : (
+              <Form.Control
+                disabled={isDurationDisabled}
+                type="text"
+                value={durationValue}
+                ref={this.refDuration}
+                placeholder="Input duration..."
+                onChange={(event) => this.handleDurationChange(event)}
+              />
+            )}
             <OverlayTrigger
               placement="bottom"
               overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
@@ -197,14 +201,16 @@ export default class ReactionDetailsDuration extends Component {
         </Col>
         <Col md={3} sm={6} className="d-flex flex-column justify-content-end">
           <InputGroup>
-            <Form.Control
-              disabled={isDurationDisabled}
-              type="text"
-              value={durationValue}
-              ref={this.refDuration}
-              placeholder="Input duration..."
-              onChange={event => this.handleDurationChange(event)}
-            />
+            {durationRange.isRangeField ? durationRangeInput : (
+              <Form.Control
+                disabled={isDurationDisabled}
+                type="text"
+                value={durationValue}
+                ref={this.refDuration}
+                placeholder="Input duration..."
+                onChange={event => this.handleDurationChange(event)}
+              />
+            )}
               <OverlayTrigger
                 placement="bottom"
                 overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}

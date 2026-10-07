@@ -513,6 +513,25 @@ const getInitialColumnState = (reactionId, view = SCHEMA_VIEW) => {
   }
 };
 
+/*
+A stored layout knows the columns there were when it was saved. AG Grid puts the columns it does not
+know - those of a material added to the reaction since - after all the others, behind the products and
+the reaction fields. They go where the definitions have them instead: right after the column that
+precedes them there, so that a second reactant follows the first, wherever the user has moved that.
+*/
+const placeUnknownColumns = (columnState, colIdsInDefinitionOrder) => {
+  const placed = [...columnState];
+  const known = new Set(placed.map(({ colId }) => colId));
+  colIdsInDefinitionOrder.forEach((colId, index) => {
+    if (known.has(colId)) return;
+    const predecessor = colIdsInDefinitionOrder.slice(0, index).reverse().find((id) => known.has(id));
+    const position = predecessor ? placed.findIndex((entry) => entry.colId === predecessor) + 1 : 0;
+    placed.splice(position, 0, { colId });
+    known.add(colId);
+  });
+  return placed;
+};
+
 const persistColumnState = (reactionId, columnState, view = SCHEMA_VIEW) => {
   try {
     window.localStorage.setItem(getColumnStateId(reactionId, view), JSON.stringify(columnState));
@@ -758,6 +777,7 @@ export {
   adoptLegacyVariationsLayout,
   getInitialColumnState,
   persistColumnState,
+  placeUnknownColumns,
   columnKind,
   isHiddenByDefault,
   persistUserColumnKinds,

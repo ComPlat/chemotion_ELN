@@ -9,6 +9,7 @@ import {
   Row,
   Form
 } from 'react-bootstrap';
+import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
 import Reaction from 'src/models/Reaction';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
@@ -106,17 +107,17 @@ export default class ReactionDetailsMainProperties extends Component {
                     <i className="fa fa-area-chart" />
                   </Button>
                 </OverlayTrigger>
-                <Form.Control
-                  type="text"
-                  value={
-                    temperatureRange.isRangeField
-                      ? variationRangeText(temperatureRange)
-                      : (reaction.temperature_display || '')
-                  }
-                  disabled={isTemperatureDisabled}
-                  placeholder="Temperature..."
-                  onChange={(event) => onInputChange('temperature', event)}
-                />
+                {temperatureRange.isRangeField ? (
+                  <VariationRangeInput text={variationRangeText(temperatureRange)} unit={temperature.valueUnit} />
+                ) : (
+                  <Form.Control
+                    type="text"
+                    value={reaction.temperature_display || ''}
+                    disabled={isTemperatureDisabled}
+                    placeholder="Temperature..."
+                    onChange={(event) => onInputChange('temperature', event)}
+                  />
+                )}
                 <Button
                   disabled={!permitOn(reaction) || temperatureRange.isRangeField}
                   variant="light"

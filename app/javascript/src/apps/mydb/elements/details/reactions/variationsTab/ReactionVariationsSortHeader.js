@@ -56,21 +56,24 @@ const sortTitle = (displayName, sort) => {
 /*
 The column name, clickable when the column sorts. Shift-click adds the column to the sort instead of
 replacing it, which is what AG Grid's own header does with `progressSort`.
+
+A column that explains itself passes `description` (through `headerComponentParams`), which leads the
+title: a `headerTooltip` would show as a second tooltip next to it.
 */
 const SortableHeaderName = ({
-  displayName, column, enableSorting, progressSort
+  displayName, column, enableSorting, progressSort, description
 }) => {
   const sort = useColumnSort(column, enableSorting);
 
   if (!enableSorting) {
-    return <span className="text-truncate">{displayName}</span>;
+    return <span className="text-truncate" title={description ?? undefined}>{displayName}</span>;
   }
 
   return (
     <button
       type="button"
       className="variations-sort-header text-truncate"
-      title={sortTitle(displayName, sort)}
+      title={[description, sortTitle(displayName, sort)].filter(Boolean).join('\n')}
       onClick={(event) => progressSort(event.shiftKey)}
     >
       <span className="text-truncate">{displayName}</span>
@@ -89,12 +92,14 @@ SortableHeaderName.propTypes = {
   column: PropTypes.object,
   enableSorting: PropTypes.bool,
   progressSort: PropTypes.func,
+  description: PropTypes.string,
 };
 
 SortableHeaderName.defaultProps = {
   column: null,
   enableSorting: false,
   progressSort: () => {},
+  description: null,
 };
 
 export default SortableHeaderName;

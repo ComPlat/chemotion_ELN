@@ -21,6 +21,7 @@ import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/
 
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
+import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
 import { permitOn } from 'src/components/common/uis';
 import {
   findVariationRange, variationRangeText
@@ -207,15 +208,23 @@ export default class ReactionDetailsScheme extends React.Component {
       <Form.Group>
         <Form.Label>Vessel size</Form.Label>
         <InputGroup>
-          <Form.Control
-            name="reaction_vessel_size"
-            type="text"
-            value={range.isRangeField ? variationRangeText(range) : (reaction.vessel_size?.amount ?? '')}
-            disabled={isDisabled}
-            onChange={(event) => this.reactionUpdateHandler.updateVesselSize(event)}
-            onBlur={(event) => this.reactionUpdateHandler.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
-            className="flex-grow-1 Select-control"
-          />
+          {range.isRangeField ? (
+            <VariationRangeInput
+              text={variationRangeText(range)}
+              unit={reaction.vessel_size?.unit || 'ml'}
+              name="reaction_vessel_size"
+            />
+          ) : (
+            <Form.Control
+              name="reaction_vessel_size"
+              type="text"
+              value={reaction.vessel_size?.amount ?? ''}
+              disabled={isDisabled}
+              onChange={(event) => this.reactionUpdateHandler.updateVesselSize(event)}
+              onBlur={(event) => this.reactionUpdateHandler.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
+              className="flex-grow-1 Select-control"
+            />
+          )}
           <Button
             disabled={isDisabled}
             variant="light"
@@ -281,15 +290,16 @@ export default class ReactionDetailsScheme extends React.Component {
           >
             {operator}
           </Button>
-          <Form.Control
-            // A range is not a number, so the input has to take text while it shows one.
-            type={range.isRangeField ? 'text' : 'number'}
-            step="any"
-            value={range.isRangeField ? variationRangeText(range) : value}
-            disabled={isDisabled}
-            placeholder="value"
-            onChange={(event) => onInputChange('phValue', event.target.value)}
-          />
+          {range.isRangeField ? <VariationRangeInput text={variationRangeText(range)} /> : (
+            <Form.Control
+              type="number"
+              step="any"
+              value={value}
+              disabled={isDisabled}
+              placeholder="value"
+              onChange={(event) => onInputChange('phValue', event.target.value)}
+            />
+          )}
         </InputGroup>
       </Form.Group>
     );

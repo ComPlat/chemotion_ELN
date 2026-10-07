@@ -28,6 +28,7 @@ import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/sche
 import {
   getInitialColumnState,
   persistColumnState,
+  placeUnknownColumns,
   isHiddenByDefault,
   persistUserColumnKinds,
   getUserGridHeight,
@@ -475,6 +476,8 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
         {
           colId: 'variation_index',
           headerName: '#',
+          // Not movable, so no DraggableHeader - but it sorts, and says so like every other column.
+          headerComponent: SortableHeaderName,
           width: 75,
           valueGetter: ({ data }) => data.label,
           // Rows are put in order by dragging them by this handle (see onRowDragEnd). AG Grid leaves
@@ -493,8 +496,11 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
         {
           colId: 'variation_group',
           headerName: 'Group',
-          headerTooltip: 'Groups variations, e.g. a screening series: enter a number such as 2 or 2.1. '
-            + 'Sorting by this column orders 2.1 before 10.2.',
+          headerComponent: SortableHeaderName,
+          headerComponentParams: {
+            description: 'Groups variations, e.g. a screening series: enter a number such as 2 or 2.1. '
+              + 'Sorting by this column orders 2.1 before 10.2.',
+          },
           width: 110,
           valueGetter: ({ data }) => data.group,
           // "10.2" after "2.1", not before it: a group is a sequence of numbers, so it is compared
@@ -1149,10 +1155,18 @@ const VariationSchemaTable = ({
     if (!known) {
       return;
     }
-    const added = colIds.filter((colId) => !known.has(colId) && isHiddenByDefault(colId, currentSegmentName));
-    if (added.length > 0) {
-      gridApiRef.current?.setColumnsVisible(added, false);
-      setHiddenColumns((previous) => [...new Set([...previous, ...added])]);
+    const api = gridApiRef.current;
+    const added = colIds.filter((colId) => !known.has(colId));
+    // Next to the columns they follow in the definitions, not at the end - see placeUnknownColumns.
+    if (api && added.some((colId) => api.getColumn(colId))) {
+      const others = api.getColumnState().filter(({ colId }) => !added.includes(colId));
+      api.applyColumnState({ state: placeUnknownColumns(others, colIds), applyOrder: true });
+      syncGroupOrder();
+    }
+    const hiddenByDefault = added.filter((colId) => isHiddenByDefault(colId, currentSegmentName));
+    if (hiddenByDefault.length > 0) {
+      api?.setColumnsVisible(hiddenByDefault, false);
+      setHiddenColumns((previous) => [...new Set([...previous, ...hiddenByDefault])]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colIdsKey]);
@@ -1408,7 +1422,10 @@ const VariationSchemaTable = ({
             onGridApiReady?.(api);
             const storedState = getInitialColumnState(reactionId, currentSegmentName);
             if (storedState?.length) {
-              api.applyColumnState({ state: storedState, applyOrder: true });
+              api.applyColumnState({
+                state: placeUnknownColumns(storedState, colIdsKey ? colIdsKey.split(',') : []),
+                applyOrder: true,
+              });
             }
             // Only from here on may events overwrite what was just loaded.
             restoredRef.current = true;

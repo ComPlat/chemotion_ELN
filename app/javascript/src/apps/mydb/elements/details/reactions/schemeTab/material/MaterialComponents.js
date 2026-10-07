@@ -13,6 +13,7 @@ import SampleName from 'src/components/common/SampleName';
 import { SampleCode } from 'src/utilities/ElementUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import { permitOn } from 'src/components/common/uis';
+import VariationRangeInput from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeInput';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
 import Reaction, { convertDuration, convertTemperature, convertTonPerTime } from 'src/models/Reaction';
@@ -508,12 +509,7 @@ CoefficientField.propTypes = {
 const MassField = ({ mh, metricPrefixes, metric }) => {
   const { lockEquivColumn, materialGroup, material, reaction } = mh;
 
-  const tooltip = (
-    <Tooltip id="molecular-weight-info">
-      {'molar mass: '}
-      {mh.molarWeightValue()}
-    </Tooltip>
-  );
+  const tooltipText = `molar mass: ${mh.molarWeightValue()}`;
 
   const {
     min: rangeStart,
@@ -525,7 +521,9 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
   return (
     <OverlayTrigger
-      overlay={tooltip}
+      overlay={<Tooltip id="molecular-weight-info">{tooltipText}</Tooltip>}
+      // A range has a tooltip of its own, which says this as well.
+      show={isRangeField ? false : undefined}
     >
       <div>
         <NumeralInputWithUnitsCompo
@@ -534,6 +532,7 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
           isRangeField={isRangeField}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
+          rangeHint={tooltipText}
           unit={rangeUnit}
           metricPrefix={metric}
           metricPrefixes={metricPrefixes}
@@ -571,15 +570,12 @@ const MaterialVolume = ({ mh, className }) => {
   const {
     density, molarity_value, molarity_unit, has_density, has_molarity
   } = material;
-  const tooltip = has_density || has_molarity ? (
-    <Tooltip id="density_info">
-      {has_density
-        ? `density: ${density}`
-        : `molarity = ${molarity_value} ${molarity_unit}`}
-    </Tooltip>
-  ) : (
-    <Tooltip id="density_info">no density or molarity defined</Tooltip>
-  );
+  let tooltipText = 'no density or molarity defined';
+  if (has_density) {
+    tooltipText = `density: ${density}`;
+  } else if (has_molarity) {
+    tooltipText = `molarity = ${molarity_value} ${molarity_unit}`;
+  }
 
   const metric = volumeMetricPrefix(material, mh.isSbmm);
   const { isAmountDisabledByWeightPercentage } = mh;
@@ -592,7 +588,11 @@ const MaterialVolume = ({ mh, className }) => {
   } = mh.findMinMayUnit('l', (m) => m.amount_l, { needsAmount: true });
 
   return (
-    <OverlayTrigger overlay={tooltip}>
+    <OverlayTrigger
+      overlay={<Tooltip id="density_info">{tooltipText}</Tooltip>}
+      // A range has a tooltip of its own, which says this as well.
+      show={isRangeField ? false : undefined}
+    >
       <div>
         <NumeralInputWithUnitsCompo
           className={className}
@@ -600,6 +600,7 @@ const MaterialVolume = ({ mh, className }) => {
           isRangeField={isRangeField}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
+          rangeHint={tooltipText}
           unit={rangeUnit}
           metricPrefix={metric}
           metricPrefixes={VOLUME_METRIC_PREFIXES}
@@ -814,6 +815,20 @@ const YIELD_LIMIT = 1 + 1e-9;
 
 const YieldOrConversionRate = ({ mh, displayYieldField }) => {
   if (displayYieldField === true || displayYieldField === null) {
+    const yieldRange = mh.yieldRange();
+    if (yieldRange) {
+      const [min, max] = [yieldRange.min, yieldRange.max].map((value) => (value * 100).toFixed(0));
+      return (
+        <div className="d-flex align-items-center gap-1">
+          <VariationRangeInput
+            text={min === max ? `${min}%` : `${min}-${max}%`}
+            size="sm"
+            name="yield"
+            className="reaction-material__yield-data bs-form--compact"
+          />
+        </div>
+      );
+    }
     const yieldText = mh.calculateYield() || 'n.d.';
     const uncappedYield = mh.uncappedYield();
     const exceedsLimit = uncappedYield !== null && uncappedYield > YIELD_LIMIT;
@@ -974,18 +989,22 @@ VolumeRatio.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired
 };
 
+/*
+The Ref cell takes the width of its header whatever it holds - a product's is mostly empty - so that
+the columns after it line up across starting materials, reactants and products.
+*/
 const MaterialRef = ({ mh }) => {
   const { materialGroup, reaction, material } = mh;
   if (materialGroup === 'products') {
-    return <div><ProductReference mh={mh}/></div>;
+    return <div className="reaction-material__ref-data"><ProductReference mh={mh}/></div>;
   }
 
   if (reaction.weight_percentage && !mh.isSbmm) {
-    return <div><NestedReferenceRadios mh={mh}/></div>;
+    return <div className="reaction-material__ref-data"><NestedReferenceRadios mh={mh}/></div>;
   }
 
   return (
-    <div>
+    <div className="reaction-material__ref-data">
       <Form.Check
         type="radio"
         disabled={!permitOn(reaction)}
