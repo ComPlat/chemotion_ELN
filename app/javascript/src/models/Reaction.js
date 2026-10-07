@@ -255,6 +255,31 @@ function copyVariationForReactionCopy(variation) {
   };
 }
 
+/*
+What an image element shows for a reaction scheme: a stored file under /images/reactions, or raw SVG -
+as the reaction_svg endpoint returns it - as a data URI. Apart from the reaction, so that a scheme drawn
+for one of its variations can be shown without storing it on the variation.
+*/
+export const reactionSvgPath = (svgFile) => {
+  if (svgFile && svgFile !== '***') {
+    if (svgFile.includes('<svg')) {
+      // Raw SVG must be encoded as data URI - passing it directly causes react-inlinesvg
+      // to match embedded data URIs (e.g. in <image href="...">) and atob() invalid base64
+      try {
+        const base64 = btoa(unescape(encodeURIComponent(svgFile)));
+        return `data:image/svg+xml;base64,${base64}`;
+      } catch (e) {
+        console.warn('Failed to encode reaction SVG as data URI', e);
+        return 'images/wild_card/no_image_180.svg';
+      }
+    }
+    if (svgFile.substr(svgFile.length - 4) === '.svg') {
+      return `/images/reactions/${svgFile}`;
+    }
+  }
+  return 'images/wild_card/no_image_180.svg';
+};
+
 export default class Reaction extends Element {
   // reaction material types
   static STARTING_MATERIALS = 'starting_materials';
@@ -1256,23 +1281,7 @@ export default class Reaction extends Element {
   }
 
   get svgPath() {
-    if (this.reaction_svg_file && this.reaction_svg_file != '***') {
-      if (this.reaction_svg_file.includes('<svg')) {
-        // Raw SVG must be encoded as data URI - passing it directly causes react-inlinesvg
-        // to match embedded data URIs (e.g. in <image href="...">) and atob() invalid base64
-        try {
-          const base64 = btoa(unescape(encodeURIComponent(this.reaction_svg_file)));
-          return `data:image/svg+xml;base64,${base64}`;
-        } catch (e) {
-          console.warn('Failed to encode reaction SVG as data URI', e);
-          return 'images/wild_card/no_image_180.svg';
-        }
-      }
-      if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
-        return `/images/reactions/${this.reaction_svg_file}`;
-      }
-    }
-    return 'images/wild_card/no_image_180.svg';
+    return reactionSvgPath(this.reaction_svg_file);
   }
 
   SMGroupValid() {
