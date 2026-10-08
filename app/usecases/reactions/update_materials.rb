@@ -17,10 +17,8 @@ class OSample < OpenStruct
       )
     end
 
-    if data['elemental_compositions_attributes']
-      data['elemental_compositions_attributes'].each do |i|
-        i.delete('description')
-      end
+    data['elemental_compositions_attributes']&.each do |i|
+      i.delete('description')
     end
     data['show_label'] = false if data['show_label'].blank?
     super
@@ -62,10 +60,11 @@ end
 
 module Usecases
   module Reactions
-    # rubocop:disable Metrics/ClassLength -- pre-existing size, out of scope for this PR
+    # rubocop:disable-next Metrics/ClassLength -- pre-existing size, out of scope for this PR
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
+
       attr_reader :current_user
 
       def initialize(reaction, materials, user, vessel_size)
@@ -219,9 +218,9 @@ module Usecases
 
         # update attributes[:name] for a copied reaction
         if (@reaction.name || '').include?('Copy') && attributes[:name].present?
-          named_by_reaction = "#{@reaction.short_label}"
+          named_by_reaction = @reaction.short_label.to_s
           named_by_reaction += "-#{attributes[:name].split('-').last}"
-          attributes.merge!(name: named_by_reaction)
+          attributes[:name] = named_by_reaction
         end
 
         container_info = attributes[:container]
@@ -295,7 +294,7 @@ module Usecases
         existing_sample.dry_solvent = sample.dry_solvent
         existing_sample.solvent = sample.solvent
 
-        if r = existing_sample.residues[0]
+        if (r = existing_sample.residues[0])
           r.assign_attributes sample.residues_attributes[0]
         end
 
@@ -306,48 +305,28 @@ module Usecases
         existing_sample
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- pre-existing size, out of scope for this PR
       def associate_sample_with_reaction(sample, modified_sample, material_group)
+        reactions_sample = ReactionsSample.find_or_initialize_by(sample_id: modified_sample.id)
+
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
         weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
-        if existing_association
-          existing_association.update!(
-            reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-            weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: weight_percentage,
-          )
-        # sample was moved to other materialgroup
-        else
-          ReactionsSample.create!(
-            sample_id: modified_sample.id,
-            reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-            weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: weight_percentage,
-          )
-        end
+
+        reactions_sample.update!(
+          reaction_id: @reaction.id,
+          equivalent: sample.equivalent,
+          reference: sample.reference,
+          show_label: sample.show_label,
+          waste: sample.waste,
+          coefficient: sample.coefficient,
+          position: sample.position,
+          type: reactions_sample_klass,
+          gas_type: sample.gas_type,
+          gas_phase_data: sample.gas_phase_data,
+          conversion_rate: sample.conversion_rate,
+          weight_percentage_reference: sample.weight_percentage_reference,
+          weight_percentage: weight_percentage,
+        )
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
@@ -530,6 +509,5 @@ module Usecases
         sample
       end
     end
-    # rubocop:enable Metrics/ClassLength
   end
 end

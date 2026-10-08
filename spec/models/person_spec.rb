@@ -22,6 +22,7 @@
 #  encrypted_password        :string           default(""), not null
 #  failed_attempts           :integer          default(0), not null
 #  first_name                :string           not null
+#  jti                       :string
 #  last_name                 :string           not null
 #  last_sign_in_at           :datetime
 #  last_sign_in_ip           :inet
@@ -51,6 +52,7 @@
 #  index_users_on_confirmation_token    (confirmation_token) UNIQUE
 #  index_users_on_deleted_at            (deleted_at)
 #  index_users_on_email                 (email) UNIQUE
+#  index_users_on_jti                   (jti)
 #  index_users_on_name_abbreviation     (name_abbreviation) UNIQUE WHERE (name_abbreviation IS NOT NULL)
 #  index_users_on_reset_password_token  (reset_password_token) UNIQUE
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
@@ -62,12 +64,12 @@ RSpec.describe 'Person', type: :model do
     let(:person) { create(:person) }
 
     it 'is possible to create a valid user-person' do
-      expect(person.valid?).to eq true
+      expect(person.valid?).to be true
       expect(person.type).to eq 'Person'
     end
 
     it 'creates an All & chemotion-repository.net collection' do
-      expect(person.collections.pluck(:label)).to match_array ['All', 'chemotion-repository.net']
+      expect(person.collections.pluck(:label)).to contain_exactly('All', 'chemotion-repository.net')
     end
 
     context 'when several groups contain the person,' do
@@ -82,7 +84,7 @@ RSpec.describe 'Person', type: :model do
 
       it 'has many groups' do
         expect(person.groups).not_to be_empty
-        expect(person.groups).to match_array [g1, g2]
+        expect(person.groups).to contain_exactly(g1, g2)
       end
     end
 
@@ -98,7 +100,7 @@ RSpec.describe 'Person', type: :model do
 
       it 'has many administrated_accounts' do
         expect(person.administrated_accounts).not_to be_empty
-        expect(person.administrated_accounts).to match_array [g1, g2]
+        expect(person.administrated_accounts).to contain_exactly(g1, g2)
       end
     end
 
@@ -113,8 +115,8 @@ RSpec.describe 'Person', type: :model do
 
       it 'has (unlocked) collections through the group' do
         expect(person.group_collections).not_to be_empty
-        expect(person.group_collections).to match_array [c1]
-        expect(person.all_collections.unlocked).to match_array [c1]
+        expect(person.group_collections).to contain_exactly(c1)
+        expect(person.all_collections.unlocked).to contain_exactly(c1)
       end
     end
   end

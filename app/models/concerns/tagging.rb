@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # update ElementTag when Element joint table association is updated
-# rubocop: disable Metrics/CyclomaticComplexity
+# rubocop:disable-next Metrics/CyclomaticComplexity
 module Tagging
   extend ActiveSupport::Concern
 
@@ -15,7 +15,7 @@ module Tagging
     klass = self.class.name
     case klass
     when 'ReactionsProductSample', 'ReactionsStartingMaterialSample',
-      'ReactionsSolventSample', 'ReactionsReactantSample'
+      'ReactionsSolventSample', 'ReactionsReactantSample', 'ReactionsIntermediateSample'
       args = { reaction_tag: reaction_id, resources_tag: true }
       element = 'sample'
     when 'ReactionsReactantSbmmSample'
@@ -50,4 +50,3 @@ module Tagging
     element && send(element)&.update_tag!(args)
   end
 end
-# rubocop: enable Metrics/CyclomaticComplexity

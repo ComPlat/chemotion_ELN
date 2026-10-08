@@ -56,7 +56,7 @@
 #  index_reactions_on_rxno              (rxno)
 #
 
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable-next Metrics/ClassLength
 class Reaction < ApplicationRecord
   enum reaction_type: {
     standard: 'standard',
@@ -128,19 +128,19 @@ class Reaction < ApplicationRecord
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
 
-  has_many :reactions_samples, dependent: :destroy
+  has_many :reactions_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :samples, through: :reactions_samples, source: :sample
   has_many :sample_molecules, through: :samples, source: :molecule
 
-  has_many :reactions_starting_material_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_starting_material_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
 
-  has_many :reactions_solvent_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_solvent_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :solvents, through: :reactions_solvent_samples, source: :sample
   has_many :solvent_molecules, through: :solvents, source: :molecule
 
-  has_many :reactions_purification_solvent_samples, -> { order(position: :asc) },
+  has_many :reactions_purification_solvent_samples, -> { includes(:sample).order(position: :asc) },
            dependent: :destroy
   has_many :purification_solvents,
            through: :reactions_purification_solvent_samples,
@@ -149,7 +149,7 @@ class Reaction < ApplicationRecord
            through: :reactions_purification_solvent_samples,
            source: :sample
 
-  has_many :reactions_reactant_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_reactant_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
@@ -161,9 +161,12 @@ class Reaction < ApplicationRecord
            through: :reactions_reactant_sbmm_samples,
            source: :sequence_based_macromolecule_sample
 
-  has_many :reactions_product_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_product_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
+
+  has_many :reactions_intermediate_samples, -> { includes(:sample).order(position: :asc) }, dependent: :destroy
+  has_many :intermediate_samples, through: :reactions_intermediate_samples, source: :sample
 
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
@@ -188,6 +191,10 @@ class Reaction < ApplicationRecord
   has_one :container, as: :containable
 
   CONCENTRATION_MODES = %w[solvents_only combined reaction_volume].freeze
+
+  has_one :reaction_process, -> { includes(:reaction_process_steps) },
+          class_name: 'ReactionProcessEditor::ReactionProcess',
+          inverse_of: :reaction, dependent: :destroy
 
   validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
   validates :concentration_mode, inclusion: { in: CONCENTRATION_MODES }
@@ -454,7 +461,7 @@ class Reaction < ApplicationRecord
     update_to_plain_text(description_changed, observation_changed)
   end
 
-  # rubocop:disable Rails/SkipsModelValidations
+  # rubocop:disable-next Rails/SkipsModelValidations
   def update_to_plain_text(description_changed, observation_changed)
     update_columns(
       {
@@ -466,8 +473,6 @@ class Reaction < ApplicationRecord
   rescue StandardError => e
     Rails.logger.error("Error converting quill to plain text: #{e}")
   end
-  # rubocop:enable Rails/SkipsModelValidations
-
   handle_asynchronously :update_to_plain_text, queue: 'plain_text_reaction'
 
   def full_svg_path(svg_file_name = reaction_svg_file)
@@ -476,4 +481,3 @@ class Reaction < ApplicationRecord
     Rails.public_path.join('images/reactions', svg_file_name)
   end
 end
-# rubocop:enable Metrics/ClassLength

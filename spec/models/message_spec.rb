@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: messages
+#
+#  id         :integer          not null, primary key
+#  content    :jsonb            not null
+#  created_by :integer          not null
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  channel_id :integer
+#
 describe Message do
   let(:sender) { create(:person) }
   let(:receiver) { create(:person) }
