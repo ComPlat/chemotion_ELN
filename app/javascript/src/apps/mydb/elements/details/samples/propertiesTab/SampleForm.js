@@ -13,7 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
-import { SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
+import { SampleTypesOptions, IntermediateTypeOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
@@ -32,6 +32,10 @@ export default class SampleForm extends React.Component {
       (option) => option.value === props.sample.sample_type
     );
 
+    const selectedIntermediateType = IntermediateTypeOptions.find(
+      (option) => option.value === props.sample.intermediate_type
+    );
+
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
@@ -39,6 +43,7 @@ export default class SampleForm extends React.Component {
       sumFormula: null,
       densityMolarity: props.sample.molarity_value !== 0 ? 'molarity' : 'density',
       selectedSampleType: selectedOption || SampleTypesOptions[0],
+      selectedIntermediateType: selectedIntermediateType,
       enableComponentLabel: false,
       enableComponentPurity: false,
       moleculeNameInputValue: props.sample.molecule_name?.label || props.sample.molecule_name?.value || '',
@@ -60,6 +65,7 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
+    this.handleIntermediateTypeChanged = this.handleIntermediateTypeChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -140,6 +146,15 @@ export default class SampleForm extends React.Component {
     }
 
     handleSampleChanged(sample);
+  }
+
+  handleIntermediateTypeChanged(intermediateType) {
+    const { sample } = this.props;
+
+    sample.updateIntermediateType(intermediateType.value);
+    this.setState({ selectedIntermediateType: intermediateType });
+
+    this.props.handleSampleChanged(sample);
   }
 
   /**
@@ -947,7 +962,7 @@ export default class SampleForm extends React.Component {
     const weightPercentageSample = sample.weight_percentage > 0;
     const overlayMessage = weightPercentageSample
       ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
-        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
       : null;
     let metric;
     if (unit === 'l') {
@@ -1270,6 +1285,32 @@ export default class SampleForm extends React.Component {
   }
 
   /**
+   * Renders the sample intermediate_type selection input.
+   * Allows the user to select the intermediate_type of sample (e.g., Crude, Mixtue, Intermediate, …).
+   * @returns {JSX.Element} The rendered sample intermediate_type selects input
+   */
+  intermediateTypeInput() {
+    const { sample } = this.props;
+    const { selectedIntermediateType } = this.state;
+
+    return (
+      <Form.Group>
+        <Form.Label>Intermediate type</Form.Label>
+        <Select
+          name="sampleType"
+          clearable={false}
+          disabled={!sample.can_update}
+          value={selectedIntermediateType}
+          onChange={(value) => this.handleIntermediateTypeChanged(value)}
+          options={IntermediateTypeOptions}
+          isDisabled={!selectedIntermediateType}
+          placeholder={'No IntermediateType'}
+        />
+      </Form.Group>
+    );
+  }
+
+  /**
    * Renders the list of mixture components for the sample.
    * Passes state flags for component label and purity to the child component.
    * @param {Object} sample - The sample object
@@ -1308,6 +1349,9 @@ export default class SampleForm extends React.Component {
       <Form>
         <Row className="align-items-end mb-4">
           {this.sampleTypeInput()}
+        </Row>
+        <Row className="align-items-end mb-4">
+          {this.intermediateTypeInput()}
         </Row>
         {
           selectedSampleType?.value !== 'Mixture' ? (
@@ -1501,6 +1545,6 @@ SampleForm.propTypes = {
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
   onDecoupleChanged: null,
-  setComponentDeletionLoading: () => {},
-  setMoleculeLoading: () => {},
+  setComponentDeletionLoading: () => { },
+  setMoleculeLoading: () => { },
 };
