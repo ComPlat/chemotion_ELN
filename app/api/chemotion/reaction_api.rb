@@ -238,7 +238,7 @@ module Chemotion
               step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
             end
             reaction.update!(attributes)
-            reaction.touch
+            reaction.touch # rubocop:disable Rails/SkipsModelValidations
             # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
             reaction = Usecases::Reactions::UpdateMaterials.new(
               reaction, materials,
