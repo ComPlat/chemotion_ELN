@@ -53,15 +53,7 @@ class Report < ApplicationRecord
   after_destroy :delete_job
 
   def create_docx
-    if ReportTemplate.where(id: report_templates_id).present?
-      report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
-      template = report_template.report_type
-      #     tpl_path = if report_template.attachment
-      #                  report_template.attachment.attachment_url
-      #                else
-      #                  report_template.report_type
-      #                end
-    end
+    template = ReportTemplate.find_by(id: report_templates_id)&.report_type || self.template
     tpl_path = self.class.template_path(template)
     case template
     when 'spectrum'
@@ -197,8 +189,9 @@ class Report < ApplicationRecord
   end
 
   def delete_archive
-    full_file_path = File.join('public', 'docx', file_name + '.docx')
-    FileUtils.rm(full_file_path, force: true) if File.exist?(full_file_path)
+    return if file_name.blank?
+
+    FileUtils.rm_f(Rails.public_path.join('docx', "#{file_name}.docx"))
   end
 
   def delete_job
