@@ -489,7 +489,9 @@ export default class ResearchPlanDetails extends Component {
           }
           <DetailsTabLiteratures
             element={researchPlan}
-            literatures={researchPlan.isNew ? researchPlan.literatures : null}
+            literatures={
+              researchPlan.isNew && Array.isArray(researchPlan.literatures) ? researchPlan.literatures : null
+            }
           />
         </Tab>
       ),

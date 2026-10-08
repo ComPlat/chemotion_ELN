@@ -146,7 +146,7 @@ function AnalysesContainer({ readonly }) {
             </div>
             <CommentBox
               isVisible={sbmmStore.analysis_comment_box}
-              value={sbmmSample.container.description}
+              value={sbmmSample.container?.description || ''}
               handleCommentTextChange={sbmmStore.changeAnalysisComment}
             />
             {sbmmStore.analysis_mode === 'edit' ? (

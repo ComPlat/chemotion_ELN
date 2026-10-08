@@ -17,7 +17,7 @@ import AppModal from 'src/components/common/AppModal';
 function MessageAlert({ message, link = null, onHide }) {
   return (
     message?.length > 0 ? (
-      <Alert variant="info" onDismiss={onHide} dismissible>
+      <Alert variant="info" onClose={onHide} dismissible>
         <p>
           {message}
         </p>
@@ -1144,7 +1144,7 @@ export default class UserManagement extends React.Component {
                 type="number"
                 min="1"
                 name="u_avail"
-                defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
+                defaultValue={user.allocated_space ? user.allocated_space / 1024 / 1024 : ''}
                 ref={(ref) => {
                   this.u_avail = ref;
                 }}
@@ -1542,8 +1542,8 @@ export default class UserManagement extends React.Component {
           {g.type}
         </td>
         <td className="py-3">
-          {g.allocated_space === 0 ? ''
-            : `${Math.round((g.used_space / g.allocated_space) * 100)}% of ${g.allocated_space / 1024 / 1024} MB`}
+          {g.allocated_space ? `${Math.round((g.used_space / g.allocated_space) * 100)}% of ${g.allocated_space / 1024 / 1024} MB`
+            : ''}
         </td>
         <td className="py-3">
           {g.current_sign_in_at}

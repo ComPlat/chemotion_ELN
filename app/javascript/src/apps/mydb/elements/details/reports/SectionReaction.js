@@ -175,7 +175,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
     );
   };
   const table = dataRows => (
-    <Table striped condensed hover>
+    <Table striped size="sm" hover>
       <thead>
         <tr>
           <th>Formula</th>
@@ -341,7 +341,7 @@ const LiteratureContent = ({show, literatures}) => {
       </tr>
     )
   })
-  const table = <Table striped condensed hover>
+  const table = <Table striped size="sm" hover>
                   <thead>
                     <tr>
                       <th>Title</th>
