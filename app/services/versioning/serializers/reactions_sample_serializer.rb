@@ -5,6 +5,7 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
     new(record: record, name: name).call
   end
 
+  # rubocop:disable Metrics/MethodLength -- a plain list of fields, pre-existing size
   def field_definitions
     {
       created_at: {
@@ -54,6 +55,7 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
       },
     }.with_indifferent_access
   end
+  # rubocop:enable Metrics/MethodLength
 
   private
 
