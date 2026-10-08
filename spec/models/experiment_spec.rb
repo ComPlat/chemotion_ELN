@@ -23,5 +23,9 @@
 require 'rails_helper'
 
 RSpec.describe Experiment, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+  describe 'associations' do
+    it { is_expected.to belong_to(:device) }
+    it { is_expected.to belong_to(:container) }
+    it { is_expected.to belong_to(:experimentable) }
+  end
 end
