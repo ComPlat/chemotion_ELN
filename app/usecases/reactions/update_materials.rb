@@ -79,8 +79,7 @@ module Usecases
       include Reactable
       attr_reader :current_user
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity -- pre-existing size, out of scope for this PR
-      def initialize(reaction, materials, user, vessel_size, step_id_by_position = {})
+      def initialize(reaction, materials, user, vessel_size, step_id_by_position = {}) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
         @reaction = reaction
         @step_id_by_position = step_id_by_position
         @materials = {
@@ -94,7 +93,6 @@ module Usecases
         @current_user = user
         @vessel_size = vessel_size
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
       def execute!
         weight_percentage_ref_record_target_amount = nil
@@ -220,8 +218,7 @@ module Usecases
         subsample
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- pre-existing size, out of scope for this PR
-      def create_new_sample(sample, fixed_label, target_amount = nil)
+      def create_new_sample(sample, fixed_label, target_amount = nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         attributes = sample.to_h.except(
           :id, :is_new, :is_split, :reference, :equivalent, :position,
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
@@ -260,7 +257,6 @@ module Usecases
         new_sample.save!
         new_sample
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       def update_mole_gas_product(sample, vessel_volume)
         gas_phase_data = sample.gas_phase_data
