@@ -120,6 +120,24 @@ RSpec.describe Attachment do
     it 'is nil for an unsorted inbox attachment' do
       expect(described_class.new(attachable_type: 'Container').root_element).to be_nil
     end
+
+    it "is the element above a container nested below the element's analyses" do
+      sample = create(:sample)
+      dataset = sample.container.analyses_container
+                      .children.create!(container_type: 'analysis')
+                      .children.create!(container_type: 'dataset')
+
+      expect(create(:attachment, attachable: dataset).root_element).to eq sample
+    end
+
+    it 'falls back to the recipient when not attached to an element' do
+      user = create(:person)
+      expect(described_class.new(created_for: user.id).root_element).to eq user
+    end
+
+    it 'is nil without attachable or recipient' do
+      expect(described_class.new.root_element).to be_nil
+    end
   end
 
   describe '#for_research_plan?' do
@@ -477,33 +495,6 @@ RSpec.describe Attachment do
 
     it 'returns all template attachments' do
       expect(described_class.where_template).to contain_exactly(template_attachment)
-    end
-  end
-
-  describe '#root_element' do
-    let(:user) { create(:person) }
-
-    it 'returns the attachable when it is an element' do
-      research_plan = create(:research_plan)
-
-      expect(create(:attachment, attachable: research_plan).root_element).to eq research_plan
-    end
-
-    it "returns the container's root element when attached to a container" do
-      sample = create(:sample)
-      dataset = sample.container.analyses_container
-                      .children.create!(container_type: 'analysis')
-                      .children.create!(container_type: 'dataset')
-
-      expect(create(:attachment, attachable: dataset).root_element).to eq sample
-    end
-
-    it 'falls back to the recipient when not attached to an element' do
-      expect(described_class.new(created_for: user.id).root_element).to eq user
-    end
-
-    it 'returns nil without attachable or recipient' do
-      expect(described_class.new.root_element).to be_nil
     end
   end
 
