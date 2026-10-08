@@ -13,6 +13,7 @@ class Import::ImportSdf < Import::ImportSamples
 
   SIZE_LIMIT = 40 # MB
   MOLFILE_BLOCK_END_LINE = 'M  END'
+  MOLFILE_END_PATTERN = /^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/.freeze
 
   # Extra target fields offered in the confirm grid when importing as a chemical inventory.
   # They are resolved to a Chemical record by ImportChemicals during create_samples.
@@ -847,8 +848,14 @@ class Import::ImportSdf < Import::ImportSamples
     end
   end
 
-  def sanitize_molfile(mf)
+  def sanitize_molfile(mol)
     # TODO: check for residue polymer thingy
-    mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
+    mol = mol.dup.force_encoding('UTF-8')
+    mol = mol.encode('UTF-8', 'binary', invalid: :replace, undef: :replace) unless mol.valid_encoding?
+    mol.encode('UTF-8', universal_newline: true)
+       .scrub
+       .split(MOLFILE_END_PATTERN)
+       .first
+       .concat(MOLFILE_BLOCK_END_LINE)
   end
 end
