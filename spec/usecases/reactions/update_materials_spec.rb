@@ -626,6 +626,44 @@ describe Usecases::Reactions::UpdateMaterials do
       expect(updated_sample.target_amount_unit).to eq(wp_reference_sample.target_amount_unit)
     end
   end
+
+  describe 'multi-step fields' do
+    let(:step) { ReactionStep.create!(reaction: reaction, position: 1) }
+    let(:carried_product) do
+      {
+        'products' => [
+          {
+            'name' => 'carried product',
+            'target_amount_unit' => 'mg',
+            'target_amount_value' => 99.08304,
+            'equivalent' => 1,
+            'reference' => false,
+            'is_new' => true,
+            'molfile' => molfile,
+            'container' => root_container,
+            'reaction_step_position' => step.position,
+            'carry_on' => true,
+          },
+        ],
+      }
+    end
+
+    it 'resolves the step link from its position and stores the carry-on flag' do
+      described_class.new(reaction, carried_product, user, vessel_size, { step.position => step.id }).execute!
+      row = reaction.reactions_samples.reload.last
+
+      expect(row.reaction_step_id).to eq(step.id)
+      expect(row.carry_on).to be true
+    end
+
+    it 'leaves both empty when the browser sends nothing' do
+      described_class.new(reaction, products, user, vessel_size).execute!
+      row = reaction.reactions_samples.reload.last
+
+      expect(row.reaction_step_id).to be_nil
+      expect(row.carry_on).to be false
+    end
+  end
 end
 
 # rubocop:enable Style/OpenStructUse, RSpec/MultipleMemoizedHelpers

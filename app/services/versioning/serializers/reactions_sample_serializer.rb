@@ -5,7 +5,7 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
     new(record: record, name: name).call
   end
 
-  def field_definitions
+  def field_definitions # rubocop:disable Metrics/MethodLength
     {
       created_at: {
         label: 'Created at',
@@ -22,6 +22,11 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         label: 'L/S',
         kind: :boolean,
         revert: %i[show_label],
+      },
+      carry_on: {
+        label: 'Carry on',
+        kind: :boolean,
+        revert: %i[carry_on],
       },
       position: {
         label: 'Position',
