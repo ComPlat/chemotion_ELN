@@ -319,8 +319,7 @@ module Usecases
         subsample
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- pre-existing size, out of scope for this PR
-      def create_new_sample(sample, fixed_label, target_amount = nil)
+      def create_new_sample(sample, fixed_label, target_amount = nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
         attributes = sample.to_h.except(
           :id, :is_new, :is_split, :reference, :equivalent, :position,
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
@@ -360,7 +359,6 @@ module Usecases
         new_sample.save!
         new_sample
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       def update_mole_gas_product(sample, vessel_volume)
         gas_phase_data = sample.gas_phase_data
