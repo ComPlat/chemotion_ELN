@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 1rem;
   left: 1rem;
-  z-index: 1080;
+  z-index: $zindex-modal + 2;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -25,11 +25,27 @@
   }
 }
 
+// Any open modal sets body.modal-open: shrink to the logo so the pill does not
+// cover the modal's own controls in the bottom-left corner.
+body.modal-open .workshop-guide-fab {
+  padding: 0.25rem;
+  opacity: 0.6;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  .workshop-guide-fab__label {
+    display: none;
+  }
+}
+
 .workshop-guide-drawer {
   position: fixed;
   bottom: 4.5rem;
   left: 1rem;
-  z-index: 1079;
+  z-index: $zindex-modal + 1;
   width: 720px;
   max-width: calc(100vw - 2rem);
   height: 720px;
