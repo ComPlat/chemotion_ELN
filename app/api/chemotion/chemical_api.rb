@@ -1,8 +1,22 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength -- one Grape resource class per domain object is
+  # this API layer's convention; it was already over the limit before the SDS
+  # extraction endpoint below was added.
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
+
+    helpers do
+      # True when the current user has an LLM provider configured for SDS extraction.
+      def llm_provider_available?
+        LlmProviderResolver.resolve(user: current_user, task_name: 'sds_extraction')
+        true
+      rescue Errors::LlmNotConfiguredError
+        false
+      end
+    end
+
     resource :chemicals do
       desc 'update chemicals'
       params do
@@ -151,6 +165,12 @@ module Chemotion
         end
 
         post do
+          # Writes the sample's chemical record, so it takes the same permission
+          # as editing the sample. Cf. the extract_sds endpoint below.
+          sample = Sample.find_by(id: params[:sample_id])
+          error!({ error: 'Sample not found' }, 404) unless sample
+          error!({ error: '403 Forbidden' }, 403) unless ElementPolicy.new(current_user, sample).update?
+
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],
@@ -174,8 +194,44 @@ module Chemotion
       end
 
       resources :extract_sds do
-        desc 'Read H and P codes and section 9 properties out of a saved safety data sheet'
+        desc 'Extract safety data from an SDS PDF using the configured LLM provider'
+        params do
+          requires :sample_id, type: Integer, desc: 'Sample ID'
+          optional :path, type: String, desc: 'safetySheetPath link of the sheet to read; the last saved one if omitted'
+        end
 
+        post do
+          Chemotion::ChemicalsService.handle_exceptions do
+            # The job writes back to the sample's chemical record, so reaching it
+            # takes the same permission as editing the sample itself.
+            sample = Sample.find_by(id: params[:sample_id])
+            error!({ error: 'Sample not found' }, 404) unless sample
+            error!({ error: '403 Forbidden' }, 403) unless ElementPolicy.new(current_user, sample).update?
+
+            unless llm_provider_available?
+              error!({ error: 'No LLM extraction service is configured. ' \
+                              'Set up an LLM provider in Profile → AI Settings, ' \
+                              'or ask your admin to configure the institution provider.' }, 503)
+            end
+
+            chemical = Chemical.find_by(sample_id: sample.id)
+            error!({ error: 'Chemical not found for this sample' }, 404) unless chemical
+            if params[:path].present? && Chemotion::SdsExtractor.saved_sheet_path(params[:path]).nil?
+              error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400)
+            end
+
+            ExtractSdsJob.perform_later(
+              sample_id: params[:sample_id],
+              user_id: current_user.id,
+              sheet_path: params[:path].presence,
+            )
+
+            status 202
+            { message: 'SDS extraction job submitted', sample_id: params[:sample_id] }
+          end
+        end
+
+        desc 'Read H and P codes and section 9 properties out of a saved safety data sheet'
         params do
           requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
@@ -206,3 +262,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

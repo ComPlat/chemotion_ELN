@@ -1112,6 +1112,234 @@ describe('ChemicalTab extraction from a saved sheet', () => {
   });
 });
 
+describe('ChemicalTab extraction mode picker', () => {
+  const sheetPath = '/safety_sheets/merck/33009_0123456789abcdef.pdf';
+  let instance;
+
+  const render = () => shallow(<div>{instance.renderSdsExtraction(sheetPath)}</div>);
+  const picker = () => shallow(<div>{instance.renderModePicker(sheetPath)}</div>);
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(createChemical());
+    sinon.stub(ChemicalFetcher, 'llmAvailable').resolves(false);
+    instance = shallow(
+      React.createElement(ChemicalTab, {
+        sample: Sample.buildEmpty(2),
+        type: 'sample',
+        saveInventory: false,
+        editChemical: sinon.spy(),
+        setSaveInventory: sinon.spy(),
+        handleUpdateSample: sinon.spy(),
+      })
+    ).instance();
+    sinon.stub(instance, 'notify');
+    instance.setState({ chemical: createChemical([{ safetySheetPath: [{ merck_link: sheetPath }] }]) });
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('reads the sheet straight away when the built-in reader is the only route', () => {
+    const stub = sinon.stub(ChemicalFetcher, 'extractFromSds').returns(new Promise(() => {}));
+
+    render().find('#extract-sds').simulate('click');
+
+    expect(stub.calledOnceWith(sheetPath)).toBe(true);
+    expect(render().find(OverlayTrigger).filterWhere((o) => o.prop('trigger') === 'click').exists()).toBe(false);
+  });
+
+  it('asks which route to take once an AI provider is set up', () => {
+    instance.setState({ llmAvailable: true });
+
+    const trigger = render().find(OverlayTrigger).filterWhere((o) => o.prop('trigger') === 'click');
+    expect(trigger.exists()).toBe(true);
+    expect(trigger.find('#extract-sds').prop('onClick')).toBeUndefined();
+
+    trigger.prop('onToggle')(true);
+    expect(instance.state.modePickerSheet).toEqual(sheetPath);
+  });
+
+  it('runs the built-in reader from the default option and closes the picker', () => {
+    instance.setState({ llmAvailable: true, modePickerSheet: sheetPath });
+    const stub = sinon.stub(ChemicalFetcher, 'extractFromSds').returns(new Promise(() => {}));
+
+    picker().find('#extract-sds-builtin').simulate('click');
+
+    expect(stub.calledOnceWith(sheetPath)).toBe(true);
+    expect(instance.state.modePickerSheet).toEqual('');
+  });
+
+  it('queues the AI job for the sheet of the row it was chosen on', async () => {
+    instance.setState({ llmAvailable: true, modePickerSheet: sheetPath });
+    const stub = sinon.stub(ChemicalFetcher, 'extractSds').resolves({});
+    sinon.stub(instance, 'startExtractionPolling');
+
+    await picker().find('#extract-sds-ai').prop('onClick')();
+
+    expect(stub.calledOnceWith(instance.props.sample.id, sheetPath)).toBe(true);
+    const button = render().find('#extract-sds');
+    expect(button.prop('disabled')).toBe(true);
+    expect(button.children().map((c) => c.text()).join('')).toContain('Extracting with AI');
+  });
+
+  it('resets the row when the job cannot be queued', async () => {
+    sinon.stub(ChemicalFetcher, 'extractSds').rejects(new Error('No LLM extraction service is configured.'));
+
+    await instance.extractWithAi(sheetPath);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(instance.notify.lastCall.args[0].message).toEqual('No LLM extraction service is configured.');
+  });
+});
+
+describe('ChemicalTab AI result modal', () => {
+  let instance;
+
+  beforeEach(() => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(createChemical());
+    sinon.stub(ChemicalFetcher, 'llmAvailable').resolves(true);
+    instance = shallow(React.createElement(ChemicalTab, {
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      editChemical: sinon.spy(),
+    })).instance();
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('renders nothing before an AI extraction has run', () => {
+    instance.setState({ chemical: createChemical([{}]) });
+
+    expect(instance.renderAiResultModal()).toBe(null);
+  });
+
+  it('shows the result stored under aiExtraction', () => {
+    instance.setState({
+      chemical: createChemical([{
+        aiExtraction: { extracted_at: '2026-10-07T09:00:00Z', chemical_name: 'Phenol', model: 'kit.glm-5.3-flash' },
+        extractedProperties: { boiling_point: '181.7 °C' },
+      }]),
+    });
+
+    const modal = shallow(<div>{instance.renderAiResultModal()}</div>).find(AppModal);
+    expect(modal.prop('title')).toEqual('Extracted Data using AI');
+    const metadata = modal.find({ controlId: 'aiMetadataSection' }).find({ as: 'textarea' });
+    expect(metadata.prop('value')).toEqual('Chemical: Phenol');
+  });
+});
+
+describe('ChemicalTab LLM property mapping', () => {
+  // Verbatim from an extraction of a p-Xylene sheet: the sheet's wording, comma decimals.
+  const extractedProperties = {
+    boiling_point: '138 °C - lit.',
+    melting_point: '12 - 13 °C - lit.',
+    flash_point: '27 °C - closed cup',
+    density: '0,861 g/cm3 at 20 °C - lit.',
+    form: 'liquid',
+    solubility: '146 g/l at 25 °C - partly soluble',
+  };
+
+  let llmSample = null;
+
+  beforeEach(() => {
+    sinon.stub(ElementActions, 'updateSample');
+    llmSample = Sample.buildEmpty(2);
+    const wrapper = shallow(
+      React.createElement(ChemicalTab, {
+        sample: llmSample,
+        type: 'sample',
+        saveInventory: false,
+        setSaveInventory: sinon.spy(),
+        handleUpdateSample: sinon.spy(),
+        editChemical: sinon.spy(),
+      })
+    );
+    wrapper.instance().mapLlmPropertiesToSample(new Chemical({ _chemical_data: [{ extractedProperties }] }));
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('writes the density as a number, without the unit and reference temperature', () => {
+    expect(llmSample.density).toBe(0.861);
+  });
+
+  it('writes the flash point as a value and a unit, without the method', () => {
+    expect(llmSample.xref.flash_point).toEqual({ unit: '°C', value: 27 });
+  });
+
+  it('writes the melting point as the range the sheet states', () => {
+    expect(llmSample.melting_point_lowerbound).toBe(12);
+    expect(llmSample.melting_point_upperbound).toBe(13);
+  });
+
+  it('writes a single-valued boiling point open-ended', () => {
+    expect(llmSample.boiling_point_lowerbound).toBe(138);
+    expect(llmSample.boiling_point_upperbound).toBeFalsy();
+  });
+
+  it('writes the free-text fields as the sheet words them', () => {
+    expect(llmSample.xref.form).toBe('liquid');
+    expect(llmSample.xref.solubility).toBe('146 g/l at 25 °C - partly soluble');
+  });
+});
+
+describe('ChemicalTab AI extraction polling', () => {
+  // A bare instance: the polling chain is instance state and timers, and a renderer
+  // would replace the context the toast goes through on every setState.
+  let instance = null;
+
+  beforeEach(() => {
+    instance = new ChemicalTab({
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      editChemical: sinon.spy(),
+    });
+    instance.setState = (patch) => {
+      instance.state = { ...instance.state, ...patch };
+    };
+    instance.context = { notifications: { add: sinon.spy() } };
+    instance.setState({ loadingExtractSds: true });
+  });
+
+  afterEach(() => {
+    clearTimeout(instance._extractionPollTimer);
+  });
+
+  const toasts = () => instance.context.notifications.add;
+
+  it('keeps the button waiting while the extraction is still within the usual time', () => {
+    instance.startExtractionPolling(1, null, null, 5);
+
+    expect(instance.state.loadingExtractSds).toBe(true);
+    expect(toasts().called).toBe(false);
+  });
+
+  it('stops the button and says a notification will follow once it runs long', () => {
+    instance.startExtractionPolling(1, null, null, 30);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(toasts().calledOnce).toBe(true);
+    expect(toasts().firstCall.args[0].message).toEqual(expect.stringContaining('notification'));
+  });
+
+  it('keeps polling after it has said so', () => {
+    instance.startExtractionPolling(1, null, null, 30);
+
+    expect(instance._extractionPollTimer).toBeTruthy();
+  });
+
+  it('gives up silently at the ceiling', () => {
+    instance.startExtractionPolling(1, null, null, 140);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(toasts().called).toBe(false);
+  });
+});
+
 describe('ChemicalTab helpers', () => {
   describe('searchStateFromResponse', () => {
     it('keeps an All vendors overview that found something', () => {

@@ -1,4 +1,6 @@
-import React, { forwardRef } from 'react';
+import React, {
+  forwardRef, useCallback, useRef, useState,
+} from 'react';
 import PropTypes from 'prop-types';
 import RSelect, { components } from 'react-select';
 import RAsyncSelect from 'react-select/async';
@@ -12,6 +14,44 @@ import cs from 'classnames';
 // see https://react-select.com/styles#the-classnameprefix-prop
 
 const baseClassName = 'chemotion-select';
+
+// The smaller of the room react-select measured for the menu and the configured
+// cap. react-select places a fixed-position menu against the space it found
+// below (or above) the control and passes that as the menu list's maxHeight;
+// replacing it with a taller cap renders a list that runs off the viewport, and
+// a fixed-position element cannot be scrolled back into view.
+const capMenuHeight = (measured, cap) => {
+  if (measured === undefined || measured === null) return cap;
+  const measuredCss = typeof measured === 'number' ? `${measured}px` : measured;
+  return `min(${measuredCss}, ${cap})`;
+};
+
+// Breathing room between the menu and the edge of the window.
+const MENU_GUTTER = 8;
+// Below this, a menu below the control is too small to be worth keeping there.
+const MIN_MENU_HEIGHT = 140;
+
+// How much room the menu actually has, measured from the control.
+//
+// react-select measures this itself, but only after the menu has mounted, and
+// for a menu portalled to the body at `position: fixed` that measurement does
+// not survive: it keeps the unmeasured default, renders taller than the room
+// below the control, and the overflow is unreachable because a fixed element
+// does not scroll with the page. Measuring the control up front does not depend
+// on any of that.
+const fitMenu = (controlEl) => {
+  if (!controlEl || typeof window === 'undefined') return null;
+
+  const rect = controlEl.getBoundingClientRect();
+  const below = window.innerHeight - rect.bottom - MENU_GUTTER;
+  const above = rect.top - MENU_GUTTER;
+  const flip = below < MIN_MENU_HEIGHT && above > below;
+
+  return {
+    menuPlacement: flip ? 'top' : 'bottom',
+    maxMenuHeight: Math.max(0, flip ? above : below),
+  };
+};
 
 // Custom Input component that keeps the input visible for editing selected values
 function EditableInput(props) {
@@ -29,15 +69,34 @@ function buildWrappedComponent(name, BaseComponent) {
     components: customComponents = {},
     isInputEditable = false,
     usePortal = true,
+    onMenuOpen,
     ...props
   }, ref) => {
+    const selectRef = useRef(null);
+    const [menuFit, setMenuFit] = useState(null);
+
+    // The caller's ref still has to reach the select; this one is ours, for the
+    // control element fitMenu measures.
+    const attachRef = useCallback((instance) => {
+      selectRef.current = instance;
+      if (typeof ref === 'function') ref(instance);
+      else if (ref) ref.current = instance;
+    }, [ref]);
+
+    // Only the portalled (fixed) menu needs this. An in-flow menu is positioned
+    // in the document and can simply be scrolled to.
+    const handleMenuOpen = useCallback((...args) => {
+      if (usePortal) setMenuFit(fitMenu(selectRef.current?.controlRef));
+      if (onMenuOpen) onMenuOpen(...args);
+    }, [usePortal, onMenuOpen]);
+
     const styleDefaults = {
       control: {
         minWidth: minWidth || '0',
       },
-      menuList: {
-        maxHeight: maxHeight || '250px',
-      },
+      menuList: (base) => ({
+        maxHeight: capMenuHeight(base.maxHeight, maxHeight || '250px'),
+      }),
       menu: {
         minWidth: '100%',
         width: 'max-content',
@@ -80,6 +139,8 @@ function buildWrappedComponent(name, BaseComponent) {
       ...(isInputEditable && { Input: EditableInput }),
     };
 
+    // menuFit is spread after the defaults above: once the control has been
+    // measured, its placement and height win over `auto`.
     return (
       <BaseComponent
         {...props}
@@ -90,10 +151,12 @@ function buildWrappedComponent(name, BaseComponent) {
           { [`form-select-${size}`]: !!size }
         )}
         classNamePrefix={baseClassName}
-        ref={ref}
+        ref={attachRef}
         menuPortalTarget={usePortal ? document.body : undefined}
         menuPlacement="auto"
         menuPosition="fixed"
+        {...menuFit}
+        onMenuOpen={handleMenuOpen}
         unstyled
         styles={stylesWithOverrides}
         components={mergedComponents}

@@ -4,12 +4,13 @@ import PropTypes from 'prop-types';
 import {
   Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Row, Col,
-  ButtonGroup, Badge
+  ButtonGroup, Badge, Popover
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import { parseSdsNumber, parseSdsRange, parseSdsTemperature } from 'src/utilities/sdsValueParser';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
@@ -112,6 +113,12 @@ export default class ChemicalTab extends React.Component {
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: {},
       extractingSheet: '',
+      // The AI route runs as a background job; aiExtractingSheet is the row that started it.
+      loadingExtractSds: false,
+      aiExtractingSheet: '',
+      showAiResultModal: false,
+      llmAvailable: false,
+      modePickerSheet: '',
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewPropertiesForSheet: '',
@@ -126,15 +133,19 @@ export default class ChemicalTab extends React.Component {
     const { sample } = this.props;
     this.fetchChemical(sample);
     this.updateDisplayWell();
+    ChemicalFetcher.llmAvailable().then((available) => {
+      if (!this.unmounted) this.setState({ llmAvailable: available });
+    });
   }
 
   componentWillUnmount() {
     this.unmounted = true;
     clearTimeout(this.copyFeedbackTimer);
+    clearTimeout(this._extractionPollTimer);
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory } = this.props;
+    const { saveInventory, sample } = this.props;
     const { chemical } = this.state;
 
     if (prevState.chemical !== chemical) {
@@ -143,6 +154,11 @@ export default class ChemicalTab extends React.Component {
 
     if (saveInventory === true) {
       this.handleSubmitSave();
+    }
+
+    // A finished SDS job refetches the sample (cf. NoticeButton); pick up its chemical data too.
+    if (prevProps.sample !== sample && sample && !sample.is_new) {
+      this.fetchChemical(sample);
     }
   }
 
@@ -521,6 +537,102 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
+  // The markers polling watches for a change. Read from the server, since a stale state
+  // copy makes the previous run's markers look like this run's result.
+  extractionBaseline = () => {
+    const { sample, type } = this.props;
+    const { chemical } = this.state;
+    const stateData = chemical?._chemical_data?.[0];
+
+    return ChemicalFetcher.fetchChemical(sample.id, type)
+      .then((fresh) => fresh?._chemical_data?.[0] ?? null)
+      .catch(() => stateData ?? null)
+      .then((data) => ({
+        extractedAt: data?.aiExtraction?.extracted_at ?? null,
+        failedAt: data?.extraction_error?.failed_at ?? null,
+      }));
+  };
+
+  extractWithAi = (sheetPath) => {
+    const { sample } = this.props;
+    const { loadingExtractSds, extractingSheet } = this.state;
+    if (loadingExtractSds || extractingSheet) return Promise.resolve();
+
+    this.setState({ warningMessage: '', loadingExtractSds: true, aiExtractingSheet: sheetPath });
+
+    return this.extractionBaseline().then(({ extractedAt, failedAt }) => (
+      ChemicalFetcher.extractSds(sample.id, sheetPath).then(() => {
+        this.notify({
+          title: 'AI extraction running',
+          message: 'Reading the safety data sheet with AI. The results appear here when it is done.',
+          level: 'info',
+          position: 'tc',
+          autoDismiss: 5,
+        });
+        this.startExtractionPolling(sample.id, extractedAt, failedAt, 0);
+      })
+    )).catch((error) => {
+      this.setState({ loadingExtractSds: false, aiExtractingSheet: '' });
+      this.notify({
+        title: 'AI extraction failed',
+        message: error.message || 'Could not start the extraction job',
+        level: 'error',
+        position: 'tc',
+        autoDismiss: 5,
+      });
+    });
+  };
+
+  // Polls until extracted_at or extraction_error.failed_at changes. The button stops
+  // waiting at SLOW_AFTER_ATTEMPTS, the job's notification takes over, and polling goes on quietly.
+  startExtractionPolling = (sampleId, prevExtractedAt, prevFailedAt, attempt) => {
+    const POLL_INTERVAL = 3000;
+    const SLOW_AFTER_ATTEMPTS = 30; // 90 s
+    // Two models at config/llm_tasks/sds_extraction.yml's timeout_seconds, plus the queue.
+    const MAX_ATTEMPTS = 140; // 7 min
+    const stopWaiting = { loadingExtractSds: false, aiExtractingSheet: '' };
+
+    if (attempt >= MAX_ATTEMPTS) {
+      this.setState(stopWaiting);
+      return;
+    }
+
+    if (attempt === SLOW_AFTER_ATTEMPTS) {
+      this.setState(stopWaiting);
+      this.notify({
+        title: 'AI extraction still running',
+        message: 'This is taking longer than usual. Carry on working: a notification arrives when it completes, '
+          + 'and the safety data appears here on its own.',
+        level: 'warning',
+        position: 'tc',
+        autoDismiss: 8,
+      });
+    }
+
+    this._extractionPollTimer = setTimeout(() => {
+      const { type, sample } = this.props;
+      if (!sample || this.unmounted) { this.setState(stopWaiting); return; }
+
+      ChemicalFetcher.fetchChemical(sampleId, type).then((chemical) => {
+        const data = chemical?._chemical_data?.[0];
+        const newExtractedAt = data?.aiExtraction?.extracted_at ?? null;
+        const newFailedAt = data?.extraction_error?.failed_at ?? null;
+
+        if (chemical !== null && newExtractedAt && newExtractedAt !== prevExtractedAt) {
+          this.setState({ chemical, ...stopWaiting });
+          this.mapLlmPropertiesToSample(chemical);
+        } else if (newFailedAt && newFailedAt !== prevFailedAt) {
+          // ExtractSdsJob's own notification carries the error, so no toast here.
+          this.setState({ chemical, ...stopWaiting });
+        } else {
+          this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+        }
+      }).catch(() => {
+        this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+      });
+    }, POLL_INTERVAL);
+  };
+
   // Says what was overwritten, and flags phrases matched from wording since no code was printed.
   static extractionSummary(result, codeCount, replacedPhrases, { written, skipped }) {
     const phrases = result?.diagnostics?.phrases ?? {};
@@ -745,6 +857,36 @@ export default class ChemicalTab extends React.Component {
       ElementActions.updateSample(new Sample(sample), false);
     }
     return { written, skipped };
+  }
+
+  // Cf. mapToSampleProperties, which maps the built-in reader's result.
+  mapLlmPropertiesToSample(chemical) {
+    const { sample, handleUpdateSample } = this.props;
+    if (!(sample instanceof Sample) || !handleUpdateSample) return;
+
+    const properties = chemical?._chemical_data?.[0]?.extractedProperties;
+    if (!properties || Object.keys(properties).length === 0) return;
+
+    sample.xref ||= {};
+
+    ['boiling_point', 'melting_point'].forEach((key) => {
+      const range = parseSdsRange(properties[key]);
+      if (range) sample.updateRange(key, range.lower, range.upper);
+    });
+
+    const flashPoint = parseSdsTemperature(properties.flash_point);
+    if (flashPoint) sample.xref.flash_point = { unit: flashPoint.unit, value: flashPoint.value };
+
+    const density = parseSdsNumber(properties.density);
+    if (density !== null) sample.density = density;
+
+    // Free-text sample fields: the sheet's wording is the value.
+    ['form', 'color', 'refractive_index', 'solubility', 'purity'].forEach((key) => {
+      if (properties[key]) sample.xref[key] = properties[key];
+    });
+
+    handleUpdateSample(sample);
+    ElementActions.updateSample(new Sample(sample), false);
   }
 
   chemicalStatus(data) {
@@ -1276,7 +1418,7 @@ export default class ChemicalTab extends React.Component {
             {this.removeButton(index, document)}
           </ButtonToolbar>
         </div>
-        <div className="justify-content-end">
+        <div className="ms-auto">
           {this.renderSdsExtraction(link)}
         </div>
       </div>
@@ -1766,63 +1908,146 @@ export default class ChemicalTab extends React.Component {
     return sheetPath ? this.allExtractedProperties()[sheetPath] : undefined;
   }
 
+  runExtraction = (sheetPath, mode) => {
+    this.setState({ modePickerSheet: '' });
+    return mode === 'ai' ? this.extractWithAi(sheetPath) : this.extractFromSheet(sheetPath);
+  };
+
+  renderModePicker = (sheetPath) => {
+    const { chemical } = this.state;
+    const hasAiResult = !!chemical?._chemical_data?.[0]?.aiExtraction?.extracted_at;
+    const option = (id, mode, icon, title, hint, badge) => (
+      <button
+        type="button"
+        id={id}
+        className={`sds-mode-picker__option${badge ? ' sds-mode-picker__option--default' : ''}`}
+        onClick={() => this.runExtraction(sheetPath, mode)}
+      >
+        {icon}
+        <span>
+          <span className="sds-mode-picker__title">
+            {title}
+            {badge && <Badge bg="secondary" pill className="ms-2">{badge}</Badge>}
+          </span>
+          <span className="sds-mode-picker__hint">{hint}</span>
+        </span>
+      </button>
+    );
+
+    return (
+      <Popover id={`sds-mode-picker-${sheetPath}`} className="sds-mode-picker shadow">
+        <Popover.Header as="div">How should this sheet be read?</Popover.Header>
+        <Popover.Body>
+          {option(
+            'extract-sds-builtin',
+            'builtin',
+            <i className="fa fa-file-text-o fa-fw sds-mode-picker__icon" />,
+            'Built-in reader',
+            'Parses the sheet on the server in seconds',
+            'Default'
+          )}
+          {option(
+            'extract-sds-ai',
+            'ai',
+            <span className="sds-mode-picker__icon sds-mode-picker__icon--sparkle" aria-hidden="true">✨</span>,
+            'AI extraction',
+            'Your AI provider reads the sheet; takes up to a minute, review the result'
+          )}
+          {hasAiResult && (
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0 mt-1"
+              onClick={() => this.setState({ modePickerSheet: '', showAiResultModal: true })}
+            >
+              View last AI extraction
+            </Button>
+          )}
+        </Popover.Body>
+      </Popover>
+    );
+  };
+
   // Reads the saved PDF itself, so it works for a manually attached sheet as much as a
   // fetched one. A search result has no file yet, hence the saved-path gate.
+  // With an AI provider set up the button asks which route to take; otherwise it reads straight away.
   renderSdsExtraction = (sheetPath) => {
-    const { loadingQuerySafetySheets, extractingSheet } = this.state;
+    const {
+      loadingQuerySafetySheets, extractingSheet, loadingExtractSds, aiExtractingSheet, llmAvailable, modePickerSheet
+    } = this.state;
     const extracted = this.extractedPropertiesFor(sheetPath);
     const isSaved = EXTRACTABLE_SHEET.test(sheetPath || '');
-    const isLoading = extractingSheet === sheetPath;
+    const isReading = extractingSheet === sheetPath;
+    const isAiRunning = loadingExtractSds && aiExtractingSheet === sheetPath;
+    const busy = !!extractingSheet || loadingExtractSds || !!loadingQuerySafetySheets;
     const hint = isSaved
       ? 'Reads H and P phrases and section 9 properties out of the saved sheet'
       : 'Save the safety data sheet first';
 
+    let label = 'Extract from sheet';
+    if (isReading) label = 'Reading sheet…';
+    if (isAiRunning) label = 'Extracting with AI…';
+
+    const extractButton = (
+      <Button
+        id="extract-sds"
+        variant="light"
+        size="sm"
+        className="border"
+        onClick={llmAvailable ? undefined : () => this.extractFromSheet(sheetPath)}
+        disabled={!isSaved || busy}
+      >
+        <i className={`fa ${isReading || isAiRunning ? 'fa-spinner fa-pulse' : 'fa-file-text-o'} fa-fw me-1`} />
+        {label}
+      </Button>
+    );
+
     return (
-      <div className="w-100 mt-0 ms-2">
-        <InputGroup>
-          <OverlayTrigger container={TOOLTIP_CONTAINER}
+      <ButtonGroup size="sm" className="sds-extract">
+        {/* Same trigger while busy: swapping it out mid-close leaves the Overlay without a target. */}
+        {llmAvailable && isSaved ? (
+          <OverlayTrigger
+            trigger="click"
+            placement="bottom-end"
+            rootClose
+            show={modePickerSheet === sheetPath && !busy}
+            onToggle={(open) => this.setState({ modePickerSheet: open ? sheetPath : '' })}
+            overlay={this.renderModePicker(sheetPath)}
+          >
+            {extractButton}
+          </OverlayTrigger>
+        ) : (
+          <OverlayTrigger
+            container={TOOLTIP_CONTAINER}
             placement="top"
             overlay={<Tooltip id="extractSds">{hint}</Tooltip>}
           >
-            <div>
-              <Button
-                id="extract-sds"
-                onClick={() => this.extractFromSheet(sheetPath)}
-                disabled={!isSaved || !!extractingSheet || !!loadingQuerySafetySheets}
-                variant="light"
-              >
-                {isLoading ? (
-                  <div>
-                    <i className="fa fa-spinner fa-pulse fa-fw" />
-                    <span>Reading sheet...</span>
-                  </div>
-                ) : 'Extract from sheet'}
-              </Button>
-            </div>
+            <span className="d-inline-block">{extractButton}</span>
           </OverlayTrigger>
-          <OverlayTrigger container={TOOLTIP_CONTAINER}
-            placement="top"
-            overlay={(
-              <Tooltip id="viewChemProp">
-                {extracted
-                  ? 'Click to view the properties read from this sheet'
-                  : 'Extract from this sheet first'}
-              </Tooltip>
-            )}
-          >
-            <div>
-              <Button
-                active
-                onClick={() => this.handlePropertiesModal(sheetPath)}
-                variant="light"
-                disabled={!extracted}
-              >
-                <i className="fa fa-file-text" />
-              </Button>
-            </div>
-          </OverlayTrigger>
-        </InputGroup>
-      </div>
+        )}
+        <OverlayTrigger
+          container={TOOLTIP_CONTAINER}
+          placement="top"
+          overlay={(
+            <Tooltip id="viewChemProp">
+              {extracted ? 'View the properties read from this sheet' : 'Extract from this sheet first'}
+            </Tooltip>
+          )}
+        >
+          <span className="d-inline-block">
+            <Button
+              variant="light"
+              size="sm"
+              className="border ms-1"
+              onClick={() => this.handlePropertiesModal(sheetPath)}
+              disabled={!extracted}
+              aria-label="View extracted properties"
+            >
+              <i className="fa fa-file-text" />
+            </Button>
+          </span>
+        </OverlayTrigger>
+      </ButtonGroup>
     );
   };
 
@@ -2061,6 +2286,71 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  renderAiResultModal() {
+    const { showAiResultModal, chemical } = this.state;
+    const entry = chemical?._chemical_data?.[0];
+    if (!entry?.aiExtraction?.extracted_at) return null;
+
+    const aiData = entry.aiExtraction;
+    const extractedProps = entry.extractedProperties || {};
+    const extractedAt = new Date(aiData.extracted_at).toLocaleString();
+
+    const metadataLines = [
+      aiData.chemical_name && `Chemical: ${aiData.chemical_name}`,
+      aiData.is_mixture
+        ? 'Type: Mixture (no single CAS number)'
+        : aiData.cas_number && `CAS: ${aiData.cas_number}`,
+      !aiData.is_mixture && aiData.molecular_formula && `Formula: ${aiData.molecular_formula}`,
+      aiData.signal_word && `Signal Word: ${aiData.signal_word}`,
+    ].filter(Boolean);
+
+    const mixtureLines = aiData.is_mixture && Array.isArray(aiData.mixture_components)
+      && aiData.mixture_components.length > 0
+      ? aiData.mixture_components.map((c) => {
+        const cas = c.cas_number ? ` (CAS: ${c.cas_number})` : '';
+        const conc = c.concentration ? ` [${c.concentration}]` : '';
+        return `${c.name}${cas}${conc}`;
+      })
+      : null;
+
+    const propertiesDisplay = Object.keys(extractedProps).length > 0
+      ? Object.entries(extractedProps).map(([key, val]) => `${key}: ${val}`).join('\n')
+      : 'No physical properties were extracted.';
+
+    const textArea = (controlId, label, rows, value) => (
+      <Form.Group controlId={controlId} className="mb-3">
+        <Form.Label className="fw-bold">{label}</Form.Label>
+        <Form.Control as="textarea" className="w-100" readOnly disabled rows={rows} value={value} />
+      </Form.Group>
+    );
+
+    return (
+      <AppModal
+        title="Extracted Data using AI"
+        show={showAiResultModal}
+        onHide={() => this.setState({ showAiResultModal: false })}
+        size="lg"
+        closeLabel="Close"
+        showFooter
+      >
+        <p className="text-muted small mb-3">
+          Safety phrases (H/P codes, GHS pictograms) are shown in the Safety Phrases section.
+          AI results may contain inaccuracies, so review them against the sheet.
+        </p>
+        {textArea('aiMetadataSection', 'Extracted Metadata', metadataLines.length || 2, metadataLines.join('\n'))}
+        {mixtureLines
+          && textArea('aiMixtureSection', 'Mixture Components', mixtureLines.length + 1, mixtureLines.join('\n'))}
+        {textArea('aiPropertiesSection', 'Extracted Physical Properties', 6, propertiesDisplay)}
+        <p className="text-muted small mb-3">
+          {`Extracted at: ${extractedAt}`}
+          {aiData.model && `, Task was performed using ${aiData.model}`}
+          {aiData.requested_model && aiData.requested_model !== aiData.model
+            && ` (requested ${aiData.requested_model}, unavailable, fell back to default)`}
+        </p>
+      </AppModal>
+    );
+  }
+
   renderPropertiesModal() {
     const { viewChemicalPropertiesModal, viewPropertiesForSheet } = this.state;
     const properties = this.extractedPropertiesFor(viewPropertiesForSheet);
@@ -2151,6 +2441,7 @@ export default class ChemicalTab extends React.Component {
         </Accordion>
 
         {this.renderPropertiesModal()}
+        {this.renderAiResultModal()}
 
         <SDSAttachmentModal
           show={showModal}

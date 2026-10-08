@@ -540,17 +540,17 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'POST /api/v1/chemicals/save_manual_sds' do
-    let(:vendor_info) { { productNumber: 'ABC123', vendor: 'testVendor' }.to_json }
-    let(:vendor_name) { 'TestVendor' }
-    let(:vendor_product) { 'testVendorProductInfo' }
     let(:chemical_data) { { cas: 64_197 }.to_json }
 
+    # The endpoint rewrites the sample's chemical record, so the caller has to be
+    # allowed to edit that sample.
+    let(:own_sample) { create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)]) }
     let(:params) do
       {
-        sample_id: s.id,
-        vendor_info: vendor_info,
-        vendor_name: vendor_name,
-        vendor_product: vendor_product,
+        sample_id: own_sample.id,
+        vendor_info: { productNumber: 'ABC123', vendor: 'testVendor' }.to_json,
+        vendor_name: 'TestVendor',
+        vendor_product: 'testVendorProductInfo',
       }
     end
     let(:mock_file) { fixture_file_upload('spec/fixtures/upload.pdf', 'application/pdf') }
@@ -582,6 +582,16 @@ describe Chemotion::ChemicalAPI do
           chemical_data: chemical_data,
         )
         expect(response.status).to eq 201
+      end
+    end
+
+    context 'when the sample belongs to someone else' do
+      it 'refuses without calling the service' do
+        post '/api/v1/chemicals/save_manual_sds',
+             params: params.merge(sample_id: s.id, attached_file: mock_file)
+
+        expect(response).to have_http_status(:forbidden)
+        expect(Chemotion::ManualSdsService).not_to have_received(:create_manual_sds)
       end
     end
 
@@ -769,6 +779,62 @@ describe Chemotion::ChemicalAPI do
       it 'accepts a chemical that belongs only to an SBMM sample' do
         chem = Chemical.new(sequence_based_macromolecule_sample_id: sbmm_sample.id, chemical_data: [{}])
         expect(chem).to be_valid
+      end
+    end
+  end
+
+  describe 'POST extract SDS /api/v1/chemicals/extract_sds' do
+    let(:own_sample) { create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)]) }
+
+    before { create(:chemical, sample_id: own_sample.id) }
+
+    it 'refuses a sample the caller may not edit, without queueing a job' do
+      expect do
+        post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id }.to_json,
+                                              headers: { 'CONTENT_TYPE' => 'application/json' }
+      end.not_to change(ExtractSdsJob.queue_adapter.enqueued_jobs, :size)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns 404 for a sample that does not exist' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: s.id + 100_000 }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'reports the missing provider only once the caller is allowed the sample' do
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:service_unavailable)
+    end
+
+    context 'with a provider configured' do
+      let(:link) { '/safety_sheets/merck/33009_0123456789abcdef.pdf' }
+
+      before { allow(LlmProviderResolver).to receive(:resolve).and_return(true) }
+
+      def extract(params)
+        post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id, **params }.to_json,
+                                              headers: { 'CONTENT_TYPE' => 'application/json' }
+      end
+
+      it 'queues the job for the sheet the caller names' do
+        expect { extract(path: link) }.to have_enqueued_job(ExtractSdsJob)
+          .with(sample_id: own_sample.id, user_id: unauthorized_user.id, sheet_path: link)
+        expect(response).to have_http_status(:accepted)
+      end
+
+      it 'leaves the sheet to the job when none is named' do
+        expect { extract({}) }.to have_enqueued_job(ExtractSdsJob)
+          .with(sample_id: own_sample.id, user_id: unauthorized_user.id, sheet_path: nil)
+      end
+
+      it 'refuses a path that is not a saved sheet, without queueing a job' do
+        expect { extract(path: '/etc/passwd') }.not_to have_enqueued_job(ExtractSdsJob)
+        expect(response).to have_http_status(:bad_request)
       end
     end
   end
