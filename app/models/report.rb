@@ -54,37 +54,7 @@ class Report < ApplicationRecord
 
   def create_docx
     template = ReportTemplate.find_by(id: report_templates_id)&.report_type || self.template
-    tpl_path = self.class.template_path(template)
-    case template
-    when 'spectrum'
-      Reporter::WorkerSpectrum.new(
-        report: self, template_path: tpl_path,
-      ).process
-    when 'supporting_information'
-      Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: false,
-      ).process
-    when 'supporting_information_std_rxn'
-      Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: true,
-      ).process
-    when 'rxn_list_xlsx'
-      Reporter::WorkerRxnList.new(
-        report: self, ext: 'xlsx',
-      ).process
-    when 'rxn_list_csv'
-      Reporter::WorkerRxnList.new(
-        report: self, ext: 'csv',
-      ).process
-    when 'rxn_list_html'
-      Reporter::WorkerRxnList.new(
-        report: self, template_path: tpl_path, ext: 'html',
-      ).process
-    else
-      Reporter::Worker.new(
-        report: self, template_path: tpl_path,
-      ).process
-    end
+    report_worker(template).process
   end
   handle_asynchronously(:create_docx, run_at: proc { 30.seconds.from_now }) unless Rails.env.development?
 
@@ -197,5 +167,22 @@ class Report < ApplicationRecord
   def delete_job
     job = Delayed::Job.find_by(queue: "report_#{id}")
     job&.delete
+  end
+
+  private
+
+  def report_worker(template)
+    tpl_path = self.class.template_path(template)
+    case template
+    when 'spectrum'
+      Reporter::WorkerSpectrum.new(report: self, template_path: tpl_path)
+    when 'supporting_information', 'supporting_information_std_rxn'
+      Reporter::WorkerSi.new(report: self, template_path: tpl_path, std_rxn: template.end_with?('_std_rxn'))
+    when 'rxn_list_xlsx', 'rxn_list_csv', 'rxn_list_html'
+      ext = template.delete_prefix('rxn_list_')
+      Reporter::WorkerRxnList.new(report: self, ext: ext, template_path: (tpl_path if ext == 'html'))
+    else
+      Reporter::Worker.new(report: self, template_path: tpl_path)
+    end
   end
 end
