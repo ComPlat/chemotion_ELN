@@ -20,7 +20,6 @@ describe('Reaction multi-step', () => {
     reaction.conditions = 'under nitrogen';
     reaction.ph_value = 7;
     reaction.volume = 0.5;
-    reaction.use_reaction_volume = true;
 
     reaction.enterMultiStep();
 
@@ -29,7 +28,6 @@ describe('Reaction multi-step', () => {
     expect(step.conditions).toEqual('under nitrogen');
     expect(step.ph_value).toEqual(7);
     expect(step.volume).toEqual(0.5);
-    expect(step.use_reaction_volume).toEqual(true);
   });
 
   it('divides a step material by that step volume, not the whole reaction', async () => {
@@ -38,11 +36,43 @@ describe('Reaction multi-step', () => {
     reaction.enterMultiStep();
     const step = reaction.reaction_steps[0];
     step.volume = 0.5;
-    step.use_reaction_volume = true;
+    reaction.concentration_mode = 'reaction_volume';
 
     expect(reaction.stepContext(step).reactionVolumeForConcentration()).toEqual(0.5);
     expect(reaction.volumeContextFor(reaction.starting_materials[0])
       .reactionVolumeForConcentration()).toEqual(0.5);
+  });
+
+  it('shares the reaction basis across steps but divides by each step volume', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.concentration_mode = 'reaction_volume';
+    reaction.reaction_steps = [{ id: 1, position: 1, volume: 0.5 }, { id: 2, position: 2, volume: 0.2 }];
+    const [first, second] = reaction.starting_materials;
+    first.reaction_step_id = 1;
+    second.reaction_step_id = 2;
+
+    expect(reaction.volumeContextFor(first).reactionVolumeForConcentration()).toEqual(0.5);
+    expect(reaction.volumeContextFor(second).reactionVolumeForConcentration()).toEqual(0.2);
+    expect(reaction.serialize().reaction_steps.some((s) => 'concentration_mode' in s)).toEqual(false);
+  });
+
+  it('sets the step volume, not the reaction volume, when a step concentration is typed', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.volume = 1;
+    reaction.reaction_steps = [{ id: 1, position: 1, volume: 1 }, { id: 2, position: 2 }];
+    const sample = reaction.reactants[0] || reaction.starting_materials[1];
+    sample.reaction_step_id = 2;
+    sample.amount_value = 0.1;
+    sample.amount_unit = 'mol';
+
+    const applied = reaction.deriveVolumeFromSampleConcentration(sample, 0.5);
+
+    expect(applied.volume).toBeCloseTo(sample.amount_mol / 0.5);
+    expect(reaction.reaction_steps[1].volume).toBeCloseTo(sample.amount_mol / 0.5);
+    expect(reaction.concentration_mode).toEqual('reaction_volume');
+    expect(reaction.volume).toEqual(1);
   });
 
   it('mirrors step 1 onto the reaction so other tabs read current values', async () => {

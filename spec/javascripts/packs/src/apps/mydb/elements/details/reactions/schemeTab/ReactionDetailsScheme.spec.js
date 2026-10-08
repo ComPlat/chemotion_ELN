@@ -1565,7 +1565,7 @@ describe('ReactionDetailsScheme#updateVolume', () => {
 
 describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
-    const reaction = {};
+    const reaction = { volumeContextFor() { return this; } };
     const updatedSample = {
       concn: 0.5,
       setAmountFromConcentrationAndPreserve: sinon.spy(),
@@ -1588,7 +1588,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   });
 
   it('applies the concentration when a reaction volume is available', () => {
-    const reaction = {};
+    const reaction = { volumeContextFor() { return this; } };
     const updatedReaction = {};
     const updatedSample = {
       concn: null,
@@ -1619,6 +1619,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
       gaseous: false,
       isVolumeLocked: false,
       findReactionSample: () => updatedSample,
+      volumeContextFor() { return this; },
       ...reactionOverrides,
     };
     return {
