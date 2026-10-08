@@ -156,9 +156,13 @@ export default function ReactionSchemeGraphic({
     </Popover>
   );
 
+  const svgContainerClass = reaction.isMultiStep()
+    ? 'Reaction-scheme-graphic__svg-container Reaction-scheme-graphic__svg-container--tall'
+    : 'Reaction-scheme-graphic__svg-container';
+
   return (
     <div className="Reaction-scheme-graphic__wrapper">
-      <div className={`Reaction-scheme-graphic__svg-container${reaction.isMultiStep() ? ' Reaction-scheme-graphic__svg-container--tall' : ''}`}>
+      <div className={svgContainerClass}>
         {isRefreshing && (
           <div className="Reaction-scheme-graphic__loader-overlay">
             <div className="text-center p-4">

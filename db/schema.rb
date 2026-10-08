@@ -1168,7 +1168,6 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "ph_value"
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.decimal "volume", precision: 10, scale: 4
-    t.boolean "use_reaction_volume", default: false, null: false
     t.boolean "lock_reaction_volume", default: false, null: false
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false

@@ -30,7 +30,6 @@ export const STEP_FIELD_DEFAULTS = {
   ph_operator: () => '=',
   ph_value: () => null,
   volume: () => null,
-  use_reaction_volume: () => false,
   lock_reaction_volume: () => false,
   conditions: () => '',
 };
@@ -298,7 +297,6 @@ export default class Reaction extends Element {
         ph_value: step.ph_value,
         vessel_size: step.vessel_size,
         volume: step.volume,
-        use_reaction_volume: step.use_reaction_volume,
         lock_reaction_volume: step.lock_reaction_volume,
       };
       return Object.fromEntries(
@@ -1070,9 +1068,13 @@ export default class Reaction extends Element {
     Object.keys(STEP_FIELD_DEFAULTS).forEach((field) => { this[field] = first[field]; });
   }
 
+  stepOf(sample) {
+    if (!this.isMultiStep()) return null;
+    return this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id) || null;
+  }
+
   volumeContextFor(sample) {
-    if (!this.isMultiStep()) return this;
-    const step = this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id);
+    const step = this.stepOf(sample);
     return step ? this.stepContext(step) : this;
   }
 
@@ -1163,7 +1165,6 @@ export default class Reaction extends Element {
       ph_value: this.ph_value,
       vessel_size: this.vessel_size ? { ...this.vessel_size } : this.vessel_size,
       volume: this.volume,
-      use_reaction_volume: this.use_reaction_volume,
       lock_reaction_volume: this.lock_reaction_volume,
     });
   }
@@ -1783,9 +1784,12 @@ export default class Reaction extends Element {
     if (amountMol <= 0) return null;
 
     const newVolume = amountMol / concentration;
-    this.volume = newVolume;
+    const step = this.stepOf(sample);
+    const target = step || this;
+    target.volume = newVolume;
     this.resetPreservedConcentrationExcept(sample);
     this.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+    if (step) this.mirrorFirstStep();
     this.updateAllConcentrations();
 
     return {

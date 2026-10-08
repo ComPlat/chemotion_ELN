@@ -1352,7 +1352,8 @@ export default class ReactionDetailsScheme extends React.Component {
       return this.handleFeedstockConcentrationChange(updatedSample, concentrationValue);
     }
 
-    if (!this.guardConcentrationUpdate(reaction)) {
+    const volumeContext = reaction.volumeContextFor(updatedSample);
+    if (!this.guardConcentrationUpdate(volumeContext)) {
       return reaction;
     }
 
@@ -1369,7 +1370,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // amount from concentration × volume instead (otherwise the typed value
     // would be silently discarded on the next recompute).
     const hasAmount = Number.isFinite(updatedSample.amount_mol) && updatedSample.amount_mol > 0;
-    if (reaction.isVolumeLocked || !hasAmount) {
+    if (volumeContext.isVolumeLocked || !hasAmount) {
       return this.handleFixedVolumeConcentrationChange(updatedSample, concentrationValue);
     }
 
@@ -1470,10 +1471,12 @@ export default class ReactionDetailsScheme extends React.Component {
   applyDerivedVolumeFromConcentration(reaction, sample, concentration) {
     const { onInputChange } = this.props;
     const previousMode = reaction.concentration_mode;
+    const isStepMaterial = !!reaction.stepOf(sample);
     const applied = reaction.deriveVolumeFromSampleConcentration(sample, concentration);
+    if (applied && isStepMaterial) reaction.changed = true;
 
     if (applied && onInputChange) {
-      onInputChange('volume', applied.volume);
+      if (!isStepMaterial) onInputChange('volume', applied.volume);
       onInputChange('concentrationMode', applied.concentrationMode);
 
       // Typing a concentration directly defines the reaction volume, which only
@@ -1532,7 +1535,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 
-    const reactionVolume = this.resolveReactionVolumeForConcentrationOrWarn(reaction);
+    const reactionVolume = this.resolveReactionVolumeForConcentrationOrWarn(
+      reaction.volumeContextFor(updatedSample)
+    );
     if (reactionVolume == null) {
       return reaction;
     }
@@ -2453,7 +2458,7 @@ export default class ReactionDetailsScheme extends React.Component {
             title="Reaction volume"
             active
             id="numInput_reaction_volume_l"
-            disabled={reaction.isVolumeLocked}
+            disabled={target.isVolumeLocked}
             disableUnitButtonPadding
             onChange={(e) => this.updateVolume(e, target, onChange)}
             onMetricsChange={(e) => this.updateVolume(e, target, onChange)}
@@ -2500,17 +2505,15 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  handleConcentrationModeChange(mode, source = null, onChange = null) {
+  handleConcentrationModeChange(mode) {
     const { reaction, onInputChange } = this.props;
-    const target = source || reaction;
-    const change = onChange || onInputChange;
     const reactionVolumeMode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
 
-    if (mode === target.concentration_mode) return;
+    if (mode === reaction.concentration_mode) return;
 
     // The reaction-volume basis needs a volume to divide by; keep the previous
     // mode if none has been entered yet.
-    if (mode === reactionVolumeMode && !target.hasValidReactionVolume) {
+    if (mode === reactionVolumeMode && !reaction.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before using it as the concentration basis.'
       );
@@ -2520,9 +2523,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // A preserved concentration belongs to the volume basis under which it was
     // entered. Release those values before recalculating under a new basis.
     reaction.resetPreservedConcentrationExcept();
-    target.concentration_mode = mode;
+    reaction.concentration_mode = mode;
 
-    change('concentrationMode', mode);
+    onInputChange('concentrationMode', mode);
 
     // Recalculate concentrations when the basis changes.
     reaction.updateAllConcentrations();
