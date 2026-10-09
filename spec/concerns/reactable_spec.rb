@@ -23,6 +23,98 @@ RSpec.describe Reactable, type: :module do
            })
   end
 
+  describe '#update_equivalent' do
+    it 'preserves the client-calculated equivalent when the reference is a mixture' do
+      mixture = create(
+        :sample,
+        sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+        real_amount_value: 1000.124,
+        real_amount_unit: 'g',
+      )
+      dependent = create(:sample, real_amount_value: 0.816, real_amount_unit: 'g')
+      create(
+        :reactions_starting_material_sample,
+        reaction: reaction,
+        sample: mixture,
+        reference: true,
+        equivalent: 1.0,
+      )
+      association = create(
+        :reactions_reactant_sample,
+        reaction: reaction,
+        sample: dependent,
+        equivalent: 1.7728,
+      )
+
+      association.update_equivalent
+
+      expect(association.reload.equivalent).to eq(1.7728)
+    end
+
+    context 'when the reference is a mixture' do
+      let(:mixture_reference) do
+        create(
+          :sample,
+          sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+          real_amount_value: nil,
+          target_amount_value: 1,
+          target_amount_unit: 'mol',
+        )
+      end
+
+      before do
+        create(
+          :reactions_starting_material_sample,
+          reaction: reaction,
+          sample: mixture_reference,
+          reference: true,
+          equivalent: 1.0,
+        )
+      end
+
+      it 'refreshes the gas-product equivalent from gas-phase data' do
+        association = create(
+          :reactions_product_sample,
+          reaction: reaction,
+          sample: sample_with_real_amount,
+          gas_type: 'gas',
+          equivalent: 0.1,
+          gas_phase_data: { 'ppm' => 100, 'temperature' => { 'unit' => '°C', 'value' => 20 } },
+        )
+        allow(association).to receive(:calculate_equivalent_for_gas_material)
+          .with(sample_with_real_amount.purity || 1, 293.15, 100).and_return(4.5)
+
+        association.update_equivalent
+
+        expect(association.reload.equivalent).to eq(4.5)
+      end
+
+      [Sample::SAMPLE_TYPE_MIXTURE, Sample::SAMPLE_TYPE_MICROMOLECULE].each do |sample_type|
+        it "refreshes the weight-percentage-reference yield for a #{sample_type} product" do
+          product = create(
+            :sample,
+            sample_type: sample_type,
+            real_amount_value: 5,
+            real_amount_unit: 'mol',
+            target_amount_value: 10,
+            target_amount_unit: 'mol',
+          )
+          association = create(
+            :reactions_product_sample,
+            reaction: reaction,
+            sample: product,
+            weight_percentage_reference: true,
+            equivalent: 0.1,
+          )
+
+          association.update_equivalent
+
+          expect(association.reload.equivalent).to eq(0.5)
+        end
+      end
+    end
+  end
+
   describe '#test methods for gas phase reaction samples' do
     describe '#detect_amount_type' do
       it 'returns a hash with sample target_amount_value and target_amount_unit' do

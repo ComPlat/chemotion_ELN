@@ -620,6 +620,16 @@ class Material extends Component {
       const { mixtureComponents } = this.state;
       const { onChange, material, materialGroup } = this.props;
 
+      // The components may be shared with the reaction. Let its handler capture the mass
+      // under the old reference before changing the selection in this row.
+      if (onChange) {
+        onChange({
+          ...changeEvent,
+          sampleID: material.id,
+          materialGroup
+        });
+      }
+
       // Update the reference directly on the ComponentModel instances
       mixtureComponents.forEach((comp) => {
         const isReference = comp.id === changeEvent.componentId;
@@ -630,15 +640,6 @@ class Material extends Component {
 
       // Trigger re-render with updated components
       this.setState({ mixtureComponents: [...mixtureComponents] });
-
-      // Propagate the change up to notify the reaction that it has changed
-      if (onChange) {
-        onChange({
-          ...changeEvent,
-          sampleID: material.id,
-          materialGroup
-        });
-      }
     }
   };
 
