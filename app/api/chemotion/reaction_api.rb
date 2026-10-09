@@ -142,6 +142,25 @@ module Chemotion
         end
       end
 
+      desc 'Update the equivalent of an existing reaction material'
+      params do
+        requires :id, type: Integer, desc: 'Reaction id'
+        requires :sample_id, type: Integer, desc: 'Sample id'
+        requires :equivalent, type: Float
+      end
+      put ':id/materials/:sample_id/equivalent' do
+        reaction = Reaction.find(params[:id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, reaction).update?
+        error!('Invalid equivalent', 422) unless params[:equivalent].finite?
+
+        material = ReactionsSample.find_by!(reaction_id: reaction.id, sample_id: params[:sample_id])
+        material.update!(equivalent: params[:equivalent])
+
+        { equivalent: material.equivalent }
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
+      end
+
       desc 'Update reaction by id'
       params do
         requires :id, type: Integer, desc: 'Reaction id'
