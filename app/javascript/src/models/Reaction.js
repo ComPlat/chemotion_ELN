@@ -1102,8 +1102,12 @@ export default class Reaction extends Element {
             ));
           }
 
-          mat.updateChecksum();
           group[index] = mat;
+          // A saved sample carries its stock concentration. The attached material
+          // needs the reaction concentration even when the equivalent column is locked.
+          mat.preserveConcentration = false;
+          mat.updateConcentrationFromSolvent(this);
+          mat.updateChecksum();
           break;
         }
       }

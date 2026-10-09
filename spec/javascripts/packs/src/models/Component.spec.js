@@ -7,6 +7,11 @@ import { addMiddleware } from 'mobx-state-tree';
 
 describe('Component', () => {
   let component;
+  const originalGetState = ComponentStore.getState;
+
+  afterEach(() => {
+    ComponentStore.getState = originalGetState;
+  });
 
   beforeEach(() => {
     const mockMolecule = { id: 101, molecular_weight: 18.010564684 };
@@ -569,8 +574,7 @@ describe('Component', () => {
       const result = component.calculateRelativeMolecularWeight(sample);
 
       expect(result).toBe(null);
-      expect(component.component_properties && component.component_properties.relative_molecular_weight)
-        .toBe(undefined);
+      expect(component.relative_molecular_weight).toBe(undefined);
     });
 
     it('calculates and assigns relative molecular weight for mixtures', () => {
@@ -592,8 +596,7 @@ describe('Component', () => {
         relative_molecular_weight: 18
       });
 
-      expect(component.component_properties).toBeTruthy();
-      expect(component.component_properties.relative_molecular_weight).toBe(18);
+      expect(component.relative_molecular_weight).toBe(18);
     });
 
     it('sets relative molecular weight to 0 when inputs are zero or missing', () => {
@@ -611,7 +614,22 @@ describe('Component', () => {
         amount_mol: 0,
         relative_molecular_weight: 0
       });
-      expect(component.component_properties.relative_molecular_weight).toBe(0);
+      expect(component.relative_molecular_weight).toBe(0);
+    });
+
+    it('preserves a loaded relative molecular weight when recalculation inputs are missing', () => {
+      const sample = {
+        isMixture: () => true,
+        total_mixture_mass_g: 0
+      };
+
+      component.amount_mol = 0;
+      component.relative_molecular_weight = 50;
+
+      const result = component.calculateRelativeMolecularWeight(sample);
+
+      expect(component.relative_molecular_weight).toBe(50);
+      expect(result.relative_molecular_weight).toBe(50);
     });
   });
 
@@ -635,6 +653,7 @@ describe('Component', () => {
           material_group: 'solid',
           reference: true,
           purity: 0.95,
+          relative_molecular_weight: 18,
           molecule: {
             id: 'mol_123',
             iupac_name: 'Test Molecule',
@@ -661,6 +680,7 @@ describe('Component', () => {
       expect(component.material_group).toBe('solid');
       expect(component.reference).toBe(true);
       expect(component.purity).toBe(0.95);
+      expect(component.relative_molecular_weight).toBe(18);
       expect(component.molecule.id).toBe('mol_123');
       expect(component.molecule.iupac_name).toBe('Test Molecule');
       expect(component.molecule.molecular_weight).toBe(100);
@@ -1144,12 +1164,13 @@ describe('Component', () => {
   });
 
   describe('resetAmounts', () => {
-    it('sets amount_mol, amount_g, amount_l, molarity_value, and concn to 0', () => {
+    it('sets amount_mol, amount_g, amount_l, molarity_value, concn, and equivalent to 0', () => {
       component.amount_mol = 0.05;
       component.amount_g = 9.0;
       component.amount_l = 0.005;
       component.molarity_value = 0.5;
       component.concn = 0.5;
+      component.equivalent = 2.0;
 
       component.resetAmounts();
 
@@ -1158,17 +1179,16 @@ describe('Component', () => {
       expect(component.amount_l).toBe(0);
       expect(component.molarity_value).toBe(0);
       expect(component.concn).toBe(0);
+      expect(component.equivalent).toBe(0);
     });
 
-    it('does not affect purity, equivalent, or other fields', () => {
+    it('does not affect purity or density', () => {
       component.purity = 0.98;
-      component.equivalent = 2.0;
       component.density = 1.2;
 
       component.resetAmounts();
 
       expect(component.purity).toBe(0.98);
-      expect(component.equivalent).toBe(2.0);
       expect(component.density).toBe(1.2);
     });
   });
