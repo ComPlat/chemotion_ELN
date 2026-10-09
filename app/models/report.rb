@@ -42,6 +42,16 @@ class Report < ApplicationRecord
   serialize :mol_serials, Array
   serialize :prd_atts, Array
 
+  # report type => [worker class, extra worker arguments]; other types use Reporter::Worker
+  REPORT_WORKERS = {
+    'spectrum' => [Reporter::WorkerSpectrum, {}],
+    'supporting_information' => [Reporter::WorkerSi, { std_rxn: false }],
+    'supporting_information_std_rxn' => [Reporter::WorkerSi, { std_rxn: true }],
+    'rxn_list_xlsx' => [Reporter::WorkerRxnList, { ext: 'xlsx' }],
+    'rxn_list_csv' => [Reporter::WorkerRxnList, { ext: 'csv' }],
+    'rxn_list_html' => [Reporter::WorkerRxnList, { ext: 'html' }],
+  }.freeze
+
   has_many :reports_users
   has_many :users, through: :reports_users
   has_many :attachments, as: :attachable
@@ -52,7 +62,8 @@ class Report < ApplicationRecord
   after_destroy :delete_job
 
   def create_docx
-    report_worker(template).process
+    worker, args = REPORT_WORKERS.fetch(template, [Reporter::Worker, {}])
+    worker.new(report: self, template_path: self.class.template_path(template), **args).process
   end
   handle_asynchronously(:create_docx, run_at: proc { 30.seconds.from_now }) unless Rails.env.development?
 
@@ -159,22 +170,5 @@ class Report < ApplicationRecord
   def delete_job
     job = Delayed::Job.find_by(queue: "report_#{id}")
     job&.delete
-  end
-
-  private
-
-  def report_worker(template)
-    tpl_path = self.class.template_path(template)
-    case template
-    when 'spectrum'
-      Reporter::WorkerSpectrum.new(report: self, template_path: tpl_path)
-    when 'supporting_information', 'supporting_information_std_rxn'
-      Reporter::WorkerSi.new(report: self, template_path: tpl_path, std_rxn: template.end_with?('_std_rxn'))
-    when 'rxn_list_xlsx', 'rxn_list_csv', 'rxn_list_html'
-      ext = template.delete_prefix('rxn_list_')
-      Reporter::WorkerRxnList.new(report: self, ext: ext, template_path: (tpl_path if ext == 'html'))
-    else
-      Reporter::Worker.new(report: self, template_path: tpl_path)
-    end
   end
 end

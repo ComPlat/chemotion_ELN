@@ -181,6 +181,29 @@ RSpec.describe Report, type: :report do
     end
   end
 
+  describe '#create_docx worker selection' do
+    {
+      'standard' => [Reporter::Worker, {}],
+      'spectrum' => [Reporter::WorkerSpectrum, {}],
+      'supporting_information' => [Reporter::WorkerSi, { std_rxn: false }],
+      'supporting_information_std_rxn' => [Reporter::WorkerSi, { std_rxn: true }],
+      'rxn_list_xlsx' => [Reporter::WorkerRxnList, { ext: 'xlsx' }],
+      'rxn_list_csv' => [Reporter::WorkerRxnList, { ext: 'csv' }],
+      'rxn_list_html' => [Reporter::WorkerRxnList, { ext: 'html' }],
+    }.each do |type, (worker_class, args)|
+      it "processes the report with #{worker_class} for #{type}" do
+        worker = instance_double(worker_class, process: nil)
+        allow(worker_class).to receive(:new).and_return(worker)
+        report = described_class.create!(author_id: user.id, template: type)
+        report.create_docx
+        expect(worker_class).to have_received(:new).with(
+          report: report, template_path: described_class.template_path(type), **args,
+        )
+        expect(worker).to have_received(:process)
+      end
+    end
+  end
+
   describe '#report_template' do
     it 'returns the stored template referenced by report_templates_id' do
       report_template = create(:report_template)
