@@ -137,16 +137,18 @@ RSpec.describe Report, type: :report do
       }
     end
 
+    before { allow(Reporter::WorkerSi).to receive(:new).and_call_original }
+
     context 'when no db template is requested' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       before do
         user.reports << report
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
+      it 'generates the report with the worker for its stored type' do
+        expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
     end
 
@@ -157,10 +159,10 @@ RSpec.describe Report, type: :report do
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
+      it 'generates the report with the worker for its stored type' do
+        expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
     end
 
@@ -171,24 +173,10 @@ RSpec.describe Report, type: :report do
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
-      end
-    end
-
-    context 'with the report type stored on the report' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      before do
-        allow(Reporter::WorkerSi).to receive(:new).and_call_original
-        allow(Reporter::Worker).to receive(:new).and_call_original
-        user.reports << report
-        report.create_docx
-      end
-
-      it 'uses the matching worker' do
+      it 'generates the report with the worker for its stored type' do
         expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
-        expect(Reporter::Worker).not_to have_received(:new)
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
     end
   end
