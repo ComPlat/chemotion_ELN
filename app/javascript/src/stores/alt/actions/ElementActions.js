@@ -469,6 +469,8 @@ export class ElementActions {
 
         // Update sample
         const newSample = await SamplesFetcher.update(sample);
+        // Keep subsequent editor saves attached to the reaction after the API replaces the sample.
+        newSample.belongTo = reaction;
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
