@@ -3,6 +3,12 @@
 require 'rails_helper'
 
 describe LlmEndpointPolicy do
+  def stub_resolution(host, *addresses)
+    allow(Addrinfo).to receive(:getaddrinfo).and_call_original
+    allow(Addrinfo).to receive(:getaddrinfo).with(host, nil, nil, :STREAM)
+                                            .and_return(addresses.map { |ip| Addrinfo.tcp(ip, 0) })
+  end
+
   describe '.violation' do
     it 'accepts a public https endpoint' do
       expect(described_class.violation('https://api.openai.com/v1')).to be_nil
@@ -51,8 +57,25 @@ describe LlmEndpointPolicy do
       expect(described_class.violation('http://metadata.google.internal')).to include('private')
     end
 
+    it 'refuses a local name written with the trailing root dot' do
+      expect(described_class.violation('http://localhost.:11434')).to include('private')
+      expect(described_class.violation('http://ollama.internal.')).to include('private')
+    end
+
+    # getaddrinfo, which Net::HTTP connects through, reads all of these as IPv4.
+    %w[127.1 2130706433 0x7f000001 0177.0.0.1 0 2852039166].each do |host|
+      it "refuses the shorthand IPv4 form #{host}" do
+        expect(described_class.violation("http://#{host}:8080")).to include('private')
+      end
+    end
+
+    it 'refuses the multicast and reserved IPv4 blocks' do
+      expect(described_class.violation('http://224.0.0.1')).to include('private')
+      expect(described_class.violation('http://255.255.255.255')).to include('private')
+    end
+
     context 'when a name resolves into the private space' do
-      before { allow(Resolv).to receive(:getaddresses).with('sneaky.example.com').and_return(['127.0.0.1']) }
+      before { stub_resolution('sneaky.example.com', '127.0.0.1') }
 
       it 'passes the name check but is refused at connect time' do
         expect(described_class.violation('http://sneaky.example.com')).to be_nil
@@ -76,29 +99,37 @@ describe LlmEndpointPolicy do
 
   describe '.pinned_address!' do
     it 'pins the connection to the address it checked' do
-      allow(Resolv).to receive(:getaddresses).with('api.example.com').and_return(['93.184.216.34'])
+      stub_resolution('api.example.com', '93.184.216.34')
 
       expect(described_class.pinned_address!('api.example.com')).to eq('93.184.216.34')
     end
 
     it 'refuses a public name whose second address is private' do
-      allow(Resolv).to receive(:getaddresses).with('mixed.example.com')
-                                             .and_return(['93.184.216.34', '10.0.0.1'])
+      stub_resolution('mixed.example.com', '93.184.216.34', '10.0.0.1')
 
       expect { described_class.pinned_address!('mixed.example.com') }
         .to raise_error(Errors::LlmNotConfiguredError)
     end
 
-    it 'leaves an unresolvable name to the client' do
-      allow(Resolv).to receive(:getaddresses).with('nowhere.invalid').and_return([])
+    it 'fails an unresolvable name rather than letting the client look it up again' do
+      allow(Addrinfo).to receive(:getaddrinfo).and_call_original
+      allow(Addrinfo).to receive(:getaddrinfo).with('nowhere.invalid', nil, nil, :STREAM)
+                                              .and_raise(SocketError, 'getaddrinfo: Name or service not known')
 
-      expect(described_class.pinned_address!('nowhere.invalid')).to be_nil
+      expect { described_class.pinned_address!('nowhere.invalid') }.to raise_error(SocketError)
     end
 
     it 'refuses a reserved literal and pins nothing for a public one' do
       expect { described_class.pinned_address!('169.254.169.254') }
         .to raise_error(Errors::LlmNotConfiguredError)
       expect(described_class.pinned_address!('93.184.216.34')).to be_nil
+    end
+
+    it 'refuses the shorthand form of a reserved address without a lookup' do
+      expect { described_class.pinned_address!('2852039166') }
+        .to raise_error(Errors::LlmNotConfiguredError, /private or loopback/)
+      expect { described_class.pinned_address!('127.1') }
+        .to raise_error(Errors::LlmNotConfiguredError)
     end
 
     it 'checks nothing when the deployment allows private endpoints' do
