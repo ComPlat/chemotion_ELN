@@ -90,4 +90,63 @@ RSpec.describe Device do
       expect { new_device.save! }.not_to raise_error
     end
   end
+
+  describe 'name abbreviation uniqueness' do
+    it 'rejects an abbreviation that differs only in case' do
+      taken = create(:device, name_abbreviation: 'Ab_c')
+
+      expect(build(:device, name_abbreviation: taken.name_abbreviation.upcase)).not_to be_valid
+    end
+
+    it 'adds errors instead of raising when the abbreviation is missing' do
+      new_device = described_class.new(name: 'x')
+
+      expect(new_device).not_to be_valid
+      expect(new_device.errors[:name_abbreviation]).to be_present
+    end
+
+    it 'can validate a soft-deleted device' do
+      device.destroy
+
+      expect { described_class.only_deleted.find(device.id).valid? }.not_to raise_error
+    end
+  end
+
+  describe 'sftp keyfile validation' do
+    let(:keydir) { Dir.mktmpdir }
+    let(:sftp_device) do
+      build(:device, datacollector_method: 'filewatchersftp', datacollector_dir: '/data',
+                     datacollector_user: 'user', datacollector_host: 'host',
+                     datacollector_authentication: 'keyfile', datacollector_key_name: 'id_test')
+    end
+
+    before { allow(Rails.configuration.datacollectors).to receive(:keydir).and_return(keydir) }
+
+    after { FileUtils.remove_entry(keydir) }
+
+    it 'accepts an existing key file' do
+      FileUtils.touch(File.join(keydir, 'id_test'))
+
+      expect(sftp_device).to be_valid
+    end
+
+    it 'reports a key file that does not exist' do
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :not_found }]
+    end
+
+    it 'reports a missing key name as blank' do
+      sftp_device.datacollector_key_name = nil
+
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :blank }]
+    end
+
+    it 'reports the key file as not found when no key directory is configured' do
+      allow(Rails.configuration.datacollectors).to receive(:keydir).and_return(nil)
+
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :not_found }]
+    end
+  end
 end
