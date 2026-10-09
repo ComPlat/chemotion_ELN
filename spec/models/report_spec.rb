@@ -193,6 +193,13 @@ RSpec.describe Report, type: :report do
     end
   end
 
+  describe '#report_template' do
+    it 'returns the stored template referenced by report_templates_id' do
+      report_template = create(:report_template)
+      expect(create(:report, report_templates_id: report_template.id).report_template).to eq(report_template)
+    end
+  end
+
   describe '#destroy' do
     it 'succeeds for a report without a file name' do
       report = create(:report, file_name: nil)
