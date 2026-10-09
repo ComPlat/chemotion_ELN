@@ -52,7 +52,6 @@ class Report < ApplicationRecord
   after_destroy :delete_job
 
   def create_docx
-    template = ReportTemplate.find_by(id: report_templates_id)&.report_type || self.template
     report_worker(template).process
   end
   handle_asynchronously(:create_docx, run_at: proc { 30.seconds.from_now }) unless Rails.env.development?

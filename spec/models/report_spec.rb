@@ -177,7 +177,8 @@ RSpec.describe Report, type: :report do
         expect(report.template).to include(template)
       end
     end
-    context 'when no db template is given' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+
+    context 'with the report type stored on the report' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       before do
         allow(Reporter::WorkerSi).to receive(:new).and_call_original
         allow(Reporter::Worker).to receive(:new).and_call_original
@@ -185,24 +186,9 @@ RSpec.describe Report, type: :report do
         report.create_docx
       end
 
-      it 'uses the worker for the template stored on the report' do
+      it 'uses the matching worker' do
         expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
         expect(Reporter::Worker).not_to have_received(:new)
-      end
-    end
-
-    context 'when a db template is given' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      before do
-        allow(Reporter::WorkerSi).to receive(:new).and_call_original
-        allow(Reporter::Worker).to receive(:new).and_call_original
-        attributes[:report_templates_id] = report_template.id
-        user.reports << report
-        report.create_docx
-      end
-
-      it 'uses the worker for the db template report type' do
-        expect(Reporter::Worker).to have_received(:new)
-        expect(Reporter::WorkerSi).not_to have_received(:new)
       end
     end
   end
