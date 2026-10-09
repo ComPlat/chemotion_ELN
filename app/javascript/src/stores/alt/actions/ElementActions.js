@@ -52,7 +52,7 @@ import { sampleAssociationLockNotification } from 'src/utilities/notificationMes
 
 import _ from 'lodash';
 
-class ElementActions {
+export class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
       GenericElsFetcher.export(element, klass, exportFormat)
@@ -346,6 +346,14 @@ class ElementActions {
         // Update the material in the reaction and dispatch
         reaction.updateMaterial(newSample);
         reaction.changed = true;
+
+        // Persist only the edited mixture's existing association, keeping other
+        // reaction edits pending until the user saves from the reaction toolbar.
+        const savedReactionId = newSample.tag?.taggable_data?.reaction_id;
+        if (newSample.isMixture() && !reaction.isNew && savedReactionId === reaction.id) {
+          const material = reaction.sampleById(newSample.id);
+          await ReactionsFetcher.updateMaterialEquivalent(reaction.id, material.id, material.equivalent);
+        }
 
         dispatch({
           reaction,
