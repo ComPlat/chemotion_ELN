@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/AbcSize
 
 module Versioning
   module Fetchers
@@ -43,14 +43,19 @@ module Versioning
             end
           end
         end
-        unless sample.chemical.nil?
-          versions += Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
-        end
 
-        versions
+        versions + chemical_versions + Versioning::Fetchers::LiteratureFetcher.call(element: sample)
+      end
+
+      private
+
+      def chemical_versions
+        return [] if sample.chemical.nil?
+
+        Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
       end
     end
   end
 end
 
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/AbcSize
