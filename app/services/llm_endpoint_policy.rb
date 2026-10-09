@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'ipaddr'
-require 'resolv'
+require 'socket'
 
 # Whether a user-supplied LLM endpoint may be reached on the server's behalf.
 #
@@ -14,11 +14,11 @@ class LlmEndpointPolicy
 
   # Ranges no personal provider may address: loopback, link-local (the metadata
   # service among them), the RFC1918/ULA private space, and the unspecified,
-  # CGNAT and benchmark blocks that reach the same hosts.
+  # CGNAT, benchmark, multicast and reserved blocks that reach the same hosts.
   RESERVED_RANGES = [
     '0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16',
-    '172.16.0.0/12', '192.0.0.0/24', '192.168.0.0/16', '198.18.0.0/15',
-    '::/128', '::1/128', 'fc00::/7', 'fe80::/10'
+    '172.16.0.0/12', '192.0.0.0/24', '192.168.0.0/16', '198.18.0.0/15', '224.0.0.0/4',
+    '240.0.0.0/4', '::/96', 'fc00::/7', 'fe80::/10'
   ].map { |cidr| IPAddr.new(cidr) }.freeze
 
   # Names that address the host or the local network without an IP literal.
@@ -73,12 +73,11 @@ class LlmEndpointPolicy
     end
 
     # Every address the name resolves to must be public. The connection is then
-    # pinned to the one checked here, so the client does not look it up again
-    # and get a different answer. An unresolvable name is left to the client,
-    # whose own lookup fails the request in the ordinary way.
+    # pinned to the one checked here, so the client never looks the name up again.
+    # A failed lookup raises the client's own SocketError.
     def check_resolved!(host)
       addresses = resolve(host)
-      return nil if addresses.empty?
+      raise SocketError, "getaddrinfo: #{host} did not resolve" if addresses.empty?
 
       raise_private(host) if addresses.any? { |address| reserved?(address) }
       addresses.first.to_s
@@ -90,10 +89,9 @@ class LlmEndpointPolicy
             'reachable only through an institution provider.'
     end
 
+    # getaddrinfo, as Net::HTTP itself resolves: /etc/hosts and nsswitch included.
     def resolve(host)
-      Resolv.getaddresses(host).filter_map { |address| ip_literal(address) }
-    rescue StandardError
-      []
+      Addrinfo.getaddrinfo(host, nil, nil, :STREAM).map { |info| IPAddr.new(info.ip_address) }.uniq
     end
 
     def usable?(uri)
@@ -110,7 +108,7 @@ class LlmEndpointPolicy
     # per save would stall on every offline deployment, and the answer would not
     # bind the connection anyway.
     def private_host?(host)
-      name = host.downcase
+      name = host.downcase.chomp('.')
       return true if name == 'localhost' || LOCAL_SUFFIXES.any? { |suffix| name.end_with?(suffix) }
 
       address = ip_literal(name)
@@ -120,6 +118,15 @@ class LlmEndpointPolicy
     def ip_literal(host)
       IPAddr.new(host)
     rescue IPAddr::Error
+      numeric_literal(host)
+    end
+
+    # The shorthand forms getaddrinfo also reads as IPv4 (127.1, 2130706433,
+    # 0x7f000001), parsed without a DNS lookup.
+    def numeric_literal(host)
+      info = Addrinfo.getaddrinfo(host, nil, nil, :STREAM, nil, Socket::AI_NUMERICHOST).first
+      info && IPAddr.new(info.ip_address)
+    rescue SocketError, IPAddr::Error
       nil
     end
 

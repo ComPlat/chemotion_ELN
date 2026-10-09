@@ -521,6 +521,9 @@ describe Chemotion::LlmSettingsAPI do
       let!(:mine)   { create(:llm_provider, :personal, user: user, base_url: old_url, api_key: 'sk-old-key') }
 
       before do
+        allow(Addrinfo).to receive(:getaddrinfo).and_call_original
+        allow(Addrinfo).to receive(:getaddrinfo).with(/\A(old|new)-endpoint\.example\z/, nil, nil, :STREAM)
+                                                .and_return([Addrinfo.tcp('93.184.216.34', 0)])
         stub_request(:get, "#{old_url}/v1/models").to_return(
           status: 200, body: { 'data' => [{ 'id' => 'old-model' }] }.to_json,
           headers: { 'Content-Type' => 'application/json' }
