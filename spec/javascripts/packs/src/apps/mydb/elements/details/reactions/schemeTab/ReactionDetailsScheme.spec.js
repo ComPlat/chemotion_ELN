@@ -1151,6 +1151,125 @@ describe('ReactionDetailsScheme reference mixture component switch (real Sample)
   });
 });
 
+describe('ReactionDetailsScheme non-reference mixture concentration', () => {
+  const massG = 0.006 * 182.22 + 0.012 * 94.11;
+
+  const build = (unit, lockEquivColumn, materialGroup = 'starting_materials') => {
+    const sample = (id, value, amountUnit, extra = {}) => ({
+      id,
+      amountType: 'target',
+      target_amount_value: value,
+      target_amount_unit: amountUnit,
+      molecule: { molecular_weight: 100 },
+      purity: 1,
+      density: 0,
+      molarity_value: 0,
+      gas_type: 'off',
+      coefficient: 1,
+      ...extra,
+    });
+    const mixtureData = sample('mixture', unit === 'mol' ? 0.012 : massG, unit, {
+      sample_type: 'Mixture', reference: false, equivalent: 1.2,
+      sample_details: { reference_component_changed: false },
+    });
+    const reaction = new Reaction({
+      id: 101,
+      changed: true,
+      starting_materials: [sample('reference', 0.01, 'mol', { reference: true, equivalent: 1 })],
+      reactants: [sample('other', 0.02, 'mol', { equivalent: 2 })],
+      products: [],
+      solvents: [sample('solvent', 0.01, 'l', { density: 1 })],
+    });
+    reaction[materialGroup].push(new Sample(mixtureData));
+    const mixture = reaction.sampleById('mixture');
+    mixture.initialComponents([
+      new Component({
+        id: 'benzophenone', position: 0, reference: false,
+        amount_mol: 0.006, relative_molecular_weight: massG / 0.006,
+        molecule: { molecular_weight: 182.22 }, material_group: 'solid', purity: 1,
+      }),
+      new Component({
+        id: 'phenol', position: 1, reference: true,
+        amount_mol: 0.012, relative_molecular_weight: massG / 0.012,
+        molecule: { molecular_weight: 94.11 }, material_group: 'solid', purity: 1,
+      }),
+    ]);
+    mixture.getLockReactionEquivColumn = () => lockEquivColumn;
+    reaction.updateAllConcentrations();
+
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn };
+    scheme.getReactionEquivLockState = () => lockEquivColumn;
+    return { reaction, mixture, scheme };
+  };
+
+  ['starting_materials', 'reactants'].forEach((materialGroup) => {
+    ['g', 'mol'].forEach((unit) => {
+      [true, false].forEach((lockEquivColumn) => {
+        it(`refreshes both ${unit} switches in ${materialGroup} with lock=${lockEquivColumn}`, () => {
+          const { reaction, mixture, scheme } = build(unit, lockEquivColumn, materialGroup);
+          const other = reaction.sampleById('other');
+          other.concn = 3;
+          other.preserveConcentration = true;
+          expect(mixture.concn).toBeCloseTo(1.2, 12);
+
+          scheme.updatedReactionForComponentReferenceChange({
+            sampleID: 'mixture', componentId: 'benzophenone',
+          });
+
+          expect(mixture.amount_mol).toBeCloseTo(0.006, 12);
+          expect(mixture.equivalent).toBeCloseTo(0.6, 12);
+          expect(mixture.concn).toBeCloseTo(0.6, 12);
+          expect(mixture.amount_g).toBeCloseTo(massG, 12);
+
+          scheme.updatedReactionForComponentReferenceChange({
+            sampleID: 'mixture', componentId: 'phenol',
+          });
+
+          expect(mixture.amount_mol).toBeCloseTo(0.012, 12);
+          expect(mixture.equivalent).toBeCloseTo(1.2, 12);
+          expect(mixture.concn).toBeCloseTo(1.2, 12);
+          expect(mixture.amount_g).toBeCloseTo(massG, 12);
+          expect(mixture.amount_unit).toBe(unit);
+          expect(reaction.referenceMaterial.id).toBe('reference');
+          expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 12);
+          expect(reaction.referenceMaterial.equivalent).toBe(1);
+          expect(reaction.solventVolume).toBeCloseTo(0.01, 12);
+          expect(other.amount_mol).toBeCloseTo(0.02, 12);
+          expect(other.equivalent).toBe(2);
+          expect(other.concn).toBe(3);
+          expect(other.preserveConcentration).toBe(true);
+        });
+      });
+    });
+  });
+
+  it('refreshes an explicitly preserved concentration when its component basis changes', () => {
+    const { mixture, scheme } = build('g', true);
+    mixture.preserveConcentration = true;
+
+    scheme.updatedReactionForComponentReferenceChange({
+      sampleID: 'mixture', componentId: 'benzophenone',
+    });
+
+    expect(mixture.concn).toBeCloseTo(0.6, 12);
+    expect(mixture.preserveConcentration).toBe(false);
+  });
+
+  it('clears the stale concentration when the reaction volume is unavailable', () => {
+    const { reaction, mixture, scheme } = build('g', true);
+    reaction.solvents = [];
+
+    scheme.updatedReactionForComponentReferenceChange({
+      sampleID: 'mixture', componentId: 'benzophenone',
+    });
+
+    expect(mixture.amount_mol).toBeCloseTo(0.006, 12);
+    expect(mixture.concn).toBe(null);
+  });
+});
+
 describe('ReactionDetailsScheme mixture reference switch — stored units and shared UI components', () => {
   const build = (unit, lockEquivColumn) => {
     const sample = (id, value, amountUnit, extra = {}) => ({

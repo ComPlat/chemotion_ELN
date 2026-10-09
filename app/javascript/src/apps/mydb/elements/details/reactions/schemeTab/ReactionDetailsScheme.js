@@ -1255,6 +1255,12 @@ export default class ReactionDetailsScheme extends React.Component {
       return updatedReaction;
     }
 
+    // The selected component changes the concentration's molar basis even though
+    // the mixture mass and reaction volume stay fixed. Refresh it here because
+    // rendering skips concentration updates while the equivalent column is locked.
+    updatedSample.preserveConcentration = false;
+    updatedSample.updateConcentrationFromSolvent(reaction);
+
     // Mark the sample as changed for persistence
     updatedSample.changed = true;
 
