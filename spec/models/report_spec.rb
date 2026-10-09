@@ -207,22 +207,10 @@ RSpec.describe Report, type: :report do
     end
   end
 
-  describe '#delete_archive' do
-    let(:archive_dir) { Rails.public_path.join('docx') }
-
-    it 'does nothing when the report has no file name' do
+  describe '#destroy' do
+    it 'succeeds for a report without a file name' do
       report = create(:report, file_name: nil)
       expect { report.destroy }.not_to raise_error
-    end
-
-    it 'removes the archive from the public dir regardless of the working directory' do
-      FileUtils.mkdir_p(archive_dir)
-      archive = archive_dir.join("#{rp1.file_name}.docx")
-      FileUtils.touch(archive)
-      Dir.chdir(Dir.tmpdir) { rp1.destroy }
-      expect(File.exist?(archive)).to be false
-    ensure
-      FileUtils.rm_f(archive)
     end
   end
 

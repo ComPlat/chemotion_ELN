@@ -49,7 +49,6 @@ class Report < ApplicationRecord
 
   default_scope { includes(:reports_users) }
 
-  after_destroy :delete_archive
   after_destroy :delete_job
 
   def create_docx
@@ -156,12 +155,6 @@ class Report < ApplicationRecord
       page_break: true,
       whole_diagram: true,
     }
-  end
-
-  def delete_archive
-    return if file_name.blank?
-
-    FileUtils.rm_f(Rails.public_path.join('docx', "#{file_name}.docx"))
   end
 
   def delete_job
