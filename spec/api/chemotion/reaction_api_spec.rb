@@ -231,6 +231,77 @@ describe Chemotion::ReactionAPI do
     end
   end
 
+  describe 'PUT /api/v1/reactions/:id/materials/:sample_id/equivalent' do
+    let(:collection) { create(:collection, user: user) }
+    let(:reaction) { create(:reaction, name: 'Saved reaction', collections: [collection]) }
+    let(:sample) { create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, collections: [collection]) }
+    let!(:material) do
+      create(:reactions_starting_material_sample, reaction: reaction, sample: sample, equivalent: 0.6)
+    end
+    let(:endpoint) { "/api/v1/reactions/#{reaction.id}/materials/#{sample.id}/equivalent" }
+
+    it 'persists the edited equivalent and returns it on reaction reload' do
+      put endpoint, params: { equivalent: 1.2 }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(material.reload.equivalent).to eq(1.2)
+
+      get "/api/v1/reactions/#{reaction.id}"
+
+      expect(parsed_json_response.dig('reaction', 'starting_materials').first['equivalent']).to eq(1.2)
+    end
+
+    it 'persists the reverse switch' do
+      material.update!(equivalent: 1.2)
+
+      put endpoint, params: { equivalent: 0.6 }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(material.reload.equivalent).to eq(0.6)
+    end
+
+    it 'does not save unrelated reaction fields or material associations' do
+      other = create(:reactions_reactant_sample, reaction: reaction, equivalent: 2)
+      original_material = material.reload.attributes.except('equivalent', 'updated_at')
+      original_reaction = reaction.reload.attributes
+
+      put endpoint, params: { equivalent: 1.2, name: 'Unsaved name', reference: true, coefficient: 5 }, as: :json
+
+      expect(reaction.reload.attributes).to eq(original_reaction)
+      expect(material.reload.attributes.except('equivalent', 'updated_at')).to eq(original_material)
+      expect(other.reload.equivalent).to eq(2)
+    end
+
+    it 'rejects a sample that is not associated with this reaction' do
+      unrelated = create(:reactions_starting_material_sample, equivalent: 0.3)
+
+      put "/api/v1/reactions/#{reaction.id}/materials/#{unrelated.sample_id}/equivalent",
+          params: { equivalent: 1.2 }, as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(unrelated.reload.equivalent).to eq(0.3)
+    end
+
+    it 'requires update permission on the reaction' do
+      other_collection = create(:collection, user: other_user)
+      other_reaction = create(:reaction, collections: [other_collection])
+      other_material = create(:reactions_starting_material_sample, reaction: other_reaction, equivalent: 0.6)
+
+      put "/api/v1/reactions/#{other_reaction.id}/materials/#{other_material.sample_id}/equivalent",
+          params: { equivalent: 1.2 }, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(other_material.reload.equivalent).to eq(0.6)
+    end
+
+    it 'rejects a missing equivalent without changing the association' do
+      put endpoint, params: {}, as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(material.reload.equivalent).to eq(0.6)
+    end
+  end
+
   describe 'DELETE /api/v1/reactions' do
     context 'with valid parameters' do
       let(:collection1) { create(:collection, user_id: user.id) }
