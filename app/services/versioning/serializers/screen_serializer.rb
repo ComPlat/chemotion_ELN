@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/MethodLength
+
 class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseSerializer
   def self.call(record, name = ['Screen Properties'])
     new(record: record, name: name).call
@@ -39,3 +41,5 @@ class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseS
     }.with_indifferent_access
   end
 end
+
+# rubocop:enable Metrics/MethodLength

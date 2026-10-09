@@ -56,6 +56,8 @@ export default class VersionsTable extends Component {
       case 'sample': {
         SamplesFetcher.fetchById(id).then((result) => {
           parent.setState({ sample: result });
+          // The inventory tab stays mounted and keeps its own copy of the chemical, which a revert may have changed.
+          parent.chemicalTabRef?.current?.fetchChemical(result);
         });
         break;
       }
@@ -121,19 +123,10 @@ export default class VersionsTable extends Component {
       ...selectedVersion,
       changes: selectedVersion.changes.map((change) => ({
         ...change,
-        fields: change.fields.map((field) => {
-          const lastDifferent = this.findLastDifferentValue(
-            selectedVersion.id,
-            field.label,
-            field.newValue
-          );
-
-          return {
-            ...field,
-            previousValue: lastDifferent ?? field.oldValue,
-            revertibleValue: this.calcRevertible(lastDifferent, field.currentValue) ?? field.revertibleValue,
-          };
-        })
+        fields: change.fields.map((field) => ({
+          ...field,
+          previousValue: field.oldValue,
+        }))
       }))
     };
 
@@ -161,101 +154,6 @@ export default class VersionsTable extends Component {
         totalElements: result.totalElements || 0,
       });
     });
-  }
-
-  deep_fill_missing(currentValue, changes) {
-    if (typeof currentValue !== 'object' || currentValue === null || Array.isArray(currentValue)) {
-      return null;
-    }
-
-    const result = {};
-    Object.entries(currentValue).forEach(([key, expectedVal]) => {
-      // Gather values for this key from all changes
-      const candidateStack = Object.values(changes)
-        .map((c) => (
-          typeof c === 'object'
-          && c !== null
-          && !Array.isArray(c)
-          && Object.prototype.hasOwnProperty.call(c, key) ? c[key] : undefined
-        ))
-        .filter((val) => val !== undefined);
-
-      if (candidateStack[0] === 'deleted') {
-        result[key] = 'deleted';
-        return;
-      }
-
-      if (typeof expectedVal === 'object' && expectedVal !== null && !Array.isArray(expectedVal)) {
-        const merged = this.deep_fill_missing(
-          expectedVal,
-          Object.fromEntries(candidateStack.map((val, i) => [i, val]))
-        );
-        if (merged != null && Object.keys(merged).length > 0) {
-          result[key] = merged;
-        }
-      } else {
-        const candidate = candidateStack.find((v) => v != null);
-        if (candidate != null) {
-          result[key] = candidate;
-        }
-      }
-    });
-    return result;
-  }
-
-  findLastDifferentValue(id, key, currentValue) {
-    const { versions } = this.state;
-    const changes = versions
-      .filter((v) => v.id <= id)
-      .sort((a, b) => b.id - a.id)
-      .flatMap((v) => v.changes
-        .flatMap((change) => change.fields
-          .filter((f) => f.label === key)
-          .map((f) => f.oldValue)));
-
-    if (typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
-      return this.deep_fill_missing(currentValue, changes) || {};
-    }
-
-    return null;
-  }
-
-  calcRevertible(revertibleValue, currentValue) {
-    if (typeof revertibleValue !== 'object'
-    || revertibleValue === null
-    || Array.isArray(revertibleValue)
-    || Object.keys(revertibleValue).length === 0
-    ) {
-      return null;
-    }
-
-    const result = {};
-    Object.entries(revertibleValue).forEach(([key, revertTo]) => {
-      if (revertTo === 'deleted') return;
-      const currentVal = currentValue?.[key];
-
-      if (typeof revertTo === 'object'
-      && revertTo !== null
-      && !Array.isArray(revertTo)
-      && typeof currentVal === 'object'
-      && currentVal !== null
-      && !Array.isArray(currentVal)
-      ) {
-        const nested = this.calcRevertible(revertTo, currentVal);
-        if (nested !== null) {
-          result[key] = nested;
-        }
-      } else {
-        result[key] = revertTo;
-      }
-    });
-
-    Object.entries(currentValue).forEach(([key, value]) => {
-      if (!(key in revertibleValue)) {
-        result[key] = value;
-      }
-    });
-    return result;
   }
 
   render() {
