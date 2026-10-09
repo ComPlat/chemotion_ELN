@@ -442,9 +442,18 @@ module Chemotion
 
       root = GenerateFileHashUtils.safety_sheets_root
       path = root.join(File.basename(vendor_dir), File.basename(file_name)).cleanpath
-      raise ArgumentError, "Not a safety sheet path: #{relative_path}" unless path.dirname.dirname == root
+      unless path.dirname.dirname == root && inside_sheet_root?(path, root)
+        raise ArgumentError, "Not a safety sheet path: #{relative_path}"
+      end
 
       path
+    end
+
+    # A symlink under the sheet folder must not lead a reader elsewhere on the disk.
+    def self.inside_sheet_root?(path, root)
+      return true unless path.exist?
+
+      path.realpath.to_s.start_with?("#{root.realpath}/")
     end
 
     def self.safe_path_segment?(segment)
@@ -544,21 +553,12 @@ module Chemotion
       end
     end
 
-    # Split a phrase string into the codes used as lookup keys.
-    #
-    # A single code is an optional "EU" prefix (for supplemental EUH### statements),
-    # the H/P letter, 1-3 digits, and optional sub-category letters (e.g. EUH071,
-    # H360FD, H350i). Codes joined by "+" (e.g. "P305 + P351 + P338") are kept
-    # together as one token so they resolve to the combined statement rather than
-    # being split into separate phrases; inner whitespace is stripped to match the
-    # JSON keys (e.g. "P305+P351+P338").
+    # Codes joined by "+" stay one token so they resolve to the combined statement.
+    # Cf. SdsPhraseParser.codes, which reads a string.
     def self.normalize_phrases_to_array(phrases, prefix)
       return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?) if phrases.is_a?(Array)
 
-      return [] unless phrases.is_a?(String)
-
-      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
-      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
+      phrases.is_a?(String) ? SdsPhraseParser.codes(phrases, prefix) : []
     end
 
     def self.load_hazard_phrases_hash

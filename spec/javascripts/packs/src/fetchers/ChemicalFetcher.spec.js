@@ -1,4 +1,4 @@
-import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import ChemicalFetcher, { SDS_STILL_QUEUED } from 'src/fetchers/ChemicalFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
 describe('ChemicalFetcher methods', () => {
@@ -240,6 +240,75 @@ describe('ChemicalFetcher methods', () => {
       fetchStub.rejects(new TypeError('Failed to fetch'));
 
       await expect(ChemicalFetcher.extractFromSds(sheetPath)).rejects.toThrow('Failed to fetch');
+    });
+
+    it('polls while the server answers pending and resolves with the stored result', async () => {
+      const pending = () => new Response(JSON.stringify({ status: 'pending' }), { status: 202 });
+      fetchStub.onCall(0).resolves(pending());
+      fetchStub.onCall(1).resolves(pending());
+      fetchStub.onCall(2).resolves(new Response(JSON.stringify({ properties: { color: 'clear' } })));
+
+      const result = await ChemicalFetcher.extractFromSds(sheetPath, { interval: 0 });
+
+      sinon.assert.calledThrice(fetchStub);
+      expect(result).toEqual({ properties: { color: 'clear' } });
+    });
+
+    it('asks a busy text service again after the delay it gave', async () => {
+      const clock = sinon.useFakeTimers();
+      const busy = { error: 'the PDF text service is busy, try again shortly' };
+      fetchStub.onCall(0).resolves(new Response(JSON.stringify(busy), { status: 503, headers: { 'Retry-After': '5' } }));
+      fetchStub.onCall(1).resolves(new Response(JSON.stringify({ status: 'pending' }), { status: 202 }));
+      fetchStub.onCall(2).resolves(new Response(JSON.stringify({ properties: {} })));
+
+      try {
+        const pending = ChemicalFetcher.extractFromSds(sheetPath, { interval: 10 });
+        await clock.tickAsync(4999);
+        sinon.assert.calledOnce(fetchStub);
+        await clock.tickAsync(11);
+        expect(await pending).toEqual({ properties: {} });
+        sinon.assert.calledThrice(fetchStub);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('reports the busy service when it stays busy', async () => {
+      fetchStub.callsFake(() => Promise.resolve(new Response(
+        JSON.stringify({ error: 'the PDF text service is busy, try again shortly' }),
+        { status: 503, headers: { 'Retry-After': '1' } },
+      )));
+
+      await expect(ChemicalFetcher.extractFromSds(sheetPath, { attempts: 1 }))
+        .rejects.toThrow('the PDF text service is busy, try again shortly');
+    });
+
+    it('rejects a service outage without Retry-After at once', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({ error: 'the PDF text service is misconfigured' }), { status: 503 }));
+
+      await expect(ChemicalFetcher.extractFromSds(sheetPath)).rejects.toThrow('the PDF text service is misconfigured');
+      sinon.assert.calledOnce(fetchStub);
+    });
+
+    it('stops polling once the caller cancels', async () => {
+      let cancelled = false;
+      fetchStub.callsFake(() => {
+        cancelled = true;
+        return Promise.resolve(new Response('{"status":"pending"}', { status: 202 }));
+      });
+
+      const result = await ChemicalFetcher.extractFromSds(sheetPath, { interval: 0, cancelled: () => cancelled });
+
+      expect(result).toBeUndefined();
+      sinon.assert.calledOnce(fetchStub);
+    });
+
+    it('gives up when the run stays queued', async () => {
+      fetchStub.callsFake(() => Promise.resolve(new Response('{"status":"pending"}', { status: 202 })));
+
+      await expect(ChemicalFetcher.extractFromSds(sheetPath, { interval: 0, attempts: 3 }))
+        .rejects.toThrow(SDS_STILL_QUEUED);
+      sinon.assert.calledThrice(fetchStub);
     });
   });
 });

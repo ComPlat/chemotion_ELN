@@ -12,7 +12,7 @@ import {
   loadPictograms,
 } from 'src/utilities/chemicalDataValidations';
 import {
-  formatPhrase, formatPhraseSections, safetyPhraseSections, SECTION_TITLES,
+  formatPhrase, formatPhraseSections, pictogramName, safetyPhraseSections, SECTION_TITLES,
 } from 'src/utilities/sdsClipboardFormat';
 
 const trim = (v) => (typeof v === 'string' ? v.trim() : '');
@@ -21,8 +21,6 @@ const formatStatementValue = (text) => {
   const t = trim(text);
   return t ? ` ${t}` : '';
 };
-
-const prettyPictogramName = (file) => trim(file).replace(/\.[A-Za-z0-9]+$/, '').replace(/_/g, ' ');
 
 // Only allow known GHS pictogram codes (GHS01–GHS09). This guards against path-traversal
 // and XSS via the /images/ghs/${code}.svg interpolation in PictogramCard.
@@ -405,7 +403,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
   const pictogramItems = useMemo(() => (
     data.pictograms.map((code) => ({
       code,
-      text: prettyPictogramName(pictogramDict[code]) || code,
+      text: pictogramName(pictogramDict[code]) || code,
       onDelete: () => handleRemovePictogram(code),
     }))
   ), [data, pictogramDict, handleRemovePictogram]);
@@ -419,7 +417,7 @@ const SafetyPhrasesEditor = ({ value, onChange }) => {
   ), [precautionaryDict, data.p_statements]);
 
   const pictogramOptions = useMemo(() => (
-    buildOptions(pictogramDict, new Set(data.pictograms), (code, file) => `${code}: ${prettyPictogramName(file)}`)
+    buildOptions(pictogramDict, new Set(data.pictograms), (code, file) => `${code}: ${pictogramName(file)}`)
   ), [pictogramDict, data.pictograms]);
 
   return (

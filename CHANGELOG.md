@@ -1,5 +1,11 @@
 # Chemotion_ELN Changelog
 
+# [Unreleased]
+
+## Features and enhancements
+
+* **chemicals:** extract H/P phrases, pictograms and section 9 properties from a saved safety data sheet of any supplier, in a background job cached per sheet; copy phrases and properties to the clipboard ([#3605](https://github.com/ComPlat/chemotion_ELN/pull/3605))
+
 # [v4.0.0-rc]
 > (2026-07-14)
 

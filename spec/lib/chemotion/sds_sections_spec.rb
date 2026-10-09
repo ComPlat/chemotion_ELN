@@ -40,10 +40,24 @@ RSpec.describe Chemotion::SdsSections do
       expect(described_class.new(lines, :fisher).lines_of(2)).to eq(['hazard'])
     end
 
-    it 'refuses a heading that appears twice', :aggregate_failures do
-      sections = described_class.new(['1. Identification', '2. Hazards', 'a', '2. Hazards again', 'b'], :fisher)
+    it 'refuses a heading when the sheet repeats its sections', :aggregate_failures do
+      copy = ['1. Identification', '2. Hazards', 'a', '3. Composition']
+      sections = described_class.new(copy + copy, :fisher)
       expect(sections.lines_of(2)).to be_nil
       expect(sections.ambiguous?(2)).to be true
+    end
+
+    it 'reads a section holding a numbered body line that repeats its number', :aggregate_failures do
+      lines = ['1. Identification', '2. Hazards', 'P305', '2. Rinse cautiously with water', '3. Composition']
+      sections = described_class.new(lines, :fisher)
+      expect(sections.ambiguous?(2)).to be false
+      expect(sections.lines_of(2)).to eq(['P305', '2. Rinse cautiously with water'])
+    end
+
+    it 'ignores a short numbered list after the last heading' do
+      headings = ['3. Composition', '4. First aid', '5. Fire', '6. Release']
+      lines = ['1. Identification', '2. Hazards', 'h', *headings, '1. Call', '2. Rinse']
+      expect(described_class.new(lines, :fisher).lines_of(2)).to eq(['h'])
     end
   end
 end

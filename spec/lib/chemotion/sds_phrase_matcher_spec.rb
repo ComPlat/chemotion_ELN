@@ -157,9 +157,7 @@ RSpec.describe Chemotion::SdsPhraseMatcher do
 
   describe 'with a catalogue of its own' do
     def entry(code, text)
-      tokens = described_class.tokenize(text, catalogue: true)
-      described_class::Entry.new(code: code, words: tokens - [described_class::WILDCARD],
-                                 wildcards: tokens.count(described_class::WILDCARD))
+      described_class.entry(code, described_class.tokenize(text, catalogue: true))
     end
 
     let(:matcher) do
