@@ -41,6 +41,21 @@ function updateAnalyses(variations, allReactionAnalyses) {
   });
 }
 
+/*
+Turn the `samples` of a `reaction_variation.json` into autofill proposals.
+Each entry is `[sampleIdentifier, value, unit]`. The converter writes `null` for an identifier
+it could not resolve from the file; such an entry names no material, and matching it against
+material labels would pick any material whose label is empty, so it is skipped.
+*/
+function collectAutofillSamples(samples, findMaterial, variationRow) {
+  return samples.flatMap((sample) => {
+    const [sampleIdentifier, value, unit] = Array.isArray(sample) ? sample : [];
+    if (sampleIdentifier == null || sampleIdentifier === '') return [];
+    const foundMat = findMaterial({ sampleIdentifier });
+    return foundMat ? [{ foundMat, sampleIdentifier, value, unit, variationRow }] : [];
+  });
+}
+
 function getAnalysesOverlay({ data: row, context }) {
   const { analyses: analysesIDs = [] } = row.metadata;
   const { allReactionAnalyses } = context;
@@ -176,15 +191,7 @@ const AnalysesCellEditor = ({
       return;
     }
 
-    const autofilledSamples = [];
-    samples.forEach((sample) => {
-      const [sampleIdentifier, value, unit] = Array.isArray(sample) ? sample : [];
-      if (sampleIdentifier === undefined) return;
-      const foundMat = findAutofillVariationSampleFromAnalysis({ sampleIdentifier });
-      if (foundMat) {
-        autofilledSamples.push({ foundMat, sampleIdentifier, value, unit, variationRow: row });
-      }
-    });
+    const autofilledSamples = collectAutofillSamples(samples, findAutofillVariationSampleFromAnalysis, row);
 
     /*
     Hand the confirmation to <ReactionVariations>, which renders it outside <AgGridReact>.
@@ -366,6 +373,7 @@ export {
   AnalysisVariationLink,
   AnalysisOverlay,
   getAnalysesOverlay,
+  collectAutofillSamples,
   updateAnalyses,
   getReactionAnalyses
 };
