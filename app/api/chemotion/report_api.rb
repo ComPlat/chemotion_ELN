@@ -29,6 +29,19 @@ module Chemotion
         collection.id
       end
 
+      # Resolves which template a new report uses. The UI sends +templateId+ either as the id of a
+      # stored report template or, for cloned archives, as a report type; +templateType+ is optional.
+      #
+      # @param template_id [String] the +templateId+ param
+      # @param template_type [String, nil] the +templateType+ param
+      # @return [Hash] +report_templates_id+ and the resolved +template+ report type
+      def report_template_attributes(template_id, template_type)
+        report_template = ReportTemplate.find_by(id: template_id) if /\A\d+\z/.match?(template_id)
+        type = report_template&.report_type
+        type ||= template_id if ReportTemplate::REPORT_TYPES.include?(template_id)
+        { report_templates_id: report_template&.id, template: type || template_type }
+      end
+
       # Rejects the request unless the caller may read every element referenced in +objTags+.
       # Without this a report is an IDOR: the generator does a bare +Model.find(id)+ with no
       # ownership/collection check, so any authenticated user could pull any element's data.
@@ -260,10 +273,8 @@ module Chemotion
         prd_atts: params[:prdAtts],
         objects: params[:objTags],
         img_format: params[:imgFormat],
-        template: params[:templateType],
-        report_templates_id: /\A\d+\z/.match(params[:templateId]).nil? ? nil : params[:templateId].to_i,
         author_id: current_user.id,
-      }
+      }.merge(report_template_attributes(params[:templateId], params[:templateType]))
 
       report = Report.create(attributes)
       current_user.reports << report

@@ -42,57 +42,28 @@ class Report < ApplicationRecord
   serialize :mol_serials, Array
   serialize :prd_atts, Array
 
+  # report type => [worker class, extra worker arguments]; other types use Reporter::Worker
+  REPORT_WORKERS = {
+    'spectrum' => [Reporter::WorkerSpectrum, {}],
+    'supporting_information' => [Reporter::WorkerSi, { std_rxn: false }],
+    'supporting_information_std_rxn' => [Reporter::WorkerSi, { std_rxn: true }],
+    'rxn_list_xlsx' => [Reporter::WorkerRxnList, { ext: 'xlsx' }],
+    'rxn_list_csv' => [Reporter::WorkerRxnList, { ext: 'csv' }],
+    'rxn_list_html' => [Reporter::WorkerRxnList, { ext: 'html' }],
+  }.freeze
+
   has_many :reports_users
   has_many :users, through: :reports_users
   has_many :attachments, as: :attachable
-  belongs_to :report_templates, optional: true
+  belongs_to :report_template, foreign_key: :report_templates_id, optional: true, inverse_of: false
 
   default_scope { includes(:reports_users) }
 
-  after_destroy :delete_archive
   after_destroy :delete_job
 
   def create_docx
-    if ReportTemplate.where(id: report_templates_id).present?
-      report_template = ReportTemplate.includes(:attachment).find(report_templates_id)
-      template = report_template.report_type
-      #     tpl_path = if report_template.attachment
-      #                  report_template.attachment.attachment_url
-      #                else
-      #                  report_template.report_type
-      #                end
-    end
-    tpl_path = self.class.template_path(template)
-    case template
-    when 'spectrum'
-      Reporter::WorkerSpectrum.new(
-        report: self, template_path: tpl_path,
-      ).process
-    when 'supporting_information'
-      Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: false,
-      ).process
-    when 'supporting_information_std_rxn'
-      Reporter::WorkerSi.new(
-        report: self, template_path: tpl_path, std_rxn: true,
-      ).process
-    when 'rxn_list_xlsx'
-      Reporter::WorkerRxnList.new(
-        report: self, ext: 'xlsx',
-      ).process
-    when 'rxn_list_csv'
-      Reporter::WorkerRxnList.new(
-        report: self, ext: 'csv',
-      ).process
-    when 'rxn_list_html'
-      Reporter::WorkerRxnList.new(
-        report: self, template_path: tpl_path, ext: 'html',
-      ).process
-    else
-      Reporter::Worker.new(
-        report: self, template_path: tpl_path,
-      ).process
-    end
+    worker, args = REPORT_WORKERS.fetch(template, [Reporter::Worker, {}])
+    worker.new(report: self, template_path: self.class.template_path(template), **args).process
   end
   handle_asynchronously(:create_docx, run_at: proc { 30.seconds.from_now }) unless Rails.env.development?
 
@@ -194,11 +165,6 @@ class Report < ApplicationRecord
       page_break: true,
       whole_diagram: true,
     }
-  end
-
-  def delete_archive
-    full_file_path = File.join('public', 'docx', file_name + '.docx')
-    FileUtils.rm(full_file_path, force: true) if File.exist?(full_file_path)
   end
 
   def delete_job
