@@ -41,7 +41,7 @@ Rails.application.configure do
     if config.spectra.nmriumwrapper.url.nil?
       Rails.logger.warn('No endpoint url set for NMRiumWrapper, it will not be available.')
     else
-      Rails.logger.info("NMRiumWrapper endpoint configured to be '#{config.spectra.nmriumwrapper.url}'.")
+      Rails.logger.info("NMRiumWrapper endpoint is configured to be '#{config.spectra.nmriumwrapper.url}'.")
     end
   end
 end
