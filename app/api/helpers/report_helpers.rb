@@ -126,11 +126,6 @@ module ReportHelpers
         -- molecules
         inner join molecules m on s.molecule_id = m.id
         where rsm.reaction_id in (#{selection})
-          -- only the roles mapped to s_type above (e.g. purification solvents are not part of the smiles)
-          and rsm.type in (
-            'ReactionsStartingMaterialSample', 'ReactionsReactantSample',
-            'ReactionsSolventSample', 'ReactionsProductSample'
-          )
 
         union all
 
@@ -166,6 +161,8 @@ module ReportHelpers
         inner join sequence_based_macromolecule_samples sbms on sbms.id = s_sbmm.s_id
         where rrss.reaction_id in (#{selection})
         ) group_1
+        -- roles without an s_type (e.g. purification solvents) are not part of the smiles
+        where s_type is not null
         group by r_id, s_type
       ) group_0 group by r_id order by #{order}
       ) group_

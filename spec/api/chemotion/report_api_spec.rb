@@ -794,33 +794,44 @@ describe Chemotion::ReportAPI do
       end
 
       context 'with a purification solvent in the reaction' do
+        # a molecule distinct from the other samples, so its smiles can be told apart
         let!(:purification_solvent) do
-          create(:sample, created_by: user.id, molfile: molfile, collections: [collection])
+          create(:sample, created_by: user.id, molfile: build(:molfile), collections: [collection])
         end
+        let(:purification_smiles) { purification_solvent.molecule.cano_smiles }
 
         before do
           create(:reactions_purification_solvent_sample, reaction: reaction, sample: purification_solvent)
         end
 
-        it 'exports the reaction smiles' do
+        it 'uses a structure distinct from the reaction samples' do
+          expect(purification_smiles).not_to eq(smiles2)
+        end
+
+        it 'exports the reaction smiles without the purification solvent (SM>R>S>P)' do
           post('/api/v1/reports/export_reactions_from_selections',
-               params: params.to_json,
+               params: params.merge(exportType: 5).to_json,
                headers: {
                  'HTTP_ACCEPT' => 'text/plain, text/csv',
                  'CONTENT-TYPE' => 'application/json',
                })
 
           expect(response).to have_http_status(:created)
-          expect(response.body).to eq("#{[smiles0, smiles1].join('.')}>>#{smiles4}")
+          expect(response.body).to eq(
+            "#{[smiles0, smiles1].join('.')}>#{smiles3}>#{smiles2}>#{smiles4}",
+          )
         end
 
-        it 'leaves the purification solvent out of the queried smiles' do
-          expect(result.fetch(reaction.id.to_s)).to eq(
+        it 'leaves the purification solvent out of every role' do
+          smiles_by_role = result.fetch(reaction.id.to_s)
+
+          expect(smiles_by_role).to eq(
             '0' => [smiles0, smiles1],
-            '1' => [smiles2],
-            '2' => [smiles3],
+            '1' => [smiles3],
+            '2' => [smiles2],
             '3' => [smiles4],
           )
+          expect(smiles_by_role.values.flatten).not_to include(purification_smiles)
         end
       end
 
