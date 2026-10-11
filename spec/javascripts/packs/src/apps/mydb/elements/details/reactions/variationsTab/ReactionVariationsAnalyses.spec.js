@@ -6,7 +6,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import Container from 'src/models/Container';
 import AppModal from 'src/components/common/AppModal';
 import {
-  updateAnalyses, getReactionAnalyses, AutofillVariationSamplesModal
+  updateAnalyses, getReactionAnalyses, AutofillVariationSamplesModal, collectAutofillSamples
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
@@ -59,6 +59,37 @@ describe('ReactionVariationsAnalyses', async () => {
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([analysisBar.id]);
       analysisBar.is_new = true;
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([]);
+    });
+  });
+
+  describe('collectAutofillSamples', () => {
+    const row = { id: 1 };
+    const findMaterial = ({ sampleIdentifier }) => (
+      { foo: { matType: 'startingMaterials' }, bar: { matType: 'products' } }[sampleIdentifier]
+    );
+
+    it('proposes every sample that names a known material', () => {
+      expect(collectAutofillSamples([['foo', 1.5, 'g'], ['bar', 42, '%']], findMaterial, row)).toEqual([
+        {
+          foundMat: { matType: 'startingMaterials' }, sampleIdentifier: 'foo', value: 1.5, unit: 'g', variationRow: row
+        },
+        {
+          foundMat: { matType: 'products' }, sampleIdentifier: 'bar', value: 42, unit: '%', variationRow: row
+        },
+      ]);
+    });
+
+    it('skips samples without an identifier instead of matching empty labels', () => {
+      const findAny = sinon.spy(() => ({ matType: 'reactants' }));
+      const samples = [[null, 1.5, 'g'], [undefined, 2, 'g'], ['', 3, 'g'], [], 'foo', null];
+
+      expect(collectAutofillSamples(samples, findAny, row)).toEqual([]);
+      expect(findAny.called).toBe(false);
+    });
+
+    it('skips samples whose identifier matches no material', () => {
+      expect(collectAutofillSamples([['baz', 1, 'g'], ['foo', 2, 'g']], findMaterial, row)
+        .map(({ sampleIdentifier }) => sampleIdentifier)).toEqual(['foo']);
     });
   });
 
