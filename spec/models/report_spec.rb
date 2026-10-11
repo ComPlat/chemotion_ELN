@@ -73,6 +73,29 @@ RSpec.describe Report, type: :report do
       expect(file_name).to include('ELN_Reaction_')
     end
 
+    it 'renders bulleted and numbered lists from a product analysis' do
+      require 'zip'
+      allow(PubchemLookupJob).to receive(:perform_later)
+      product = create(:sample, collections: [collection])
+      create(:reactions_product_sample, reaction: reaction1, sample: product)
+      analysis = product.container.children[0].children[0]
+      analysis.extended_metadata['report'] = true
+      analysis.extended_metadata['content'] = {
+        'ops' => [
+          { 'insert' => 'first bullet' },
+          { 'insert' => "\n", 'attributes' => { 'list' => 'bullet' } },
+          { 'insert' => 'first step' },
+          { 'insert' => "\n", 'attributes' => { 'list' => 'ordered' } },
+        ],
+      }.to_json
+      analysis.save!
+      params = { template: 'single_reaction', id: reaction1.id }
+      docx, = described_class.create_reaction_docx(user, [user.id], params)
+
+      doc = Zip::File.open_buffer(StringIO.new(docx)).read('word/document.xml')
+      expect(doc).to include('<w:pStyle w:val="ListBullet"/>', '<w:pStyle w:val="ListNumber"/>')
+    end
+
     # Guards against the "Word found unreadable content" warning: every
     # relationship referenced by the document must be declared and its target
     # part present, every part extension must have a content type, no merge
