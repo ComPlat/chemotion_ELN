@@ -86,7 +86,7 @@ module ReportHelpers
     <<~SQL
       select json_object_agg(r_id, smiles_json) as result from (
       select r_id, json_object_agg(stype, smiles_arr) as smiles_json from (
-        select r_id, array_agg( smiles) as smiles_arr, coalesce(s_type) as stype
+        select r_id, array_agg( smiles) as smiles_arr, s_type as stype
         from (
           select s_id
           , case

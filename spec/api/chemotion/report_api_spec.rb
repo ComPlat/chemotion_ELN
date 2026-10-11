@@ -794,18 +794,19 @@ describe Chemotion::ReportAPI do
       end
 
       context 'with a purification solvent in the reaction' do
-        # a molecule distinct from the other samples, so its smiles can be told apart
+        # the solvent and the purification solvent get their own structures,
+        # so that each role can be told apart in the exported smiles
+        let!(:sample2) do
+          build(:sample, created_by: user.id, molfile: build(:molfile, type: :aromtic_2sub),
+                         collections: [collection])
+        end
         let!(:purification_solvent) do
-          create(:sample, created_by: user.id, molfile: build(:molfile), collections: [collection])
+          create(:sample, created_by: user.id, molfile: build(:molfile, type: :water), collections: [collection])
         end
         let(:purification_smiles) { purification_solvent.molecule.cano_smiles }
 
         before do
           create(:reactions_purification_solvent_sample, reaction: reaction, sample: purification_solvent)
-        end
-
-        it 'uses a structure distinct from the reaction samples' do
-          expect(purification_smiles).not_to eq(smiles2)
         end
 
         it 'exports the reaction smiles without the purification solvent (SM>R>S>P)' do
@@ -825,6 +826,8 @@ describe Chemotion::ReportAPI do
         it 'leaves the purification solvent out of every role' do
           smiles_by_role = result.fetch(reaction.id.to_s)
 
+          expect([smiles0, smiles1, smiles3, smiles4]).not_to include(smiles2, purification_smiles)
+          expect(smiles2).not_to eq(purification_smiles)
           expect(smiles_by_role).to eq(
             '0' => [smiles0, smiles1],
             '1' => [smiles3],
