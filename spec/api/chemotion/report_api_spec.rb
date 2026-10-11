@@ -969,6 +969,39 @@ describe Chemotion::ReportAPI do
         post '/api/v1/reports', params: params, as: :json
         expect(response.body).to include(filename)
       end
+
+      context 'with the template selected in the UI' do
+        let(:report_template) { create(:report_template, report_type: 'supporting_information') }
+
+        it 'stores the report type of the selected template' do
+          post '/api/v1/reports', params: params.merge(templateId: report_template.id), as: :json
+          expect(Report.last).to have_attributes(
+            report_templates_id: report_template.id, template: 'supporting_information',
+          )
+        end
+
+        it 'lists the archive with the stored template id and its report type' do
+          report_template.update!(report_type: 'rxn_list_xlsx')
+          post '/api/v1/reports', params: params.merge(templateId: report_template.id), as: :json
+          get '/api/v1/archives/all'
+          archive = JSON.parse(response.body)['archives'].find { |a| a['id'] == Report.last.id }
+          expect(archive).to include('template' => report_template.id, 'report_type' => 'rxn_list_xlsx')
+        end
+      end
+
+      context 'with a cloned archive that has no stored template' do
+        it 'stores the report type sent as templateId' do
+          post '/api/v1/reports', params: params.merge(templateId: 'supporting_information'), as: :json
+          expect(Report.last).to have_attributes(report_templates_id: nil, template: 'supporting_information')
+        end
+      end
+
+      context 'with an unknown template id' do
+        it 'falls back to templateType' do
+          post '/api/v1/reports', params: params.merge(templateId: '0', templateType: 'spectrum'), as: :json
+          expect(Report.last).to have_attributes(report_templates_id: nil, template: 'spectrum')
+        end
+      end
     end
 
     describe 'GET /api/v1/download_report/file' do
