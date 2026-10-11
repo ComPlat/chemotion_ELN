@@ -14,7 +14,7 @@ import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
   removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
-  setLayout, persistTableLayout, cellDataTypes,
+  areVariationsEqualIgnoringOrder, setLayout, persistTableLayout, cellDataTypes,
   getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
@@ -125,10 +125,12 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
    .
     A Save (rows we just wrote back, deep-equal) or an unrelated Scheme-tab edit (variations untouched) must NOT reset,
     otherwise the user's in-session column selection, layout, and pending edits are lost.
+    The comparison ignores row order: the server returns the rows in id order, while the display order
+    is a per-browser preference (see `setRowOrder`).
     Switching reactions is handled separately by the <Tab key={`variations_${reaction.id}`}>
     remount, which re-seeds the store via the useState initializer.
     */
-    if (asyncDataLoaded && isEqual(reactionVariations, reaction.variations ?? [])) {
+    if (asyncDataLoaded && areVariationsEqualIgnoringOrder(reactionVariations, reaction.variations ?? [])) {
       return undefined;
     }
 
@@ -198,7 +200,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     if (!asyncDataLoaded) {
       return;
     }
-    if (isEqual(reaction.variations, reactionVariations)) {
+    if (areVariationsEqualIgnoringOrder(reaction.variations, reactionVariations)) {
       return;
     }
 
