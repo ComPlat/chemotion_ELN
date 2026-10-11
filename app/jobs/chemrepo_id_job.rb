@@ -57,7 +57,7 @@ class ChemrepoIdJob < ApplicationJob
 
   def update_element_tag(params)
     ElementTag.where("taggable_id = ? AND taggable_type = 'Molecule' ", params[:mol_id])
-              .update_all(
+              .update_all( # rubocop:disable Rails/SkipsModelValidations
                 [
                   "taggable_data = jsonb_set(taggable_data, '{chemrepo_id}', to_jsonb(?::int), true)",
                   Integer(params[:chemrepo_id]),
