@@ -126,6 +126,11 @@ module ReportHelpers
         -- molecules
         inner join molecules m on s.molecule_id = m.id
         where rsm.reaction_id in (#{selection})
+          -- only the roles mapped to s_type above (e.g. purification solvents are not part of the smiles)
+          and rsm.type in (
+            'ReactionsStartingMaterialSample', 'ReactionsReactantSample',
+            'ReactionsSolventSample', 'ReactionsProductSample'
+          )
 
         union all
 

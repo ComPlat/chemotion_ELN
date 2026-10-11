@@ -793,6 +793,37 @@ describe Chemotion::ReportAPI do
         expect(response['Content-Type']).to eq('text/csv')
       end
 
+      context 'with a purification solvent in the reaction' do
+        let!(:purification_solvent) do
+          create(:sample, created_by: user.id, molfile: molfile, collections: [collection])
+        end
+
+        before do
+          create(:reactions_purification_solvent_sample, reaction: reaction, sample: purification_solvent)
+        end
+
+        it 'exports the reaction smiles' do
+          post('/api/v1/reports/export_reactions_from_selections',
+               params: params.to_json,
+               headers: {
+                 'HTTP_ACCEPT' => 'text/plain, text/csv',
+                 'CONTENT-TYPE' => 'application/json',
+               })
+
+          expect(response).to have_http_status(:created)
+          expect(response.body).to eq("#{[smiles0, smiles1].join('.')}>>#{smiles4}")
+        end
+
+        it 'leaves the purification solvent out of the queried smiles' do
+          expect(result.fetch(reaction.id.to_s)).to eq(
+            '0' => [smiles0, smiles1],
+            '1' => [smiles2],
+            '2' => [smiles3],
+            '3' => [smiles4],
+          )
+        end
+      end
+
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
