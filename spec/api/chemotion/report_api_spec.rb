@@ -793,6 +793,51 @@ describe Chemotion::ReportAPI do
         expect(response['Content-Type']).to eq('text/csv')
       end
 
+      context 'with a purification solvent in the reaction' do
+        # the solvent and the purification solvent get their own structures,
+        # so that each role can be told apart in the exported smiles
+        let(:sample2) do
+          build(:sample, created_by: user.id, molfile: build(:molfile, type: :aromtic_2sub),
+                         collections: [collection])
+        end
+        let!(:purification_solvent) do
+          create(:sample, created_by: user.id, molfile: build(:molfile, type: :water), collections: [collection])
+        end
+        let(:purification_smiles) { purification_solvent.molecule.cano_smiles }
+
+        before do
+          create(:reactions_purification_solvent_sample, reaction: reaction, sample: purification_solvent)
+        end
+
+        it 'exports the reaction smiles without the purification solvent (SM>R>S>P)' do
+          post('/api/v1/reports/export_reactions_from_selections',
+               params: params.merge(exportType: 5).to_json,
+               headers: {
+                 'HTTP_ACCEPT' => 'text/plain, text/csv',
+                 'CONTENT-TYPE' => 'application/json',
+               })
+
+          expect(response).to have_http_status(:created)
+          expect(response.body).to eq(
+            "#{[smiles0, smiles1].join('.')}>#{smiles3}>#{smiles2}>#{smiles4}",
+          )
+        end
+
+        it 'leaves the purification solvent out of every role' do
+          smiles_by_role = result.fetch(reaction.id.to_s)
+
+          # reactant, solvent and purification solvent are three distinct structures
+          expect([smiles3, smiles2, purification_smiles].uniq.size).to eq(3)
+          expect(smiles_by_role).to eq(
+            '0' => [smiles0, smiles1],
+            '1' => [smiles3],
+            '2' => [smiles2],
+            '3' => [smiles4],
+          )
+          expect(smiles_by_role.values.flatten).not_to include(purification_smiles)
+        end
+      end
+
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(

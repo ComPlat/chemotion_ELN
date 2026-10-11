@@ -86,7 +86,7 @@ module ReportHelpers
     <<~SQL
       select json_object_agg(r_id, smiles_json) as result from (
       select r_id, json_object_agg(stype, smiles_arr) as smiles_json from (
-        select r_id, array_agg( smiles) as smiles_arr, coalesce(s_type) as stype
+        select r_id, array_agg( smiles) as smiles_arr, s_type as stype
         from (
           select s_id
           , case
@@ -161,6 +161,8 @@ module ReportHelpers
         inner join sequence_based_macromolecule_samples sbms on sbms.id = s_sbmm.s_id
         where rrss.reaction_id in (#{selection})
         ) group_1
+        -- roles without an s_type (e.g. purification solvents) are not part of the smiles
+        where s_type is not null
         group by r_id, s_type
       ) group_0 group by r_id order by #{order}
       ) group_
