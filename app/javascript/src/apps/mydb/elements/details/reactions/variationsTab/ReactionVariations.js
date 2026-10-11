@@ -125,7 +125,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
    .
     A Save (rows we just wrote back, deep-equal) or an unrelated Scheme-tab edit (variations untouched) must NOT reset,
     otherwise the user's in-session column selection, layout, and pending edits are lost.
-    The comparison ignores row order: the server returns the rows in its own order, and the display order
+    The comparison ignores row order: the server returns the rows in id order, while the display order
     is a per-browser preference (see `setRowOrder`).
     Switching reactions is handled separately by the <Tab key={`variations_${reaction.id}`}>
     remount, which re-seeds the store via the useState initializer.

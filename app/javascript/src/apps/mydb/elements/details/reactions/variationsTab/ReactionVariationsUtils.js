@@ -794,8 +794,7 @@ function setRowOrder(reactionId, reactionVariations) {
   const positions = new Map(rowOrder.map((id, index) => [id, index]));
   const position = (row) => positions.get(row.id) ?? Infinity;
 
-  // Rows without a stored position (no manual order yet, or added since) follow in id order, i.e., creation order:
-  // the server returns variations in arbitrary order.
+  // Rows without a stored position (no manual order yet, or added since) follow in id order, i.e., creation order.
   return cloneDeep(reactionVariations).sort((a, b) => {
     const positionA = position(a);
     const positionB = position(b);
