@@ -1,4 +1,4 @@
-import { set, cloneDeep } from 'lodash';
+import { set, cloneDeep, isEqual } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
@@ -782,23 +782,27 @@ function persistRowOrder(reactionId, rowOrder) {
   localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
 }
 
+// Row order is a per-browser view preference (see `setRowOrder`), not persisted with the reaction,
+// so a different order alone must not count as a change.
+function areVariationsEqualIgnoringOrder(variationsA = [], variationsB = []) {
+  const byId = (a, b) => a.id - b.id;
+  return isEqual([...variationsA].sort(byId), [...variationsB].sort(byId));
+}
+
 function setRowOrder(reactionId, reactionVariations) {
-  const rowOrder = getInitialRowOrder(reactionId);
-  let updatedReactionVariations = cloneDeep(reactionVariations);
+  const rowOrder = getInitialRowOrder(reactionId) ?? [];
+  const positions = new Map(rowOrder.map((id, index) => [id, index]));
+  const position = (row) => positions.get(row.id) ?? Infinity;
 
-  if (rowOrder) {
-    updatedReactionVariations = updatedReactionVariations.sort(
-      (a, b) => {
-        const indexA = rowOrder.indexOf(a.id);
-        const indexB = rowOrder.indexOf(b.id);
-        const posA = indexA === -1 ? Infinity : indexA;
-        const posB = indexB === -1 ? Infinity : indexB;
-        return posA - posB;
-      }
-    );
-  }
-
-  return updatedReactionVariations;
+  // Rows without a stored position (no manual order yet, or added since) follow in id order, i.e., creation order.
+  return cloneDeep(reactionVariations).sort((a, b) => {
+    const positionA = position(a);
+    const positionB = position(b);
+    if (positionA !== positionB) {
+      return positionA < positionB ? -1 : 1;
+    }
+    return a.id - b.id;
+  });
 }
 
 function traverseColDefs(colDef, callback, path = []) {
@@ -911,6 +915,7 @@ function setLayout(reactionId, columnDefinitions) {
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
+  // Row order is persisted on drag only (`handleRowDrag`); without a manual order, rows are shown in id order.
   const { state: gridState } = event;
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
   localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
@@ -1025,6 +1030,7 @@ export {
   getInitialRowOrder,
   persistRowOrder,
   setRowOrder,
+  areVariationsEqualIgnoringOrder,
   setLayout,
   persistTableLayout,
   getUserFacingEntryName,

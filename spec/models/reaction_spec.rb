@@ -214,6 +214,15 @@ RSpec.describe Reaction, type: :model do
 
       expect(reaction.reload.variations).to eq([])
     end
+
+    it 'returns the variations in id order, whatever order the jsonb keys come back in' do
+      variations = { 'c' => { 'id' => 1 }, 'a' => { 'id' => 2 }, 'b' => { 'id' => 3 } }
+      reaction.update_columns(variations: variations) # rubocop:disable Rails/SkipsModelValidations
+      reaction.reload
+
+      expect(reaction[:variations].values.pluck('id')).to eq([2, 3, 1])
+      expect(reaction.variations.pluck('id')).to eq([1, 2, 3])
+    end
   end
 
   describe '#assign_attachment_to_variation' do

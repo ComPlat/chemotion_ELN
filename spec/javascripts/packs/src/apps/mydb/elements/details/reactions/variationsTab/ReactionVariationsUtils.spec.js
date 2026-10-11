@@ -9,6 +9,7 @@ import {
   setGroupColDefAttribute, setLeafColDefAttribute, getInitialLayout,
   getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
   getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
+  persistRowOrder, setRowOrder, areVariationsEqualIgnoringOrder, persistTableLayout,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import {
@@ -868,6 +869,76 @@ describe('ReactionVariationsUtils', () => {
       expect(columnDefinitions[0].children[0].children[0].hide).toBe(true);
       expect(columnDefinitions[0].children[0].children[0].displayUnit).toBe('mol');
       expect(columnDefinitions[0].children[0].headerName).toBe('Water');
+    });
+  });
+
+  describe('row order', () => {
+    const rowOrderKey = 'user7-reaction42-reactionVariationsRowOrder';
+    const rows = (ids) => ids.map((id) => ({ id, metadata: { notes: `row ${id}` } }));
+    const ids = (variations) => variations.map((row) => row.id);
+    let userStoreStub;
+
+    beforeEach(() => {
+      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      userStoreStub.restore();
+      localStorage.clear();
+    });
+
+    describe('setRowOrder', () => {
+      it('sorts by id when no row order is stored', () => {
+        const variations = rows([6, 10, 1, 9, 7, 4, 2, 8, 3, 5]);
+        expect(ids(setRowOrder(42, variations))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      });
+
+      it('applies the stored row order and puts rows missing from it after, in id order', () => {
+        persistRowOrder(42, [3, 1, 2]);
+        expect(ids(setRowOrder(42, rows([2, 5, 1, 4, 3])))).toEqual([3, 1, 2, 4, 5]);
+      });
+
+      it('ignores stored ids that no longer exist', () => {
+        persistRowOrder(42, [9, 2, 1]);
+        expect(ids(setRowOrder(42, rows([1, 3, 2])))).toEqual([2, 1, 3]);
+      });
+
+      it('does not mutate its input', () => {
+        const variations = rows([3, 1, 2]);
+        setRowOrder(42, variations);
+        expect(ids(variations)).toEqual([3, 1, 2]);
+      });
+    });
+
+    describe('areVariationsEqualIgnoringOrder', () => {
+      it('is true for the same rows in a different order', () => {
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), rows([3, 1, 2]))).toBe(true);
+      });
+
+      it('is false when a row differs', () => {
+        const changed = rows([3, 1, 2]);
+        changed[0].metadata.notes = 'edited';
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), changed)).toBe(false);
+      });
+
+      it('is false when a row was added or removed', () => {
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), rows([1, 2]))).toBe(false);
+      });
+
+      it('treats a missing list as empty', () => {
+        expect(areVariationsEqualIgnoringOrder(undefined, [])).toBe(true);
+      });
+    });
+
+    describe('persistTableLayout', () => {
+      it('stores grid state and layout, but no row order', () => {
+        const gridState = { columnSizing: {} };
+        persistTableLayout(42, { state: gridState }, []);
+
+        expect(JSON.parse(localStorage.getItem('user7-reaction42-reactionVariationsGridState'))).toEqual(gridState);
+        expect(localStorage.getItem('user7-reaction42-reactionVariationsLayout')).not.toBeNull();
+        expect(localStorage.getItem(rowOrderKey)).toBeNull();
+      });
     });
   });
 });
