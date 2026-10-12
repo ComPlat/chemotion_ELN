@@ -259,43 +259,16 @@ describe Chemotion::LlmSettingsAPI do
       end
     end
 
-    describe 'POST /api/v1/users/llm_settings/models' do
-      let(:base_url)   { 'https://ki-toolbox.scc.kit.edu/api' }
-      let(:models_url) { "#{base_url}/v1/models" }
-
-      before do
-        stub_request(:get, models_url).to_return(
-          status:  200,
-          body:    { 'data' => [{ 'id' => 'kit.llama3' }] }.to_json,
-          headers: { 'Content-Type' => 'application/json' },
-        )
-      end
-
-      it 'serves a repeat lookup from the cache' do
-        2.times do
-          post '/api/v1/users/llm_settings/models', params: { base_url: base_url }.to_json, headers: headers
-        end
-
-        expect(JSON.parse(response.body)['models']).to eq(['kit.llama3'])
-        expect(WebMock).to have_requested(:get, models_url).once
-      end
-
-      it 'uses the key as typed — an unsaved provider has none on the server yet' do
-        post '/api/v1/users/llm_settings/models',
-             params:  { base_url: base_url, api_key: 'sk-typed' }.to_json,
-             headers: headers
-
-        expect(WebMock).to have_requested(:get, models_url)
-          .with(headers: { 'Authorization' => 'Bearer sk-typed' }).once
-      end
-
-      it 're-reads the catalogue when the caller asks for a refresh' do
-        post '/api/v1/users/llm_settings/models', params: { base_url: base_url }.to_json, headers: headers
-        post '/api/v1/users/llm_settings/models',
-             params:  { base_url: base_url, refresh: true }.to_json,
-             headers: headers
-
-        expect(WebMock).to have_requested(:get, models_url).twice
+    # Model lists come from a provider record (llm_providers/:id/models or
+    # llm/institution_models), never from a bare endpoint or the resolver.
+    describe 'the retired /api/v1/users/llm_settings/models routes' do
+      it 'serves neither the resolved list nor a pre-save lookup' do
+        expect { get '/api/v1/users/llm_settings/models', headers: headers }
+          .to raise_error(ActionController::RoutingError)
+        expect do
+          post '/api/v1/users/llm_settings/models',
+               params: { base_url: 'https://ki-toolbox.scc.kit.edu/api' }.to_json, headers: headers
+        end.to raise_error(ActionController::RoutingError)
       end
     end
   end
