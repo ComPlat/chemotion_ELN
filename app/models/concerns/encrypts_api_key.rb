@@ -4,8 +4,8 @@
 # The ciphertext is persisted in the :api_key_enc column.
 #
 # Encryption uses ActiveSupport::MessageEncryptor with a key derived from the
-# LLM_API_KEY_ENCRYPTION_KEY env variable (falls back to SECRET_KEY_BASE in
-# non-production environments).
+# LLM_API_KEY_ENCRYPTION_KEY env variable, or else the application's
+# secret_key_base. Changing that secret makes stored keys unreadable.
 #
 # Usage:
 #   class LlmProvider < ApplicationRecord
@@ -31,6 +31,8 @@ module EncryptsApiKey
 
       self.class.llm_encryptor.decrypt_and_verify(api_key_enc)
     rescue ActiveSupport::MessageEncryptor::InvalidMessage, ActiveSupport::MessageVerifier::InvalidSignature
+      Rails.logger.warn("[EncryptsApiKey] #{self.class.name}##{id}: the stored API key could not be decrypted; " \
+                        'was the encryption secret changed?')
       nil
     end
 
@@ -47,9 +49,10 @@ module EncryptsApiKey
     def api_key_masked
       plain = api_key
       return nil if plain.blank?
+      # Too short to show both ends without showing most of the key.
+      return '•' * 8 if plain.length < 12
 
-      visible = plain.last(4)
-      "#{plain[0, 3]}#{'•' * 8}#{visible}"
+      "#{plain[0, 3]}#{'•' * 8}#{plain.last(4)}"
     end
 
     before_save :encrypt_api_key_to_enc
@@ -74,9 +77,7 @@ module EncryptsApiKey
     # The key is cached at class level after first call.
     def llm_encryptor
       @llm_encryptor ||= begin
-        raw_key = ENV.fetch('LLM_API_KEY_ENCRYPTION_KEY') do
-          Rails.application.secrets.secret_key_base
-        end
+        raw_key = ENV.fetch('LLM_API_KEY_ENCRYPTION_KEY') { Rails.application.secret_key_base }
         key = ActiveSupport::KeyGenerator
               .new(raw_key, iterations: 65_536)
               .generate_key('llm_api_key_v1', 32)
