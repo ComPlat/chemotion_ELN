@@ -1,50 +1,42 @@
 import expect from 'expect';
 import UsersFetcher from '../../../app/javascript/src/fetchers/UsersFetcher';
 import {
-  customModelsKey,
   institutionModelsKey,
   peekModels,
-  fetchCustomModels,
   fetchInstitutionModels,
   fetchProviderModels,
   providerModelsKey,
+  invalidate,
   clearModelCache,
   subscribe,
   scopeToUser,
 } from '../../../app/javascript/src/utilities/llmModelCache';
 
 describe('llmModelCache', () => {
-  const originalCustom = UsersFetcher.fetchLlmModelsForConfig;
   const originalInstitution = UsersFetcher.fetchInstitutionLlmModels;
   const originalProvider = UsersFetcher.fetchLlmProviderModels;
 
-  let customCalls;
   let institutionCalls;
   let providerCalls;
-  let customResponse;
+  // What a saved provider answers, by id; ids not listed answer `model-of-<id>`.
+  let providerResponses;
 
   beforeEach(() => {
     clearModelCache();
-    customCalls = [];
     institutionCalls = [];
-    customResponse = ['gpt-4o', 'gpt-4o-mini'];
-    UsersFetcher.fetchLlmModelsForConfig = (config) => {
-      customCalls.push(config);
-      return Promise.resolve(customResponse);
-    };
     UsersFetcher.fetchInstitutionLlmModels = (id, opts) => {
       institutionCalls.push({ id, ...opts });
       return Promise.resolve([`kit.model-of-${id}`]);
     };
     providerCalls = [];
+    providerResponses = {};
     UsersFetcher.fetchLlmProviderModels = (id, opts) => {
       providerCalls.push({ id, ...opts });
-      return Promise.resolve([`model-of-${id}`]);
+      return Promise.resolve(providerResponses[id] || [`model-of-${id}`]);
     };
   });
 
   after(() => {
-    UsersFetcher.fetchLlmModelsForConfig = originalCustom;
     UsersFetcher.fetchInstitutionLlmModels = originalInstitution;
     UsersFetcher.fetchLlmProviderModels = originalProvider;
     clearModelCache();
@@ -60,11 +52,23 @@ describe('llmModelCache', () => {
       expect(providerCalls.map((c) => c.id)).toEqual([1, 2]);
     });
 
-    it('serves a repeat lookup from the cache', async () => {
+    it('serves a repeat lookup from the cache without a second request', async () => {
       await fetchProviderModels(1);
-      await fetchProviderModels(1);
+      const second = await fetchProviderModels(1);
 
       expect(providerCalls.length).toEqual(1);
+      expect(second).toEqual(['model-of-1']);
+    });
+
+    it('shares one request between concurrent lookups', async () => {
+      const results = await Promise.all([
+        fetchProviderModels(1),
+        fetchProviderModels(1),
+        fetchProviderModels(1),
+      ]);
+
+      expect(providerCalls.length).toEqual(1);
+      expect(results[2]).toEqual(['model-of-1']);
     });
 
     it('re-reads when forced', async () => {
@@ -75,114 +79,47 @@ describe('llmModelCache', () => {
       expect(providerCalls[1].refresh).toEqual(true);
     });
 
-    it('is dropped when the cache is scoped to another user', async () => {
-      scopeToUser(1);
-      await fetchProviderModels(7);
-      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
-
-      scopeToUser(2);
-      expect(peekModels(providerModelsKey(7))).toEqual(null);
-    });
-  });
-
-  describe('customModelsKey', () => {
-    it('ignores whitespace and a trailing slash on the endpoint', () => {
-      expect(customModelsKey({ protocol: 'openai', baseUrl: ' https://x/api/ ' }))
-        .toEqual(customModelsKey({ protocol: 'openai', baseUrl: 'https://x/api' }));
-    });
-
-    it('separates providers by protocol', () => {
-      expect(customModelsKey({ protocol: 'openai', baseUrl: '' }))
-        .not.toEqual(customModelsKey({ protocol: 'anthropic', baseUrl: '' }));
-    });
-
-    it('ignores the api key, which is not part of a provider identity', () => {
-      expect(customModelsKey({ protocol: 'openai', baseUrl: 'https://x', apiKey: 'a' }))
-        .toEqual(customModelsKey({ protocol: 'openai', baseUrl: 'https://x', apiKey: 'b' }));
-    });
-  });
-
-  describe('fetchCustomModels', () => {
-    const config = { protocol: 'openai', baseUrl: 'https://x/api', model: 'gpt-4o' };
-
-    it('resolves to the provider model list', async () => {
-      expect(await fetchCustomModels(config)).toEqual(['gpt-4o', 'gpt-4o-mini']);
-    });
-
-    it('serves a repeat lookup from the cache without a second request', async () => {
-      await fetchCustomModels(config);
-      const second = await fetchCustomModels(config);
-
-      expect(customCalls.length).toEqual(1);
-      expect(second).toEqual(['gpt-4o', 'gpt-4o-mini']);
-    });
-
-    it('shares one request between concurrent lookups', async () => {
-      const results = await Promise.all([
-        fetchCustomModels(config),
-        fetchCustomModels(config),
-        fetchCustomModels(config),
-      ]);
-
-      expect(customCalls.length).toEqual(1);
-      expect(results[2]).toEqual(['gpt-4o', 'gpt-4o-mini']);
-    });
-
-    it('refetches when forced', async () => {
-      await fetchCustomModels(config);
-      await fetchCustomModels(config, { force: true });
-
-      expect(customCalls.length).toEqual(2);
-    });
-
     it('does not cache an empty answer as the list for that provider', async () => {
-      customResponse = [];
-      await fetchCustomModels(config);
+      providerResponses[1] = [];
+      await fetchProviderModels(1);
 
-      expect(peekModels(customModelsKey(config))).toEqual(null);
+      expect(peekModels(providerModelsKey(1))).toEqual(null);
     });
 
     it('does not re-request straight away after an empty answer', async () => {
-      customResponse = [];
-      await fetchCustomModels(config);
-      await fetchCustomModels(config);
+      providerResponses[1] = [];
+      await fetchProviderModels(1);
+      await fetchProviderModels(1);
 
-      expect(customCalls.length).toEqual(1);
+      expect(providerCalls.length).toEqual(1);
     });
 
     it('keeps a known list when a later lookup comes back empty', async () => {
-      await fetchCustomModels(config);
-      customResponse = [];
-      await fetchCustomModels(config, { force: true });
+      await fetchProviderModels(1);
+      providerResponses[1] = [];
+      await fetchProviderModels(1, { force: true });
 
-      expect(peekModels(customModelsKey(config))).toEqual(['gpt-4o', 'gpt-4o-mini']);
+      expect(peekModels(providerModelsKey(1))).toEqual(['model-of-1']);
     });
   });
 
   describe('switching between providers', () => {
-    const openai = { protocol: 'openai', baseUrl: 'https://x/api' };
-    const claude = { protocol: 'anthropic', baseUrl: '' };
-
     it('keeps each provider list, so switching back needs no request', async () => {
-      await fetchCustomModels(openai);
-      customResponse = ['claude-opus-5'];
-      await fetchCustomModels(claude);
+      await fetchProviderModels(1);
+      await fetchProviderModels(2);
+      await fetchProviderModels(1);
 
-      // Back to the first provider: its list is still there…
-      expect(peekModels(customModelsKey(openai))).toEqual(['gpt-4o', 'gpt-4o-mini']);
-      // …and the second provider's list has not been overwritten either.
-      expect(peekModels(customModelsKey(claude))).toEqual(['claude-opus-5']);
-
-      await fetchCustomModels(openai);
-      expect(customCalls.length).toEqual(2); // one per provider, none for the switch back
+      expect(peekModels(providerModelsKey(1))).toEqual(['model-of-1']);
+      expect(peekModels(providerModelsKey(2))).toEqual(['model-of-2']);
+      expect(providerCalls.length).toEqual(2);
     });
 
-    it('keeps the institution list separate from any custom provider', async () => {
+    it('keeps the institution list separate from a saved provider with the same id', async () => {
       await fetchInstitutionModels(7);
-      await fetchCustomModels(openai);
+      await fetchProviderModels(7);
 
       expect(peekModels(institutionModelsKey(7))).toEqual(['kit.model-of-7']);
-      expect(peekModels(customModelsKey(openai))).toEqual(['gpt-4o', 'gpt-4o-mini']);
+      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
     });
 
     it('caches per institution provider, so two of them never share a list', async () => {
@@ -204,62 +141,110 @@ describe('llmModelCache', () => {
 
   describe('peekModels', () => {
     it('returns null for a provider that was never looked up', () => {
-      expect(peekModels(customModelsKey({ protocol: 'gemini', baseUrl: '' }))).toEqual(null);
+      expect(peekModels(providerModelsKey(99))).toEqual(null);
     });
   });
 
   describe('asking the server to refresh', () => {
-    const config = { protocol: 'openai', baseUrl: 'https://x/api' };
-
     it('does not ask the server to re-read the catalogue on an ordinary lookup', async () => {
-      await fetchCustomModels(config);
+      await fetchProviderModels(1);
       await fetchInstitutionModels(7);
 
-      expect(customCalls[0].refresh).toEqual(false);
+      expect(providerCalls[0].refresh).toEqual(false);
       expect(institutionCalls[0].refresh).toEqual(false);
     });
 
     it('asks the server to re-read the catalogue when forced', async () => {
-      await fetchCustomModels(config, { force: true });
+      await fetchProviderModels(1, { force: true });
       await fetchInstitutionModels(7, { force: true });
 
-      // Without this the server would keep serving its own 30-minute cache entry
-      // for an unchanged provider identity, and "Test connection" could never
-      // surface a catalogue that changed at the provider.
-      expect(customCalls[0].refresh).toEqual(true);
-      expect(institutionCalls[0].refresh).toEqual(true);
-    });
-
-    it('forwards the config alongside the refresh flag', async () => {
-      await fetchCustomModels({ ...config, model: 'gpt-4o', apiKey: 'sk-x' }, { force: true });
-
-      expect(customCalls[0]).toEqual({
-        protocol: 'openai', baseUrl: 'https://x/api', model: 'gpt-4o', apiKey: 'sk-x', refresh: true,
-      });
+      expect(providerCalls[0]).toEqual({ id: 1, refresh: true });
+      expect(institutionCalls[0]).toEqual({ id: 7, refresh: true });
     });
   });
 
   describe('a superseded lookup', () => {
-    const config = { protocol: 'openai', baseUrl: 'https://x/api' };
-
     it('cannot overwrite the list a later forced lookup stored', async () => {
-      // First lookup: slow, and answers with the list the provider used to offer.
       let releaseSlow;
-      UsersFetcher.fetchLlmModelsForConfig = () => new Promise((resolve) => {
+      UsersFetcher.fetchLlmProviderModels = () => new Promise((resolve) => {
         releaseSlow = () => resolve(['stale-model']);
       });
-      const slow = fetchCustomModels(config);
+      const slow = fetchProviderModels(1);
 
-      // Test connection meanwhile: forced, fast, and authoritative.
-      UsersFetcher.fetchLlmModelsForConfig = () => Promise.resolve(['fresh-model']);
-      await fetchCustomModels(config, { force: true });
-      expect(peekModels(customModelsKey(config))).toEqual(['fresh-model']);
+      UsersFetcher.fetchLlmProviderModels = () => Promise.resolve(['fresh-model']);
+      await fetchProviderModels(1, { force: true });
+      expect(peekModels(providerModelsKey(1))).toEqual(['fresh-model']);
 
-      // The slow answer lands last but is no longer the owner of this entry.
       releaseSlow();
       await slow;
 
-      expect(peekModels(customModelsKey(config))).toEqual(['fresh-model']);
+      expect(peekModels(providerModelsKey(1))).toEqual(['fresh-model']);
+    });
+  });
+
+  describe('invalidate', () => {
+    it('drops the known list, so an edited provider that now lists nothing offers nothing', async () => {
+      providerResponses[7] = ['gpt-4o', 'gpt-4o-mini'];
+      await fetchProviderModels(7);
+
+      invalidate(providerModelsKey(7));
+      providerResponses[7] = [];
+      await fetchProviderModels(7, { force: true });
+
+      expect(peekModels(providerModelsKey(7))).toEqual(null);
+    });
+
+    it('lets the next lookup through despite a recent empty answer', async () => {
+      providerResponses[7] = [];
+      await fetchProviderModels(7);
+
+      invalidate(providerModelsKey(7));
+      providerResponses[7] = ['claude-opus-5'];
+
+      expect(await fetchProviderModels(7)).toEqual(['claude-opus-5']);
+      expect(providerCalls.length).toEqual(2);
+    });
+
+    it('discards a lookup that was in flight', async () => {
+      let releaseSlow;
+      UsersFetcher.fetchLlmProviderModels = () => new Promise((resolve) => {
+        releaseSlow = () => resolve(['old-endpoint-model']);
+      });
+      const slow = fetchProviderModels(7);
+
+      invalidate(providerModelsKey(7));
+      releaseSlow();
+      await slow;
+
+      expect(peekModels(providerModelsKey(7))).toEqual(null);
+    });
+
+    it('starts a new request rather than joining the one in flight', async () => {
+      const pending = [];
+      UsersFetcher.fetchLlmProviderModels = (id) => {
+        providerCalls.push({ id });
+        return new Promise((resolve) => { pending.push(resolve); });
+      };
+      fetchProviderModels(7);
+
+      invalidate(providerModelsKey(7));
+      fetchProviderModels(7);
+      pending.forEach((resolve) => resolve([]));
+
+      expect(providerCalls.length).toEqual(2);
+    });
+
+    it('leaves the other providers alone and tells listeners', async () => {
+      await fetchProviderModels(1);
+      await fetchProviderModels(7);
+      let notifications = 0;
+      const unsubscribe = subscribe(() => { notifications += 1; });
+
+      invalidate(providerModelsKey(7));
+      unsubscribe();
+
+      expect(notifications).toEqual(1);
+      expect(peekModels(providerModelsKey(1))).toEqual(['model-of-1']);
     });
   });
 
@@ -268,7 +253,7 @@ describe('llmModelCache', () => {
       let notifications = 0;
       const unsubscribe = subscribe(() => { notifications += 1; });
 
-      await fetchCustomModels({ protocol: 'openai', baseUrl: 'https://x/api' });
+      await fetchProviderModels(1);
       expect(notifications).toEqual(1);
 
       unsubscribe();
@@ -279,9 +264,9 @@ describe('llmModelCache', () => {
     it('does not notify when the answer was empty and nothing was stored', async () => {
       let notifications = 0;
       const unsubscribe = subscribe(() => { notifications += 1; });
-      customResponse = [];
+      providerResponses[1] = [];
 
-      await fetchCustomModels({ protocol: 'openai', baseUrl: 'https://x/api' });
+      await fetchProviderModels(1);
 
       expect(notifications).toEqual(0);
       unsubscribe();
@@ -289,48 +274,46 @@ describe('llmModelCache', () => {
   });
 
   describe('scopeToUser', () => {
-    const config = { protocol: 'openai', baseUrl: 'https://x/api' };
-
     it('drops another user’s cached lists', async () => {
       scopeToUser(1);
-      await fetchCustomModels(config);
-      expect(peekModels(customModelsKey(config))).toEqual(['gpt-4o', 'gpt-4o-mini']);
+      await fetchProviderModels(7);
+      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
 
       scopeToUser(2);
 
-      expect(peekModels(customModelsKey(config))).toEqual(null);
+      expect(peekModels(providerModelsKey(7))).toEqual(null);
     });
 
     it('keeps the cache for the same user', async () => {
       scopeToUser(1);
-      await fetchCustomModels(config);
+      await fetchProviderModels(7);
       scopeToUser(1);
 
-      expect(peekModels(customModelsKey(config))).toEqual(['gpt-4o', 'gpt-4o-mini']);
+      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
     });
 
     it('does not store a request that was in flight when the user switched', async () => {
       let releaseSlow;
-      UsersFetcher.fetchLlmModelsForConfig = () => new Promise((resolve) => {
+      UsersFetcher.fetchLlmProviderModels = () => new Promise((resolve) => {
         releaseSlow = () => resolve(['user-1-model']);
       });
       scopeToUser(1);
-      const slow = fetchCustomModels(config);
+      const slow = fetchProviderModels(7);
 
       scopeToUser(2);
       releaseSlow();
       await slow;
 
-      expect(peekModels(customModelsKey(config))).toEqual(null);
+      expect(peekModels(providerModelsKey(7))).toEqual(null);
     });
 
     it('keeps the cache when the user is not known yet', async () => {
       scopeToUser(1);
-      await fetchCustomModels(config);
+      await fetchProviderModels(7);
       scopeToUser(undefined);
       scopeToUser(null);
 
-      expect(peekModels(customModelsKey(config))).toEqual(['gpt-4o', 'gpt-4o-mini']);
+      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
     });
   });
 });

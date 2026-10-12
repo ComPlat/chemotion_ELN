@@ -320,12 +320,6 @@ export default class UsersFetcher {
       });
   }
 
-  static fetchLlmModels() {
-    return fetch('/api/v1/users/llm_settings/models', { credentials: 'same-origin' })
-      .then((r) => r.json())
-      .catch(() => ({ models: [] }));
-  }
-
   // Models offered by one institution provider — for the Task→Model dropdown of
   // any task routed to it. A blank id means whichever institution provider
   // serves this user. Returns [] if the provider exposes no list (caller falls
@@ -338,30 +332,6 @@ export default class UsersFetcher {
     const suffix = query.toString() ? `?${query}` : '';
 
     return fetch(`/api/v1/llm/institution_models${suffix}`, { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : { models: [] }))
-      .then((d) => d.models || [])
-      .catch(() => []);
-  }
-
-  // Models for a supplied (pre-save) custom config. Used to (re)populate the
-  // Task→Model dropdown after a successful Test connection or on load. A blank
-  // api_key tells the server to reuse the user's saved key. `refresh` bypasses
-  // the server-side catalogue cache. Returns [].
-  static fetchLlmModelsForConfig({
-    protocol, baseUrl, model, apiKey, refresh = false,
-  } = {}) {
-    return fetch('/api/v1/users/llm_settings/models', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        protocol,
-        base_url: baseUrl,
-        model,
-        api_key: apiKey,
-        refresh,
-      }),
-    })
       .then((r) => (r.ok ? r.json() : { models: [] }))
       .then((d) => d.models || [])
       .catch(() => []);
