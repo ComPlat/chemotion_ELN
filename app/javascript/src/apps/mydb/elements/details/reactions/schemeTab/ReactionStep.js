@@ -102,6 +102,7 @@ const ReactionStep = ({
       {step && !isFirstStep ? carriedBanner : (
         <MaterialGroup
           reaction={reaction}
+          stepId={stepId}
           materialGroup="starting_materials"
           materials={startingMaterials}
           dropMaterial={dropMaterial}
@@ -116,6 +117,7 @@ const ReactionStep = ({
       )}
       <MaterialGroup
         reaction={reaction}
+        stepId={stepId}
         materialGroup="reactants"
         materials={reactants}
         dropMaterial={dropMaterial}
@@ -130,6 +132,7 @@ const ReactionStep = ({
       />
       <MaterialGroup
         reaction={reaction}
+        stepId={stepId}
         materialGroup="solvents"
         materials={solvents}
         dropMaterial={dropMaterial}
@@ -142,6 +145,7 @@ const ReactionStep = ({
       />
       <MaterialGroup
         reaction={reaction}
+        stepId={stepId}
         materialGroup="products"
         materials={products}
         dropMaterial={dropMaterial}

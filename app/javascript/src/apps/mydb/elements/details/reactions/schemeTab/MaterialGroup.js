@@ -43,7 +43,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled, onConcentrationModeChange, onToggleCarryOn
+  switchYield, dndEnabled, onConcentrationModeChange, onToggleCarryOn, stepId
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -116,6 +116,7 @@ const MaterialGroup = ({
         headIndex={headIndex}
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
+        stepId={stepId}
       />
     );
   }
@@ -137,6 +138,7 @@ const MaterialGroup = ({
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
       onConcentrationModeChange={onConcentrationModeChange}
+      stepId={stepId}
     />
   );
 };
@@ -369,7 +371,7 @@ const GeneralMaterialGroup = ({
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
   switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled,
-  onConcentrationModeChange
+  onConcentrationModeChange, stepId
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
@@ -495,7 +497,7 @@ const GeneralMaterialGroup = ({
   const addSampleButton = (
     <CreateButton
       disabled={!permitOn(reaction)}
-      onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
+      onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup, stepId })}
       size="xsm"
     />
   );
@@ -593,7 +595,7 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled
+  dropSample, onDrop, onReorder, dndEnabled, stepId
 }) => {
   const groupHeaders = { ...headers };
   groupHeaders.group = 'Solvents';
@@ -603,7 +605,7 @@ const SolventsMaterialGroup = ({
   const addSampleButton = (
     <CreateButton
       disabled={!permitOn(reaction)}
-      onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
+      onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup, stepId })}
       size="xsm"
     />
   );
@@ -723,6 +725,7 @@ MaterialGroup.propTypes = {
   dndEnabled: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
   onToggleCarryOn: PropTypes.func,
+  stepId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -741,6 +744,7 @@ GeneralMaterialGroup.propTypes = {
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
+  stepId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -753,10 +757,12 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
+  stepId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
+  stepId: null,
 };
 
 MaterialGroup.defaultProps = {
@@ -767,6 +773,7 @@ MaterialGroup.defaultProps = {
   dndEnabled: true,
   onConcentrationModeChange: null,
   onToggleCarryOn: null,
+  stepId: null,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -775,6 +782,7 @@ GeneralMaterialGroup.defaultProps = {
   displayYieldField: null,
   dndEnabled: true,
   onConcentrationModeChange: null,
+  stepId: null,
 };
 
 export default MaterialGroup;
