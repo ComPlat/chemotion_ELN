@@ -31,6 +31,9 @@ class ForwardActions {
 
   resetForward = () => ({ type: 'RESET' });
 
+  // Reveal the next page of already fetched products.
+  showMoreOutcomes = () => ({ type: 'SHOW_MORE' });
+
   handleChange = (sample_id, data) => {
       return (dispatch) => {
                 SamplesFetcher.fetchById(sample_id)

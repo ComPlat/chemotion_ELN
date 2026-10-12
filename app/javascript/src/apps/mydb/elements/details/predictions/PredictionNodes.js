@@ -15,6 +15,7 @@ export const PredictionFlowContext = createContext({
   onExpand: () => {},
   onToggleFold: () => {},
   onDropSample: () => {},
+  onShowMore: () => {},
 });
 
 const SMILES_PREVIEW = 32;
@@ -254,10 +255,32 @@ SynthesisNodeBox.propTypes = {
   data: PropTypes.object.isRequired,
 };
 
+// Stands in for the ranked products that are not drawn yet.
+const MoreNodeBox = ({ data }) => {
+  const { onShowMore } = useContext(PredictionFlowContext);
+
+  return (
+    <div className="retro-node retro-node--more">
+      <NodeHandles />
+      <button type="button" className="retro-node__toggle" onClick={stopping(onShowMore)}>
+        <i className="fa fa-chevron-down me-1" aria-hidden="true" />
+        {`Show ${data.next} more`}
+      </button>
+      <div className="retro-node__smiles">{`${data.remaining} more predicted`}</div>
+    </div>
+  );
+};
+
+MoreNodeBox.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  data: PropTypes.object.isRequired,
+};
+
 const MoleculeNode = memo(MoleculeNodeBox);
 const ReactionNode = memo(ReactionNodeBox);
 const ForwardInputNode = memo(ForwardInputNodeBox);
 const SynthesisNode = memo(SynthesisNodeBox);
+const MoreNode = memo(MoreNodeBox);
 
 export const retroNodeTypes = {
   root: MoleculeNode,
@@ -269,6 +292,7 @@ export const forwardNodeTypes = {
   input: ForwardInputNode,
   synthesis: SynthesisNode,
   outcome: MoleculeNode,
+  more: MoreNode,
 };
 
 // Key to the canvas symbols; `variant` picks the forward or retro entries.

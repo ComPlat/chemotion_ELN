@@ -1,6 +1,6 @@
 import alt from 'src/stores/alt/alt';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
-import { layoutForward } from 'src/apps/mydb/elements/details/predictions/forwardTree';
+import { OUTCOME_PAGE, layoutForward } from 'src/apps/mydb/elements/details/predictions/forwardTree';
 
 // The canvas is always derived from the dropped inputs and the latest
 // prediction, so re-running Synthesize replaces the products instead of
@@ -12,6 +12,8 @@ const emptyState = () => ({
   // Input node id -> { smiles, png } of the dropped sample.
   inputs: {},
   outcomes: [],
+  // How many of the ranked products are drawn; grows by OUTCOME_PAGE.
+  visibleCount: OUTCOME_PAGE,
   tree: {},
   newSample: {},
   loading: false,
@@ -27,6 +29,7 @@ class ForwardStore {
       handleFetchApiResponse: ForwardActions.fetchApiResponse,
       handleMoleculeSave: ForwardActions.handleSave,
       handleReset: ForwardActions.resetForward,
+      handleShowMore: ForwardActions.showMoreOutcomes,
     });
   }
 
@@ -53,7 +56,7 @@ class ForwardStore {
     const inputs = { ...this.state.inputs, [nodeId]: { smiles, png } };
     // Products predicted from the previous inputs no longer apply.
     this.setState({
-      [key]: sample, inputs, outcomes: [], ...layoutForward(inputs, [])
+      [key]: sample, inputs, outcomes: [], visibleCount: OUTCOME_PAGE, ...layoutForward(inputs, [])
     });
   }
 
@@ -65,8 +68,18 @@ class ForwardStore {
     const { tree } = action.payload;
     const outcomes = tree.outcomes || [];
     this.setState({
-      tree, outcomes, loading: false, ...layoutForward(this.state.inputs, outcomes)
+      tree,
+      outcomes,
+      visibleCount: OUTCOME_PAGE,
+      loading: false,
+      ...layoutForward(this.state.inputs, outcomes, OUTCOME_PAGE)
     });
+  }
+
+  handleShowMore() {
+    const { inputs, outcomes, visibleCount } = this.state;
+    const next = Math.min(visibleCount + OUTCOME_PAGE, outcomes.length);
+    this.setState({ visibleCount: next, ...layoutForward(inputs, outcomes, next) });
   }
 
   handleMoleculeSave(action) {

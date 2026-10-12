@@ -13,13 +13,18 @@ export const FORWARD_INPUTS = [
   { id: 'Solvent', optional: true },
 ];
 
+// Products shown at first, and how many more each "Show more" click reveals.
+export const OUTCOME_PAGE = 5;
+
 const SYNTHESIS_ID = 'Synthesis';
 const SYNTHESIS_COLUMN = 200;
 
 const centredRow = (index, count) => (index - (count - 1) / 2) * ROW_HEIGHT;
 
-// `inputs` maps an input id to { smiles, png } of the dropped sample.
-export function layoutForward(inputs = {}, outcomes = []) {
+// `inputs` maps an input id to { smiles, png } of the dropped sample. Only the
+// best `visibleCount` products are drawn; a "more" box below them stands for
+// the rest.
+export function layoutForward(inputs = {}, outcomes = [], visibleCount = OUTCOME_PAGE) {
   const nodes = [];
   const edges = [];
 
@@ -42,9 +47,13 @@ export function layoutForward(inputs = {}, outcomes = []) {
     selectable: false,
   });
 
-  [...outcomes]
-    .sort((a, b) => a.rank - b.rank)
-    .forEach((outcome, i, sorted) => {
+  const sorted = [...outcomes].sort((a, b) => a.rank - b.rank);
+  const shown = sorted.slice(0, visibleCount);
+  const remaining = sorted.length - shown.length;
+  const rows = shown.length + (remaining > 0 ? 1 : 0);
+  const outcomeX = MOLECULE_COLUMN + SYNTHESIS_COLUMN;
+
+  shown.forEach((outcome, i) => {
       const id = `outcome.${i}`;
       nodes.push({
         id,
@@ -58,10 +67,20 @@ export function layoutForward(inputs = {}, outcomes = []) {
           rank: outcome.rank,
           prob: outcome.prob,
         },
-        position: { x: MOLECULE_COLUMN + SYNTHESIS_COLUMN, y: centredRow(i, sorted.length) },
+        position: { x: outcomeX, y: centredRow(i, rows) },
       });
       edges.push(arrowEdge(SYNTHESIS_ID, id, outcome.rank === 1));
     });
+
+  if (remaining > 0) {
+    nodes.push({
+      id: 'outcome.more',
+      type: 'more',
+      data: { remaining, next: Math.min(OUTCOME_PAGE, remaining) },
+      position: { x: outcomeX, y: centredRow(shown.length, rows) },
+      selectable: false,
+    });
+  }
 
   return { nodes, edges };
 }

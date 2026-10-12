@@ -15,7 +15,9 @@ import ForwardStore from 'src/stores/alt/stores/ForwardStore';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
 
 const FIT_VIEW_OPTIONS = { padding: 0.15 };
-const NUM_RESULTS = 5;
+// Fetched in one go (cheap compared to the per-product images and vendor
+// lookups the backend adds); the canvas reveals them five at a time.
+const NUM_RESULTS = 25;
 
 class ForwardContainer extends Component {
   constructor(props) {
@@ -29,6 +31,7 @@ class ForwardContainer extends Component {
     // One stable value, so the boxes do not re-render on every container render.
     this.flowActions = {
       onDropSample: (label, event) => ForwardActions.handleChange(event.sample_id, { label }),
+      onShowMore: () => ForwardActions.showMoreOutcomes(),
     };
     this.flow = null;
     this.fitTimer = null;
@@ -127,8 +130,9 @@ class ForwardContainer extends Component {
           <div>
             <PredictionHelp>
               Perform single step forward synthesis. Drag and drop a sample onto Reactant, and optionally onto
-              Reagent and Solvent (one sample each), then click Synthesize. Hover a product for its vendors and
-              prices; click one and use Save Molecule to save it to the currently selected collection.
+              Reagent and Solvent (one sample each), then click Synthesize. The top 5 products are shown; use
+              Show more for the next 5. Hover a product for its vendors and prices; click one and use Save
+              Molecule to save it to the currently selected collection.
             </PredictionHelp>
             <PredictionToolbar>
               <Button

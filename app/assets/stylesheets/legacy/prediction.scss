@@ -717,3 +717,10 @@
 }
 
 .retro-reaction--ready { border-color: var(--bs-primary, #0d6efd); }
+
+// "Show more" placeholder below the drawn forward products.
+.retro-node--more {
+  cursor: default;
+  border-style: dashed;
+  box-shadow: none;
+}
