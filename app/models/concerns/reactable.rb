@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Reactable module
-module Reactable
+module Reactable # rubocop:disable Metrics/ModuleLength
   extend ActiveSupport::Concern
 
   IDEAL_GAS_CONSTANT = 0.0821
@@ -26,7 +26,7 @@ module Reactable
     PER_HOUR: 'TON/h',
   }.freeze
 
-  def update_equivalent
+  def update_equivalent # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
        !reference && !weight_percentage_reference
       ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
