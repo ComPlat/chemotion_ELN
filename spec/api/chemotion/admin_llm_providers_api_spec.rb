@@ -190,10 +190,12 @@ describe Chemotion::AdminLlmProvidersAPI do
       end
 
       it 'tests the saved provider with its stored key' do
+        allow(LlmClient).to receive(:new).and_call_original
         post "/api/v1/admin/llm_providers/#{provider.id}/verify", headers: headers
 
         expect(response).to have_http_status(:success)
         expect(JSON.parse(response.body)['success']).to be true
+        expect(LlmClient).to have_received(:new).with(hash_including(timeout: LlmClient::INTERACTIVE_TIMEOUT))
       end
     end
 

@@ -145,6 +145,7 @@ module Chemotion
               api_key: provider.api_key,
               model: provider.default_model,
               protocol: provider.api_protocol,
+              timeout: LlmClient::INTERACTIVE_TIMEOUT,
               restrict_endpoint: true,
             ).chat(messages: [{ role: 'user', content: 'Reply with a single word: OK' }], max_tokens: 64)
 
