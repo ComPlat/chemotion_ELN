@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/WordArray
-
 # require 'coveralls'
 # Coveralls.wear!
 require 'logger'
@@ -9,6 +7,7 @@ require 'rspec/repeat'
 require 'webmock/rspec'
 
 require 'factory_bot_rails'
+require 'test_prof/recipes/rspec/factory_default'
 require 'faker'
 require 'capybara'
 require 'webdrivers'
@@ -42,7 +41,7 @@ Capybara.register_driver :selenium do |app|
   options.add_argument('--headless') unless ENV['USE_HEAD']
   options.add_argument('--no-sandbox')
 
-  capabilities = Selenium::WebDriver::Remote::Capabilities.chrome(
+  Selenium::WebDriver::Remote::Capabilities.chrome(
     loggingPrefs: {
       browser: 'ALL',
       client: 'ALL',
@@ -209,7 +208,7 @@ RSpec.configure do |config|
       )
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_two_compounds.json'),
+        body: File.read("#{Rails.root}/spec/fixtures/body_two_compounds.json"),
         headers: { 'Content-Type' => 'application/json' },
       )
 
@@ -231,7 +230,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
+        body: File.read("#{Rails.root}/spec/fixtures/body_123456789_CAS.xml"),
         headers: { 'Content-Type' => 'application/xml' },
       )
 
@@ -243,7 +242,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
+        body: File.read("#{Rails.root}/spec/fixtures/body_643785_LCSS.json"),
         headers: { 'Content-Type' => 'application/json' },
       )
   end
@@ -267,4 +266,3 @@ RSpec.configure do |config|
     repeat example, 3.times, verbose: true
   end
 end
-# rubocop:enable Style/WordArray
