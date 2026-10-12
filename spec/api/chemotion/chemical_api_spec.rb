@@ -811,6 +811,14 @@ describe Chemotion::ChemicalAPI do
       expect(response).to have_http_status(:service_unavailable)
     end
 
+    it 'reports a missing chemical before a missing provider' do
+      bare_sample = create(:sample, collections: [create(:collection, user_id: unauthorized_user.id)])
+      post '/api/v1/chemicals/extract_sds', params: { sample_id: bare_sample.id }.to_json,
+                                            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
     context 'with a provider configured' do
       let(:link) { '/safety_sheets/merck/33009_0123456789abcdef.pdf' }
 
@@ -819,6 +827,11 @@ describe Chemotion::ChemicalAPI do
       def extract(params)
         post '/api/v1/chemicals/extract_sds', params: { sample_id: own_sample.id, **params }.to_json,
                                               headers: { 'CONTENT_TYPE' => 'application/json' }
+      end
+
+      def record_run(times)
+        run = { 'job_id' => 'earlier-job', 'token' => 'earlier-run', **times }
+        Chemical.find_by(sample_id: own_sample.id).update!(chemical_data: [{ 'extraction_run' => run }])
       end
 
       it 'queues the job for the sheet the caller names' do
@@ -835,6 +848,36 @@ describe Chemotion::ChemicalAPI do
       it 'refuses a path that is not a saved sheet, without queueing a job' do
         expect { extract(path: '/etc/passwd') }.not_to have_enqueued_job(ExtractSdsJob)
         expect(response).to have_http_status(:bad_request)
+      end
+
+      it 'answers an unexpected failure with a server error that names no internals' do
+        allow(ExtractSdsJob).to receive(:perform_later).and_raise(StandardError, 'queue connection lost')
+        extract({})
+
+        expect(response).to have_http_status(:internal_server_error)
+        expect(JSON.parse(response.body)['error']).not_to include('queue connection lost')
+      end
+
+      it 'refuses a second extraction while the first is running, without queueing a job' do
+        record_run('started_at' => 1.minute.ago.iso8601)
+
+        expect { extract({}) }.not_to have_enqueued_job(ExtractSdsJob)
+        expect(response).to have_http_status(:conflict)
+        expect(JSON.parse(response.body)).to eq('error' => 'An extraction is already running for this sample.')
+      end
+
+      it 'accepts an extraction once the last run has finished' do
+        record_run('started_at' => 1.minute.ago.iso8601, 'finished_at' => Time.current.iso8601)
+
+        expect { extract({}) }.to have_enqueued_job(ExtractSdsJob)
+        expect(response).to have_http_status(:accepted)
+      end
+
+      it 'accepts an extraction once the last run is too old to be alive' do
+        record_run('started_at' => (Delayed::Worker.max_run_time + 1.minute).ago.iso8601)
+
+        expect { extract({}) }.to have_enqueued_job(ExtractSdsJob)
+        expect(response).to have_http_status(:accepted)
       end
     end
   end

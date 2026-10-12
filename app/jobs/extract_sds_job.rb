@@ -109,6 +109,17 @@ class ExtractSdsJob < ApplicationJob
     1
   end
 
+  # Whether a run holds this chemical's extraction: claimed, unfinished and not yet stale.
+  def self.in_flight?(chemical)
+    run = chemical.chemical_data&.dig(0, 'extraction_run')
+    return false unless run.is_a?(Hash) && run['finished_at'].blank?
+
+    started_at = Time.zone.parse(run['started_at'].to_s)
+    started_at.present? && started_at > stale_before
+  rescue ArgumentError, TypeError
+    false
+  end
+
   # A run started before this is dead: Delayed::Worker stops every job at max_run_time.
   def self.stale_before
     Delayed::Worker.max_run_time.ago
