@@ -205,67 +205,6 @@ module Chemotion
             error!(e.message, 502)
           end
         end
-
-        namespace :models do
-          desc 'List models available from the resolved provider (calls the provider models endpoint)'
-          params do
-            optional :refresh, type: Boolean, default: false,
-                               desc: 'Re-read the catalogue from the provider instead of serving the cached one'
-          end
-          get do
-            resolution = LlmProviderResolver.resolve(user: current_user, skip_feature_flags: true)
-            models = LlmModelCatalog.fetch(
-              base_url: resolution.base_url,
-              api_key:  resolution.api_key,
-              protocol: resolution.protocol || 'openai',
-              force:    params[:refresh],
-            )
-            { models: models }
-          rescue StandardError
-            # Includes Errors::LlmNotConfiguredError: an unconfigured provider is
-            # an empty dropdown, not an error the settings form has to render.
-            { models: [] }
-          end
-
-          desc 'List models for a supplied (pre-save) provider config'
-          params do
-            optional :protocol, type: String
-            optional :base_url, type: String
-            optional :model,    type: String
-            optional :api_key,  type: String
-            optional :refresh,  type: Boolean, default: false,
-                                desc: 'Re-read the catalogue from the provider instead of serving the cached one'
-          end
-          post do
-            ensure_personal_providers_allowed!
-            protocol = params[:protocol].presence || 'openai'
-            # Cached per protocol+endpoint+key (LlmModelCatalog) — the settings form
-            # asks for this list every time the user lands on a different provider.
-            # `model` is accepted for backwards compatibility but deliberately not
-            # passed on: a models listing never depends on it, and including it would
-            # fragment the cache on every Default Model keystroke.
-            #
-            # `refresh` only ever evicts this caller's own cache entry: the identity
-            # includes a digest of their key, so one user cannot force a re-read of
-            # another user's (or the institution's) catalogue through here.
-            # An endpoint the user may not save is not one we call for a listing either.
-            base_url = params[:base_url].presence
-            models = if LlmEndpointPolicy.violation(base_url)
-                       []
-                     else
-                       LlmModelCatalog.fetch(
-                         base_url: base_url,
-                         api_key: params[:api_key].presence,
-                         protocol: protocol,
-                         force: params[:refresh],
-                         restrict_endpoint: true,
-                       )
-                     end
-            { models: models }
-          rescue StandardError
-            { models: [] }
-          end
-        end
       end
     end
   end
