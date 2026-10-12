@@ -178,7 +178,7 @@ module Chemotion
         optional :reaction_steps, type: Array do
           optional :id, type: Integer
           optional :position, type: Integer
-          optional :description, type: String
+          optional :description, type: Hash
           optional :conditions, type: String
           optional :duration, type: String
           optional :timestamp_start, type: String
@@ -296,7 +296,7 @@ module Chemotion
         optional :reaction_steps, type: Array do
           optional :id, type: Integer
           optional :position, type: Integer
-          optional :description, type: String
+          optional :description, type: Hash
           optional :conditions, type: String
           optional :duration, type: String
           optional :timestamp_start, type: String

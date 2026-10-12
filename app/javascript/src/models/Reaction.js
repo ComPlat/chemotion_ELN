@@ -32,6 +32,7 @@ export const STEP_FIELD_DEFAULTS = {
   volume: () => null,
   lock_reaction_volume: () => false,
   conditions: () => '',
+  description: () => Element.quillDefault(),
 };
 
 const TemperatureDefault = {
@@ -1166,6 +1167,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size ? { ...this.vessel_size } : this.vessel_size,
       volume: this.volume,
       lock_reaction_volume: this.lock_reaction_volume,
+      description: this.description ? JSON.parse(JSON.stringify(this.description)) : this.description,
     });
   }
 

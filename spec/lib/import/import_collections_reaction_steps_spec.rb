@@ -29,7 +29,8 @@ RSpec.describe Import::ImportCollections do
   end
 
   before do
-    first = ReactionStep.create!(reaction: reaction, position: 1, conditions: 'reflux', volume: 0.005)
+    first = ReactionStep.create!(reaction: reaction, position: 1, conditions: 'reflux', volume: 0.005,
+                                 description: { 'ops' => [{ 'insert' => "heat it\n" }] })
     second = ReactionStep.create!(reaction: reaction, position: 2, conditions: 'rt')
     reaction.reactions_samples.where(sample_id: [starting.id, carried.id])
             .update_all(reaction_step_id: first.id) # rubocop:disable Rails/SkipsModelValidations
@@ -42,6 +43,7 @@ RSpec.describe Import::ImportCollections do
     expect(imported.reaction_type).to eq('multi_step')
     expect(imported.reaction_steps.map { |s| [s.position, s.conditions, s.volume&.to_f] })
       .to eq([[1, 'reflux', 0.005], [2, 'rt', nil]])
+    expect(imported.reaction_steps.map(&:description)).to eq([{ 'ops' => [{ 'insert' => "heat it\n" }] }, nil])
   end
 
   it 'links each material to its imported step and keeps carry-on' do
