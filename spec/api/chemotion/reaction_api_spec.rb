@@ -519,7 +519,10 @@ describe Chemotion::ReactionAPI do
       it 'creates the steps that were sent and numbers them in order' do
         params = base_params.merge(
           'reaction_steps' => [
-            { 'position' => 1, 'conditions' => 'stirred', 'duration' => '2 h', 'description' => 'first' },
+            {
+              'position' => 1, 'conditions' => 'stirred', 'duration' => '2 h',
+              'description' => { 'ops' => [{ 'insert' => "first\n" }] }
+            },
             { 'position' => 2, 'conditions' => 'warmed', 'duration' => '12 h' },
           ],
         )
@@ -528,7 +531,7 @@ describe Chemotion::ReactionAPI do
 
         expect(r.reaction_steps.map(&:position)).to eq([1, 2])
         expect(r.reaction_steps.map(&:conditions)).to eq(%w[stirred warmed])
-        expect(r.reaction_steps.map(&:description)).to eq(['first', nil])
+        expect(r.reaction_steps.map(&:description)).to eq([{ 'ops' => [{ 'insert' => "first\n" }] }, nil])
       end
 
       it 'lets a reaction leave Multi-step when the same request removes its steps' do
