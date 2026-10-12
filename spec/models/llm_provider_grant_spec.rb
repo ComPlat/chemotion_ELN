@@ -56,5 +56,13 @@ RSpec.describe LlmProviderGrant, type: :model do
       expect(grant.allows?(user)).to be true
       expect(grant.allows?(other)).to be false
     end
+
+    it 'does not drop the groups, and with them a group exclusion, when reading them fails' do
+      group = create(:group, users: [user])
+      grant = build(:llm_provider_grant, enabled: true, exclude_ids: [group.id])
+      allow(user).to receive(:group_ids).and_raise(ActiveRecord::ConnectionTimeoutError)
+
+      expect { grant.allows?(user) }.to raise_error(ActiveRecord::ConnectionTimeoutError)
+    end
   end
 end
