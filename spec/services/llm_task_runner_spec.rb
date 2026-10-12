@@ -235,6 +235,11 @@ RSpec.describe LlmTaskRunner do
         expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
           .to raise_error(Errors::LlmProviderError, /invalid JSON/)
       end
+
+      it 'does not quote the model output, which the job notification and audit log carry' do
+        expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
+          .to raise_error(Errors::LlmProviderError) { |error| expect(error.message).not_to include("'Not'") }
+      end
     end
 
     context 'when the first attempt is truncated to empty output (finish_reason length)' do

@@ -269,8 +269,8 @@ class LlmTaskRunner
     # The output is not quoted here: it is SDS-derived and this message reaches
     # the audit log and the user's job notification. Length locates the problem.
     raise Errors::LlmProviderError,
-          "LLM returned invalid JSON for task '#{@task_name}': #{e.message} " \
-          "(#{text.to_s.length} chars returned)"
+          "LLM returned invalid JSON for task '#{@task_name}' (#{e.message[/line \d+ column \d+/] || 'unparseable'}, " \
+          "#{text.to_s.length} chars returned)"
   end
 
   # Strip surrounding whitespace and a single ```json / ``` fence pair.
