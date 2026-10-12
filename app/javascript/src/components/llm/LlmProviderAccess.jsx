@@ -134,6 +134,8 @@ const ProviderAccessCard = ({ provider, expanded, onToggle, onChanged }) => {
   const [restrict, setRestrict] = useState(!!provider.restrict_models);
   const [models, setModels]     = useState([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  // Set by "Reload models", which asks past the server's cached copy of the list.
+  const [refreshModels, setRefreshModels] = useState(false);
   const [saving, setSaving]     = useState(false);
   const [status, setStatus]     = useState(null);
   const [saved, setSaved]       = useState(rulesKey(provider.grants, provider.restrict_models));
@@ -148,14 +150,19 @@ const ProviderAccessCard = ({ provider, expanded, onToggle, onChanged }) => {
     if (!expanded || modelsLoaded) return undefined;
 
     let live = true;
-    AdminFetcher.fetchInstitutionLlmModels(provider.id)
+    AdminFetcher.fetchInstitutionLlmModels(provider.id, { refresh: refreshModels })
       .then((list) => { if (live) setModels(Array.isArray(list) ? list : []); })
       .catch(() => { if (live) setModels([]); })
       .finally(() => { if (live) setModelsLoaded(true); });
     return () => { live = false; };
-  }, [expanded, modelsLoaded, provider.id]);
+  }, [expanded, modelsLoaded, provider.id, refreshModels]);
 
   const loadingModels = expanded && !modelsLoaded;
+
+  const reloadModels = () => {
+    setRefreshModels(true);
+    setModelsLoaded(false);
+  };
 
   const dirty = rulesKey(rules, restrict) !== saved;
 
@@ -280,6 +287,14 @@ const ProviderAccessCard = ({ provider, expanded, onToggle, onChanged }) => {
                   Reading the provider’s model list…
                 </span>
               )}
+              {modelsLoaded && models.length === 0 && (
+                <span className="text-muted small me-auto">
+                  The provider listed no models.
+                  <Button size="sm" variant="link" className="p-0 ms-1 align-baseline" onClick={reloadModels}>
+                    Reload models
+                  </Button>
+                </span>
+              )}
               <Button size="sm" variant="outline-primary" onClick={addRule} disabled={!canAddRule}>
                 <i className="fa fa-plus me-1" />
                 Add rule
@@ -339,10 +354,13 @@ const LlmProviderAccess = ({ providers, onChanged }) => {
   return (
     <div>
       {providers.map((provider) => (
-        // Remounting on a reload is deliberate: the card holds the saved rules
-        // as its own state, and a stale copy would show the wrong dirty mark.
+        // Remounting on a reload is deliberate: the card holds the saved rules and the model
+        // list as its own state, and the endpoint, protocol and API key decide that list.
         <ProviderAccessCard
-          key={`${provider.id}-${(provider.grants || []).length}-${provider.restrict_models}`}
+          key={[
+            provider.id, (provider.grants || []).length, provider.restrict_models,
+            provider.base_url, provider.api_protocol, provider.api_key_masked,
+          ].join('|')}
           provider={provider}
           expanded={openIds.includes(provider.id)}
           onToggle={() => toggle(provider.id)}
