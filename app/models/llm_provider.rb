@@ -105,6 +105,13 @@ class LlmProvider < ApplicationRecord
     models_for(user, [name]).any?
   end
 
+  # A model no rule names, on a provider where other models have rules. It is
+  # open by default, but may be an alias of a model a rule denies.
+  def unruled_model?(name)
+    rules = llm_provider_grants.reject(&:provider_rule?)
+    rules.any? && rules.none? { |rule| rule.model == name }
+  end
+
   private
 
   def base_url_reachable_by_users

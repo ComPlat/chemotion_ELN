@@ -65,10 +65,7 @@ class LlmProviderGrant < ApplicationRecord
   private
 
   def user_and_group_ids(user)
-    [user.id, *user.group_ids]
-  rescue StandardError
-    # A user model without group memberships still has to resolve to something.
-    [user.id]
+    user.respond_to?(:group_ids) ? [user.id, *user.group_ids] : [user.id]
   end
 
   def one_provider_rule_per_provider

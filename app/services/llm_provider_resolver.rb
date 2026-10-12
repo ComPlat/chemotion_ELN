@@ -154,6 +154,9 @@ class LlmProviderResolver
       return false if ((matrice.exclude_ids || []) & ids).any?
 
       matrice.enabled || ((matrice.include_ids || []) & ids).any?
+    rescue NoMethodError => e
+      Rails.logger.error("[LlmProviderResolver] #{matrice_name} gate check failed: #{e.message}")
+      false
     rescue NameError
       true
     end
@@ -207,12 +210,21 @@ class LlmProviderResolver
     # first model they may use. Blank when the rules leave them none — the
     # caller falls through rather than spending a request on a refusal.
     def institution_model_for(user, provider, asked = nil)
-      return asked if asked.present? && provider.model_allowed?(user, asked)
+      return asked if asked.present? && asked_model_allowed?(user, provider, asked)
       return provider.default_model if provider.model_allowed?(user, provider.default_model)
 
       # Only a provider whose rules actually deny the default gets this far, so
       # the (cached) catalogue lookup stays off the common path.
       institution_models_for(user, provider).first
+    end
+
+    # An unruled model is taken only when the provider lists it, so an alias
+    # cannot reach a model the rules deny.
+    def asked_model_allowed?(user, provider, asked)
+      return false unless provider.model_allowed?(user, asked)
+      return true unless provider.unruled_model?(asked)
+
+      institution_models_for(user, provider).include?(asked)
     end
 
     def model_only_override(user, mapping)

@@ -109,6 +109,29 @@ RSpec.describe LlmProviderResolver do
 
         expect(described_class.resolve(user: user, task_name: 'sds_extraction').model).to eq('kit.secret')
       end
+
+      # Rules name the dated ids a provider lists; an alias would match none of them.
+      def deny_dated_model_and_map(model)
+        create(:llm_provider_grant, llm_provider: open_provider, model: 'claude-sonnet-4-5-20250929',
+                                    exclude_ids: [user.id])
+        allow(LlmModelCatalog).to receive(:fetch).and_return(%w[claude-sonnet-4-5-20250929 claude-haiku-4-5-20251001])
+        create(:user_task_model_mapping, user: user, task_name: 'sds_extraction', model: model,
+                                         llm_provider: open_provider)
+      end
+
+      it 'refuses an unruled alias of a model the user was denied' do
+        deny_dated_model_and_map('claude-sonnet-4-5')
+
+        expect(described_class.resolve(user: user, task_name: 'sds_extraction').model)
+          .to eq(open_provider.default_model)
+      end
+
+      it 'keeps an unruled model the provider lists' do
+        deny_dated_model_and_map('claude-haiku-4-5-20251001')
+
+        expect(described_class.resolve(user: user, task_name: 'sds_extraction').model)
+          .to eq('claude-haiku-4-5-20251001')
+      end
     end
 
     describe '.institution_models_for' do
@@ -146,6 +169,14 @@ RSpec.describe LlmProviderResolver do
         allow(described_class).to receive(:institution_provider_allowed?).with(user).and_return(false)
 
         expect(described_class.institution_provider_for(user)).to be_nil
+      end
+    end
+
+    describe 'a gate check that fails unexpectedly' do
+      it 'denies rather than allows' do
+        allow(Matrice).to receive(:find_by).and_raise(NoMethodError, "undefined method `include_ids'")
+
+        expect(described_class.user_api_key_allowed?(user)).to be false
       end
     end
 
