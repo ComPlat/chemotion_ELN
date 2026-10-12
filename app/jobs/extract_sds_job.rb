@@ -63,6 +63,18 @@ class ExtractSdsJob < ApplicationJob
                         'Set one up in Profile → AI Settings, or ask your admin ' \
                         'to configure the institution provider.'
 
+  NOT_PERMITTED_MESSAGE = 'SDS extraction failed: you may not edit this sample.'
+
+  # Readable by anyone who can read the sample; the cause goes to the requesting user only.
+  FAILURE_MARKER_MESSAGE = 'SDS extraction did not complete.'
+
+  RUN_SQL = "chemical_data -> 0 -> 'extraction_run'"
+
+  # Free unless this job's own run has finished or may still be alive. Cf. .stale_before.
+  CLAIMABLE_SQL = "COALESCE(#{RUN_SQL} ->> 'job_id', '') <> :job_id OR " \
+                  "(#{RUN_SQL} ->> 'finished_at' IS NULL AND " \
+                  "(#{RUN_SQL} ->> 'started_at')::timestamptz < CAST(:stale_before AS timestamptz))"
+
   # Vendor product-info keys that may carry a locally stored SDS.
   VENDOR_INFO_KEYS = %w[merckProductInfo alfaProductInfo].freeze
 
@@ -76,15 +88,17 @@ class ExtractSdsJob < ApplicationJob
     chemical = Chemical.find_by(sample_id: sample_id)
     return fail_with("SDS extraction failed: no chemical record for sample #{sample_id}.") unless chemical
 
+    # Checked again here: access can be withdrawn while the job waits in the queue.
+    user = User.find_by(id: user_id)
+    return fail_with(NOT_PERMITTED_MESSAGE) unless ElementPolicy.new(user, Sample.find_by(id: sample_id)).update?
+
     file_path = sds_file_for(chemical, sheet_path)
     return fail_with('SDS extraction failed: no SDS file found for this chemical.') unless file_path
 
     # A second execution of this same job is doing the work already; bail out
     # before spending an LLM call on it.
     return unless claim_extraction(chemical)
-
-    user = User.find_by(id: user_id)
-    return fail_with(NO_PROVIDER_MESSAGE) unless user && provider_path_available?(user)
+    return fail_with(NO_PROVIDER_MESSAGE) unless provider_path_available?(user)
 
     run_with_provider(chemical, user, file_path)
   rescue StandardError => e
@@ -93,6 +107,11 @@ class ExtractSdsJob < ApplicationJob
 
   def max_attempts
     1
+  end
+
+  # A run started before this is dead: Delayed::Worker stops every job at max_run_time.
+  def self.stale_before
+    Delayed::Worker.max_run_time.ago
   end
 
   private
@@ -118,7 +137,7 @@ class ExtractSdsJob < ApplicationJob
     # rubocop:disable Rails/SkipsModelValidations -- deliberate: the claim must be
     # one atomic statement, and fires no validations or callbacks.
     rows = Chemical.where(id: chemical.id)
-                   .where("COALESCE(chemical_data -> 0 -> 'extraction_run' ->> 'job_id', '') <> ?", job_id.to_s)
+                   .where(CLAIMABLE_SQL, job_id: job_id.to_s, stale_before: self.class.stale_before.iso8601)
                    .update_all(["chemical_data = jsonb_set(chemical_data #- '{0,extraction_error}', " \
                                 "'{0,extraction_run}', ?::jsonb, true)", claim.to_json])
     # rubocop:enable Rails/SkipsModelValidations
@@ -139,8 +158,7 @@ class ExtractSdsJob < ApplicationJob
     return true if @duplicate
     return false unless @claimed
 
-    token = stored_run_token
-    return false if token.blank? || token == @run_token
+    return false if owns_run?(stored_run_token)
 
     Rails.logger.warn(
       "[ExtractSdsJob] sample #{@sample_id}: a newer extraction is in charge; " \
@@ -150,6 +168,11 @@ class ExtractSdsJob < ApplicationJob
   rescue StandardError => e
     Delayed::Worker.logger.error "ExtractSdsJob supersede-check error: #{e.message}"
     false
+  end
+
+  # A claimed run gives way once another run's token replaces its own.
+  def owns_run?(token)
+    !@claimed || token.blank? || token == @run_token
   end
 
   def stored_run_token
@@ -225,12 +248,13 @@ class ExtractSdsJob < ApplicationJob
 
     progress.progress = 90
     status[:stage] = 'updating_record'
-    update_chemical_data(
+    written = update_chemical_data(
       chemical,
       extraction_result,
       model_used: runner.model_used,
       requested_model: (runner.requested_model if runner.fell_back?),
     )
+    return unless written # a newer run owns the record; #superseded? keeps this one quiet
 
     @notification_message = "SDS extraction completed. Safety data has been updated for sample #{@sample_id}."
     @notification_level   = 'info'
@@ -303,13 +327,22 @@ class ExtractSdsJob < ApplicationJob
   # @param requested_model [String, nil] the task-specific model that was requested
   #   but was unavailable, when the runner fell back to the default model. nil when
   #   no fallback happened; lets the UI show "requested X, fell back to <model>".
+  # @return [Boolean] false when a newer run owns the record and nothing was written
   def update_chemical_data(chemical, extraction_result, model_used: nil, requested_model: nil)
-    # Re-read first: the record may have moved on while the LLM was answering,
-    # and merging onto a stale copy would drop that work.
-    chemical.reload
-    data  = chemical.chemical_data.deep_dup
-    entry = data[0] || {}
+    # with_lock re-reads the row and holds it, so no claim lands between the check and the write.
+    chemical.with_lock do
+      data  = chemical.chemical_data.is_a?(Array) ? chemical.chemical_data.deep_dup : []
+      entry = data[0].is_a?(Hash) ? data[0] : {}
+      next false unless owns_run?(entry.dig('extraction_run', 'token'))
 
+      merge_extraction(entry, extraction_result, model_used, requested_model)
+      data[0] = entry
+      chemical.update!(chemical_data: data)
+      true
+    end
+  end
+
+  def merge_extraction(entry, extraction_result, model_used, requested_model)
     # Safety phrases (H/P/EUH codes) from extracted data
     entry['safetyPhrases'] = (entry['safetyPhrases'] || {}).merge(build_safety_phrases(extraction_result))
 
@@ -320,8 +353,8 @@ class ExtractSdsJob < ApplicationJob
     entry['aiExtraction'] = extraction_metadata(extraction_result, model_used, requested_model)
     entry.delete('extraction_error') # clear any prior failure marker on success
 
-    data[0] = entry
-    chemical.update!(chemical_data: data)
+    run = entry['extraction_run']
+    run['finished_at'] = Time.current.iso8601 if run.is_a?(Hash) && run['token'] == @run_token
   end
 
   # Raw extraction metadata — used by the frontend AI result modal.
@@ -347,23 +380,24 @@ class ExtractSdsJob < ApplicationJob
     metadata.compact
   end
 
-  # Write a failure marker into chemical_data[0] so the frontend polling detects
-  # the error (via its changed +failed_at+) and resets the "Extracting…" button.
+  # Failure marker for ChemicalTab's polling, which watches +failed_at+. One statement,
+  # so it overwrites neither a concurrent write nor a newer run's claim.
   def persist_extraction_failure
     return unless @sample_id
 
-    chemical = Chemical.find_by(sample_id: @sample_id)
-    return unless chemical&.chemical_data.is_a?(Array) && chemical.chemical_data[0].is_a?(Hash)
-
-    data = chemical.chemical_data.deep_dup
-    data[0]['extraction_error'] = {
-      'message' => @notification_message,
-      'failed_at' => Time.current.iso8601,
-    }
+    now     = Time.current.iso8601
+    scope   = Chemical.where(sample_id: @sample_id).where("jsonb_typeof(chemical_data -> 0) = 'object'")
+    updated = "jsonb_set(chemical_data, '{0,extraction_error}', ?::jsonb)"
+    binds   = [{ 'message' => FAILURE_MARKER_MESSAGE, 'failed_at' => now }.to_json]
+    if @claimed
+      scope   = scope.where("COALESCE(#{RUN_SQL} ->> 'token', ?) = ?", @run_token, @run_token)
+      updated = "jsonb_set(#{updated}, '{0,extraction_run,finished_at}', to_jsonb(?::text))"
+      binds << now
+    end
     # rubocop:disable Rails/SkipsModelValidations -- deliberate: this writes only a
     # failure marker the frontend polls for, and must not fire validations or
     # callbacks on a chemical whose extraction just failed.
-    chemical.update_columns(chemical_data: data)
+    scope.update_all(["chemical_data = #{updated}", *binds])
     # rubocop:enable Rails/SkipsModelValidations
   rescue StandardError => e
     Delayed::Worker.logger.error "ExtractSdsJob failure-marker error: #{e.message}"
