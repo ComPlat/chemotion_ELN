@@ -4,14 +4,14 @@ import ReactFlow, {
   ReactFlowProvider, Controls, MiniMap, Background
 } from 'reactflow';
 import {
-  PredictionHelp, PredictionLoading, PredictionToolbar, isAllCollection
+  PredictionHelp, PredictionLoading, PredictionToolbar, ensureMlCollection, PredictionNodeCache
 } from 'src/apps/mydb/elements/details/predictions/PredictionUI';
 import DropTargetMolecule from 'src/apps/mydb/elements/details/predictions/dragNdrop';
 import {
   PredictionLegend, PredictionFlowContext, retroNodeTypes
 } from 'src/apps/mydb/elements/details/predictions/PredictionNodes';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import Reaction from 'src/models/Reaction';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import RetroActions from 'src/stores/alt/actions/RetroActions';
@@ -20,6 +20,9 @@ import RetroStore from 'src/stores/alt/stores/RetroStore';
 const FIT_VIEW_OPTIONS = { padding: 0.15 };
 
 class RetroContainer extends Component {
+  // The MobX root store, used to reload the sidebar collection tree.
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.initialState = {
@@ -41,6 +44,7 @@ class RetroContainer extends Component {
       onExpand: (node) => this.expandNode(node),
       onToggleFold: (id) => RetroActions.toggleFold(id),
     };
+    this.nodeCache = new PredictionNodeCache();
     this.flow = null;
     this.fitTimer = null;
   }
@@ -77,31 +81,26 @@ class RetroContainer extends Component {
   clickToReset = () => {
     this.setState(this.initialState);
     RetroActions.resetTree();
+    this.nodeCache.clear();
   };
 
   getSelectedNode = () => (
     this.state.nodes.find((node) => node.id === this.state.selectedId) || {}
   );
 
+  // Saves always go to the user's MLGenerated collection (created on first save).
   handleMoleculeSave = () => {
-    const { currentCollection } = UIStore.getState();
     const selectedNode = this.getSelectedNode();
     if (!selectedNode.data?.smiles || selectedNode.type === 'reaction') {
       NotificationActions.add.defer({ message: 'Select a Molecule Node', level: 'error' });
       return;
     }
-    if (isAllCollection(currentCollection)) {
-      NotificationActions.add.defer({
-        message: 'Select a collection',
-        level: 'error'
-      });
-      return;
-    }
-    RetroActions.handleCreateMolecule(currentCollection, selectedNode.data.smiles);
+    ensureMlCollection(this.context?.collections)
+      .then((collection) => RetroActions.handleCreateMolecule(collection, selectedNode.data.smiles))
+      .catch(() => {}); // already reported by ensureMlCollection
   };
 
   handleReactionSave = () => {
-    const { currentCollection } = UIStore.getState();
     const selectedNode = this.getSelectedNode();
 
     if (selectedNode.type !== 'reaction') {
@@ -112,44 +111,40 @@ class RetroContainer extends Component {
       return;
     }
 
-    if (isAllCollection(currentCollection)) {
-      NotificationActions.add.defer({
-        message: 'Select a collection',
-        level: 'error'
-      });
-      return;
-    }
+    ensureMlCollection(this.context?.collections)
+      .then((collection) => this.saveReaction(collection, selectedNode.data))
+      .catch(() => {}); // already reported by ensureMlCollection
+  };
 
+  // Every material is created as a new sample in `collection`, the product
+  // included, so the saved reaction is complete within MLGenerated.
+  saveReaction = (collection, reactionData) => {
     RetroActions.handleReactionReset();
 
-    const reactionSmiles = selectedNode.data.smiles;
-    const parts = reactionSmiles.split('>>');
+    const [reactants = '', products = ''] = reactionData.smiles.split('>>');
+    const reagents = reactionData.necessary_reagent || '';
 
-    const reactants = parts[0] || ''; // Reactants should always be present
-    const reagents = selectedNode.data.necessary_reagent || null;
-
-    const fetchSamples = (smilesString, sampleType) => {
+    const createSamples = (smilesString, sampleType) => {
       if (!smilesString) return Promise.resolve([]);
 
       return Promise.all(smilesString.split('.').map((smiles) => (
-        RetroActions.createSampleforReaction(currentCollection, smiles, sampleType)
+        RetroActions.createSampleforReaction(collection, smiles, sampleType)
           .catch((error) => {
-            console.error(`Error fetching sample for SMILES: ${smiles}`, error);
+            console.error(`Error creating sample for SMILES: ${smiles}`, error);
             return null; // Handle error gracefully
           })
       )));
     };
 
-    const fetchReactantSamples = fetchSamples(reactants, 'reactant');
-    const fetchReagentSamples = reagents ? fetchSamples(reagents, 'reagent') : Promise.resolve([]);
-
-    Promise.all([fetchReactantSamples, fetchReagentSamples]).then(([reactantSamples, reagentSamples]) => {
-      const newReaction = Reaction.buildEmpty(currentCollection.id);
-      // The product is the sample dropped onto the tree root.
-      const { sample } = RetroStore.getState();
+    Promise.all([
+      createSamples(reactants, 'reactant'),
+      createSamples(reagents, 'reagent'),
+      createSamples(products, 'product'),
+    ]).then(([reactantSamples, reagentSamples, productSamples]) => {
+      const newReaction = Reaction.buildEmpty(collection.id);
       newReaction.starting_materials = reactantSamples.filter(Boolean);
-      newReaction.products = sample?.id ? [sample] : [];
       newReaction.reagents = reagentSamples.filter(Boolean);
+      newReaction.products = productSamples.filter(Boolean);
 
       ElementActions.createReaction(newReaction);
     });
@@ -172,6 +167,7 @@ class RetroContainer extends Component {
 
   handleChange = (event) => {
     this.setState({ loading: true, selectedId: null });
+    this.nodeCache.clear();
     RetroActions.handleDrop(event);
   };
 
@@ -198,9 +194,7 @@ class RetroContainer extends Component {
     const selectedType = this.getSelectedNode().type;
     const isMoleculeSelected = selectedType === 'custom' || selectedType === 'root';
     // reactflow draws its selection from the nodes; mark the chosen one.
-    const shownNodes = selectedId
-      ? nodes.map((node) => (node.id === selectedId ? { ...node, selected: true } : node))
-      : nodes;
+    const shownNodes = this.nodeCache.shownNodes(nodes, selectedId);
 
     return (
       <div>
@@ -211,7 +205,7 @@ class RetroContainer extends Component {
               Perform retro synthesis. Drag and drop a sample into the drop field. Click a molecule and use
               Save Molecule to keep it, or click a reaction and use Save Reaction. Use + (or double-click a
               molecule) to find its precursors, and the arrow to hide or show a branch. Hover a box for details.
-              Everything is saved to the currently selected collection.
+              Everything is saved to your MLGenerated collection (created on first save).
             </PredictionHelp>
             <div className="dropzone">
               <DropTargetMolecule onChange={this.handleChange} />
@@ -221,7 +215,7 @@ class RetroContainer extends Component {
                 variant="outline-primary"
                 size="sm"
                 onClick={this.handleMoleculeSave}
-                title="Save the selected molecule to the current collection"
+                title="Save the selected molecule to the MLGenerated collection"
                 disabled={!success || !isMoleculeSelected}
               >
                 <i className="fa fa-floppy-o me-1" aria-hidden="true" />
@@ -231,7 +225,7 @@ class RetroContainer extends Component {
                 variant="outline-primary"
                 size="sm"
                 onClick={this.handleReactionSave}
-                title="Save the selected reaction to the current collection"
+                title="Save the selected reaction to the MLGenerated collection"
                 disabled={selectedType !== 'reaction'}
               >
                 <i className="fa fa-floppy-o me-1" aria-hidden="true" />
@@ -260,6 +254,7 @@ class RetroContainer extends Component {
                     edges={edges}
                     nodeTypes={retroNodeTypes}
                     nodeOrigin={[0, 0.5]}
+                    onNodesChange={this.nodeCache.onNodesChange}
                     nodesDraggable={false}
                     nodesConnectable={false}
                     zoomOnDoubleClick={false}

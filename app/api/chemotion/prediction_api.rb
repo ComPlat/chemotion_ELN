@@ -4,7 +4,29 @@ module Chemotion
       # return 401 unless current_user.matrix_check_by_name("reactionPrediction")
     # end
 
+    # Molecules and reactions saved from the prediction UI all go to this
+    # collection, created for the user on their first save.
+    ML_COLLECTION_LABEL = 'MLGenerated'.freeze
+
     resource :prediction do
+
+      resource :ml_collection do
+        desc 'Find or create the collection that prediction saves go to'
+        post do
+          created = false
+          collection = Collection.transaction do
+            # Lock the user row so concurrent first saves create only one collection.
+            current_user.lock!
+            current_user.collections.unlocked.order(:id).find_by(label: ML_COLLECTION_LABEL) || begin
+              created = true
+              Usecases::Collections::Create.new(current_user).perform!(
+                parent_id: nil, label: ML_COLLECTION_LABEL, inventory_id: nil,
+              )
+            end
+          end
+          { id: collection.id, label: collection.label, created: created }
+        end
+      end
 
       resource :products do
         desc 'Forward prediction'

@@ -4,12 +4,12 @@ import ReactFlow, {
   ReactFlowProvider, Controls, MiniMap, Background
 } from 'reactflow';
 import {
-  PredictionHelp, PredictionLoading, PredictionToolbar, isAllCollection
+  PredictionHelp, PredictionLoading, PredictionToolbar, ensureMlCollection, PredictionNodeCache
 } from 'src/apps/mydb/elements/details/predictions/PredictionUI';
 import {
   PredictionLegend, PredictionFlowContext, forwardNodeTypes
 } from 'src/apps/mydb/elements/details/predictions/PredictionNodes';
-import UIStore from 'src/stores/alt/stores/UIStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ForwardStore from 'src/stores/alt/stores/ForwardStore';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
@@ -20,6 +20,9 @@ const FIT_VIEW_OPTIONS = { padding: 0.15 };
 const NUM_RESULTS = 25;
 
 class ForwardContainer extends Component {
+  // The MobX root store, used to reload the sidebar collection tree.
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -33,6 +36,7 @@ class ForwardContainer extends Component {
       onDropSample: (label, event) => ForwardActions.handleChange(event.sample_id, { label }),
       onShowMore: () => ForwardActions.showMoreOutcomes(),
     };
+    this.nodeCache = new PredictionNodeCache();
     this.flow = null;
     this.fitTimer = null;
   }
@@ -67,6 +71,7 @@ class ForwardContainer extends Component {
   clickToReset = () => {
     this.setState({ selectedId: null });
     ForwardActions.resetForward();
+    this.nodeCache.clear();
   };
 
   getSelectedNode = () => (
@@ -96,21 +101,16 @@ class ForwardContainer extends Component {
     if (node.type === 'outcome') this.setState({ selectedId: node.id });
   };
 
+  // Saves always go to the user's MLGenerated collection (created on first save).
   handleMoleculeSave = () => {
-    const { currentCollection } = UIStore.getState();
     const selectedNode = this.getSelectedNode();
     if (selectedNode.type !== 'outcome') {
       NotificationActions.add.defer({ message: 'Select a predicted product', level: 'error' });
       return;
     }
-    if (isAllCollection(currentCollection)) {
-      NotificationActions.add.defer({
-        message: 'Select a collection',
-        level: 'error'
-      });
-      return;
-    }
-    ForwardActions.handleSave(currentCollection, selectedNode);
+    ensureMlCollection(this.context?.collections)
+      .then((collection) => ForwardActions.handleSave(collection, selectedNode))
+      .catch(() => {}); // already reported by ensureMlCollection
   };
 
   render() {
@@ -119,9 +119,7 @@ class ForwardContainer extends Component {
     } = this.state;
     const hasReactant = Boolean(inputs?.Reactant?.smiles);
     // reactflow draws its selection from the nodes; mark the chosen one.
-    const shownNodes = selectedId
-      ? nodes.map((node) => (node.id === selectedId ? { ...node, selected: true } : node))
-      : nodes;
+    const shownNodes = this.nodeCache.shownNodes(nodes, selectedId);
 
     return (
       <div>
@@ -132,7 +130,7 @@ class ForwardContainer extends Component {
               Perform single step forward synthesis. Drag and drop a sample onto Reactant, and optionally onto
               Reagent and Solvent (one sample each), then click Synthesize. The top 5 products are shown; use
               Show more for the next 5. Hover a product for its vendors and prices; click one and use Save
-              Molecule to save it to the currently selected collection.
+              Molecule to save it to your MLGenerated collection (created on first save).
             </PredictionHelp>
             <PredictionToolbar>
               <Button
@@ -150,7 +148,7 @@ class ForwardContainer extends Component {
                 size="sm"
                 onClick={this.handleMoleculeSave}
                 disabled={this.getSelectedNode().type !== 'outcome'}
-                title="Save the selected product to the current collection"
+                title="Save the selected product to the MLGenerated collection"
               >
                 <i className="fa fa-floppy-o me-1" aria-hidden="true" />
                 Save Molecule
@@ -168,6 +166,7 @@ class ForwardContainer extends Component {
                     edges={edges}
                     nodeTypes={forwardNodeTypes}
                     nodeOrigin={[0, 0.5]}
+                    onNodesChange={this.nodeCache.onNodesChange}
                     nodesDraggable={false}
                     nodesConnectable={false}
                     zoomOnDoubleClick={false}
