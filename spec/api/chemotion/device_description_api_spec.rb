@@ -139,17 +139,23 @@ describe Chemotion::DeviceDescriptionAPI do
     end
 
     context 'when the device description has a segment' do
+      let(:segment_properties) do
+        segment_klass.properties_release.deep_dup.tap do |properties|
+          properties['layers']['ontology_fields']['fields'].first['value'] = 'entered value'
+        end
+      end
       let!(:segment) do
         create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
-                         properties: segment_klass.properties_release)
+                         properties: segment_properties)
       end
 
-      it 'copies the segment to the split' do
+      it 'copies the segment with its field values to the split' do
         post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
 
         split_segments = device_description.reload.children.first.segments
         expect(split_segments.map(&:segment_klass_id)).to eq([segment_klass.id])
-        expect(split_segments.first.properties['layers']).to eq(segment.properties['layers'])
+        expect(split_segments.first.properties.dig('layers', 'ontology_fields', 'fields', 0, 'value'))
+          .to eq('entered value')
         expect(device_description.segments.reload).to eq([segment])
       end
     end
