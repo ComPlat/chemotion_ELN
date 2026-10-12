@@ -1284,6 +1284,73 @@ describe('ChemicalTab LLM property mapping', () => {
   });
 });
 
+describe('ChemicalTab LLM property mapping, values the sample cannot take', () => {
+  let llmSample;
+  let handleUpdateSample;
+  let notify;
+
+  const mapAi = (extractedProperties) => {
+    llmSample = Sample.buildEmpty(2);
+    handleUpdateSample = sinon.spy();
+    const instance = shallow(React.createElement(ChemicalTab, {
+      sample: llmSample,
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample,
+      editChemical: sinon.spy(),
+    })).instance();
+    notify = sinon.stub(instance, 'notify');
+    instance.mapLlmPropertiesToSample(new Chemical({ _chemical_data: [{ extractedProperties }] }));
+  };
+
+  beforeEach(() => { sinon.stub(ElementActions, 'updateSample'); });
+  afterEach(() => { sinon.restore(); });
+
+  it('writes a flash point in Celsius, not the Fahrenheit conversion after it', () => {
+    mapAi({ flash_point: '11 °C (52 °F)' });
+
+    expect(llmSample.xref.flash_point).toEqual({ unit: '°C', value: 11 });
+  });
+
+  it('leaves a boiling point given in Fahrenheit alone', () => {
+    mapAi({ boiling_point: '148 °F (64 °C)' });
+
+    expect(llmSample.boiling_point_lowerbound).toBeFalsy();
+  });
+
+  [
+    '790 kg/m³ at 20 °C',
+    'at 20 °C: 0.79 g/cm³',
+    'Relative density 2.7 (air = 1)',
+  ].forEach((density) => {
+    it(`leaves the density alone for "${density}"`, () => {
+      mapAi({ density });
+
+      expect(llmSample.density).toEqual(0);
+    });
+  });
+
+  it('saves nothing and says which fields it left out when none fits', () => {
+    mapAi({ boiling_point: '148 °F (64 °C)', density: '790 kg/m³ at 20 °C' });
+
+    expect(handleUpdateSample.called).toBe(false);
+    expect(ElementActions.updateSample.called).toBe(false);
+    expect(notify.firstCall.args[0].message)
+      .toEqual(expect.stringContaining('Not in a unit the sample takes: boiling point, density'));
+  });
+
+  it('saves what fits and reports both', () => {
+    mapAi({ flash_point: '11 °C (52 °F)', density: '790 kg/m³ at 20 °C' });
+
+    expect(handleUpdateSample.calledOnceWith(llmSample)).toBe(true);
+    expect(ElementActions.updateSample.calledOnce).toBe(true);
+    const { message } = notify.firstCall.args[0];
+    expect(message).toEqual(expect.stringContaining('Sample properties set: flash point'));
+    expect(message).toEqual(expect.stringContaining('Not in a unit the sample takes: density'));
+  });
+});
+
 describe('ChemicalTab AI extraction polling', () => {
   // A bare instance: the polling chain is instance state and timers, and a renderer
   // would replace the context the toast goes through on every setState.
@@ -1337,6 +1404,170 @@ describe('ChemicalTab AI extraction polling', () => {
 
     expect(instance.state.loadingExtractSds).toBe(false);
     expect(toasts().called).toBe(false);
+  });
+});
+
+describe('ChemicalTab AI extraction run', () => {
+  const sheetPath = '/safety_sheets/merck/33009_0123456789abcdef.pdf';
+  const finished = () => createChemical([{
+    aiExtraction: { extracted_at: '2026-10-09T10:00:00Z' },
+    extractedProperties: { form: 'liquid' },
+  }]);
+  const busy = () => Object.assign(new Error('An extraction is already running for this sample.'), { status: 409 });
+
+  let clock;
+  let instance;
+  let handleUpdateSample;
+  let fetchChemical;
+  let notify;
+
+  // Promise callbacks are not timers, so this drains them while setTimeout stays faked.
+  const flush = () => new Promise((resolve) => { setImmediate(resolve); });
+  const deferred = () => {
+    let resolve;
+    let reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+  };
+
+  // A bare instance, as above: React drops a setState after unmount, where the shallow
+  // renderer throws and would end the continuation before the step under test.
+  const closeTab = () => instance.componentWillUnmount();
+
+  beforeEach(() => {
+    clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    fetchChemical = sinon.stub(ChemicalFetcher, 'fetchChemical').resolves(createChemical([{}]));
+    sinon.stub(ElementActions, 'updateSample');
+    handleUpdateSample = sinon.spy();
+    instance = new ChemicalTab({
+      sample: Sample.buildEmpty(2),
+      type: 'sample',
+      saveInventory: false,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample,
+      editChemical: sinon.spy(),
+    });
+    instance.setState = (patch) => {
+      instance.state = { ...instance.state, ...patch };
+    };
+    notify = sinon.stub(instance, 'notify');
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('saves nothing when the result arrives after the tab closed', async () => {
+    const poll = deferred();
+    fetchChemical.returns(poll.promise);
+    instance.startExtractionPolling(1, null, null, 0);
+    clock.tick(3000);
+
+    closeTab();
+    poll.resolve(finished());
+    await flush();
+
+    expect(handleUpdateSample.called).toBe(false);
+    expect(ElementActions.updateSample.called).toBe(false);
+  });
+
+  it('keeps one polling chain when a new run starts while the last one still polls', async () => {
+    sinon.stub(ChemicalFetcher, 'extractSds').resolves({});
+    instance.startExtractionPolling(1, null, null, 30);
+    expect(instance.state.loadingExtractSds).toBe(false);
+
+    await instance.extractWithAi(sheetPath);
+    fetchChemical.resolves(finished());
+    clock.tick(3000);
+    await flush();
+
+    expect(fetchChemical.callCount).toEqual(2); // the run's baseline read and one poll
+    expect(ElementActions.updateSample.calledOnce).toBe(true);
+  });
+
+  it('does not let a retired chain release the button of the run that replaced it', async () => {
+    const inFlight = deferred();
+    fetchChemical.returns(inFlight.promise);
+    instance.startExtractionPolling(1, null, null, 139);
+    clock.tick(3000);
+
+    fetchChemical.resolves(createChemical([{}]));
+    sinon.stub(ChemicalFetcher, 'extractSds').resolves({});
+    await instance.extractWithAi(sheetPath);
+    inFlight.reject(new Error('HTTP 502'));
+    await flush();
+
+    expect(instance.state.loadingExtractSds).toBe(true);
+  });
+
+  it('drops the answer a retired chain still had in flight', async () => {
+    const inFlight = deferred();
+    fetchChemical.returns(inFlight.promise);
+    instance.startExtractionPolling(1, null, null, 30);
+    clock.tick(3000);
+
+    fetchChemical.resolves(createChemical([{}]));
+    sinon.stub(ChemicalFetcher, 'extractSds').resolves({});
+    await instance.extractWithAi(sheetPath);
+    inFlight.resolve(finished());
+    await flush();
+    fetchChemical.resolves(finished());
+    clock.tick(3000);
+    await flush();
+
+    expect(ElementActions.updateSample.calledOnce).toBe(true);
+  });
+
+  it('starts no polling when the job is queued after the tab closed', async () => {
+    const submit = deferred();
+    sinon.stub(ChemicalFetcher, 'extractSds').returns(submit.promise);
+    const run = instance.extractWithAi(sheetPath);
+    await flush();
+
+    closeTab();
+    submit.resolve({});
+    await run;
+
+    expect(clock.countTimers()).toEqual(0);
+    expect(notify.called).toBe(false);
+  });
+
+  it('stays quiet when the submit fails after the tab closed', async () => {
+    const submit = deferred();
+    sinon.stub(ChemicalFetcher, 'extractSds').returns(submit.promise);
+    const run = instance.extractWithAi(sheetPath);
+    await flush();
+
+    closeTab();
+    submit.reject(new Error('HTTP 502'));
+    await run;
+
+    expect(notify.called).toBe(false);
+  });
+
+  it('follows the run already going instead of reporting a failure', async () => {
+    sinon.stub(ChemicalFetcher, 'extractSds').rejects(busy());
+    const startPolling = sinon.spy(instance, 'startExtractionPolling');
+
+    await instance.extractWithAi(sheetPath);
+
+    expect(notify.lastCall.args[0]).toEqual(expect.objectContaining({
+      level: 'info', message: 'An extraction is already running for this sample.',
+    }));
+    expect(startPolling.calledOnce).toBe(true);
+    expect(instance.state.loadingExtractSds).toBe(true);
+  });
+
+  it('resets the button and polls nothing when the server refuses the job', async () => {
+    const refused = Object.assign(new Error('No LLM extraction service is configured.'), { status: 503 });
+    sinon.stub(ChemicalFetcher, 'extractSds').rejects(refused);
+    const startPolling = sinon.spy(instance, 'startExtractionPolling');
+
+    await instance.extractWithAi(sheetPath);
+
+    expect(instance.state.loadingExtractSds).toBe(false);
+    expect(notify.lastCall.args[0]).toEqual(expect.objectContaining({
+      level: 'error', message: 'No LLM extraction service is configured.',
+    }));
+    expect(startPolling.called).toBe(false);
   });
 });
 

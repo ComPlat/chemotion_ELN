@@ -10,7 +10,7 @@ import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
-import { parseSdsNumber, parseSdsRange, parseSdsTemperature } from 'src/utilities/sdsValueParser';
+import { parseSdsQuantity } from 'src/utilities/sdsValueParser';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
@@ -562,6 +562,7 @@ export default class ChemicalTab extends React.Component {
 
     return this.extractionBaseline().then(({ extractedAt, failedAt }) => (
       ChemicalFetcher.extractSds(sample.id, sheetPath).then(() => {
+        if (this.unmounted) return;
         this.notify({
           title: 'AI extraction running',
           message: 'Reading the safety data sheet with AI. The results appear here when it is done.',
@@ -570,8 +571,21 @@ export default class ChemicalTab extends React.Component {
           autoDismiss: 5,
         });
         this.startExtractionPolling(sample.id, extractedAt, failedAt, 0);
+      }, (error) => {
+        // 409: a run is already going for this sample, so its result is followed instead.
+        if (error?.status !== 409) throw error;
+        if (this.unmounted) return;
+        this.notify({
+          title: 'AI extraction already running',
+          message: error.message,
+          level: 'info',
+          position: 'tc',
+          autoDismiss: 5,
+        });
+        this.startExtractionPolling(sample.id, extractedAt, failedAt, 0);
       })
     )).catch((error) => {
+      if (this.unmounted) return;
       this.setState({ loadingExtractSds: false, aiExtractingSheet: '' });
       this.notify({
         title: 'AI extraction failed',
@@ -583,9 +597,16 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
+  // One chain at a time: starting one retires the last, so a result is mapped and saved once.
+  startExtractionPolling = (sampleId, prevExtractedAt, prevFailedAt, attempt) => {
+    const chain = {};
+    this._extractionPoll = chain;
+    this.pollExtraction(chain, sampleId, prevExtractedAt, prevFailedAt, attempt);
+  };
+
   // Polls until extracted_at or extraction_error.failed_at changes. The button stops
   // waiting at SLOW_AFTER_ATTEMPTS, the job's notification takes over, and polling goes on quietly.
-  startExtractionPolling = (sampleId, prevExtractedAt, prevFailedAt, attempt) => {
+  pollExtraction = (chain, sampleId, prevExtractedAt, prevFailedAt, attempt) => {
     const POLL_INTERVAL = 3000;
     const SLOW_AFTER_ATTEMPTS = 30; // 90 s
     // Two models at config/llm_tasks/sds_extraction.yml's timeout_seconds, plus the queue.
@@ -609,11 +630,17 @@ export default class ChemicalTab extends React.Component {
       });
     }
 
+    // A closed tab or a newer chain owns the outcome, so this chain's answers are dropped.
+    const current = () => !this.unmounted && this._extractionPoll === chain;
+    const next = () => this.pollExtraction(chain, sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+
     this._extractionPollTimer = setTimeout(() => {
       const { type, sample } = this.props;
-      if (!sample || this.unmounted) { this.setState(stopWaiting); return; }
+      if (!current()) return;
+      if (!sample) { this.setState(stopWaiting); return; }
 
       ChemicalFetcher.fetchChemical(sampleId, type).then((chemical) => {
+        if (!current()) return;
         const data = chemical?._chemical_data?.[0];
         const newExtractedAt = data?.aiExtraction?.extracted_at ?? null;
         const newFailedAt = data?.extraction_error?.failed_at ?? null;
@@ -625,10 +652,10 @@ export default class ChemicalTab extends React.Component {
           // ExtractSdsJob's own notification carries the error, so no toast here.
           this.setState({ chemical, ...stopWaiting });
         } else {
-          this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+          next();
         }
       }).catch(() => {
-        this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+        if (current()) next();
       });
     }, POLL_INTERVAL);
   };
@@ -647,8 +674,7 @@ export default class ChemicalTab extends React.Component {
       parts.push('The sheet prints no codes, so they were matched from the statement wording; check them');
     }
     if (fromWording && unmatched) parts.push(`${unmatched} statements matched no known phrase`);
-    if (written.length) parts.push(`Sample properties set: ${written.join(', ')}`);
-    if (skipped.length) parts.push(`Not in a unit the sample takes: ${skipped.join(', ')}`);
+    parts.push(...ChemicalTab.propertySummary({ written, skipped }));
 
     return {
       title: 'Read from the safety data sheet',
@@ -656,6 +682,13 @@ export default class ChemicalTab extends React.Component {
       level: fromWording ? 'warning' : 'success',
       position: 'tc',
     };
+  }
+
+  static propertySummary({ written, skipped }) {
+    const parts = [];
+    if (written.length) parts.push(`Sample properties set: ${written.join(', ')}`);
+    if (skipped.length) parts.push(`Not in a unit the sample takes: ${skipped.join(', ')}`);
+    return parts;
   }
 
   // The extractor omits rather than guesses, so say which step stopped short.
@@ -807,16 +840,17 @@ export default class ChemicalTab extends React.Component {
   /* eslint-disable prefer-destructuring */
   // Returns the labels written and those whose unit the sample field cannot hold.
   // Only a Sample has the range and xref fields these map onto; an SBMM sample gets none.
-  mapToSampleProperties(properties) {
+  mapToSampleProperties(properties, parse = parseSheetQuantity) {
     const { sample, handleUpdateSample } = this.props;
     const written = [];
     const skipped = [];
     if (!(sample instanceof Sample)) return { written, skipped };
+    sample.xref ||= {};
 
     // Melting, boiling and flash point fields are Celsius only.
     const celsius = (key, label) => {
       if (!properties[key]) return null;
-      const quantity = parseSheetQuantity(properties[key]);
+      const quantity = parse(properties[key]);
       if (quantity?.unit === '°C') return quantity;
       skipped.push(label);
       return null;
@@ -836,7 +870,7 @@ export default class ChemicalTab extends React.Component {
     }
 
     if (properties.density) {
-      const density = parseSheetQuantity(properties.density);
+      const density = parse(properties.density);
       if (density && density.low === density.high && DENSITY_UNITS.includes(density.unit)) {
         sample.density = density.low;
         written.push('density');
@@ -845,7 +879,8 @@ export default class ChemicalTab extends React.Component {
       }
     }
 
-    [['form', 'form'], ['color', 'color'], ['refractive_index', 'refractive index'], ['solubility', 'solubility']]
+    [['form', 'form'], ['color', 'color'], ['refractive_index', 'refractive index'], ['solubility', 'solubility'],
+      ['purity', 'purity']]
       .forEach(([key, label]) => {
         if (!properties[key]) return;
         sample.xref[key] = properties[key];
@@ -859,7 +894,7 @@ export default class ChemicalTab extends React.Component {
     return { written, skipped };
   }
 
-  // Cf. mapToSampleProperties, which maps the built-in reader's result.
+  // The AI's wording goes through the built-in reader's unit checks, and is reported the same way.
   mapLlmPropertiesToSample(chemical) {
     const { sample, handleUpdateSample } = this.props;
     if (!(sample instanceof Sample) || !handleUpdateSample) return;
@@ -867,26 +902,15 @@ export default class ChemicalTab extends React.Component {
     const properties = chemical?._chemical_data?.[0]?.extractedProperties;
     if (!properties || Object.keys(properties).length === 0) return;
 
-    sample.xref ||= {};
-
-    ['boiling_point', 'melting_point'].forEach((key) => {
-      const range = parseSdsRange(properties[key]);
-      if (range) sample.updateRange(key, range.lower, range.upper);
+    const mapped = this.mapToSampleProperties(properties, parseSdsQuantity);
+    const parts = ChemicalTab.propertySummary(mapped);
+    if (!parts.length) return;
+    this.notify({
+      title: 'AI extraction applied to the sample',
+      message: `${parts.join('. ')}.`,
+      level: mapped.written.length ? 'success' : 'warning',
+      position: 'tc',
     });
-
-    const flashPoint = parseSdsTemperature(properties.flash_point);
-    if (flashPoint) sample.xref.flash_point = { unit: flashPoint.unit, value: flashPoint.value };
-
-    const density = parseSdsNumber(properties.density);
-    if (density !== null) sample.density = density;
-
-    // Free-text sample fields: the sheet's wording is the value.
-    ['form', 'color', 'refractive_index', 'solubility', 'purity'].forEach((key) => {
-      if (properties[key]) sample.xref[key] = properties[key];
-    });
-
-    handleUpdateSample(sample);
-    ElementActions.updateSample(new Sample(sample), false);
   }
 
   chemicalStatus(data) {

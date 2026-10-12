@@ -97,6 +97,7 @@ export default class ChemicalFetcher {
   }
 
   // Queues the AI extraction job; sheetPath picks the saved sheet, else the job takes the last one.
+  // A refusal rejects with the server's reason and the HTTP status (409: a run is already going).
   static extractSds(sampleId, sheetPath) {
     return fetch('/api/v1/chemicals/extract_sds', {
       credentials: 'same-origin',
@@ -106,13 +107,11 @@ export default class ChemicalFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ sample_id: sampleId, ...(sheetPath ? { path: sheetPath } : {}) })
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      return response.json().then((errorData) => {
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      });
-    });
+    }).then((response) => response.json().catch(() => ({})).then((body) => {
+      if (response.ok && !body.error) return body;
+      const error = new Error(body.error || `HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }));
   }
 }
