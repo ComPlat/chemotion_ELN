@@ -178,7 +178,7 @@ class Material extends Component {
         disabled={
           !permitOn(this.props.reaction)
           || (this.props.materialGroup === 'products'
-            || (!material.reference && this.props.lockEquivColumn))
+            || (!this.isReference(material) && this.props.lockEquivColumn))
         }
         onChange={(loading) => this.handleLoadingChange(loading)}
       />
@@ -264,8 +264,8 @@ class Material extends Component {
         <Form.Check
           type="radio"
           disabled={!permitOn(reaction)}
-          name="reference"
-          checked={material.reference}
+          name={reaction.isMultiStep?.() ? `reference-${material.reaction_step_id}` : 'reference'}
+          checked={this.isReference(material)}
           onChange={(e) => this.handleReferenceChange(e)}
           size="sm"
           className="m-1"
@@ -415,7 +415,7 @@ class Material extends Component {
           precision={4}
           value={material.equivalent}
           disabled={
-            !permitOn(reaction) || ((((material.reference || false)
+            !permitOn(reaction) || ((((this.isReference(material) || false)
             && material.equivalent) !== false) || lockEquivColumn)
           }
           onChange={(e) => this.handleEquivalentChange(e)}
@@ -465,7 +465,7 @@ class Material extends Component {
         onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(material, field)}
         disableSpecificField={disableWeightPercentageField}
         disabled={
-          !permitOn(reaction) || material.reference || lockEquivColumn
+          !permitOn(reaction) || this.isReference(material) || lockEquivColumn
         }
         weightPercentageReference={material.weight_percentage_reference}
       />
@@ -699,7 +699,7 @@ class Material extends Component {
             disabled={!permitOn(reaction)
               || isAmountDisabledByWeightPercentage
               || ((materialGroup !== 'products')
-                && !material.reference && lockEquivColumn)
+                && !this.isReference(material) && lockEquivColumn)
               || material.gas_type === 'gas'}
             onChange={(e) => this.handleAmountUnitChange(e, material.amount_l, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
@@ -724,7 +724,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
+      || (!this.isReference(material) && lockEquivColumn && materialGroup !== 'products');
 
     return (
       <NumeralInputWithUnitsCompo
@@ -752,7 +752,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
+      || (!this.isReference(material) && lockEquivColumn && materialGroup !== 'products');
 
     // Check if activity is the active unit
     // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
@@ -1129,6 +1129,11 @@ class Material extends Component {
     return this.material().id;
   }
 
+  isReference(material) {
+    const { reaction } = this.props;
+    return reaction.isMultiStep?.() ? reaction.isReference(material) : material.reference;
+  }
+
   material() {
     const { material } = this.props;
 
@@ -1162,7 +1167,7 @@ class Material extends Component {
             disabled={
               isAmountDisabledByWeightPercentage
               || !permitOn(reaction)
-              || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
+              || (materialGroup !== 'products' && !this.isReference(material) && lockEquivColumn)
               || material.gas_type === 'feedstock'
               || material.gas_type === 'gas'
             }
@@ -1732,7 +1737,7 @@ class Material extends Component {
 
     const innerClassNames = [
       'reaction-material__nested-radio-inner',
-      material.reference ? 'checked' : '',
+      this.isReference(material) ? 'checked' : '',
       isDisabled ? 'disabled' : ''
     ].filter(Boolean).join(' ');
 
@@ -1786,7 +1791,7 @@ class Material extends Component {
             onKeyDown={handleKeyDown(handleInnerClick)}
             tabIndex={0}
             role="radio"
-            aria-checked={material.reference}
+            aria-checked={this.isReference(material)}
             aria-label="Molar reference"
           />
         </div>

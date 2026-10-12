@@ -54,6 +54,14 @@ const isSameMaterial = (first, second) => (
   && isSbmmSample(first) === isSbmmSample(second)
 );
 
+const referenceFor = (reaction, sample) => (
+  reaction.isMultiStep?.() ? reaction.referenceFor(sample) : reaction.referenceMaterial
+);
+
+const isReference = (reaction, sample) => (
+  reaction.isMultiStep?.() ? reaction.isReference(sample) : sample.reference
+);
+
 export default class ReactionDetailsScheme extends React.Component {
   static contextType = StoreContext;
   constructor(props) {
@@ -383,19 +391,20 @@ export default class ReactionDetailsScheme extends React.Component {
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
     // only when no reference material exists (regular or SBMM) triggers updatedReactionForReferenceChange
     const referenceRelatedGroup = ['starting_materials', 'reactants'];
+    const inFirstStep = (m) => !reaction.isMultiStep?.() || !reaction.isLaterStep(reaction.stepOf(m));
     if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
       // Determine which array to use: reactants may include SBMM samples, so use reactantsWithSbmm
-      const materialsArray = materialGroup === 'reactants'
+      const materialsArray = (materialGroup === 'reactants'
         ? reaction.reactantsWithSbmm
-        : reaction[materialGroup];
+        : reaction[materialGroup]).filter(inFirstStep);
 
       if (materialsArray.length === 0) {
         // No materials left in the deleted group, try to set reference from the other group
         const refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
         // When looking for alternative reference in 'reactants', use reactantsWithSbmm
-        const refMaterialsArray = refMaterialGroup === 'reactants'
+        const refMaterialsArray = (refMaterialGroup === 'reactants'
           ? reaction.reactantsWithSbmm
-          : reaction[refMaterialGroup];
+          : reaction[refMaterialGroup]).filter(inFirstStep);
         if (refMaterialsArray.length > 0) {
           const nextReferenceSample = refMaterialsArray[0];
           const event = {
@@ -426,6 +435,7 @@ export default class ReactionDetailsScheme extends React.Component {
       this.updatedReactionForCatalystDeletion();
     }
 
+    this.recalculateLaterSteps();
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -719,18 +729,53 @@ export default class ReactionDetailsScheme extends React.Component {
       return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
     }
 
+    const step = reaction.isMultiStep?.() && (changeEvent.stepId != null
+      ? reaction.reaction_steps.find((entry) => entry.id === changeEvent.stepId)
+      : reaction.stepOf(sample));
+    if (step && reaction.isLaterStep(step)) {
+      reaction.setStepReference(step, sampleID);
+      this.recalculateStepEquivalents(step);
+      return reaction;
+    }
+
     if (isSbmm) {
       reaction.markSbmmSampleAsReference(sampleID);
     } else {
       reaction.markSampleAsReference(sampleID);
     }
 
-    return this.updatedReactionWithSample(
+    const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForReferenceChange.bind(this),
       sample,
       undefined,
       true
     );
+    this.recalculateLaterSteps();
+    return updatedReaction;
+  }
+
+  recalculateLaterSteps() {
+    const { reaction } = this.props;
+    if (!reaction.isMultiStep?.()) return;
+    reaction.reaction_steps
+      .filter((entry) => !entry._destroy && reaction.isLaterStep(entry))
+      .forEach((entry) => this.recalculateStepEquivalents(entry));
+  }
+
+  recalculateStepEquivalents(step) {
+    const { reaction } = this.props;
+    const referenceMaterial = reaction.stepReference(step);
+    if (!referenceMaterial) return;
+    ['starting_materials', 'reactants', 'solvents', 'products'].forEach((materialGroup) => {
+      reaction.materialsForStep(materialGroup, step.id).forEach((sample) => {
+        sample.reference = false;
+        if (sample === referenceMaterial) {
+          sample.equivalent = 1.0;
+        } else {
+          this.updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup);
+        }
+      });
+    });
   }
 
   /**
@@ -1008,7 +1053,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
     updatedSample.weight_percentage = weightPercentage;
     if (weightPercentage == null || weightPercentage === 0) {
-      const { referenceMaterial } = reaction;
+      const referenceMaterial = referenceFor(reaction, updatedSample);
       if (referenceMaterial?.amount_mol) {
         updatedSample.equivalent = updatedSample.amount_mol / referenceMaterial.amount_mol;
       }
@@ -1057,7 +1102,7 @@ export default class ReactionDetailsScheme extends React.Component {
       if (!updatedSample.gas_phase_data) {
         updatedSample.gas_phase_data = null;
       }
-      const { referenceMaterial } = reaction;
+      const referenceMaterial = referenceFor(reaction, updatedSample);
       const stoichiometryCoeff = (updatedSample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (referenceMaterial && stoichiometryCoeff) {
         updatedSample = this.calculateEquivalentForProduct(updatedSample, referenceMaterial, stoichiometryCoeff);
@@ -1243,7 +1288,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // If the updated sample is the reference material, update equivalents of all other samples
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
     // other samples' equivalents are recalculated, just like when amount_g or amount_l changes
-    if (reaction.referenceMaterial && isSameMaterial(updatedSample, reaction.referenceMaterial)) {
+    const referenceMaterial = referenceFor(reaction, updatedSample);
+    if (referenceMaterial && isSameMaterial(updatedSample, referenceMaterial)) {
       return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
     }
 
@@ -1332,7 +1378,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // Calculate equivalent relative to the reference material since the amount_mol gets updated
-    const referenceMaterial = reaction?.referenceMaterial;
+    const referenceMaterial = reaction && referenceFor(reaction, updatedSample);
     if (referenceMaterial?.amount_mol > 0) {
       updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
     }
@@ -1607,9 +1653,9 @@ export default class ReactionDetailsScheme extends React.Component {
     ];
 
     materialsToUpdate.forEach((material) => {
-      if (material.reference || !material.amount_mol) return;
+      if (isReference(reaction, material) || !material.amount_mol) return;
 
-      const { referenceMaterial } = reaction;
+      const referenceMaterial = referenceFor(reaction, material);
       if (!referenceMaterial) return;
 
       material.equivalent = referenceMaterial.amount_mol === 0
@@ -1762,12 +1808,12 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const { reaction } = this.props;
-    const { referenceMaterial } = reaction;
     const { lockEquivColumn } = this.state;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     let stoichiometryCoeff = 1.0;
 
     return samples.map((sample) => {
+      const referenceMaterial = referenceFor(reaction, sample);
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
 
       // If equivalents are locked and this is the reference sample,
@@ -1777,7 +1823,7 @@ export default class ReactionDetailsScheme extends React.Component {
       if (referenceMaterial) {
         const isUpdatedSample = isSameMaterial(sample, updatedSample);
         if (isUpdatedSample) {
-          if (!updatedSample.reference && referenceMaterial.amount_value) {
+          if (!isReference(reaction, updatedSample) && referenceMaterial.amount_value) {
             if (materialGroup === 'products') {
               if (updatedSample.contains_residues && updatedSample.gas_type !== 'gas') {
                 const massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
@@ -1792,7 +1838,7 @@ export default class ReactionDetailsScheme extends React.Component {
               } else if (!lockEquivColumn) {
                 if (referenceMaterial.amount_mol > 0) {
                   sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-                } else if (!sample.reference) {
+                } else if (!isReference(reaction, sample)) {
                   // Set equivalent to 0 when reference material has no values (amount_mol = 0)
                   sample.equivalent = 0.0;
                 }
@@ -1829,7 +1875,7 @@ export default class ReactionDetailsScheme extends React.Component {
               // yield taking into account stoichiometry:
               if (referenceMaterial.amount_mol > 0) {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-              } else if (!sample.reference) {
+              } else if (!isReference(reaction, sample)) {
                 // Set equivalent to 0 when reference material has no values (amount_mol = 0)
                 sample.equivalent = 0.0;
               }
@@ -1851,7 +1897,7 @@ export default class ReactionDetailsScheme extends React.Component {
         // so the solvent still scales from its (now valid) equivalent under lock.
         if ((materialGroup === 'starting_materials'
           || materialGroup === 'reactants'
-          || materialGroup === 'solvents') && !sample.reference && !lockEquivColumn) {
+          || materialGroup === 'solvents') && !isReference(reaction, sample) && !lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
           if (referenceMaterial.amount_mol > 0) {
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
@@ -1977,11 +2023,12 @@ export default class ReactionDetailsScheme extends React.Component {
     materialGroup,
     { isEquivalentEdit = false } = {}
   ) {
-    const { reaction: { referenceMaterial } } = this.props;
-    const referenceAmountMol = Number(referenceMaterial?.amount_mol);
-    const hasReferenceAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol > 0;
+    const { reaction } = this.props;
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
+      const referenceMaterial = referenceFor(reaction, sample);
+      const referenceAmountMol = Number(referenceMaterial?.amount_mol);
+      const hasReferenceAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol > 0;
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       const isUpdatedSample = isSameMaterial(sample, updatedSample);
       if (isUpdatedSample && updatedSample.equivalent != null) {
@@ -2001,7 +2048,7 @@ export default class ReactionDetailsScheme extends React.Component {
         /* eslint-disable no-param-reassign, no-unused-expressions */
         if (materialGroup === 'products') {
           sample = this.calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff);
-        } else if (sample.reference) {
+        } else if (isReference(reaction, sample)) {
           // NB: sample equivalent independent of coeff
           sample.equivalent = 1;
         } else if (hasReferenceAmountMol) {
@@ -2045,7 +2092,7 @@ export default class ReactionDetailsScheme extends React.Component {
         } else {
           sample.weight_percentage = updatedSample.weight_percentage;
           if (updatedSample.weight_percentage == null || updatedSample.weight_percentage === 0) {
-            sample.equivalent = sample.amount_mol / reaction.referenceMaterial.amount_mol;
+            sample.equivalent = sample.amount_mol / referenceFor(reaction, sample).amount_mol;
           }
         }
       }
@@ -2103,28 +2150,34 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.equivalent = 1.0;
         sample.reference = true;
       } else {
-        // Both Sample and SequenceBasedMacromoleculeSample have amount_mol getter
-        const sampleAmountMol = sample.amount_mol;
-        const referenceAmountMol = referenceMaterial.amount_mol;
-
-        if (sample.amount_value || sampleAmountMol) {
-          if (referenceMaterial && referenceAmountMol > 0) {
-            if (materialGroup === 'products') {
-              const refCoeff = referenceMaterial.coefficient || 1;
-              const sampleCoeff = sample.coefficient || 1;
-              sample.equivalent = (sampleAmountMol * refCoeff) / (referenceAmountMol * sampleCoeff);
-            } else {
-              sample.equivalent = sampleAmountMol / referenceAmountMol;
-            }
-          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
-            // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
-            sample.equivalent = 0.0;
-          }
-        }
+        this.updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup);
         sample.reference = false;
       }
       return sample;
     });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup) {
+    // Both Sample and SequenceBasedMacromoleculeSample have amount_mol getter
+    const sampleAmountMol = sample.amount_mol;
+    const referenceAmountMol = referenceMaterial.amount_mol;
+
+    if (sample.amount_value || sampleAmountMol) {
+      if (referenceMaterial && referenceAmountMol > 0) {
+        if (materialGroup === 'products') {
+          const refCoeff = referenceMaterial.coefficient || 1;
+          const sampleCoeff = sample.coefficient || 1;
+          sample.equivalent = (sampleAmountMol * refCoeff) / (referenceAmountMol * sampleCoeff);
+        } else {
+          sample.equivalent = sampleAmountMol / referenceAmountMol;
+        }
+      } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants')
+        && referenceMaterial && !sample.reference) {
+        // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
+        sample.equivalent = 0.0;
+      }
+    }
   }
 
   updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
@@ -2339,7 +2392,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    const refMol = reaction.referenceMaterial?.amount_mol || 0;
+    const refMol = referenceFor(reaction, splitSample)?.amount_mol || 0;
     if (refMol > 0 && typeof splitSample.amount_mol === 'number') {
       splitSample.equivalent = splitSample.amount_mol / refMol;
     } else {
@@ -2590,6 +2643,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const steps = reaction.reaction_steps;
     const isLastStep = steps.length > 0 && steps[steps.length - 1].id === step.id;
     if (product.carry_on && isLastStep) reaction.addStep();
+    this.recalculateLaterSteps();
     reaction.changed = true;
     onReactionChange(reaction, { updateGraphic: true });
   }
@@ -2750,10 +2804,11 @@ export default class ReactionDetailsScheme extends React.Component {
       }
       reaction.products.map((sample) => {
         sample.updateConcentrationFromSolvent(reaction.volumeContextFor(sample));
-        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+        const productReference = referenceFor(reaction, sample);
+        if (typeof (productReference) !== 'undefined' && productReference) {
           if (sample.contains_residues) {
-            sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
-              * (sample.molecule.molecular_weight - referenceMaterial.molecule.molecular_weight));
+            sample.maxAmount = productReference.amount_g + (productReference.amount_mol
+              * (sample.molecule.molecular_weight - productReference.molecule.molecular_weight));
           }
         }
       });
@@ -2767,7 +2822,9 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // if no reference material then mark first starting material
-    const refM = reaction.starting_materials[0];
+    const refM = reaction.isMultiStep()
+      ? reaction.starting_materials.find((material) => !reaction.isLaterStep(reaction.stepOf(material)))
+      : reaction.starting_materials[0];
     if (!reaction.referenceMaterial && refM) {
       if (isSbmmSample(refM)) {
         reaction.markSbmmSampleAsReference(refM.id);

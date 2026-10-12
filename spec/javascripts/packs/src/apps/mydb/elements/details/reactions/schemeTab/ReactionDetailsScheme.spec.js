@@ -1714,25 +1714,72 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
   });
 });
 
-describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — multi-step reference', () => {
-  it('measures a later step against the single reaction reference', () => {
-    const referenceMaterial = {
-      id: 'ref', reference: true, amount_mol: 0.01, coefficient: 1, molecule: { molecular_weight: 100 },
+describe('ReactionDetailsScheme — per-step reference', () => {
+  const buildTwoSteps = () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const make = (id, mmol, fields) => {
+      const sample = Sample.buildEmpty(1);
+      Object.assign(sample, {
+        id, coefficient: 1, molecule: { molecular_weight: 100 }, ...fields,
+      });
+      sample.setAmount({ value: mmol / 1000, unit: 'mol' });
+      return sample;
     };
-    const stepTwoReagent = {
-      id: 's2',
-      reference: false,
-      amount_mol: 0.02,
-      coefficient: 1,
-      reaction_step_id: 2,
-      molecule: { molecular_weight: 100 },
+    reaction.starting_materials = [
+      make('start', 10, { reaction_step_id: 1, reference: true }),
+      make('reagent', 12, { reaction_step_id: 2 }),
+    ];
+    reaction.products = [
+      make('carried', 8, { reaction_step_id: 1, carry_on: true }),
+      make('final', 6, { reaction_step_id: 2 }),
+    ];
+    const [start, reagent] = reaction.starting_materials;
+    const [carried, final] = reaction.products;
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction };
+    instance.state = {};
+    return {
+      reaction, instance, start, reagent, carried, final,
     };
-    const instance = { props: { reaction: { referenceMaterial } }, state: {} };
+  };
 
-    const [updated] = ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
-      instance, [stepTwoReagent], { id: 'other' }, 'reactants'
-    );
+  it('measures step 2 against the carried product', () => {
+    const {
+      reaction, instance, reagent, final,
+    } = buildTwoSteps();
 
-    expect(updated.equivalent).toEqual(2);
+    instance.recalculateStepEquivalents(reaction.reaction_steps[1]);
+
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+    expect(final.equivalent).toBeCloseTo(0.75);
+  });
+
+  it('switches step 2 to a picked reagent and leaves step 1 alone', () => {
+    const {
+      reaction, instance, start, reagent, final,
+    } = buildTwoSteps();
+
+    instance.updatedReactionForReferenceChange({ sampleID: 'reagent' });
+
+    expect(reagent.step_reference).toEqual(true);
+    expect(reagent.equivalent).toEqual(1);
+    expect(final.equivalent).toBeCloseTo(0.5);
+    expect(reaction.referenceMaterial).toBe(start);
+  });
+
+  it('picks the carried product from the step bar', () => {
+    const {
+      reaction, instance, reagent, carried,
+    } = buildTwoSteps();
+    reagent.step_reference = true;
+
+    instance.updatedReactionForReferenceChange({ sampleID: 'carried', stepId: 2 });
+
+    expect(carried.step_reference).toEqual(true);
+    expect(carried.reference).toBeFalsy();
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+    expect(reaction.referenceMaterial.id).toEqual('start');
   });
 });

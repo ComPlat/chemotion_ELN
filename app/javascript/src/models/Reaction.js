@@ -307,6 +307,7 @@ export default class Reaction extends Element {
     const withStepPosition = (sample) => {
       const data = sample.serializeMaterial();
       data.reaction_step_position = stepPositionById[sample.reaction_step_id] ?? null;
+      if (this.isLaterStep(this.stepOf(sample))) data.reference = false;
       return data;
     };
     const lastLivePosition = liveSteps.length;
@@ -314,6 +315,7 @@ export default class Reaction extends Element {
       const data = withStepPosition(sample);
       const position = data.reaction_step_position;
       data.carry_on = !!data.carry_on && position != null && position < lastLivePosition;
+      data.step_reference = data.step_reference && data.carry_on;
       return data;
     };
     return super.serialize({
@@ -978,8 +980,10 @@ export default class Reaction extends Element {
         if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
       }
 
-      if (!reference && this.starting_materials.length > 0) {
-        this._setAsReferenceMaterial(this.starting_materials[0]);
+      const firstStepStartingMaterials = this.starting_materials
+        .filter((m) => !this.isLaterStep(this.stepOf(m)));
+      if (!reference && firstStepStartingMaterials.length > 0) {
+        this._setAsReferenceMaterial(firstStepStartingMaterials[0]);
       } else {
         this._updateEquivalentForMaterial(material);
       }
@@ -1022,7 +1026,7 @@ export default class Reaction extends Element {
    * @returns {Sample|SequenceBasedMacromoleculeSample|undefined} The reference material, or undefined if none exists
    */
   get referenceMaterial() {
-    return this.allReactionMaterials.find((sample) => sample.reference);
+    return this.allReactionMaterials.find((sample) => sample.reference && !this.isLaterStep(this.stepOf(sample)));
   }
 
   get reaction_steps() {
@@ -1072,6 +1076,39 @@ export default class Reaction extends Element {
   stepOf(sample) {
     if (!this.isMultiStep()) return null;
     return this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id) || null;
+  }
+
+  isLaterStep(step) {
+    return !!step && this.reaction_steps.filter((entry) => !entry._destroy)[0]?.id !== step.id;
+  }
+
+  stepReferenceCandidates(step) {
+    return [
+      ...this.carriedProductsIntoStep(step.id),
+      ...this.materialsForStep('starting_materials', step.id),
+      ...this.materialsForStep('reactants', step.id),
+    ];
+  }
+
+  stepReference(step) {
+    const candidates = this.stepReferenceCandidates(step);
+    return candidates.find((material) => material.step_reference) || candidates[0];
+  }
+
+  referenceFor(sample) {
+    const step = this.stepOf(sample);
+    return this.isLaterStep(step) ? this.stepReference(step) : this.referenceMaterial;
+  }
+
+  isReference(sample) {
+    const step = this.stepOf(sample);
+    return this.isLaterStep(step) ? this.stepReference(step) === sample : !!sample.reference;
+  }
+
+  setStepReference(step, sampleId) {
+    this.stepReferenceCandidates(step).forEach((material) => {
+      material.step_reference = material.id === sampleId;
+    });
   }
 
   volumeContextFor(sample) {
@@ -1183,7 +1220,9 @@ export default class Reaction extends Element {
 
   toggleCarryOn(sampleId) {
     const product = this.products.find((material) => material.id === sampleId);
-    if (product) product.carry_on = !product.carry_on;
+    if (!product) return;
+    product.carry_on = !product.carry_on;
+    if (!product.carry_on) product.step_reference = false;
   }
 
   hasMultiStepData() {
@@ -1264,7 +1303,7 @@ export default class Reaction extends Element {
   }
 
   _updateEquivalentForMaterial(sample) {
-    const referenceAmountMol = this.referenceMaterial.amount_mol;
+    const referenceAmountMol = this.referenceFor(sample)?.amount_mol;
     const sampleAmountMol = sample.amount_mol;
 
     if (Number.isFinite(referenceAmountMol) && referenceAmountMol > 0 && Number.isFinite(sampleAmountMol)) {
@@ -1337,6 +1376,9 @@ export default class Reaction extends Element {
           const existingMat = group[index];
           const mat = new Sample(material);
           mat.reference = existingMat.reference;
+          mat.reaction_step_id = existingMat.reaction_step_id;
+          mat.carry_on = existingMat.carry_on;
+          mat.step_reference = existingMat.step_reference;
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
@@ -1378,11 +1420,14 @@ export default class Reaction extends Element {
                 m.coefficient = refreshCoefficient.coefficient;
               }
             }
+            const ref = this.referenceFor(m);
+            const refAmountMol = ref?.amount_mol;
+            if (!refAmountMol) return m;
             if (g === '_products' && m.gas_type !== 'gas') {
-              const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
-              m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
+              const stoichiometryCoeff = (m.coefficient || 1.0) / (ref.coefficient || 1.0);
+              m.equivalent = amountMol / refAmountMol / stoichiometryCoeff;
             } else {
-              m.equivalent = amountMol / referenceAmountMol;
+              m.equivalent = amountMol / refAmountMol;
             }
             return m;
           });
@@ -1585,7 +1630,10 @@ export default class Reaction extends Element {
     if (startingMaterialsList.length == 0) { return; }
     const referenceSample = startingMaterialsList[0];
 
-    this.products.forEach((product) => product.calculateMaxAmount(referenceSample));
+    this.products.forEach((product) => {
+      const step = this.stepOf(product);
+      product.calculateMaxAmount(this.isLaterStep(step) ? this.stepReference(step) : referenceSample);
+    });
   }
 
   findReactionVesselSizeCatalystMaterialValues() {
@@ -1844,9 +1892,11 @@ export default class Reaction extends Element {
   updateReferenceAmountForLockedEquivalents(referenceSample, updatedSample, lockEquivColumn) {
     if (!lockEquivColumn
       || !referenceSample
-      || !referenceSample.reference
+      || !this.isReference(referenceSample)
       || !updatedSample
-      || updatedSample.reference) {
+      || this.isReference(updatedSample)
+      || (this.isMultiStep() && this.referenceFor(updatedSample) !== referenceSample)
+      || this.products.includes(referenceSample)) {
       return;
     }
 

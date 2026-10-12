@@ -28,6 +28,11 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         kind: :boolean,
         revert: %i[carry_on],
       },
+      step_reference: {
+        label: 'Step Ref',
+        kind: :boolean,
+        revert: %i[step_reference],
+      },
       position: {
         label: 'Position',
         revert: %i[position],

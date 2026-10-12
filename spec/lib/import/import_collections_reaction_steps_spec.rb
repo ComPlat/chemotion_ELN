@@ -34,7 +34,8 @@ RSpec.describe Import::ImportCollections do
     second = ReactionStep.create!(reaction: reaction, position: 2, conditions: 'rt')
     reaction.reactions_samples.where(sample_id: [starting.id, carried.id])
             .update_all(reaction_step_id: first.id) # rubocop:disable Rails/SkipsModelValidations
-    reaction.reactions_samples.where(sample_id: carried.id).update_all(carry_on: true) # rubocop:disable Rails/SkipsModelValidations
+    reaction.reactions_samples.where(sample_id: carried.id)
+            .update_all(carry_on: true, step_reference: true) # rubocop:disable Rails/SkipsModelValidations
     reaction.reactions_samples.where(sample_id: final.id)
             .update_all(reaction_step_id: second.id) # rubocop:disable Rails/SkipsModelValidations
   end
@@ -48,12 +49,12 @@ RSpec.describe Import::ImportCollections do
 
   it 'links each material to its imported step and keeps carry-on' do
     first, second = imported.reaction_steps
-    links = imported.reactions_samples.map { |rs| [rs.type, rs.reaction_step_id, rs.carry_on] }
+    links = imported.reactions_samples.map { |rs| [rs.type, rs.reaction_step_id, rs.carry_on, rs.step_reference] }
 
     expect(links).to contain_exactly(
-      ['ReactionsStartingMaterialSample', first.id, false],
-      ['ReactionsProductSample', first.id, true],
-      ['ReactionsProductSample', second.id, false],
+      ['ReactionsStartingMaterialSample', first.id, false, false],
+      ['ReactionsProductSample', first.id, true, true],
+      ['ReactionsProductSample', second.id, false, false],
     )
   end
 

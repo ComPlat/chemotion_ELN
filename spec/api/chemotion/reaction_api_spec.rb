@@ -461,7 +461,7 @@ describe Chemotion::ReactionAPI do
           {
             'starting_materials' => [material(sample1, 1, 'reference' => true)],
             'reactants' => [material(sample2, 1)],
-            'products' => [material(sample3, 1, 'carry_on' => true), material(sample4, 2)],
+            'products' => [material(sample3, 1, 'carry_on' => true, 'step_reference' => true), material(sample4, 2)],
           },
         )
         expect(response.status).to eq(200)
@@ -470,6 +470,8 @@ describe Chemotion::ReactionAPI do
         expect(r.reactions_samples.find_by(sample_id: sample1.id).reaction_step_id).to eq(step1.id)
         expect(r.reactions_samples.find_by(sample_id: sample4.id).reaction_step_id).to eq(step2.id)
         expect(r.reactions_samples.find_by(sample_id: sample3.id).carry_on).to be true
+        expect(r.reactions_samples.find_by(sample_id: sample3.id).step_reference).to be true
+        expect(r.reactions_samples.find_by(sample_id: sample4.id).step_reference).to be false
 
         # 2. the carried product must stay out of the generated picture
         expect(r.send(:scheme_material_svg_paths, :reactions_product_samples, :products).length).to eq(1)

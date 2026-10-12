@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_12_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1264,6 +1264,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "weight_percentage"
     t.bigint "reaction_step_id"
     t.boolean "carry_on", default: false, null: false
+    t.boolean "step_reference", default: false, null: false
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["reaction_step_id"], name: "index_reactions_samples_on_reaction_step_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
