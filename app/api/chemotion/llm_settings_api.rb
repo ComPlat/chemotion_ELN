@@ -73,6 +73,20 @@ module Chemotion
 
           LlmProvider.global_providers.select { |p| p.grants_access_to?(current_user) }
         end
+
+        # The institution provider's own reply can name its account, so a user is
+        # told only what kind of failure it was; the detail goes to the log.
+        def institution_test_failure(error)
+          Rails.logger.warn("[LlmSettingsAPI] institution provider test failed: #{error.class}: #{error.message}")
+          case error
+          when Errors::LlmAuthenticationError
+            'The institution provider refused its API key. Contact your administrator.'
+          when Errors::LlmTimeoutError
+            'The institution provider did not answer. Try again later, or contact your administrator.'
+          else
+            'The institution provider returned an error. Contact your administrator.'
+          end
+        end
       end
 
       namespace :llm_settings do
@@ -188,7 +202,7 @@ module Chemotion
               api_key  = provider.api_key
             end
             client = LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol,
-                                   restrict_endpoint: supplied)
+                                   timeout: LlmClient::INTERACTIVE_TIMEOUT, restrict_endpoint: supplied)
             client.chat(
               messages:   [{ role: 'user', content: 'Reply with a single word: OK' }],
               max_tokens: 64,
@@ -200,9 +214,9 @@ module Chemotion
             # the one there is) — a generic message would hide which it was.
             error!(e.message, 422)
           rescue Errors::LlmAuthenticationError => e
-            error!(e.message, 401)
+            error!(supplied ? e.message : institution_test_failure(e), 401)
           rescue Errors::LlmProviderError => e
-            error!(e.message, 502)
+            error!(supplied ? e.message : institution_test_failure(e), 502)
           end
         end
       end

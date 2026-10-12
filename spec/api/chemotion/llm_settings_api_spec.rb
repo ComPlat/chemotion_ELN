@@ -292,6 +292,24 @@ describe Chemotion::LlmSettingsAPI do
         body = JSON.parse(response.body)
         expect(body['success']).to be true
       end
+
+      it 'gives the call the interactive timeout' do
+        allow(LlmClient).to receive(:new).and_call_original
+        post '/api/v1/users/llm_settings/verify', params: {}.to_json, headers: headers
+
+        expect(LlmClient).to have_received(:new).with(hash_including(timeout: LlmClient::INTERACTIVE_TIMEOUT))
+      end
+
+      it 'keeps the provider reply, which can name the institution account, out of the answer' do
+        stub_request(:post, 'https://ki-toolbox.scc.kit.edu/api/v1/chat/completions').to_return(
+          status: 401, body: { error: 'Incorrect API key provided: sk-in****1234 (org org-INTERNAL)' }.to_json,
+        )
+        post '/api/v1/users/llm_settings/verify', params: {}.to_json, headers: headers
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(response.body).not_to include('org-INTERNAL')
+        expect(response.body).to include('Contact your administrator')
+      end
     end
 
     context 'when no LLM provider is configured' do
@@ -473,9 +491,11 @@ describe Chemotion::LlmSettingsAPI do
           headers: { 'Content-Type' => 'application/json' }
         )
 
+        allow(LlmClient).to receive(:new).and_call_original
         post "/api/v1/users/llm_providers/#{mine.id}/verify", headers: headers
 
         expect(JSON.parse(response.body)['success']).to be true
+        expect(LlmClient).to have_received(:new).with(hash_including(timeout: LlmClient::INTERACTIVE_TIMEOUT))
       end
 
       it 'reports a provider with no model as a configuration error, not a provider failure' do

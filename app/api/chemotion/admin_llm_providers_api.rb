@@ -70,7 +70,8 @@ module Chemotion
           error!('No model available for test. Enter a default model first.', 422) if model.blank?
           error!('No base URL available for test.', 422) if base_url.blank? && protocol == 'openai'
 
-          LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol)
+          LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol,
+                        timeout: LlmClient::INTERACTIVE_TIMEOUT)
                    .chat(messages: [{ role: 'user', content: 'Reply with a single word: OK' }], max_tokens: 64)
 
           { success: true, message: 'Connection verified successfully.' }
