@@ -159,24 +159,31 @@ class SdsPdfTextExtractor
   def capture_bounded(cmd)
     Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
       stdin.close
-      err_thread = Thread.new { read_capped(stderr, MAX_STDERR_BYTES) }
-      reader     = Thread.new { read_capped(stdout, MAX_RAW_BYTES) }
+      err_reader = Thread.new { read_capped(stderr, MAX_STDERR_BYTES) }
+      out_reader = Thread.new { read_capped(stdout, MAX_RAW_BYTES) }
+      deadline   = Process.clock_gettime(Process::CLOCK_MONOTONIC) + GHOSTSCRIPT_TIMEOUT
 
-      unless reader.join(GHOSTSCRIPT_TIMEOUT)
+      unless [wait_thread, out_reader, err_reader].all? { |thread| thread.join(seconds_left(deadline)) }
         terminate(wait_thread.pid)
-        reader.kill
+        [out_reader, err_reader].each { |reader| reader.kill.join(1) }
         raise ExtractionError, "Ghostscript timed out after #{GHOSTSCRIPT_TIMEOUT}s"
       end
 
-      [reader.value, err_thread.value, wait_thread.value]
+      [out_reader.value, err_reader.value, wait_thread.value]
     end
   end
 
-  # Read until EOF or +limit+ bytes, whichever comes first. Chunked reads come
-  # back binary and the cap can land mid-character, hence the scrub.
+  def seconds_left(deadline)
+    [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max
+  end
+
+  # Read to EOF but keep only the first +limit+ bytes: a pipe left unread blocks gs.
+  # Chunked reads come back binary and the cap can land mid-character, hence the scrub.
   def read_capped(io, limit)
     buffer = String.new(encoding: Encoding::BINARY)
-    buffer << io.read(READ_CHUNK_BYTES).to_s while buffer.bytesize < limit && !io.eof?
+    while (chunk = io.read(READ_CHUNK_BYTES))
+      buffer << chunk.byteslice(0, limit - buffer.bytesize) if buffer.bytesize < limit
+    end
     buffer.force_encoding(Encoding::UTF_8).scrub
   end
 
