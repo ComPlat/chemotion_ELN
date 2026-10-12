@@ -31,6 +31,11 @@ require 'json'
 class LlmClient
   PROTOCOLS = %w[openai anthropic gemini].freeze
 
+  include Transport
+
+  # For a request a user is waiting on in the browser (Test connection).
+  INTERACTIVE_TIMEOUT = 30
+
   # Sensible default endpoints per protocol when the caller leaves base_url blank.
   DEFAULT_BASE_URLS = {
     'anthropic' => 'https://api.anthropic.com',
@@ -83,14 +88,10 @@ class LlmClient
     ensure_endpoint_present!
     ensure_api_key_present!
     ensure_model_present!
-    request  = build_chat_request(messages, temperature, max_tokens, json_mode)
-    response = http_client.request(request)
-    handle_response(response)
-  # Timeouts and transport failures (refused, reset, DNS, EOF) are reported the
-  # same way: the request never produced an answer and retrying may help.
-  rescue Net::ReadTimeout, Net::OpenTimeout,
-         Errno::ECONNREFUSED, SocketError, Errno::ECONNRESET, EOFError => e
-    raise Errors::LlmTimeoutError, "LLM request timed out: #{e.message}"
+    request = build_chat_request(messages, temperature, max_tokens, json_mode)
+    handle_response(*perform(request))
+  rescue *TRANSPORT_ERRORS => e
+    raise Errors::LlmTimeoutError, transport_failure_message(e)
   end
 
   # Fetch the list of available model IDs from the provider. Returns an array of
@@ -98,10 +99,11 @@ class LlmClient
   #
   # @return [Array<String>]
   def list_models
-    response = http_client.request(build_models_request)
-    return [] unless response.code.to_i == 200
+    code, body = perform(build_models_request)
+    return [] unless code == 200
 
-    parse_models(JSON.parse(response.body))
+    data = JSON.parse(body)
+    data.is_a?(Hash) ? parse_models(data) : []
   rescue StandardError
     []
   end
@@ -241,7 +243,7 @@ class LlmClient
     body = { contents: contents, generationConfig: generation_config }
     body[:systemInstruction] = { parts: [{ text: system_prompt }] } if system_prompt
 
-    req = Net::HTTP::Post.new("#{@uri.path}/v1beta/models/#{@model}:generateContent")
+    req = Net::HTTP::Post.new("#{@uri.path}/v1beta/models/#{ERB::Util.url_encode(@model)}:generateContent")
     req['x-goog-api-key'] = @api_key if @api_key.present?
     req['Content-Type']   = 'application/json'
     req.body = body.to_json
@@ -250,24 +252,26 @@ class LlmClient
 
   # ── Response handling ───────────────────────────────────────────────────────
 
-  def handle_response(response)
-    case response.code.to_i
+  def handle_response(code, body)
+    case code
     when 200
-      parse_content(response.body)
+      parse_content(body)
     when 401, 403
       raise Errors::LlmAuthenticationError,
-            "LLM API authentication failed (#{response.code}). Check the API key and endpoint. " \
-            "Provider response: #{response.body.to_s[0, 300]}"
+            "LLM API authentication failed (#{code}). Check the API key and endpoint. " \
+            "Provider response: #{body.to_s[0, 300]}"
     when 429
       raise Errors::LlmRateLimitError, 'LLM API rate limit exceeded (429). Retry later.'
     else
       raise Errors::LlmProviderError,
-            "LLM API error (#{response.code}): #{response.body.to_s[0, 200]}"
+            "LLM API error (#{code}): #{body.to_s[0, 200]}"
     end
   end
 
   def parse_content(body_str)
     parsed = JSON.parse(body_str)
+    raise_unexpected_shape(body_str) unless parsed.is_a?(Hash)
+
     case @protocol
     when 'anthropic' then parse_anthropic_content(parsed, body_str)
     when 'gemini'    then parse_gemini_content(parsed, body_str)
@@ -293,16 +297,27 @@ class LlmClient
     blocks = parsed['content']
     raise_unexpected_shape(body_str) unless blocks.is_a?(Array)
 
-    @last_finish_reason = parsed['stop_reason']
+    @last_finish_reason = normalized_finish_reason(parsed['stop_reason'])
     blocks.select { |b| b.is_a?(Hash) && b['type'] == 'text' }.pluck('text').join
   end
 
   def parse_gemini_content(parsed, body_str)
-    @last_finish_reason = parsed.dig('candidates', 0, 'finishReason')
-    parts = parsed.dig('candidates', 0, 'content', 'parts')
+    candidate = parsed.dig('candidates', 0)
+    raise_unexpected_shape(body_str) unless candidate.is_a?(Hash)
+
+    @last_finish_reason = normalized_finish_reason(candidate['finishReason'])
+    parts = candidate.dig('content', 'parts')
+    # A reply cut off before its first token carries a finish reason and no parts.
+    return '' if parts.nil? && @last_finish_reason.present?
+
     raise_unexpected_shape(body_str) unless parts.is_a?(Array)
 
     parts.filter_map { |p| p['text'] if p.is_a?(Hash) }.join
+  end
+
+  # The token-limit stop under the name the Chat Completions API uses for it.
+  def normalized_finish_reason(reason)
+    %w[MAX_TOKENS max_tokens].include?(reason) ? 'length' : reason
   end
 
   def raise_unexpected_shape(body_str)
@@ -325,20 +340,5 @@ class LlmClient
     return nil unless entry.is_a?(Hash)
 
     (entry['id'] || entry['name'])&.delete_prefix('models/')
-  end
-
-  def http_client
-    http              = Net::HTTP.new(@uri.host, @uri.port)
-    http.use_ssl      = (@uri.scheme == 'https')
-    http.read_timeout = @timeout
-    http.open_timeout = 10
-    # ipaddr= sets only where the socket connects; Host and SNI still come from
-    # the URI, so the request is unchanged and the name cannot resolve again.
-    http.ipaddr = pinned_address if @restrict_endpoint
-    http
-  end
-
-  def pinned_address
-    LlmEndpointPolicy.pinned_address!(@uri.hostname)
   end
 end
