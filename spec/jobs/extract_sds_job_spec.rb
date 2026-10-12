@@ -29,7 +29,7 @@ RSpec.describe ExtractSdsJob do
       protocol: 'openai',
     )
   end
-  let(:sample) { create(:sample) }
+  let(:sample) { create(:sample, collections: [create(:collection, user_id: user.id)]) }
   let(:chemical) do
     Chemical.create!(
       sample_id: sample.id,
@@ -248,10 +248,131 @@ RSpec.describe ExtractSdsJob do
           .to end_with('API timeout (model gemini-3.6-flash on KIT KI-Toolbox)')
       end
 
-      it 'notifies the user and records the failure marker' do
+      it 'tells the user the cause but stores only a generic failure marker' do
         expect { described_class.perform_now(sample_id: sample.id, user_id: user.id) }
           .to change(Message, :count).by(1)
-        expect(chemical.reload.chemical_data[0]['extraction_error']['message']).to include('API timeout')
+        expect(Message.last.content['data']).to include('API timeout')
+        expect(chemical.reload.chemical_data[0]['extraction_error'])
+          .to include('message' => described_class::FAILURE_MARKER_MESSAGE, 'failed_at' => be_present)
+      end
+
+      it 'records the failure without overwriting a write that lands meanwhile' do
+        allow(runner).to receive(:run) do
+          snapshot = Chemical.find(chemical.id)
+          edit = "chemical_data = jsonb_set(chemical_data, '{0,note}', '\"kept\"')"
+          Chemical.where(id: chemical.id).update_all(edit) # rubocop:disable Rails/SkipsModelValidations
+          allow(Chemical).to receive(:find_by).with(sample_id: sample.id).and_return(snapshot)
+          raise Errors::LlmProviderError, 'API timeout'
+        end
+        described_class.perform_now(sample_id: sample.id, user_id: user.id)
+
+        entry = chemical.reload.chemical_data[0]
+        expect(entry['note']).to eq('kept')
+        expect(entry['extraction_error']).to be_present
+      end
+    end
+
+    context 'with a run marker already on the chemical' do
+      let(:job) { described_class.new(sample_id: sample.id, user_id: user.id) }
+
+      before do
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
+        allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+      end
+
+      def stamp_run(run)
+        data = chemical.chemical_data.deep_dup
+        data[0]['extraction_run'] = run
+        chemical.update!(chemical_data: data)
+      end
+
+      it 'takes over a run of this job that died without finishing' do
+        stamp_run('job_id' => job.job_id, 'token' => 'dead', 'started_at' => 2.hours.ago.iso8601)
+
+        expect { job.perform_now }.to change(Message, :count).by(1)
+        expect(chemical.reload.chemical_data[0]['aiExtraction']).to be_present
+      end
+
+      it 'refuses a second execution of this job while the first is running' do
+        stamp_run('job_id' => job.job_id, 'token' => 'live', 'started_at' => 1.minute.ago.iso8601)
+
+        expect { job.perform_now }.not_to change(Message, :count)
+        expect(LlmTaskRunner).not_to have_received(:new)
+      end
+
+      it 'refuses a re-run of this job once it has finished' do
+        stamp_run('job_id' => job.job_id, 'token' => 'done', 'started_at' => 2.hours.ago.iso8601,
+                  'finished_at' => 2.hours.ago.iso8601)
+
+        expect { job.perform_now }.not_to change(Message, :count)
+        expect(LlmTaskRunner).not_to have_received(:new)
+      end
+
+      it 'marks its own run finished on success and on failure' do
+        job.perform_now
+        expect(chemical.reload.chemical_data[0]['extraction_run']['finished_at']).to be_present
+
+        allow(runner).to receive(:run).and_raise(Errors::LlmProviderError, 'API timeout')
+        described_class.perform_now(sample_id: sample.id, user_id: user.id)
+        expect(chemical.reload.chemical_data[0]['extraction_run']['finished_at']).to be_present
+      end
+    end
+
+    context 'when a newer extraction claims the sample while the model answers' do
+      before do
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
+        allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+        allow(runner).to receive(:run) do
+          data = chemical.reload.chemical_data.deep_dup
+          data[0]['extraction_run'] = { 'token' => 'newer-run', 'started_at' => Time.current.iso8601 }
+          chemical.update_columns(chemical_data: data) # rubocop:disable Rails/SkipsModelValidations
+          extraction_result
+        end
+      end
+
+      it 'leaves the record to the newer run and notifies nobody' do
+        expect { described_class.perform_now(sample_id: sample.id, user_id: user.id) }
+          .not_to change(Message, :count)
+        entry = chemical.reload.chemical_data[0]
+        expect(entry).not_to have_key('aiExtraction')
+        expect(entry['extraction_run']['token']).to eq('newer-run')
+      end
+    end
+
+    context 'when the user may no longer edit the sample' do
+      let(:outsider) { create(:person) }
+
+      before do
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
+        allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+      end
+
+      it 'fails before calling the model' do
+        job = described_class.new
+        job.perform(sample_id: sample.id, user_id: outsider.id)
+
+        expect(LlmTaskRunner).not_to have_received(:new)
+        expect(job.instance_variable_get(:@notification_message)).to include('may not edit')
+      end
+    end
+
+    context 'when the chemical has no chemical_data yet' do
+      before do
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
+        allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+        chemical.update_columns(chemical_data: nil) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      it 'writes the result for the sheet it is given' do
+        job = described_class.new
+        job.perform(sample_id: sample.id, user_id: user.id, sheet_path: '/safety_sheets/merck/test.pdf')
+
+        expect(job.instance_variable_get(:@notification_level)).to eq('info')
+        expect(chemical.reload.chemical_data[0]['aiExtraction']['chemical_name']).to eq('Phenol')
       end
     end
   end
