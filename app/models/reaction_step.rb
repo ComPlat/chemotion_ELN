@@ -7,7 +7,7 @@
 #  id              :bigint           not null, primary key
 #  conditions      :string
 #  deleted_at      :datetime
-#  description     :text
+#  description     :jsonb
 #  duration        :string
 #  ph_operator     :string           default("="), not null
 #  ph_value        :float

@@ -70,6 +70,7 @@ export default class ReactionDetailsScheme extends React.Component {
     };
 
     this.reactQuillRef = React.createRef();
+    this.stepQuillRefs = {};
     this.additionQuillRef = React.createRef();
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
@@ -626,11 +627,28 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   addSampleTo(e, type) {
-    const { onInputChange } = this.props;
+    const { onInputChange, onReactionChange, reaction } = this.props;
     const { paragraph } = e;
+
+    if (type === 'description' && reaction.isMultiStep()) {
+      const inserted = reaction.reaction_steps.filter((step) => {
+        const editor = this.stepQuillRefs[step.id]?.current?.editor;
+        return editor && ReactionDetailsScheme.insertParagraph(
+          editor,
+          paragraph,
+          (contents) => this.setStepField(step.id, 'description', contents)
+        );
+      });
+      if (inserted.length) onReactionChange(reaction);
+      return;
+    }
 
     let quillEditor = this.reactQuillRef.current.editor;
     if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
+    ReactionDetailsScheme.insertParagraph(quillEditor, paragraph, (contents) => onInputChange(type, contents));
+  }
+
+  static insertParagraph(quillEditor, paragraph, onInserted) {
     const range = quillEditor.getSelection();
     if (range) {
       let contents = quillEditor.getContents();
@@ -645,8 +663,10 @@ export default class ReactionDetailsScheme extends React.Component {
       range.length = 0;
       range.index += insertDelta.length();
       quillEditor.setSelection(range);
-      onInputChange(type, new Delta(contents));
+      onInserted(new Delta(contents));
+      return true;
     }
+    return false;
   }
 
   /**
@@ -2620,12 +2640,6 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.changed = true;
   }
 
-  handleStepFieldChange(stepId, field, value) {
-    const { reaction, onReactionChange } = this.props;
-    this.setStepField(stepId, field, value);
-    onReactionChange(reaction, { updateGraphic: true });
-  }
-
   handleDeleteStep(step) {
     const { reaction, onReactionChange } = this.props;
     const target = reaction.reaction_steps.find((entry) => entry.id === step.id);
@@ -2651,6 +2665,31 @@ export default class ReactionDetailsScheme extends React.Component {
     onReactionChange(reaction, { updateGraphic: true });
   }
 
+  stepQuillRef(stepId) {
+    if (!this.stepQuillRefs[stepId]) this.stepQuillRefs[stepId] = React.createRef();
+    return this.stepQuillRefs[stepId];
+  }
+
+  renderStepDescription(step) {
+    const { reaction, onReactionChange } = this.props;
+    const { reactionDescTemplate } = this.state;
+    if (!permitOn(reaction)) return <QuillViewer value={step.description} />;
+
+    return (
+      <ReactionDescriptionEditor
+        height="100%"
+        reactQuillRef={this.stepQuillRef(step.id)}
+        template={reactionDescTemplate}
+        value={step.description}
+        updateTextTemplates={this.updateTextTemplates}
+        onChange={(contents) => {
+          this.setStepField(step.id, 'description', contents);
+          onReactionChange(reaction);
+        }}
+      />
+    );
+  }
+
   renderStep(step) {
     const { reaction } = this.props;
     const { lockEquivColumn, displayYieldField } = this.state;
@@ -2671,6 +2710,7 @@ export default class ReactionDetailsScheme extends React.Component {
         phField={step ? this.renderPhConditionProperty(stepSource, stepChange) : null}
         vesselSizeField={step ? this.reactionVesselSize(stepSource, stepChange) : null}
         reactionVolumeField={step ? this.reactionVolume(stepSource, stepChange) : null}
+        descriptionField={step ? this.renderStepDescription(step) : null}
         isInteractionReaction={reaction.isInteractionReaction()}
         lockEquivColumn={lockEquivColumn}
         displayYieldField={displayYieldField}
@@ -2685,7 +2725,6 @@ export default class ReactionDetailsScheme extends React.Component {
         onToggleCarryOn={(product, entry) => this.handleToggleCarryOn(product, entry)}
         onConcentrationModeChange={this.handleConcentrationModeChange}
         onDeleteStep={(entry) => this.handleDeleteStep(entry)}
-        onStepFieldChange={(id, field, value) => this.handleStepFieldChange(id, field, value)}
       />
     );
   }
@@ -2808,26 +2847,28 @@ export default class ReactionDetailsScheme extends React.Component {
             </Col>
           </Row>
         )}
-        <Row className="mb-3">
-          <Form.Group>
-            <Form.Label>Description</Form.Label>
-            <div>
-              {
-                permitOn(reaction)
-                  ? (
-                    <ReactionDescriptionEditor
-                      height="100%"
-                      reactQuillRef={this.reactQuillRef}
-                      template={reactionDescTemplate}
-                      value={reaction.description}
-                      updateTextTemplates={this.updateTextTemplates}
-                      onChange={(event) => onInputChange('description', event)}
-                    />
-                  ) : <QuillViewer value={reaction.description} />
-              }
-            </div>
-          </Form.Group>
-        </Row>
+        {!reaction.isMultiStep() && (
+          <Row className="mb-3">
+            <Form.Group>
+              <Form.Label>Description</Form.Label>
+              <div>
+                {
+                  permitOn(reaction)
+                    ? (
+                      <ReactionDescriptionEditor
+                        height="100%"
+                        reactQuillRef={this.reactQuillRef}
+                        template={reactionDescTemplate}
+                        value={reaction.description}
+                        updateTextTemplates={this.updateTextTemplates}
+                        onChange={(event) => onInputChange('description', event)}
+                      />
+                    ) : <QuillViewer value={reaction.description} />
+                }
+              </div>
+            </Form.Group>
+          </Row>
+        )}
         <ReactionDetailsPurification
           reaction={reaction}
           onReactionChange={onReactionChange}

@@ -1163,7 +1163,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.string "timestamp_start"
     t.string "timestamp_stop"
     t.string "conditions"
-    t.text "description"
+    t.jsonb "description"
     t.string "ph_operator", default: "=", null: false
     t.float "ph_value"
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}

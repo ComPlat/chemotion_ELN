@@ -20,6 +20,7 @@ describe('Reaction multi-step', () => {
     reaction.conditions = 'under nitrogen';
     reaction.ph_value = 7;
     reaction.volume = 0.5;
+    reaction.description = { ops: [{ insert: 'stir overnight\n' }] };
 
     reaction.enterMultiStep();
 
@@ -28,6 +29,8 @@ describe('Reaction multi-step', () => {
     expect(step.conditions).toEqual('under nitrogen');
     expect(step.ph_value).toEqual(7);
     expect(step.volume).toEqual(0.5);
+    expect(step.description).toEqual({ ops: [{ insert: 'stir overnight\n' }] });
+    expect(step.description).not.toBe(reaction.description);
   });
 
   it('divides a step material by that step volume, not the whole reaction', async () => {
@@ -88,6 +91,11 @@ describe('Reaction multi-step', () => {
     reaction.reaction_steps[1].duration = '9 Hour(s)';
     reaction.mirrorFirstStep();
     expect(reaction.duration).toEqual('2 Hour(s)');
+
+    reaction.reaction_steps[0].description = { ops: [{ insert: 'step one\n' }] };
+    reaction.reaction_steps[1].description = { ops: [{ insert: 'step two\n' }] };
+    reaction.mirrorFirstStep();
+    expect(reaction.description).toEqual({ ops: [{ insert: 'step one\n' }] });
   });
 
   it('drops a deleted step and its materials from the save payload and renumbers', async () => {

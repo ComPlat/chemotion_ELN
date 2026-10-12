@@ -26,12 +26,12 @@ const ReactionStep = ({
   onToggleCarryOn,
   onConcentrationModeChange,
   onDeleteStep,
-  onStepFieldChange,
   stepSource,
   onStepInputChange,
   phField,
   vesselSizeField,
   reactionVolumeField,
+  descriptionField,
 }) => {
   const [open, setOpen] = useState(true);
   const stepId = step ? step.id : null;
@@ -200,14 +200,7 @@ const ReactionStep = ({
           </div>
           <div className="mb-2">
             <Form.Label className="mb-0 small">Description</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={2}
-              size="sm"
-              value={step.description || ''}
-              disabled={!permitOn(reaction)}
-              onChange={(event) => onStepFieldChange(stepId, 'description', event.target.value)}
-            />
+            {descriptionField}
           </div>
         </div>
       </Collapse>
@@ -221,7 +214,7 @@ ReactionStep.propTypes = {
     id: PropTypes.any,
     position: PropTypes.number,
     _destroy: PropTypes.bool,
-    description: PropTypes.string,
+    description: PropTypes.shape({ ops: PropTypes.arrayOf(PropTypes.object) }),
     conditions: PropTypes.string,
     duration: PropTypes.string,
     ph_operator: PropTypes.string,
@@ -250,13 +243,13 @@ ReactionStep.propTypes = {
   onToggleCarryOn: PropTypes.func.isRequired,
   onConcentrationModeChange: PropTypes.func.isRequired,
   onDeleteStep: PropTypes.func.isRequired,
-  onStepFieldChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   stepSource: PropTypes.object,
   onStepInputChange: PropTypes.func,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
+  descriptionField: PropTypes.node,
 };
 
 ReactionStep.defaultProps = {
@@ -268,6 +261,7 @@ ReactionStep.defaultProps = {
   phField: null,
   vesselSizeField: null,
   reactionVolumeField: null,
+  descriptionField: null,
 };
 
 export default ReactionStep;

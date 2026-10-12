@@ -10,7 +10,7 @@ class AddReactionSteps < ActiveRecord::Migration[6.1]
       t.string :timestamp_start
       t.string :timestamp_stop
       t.string :conditions
-      t.text :description
+      t.jsonb :description
       t.string :ph_operator, null: false, default: '='
       t.float :ph_value
       t.jsonb :vessel_size, default: { 'unit' => 'ml', 'amount' => nil }
