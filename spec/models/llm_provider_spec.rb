@@ -90,5 +90,31 @@ RSpec.describe LlmProvider do
       provider.save!
       expect(provider.reload.api_key).to eq('sk-new-key-9999')
     end
+
+    it 'masks a short key completely' do
+      expect(create(:llm_provider, api_key: 'tok1234').api_key_masked).not_to include('tok', '1234')
+    end
+
+    it 'logs a stored key it can no longer decrypt' do
+      provider.update_column(:api_key_enc, 'bm9wZQ==--bm9wZQ==--bm9wZQ==') # rubocop:disable Rails/SkipsModelValidations
+      allow(Rails.logger).to receive(:warn)
+
+      expect(described_class.find(provider.id).api_key).to be_nil
+      expect(Rails.logger).to have_received(:warn).with(/could not be decrypted/)
+    end
+
+    context 'when the secret is configured outside secrets.yml' do
+      before do
+        allow(Rails.application).to receive_messages(secrets: ActiveSupport::OrderedOptions.new,
+                                                     secret_key_base: 'k' * 64)
+        described_class.reset_llm_encryptor!
+      end
+
+      after { described_class.reset_llm_encryptor! }
+
+      it 'derives its key from the application secret' do
+        expect(described_class.find(provider.id).tap { |p| p.api_key = 'sk-x-5678' }.save!).to be true
+      end
+    end
   end
 end
