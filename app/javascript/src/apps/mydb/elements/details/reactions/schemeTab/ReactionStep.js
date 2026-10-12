@@ -69,6 +69,26 @@ const ReactionStep = ({
         {`Starting material \u2014 ${carriedProducts.map(labelFor).join(', ')}, `}
         {`carried from step ${step.position - 1}`}
       </div>
+      <div className="d-flex flex-wrap gap-3 ms-4 mt-1 small">
+        {carriedProducts.map((product) => (
+          <Form.Check
+            key={product.id}
+            type="radio"
+            id={`step-ref-${stepId}-${product.id}`}
+            name={`reference-${stepId}`}
+            label={`Ref: ${labelFor(product)}`}
+            checked={reaction.stepReference(step) === product}
+            disabled={!permitOn(reaction)}
+            onChange={() => onMaterialsChange({
+              type: 'referenceChanged',
+              materialGroup: 'products',
+              sampleID: product.id,
+              stepId,
+              value: 'on',
+            })}
+          />
+        ))}
+      </div>
       {notCarried.length > 0 && (
         <div className="small text-muted ms-4" title={titleFor(notCarried)}>
           {`${notCarried.map(labelFor).join(', ')} was not carried on`}

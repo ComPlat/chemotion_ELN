@@ -874,18 +874,15 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const { referenceMaterial } = reaction;
-    if (!referenceMaterial || !referenceMaterial.amount_mol) {
-      return;
-    }
-
     const materialsToUpdate = [
       ...reaction.starting_materials,
       ...reaction.reactants,
     ];
 
     materialsToUpdate.forEach((material) => {
-      if (!material.reference && material.amount_mol) {
+      const referenceMaterial = reaction.referenceFor(material);
+      if (!referenceMaterial || !referenceMaterial.amount_mol) return;
+      if (!reaction.isReference(material) && material.amount_mol) {
         material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
       }
     });

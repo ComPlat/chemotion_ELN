@@ -25,7 +25,7 @@ module Usecases
 
       def discard(steps)
         ReactionsSample.where(reaction_step_id: steps.map(&:id))
-                       .update_all(reaction_step_id: nil, carry_on: false) # rubocop:disable Rails/SkipsModelValidations
+                       .update_all(reaction_step_id: nil, carry_on: false, step_reference: false) # rubocop:disable Rails/SkipsModelValidations
         steps.destroy_all
       end
     end

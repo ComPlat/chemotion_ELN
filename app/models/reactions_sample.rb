@@ -13,6 +13,7 @@
 #  position                    :integer
 #  reference                   :boolean
 #  show_label                  :boolean          default(FALSE), not null
+#  step_reference              :boolean          default(FALSE), not null
 #  type                        :string
 #  waste                       :boolean          default(FALSE)
 #  weight_percentage           :float
@@ -50,6 +51,10 @@ class ReactionsSample < ApplicationRecord
 
   def self.get_reactions(samples_ids)
     where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
+  end
+
+  def step_reference_row
+    reaction_step&.reference_row
   end
 
   private

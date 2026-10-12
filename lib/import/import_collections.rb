@@ -503,6 +503,7 @@ module Import
             'weight_percentage_reference',
             'weight_percentage',
             'carry_on',
+            'step_reference',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
