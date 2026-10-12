@@ -11,7 +11,8 @@
 # is part of it because this cache is shared by every request on the host: two
 # users pointing at the same endpoint with different keys can legitimately be
 # offered different catalogues, so their entries must not collide. Only the
-# digest is ever stored — never the key itself.
+# digest is ever stored — never the key itself. Restricted (user-chosen) lookups
+# get entries of their own, so a cache hit never skips the endpoint check.
 #
 # Empty results are deliberately NOT cached. `LlmClient#list_models` returns []
 # for every failure (unreachable endpoint, wrong key, provider without a models
@@ -28,6 +29,7 @@
 # provider across page reloads, extra tabs and other users.
 class LlmModelCatalog
   CACHE_TTL       = 30.minutes
+  LIST_TIMEOUT    = 15
   CACHE_NAMESPACE = 'llm_model_catalog'
   # Cache stores disagree on what `delete_matched` accepts: MemoryStore and
   # FileStore want a Regexp, RedisCacheStore wants a glob String. Try each in turn
@@ -41,7 +43,7 @@ class LlmModelCatalog
     # @param force    [Boolean]     ignore (and replace) any cached entry
     # @return [Array<String>]       model IDs, [] when the provider offers none
     def fetch(base_url:, api_key:, protocol: 'openai', force: false, restrict_endpoint: false)
-      key = cache_key(base_url: base_url, api_key: api_key, protocol: protocol)
+      key = cache_key(base_url: base_url, api_key: api_key, protocol: protocol, restricted: restrict_endpoint)
       store.delete(key) if force
 
       cached = store.read(key)
@@ -52,6 +54,7 @@ class LlmModelCatalog
         api_key: api_key,
         model: '', # irrelevant to a models listing
         protocol: protocol.presence || 'openai',
+        timeout: LIST_TIMEOUT,
         restrict_endpoint: restrict_endpoint,
       ).list_models
 
@@ -68,7 +71,9 @@ class LlmModelCatalog
     # Drop the cached catalogue for one provider identity — call after changing a
     # provider's key or endpoint if the new catalogue must be visible at once.
     def invalidate(base_url:, api_key:, protocol: 'openai')
-      store.delete(cache_key(base_url: base_url, api_key: api_key, protocol: protocol))
+      [false, true].each do |restricted|
+        store.delete(cache_key(base_url: base_url, api_key: api_key, protocol: protocol, restricted: restricted))
+      end
     end
 
     # Wipe every cached catalogue (used by the test suite).
@@ -90,19 +95,20 @@ class LlmModelCatalog
 
     private
 
-    def cache_key(base_url:, api_key:, protocol:)
+    def cache_key(base_url:, api_key:, protocol:, restricted: false)
       [
         CACHE_NAMESPACE,
         protocol.presence || 'openai',
         normalize_url(base_url),
         key_digest(api_key),
+        restricted ? 'restricted' : 'trusted',
       ].join('/')
     end
 
-    # Trailing slashes are insignificant to the provider (LlmClient chomps them),
-    # so they must not split the cache either.
+    # A trailing slash, query or fragment never reaches the provider (LlmClient
+    # builds the path alone), so none of them may split the cache either.
     def normalize_url(base_url)
-      base_url.to_s.strip.chomp('/').presence || 'default'
+      base_url.to_s.strip.sub(/[?#].*\z/m, '').chomp('/').presence || 'default'
     end
 
     def key_digest(api_key)
