@@ -90,6 +90,7 @@ RSpec.describe SdsPdfTextExtractor do
   def stub_ghostscript(stdout: '', stderr: '', success: true, exitstatus: 0)
     status = instance_double(Process::Status, success?: success, exitstatus: exitstatus)
     wait_thread = instance_double(Process::Waiter, pid: 4321, value: status)
+    allow(wait_thread).to receive(:join).and_return(wait_thread)
     allow(Open3).to receive(:popen3) do |*_args, &block|
       block.call(StringIO.new, StringIO.new(stdout), StringIO.new(stderr), wait_thread)
     end
@@ -131,9 +132,9 @@ RSpec.describe SdsPdfTextExtractor do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
         stub_const("#{described_class}::GHOSTSCRIPT_TIMEOUT", 0.1)
-        wait_thread = instance_double(Process::Waiter, pid: 4321, value: nil)
+        wait_thread = instance_double(Process::Waiter, pid: 4321, value: nil, join: nil)
         blocking = instance_double(IO)
-        allow(blocking).to receive(:eof?) { sleep 5 }
+        allow(blocking).to receive(:read) { sleep 5 }
         allow(Open3).to receive(:popen3) do |*_args, &block|
           block.call(StringIO.new, blocking, StringIO.new, wait_thread)
         end
@@ -143,6 +144,50 @@ RSpec.describe SdsPdfTextExtractor do
       it 'kills the subprocess and raises rather than holding the worker' do
         expect { extract }.to raise_error(SdsPdfTextExtractor::ExtractionError, /timed out/)
         expect(Process).to have_received(:kill).with('TERM', 4321)
+      end
+    end
+
+    # Real subprocesses: the bugs here live in how the pipes are drained.
+    context 'with a ghostscript that floods or stalls' do
+      let(:bin_dir) { Dir.mktmpdir('fake_gs') }
+
+      def fake_gs(script)
+        path = File.join(bin_dir, 'gs')
+        File.write(path, "#!/bin/sh\n#{script}\n")
+        File.chmod(0o755, path)
+        allow(Open3).to receive(:popen3).and_wrap_original do |original, _gs, *args, &block|
+          original.call(path, *args, &block)
+        end
+      end
+
+      def extract_within(seconds)
+        Timeout.timeout(seconds) { extract }
+      end
+
+      before do
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        stub_const("#{described_class}::GHOSTSCRIPT_TIMEOUT", 1)
+        stub_const("#{described_class}::MAX_RAW_BYTES", 100_000)
+      end
+
+      after { FileUtils.rm_rf(bin_dir) }
+
+      it 'keeps reading stdout past the cap so ghostscript can finish' do
+        fake_gs("head -c 1000000 /dev/zero | tr '\\0' 'a'")
+        expect(extract_within(4)).to eq('a' * SdsPdfTextExtractor::MAX_FALLBACK_CHARS)
+      end
+
+      it 'keeps reading stderr past the cap so a noisy run still succeeds' do
+        fake_gs(<<~SH)
+          i=0; while [ $i -lt 4000 ]; do echo "**** Error: page drawing error occurred." >&2; i=$((i+1)); done
+          echo "SECTION 1 Identification"; echo "SECTION 2 Hazards"
+        SH
+        expect(extract_within(4)).to include('SECTION 1')
+      end
+
+      it 'applies the deadline to the process, not only to its output' do
+        fake_gs('exec sleep 30 >&- 2>&-')
+        expect { extract_within(4) }.to raise_error(SdsPdfTextExtractor::ExtractionError, /timed out/)
       end
     end
 
