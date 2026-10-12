@@ -12,7 +12,7 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { llmProtocolShortLabel } from 'src/utilities/llmProtocols';
 import {
   institutionModelsKey, providerModelsKey, peekModels,
-  fetchProviderModels, fetchInstitutionModels, subscribe, scopeToUser,
+  fetchProviderModels, fetchInstitutionModels, subscribe, scopeToUser, invalidate,
 } from 'src/utilities/llmModelCache';
 
 const PROVIDER_OPTIONS = [
@@ -61,6 +61,9 @@ export const effectiveProviderChoice = (setting, ownProviders, { personal, insti
 };
 
 const toModelOptions = (models) => (models || []).map((m) => ({ value: m, label: m }));
+
+// An edit may move a provider to another endpoint, whose list must not fall back to the old one's.
+const forgetModels = (id) => (res) => { invalidate(providerModelsKey(id)); return res; };
 
 // Tasks are loaded from the server-side LLM Task Registry (SF-04). This is only
 // the fallback for a failed request, so it lists the task definitions that ship
@@ -289,8 +292,8 @@ const LlmSettings = ({ userId }) => {
 
   const providerApi = useMemo(() => ({
     create:    (params)     => UsersFetcher.createLlmProvider(params),
-    update:    (id, params) => UsersFetcher.updateLlmProvider(id, params),
-    remove:    (id)         => UsersFetcher.deleteLlmProvider(id),
+    update:    (id, params) => UsersFetcher.updateLlmProvider(id, params).then(forgetModels(id)),
+    remove:    (id)         => UsersFetcher.deleteLlmProvider(id).then(forgetModels(id)),
     verify:    (id)         => UsersFetcher.verifyLlmProvider(id),
     testDraft: (draft)      => UsersFetcher.verifyLlmApiKey({
       protocol: draft.api_protocol,

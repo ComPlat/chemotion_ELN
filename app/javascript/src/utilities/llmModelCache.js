@@ -1,26 +1,8 @@
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 /**
- * Session cache for LLM provider model lists.
- *
- * Asking for a provider's model list makes the ELN server call that provider's
- * `/v1/models` endpoint, so re-fetching it every time the user flips the "LLM
- * Provider" radio or the "API protocol" select would hammer both. The set of
- * models a provider offers changes on the order of weeks, so the lists are
- * memoised here per provider identity — module level, so they also survive
- * remounting the AI settings tab.
- *
- * Identity is `protocol + base_url` (the endpoint decides which models exist).
- * The API key is deliberately NOT part of it: the key field changes on every
- * keystroke, and blanking the dropdown while someone pastes a key would be a
- * regression. A successful "Test connection" re-fetches with `force`, which asks
- * the server to re-read the catalogue too — that is what makes a key/tenant swap
- * show its own list. The server cache (LlmModelCatalog) does key on the key
- * digest, since it is shared across users.
- *
- * Because the cache is module level it outlives a component but not a page load:
- * nothing here is persisted — no localStorage, no sessionStorage. It is also
- * scoped to one user, see `scopeToUser`.
+ * Session cache of LLM model lists, per provider record. A lookup makes the server call the provider's
+ * models endpoint, so lists are memoised at module level; nothing is persisted, see scopeToUser.
  */
 
 const TTL_MS = 30 * 60 * 1000;
@@ -65,11 +47,6 @@ function notify() {
 export function subscribe(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
-}
-
-/** Stable cache identity for a custom (personal) provider config. */
-export function customModelsKey({ protocol, baseUrl } = {}) {
-  return ['custom', protocol || 'openai', (baseUrl || '').trim().replace(/\/+$/, '')].join('|');
 }
 
 /**
@@ -171,18 +148,6 @@ export function fetchInstitutionModels(id, { force = false } = {}) {
   );
 }
 
-/**
- * Models offered by a supplied (possibly unsaved) custom provider config.
- * `model` is passed through to the API but is not part of the cache identity.
- */
-export function fetchCustomModels(config = {}, { force = false } = {}) {
-  return loadCached(
-    customModelsKey(config),
-    (opts) => UsersFetcher.fetchLlmModelsForConfig({ ...config, ...opts }),
-    { force },
-  );
-}
-
 /** Models offered by one of the user's saved providers. */
 export function fetchProviderModels(id, { force = false } = {}) {
   return loadCached(
@@ -190,6 +155,15 @@ export function fetchProviderModels(id, { force = false } = {}) {
     (opts) => UsersFetcher.fetchLlmProviderModels(id, opts),
     { force },
   );
+}
+
+// Forgets one list, keeping no stale fallback: an edited provider may now answer from another endpoint.
+export function invalidate(key) {
+  entries.delete(key);
+  misses.delete(key);
+  inflight.delete(key);
+  generations.set(key, generationOf(key) + 1);
+  notify();
 }
 
 /** Forget everything, including which user it was bound to (used by tests). */
