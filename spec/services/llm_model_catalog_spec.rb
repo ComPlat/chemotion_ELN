@@ -69,6 +69,44 @@ RSpec.describe LlmModelCatalog do
       expect(described_class.fetch(base_url: other_url, api_key: api_key)).to eq(['gpt-4o'])
     end
 
+    it 'ignores a query string, which never reaches the provider' do
+      described_class.fetch(base_url: base_url, api_key: api_key)
+      described_class.fetch(base_url: "#{base_url}?n=1", api_key: api_key)
+
+      expect(WebMock).to have_requested(:get, models_url).once
+    end
+
+    it 'lists with a short timeout, since a person is usually waiting on it' do
+      allow(LlmClient).to receive(:new).and_call_original
+      described_class.fetch(base_url: base_url, api_key: api_key)
+
+      expect(LlmClient).to have_received(:new).with(hash_including(timeout: described_class::LIST_TIMEOUT))
+    end
+
+    # The institution may run its endpoint inside the network a user may not reach.
+    context 'when an institution endpoint resolves to a private address' do
+      before do
+        allow(Addrinfo).to receive(:getaddrinfo).and_call_original
+        allow(Addrinfo).to receive(:getaddrinfo).with('ki-toolbox.scc.kit.edu', nil, nil, :STREAM)
+                                                .and_return([Addrinfo.tcp('10.0.0.5', 0)])
+      end
+
+      it 'does not answer a restricted lookup from the institution entry' do
+        described_class.fetch(base_url: base_url, api_key: api_key)
+
+        expect(described_class.fetch(base_url: base_url, api_key: api_key, restrict_endpoint: true))
+          .not_to include('kit.llama3')
+      end
+
+      it 'does not let a restricted refresh evict the institution entry' do
+        described_class.fetch(base_url: base_url, api_key: api_key)
+        described_class.fetch(base_url: base_url, api_key: api_key, restrict_endpoint: true, force: true)
+        described_class.fetch(base_url: base_url, api_key: api_key)
+
+        expect(WebMock).to have_requested(:get, models_url).once
+      end
+    end
+
     it 'does not cache an empty result, so a fixed config is picked up at once' do
       stub_request(:get, models_url).to_return(status: 401, body: '{}')
       expect(described_class.fetch(base_url: base_url, api_key: 'bad')).to eq([])
