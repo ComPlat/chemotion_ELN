@@ -120,9 +120,9 @@ module Chemotion
             error!(e.message, 422)
           end
 
+          # Not gated: a user whose permission was revoked can still remove their key.
           desc 'Delete one of my own providers'
           delete do
-            ensure_personal_providers_allowed!
             provider = find_own_llm_provider!(params[:id])
             identity = llm_catalog_identity(provider)
 
