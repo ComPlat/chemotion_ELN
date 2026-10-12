@@ -1,4 +1,3 @@
-import _, { create } from 'lodash';
 import alt from '../alt';
 import ForwardFetcher from 'src/fetchers/ForwardFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
@@ -12,92 +11,25 @@ import Sample from 'src/models/Sample';
 class ForwardActions {
 
   fetchApiResponse = (params) => {
-
     return (dispatch) => {
-
-    console.log('parkjrh',params);
-
-    ForwardFetcher.fetchforward(params).then((response) => {
-      console.log(response);
-      const treeData = this.generateTreeData(response.outcomes);
-      dispatch({
-        type: 'FETCH_API_SUCCESS',
-        payload: {
-          tree: response,
-          nodes: treeData.nodes,
-          edges: treeData.edges,
-          loading: false
-        }
-      });
-
-    })
-      .catch((error) => {
-        console.log(error);
-        dispatch({
-          type: 'ERROR',
-          payload: {
-            error : error,
-            loading: false
+      // ForwardFetcher already reports server errors; it resolves to undefined
+      // when the request itself fails.
+      ForwardFetcher.fetchforward(params)
+        .then((response) => {
+          if (!response || response.error) {
+            dispatch({ type: 'ERROR', payload: { error: response?.error || 'Prediction failed' } });
+            return;
           }
+          dispatch({ type: 'FETCH_API_SUCCESS', payload: { tree: response } });
+        })
+        .catch((error) => {
+          console.log(error);
+          dispatch({ type: 'ERROR', payload: { error: error || 'Prediction failed' } });
         });
-      });
-    }
-  }
-
-  generateTreeData = (outcomes) => {
-    const newtreeData = { nodes: [], edges: [] };
-    const x_pos = 600;
-    let child_len = 0;
-    let parent_len = 0;
-
-    child_len = outcomes.length;
-    let precursor_counter = 1;
-
-    Object.entries(outcomes).forEach(([key, value]) => {
-
-      if (outcomes && outcomes.length > 0) {
-        let start_point = -(((child_len) * 300) / 2)
-
-        const y_pos_child = (precursor_counter * 300) + start_point;
-
-        const outcomeNode = {
-          id: `custom_${value.rank}`,
-          type: "custom",
-          data: {
-            smiles: value.smiles,
-            svg: value.png,
-            buy: value.is_buyable,
-            buyables: value.buyables,
-            rank: value.rank,
-            prob: value.prob,
-
-          },
-          position: { x: x_pos, y: y_pos_child },
-          sourcePosition: "right",
-          targetPosition: "left",
-          zIndex: 0
-          // render: CustomNode,
-        };
-        newtreeData.nodes.push(outcomeNode);
-        precursor_counter++;
-
-        const outcomeEdge =
-        {
-          id: `synth_${value.rank}`,
-          source: "Synthesis",
-          target: `custom_${value.rank}`,
-          animated: true,
-          style: { stroke: '#1e1d3a' },
-        }
-        newtreeData.edges.push(outcomeEdge);
-
-      }
-
-    });
-    return newtreeData;
-
+    };
   };
-  
+
+  resetForward = () => ({ type: 'RESET' });
 
   handleChange = (sample_id, data) => {
       return (dispatch) => {

@@ -1,5 +1,8 @@
 import alt from '../alt';
 import RetroActions from 'src/stores/alt/actions/RetroActions';
+import {
+  buildRetroTree, expandMolecule, layoutRetroTree
+} from 'src/apps/mydb/elements/details/predictions/retroTree';
 
 class RetroStore {
  constructor() {
@@ -10,14 +13,12 @@ class RetroStore {
         sample : {},
         newSample : {},
         reaction : {reaction_obj : null, reactants : [], reagents : [], products : []},
-        selectedNode : {},
         nodes: [],
         edges:[],
         tree :{},
-        showSVG: false, 
-        hoveredNode: null,
+        retroTree: null,
+        folded: [],
         loading : false,
-        treeData : { nodes: [], edges: [] },
         success : false
 
      }
@@ -27,7 +28,9 @@ class RetroStore {
         handleExpandElements: RetroActions.handleNodeExpand,
         handleSampleSave: RetroActions.handleCreateMolecule,
         handleCreateSampleForReaction: RetroActions.createSampleforReaction,
-        handleReset: RetroActions.handleReactionReset
+        handleReset: RetroActions.handleReactionReset,
+        handleResetTree: RetroActions.resetTree,
+        handleToggleFold: RetroActions.toggleFold
      });
      }
  
@@ -39,40 +42,50 @@ class RetroStore {
         this.setState({ reaction : action.payload.reaction});
     }
 
+    // A dropped sample starts a new tree; expanding grafts reactions onto it.
+    // Either way the boxes and lines are laid out again from the whole tree.
     handleDropElements(action) {
-        if (action.payload.error) {return;}
-
-        const updatedNodes = [...this.state.nodes, ...action.payload.newTreeData.nodes];
-        const updatedEdges = [...this.state.edges, ...action.payload.newTreeData.edges];
-
-        this.setState({ 
-            tree: action.payload.tree,
-            loading : false,
-            nodes: updatedNodes,
-            edges: updatedEdges,
-            success: true,
-            sample: action.payload.sample
-         });
-      }
+        if (action.payload.error) {
+            this.setState({ loading: false });
+            return;
+        }
+        this.setTree(buildRetroTree(action.payload.tree), { sample: action.payload.sample, folded: [] });
+    }
 
     handleExpandElements(action) {
-        if (action.payload.error) {
-            this.setState({ 
-                loading : false
-            })
+        if (action.payload.error || !this.state.retroTree) {
+            this.setState({ loading: false });
+            return;
         }
+        const { nodeKey } = action.payload;
+        // Show the new branch even if the molecule was folded before.
+        this.setTree(
+            expandMolecule(this.state.retroTree, nodeKey, action.payload.tree),
+            { folded: this.state.folded.filter((key) => key !== nodeKey) }
+        );
+    }
 
-        const updatedNodes = [...this.state.nodes, ...action.payload.newTreeData.nodes];
-        const updatedEdges = [...this.state.edges, ...action.payload.newTreeData.edges];
+    handleResetTree() {
+        this.setState({
+            retroTree: null, folded: [], tree: {}, nodes: [], edges: [], sample: {}, success: false, loading: false
+        });
+    }
 
-        this.setState({ 
-            tree: action.payload.tree,
-            loading : false,
-            nodes: updatedNodes,
-            edges: updatedEdges,
-            success: true
-                 });
-      }
+    handleToggleFold(key) {
+        if (!this.state.retroTree) return;
+        const { folded } = this.state;
+        this.setTree(this.state.retroTree, {
+            folded: folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key]
+        });
+    }
+
+    setTree(retroTree, extra = {}) {
+        const folded = extra.folded || this.state.folded;
+        const { nodes, edges } = layoutRetroTree(retroTree, new Set(folded));
+        this.setState({
+            ...extra, retroTree, nodes, edges, loading: false, success: true
+        });
+    }
 
     handleSampleSave(action) {
         this.setState({ newSample: action.payload.new });

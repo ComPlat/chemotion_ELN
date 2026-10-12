@@ -437,6 +437,7 @@
 // reactflow needs a definite height; use the viewport so the canvas grows
 // in full-screen instead of staying pinned at 700px.
 .prediction-flow {
+  position: relative;
   height: 65vh;
   min-height: 25rem;
 }
@@ -484,3 +485,235 @@
   &--buyable { border: 2px solid var(--bs-success, #198754); }
   &--unavailable { border: 2px solid var(--bs-danger, #dc3545); }
 }
+
+// Retrosynthesis tree boxes (predictions/RetroNodes.js).
+.retro-node,
+.retro-reaction {
+  cursor: pointer;
+
+  // Handles only anchor the edges; nothing can be connected by hand.
+  .react-flow__handle {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.retro-node {
+  width: 200px;
+  padding: .5rem;
+  text-align: center;
+  background-color: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+
+  &--buyable { border-color: var(--bs-success, #198754); }
+  &--root { border: 2px solid var(--bs-primary, #0d6efd); }
+
+  &--selected {
+    outline: 3px solid var(--bs-primary, #0d6efd);
+    outline-offset: 2px;
+  }
+
+  &__label {
+    margin-bottom: .25rem;
+    font-size: .6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--bs-primary, #0d6efd);
+  }
+
+  &__image {
+    display: block;
+    max-width: 100%;
+    max-height: 120px;
+    margin: 0 auto;
+  }
+
+  &__smiles {
+    margin: .25rem 0;
+    font-family: var(--bs-font-monospace, monospace);
+    font-size: .6875rem;
+    word-break: break-all;
+    color: var(--bs-secondary-color, #6c757d);
+  }
+
+  &__toggle {
+    display: block;
+    margin: .375rem auto 0;
+    padding: .125rem .5rem;
+    font-size: .75rem;
+    line-height: 1.2;
+    color: var(--bs-secondary-color, #6c757d);
+    background-color: var(--bs-tertiary-bg, #f8f9fa);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 1rem;
+
+    &:hover {
+      color: var(--bs-primary, #0d6efd);
+      border-color: var(--bs-primary, #0d6efd);
+    }
+  }
+}
+
+.retro-reaction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  background-color: var(--bs-secondary-bg, #e9ecef);
+  border: 2px solid var(--bs-secondary, #6c757d);
+  border-radius: 50%;
+
+  &__rank {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  &__score {
+    font-size: .75rem;
+    color: var(--bs-secondary-color, #6c757d);
+  }
+
+  &--selected {
+    outline: 3px solid var(--bs-primary, #0d6efd);
+    outline-offset: 2px;
+  }
+
+  // Small pill used in the legend.
+  &--legend {
+    width: auto;
+    height: auto;
+    padding: 0 .4rem;
+    font-size: .6875rem;
+    font-weight: 700;
+    border-width: 1px;
+    border-radius: 1rem;
+  }
+}
+
+.retro-badge {
+  display: inline-block;
+  padding: .125rem .5rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  border-radius: 1rem;
+
+  &--buyable {
+    color: #fff;
+    background-color: var(--bs-success, #198754);
+  }
+
+  &--unavailable {
+    color: var(--bs-secondary-color, #6c757d);
+    background-color: var(--bs-secondary-bg, #e9ecef);
+  }
+}
+
+// Hover popups; NodeToolbar renders them above the canvas at a fixed size.
+.retro-popup {
+  max-width: 22rem;
+  padding: .5rem .75rem;
+  font-size: .75rem;
+  background-color: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .375rem;
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .15);
+
+  &__smiles {
+    margin-bottom: .375rem;
+    font-family: var(--bs-font-monospace, monospace);
+    word-break: break-all;
+  }
+
+  &__sources {
+    width: 100%;
+
+    th,
+    td { padding: .125rem .75rem .125rem 0; }
+
+    th {
+      font-weight: 600;
+      color: var(--bs-secondary-color, #6c757d);
+    }
+  }
+
+  &__note { color: var(--bs-secondary-color, #6c757d); }
+
+  &--reaction {
+    max-width: 40rem;
+    text-align: center;
+
+    img {
+      display: block;
+      max-width: 100%;
+      max-height: 12rem;
+      margin: 0 auto .375rem;
+    }
+  }
+}
+
+.retro-legend {
+  position: absolute;
+  top: .5rem;
+  left: .5rem;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+  max-width: calc(100% - 1rem);
+  padding: .375rem .625rem;
+  font-size: .75rem;
+  background-color: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .375rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+}
+
+// Forward synthesis boxes (PredictionNodes.js).
+.retro-node {
+  &--input { cursor: default; }
+  &--filled { border-color: var(--bs-primary, #0d6efd); }
+
+  // Rank and probability of a predicted product.
+  &__rank {
+    display: inline-block;
+    margin-top: .25rem;
+    padding: 0 .4rem;
+    font-size: .6875rem;
+    font-weight: 700;
+    background-color: var(--bs-secondary-bg, #e9ecef);
+    border: 1px solid var(--bs-secondary, #6c757d);
+    border-radius: 1rem;
+  }
+
+  &__drop .drop-target {
+    margin-top: .375rem;
+    padding: .375rem;
+    font-size: .75rem;
+    color: var(--bs-secondary-color, #6c757d);
+    border: 2px dashed var(--bs-border-color, #dee2e6);
+    border-radius: .375rem;
+
+    &.can-drop { border-color: var(--bs-primary, #0d6efd); }
+
+    &.is-over {
+      color: var(--bs-primary, #0d6efd);
+      background-color: var(--bs-primary-bg-subtle, #cfe2ff);
+    }
+  }
+}
+
+.retro-reaction--synthesis {
+  gap: .125rem;
+  cursor: default;
+
+  .fa { font-size: 1.25rem; }
+}
+
+.retro-reaction--ready { border-color: var(--bs-primary, #0d6efd); }

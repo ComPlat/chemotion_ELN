@@ -1,301 +1,153 @@
-import React, { Component, useState, useCallback } from 'react';
+import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
+import ReactFlow, {
+  ReactFlowProvider, Controls, MiniMap, Background
+} from 'reactflow';
 import {
   PredictionHelp, PredictionLoading, PredictionToolbar, isAllCollection
-} from './PredictionUI';
-import DropTargetMolecule from './dragNdrop';
-import ReactFlow, { ReactFlowProvider, Controls, MiniMap, Background, Handle, Position} from 'reactflow';
-import ButtonEdge from './ButtonEdge';
+} from 'src/apps/mydb/elements/details/predictions/PredictionUI';
+import {
+  PredictionLegend, PredictionFlowContext, forwardNodeTypes
+} from 'src/apps/mydb/elements/details/predictions/PredictionNodes';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ForwardStore from 'src/stores/alt/stores/ForwardStore';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
 
+const FIT_VIEW_OPTIONS = { padding: 0.15 };
+const NUM_RESULTS = 5;
+
 class ForwardContainer extends Component {
   constructor(props) {
     super(props);
-    this.initialState = {
-      target: '',
-      idle: true,
-      sample: {},
-      newSample : {},
-      nodes: [{
-        id: 'Reactant',
-        type: 'input',
-        data: { label: 'Reactant' },
-        width: 100,
-        height: 200,
-        position: { x: 0, y: 0 },
-      },
-      {
-        id: 'Reagent',
-        type: 'input',
-        data: { label: 'Reagent' },
-        position: { x: 0, y: 250 },
-      }, {
-        id: 'Solvent',
-        type: 'input',
-        data: { label: 'Solvent' },
-        position: { x: 0, y: 500 },
-      }, {
-        id: 'Synthesis',
-        type: 'synthesis',
-        data: { label: 'synthesis' },
-        position: { x: 300, y: 250 },
-      }
-
-      ],
-      edges: [
-        {
-          id: 're-sy',
-          source: 'Reactant',
-          target: 'Synthesis',
-          animated: true,
-        },
-        {
-          id: 'reag-sy',
-          source: 'Reagent',
-          target: 'Synthesis',
-          animated: true,
-        },
-        {
-          id: 'sol-sy',
-          source: 'Solvent',
-          target: 'Synthesis',
-          animated: true,
-        }
-
-      ],
-      tree: {},
-      showSVG: false,
-      hoveredNode: null,
-      pngBackground: "",
-      treeData: { nodes: [], edges: [] },
-      loading: false,
-      selectedNode: {},
-      reactants: [],
-      reagents : [],
-      solvents :[]
-
-
+    this.state = {
+      ...ForwardStore.getState(),
+      // Selection is kept by node id; only predicted products can be selected.
+      selectedId: null,
     };
 
-    this.state = this.initialState;
-    this.handleChange = this.handleChange.bind(this);
+    // One stable value, so the boxes do not re-render on every container render.
+    this.flowActions = {
+      onDropSample: (label, event) => ForwardActions.handleChange(event.sample_id, { label }),
+    };
+    this.flow = null;
+    this.fitTimer = null;
   }
 
   componentDidMount() {
     this.storeListener = ForwardStore.listen(this.handleStoreChange);
-    const initialState = ForwardStore.getState();
-    this.setState(initialState);  
-    }
+  }
 
-  // Unsubscribe from store updates when the component unmounts
-  componentWillUnmount() {
-    if (this.storeListener) {
-      this.storeListener();  // Unsubscribe the listener
+  componentDidUpdate(prevProps, prevState) {
+    // Dropping an input re-lays the canvas while it stays mounted; refit once
+    // the boxes have been measured. A prediction remounts it, which fits by itself.
+    const canvasStayedMounted = !prevState.loading && !this.state.loading;
+    if (prevState.nodes !== this.state.nodes && canvasStayedMounted && this.flow) {
+      clearTimeout(this.fitTimer);
+      this.fitTimer = setTimeout(() => {
+        this.flow?.fitView({ ...FIT_VIEW_OPTIONS, duration: 300 });
+      }, 50);
     }
   }
 
-  clickToReset = () => {
-    this.setState(
-      {
-        ...this.initialState, 
-        nodes: this.initialState.nodes.map((node) => ({
-          ...node, 
-          data: { label : node.data.label }, 
-        })),
-      },
-      () => {
-        console.log(this.state, 'State after reset');
-      }
-    );
-  };
+  componentWillUnmount() {
+    clearTimeout(this.fitTimer);
+    if (this.storeListener) {
+      this.storeListener(); // Unsubscribe the listener
+    }
+  }
 
   handleStoreChange = (newState) => {
-      // Update the component's state with the new store state
-        this.setState(newState);
-      };
-    
+    this.setState(newState);
+  };
 
   clickToReset = () => {
-      this.setState(this.initialState);
-    };
-  
-  handleChange = (event, data) => {
-        const sampleId = event.sample_id;
-        ForwardActions.handleChange(sampleId, data);
-      };
-  
-  handleSynthesize = () => {
-        const state = ForwardStore.getState(); // Get current state
-        this.setState({ nodes: state.nodes.slice(3), loading: true });
-            // Construct request parameters
-            const params = {
-              reactant: state.reactant?.molecule?.cano_smiles,
-              reagent: state.reagent?.molecule?.cano_smiles,
-              solvent: state.solvent?.molecule?.cano_smiles,
-              num_res: 5,
-              flag: false
-            };
-      
-        ForwardActions.fetchApiResponse(params);
-      };
+    this.setState({ selectedId: null });
+    ForwardActions.resetForward();
+  };
 
-  handleNodeSelect = (event, node) => {
-        this.setState({ selectedNode: node })
-      }
-  
-  handleMoleculeSave= () => {
-        const { currentCollection } = UIStore.getState();
-    if (!this.state.selectedNode?.data?.smiles) {
-      NotificationActions.add.defer({ message: 'Select a Molecule Node', level: 'error' });
+  getSelectedNode = () => (
+    this.state.nodes.find((node) => node.id === this.state.selectedId) || {}
+  );
+
+  handleSynthesize = () => {
+    const { reactant, reagent, solvent } = ForwardStore.getState();
+    const smilesOf = (sample) => sample?.molecule?.cano_smiles || '';
+    if (!smilesOf(reactant)) {
+      NotificationActions.add.defer({ message: 'Drop a reactant first', level: 'error' });
       return;
     }
-        if (isAllCollection(currentCollection)) {
-          NotificationActions.add.defer({
-            message: 'Select a collection',
-            level: 'error'
-          });
-        return;
-        }
-        ForwardActions.handleSave(currentCollection, this.state.selectedNode);
-      };
 
+    this.setState({ loading: true, selectedId: null });
+    // The API requires every field; the prediction server treats '' as "none".
+    ForwardActions.fetchApiResponse({
+      reactant: smilesOf(reactant),
+      reagent: smilesOf(reagent),
+      solvent: smilesOf(solvent),
+      num_res: String(NUM_RESULTS),
+      flag: false
+    });
+  };
+
+  handleNodeSelect = (event, node) => {
+    if (node.type === 'outcome') this.setState({ selectedId: node.id });
+  };
+
+  handleMoleculeSave = () => {
+    const { currentCollection } = UIStore.getState();
+    const selectedNode = this.getSelectedNode();
+    if (selectedNode.type !== 'outcome') {
+      NotificationActions.add.defer({ message: 'Select a predicted product', level: 'error' });
+      return;
+    }
+    if (isAllCollection(currentCollection)) {
+      NotificationActions.add.defer({
+        message: 'Select a collection',
+        level: 'error'
+      });
+      return;
+    }
+    ForwardActions.handleSave(currentCollection, selectedNode);
+  };
 
   render() {
-
-    const InputNode = ({ data }) => {
-      // Function to handle the drag over event and allow the drop
-      return (
-        <div className="prediction-node">
-          <>
-          <div className="prediction-node__smiles">
-          {data.label}<br />
-          {data.smiles}
-        </div>
-            <img src={`data:image/png;base64,${data.png}`} alt="" />
-            
-          </>
-          <div className='drop-field'>
-            <DropTargetMolecule onChange={(event) => this.handleChange(event, data)}></DropTargetMolecule>
-          </div>
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ background: '#555' }}
-            isConnectable={true}
-          />
-        </div>
-      );
-    };
-
-    const SynthesisNode = ({ data }) => {
-      return (
-        <div className="prediction-node">
-
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-            <img
-              style={{ width: '50px' }}
-              src='/images/chem.png' alt="chem"
-            />
-            <p style={{ justifyContent: 'center' }}><b>{data.smiles}</b></p>
-
-          </div>
-          
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{ background: '#555' }}
-            isConnectable={true}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ background: '#555' }}
-            isConnectable={true}
-          />
-        </div>
-      );
-    };
-
-    const CustomNode = ({ data }) => {
-
-      // Extract buyables data or set it as an empty array if not available
-      const buyables = data.buyables || { result: [] };
-      const { result, search } = buyables;
-
-      // Prepare buyablesInfo string if there are buyables
-      let buyablesInfo = '';
-      if (result.length > 0) {
-        buyablesInfo = result.map((item) => `Source: ${item.source}, PPG: ${item.ppg} USD`).join('\n');
-      }
-
-      return (
-        <div
-          className={`prediction-node prediction-node--${data.buy ? 'buyable' : 'unavailable'}`}
-          title={
-            `${data.smiles} - \nProb:${data.prob}\nRank: ${data.rank}` +
-            (data.buy
-              ? buyablesInfo
-                ? `\nBuyable\n${buyablesInfo}`
-                : '\nNot Buyable'
-              : '')
-          }
-        >
-          <div>
-            <img src={`data:image/png;base64,${data.svg}`} alt="" />
-          </div>
-          <Handle
-            type="target"
-            position={Position.Left}
-            style={{ background: '#555' }}
-            isConnectable={true}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            style={{ background: '#555' }}
-            isConnectable={true}
-          />
-        </div>
-      );
-    };
-
-    const nodeTypes = {
-      custom: CustomNode,
-      input: InputNode,
-      synthesis: SynthesisNode,
-
-    };
-    const edgeTypes = {
-
-      buttonedge: ButtonEdge,
-    };
-
-    const nodes = this.state.nodes;
-    const edges = this.state.edges;
-
-    const connectionLineStyle = { stroke: '#fff' };
-    const snapGrid = [10, 10];
-    const defaultViewport = { x: 0, y: 0, zoom: 0.2 };
+    const {
+      nodes, edges, selectedId, loading, inputs, outcomes
+    } = this.state;
+    const hasReactant = Boolean(inputs?.Reactant?.smiles);
+    // reactflow draws its selection from the nodes; mark the chosen one.
+    const shownNodes = selectedId
+      ? nodes.map((node) => (node.id === selectedId ? { ...node, selected: true } : node))
+      : nodes;
 
     return (
       <div>
-        {this.state.loading && <PredictionLoading label="Running forward synthesis…" />}
-        {!this.state.loading && (
+        {loading && <PredictionLoading label="Running forward synthesis…" />}
+        {!loading && (
           <div>
             <PredictionHelp>
-              Perform single step forward synthesis. Drag and drop samples as reactants, reagents and solvents.
-              Multiple samples are currently not supported. The outcome can be saved by clicking a molecule and
-              using Save Molecule; molecules are saved to the currently selected collection.
+              Perform single step forward synthesis. Drag and drop a sample onto Reactant, and optionally onto
+              Reagent and Solvent (one sample each), then click Synthesize. Hover a product for its vendors and
+              prices; click one and use Save Molecule to save it to the currently selected collection.
             </PredictionHelp>
             <PredictionToolbar>
-              <Button variant="primary" size="sm" onClick={this.handleSynthesize}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={this.handleSynthesize}
+                disabled={!hasReactant}
+                title={hasReactant ? 'Predict the products' : 'Drop a reactant first'}
+              >
                 <i className="fa fa-flask me-1" aria-hidden="true" />
                 Synthesize
               </Button>
-              <Button variant="outline-primary" size="sm" onClick={this.handleMoleculeSave}>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={this.handleMoleculeSave}
+                disabled={this.getSelectedNode().type !== 'outcome'}
+                title="Save the selected product to the current collection"
+              >
                 <i className="fa fa-floppy-o me-1" aria-hidden="true" />
                 Save Molecule
               </Button>
@@ -305,38 +157,36 @@ class ForwardContainer extends Component {
               </Button>
             </PredictionToolbar>
             <div className="prediction-flow">
-            <ReactFlowProvider>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                connectionLineStyle={connectionLineStyle}
-                snapToGrid={true}
-                snapGrid={snapGrid}
-                defaultViewport={defaultViewport}
-                onNodeClick={this.handleNodeSelect}
-                fitView
-              >
-                <MiniMap minZoom={0.2} />
-                <Controls />
-                <Background color="#aaa" gap={16} />
-              </ReactFlow>
-            </ReactFlowProvider>
+              <PredictionFlowContext.Provider value={this.flowActions}>
+                <ReactFlowProvider>
+                  <ReactFlow
+                    nodes={shownNodes}
+                    edges={edges}
+                    nodeTypes={forwardNodeTypes}
+                    nodeOrigin={[0, 0.5]}
+                    nodesDraggable={false}
+                    nodesConnectable={false}
+                    zoomOnDoubleClick={false}
+                    onInit={(instance) => { this.flow = instance; }}
+                    onNodeClick={this.handleNodeSelect}
+                    onPaneClick={() => this.setState({ selectedId: null })}
+                    fitView
+                    fitViewOptions={FIT_VIEW_OPTIONS}
+                    minZoom={0.1}
+                  >
+                    <MiniMap minZoom={0.2} />
+                    <Controls />
+                    <Background color="#aaa" gap={16} />
+                  </ReactFlow>
+                </ReactFlowProvider>
+              </PredictionFlowContext.Provider>
+              {outcomes?.length > 0 && <PredictionLegend variant="forward" />}
             </div>
           </div>
         )}
       </div>
     );
-
   }
-};
-
-ForwardContainer.propTypes = {
-  // target: PropTypes.string.isRequired,
-  // num_res: PropTypes.string.isRequired, 
-  // eslint-disable-line react/forbid-prop-types
 }
-
 
 export default ForwardContainer;
