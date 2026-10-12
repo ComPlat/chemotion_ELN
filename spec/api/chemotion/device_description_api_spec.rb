@@ -138,6 +138,22 @@ describe Chemotion::DeviceDescriptionAPI do
       expect(device_description.reload.children.size).to be(1)
     end
 
+    context 'when the device description has a segment' do
+      let!(:segment) do
+        create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
+                         properties: segment_klass.properties_release)
+      end
+
+      it 'copies the segment to the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segments = device_description.reload.children.first.segments
+        expect(split_segments.map(&:segment_klass_id)).to eq([segment_klass.id])
+        expect(split_segments.first.properties['layers']).to eq(segment.properties['layers'])
+        expect(device_description.segments.reload).to eq([segment])
+      end
+    end
+
     context 'when the collection is a read-only share' do
       let(:read_only_collection) do
         create(:collection, user: create(:person)).tap do |c|

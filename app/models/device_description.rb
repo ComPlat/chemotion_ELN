@@ -208,7 +208,7 @@ class DeviceDescription < ApplicationRecord
 
   def create_sub_device_description(user, collection_ids)
     device_description = dup
-    segments = device_description.segments
+    segments = segments_for_split
 
     device_description.is_split = true
     device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
@@ -220,8 +220,17 @@ class DeviceDescription < ApplicationRecord
     device_description.collections << all_collections(user, collection_ids)
     device_description.save!
 
-    device_description.save_segments(segments: segments, current_user_id: user.id) if segments
+    device_description.save_segments(segments: segments, current_user_id: user.id) if segments.any?
 
     device_description.reload
+  end
+
+  private
+
+  def segments_for_split
+    segments.map do |segment|
+      { 'segment_klass_id' => segment.segment_klass_id, 'properties' => segment.properties.deep_dup,
+        'metadata' => segment.metadata }
+    end
   end
 end
