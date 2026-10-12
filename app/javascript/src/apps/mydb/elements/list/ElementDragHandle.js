@@ -110,6 +110,7 @@ const ElementDragHandle = ({ element, sourceType: sourceTypeProp }) => {
       case DragDropItemTypes.SAMPLE:
         return sampleTaskInboxVisible || [
           'device',
+          'prediction',
           'reaction',
           'research_plan',
           'sample',

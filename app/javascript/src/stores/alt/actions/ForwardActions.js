@@ -4,6 +4,7 @@ import ForwardFetcher from 'src/fetchers/ForwardFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import PngFetcher from 'src/fetchers/PngFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 
@@ -35,7 +36,7 @@ class ForwardActions {
         dispatch({
           type: 'ERROR',
           payload: {
-            error : errror,
+            error : error,
             loading: false
           }
         });
@@ -162,7 +163,7 @@ class ForwardActions {
         if (!result || result == null) {
           NotificationActions.add({
             title: 'Error on Sample creation',
-            message: `Cannot create molecule with entered Smiles/CAS! [${smi}]`,
+            message: `Cannot create molecule with entered Smiles/CAS! [${selectedNode.data.smiles}]`,
             level: 'error',
             position: 'tc'
           });
@@ -177,7 +178,18 @@ class ForwardActions {
               new: newSample
             }
           });
-          ElementActions.createSample(newSample, true);
+          SamplesFetcher.create(newSample)
+            .then((created) => {
+              NotificationActions.add({
+                message: `Sample ${created.short_label} saved to "${currentCollection.label}"`,
+                level: 'success'
+              });
+              ElementActions.refreshElements('sample');
+            })
+            .catch((error) => {
+              console.error('Error saving sample', error);
+              NotificationActions.add({ message: 'Saving the sample failed', level: 'error' });
+            });
 
         }
       }).catch((error) => {

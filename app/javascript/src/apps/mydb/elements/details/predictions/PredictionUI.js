@@ -41,3 +41,8 @@ export const PredictionToolbar = ({ children }) => (
 PredictionToolbar.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
+// Saving needs a real target collection; the locked "All" collection is not one.
+export const isAllCollection = (collection) => Boolean(
+  collection?.is_locked && collection?.label === 'All'
+);

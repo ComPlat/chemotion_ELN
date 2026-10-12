@@ -236,7 +236,7 @@ class RetroActions {
               if (!result || result == null) {
                 NotificationActions.add({
                   title: 'Error on Sample creation',
-                  message: `Cannot create molecule with entered Smiles/CAS! [${smi}]`,
+                  message: `Cannot create molecule with entered Smiles/CAS! [${smiles}]`,
                   level: 'error',
                   position: 'tc'
                 });
@@ -251,7 +251,18 @@ class RetroActions {
                       new: newSample
                     }
                   });
-                ElementActions.createSample(newSample, true);
+                SamplesFetcher.create(newSample)
+            .then((created) => {
+              NotificationActions.add({
+                message: `Sample ${created.short_label} saved to "${currentCollection.label}"`,
+                level: 'success'
+              });
+              ElementActions.refreshElements('sample');
+            })
+            .catch((error) => {
+              console.error('Error saving sample', error);
+              NotificationActions.add({ message: 'Saving the sample failed', level: 'error' });
+            });
               }
             }).catch((error) => {
               console.log(error);
@@ -310,11 +321,13 @@ class RetroActions {
                 })
                 .catch((error) => {
                   console.error("Error creating sample", error);
+                  resolve(null);
                 });
             }
           })
           .catch((error) => {
             console.error(`Error fetching molecule for SMILES: ${smiles}`, error);
+            resolve(null);
           });
         
       });

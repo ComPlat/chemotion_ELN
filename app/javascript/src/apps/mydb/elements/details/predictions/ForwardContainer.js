@@ -1,10 +1,13 @@
 import React, { Component, useState, useCallback } from 'react';
 import { Button } from 'react-bootstrap';
-import { PredictionHelp, PredictionLoading, PredictionToolbar } from './PredictionUI';
+import {
+  PredictionHelp, PredictionLoading, PredictionToolbar, isAllCollection
+} from './PredictionUI';
 import DropTargetMolecule from './dragNdrop';
 import ReactFlow, { ReactFlowProvider, Controls, MiniMap, Background, Handle, Position} from 'reactflow';
 import ButtonEdge from './ButtonEdge';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ForwardStore from 'src/stores/alt/stores/ForwardStore';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
 
@@ -144,9 +147,12 @@ class ForwardContainer extends Component {
       }
   
   handleMoleculeSave= () => {
-        const { currentCollection, isSync } = UIStore.getState();
-        console.log(currentCollection.id);
-        if (currentCollection.id == 21) {
+        const { currentCollection } = UIStore.getState();
+    if (!this.state.selectedNode?.data?.smiles) {
+      NotificationActions.add.defer({ message: 'Select a Molecule Node', level: 'error' });
+      return;
+    }
+        if (isAllCollection(currentCollection)) {
           NotificationActions.add.defer({
             message: 'Select a collection',
             level: 'error'

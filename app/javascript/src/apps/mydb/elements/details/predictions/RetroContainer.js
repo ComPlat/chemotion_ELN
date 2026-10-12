@@ -1,6 +1,8 @@
 import React, { Component, useState} from 'react';
 import { Button } from 'react-bootstrap';
-import { PredictionHelp, PredictionLoading, PredictionToolbar } from './PredictionUI';
+import {
+  PredictionHelp, PredictionLoading, PredictionToolbar, isAllCollection
+} from './PredictionUI';
 import PropTypes from 'prop-types';
 import DropTargetMolecule from './dragNdrop';
 import ReactFlow, { ReactFlowProvider, Controls, MiniMap, Background, Handle, Position} from 'reactflow';
@@ -95,7 +97,11 @@ class RetroContainer extends Component {
 
   handleMoleculeSave = () =>{
     const { currentCollection } = UIStore.getState();
-    if (currentCollection.id == 21) {
+    if (!this.state.selectedNode?.data?.smiles) {
+      NotificationActions.add.defer({ message: 'Select a Molecule Node', level: 'error' });
+      return;
+    }
+    if (isAllCollection(currentCollection)) {
       NotificationActions.add.defer({
         message: 'Select a collection',
         level: 'error'
@@ -117,7 +123,7 @@ handleReactionSave = () => {
   return;
   }
 
-  if (currentCollection.id == 21) {
+  if (isAllCollection(currentCollection)) {
     NotificationActions.add.defer({
         message: 'Select a collection',
         level: 'error'
@@ -158,12 +164,13 @@ handleReactionSave = () => {
     fetchReagentSamples = fetchSamples(reagents, 'reagent');
   }
   
-  Promise.all([fetchReactantSamples, fetchReagentSamples]).then(() => {
+  Promise.all([fetchReactantSamples, fetchReagentSamples]).then(([reactantSamples, reagentSamples]) => {
     const newReaction = Reaction.buildEmpty(currentCollection.id);
-    console.log(newReaction);
-    newReaction.starting_materials = [...this.state.reaction.reactants];
-    newReaction.products = [...this.state.sample];
-    newReaction.reagents = [...this.state.reaction.reagents];
+    // The product is the sample dropped onto the tree root.
+    const { sample } = RetroStore.getState();
+    newReaction.starting_materials = reactantSamples.filter(Boolean);
+    newReaction.products = sample?.id ? [sample] : [];
+    newReaction.reagents = reagentSamples.filter(Boolean);
 
     ElementActions.createReaction(newReaction);
    
@@ -212,6 +219,7 @@ handleReactionSave = () => {
   }
 
   handleNodeExpand = () =>{
+    const { selectedNode } = this.state;
     if (selectedNode.type != 'custom'){
       NotificationActions.add.defer({
         message: 'Select a Molecule Node',

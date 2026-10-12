@@ -17,6 +17,7 @@ export default class SelectionGenerateButton extends React.Component {
       checkedIds: UIStore.getState().sample.checkedIds,
       json: {},
       matrix: null,
+      matrices: null,
       enableComputedProps: null,
       enableReactionPredict: null,
       hasSampleExplorer: isUIComponentEnabled('sampleExplorer'),
@@ -61,6 +62,14 @@ export default class SelectionGenerateButton extends React.Component {
     if (hasSampleExplorer !== this.state.hasSampleExplorer) {
       this.setState({ hasSampleExplorer });
     }
+    // The UI matrices (/ui/initialize) and the current user load independently;
+    // re-check the feature flags when the matrices arrive after the user.
+    if (state.matrices !== this.state.matrices) {
+      this.setState({
+        matrices: state.matrices,
+        ...this.featureFlags(this.state.matrix),
+      });
+    }
   }
 
   onUserStoreChange(state) {
@@ -68,10 +77,17 @@ export default class SelectionGenerateButton extends React.Component {
     if (this.state.matrix !== storeMatrix) {
       this.setState({
         matrix: storeMatrix,
-        enableComputedProps: MatrixCheck(storeMatrix, 'computedProp'),
-        enableReactionPredict: MatrixCheck(storeMatrix, 'reactionPrediction'),
+        ...this.featureFlags(storeMatrix),
       });
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  featureFlags(matrix) {
+    return {
+      enableComputedProps: MatrixCheck(matrix, 'computedProp'),
+      enableReactionPredict: MatrixCheck(matrix, 'reactionPrediction'),
+    };
   }
 
   async downloadPrintCodesPDF(ids, template) {

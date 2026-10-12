@@ -72,39 +72,25 @@ class ForwardStore {
      }
  
     handleUpdateElements(action) {
-      switch (action.type) {
-        case 'UPDATE_REACTANT':
+      // Each drop fills one of the fixed input nodes (ids match the labels).
+      const targets = {
+        UPDATE_REACTANT: ['reactant', 'Reactant'],
+        UPDATE_REAGENT: ['reagent', 'Reagent'],
+        UPDATE_SOLVENT: ['solvent', 'Solvent'],
+      };
 
-          this.setState({ reactant: action.payload.sample });
-          const reactionNode = this.state.nodes[0];
-          reactionNode.data = { ...reactionNode.data, png: action.payload.png, smiles: action.payload.smiles };
-          const updatereactionNode = [...this.state.nodes, ...reactionNode];
-          this.setState({ nodes: updatereactionNode });
-
-          break;
-    
-        case 'UPDATE_REAGENT':
-
-          this.setState({ reagent: action.payload.sample });
-          const reagentNode = this.state.nodes[1];
-          reagentNode.data = { ...reagentNode.data, png: action.payload.png, smiles: action.payload.smiles };
-          const updatereagentNode = [...this.state.nodes, ...reagentNode];
-          this.setState({ nodes: updatereagentNode });
-          break;
-    
-        case 'UPDATE_SOLVENT':
-
-          this.setState({ solvent: action.payload.sample });
-          const solventNode = this.state.nodes[2];
-          solventNode.data = { ...solventNode.data, png: action.payload.png, smiles: action.payload.smiles };
-          const updatesolventNode = [...this.state.nodes, ...solventNode];
-          this.setState({ nodes: updatesolventNode });
-
-          break;
-    
-        case 'ERROR':
-          console.warn('Error while fetch:', action.error);
+      if (action.type === 'ERROR') {
+        console.warn('Error while fetch:', action.error);
+        return;
       }
+      if (!targets[action.type]) return;
+
+      const [key, nodeId] = targets[action.type];
+      const { sample, png, smiles } = action.payload;
+      const nodes = this.state.nodes.map((node) => (
+        node.id === nodeId ? { ...node, data: { ...node.data, png, smiles } } : node
+      ));
+      this.setState({ [key]: sample, nodes });
     }
 
     handleFetch(value) {
