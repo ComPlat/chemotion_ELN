@@ -2,10 +2,30 @@
 
 module Chemotion
   class LlmSettingsAPI < Grape::API
+    MAX_TASK_MAPPINGS = 100
+
     resource :users do
       helpers LlmAccessHelpers
 
       helpers do
+        # Checked before the transaction opens: error! throws, and a throw out of
+        # a transaction block commits it on Rails 6.1.
+        def ensure_task_mappings_acceptable!(mappings)
+          mappings = Array(mappings)
+          error!({ error: "At most #{MAX_TASK_MAPPINGS} task overrides." }, 422) if mappings.size > MAX_TASK_MAPPINGS
+
+          unknown = unknown_task_names(mappings)
+          error!({ error: "Unknown task: #{unknown.first}" }, 422) if unknown.any?
+        end
+
+        # Tasks an override would be stored for that the registry does not define.
+        # Clearing a row is allowed whatever its name.
+        def unknown_task_names(mappings)
+          mappings.reject { |m| m[:model].blank? && m[:llm_provider_id].blank? }
+                  .map { |m| m[:task_name].to_s.strip }
+                  .reject { |name| name.blank? || Chemotion::LlmTaskRegistry.names.include?(name) }
+        end
+
         # Everything about a provider EXCEPT its key, which never leaves the
         # server in readable form.
         def present_llm_provider(provider)
@@ -142,6 +162,7 @@ module Chemotion
             error!({ error: 'You are not permitted to use the institution provider. Contact your administrator.' }, 403)
           end
 
+          ensure_task_mappings_acceptable!(params[:task_mappings])
           setting = current_user.user_llm_setting ||
                     UserLlmSetting.new(user: current_user)
 
@@ -155,8 +176,10 @@ module Chemotion
           end
 
           { success: true }
-        rescue ActiveRecord::RecordInvalid => e
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::InvalidForeignKey => e
           error!(e.message, 422)
+        rescue ActiveRecord::RecordNotUnique
+          error!({ error: 'Your AI settings were saved from elsewhere at the same time. Reload and try again.' }, 409)
         end
 
         namespace :verify do

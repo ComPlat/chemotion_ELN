@@ -215,6 +215,46 @@ describe Chemotion::LlmSettingsAPI do
 
         expect(user.user_task_model_mappings.find_by(task_name: 'sds_extraction')).to be_nil
       end
+
+      it 'refuses a task the registry does not know' do
+        put '/api/v1/users/llm_settings',
+            params: { task_mappings: [{ task_name: 'no_such_task', model: 'gpt-4' }] }.to_json,
+            headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(user.user_task_model_mappings).to be_empty
+      end
+
+      it 'refuses more task overrides than there could be tasks' do
+        mappings = Array.new(101) { |i| { task_name: "task_#{i}", model: '' } }
+        put '/api/v1/users/llm_settings', params: { task_mappings: mappings }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'when a pointer names a provider that no longer exists' do
+      let(:gone) { create(:llm_provider).tap(&:destroy).id }
+
+      it 'answers 422 for the default provider' do
+        put '/api/v1/users/llm_settings', params: { default_llm_provider_id: gone }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'answers 422 for the institution provider' do
+        put '/api/v1/users/llm_settings', params: { institution_llm_provider_id: gone }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'answers 422 for a task override' do
+        put '/api/v1/users/llm_settings',
+            params: { task_mappings: [{ task_name: 'sds_extraction', llm_provider_id: gone }] }.to_json,
+            headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
     end
 
     context 'with invalid provider_type' do
@@ -479,6 +519,21 @@ describe Chemotion::LlmSettingsAPI do
 
         expect(response).to have_http_status(:not_found)
         expect(theirs.reload).to be_present
+      end
+
+      context 'when personal providers are no longer permitted' do
+        before do
+          Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
+        end
+
+        after { Matrice.find_by(name: 'aiUserApiKey')&.destroy }
+
+        it 'still lets the owner remove the provider and its stored key' do
+          delete "/api/v1/users/llm_providers/#{mine.id}", headers: headers
+
+          expect(response).to have_http_status(:success)
+          expect(LlmProvider.exists?(mine.id)).to be false
+        end
       end
     end
 

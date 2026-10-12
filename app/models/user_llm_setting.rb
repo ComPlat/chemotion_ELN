@@ -54,8 +54,8 @@ class UserLlmSetting < ApplicationRecord
   # check, a crafted default_llm_provider_id would make every task run on another
   # user's endpoint — and spend their API key.
   def default_llm_provider_belongs_to_user
-    return if default_llm_provider.nil?
-    return if default_llm_provider.scope == 'user' && default_llm_provider.user_id == user_id
+    return if default_llm_provider_id.nil?
+    return if default_llm_provider&.scope == 'user' && default_llm_provider.user_id == user_id
 
     errors.add(:default_llm_provider, 'must be one of your own providers')
   end
@@ -63,8 +63,8 @@ class UserLlmSetting < ApplicationRecord
   # A personal provider here would hand its owner's key to whoever set the
   # preference — only the shared institution list may be named.
   def institution_llm_provider_is_global
-    return if institution_llm_provider.nil?
-    return if institution_llm_provider.scope == 'global'
+    return if institution_llm_provider_id.nil?
+    return if institution_llm_provider&.scope == 'global'
 
     errors.add(:institution_llm_provider, 'must be one of the institution providers')
   end

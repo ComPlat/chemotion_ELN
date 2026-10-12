@@ -50,9 +50,9 @@ class UserTaskModelMapping < ApplicationRecord
   # shared. Anything else would let one user route their tasks — and their data —
   # through another user's endpoint and key.
   def provider_is_reachable_by_user
-    return if llm_provider.nil?
-    return if llm_provider.scope == 'global'
-    return if llm_provider.user_id == user_id
+    return if llm_provider_id.nil?
+    return if llm_provider&.scope == 'global'
+    return if llm_provider && llm_provider.user_id == user_id
 
     errors.add(:llm_provider, 'must be the institution provider or one of your own')
   end
