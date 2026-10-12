@@ -3,7 +3,7 @@
 # Defaults for join-row flags the UI may omit
 module JoinFlagDefaults
   def default_join_flags(data)
-    %w[show_label carry_on].each { |flag| data[flag] = false if data[flag].blank? }
+    %w[show_label carry_on step_reference].each { |flag| data[flag] = false if data[flag].blank? }
   end
 end
 
@@ -225,7 +225,7 @@ module Usecases
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
           :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage,
-          :components, :literatures, :reaction_step_position, :carry_on
+          :components, :literatures, :reaction_step_position, :carry_on, :step_reference
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -365,10 +365,10 @@ module Usecases
 
       def step_link(sample, existing = nil)
         if @step_id_by_position.nil?
-          return existing ? { reaction_step_id: existing.reaction_step_id, carry_on: existing.carry_on } : {}
+          return existing ? existing.slice(:reaction_step_id, :carry_on, :step_reference).symbolize_keys : {}
         end
 
-        { reaction_step_id: resolved_step_id(sample), carry_on: sample.carry_on }
+        { reaction_step_id: resolved_step_id(sample), carry_on: sample.carry_on, step_reference: sample.step_reference }
       end
 
       def resolved_step_id(sample)

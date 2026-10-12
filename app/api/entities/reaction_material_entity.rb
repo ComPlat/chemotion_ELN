@@ -23,5 +23,6 @@ module Entities
     expose! :weight_percentage
     expose! :reaction_step_id
     expose! :carry_on
+    expose! :step_reference
   end
 end

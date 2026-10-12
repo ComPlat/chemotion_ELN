@@ -274,4 +274,108 @@ describe('Reaction multi-step', () => {
     expect(Object.values(step).some((v) => v === null)).toEqual(false);
     expect(step.position).toEqual(1);
   });
+
+  describe('per-step reference', () => {
+    const buildTwoSteps = async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      reaction.reaction_type = 'multi_step';
+      reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+      const [start, reagent] = reaction.starting_materials;
+      const [carried, final] = reaction.products;
+      start.reaction_step_id = 1;
+      start.reference = true;
+      reagent.reaction_step_id = 2;
+      carried.reaction_step_id = 1;
+      carried.carry_on = true;
+      final.reaction_step_id = 2;
+      return {
+        reaction, start, reagent, carried, final,
+      };
+    };
+
+    it('measures a later step against its carried product by default', async () => {
+      const {
+        reaction, start, reagent, carried, final,
+      } = await buildTwoSteps();
+
+      expect(reaction.referenceFor(start)).toBe(start);
+      expect(reaction.referenceFor(carried)).toBe(start);
+      expect(reaction.referenceFor(reagent)).toBe(carried);
+      expect(reaction.referenceFor(final)).toBe(carried);
+      expect(reaction.isReference(carried)).toEqual(false);
+    });
+
+    it('lets a later step pick its own reference without touching step 1', async () => {
+      const {
+        reaction, start, reagent, carried, final,
+      } = await buildTwoSteps();
+
+      reaction.setStepReference(reaction.reaction_steps[1], reagent.id);
+
+      expect(reaction.referenceFor(final)).toBe(reagent);
+      expect(reaction.isReference(reagent)).toEqual(true);
+      expect(reaction.isReference(start)).toEqual(true);
+      expect(carried.step_reference).toEqual(false);
+      expect(reaction.referenceMaterial).toBe(start);
+    });
+
+    it('ignores a reference flag left on a later-step material', async () => {
+      const { reaction, start, reagent } = await buildTwoSteps();
+      start.reference = false;
+      reagent.reference = true;
+
+      expect(reaction.referenceMaterial).toEqual(undefined);
+    });
+
+    it('drops the step choice when the product is no longer carried', async () => {
+      const { reaction, carried } = await buildTwoSteps();
+      carried.step_reference = true;
+
+      reaction.toggleCarryOn(carried.id);
+
+      expect(carried.step_reference).toEqual(false);
+    });
+
+    it('sends the step choice only for a product that is still carried', async () => {
+      const { reaction, carried, final } = await buildTwoSteps();
+      carried.step_reference = true;
+      final.step_reference = true;
+
+      const { products } = reaction.serialize().materials;
+
+      expect(products.find((p) => p.id === carried.id).step_reference).toEqual(true);
+      expect(products.find((p) => p.id === final.id).step_reference).toEqual(false);
+    });
+
+    it('never sends the reaction reference flag for a later-step material', async () => {
+      const { reaction, reagent } = await buildTwoSteps();
+      reagent.reference = true;
+
+      const sent = reaction.serialize().materials.starting_materials.find((m) => m.id === reagent.id);
+
+      expect(sent.reference).toEqual(false);
+    });
+
+    it('keeps the step choice on a copied reaction', async () => {
+      const { reaction, reagent } = await buildTwoSteps();
+      reaction.setStepReference(reaction.reaction_steps[1], reagent.id);
+
+      const copy = reaction.buildCopy();
+      const copiedReagent = copy.starting_materials[1];
+
+      expect(copiedReagent.step_reference).toEqual(true);
+      expect(copy.isReference(copiedReagent)).toEqual(true);
+    });
+
+    it('keeps the step link when a material is refreshed from its sample', async () => {
+      const { reaction, reagent } = await buildTwoSteps();
+      reagent.step_reference = true;
+
+      reaction.updateMaterial({ ...reagent, reaction_step_id: undefined, step_reference: undefined });
+
+      const refreshed = reaction.starting_materials.find((m) => m.id === reagent.id);
+      expect(refreshed.reaction_step_id).toEqual(2);
+      expect(refreshed.step_reference).toEqual(true);
+    });
+  });
 });

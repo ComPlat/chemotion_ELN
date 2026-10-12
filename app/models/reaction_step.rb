@@ -32,4 +32,16 @@ class ReactionStep < ApplicationRecord
   belongs_to :reaction
 
   validates :position, presence: true, numericality: { greater_than: 0 }
+
+  def reference_row
+    previous = reaction.reaction_steps.where(position: ...position).order(:position).last
+    return if previous.nil?
+
+    candidates = [
+      *ReactionsProductSample.where(reaction_step_id: previous.id, carry_on: true).order(:position),
+      *ReactionsStartingMaterialSample.where(reaction_step_id: id).order(:position),
+      *ReactionsReactantSample.where(reaction_step_id: id).order(:position),
+    ]
+    candidates.find(&:step_reference) || candidates.first
+  end
 end
