@@ -940,7 +940,9 @@ class ElementStore {
       return { refreshCoefficient: updatedCoefficient };
     });
 
-    if (sample.isMixture()) {
+    const componentsLoaded = sample.hasComponents()
+      && sample.components.every((component) => component instanceof Component);
+    if (sample.isMixture() && !componentsLoaded) {
       ComponentsFetcher.fetchComponentsBySampleId(sample.id)
         .then(async (components) => {
           const sampleComponents = components.map((component) => {
