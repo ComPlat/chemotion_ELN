@@ -98,6 +98,7 @@ RSpec.describe Sample do
   describe 'deletion' do
     let(:sample) { create(:sample) }
     let(:starting_material_reaction) { create(:reaction) }
+    let(:reactant_reaction) { create(:reaction) }
     let(:product_reaction) { create(:reaction) }
     let(:wellplate)  { create(:wellplate) }
     let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
@@ -106,7 +107,7 @@ RSpec.describe Sample do
     before do
       # CollectionsSample.create!(sample: sample, collection: collection)
       ReactionsStartingMaterialSample.create!(sample: sample, reaction: starting_material_reaction)
-      ReactionsReactantSample.create!(sample: sample, reaction: starting_material_reaction)
+      ReactionsReactantSample.create!(sample: sample, reaction: reactant_reaction)
       ReactionsProductSample.create!(sample: sample, reaction: product_reaction)
       sample.destroy
       wellplate.reload

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_13_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1241,6 +1241,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
+    t.index ["reaction_id", "sample_id"], name: "index_reactions_samples_on_reaction_id_sample_id", unique: true, where: "(deleted_at IS NULL)"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"

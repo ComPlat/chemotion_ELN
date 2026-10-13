@@ -67,8 +67,8 @@ RSpec.describe ElementalComposition, type: :model do
     context 'product/reactant' do
       before do
         reaction = create(:reaction)
-        ReactionsStartingMaterialSample.create!(sample: @sample, reaction: reaction)
-        ReactionsReactantSample.create!(sample: @sample, reaction: reaction)
+        @starting_material = create(:sample)
+        ReactionsStartingMaterialSample.create!(sample: @starting_material, reaction: reaction)
         ReactionsProductSample.create!(sample: @sample, reaction: reaction)
         @sample.reload
       end
@@ -79,7 +79,7 @@ RSpec.describe ElementalComposition, type: :model do
         product_yield = Chemotion::Calculations.get_yield(@el_comp_found.data,
                                                           { 'H' => '11.19', 'O' => '88.81' },
                                                           @el_comp_expected.data)
-        new_amount = @sample.amount_mmol * product_yield
+        new_amount = @starting_material.amount_mmol * product_yield
         amount = @sample.amount_mg
         target = new_amount / amount * 1000.0
 

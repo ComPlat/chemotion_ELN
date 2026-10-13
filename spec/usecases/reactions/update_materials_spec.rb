@@ -27,7 +27,7 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:product_sample) do
     create(:reactions_product_sample,
            reaction: reaction,
-           sample: sample,
+           sample: create(:sample, name: 'GasProduct', container: create(:container)),
            gas_phase_data: gas_phase_data)
   end
 
