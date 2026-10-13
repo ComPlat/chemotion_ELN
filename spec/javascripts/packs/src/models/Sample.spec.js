@@ -702,6 +702,76 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateComponentAmounts() with an indeterminate ratio', () => {
+    const buildQaMixture = () => {
+      const sample = new Sample({ sample_type: 'Mixture' });
+      const components = [
+        { id: 'benzophenone', molecular_weight: 182.2179, amount_mol: 0.005, reference: true },
+        { id: 'benzoic-acid', molecular_weight: 122.12134, amount_mol: 0.005, reference: false },
+        { id: 'phenol', molecular_weight: 94.11124, amount_mol: 0.01, reference: false },
+      ].map(({ molecular_weight, ...data }, position) => {
+        const component = new Component({
+          ...data, position, material_group: 'solid', purity: 1,
+          molecule: { id: position + 1, molecular_weight },
+        });
+        component.updatePhysicalAmounts();
+        return component;
+      });
+      sample.initialComponents(components);
+      sample.amount_value = components.reduce((sum, component) => sum + component.amount_g, 0);
+      sample.amount_unit = 'g';
+      return sample;
+    };
+
+    ['zero', 'reset', 'missing'].forEach((ratioState) => {
+      ['setAmount', 'setAmountAndNormalizeToGram'].forEach((setter) => {
+        it(`preserves all component quantities with a ${ratioState} ratio during ${setter}`, () => {
+          const sample = buildQaMixture();
+          const benzoic = sample.components[1];
+          if (ratioState === 'reset') benzoic.resetAmounts();
+          else benzoic.equivalent = ratioState === 'zero' ? 0 : null;
+          const before = JSON.parse(JSON.stringify(sample.serializeMaterial().components));
+
+          sample[setter]({ value: 6, unit: 'g' });
+
+          expect(sample.amount_g).toBe(6);
+          expect(sample.components[0].amount_mol).toBe(0.005);
+          expect(sample.components[2].amount_mol).toBe(0.01);
+          expect(benzoic.amount_mol).toBe(ratioState === 'reset' ? 0 : 0.005);
+          expect(JSON.parse(JSON.stringify(sample.serializeMaterial().components))).toEqual(before);
+        });
+      });
+    });
+
+    it('initializes the same dry composition when every ratio is positive', () => {
+      const sample = buildQaMixture();
+      sample.components.forEach((component) => {
+        component.amount_mol = 0;
+        component.updatePhysicalAmounts();
+      });
+
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+
+      const [benzophenone, benzoic, phenol] = sample.components;
+      expect(benzoic.amount_mol).toBeCloseTo(benzophenone.amount_mol, 12);
+      expect(phenol.amount_mol).toBeCloseTo(benzophenone.amount_mol * 2, 12);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+    });
+
+    it('uses valid relative weights to conserve mass even with a saved zero ratio', () => {
+      const sample = buildQaMixture();
+      sample.calculateTotalMixtureMass();
+      const previousMassG = sample.amount_g;
+      sample.components[1].equivalent = 0;
+
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+
+      expect(sample.components[1].amount_mol).toBeCloseTo(0.005 * 6 / previousMassG, 12);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+      expect(sample.components[1].equivalent).toBe(0);
+    });
+  });
+
   describe('Sample.calculateRequiredTotalVolume()', () => {
     let sample;
     let referenceComponent;
