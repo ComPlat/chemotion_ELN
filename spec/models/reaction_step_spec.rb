@@ -95,4 +95,35 @@ RSpec.describe ReactionStep do
       expect(rows[:start].reload.equivalent).to eq(1.0)
     end
   end
+
+  describe 'step descriptions in search and sample reports' do
+    let(:text) { ->(words) { { 'ops' => [{ 'insert' => "#{words}\n" }] } } }
+    let(:multi) { create(:reaction, reaction_type: 'multi_step', description: text.call('heat it')) }
+    let(:product) { create(:sample) }
+
+    before do
+      described_class.create!(reaction: multi, position: 1, description: text.call('heat it'))
+      second = described_class.create!(reaction: multi, position: 2, description: text.call('cool it'))
+      ReactionsProductSample.create!(reaction: multi, sample: product, reaction_step: second)
+    end
+
+    it 'searches the text of every step' do
+      multi.reload.send(:update_to_plain_text_without_delay, true, false)
+
+      expect(multi.reload.plain_text_description).to include('heat it', 'cool it')
+    end
+
+    it 'gives a step 2 product the text of step 2' do
+      expect(product.reload.reaction_description).to eq(text.call('cool it'))
+    end
+
+    it 'keeps the reaction text for a standard reaction' do
+      standard = create(:reaction, description: text.call('stir'))
+      sample = create(:sample)
+      ReactionsProductSample.create!(reaction: standard, sample: sample)
+
+      expect(sample.reload.reaction_description).to eq(text.call('stir'))
+      expect(standard.reload.description_for_search).to eq(text.call('stir'))
+    end
+  end
 end

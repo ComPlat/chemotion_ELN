@@ -351,6 +351,16 @@ class Reaction < ApplicationRecord
     update(variations: current_variations) if changed.positive?
   end
 
+  def refresh_search_text
+    update_to_plain_text(true, false)
+  end
+
+  def description_for_search
+    return description unless multi_step? && reaction_steps.any?
+
+    { 'ops' => reaction_steps.flat_map { |step| Array(step.description&.dig('ops')) } }
+  end
+
   private
 
   def temperature_data_display
@@ -509,7 +519,8 @@ class Reaction < ApplicationRecord
     update_columns(
       {
         plain_text_observation: observation_changed.presence && Chemotion::QuillToPlainText.convert(observation),
-        plain_text_description: description_changed.presence && Chemotion::QuillToPlainText.convert(description),
+        plain_text_description: description_changed.presence &&
+          Chemotion::QuillToPlainText.convert(description_for_search),
       }.compact,
     )
   # NB: we don't want to raise an error if the conversion fails
