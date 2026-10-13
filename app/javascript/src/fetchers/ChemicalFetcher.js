@@ -1,6 +1,10 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Chemical from 'src/models/Chemical';
 
+const SDS_POLL_INTERVAL_MS = 2000;
+const SDS_POLL_ATTEMPTS = 60;
+export const SDS_STILL_QUEUED = 'the sheet is still waiting to be read in the background; try again in a minute';
+
 export default class ChemicalFetcher {
   // Fetch chemical by either sample_id or sequence_based_macromolecule_sample_id, depending on type
   static fetchChemical(id, type) {
@@ -75,15 +79,32 @@ export default class ChemicalFetcher {
   }
 
   // Rejects on a failed request so the caller can tell it from a sheet that yielded nothing.
-  static extractFromSds(sheetPath) {
-    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?${new URLSearchParams({ path: sheetPath })}`, {
+  // The server answers 202 while SdsExtractionJob reads the sheet, so this polls until the stored
+  // result arrives; a busy text service (503 with Retry-After) is asked again after that delay.
+  // Polling stops, resolving undefined, once `cancelled` returns true.
+  static extractFromSds(sheetPath, {
+    interval = SDS_POLL_INTERVAL_MS, attempts = SDS_POLL_ATTEMPTS, cancelled = () => false,
+  } = {}) {
+    const url = `/api/v1/chemicals/extract_sds?${new URLSearchParams({ path: sheetPath })}`;
+    const request = () => ApiClient.getJson(url, {
       handleResponseSuccess: (response) => {
-        if (response.ok) return response.json();
+        if (response.status === 202) return { retryIn: interval };
+        if (response.ok) return response.json().then((result) => ({ result }));
+        const retryAfter = Number(response.headers?.get('Retry-After'));
         return response.json().catch(() => ({})).then((errorData) => {
-          throw new Error(errorData.error || `HTTP ${response.status}`);
+          const error = new Error(errorData.error || `HTTP ${response.status}`);
+          if (response.status === 503 && retryAfter > 0) return { retryIn: retryAfter * 1000, error };
+          throw error;
         });
       },
       handleResponseError: (error) => { throw error; },
     });
+    const poll = (left) => (cancelled() ? Promise.resolve(undefined) : request().then(({ result, retryIn, error }) => {
+      if (retryIn === undefined) return result;
+      if (left <= 1) throw error || new Error(SDS_STILL_QUEUED);
+      return new Promise((resolve) => { setTimeout(resolve, retryIn); }).then(() => poll(left - 1));
+    }));
+
+    return poll(attempts);
   }
 }

@@ -180,24 +180,36 @@ module Chemotion
           requires :path, type: String, desc: 'safetySheetPath link of the saved sheet'
         end
 
-        # 400 for a path that is not a saved sheet, 404 when it is gone, 422 when the PDF cannot be
-        # read, 503 when the PDF text service is busy, down or misconfigured (with Retry-After when
-        # known); a readable sheet that yields nothing is a 200 whose diagnostics say why.
+        helpers do
+          # A failure of the PDF text service is a 503, with Retry-After when it gave one; of the sheet, a 422.
+          def answer_sds_extraction(result)
+            diagnostics = result['diagnostics']
+            failure = diagnostics&.dig('errors')&.first
+            return result unless failure
+
+            if diagnostics['service_unavailable']
+              retry_after = Chemotion::SdsExtractionCache.retry_after(diagnostics)
+              error!({ error: failure, diagnostics: diagnostics }, 503,
+                     retry_after ? { 'Retry-After' => retry_after.to_s } : {})
+            end
+            error!({ error: failure, diagnostics: diagnostics }, 422)
+          end
+        end
+
+        # 400 not a saved sheet, 404 gone, 202 while SdsExtractionJob reads it, then the cached
+        # result: 200, or the failure as answer_sds_extraction maps it.
         get do
           path = Chemotion::SdsExtractor.saved_sheet_path(params[:path])
           error!({ error: Chemotion::SdsExtractor::NOT_A_SAVED_SHEET }, 400) if path.nil?
           error!({ error: 'the safety data sheet is no longer on the server' }, 404) unless path.file?
 
-          result = Chemotion::SdsExtractor.extract(path.to_s)
-          diagnostics = result['diagnostics']
-          failure = diagnostics&.dig('errors')&.first
-          if failure && diagnostics['service_unavailable']
-            retry_after = diagnostics['retry_after']
-            error!({ error: failure, diagnostics: diagnostics }, 503,
-                   retry_after ? { 'Retry-After' => retry_after.to_s } : {})
-          end
-          error!({ error: failure, diagnostics: diagnostics }, 422) if failure
-          result
+          key = Chemotion::SdsExtractionCache.key(path)
+          result = Chemotion::SdsExtractionCache.read(key)
+          next answer_sds_extraction(result) if result
+
+          SdsExtractionJob.perform_later(params[:path], key) unless SdsExtractionJob.pending?(key)
+          status 202
+          { status: 'pending' }
         rescue StandardError => e
           Rails.logger.error("extract_sds failed: #{e.class}: #{e.message}")
           error!({ error: 'the safety data sheet could not be read' }, 500)

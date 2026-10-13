@@ -44,7 +44,7 @@ module Chemotion
     VARIANTS_FILE = File.expand_path('sds_phrase_variants.yml', __dir__)
     PHRASE_FILES = %w[json/hazardPhrases.json json/precautionaryPhrases.json].freeze
 
-    Entry = Struct.new(:code, :words, :wildcards, keyword_init: true)
+    Entry = Struct.new(:code, :words, :wildcards, :decisive, keyword_init: true)
     Hit = Struct.new(:code, :score, :value, :text, keyword_init: true)
 
     def self.match(lines)
@@ -65,8 +65,14 @@ module Chemotion
         by_wording[tokens] = code if held.nil? || code.count('+') > held.count('+')
       end
       by_wording.map do |tokens, code|
-        Entry.new(code: code, words: tokens - [WILDCARD], wildcards: tokens.count(WILDCARD)).freeze
+        entry(code, tokens)
       end
+    end
+
+    # @param tokens [Array<String, Symbol>] the wording as .tokenize(text, catalogue: true) returns it
+    def self.entry(code, tokens)
+      words = tokens - [WILDCARD]
+      Entry.new(code: code, words: words, wildcards: tokens.count(WILDCARD), decisive: words & DECISIVE).freeze
     end
 
     def self.live_wordings
@@ -106,7 +112,9 @@ module Chemotion
       @catalog = catalog
     end
 
-    # => { codes: [...], matched: [{ text, code, score }], unmatched: [text, ...], ambiguous: [...] }
+    # @param lines [Array<String>] the label elements block
+    # @return [Hash] :codes, :matched ([{ 'text', 'code', 'score' }]), :unmatched and :ambiguous
+    #   statement texts, and :refused with a reason when the block is too large to match
     def match(lines)
       @ambiguous = {}
       fragments = fragment(lines)
@@ -179,7 +187,8 @@ module Chemotion
 
       # Coverage first: a trailing placeholder must not let a shorter entry swallow a longer one's words.
       pool = tokens.tally
-      top, runner_up = @catalog.filter_map { |entry| score(entry, tokens, pool, text) }
+      decisive = tokens & DECISIVE
+      top, runner_up = @catalog.filter_map { |entry| score(entry, tokens, pool, decisive, text) }
                                .sort_by { |hit| [-hit.value, -hit.score] }
       return top unless tied?(top, runner_up)
 
@@ -192,8 +201,8 @@ module Chemotion
     end
 
     # Dice overlap of the words, where the words a placeholder takes count on neither side.
-    def score(entry, tokens, pool, text)
-      return nil unless within_reach?(entry, tokens) && decisive_words_agree?(entry, tokens)
+    def score(entry, tokens, pool, decisive, text)
+      return nil unless within_reach?(entry, tokens) && decisive_words_agree?(entry, tokens, decisive)
 
       matched = shared_word_count(entry.words, pool)
       return nil if matched < MIN_MATCHED_WORDS
@@ -216,11 +225,10 @@ module Chemotion
     end
 
     # Text may carry extra decisive words only where the entry has a placeholder to hold them.
-    def decisive_words_agree?(entry, tokens)
-      decisive_in_entry = entry.words & DECISIVE
-      return false unless (decisive_in_entry - tokens).empty?
+    def decisive_words_agree?(entry, tokens, decisive)
+      return false unless (entry.decisive - tokens).empty?
 
-      extra = (tokens & DECISIVE) - decisive_in_entry
+      extra = decisive - entry.decisive
       extra.empty? || (entry.wildcards.positive? && (extra & NEGATIONS).empty?)
     end
 

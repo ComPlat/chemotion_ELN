@@ -173,13 +173,32 @@ RSpec.describe Chemotion::SdsExtractor do
     end
   end
 
-  describe 'a document with no vendor mark' do
+  describe 'a sheet whose printed codes are all unknown' do
+    let(:result) { extract_lines(us_sheet(['H999 Highly flammable liquid and vapor'])) }
+
+    it 'falls back to the statement wording', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225])
+      expect(result['diagnostics']['phrases']['source']).to eq('wording')
+      expect(result['diagnostics']['notes'].join).to include('no printed code is a known one (H999)')
+    end
+  end
+
+  describe 'a sheet from a supplier with no known brand mark' do
+    let(:result) { extract_lines(eu_sheet(['H225 Highly flammable liquid and vapour.'], vendor: 'TCI Europe N.V.')) }
+
+    it 'reads the printed codes and leaves the vendor unnamed', :aggregate_failures do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225])
+      expect(result['diagnostics']['layout']).to eq('sigma')
+      expect(result['diagnostics']).not_to have_key('vendor')
+      expect(result['diagnostics']['notes']).to include('vendor fingerprint inconclusive')
+    end
+  end
+
+  describe 'a US sheet from a supplier with no known brand mark' do
     let(:result) { extract_lines(us_sheet(['Highly flammable liquid and vapor'], vendor: 'Some Supplier')) }
 
-    it 'reads nothing and says the vendor is unknown', :aggregate_failures do
-      expect(result['safetyPhrases']['h_statements']).to be_empty
-      expect(result['properties']).to be_empty
-      expect(result['diagnostics']['notes']).to include('vendor fingerprint inconclusive')
+    it 'matches the wording as it would on a Fisher sheet' do
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225])
     end
   end
 
@@ -188,8 +207,10 @@ RSpec.describe Chemotion::SdsExtractor do
       extract_lines(us_sheet(['Highly flammable liquid and vapor'], vendor: 'Sigma-Aldrich / Alfa Aesar'))
     end
 
-    it 'refuses to pick one' do
+    it 'names neither but still reads the sheet', :aggregate_failures do
       expect(result['diagnostics']['notes']).to include('vendor fingerprint inconclusive')
+      expect(result['diagnostics']).not_to have_key('vendor')
+      expect(result['safetyPhrases']['h_statements'].keys).to eq(%w[H225])
     end
   end
 end
