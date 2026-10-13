@@ -1,5 +1,209 @@
 # Chemotion_ELN Changelog
 
+# [v4.0.0]
+> (2026-10-13)
+
+> ⚠️ Major release. Read the **Breaking changes** before upgrading from v3.
+> This section lists every user- and admin-visible change since v3, grouped by area, including what was previewed in v4.0.0-rc. Fixes also released in a v3.1.x update are left out (see their own sections), and internal refactoring, test, build and dependency changes are summarised under **Maintenance**.
+
+## Breaking changes
+
+* **Collection sharing redesigned.** Synchronized collections are gone, a share no longer creates a copy, permissions form a single ladder, and only an element's owner can destroy it ([#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783), [#3064](https://github.com/ComPlat/chemotion_ELN/pull/3064), [#3236](https://github.com/ComPlat/chemotion_ELN/pull/3236), [#3374](https://github.com/ComPlat/chemotion_ELN/pull/3374)).
+* **Collections belong to one person.** A group reaches a collection only through a share, and empty **All** collections of group accounts are retired by the upgrade ([#3453](https://github.com/ComPlat/chemotion_ELN/pull/3453)).
+* **The `sync_collections_users` table is dropped** by the upgrade migration. Local scripts or reports reading it need rewriting ([#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783)).
+* **User-label API endpoints moved** from `/api/v1/users/...` to `/api/v1/user_labels/...`, with no alias for the old paths ([#3142](https://github.com/ComPlat/chemotion_ELN/pull/3142)).
+* **Group-management API moved** to `/api/v1/groups`, replacing the old `groups/*` routes ([#3398](https://github.com/ComPlat/chemotion_ELN/pull/3398)).
+* **One PubChem job queue.** The `pubchem`, `pubchemLcss` and `single_pubchem_lcss` queues are replaced by `pubchem_lookup`. A worker pool started with an explicit `--queues` list must be updated; `CRON_CONFIG_PC_LCSS` is obsolete, `CRON_CONFIG_PC_CID` drives the single job ([#3438](https://github.com/ComPlat/chemotion_ELN/pull/3438)).
+
+## Collections and sharing
+
+### Features and enhancements
+
+* One sharing model with a six-level permission ladder, per-type detail levels, role presets, group shares, delegated share management and a two-step ownership handshake ([#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783), [#3374](https://github.com/ComPlat/chemotion_ELN/pull/3374)).
+* Locked system collections (**All**, **chemotion-repository.net**, **transferred**) appear in a pinned *System collections* section of collection management, where they can be shared and have their tab layout edited ([#3468](https://github.com/ComPlat/chemotion_ELN/pull/3468)).
+* Collection management reworked: a per-collection menu (*Add share*, *Edit collection metadata*, *Publish via RADAR*) and clickable share icons that open the share list ([#3424](https://github.com/ComPlat/chemotion_ELN/pull/3424)).
+* Collection graph explorer: see a collection's samples and reactions as a graph ([#2764](https://github.com/ComPlat/chemotion_ELN/pull/2764)).
+* Detail levels apply the same way when you read, edit, report on or export shared elements ([#3445](https://github.com/ComPlat/chemotion_ELN/pull/3445)).
+* At sample detail level 1, recipients see the structure and molecule name ([#3475](https://github.com/ComPlat/chemotion_ELN/pull/3475)).
+
+### Fixes
+
+* Creating elements in a read-only shared collection is refused ([#3360](https://github.com/ComPlat/chemotion_ELN/pull/3360)).
+* Upgrade migration: legacy sharing data, orphaned shares and element-tag collection labels are handled ([#3337](https://github.com/ComPlat/chemotion_ELN/pull/3337), [#3447](https://github.com/ComPlat/chemotion_ELN/pull/3447)).
+* The repository subtree stays nested in the collection tree ([#3453](https://github.com/ComPlat/chemotion_ELN/pull/3453)).
+* Renaming a shared collection, changing a permission or revoking a share reaches recipients straight away ([#3461](https://github.com/ComPlat/chemotion_ELN/pull/3461)).
+* Collection menu, metadata and RADAR actions are offered to the owner only ([#3463](https://github.com/ComPlat/chemotion_ELN/pull/3463)).
+* The collection-label badge on elements is legible, and its warning is shown to owners only ([#3462](https://github.com/ComPlat/chemotion_ELN/pull/3462)).
+* Unsaved edits in the collection management modal are no longer lost ([#3454](https://github.com/ComPlat/chemotion_ELN/pull/3454)).
+* Read-only shares of research plans, screens and wellplates are honoured in their detail views ([#3411](https://github.com/ComPlat/chemotion_ELN/pull/3411)).
+* A cascading share edit also shares sub-collections created since ([#3436](https://github.com/ComPlat/chemotion_ELN/pull/3436)).
+* Ownership can only be offered to a single person, never to a group or several people at once ([#3429](https://github.com/ComPlat/chemotion_ELN/pull/3429)).
+* Removing elements tells you which samples were skipped because they are locked ([#3404](https://github.com/ComPlat/chemotion_ELN/pull/3404)).
+* Bulk collection actions (assign, move, remove) work for generic elements ([#3402](https://github.com/ComPlat/chemotion_ELN/pull/3402)).
+* *Split*, *Copy* and *My labels* need write permission on the collection ([#3399](https://github.com/ComPlat/chemotion_ELN/pull/3399)).
+* Locked collections cannot be created, renamed, moved or deleted through any path ([#3384](https://github.com/ComPlat/chemotion_ELN/pull/3384)).
+* Renaming a collection in the tree keeps the cursor where you are typing ([#3393](https://github.com/ComPlat/chemotion_ELN/pull/3393)).
+* Sharing, the sequence-based macromolecule icon, conflict handling and advanced search in shared collections ([#3225](https://github.com/ComPlat/chemotion_ELN/pull/3225)).
+* **All** collection: no duplicate entries, and a stable tab layout ([#3284](https://github.com/ComPlat/chemotion_ELN/pull/3284), [#3364](https://github.com/ComPlat/chemotion_ELN/pull/3364)).
+
+## Samples, molecules and research plans
+
+### Features and enhancements
+
+* Moisture, particle size and physical state as sample properties ([#3306](https://github.com/ComPlat/chemotion_ELN/pull/3306)).
+* Melting and boiling point ranges with richer input and a **Decomposed** toggle ([#3189](https://github.com/ComPlat/chemotion_ELN/pull/3189)).
+* Research plans carry a short label, like the other element types ([#2715](https://github.com/ComPlat/chemotion_ELN/pull/2715)).
+* Better handling of loading values on samples ([#3341](https://github.com/ComPlat/chemotion_ELN/pull/3341)).
+* Molecule names may contain printable Unicode; control and invisible characters stay blocked ([#3281](https://github.com/ComPlat/chemotion_ELN/pull/3281)).
+* Molecule names from PubChem appear while you draw and during import, instead of waiting for a background job ([#3439](https://github.com/ComPlat/chemotion_ELN/pull/3439), [#3438](https://github.com/ComPlat/chemotion_ELN/pull/3438)).
+
+### Fixes
+
+* Polymer surface chemistry: yield calculation, drag-and-drop, structure images and Ketcher save ([#3326](https://github.com/ComPlat/chemotion_ELN/pull/3326)).
+* Polymer molfiles: no empty `PolymersList` tags written, imported or exported, and molfile headers stay intact ([#3486](https://github.com/ComPlat/chemotion_ELN/pull/3486), [#3533](https://github.com/ComPlat/chemotion_ELN/pull/3533)).
+* Component molecular weight is always stored as a number ([#3473](https://github.com/ComPlat/chemotion_ELN/pull/3473)).
+* The sample tab title stays on one line with its icon ([#3532](https://github.com/ComPlat/chemotion_ELN/pull/3532)).
+* CAS and affiliation input fields no longer freeze the page while resizing ([#3266](https://github.com/ComPlat/chemotion_ELN/pull/3266)).
+* Molecule creation during import is atomic, and PubChem lookups are batched, rate-limited and no longer re-queued forever ([#3407](https://github.com/ComPlat/chemotion_ELN/pull/3407), [#3387](https://github.com/ComPlat/chemotion_ELN/pull/3387), [#3523](https://github.com/ComPlat/chemotion_ELN/pull/3523), [#3416](https://github.com/ComPlat/chemotion_ELN/pull/3416)).
+
+## Reactions and reaction variations
+
+### Features and enhancements
+
+* **µmol** as an amount unit in the reaction scheme ([#3292](https://github.com/ComPlat/chemotion_ELN/pull/3292)) and in the reaction-variations amount columns ([#3522](https://github.com/ComPlat/chemotion_ELN/pull/3522)).
+* An **interaction** reaction type, plus reaction-scheme UI improvements ([#3234](https://github.com/ComPlat/chemotion_ELN/pull/3234)).
+* Concentration handling and a **volume lock** in the reaction scheme ([#2985](https://github.com/ComPlat/chemotion_ELN/pull/2985)).
+* The concentration calculation basis is a choice made per reaction ([#3607](https://github.com/ComPlat/chemotion_ELN/pull/3607)).
+* A **Most Used** shortlist in the reagent and solvent dropdowns ([#3308](https://github.com/ComPlat/chemotion_ELN/pull/3308)).
+* Reaction variations: a concentration column ([#3435](https://github.com/ComPlat/chemotion_ELN/pull/3435)), sample values autofilled from a linked analysis dataset ([#3458](https://github.com/ComPlat/chemotion_ELN/pull/3458)), and attachments linked automatically by a `-v<id>` filename suffix ([#3300](https://github.com/ComPlat/chemotion_ELN/pull/3300)).
+
+### Fixes
+
+* Reaction variations state is saved atomically ([#3365](https://github.com/ComPlat/chemotion_ELN/pull/3365)), rows keep their creation order and reordering alone no longer marks the reaction as changed ([#3520](https://github.com/ComPlat/chemotion_ELN/pull/3520)), and the grid's horizontal scrollbar is always reachable ([#3410](https://github.com/ComPlat/chemotion_ELN/pull/3410)).
+* *Populate samples from data file* skips entries without a sample identifier instead of matching an unlabelled material ([#3636](https://github.com/ComPlat/chemotion_ELN/pull/3636)).
+* Solvent volumes no longer collapse to 0 or *n.d.* when the reference amount changes ([#3512](https://github.com/ComPlat/chemotion_ELN/pull/3512)).
+* Editing *Eq* highlights **Amount**, not Mass, as the recalculated field ([#3553](https://github.com/ComPlat/chemotion_ELN/pull/3553)); the reaction-volume checkbox is labelled *Use for concentration* ([#3545](https://github.com/ComPlat/chemotion_ELN/pull/3545)).
+* Temperature ranges keep their unit in schemes and exports ([#3568](https://github.com/ComPlat/chemotion_ELN/pull/3568)).
+
+## Chemicals, safety data and mixtures
+
+### Features and enhancements
+
+* Editable safety phrases (H/P codes and pictograms) in the inventory tab ([#3244](https://github.com/ComPlat/chemotion_ELN/pull/3244)), a fuller phrase catalogue, and combined codes resolved into their parts ([#3247](https://github.com/ComPlat/chemotion_ELN/pull/3247)).
+* Safety data sheets: vendor sheets found through PubChem and stored with the chemical, up to five per sample, and a *Product number* inventory field ([#3578](https://github.com/ComPlat/chemotion_ELN/pull/3578)); an *Extract from sheet* button that reads safety phrases and properties from a saved sheet, replacing the old fetch buttons ([#3605](https://github.com/ComPlat/chemotion_ELN/pull/3605)).
+* Sheet text can be read by a separate PDF text service, configured in `config/sds_text_service.yml`; without it, extraction runs locally as before ([#3619](https://github.com/ComPlat/chemotion_ELN/pull/3619)).
+* Mixtures can hold several components built on the same molecule ([#3302](https://github.com/ComPlat/chemotion_ELN/pull/3302)), with better component ordering, structure-editor stability and list UI ([#3273](https://github.com/ComPlat/chemotion_ELN/pull/3273)).
+
+### Fixes
+
+* A manually uploaded SDS is saved reliably ([#3570](https://github.com/ComPlat/chemotion_ELN/pull/3570)).
+* Inventory amounts, volumes, temperatures and flash points accept a comma as decimal separator ([#3616](https://github.com/ComPlat/chemotion_ELN/pull/3616)).
+* Mixture stock concentration carries over when a component is dropped in, and the total-concentration value is no longer cut off ([#3528](https://github.com/ComPlat/chemotion_ELN/pull/3528)).
+
+## Import, export and reports
+
+### Features and enhancements
+
+* Sample import from a list of CAS numbers alone, with per-cell value conversion and a report you can correct and re-import ([#3340](https://github.com/ComPlat/chemotion_ELN/pull/3340)).
+
+### Fixes
+
+* SDF import runs in the background, so large files no longer time out ([#3397](https://github.com/ComPlat/chemotion_ELN/pull/3397)); structure rendering during import is bounded and the database connection is released during long steps ([#3401](https://github.com/ComPlat/chemotion_ELN/pull/3401), [#3524](https://github.com/ComPlat/chemotion_ELN/pull/3524), [#3440](https://github.com/ComPlat/chemotion_ELN/pull/3440)).
+* Validation when importing samples with the column-mapping feature ([#3223](https://github.com/ComPlat/chemotion_ELN/pull/3223)).
+* Research plans keep their links to samples and reactions through export and import ([#3434](https://github.com/ComPlat/chemotion_ELN/pull/3434)).
+* An export of *all pages* of a filtered list includes only what the filtered list shows ([#3565](https://github.com/ComPlat/chemotion_ELN/pull/3565)).
+* The reaction SMILES export works for reactions with a purification solvent, which it leaves out ([#3639](https://github.com/ComPlat/chemotion_ELN/pull/3639)).
+* Reports: preview, label and DOCX export no longer crash, and SI-Synthesis analyses are back ([#3470](https://github.com/ComPlat/chemotion_ELN/pull/3470)); a blank ppm value no longer breaks the gas-scheme DOCX export ([#3513](https://github.com/ComPlat/chemotion_ELN/pull/3513)).
+* A report is generated with the template you picked ([#3632](https://github.com/ComPlat/chemotion_ELN/pull/3632)), and bulleted or numbered lists in rich-text analyses no longer break it. Custom report templates need the `ListBullet` and `ListNumber` styles for this ([#3638](https://github.com/ComPlat/chemotion_ELN/pull/3638)).
+
+## Analyses, spectra and attachments
+
+### Features and enhancements
+
+* An edit / order mode toggle on the analyses tab of every element type ([#3114](https://github.com/ComPlat/chemotion_ELN/pull/3114)).
+* Browse all images and PDFs of an analysis and pick its preview image explicitly ([#2671](https://github.com/ComPlat/chemotion_ELN/pull/2671)).
+* LC/MS: on-demand mass-spectrum extraction at a chosen retention time, with a polarity filter ([#3295](https://github.com/ComPlat/chemotion_ELN/pull/3295)).
+* Spectra editor 1.8 ([#3352](https://github.com/ComPlat/chemotion_ELN/pull/3352)); converter client 0.16 and converter app 1.9 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378), [#3412](https://github.com/ComPlat/chemotion_ELN/pull/3412)).
+
+### Fixes
+
+* Spectra editor: fullscreen modal without scrollbars ([#3477](https://github.com/ComPlat/chemotion_ELN/pull/3477)), dropdowns in the modal header and a fixed chart/panel layout ([#3561](https://github.com/ComPlat/chemotion_ELN/pull/3561)), all three LC/MS charts rendered ([#3514](https://github.com/ComPlat/chemotion_ELN/pull/3514)).
+* *Refresh Simulation* saves again and shows the simulated peaks in place ([#3600](https://github.com/ComPlat/chemotion_ELN/pull/3600)); peak generation works for derived JCAMP files ([#3531](https://github.com/ComPlat/chemotion_ELN/pull/3531)).
+* A spectrum save reuses the existing derived attachment instead of adding a duplicate each time ([#3494](https://github.com/ComPlat/chemotion_ELN/pull/3494)).
+* NMRium: multi-curve NMR zip uploads ([#3488](https://github.com/ComPlat/chemotion_ELN/pull/3488)), 2D source data ([#3421](https://github.com/ComPlat/chemotion_ELN/pull/3421)), source links that keep working ([#3566](https://github.com/ComPlat/chemotion_ELN/pull/3566)), versioned `.nmrium` files ([#3586](https://github.com/ComPlat/chemotion_ELN/pull/3586)), and saving on self-hosted instances ([#3537](https://github.com/ComPlat/chemotion_ELN/pull/3537)); legacy 2D documents reopen and a 2D FID processed in NMRium survives save and reopen ([#3621](https://github.com/ComPlat/chemotion_ELN/pull/3621)).
+* 2D NMR JCAMP uploads go straight to NMRium instead of being turned into a meaningless 1D curve ([#3622](https://github.com/ComPlat/chemotion_ELN/pull/3622)).
+* Spectra editor 1.8.5: a JCAMP of an unrecognised data type opens in a neutral layout, and multiplet bars no longer carry over from the previous spectrum ([#3620](https://github.com/ComPlat/chemotion_ELN/pull/3620)).
+* Analysis upload modal: single scroll, advanced-mode toggle and a stable *+Dataset* button ([#3484](https://github.com/ComPlat/chemotion_ELN/pull/3484)).
+* Image preview modal layout and PDF sizing ([#3536](https://github.com/ComPlat/chemotion_ELN/pull/3536)).
+* Attachments that cannot be previewed show a file-type icon instead of a preview that never loads, and an analysis header only picks a preferred image that has a thumbnail ([#3547](https://github.com/ComPlat/chemotion_ELN/pull/3547)).
+* Uploaded files are attached once ([#3617](https://github.com/ComPlat/chemotion_ELN/pull/3617)), and attachment reads and writes follow the same access rule as the element they belong to ([#3583](https://github.com/ComPlat/chemotion_ELN/pull/3583)).
+
+## Wellplates, devices and generic elements
+
+### Features and enhancements
+
+* Wellplates can be created without a size and resized later, as long as no filled well would be lost ([#2123](https://github.com/ComPlat/chemotion_ELN/pull/2123)).
+* LabIMotion 2.3 for generic elements, segments and datasets ([#3359](https://github.com/ComPlat/chemotion_ELN/pull/3359), [#3525](https://github.com/ComPlat/chemotion_ELN/pull/3525), [#3613](https://github.com/ComPlat/chemotion_ELN/pull/3613)).
+
+### Fixes
+
+* Wellplates keep their attachments after save and import, and tolerate a missing molarity ([#3372](https://github.com/ComPlat/chemotion_ELN/pull/3372)); the import template download waits until the wellplate is saved ([#3560](https://github.com/ComPlat/chemotion_ELN/pull/3560)).
+* Device descriptions show their history and tabs again ([#3446](https://github.com/ComPlat/chemotion_ELN/pull/3446)).
+* Generic-element variations mapping ([#3413](https://github.com/ComPlat/chemotion_ELN/pull/3413)); built-in elements stay in the tab layout when generic elements are enabled ([#3572](https://github.com/ComPlat/chemotion_ELN/pull/3572)).
+
+## Interface
+
+### Features and enhancements
+
+* Browse, search and archive past notifications ([#3138](https://github.com/ComPlat/chemotion_ELN/pull/3138)); comment notifications link to their element ([#3192](https://github.com/ComPlat/chemotion_ELN/pull/3192)).
+* Bulk add and remove your labels across a selection ([#3142](https://github.com/ComPlat/chemotion_ELN/pull/3142)).
+* Personal text templates, insertable from the editor toolbar ([#3094](https://github.com/ComPlat/chemotion_ELN/pull/3094)).
+* Consolidated buttons, detail cards and modals ([#3110](https://github.com/ComPlat/chemotion_ELN/pull/3110), [#3146](https://github.com/ComPlat/chemotion_ELN/pull/3146), [#3211](https://github.com/ComPlat/chemotion_ELN/pull/3211)); element detail tab layout refreshed and remembered ([#3128](https://github.com/ComPlat/chemotion_ELN/pull/3128)).
+* A collapsible filter panel for the elements table ([#3227](https://github.com/ComPlat/chemotion_ELN/pull/3227)).
+* Redesigned profile and admin sidebars ([#3172](https://github.com/ComPlat/chemotion_ELN/pull/3172)).
+* Cell lines in search ([#2988](https://github.com/ComPlat/chemotion_ELN/pull/2988), [#3299](https://github.com/ComPlat/chemotion_ELN/pull/3299)).
+* Calendar: booking sharing, agenda view and notifications ([#3149](https://github.com/ComPlat/chemotion_ELN/pull/3149)).
+* Close buttons on the tab-layout settings popovers ([#3518](https://github.com/ComPlat/chemotion_ELN/pull/3518)).
+* Ketcher 3.12 ([#3072](https://github.com/ComPlat/chemotion_ELN/pull/3072)), then 3.18, which keeps the canvas position and template labels on update ([#3577](https://github.com/ComPlat/chemotion_ELN/pull/3577)).
+
+### Fixes
+
+* Search results respect the active list filters (**My labels**, date range, products only) ([#3579](https://github.com/ComPlat/chemotion_ELN/pull/3579)).
+* Element lists page correctly again ([#3529](https://github.com/ComPlat/chemotion_ELN/pull/3529)).
+* Copy buttons give feedback, and the citation copy button works again ([#3481](https://github.com/ComPlat/chemotion_ELN/pull/3481)).
+* Long import-log links no longer overflow the notification ([#3482](https://github.com/ComPlat/chemotion_ELN/pull/3482)).
+* Sidebar, notification and detail-header papercuts ([#3450](https://github.com/ComPlat/chemotion_ELN/pull/3450)); collection and reaction badges in detail headers restyled ([#3610](https://github.com/ComPlat/chemotion_ELN/pull/3610)).
+* The in-app guide toggle no longer covers modal controls ([#3631](https://github.com/ComPlat/chemotion_ELN/pull/3631)).
+* *Mirror to your chemotion.net account* queues the transfer again and confirms it with a message ([#3624](https://github.com/ComPlat/chemotion_ELN/pull/3624)).
+* Ketcher bond handling guard ([#3251](https://github.com/ComPlat/chemotion_ELN/pull/3251)).
+* Changing your profile layout settings no longer alters the default layout other users start from ([#3573](https://github.com/ComPlat/chemotion_ELN/pull/3573)).
+
+## Accounts, administration and API
+
+### Features and enhancements
+
+* User-managed API tokens, gated on two-factor authentication ([#3135](https://github.com/ComPlat/chemotion_ELN/pull/3135)).
+* A separate authentication API ([#3143](https://github.com/ComPlat/chemotion_ELN/pull/3143)).
+* Admin-configurable *Info & Support* links in the navigation bar ([#3167](https://github.com/ComPlat/chemotion_ELN/pull/3167)).
+* Configurable title and an optional alternate logo for the in-app guide drawer (`WORKSHOP_GUIDE_TITLE`, [#3535](https://github.com/ComPlat/chemotion_ELN/pull/3535)).
+
+### Fixes
+
+* Groups contain people only; group admins need not be members, and a group always keeps at least one admin ([#3464](https://github.com/ComPlat/chemotion_ELN/pull/3464), [#3415](https://github.com/ComPlat/chemotion_ELN/pull/3415)).
+* The account-providers endpoint returns only the list of linked login providers, and a user label can only be changed by its owner ([#3551](https://github.com/ComPlat/chemotion_ELN/pull/3551)).
+* SMTP settings: HELO domain, timeouts and value types are applied as configured ([#3510](https://github.com/ComPlat/chemotion_ELN/pull/3510)).
+* Admin screens: user defaults and group updates save correctly ([#3392](https://github.com/ComPlat/chemotion_ELN/pull/3392), [#3394](https://github.com/ComPlat/chemotion_ELN/pull/3394)).
+* Faster list endpoints for samples, collections, comments, reports and permission checks ([#3427](https://github.com/ComPlat/chemotion_ELN/pull/3427), [#3425](https://github.com/ComPlat/chemotion_ELN/pull/3425), [#3459](https://github.com/ComPlat/chemotion_ELN/pull/3459), [#3519](https://github.com/ComPlat/chemotion_ELN/pull/3519), [#3521](https://github.com/ComPlat/chemotion_ELN/pull/3521), [#3284](https://github.com/ComPlat/chemotion_ELN/pull/3284)).
+
+## Maintenance
+
+* Frontend API calls go through a single client ([#3294](https://github.com/ComPlat/chemotion_ELN/pull/3294), [#3321](https://github.com/ComPlat/chemotion_ELN/pull/3321), [#3324](https://github.com/ComPlat/chemotion_ELN/pull/3324), [#3361](https://github.com/ComPlat/chemotion_ELN/pull/3361), [#3373](https://github.com/ComPlat/chemotion_ELN/pull/3373), [#3377](https://github.com/ComPlat/chemotion_ELN/pull/3377)); collection-select refactoring ([#3443](https://github.com/ComPlat/chemotion_ELN/pull/3443)); CSS prepared for the application split ([#3099](https://github.com/ComPlat/chemotion_ELN/pull/3099)).
+* Configuration examples hold shared defaults in a `shared:` block ([#3601](https://github.com/ComPlat/chemotion_ELN/pull/3601)).
+* Tests and tooling: end-to-end (Cypress) suite overhauled ([#3346](https://github.com/ComPlat/chemotion_ELN/pull/3346)), ESLint config modernised ([#3315](https://github.com/ComPlat/chemotion_ELN/pull/3315)), Storybook documents cards and modals ([#3205](https://github.com/ComPlat/chemotion_ELN/pull/3205)), devtools and test-runner Babel config fixed ([#3127](https://github.com/ComPlat/chemotion_ELN/pull/3127)), a flaky sample spec fixed ([#3549](https://github.com/ComPlat/chemotion_ELN/pull/3549)).
+* Development setup: asdf install fix ([#3362](https://github.com/ComPlat/chemotion_ELN/pull/3362)), self-hosted NMRium wrapper assets ([#3428](https://github.com/ComPlat/chemotion_ELN/pull/3428)), demo seed data for collection sharing and screening ([#3423](https://github.com/ComPlat/chemotion_ELN/pull/3423)); push-to-deploy CI rebased ([#3270](https://github.com/ComPlat/chemotion_ELN/pull/3270)).
+* React-ecosystem packages updated ahead of the React upgrade ([#3370](https://github.com/ComPlat/chemotion_ELN/pull/3370)).
+* Dependency bumps: JS batch ([#3356](https://github.com/ComPlat/chemotion_ELN/pull/3356)), immutable 5 ([#2994](https://github.com/ComPlat/chemotion_ELN/pull/2994), [#3303](https://github.com/ComPlat/chemotion_ELN/pull/3303)), webpack-dev-server ([#3263](https://github.com/ComPlat/chemotion_ELN/pull/3263)), postcss ([#3219](https://github.com/ComPlat/chemotion_ELN/pull/3219), [#3456](https://github.com/ComPlat/chemotion_ELN/pull/3456)), dompurify ([#3449](https://github.com/ComPlat/chemotion_ELN/pull/3449), [#3615](https://github.com/ComPlat/chemotion_ELN/pull/3615)), js-yaml ([#3455](https://github.com/ComPlat/chemotion_ELN/pull/3455)), fast-uri ([#3414](https://github.com/ComPlat/chemotion_ELN/pull/3414), [#3441](https://github.com/ComPlat/chemotion_ELN/pull/3441)), undici ([#3433](https://github.com/ComPlat/chemotion_ELN/pull/3433)), ip-address ([#3432](https://github.com/ComPlat/chemotion_ELN/pull/3432)), @xmldom/xmldom ([#3175](https://github.com/ComPlat/chemotion_ELN/pull/3175)), follow-redirects ([#3132](https://github.com/ComPlat/chemotion_ELN/pull/3132)), concurrent-ruby ([#3333](https://github.com/ComPlat/chemotion_ELN/pull/3333)), yard ([#3145](https://github.com/ComPlat/chemotion_ELN/pull/3145)).
+
 # [v4.0.0-rc]
 > (2026-07-14)
 
