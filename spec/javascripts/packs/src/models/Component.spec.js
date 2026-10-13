@@ -617,19 +617,32 @@ describe('Component', () => {
       expect(component.relative_molecular_weight).toBe(0);
     });
 
-    it('preserves a loaded relative molecular weight when recalculation inputs are missing', () => {
+    it('preserves a loaded relative molecular weight when only the total mass is unknown', () => {
       const sample = {
         isMixture: () => true,
         total_mixture_mass_g: 0
       };
 
-      component.amount_mol = 0;
+      component.amount_mol = 0.01;
       component.relative_molecular_weight = 50;
 
       const result = component.calculateRelativeMolecularWeight(sample);
 
       expect(component.relative_molecular_weight).toBe(50);
       expect(result.relative_molecular_weight).toBe(50);
+    });
+
+    [0, 10].forEach((totalMass) => {
+      it(`clears stale relative molecular weight for a zero amount with total mass ${totalMass}`, () => {
+        const sample = { isMixture: () => true, total_mixture_mass_g: totalMass };
+        component.amount_mol = 0;
+        component.relative_molecular_weight = 50;
+
+        const result = component.calculateRelativeMolecularWeight(sample);
+
+        expect(result.relative_molecular_weight).toBe(0);
+        expect(component.serializeComponent().component_properties.relative_molecular_weight).toBe(0);
+      });
     });
   });
 

@@ -369,6 +369,84 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
 // the first locked scale-up multiplied NaN by the reference and showed the volume as "n.d.".
 // The correction block now includes solvents, so the equivalent is always a valid
 // amount_mol / reference.amount_mol ratio before it is used to scale.
+describe('ReactionDetailsScheme Eq-locked mixture internal solvent scaling', () => {
+  const build = (relativeWeight = 1000, previousMassG = 5) => {
+    const reaction = new Reaction({
+      starting_materials: [{
+        id: 'reference', reference: true, amountType: 'target',
+        target_amount_value: 0.005, target_amount_unit: 'mol',
+        molecule: { molecular_weight: 100 }, purity: 1, coefficient: 1, gas_type: 'off',
+      }],
+      reactants: [{
+        id: 'mixture', reference: false, sample_type: 'Mixture', equivalent: 1,
+        amountType: 'target', target_amount_value: 5, target_amount_unit: 'g',
+        coefficient: 1, gas_type: 'off',
+        solvent: [{ amount_l: 0.01, density: 0.2 }],
+        sample_details: { previous_amount_g: previousMassG, previous_amount_mol: 0.005 },
+      }],
+      products: [], solvents: [],
+    });
+    reaction.reactants[0].initialComponents([new Component({
+      id: 'component', reference: true, material_group: 'solid',
+      amount_mol: 0.005, amount_g: 3, relative_molecular_weight: relativeWeight,
+      molecule: { id: 101, molecular_weight: 600 }, purity: 1,
+    })]);
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn: true };
+    return { reaction, scheme };
+  };
+
+  [5, 2, undefined].forEach((previousMassG) => {
+    it(`restores internal solvent on repeated locked rescales with snapshot ${previousMassG}`, () => {
+      const { reaction, scheme } = build(1000, previousMassG);
+      if (previousMassG === undefined) delete reaction.reactants[0].sample_details.previous_amount_g;
+      for (let cycle = 0; cycle < 3; cycle += 1) {
+        [0.01, 0.005].forEach((referenceMol) => {
+          const reference = reaction.referenceMaterial;
+          reference.setAmount({ value: referenceMol, unit: 'mol' });
+          scheme.updatedReactionWithSample(
+            scheme.updatedSamplesForAmountChange.bind(scheme), reference, undefined, true
+          );
+
+          const mixture = reaction.reactants[0];
+          expect(mixture.amount_g).toBeCloseTo(referenceMol * 1000, 10);
+          expect(mixture.solvent[0].amount_l).toBeCloseTo(referenceMol * 2, 12);
+          expect(mixture.reference_component.amount_mol).toBeCloseTo(referenceMol, 12);
+          expect(mixture.equivalent).toBe(1);
+          expect(mixture.serializeMaterial().solvent[0].amount_l).toBeCloseTo(referenceMol * 2, 12);
+        });
+      }
+    });
+  });
+
+  [0, null].forEach((relativeWeight) => {
+    it(`scales internal solvent only once with unusable reference relative MW ${relativeWeight}`, () => {
+      const { reaction, scheme } = build(relativeWeight);
+      const reference = reaction.referenceMaterial;
+      reference.setAmount({ value: 0.01, unit: 'mol' });
+
+      scheme.updatedReactionWithSample(
+        scheme.updatedSamplesForAmountChange.bind(scheme), reference, undefined, true
+      );
+
+      expect(reaction.reactants[0].amount_g).toBeCloseTo(10, 10);
+      expect(reaction.reactants[0].solvent[0].amount_l).toBeCloseTo(0.02, 12);
+    });
+  });
+
+  it('does not rescale internal solvent for a rounding-only component discrepancy', () => {
+    const { reaction, scheme } = build(1000, 2.5);
+    scheme.state.lockEquivColumn = false;
+    const mixture = reaction.reactants[0];
+    mixture.reference_component.amount_mol = 0.005 + Number.EPSILON * 0.005;
+
+    scheme.updatedSamplesForAmountChange([mixture], reaction.referenceMaterial, 'reactants');
+
+    expect(mixture.solvent[0].amount_l).toBe(0.01);
+  });
+});
+
 describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume', () => {
   let gasStoreStub;
 
