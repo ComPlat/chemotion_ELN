@@ -49,4 +49,35 @@ describe Usecases::Reactions::UpdateSteps do
 
     expect(reaction.reaction_steps.reload).to be_empty
   end
+
+  describe 'search text' do
+    let(:text) { ->(words) { { 'ops' => [{ 'insert' => "#{words}\n" }] } } }
+
+    it 'rebuilds the search text when a step description changes' do
+      step = ReactionStep.create!(reaction: reaction, position: 1, description: text.call('old'))
+      allow(reaction).to receive(:refresh_search_text)
+
+      described_class.new(reaction, [{ id: step.id, description: text.call('new') }]).execute!
+
+      expect(reaction).to have_received(:refresh_search_text)
+    end
+
+    it 'rebuilds the search text when a step is deleted' do
+      ReactionStep.create!(reaction: reaction, position: 1, description: text.call('gone'))
+      allow(reaction).to receive(:refresh_search_text)
+
+      described_class.new(reaction, []).execute!
+
+      expect(reaction).to have_received(:refresh_search_text)
+    end
+
+    it 'leaves the search text alone when no step text changed' do
+      step = ReactionStep.create!(reaction: reaction, position: 1, description: text.call('same'))
+      allow(reaction).to receive(:refresh_search_text)
+
+      described_class.new(reaction, [{ id: step.id, description: text.call('same'), conditions: 'rt' }]).execute!
+
+      expect(reaction).not_to have_received(:refresh_search_text)
+    end
+  end
 end

@@ -10,8 +10,11 @@ module Usecases
 
       def execute!
         kept = @steps_params.each_with_index.map { |attributes, index| persist(attributes, index + 1) }
+        doomed = @reaction.reaction_steps.where.not(id: kept.map(&:id))
+        text_changed = doomed.exists? || kept.any?(&:saved_change_to_description?)
 
-        discard(@reaction.reaction_steps.where.not(id: kept.map(&:id)))
+        discard(doomed)
+        @reaction.refresh_search_text if text_changed
         @reaction.reaction_steps.reload
       end
 
