@@ -569,6 +569,61 @@ describe('Sample', async () => {
       expect(ref.amount_g + other.amount_g).toBeCloseTo(1, 10);
     });
 
+    ['clear', 'merge'].forEach((operation) => {
+      it(`does not restore a component after ${operation}, save/reload, and a mass edit`, async () => {
+        const { s, ref, other } = buildMixture(1);
+        ref.id = 'reference';
+        other.id = 'cleared';
+        ref.molecule.id = 101;
+        other.molecule.id = 102;
+        ref.amount_mol = 0.001;
+        other.amount_mol = 0.002;
+        ref.updatePhysicalAmounts();
+        other.updatePhysicalAmounts();
+
+        let duplicate;
+        if (operation === 'merge') {
+          duplicate = new Component({
+            id: 'duplicate', material_group: 'solid', amount_mol: 0.003,
+            molecule: { id: 102, molecular_weight: 114.23 },
+          });
+          duplicate.updatePhysicalAmounts();
+          s.components.push(duplicate);
+        }
+        s.calculateTotalMixtureMass();
+        expect(other.relative_molecular_weight).toBeGreaterThan(0);
+
+        if (operation === 'merge') {
+          await s.mergeComponents(duplicate, 'solid', other, 'solid');
+        } else {
+          other.handleAmountChange({ value: 0, unit: 'mol' }, 0);
+          s.calculateTotalMixtureMass();
+          s.updateMixtureComponentEquivalent();
+        }
+
+        const payload = JSON.parse(JSON.stringify(s.serializeMaterial()));
+        payload.components.forEach((entry, index) => {
+          entry.component_properties.molecule = s.components[index].molecule;
+        });
+        const reloaded = new Sample(payload);
+        reloaded.initialComponents(payload.components.map(Component.deserializeData));
+        reloaded.setAmount({ value: reloaded.amount_g * 2, unit: 'g' });
+
+        const reloadedOther = reloaded.components.find((entry) => entry.id === 'cleared');
+        const reloadedRef = reloaded.components.find((entry) => entry.id === 'reference');
+        expect(reloadedOther.amount_mol).toBe(0);
+        expect(reloadedOther.amount_g).toBe(0);
+        expect(reloadedOther.relative_molecular_weight).toBe(0);
+        expect(reloadedRef.amount_mol).toBeCloseTo(0.002, 10);
+
+        const savedComponents = JSON.parse(JSON.stringify(reloaded.serializeMaterial().components));
+        const savedOther = savedComponents.find((entry) => entry.id === 'cleared');
+        expect(savedOther.component_properties.amount_mol).toBe(0);
+        expect(savedOther.component_properties.relative_molecular_weight).toBe(0);
+        expect(Component.deserializeData(savedOther).amount_mol).toBe(0);
+      });
+    });
+
     [
       { name: 'solvent mass', totalVolumeL: 0, solvent: [{ amount_l: 0.01, density: 1 }] },
       { name: 'total-volume mass', totalVolumeL: 0.01, solvent: [] },

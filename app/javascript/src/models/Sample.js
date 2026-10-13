@@ -822,6 +822,21 @@ export default class Sample extends Element {
     this.updateSolventVolumes();
   }
 
+  /** Synchronizes component amounts to the current mass without rescaling internal solvents. */
+  syncMixtureComponentAmounts() {
+    if (!this.isMixture() || !this.hasComponents()) return;
+
+    const relativeWeight = Number(this.reference_component?.relative_molecular_weight);
+    const expectedAmountMol = Number(this.amount_g) / relativeWeight;
+    const componentAmountMol = Number(this.reference_component?.amount_mol);
+    const tolerance = 8 * Number.EPSILON * Math.max(1, Math.abs(expectedAmountMol));
+    if (Number.isFinite(relativeWeight) && relativeWeight > 0 && Number.isFinite(expectedAmountMol)
+      && (!Number.isFinite(componentAmountMol)
+        || Math.abs(componentAmountMol - expectedAmountMol) > tolerance)) {
+      this.updateComponentAmounts();
+    }
+  }
+
   /** Checks whether a component has a known ratio and usable molar mass and purity. */
   static hasValidComponentComposition(component) {
     const ratio = Number.isFinite(component.equivalent)
@@ -902,12 +917,13 @@ export default class Sample extends Element {
 
   /**
    * Scales solvent volumes (L) relative to change in total mass.
+   * @param {number} [previousAmountG] - Mass before this rescale; defaults to the user-edit snapshot.
    * @returns {void}
    */
-  updateSolventVolumes() {
+  updateSolventVolumes(previousAmountG = this.sample_details?.previous_amount_g) {
     // Scale solvent volumes based on change in total mass (amount_g)
     // Uses factor = current amount_g / previous_amount_g, if previous is provided
-    const prevAmountG = this.sample_details && Number(this.sample_details.previous_amount_g);
+    const prevAmountG = Number(previousAmountG);
 
     if (
       Array.isArray(this.solvent)
@@ -1176,9 +1192,14 @@ export default class Sample extends Element {
   }
 
   setAmountAndNormalizeToGram(amount) {
+    const previousAmountG = this.isMixture() ? Number(this.amount_g) : null;
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
-    if (this.isMixture()) this.updateMixtureComponentAmounts();
+    if (this.isMixture()) {
+      this.updateComponentAmounts();
+      // Programmatic Eq rescales must use the current mass, not an earlier user-edit snapshot.
+      this.updateSolventVolumes(previousAmountG);
+    }
   }
 
   setMetrics(metrics) {
