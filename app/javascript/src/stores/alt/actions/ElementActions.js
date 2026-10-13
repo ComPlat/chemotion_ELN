@@ -590,6 +590,18 @@ export class ElementActions {
   showReactionMaterial(params) {
     const sampleCoefficient = params.sample.coefficient;
     return (dispatch) => {
+      if (params.sample.isMixture() && params.sample.hasComponents()) {
+        // Open the pending reaction state without sharing mutable editor data.
+        // Eq and material reference stay on the reaction association, as with the sample API.
+        const sample = new Sample(_.cloneDeep(_.omit(params.sample, ['belongTo', '_equivalent', 'reference'])));
+        sample.initialComponents(sample.components.map((component) => (
+          component instanceof Component ? component : Component.deserializeData(component)
+        )));
+        params.sample = sample;
+        params.coefficient = sampleCoefficient;
+        dispatch(params);
+        return;
+      }
       SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
           params.coefficient = sampleCoefficient;
