@@ -1,5 +1,6 @@
 import expect from 'expect';
 import ReactionFactory from 'factories/ReactionFactory';
+import Reaction from 'src/models/Reaction';
 
 describe('Reaction multi-step', () => {
 
@@ -273,6 +274,20 @@ describe('Reaction multi-step', () => {
     expect('ph_operator' in step).toEqual(false);
     expect(Object.values(step).some((v) => v === null)).toEqual(false);
     expect(step.position).toEqual(1);
+  });
+
+  it('clears the step start and stop times on a copied reaction', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, timestamp_start: '01/10/2026 09:00:00', timestamp_stop: '01/10/2026 12:00:00' },
+      { id: 2, position: 2, timestamp_start: '01/10/2026 13:00:00', timestamp_stop: '' },
+    ];
+
+    const copy = Reaction.copyFromReactionAndCollectionId(reaction, 1);
+
+    expect(copy.reaction_steps.map((s) => [s.timestamp_start, s.timestamp_stop])).toEqual([['', ''], ['', '']]);
+    expect(reaction.reaction_steps[0].timestamp_start).toEqual('01/10/2026 09:00:00');
   });
 
   describe('per-step reference', () => {

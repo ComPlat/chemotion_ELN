@@ -695,6 +695,7 @@ export default class Reaction extends Element {
       status: '',
     };
     const copy = reaction.buildCopy(params, keepAmounts);
+    copy.reaction_steps = copy.reaction_steps.map((step) => ({ ...step, timestamp_start: '', timestamp_stop: '' }));
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
     copy.name = copy.nameFromRole(copy.role);
     return copy;
