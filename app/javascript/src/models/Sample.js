@@ -837,13 +837,13 @@ export default class Sample extends Element {
     }
   }
 
-  /** Checks whether a component has a known ratio and usable molar mass and purity. */
+  /** Checks whether a component can participate in mass initialization from positive ratios. */
   static hasValidComponentComposition(component) {
     const ratio = Number.isFinite(component.equivalent)
       ? component.equivalent : (component.reference ? 1 : null);
     const molarMass = Number(component.molecule_molecular_weight);
     const purity = Number(component.purity ?? 1);
-    return ratio != null && ratio >= 0 && Number.isFinite(molarMass) && molarMass > 0
+    return ratio != null && ratio > 0 && Number.isFinite(molarMass) && molarMass > 0
       && Number.isFinite(purity) && purity > 0;
   }
 
@@ -897,9 +897,9 @@ export default class Sample extends Element {
     const molarMassOf = (component) => Number(component.molecule_molecular_weight);
     const purityOf = (component) => Number(component.purity ?? 1);
 
-    // Bail when any component's composition is unknown: an 'n.d' (non-numeric) ratio or a
-    // missing/invalid molar mass makes the distribution indeterminate, so we must not
-    // silently assign that component 0 moles and reallocate its share to the others.
+    // Require positive ratios for every component: zero/reset or unknown ratios and
+    // missing/invalid molar masses leave the distribution indeterminate. Do not assign
+    // those components 0 moles and reallocate their share to the others.
     if (!components.every(Sample.hasValidComponentComposition)) return;
 
     // Physical mass per ratio unit: Σ (ratio_j * molar_mass_j / purity_j).
