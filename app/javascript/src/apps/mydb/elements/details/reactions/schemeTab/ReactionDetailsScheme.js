@@ -1816,12 +1816,7 @@ export default class ReactionDetailsScheme extends React.Component {
         }
       }
 
-      // Refresh mixtures only after their final mass changes; user edits already refresh themselves.
-      if (sample.isMixture && sample.isMixture() && sample.hasComponents && sample.hasComponents()
-        && sample.reference_component?.amount_mol !== Number(sample.amount_g)
-          / Number(sample.reference_component?.relative_molecular_weight)) {
-        sample.updateMixtureComponentAmounts();
-      }
+      sample.syncMixtureComponentAmounts?.();
 
       return sample;
     });
