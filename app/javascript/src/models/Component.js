@@ -755,6 +755,7 @@ export default class Component extends Sample {
         metrics: this.metrics || 'mmmm', // Preserve metrics for unit display
         // Heterogeneous Material
         template_category: this.template_category,
+        template_id: this.template_id ?? null,
         source: this.source,
         molar_mass: this.molar_mass,
         weight_ratio_exp: this.weight_ratio_exp,

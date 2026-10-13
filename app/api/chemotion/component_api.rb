@@ -57,6 +57,7 @@ module Chemotion
 
             # params Hierarchical Material
             optional :template_category, type: String, desc: 'template for Hierarchical Material e.g basic, semantic'
+            optional :template_id, type: Integer, desc: 'template_id identifying shape type for Hierarchical Material'
             optional :source, type: String, desc: 'source(textNode label) for Hierarchical Material'
             optional :molar_mass, type: Float, desc: 'Molar mass value for Hierarchical Material'
             optional :weight_ratio_exp, type: Float, desc: 'Weight ratio exp. for Hierarchical Material'

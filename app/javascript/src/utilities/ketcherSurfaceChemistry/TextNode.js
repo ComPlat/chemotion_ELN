@@ -9,6 +9,19 @@ import {
   removeTextFromData,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 
+// Safely extract { key, text } from a text node's data.content.
+// data.content is normally Draft.js JSON but can be a plain string for legacy nodes.
+// Returns null if content is absent or unparseable.
+const parseDraftBlock = (content) => {
+  if (!content) return null;
+  try {
+    const parsed = JSON.parse(content);
+    const block = parsed?.blocks?.[0];
+    if (block) return block;
+  } catch (_e) { /* plain text */ }
+  return null;
+};
+
 // Calculate available space on left and right sides of an atom/image
 // Returns { left: number, right: number } representing distance to nearest obstacle
 const calculateAvailableSpace = (atomLocation, imageWidth, currentImageIndex) => {
@@ -230,7 +243,9 @@ const isAliasConsistent = () => {
 const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
   for (let textIdx = 0; textIdx < textList.length; textIdx++) {
     const text = textList[textIdx];
-    const content = JSON.parse(text.data.content); // Parse content
+    const block = parseDraftBlock(text.data?.content);
+    if (!block) continue; // eslint-disable-line no-continue
+    const content = { blocks: [block] };
     if (content.blocks[0].key === textNodeKey) {
       const split = atom.alias.split('_')[2];
       const img = imagesList?.[split];
@@ -311,14 +326,15 @@ const filterTextList = async (_aliasDifferences, data) => {
   }
 
   const retainedTextNodes = textList.filter((item) => {
-    const { key } = JSON.parse(item.data.content).blocks[0];
-    return activeKeys.has(key);
+    const block = parseDraftBlock(item.data?.content);
+    return block ? activeKeys.has(block.key) : false;
   });
 
   return [...removeTextFromData(data), ...retainedTextNodes];
 };
 
 export {
+  parseDraftBlock,
   forTextNodeHeader,
   addTextNodes,
   isAliasConsistent,

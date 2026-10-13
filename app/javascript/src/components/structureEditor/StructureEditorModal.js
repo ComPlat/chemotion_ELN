@@ -90,8 +90,9 @@ function postComponents(components) {
       name: 'HierarchicalMaterial',
       position: idx,
       molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
-      template_category: Object.values(comp)[0],
-      source: Object.keys(comp)[0],
+      template_category: comp.category ?? Object.values(comp)[0],
+      source: comp.label ?? Object.keys(comp)[0],
+      template_id: comp.template_id ?? null,
       molar_mass: 0,
       weight_ratio_exp: 0
     })

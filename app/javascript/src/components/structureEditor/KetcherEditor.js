@@ -31,7 +31,7 @@ import {
   ButtonSelectors,
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { deepCompareContent, filterTextList, parseDraftBlock } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   runImageLayering,
@@ -144,12 +144,8 @@ const onAtomDelete = async (editor) => {
     // before that call, otherwise the orphaned text node reappears on the canvas.
     const activeTextKeys = new Set(Object.values(textNodeStruct));
     textListSetter(textList.filter((item) => {
-      try {
-        const { key } = JSON.parse(item.data.content).blocks[0];
-        return activeTextKeys.has(key);
-      } catch (_e) {
-        return false;
-      }
+      const block = parseDraftBlock(item.data?.content);
+      return block ? activeTextKeys.has(block.key) : false;
     }));
 
     dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes

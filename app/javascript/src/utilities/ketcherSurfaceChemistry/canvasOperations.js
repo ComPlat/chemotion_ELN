@@ -23,7 +23,7 @@ import {
   handleAddAtom,
   removeTextFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader, parseDraftBlock } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -124,7 +124,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
       if (textNodeKey && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         const polymerIndex = allAliasedAtoms.findIndex((a) => a.alias === atom.alias);
         for (const textItem of textList) {
-          const block = JSON.parse(textItem.data.content).blocks[0];
+          const block = parseDraftBlock(textItem.data?.content);
+          if (!block) continue; // eslint-disable-line no-continue
           if (textNodeKey === block.key) {
             const line = [
               polymerIndex,
@@ -222,7 +223,14 @@ const onDeleteText = async (editor) => {
 
     const surviving = [];
     for (const item of textList) {
-      const { key } = JSON.parse(item.data.content).blocks[0];
+      let key;
+      try {
+        key = JSON.parse(item.data.content).blocks?.[0]?.key;
+      } catch (_e) {
+        surviving.push(item); // plain-text node — keep it, can't match by key
+        continue; // eslint-disable-line no-continue
+      }
+      if (!key) { surviving.push(item); continue; } // eslint-disable-line no-continue
       const stillOnCanvas = ketcherTexts ? liveKeys.has(key) : Object.values(textNodeStruct).includes(key);
       if (stillOnCanvas) {
         surviving.push(item);
@@ -734,10 +742,18 @@ const getSvgFromCanvas = async (iframeRef) => {
         } catch (e) { /* ignore */ }
       });
       if (minX === Infinity || maxX === -Infinity) {
-        const fallbackBbox = canvasElement.getBBox();
-        minX = fallbackBbox.x; minY = fallbackBbox.y;
-        maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+        try {
+          const fallbackBbox = canvasElement.getBBox();
+          if (fallbackBbox) {
+            minX = fallbackBbox.x; minY = fallbackBbox.y;
+            maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+          }
+        } catch (_e) { /* canvas not in DOM or getBBox unsupported */ }
       }
+    }
+
+    if (minX === Infinity || maxX === -Infinity || minX == null) {
+      return { svg: null, message: 'No renderable content found in canvas' };
     }
 
     const padding = 5;
@@ -798,7 +814,21 @@ const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
     return;
   }
 
-  const serialized = JSON.stringify(dataCopy);
+  // Ketcher 3.18 renders data.content as a literal string rather than parsing it as Draft.js
+  // JSON. Extract the plain text from any Draft.js JSON nodes before every setMolecule call
+  // so the label (not the raw JSON blob) is displayed on the canvas.
+  let data = dataCopy;
+  if ((data.root?.nodes || []).some((n) => n.type === 'text')) {
+    data = JSON.parse(JSON.stringify(data));
+    data.root.nodes = data.root.nodes.map((node) => {
+      if (node.type !== 'text' || !node.data?.content) return node;
+      const block = parseDraftBlock(node.data.content);
+      if (!block) return node;
+      return { ...node, data: { ...node.data, content: block.text ?? '' } };
+    });
+  }
+
+  const serialized = JSON.stringify(data);
   if (recenter) {
     await editor.structureDef.editor.setMolecule(serialized);
     return;
@@ -869,11 +899,23 @@ const saveMoveCanvas = async (
 
 const centerPositionCanvas = async (editor) => {
   try {
-    const clone = editor._structureDef.editor.editor.struct().clone();
-    await editor._structureDef.editor.editor.renderAndRecoordinateStruct(clone);
+    // Use centerStruct() on the already-rendered ctab rather than renderAndRecoordinateStruct().
+    // renderAndRecoordinateStruct clones the struct and loads it into a fresh ctab via
+    // fromNewCanvas+update — those new render items have no visel.boundingBox yet, so
+    // centerStruct() falls back to new Box2Abs(atom.pp, atom.pp) and throws when pp is undefined.
+    // Calling centerStruct() directly reuses the existing render items (already painted by
+    // the previous setMolecule call) whose bounding boxes are already computed.
+    const internalEditor = editor._structureDef?.editor?.editor;
+    if (internalEditor?.render?.ctab?.molecule?.atoms?.size > 0) {
+      try {
+        internalEditor.centerStruct();
+      } catch (_e) {
+        // centering failed — atoms may still be mid-render; images still sync below
+      }
+    }
     await fetchKetcherData(editor);
     // syncImagesOnly: true ensures images follow the re-centered atom positions
-    saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
+    await saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
     await fetchKetcherData(editor);
   } catch (err) {
     await fetchKetcherData(editor);
@@ -1029,12 +1071,15 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
     const keyText = textNodeStruct[alias];
     const parts = alias.split('_');
     for (const item of textList) {
-      const { key, text } = JSON.parse(item.data.content).blocks[0];
+      const block = parseDraftBlock(item.data?.content);
+      if (!block) continue; // eslint-disable-line no-continue
+      const { key, text } = block;
       if (key === keyText) {
         textNodeStructureModified[parts[2]] = text;
         // eslint-disable-next-line no-await-in-loop
         const categoryName = await findTemplateIdCategoryFromTemplates(parts[1]);
-        textNodeStructureForComponents.push({ [text]: categoryName });
+        // eslint-disable-next-line max-len
+        textNodeStructureForComponents.push({ label: text, category: categoryName, template_id: parseInt(parts[1], 10) });
       }
     }
   }
