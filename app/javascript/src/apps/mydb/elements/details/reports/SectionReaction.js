@@ -138,16 +138,15 @@ const StatusContent = ({ status }) => {
 
 const MaterialContent = ({show, starting_materials, reactants, products}) => {
   const materialCalc = (target, multi, precision) => {
-    return (target ? (target*multi).toFixed(precision) : " - ")
-  }
+    const value = Number(target);
+    return target && Number.isFinite(value) ? (value * multi).toFixed(precision) : ' - ';
+  };
 
-  const equiv_or_yield = (s, isProduct) => {
-    return (
+  const equiv_or_yield = (s, isProduct) => (
       isProduct
-        ? materialCalc(s.equivalent*100, 1, 0).toString() + "%"
+        ? `${materialCalc(s.equivalent * 100, 1, 0).toString()  }%`
         : materialCalc(s.equivalent, 1, 3)
-    )
-  }
+    );
 
   const rows = (material, isProduct) => {
     return (

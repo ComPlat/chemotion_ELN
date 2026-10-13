@@ -3,6 +3,7 @@ import { camelizeKeys } from 'src/utilities/FetcherHelper';
 
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
+import Component from 'src/models/Component';
 
 export default class UIFetcher {
   static initialize() {
@@ -19,7 +20,18 @@ export default class UIFetcher {
     return ApiClient.postJson('/api/v1/ui_state/load_report', { body })
       .then((json) => {
         const samples = json.samples.map((s) => new Sample(s));
-        const reactions = json.reactions.map((r) => new Reaction(r));
+        const reactions = json.reactions.map((r) => {
+          const reaction = new Reaction(r);
+          reaction.samples.forEach((sample) => {
+            if (sample.isMixture() && sample.hasComponents()) {
+              // Report components use the same nested API format as reaction materials.
+              sample.components = sample.components.map(Component.deserializeData);
+              sample.updateChecksum();
+            }
+          });
+          reaction.updateChecksum();
+          return reaction;
+        });
         return { samples, reactions };
       });
   }
