@@ -718,9 +718,14 @@ export default class Component extends Sample {
     const storedRelativeMW = Number(this.relative_molecular_weight);
     const hasStoredRelativeMW = Number.isFinite(storedRelativeMW) && storedRelativeMW > 0;
 
-    const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
-      ? totalMixtureMass / componentAmountMol
-      : (hasStoredRelativeMW ? storedRelativeMW : 0);
+    // A cleared/reset component must lose its old weight, otherwise the next
+    // total-mass edit restores its previous amount through relative-MW scaling.
+    let relativeMW = 0;
+    if (componentAmountMol > 0) {
+      relativeMW = totalMixtureMass > 0
+        ? totalMixtureMass / componentAmountMol
+        : (hasStoredRelativeMW ? storedRelativeMW : 0);
+    }
 
     // Store the canonical runtime value. serializeComponent nests it under
     // component_properties when preparing the API payload.
