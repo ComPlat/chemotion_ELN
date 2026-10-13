@@ -547,6 +547,18 @@ RSpec.describe Sample do
     let(:molecule) { create(:molecule, molecular_weight: 180.0) }
     let(:sample) { create(:sample, molecule: molecule, purity: 0.9, density: 1.1, molarity_value: 2.0) }
 
+    describe 'mass from a molar amount' do
+      { nil => 1.8, 0.0 => 1.8, 1.0 => 1.8, 0.8 => 2.25 }.each do |purity, expected_mass|
+        it "calculates report mass with purity #{purity.inspect}" do
+          sample.purity = purity
+          sample.real_amount_value = 0.01
+          sample.real_amount_unit = 'mol'
+
+          expect(sample.amount_g(:real)).to be_within(1e-9).of(expected_mass)
+        end
+      end
+    end
+
     describe '#convert_liters_to_moles' do
       it 'uses molarity when available' do
         sample.update(density: 0.0)
