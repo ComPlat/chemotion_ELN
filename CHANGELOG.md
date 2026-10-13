@@ -123,7 +123,7 @@
 * An edit / order mode toggle on the analyses tab of every element type ([#3114](https://github.com/ComPlat/chemotion_ELN/pull/3114)).
 * Browse all images and PDFs of an analysis and pick its preview image explicitly ([#2671](https://github.com/ComPlat/chemotion_ELN/pull/2671)).
 * LC/MS: on-demand mass-spectrum extraction at a chosen retention time, with a polarity filter ([#3295](https://github.com/ComPlat/chemotion_ELN/pull/3295)).
-* Spectra editor 1.8 ([#3352](https://github.com/ComPlat/chemotion_ELN/pull/3352)); converter client 0.16 and converter app 1.9 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378), [#3412](https://github.com/ComPlat/chemotion_ELN/pull/3412)).
+* Spectra editor 1.8 ([#3352](https://github.com/ComPlat/chemotion_ELN/pull/3352)); converter client 0.16 and converter app 1.9 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378), [#3412](https://github.com/ComPlat/chemotion_ELN/pull/3412)); ChemSpectra service 1.6.0 ([#3645](https://github.com/ComPlat/chemotion_ELN/pull/3645)).
 
 ### Fixes
 
