@@ -520,19 +520,20 @@ module Reporter
         [amount_mol_unit, concn_unit]
       end
 
-      # Gets the molecular weight for a sample, using reference_relative_molecular_weight for mixtures
+      # Gets a mixture's relative molar mass from its selected reference component.
       # @param sample [OpenStruct] the sample object
       # @param molecule [Hash] the molecule hash containing molecular_weight
       # @return [Float, nil] the molecular weight to use
       def get_molecular_weight(sample, molecule)
-        # For mixtures, use reference_relative_molecular_weight if available
-        # Otherwise fall back to regular molecular_weight
-        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.sample_details
-          sample_details = sample.sample_details.transform_keys(&:to_sym)
-          sample_details[:reference_relative_molecular_weight] || molecule[:molecular_weight]
-        else
-          molecule[:molecular_weight]
-        end
+        return molecule[:molecular_weight] unless sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+
+        reference = find_reference_component(sample).to_h
+        relative_weight = normalize_component_properties(reference)[:relative_molecular_weight].to_f
+        return relative_weight if relative_weight.positive? && relative_weight.finite?
+
+        # Preserve the cached fallback for legacy mixtures without usable component data.
+        sample_details = (sample.sample_details || {}).transform_keys(&:to_sym)
+        sample_details[:reference_relative_molecular_weight] || molecule[:molecular_weight]
       end
 
       def material_hash(material, is_product = false)
@@ -596,6 +597,16 @@ module Reporter
         sample_hash
       end
 
+      def component_ratio(component_props, reference_amount)
+        return 1.0 if component_props[:reference] == true
+
+        amount = Float(component_props[:amount_mol], exception: false)
+        return component_props[:equivalent] unless reference_amount.positive? && reference_amount.finite? &&
+                                                   amount&.finite? && amount >= 0
+
+        amount / reference_amount
+      end
+
       def process_mixture_components(material, sample_hash)
         # Check if material is a mixture with components
         # Always set components to an empty array to avoid nil errors in Sablon templates
@@ -606,6 +617,8 @@ module Reporter
           components = material.components || []
           # Only set components if there are actual components to display
           if components.present? && components.any?
+            reference_props = normalize_component_properties(find_reference_component(material).to_h)
+            reference_amount = Float(reference_props[:amount_mol], exception: false) || 0.0
             sample_hash[:components] = components.map do |comp|
               comp_props = normalize_component_properties(comp)
               comp_mol = (comp_props[:molecule] || {}).transform_keys(&:to_sym)
@@ -622,7 +635,7 @@ module Reporter
                 amount_mol_unit: amount_mol_unit,
                 concn: format_scientific(concn_value, digit),
                 concn_unit: concn_unit,
-                equivalent: format_scientific(comp_props[:equivalent], digit),
+                equivalent: format_scientific(component_ratio(comp_props, reference_amount), digit),
                 purity: format_scientific(comp_props[:purity], digit),
                 reference: comp_props[:reference] || false,
                 molecular_weight: format_scientific(comp_mol[:molecular_weight], digit),
