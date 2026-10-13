@@ -204,6 +204,68 @@
 * React-ecosystem packages updated ahead of the React upgrade ([#3370](https://github.com/ComPlat/chemotion_ELN/pull/3370)).
 * Dependency bumps: JS batch ([#3356](https://github.com/ComPlat/chemotion_ELN/pull/3356)), immutable 5 ([#2994](https://github.com/ComPlat/chemotion_ELN/pull/2994), [#3303](https://github.com/ComPlat/chemotion_ELN/pull/3303)), webpack-dev-server ([#3263](https://github.com/ComPlat/chemotion_ELN/pull/3263)), postcss ([#3219](https://github.com/ComPlat/chemotion_ELN/pull/3219), [#3456](https://github.com/ComPlat/chemotion_ELN/pull/3456)), dompurify ([#3449](https://github.com/ComPlat/chemotion_ELN/pull/3449), [#3615](https://github.com/ComPlat/chemotion_ELN/pull/3615)), js-yaml ([#3455](https://github.com/ComPlat/chemotion_ELN/pull/3455)), fast-uri ([#3414](https://github.com/ComPlat/chemotion_ELN/pull/3414), [#3441](https://github.com/ComPlat/chemotion_ELN/pull/3441)), undici ([#3433](https://github.com/ComPlat/chemotion_ELN/pull/3433)), ip-address ([#3432](https://github.com/ComPlat/chemotion_ELN/pull/3432)), @xmldom/xmldom ([#3175](https://github.com/ComPlat/chemotion_ELN/pull/3175)), follow-redirects ([#3132](https://github.com/ComPlat/chemotion_ELN/pull/3132)), concurrent-ruby ([#3333](https://github.com/ComPlat/chemotion_ELN/pull/3333)), yard ([#3145](https://github.com/ComPlat/chemotion_ELN/pull/3145)).
 
+# [v3.1.3]
+> (2026-08-11)
+
+> Maintenance release of the v3.x line. Most of these fixes are also part of v4.0.0.
+
+## Features and enhancements
+
+* An in-app drawer that opens the workshop guide, where the instance provides one.
+* The sample description field grows with its content ([#3017](https://github.com/ComPlat/chemotion_ELN/pull/3017)).
+* Vessel items group the header label and the edit action ([#3248](https://github.com/ComPlat/chemotion_ELN/pull/3248)).
+
+## Fixes
+
+### Samples and mixtures
+
+* Mixtures: components built on the same molecule are merged or kept apart as intended, the structure editor reconciles drawn components instead of duplicating them, and mixture samples save reliably ([#3400](https://github.com/ComPlat/chemotion_ELN/pull/3400)).
+* The mixture total-volume field is shown disabled instead of hidden ([#3351](https://github.com/ComPlat/chemotion_ELN/pull/3351)).
+* Loading values are stored as numbers, and a zero loading is only flagged when you save ([#3350](https://github.com/ComPlat/chemotion_ELN/pull/3350)).
+* Creating a sample in the **All** collection no longer assigns it to a collection twice ([#3287](https://github.com/ComPlat/chemotion_ELN/pull/3287)).
+* Literature lists keep a stable order ([#3354](https://github.com/ComPlat/chemotion_ELN/pull/3354)).
+
+### Reactions
+
+* Non-numeric volume values no longer break the reaction scheme ([#3288](https://github.com/ComPlat/chemotion_ELN/pull/3288)).
+* Gas-phase reactions: gaseous product fields follow a change of vessel size ([#3265](https://github.com/ComPlat/chemotion_ELN/pull/3265)).
+* The solvent dropdown title resets after a selection ([#3285](https://github.com/ComPlat/chemotion_ELN/pull/3285)).
+
+### Chemicals
+
+* Sigma-Aldrich SDS links, safety phrases and properties are read from the vendor's product pages again; outbound requests go only to allowlisted https vendor hosts ([#3235](https://github.com/ComPlat/chemotion_ELN/pull/3235)).
+
+### Spectra and attachments
+
+* Multi-curve archives of a single spectrum type are grouped correctly ([#3403](https://github.com/ComPlat/chemotion_ELN/pull/3403)).
+* Copying annotations skips attachments that are not images ([#3338](https://github.com/ComPlat/chemotion_ELN/pull/3338)).
+
+### Reports and export
+
+* Superscript text from the rich-text editor appears as superscript in reports ([#3391](https://github.com/ComPlat/chemotion_ELN/pull/3391)).
+* Research-plan structure images are exported at the right size and aspect ratio ([#3419](https://github.com/ComPlat/chemotion_ELN/pull/3419)).
+
+### Interface
+
+* Ketcher no longer fails when its frame is still loading ([#3305](https://github.com/ComPlat/chemotion_ELN/pull/3305)).
+* Mutually exclusive checkboxes and their labels behave correctly ([#3171](https://github.com/ComPlat/chemotion_ELN/pull/3171)).
+* The inbox *copy address* button works ([#3269](https://github.com/ComPlat/chemotion_ELN/pull/3269)).
+* The documentation search link in the navigation bar works again ([#3442](https://github.com/ComPlat/chemotion_ELN/pull/3442)).
+* The workshop guide checks whether it is available without filling the browser console with errors ([#3371](https://github.com/ComPlat/chemotion_ELN/pull/3371)).
+* A profile layout setting no longer crashes on load ([#3389](https://github.com/ComPlat/chemotion_ELN/pull/3389)).
+
+### Accounts and administration
+
+* Two-factor login recovers from a stored secret that can no longer be read, instead of failing ([#3376](https://github.com/ComPlat/chemotion_ELN/pull/3376), [#3381](https://github.com/ComPlat/chemotion_ELN/pull/3381)).
+* Deleting a device frees its unique fields for reuse ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375)).
+* Faster admin user and report lists ([#3395](https://github.com/ComPlat/chemotion_ELN/pull/3395)).
+
+## Maintenance
+
+* The development `docker-compose` setup works out of the box ([#3327](https://github.com/ComPlat/chemotion_ELN/pull/3327)); test fixes for the v3.x line ([#3268](https://github.com/ComPlat/chemotion_ELN/pull/3268)).
+* OpenBabel 3.2.0 ([#3339](https://github.com/ComPlat/chemotion_ELN/pull/3339)), InChI 1.07.5 ([#2887](https://github.com/ComPlat/chemotion_ELN/pull/2887)), sablon 0.4.3-1 ([#3342](https://github.com/ComPlat/chemotion_ELN/pull/3342)).
+* Dependency bumps: faraday, jwt, css_parser, addressable, rack ([#3261](https://github.com/ComPlat/chemotion_ELN/pull/3261), [#3262](https://github.com/ComPlat/chemotion_ELN/pull/3262), [#3240](https://github.com/ComPlat/chemotion_ELN/pull/3240)).
+
 # [v4.0.0-rc]
 > (2026-07-14)
 
