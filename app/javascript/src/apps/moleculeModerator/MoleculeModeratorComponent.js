@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import {
-  Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, OverlayTrigger, Tooltip, Form, InputGroup,
+  Card, Container, Col, Button, Row, Table, ButtonGroup, OverlayTrigger, Tooltip, Form, InputGroup,
   Alert
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
@@ -10,6 +10,7 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import AppModal from 'src/components/common/AppModal';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 export default class MoleculeModeratorComponent extends Component {
   constructor(props) {
@@ -155,35 +156,12 @@ export default class MoleculeModeratorComponent extends Component {
   }
 
   renderDeleteButton(nameObj) {
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        <Popover.Header>
-          Delete this molecule name?
-        </Popover.Header>
-        <Popover.Body className="d-flex gap-2">
-          <Button size="sm" variant="danger" onClick={() => this.confirmDelete(nameObj)}>
-            Yes
-          </Button>
-          <Button size="sm" variant="warning" onClick={this.handleClick}>
-            No
-          </Button>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
       <ButtonGroup className="actions">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button size="sm" variant="danger">
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
+        <ConfirmDeleteButton
+          header="Delete this molecule name?"
+          onConfirm={() => this.confirmDelete(nameObj)}
+        />
       </ButtonGroup>
     );
   }
