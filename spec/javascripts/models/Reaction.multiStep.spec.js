@@ -34,6 +34,15 @@ describe('Reaction multi-step', () => {
     expect(step.description).not.toBe(reaction.description);
   });
 
+  it('shows the step duration in a new reaction, not the reaction default', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.enterMultiStep();
+    const [step] = reaction.reaction_steps;
+    step.duration = '7 Hour(s)';
+
+    expect(reaction.stepContext(step).durationDisplay.dispValue).toEqual('7');
+  });
+
   it('divides a step material by that step volume, not the whole reaction', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
