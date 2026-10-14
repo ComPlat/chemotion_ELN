@@ -386,4 +386,24 @@ RSpec.describe Chemotion::SvgRenderer do
       expect(described_class.parse_polymers_line(nil)).to eq([])
     end
   end
+
+  describe '.parse_text_nodes' do
+    # .b simulates bytea → ASCII-8BIT read from PostgreSQL — this is the actual bug trigger
+    let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read.b }
+
+    it 'preserves non-ASCII characters in TextNode labels' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).to include('α-Al2O3')
+    end
+
+    it 'does not replace non-ASCII bytes with empty string or U+FFFD' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).not_to include('?')
+      expect(result[0]).not_to include("\u{FFFD}")
+    end
+
+    it 'handles binary-encoded molfile bytes without raising' do
+      expect { described_class.parse_text_nodes(textnode_molfile) }.not_to raise_error
+    end
+  end
 end

@@ -593,6 +593,42 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
+    describe '#sanitize_molfile' do
+      # A minimal CTAB with a non-ASCII molecule name in the header (line 1, before M  END).
+      # .b simulates bytea → ASCII-8BIT as returned by PostgreSQL.
+      subject(:result) { mapper.send(:sanitize_molfile, non_ascii_molfile) }
+
+      let(:non_ascii_molfile) do
+        <<~MOL.b
+          10 wt.% α-Al2O3
+            Ketcher 01010101 2D 1   1.00000     0.00000     0
+
+            1  0  0  0  0  0  0  0  0  0999 V2000
+              0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          M  END
+          $$$$
+        MOL
+      end
+
+      it 'preserves non-ASCII characters in the molfile header' do
+        expect(result).to include('α-Al2O3')
+      end
+
+      it 'returns a valid UTF-8 string' do
+        expect(result.encoding.name).to eq('UTF-8')
+        expect(result.valid_encoding?).to be true
+      end
+
+      it 'does not replace non-ASCII bytes with U+FFFD' do
+        expect(result).not_to include("\u{FFFD}")
+      end
+
+      it 'trims everything after the molfile end marker' do
+        expect(result).not_to include('$$$$')
+        expect(result).to end_with('M  END')
+      end
+    end
+
     describe '#molecule_and_molfile_for_row' do
       it 'delegates to Import::PolymerMoleculeResolver and returns a [molecule, raw_molfile, babel_info] tuple' do
         allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(resolver_result)
