@@ -233,10 +233,18 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropSbmmSample(srcSbmmSample, tagMaterial) {
     const { reaction, onReactionChange } = this.props;
+    const dropStep = reaction.reaction_steps.find((step) => step.id === this.activeDropStepId);
+    if (reaction.isMultiStep() && reaction.isLaterStep(dropStep)) {
+      this.context.notifications.add({
+        title: 'SBMM sample not added',
+        message: 'SBMM samples can only be added to step 1 for now.',
+        level: 'warning'
+      });
+      return;
+    }
 
     // Create a split copy (like buildChildWithoutCounter for samples)
     const splitSbmmSample = srcSbmmSample.buildChildWithoutCounter();
-    splitSbmmSample.reaction_step_id = this.activeDropStepId ?? null;
 
     // Calculate concentration_rt if amount_mol and volume are available
     // This ensures the Conc field displays the correct value
