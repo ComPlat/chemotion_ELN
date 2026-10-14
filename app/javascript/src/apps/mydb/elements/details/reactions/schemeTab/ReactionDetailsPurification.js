@@ -5,7 +5,7 @@ import { Select } from 'src/components/common/Select';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
 import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import QuillViewer from 'src/components/QuillViewer';
 import Sample from 'src/models/Sample';
 import { observationPurification, solventsTL } from 'src/utilities/reactionPredefined';
@@ -148,11 +148,13 @@ export default class ReactionDetailsPurification extends Component {
             <div>
               {
                 permitOn(reaction) ? (
-                  <QuillEditor
-                    ref={additionQuillRef}
+                  <RichTextEditor
+                    innerRef={additionQuillRef}
+                    templateType="reactionDescription"
+                    specialCharacters
+                    indent
                     value={reaction.observation}
-                    height="100%"
-                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
+                    readOnly={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
                     onChange={(event) => onInputChange('observation', event)}
                   />
                 ) : <QuillViewer value={reaction.observation} />
