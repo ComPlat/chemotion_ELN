@@ -4,14 +4,13 @@ require 'rails_helper'
 
 load 'db/migrate/20261013120000_add_unique_index_to_reactions_samples.rb'
 
-# rubocop:disable RSpec/DescribeClass
-RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do
-  let(:migration) { AddUniqueIndexToReactionsSamples.new }
+RSpec.describe AddUniqueIndexToReactionsSamples do
+  let(:migration) { described_class.new }
   let(:reaction) { create(:reaction) }
   let(:other_reaction) { create(:reaction) }
   let(:sample) { create(:sample) }
   let(:index_exists) do
-    -> { ActiveRecord::Base.connection.index_name_exists?(:reactions_samples, AddUniqueIndexToReactionsSamples::INDEX_NAME) }
+    -> { ActiveRecord::Base.connection.index_name_exists?(:reactions_samples, described_class::INDEX_NAME) }
   end
 
   around do |example|
@@ -89,4 +88,3 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do
     end
   end
 end
-# rubocop:enable RSpec/DescribeClass
