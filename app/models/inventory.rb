@@ -46,6 +46,8 @@ class Inventory < ApplicationRecord
   end
 
   def self.create_or_update_inventory_label(prefix, name, counter, collection_ids, user)
+    return reset_inventory_label(collection_ids, user) if prefix.blank?
+
     associations = compare_associations(collection_ids)
     ActiveRecord::Base.transaction do
       if associations
@@ -63,6 +65,18 @@ class Inventory < ApplicationRecord
         collection = Collection.find(id)
         collection.update(inventory_id: inventory.id)
       end
+      { inventory_collections: Collection.inventory_collections(user) }
+    end
+  end
+
+  # Detach the collections from their inventory and drop inventories left without collections, so
+  # a reset collection is treated like one that never had a label.
+  def self.reset_inventory_label(collection_ids, user)
+    ActiveRecord::Base.transaction do
+      collections = Collection.where(id: collection_ids)
+      inventory_ids = collections.pluck(:inventory_id).compact
+      collections.find_each { |collection| collection.update(inventory_id: nil) }
+      where(id: inventory_ids).where.missing(:collections).destroy_all
       { inventory_collections: Collection.inventory_collections(user) }
     end
   end
