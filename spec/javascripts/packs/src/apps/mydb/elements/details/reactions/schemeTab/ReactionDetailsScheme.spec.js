@@ -1769,6 +1769,26 @@ describe('ReactionDetailsScheme — per-step reference', () => {
     expect(reaction.referenceMaterial).toBe(start);
   });
 
+  it('gives step 1 a new reference when its reference moves to step 2', () => {
+    const { reaction, instance, start } = buildTwoSteps();
+    const other = Sample.buildEmpty(1);
+    Object.assign(other, {
+      id: 'other', coefficient: 1, molecule: { molecular_weight: 100 }, reaction_step_id: 1, equivalent: 0.5,
+    });
+    other.setAmount({ value: 0.005, unit: 'mol' });
+    reaction.starting_materials.push(other);
+    instance.props.onReactionChange = () => {};
+    instance.context = { notifications: { add: () => {} } };
+    instance.activeDropStepId = 2;
+
+    instance.dropMaterial(start, 'starting_materials', null, 'reactants');
+
+    const find = (group, id) => reaction[group].find((material) => material.id === id);
+    expect(reaction.referenceMaterial.id).toEqual('other');
+    expect(find('starting_materials', 'other').equivalent).toEqual(1);
+    expect(find('products', 'carried').equivalent).toBeCloseTo(1.6);
+  });
+
   it('picks the carried product from the step bar', () => {
     const {
       reaction, instance, reagent, carried,

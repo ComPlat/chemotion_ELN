@@ -468,6 +468,15 @@ export default class ReactionDetailsScheme extends React.Component {
     const actualTagGroup = Reaction.storageGroupFor(tagMat, tagGroup);
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
+    if (reaction.isMultiStep()) {
+      const newReference = !reaction.referenceMaterial && reaction.starting_materials
+        .find((material) => !reaction.isLaterStep(reaction.stepOf(material)));
+      if (newReference) {
+        this.updatedReactionForReferenceChange({ sampleID: newReference.id });
+      } else {
+        this.recalculateLaterSteps();
+      }
+    }
     onReactionChange(reaction, { updateGraphic: true });
   }
 
