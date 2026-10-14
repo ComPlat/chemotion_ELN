@@ -1051,6 +1051,7 @@ export default class Reaction extends Element {
   stepContext(step) {
     const context = Object.create(this);
     context.stepId = step.id;
+    context._durationDisplay = undefined;
     Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
       context[field] = step[field] ?? fallback();
     });
