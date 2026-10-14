@@ -32,13 +32,14 @@ class Measurement < ApplicationRecord
   belongs_to :sample, optional: false
   belongs_to :source, polymorphic: true
 
+  validates :description, :unit, :value, presence: true
+
   before_save :strip_whitespaces
 
   private
 
   def strip_whitespaces
-    self.description.strip!
-    self.unit.strip!
-    self.source_type.strip! # should not be needed but it's still user input...
+    self.description = description&.strip
+    self.unit = unit&.strip
   end
 end
