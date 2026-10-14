@@ -90,9 +90,10 @@ class Device < ApplicationRecord
   end
 
   def unique_name_abbreviation
-    devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',
-                                    Device.sanitize_sql_like(name_abbreviation.downcase).to_s)
-    return if devices.blank? || (devices.size == 1 && devices.first.id == id)
+    return if name_abbreviation.blank?
+
+    devices = Device.unscoped.where('LOWER(name_abbreviation) = ?', name_abbreviation.downcase).where.not(id: id)
+    return unless devices.exists?
 
     errors.add(:name_abbreviation, :in_use)
   end
@@ -210,7 +211,9 @@ class Device < ApplicationRecord
   def datacollector_check_sftp_keyfile_path
     return unless datacollector_sftp_values_present?
     return unless datacollector_method.end_with?('sftp') && datacollector_authentication == 'keyfile'
-    return if datacollector_key_dir_path.file? && datacollector_key_dir_path.exist?
+    # a missing key name is already reported by datacollector_check_keyfile
+    return if datacollector_key_name.blank?
+    return if datacollector_key_dir_path&.file?
 
     errors.add(:datacollector_key_name, :not_found)
   end
