@@ -3,26 +3,33 @@
 module Chemotion
   # Overrides the +/api/v1/converter+ routes that {Labimotion::ConverterAPI}
   # cannot serve, or serves without normalizing. Everything else on that
-  # surface (create/delete profile, options, datasets, datasets_units) falls
-  # through to the gem, so this API must stay mounted *before*
-  # +Labimotion::LabimotionAPI+ in {API}.
+  # surface (delete profile, options, datasets, datasets_units) falls through to
+  # the gem, so this API must stay mounted *before* +Labimotion::LabimotionAPI+
+  # in {API}.
   #
   # - +profiles/restore+ and +conversions+ call +Labimotion::Converter.restore+ /
   #   +.test_conversions+, neither of which the gem defines.
   # - +tables+ drops the +ontology+ field that chemotion-converter-client sends
   #   since 0.16.0, which converter-app needs to pick a reader.
-  # - +profiles+ GET/PUT relay converter-app's response verbatim. converter-app
-  #   only runs its profile-schema migration/validation on write (POST/PUT), so a
-  #   profile that predates a schema field (e.g. +tables+) keeps missing it on
-  #   read forever. chemotion-converter-client 0.16.0's +ProfileForm+ assumes
-  #   every array-typed field is always present and reads several of them
-  #   unguarded on mount (+profile.tables.map+ et al.), so a legacy profile
-  #   crashes the whole admin page the moment "Edit" is clicked. Backfilled here
-  #   with the same defaults the client itself uses for a brand-new profile.
+  # - +profiles+ GET normalizes and POST/PUT go through {Chemotion::ConverterClient}
+  #   rather than the gem. converter-app only runs its profile-schema
+  #   migration/validation on write (POST/PUT), so a profile that predates a
+  #   schema field (e.g. +tables+) keeps missing it on read forever.
+  #   chemotion-converter-client 0.16.0's +ProfileForm+ assumes every array-typed
+  #   field is always present and reads several of them unguarded on mount
+  #   (+profile.tables.map+ et al.), so a legacy profile crashes the whole admin
+  #   page the moment "Edit" is clicked — backfilled here with the same defaults
+  #   the client uses for a brand-new profile. On *write*, that same legacy
+  #   profile can fail converter-app's validation (HTTP 400 + errors body); the
+  #   gem's +*_profile+ helpers return +response.parsed_response if response.code
+  #   == 200+ and so collapse that to +nil+, which this proxy would relay as
+  #   200/null and the client's error handler would then crash on
+  #   +Object.values(errors.data)+. Routing writes through the client keeps the
+  #   real status and body so the validation error reaches the user.
   #
   # Delete the +restore+/+conversions+/+tables+ overrides once the gem
   # implements them; delete the +profiles+ overrides once converter-app
-  # migrates/validates on read too.
+  # migrates/validates on read too and the gem stops swallowing write errors.
   class ConverterAPI < Grape::API
     # Array/hash-typed profile fields that chemotion-converter-client 0.16.0
     # always expects present — see AdminApp.js's brand-new-profile defaults.
@@ -43,11 +50,23 @@ module Chemotion
         error!({ error: 'unauthorized' }, 401) unless current_user&.converter_admin == true
       end
 
-      # Relays a converter-app failure instead of surfacing it as a 500.
+      # Relays a converter-app failure instead of surfacing it as a 500. The
+      # upstream body is forwarded verbatim when it is JSON (e.g. converter-app's
+      # +{ Validation:, ValidationMsg: }+ on a legacy profile that no longer
+      # validates) so the client can show *why* the write was rejected; a
+      # non-JSON body degrades to a generic message.
       def with_converter_errors
         yield
       rescue Chemotion::ConverterClient::RequestError => e
-        error!({ error: 'converter request failed' }, e.code)
+        error!(converter_error_body(e.body), e.code)
+      end
+
+      # @return [Hash] converter-app's parsed error body, or a generic fallback
+      def converter_error_body(body)
+        parsed = JSON.parse(body)
+        parsed.is_a?(Hash) ? parsed : { error: 'converter request failed' }
+      rescue JSON::ParserError, TypeError
+        { error: 'converter request failed' }
       end
 
       # The upload arrives as a Rack multipart hash with string keys. Older
@@ -107,6 +126,13 @@ module Chemotion
       end
 
       resource :profiles do
+        desc 'create a profile, relaying converter-app validation errors'
+        post do
+          with_converter_errors do
+            normalize_profile(Chemotion::ConverterClient.create_profile(params))
+          end
+        end
+
         desc 'restore a profile to an earlier version'
         params do
           requires :profile_id, type: String, desc: 'profile id'
@@ -129,7 +155,16 @@ module Chemotion
         route_param :id do
           desc 'update a profile, backfilling fields legacy profiles may be missing'
           put do
-            normalize_profile(Labimotion::Converter.update_profile(params))
+            # Routed through Chemotion::ConverterClient (not the gem's
+            # Labimotion::Converter.update_profile) because the gem returns
+            # +response.parsed_response if response.code == 200+, so a legacy
+            # profile that fails converter-app's write-time json-schema validation
+            # (HTTP 400 + errors body) collapses to nil. This proxy then returned
+            # 200/null, and chemotion-converter-client's error handler crashed on
+            # +Object.values(errors.data)+ with the real error already discarded.
+            with_converter_errors do
+              normalize_profile(Chemotion::ConverterClient.update_profile(params[:id], params))
+            end
           end
         end
       end
