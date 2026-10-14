@@ -1863,3 +1863,19 @@ describe('ReactionDetailsScheme — per-step reference', () => {
     expect(reaction.referenceMaterial.id).toEqual('start');
   });
 });
+
+describe('ReactionDetailsScheme — step input', () => {
+  it('passes a status change from a step to the reaction', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }];
+    const onInputChange = sinon.spy();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction, onInputChange, onReactionChange: sinon.spy() };
+    const event = { target: { value: 'Running' } };
+
+    instance.handleStepInputChange(reaction.reaction_steps[0], 'status', event);
+
+    expect(onInputChange.calledWith('status', event)).toEqual(true);
+  });
+});
