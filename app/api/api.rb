@@ -29,7 +29,7 @@ class API < Grape::API
     end
 
     def detect_current_user
-      detect_current_user_from_session || detect_current_user_from_api_token || detect_current_user_from_jwt
+      detect_current_user_from_session || detect_current_user_from_api_token || detect_current_user_from_jwt || detect_current_user_from_jti_token
     end
 
     def detect_current_user_from_session
@@ -52,6 +52,12 @@ class API < Grape::API
       return nil unless token
 
       token.user
+    end
+    
+    def detect_current_user_from_jti_token
+      token = Warden::JWTAuth::HeaderParser.from_env(env)
+      decoded_token = JWT.decode(token, Rails.application.secrets.secret_key_base)
+      User.find_by(id: decoded_token[0]['sub'], jti: decoded_token[0]['jti'])
     rescue StandardError
       nil
     end
@@ -248,11 +254,18 @@ class API < Grape::API
   mount Chemotion::CollectionElementsAPI
   mount Chemotion::AuthenticationAPI
 
-  if Rails.env.development?
-    add_swagger_documentation(info: {
-                                title: 'Chemotion ELN',
-                                version: '1.0',
-                              })
+  namespace :reaction_process_editor do
+    mount ::ReactionProcessEditor::EditorAPI
+    mount ::ReactionProcessEditor::OntologiesAPI
+    mount ::ReactionProcessEditor::ReactionAPI
+    mount ::ReactionProcessEditor::ReactionProcessAPI
+    mount ::ReactionProcessEditor::ReactionProcessActivityAPI
+    mount ::ReactionProcessEditor::ReactionProcessStepAPI
+    mount ::ReactionProcessEditor::ReactionProcessVesselAPI
+    mount ::ReactionProcessEditor::SampleAPI
+    mount ::ReactionProcessEditor::VesselAPI
   end
+
+  add_swagger_documentation(info: { title: 'Chemotion ELN', version: '1.0' }) if Rails.env.development?
 end
 # rubocop:enable Metrics/ClassLength

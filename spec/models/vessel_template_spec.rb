@@ -5,6 +5,7 @@
 # Table name: vessel_templates
 #
 #  id               :uuid             not null, primary key
+#  automation_modes :string           is an Array
 #  deleted_at       :datetime
 #  details          :string
 #  material_details :string
