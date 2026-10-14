@@ -421,5 +421,42 @@ describe('PolymerSection', () => {
         expect(getFoundRadioDisabled(sample)).toEqual(false);
       });
     });
+
+    describe("'Mass difference' radio (value='mass_diff') disabled logic", () => {
+      const getMassDiffRadioDisabled = (sample) => {
+        const instance = shallow(
+          <PolymerSection
+            sample={sample}
+            handleSampleChanged={() => {}}
+            handleAmountChanged={() => {}}
+          />
+        ).instance();
+        const el = instance.customInfoRadio('Mass difference', 'mass_diff', sample.residues[0], sample);
+        return el.props.disabled;
+      };
+
+      it('is disabled for a sample outside any reaction without a mass_diff composition', () => {
+        const sample = buildSample();
+        expect(getMassDiffRadioDisabled(sample)).toEqual(true);
+      });
+
+      it('is enabled for a reaction product before any mass_diff composition exists', () => {
+        const sample = buildSample();
+        sample.residues[0].custom_info.reaction_product = 'true';
+        expect(getMassDiffRadioDisabled(sample)).toEqual(false);
+      });
+
+      it('is enabled for a sample tagged with a reaction', () => {
+        const sample = buildSample();
+        sample.tag = { taggable_data: { reaction_id: 42 } };
+        expect(getMassDiffRadioDisabled(sample)).toEqual(false);
+      });
+
+      it('is enabled when a mass_diff composition carries a loading', () => {
+        const sample = buildSample();
+        sample.elemental_compositions = [{ composition_type: 'mass_diff', loading: 0.4 }];
+        expect(getMassDiffRadioDisabled(sample)).toEqual(false);
+      });
+    });
   });
 });
