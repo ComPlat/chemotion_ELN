@@ -117,13 +117,24 @@ RSpec.describe ReactionStep do
       expect(product.reload.reaction_description).to eq(text.call('cool it'))
     end
 
+    it 'gives the Word report every step with a heading, but only the reaction text when restricted' do
+      represent = lambda do |level|
+        Entities::ReactionReportEntity.represent(multi.reload, current_user: create(:person),
+                                                               detail_levels: { Reaction => level, Sample => level })
+                                      .serializable_hash[:description]['ops'].pluck('insert').join
+      end
+
+      expect(represent.call(10)).to eq("Step 1: heat it\nStep 2: cool it\n")
+      expect(represent.call(0)).to eq("heat it\n")
+    end
+
     it 'keeps the reaction text for a standard reaction' do
       standard = create(:reaction, description: text.call('stir'))
       sample = create(:sample)
       ReactionsProductSample.create!(reaction: standard, sample: sample)
 
       expect(sample.reload.reaction_description).to eq(text.call('stir'))
-      expect(standard.reload.description_for_search).to eq(text.call('stir'))
+      expect(standard.reload.steps_description).to eq(text.call('stir'))
     end
   end
 end

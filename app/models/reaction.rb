@@ -355,10 +355,14 @@ class Reaction < ApplicationRecord
     update_to_plain_text(true, false)
   end
 
-  def description_for_search
+  def steps_description(labels: false)
     return description unless multi_step? && reaction_steps.any?
 
-    { 'ops' => reaction_steps.flat_map { |step| Array(step.description&.dig('ops')) } }
+    ops = reaction_steps.flat_map do |step|
+      heading = [{ 'insert' => "Step #{step.position}: ", 'attributes' => { 'bold' => true } }]
+      (labels ? heading : []) + Array(step.description&.dig('ops'))
+    end
+    { 'ops' => ops }
   end
 
   private
@@ -520,7 +524,7 @@ class Reaction < ApplicationRecord
       {
         plain_text_observation: observation_changed.presence && Chemotion::QuillToPlainText.convert(observation),
         plain_text_description: description_changed.presence &&
-          Chemotion::QuillToPlainText.convert(description_for_search),
+          Chemotion::QuillToPlainText.convert(steps_description),
       }.compact,
     )
   # NB: we don't want to raise an error if the conversion fails
