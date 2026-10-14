@@ -2677,7 +2677,11 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   handleStepInputChange(step, type, event) {
-    const { reaction, onReactionChange } = this.props;
+    const { reaction, onReactionChange, onInputChange } = this.props;
+    if (type === 'status') {
+      onInputChange(type, event);
+      return;
+    }
     const value = STEP_EVENT_VALUE_TYPES.includes(type) ? event.target.value : event;
     const view = this.stepView(step);
     setReactionByType(view, type, value);
