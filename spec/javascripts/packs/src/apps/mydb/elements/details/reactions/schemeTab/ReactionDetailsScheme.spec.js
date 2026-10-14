@@ -5,6 +5,7 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
@@ -1817,5 +1818,34 @@ describe('ReactionDetailsScheme — step input', () => {
     instance.handleStepInputChange(reaction.reaction_steps[0], 'status', event);
 
     expect(onInputChange.calledWith('status', event)).toEqual(true);
+  });
+});
+
+describe('ReactionDetailsScheme — SBMM drop in a multi-step reaction', () => {
+  const dropOn = (stepId) => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const notify = sinon.spy();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction, onReactionChange: () => {} };
+    instance.context = { notifications: { add: notify } };
+    instance.activeDropStepId = stepId;
+    instance.dropSbmmSample(new SequenceBasedMacromoleculeSample({ id: 'sbmm', short_label: 'S1' }), null);
+    return { reaction, notify };
+  };
+
+  it('refuses an SBMM dropped on step 2 and says why', () => {
+    const { reaction, notify } = dropOn(2);
+
+    expect(reaction.reactant_sbmm_samples.length).toEqual(0);
+    expect(notify.calledOnce).toEqual(true);
+  });
+
+  it('adds an SBMM dropped on step 1', () => {
+    const { reaction, notify } = dropOn(1);
+
+    expect(reaction.reactant_sbmm_samples.length).toEqual(1);
+    expect(notify.called).toEqual(false);
   });
 });
