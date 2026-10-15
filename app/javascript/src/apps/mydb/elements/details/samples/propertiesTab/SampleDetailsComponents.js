@@ -381,21 +381,14 @@ export default class SampleDetailsComponents extends React.Component {
       return;
     }
 
-    const refIndex = sample.components.findIndex(
-      (component) => component.reference === true
-    );
-
-    if (refIndex === -1) {
+    if (!sample.reference_component) {
       console.error('Reference component not found');
       return;
     }
 
-    const referenceMoles = sample.components[refIndex].amount_mol;
-    const totalVolume = sample.amount_l;
-
-    currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
-    SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
-    sample.calculateTotalMixtureMass();
+    sample.updateComponentRatio(currentComponent, newRatio, materialGroup, {
+      concentrationLocked: currentComponent.isComponentConcentrationLocked(),
+    });
   }
 
   /**
