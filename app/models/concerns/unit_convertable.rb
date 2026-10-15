@@ -69,7 +69,9 @@ module UnitConvertable
         end
       when 'mol'
         mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
-        value / (purity || 1.0) * mol_weight
+        # Match the UI's default for nil/zero purity instead of dividing by zero.
+        secure_purity = purity.to_f.zero? ? 1.0 : purity
+        value / secure_purity * mol_weight
       else
         value
       end

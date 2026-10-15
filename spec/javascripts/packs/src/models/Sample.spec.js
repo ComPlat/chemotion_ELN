@@ -7,6 +7,7 @@ import Sample from 'src/models/Sample.js';
 import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
@@ -209,11 +210,861 @@ describe('Sample', async () => {
     });
   });
 
-  describe('Sample.getReferenceRelativeMolecularWeight()', () => {
-    it('returns the relative molecular weight from reference component', () => {
+  describe('Sample.setReferenceComponent()', () => {
+    const buildWithClearedComponent = () => {
+      const sample = new Sample({ sample_type: 'Mixture', amount_value: 1, amount_unit: 'g' });
+      const components = [0.01, 0, 0].map((amount, index) => new Component({
+        id: index + 1, position: index, reference: index === 0,
+        amount_mol: amount, amount_g: amount * 100, relative_molecular_weight: index === 0 ? 100 : 0,
+        material_group: 'liquid', density: 1, purity: 1, molecule: { molecular_weight: 100 },
+      }));
+      sample.initialComponents(components);
+      // This ratio belonged to the old reference, before the component was cleared.
+      components[1].equivalent = 2;
+      return { sample, components };
+    };
+
+    ['selection', 'position-0 fallback'].forEach((path) => {
+      it(`does not refill a cleared component from an old reference's ratio via ${path}`, () => {
+        const { sample, components: [oldReference, cleared, newReference] } = buildWithClearedComponent();
+        if (path === 'selection') {
+          sample.setReferenceComponent(2);
+        } else {
+          oldReference.reference = false;
+          oldReference.position = 1;
+          cleared.position = 2;
+          newReference.position = 0;
+          sample.updateMixtureComponentEquivalent();
+        }
+
+        expect(sample.reference_component).toBe(newReference);
+        expect(oldReference.equivalent).toBe('n.d');
+        expect(cleared.equivalent).toBe('n.d');
+        newReference.amount_mol = 0.01;
+        newReference.amount_g = 1;
+        sample.updateMixtureComponentsFromReferenceAmount();
+        sample.calculateTotalMixtureMass();
+
+        expect(oldReference.amount_mol).toBe(0.01);
+        expect(cleared.amount_mol).toBe(0);
+        expect(cleared.equivalent).toBe('n.d');
+        expect(sample.serializeMaterial().components.find((component) => component.id === cleared.id)
+          .component_properties.amount_mol).toBe(0);
+      });
+    });
+
+    it('keeps a positive typed ratio when reselecting the same empty reference', () => {
+      const { sample, components: [reference, other] } = buildWithClearedComponent();
+      reference.amount_mol = 0;
+      reference.amount_g = 0;
+      sample.amount_value = 0;
+      sample.setReferenceComponent(0);
+
+      expect(other.equivalent).toBe(2);
+      reference.amount_mol = 0.01;
+      sample.updateMixtureComponentsFromReferenceAmount();
+      expect(other.amount_mol).toBe(0.02);
+    });
+
+    ['target', 'real'].forEach((amountType) => {
+      ['mol', 'g'].forEach((unit) => {
+        it(`preserves mass and component amounts across ${amountType} ${unit} reference switches and reloads`, () => {
+          const massG = 11.1004442;
+          const amounts = [0.006, 0.012, 0.012];
+          const componentMasses = [4.9556973, 1.1056610, 5.0390859];
+          let sample = new Sample({
+            id: 1341, sample_type: 'Mixture', amountType,
+            [`${amountType}_amount_value`]: unit === 'mol' ? 0.006 : massG,
+            [`${amountType}_amount_unit`]: unit,
+            sample_details: { total_mixture_mass_g: 7.7617 },
+          });
+          sample.initialComponents(amounts.map((amount, index) => new Component({
+            id: index + 1, position: index, reference: index === 0,
+            amount_mol: amount, amount_g: componentMasses[index],
+            relative_molecular_weight: massG / amount, material_group: 'solid', purity: 1,
+            molecule: { id: index + 1, molecular_weight: componentMasses[index] / amount },
+          })));
+
+          [1, 0].forEach((referenceIndex) => {
+            sample.setReferenceComponent(referenceIndex);
+
+            expect(sample.amount_g).toBeCloseTo(massG, 10);
+            expect(sample.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+            expect(sample.amount_unit).toBe(unit);
+            sample.components.forEach((component, index) => {
+              expect(component.amount_mol).toBeCloseTo(amounts[index], 12);
+              expect(component.amount_g).toBeCloseTo(componentMasses[index], 10);
+              expect(component.equivalent).toBeCloseTo(amounts[index] / amounts[referenceIndex], 12);
+            });
+
+            sample.prepareMixtureForSave();
+            const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+            expect(payload[`${amountType}_amount_value`]).toBeCloseTo(
+              unit === 'mol' ? amounts[referenceIndex] : massG, 12
+            );
+            const reloaded = new Sample(payload);
+            reloaded.initialComponents(payload.components.map((component, index) => Component.deserializeData({
+              ...component,
+              component_properties: {
+                ...component.component_properties,
+                molecule: { id: index + 1, molecular_weight: componentMasses[index] / amounts[index] },
+              },
+            })));
+            expect(reloaded.amount_g).toBeCloseTo(massG, 10);
+            expect(reloaded.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+            sample = reloaded;
+          });
+        });
+      });
+    });
+  });
+
+  describe('Sample.initialComponents()', () => {
+    [false, true].forEach((hasTotalVolume) => {
+      it(`initializes a legacy stock before cloning a solvent-containing portion, total volume=${hasTotalVolume}`, () => {
+        const stock = new Sample({
+          id: 'legacy-stock', short_label: 'stock', children_count: 0,
+          sample_type: 'Mixture', amount_value: 0, amount_unit: 'g',
+          sample_details: hasTotalVolume ? { total_mixture_volume_l: 0.001 } : undefined,
+          solvent: [{ amount_l: 0.001, density: 1 }],
+        });
+        stock.initialComponents([new Component({
+          id: 'solute', position: 0, reference: true, material_group: 'solid', purity: 1,
+          amount_mol: 0.01, amount_g: 1, molecule: { id: 101, molecular_weight: 100 },
+        })]);
+
+        const portion = stock.buildChildWithoutCounter();
+
+        expect(portion.sample_details.total_mixture_mass_g).toBe(2);
+        expect(portion.components[0].relative_molecular_weight).toBe(200);
+        expect(portion.amount_g).toBe(2);
+        portion.setAmount({ value: 1, unit: 'g' });
+        expect(portion.components[0].amount_mol).toBeCloseTo(0.005, 12);
+        expect(portion.components[0].amount_g).toBeCloseTo(0.5, 12);
+        expect(portion.solvent[0].amount_l).toBeCloseTo(0.0005, 12);
+        portion.calculateTotalMixtureMass();
+        expect(portion.amount_g).toBeCloseTo(1, 12);
+        expect(stock.amount_g).toBe(2);
+        expect(stock.sample_details.total_mixture_mass_g).toBe(2);
+        expect(stock.components[0].amount_mol).toBe(0.01);
+        expect(stock.components[0].amount_g).toBe(1);
+        expect(stock.solvent[0].amount_l).toBe(0.001);
+      });
+    });
+
+    it('preserves stock relative molecular weights when a scaled reaction child is saved and reloaded', () => {
+      const stock = new Sample({
+        id: 'stock',
+        short_label: 'stock',
+        children_count: 0,
+        sample_type: 'Mixture',
+        sample_details: { total_mixture_mass_g: 1000 },
+      });
+      stock.initialComponents([
+        new Component({
+          id: 'secondary', position: 1, amount_mol: 10, relative_molecular_weight: 100,
+          material_group: 'solid', amount_g: 200,
+          molecule: { id: 102, molecular_weight: 20 },
+        }),
+        new Component({
+          id: 'primary', position: 0, amount_mol: 20, relative_molecular_weight: 50,
+          material_group: 'solid', amount_g: 800,
+          molecule: { id: 101, molecular_weight: 40 },
+        }),
+      ]);
+      const child = stock.buildChildWithoutCounter();
+      child.setAmount({ value: 5, unit: 'g' });
+      child.updateMixtureComponentAmounts();
+      child.prepareMixtureForSave();
+      expect(stock.components.map((component) => component.amount_g)).toEqual([800, 200]);
+      expect(stock.components.map((component) => component.amount_mol)).toEqual([20, 10]);
+      expect(stock.sample_details.total_mixture_mass_g).toBe(1000);
+      expect(stock.isEdited).toBe(false);
+
+      const payload = JSON.parse(JSON.stringify(child.serializeMaterial()));
+      expect(payload.sample_details.total_mixture_mass_g).toBe(1000);
+      expect(payload.components[0].component_properties.amount_mol).toBeCloseTo(0.1, 10);
+      expect(payload.components[1].component_properties.amount_mol).toBeCloseTo(0.05, 10);
+
+      // Older saves kept stock masses alongside the portion's molar amounts.
+      payload.components[0].component_properties.amount_g = 800;
+      payload.components[1].component_properties.amount_g = 200;
+      // The component API enriches persisted molecule IDs with molecule data.
+      payload.components.forEach((component, index) => {
+        component.component_properties.molecule = {
+          id: stock.components[index].molecule.id,
+          molecular_weight: stock.components[index].molecule_molecular_weight,
+        };
+      });
+
+      const reloaded = new Sample(payload);
+      const components = payload.components.map(Component.deserializeData);
+      reloaded.initialComponents(components);
+
+      expect(reloaded.components.map((component) => component.relative_molecular_weight)).toEqual([50, 100]);
+      expect(reloaded.amount_g).toBe(5);
+      expect(reloaded.components.map((component) => component.amount_g)).toEqual([4, 1]);
+      expect(reloaded.amount_mol).toBeCloseTo(0.1, 10);
+      expect(reloaded.components[1].equivalent).toBeCloseTo(0.5, 10);
+      expect(reloaded.isEdited).toBe(false);
+      reloaded.calculateEquivalentFromReferenceMaterial({ amount_mol: 0.001 });
+      expect(reloaded.equivalent).toBeCloseTo(100, 10);
+
+      reloaded.setReferenceComponent(1);
+      reloaded.initialComponents(reloaded.components);
+      expect(reloaded.amount_mol).toBeCloseTo(0.05, 10);
+      expect(reloaded.components[0].equivalent).toBeCloseTo(2, 10);
+      expect(reloaded.components.map((component) => component.relative_molecular_weight)).toEqual([50, 100]);
+      expect(reloaded.isEdited).toBe(false);
+
+      reloaded.setReferenceComponent(0);
+      expect(reloaded.amount_mol).toBeCloseTo(0.1, 10);
+
+      reloaded.calculateTotalMixtureMass();
+      reloaded.calculateTotalMixtureMass();
+      expect(reloaded.amount_g).toBe(5);
+      expect(reloaded.amount_mol).toBeCloseTo(0.1, 10);
+      expect(reloaded.components.map((component) => component.relative_molecular_weight)).toEqual([50, 100]);
+    });
+
+    it('recalculates a liquid reaction portion without using its cloned stock volume', () => {
+      const stock = new Sample({
+        id: 'liquid-stock', short_label: 'stock', children_count: 0,
+        sample_type: 'Mixture', density: 1, amountType: 'target',
+        target_amount_value: 1, target_amount_unit: 'g',
+        sample_details: { total_mixture_mass_g: 1, total_mixture_volume_l: 0.001 },
+      });
+      stock.initialComponents([new Component({
+        id: 'liquid', position: 0, reference: true, material_group: 'liquid',
+        amount_g: 1, amount_l: 0.001, amount_mol: 0.01, relative_molecular_weight: 100,
+        density: 1, molecule: { id: 101, molecular_weight: 100 },
+      })]);
+      const child = stock.buildChildWithoutCounter();
+      child.setAmount({ value: 0.5, unit: 'g' });
+      child.prepareMixtureForSave();
+      const payload = JSON.parse(JSON.stringify(child.serializeMaterial()));
+      payload.components[0].component_properties.amount_g = 1;
+      payload.components[0].component_properties.amount_l = 0.001;
+      payload.components[0].component_properties.molecule = { id: 101, molecular_weight: 100 };
+      const reloaded = new Sample(payload);
+      reloaded.initialComponents(payload.components.map(Component.deserializeData));
+
+      reloaded.calculateTotalMixtureMass();
+      reloaded.calculateTotalMixtureMass();
+
+      expect(reloaded.amount_g).toBeCloseTo(0.5, 10);
+      expect(reloaded.amount_mol).toBeCloseTo(0.005, 10);
+      expect(reloaded.components[0].amount_l).toBeCloseTo(0.0005, 10);
+      expect(reloaded.components[0].relative_molecular_weight).toBeCloseTo(100, 10);
+      expect(reloaded.total_mixture_volume_l).toBeCloseTo(0.0005, 10);
+      expect(reloaded.density).toBeCloseTo(1, 10);
+      expect(stock.components[0].amount_l).toBeCloseTo(0.001, 10);
+      expect(stock.total_mixture_volume_l).toBeCloseTo(0.001, 10);
+
+      // An explicit composition-volume edit must retain the newly entered volume.
+      reloaded.setTotalMixtureVolume(0.002);
+      expect(reloaded.total_mixture_volume_l).toBeCloseTo(0.002, 10);
+      expect(reloaded.total_mixture_mass_g).toBeCloseTo(2, 10);
+    });
+  });
+
+  describe('Sample.updateComponentAmounts()', () => {
+    it('rescales from a valid relative molecular weight without a molecule MW', () => {
+      const sample = new Sample({ sample_type: 'Mixture', amount_value: 0.2, amount_unit: 'g' });
+      const component = new Component({
+        reference: true,
+        equivalent: 1,
+        amount_mol: 0.1,
+        relative_molecular_weight: 50,
+      });
+      sample.initialComponents([component]);
+
+      expect(component.molecule_molecular_weight).toBeFalsy();
+      sample.updateComponentAmounts();
+
+      expect(component.amount_mol).toBeCloseTo(0.004, 10);
+      expect(component.relative_molecular_weight).toBe(50);
+    });
+
+    it('keeps component amounts and ratios stable when the reference changes', () => {
+      const sample = new Sample({ amount_value: 1000.124, amount_unit: 'g' });
+      sample.components = [
+        {
+          id: 'icosane',
+          reference: true,
+          relative_molecular_weight: 2825825.158875,
+          amount_mol: 0.000353923,
+          equivalent: 1,
+        },
+        {
+          id: 'octane',
+          reference: false,
+          relative_molecular_weight: 921311.970455,
+          amount_mol: 0.001085543,
+          equivalent: 3.067175,
+        },
+      ];
+
+      sample.updateComponentAmounts();
+
+      sample.components[0].reference = false;
+      sample.components[1].reference = true;
+      sample.updateComponentAmounts();
+
+      sample.components[0].reference = true;
+      sample.components[1].reference = false;
+      sample.updateComponentAmounts();
+
+      expect(sample.components[0].amount_mol).toBeCloseTo(0.000353923, 8);
+      expect(sample.components[1].amount_mol).toBeCloseTo(0.001085543, 8);
+      expect(sample.components[1].equivalent).toBe(3.067175);
+    });
+  });
+
+  describe('Sample.prepareMixtureForSave()', () => {
+    it('persists a settled reference-component state', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.sample_details = { reference_component_changed: true };
+      sample.components = [{
+        reference: true,
+        molecule: { molecular_weight: 114.23 },
+        relative_molecular_weight: 2825825.158875,
+      }];
+
+      sample.prepareMixtureForSave();
+
+      expect(sample.sample_details.reference_component_changed).toBe(false);
+      expect(sample.sample_details.reference_molecular_weight).toBe(114.23);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(2825825.158875);
+    });
+  });
+
+  describe('Sample.updateMixtureComponentEquivalent()', () => {
+    const buildMixture = () => {
       const s = new Sample();
-      const ref = { relative_molecular_weight: 42 };
-      expect(s.getReferenceRelativeMolecularWeight(ref)).toBe(42);
+      s.sample_type = 'Mixture';
+      const ref = new Component({});
+      ref.reference = true;
+      ref.component_properties = {};
+      const other = new Component({});
+      other.reference = false;
+      other.component_properties = {};
+      s.initialComponents([ref, other]);
+      return { s, ref, other };
+    };
+
+    it('keeps a user-entered ratio when the reference has no amount', () => {
+      const { s, other } = buildMixture();
+      // Reference has amount_mol 0 (no values entered anywhere).
+      other.equivalent = 2;
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBe(2);
+    });
+
+    it("marks a non-reference component with no ratio as 'n.d' when the reference has no amount", () => {
+      const { s, other } = buildMixture();
+      other.equivalent = 'n.d';
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBe('n.d');
+    });
+
+    [0, -1, NaN, Infinity].forEach((ratio) => {
+      it(`shows n.d for ratio ${ratio} when the reference has no amount`, () => {
+        const { s, other } = buildMixture();
+        other.equivalent = ratio;
+
+        s.updateMixtureComponentEquivalent();
+
+        expect(other.equivalent).toBe('n.d');
+      });
+    });
+
+    it('derives the ratio from amounts when the reference has an amount', () => {
+      const { s, ref, other } = buildMixture();
+      ref.amount_mol = 2;
+      other.amount_mol = 1;
+      s.updateMixtureComponentEquivalent();
+      expect(other.equivalent).toBeCloseTo(0.5, 6);
+    });
+
+    it('keeps a cleared component ratio as n.d during mixture refresh', () => {
+      const { s, ref, other } = buildMixture();
+      ref.amount_mol = 2;
+      other.amount_mol = 0;
+      other.equivalent = 0;
+
+      s.updateMixtureComponentEquivalent();
+
+      expect(other.equivalent).toBe('n.d');
+      expect(other.amount_mol).toBe(0);
+      expect(ref.equivalent).toBe(1);
+    });
+  });
+
+  describe('Sample.updateMixtureComponentsFromReferenceAmount()', () => {
+    const buildMixture = () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      const ref = new Component({});
+      ref.reference = true;
+      ref.material_group = 'liquid';
+      ref.component_properties = {};
+      const other = new Component({});
+      other.reference = false;
+      other.material_group = 'liquid';
+      other.component_properties = {};
+      s.initialComponents([ref, other]);
+      return { s, ref, other };
+    };
+
+    it('fills in the amount from the ratio when the component has no amount yet', () => {
+      const { s, ref, other } = buildMixture();
+      // User typed a ratio while the reference had no amount; component amount is 0.
+      other.equivalent = 2;
+      other.amount_mol = 0;
+      // Now the reference amount is entered.
+      ref.amount_mol = 10;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(2);
+      expect(other.amount_mol).toBeCloseTo(20, 6);
+    });
+
+    it('fills a solid from its typed ratio with Mass locked without overwriting its purity', () => {
+      const { s, ref, other } = buildMixture();
+      other.material_group = 'solid';
+      other.parent_id = s.id;
+      other.molecule = { molecular_weight: 100 };
+      other.amount_g = 0;
+      other.amount_mol = 0;
+      other.equivalent = 2;
+      other.purity = 0.5;
+      ref.amount_mol = 0.01;
+      const state = sinon.stub(ComponentStore, 'getState').returns({
+        lockAmountColumnSolidsBySample: { [s.id]: true },
+      });
+      try {
+        s.updateMixtureComponentsFromReferenceAmount();
+
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.amount_g).toBeCloseTo(4, 12);
+        expect(other.purity).toBe(0.5);
+      } finally {
+        state.restore();
+      }
+    });
+
+    it('keeps an existing amount fixed and re-derives its ratio when the reference amount changes', () => {
+      const { s, ref, other } = buildMixture();
+      // Component already has its own amount (20 mmol) and ratio 2 vs reference 10 mmol.
+      other.equivalent = 2;
+      other.amount_mol = 20;
+      // Change reference 10 -> 20 mmol; amount stays 20, ratio re-derived (20/20 = 1).
+      ref.amount_mol = 20;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.amount_mol).toBeCloseTo(20, 6);
+      expect(other.equivalent).toBeCloseTo(1, 6);
+    });
+
+    [2, 15].forEach((correctedMassG) => {
+      it(`keeps a ratio-generated amount when a committed reference mass is corrected from 1 to ${correctedMassG} g`, () => {
+        const { s, ref, other } = buildMixture();
+        [ref, other].forEach((component) => {
+          component.molecule = { molecular_weight: 100 };
+          component.material_group = 'solid';
+          component.purity = 1;
+          component.amount_mol = 0;
+        });
+        other.equivalent = 2;
+        const commitReferenceMass = (massG) => {
+          ref.handleVolumeChange({ value: massG, unit: 'g' }, s.amount_l);
+          s.updateMixtureComponentsFromReferenceAmount();
+          s.calculateTotalMixtureMass();
+        };
+
+        // Each call represents a value committed after a debounce pause or blur.
+        commitReferenceMass(1);
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.amount_g).toBeCloseTo(2, 12);
+        expect(other.equivalent).toBe(2);
+
+        commitReferenceMass(correctedMassG);
+        expect(ref.amount_mol).toBeCloseTo(correctedMassG / 100, 12);
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.amount_g).toBeCloseTo(2, 12);
+        expect(other.equivalent).toBeCloseTo(2 / correctedMassG, 12);
+        expect(s.amount_g).toBeCloseTo(correctedMassG + 2, 12);
+        expect(s.serializeMaterial().components[1].component_properties.equivalent)
+          .toBeCloseTo(2 / correctedMassG, 12);
+      });
+    });
+
+    it('re-derives the ratio (and keeps the amount) for a component with no ratio yet', () => {
+      const { s, ref, other } = buildMixture();
+      other.equivalent = 'n.d';
+      other.amount_mol = 4;
+      ref.amount_mol = 8;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.amount_mol).toBeCloseTo(4, 6);
+      expect(other.equivalent).toBeCloseTo(0.5, 6);
+    });
+
+    it('preserves a typed ratio when the reference still has no amount', () => {
+      const { s, ref, other } = buildMixture();
+      other.equivalent = 3;
+      ref.amount_mol = 0;
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(3);
+    });
+
+    it('materialises a ratio-driven amount when the reference amount appears via a density edit', () => {
+      const { s, ref, other } = buildMixture();
+      // Reference is a liquid with a volume but no amount yet; the other component has a
+      // typed ratio and no amount.
+      ref.material_group = 'liquid';
+      ref.molecule = { molecular_weight: 100 };
+      ref.amount_l = 0.001; // 1 mL
+      ref.amount_mol = 0;
+      other.equivalent = 2;
+      other.amount_mol = 0;
+
+      // Density edit derives the reference amount from volume + density.
+      ref.handleDensityChange({ value: 0.8, unit: 'g/ml' }, false);
+      expect(ref.amount_mol).toBeGreaterThan(0);
+
+      s.updateMixtureComponentsFromReferenceAmount();
+      expect(other.equivalent).toBe(2);
+      expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 9);
+    });
+  });
+
+  describe('Sample.updateComponentAmounts()', () => {
+    // icosane (ref, ratio 1, MW 282.55) + octane (ratio 2, MW 114.23)
+    const buildMixture = (totalMassG) => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+
+      const ref = new Component({});
+      ref.reference = true;
+      ref.material_group = 'solid';
+      ref.molecule = { molecular_weight: 282.55 };
+      ref.equivalent = 1;
+      ref.component_properties = {};
+
+      const other = new Component({});
+      other.reference = false;
+      other.material_group = 'solid';
+      other.molecule = { molecular_weight: 114.23 };
+      other.equivalent = 2;
+      other.component_properties = {};
+
+      s.initialComponents([ref, other]);
+      s.amount_value = totalMassG;
+      s.amount_unit = 'g';
+      return { s, ref, other };
+    };
+
+    it('distributes the total mass into component amounts by ratio and molar mass', () => {
+      const { s, ref, other } = buildMixture(1); // 1 g total
+      const denom = (1 * 282.55) + (2 * 114.23); // Σ ratio * molar mass
+      s.updateComponentAmounts();
+      expect(ref.amount_mol).toBeCloseTo(1 / denom, 9);
+      expect(other.amount_mol).toBeCloseTo(2 / denom, 9);
+    });
+
+    it('conserves the total mass across the components', () => {
+      const { s, ref, other } = buildMixture(0.5); // 0.5 g total
+      s.updateComponentAmounts();
+      const massBack = (ref.amount_mol * 282.55) + (other.amount_mol * 114.23);
+      expect(massBack).toBeCloseTo(0.5, 9);
+    });
+
+    it('includes component purity when initializing amounts from ratios', () => {
+      const { s, ref, other } = buildMixture(1);
+      ref.purity = 0.5;
+      other.purity = 0.8;
+      const denominator = (282.55 / 0.5) + (2 * 114.23 / 0.8);
+
+      s.updateComponentAmounts();
+
+      expect(ref.amount_mol).toBeCloseTo(1 / denominator, 10);
+      expect(other.amount_mol).toBeCloseTo(2 / denominator, 10);
+      expect(ref.amount_g + other.amount_g).toBeCloseTo(1, 10);
+    });
+
+    ['clear', 'merge'].forEach((operation) => {
+      it(`does not restore a component after ${operation}, save/reload, and a mass edit`, async () => {
+        const { s, ref, other } = buildMixture(1);
+        ref.id = 'reference';
+        other.id = 'cleared';
+        ref.molecule.id = 101;
+        other.molecule.id = 102;
+        ref.amount_mol = 0.001;
+        other.amount_mol = 0.002;
+        ref.updatePhysicalAmounts();
+        other.updatePhysicalAmounts();
+
+        let duplicate;
+        if (operation === 'merge') {
+          duplicate = new Component({
+            id: 'duplicate', material_group: 'solid', amount_mol: 0.003,
+            molecule: { id: 102, molecular_weight: 114.23 },
+          });
+          duplicate.updatePhysicalAmounts();
+          s.components.push(duplicate);
+        }
+        s.calculateTotalMixtureMass();
+        expect(other.relative_molecular_weight).toBeGreaterThan(0);
+
+        if (operation === 'merge') {
+          await s.mergeComponents(duplicate, 'solid', other, 'solid');
+        } else {
+          other.handleAmountChange({ value: 0, unit: 'mol' }, 0);
+          s.calculateTotalMixtureMass();
+          s.updateMixtureComponentEquivalent();
+        }
+
+        const payload = JSON.parse(JSON.stringify(s.serializeMaterial()));
+        payload.components.forEach((entry, index) => {
+          entry.component_properties.molecule = s.components[index].molecule;
+        });
+        const reloaded = new Sample(payload);
+        reloaded.initialComponents(payload.components.map(Component.deserializeData));
+        reloaded.setAmount({ value: reloaded.amount_g * 2, unit: 'g' });
+
+        const reloadedOther = reloaded.components.find((entry) => entry.id === 'cleared');
+        const reloadedRef = reloaded.components.find((entry) => entry.id === 'reference');
+        expect(reloadedOther.amount_mol).toBe(0);
+        expect(reloadedOther.amount_g).toBe(0);
+        expect(reloadedOther.relative_molecular_weight).toBe(0);
+        expect(reloadedRef.amount_mol).toBeCloseTo(0.002, 10);
+
+        const savedComponents = JSON.parse(JSON.stringify(reloaded.serializeMaterial().components));
+        const savedOther = savedComponents.find((entry) => entry.id === 'cleared');
+        expect(savedOther.component_properties.amount_mol).toBe(0);
+        expect(savedOther.component_properties.relative_molecular_weight).toBe(0);
+        expect(Component.deserializeData(savedOther).amount_mol).toBe(0);
+      });
+    });
+
+    [
+      { name: 'solvent mass', totalVolumeL: 0, solvent: [{ amount_l: 0.01, density: 1 }] },
+      { name: 'total-volume mass', totalVolumeL: 0.01, solvent: [] },
+    ].forEach(({ name, totalVolumeL, solvent }) => {
+      const buildSolution = () => {
+        const mixture = buildMixture(0);
+        const { s, ref, other } = mixture;
+        ref.molecule = { molecular_weight: 100 };
+        other.molecule = { molecular_weight: 200 };
+        ref.amount_mol = 0.001;
+        other.amount_mol = 0.002;
+        ref.updatePhysicalAmounts();
+        other.updatePhysicalAmounts();
+        s.solvent = solvent.map((entry) => ({ ...entry }));
+        s.sample_details = { total_mixture_volume_l: totalVolumeL };
+        s.calculateTotalMixtureMass();
+        expect(s.total_mixture_mass_g).toBeCloseTo(10.5, 10);
+        return mixture;
+      };
+
+      it(`retains ${name} in relative-MW scaling`, () => {
+        const { s, ref, other } = buildSolution();
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.0005, 10);
+        expect(other.amount_mol).toBeCloseTo(0.001, 10);
+        expect(ref.amount_g + other.amount_g).toBeCloseTo(0.25, 10);
+        expect(other.amount_mol / ref.amount_mol).toBeCloseTo(2, 10);
+      });
+
+      it(`preserves valid relative-MW scaling with ${name} when another weight is missing`, () => {
+        const { s, ref, other } = buildSolution();
+        other.relative_molecular_weight = 0;
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.0005, 10);
+        expect(other.amount_mol).toBeCloseTo(0.002, 10);
+        expect(other.amount_g).toBeCloseTo(0.4, 10);
+      });
+
+      it(`does not allocate ${name} to solutes when all relative weights are missing`, () => {
+        const { s, ref, other } = buildSolution();
+        ref.relative_molecular_weight = 0;
+        other.relative_molecular_weight = 0;
+        s.amount_value = 5.25;
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol).toBeCloseTo(0.001, 10);
+        expect(other.amount_mol).toBeCloseTo(0.002, 10);
+        expect(ref.amount_g + other.amount_g).toBeCloseTo(0.5, 10);
+      });
+    });
+
+    it('works from zero prior amounts (no dependence on relative_molecular_weight)', () => {
+      const { s, ref, other } = buildMixture(1);
+      // Components start with no amounts / no relative MW, as when a mass is first
+      // entered on a mixture reaction material.
+      expect(ref.amount_mol == null || ref.amount_mol === 0).toBe(true);
+      s.updateComponentAmounts();
+      expect(ref.amount_mol).toBeGreaterThan(0);
+      expect(other.amount_mol).toBeGreaterThan(0);
+      expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 9);
+    });
+
+    it('does not mutate amounts when a ratio is unknown (n.d)', () => {
+      const { s, ref, other } = buildMixture(1);
+      other.equivalent = 'n.d'; // composition unknown, not zero
+      s.updateComponentAmounts();
+      expect(ref.amount_mol == null || ref.amount_mol === 0).toBe(true);
+      expect(other.amount_mol == null || other.amount_mol === 0).toBe(true);
+    });
+  });
+
+  describe('Sample.updateComponentAmounts() with an indeterminate ratio', () => {
+    const buildQaMixture = () => {
+      const sample = new Sample({ sample_type: 'Mixture' });
+      const components = [
+        { id: 'benzophenone', molecular_weight: 182.2179, amount_mol: 0.005, reference: true },
+        { id: 'benzoic-acid', molecular_weight: 122.12134, amount_mol: 0.005, reference: false },
+        { id: 'phenol', molecular_weight: 94.11124, amount_mol: 0.01, reference: false },
+      ].map(({ molecular_weight, ...data }, position) => {
+        const component = new Component({
+          ...data, position, material_group: 'solid', purity: 1,
+          molecule: { id: position + 1, molecular_weight },
+        });
+        component.updatePhysicalAmounts();
+        return component;
+      });
+      sample.initialComponents(components);
+      sample.amount_value = components.reduce((sum, component) => sum + component.amount_g, 0);
+      sample.amount_unit = 'g';
+      return sample;
+    };
+
+    ['zero', 'reset', 'missing'].forEach((ratioState) => {
+      ['setAmount', 'setAmountAndNormalizeToGram'].forEach((setter) => {
+        it(`preserves all component quantities with a ${ratioState} ratio during ${setter}`, () => {
+          const sample = buildQaMixture();
+          const benzoic = sample.components[1];
+          if (ratioState === 'reset') benzoic.resetAmounts();
+          else benzoic.equivalent = ratioState === 'zero' ? 0 : null;
+          const before = JSON.parse(JSON.stringify(sample.serializeMaterial().components));
+
+          sample[setter]({ value: 6, unit: 'g' });
+
+          expect(sample.amount_g).toBe(6);
+          expect(sample.components[0].amount_mol).toBe(0.005);
+          expect(sample.components[2].amount_mol).toBe(0.01);
+          expect(benzoic.amount_mol).toBe(ratioState === 'reset' ? 0 : 0.005);
+          expect(JSON.parse(JSON.stringify(sample.serializeMaterial().components))).toEqual(before);
+        });
+      });
+    });
+
+    it('initializes the same dry composition when every ratio is positive', () => {
+      const sample = buildQaMixture();
+      sample.components.forEach((component) => {
+        component.amount_mol = 0;
+        component.updatePhysicalAmounts();
+      });
+
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+
+      const [benzophenone, benzoic, phenol] = sample.components;
+      expect(benzoic.amount_mol).toBeCloseTo(benzophenone.amount_mol, 12);
+      expect(phenol.amount_mol).toBeCloseTo(benzophenone.amount_mol * 2, 12);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+    });
+
+    it('uses valid relative weights to conserve mass even with a saved zero ratio', () => {
+      const sample = buildQaMixture();
+      sample.calculateTotalMixtureMass();
+      const previousMassG = sample.amount_g;
+      sample.components[1].equivalent = 0;
+
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+
+      expect(sample.components[1].amount_mol).toBeCloseTo(0.005 * 6 / previousMassG, 12);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+      expect(sample.components[1].equivalent).toBe(0);
+    });
+  });
+
+  describe('Sample ratio edit after an unresolved mixture mass', () => {
+    const build = () => {
+      const sample = new Sample({ sample_type: 'Mixture' });
+      sample.initialComponents([100, 200, 300].map((molecularWeight, index) => new Component({
+        id: index + 1, position: index, reference: index === 0,
+        equivalent: [1, 0, 2][index], amount_mol: 0,
+        amount_g: 0, relative_molecular_weight: 0, material_group: 'solid', purity: 1,
+        molecule: { id: index + 1, molecular_weight: molecularWeight },
+      })));
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+      return sample;
+    };
+    const editRatio = (sample, ratio) => {
+      const SampleDetailsComponents = require(
+        'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents'
+      ).default;
+      const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+      editor.onChangeComponent({ type: 'ratioChanged', sampleID: 2, newRatio: ratio, materialGroup: 'solid' });
+    };
+
+    [0, undefined].forEach((referenceMoles) => {
+      it(`keeps 6000 mg and initializes amounts after fixing the ratio with reference amount ${referenceMoles}`, () => {
+        const sample = build();
+        sample.components[0].amount_mol = referenceMoles;
+
+        editRatio(sample, 1);
+
+        expect(sample.amount_g).toBeCloseTo(6, 12);
+        expect(sample.total_mixture_mass_g).toBeCloseTo(6, 12);
+        expect(sample.components.map((component) => component.amount_mol)).toEqual([6 / 900, 6 / 900, 12 / 900]);
+        expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+        expect(sample.serializeMaterial().sample_details.total_mixture_mass_g).toBeCloseTo(6, 12);
+      });
+    });
+
+    it('keeps the entered mass while another component ratio is still unresolved', () => {
+      const sample = build();
+      sample.components[2].equivalent = 0;
+
+      editRatio(sample, 1);
+
+      expect(sample.amount_g).toBe(6);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual([0, 0, 0]);
+    });
+
+    it('retains reference-amount-driven ratio edits once component quantities exist', () => {
+      const sample = build();
+      sample.components.forEach((component) => {
+        component.amount_mol = 0.001;
+        component.updatePhysicalAmounts();
+      });
+      sample.calculateTotalMixtureMass();
+
+      editRatio(sample, 2);
+
+      expect(sample.components[1].amount_mol).toBe(0.002);
+      expect(sample.amount_g).toBeCloseTo(0.8, 12);
+    });
+
+    it('still clears the total when an explicit ratio edit removes the last known component amount', () => {
+      const sample = build();
+      sample.components[1].amount_mol = 0.001;
+      sample.components[1].equivalent = 1;
+      sample.components[1].updatePhysicalAmounts();
+      sample.calculateTotalMixtureMass();
+
+      editRatio(sample, 0);
+
+      expect(sample.components[1].amount_mol).toBe(0);
+      expect(sample.amount_g).toBe(0);
     });
   });
 
@@ -1228,6 +2079,34 @@ describe('Sample', async () => {
   });
 
   describe('Sample.calculateTotalMixtureMass()', () => {
+    it('recalculates canonical relative molecular weights from the editor component amounts', () => {
+      const sample = new Sample({ sample_type: 'Mixture', sample_details: {} });
+      sample.components = [
+        new Component({
+          position: 0, reference: true, material_group: 'solid',
+          amount_g: 36, amount_mol: 2, relative_molecular_weight: 999,
+        }),
+        new Component({
+          position: 1, material_group: 'solid',
+          amount_g: 14, amount_mol: 0.5, relative_molecular_weight: 333,
+        }),
+      ];
+
+      sample.calculateTotalMixtureMass();
+
+      expect(sample.total_mixture_mass_g).toBe(50);
+      expect(sample.components.map((component) => component.relative_molecular_weight)).toEqual([25, 100]);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(25);
+
+      sample.components[0].amount_g = 72;
+      sample.components[0].amount_mol = 4;
+      sample.calculateTotalMixtureMass();
+
+      expect(sample.total_mixture_mass_g).toBe(86);
+      expect(sample.components.map((component) => component.relative_molecular_weight)).toEqual([21.5, 172]);
+      expect(sample.sample_details.reference_relative_molecular_weight).toBe(21.5);
+    });
+
     it('sums solids and liquids, and includes solvents when total volume is NOT present', () => {
       const s = new Sample();
       s.sample_type = 'Mixture';
@@ -1809,14 +2688,6 @@ describe('Sample', async () => {
       ref2.component_properties = {};
       s2.initialComponents([ref2]);
       expect(s2.calculateMixtureAmountMol()).toBe('n.d');
-    });
-  });
-
-  describe('Sample.getReferenceRelativeMolecularWeight()', () => {
-    it('returns the relative molecular weight from reference component', () => {
-      const s = new Sample();
-      const ref = { relative_molecular_weight: 42 };
-      expect(s.getReferenceRelativeMolecularWeight(ref)).toBe(42);
     });
   });
 
@@ -2539,6 +3410,17 @@ describe('Sample', async () => {
       const sample = makeMixture();
 
       expect(sample.serializeMaterial().components).toBe(null);
+    });
+
+    it('settles the serialized reference flag even when components are not loaded', () => {
+      const sample = makeMixture();
+      sample.sample_details = { reference_component_changed: true, previous_amount_g: 5 };
+
+      const serialized = sample.serializeMaterial();
+
+      expect(serialized.components).toBe(null);
+      expect(serialized.sample_details).toEqual({ reference_component_changed: false, previous_amount_g: 5 });
+      expect(sample.sample_details.reference_component_changed).toBe(true);
     });
 
     it('serializes an explicitly emptied component list as [] (delete-all instruction)', () => {
