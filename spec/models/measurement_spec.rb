@@ -3,8 +3,13 @@
 require 'rails_helper'
 
 RSpec.describe Measurement do
-  let(:research_plan) { create(:research_plan) }
-  let(:sample) { create(:sample) }
+  let(:research_plan) { build_stubbed(:research_plan) }
+  let(:sample) { build_stubbed(:sample) }
+
+  shared_context 'with persisted associations' do
+    let(:research_plan) { create(:research_plan) }
+    let(:sample) { create(:sample) }
+  end
 
   describe 'validations' do
     %i[description unit value].each do |attribute|
@@ -22,10 +27,14 @@ RSpec.describe Measurement do
       expect(measurement.save).to be(false)
     end
 
-    it 'saves with an empty unit' do
-      measurement = build(:measurement, sample: sample, source: research_plan, unit: '')
+    context 'with an empty unit' do
+      include_context 'with persisted associations'
 
-      expect(measurement.save).to be(true)
+      it 'saves' do
+        measurement = build(:measurement, sample: sample, source: research_plan, unit: '')
+
+        expect(measurement.save).to be(true)
+      end
     end
   end
 
@@ -37,10 +46,14 @@ RSpec.describe Measurement do
       expect(measurement).to have_attributes(description: 'Yield', unit: '%')
     end
 
-    it 'strips surrounding whitespace from description and unit' do
-      measurement = create(:measurement, sample: sample, source: research_plan, description: '  Yield  ', unit: ' % ')
+    context 'when saved' do
+      include_context 'with persisted associations'
 
-      expect(measurement.reload).to have_attributes(description: 'Yield', unit: '%')
+      it 'stores the stripped description and unit' do
+        measurement = create(:measurement, sample: sample, source: research_plan, description: '  Yield  ', unit: ' % ')
+
+        expect(measurement.reload).to have_attributes(description: 'Yield', unit: '%')
+      end
     end
   end
 end
