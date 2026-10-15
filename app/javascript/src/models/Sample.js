@@ -2597,7 +2597,7 @@ export default class Sample extends Element {
         const currentMol = component.amount_mol ?? 0;
         component.equivalent = currentMol && !Number.isNaN(currentMol)
           ? currentMol / referenceMol
-          : 0;
+          : 'n.d';
       }
     });
   }
@@ -2613,6 +2613,9 @@ export default class Sample extends Element {
    * - already has an amount → keep the amount fixed and re-derive the ratio from it
    *   (matching updateMixtureComponentEquivalent), so a later reference change updates
    *   the ratio rather than the amount the user already established.
+   * A typed ratio fills the missing amount once, when a reference edit is committed.
+   * A debounce pause or blur can commit that first value; subsequent corrections keep
+   * the generated component amount fixed, just like a directly entered amount.
    *
    * Falls back to updateMixtureComponentEquivalent when there is no usable reference
    * amount to scale from.
