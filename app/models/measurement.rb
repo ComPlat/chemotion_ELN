@@ -32,7 +32,9 @@ class Measurement < ApplicationRecord
   belongs_to :sample, optional: false
   belongs_to :source, polymorphic: true
 
-  validates :description, :unit, :value, presence: true
+  # The columns are NOT NULL, but an empty string is valid (e.g. MTT results have no unit).
+  validates :description, :unit, exclusion: { in: [nil], message: :blank }
+  validates :value, presence: true
 
   before_save :strip_whitespaces
 

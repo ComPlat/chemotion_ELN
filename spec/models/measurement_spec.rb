@@ -22,10 +22,10 @@ RSpec.describe Measurement do
       expect(measurement.save).to be(false)
     end
 
-    it 'is invalid with a whitespace-only description' do
-      measurement = build(:measurement, sample: sample, source: research_plan, description: '   ')
+    it 'saves with an empty unit' do
+      measurement = build(:measurement, sample: sample, source: research_plan, unit: '')
 
-      expect(measurement).not_to be_valid
+      expect(measurement.save).to be(true)
     end
   end
 
