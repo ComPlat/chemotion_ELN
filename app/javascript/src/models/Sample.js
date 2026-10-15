@@ -425,6 +425,11 @@ export default class Sample extends Element {
   }
 
   buildChildWithoutCounter() {
+    // Compute missing stock mass and relative MWs before the portion copies them.
+    if (this.isMixture() && this.hasComponents() && !this.sample_details?.total_mixture_mass_g) {
+      this.calculateTotalMixtureMass();
+    }
+
     const splitSample = this.clone();
     if (this.isMixture()) {
       // A reaction portion must not rescale the stock's components or internal solvents.
@@ -449,12 +454,6 @@ export default class Sample extends Element {
     splitSample.is_split = true;
     splitSample.is_new = true;
     splitSample.split_label = splitSample.buildSplitShortLabel();
-
-    // Map mixture properties from sample_details for mixture samples
-    // Calculate total mixture mass first if this is a mixture and mass is not already calculated
-    if (this.isMixture() && this.hasComponents() && !this.sample_details?.total_mixture_mass_g) {
-      this.calculateTotalMixtureMass();
-    }
 
     this.applyMixturePropertiesToSample(splitSample);
 
@@ -2498,11 +2497,16 @@ export default class Sample extends Element {
 
     // Read mass using the old reference before a mol-stored amount changes its basis.
     // Initial reference selection has no previous molar basis to preserve.
-    const hadReference = !!this.reference_component;
+    const previousReference = this.reference_component;
+    const hadReference = !!previousReference;
     const mixtureMassG = hadReference ? Number(this.amount_g) : NaN;
 
     this.components.forEach((component, index) => {
       component.reference = (index === componentIndex);
+      if (!component.reference && previousReference !== referenceComponent) {
+        // Ratios against the old reference cannot initialize amounts under the new one.
+        component.equivalent = 'n.d';
+      }
     });
 
     if (hadReference) {
@@ -2585,11 +2589,10 @@ export default class Sample extends Element {
         component.equivalent = 1;
       } else if (!referenceMol || Number.isNaN(referenceMol)) {
         // The reference has no amount, so the ratio cannot be derived from amounts.
-        // Preserve a user-entered numeric ratio; only fall back to 'n.d' when the
-        // component has no meaningful ratio yet.
+        // Preserve positive typed ratios while this reference has no amount.
         const currentEq = component.equivalent;
-        const hasNumericEq = typeof currentEq === 'number' && !Number.isNaN(currentEq);
-        component.equivalent = hasNumericEq ? currentEq : 'n.d';
+        const hasPositiveRatio = Number.isFinite(currentEq) && currentEq > 0;
+        component.equivalent = hasPositiveRatio ? currentEq : 'n.d';
       } else {
         const currentMol = component.amount_mol ?? 0;
         component.equivalent = currentMol && !Number.isNaN(currentMol)

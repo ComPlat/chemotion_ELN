@@ -585,7 +585,8 @@ export default class Component extends Sample {
     if (this.material_group === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (this.material_group === 'solid') {
-      this.calculateMassFromAmount(purity);
+      // The ratio derives a new amount and mass; it must not infer purity from the old mass.
+      this.calculateMassFromAmount(purity, false);
     }
 
     this.calculateTargetConcentration(totalVolume);
