@@ -54,6 +54,28 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     end
   end
 
+  context 'when the gas data of a moved link was edited in its first reaction' do
+    let!(:moved_link) { ReactionsProductSample.create!(reaction: other_reaction, sample: sample, gas_type: 'gas') }
+    let(:gas_data_before_move) do
+      moved_link.gas_phase_data.deep_merge(
+        'turnover_number' => 16.49,
+        'turnover_frequency' => { 'value' => 4.12 },
+      )
+    end
+
+    before do
+      ReactionsProductSample.create!(reaction: reaction, sample: sample, gas_type: 'gas')
+      moved_link.update!(gas_phase_data: gas_data_before_move)
+      moved_link.update!(reaction_id: reaction.id)
+      moved_link.update!(gas_phase_data: gas_data_before_move.merge('part_per_million' => 99))
+      migration.up
+    end
+
+    it 'restores the complete gas data it had there' do
+      expect(moved_link.reload.gas_phase_data).to eq(gas_data_before_move)
+    end
+  end
+
   context 'when a reaction links a sample twice' do
     let!(:older_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, equivalent: 1) }
     let!(:newer_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, equivalent: 2) }

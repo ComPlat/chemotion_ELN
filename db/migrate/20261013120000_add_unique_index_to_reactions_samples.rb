@@ -17,6 +17,9 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
     type reference equivalent position waste coefficient show_label gas_type gas_phase_data
     conversion_rate weight_percentage weight_percentage_reference
   ].freeze
+  # logidze keeps the full value of a jsonb column only in the first version; later versions
+  # hold a nested diff of the changed keys, with 'deleted' for a removed object
+  JSONB_COLUMNS = %w[gas_phase_data].freeze
 
   def up
     # checked link by link, a reaction can get back one of several links moved from it
@@ -77,9 +80,37 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
       changes = version['c']
       break if changes.key?('reaction_id') && changes['reaction_id'] != original_reaction_id
 
-      snapshot.merge!(changes)
+      apply_changes(snapshot, changes)
     end
     snapshot
+  end
+
+  def apply_changes(snapshot, changes)
+    changes.each do |column, value|
+      snapshot[column] = if JSONB_COLUMNS.include?(column)
+                           apply_diff(parse_json(snapshot[column]), parse_json(value))
+                         else
+                           value
+                         end
+    end
+  end
+
+  def apply_diff(value, diff)
+    return diff unless value.is_a?(Hash) && diff.is_a?(Hash)
+
+    diff.each_with_object(value.dup) do |(key, change), merged|
+      if change == 'deleted' && merged[key].is_a?(Hash)
+        merged.delete(key)
+      else
+        merged[key] = apply_diff(merged[key], change)
+      end
+    end
+  end
+
+  def parse_json(value)
+    value.is_a?(String) ? JSON.parse(value) : value
+  rescue JSON::ParserError
+    value
   end
 
   def restorable?(reaction_id, sample_id)
