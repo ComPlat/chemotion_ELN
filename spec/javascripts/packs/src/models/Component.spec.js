@@ -850,6 +850,30 @@ describe('Component', () => {
     });
   });
 
+  describe('updateAmountFromRatio', () => {
+    [true, false].forEach((locked) => {
+      it(`fills a solid's mass without changing purity with Mass locked=${locked}`, () => {
+        component.material_group = 'solid';
+        component.parent_id = 'ratio-sample';
+        component.amount_g = 0;
+        component.amount_mol = 0;
+        component.equivalent = 2;
+        component.purity = 0.5;
+        component.molecule.molecular_weight = 100;
+        ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { 'ratio-sample': locked } });
+        const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+        component.updateAmountFromRatio(2, 0.01, 0.01);
+
+        expect(component.amount_mol).toBeCloseTo(0.02, 12);
+        expect(component.amount_g).toBeCloseTo(4, 12);
+        expect(component.purity).toBe(0.5);
+        expect(component.equivalent).toBe(2);
+        sinon.assert.notCalled(purityUpdate);
+      });
+    });
+  });
+
   describe('updateRatioFromReference', () => {
     beforeEach(() => {
       // Mock store state for unlocked concentration
