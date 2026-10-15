@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: scifinder_n_credentials
@@ -15,18 +17,16 @@
 #
 
 class ScifinderNCredential < ApplicationRecord
+  # Returns a usable access token, refreshing it first if it has expired.
+  # Returns nil if the refresh fails.
   def issued_token
-    token = access_token
-    if DateTime.now > expires_at
-      token = refresh_token
-      begin
-        access_set = Chemotion::ScifinderNService.provider_access(token)
-        update!(access_token: access_set[:access_token], refresh_token: access_set[:refresh_token], expires_at: access_set[:expires_at])
-        token = access_token
-      rescue StandardError => e
-        Rails.logger.error("Error while issuing token: #{e}")
-      end
-    end
-    token
+    return access_token if DateTime.now <= expires_at
+
+    access_set = Chemotion::ScifinderNService.provider_access(refresh_token)
+    update!(access_set.slice(:access_token, :refresh_token, :expires_at))
+    access_token
+  rescue StandardError => e
+    Rails.logger.error("Error while issuing token: #{e}")
+    nil
   end
 end
