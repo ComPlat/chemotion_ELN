@@ -2483,7 +2483,7 @@ export default class Sample extends Element {
   }
 
   /**
-   * Sets the reference component in the mixture by index and updates equivalents.
+   * Switches the reference component while preserving the mixture's physical mass.
    *
    * The selected component is marked as the reference (reference = true, equivalent = 1),
    * and all other components are marked as non-reference.
@@ -2493,17 +2493,57 @@ export default class Sample extends Element {
    * @param {number} componentIndex - The index of the component to set as reference.
    */
   setReferenceComponent(componentIndex) {
-    this.components[componentIndex].equivalent = 1;
-    this.components[componentIndex].reference = true;
+    const referenceComponent = this.components?.[componentIndex];
+    if (!referenceComponent) return;
+
+    // Read mass using the old reference before a mol-stored amount changes its basis.
+    // Initial reference selection has no previous molar basis to preserve.
+    const hadReference = !!this.reference_component;
+    const mixtureMassG = hadReference ? Number(this.amount_g) : NaN;
 
     this.components.forEach((component, index) => {
-      if (index !== componentIndex) {
-        component.reference = false;
-      }
+      component.reference = (index === componentIndex);
     });
+
+    if (hadReference) {
+      this.updateReferenceComponentDetails(referenceComponent);
+      this.preserveMassAfterReferenceChange(mixtureMassG);
+    }
 
     // Update equivalents for all components
     this.updateMixtureComponentEquivalent();
+  }
+
+  /** Records the selected reference's molecular weights and clears its transient change flag. */
+  updateReferenceComponentDetails(referenceComponent) {
+    this.initializeSampleDetails();
+    if (referenceComponent.molecule?.molecular_weight) {
+      this.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
+    }
+    const relativeWeight = Number(referenceComponent.relative_molecular_weight);
+    if (relativeWeight) {
+      this.sample_details.reference_relative_molecular_weight = relativeWeight;
+    }
+    this.sample_details.reference_component_changed = false;
+  }
+
+  /** Rebases the stored amount using the mass captured before the reference switch. */
+  preserveMassAfterReferenceChange(mixtureMassG) {
+    if (!Number.isFinite(mixtureMassG) || mixtureMassG < 0) return;
+
+    this.sample_details.previous_amount_g = mixtureMassG;
+    const relativeWeight = Number(this.reference_component.relative_molecular_weight);
+    if (Number.isFinite(relativeWeight) && relativeWeight > 0) {
+      const newAmountMol = mixtureMassG / relativeWeight;
+      this.sample_details.previous_amount_mol = newAmountMol;
+      if (this.amount_unit === 'mol') this.amount_value = newAmountMol;
+      // Only the reference changed; internal solvent volumes must not scale.
+      this.updateComponentAmounts();
+    } else {
+      // Without a usable relative MW, retain the known mass in grams.
+      this.amount_value = mixtureMassG;
+      this.amount_unit = 'g';
+    }
   }
 
   /**

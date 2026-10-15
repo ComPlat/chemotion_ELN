@@ -209,6 +209,60 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.setReferenceComponent()', () => {
+    ['target', 'real'].forEach((amountType) => {
+      ['mol', 'g'].forEach((unit) => {
+        it(`preserves mass and component amounts across ${amountType} ${unit} reference switches and reloads`, () => {
+          const massG = 11.1004442;
+          const amounts = [0.006, 0.012, 0.012];
+          const componentMasses = [4.9556973, 1.1056610, 5.0390859];
+          let sample = new Sample({
+            id: 1341, sample_type: 'Mixture', amountType,
+            [`${amountType}_amount_value`]: unit === 'mol' ? 0.006 : massG,
+            [`${amountType}_amount_unit`]: unit,
+            sample_details: { total_mixture_mass_g: 7.7617 },
+          });
+          sample.initialComponents(amounts.map((amount, index) => new Component({
+            id: index + 1, position: index, reference: index === 0,
+            amount_mol: amount, amount_g: componentMasses[index],
+            relative_molecular_weight: massG / amount, material_group: 'solid', purity: 1,
+            molecule: { id: index + 1, molecular_weight: componentMasses[index] / amount },
+          })));
+
+          [1, 0].forEach((referenceIndex) => {
+            sample.setReferenceComponent(referenceIndex);
+
+            expect(sample.amount_g).toBeCloseTo(massG, 10);
+            expect(sample.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+            expect(sample.amount_unit).toBe(unit);
+            sample.components.forEach((component, index) => {
+              expect(component.amount_mol).toBeCloseTo(amounts[index], 12);
+              expect(component.amount_g).toBeCloseTo(componentMasses[index], 10);
+              expect(component.equivalent).toBeCloseTo(amounts[index] / amounts[referenceIndex], 12);
+            });
+
+            sample.prepareMixtureForSave();
+            const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+            expect(payload[`${amountType}_amount_value`]).toBeCloseTo(
+              unit === 'mol' ? amounts[referenceIndex] : massG, 12
+            );
+            const reloaded = new Sample(payload);
+            reloaded.initialComponents(payload.components.map((component, index) => Component.deserializeData({
+              ...component,
+              component_properties: {
+                ...component.component_properties,
+                molecule: { id: index + 1, molecular_weight: componentMasses[index] / amounts[index] },
+              },
+            })));
+            expect(reloaded.amount_g).toBeCloseTo(massG, 10);
+            expect(reloaded.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+            sample = reloaded;
+          });
+        });
+      });
+    });
+  });
+
   describe('Sample.initialComponents()', () => {
     it('preserves stock relative molecular weights when a scaled reaction child is saved and reloaded', () => {
       const stock = new Sample({
