@@ -1489,7 +1489,9 @@ class ElementStore {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
       const openedReaction = selecteds.find((el) => SameEleTypId(el, { type: 'reaction', id: rId }));
-      if (openedReaction) {
+      // Mixture editors own a detached draft. Their save action updates the reaction;
+      // switching or closing tabs (including Discard) must not apply that draft.
+      if (openedReaction && !previous.isMixture()) {
         if (refreshCoefficient && refreshCoefficient.length > 0) {
           refreshCoefficient.forEach((element) => {
             if (element.sId === previous.id) {
@@ -1525,7 +1527,8 @@ class ElementStore {
       const { samples } = previous;
       selecteds.map((nextSample) => {
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
-        if (previousSample) {
+        // Keep the mixture editor's draft intact when returning from its reaction.
+        if (previousSample && !nextSample.isMixture()) {
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;

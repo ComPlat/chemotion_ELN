@@ -837,6 +837,31 @@ export default class Sample extends Element {
     }
   }
 
+  /** Updates a component ratio, retaining entered mass until the composition can be initialized. */
+  updateComponentRatio(component, ratio, materialGroup, { concentrationLocked = false } = {}) {
+    const referenceComponent = this.reference_component;
+    if (!referenceComponent) return;
+
+    const massG = Number(this.amount_g);
+    const hasRelativeWeights = this.components.some((entry) => {
+      const weight = Number(entry.relative_molecular_weight);
+      return Number.isFinite(weight) && weight > 0;
+    });
+    const hasUnallocatedMass = Number.isFinite(massG) && massG > 0 && !hasRelativeWeights
+      && !this.components.some((entry) => Number(entry.amount_mol) > 0);
+
+    component.updateRatio(ratio, materialGroup, this.amount_l, referenceComponent.amount_mol);
+    if (concentrationLocked) this.updateTotalVolume(component.amount_mol, component.concn);
+
+    if (hasUnallocatedMass) {
+      this.updateComponentAmounts();
+      // Another missing/zero ratio can still prevent initialization. Keep the entered
+      // mass instead of overwriting it with the unresolved components' zero total.
+      if (!this.components.some((entry) => Number(entry.amount_mol) > 0)) return;
+    }
+    this.calculateTotalMixtureMass();
+  }
+
   /** Checks whether a component can participate in mass initialization from positive ratios. */
   static hasValidComponentComposition(component) {
     const ratio = Number.isFinite(component.equivalent)

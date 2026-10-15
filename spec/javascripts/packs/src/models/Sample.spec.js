@@ -772,6 +772,79 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample ratio edit after an unresolved mixture mass', () => {
+    const build = () => {
+      const sample = new Sample({ sample_type: 'Mixture' });
+      sample.initialComponents([100, 200, 300].map((molecularWeight, index) => new Component({
+        id: index + 1, position: index, reference: index === 0,
+        equivalent: [1, 0, 2][index], amount_mol: 0,
+        amount_g: 0, relative_molecular_weight: 0, material_group: 'solid', purity: 1,
+        molecule: { id: index + 1, molecular_weight: molecularWeight },
+      })));
+      sample.setAmountAndNormalizeToGram({ value: 6, unit: 'g' });
+      return sample;
+    };
+    const editRatio = (sample, ratio) => {
+      const SampleDetailsComponents = require(
+        'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents'
+      ).default;
+      const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+      editor.onChangeComponent({ type: 'ratioChanged', sampleID: 2, newRatio: ratio, materialGroup: 'solid' });
+    };
+
+    [0, undefined].forEach((referenceMoles) => {
+      it(`keeps 6000 mg and initializes amounts after fixing the ratio with reference amount ${referenceMoles}`, () => {
+        const sample = build();
+        sample.components[0].amount_mol = referenceMoles;
+
+        editRatio(sample, 1);
+
+        expect(sample.amount_g).toBeCloseTo(6, 12);
+        expect(sample.total_mixture_mass_g).toBeCloseTo(6, 12);
+        expect(sample.components.map((component) => component.amount_mol)).toEqual([6 / 900, 6 / 900, 12 / 900]);
+        expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(6, 12);
+        expect(sample.serializeMaterial().sample_details.total_mixture_mass_g).toBeCloseTo(6, 12);
+      });
+    });
+
+    it('keeps the entered mass while another component ratio is still unresolved', () => {
+      const sample = build();
+      sample.components[2].equivalent = 0;
+
+      editRatio(sample, 1);
+
+      expect(sample.amount_g).toBe(6);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual([0, 0, 0]);
+    });
+
+    it('retains reference-amount-driven ratio edits once component quantities exist', () => {
+      const sample = build();
+      sample.components.forEach((component) => {
+        component.amount_mol = 0.001;
+        component.updatePhysicalAmounts();
+      });
+      sample.calculateTotalMixtureMass();
+
+      editRatio(sample, 2);
+
+      expect(sample.components[1].amount_mol).toBe(0.002);
+      expect(sample.amount_g).toBeCloseTo(0.8, 12);
+    });
+
+    it('still clears the total when an explicit ratio edit removes the last known component amount', () => {
+      const sample = build();
+      sample.components[1].amount_mol = 0.001;
+      sample.components[1].equivalent = 1;
+      sample.components[1].updatePhysicalAmounts();
+      sample.calculateTotalMixtureMass();
+
+      editRatio(sample, 0);
+
+      expect(sample.components[1].amount_mol).toBe(0);
+      expect(sample.amount_g).toBe(0);
+    });
+  });
+
   describe('Sample.calculateRequiredTotalVolume()', () => {
     let sample;
     let referenceComponent;
