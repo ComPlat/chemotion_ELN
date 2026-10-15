@@ -215,7 +215,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       await Promise.resolve();
       expect(opened.sample.reference_component.id).toBe(referenceIndex + 1);
       expect(opened.sample.belongTo).toBe(reaction);
-      // Returning to the reaction synchronizes the opened sample back into its row.
+      // Returning to the reaction preserves its pending row selection.
       ElementStore.StoreModel.prototype.synchronizeElements.call(store, opened.sample);
       const returned = reaction.sampleById(mixture.id);
       expect(returned.reference_component.id).toBe(referenceIndex + 1);
@@ -226,6 +226,59 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       sinon.assert.notCalled(SamplesFetcher.update);
       sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
       sinon.assert.notCalled(fetchStub);
+    });
+  });
+
+  ['ratio', 'reference'].forEach((edit) => {
+    [false, true].forEach((returnBeforeDiscard) => {
+      it(`discards an unsaved mixture ${edit} edit${returnBeforeDiscard ? ' after switching tabs' : ''}`, async () => {
+        const { reaction, mixture } = build();
+        reaction.type = 'reaction';
+        reaction.updateChecksum();
+        const original = reaction.checksum();
+        let editorSample;
+        await new Promise((resolve) => {
+          new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+            editorSample = sample;
+            resolve();
+          });
+        });
+        editorSample.belongTo = reaction;
+        if (edit === 'ratio') {
+          editorSample.updateComponentRatio(editorSample.components[1], 0, 'solid');
+        } else {
+          editorSample.setReferenceComponent(1);
+        }
+        editorSample.changed = true;
+        const draft = editorSample.checksum();
+        const store = Object.create(ElementStore.StoreModel.prototype);
+        store.state = {
+          selecteds: [reaction, editorSample], currentElement: editorSample,
+          activeKey: 1, refreshCoefficient: [],
+        };
+        store.setState = (update) => {
+          store.state = { ...store.state, ...update };
+        };
+        // Exercise the real close/tab handlers without browser navigation.
+        store.resetCurrentElement = (key, selecteds) => store.changeCurrentElement(selecteds[key]);
+
+        if (returnBeforeDiscard) {
+          store.changeCurrentElement(reaction);
+          expect(reaction.checksum()).toBe(original);
+          store.changeCurrentElement(editorSample);
+          expect(editorSample.checksum()).toBe(draft);
+        }
+        store.handleClose({ deleteEl: editorSample, force: true });
+
+        expect(store.state.currentElement).toBe(reaction);
+        expect(store.state.selecteds).toEqual([reaction]);
+        expect(reaction.sampleById(mixture.id)).toBe(mixture);
+        expect(reaction.checksum()).toBe(original);
+        expect(reaction.isPendingToSave).toBe(false);
+        sinon.assert.notCalled(SamplesFetcher.update);
+        sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+        sinon.assert.notCalled(fetchStub);
+      });
     });
   });
 
