@@ -58,10 +58,20 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
       expect(own_link.reload).to have_attributes(equivalent: 3, position: 0)
     end
 
-    it 'soft deletes the link if the other reaction is deleted' do
-      other_reaction.destroy
-      migration.up
-      expect(live_links(reaction).count).to eq(1)
+    context 'when the other reaction is deleted' do
+      before do
+        other_reaction.destroy
+        migration.up
+      end
+
+      it 'keeps the moved link with its latest values, as it was updated last' do
+        expect(live_links(reaction)).to contain_exactly(moved_link)
+        expect(moved_link.reload).to have_attributes(reaction_id: reaction.id, equivalent: 2, position: 0)
+      end
+
+      it 'soft deletes the own link' do
+        expect(ReactionsSample.with_deleted.find(own_link.id).deleted_at).to be_present
+      end
     end
   end
 
@@ -83,6 +93,22 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     end
 
     it 'restores the complete gas data it had there' do
+      expect(moved_link.reload.gas_phase_data).to eq(gas_data_before_move)
+    end
+  end
+
+  context 'when an object was removed from the gas data of a moved link in its first reaction' do
+    let!(:moved_link) { ReactionsProductSample.create!(reaction: other_reaction, sample: sample, gas_type: 'gas') }
+    let(:gas_data_before_move) { moved_link.gas_phase_data.except('time') }
+
+    before do
+      ReactionsProductSample.create!(reaction: reaction, sample: sample, gas_type: 'gas')
+      moved_link.update!(gas_phase_data: gas_data_before_move)
+      moved_link.update!(reaction_id: reaction.id)
+      migration.up
+    end
+
+    it 'restores the gas data without the removed object' do
       expect(moved_link.reload.gas_phase_data).to eq(gas_data_before_move)
     end
   end
