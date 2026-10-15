@@ -29,7 +29,14 @@ RSpec.describe Measurement do
     end
   end
 
-  describe 'before_save :strip_whitespaces' do
+  describe 'before_validation :strip_whitespaces' do
+    it 'strips before validations run' do
+      measurement = build(:measurement, sample: sample, source: research_plan, description: '  Yield  ', unit: ' % ')
+      measurement.valid?
+
+      expect(measurement).to have_attributes(description: 'Yield', unit: '%')
+    end
+
     it 'strips surrounding whitespace from description and unit' do
       measurement = create(:measurement, sample: sample, source: research_plan, description: '  Yield  ', unit: ' % ')
 

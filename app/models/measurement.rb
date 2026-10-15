@@ -36,7 +36,7 @@ class Measurement < ApplicationRecord
   validates :description, :unit, exclusion: { in: [nil], message: :blank }
   validates :value, presence: true
 
-  before_save :strip_whitespaces
+  before_validation :strip_whitespaces
 
   private
 
