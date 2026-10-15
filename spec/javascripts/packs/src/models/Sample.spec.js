@@ -247,6 +247,7 @@ describe('Sample', async () => {
 
         expect(oldReference.amount_mol).toBe(0.01);
         expect(cleared.amount_mol).toBe(0);
+        expect(cleared.equivalent).toBe('n.d');
         expect(sample.serializeMaterial().components.find((component) => component.id === cleared.id)
           .component_properties.amount_mol).toBe(0);
       });
@@ -586,6 +587,19 @@ describe('Sample', async () => {
       s.updateMixtureComponentEquivalent();
       expect(other.equivalent).toBeCloseTo(0.5, 6);
     });
+
+    it('keeps a cleared component ratio as n.d during mixture refresh', () => {
+      const { s, ref, other } = buildMixture();
+      ref.amount_mol = 2;
+      other.amount_mol = 0;
+      other.equivalent = 0;
+
+      s.updateMixtureComponentEquivalent();
+
+      expect(other.equivalent).toBe('n.d');
+      expect(other.amount_mol).toBe(0);
+      expect(ref.equivalent).toBe(1);
+    });
   });
 
   describe('Sample.updateMixtureComponentsFromReferenceAmount()', () => {
@@ -650,6 +664,39 @@ describe('Sample', async () => {
       s.updateMixtureComponentsFromReferenceAmount();
       expect(other.amount_mol).toBeCloseTo(20, 6);
       expect(other.equivalent).toBeCloseTo(1, 6);
+    });
+
+    [2, 15].forEach((correctedMassG) => {
+      it(`keeps a ratio-generated amount when a committed reference mass is corrected from 1 to ${correctedMassG} g`, () => {
+        const { s, ref, other } = buildMixture();
+        [ref, other].forEach((component) => {
+          component.molecule = { molecular_weight: 100 };
+          component.material_group = 'solid';
+          component.purity = 1;
+          component.amount_mol = 0;
+        });
+        other.equivalent = 2;
+        const commitReferenceMass = (massG) => {
+          ref.handleVolumeChange({ value: massG, unit: 'g' }, s.amount_l);
+          s.updateMixtureComponentsFromReferenceAmount();
+          s.calculateTotalMixtureMass();
+        };
+
+        // Each call represents a value committed after a debounce pause or blur.
+        commitReferenceMass(1);
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.amount_g).toBeCloseTo(2, 12);
+        expect(other.equivalent).toBe(2);
+
+        commitReferenceMass(correctedMassG);
+        expect(ref.amount_mol).toBeCloseTo(correctedMassG / 100, 12);
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.amount_g).toBeCloseTo(2, 12);
+        expect(other.equivalent).toBeCloseTo(2 / correctedMassG, 12);
+        expect(s.amount_g).toBeCloseTo(correctedMassG + 2, 12);
+        expect(s.serializeMaterial().components[1].component_properties.equivalent)
+          .toBeCloseTo(2 / correctedMassG, 12);
+      });
     });
 
     it('re-derives the ratio (and keeps the amount) for a component with no ratio yet', () => {
