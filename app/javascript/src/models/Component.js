@@ -557,7 +557,9 @@ export default class Component extends Sample {
     if (materialGroup === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (materialGroup === 'solid') {
-      this.calculateMassFromAmount(purity);
+      // Honor the Mass lock for existing masses; initialize empty solids without inferring purity.
+      const hasMass = Number(this.amount_g) > 0;
+      this.calculateMassFromAmount(purity, hasMass ? null : false);
     }
 
     // Total concentration calculation
@@ -622,9 +624,9 @@ export default class Component extends Sample {
     const refAmountMol = referenceComponent.amount_mol ?? 0;
     const currentAmountMol = this.amount_mol ?? 0;
 
-    // If either amount is 0 or NaN, set ratio to 0
+    // A ratio cannot be derived when either amount is missing or invalid.
     if (!refAmountMol || !currentAmountMol || Number.isNaN(refAmountMol) || Number.isNaN(currentAmountMol)) {
-      this.equivalent = 0;
+      this.equivalent = 'n.d';
       return;
     }
 
@@ -685,8 +687,13 @@ export default class Component extends Sample {
    * Shows notification if calculated purity exceeds 1.
    */
   updatePurityFromAmount() {
+    const massG = Number(this.amount_g);
+    if (!Number.isFinite(massG) || massG <= 0) return;
+
     // purity = amount_mol * (Molweight / mass_g)
-    const purity = parseFloat((this.amount_mol * (this.molecule_molecular_weight / this.amount_g)).toFixed(6));
+    const purity = parseFloat((this.amount_mol * (this.molecule_molecular_weight / massG)).toFixed(6));
+    // Cleared or invalid amounts cannot determine purity; retain the entered value.
+    if (!Number.isFinite(purity) || purity <= 0) return;
 
     if (purity <= 1) {
       this.purity = purity;

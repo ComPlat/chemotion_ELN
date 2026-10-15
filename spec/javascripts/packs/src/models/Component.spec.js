@@ -909,24 +909,27 @@ describe('Component', () => {
       expect(component.equivalent).toBeCloseTo(2.0, 6); // 1.0 / 0.5
     });
 
-    it('should set ratio to 0 when reference amount is invalid', () => {
+    it('should set ratio to n.d when reference amount is invalid', () => {
       const referenceComponent = { id: 'ref_123', amount_mol: 0 };
       component.id = 'comp_123';
       component.amount_mol = 1.0;
 
       component.updateRatioFromReference(referenceComponent);
 
-      expect(component.equivalent).toBe(0);
+      expect(component.equivalent).toBe('n.d');
     });
 
-    it('should set ratio to 0 when current amount is invalid', () => {
-      const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
-      component.id = 'comp_123';
-      component.amount_mol = NaN;
+    [0, null, NaN].forEach((amount) => {
+      it(`should set ratio to n.d when current amount is ${amount}`, () => {
+        const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
+        component.id = 'comp_123';
+        component.amount_mol = amount;
 
-      component.updateRatioFromReference(referenceComponent);
+        component.updateRatioFromReference(referenceComponent);
 
-      expect(component.equivalent).toBe(0);
+        expect(component.equivalent).toBe('n.d');
+        expect(component.amount_mol).toBe(amount);
+      });
     });
   });
 
@@ -981,6 +984,27 @@ describe('Component', () => {
   });
 
   describe('updatePurityFromAmount', () => {
+    [
+      { label: 'empty mass', mass: 0, amount: 0.01 },
+      { label: 'zero divided by zero', mass: 0, amount: 0 },
+      { label: 'missing mass', mass: undefined, amount: 0.01 },
+      { label: 'negative mass', mass: -1, amount: 0.01 },
+      { label: 'infinite mass', mass: Infinity, amount: 0.01 },
+      { label: 'cleared amount', mass: 1, amount: 0 },
+      { label: 'invalid amount', mass: 1, amount: NaN },
+      { label: 'infinite amount', mass: 1, amount: Infinity },
+    ].forEach(({ label, mass, amount }) => {
+      it(`keeps the entered purity for ${label}`, () => {
+        component.amount_g = mass;
+        component.amount_mol = amount;
+        component.purity = 0.4;
+
+        component.updatePurityFromAmount();
+
+        expect(component.purity).toBe(0.4);
+      });
+    });
+
     it('should update purity correctly when calculated purity is <= 1', () => {
       component.amount_mol = 0.1;
       component.amount_g = 2.0;
