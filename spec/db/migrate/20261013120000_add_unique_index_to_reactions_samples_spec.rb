@@ -47,6 +47,17 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
       expect(live_links(reaction)).to contain_exactly(own_link)
     end
 
+    it 'keeps the latest values of the reaction on its own link' do
+      migration.up
+      expect(own_link.reload).to have_attributes(equivalent: 2, position: 0)
+    end
+
+    it 'keeps the values of the own link if it was updated last' do
+      own_link.update!(equivalent: 3)
+      migration.up
+      expect(own_link.reload).to have_attributes(equivalent: 3, position: 0)
+    end
+
     it 'soft deletes the link if the other reaction is deleted' do
       other_reaction.destroy
       migration.up

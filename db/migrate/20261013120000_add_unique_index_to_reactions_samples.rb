@@ -7,7 +7,9 @@
 #
 # 1. A moved link is a live row that duplicates another link of its reaction, and whose logidze
 #    history names another reaction first. It goes back to that reaction, with the values it had
-#    there, if that reaction is not deleted and does not link the sample itself.
+#    there, if that reaction is not deleted and does not link the sample itself. If the moved link
+#    was updated after the own link of the reaction it is taken from, its current values are
+#    copied to the own link first, so that reaction keeps its latest values.
 # 2. Of the duplicates still left, the most recently updated row is kept, the others are
 #    soft deleted.
 class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
@@ -26,6 +28,7 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
     restored = moved_links.count do |link|
       next false unless restorable?(link['snapshot']['reaction_id'], link['sample_id'])
 
+      keep_latest_values(link['id'])
       restore_link(link['id'], link['snapshot'])
       true
     end
@@ -57,6 +60,24 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
       WHERE rs.deleted_at IS NULL
         AND (rs.log_data #>> '{h,0,c,reaction_id}')::integer <> rs.reaction_id
       ORDER BY rs.id
+    SQL
+  end
+
+  # Copies the values of the moved link to the other links of its current reaction to the same
+  # sample that were updated before it.
+  def keep_latest_values(id)
+    assignments = RESTORED_COLUMNS.map do |column|
+      quoted = connection.quote_column_name(column)
+      "#{quoted} = moved.#{quoted}"
+    end
+    execute(<<~SQL.squish)
+      UPDATE reactions_samples own SET #{assignments.join(', ')}, updated_at = now()
+      FROM reactions_samples moved
+      WHERE moved.id = #{connection.quote(id)}
+        AND own.reaction_id = moved.reaction_id AND own.sample_id = moved.sample_id
+        AND own.id <> moved.id AND own.deleted_at IS NULL
+        AND moved.updated_at IS NOT NULL
+        AND (own.updated_at IS NULL OR own.updated_at < moved.updated_at)
     SQL
   end
 
