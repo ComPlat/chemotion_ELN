@@ -73,9 +73,11 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
   afterEach(() => { sandbox.restore(); });
 
-  [true, false].forEach((closeView) => {
-    it(`persists both reference switches before dispatch with closeView=${closeView}`, async () => {
+  [['g', true], ['g', false], ['mol', true], ['mol', false]].forEach(([unit, closeView]) => {
+    it(`persists both ${unit} reference switches before dispatch with closeView=${closeView}`, async () => {
       const { reaction, mixture } = build();
+      mixture.amount_unit = unit;
+      mixture.amount_value = unit === 'mol' ? 0.006 : massG;
       const action = new ElementActions();
       const dispatch = sinon.spy(() => {
         expect(persistedEquivalent).toBeCloseTo(reaction.sampleById(1315).equivalent, 12);
@@ -84,6 +86,10 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
       await action.updateSampleForReaction(mixture, reaction, closeView)(dispatch);
 
+      expect(SamplesFetcher.update.firstCall.args[0].serialize().target_amount_value).toBeCloseTo(
+        unit === 'mol' ? 0.012 : massG, 12
+      );
+      expect(reaction.sampleById(1315).amount_g).toBeCloseTo(massG, 12);
       expect(persistedEquivalent).toBeCloseTo(1.2, 12);
       expect(reaction.sampleById(1315).concn).toBeCloseTo(1.2, 12);
       const updated = reaction.sampleById(1315);
@@ -91,6 +97,10 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
       await action.updateSampleForReaction(updated, reaction, closeView)(dispatch);
 
+      expect(SamplesFetcher.update.secondCall.args[0].serialize().target_amount_value).toBeCloseTo(
+        unit === 'mol' ? 0.006 : massG, 12
+      );
+      expect(reaction.sampleById(1315).amount_g).toBeCloseTo(massG, 12);
       expect(persistedEquivalent).toBeCloseTo(0.6, 12);
       expect(reaction.sampleById(1315).concn).toBeCloseTo(0.6, 12);
       expect(reaction.name).toBe('Unsaved reaction name');

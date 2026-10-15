@@ -1180,57 +1180,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
     updatedSample.belongTo = reaction;
 
-    // Make sure sample_details exists before we read and write mixture bookkeeping on it.
-    updatedSample.initializeSampleDetails();
-
-    // Preserve the mixture mass before selecting the new component reference.
-    const mixtureMassG = Number(updatedSample.amount_g);
-    const referenceComponent = updatedSample.components[referenceComponentIndex];
-    const relativeWeight = Number(referenceComponent.relative_molecular_weight);
-    const canDeriveAmount = Number.isFinite(mixtureMassG) && mixtureMassG >= 0
-      && Number.isFinite(relativeWeight) && relativeWeight > 0;
-    const newAmountMol = canDeriveAmount ? mixtureMassG / relativeWeight : undefined;
-
-    // Set the reference component to true and all others to false
-    updatedSample.components.forEach((component, index) => {
-      // eslint-disable-next-line no-param-reassign
-      component.reference = (index === referenceComponentIndex);
-    });
-
-    // Keep legacy snapshots consistent, but derive the settled amount without consulting them.
-    if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {
-      updatedSample.sample_details.previous_amount_g = mixtureMassG;
-      if (canDeriveAmount) {
-        updatedSample.sample_details.previous_amount_mol = newAmountMol;
-      }
-    }
-
-    if (referenceComponent?.molecule?.molecular_weight) {
-      updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
-    }
-
-    // Set the reference relative molecular weight
-    if (relativeWeight) {
-      updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
-    }
-
-    // Preserve the stored unit regardless of the equivalent lock. A mol-stored mixture
-    // needs the new reference amount to keep its physical mass unchanged.
-    if (canDeriveAmount) {
-      if (updatedSample.amount_unit === 'mol') {
-        updatedSample.amount_value = newAmountMol;
-      }
-    } else if (Number.isFinite(mixtureMassG) && mixtureMassG >= 0) {
-      // Without a usable relative MW, retain the physical mass in grams. The mol getter
-      // falls back to the selected component's amount without a transient flag.
-      updatedSample.amount_value = mixtureMassG;
-      updatedSample.amount_unit = 'g';
-    }
-    updatedSample.sample_details.reference_component_changed = false;
-    if (canDeriveAmount) {
-      // Only the reference changed; synchronize components without scaling solvent volumes.
-      updatedSample.updateComponentAmounts();
-    }
+    updatedSample.setReferenceComponent(referenceComponentIndex);
 
     const { referenceMaterial } = reaction;
     if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
