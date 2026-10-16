@@ -460,7 +460,8 @@ class Reaction < ApplicationRecord
     value = step.temperature.is_a?(Hash) ? step.temperature['userText'] : nil
     return '' if value.blank?
 
-    "#{value} #{step.temperature['valueUnit']}".strip
+    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(value.strip)
+    numeric ? "#{value} #{step.temperature['valueUnit']}".strip : value
   end
 
   def step_material_paths(resource, prop, step)

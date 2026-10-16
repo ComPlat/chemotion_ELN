@@ -1121,6 +1121,10 @@ export default class Reaction extends Element {
   stepsSvgPaths() {
     if (!this.isMultiStep()) return [];
 
+    const stepTemperature = ({ userText, valueUnit } = {}) => {
+      if (!userText) return '';
+      return isNumericTemperatureText(userText) ? `${userText} ${valueUnit || ''}`.trim() : userText;
+    };
     const stepProducts = (stepId, carried) => this.products
       .filter((p) => p.reaction_step_id === stepId && !!p.carry_on === carried)
       .map((p) => [p.svgPath, p.equivalent]);
@@ -1130,8 +1134,7 @@ export default class Reaction extends Element {
       reactants: this.materialsForStep('reactants', step.id).map((m) => [m.svgPath]),
       carried: stepProducts(step.id, true),
       products: stepProducts(step.id, false),
-      temperature: step.temperature?.userText
-        ? `${step.temperature.userText} ${step.temperature.valueUnit || ''}`.trim() : '',
+      temperature: stepTemperature(step.temperature),
       duration: step.duration || '',
       conditions: step.conditions || '',
     }));
@@ -1243,6 +1246,13 @@ export default class Reaction extends Element {
           material.reaction_step_id = null;
           material.carry_on = false;
         });
+      }
+    });
+    const reference = this.referenceMaterial;
+    if (this.weight_percentage || !reference?.amount_mol) return;
+    [...this.starting_materials, ...this.reactants].forEach((material) => {
+      if (material !== reference && material.amount_mol) {
+        material.equivalent = material.amount_mol / reference.amount_mol;
       }
     });
   }

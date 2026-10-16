@@ -1790,6 +1790,19 @@ describe('ReactionDetailsScheme — per-step reference', () => {
     expect(find('products', 'carried').equivalent).toBeCloseTo(1.6);
   });
 
+  it('measures step 2 against its carried product again after Undo', () => {
+    const { reaction, instance, reagent } = buildTwoSteps();
+    instance.props.onReactionChange = () => {};
+    const confirm = sinon.stub(window, 'confirm').returns(true);
+    reagent.equivalent = 99;
+
+    instance.handleDeleteStep(reaction.reaction_steps[1]);
+    instance.handleDeleteStep(reaction.reaction_steps[1]);
+    confirm.restore();
+
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+  });
+
   it('picks the carried product from the step bar', () => {
     const {
       reaction, instance, reagent, carried,
