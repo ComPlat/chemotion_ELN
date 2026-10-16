@@ -393,6 +393,23 @@ describe Chemotion::LlmSettingsAPI do
         expect(response).to have_http_status(:unauthorized)
       end
     end
+
+    context 'when personal providers are not permitted (SF-03 gate)' do
+      before do
+        Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
+      end
+
+      after { Matrice.find_by(name: 'aiUserApiKey')&.destroy }
+
+      it 'refuses to test a typed-in endpoint, without contacting it' do
+        post '/api/v1/users/llm_settings/verify',
+             params: { base_url: 'https://typed-endpoint.example/api', model: 'm', api_key: 'sk-typed' }.to_json,
+             headers: headers
+
+        expect(response).to have_http_status(:forbidden)
+        expect(WebMock).not_to have_requested(:any, /typed-endpoint/)
+      end
+    end
   end
 
   # ── The user's own providers ────────────────────────────────────────────────
@@ -612,6 +629,30 @@ describe Chemotion::LlmSettingsAPI do
         post "/api/v1/users/llm_providers/#{mine.id}/models", headers: headers
 
         expect(JSON.parse(response.body)['models']).to eq(['new-model'])
+      end
+    end
+
+    describe 'POST :id/verify and :id/models once personal providers are no longer permitted' do
+      let!(:mine) { create(:llm_provider, :personal, user: user, base_url: base_url) }
+
+      before do
+        Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
+      end
+
+      after { Matrice.find_by(name: 'aiUserApiKey')&.destroy }
+
+      it 'refuses to test the provider with its stored key' do
+        post "/api/v1/users/llm_providers/#{mine.id}/verify", headers: headers
+
+        expect(response).to have_http_status(:forbidden)
+        expect(WebMock).not_to have_requested(:any, /ki-toolbox/)
+      end
+
+      it 'refuses to list the provider’s models with its stored key' do
+        post "/api/v1/users/llm_providers/#{mine.id}/models", headers: headers
+
+        expect(response).to have_http_status(:forbidden)
+        expect(WebMock).not_to have_requested(:any, /ki-toolbox/)
       end
     end
   end
