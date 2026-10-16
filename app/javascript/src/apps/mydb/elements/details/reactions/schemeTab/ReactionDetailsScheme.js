@@ -2736,6 +2736,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     target._destroy = !target._destroy;
+    if (!target._destroy) this.recalculateLaterSteps();
     reaction.changed = true;
     onReactionChange(reaction, { updateGraphic: true });
   }
