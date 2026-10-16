@@ -185,6 +185,24 @@ describe Chemotion::DeviceDescriptionAPI do
       end
     end
 
+    context 'when the segment follows a release this instance cannot resolve' do
+      let(:imported_release) { segment_klass.properties_release.merge('uuid' => 'imported-release') }
+
+      before do
+        create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
+                         properties: segment_klass.properties_release.except('klass_uuid'),
+                         klass_uuid: 'imported-release', properties_release: imported_release)
+      end
+
+      it 'keeps that release on the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segment = device_description.reload.children.first.segments.first
+        expect(split_segment.klass_uuid).to eq('imported-release')
+        expect(split_segment.properties_release['uuid']).to eq('imported-release')
+      end
+    end
+
     context 'when copying a segment fails' do
       let(:params) do
         {

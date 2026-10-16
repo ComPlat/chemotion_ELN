@@ -235,7 +235,9 @@ class DeviceDescription < ApplicationRecord
   def segments_for_split
     segments.map do |segment|
       { 'segment_klass_id' => segment.segment_klass_id,
+        'klass_uuid' => segment.klass_uuid,
         'properties' => detach_properties(segment.properties.deep_dup),
+        'properties_release' => segment.properties_release,
         'metadata' => segment.metadata }
     end
   end
