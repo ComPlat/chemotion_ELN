@@ -87,6 +87,7 @@ class DeviceDescription < ApplicationRecord
   include AnalysisCodes
   include Taggable
   include Labimotion::Segmentable
+  include Labimotion::LinkedProperties
 
   has_logidze
   acts_as_paranoid
@@ -207,21 +208,37 @@ class DeviceDescription < ApplicationRecord
   end
 
   def create_sub_device_description(user, collection_ids)
-    device_description = dup
-    segments = device_description.segments
+    transaction do
+      device_description = dup
+      segments = segments_for_split
 
-    device_description.is_split = true
-    device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
-    device_description.parent = self
-    device_description.created_by = user.id
-    device_description.container = Container.create_root_container
-    device_description.attachments = []
-    device_description.segments = []
-    device_description.collections << all_collections(user, collection_ids)
-    device_description.save!
+      device_description.is_split = true
+      device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
+      device_description.parent = self
+      device_description.created_by = user.id
+      device_description.container = Container.create_root_container
+      device_description.attachments = []
+      device_description.segments = []
+      device_description.collections << all_collections(user, collection_ids)
+      device_description.save!
 
-    device_description.save_segments(segments: segments, current_user_id: user.id) if segments
+      device_description.save_segments(segments: segments, current_user_id: user.id) if segments.any?
 
-    device_description.reload
+      device_description.reload
+    end
+  end
+
+  private
+
+  # Linked fields (samples, elements, uploads, sample tables) are cleared, as in Labimotion::Element#split,
+  # so the split's segments do not point to records owned by the parent.
+  def segments_for_split
+    segments.map do |segment|
+      { 'segment_klass_id' => segment.segment_klass_id,
+        'klass_uuid' => segment.klass_uuid,
+        'properties' => detach_properties(segment.properties.deep_dup),
+        'properties_release' => segment.properties_release,
+        'metadata' => segment.metadata }
+    end
   end
 end

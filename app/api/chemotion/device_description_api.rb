@@ -252,8 +252,10 @@ module Chemotion
           # with :add_elements).
           error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
 
-          device_descriptions.find_each do |device_description|
-            device_description.create_sub_device_description(current_user, col_id)
+          ActiveRecord::Base.transaction do
+            device_descriptions.find_each do |device_description|
+              device_description.create_sub_device_description(current_user, col_id)
+            end
           end
 
           {} # JS layer does not use the reply
