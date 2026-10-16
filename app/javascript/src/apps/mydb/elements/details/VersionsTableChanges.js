@@ -28,10 +28,10 @@ const VersionsTableChanges = ({
         result.push({
           db_id: historyChange.db_id,
           klass_name: historyChange.klass_name,
-          fields: affectedChangeFields.map((field) => ({
-            value: field.revertibleValue,
-            name: field.name,
-          })),
+          fields: affectedChangeFields.flatMap((field) => [
+            { value: field.revertibleValue, name: field.name },
+            ...Object.entries(field.linkedRevertibleValues || {}).map(([name, value]) => ({ name, value })),
+          ]),
         });
       }
     });

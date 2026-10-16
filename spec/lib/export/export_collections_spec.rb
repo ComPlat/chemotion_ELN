@@ -536,5 +536,28 @@ RSpec.describe 'ExportCollection' do
     research_plan.save!
     research_plan
   end
+
+  describe 'collecting images' do
+    let(:export) { Export::ExportCollections.new('fetch-image-spec', []) }
+
+    let(:folder) { Rails.public_path.join('images', 'molecules') }
+    let(:subfolder) { folder.join("fetch-image-spec-#{SecureRandom.hex(4)}") }
+
+    after { FileUtils.rm_rf(subfolder) }
+
+    it 'only picks up plain file names inside the images folder' do
+      FileUtils.mkdir_p(subfolder)
+      File.write(folder.join('fetch-image-spec.svg'), '<svg/>')
+      File.write(subfolder.join('nested.svg'), '<svg/>')
+
+      ['fetch-image-spec.svg', "#{subfolder.basename}/nested.svg"].each do |name|
+        export.send(:fetch_image, 'molecules', name)
+      end
+
+      expect(export.instance_variable_get(:@images)).to eq [File.join('images', 'molecules', 'fetch-image-spec.svg')]
+    ensure
+      FileUtils.rm_f(folder.join('fetch-image-spec.svg'))
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, Lint/MissingCopEnableDirective, Lint/RedundantCopDisableDirective

@@ -78,4 +78,35 @@ RSpec.describe 'QuillToPlainText' do
       expect(lib.convert(delta_ops)).to match(plain_text)
     end
   end
+
+  describe 'blank_content?' do
+    [
+      nil,
+      '',
+      {},
+      { 'ops' => [] },
+      { 'ops' => [{ 'insert' => "\n" }] },
+      { 'ops' => [{ 'insert' => "\n", 'attributes' => { 'header' => 1 } }] },
+      { 'ops' => [{ 'insert' => '' }, { 'insert' => "\n" }] },
+      { 'ops' => [{ 'insert' => " \t\u00a0\n" }] },
+      [{ 'insert' => "\n" }],
+      '{"ops":[{"insert":"","attributes":{"bold":true}},{"insert":"\\n"}]}',
+    ].each do |content|
+      it "treats #{content.inspect} as blank" do
+        expect(lib.blank_content?(content)).to be true
+      end
+    end
+
+    [
+      { 'ops' => [{ 'insert' => "x\n" }] },
+      { 'ops' => [{ 'insert' => "\n" }, { 'insert' => "x\n" }] },
+      { 'ops' => [{ 'insert' => { 'image' => 'data:image/png;base64,AAAA' } }, { 'insert' => "\n" }] },
+      '{"ops":[{"insert":"x\\n"}]}',
+      'not json',
+    ].each do |content|
+      it "treats #{content.inspect} as content" do
+        expect(lib.blank_content?(content)).to be false
+      end
+    end
+  end
 end

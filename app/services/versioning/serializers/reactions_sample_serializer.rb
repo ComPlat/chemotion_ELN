@@ -15,8 +15,6 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         label: 'Deleted',
         kind: :boolean,
         formatter: ->(_key, value) { value.present? },
-        revert: %i[deleted_at],
-        revertible_value_formatter: default_formatter,
       },
       show_label: {
         label: 'L/S',
@@ -27,7 +25,6 @@ class Versioning::Serializers::ReactionsSampleSerializer < Versioning::Serialize
         label: 'Position',
         revert: %i[position],
         formatter: ->(_key, value) { (value && (value + 1)) || '' },
-        revertible_formatter: default_formatter,
       },
       coefficient: {
         label: 'Coeff',
