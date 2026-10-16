@@ -765,7 +765,7 @@ class ElementStore {
   }
 
   handleCreateSampleForReaction({
-    newSample, reaction, materialGroup, components
+    newSample, reaction, materialGroup, components, stepId
   }) {
     UserActions.fetchCurrentUser();
     if (newSample.isMixture()) {
@@ -778,6 +778,7 @@ class ElementStore {
           console.log(errorMessage);
         });
     }
+    newSample.reaction_step_id = stepId ?? null;
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
     ElementActions.handleSvgReactionChange(reaction);
@@ -913,6 +914,7 @@ class ElementStore {
     sample.sample_svg_file = sample.sample_svg_file ?? null;
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
+    sample.reaction_step_id = params.stepId ?? null;
     reaction.changed = true;
     this.changeCurrentElement(sample);
   }

@@ -41,6 +41,7 @@ module Entities
       expose! :rinchi_web_key
       expose! :rxno
       expose! :reaction_type
+      expose! :reaction_steps,        anonymize_with: [],   unless: :displayed_in_list, using: 'Entities::ReactionStepEntity'
       expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list

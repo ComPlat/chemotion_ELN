@@ -5,6 +5,7 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
@@ -1485,7 +1486,7 @@ describe('ReactionDetailsScheme#updateVolume', () => {
 
 describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
-    const reaction = {};
+    const reaction = { volumeContextFor() { return this; } };
     const updatedSample = {
       concn: 0.5,
       setAmountFromConcentrationAndPreserve: sinon.spy(),
@@ -1508,7 +1509,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   });
 
   it('applies the concentration when a reaction volume is available', () => {
-    const reaction = {};
+    const reaction = { volumeContextFor() { return this; } };
     const updatedReaction = {};
     const updatedSample = {
       concn: null,
@@ -1539,6 +1540,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
       gaseous: false,
       isVolumeLocked: false,
       findReactionSample: () => updatedSample,
+      volumeContextFor() { return this; },
       ...reactionOverrides,
     };
     return {
@@ -1710,5 +1712,153 @@ describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toa
     instance.calculateEquivalent(ref, buildProduct());
     expect(notificationStub.calledOnce).toBe(true);
     expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-loading-55');
+  });
+});
+
+describe('ReactionDetailsScheme — per-step reference', () => {
+  const buildTwoSteps = () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const make = (id, mmol, fields) => {
+      const sample = Sample.buildEmpty(1);
+      Object.assign(sample, {
+        id, coefficient: 1, molecule: { molecular_weight: 100 }, ...fields,
+      });
+      sample.setAmount({ value: mmol / 1000, unit: 'mol' });
+      return sample;
+    };
+    reaction.starting_materials = [
+      make('start', 10, { reaction_step_id: 1, reference: true }),
+      make('reagent', 12, { reaction_step_id: 2 }),
+    ];
+    reaction.products = [
+      make('carried', 8, { reaction_step_id: 1, carry_on: true }),
+      make('final', 6, { reaction_step_id: 2 }),
+    ];
+    const [start, reagent] = reaction.starting_materials;
+    const [carried, final] = reaction.products;
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction };
+    instance.state = {};
+    return {
+      reaction, instance, start, reagent, carried, final,
+    };
+  };
+
+  it('measures step 2 against the carried product', () => {
+    const {
+      reaction, instance, reagent, final,
+    } = buildTwoSteps();
+
+    instance.recalculateStepEquivalents(reaction.reaction_steps[1]);
+
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+    expect(final.equivalent).toBeCloseTo(0.75);
+  });
+
+  it('switches step 2 to a picked reagent and leaves step 1 alone', () => {
+    const {
+      reaction, instance, start, reagent, final,
+    } = buildTwoSteps();
+
+    instance.updatedReactionForReferenceChange({ sampleID: 'reagent' });
+
+    expect(reagent.step_reference).toEqual(true);
+    expect(reagent.equivalent).toEqual(1);
+    expect(final.equivalent).toBeCloseTo(0.5);
+    expect(reaction.referenceMaterial).toBe(start);
+  });
+
+  it('gives step 1 a new reference when its reference moves to step 2', () => {
+    const { reaction, instance, start } = buildTwoSteps();
+    const other = Sample.buildEmpty(1);
+    Object.assign(other, {
+      id: 'other', coefficient: 1, molecule: { molecular_weight: 100 }, reaction_step_id: 1, equivalent: 0.5,
+    });
+    other.setAmount({ value: 0.005, unit: 'mol' });
+    reaction.starting_materials.push(other);
+    instance.props.onReactionChange = () => {};
+    instance.context = { notifications: { add: () => {} } };
+    instance.activeDropStepId = 2;
+
+    instance.dropMaterial(start, 'starting_materials', null, 'reactants');
+
+    const find = (group, id) => reaction[group].find((material) => material.id === id);
+    expect(reaction.referenceMaterial.id).toEqual('other');
+    expect(find('starting_materials', 'other').equivalent).toEqual(1);
+    expect(find('products', 'carried').equivalent).toBeCloseTo(1.6);
+  });
+
+  it('measures step 2 against its carried product again after Undo', () => {
+    const { reaction, instance, reagent } = buildTwoSteps();
+    instance.props.onReactionChange = () => {};
+    const confirm = sinon.stub(window, 'confirm').returns(true);
+    reagent.equivalent = 99;
+
+    instance.handleDeleteStep(reaction.reaction_steps[1]);
+    instance.handleDeleteStep(reaction.reaction_steps[1]);
+    confirm.restore();
+
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+  });
+
+  it('picks the carried product from the step bar', () => {
+    const {
+      reaction, instance, reagent, carried,
+    } = buildTwoSteps();
+    reagent.step_reference = true;
+
+    instance.updatedReactionForReferenceChange({ sampleID: 'carried', stepId: 2 });
+
+    expect(carried.step_reference).toEqual(true);
+    expect(carried.reference).toBeFalsy();
+    expect(reagent.equivalent).toBeCloseTo(1.5);
+    expect(reaction.referenceMaterial.id).toEqual('start');
+  });
+});
+
+describe('ReactionDetailsScheme — step input', () => {
+  it('passes a status change from a step to the reaction', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }];
+    const onInputChange = sinon.spy();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction, onInputChange, onReactionChange: sinon.spy() };
+    const event = { target: { value: 'Running' } };
+
+    instance.handleStepInputChange(reaction.reaction_steps[0], 'status', event);
+
+    expect(onInputChange.calledWith('status', event)).toEqual(true);
+  });
+});
+
+describe('ReactionDetailsScheme — SBMM drop in a multi-step reaction', () => {
+  const dropOn = (stepId) => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const notify = sinon.spy();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.props = { reaction, onReactionChange: () => {} };
+    instance.context = { notifications: { add: notify } };
+    instance.activeDropStepId = stepId;
+    instance.dropSbmmSample(new SequenceBasedMacromoleculeSample({ id: 'sbmm', short_label: 'S1' }), null);
+    return { reaction, notify };
+  };
+
+  it('refuses an SBMM dropped on step 2 and says why', () => {
+    const { reaction, notify } = dropOn(2);
+
+    expect(reaction.reactant_sbmm_samples.length).toEqual(0);
+    expect(notify.calledOnce).toEqual(true);
+  });
+
+  it('adds an SBMM dropped on step 1', () => {
+    const { reaction, notify } = dropOn(1);
+
+    expect(reaction.reactant_sbmm_samples.length).toEqual(1);
+    expect(notify.called).toEqual(false);
   });
 });

@@ -168,6 +168,9 @@ module Chemotion
                 reaction,
                 detail_levels: detail_levels,
               ).serializable_hash
+              unless serialized_element[:is_restricted]
+                serialized_element[:description] = reaction.steps_description(labels: true)
+              end
               serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
               serialized_element
             end

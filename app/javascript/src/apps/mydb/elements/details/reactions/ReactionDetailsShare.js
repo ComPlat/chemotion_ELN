@@ -17,6 +17,7 @@ const setReactionByType = (reaction, type, value) => {
         reaction.gaseous = false;
         reaction.weight_percentage = false;
       }
+      if (value === 'multi_step') reaction.enterMultiStep();
       options = { updateGraphic: true };
       break;
     case 'description':

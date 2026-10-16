@@ -210,7 +210,7 @@ module SVG
 
     def compose_reaction_svg
       set_global_view_box_height
-      section_it
+      @steps.present? ? section_it_steps : section_it
       return "#{core_template_it.strip} #{sections_string_filtered}</svg>" if @core_only
 
       "#{template_it.strip} #{sections_string_filtered} </svg></svg>"
@@ -238,6 +238,7 @@ module SVG
       @duration = options[:duration]
       # Use scrub_xml instead of scrub_svg for plain text conditions
       @conditions = options[:conditions] if options[:conditions].present?
+      @steps = options[:steps].to_a
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
@@ -654,9 +655,99 @@ module SVG
       @sections = sections
     end
 
+    def section_it_steps
+      sections = {}
+      @branch_extent = 0
+      y_center = (global_view_box_array[3] / 2).round
+      @steps.each_with_index do |step, index|
+        next if step_empty?(step)
+
+        sections[:"sm#{index}"] = compose_step_input(step, index, y_center)
+        sections[:"re#{index}"], sections[:"ar#{index}"] = compose_step_arrow(step, y_center)
+        product_x = global_view_box_array[2]
+        sections[:"pr#{index}"] = compose_step_output(step, y_center)
+        sections[:"by#{index}"] = compose_step_byproducts(step, y_center, product_x)
+      end
+      fit_branches!
+      @sections = sections
+    end
+
+    # A step with nothing in it would otherwise draw an arrow pointing at empty space.
+    def step_empty?(step)
+      %i[starting_materials reactants carried products].all? { |key| step[key].blank? }
+    end
+
+    def compose_step_input(step, index, y_center)
+      return '' unless index.zero?
+
+      compose_material_group(step[:starting_materials] || [], start_at: 0, y_center: y_center)
+    end
+
+    def compose_step_arrow(step, y_center)
+      apply_step_labels(step)
+      arrow_x_shift = (global_view_box_array[2] += 50)
+      reactants_y = (y_center - (@arrow_width / 3)).round
+      reactants_svg = compose_material_group(
+        step[:reactants] || [],
+        start_at: global_view_box_array[2],
+        scale: REACTANT_SCALE,
+        arrow_width: true,
+        y_center: reactants_y,
+        is_reactants: true,
+      )
+      arrow_svg = compose_arrow_and_reaction_labels(start_at: arrow_x_shift, arrow_y_shift: y_center)
+      global_view_box_array[2] += 40
+      [reactants_svg, arrow_svg]
+    end
+
+    def compose_step_output(step, y_center)
+      chain = step[:carried].presence || step[:products] || []
+      @max_height_for_products = find_material_max_height(chain)
+      compose_material_group(chain, start_at: global_view_box_array[2], y_center: y_center)
+    end
+
+    # By-products hang below the chain so it stays readable which material moves on.
+    def compose_step_byproducts(step, y_center, product_x)
+      side = step[:carried].present? ? (step[:products] || []) : []
+      return '' if side.empty?
+
+      after_chain = global_view_box_array[2]
+      chain_half = (@max_height_for_products || 0) / 2
+      @max_height_for_products = find_material_max_height(side)
+      drop = (chain_half + (@max_height_for_products / 2) + (4 * YIELD_YOFFSET)).round
+      note_branch_extent(drop, y_center)
+      global_view_box_array[2] = product_x
+      svg = compose_material_group(side, start_at: product_x, y_center: y_center)
+      global_view_box_array[2] = [after_chain, global_view_box_array[2]].max
+      "<g transform='translate(0, #{drop})'>#{plus_sign_at(product_x, y_center)} #{svg}</g>"
+    end
+
+    def fit_branches!
+      global_view_box_array[3] = [global_view_box_array[3], @branch_extent.to_i].max
+    end
+
+    # The branch is centred on y_center and then shifted down, so its lowest point
+    # is the drop plus half the material, plus room for the yield label.
+    def note_branch_extent(drop, y_center)
+      bottom = drop + y_center + (@max_height_for_products / 2) + (4 * YIELD_YOFFSET)
+      @branch_extent = [@branch_extent, bottom].max
+    end
+
+    def plus_sign_at(x_at, y_center)
+      "<text x='#{x_at - 25}' y='#{y_center}' font-size='#{word_size + 6}' text-anchor='middle'>+</text>"
+    end
+
+    def apply_step_labels(step)
+      @temperature = step[:temperature]
+      @duration = step[:duration]
+      @conditions = step[:conditions].presence
+      @num_reactants = (step[:reactants] || []).size
+      init_arrow_width
+    end
+
     def generate_filename
       filenames = { starting_materials: starting_materials, reactants: reactants, products: products }
-      key_base = "#{filenames.to_a}#{solvents}#{temperature}#{duration}#{conditions}"
+      key_base = "#{filenames.to_a}#{@steps}#{solvents}#{temperature}#{duration}#{conditions}"
       hash_of_filenames = Digest::SHA256.hexdigest(key_base)
       hash_of_filenames + '.svg'
     end

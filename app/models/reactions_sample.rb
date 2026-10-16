@@ -3,6 +3,7 @@
 # Table name: reactions_samples
 #
 #  id                          :integer          not null, primary key
+#  carry_on                    :boolean          default(FALSE), not null
 #  coefficient                 :float            default(1.0)
 #  conversion_rate             :float
 #  deleted_at                  :datetime
@@ -12,6 +13,7 @@
 #  position                    :integer
 #  reference                   :boolean
 #  show_label                  :boolean          default(FALSE), not null
+#  step_reference              :boolean          default(FALSE), not null
 #  type                        :string
 #  waste                       :boolean          default(FALSE)
 #  weight_percentage           :float
@@ -19,13 +21,15 @@
 #  created_at                  :datetime
 #  updated_at                  :datetime
 #  reaction_id                 :integer
+#  reaction_step_id            :integer
 #  sample_id                   :integer
 #
 # Indexes
 #
-#  index_reactions_samples_on_reaction_id     (reaction_id)
-#  index_reactions_samples_on_sample_id       (sample_id)
-#  index_reactions_samples_on_sample_id_type  (sample_id,type)
+#  index_reactions_samples_on_reaction_id       (reaction_id)
+#  index_reactions_samples_on_reaction_step_id  (reaction_step_id)
+#  index_reactions_samples_on_sample_id         (sample_id)
+#  index_reactions_samples_on_sample_id_type    (sample_id,type)
 #
 
 class ReactionsSample < ApplicationRecord
@@ -33,6 +37,7 @@ class ReactionsSample < ApplicationRecord
   acts_as_paranoid
   belongs_to :reaction, optional: true
   belongs_to :sample, optional: true
+  belongs_to :reaction_step, optional: true
 
   before_validation :set_default
 
@@ -46,6 +51,10 @@ class ReactionsSample < ApplicationRecord
 
   def self.get_reactions(samples_ids)
     where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
+  end
+
+  def step_reference_row
+    reaction_step&.reference_row
   end
 
   private
