@@ -309,11 +309,12 @@ class LlmTaskRunner
           "LLM output for task '#{@task_name}' failed validation: #{e.message}"
   end
 
-  # nil when the task names a class that does not exist. Kept apart from the call
-  # itself so a NoMethodError inside the validator is not read as a missing class.
+  # nil when the task names a class that does not exist. safe_constantize re-raises
+  # a NameError from inside the class's own file, so a broken validator fails the task.
   def resolve_validator(task)
-    task.validator_class.constantize
-  rescue NameError
+    validator = task.validator_class.safe_constantize
+    return validator if validator
+
     Rails.logger.warn(
       "[LlmTaskRunner] Validator class '#{task.validator_class}' not found for task " \
       "'#{@task_name}'. Skipping validation.",
