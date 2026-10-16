@@ -65,6 +65,21 @@ RSpec.describe ScifinderNCredential do
       end
     end
 
+    context 'when the refresh response has no refresh token' do
+      let(:expires_at) { 1.minute.ago }
+
+      before do
+        allow(Chemotion::ScifinderNService).to receive(:provider_access)
+          .and_return(access_token: 'new-access', refresh_token: nil, expires_at: 2.hours.from_now)
+      end
+
+      it 'keeps the stored refresh token' do
+        credential.issued_token
+
+        expect(credential.reload).to have_attributes(access_token: 'new-access', refresh_token: 'current-refresh')
+      end
+    end
+
     context 'when refreshing fails' do
       let(:expires_at) { 1.minute.ago }
 

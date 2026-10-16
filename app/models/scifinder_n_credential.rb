@@ -23,7 +23,7 @@ class ScifinderNCredential < ApplicationRecord
     return access_token if DateTime.now <= expires_at
 
     access_set = Chemotion::ScifinderNService.provider_access(refresh_token)
-    update!(access_set.slice(:access_token, :refresh_token, :expires_at))
+    update!(access_set.slice(:access_token, :refresh_token, :expires_at).compact)
     access_token
   rescue StandardError => e
     Rails.logger.error("Error while issuing token: #{e}")
