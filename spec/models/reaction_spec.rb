@@ -443,6 +443,14 @@ RSpec.describe Reaction, type: :model do
       expect(drawn.length).to eq(1)
     end
 
+    it 'adds the unit only to a numeric step temperature' do
+      step.update!(temperature: { 'data' => [], 'userText' => 'r.t.', 'valueUnit' => '°C' })
+      expect(reaction.send(:step_temperature_with_unit, step)).to eq('r.t.')
+
+      step.update!(temperature: { 'data' => [], 'userText' => '40', 'valueUnit' => '°C' })
+      expect(reaction.send(:step_temperature_with_unit, step)).to eq('40 °C')
+    end
+
     it 'draws every product of a standard reaction' do
       standard = create(:reaction)
       create(:reactions_product_sample, reaction: standard)

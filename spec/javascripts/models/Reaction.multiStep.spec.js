@@ -273,6 +273,34 @@ describe('Reaction multi-step', () => {
     expect(reaction.serialize().materials.products.map((p) => p.id)).toEqual([kept.id]);
   });
 
+  it('measures merged materials against the reaction reference when leaving multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const [start, merged] = reaction.starting_materials;
+    start.reaction_step_id = 1;
+    start.reference = true;
+    merged.reaction_step_id = 2;
+    start.setAmount({ value: 0.01, unit: 'mol' });
+    merged.setAmount({ value: 0.005, unit: 'mol' });
+    merged.equivalent = 99;
+
+    reaction.clearMultiStep();
+
+    expect(merged.equivalent).toBeCloseTo(0.5);
+  });
+
+  it('adds the unit only to a numeric step temperature in the scheme', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, temperature: { data: [], userText: 'r.t.', valueUnit: '°C' } },
+      { id: 2, position: 2, temperature: { data: [], userText: '40', valueUnit: '°C' } },
+    ];
+
+    expect(reaction.stepsSvgPaths().map((step) => step.temperature)).toEqual(['r.t.', '40 °C']);
+  });
+
   it('omits unset step fields so the database defaults apply', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
