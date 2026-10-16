@@ -239,6 +239,14 @@ RSpec.describe LlmProviderResolver do
       expect(described_class.resolve(user: user, task_name: 'sds_extraction').model).to eq('claude-haiku-4-5')
     end
 
+    it 'skips a task override naming a personal provider that was switched off' do
+      UserLlmSetting.create!(user: user, provider_type: 'global')
+      UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction', llm_provider: mine)
+      mine.update!(enabled: false)
+
+      expect(described_class.resolve(user: user, task_name: 'sds_extraction').provider).to eq(institution)
+    end
+
     it 'falls back to the institution provider when the personal-key gate is revoked' do
       UserLlmSetting.create!(user: user, provider_type: 'custom', default_llm_provider: mine)
       UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction', llm_provider: mine)

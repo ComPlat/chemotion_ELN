@@ -108,6 +108,42 @@ RSpec.describe LlmTaskRunner do
           expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
         end
       end
+
+      context 'when the mapped model rejects the key (HTTP 401)' do
+        before do
+          stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+            { status: 401, body: '{"error":"Unauthorized"}' },
+            { status: 200, body: llm_json_response, headers: { 'Content-Type' => 'application/json' } },
+          )
+        end
+
+        it 'raises without retrying on the default model' do
+          runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+          expect { runner.run }.to raise_error(Errors::LlmAuthenticationError)
+          expect(runner.fell_back?).to be false
+          expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").once
+        end
+      end
+    end
+
+    context 'when the task is routed to a provider other than the default, and it fails (503)' do
+      let(:other_url) { 'https://other-endpoint.example/api' }
+
+      before do
+        allow(Addrinfo).to receive(:getaddrinfo).and_call_original
+        allow(Addrinfo).to receive(:getaddrinfo).with('other-endpoint.example', nil, nil, :STREAM)
+                                                .and_return([Addrinfo.tcp('93.184.216.34', 0)])
+        other = create(:llm_provider, :personal, user: user, base_url: other_url, default_model: 'other-model')
+        UserTaskModelMapping.create!(user_id: user.id, task_name: 'sds_extraction', llm_provider: other)
+        stub_request(:post, "#{other_url}/v1/chat/completions").to_return(status: 503, body: 'busy')
+      end
+
+      it 'raises rather than sending the content to the default provider' do
+        runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect { runner.run }.to raise_error(Errors::LlmProviderError)
+        expect(runner.fell_back?).to be false
+        expect(WebMock).not_to have_requested(:post, "#{base_url}/v1/chat/completions")
+      end
     end
 
     context 'when there is no task-specific model and the default model fails (503)' do
