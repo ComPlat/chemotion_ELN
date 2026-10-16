@@ -185,6 +185,27 @@ describe Chemotion::DeviceDescriptionAPI do
       end
     end
 
+    context 'when the device description has segments of several classes' do
+      let(:segment_klasses) do
+        [segment_klass,
+         create(:segment_klass, :with_ontology_properties_template, element_klass: element_klass, label: 'second')]
+      end
+
+      before do
+        segment_klasses.each do |klass|
+          create(:segment, segment_klass: klass, element: device_description, created_by: user.id,
+                           properties: klass.properties_release)
+        end
+      end
+
+      it 'copies one segment of each class to the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segments = device_description.reload.children.first.segments
+        expect(split_segments.map(&:segment_klass_id)).to match_array(segment_klasses.map(&:id))
+      end
+    end
+
     context 'when the segment follows a release this instance cannot resolve' do
       let(:imported_release) { segment_klass.properties_release.merge('uuid' => 'imported-release') }
 
