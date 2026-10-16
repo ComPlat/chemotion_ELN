@@ -208,22 +208,24 @@ class DeviceDescription < ApplicationRecord
   end
 
   def create_sub_device_description(user, collection_ids)
-    device_description = dup
-    segments = segments_for_split
+    transaction do
+      device_description = dup
+      segments = segments_for_split
 
-    device_description.is_split = true
-    device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
-    device_description.parent = self
-    device_description.created_by = user.id
-    device_description.container = Container.create_root_container
-    device_description.attachments = []
-    device_description.segments = []
-    device_description.collections << all_collections(user, collection_ids)
-    device_description.save!
+      device_description.is_split = true
+      device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
+      device_description.parent = self
+      device_description.created_by = user.id
+      device_description.container = Container.create_root_container
+      device_description.attachments = []
+      device_description.segments = []
+      device_description.collections << all_collections(user, collection_ids)
+      device_description.save!
 
-    device_description.save_segments(segments: segments, current_user_id: user.id) if segments.any?
+      device_description.save_segments(segments: segments, current_user_id: user.id) if segments.any?
 
-    device_description.reload
+      device_description.reload
+    end
   end
 
   private

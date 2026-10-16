@@ -185,6 +185,34 @@ describe Chemotion::DeviceDescriptionAPI do
       end
     end
 
+    context 'when copying a segment fails' do
+      let(:params) do
+        {
+          ui_state: {
+            currentCollectionId: collection.id,
+            device_description: {
+              all: false,
+              included_ids: [device_description.id, device_description2.id],
+              excluded_ids: [],
+            },
+          },
+        }
+      end
+
+      before do
+        create(:collections_device_description, device_description: device_description2, collection: collection)
+        create(:segment, segment_klass: segment_klass, element: device_description2, created_by: user.id,
+                         properties: nil)
+      end
+
+      it 'creates no split for any of the selected device descriptions' do
+        expect { post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json }
+          .to raise_error(NoMethodError)
+        expect(DeviceDescription.where(id: [device_description.id, device_description2.id])
+          .flat_map(&:children)).to be_empty
+      end
+    end
+
     context 'when the collection is a read-only share' do
       let(:read_only_collection) do
         create(:collection, user: create(:person)).tap do |c|
