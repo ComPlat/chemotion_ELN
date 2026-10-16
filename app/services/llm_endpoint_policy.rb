@@ -104,9 +104,8 @@ class LlmEndpointPolicy
       nil
     end
 
-    # Literals and local names only. A hostname is not resolved here: a lookup
-    # per save would stall on every offline deployment, and the answer would not
-    # bind the connection anyway.
+    # Literals and local names only: a lookup per save would stall offline deployments.
+    # Names are resolved and checked when connecting, cf. pinned_address!.
     def private_host?(host)
       name = host.downcase.chomp('.')
       return true if name == 'localhost' || LOCAL_SUFFIXES.any? { |suffix| name.end_with?(suffix) }
