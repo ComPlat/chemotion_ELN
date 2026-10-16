@@ -18,9 +18,10 @@
 
 class ScifinderNCredential < ApplicationRecord
   # Returns a usable access token, refreshing it first if it has expired.
-  # Returns nil if the refresh fails.
+  # Returns nil if there is no refresh token or the refresh fails.
   def issued_token
     return access_token if DateTime.now <= expires_at
+    return if refresh_token.blank?
 
     access_set = Chemotion::ScifinderNService.provider_access(refresh_token)
     update!(access_set.slice(:access_token, :refresh_token, :expires_at).compact)

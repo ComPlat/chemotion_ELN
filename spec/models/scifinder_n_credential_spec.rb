@@ -80,6 +80,17 @@ RSpec.describe ScifinderNCredential do
       end
     end
 
+    context 'when the access token has expired and there is no refresh token' do
+      let(:expires_at) { 1.minute.ago }
+
+      before { credential.update!(refresh_token: nil) }
+
+      it 'returns nil without contacting the provider' do
+        expect(credential.issued_token).to be_nil
+        expect(Chemotion::ScifinderNService).not_to have_received(:provider_access)
+      end
+    end
+
     context 'when refreshing fails' do
       let(:expires_at) { 1.minute.ago }
 
