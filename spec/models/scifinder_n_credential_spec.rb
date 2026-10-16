@@ -91,6 +91,30 @@ RSpec.describe ScifinderNCredential do
       end
     end
 
+    context 'when the refreshed credentials cannot be saved' do
+      let(:expires_at) { 1.minute.ago }
+
+      before do
+        allow(Chemotion::ScifinderNService).to receive(:provider_access)
+          .and_return(access_token: nil, refresh_token: 'new-refresh', expires_at: 2.hours.from_now)
+        allow(Rails.logger).to receive(:error)
+      end
+
+      it 'returns nil' do
+        expect(credential.issued_token).to be_nil
+      end
+
+      it 'keeps the stored credentials' do
+        credential.issued_token
+
+        expect(credential.reload).to have_attributes(
+          access_token: 'current-access',
+          refresh_token: 'current-refresh',
+          expires_at: be_within(1.second).of(expires_at),
+        )
+      end
+    end
+
     context 'when refreshing fails' do
       let(:expires_at) { 1.minute.ago }
 
