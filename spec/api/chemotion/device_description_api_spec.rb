@@ -140,13 +140,23 @@ describe Chemotion::DeviceDescriptionAPI do
 
     context 'when the device description has a segment' do
       let(:segment_properties) do
+        linked_sample = create(:sample)
         segment_klass.properties_release.deep_dup.tap do |properties|
-          properties['layers']['ontology_fields']['fields'].first['value'] = 'entered value'
+          fields = properties['layers']['ontology_fields']['fields']
+          fields.first['value'] = 'entered value'
+          fields << { 'type' => 'drag_sample', 'field' => 'linked_sample', 'position' => 3,
+                      'value' => { 'el_id' => linked_sample.id, 'el_label' => linked_sample.short_label } }
+          fields << { 'type' => 'upload', 'field' => 'linked_upload', 'position' => 4,
+                      'value' => { 'files' => [{ 'aid' => 1, 'uid' => 'parent-file', 'filename' => 'a.txt' }] } }
         end
       end
       let!(:segment) do
         create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
                          properties: segment_properties)
+      end
+
+      def field_value(segment, name)
+        segment.properties.dig('layers', 'ontology_fields', 'fields').find { |f| f['field'] == name }['value']
       end
 
       it 'copies the segment with its field values to the split' do
@@ -157,6 +167,21 @@ describe Chemotion::DeviceDescriptionAPI do
         expect(split_segments.first.properties.dig('layers', 'ontology_fields', 'fields', 0, 'value'))
           .to eq('entered value')
         expect(device_description.segments.reload).to eq([segment])
+      end
+
+      it 'clears linked sample and upload fields on the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segment = device_description.reload.children.first.segments.first
+        expect(field_value(split_segment, 'linked_sample')).to eq({})
+        expect(field_value(split_segment, 'linked_upload')).to eq({})
+      end
+
+      it 'keeps linked sample and upload fields on the parent' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        expect(field_value(segment.reload, 'linked_sample')['el_id']).to be_present
+        expect(field_value(segment, 'linked_upload')['files'].size).to eq(1)
       end
     end
 

@@ -87,6 +87,7 @@ class DeviceDescription < ApplicationRecord
   include AnalysisCodes
   include Taggable
   include Labimotion::Segmentable
+  include Labimotion::LinkedProperties
 
   has_logidze
   acts_as_paranoid
@@ -227,9 +228,12 @@ class DeviceDescription < ApplicationRecord
 
   private
 
+  # Linked fields (samples, elements, uploads, sample tables) are cleared, as in Labimotion::Element#split,
+  # so the split's segments do not point to records owned by the parent.
   def segments_for_split
     segments.map do |segment|
-      { 'segment_klass_id' => segment.segment_klass_id, 'properties' => segment.properties.deep_dup,
+      { 'segment_klass_id' => segment.segment_klass_id,
+        'properties' => detach_properties(segment.properties.deep_dup),
         'metadata' => segment.metadata }
     end
   end
