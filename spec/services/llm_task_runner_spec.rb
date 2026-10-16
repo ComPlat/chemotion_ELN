@@ -426,6 +426,49 @@ RSpec.describe LlmTaskRunner do
     end
   end
 
+  # ── Output validator lookup ────────────────────────────────────────────────
+
+  describe 'the task validator' do
+    let(:task) { Chemotion::LlmTaskRegistry.find('sds_extraction') }
+
+    before do
+      stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+        status: 200, body: { 'choices' => [{ 'message' => { 'content' => '{"notes":"no core field"}' } }] }.to_json,
+        headers: { 'Content-Type' => 'application/json' }
+      )
+    end
+
+    def run_task
+      described_class.run(task_name: 'sds_extraction', user: user, context: 'x')
+    end
+
+    it 'is skipped when the task names a class that does not exist' do
+      allow(task).to receive(:validator_class).and_return('LlmTaskValidators::NoSuchValidator')
+
+      expect(run_task).to eq('notes' => 'no core field')
+    end
+
+    it 'fails the task when the validator raises a NameError of its own' do
+      allow(LlmTaskValidators::SdsExtractionValidator).to receive(:validate!)
+        .and_raise(NameError.new("undefined local variable or method `helper'", :helper))
+
+      expect { run_task }.to raise_error(NameError, /helper/)
+    end
+
+    it 'fails the task when loading the validator class hits a missing constant' do
+      # Stands in for an autoloaded validator file that references an undefined constant.
+      broken = Module.new do
+        def self.const_missing(_name)
+          raise NameError.new('uninitialized constant LlmSpecMissingHelper', :LlmSpecMissingHelper)
+        end
+      end
+      stub_const('LlmSpecBrokenValidators', broken)
+      allow(task).to receive(:validator_class).and_return('LlmSpecBrokenValidators::Validator')
+
+      expect { run_task }.to raise_error(NameError, /LlmSpecMissingHelper/)
+    end
+  end
+
   # ── Audit logging ──────────────────────────────────────────────────────────
 
   describe 'audit logging' do
