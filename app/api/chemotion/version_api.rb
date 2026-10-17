@@ -134,6 +134,25 @@ module Chemotion
         end
       end
 
+      resource :cellline_samples do
+        desc 'Return versions of the given cell line sample'
+
+        params do
+          requires :id, type: Integer, desc: 'cell line sample id'
+        end
+
+        paginate per_page: 10, offset: 0, max_per_page: 100
+
+        route_param :id do
+          get do
+            cellline_sample = CelllineSample.with_log_data.find(params[:id])
+
+            versions = Versioning::Fetcher.call(cellline_sample)
+            { versions: paginate(Kaminari.paginate_array(versions)) }
+          end
+        end
+      end
+
       resource :revert do
         desc 'Revert selected changes'
 

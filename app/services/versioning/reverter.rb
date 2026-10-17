@@ -6,8 +6,8 @@ module Versioning
 
     attr_accessor :changes
 
-    ALLOWED_REVERTERS = %w[Attachment Chemical Component Container DeviceDescription ElementalComposition Reaction
-                           ReactionsSample ResearchPlan ResearchPlanMetadata Residue
+    ALLOWED_REVERTERS = %w[Attachment Chemical Container CelllineSample DeviceDescription ElementalComposition
+                           Reaction ReactionsSample ResearchPlan ResearchPlanMetadata Residue
                            Sample Screen Wellplate Well].freeze
 
     def self.call(changes)
