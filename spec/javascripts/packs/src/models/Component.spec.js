@@ -1050,34 +1050,36 @@ describe('Component', () => {
   });
 
   describe('calculateMassFromAmount', () => {
-    it('should update purity when lockAmountColumnSolids is true', () => {
+    it('updates purity when the Mass lock is passed as true', () => {
       component.amount_mol = 0.1;
       component.amount_g = 2.0;
       component.molecule.molecular_weight = 18.015;
-      component.parent_id = 'sample_123';
 
-      // Mock store state with proper structure
-      ComponentStore.getState = () => ({
-        lockAmountColumnSolidsBySample: {
-          sample_123: true,
-        },
-      });
-
-      component.calculateMassFromAmount(component.purity);
+      component.calculateMassFromAmount(component.purity, true);
 
       const expectedPurity = (0.1 * 18.015) / 2.0;
       expect(component.purity).toBeCloseTo(expectedPurity, 6);
     });
 
-    it('should calculate mass when lockAmountColumnSolids is false', () => {
+    it('calculates mass when the Mass lock is passed as false', () => {
       component.amount_mol = 0.1;
       component.molecule.molecular_weight = 18.015;
       component.purity = 0.9;
 
-      // Mock store state
-      ComponentStore.getState = () => ({
-        lockAmountColumnSolids: false,
-      });
+      component.calculateMassFromAmount(component.purity, false);
+
+      const expectedMass = (0.1 * 18.015) / 0.9;
+      expect(component.amount_g).toBeCloseTo(expectedMass, 6);
+    });
+
+    it('defaults to unlocked (recomputes mass) when no lock is passed', () => {
+      component.amount_mol = 0.1;
+      component.amount_g = 2.0;
+      component.molecule.molecular_weight = 18.015;
+      component.purity = 0.9;
+      // parent_id must no longer be consulted; a lock stored under it is ignored.
+      component.parent_id = 'sample_123';
+      ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { sample_123: true } });
 
       component.calculateMassFromAmount(component.purity);
 
