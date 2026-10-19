@@ -223,6 +223,7 @@ export default class Component extends Sample {
 
   /**
    * Calculates mass or updates purity for a solid based on the Mass lock.
+   * The lock preserves an existing positive mass; an empty solid initializes its mass.
    * The lock is stored under the mixture's id, which a component cannot resolve from its own
    * parent_id (its source sample). Callers must therefore pass the lock state in; when omitted
    * it defaults to unlocked (recompute mass) rather than looking it up under the wrong id.
@@ -231,7 +232,8 @@ export default class Component extends Sample {
    */
   calculateMassFromAmount(purity, lockAmountColumnSolids = false) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    if (lockAmountColumnSolids) {
+    const massG = Number(this.amount_g);
+    if (lockAmountColumnSolids && Number.isFinite(massG) && massG > 0) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -566,9 +568,7 @@ export default class Component extends Sample {
     if (materialGroup === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (materialGroup === 'solid') {
-      // Honor the Mass lock for existing masses; initialize empty solids without inferring purity.
-      const hasMass = Number(this.amount_g) > 0;
-      this.calculateMassFromAmount(purity, hasMass ? lockAmountColumnSolids : false);
+      this.calculateMassFromAmount(purity, lockAmountColumnSolids);
     }
 
     // Total concentration calculation

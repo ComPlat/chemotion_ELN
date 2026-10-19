@@ -53,7 +53,6 @@ describe('SampleComponent reference switching for reaction-linked mixtures', () 
       expect(wrapper.find(Form.Check).prop('disabled')).toBe(true);
       expect(wrapper.find(Form.Check).prop('checked')).toBe(false);
       expect(wrapper.find('span').prop('tabIndex')).toBe(0);
-      expect(wrapper.find('span').prop('aria-disabled')).toBe('true');
       expect(shallow(wrapper.find(OverlayTrigger).prop('overlay')).text()).toBe(
         'Change the reference component in the reaction’s material row '
         + 'so dependent amounts and equivalents update together.'

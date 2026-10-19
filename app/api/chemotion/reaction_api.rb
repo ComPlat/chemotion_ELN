@@ -151,7 +151,7 @@ module Chemotion
       put ':id/materials/:sample_id/equivalent' do
         reaction = Reaction.find(params[:id])
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, reaction).update?
-        error!('Invalid equivalent', 422) unless params[:equivalent].finite?
+        error!('Invalid equivalent', 422) unless params[:equivalent]&.finite?
 
         material = ReactionsSample.find_by!(reaction_id: reaction.id, sample_id: params[:sample_id])
         material.update!(equivalent: params[:equivalent])
