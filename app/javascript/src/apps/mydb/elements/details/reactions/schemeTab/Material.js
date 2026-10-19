@@ -1247,7 +1247,27 @@ class Material extends Component {
         <div className="d-flex flex-column gap-1 py-1">
           {/* Flex container with flex-column because products can display extra rows */}
           <div className="d-flex gap-2 align-items-start">
-            {this.materialRef(material)}
+            {showCarryOn ? (
+              <div
+                className="reaction-material__ref-data d-flex align-items-center"
+                title={reaction.isCarryOnLocked(material)
+                  ? 'The next step needs a starting material. Delete that step first.'
+                  : 'Carry on to next step'}
+              >
+                <div className="form-check form-switch m-0 p-0">
+                  <Form.Check.Input
+                    type="checkbox"
+                    role="switch"
+                    className="ms-0"
+                    id={`carry-on-${material.id}`}
+                    aria-label="Carry on to next step"
+                    checked={!!material.carry_on}
+                    disabled={!permitOn(reaction) || reaction.isCarryOnLocked(material)}
+                    onChange={() => onToggleCarryOn(material)}
+                  />
+                </div>
+              </div>
+            ) : this.materialRef(material)}
             {this.switchTargetReal()}
             {isSbmmSample(material) ? (
               <div className="reaction-material__coefficient-data" />
@@ -1296,22 +1316,6 @@ class Material extends Component {
             {this.materialLoading(material, showLoadingColumn)}
             {this.materialConcentration(material)}
             {this.equivalentOrYield(material)}
-            {showCarryOn && (
-              <div
-                className="reaction-material__carry-on d-flex align-items-center px-1"
-                title={reaction.isCarryOnLocked(material)
-                  ? 'The next step needs a starting material. Delete that step first.'
-                  : 'Carry on to next step'}
-              >
-                <Form.Check
-                  type="switch"
-                  id={`carry-on-${material.id}`}
-                  checked={!!material.carry_on}
-                  disabled={!permitOn(reaction) || reaction.isCarryOnLocked(material)}
-                  onChange={() => onToggleCarryOn(material)}
-                />
-              </div>
-            )}
             <div
               className="reaction-material__delete-data"
               title={reaction.isCarryOnLocked(material)
