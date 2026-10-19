@@ -192,8 +192,8 @@ export default class Component extends Sample {
    * Handles molar amount change and recalculates dependent fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
-   * @param {null} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
-   *   from the mixture's id. When null, falls back to the store lookup by parent_id.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
   handleAmountChange(amount, totalVolume, lockAmountColumnSolids = null) {
     if (Number.isNaN(amount.value) || amount.unit !== 'mol') return;
@@ -222,25 +222,16 @@ export default class Component extends Sample {
   }
 
   /**
-   * Calculates mass or updates purity for solid based on lock flag.
+   * Calculates mass or updates purity for a solid based on the Mass lock.
+   * The lock is stored under the mixture's id, which a component cannot resolve from its own
+   * parent_id (its source sample). Callers must therefore pass the lock state in; when omitted
+   * it defaults to unlocked (recompute mass) rather than looking it up under the wrong id.
    * @param {number} purity
-   * @param {null} [lockAmountColumnSolids] - Optional lock state. If not provided, will be retrieved from store using parent_id as sampleId.
+   * @param {boolean} [lockAmountColumnSolids=false] - Mass lock state, resolved by the caller.
    */
-  calculateMassFromAmount(purity, lockAmountColumnSolids = null) {
+  calculateMassFromAmount(purity, lockAmountColumnSolids = false) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    let lockState = lockAmountColumnSolids;
-    if (lockState === null) {
-      // Try to get lock state from store using parent_id as sample ID
-      try {
-        const componentState = ComponentStore.getState();
-        lockState = ComponentStore.getLockStateForSample(componentState, 'lockAmountColumnSolids', this.parent_id);
-      } catch (e) {
-        // Fallback to false if store is not available
-        lockState = false;
-      }
-    }
-
-    if (lockState) {
+    if (lockAmountColumnSolids) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -543,8 +534,8 @@ export default class Component extends Sample {
    * @param {string} materialGroup - 'liquid' or 'solid'.
    * @param {number} totalVolume - Total mixture volume.
    * @param {number} referenceMoles - Amount in mol of reference component.
-   * @param {null} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
-   *   from the mixture's id. When null, falls back to the store lookup by parent_id.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
   updateRatio(newRatio, materialGroup, totalVolume, referenceMoles, lockAmountColumnSolids = null) {
     if (this.equivalent === newRatio) { return; }
@@ -565,8 +556,8 @@ export default class Component extends Sample {
    * solid ignores the lock so a zero mass is never used to infer purity.
    * @param {string} materialGroup - 'liquid' or 'solid'.
    * @param {number} totalVolume - Total mixture volume.
-   * @param {boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
-   *   from the mixture's id. When null, falls back to the store lookup by parent_id.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
   recalculateAmountDerivedFields(materialGroup, totalVolume, lockAmountColumnSolids = null) {
     const purity = this.purity || 1.0;
@@ -595,8 +586,8 @@ export default class Component extends Sample {
    * @param {number} ratio - The existing equivalent ratio to keep.
    * @param {number} referenceMoles - Amount in mol of the reference component.
    * @param {number} totalVolume - Total mixture volume.
-   * @param {boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
-   *   from the mixture's id. When null, falls back to the store lookup by parent_id.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
   updateAmountFromRatio(ratio, referenceMoles, totalVolume, lockAmountColumnSolids = null) {
     this.amount_mol = ratio * referenceMoles;

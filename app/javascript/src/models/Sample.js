@@ -21,6 +21,7 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import alt from 'src/stores/alt/alt';
 import { rootStore } from 'src/stores/mobx/RootStore';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
@@ -313,10 +314,19 @@ export default class Sample extends Element {
     });
   }
 
+  /** A toolbar save replaces the open reaction; editor context may still hold its previous instance. */
+  resolveReactionContext(reaction = this.belongTo) {
+    if (reaction?.type !== 'reaction' || reaction.id == null) return reaction;
+
+    // Resolve lazily through the store registry to avoid a Sample/ElementStore import cycle.
+    const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
+    return selecteds.find((element) => element.type === 'reaction' && element.id === reaction.id) || reaction;
+  }
+
   hasReactionMixtureConflict(reaction = this.belongTo) {
     if (!this.isMixture() || !this.isDetachedMixtureDraft || !this._mixtureDraftSourceState) return false;
 
-    const material = reaction?.sampleById?.(this.id);
+    const material = this.resolveReactionContext(reaction)?.sampleById?.(this.id);
     return !material || material.mixtureReactionState() !== this._mixtureDraftSourceState;
   }
 

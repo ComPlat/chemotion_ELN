@@ -447,7 +447,8 @@ export default class SampleDetails extends React.Component {
     sample.prepareMixtureForSave();
 
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
-      const reaction = sample.belongTo;
+      const reaction = sample.isMixture() ? sample.resolveReactionContext() : sample.belongTo;
+      sample.belongTo = reaction;
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
       if (sample.isNew) {
