@@ -39,8 +39,8 @@ class ChemrepoIdJob < ApplicationJob
       req.body = req_params.to_json
     }
     if @resp.success?
-      # the id is written into the element tag, only accept an integer
-      Integer(JSON.parse(@resp.body)['molecule_id'], exception: false)
+      # the id is written into the element tag, only accept a base-10 integer
+      Integer(JSON.parse(@resp.body)['molecule_id'].to_s, 10, exception: false)
     else
       Delayed::Worker.logger.error  <<~TXT
         --------- chemorepo id FAIL message.BEGIN ------------

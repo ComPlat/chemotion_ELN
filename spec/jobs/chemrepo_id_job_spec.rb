@@ -24,12 +24,22 @@ RSpec.describe ChemrepoIdJob do
     end
   end
 
-  context 'when the repository returns something other than an integer' do
-    let(:molecule_id) { '1abc' }
+  context 'when the repository returns an integer id as a string with a leading zero' do
+    let(:molecule_id) { '0101' }
 
-    it 'leaves the molecule tag untouched' do
-      expect(molecule.tag.reload.taggable_type).to eq 'Molecule'
-      expect(taggable_data).not_to have_key('chemrepo_id')
+    it 'reads it as a decimal number' do
+      expect(taggable_data['chemrepo_id']).to eq 101
+    end
+  end
+
+  ['1abc', '1.5', '0x10', '', nil].each do |value|
+    context "when the repository returns #{value.inspect}" do
+      let(:molecule_id) { value }
+
+      it 'leaves the molecule tag untouched' do
+        expect(molecule.tag.reload.taggable_type).to eq 'Molecule'
+        expect(taggable_data).not_to have_key('chemrepo_id')
+      end
     end
   end
 end
