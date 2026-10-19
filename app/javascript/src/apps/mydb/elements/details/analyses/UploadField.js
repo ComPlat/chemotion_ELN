@@ -33,7 +33,13 @@ async function handleZipFile(zipFile) {
   */
   const rootFileName = '';
 
-  const files = new VirtualFolderNode(rootFileName, '');
+  /*
+  The unnamed root adds no segment to its entries' paths, so it sits one level above the
+  top: a top-level entry is at depth 0 with a one-segment path, as a loose dropped file is.
+  `moveUp()` drops one leading segment per depth level, so a depth ahead of the path strips
+  the file name itself and every file of a re-zipped dataset lands on the same entry.
+  */
+  const files = new VirtualFolderNode(rootFileName, '', -1);
 
   const readFilePromises = Object.entries(zip.files).map(async ([, entry]) => {
     if (entry.dir) return; // skip directories
@@ -521,5 +527,6 @@ UploadField.propTypes = {
 
 export {
   UploadField,
-  FolderDropzone
+  FolderDropzone,
+  handleZipFile
 };
