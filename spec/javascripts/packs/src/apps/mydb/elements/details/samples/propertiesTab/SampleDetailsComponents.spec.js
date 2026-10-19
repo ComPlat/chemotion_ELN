@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import expect from 'expect';
 import sinon from 'sinon';
 import { addMiddleware } from 'mobx-state-tree';
@@ -109,6 +110,19 @@ describe('SampleDetailsComponents solid ratio edits', () => {
     sample.updateMixtureComponentEquivalent();
     expect(other.equivalent).toBe('n.d');
     expect(sample.serializeMaterial().components[1].component_properties.equivalent).toBe('n.d');
+    expect(notifications).toEqual([]);
+  });
+
+  it('includes a newly filled solid mass in the mixture total and relative weights with Mass locked', () => {
+    const { editor, sample, reference, other } = build(true);
+
+    editor.updatedSampleForAmountUnitChange({ sampleID: other.id, amount: { value: 0.01, unit: 'mol' } });
+
+    const expectedMass = (0.01 * 330.38) / 0.4;
+    expect(other.amount_g).toBeCloseTo(expectedMass, 10);
+    expect(other.purity).toBe(0.4);
+    expect(sample.amount_g).toBeCloseTo(reference.amount_g + expectedMass, 10);
+    expect(other.relative_molecular_weight).toBeCloseTo((reference.amount_g + expectedMass) / 0.01, 8);
     expect(notifications).toEqual([]);
   });
 });

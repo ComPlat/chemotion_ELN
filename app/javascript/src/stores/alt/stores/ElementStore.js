@@ -1749,9 +1749,9 @@ class ElementStore {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
       const openedReaction = selecteds.find((el) => SameEleTypId(el, { type: 'reaction', id: rId }));
-      // Mixture editors own a detached draft. Their save action updates the reaction;
-      // switching or closing tabs (including Discard) must not apply that draft.
-      if (openedReaction && !previous.isMixture()) {
+      // Detached mixture drafts are applied by their save action, never by switching
+      // or closing tabs (including Discard). Sample-list mixtures still synchronize.
+      if (openedReaction && !previous.isDetachedMixtureDraft) {
         if (refreshCoefficient && refreshCoefficient.length > 0) {
           refreshCoefficient.forEach((element) => {
             if (element.sId === previous.id) {
