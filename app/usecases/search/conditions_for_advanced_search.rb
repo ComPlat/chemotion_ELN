@@ -10,6 +10,20 @@ module Usecases
       IDENTIFIER = /\A[a-z_][a-z0-9_]*\z/i.freeze
       LINKS = %w[AND OR].freeze
       MATCHES = ['=', 'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE', '>', '<', '>=', '<=', '@>', '<@'].freeze
+      # Field tables searched through the element table they belong to (see the search modal field data).
+      FIELD_TABLE_OWNERS = {
+        'chemicals' => %w[samples],
+        'measurements' => %w[samples],
+        'molecules' => %w[samples],
+        'device_descriptions' => %w[device_descriptions],
+        'sequence_based_macromolecules' => %w[sequence_based_macromolecule_samples],
+        'protein_sequence_modifications' => %w[sequence_based_macromolecule_samples],
+        'post_translational_modifications' => %w[sequence_based_macromolecule_samples],
+        'cellline_materials' => %w[cell_lines],
+        'cellline_samples' => %w[cell_lines],
+      }.freeze
+      # Field tables available for every element table (analyses, generic segments, references).
+      SHARED_FIELD_TABLES = %w[containers datasets segments literals literatures].freeze
 
       attr_reader :params, :detail_levels
 
@@ -19,11 +33,11 @@ module Usecases
 
         @table = ''
         @field_table = ''
+        @binds = {}
         @match = ''
         @conditions = {
           joins: [], field: '', condition_table: '', first_condition: '',
-          additional_condition: '', words: '', model_name: '', value: [],
-          query: '', error: ''
+          additional_condition: '', words: '', model_name: '', query: '', error: ''
         }
         @table_or_tab_types = {
           generics: false, chemicals: false, analyses: false, measurements: false, literatures: false,
@@ -42,6 +56,7 @@ module Usecases
         rescue InvalidFilterError
           return invalid_filter!(filter)
         end
+        @conditions[:query] = ActiveRecord::Base.sanitize_sql_array([@conditions[:query], @binds]) if @binds.present?
         @conditions
       end
 
@@ -53,25 +68,31 @@ module Usecases
         validate_column_identifier
         special_and_generic_conditions_by_filter(filter, number)
         conditions_for_query = conditions
+        return if conditions_for_query.blank?
 
-        if conditions_for_query.present?
-          link = LINKS.include?(filter['link']) ? filter['link'] : ''
-          @conditions[:query] = "#{@conditions[:query]} #{link} (#{conditions_for_query}) "
-        end
-        @conditions[:value] += @conditions[:words] if @conditions[:field].present?
+        link = LINKS.include?(filter['link']) ? filter['link'] : ''
+        @conditions[:query] = "#{@conditions[:query]} #{link} (#{conditions_for_query}) "
       end
 
       # Discard everything built so far so that no partial or unsafe SQL is used.
       def invalid_filter!(filter)
         @conditions.merge!(
-          joins: [], query: 'FALSE', value: [],
+          joins: [], query: 'FALSE',
           error: "Your search for #{filter.dig('field', 'column')} is not allowed"
         )
       end
 
-      # Quote a user supplied value to be used as SQL string literal.
+      # Quote a user supplied value to be used as SQL string literal in a join.
       def quote(value)
         ActiveRecord::Base.connection.quote(value.to_s)
+      end
+
+      # Register a user supplied value of a where condition and return its named placeholder.
+      # The placeholders are only replaced once, when the whole query is built (see #filter!).
+      def bind(value)
+        key = :"v#{@binds.size}"
+        @binds[key] = value.is_a?(Numeric) ? value : value.to_s
+        ":#{key}"
       end
 
       # Only allow plain SQL identifiers (table and column names) to be interpolated.
@@ -125,6 +146,8 @@ module Usecases
         else
           table.singularize.camelize.constantize
         end
+      rescue NameError
+        raise InvalidFilterError, "invalid table: #{table}"
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
@@ -182,24 +205,35 @@ module Usecases
       # rubocop:enable Metrics/CyclomaticComplexity, Metrics/AbcSize, Metrics/PerceivedComplexity
 
       def conditions
-        condition =
-          if @conditions[:field].blank?
-            "#{@conditions[:first_condition]}#{@conditions[:additional_condition]}"
-          else
-            "#{@conditions[:first_condition]}#{@conditions[:condition_table]}#{@conditions[:field]} #{@match} ?
-            #{@conditions[:additional_condition]}"
-          end
-
         @conditions[:words] = [@conditions[:words].join("\n")] if @conditions[:words].size > 1 && @match == '='
 
-        @conditions[:words].collect { condition }.join(' OR ') if condition.present?
+        if @conditions[:field].blank?
+          condition = "#{@conditions[:first_condition]}#{@conditions[:additional_condition]}"
+          return @conditions[:words].collect { condition }.join(' OR ') if condition.present?
+
+          return
+        end
+
+        @conditions[:words].map do |word|
+          "#{@conditions[:first_condition]}#{@conditions[:condition_table]}#{@conditions[:field]} #{@match} " \
+            "#{bind(word)} #{@conditions[:additional_condition]}"
+        end.join(' OR ')
       end
 
       def table_or_detail_level_is_not_allowed?(filter)
         filter['field']['table'] = filter['field']['table'] || filter['table']
         filter['field']['column'] = filter['field']['column'] || filter['field']['field']
         adv_field = filter['field'].to_h.merge(@detail_levels).symbolize_keys
-        whitelisted_table?(**adv_field) && filter_with_detail_level?(**adv_field)
+        whitelisted_table?(**adv_field) && field_table_of_table?(filter) &&
+          filter_with_detail_level?(**adv_field, table: filter['table'])
+      end
+
+      # The field table must be the searched table, or one that is searched through it.
+      def field_table_of_table?(filter)
+        field_table = filter['field']['table']
+        return true if field_table == filter['table'] || SHARED_FIELD_TABLES.include?(field_table)
+
+        FIELD_TABLE_OWNERS.fetch(field_table, []).include?(filter['table'])
       end
 
       def whitelisted_table?(table:, column:, **_)
@@ -307,7 +341,7 @@ module Usecases
 
           @conditions[:condition_table] = ''
         when 'target_amount_value'
-          @conditions[:additional_condition] = "AND #{@table}.target_amount_unit = #{quote(filter['unit'])}"
+          @conditions[:additional_condition] = "AND #{@table}.target_amount_unit = #{bind(filter['unit'])}"
         when 'readout_titles'
           @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(readout_titles) AS titles'
           @conditions[:field] = "REPLACE(titles::TEXT, '\"', '')"
@@ -318,22 +352,22 @@ module Usecases
         when 'iupac_name'
           @conditions[:field] = "#{@field_table}.#{identifier(filter['field']['column'])}"
           @conditions[:additional_condition] =
-            "OR #{@field_table}.sum_formular ILIKE #{quote(@conditions[:words][0])}"
+            "OR #{@field_table}.sum_formular ILIKE #{bind(@conditions[:words][0])}"
           @conditions[:condition_table] = ''
         when 'xref'
-          opt = quote(filter['field']['opt'])
+          opt = bind(filter['field']['opt'])
           @conditions[:field] = "xref ->> #{opt}"
           if filter['unit'].present?
             @conditions[:field] = "xref -> #{opt} ->> 'value'"
             @conditions[:additional_condition] =
-              "AND (#{@table}.xref -> #{opt} ->> 'unit')::TEXT = #{quote(filter['unit'])}"
+              "AND (#{@table}.xref -> #{opt} ->> 'unit')::TEXT = #{bind(filter['unit'])}"
           end
         when 'stereo'
-          @conditions[:field] = "stereo ->> #{quote(filter['field']['opt'])}"
+          @conditions[:field] = "stereo ->> #{bind(filter['field']['opt'])}"
         when 'solvent'
           cross_join_empty = @conditions[:joins].exclude?('CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent')
           @conditions[:joins] << 'CROSS JOIN jsonb_array_elements(solvent) AS prop_solvent' if cross_join_empty
-          @conditions[:field] = "(prop_solvent ->> #{quote(filter['field']['opt'])})::TEXT"
+          @conditions[:field] = "(prop_solvent ->> #{bind(filter['field']['opt'])})::TEXT"
           @conditions[:condition_table] = ''
         when 'boiling_point', 'melting_point'
           range = filter['value'].split.split('-').flatten
@@ -373,7 +407,7 @@ module Usecases
           generic_sub_field_options(filter['sub_values'], prop, filter)
         else
           @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
-          @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = #{quote(filter['field']['column'])}"
+          @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = #{bind(filter['field']['column'])}"
         end
 
         @conditions[:condition_table] = ''
@@ -381,7 +415,7 @@ module Usecases
 
       def generic_sub_field_options(sub_values, prop, filter)
         @conditions[:field] = ''
-        @conditions[:additional_condition] = "(#{prop} ->> 'field')::TEXT = #{quote(filter['field']['column'])}"
+        @conditions[:additional_condition] = "(#{prop} ->> 'field')::TEXT = #{bind(filter['field']['column'])}"
 
         sub_values.first.each_with_index do |(key, value), j|
           next if value == ''
@@ -393,8 +427,8 @@ module Usecases
           sub_fields = filter['field']['type'] == 'table' ? 'sub_values' : 'sub_fields'
           if value['value'].present?
             sub_value = value['value'].tr(',', '.')
-            search_field = "replace((#{prop_sub} -> #{quote(key)} ->> 'value_system')::TEXT, '°', '')"
-            unit = " AND #{search_field} = #{quote(value['value_system'].to_s.delete('°'))}"
+            search_field = "replace((#{prop_sub} -> #{bind(key)} ->> 'value_system')::TEXT, '°', '')"
+            unit = " AND #{search_field} = #{bind(value['value_system'].to_s.delete('°'))}"
             sub_match = '>='
           end
 
@@ -402,10 +436,10 @@ module Usecases
 
           if filter['field']['type'] == 'table'
             @conditions[:additional_condition] +=
-              " AND (#{prop_sub} ->> #{quote(key)})::TEXT #{sub_match} #{quote(sub_value)}#{unit}"
+              " AND (#{prop_sub} ->> #{bind(key)})::TEXT #{sub_match} #{bind(sub_value)}#{unit}"
           else
-            @conditions[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = #{quote(key)}
-                                                AND (#{prop_sub} ->> 'value')::TEXT ILIKE #{quote("%#{value}%")}"
+            @conditions[:additional_condition] += " AND (#{prop_sub} ->> 'id')::TEXT = #{bind(key)}
+                                                AND (#{prop_sub} ->> 'value')::TEXT ILIKE #{bind("%#{value}%")}"
           end
         end
       end
@@ -423,16 +457,16 @@ module Usecases
           filter['sub_values'].first.each_with_index do |(key, value), j|
             first_and = j.zero? ? '' : ' AND'
             @conditions[:field] = ''
-            @conditions[:additional_condition] += "#{first_and} (#{prop} ->> #{quote(key)})::TEXT ILIKE #{quote(value)}"
+            @conditions[:additional_condition] += "#{first_and} (#{prop} ->> #{bind(key)})::TEXT ILIKE #{bind(value)}"
           end
         elsif filter['unit'].present?
-          @conditions[:field] = "(#{prop} -> #{quote(filter['field']['column'])} ->> 'value')::FLOAT"
+          @conditions[:field] = "(#{prop} -> #{bind(filter['field']['column'])} ->> 'value')::FLOAT"
           @conditions[:words][0] = filter['value'].to_f
           unit = %w[mg g].include?(filter['unit']) ? filter['unit'] : 'μg'
           @conditions[:additional_condition] =
-            "AND #{prop} -> #{quote(filter['field']['column'])} ->> 'unit' = #{quote(unit)}"
+            "AND #{prop} -> #{bind(filter['field']['column'])} ->> 'unit' = #{bind(unit)}"
         else
-          @conditions[:field] = "(#{prop} ->> #{quote(filter['field']['column'])})::TEXT"
+          @conditions[:field] = "(#{prop} ->> #{bind(filter['field']['column'])})::TEXT"
         end
       end
       # rubocop:enable Metrics/AbcSize
@@ -449,7 +483,7 @@ module Usecases
             if %w[name description plain_text_content].include?(filter['field']['column'])
               "children.#{filter['field']['column']}"
             else
-              "children.extended_metadata -> #{quote(filter['field']['column'])}"
+              "children.extended_metadata -> #{bind(filter['field']['column'])}"
             end
 
           @conditions[:additional_condition] += dataset_condition(filter)
@@ -457,11 +491,11 @@ module Usecases
       end
 
       def dataset_condition(filter)
-        value = quote("%#{filter['value']}%")
+        value = bind("%#{filter['value']}%")
         if %w[name description plain_text_content].include?(filter['field']['column'])
           "OR dataset.#{filter['field']['column']} ILIKE #{value}"
         else
-          "OR dataset.extended_metadata -> #{quote(filter['field']['column'])} ILIKE #{value}"
+          "OR dataset.extended_metadata -> #{bind(filter['field']['column'])} ILIKE #{value}"
         end
       end
 
@@ -487,7 +521,7 @@ module Usecases
         else
           field = filter['field']['column'].remove('datasets_')
           @conditions[:field] = "(#{prop} ->> 'value')::TEXT"
-          @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = #{quote(field)}"
+          @conditions[:additional_condition] = "AND (#{prop} ->> 'field')::TEXT = #{bind(field)}"
 
           if filter['unit'].present? || filter['available_options'].present?
             temperature_field_specials(prop, 'value', 'value_system') if field == 'temperature'
@@ -508,7 +542,7 @@ module Usecases
       def unit_and_available_options_conditions(filter, prop, field, number, unit)
         if filter['unit'].present?
           @conditions[:additional_condition] +=
-            " AND #{remove_degree_from_property(prop, unit)} = LOWER(#{quote(remove_degree_from_unit(filter))})"
+            " AND #{remove_degree_from_property(prop, unit)} = LOWER(#{bind(remove_degree_from_unit(filter))})"
         end
 
         return if filter['available_options'].blank?
@@ -521,15 +555,15 @@ module Usecases
             @conditions[:additional_condition] +=
               " OR (#{valid_temperature(prop, number)}
               AND (#{prop} ->> '#{number}')::FLOAT #{@match} '#{option[:value].to_f}'
-              AND #{remove_degree_from_property(prop, unit)} = LOWER(#{quote(remove_degree_from_unit(option))}))"
+              AND #{remove_degree_from_property(prop, unit)} = LOWER(#{bind(remove_degree_from_unit(option))}))"
           else
-            conditions += " AND (#{prop} ->> '#{number}')::TEXT NOT ILIKE #{quote("%#{option[:value]}%")}"
+            conditions += " AND (#{prop} ->> '#{number}')::TEXT NOT ILIKE #{bind("%#{option[:value]}%")}"
           end
         end
 
         return if field.include?('temperature')
 
-        @conditions[:additional_condition] += " OR ((#{prop} ->> 'field')::TEXT = #{quote(field)}#{conditions})"
+        @conditions[:additional_condition] += " OR ((#{prop} ->> 'field')::TEXT = #{bind(field)}#{conditions})"
       end
       # rubocop:enable Metrics/AbcSize
 
@@ -576,7 +610,7 @@ module Usecases
 
         if filter['field']['column'] == 'ec_numbers'
           @conditions[:first_condition] =
-            "#{@field_table}.ec_numbers @> ARRAY[#{quote(@conditions[:words][0])}]::varchar[]"
+            "#{@field_table}.ec_numbers @> ARRAY[#{bind(@conditions[:words][0])}]::varchar[]"
           @conditions[:additional_condition] = ''
           @conditions[:words][0] = ''
         end
@@ -642,7 +676,7 @@ module Usecases
         cross_join =
           "CROSS JOIN jsonb_array_elements(#{column} -> #{quote(filter['field']['opt_type'])}) AS #{prop}"
         @conditions[:joins] << cross_join if @conditions[:joins].exclude?(cross_join)
-        @conditions[:field] = "(#{prop} ->> #{quote(filter['field']['opt'])})::TEXT"
+        @conditions[:field] = "(#{prop} ->> #{bind(filter['field']['opt'])})::TEXT"
       end
 
       def field_options_for_opt_fields(filter)
@@ -651,11 +685,11 @@ module Usecases
         cross_join = "CROSS JOIN jsonb_array_elements(#{column}) AS #{prop}"
         @conditions[:joins] << cross_join if @conditions[:joins].exclude?(cross_join)
         type = filter['field']['type'] == 'date' ? 'Date' : 'TEXT'
-        @conditions[:field] = "(#{prop} ->> #{quote(filter['field']['opt'])})::#{type}"
+        @conditions[:field] = "(#{prop} ->> #{bind(filter['field']['opt'])})::#{type}"
       end
 
       def field_options_for_general_tags(filter)
-        @conditions[:first_condition] = "#{quote(filter['value'])} = ANY(general_tags)"
+        @conditions[:first_condition] = "#{bind(filter['value'])} = ANY(general_tags)"
         @conditions[:words][0] = ''
         @conditions[:field] = ''
       end

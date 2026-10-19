@@ -1037,6 +1037,93 @@ describe Chemotion::SearchAPI do
           expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
         end
       end
+
+      context 'when a value next to a searched word contains a question mark' do
+        let(:advanced_params) do
+          [base_param.merge(match: '>=', table: 'samples', unit: 'g?',
+                            field: { column: 'target_amount_value', table: 'samples' }, value: '0')]
+        end
+
+        it 'treats the value as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when searched words of several rows contain question marks' do
+        let(:advanced_params) do
+          [
+            base_param.merge(match: 'ILIKE', table: 'samples', unit: '',
+                             field: { column: 'name', table: 'samples' }, value: 'Wat?'),
+            base_param.merge(link: 'OR', match: 'ILIKE', table: 'samples', unit: '',
+                             field: { column: 'name', table: 'samples' }, value: 'Water'),
+          ]
+        end
+
+        it 'binds each word to its own row' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
+        end
+      end
+    end
+
+    context 'when the field table does not belong to the searched table' do
+      let(:advanced_params) do
+        [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+           field: { column: 'name', table: 'device_descriptions' }, value: 'Water' }]
+      end
+
+      it 'refuses the filter' do
+        expect(response).to have_http_status(:created)
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+      end
+    end
+
+    context 'when the searched table is not an element table' do
+      let(:advanced_params) do
+        [{ link: '', match: 'ILIKE', table: 'segments', element_id: 0, unit: '',
+           field: { column: 'name', table: 'segments', key: 'layer', element_id: 1 }, value: 'Water' }]
+      end
+
+      it 'refuses the filter' do
+        expect(response).to have_http_status(:created)
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/advanced in a collection shared at sample detail level 0' do
+    let(:url) { '/api/v1/search/advanced' }
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let!(:shared_sample) { create(:sample, name: 'Shared water', creator: owner, collections: [shared_collection]) }
+    let(:params) do
+      {
+        selection: { elementType: :advanced, search_by_method: :advanced, advanced_params: advanced_params },
+        collection_id: shared_collection.id, page: 1, per_page: 15
+      }
+    end
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 0)
+      do_request
+    end
+
+    [
+      { column: 'name', table: 'samples' },
+      { column: 'name', table: 'device_descriptions' },
+      { column: 'iupac_name', table: 'molecules' },
+    ].each do |field|
+      context "with a #{field[:table]}.#{field[:column]} filter" do
+        let(:advanced_params) do
+          [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '', field: field, value: 'water' }]
+        end
+
+        it 'finds no samples' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+        end
+      end
     end
   end
 

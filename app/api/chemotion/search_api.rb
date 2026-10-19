@@ -135,10 +135,10 @@ module Chemotion
           detail_levels: dl,
           params: params[:selection][:advanced_params],
         ).filter!
+        return Sample.none if conditions[:error].present? || conditions[:model_name].blank?
 
-        query_cond = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
         scope = conditions[:model_name].by_collection_id(c_id.to_i)
-                                       .where(query_cond)
+                                       .where(conditions[:query])
                                        .joins(conditions[:joins].join(' '))
         scope = order_by_molecule(scope) if conditions[:model_name] == Sample
         if %w[ResearchPlan Wellplate].include?(conditions[:model_name].to_s)

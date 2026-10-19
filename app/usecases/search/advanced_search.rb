@@ -74,8 +74,7 @@ module Usecases
       end
 
       def query_with_condition
-        filtered_query = @conditions[:query].gsub(/\A\ AND \s*/, '')
-        @conditions[:value].present? ? [filtered_query] + @conditions[:value] : filtered_query
+        @conditions[:query].gsub(/\A\ AND \s*/, '')
       end
 
       def elements_by_scope(scope)
