@@ -462,7 +462,8 @@ export class ElementActions {
 
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
-      if (sample.hasReactionMixtureConflict(reaction)) {
+      const currentReaction = sample.isMixture() ? sample.resolveReactionContext(reaction) : reaction;
+      if (sample.hasReactionMixtureConflict(currentReaction)) {
         rootStore.notificationsStore.add(mixtureReactionConflictNotification());
         LoadingActions.stop();
         return;
@@ -478,7 +479,7 @@ export class ElementActions {
         // Update sample
         const newSample = await SamplesFetcher.update(sample);
         // Keep subsequent editor saves attached to the reaction after the API replaces the sample.
-        newSample.belongTo = reaction;
+        newSample.belongTo = currentReaction;
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
@@ -487,25 +488,25 @@ export class ElementActions {
         }
 
         // Update the material in the reaction and dispatch
-        reaction.updateMaterial(newSample);
-        reaction.changed = true;
+        currentReaction.updateMaterial(newSample);
+        currentReaction.changed = true;
 
         // Persist only the edited mixture's existing association, keeping other
         // reaction edits pending until the user saves from the reaction toolbar.
         const savedReactionId = newSample.tag?.taggable_data?.reaction_id;
-        if (newSample.isMixture() && !reaction.isNew && savedReactionId === reaction.id) {
-          const material = reaction.sampleById(newSample.id);
-          await ReactionsFetcher.updateMaterialEquivalent(reaction.id, material.id, material.equivalent);
+        if (newSample.isMixture() && !currentReaction.isNew && savedReactionId === currentReaction.id) {
+          const material = currentReaction.sampleById(newSample.id);
+          await ReactionsFetcher.updateMaterialEquivalent(currentReaction.id, material.id, material.equivalent);
         }
 
         if (sample.isDetachedMixtureDraft) {
           newSample.isDetachedMixtureDraft = true;
-          newSample._mixtureDraftSourceState = reaction.sampleById(newSample.id).mixtureReactionState();
+          newSample._mixtureDraftSourceState = currentReaction.sampleById(newSample.id).mixtureReactionState();
           newSample.updateChecksum();
         }
 
         dispatch({
-          reaction,
+          reaction: currentReaction,
           sample: newSample,
           closeView,
         });

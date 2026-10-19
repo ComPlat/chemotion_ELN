@@ -222,6 +222,113 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(draft.hasReactionMixtureConflict()).toBe(false);
   });
 
+  const buildAfterReactionToolbarSave = (dirtyBeforeSave = false) => {
+    const { reaction, mixture } = build();
+    reaction.purification_solvents = [];
+    reaction.segments = [];
+    let draft;
+    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    draft.belongTo = reaction;
+    if (dirtyBeforeSave) draft.name = 'Unsaved composition edit';
+    mixture.setAmount({ value: 12, unit: 'g' });
+
+    // The toolbar save returns a new Reaction and new material objects with the same IDs.
+    const payload = JSON.parse(JSON.stringify(reaction.serialize()));
+    const savedReaction = new Reaction({ ...payload, ...payload.materials });
+    savedReaction.samples.forEach((sample) => {
+      const original = reaction.sampleById(sample.id);
+      // API responses include molecule data rather than only the IDs in the save payload.
+      sample.molecule = original.molecule;
+      if (sample.isMixture()) {
+        sample.initialComponents(sample.components.map((component) => Component.deserializeData({
+          ...component,
+          component_properties: {
+            ...component.component_properties,
+            molecule: original.components.find((entry) => entry.id === component.id).molecule,
+          },
+        })));
+      }
+    });
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = {
+      selecteds: [reaction, draft], currentElement: reaction, activeKey: 0, refreshCoefficient: [],
+    };
+    sandbox.stub(ElementStore, 'getState').callsFake(() => store.state);
+    store.changeCurrentElement(savedReaction);
+    store.changeCurrentElement(draft);
+    return { reaction, savedReaction, draft, store };
+  };
+
+  [false, true].forEach((dirtyBeforeSave) => {
+    it(`rebinds a mixture draft to the toolbar-saved reaction, unsaved edits=${dirtyBeforeSave}`, () => {
+      const { savedReaction, draft } = buildAfterReactionToolbarSave(dirtyBeforeSave);
+
+      expect(draft.belongTo).toBe(savedReaction);
+      if (dirtyBeforeSave) {
+        expect(draft.name).toBe('Unsaved composition edit');
+        expect(draft.isEdited).toBe(true);
+        expect(draft.hasReactionMixtureConflict()).toBe(true);
+      } else {
+        expect(draft.amount_g).toBeCloseTo(12, 12);
+        expect(draft.isEdited).toBe(false);
+        expect(draft.hasReactionMixtureConflict()).toBe(false);
+      }
+    });
+  });
+
+  it('blocks a mixture save against the open reaction even when belongTo points to the pre-save copy', async () => {
+    const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+    draft.belongTo = reaction;
+    draft.setAmount({ value: 12.5, unit: 'g' });
+    savedReaction.sampleById(draft.id).setAmount({ value: 13, unit: 'g' });
+    const dispatch = sinon.spy();
+
+    await new ElementActions().updateSampleForReaction(draft, reaction)(dispatch);
+
+    expect(draft.hasReactionMixtureConflict()).toBe(true);
+    expect(draft.amount_g).toBeCloseTo(12.5, 12);
+    expect(savedReaction.sampleById(draft.id).amount_g).toBeCloseTo(13, 12);
+    sinon.assert.notCalled(SamplesFetcher.update);
+    sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+    sinon.assert.notCalled(fetchStub);
+    sinon.assert.notCalled(dispatch);
+  });
+
+  [false, true].forEach((closeView) => {
+    it(`keeps a conflicting draft open after a reaction toolbar save, close view=${closeView}`, () => {
+      const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+      draft.belongTo = reaction;
+      draft.setAmount({ value: 12.5, unit: 'g' });
+      savedReaction.sampleById(draft.id).setAmount({ value: 13, unit: 'g' });
+      const details = Object.create(SampleDetails.prototype);
+      details.state = { sample: draft };
+      details.context = { notifications: { add: sinon.spy() } };
+      const save = sandbox.spy(ElementActionDispatcher, 'updateSampleForReaction');
+
+      details.handleSubmit(closeView);
+
+      sinon.assert.calledOnce(details.context.notifications.add);
+      sinon.assert.notCalled(save);
+      sinon.assert.notCalled(SamplesFetcher.update);
+      expect(draft.isEdited).toBe(true);
+    });
+  });
+
+  it('applies a nonconflicting mixture save to the open toolbar-saved reaction', async () => {
+    const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+    draft.belongTo = reaction;
+    draft.setAmount({ value: 12.5, unit: 'g' });
+    const dispatch = sinon.spy();
+
+    await new ElementActions().updateSampleForReaction(draft, reaction, false)(dispatch);
+
+    sinon.assert.calledOnce(dispatch);
+    expect(dispatch.firstCall.args[0].reaction).toBe(savedReaction);
+    expect(savedReaction.sampleById(draft.id).amount_g).toBeCloseTo(12.5, 12);
+    expect(reaction.sampleById(draft.id).amount_g).toBeCloseTo(12, 12);
+    expect(dispatch.firstCall.args[0].sample.belongTo).toBe(savedReaction);
+  });
+
   [false, true].forEach((closeView) => {
     it(`keeps a conflicting draft open on Save, close view=${closeView}`, () => {
       const { reaction, mixture } = build();

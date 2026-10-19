@@ -1784,17 +1784,20 @@ class ElementStore {
     }
 
     if (previous instanceof Reaction) {
-      const { samples } = previous;
+      const reaction = selecteds.find((element) => SameEleTypId(element, previous)) || previous;
+      const { samples } = reaction;
       selecteds.map((nextSample) => {
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
         if (previousSample && nextSample.isMixture()) {
+          // Rebind even when preserving a dirty draft or when the quantity is unchanged.
+          nextSample.belongTo = reaction;
           const sourceState = previousSample.mixtureReactionState();
           // Keep unsaved composition edits. The save guard will report a conflict
           // if the reaction quantity or reference changed since this draft opened.
           if (nextSample.isEdited || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
 
           const refreshed = new Sample(cloneDeep(omit(previousSample, ['belongTo', '_equivalent', 'reference'])));
-          refreshed.belongTo = previous;
+          refreshed.belongTo = reaction;
           refreshed.isDetachedMixtureDraft = true;
           refreshed._mixtureDraftSourceState = sourceState;
           // The reaction row may not have fetched its components yet. Keep the
