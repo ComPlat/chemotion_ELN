@@ -44,7 +44,7 @@ RSpec.describe Device do
 
   before do
     device.people << user
-    device.save
+    device.save!
   end
 
   it 'handles user device relationship correctly' do
@@ -95,7 +95,16 @@ RSpec.describe Device do
     it 'rejects an abbreviation that differs only in case' do
       taken = create(:device, name_abbreviation: 'Ab_c')
 
-      expect(build(:device, name_abbreviation: taken.name_abbreviation.upcase)).not_to be_valid
+      duplicate = build(:device, name_abbreviation: taken.name_abbreviation.upcase)
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors.of_kind?(:name_abbreviation, :taken)).to be true
+    end
+
+    it 'lets a device change the case of its own abbreviation' do
+      device.name_abbreviation = device.name_abbreviation.swapcase
+
+      expect(device).to be_valid
     end
 
     it 'adds errors instead of raising when the abbreviation is missing' do
@@ -128,6 +137,7 @@ RSpec.describe Device do
       other.name_abbreviation = ''
 
       expect(other).not_to be_valid
+      expect(other.errors.of_kind?(:name_abbreviation, :taken)).to be true
       expect(other.errors.messages[:name_abbreviation]).to include 'Is already in use'
     end
 
