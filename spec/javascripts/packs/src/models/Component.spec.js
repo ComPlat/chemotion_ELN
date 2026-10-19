@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import expect from 'expect';
@@ -163,6 +164,35 @@ describe('Component', () => {
   });
 
   describe('handleAmountChange', () => {
+    [0, undefined].forEach((mass) => {
+      it(`initializes a solid mass from typed moles under the Mass lock, initial mass=${mass}`, () => {
+        component.material_group = 'solid';
+        component.parent_id = 'source-sample';
+        component.amount_g = mass;
+        component.purity = 0.5;
+        component.molecule.molecular_weight = 100;
+
+        component.handleAmountChange({ unit: 'mol', value: 0.01 }, 0.1, true);
+
+        expect(component.amount_mol).toBe(0.01);
+        expect(component.amount_g).toBeCloseTo(2, 12);
+        expect(component.purity).toBe(0.5);
+        expect(component.concn).toBeCloseTo(0.1, 12);
+      });
+    });
+
+    it('preserves an existing solid mass and derives purity from typed moles under the Mass lock', () => {
+      component.material_group = 'solid';
+      component.amount_g = 2;
+      component.purity = 0.9;
+      component.molecule.molecular_weight = 100;
+
+      component.handleAmountChange({ unit: 'mol', value: 0.01 }, 0.1, true);
+
+      expect(component.amount_g).toBe(2);
+      expect(component.purity).toBeCloseTo(0.5, 12);
+    });
+
     it('should set amount in mol and calculate volume if stock (starting concentration), when material group is'
       + ' liquid', () => {
       const amount = { unit: 'mol', value: 2 };

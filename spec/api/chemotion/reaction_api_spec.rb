@@ -300,6 +300,20 @@ describe Chemotion::ReactionAPI do
       expect(response).to have_http_status(:bad_request)
       expect(material.reload.equivalent).to eq(0.6)
     end
+
+    it 'rejects a null equivalent with 422 without changing the association' do
+      put endpoint, params: { equivalent: nil }, as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(material.reload.equivalent).to eq(0.6)
+    end
+
+    it 'accepts zero as a valid equivalent' do
+      put endpoint, params: { equivalent: 0 }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(material.reload.equivalent).to eq(0)
+    end
   end
 
   describe 'DELETE /api/v1/reactions' do

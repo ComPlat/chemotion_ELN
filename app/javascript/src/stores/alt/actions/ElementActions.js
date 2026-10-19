@@ -494,9 +494,27 @@ export class ElementActions {
         // Persist only the edited mixture's existing association, keeping other
         // reaction edits pending until the user saves from the reaction toolbar.
         const savedReactionId = newSample.tag?.taggable_data?.reaction_id;
-        if (newSample.isMixture() && !currentReaction.isNew && savedReactionId === currentReaction.id) {
-          const material = currentReaction.sampleById(newSample.id);
-          await ReactionsFetcher.updateMaterialEquivalent(currentReaction.id, material.id, material.equivalent);
+        const material = currentReaction.sampleById(newSample.id);
+        let equivalentSaveFailed = false;
+        if (newSample.isMixture() && !currentReaction.isNew && savedReactionId === currentReaction.id
+          && Number.isFinite(material?.equivalent)) {
+          try {
+            await ReactionsFetcher.updateMaterialEquivalent(currentReaction.id, material.id, material.equivalent);
+          } catch (errorMessage) {
+            // The mixture is already saved. Refresh its draft baseline even if this
+            // separate association update fails, so the user can retry without a conflict.
+            equivalentSaveFailed = true;
+            console.log(errorMessage);
+            rootStore.notificationsStore.add({
+              title: 'Mixture saved; reaction equivalent not saved',
+              message: 'Your mixture changes were saved. Retry saving this mixture or save the reaction '
+                + 'to update its equivalent.',
+              level: 'warning',
+              position: 'tr',
+              autoDismiss: 10,
+            });
+            LoadingActions.stop();
+          }
         }
 
         if (sample.isDetachedMixtureDraft) {
@@ -508,7 +526,7 @@ export class ElementActions {
         dispatch({
           reaction: currentReaction,
           sample: newSample,
-          closeView,
+          closeView: equivalentSaveFailed ? false : closeView,
         });
       } catch (errorMessage) {
         console.log(errorMessage);
