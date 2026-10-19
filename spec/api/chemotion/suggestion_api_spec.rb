@@ -379,6 +379,53 @@ describe Chemotion::SuggestionAPI do
   end
   # rubocop:enable RSpec/MultipleMemoizedHelpers
 
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe 'GET /api/v1/suggestions/:element_type in a shared collection' do
+    include_context 'api request authorization context'
+
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let(:detail_level) { 0 }
+    let(:suggestion_names) { parsed_json_response['suggestions'].pluck('name') }
+    let(:sbmm_sample) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: create(:uniprot_sbmm),
+                                                   user: owner, name: 'shared sbmm sample')
+    end
+    let(:device_description) { create(:device_description, name: 'shared device description', creator: owner) }
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user,
+                                sequencebasedmacromoleculesample_detail_level: detail_level,
+                                devicedescription_detail_level: detail_level)
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample, collection: shared_collection,
+      )
+      CollectionsDeviceDescription.create!(device_description: device_description, collection: shared_collection)
+      get "/api/v1/suggestions/#{element_type}", params: { collection_id: shared_collection.id, query: 'shared' }
+    end
+
+    %w[all sequence_based_macromolecule_samples device_descriptions].each do |type|
+      context "with detail level 0 for #{type}" do
+        let(:element_type) { type }
+
+        it 'suggests no sbmm samples or device descriptions' do
+          expect(response).to have_http_status(:success)
+          expect(suggestion_names).not_to include('shared sbmm sample', 'shared device description')
+        end
+      end
+    end
+
+    context 'with a higher detail level' do
+      let(:detail_level) { 10 }
+      let(:element_type) { 'all' }
+
+      it 'suggests sbmm samples and device descriptions' do
+        expect(suggestion_names).to include('shared sbmm sample', 'shared device description')
+      end
+    end
+  end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
+
   context 'when user is authenticated' do
     include_context 'api request authorization context'
     let(:query) { 'query' }
