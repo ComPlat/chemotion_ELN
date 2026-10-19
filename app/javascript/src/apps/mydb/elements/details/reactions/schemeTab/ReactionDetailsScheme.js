@@ -754,6 +754,8 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, amount, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
+    // A deleted row can flush a pending edit during unmount.
+    if (!updatedSample) return reaction;
 
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
@@ -1180,7 +1182,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
     updatedSample.belongTo = reaction;
 
-    updatedSample.setReferenceComponent(referenceComponentIndex);
+    updatedSample.setReferenceComponent(referenceComponentIndex, { preserveRatios: true });
 
     const { referenceMaterial } = reaction;
     if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {

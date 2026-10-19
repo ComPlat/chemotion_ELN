@@ -145,9 +145,8 @@ class Material extends Component {
   }
 
   componentWillUnmount() {
-    // Drop any pending debounced amount edit so it can't fire after unmount.
-    // Blur already flushes real edits, so cancelling here loses nothing.
-    this.debounceHandleAmountUnitChange.cancel();
+    // Removing a focused input does not fire blur, so commit pending edits here.
+    this.debounceHandleAmountUnitChange.flush();
   }
 
   handleMaterialClick(sample) {

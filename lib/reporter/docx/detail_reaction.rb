@@ -607,6 +607,11 @@ module Reporter
         amount / reference_amount
       end
 
+      def component_reference_amount(material)
+        reference_props = normalize_component_properties(find_reference_component(material).to_h)
+        Float(reference_props[:amount_mol], exception: false) || 0.0
+      end
+
       def process_mixture_components(material, sample_hash)
         # Check if material is a mixture with components
         # Always set components to an empty array to avoid nil errors in Sablon templates
@@ -617,8 +622,7 @@ module Reporter
           components = material.components || []
           # Only set components if there are actual components to display
           if components.present? && components.any?
-            reference_props = normalize_component_properties(find_reference_component(material).to_h)
-            reference_amount = Float(reference_props[:amount_mol], exception: false) || 0.0
+            reference_amount = component_reference_amount(material)
             sample_hash[:components] = components.map do |comp|
               comp_props = normalize_component_properties(comp)
               comp_mol = (comp_props[:molecule] || {}).transform_keys(&:to_sym)

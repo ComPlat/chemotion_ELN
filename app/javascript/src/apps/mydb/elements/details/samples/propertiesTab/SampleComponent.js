@@ -125,7 +125,7 @@ const matTagCollect = (connect, monitor) => ({
  * @class SampleComponent
  * @extends React.Component
  */
-class SampleComponent extends Component {
+export class SampleComponent extends Component {
   static contextType = StoreContext;
   /**
    * Creates an instance of SampleComponent.
@@ -176,9 +176,8 @@ class SampleComponent extends Component {
 
   componentWillUnmount() {
     ComponentStore.unlisten(this.onComponentStoreChange);
-    // Drop any pending debounced amount edit so it can't fire after unmount.
-    // Blur already flushes real edits, so cancelling here loses nothing.
-    this.debounceHandleAmountChange.cancel();
+    // Removing a focused input does not fire blur, so commit pending edits here.
+    this.debounceHandleAmountChange.flush();
   }
 
   /**
@@ -317,9 +316,10 @@ class SampleComponent extends Component {
    * @param {Object} e - The change event
    */
   handleReferenceChange(e) {
-    const { value } = e.target;
+    const { sample, materialGroup, onChange } = this.props;
+    if (sample.isReactionLinked()) return;
 
-    const { materialGroup, onChange } = this.props;
+    const { value } = e.target;
 
     if (onChange) {
       const event = {
@@ -568,14 +568,23 @@ class SampleComponent extends Component {
    */
   renderDeleteButton(material) {
     const { sample, deleteMaterial } = this.props;
+    const referenceProtected = sample.isReactionLinked() && material.reference;
+    const deleteButton = (
+      <DeleteButton
+        className="component-delete-btn"
+        disabled={!permitOn(sample) || referenceProtected}
+        onClick={() => deleteMaterial(material)}
+        style={referenceProtected ? { pointerEvents: 'none' } : undefined}
+      />
+    );
 
     return (
       <td className="component-delete-cell">
-        <DeleteButton
-          className="component-delete-btn"
-          disabled={!permitOn(sample)}
-          onClick={() => deleteMaterial(material)}
-        />
+        {referenceProtected ? this.referenceRestrictionHint(
+          deleteButton,
+          'delete',
+          'Select another reference component in the reaction’s material row before deleting or merging this component.'
+        ) : deleteButton}
       </td>
     );
   }
@@ -669,6 +678,27 @@ class SampleComponent extends Component {
     );
   }
 
+  /** Keeps explanations accessible on hover and keyboard focus around disabled controls. */
+  referenceRestrictionHint(control, action, message) {
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`${action}-component-reference-${this.componentId()}`}>{message}</Tooltip>}
+      >
+        {/* The disabled control takes no mouse events or focus, so a focusable wrapper
+            hosts the explanation for mouse and keyboard users alike. */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <span
+          className="d-inline-block"
+          aria-label={message}
+          tabIndex={0}
+        >
+          {control}
+        </span>
+      </OverlayTrigger>
+    );
+  }
+
   /**
    * Renders the reference radio button for a material.
    * @param {Object} material - The material object
@@ -676,18 +706,28 @@ class SampleComponent extends Component {
    */
   materialRef(material) {
     const { sample } = this.props;
+    const reactionLinked = sample.isReactionLinked();
+    const referenceInput = (
+      <Form.Check
+        type="radio"
+        disabled={!permitOn(sample) || reactionLinked}
+        name="reference"
+        checked={material.reference}
+        onChange={(e) => this.handleReferenceChange(e)}
+        size="xsm"
+        className="m-0 ms-2"
+        style={reactionLinked ? { pointerEvents: 'none' } : undefined}
+      />
+    );
 
     return (
       <td>
-        <Form.Check
-          type="radio"
-          disabled={!permitOn(sample)}
-          name="reference"
-          checked={material.reference}
-          onChange={(e) => this.handleReferenceChange(e)}
-          size="xsm"
-          className="m-0 ms-2"
-        />
+        {reactionLinked ? this.referenceRestrictionHint(
+          referenceInput,
+          'switch',
+          'Change the reference component in the reaction’s material row '
+          + 'so dependent amounts and equivalents update together.'
+        ) : referenceInput}
       </td>
     );
   }

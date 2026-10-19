@@ -211,6 +211,37 @@ describe('Sample', async () => {
   });
 
   describe('Sample.setReferenceComponent()', () => {
+    it('preserves 1:2:2 composition ratios through reaction reference switches and reloads', () => {
+      const massG = 7.7617331;
+      const amounts = [0.004195364, 0.008390728, 0.008390728];
+      const ratios = [1, 2, 2];
+      let mixture = new Sample({ sample_type: 'Mixture', amount_value: massG, amount_unit: 'g' });
+      mixture.initialComponents(amounts.map((amount, index) => new Component({
+        id: index + 1, position: index, reference: index === 0,
+        amount_mol: amount, equivalent: ratios[index], relative_molecular_weight: massG / amount,
+      })));
+
+      [1, 2, 0].forEach((referenceIndex) => {
+        mixture.setReferenceComponent(referenceIndex, { preserveRatios: true });
+
+        expect(mixture.components.map((component) => component.equivalent)).toEqual(ratios);
+        expect(mixture.amount_g).toBeCloseTo(massG, 10);
+        expect(mixture.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+        mixture.components.forEach((component, index) => {
+          expect(component.amount_mol).toBeCloseTo(amounts[index], 12);
+        });
+
+        const payload = JSON.parse(JSON.stringify(mixture.serializeMaterial()));
+        mixture = new Sample(payload);
+        mixture.initialComponents(payload.components.map(Component.deserializeData));
+
+        expect(mixture.reference_component.id).toBe(referenceIndex + 1);
+        expect(mixture.components.map((component) => component.equivalent)).toEqual(ratios);
+        expect(mixture.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
+        expect(mixture.isEdited).toBe(false);
+      });
+    });
+
     const buildWithClearedComponent = () => {
       const sample = new Sample({ sample_type: 'Mixture', amount_value: 1, amount_unit: 'g' });
       const components = [0.01, 0, 0].map((amount, index) => new Component({
@@ -320,6 +351,22 @@ describe('Sample', async () => {
   });
 
   describe('Sample.initialComponents()', () => {
+    it('edits a portion component mass without changing the stock component', () => {
+      const stock = new Sample({ id: 500, sample_type: 'Mixture', short_label: 'stock', children_count: 0 });
+      stock.initialComponents([new Component({
+        id: 501, position: 0, reference: true, material_group: 'solid', purity: 1,
+        amount_mol: 0.012, amount_g: 1.2, molecule: { molecular_weight: 100 },
+      })]);
+      stock.calculateTotalMixtureMass();
+      const portion = stock.buildChildWithoutCounter();
+
+      portion.components[0].handleVolumeChange({ value: 2.125, unit: 'g' }, 0);
+
+      expect(portion.components[0].amount_mol).toBeCloseTo(0.02125, 12);
+      expect(stock.components[0].amount_mol).toBeCloseTo(0.012, 12);
+      expect(stock.components[0].amount_g).toBeCloseTo(1.2, 12);
+    });
+
     [false, true].forEach((hasTotalVolume) => {
       it(`initializes a legacy stock before cloning a solvent-containing portion, total volume=${hasTotalVolume}`, () => {
         const stock = new Sample({
@@ -996,6 +1043,34 @@ describe('Sample', async () => {
   });
 
   describe('Sample ratio edit after an unresolved mixture mass', () => {
+    [
+      { density: 0, molarity: 0 },
+      { density: 0, molarity: 2 },
+      { density: 1, molarity: 2 },
+    ].forEach(({ density, molarity }) => {
+      it(`keeps the entered 10 g with liquid density=${density} and stock molarity=${molarity}`, () => {
+        const mixture = new Sample({
+          sample_type: 'Mixture', amountType: 'target', amount_value: 10, amount_unit: 'g',
+        });
+        mixture.initialComponents(['solid', 'liquid'].map((materialGroup, index) => new Component({
+          id: index + 1, position: index, reference: index === 0, material_group: materialGroup,
+          equivalent: index === 0 ? 1 : 0, amount_mol: 0, amount_g: 0, amount_l: 0,
+          purity: 1, density: index === 1 ? density : 0,
+          starting_molarity_value: index === 1 ? molarity : 0, molecule: { molecular_weight: 100 },
+        })));
+
+        mixture.updateComponentRatio(mixture.components[1], 1, 'liquid');
+
+        expect(mixture.amount_g).toBe(10);
+        expect(mixture.components.map((component) => component.amount_mol)).toEqual(
+          density ? [0.05, 0.05] : [0, 0]
+        );
+        expect(mixture.components[1].amount_l).toBe(density ? 0.005 : 0);
+        expect(mixture.components.map((component) => component.equivalent)).toEqual([1, 1]);
+        expect(mixture.serializeMaterial().target_amount_value).toBe(10);
+      });
+    });
+
     const build = () => {
       const sample = new Sample({ sample_type: 'Mixture' });
       sample.initialComponents([100, 200, 300].map((molecularWeight, index) => new Component({
@@ -2078,7 +2153,75 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample solvent scaling through zero mass', () => {
+    it('clears the old solvent scaling basis when total mass is recomputed', () => {
+      const mixture = new Sample({
+        id: 600, sample_type: 'Mixture', amount_value: 0, amount_unit: 'g',
+        solvent: [{ amount_l: 0.01, density: 1 }],
+        sample_details: { solvent_scaling_mass_g: 11 },
+      });
+      mixture.initialComponents([new Component({
+        id: 601, position: 0, reference: true, material_group: 'solid', purity: 1,
+        amount_mol: 0, amount_g: 0, molecule: { molecular_weight: 100 },
+      })]);
+
+      mixture.calculateTotalMixtureMass();
+
+      expect(mixture.amount_g).toBe(10);
+      expect(mixture.sample_details.solvent_scaling_mass_g).toBeUndefined();
+      expect(mixture.serializeMaterial().sample_details.solvent_scaling_mass_g).toBeUndefined();
+      mixture.setAmount({ value: 0, unit: 'g' });
+      mixture.setAmount({ value: 22, unit: 'g' });
+      expect(mixture.solvent[0].amount_l).toBeCloseTo(0.022, 12);
+    });
+
+    ['setAmount', 'setAmountAndNormalizeToGram'].forEach((setter) => {
+      [false, true].forEach((reloadAtZero) => {
+        it(`recovers the solvent basis with ${setter}, reload at zero=${reloadAtZero}`, () => {
+          let mixture = new Sample({
+            id: 600, sample_type: 'Mixture', amount_value: 11, amount_unit: 'g',
+            solvent: [{ amount_l: 0.01, density: 1 }],
+          });
+          mixture.initialComponents([new Component({
+            id: 601, position: 0, reference: true, material_group: 'solid', purity: 1,
+            amount_mol: 0.01, amount_g: 1, relative_molecular_weight: 1100,
+            molecule: { molecular_weight: 100 },
+          })]);
+
+          mixture[setter]({ value: 0, unit: 'g' });
+          mixture[setter]({ value: 0, unit: 'g' });
+          expect(mixture.solvent[0].amount_l).toBe(0.01);
+          if (reloadAtZero) {
+            const payload = JSON.parse(JSON.stringify(mixture.serializeMaterial()));
+            mixture = new Sample(payload);
+            mixture.initialComponents(payload.components.map(Component.deserializeData));
+          }
+          mixture[setter]({ value: 22, unit: 'g' });
+
+          expect(mixture.amount_g).toBe(22);
+          expect(mixture.solvent[0].amount_l).toBeCloseTo(0.02, 12);
+          expect(mixture.components[0].amount_mol).toBeCloseTo(0.02, 12);
+          mixture[setter]({ value: 11, unit: 'g' });
+          expect(mixture.solvent[0].amount_l).toBeCloseTo(0.01, 12);
+        });
+      });
+    });
+  });
+
   describe('Sample.calculateTotalMixtureMass()', () => {
+    it('keeps a zero-mass portion total volume, including when liters have no density', () => {
+      const portion = new Sample({
+        id: 502, parent_id: 500, sample_type: 'Mixture', amount_value: 0.01, amount_unit: 'l', density: 0,
+        sample_details: { total_mixture_mass_g: 11, total_mixture_volume_l: 0.01 },
+      });
+
+      portion.calculateTotalMixtureMass();
+      portion.calculateTotalMixtureMass();
+
+      expect(portion.sample_details.total_mixture_volume_l).toBe(0.01);
+      expect(portion.serializeMaterial().sample_details.total_mixture_volume_l).toBe(0.01);
+    });
+
     it('recalculates canonical relative molecular weights from the editor component amounts', () => {
       const sample = new Sample({ sample_type: 'Mixture', sample_details: {} });
       sample.components = [

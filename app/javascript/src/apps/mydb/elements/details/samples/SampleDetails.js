@@ -64,6 +64,7 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { mixtureReactionConflictNotification } from 'src/utilities/notificationMessages';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import CopyButton from 'src/components/common/CopyButton';
@@ -424,6 +425,10 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
+    if (this.state.sample.hasReactionMixtureConflict()) {
+      this.context.notifications.add(mixtureReactionConflictNotification());
+      return;
+    }
     const { currentCollection } = UIStore.getState();
     LoadingActions.start.defer();
     const { sample, validCas } = this.state;
