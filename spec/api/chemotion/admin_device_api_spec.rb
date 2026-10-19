@@ -123,6 +123,25 @@ RSpec.describe Chemotion::AdminDeviceAPI do
       end
     end
 
+    context 'with incomplete data collector settings' do
+      let(:base_params) do
+        { name: device.name, name_abbreviation: device.name_abbreviation, datacollector_fields: true }
+      end
+
+      it 'reports a missing watch method' do
+        put "/api/v1/admin_devices/#{device.id}", params: base_params.merge(datacollector_dir: '/tmp')
+
+        expect(parsed_json_response['errors']).to include('datacollector_method')
+      end
+
+      it 'reports a local watch directory that does not exist' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: base_params.merge(datacollector_method: 'filewatcherlocal', datacollector_dir: '/does/not/exist')
+
+        expect(parsed_json_response['errors']).to include('datacollector_dir')
+      end
+    end
+
     context 'when the device does not exist' do
       it 'returns 404' do
         put '/api/v1/admin_devices/0', params: { name: 'x', name_abbreviation: 'x' }

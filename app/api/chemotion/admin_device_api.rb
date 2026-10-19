@@ -83,7 +83,9 @@ module Chemotion
         optional :novnc_password, type: String
       end
       after_validation do
-        if params[:datacollector_fields] && params[:datacollector_method].end_with?('local')
+        # a missing method or directory is reported by the Device validations
+        if params[:datacollector_fields] && params[:datacollector_method]&.end_with?('local') &&
+           params[:datacollector_dir].present? && File.directory?(params[:datacollector_dir])
           params[:datacollector_dir] = Pathname.new(params[:datacollector_dir]).realpath.to_path
         end
       end
