@@ -128,6 +128,15 @@ RSpec.describe ReactionStep do
       expect(represent.call(0)).to eq("heat it\n")
     end
 
+    it 'gives the Word report each step on its own line with a bold heading' do
+      steps = multi.reload.steps_description(labels: true)['ops']
+      ops = Reporter::Docx::Detail.new({}).send(:rm_redundant_newline, steps)
+
+      expect(Reporter::Delta.new({ 'ops' => ops }).getHTML).to eq(
+        '<p><b><span>Step 1: </span></b>heat it</p><p><b><span>Step 2: </span></b>cool it</p>',
+      )
+    end
+
     it 'keeps the reaction text for a standard reaction' do
       standard = create(:reaction, description: text.call('stir'))
       sample = create(:sample)

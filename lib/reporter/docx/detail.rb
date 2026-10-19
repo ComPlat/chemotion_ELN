@@ -106,9 +106,8 @@ module Reporter
       def rm_redundant_newline(ops)
         return unless ops
 
-        ops.map do |op|
-          op['insert'] = op['insert'].chomp if op['insert'] && op['insert']['image'].blank?
-        end
+        last = ops.last
+        last['insert'] = last['insert'].chomp if last && last['insert'].is_a?(String)
         ops.reject { |hash| hash.values.any?(&:blank?) }
       end
 
