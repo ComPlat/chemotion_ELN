@@ -91,7 +91,6 @@ class Material extends Component {
 
     this.state = {
       showComponents: false,
-      mixtureComponents: [],
       mixtureComponentsLoading: false,
       fieldToShow: 'molar mass',
     };
@@ -622,7 +621,6 @@ class Material extends Component {
    */
   handleComponentReferenceChange = (changeEvent) => {
     if (changeEvent.type === 'componentReferenceChanged') {
-      const { mixtureComponents } = this.state;
       const { onChange, material, materialGroup } = this.props;
 
       // The components may be shared with the reaction. Let its handler capture the mass
@@ -634,17 +632,6 @@ class Material extends Component {
           materialGroup
         });
       }
-
-      // Update the reference directly on the ComponentModel instances
-      mixtureComponents.forEach((comp) => {
-        const isReference = comp.id === changeEvent.componentId;
-        if (comp.reference !== isReference) {
-          comp.reference = isReference;
-        }
-      });
-
-      // Trigger re-render with updated components
-      this.setState({ mixtureComponents: [...mixtureComponents] });
     }
   };
 
@@ -796,8 +783,8 @@ class Material extends Component {
   /**
    * Fetches mixture components for a given material if it's a mixture.
    * This method handles three scenarios:
-   * 1. If material is not a mixture, clears the components state
-   * 2. If material has existing components in memory, deserializes and uses them
+   * 1. If material is not a mixture, clears the loading state
+   * 2. If material has existing components in memory, renders them directly from the material
    * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
    *
    * @param {Sample} material - The material sample to check for mixture components
@@ -805,22 +792,14 @@ class Material extends Component {
    */
   fetchMixtureComponentsIfNeeded(material) {
     if (!material || !(material.isMixture && material.isMixture())) {
-      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+      this.setState({ mixtureComponentsLoading: false });
       return;
     }
 
     const existingComponents = Array.isArray(material.components) ? material.components : [];
 
     if (existingComponents.length > 0) {
-      // Use existing components, deserializing if needed
-      const componentsList = existingComponents.map((comp) => (
-        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
-      ));
-
-      this.setState({
-        mixtureComponents: componentsList,
-        mixtureComponentsLoading: false,
-      });
+      this.setState({ mixtureComponentsLoading: false });
     } else if (typeof material.id === 'number') {
       // Fetch components for saved material
       this.setState({ mixtureComponentsLoading: true });
@@ -830,21 +809,15 @@ class Material extends Component {
           const componentsList = components.map(ComponentModel.deserializeData);
           // Initialize components on the material object so they persist
           material.initialComponents(componentsList);
-          this.setState({
-            mixtureComponents: componentsList,
-            mixtureComponentsLoading: false,
-          });
+          this.setState({ mixtureComponentsLoading: false });
         })
         .catch((error) => {
           console.error('Error fetching components:', error);
           this.setState({ mixtureComponentsLoading: false });
         });
     } else {
-      // No components and no ID, clear state
-      this.setState({
-        mixtureComponents: [],
-        mixtureComponentsLoading: false,
-      });
+      // No components and no ID, clear loading state
+      this.setState({ mixtureComponentsLoading: false });
     }
   }
 
@@ -1230,14 +1203,13 @@ class Material extends Component {
 
     const { showComponents, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();
-    // Always get fresh components from material, syncing with state
+    // Component data belongs to the material; the row only keeps UI state.
     const existingComponents = Array.isArray(material.components) ? material.components : [];
-    const currentComponents = existingComponents.map((comp) => (
+    const mixtureComponents = existingComponents.map((comp) => (
       comp instanceof ComponentModel
         ? comp
         : ComponentModel.deserializeData(comp)
     ));
-    const mixtureComponents = currentComponents;
     const hasComponents = mixtureComponents && mixtureComponents.length > 0;
 
     const materialRow = (

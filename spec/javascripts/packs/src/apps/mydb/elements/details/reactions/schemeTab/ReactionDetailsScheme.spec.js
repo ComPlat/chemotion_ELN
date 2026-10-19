@@ -1411,9 +1411,8 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
               });
               row.setState = (state) => { row.state = { ...row.state, ...state }; };
               row.fetchMixtureComponentsIfNeeded(mixture);
-              expect(row.state.mixtureComponents[0]).toBe(mixture.components[0]);
               row.handleComponentReferenceChange(changeEvent);
-              expect(row.state.mixtureComponents.find((component) => component.reference).id).toBe(componentId);
+              expect(mixture.reference_component.id).toBe(componentId);
               expect(row.materialAmountMol(mixture).props.active).toBe(unit === 'mol');
               expect(row.materialAmountMol(mixture).props.metricPrefix).toBe('m');
             }

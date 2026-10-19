@@ -66,10 +66,12 @@ class ReactionsReactantSample < ReactionsSample
 end
 
 class ReactionsSolventSample < ReactionsSample
+  include Tagging
   include Reactable
 end
 
 class ReactionsPurificationSolventSample < ReactionsSample
+  include Tagging
   include Reactable
 end
 
