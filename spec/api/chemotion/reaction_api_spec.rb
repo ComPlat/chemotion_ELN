@@ -378,13 +378,14 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    context 'when updating volume and use_reaction_volume' do
+    context 'when updating volume through the legacy compatibility field' do
+      let(:legacy_value) { true }
       let(:params) do
         {
           'id' => reaction1.id,
           'name' => 'test reaction',
           'volume' => 0.5,
-          'use_reaction_volume' => true,
+          'use_reaction_volume' => legacy_value,
           'container' => reaction_container,
           'materials' => {
             'starting_materials' => [
@@ -410,8 +411,24 @@ describe Chemotion::ReactionAPI do
         expect(r.volume).to eq(0.5)
       end
 
-      it 'updates the use_reaction_volume attribute' do
+      it 'maps a true legacy value to reaction_volume' do
+        expect(r.concentration_mode).to eq('reaction_volume')
+      end
+
+      it 'derives the true compatibility boolean from concentration_mode' do
         expect(r.use_reaction_volume).to be(true)
+        expect(r[:use_reaction_volume]).to be(true)
+      end
+
+      it 'maps a false legacy value to solvents_only' do
+        put "/api/v1/reactions/#{reaction1.id}",
+            params: params.merge('use_reaction_volume' => false),
+            as: :json
+        r.reload
+
+        expect(r.concentration_mode).to eq('solvents_only')
+        expect(r.use_reaction_volume).to be(false)
+        expect(r[:use_reaction_volume]).to be(false)
       end
     end
 
@@ -602,13 +619,14 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    context 'when creating reaction with volume and use_reaction_volume' do
+    context 'when creating reaction with volume and concentration mode' do
       let(:params) do
         {
           'name' => 'r002',
           'collection_id' => collection1.id,
           'volume' => 0.75,
-          'use_reaction_volume' => false,
+          'use_reaction_volume' => true,
+          'concentration_mode' => 'combined',
           'container' => new_root_container,
           'materials' => {
             'products' => [{
@@ -640,8 +658,13 @@ describe Chemotion::ReactionAPI do
         expect(r.volume).to eq(0.75)
       end
 
-      it 'creates reaction with use_reaction_volume attribute' do
+      it 'creates reaction with concentration_mode attribute' do
+        expect(r.concentration_mode).to eq('combined')
+      end
+
+      it 'keeps concentration_mode authoritative over the legacy boolean' do
         expect(r.use_reaction_volume).to be(false)
+        expect(r[:use_reaction_volume]).to be(false)
       end
     end
 

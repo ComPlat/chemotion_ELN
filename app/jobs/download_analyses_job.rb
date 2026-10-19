@@ -82,7 +82,7 @@ class DownloadAnalysesJob < ApplicationJob
         end
       end
 
-      if rt == false
+      if @rt == false
         zip_file.rewind
         File.write(@file_path, zip_file.read)
       end

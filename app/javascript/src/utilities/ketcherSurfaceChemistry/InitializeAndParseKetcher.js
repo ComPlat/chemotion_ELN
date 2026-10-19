@@ -109,14 +109,14 @@ const loadKetcherData = async (data, options = {}) => {
     imagesListSetter([]);
   }
 
-  // Text nodes are non-standard Ketcher extensions managed entirely in local state.
-  // The editor never returns them via getKet(), so we must never overwrite the local
-  // textList from editor data — doing so would silently wipe user text on every fetch.
-  // Only update textList when the incoming data actually contains text nodes (e.g. initial
-  // load where we injected them into the ket payload before calling setMolecule).
-  const textNodesFromEditor = nodes.filter((item) => item.type === 'text');
-  if (textNodesFromEditor.length > 0) {
-    textListSetter(textNodesFromEditor);
+  // Text nodes are managed in local state; getKet() may return text-like nodes without
+  // proper data.content (Ketcher internal format). Only sync textList when nodes are valid,
+  // otherwise preserve existing textList so newly created text nodes aren't discarded.
+  const textNodesFromData = nodes.filter((item) => item.type === 'text' && item.data?.content);
+  if (textNodesFromData.length > 0) {
+    textListSetter(textNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    textListSetter([]);
   }
 
   // Derive mol refs by $ref presence — more robust than index slicing when node order varies.

@@ -7,6 +7,8 @@ module Entities
     expose :identifier, documentation: { type: 'String', desc: "identifier uuid" }
     expose :content_type, documentation: { type: 'String', desc: "content type" }
     expose :thumb, documentation: { type: 'String', desc: "thumbnail url" }
+    expose :previewable?, as: :previewable,
+                          documentation: { type: 'Boolean', desc: 'whether GET image/:id can serve this file' }
     expose :aasm_state, documentation: { type: 'String', desc: "processing state for analytics derivative" }
     expose :filesize, documentation: { type: 'Integer', desc: "filesize in bytes" }
     expose :edit_state, documentation: { type: 'String', desc: "edit state for external viewing/editing" }

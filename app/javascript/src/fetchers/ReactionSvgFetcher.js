@@ -1,7 +1,11 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class ReactionSvgFetcher {
-  static fetchByMaterialsSvgPaths(
+  static fetchByReaction(reaction) {
+    return ReactionSvgFetcher.fetchByMaterialsSvgPaths(reaction.schemeSvgRequest());
+  }
+
+  static fetchByMaterialsSvgPaths({
     materialsSvgPaths,
     temperature,
     solvents,
@@ -9,7 +13,7 @@ export default class ReactionSvgFetcher {
     conditions,
     productsOnly = false,
     showYield = true
-  ) {
+  }) {
     const body = {
       materials_svg_paths: materialsSvgPaths,
       temperature,

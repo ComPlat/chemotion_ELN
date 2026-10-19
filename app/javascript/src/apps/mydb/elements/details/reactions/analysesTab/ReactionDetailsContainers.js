@@ -79,7 +79,10 @@ export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { reaction } = props;
-    const hasComment = reaction.container?.description && reaction.container.description.trim() !== '';
+    const hasComment = Boolean(
+      reaction.container?.description
+      && reaction.container.description.trim() !== ''
+    );
 
     this.state = {
       activeContainer: UIStore.getState().reaction.activeAnalysis,

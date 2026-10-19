@@ -154,7 +154,7 @@ export default function ElementDetailCard({
       {showUserLabels && <ShowUserLabels element={element} />}
       {titleAppendixLeading}
       {!element.isNew && (
-        <ElementCollectionLabels element={element} placement="right" size="xxsm" variant="light" />
+        <ElementCollectionLabels element={element} placement="right" size="sm" variant="secondary" />
       )}
       {titleAppendix}
     </>

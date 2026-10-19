@@ -850,6 +850,17 @@ const ColumnSelection = ({ selectedColumns, availableColumns, onApply }) => {
     }
   }, [availableColumns]);
 
+  /*
+  Re-seed from the grid's selection whenever it changes out-of-band (autofill selecting a
+  material's column, a "Scheme" tab edit dropping one). Skipped while the modal is open so
+  that a background update does not wipe the picks the user is in the middle of making;
+  closing the modal re-seeds and thereby discards anything that was not applied.
+  */
+  useEffect(() => {
+    if (showModal) return;
+    setCurrentColumns(cloneDeep(selectedColumns));
+  }, [selectedColumns, showModal]);
+
   const handleApply = () => {
     onApply(currentColumns);
     setShowModal(false);

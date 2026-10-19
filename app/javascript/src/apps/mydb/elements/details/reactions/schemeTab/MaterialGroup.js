@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tooltip, OverlayTrigger
+  Button, Tooltip, OverlayTrigger, Dropdown
 } from 'react-bootstrap';
 import classNames from 'classnames';
 import { Select } from 'src/components/common/Select';
@@ -43,7 +43,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled
+  switchYield, dndEnabled, onConcentrationModeChange
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -135,6 +135,7 @@ const MaterialGroup = ({
       displayYieldField={displayYieldField}
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
+      onConcentrationModeChange={onConcentrationModeChange}
     />
   );
 };
@@ -273,11 +274,101 @@ ReagentMenuList.propTypes = {
   }).isRequired,
 };
 
+const CONCENTRATION_MODE_OPTIONS = [
+  { value: Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY, label: 'Solvents only' },
+  { value: Reaction.CONCENTRATION_MODES.COMBINED, label: 'Solvents + reagents' },
+  { value: Reaction.CONCENTRATION_MODES.REACTION_VOLUME, label: 'Reaction volume (entered below)' },
+];
+
+const ConcentrationBasisTooltip = (
+  <Tooltip id="concentration-basis-tooltip">
+    <div>
+      <strong>Concentration basis</strong>
+      {' selects the volume used to calculate concentration:'}
+      <br />
+      <strong>Solvents only:</strong>
+      {' Total solvent volume.'}
+      <br />
+      <strong>Solvents + reagents:</strong>
+      {' Total volume of solvents, starting materials, and reactants.'}
+      <br />
+      <strong>Reaction volume:</strong>
+      {' The reaction volume entered below.'}
+    </div>
+  </Tooltip>
+);
+
+// Custom toggle: a single subtle caret that signals the dropdown without
+// restyling the "Conc" header text or doubling the built-in caret.
+const ConcentrationBasisCaretToggle = React.forwardRef(({ onClick, disabled, ...toggleProps }, ref) => (
+  <button
+    {...toggleProps}
+    type="button"
+    ref={ref}
+    disabled={disabled}
+    onClick={(e) => { e.preventDefault(); onClick(e); }}
+    className="reaction-material__conc-basis-caret btn btn-link btn-sm p-0 ms-1 text-muted"
+    title="Choose the concentration calculation basis"
+    aria-label="Concentration basis"
+  >
+    <i className="fa fa-caret-down" />
+  </button>
+));
+
+ConcentrationBasisCaretToggle.displayName = 'ConcentrationBasisCaretToggle';
+
+ConcentrationBasisCaretToggle.propTypes = {
+  onClick: PropTypes.func,
+  disabled: PropTypes.bool,
+};
+
+ConcentrationBasisCaretToggle.defaultProps = {
+  onClick: () => {},
+  disabled: false,
+};
+
+const ConcentrationBasisSelect = ({ reaction, onConcentrationModeChange }) => (
+  <Dropdown className="reaction-material__conc-basis d-inline-block">
+    <Dropdown.Toggle as={ConcentrationBasisCaretToggle} disabled={!permitOn(reaction)} />
+    <Dropdown.Menu>
+      <Dropdown.Header>Concentration basis</Dropdown.Header>
+      {CONCENTRATION_MODE_OPTIONS.map((option) => (
+        <Dropdown.Item
+          key={option.value}
+          active={reaction.concentration_mode === option.value}
+          onClick={() => onConcentrationModeChange(option.value)}
+        >
+          {option.label}
+        </Dropdown.Item>
+      ))}
+      {reaction.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+        && !reaction.hasValidReactionVolume && (
+        <>
+          <Dropdown.Divider />
+          <Dropdown.ItemText
+            className="text-muted small"
+            style={{ maxWidth: '18rem', whiteSpace: 'normal' }}
+          >
+            <i className="fa fa-info-circle me-1" />
+            No reaction volume set; concentrations use the solvent volume until you enter one.
+          </Dropdown.ItemText>
+        </>
+      )}
+    </Dropdown.Menu>
+  </Dropdown>
+);
+
+ConcentrationBasisSelect.propTypes = {
+  reaction: PropTypes.object.isRequired,
+  onConcentrationModeChange: PropTypes.func.isRequired,
+};
+
 const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled,
+  onConcentrationModeChange
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
@@ -454,6 +545,17 @@ const GeneralMaterialGroup = ({
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header d-flex align-items-center">
               {groupHeaders.concn}
+              {materialGroup === 'starting_materials' && onConcentrationModeChange && (
+                <>
+                  <ConcentrationBasisSelect
+                    reaction={reaction}
+                    onConcentrationModeChange={onConcentrationModeChange}
+                  />
+                  <OverlayTrigger placement="top" overlay={ConcentrationBasisTooltip}>
+                    <i className="ms-1 fa fa-info-circle text-muted" />
+                  </OverlayTrigger>
+                </>
+              )}
               {materialGroup === 'products' && reaction.gaseous && (
                 <OverlayTrigger
                   placement="top"
@@ -618,6 +720,7 @@ MaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
+  onConcentrationModeChange: PropTypes.func,
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -635,6 +738,7 @@ GeneralMaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
+  onConcentrationModeChange: PropTypes.func,
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -659,6 +763,7 @@ MaterialGroup.defaultProps = {
   displayYieldField: null,
   headIndex: 0,
   dndEnabled: true,
+  onConcentrationModeChange: null,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -666,6 +771,7 @@ GeneralMaterialGroup.defaultProps = {
   lockEquivColumn: false,
   displayYieldField: null,
   dndEnabled: true,
+  onConcentrationModeChange: null,
 };
 
 export default MaterialGroup;

@@ -10,6 +10,44 @@ import Delta from 'quill-delta';
 import { markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { draftContentToDelta, isDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 
+// Convert a Draft.js content object to a Quill Delta preserving bold/italic/underline.
+const draftToQuillDelta = (draftContent) => {
+  const block = draftContent?.blocks?.[0];
+  if (!block?.text) return new Delta();
+  const { text, inlineStyleRanges = [] } = block;
+  const charAttrs = Array.from({ length: text.length }, () => ({}));
+  for (const range of inlineStyleRanges) {
+    let attr;
+    if (range.style === 'BOLD') attr = 'bold';
+    else if (range.style === 'ITALIC') attr = 'italic';
+    else if (range.style === 'UNDERLINE') attr = 'underline';
+    else continue;
+    for (let i = range.offset; i < Math.min(range.offset + range.length, text.length); i++) {
+      charAttrs[i][attr] = true;
+    }
+  }
+  const ops = [];
+  let i = 0;
+  while (i < text.length) {
+    const key = JSON.stringify(charAttrs[i]);
+    let j = i + 1;
+    while (j < text.length && JSON.stringify(charAttrs[j]) === key) j += 1;
+    const op = { insert: text.slice(i, j) };
+    if (Object.keys(charAttrs[i]).length > 0) op.attributes = { ...charAttrs[i] };
+    ops.push(op);
+    i = j;
+  }
+  return new Delta(ops);
+};
+
+const parseDraftFromInitialText = (initialText) => {
+  try {
+    const parsed = JSON.parse(initialText);
+    if (parsed?.blocks) return parsed;
+  } catch { /* not JSON */ }
+  return null;
+};
+
 function TextEditorModal({
   loading = false,
   title = 'Text Editor',
@@ -37,14 +75,16 @@ function TextEditorModal({
 
   const [editorValue, setEditorValue] = useState(getInitialDelta());
 
-  // Update editor value when initialText changes (when modal opens with different text)
   React.useEffect(() => {
-    if (loading && initialText !== null) {
+    if (!loading) return;
+    if (initialValue) {
+      setEditorValue(initialValue);
+    } else if (initialText !== null) {
       setEditorValue(toDelta(initialText));
-    } else if (loading && !initialText) {
+    } else {
       setEditorValue(new Delta());
     }
-  }, [loading, initialText]);
+  }, [loading, initialText, initialValue]);
 
   const handleChange = (value) => {
     setEditorValue(value);

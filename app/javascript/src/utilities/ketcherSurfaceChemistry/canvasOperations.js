@@ -133,7 +133,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
               textSeparator,
               atom.alias,
               textSeparator,
-              block.text
+              textItem.data.content
             ].join('').trim();
             const y = textItem.data?.position?.y ?? 0;
             assembleTextList.push({ line, y });
@@ -270,6 +270,22 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   };
 };
 
+const createTextNode = (textContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  try {
+    const incoming = JSON.parse(textContent);
+    if (incoming?.blocks?.[0]?.text?.trim()) {
+      const defaultPos = [
+        { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
+        { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z },
+      ];
+      return { type: 'text', data: { content: textContent, position: defaultPosition, pos: defaultPos } };
+    }
+  } catch { /* not JSON — fall through */ }
+  return createTextNodeFromContent(textContent, defaultPosition);
+};
+
 // function to add text nodes to canvas/struct
 const onAddText = async (editor, selectedImageForTextNode) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
@@ -386,23 +402,32 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         if (existingNodeIndex !== -1) {
           // Update the existing text node content (full Draft content, preserve key)
           const existingNode = updatedTextList[existingNodeIndex];
-          const existingContent = JSON.parse(existingNode.data.content);
-          const existingKey = existingContent.blocks[0].key;
-          if (isDraftContent(textContent)) {
-            const newContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
-            newContent.blocks[0].key = existingKey;
-            existingNode.data.content = JSON.stringify(newContent);
-          } else {
-            existingContent.blocks[0].text = textContent.trim();
-            existingContent.blocks[0].inlineStyleRanges = existingContent.blocks[0].inlineStyleRanges || [];
-            existingNode.data.content = JSON.stringify(existingContent);
+          try {
+            const existingContent = JSON.parse(existingNode.data.content);
+            const existingKey = existingContent.blocks[0].key;
+            if (isDraftContent(textContent)) {
+              const newContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
+              newContent.blocks[0].key = existingKey;
+              existingNode.data.content = JSON.stringify(newContent);
+            } else {
+              existingContent.blocks[0].text = textContent.trim();
+              existingContent.blocks[0].inlineStyleRanges = existingContent.blocks[0].inlineStyleRanges || [];
+              existingNode.data.content = JSON.stringify(existingContent);
+            }
+          } catch {
+            // fallback: treat as plain text
+            try {
+              const existingContent = JSON.parse(existingNode.data.content);
+              existingContent.blocks[0].text = textContent.trim();
+              existingNode.data.content = JSON.stringify(existingContent);
+            } catch { /* skip malformed node */ }
           }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);
         } else {
           // Existing node not found, create new one
-          newTextNode = createTextNodeFromContent(textContent);
+          newTextNode = createTextNode(textContent);
           if (!newTextNode) {
             return false;
           }
@@ -412,7 +437,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         }
       } else {
         // No existing text found, create new one
-        newTextNode = createTextNodeFromContent(textContent);
+        newTextNode = createTextNode(textContent);
         if (!newTextNode) {
           return false;
         }
@@ -422,7 +447,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       }
     } else {
       // Create new text node from content
-      newTextNode = createTextNodeFromContent(textContent);
+      newTextNode = createTextNode(textContent);
       if (!newTextNode) {
         return false;
       }
@@ -792,18 +817,13 @@ const getSvgFromCanvas = async (iframeRef) => {
   }
 };
 
-const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
+const applyCanvasDataToEditor = async (editor, dataCopy) => {
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
   }
-
   const serialized = JSON.stringify(dataCopy);
-  if (recenter) {
-    await editor.structureDef.editor.setMolecule(serialized);
-    return;
-  }
-  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
+  await editor.structureDef.editor.setMolecule(serialized, { preserveCanvasPosition: true });
 };
 
 /* istanbul ignore next */
@@ -842,7 +862,14 @@ const saveMoveCanvas = async (
   }
 
   if (isMoveRequired) {
-    await applyCanvasDataToEditor(editor, dataCopy, recenter);
+    await applyCanvasDataToEditor(editor, dataCopy);
+
+    // IMPORTANT: Preserve textList from dataCopy before fetching
+    // Ketcher might not have processed the text node yet when we fetch back.
+    // Only keep text nodes that have valid data.content (not Ketcher internal format nodes).
+    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text' && n.data?.content) || [];
+    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
+
     const { syncImagesOnly = false } = moveOptions;
     if (syncImagesOnly) {
       // Use payload data for atom positions — avoid fetch overwriting with editor data
@@ -853,13 +880,18 @@ const saveMoveCanvas = async (
     } else {
       if (isFetchRequired) {
         await fetchKetcherData(editor);
+
+        // Restore textList from dataCopy if it was lost during fetchKetcherData
+        if (preservedTextList.length > textList.length) {
+          textListSetter(preservedTextList);
+        }
       }
       await onTemplateMove(editor, recenter, moveOptions);
     }
     return;
   }
 
-  await applyCanvasDataToEditor(editor, dataCopy, recenter);
+  await applyCanvasDataToEditor(editor, dataCopy);
 
   if (isFetchRequired) {
     await fetchKetcherData(editor);
@@ -889,6 +921,13 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
+
+  // Snapshot mol list before fetchKetcherData calls. If getKet() returns stale/empty
+  // data (e.g. Ketcher is mid-render), placeAtomOnImage produces no $ref nodes. The
+  // guard below detects this and aborts rather than overwriting the canvas with an
+  // image-only KET that Ketcher cannot render.
+  const molsSnapshot = [...mols];
+
   if (!skipFetch) {
     await fetchKetcherData(editor);
   }
@@ -907,6 +946,21 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   } else {
     imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   }
+
+  // Guard: if getKet() returned stale data, placeAtomOnImage produces no $ref
+  // entries despite mols and images existing. The canvas is already correct —
+  // abort rather than overwriting it with an image-only KET Ketcher cannot render.
+  const hasMolRefs = imageNodes.some((n) => n.$ref);
+  if (!hasMolRefs && molsSnapshot.length > 0 && imageListCopy.length > 0) {
+    ImagesToBeUpdatedSetter(true);
+    reloadCanvasSetter(false);
+    deletedAtomsSetter([]);
+    imageListCopyContainerSetter([]);
+    textListCopyContainerSetter([]);
+    await runImageLayering();
+    return;
+  }
+
   latestData.root.nodes = imageNodes;
 
   // Always reposition text nodes to follow atom positions
@@ -915,7 +969,7 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
     const textNodes = await placeTextOnAtoms();
     latestData.root.nodes = textNodes;
   }
-  await applyCanvasDataToEditor(editor, latestData, recenter);
+  await applyCanvasDataToEditor(editor, latestData);
   await fetchKetcherData(editor);
 
   // clear required
@@ -1174,6 +1228,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     latestData.root.nodes.push({ $ref: `mol${molCount}` });
     latestData.root.nodes.push(imageItem);
     latestData[`mol${molCount}`] = await addNewMol(tempId);
+    // Sync imagesList immediately so placeAtomOnImage can find this image by index.
+    // fetchKetcherData uses preserveImagesWhenEmpty=true, so if Ketcher omits image
+    // nodes from getKet() the stateManager list would stay at the pre-add length,
+    // causing placeAtomOnImage to silently fail for the new atom (async-forEach swallows
+    // the throw) and the image to be absent from the rebuilt node list.
+    imagesListSetter([...imagesList, imageItem]);
   } else if (imageCount - 1 !== imageNodeCounter) {
     // header
     // atom

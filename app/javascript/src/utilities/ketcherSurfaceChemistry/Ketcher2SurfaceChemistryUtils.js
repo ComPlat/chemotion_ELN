@@ -146,8 +146,10 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
 const getUnpositionedTextNodes = (addedKeys) => {
   const list = [];
   for (let i = 0; i < textList.length; i++) {
+    const content = textList[i]?.data?.content;
+    if (!content) continue;
     try {
-      const key = JSON.parse(textList[i].data.content).blocks[0]?.key;
+      const key = JSON.parse(content).blocks?.[0]?.key;
       if (key && !addedKeys.has(key)) {
         list.push(textList[i]);
       }

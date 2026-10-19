@@ -397,7 +397,7 @@ const opsCommonHead = () => (
 );
 
 const SpectraOps = {
-  PLAIN: { head: [], tail: [] },
+  PLAIN: { head: opsCommonHead, tail: opsCommonTail },
   '1H': { head: ops1HHead, tail: opsCommonTail },
   '13C': { head: ops13CHead, tail: opsCommonTail },
   '15N': { head: ops15NHead, tail: opsCommonTail },

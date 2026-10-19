@@ -217,6 +217,24 @@ describe('SpectraHelper', () => {
         const expectedValue = { orig: [1], gene: [2, 3], edited: [2, 3] };
         expect(listJcampIds).toEqual(expectedValue);
       });
+
+      it('treats bagit per-curve files as generated, not original', () => {
+        // A bagit curve's own addon is "<n>_bagit" (see jcamp_peak_addon? on the Rails
+        // side) - it never gains a .peak./.edit. addon, so it must not be classified
+        // as "orig": regenerate_spectrum would then resubmit it independently in the
+        // same request that's also reprocessing the archive that generated it, racing
+        // the two and corrupting the result.
+        const attachments = [
+          { id: 1, filename: '740.zip' },
+          { id: 2, filename: '740.1_bagit.jdx' },
+          { id: 3, filename: '740.2_bagit.jdx' },
+        ];
+        container.children.push({ attachments });
+
+        const listJcampIds = JcampIds(container);
+        const expectedValue = { orig: [1], gene: [2, 3], edited: [] };
+        expect(listJcampIds).toEqual(expectedValue);
+      });
     });
   });
 
@@ -453,8 +471,8 @@ describe('SpectraHelper', () => {
         };
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
         const [first, second] = cleanedNMRiumData.data.spectra;
-        expect(first.selector).toEqual({ root: 'nmrium-src-multi', files: ['exp1/pdata/1/2rr'] });
-        expect(second.selector).toEqual({ root: 'nmrium-src-multi', files: ['exp2/pdata/1/2rr'] });
+        expect(first.selector).toEqual({ root: 'nmrium-src-multi', files: ['/zip/file.zip/exp1/pdata/1/2rr'] });
+        expect(second.selector).toEqual({ root: 'nmrium-src-multi', files: ['/zip/file.zip/exp2/pdata/1/2rr'] });
         expect(first.data).toEqual(undefined);
         expect(second.data).toEqual(undefined);
       });
@@ -508,7 +526,9 @@ describe('SpectraHelper', () => {
         expect(second.selector).toEqual({ root: 'nmrium-src-cosy-2' });
       });
 
-      it('addresses the archive in sources[] and the member path in selector.files', () => {
+      // NMRium filters the fetched file collection by selector.files, and the entries of that collection
+      // are the source's relativePath plus the member: a bare member path would match nothing.
+      it('addresses the archive in sources[] and the member through it in selector.files', () => {
         const nmriumData = {
           spectra: [{
             sourceSelector: { files: ['https://example.com/tpa/token/file.zip/exp1/pdata/1/2rr'] },
@@ -522,11 +542,25 @@ describe('SpectraHelper', () => {
           { id: 'nmrium-src-hsqc', entries: [{ relativePath: '/tpa/token/file.zip', baseURL: 'https://example.com' }] },
         ]);
         expect(cleanedNMRiumData.spectra[0].selector).toEqual({
-          root: 'nmrium-src-hsqc', files: ['exp1/pdata/1/2rr'],
+          root: 'nmrium-src-hsqc', files: ['/tpa/token/file.zip/exp1/pdata/1/2rr'],
         });
       });
 
-      it('reduces an already server-path-patched zip reference to the member path too', () => {
+      it('keeps only the member path in selector.files when the document is persisted', () => {
+        const nmriumData = {
+          spectra: [{
+            sourceSelector: { files: ['https://example.com/tpa/token/file.zip/exp1/pdata/1/2rr'] },
+            info: { dimension: 2, name: 'hsqc' },
+            display: { name: 'hsqc' },
+            data: { rr: { z: [[1.0]] } },
+          }],
+        };
+        const attachments = [{ id: 11, label: 'hsqc.zip', url: 'https://example.com/tpa/token' }];
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData, { attachments, forPersistence: true });
+        expect(cleanedNMRiumData.spectra[0].selector.files).toEqual(['exp1/pdata/1/2rr']);
+      });
+
+      it('re-roots an already server-path-patched zip reference on the registered archive too', () => {
         const nmriumData = {
           source: { entries: [{ baseURL: 'https://example.com', relativePath: '/tpa/token/file.zip' }] },
           spectra: [{
@@ -538,7 +572,7 @@ describe('SpectraHelper', () => {
         };
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
         expect(cleanedNMRiumData.spectra[0].selector).toEqual({
-          root: 'nmrium-src-hsqc', files: ['exp1/pdata/1/2rr'],
+          root: 'nmrium-src-hsqc', files: ['/tpa/token/file.zip/exp1/pdata/1/2rr'],
         });
       });
 
@@ -564,7 +598,13 @@ describe('SpectraHelper', () => {
         ]);
       });
 
-      it('drops its own orphaned sources[] entries but leaves foreign ones alone', () => {
+      // This used to keep entries it had not minted itself, on the theory that a foreign source
+      // might still be wanted. readNMRiumObject says otherwise: it resolves a source only through
+      // `g.get(spectrum.selector.root)`, so an unreferenced entry can never render anything - but
+      // it is still fetched, along with every other, inside one `Promise.all`. One that no longer
+      // resolves therefore rejects the read for the whole document and NMRium draws nothing at
+      // all. An unreferenced entry is pure liability, whoever wrote it.
+      it('drops every orphaned sources[] entry, including ones it did not mint', () => {
         const nmriumData = {
           sources: [
             { id: 'nmrium-src-old', entries: [{ baseURL: 'https://example.com', relativePath: '/gone' }] },
@@ -578,7 +618,284 @@ describe('SpectraHelper', () => {
           }],
         };
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
-        expect(cleanedNMRiumData.sources.map((source) => source.id).sort()).toEqual(['foreign', 'nmrium-src-new']);
+        expect(cleanedNMRiumData.sources.map((source) => source.id)).toEqual(['nmrium-src-new']);
+      });
+
+      it('keeps an orphaned entry that a molecule still addresses', () => {
+        const nmriumData = {
+          sources: [
+            { id: 'mol-src', entries: [{ baseURL: 'https://example.com', relativePath: '/mol' }] },
+          ],
+          molecules: [{ selector: { root: 'mol-src' } }],
+          spectra: [],
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        expect(cleanedNMRiumData.sources.map((source) => source.id)).toEqual(['mol-src']);
+      });
+
+      describe('when cleaning for persistence', () => {
+        const TPA = 'https://eln.test/api/v1/public/third_party_apps/A.OLD.TOKEN';
+        const attachments = [{ id: 77, label: '740.zip', url: TPA }];
+        const tokenEntry = () => ({
+          baseURL: 'https://eln.test',
+          relativePath: '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip',
+        });
+
+        const zipState = () => ({
+          spectra: [{
+            info: { dimension: 2, name: '740.zip' },
+            display: { name: '740.zip' },
+            data: { rr: { z: [[1.0]] } },
+            sourceSelector: { files: [`${TPA}/file.zip/exp1/pdata/1/2rr`] },
+            selector: { root: 'wrapper-uuid' },
+          }],
+          sources: [{ id: 'wrapper-uuid', entries: [tokenEntry()] }],
+        });
+
+        it('persists an attachment reference instead of the download url', () => {
+          const cleaned = cleaningNMRiumData(zipState(), { attachments, forPersistence: true });
+          expect(cleaned.sources).toEqual([{
+            id: 'nmrium-src-740-zip',
+            entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/77/740.zip' }],
+          }]);
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+        });
+
+        it('reduces sourceSelector.files to the member path, dropping the token', () => {
+          const cleaned = cleaningNMRiumData(zipState(), { attachments, forPersistence: true });
+          expect(cleaned.spectra[0].sourceSelector.files).toEqual(['exp1/pdata/1/2rr']);
+        });
+
+        // A zip loaded by url leaves no sourceSelector at all: NMRium writes the member list into
+        // selector.files itself, each entry the download url's path through the archive.
+        it("reduces NMRium's own selector.files to member paths, dropping the token", () => {
+          const loadedByUrl = zipState();
+          delete loadedByUrl.spectra[0].sourceSelector;
+          loadedByUrl.spectra[0].selector.files = [
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/pdata/1/2rr',
+            '/api/v1/public/third_party_apps/A.OLD.TOKEN/file.zip/exp1/acqus',
+          ];
+          const cleaned = cleaningNMRiumData(loadedByUrl, { attachments, forPersistence: true });
+          expect(cleaned.spectra[0].selector).toEqual({
+            root: 'nmrium-src-740-zip',
+            files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+          });
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+        });
+
+        it('keeps the data matrix when no attachment backs the spectrum', () => {
+          const cleaned = cleaningNMRiumData(zipState(), { attachments: [], forPersistence: true });
+          expect(cleaned.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+          expect(cleaned.sources).toEqual(undefined);
+        });
+
+        // NMRium's no-source fallback (readNMRiumObject -> bn) destructures info.dimension
+        // unguarded, so dropping info on a spectrum that has to fall back there would throw.
+        it('keeps an info for a spectrum it could not register a source for', () => {
+          const bare = {
+            spectra: [{
+              display: { name: 'cosy', dimension: 2 },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'wrapper-uuid' },
+            }],
+            sources: [{ id: 'wrapper-uuid', entries: [tokenEntry()] }],
+          };
+          const cleaned = cleaningNMRiumData(bare, { attachments: [], forPersistence: true });
+          expect(cleaned.spectra[0].info).toEqual({ dimension: 2 });
+          expect(cleaned.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+        });
+
+        // The shape NMRium itself writes for a 1D JCAMP it loaded by url: its source entry carries
+        // the whole download url in relativePath with no baseURL, and selector.files repeats it.
+        // Saved as is, the token was the spectrum's only source and it reopened empty.
+        describe("with NMRium's own url-only source for a 1D JCAMP", () => {
+          const JDX = `${TPA}/file.jdx`;
+          const oneD = () => ({
+            spectra: [{
+              id: 'spc-1d',
+              info: { dimension: 1, name: 'a.peak.jdx' },
+              data: { x: [1, 2], re: [3, 4] },
+              selector: { root: 'nmrium-uuid', files: [JDX] },
+            }],
+            sources: [{ id: 'nmrium-uuid', entries: [{ relativePath: JDX }] }],
+          });
+
+          it('drops the source and keeps the embedded data', () => {
+            const cleaned = cleaningNMRiumData(oneD(), { attachments, forPersistence: true });
+            expect(cleaned.sources).toEqual(undefined);
+            expect(cleaned.spectra[0].selector).toEqual({});
+            expect(cleaned.spectra[0].data).toEqual({ x: [1, 2], re: [3, 4] });
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
+          it('also strips the url from selector.files when there is no source to cut loose from', () => {
+            const noSources = oneD();
+            delete noSources.sources;
+            delete noSources.spectra[0].selector.root;
+            const cleaned = cleaningNMRiumData(noSources, { attachments, forPersistence: true });
+            expect(cleaned.spectra[0].selector.files).toEqual(undefined);
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
+          it('saves source.jcampURL as an attachment reference, not the download url', () => {
+            const withSource = oneD();
+            withSource.spectra[0].source = { jcampURL: JDX };
+            withSource.spectra[0].sourceSelector = { files: [JDX] };
+            const jdx = [{ id: 31, label: 'a.peak.jdx', url: TPA }];
+            const cleaned = cleaningNMRiumData(withSource, { attachments: jdx, forPersistence: true });
+            expect(cleaned.spectra[0].source).toEqual({ jcampURL: 'chemotion-attachment://eln/31/a.peak.jdx' });
+            expect(cleaned.spectra[0].sourceSelector).toEqual(undefined);
+            expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          });
+
+          it('leaves the url-only source in place for display', () => {
+            const cleaned = cleaningNMRiumData(oneD(), { attachments });
+            expect(cleaned.sources).toEqual([{ id: 'nmrium-uuid', entries: [{ relativePath: JDX }] }]);
+            expect(cleaned.spectra[0].selector).toEqual({ root: 'nmrium-uuid', files: [JDX] });
+          });
+        });
+
+        it('cuts loose a spectrum whose only source could not be made durable', () => {
+          const cleaned = cleaningNMRiumData(zipState(), { attachments: [], forPersistence: true });
+          expect(cleaned.sources).toEqual(undefined);
+          expect(cleaned.spectra[0].selector.root).toEqual(undefined);
+        });
+
+        // Cutting loose is the one place cleaning reaches *into* a spectrum it copied: a copy
+        // still shares its `selector` object with the original, and `molecules` is not copied at
+        // all. Deleting the root in place would reach back into the live NMRium state being saved.
+        it('cuts a spectrum loose without touching the payload it was given', () => {
+          const live = zipState();
+          live.molecules = [{ selector: { root: 'wrapper-uuid' } }];
+          const snapshot = JSON.stringify(live);
+          cleaningNMRiumData(live, { attachments: [], forPersistence: true });
+          expect(JSON.stringify(live)).toEqual(snapshot);
+        });
+
+        // source.jcampURL is the first thing resolveSpectrumSourceUrl consults, so persisting the
+        // token there both writes a download url into the file and shadows the durable entry: the
+        // next open would re-mint sources[] only to have cleaning overwrite it with this dead url.
+        it('rewrites source.jcampURL to a reference instead of persisting the token', () => {
+          const jcampState = {
+            spectra: [{
+              info: { dimension: 2, name: 'cosy.jdx' },
+              display: { name: 'cosy.jdx' },
+              data: { rr: { z: [[1.0]] } },
+              source: { jcampURL: `${TPA}/file.jdx` },
+              sourceSelector: { files: [`${TPA}/file.jdx`] },
+              selector: { root: 'wrapper-uuid' },
+            }],
+            sources: [{ id: 'wrapper-uuid', entries: [tokenEntry()] }],
+          };
+          const jcamp = [{ id: 5, label: 'cosy.jdx', url: TPA }];
+          const cleaned = cleaningNMRiumData(jcampState, { attachments: jcamp, forPersistence: true });
+          expect(cleaned.spectra[0].source.jcampURL).toEqual('chemotion-attachment://eln/5/cosy.jdx');
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+        });
+
+        // The sanitising used to sit under `if (sourceId)`, so a spectrum nothing could be
+        // registered for kept every token url it arrived with.
+        it('strips the token from a spectrum it could not register a source for', () => {
+          const jcampState = {
+            spectra: [{
+              info: { dimension: 2, name: 'cosy.jdx' },
+              display: { name: 'cosy.jdx' },
+              data: { rr: { z: [[1.0]] } },
+              source: { jcampURL: `${TPA}/file.jdx` },
+              sourceSelector: { files: [`${TPA}/file.jdx`] },
+              selector: { root: 'wrapper-uuid' },
+            }],
+            sources: [{ id: 'wrapper-uuid', entries: [tokenEntry()] }],
+          };
+          const cleaned = cleaningNMRiumData(jcampState, { attachments: [], forPersistence: true });
+          expect(JSON.stringify(cleaned)).not.toContain('third_party_apps');
+          expect(cleaned.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+        });
+
+        it('drops a legacy singular source that would shadow the durable reference', () => {
+          const withGlobal = zipState();
+          withGlobal.source = { entries: [tokenEntry()] };
+          const cleaned = cleaningNMRiumData(withGlobal, { attachments: [], forPersistence: true });
+          expect(cleaned.source).toEqual(undefined);
+        });
+
+        // A collection export writes `as_json.except('id')` and the importer builds fresh rows,
+        // so the id inside a persisted reference is meaningless once a document has moved between
+        // instances - and worse, ids are reassigned from the destination's own sequence, so a
+        // stale one can land on a sibling attachment. The filename is the only field the transfer
+        // carries across intact, so it has to win.
+        it('resolves a re-persisted reference by filename, not by a stale id', () => {
+          const stale = {
+            spectra: [{
+              info: { dimension: 2, name: '740.zip' },
+              display: { name: '740.zip' },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'nmrium-src-740-zip' },
+            }],
+            sources: [{
+              id: 'nmrium-src-740-zip',
+              entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/4711/740.zip' }],
+            }],
+          };
+          const imported = [
+            { id: 9002, label: '740.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B1' },
+            { id: 4711, label: '740.1_bagit.jdx', url: 'https://eln.test/api/v1/public/third_party_apps/B2' },
+          ];
+          const cleaned = cleaningNMRiumData(stale, { attachments: imported, forPersistence: true });
+          expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/740.zip');
+        });
+
+        // The reference carries the filename verbatim, but resolution used to compare only its
+        // slug, which collapses every run of non-alphanumerics to a single dash: `a-b.zip` and
+        // `a_b.zip` are indistinguishable to it. Two such siblings in one dataset and a stale id -
+        // which after an import is every id - had `named.find(id)` land on the *other* file.
+        it('prefers an exact filename over a slug-equal sibling with the stale id', () => {
+          const stale = {
+            spectra: [{
+              info: { dimension: 2, name: 'a-b.zip' },
+              display: { name: 'a-b.zip' },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'nmrium-src-a-b-zip' },
+            }],
+            sources: [{
+              id: 'nmrium-src-a-b-zip',
+              entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/4711/a-b.zip' }],
+            }],
+          };
+          const imported = [
+            { id: 4711, label: 'a_b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B1' },
+            { id: 9002, label: 'a-b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B2' },
+          ];
+          const cleaned = cleaningNMRiumData(stale, { attachments: imported, forPersistence: true });
+          expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/a-b.zip');
+        });
+
+        // The slug tier still has to carry a file renamed only in its punctuation - nothing bears
+        // the exact name any more, so the lossy comparison is the only thing left that can match.
+        it('falls back to the slug when nothing carries the exact filename', () => {
+          const renamed = {
+            spectra: [{
+              info: { dimension: 2, name: 'a-b.zip' },
+              display: { name: 'a-b.zip' },
+              data: { rr: { z: [[1.0]] } },
+              selector: { root: 'nmrium-src-a-b-zip' },
+            }],
+            sources: [{
+              id: 'nmrium-src-a-b-zip',
+              entries: [{ baseURL: 'chemotion-attachment://eln', relativePath: '/4711/a-b.zip' }],
+            }],
+          };
+          const imported = [
+            { id: 9002, label: 'a_b.zip', url: 'https://eln.test/api/v1/public/third_party_apps/B2' },
+          ];
+          const cleaned = cleaningNMRiumData(renamed, { attachments: imported, forPersistence: true });
+          expect(cleaned.sources[0].entries[0].relativePath).toEqual('/9002/a_b.zip');
+        });
+
+        it('still embeds live urls when not persisting', () => {
+          const cleaned = cleaningNMRiumData(zipState(), { attachments });
+          expect(cleaned.sources[0].entries[0].baseURL).toEqual('https://eln.test');
+        });
       });
 
       it('leaves the payload it was given untouched', () => {
@@ -654,7 +971,7 @@ describe('SpectraHelper', () => {
         ]);
         expect(spectrum.selector).toEqual({
           root: 'nmrium-src-hsqc-zip',
-          files: ['exp1/pdata/1/2rr', 'exp1/acqus'],
+          files: ['/tpa/fresh/file.zip/exp1/pdata/1/2rr', '/tpa/fresh/file.zip/exp1/acqus'],
         });
       });
 
@@ -669,6 +986,147 @@ describe('SpectraHelper', () => {
         const [spectrum] = cleanedNMRiumData.spectra;
         expect(spectrum.selector).toEqual({ root: 'nmrium-src-hsqc-jdx' });
         expect('info' in spectrum).toEqual(false);
+      });
+
+      // A 2D FID NMRium Fourier-transformed: info describes the transformed spectrum, originalInfo
+      // the FID the source holds. Once the data is dropped, NMRium re-reads the FID and runs the
+      // filters again, so the info that goes with it is the FID's.
+      describe('a 2D FID processed in NMRium', () => {
+        const processedFid = () => ({
+          spectra: [{
+            source: { jcampURL: 'https://example.com/hmbc.dx' },
+            info: {
+              dimension: 2, name: 'hmbc', isFid: false, isFt: true,
+            },
+            originalInfo: {
+              dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+            },
+            display: { name: 'hmbc' },
+            filters: [{ name: 'apodizationDimension1' }, { name: 'fftDimension1' }, { name: 'fftDimension2' }],
+            data: { rr: { z: [[1.0]] }, ir: { z: [[2.0]] } },
+          }],
+        });
+
+        it('describes the source, not the processed result, once its data is dropped', () => {
+          const [spectrum] = cleaningNMRiumData(processedFid()).spectra;
+          expect(spectrum.data).toEqual(undefined);
+          expect(spectrum.info).toEqual({
+            dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+          });
+          expect(spectrum.filters.map((f) => f.name))
+            .toEqual(['apodizationDimension1', 'fftDimension1', 'fftDimension2']);
+        });
+
+        it('keeps the processed info for a spectrum that keeps its data', () => {
+          const [spectrum] = cleaningNMRiumData(processedFid(), { attachments: [], forPersistence: true }).spectra;
+          expect(spectrum.data).toEqual({ rr: { z: [[1.0]] }, ir: { z: [[2.0]] } });
+          expect(spectrum.info.isFt).toEqual(true);
+        });
+
+        // Written before originalInfo was kept: only the processed info is left, which no longer
+        // matches the source. Without it NMRium rebuilds the info from the source it reads.
+        it('drops the processed info a file saved without originalInfo holds', () => {
+          const saved = processedFid();
+          delete saved.spectra[0].originalInfo;
+          delete saved.spectra[0].data;
+          const [spectrum] = cleaningNMRiumData(saved).spectra;
+          expect('info' in spectrum).toEqual(false);
+          expect(spectrum.selector).toEqual({ root: 'nmrium-src-hmbc' });
+        });
+
+        // What a save writes is cleaned again on every reopen: the FID info it holds must survive.
+        it('keeps the FID info through a save and the reopens after it', () => {
+          const saved = cleaningNMRiumData(processedFid());
+          const reopened = cleaningNMRiumData(cleaningNMRiumData(saved));
+          expect(reopened.spectra[0].info).toEqual({
+            dimension: 2, name: 'hmbc', isFid: true, isFt: false,
+          });
+        });
+
+        // Only what processing changed comes back from originalInfo: a name the reopen path wrote
+        // into info (the zip's label) is kept.
+        it('takes only the processing keys from originalInfo', () => {
+          const renamed = processedFid();
+          renamed.spectra[0].info.name = 'hmbc.zip';
+          renamed.spectra[0].info.isComplex = false;
+          renamed.spectra[0].originalInfo.isComplex = true;
+          const [spectrum] = cleaningNMRiumData(renamed).spectra;
+          expect(spectrum.info).toEqual({
+            dimension: 2, name: 'hmbc.zip', isFid: true, isFt: false, isComplex: true,
+          });
+        });
+
+        it('ignores a disabled FFT when telling a stale processed info', () => {
+          const saved = processedFid();
+          delete saved.spectra[0].originalInfo;
+          delete saved.spectra[0].data;
+          saved.spectra[0].filters = saved.spectra[0].filters.map((f) => ({ ...f, enabled: false }));
+          const [spectrum] = cleaningNMRiumData(saved).spectra;
+          expect(spectrum.info.isFt).toEqual(true);
+        });
+      });
+
+      // A 2D spectrum that carries its data keeps it unless its own reference names its file. The
+      // document-wide source, a sole JCAMP re-minted into it, or the dataset's zip matched by name
+      // are only guesses, and a wrong one loses the data for good on the next save.
+      describe('a 2D spectrum carrying its data, without a reference of its own', () => {
+        const TPA = 'https://eln.test/api/v1/public/third_party_apps';
+        const attachments = [
+          { id: 51, label: 'hmbc.zip', url: `${TPA}/ZIP` },
+          { id: 52, label: 'hmbc.dx', url: `${TPA}/DX` },
+        ];
+        // Reopened legacy document: the FID is re-read from its own .dx, the FT still carries its
+        // matrix and, renamed on reopen, the zip's label.
+        const reopened = () => ({
+          spectra: [
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFt: true },
+              display: { name: 'hmbc.zip' },
+              data: { rr: { z: [[1.0]] } },
+            },
+            {
+              info: { dimension: 2, name: 'hmbc.zip', isFid: true },
+              display: { name: 'hmbc.zip' },
+              source: { jcampURL: `${TPA}/DX/file.dx` },
+              data: { re: { z: [[2.0]] } },
+            },
+          ],
+        });
+        const save = (doc) => cleaningNMRiumData(doc, { attachments, forPersistence: true });
+
+        it('is not bound to the zip its name matches when saved', () => {
+          const [ft, fid] = save(reopened()).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+          expect(fid.data).toEqual(undefined);
+          expect(fid.selector.root).toBeTruthy();
+        });
+
+        it('still carries its data after a second save', () => {
+          const once = save(reopened());
+          const twice = save(cleaningNMRiumData(once));
+          expect(twice.spectra[0].data).toEqual({ rr: { z: [[1.0]] } });
+          expect(twice.sources.map((source) => source.entries[0].relativePath)).toEqual(['/52/hmbc.dx']);
+        });
+
+        it('is not bound to the document-wide source', () => {
+          const doc = reopened();
+          doc.source = { entries: [{ baseURL: 'https://old.test', relativePath: '/old/file.zip' }] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(ft.selector).toEqual(undefined);
+        });
+
+        it('is not bound to a derived JCAMP re-minted into the document-wide source', () => {
+          const doc = reopened();
+          const peak = { baseURL: 'https://eln.test', relativePath: '/api/v1/public/third_party_apps/PEAK/file.jdx' };
+          doc.source = { entries: [peak] };
+          doc.spectra.pop();
+          const [ft] = cleaningNMRiumData(doc).spectra;
+          expect(ft.data).toEqual({ rr: { z: [[1.0]] } });
+          expect(JSON.stringify(ft)).not.toContain('PEAK');
+        });
       });
 
       it('names a 2D spectrum from meta.TITLE when display.name is only its own uuid', () => {

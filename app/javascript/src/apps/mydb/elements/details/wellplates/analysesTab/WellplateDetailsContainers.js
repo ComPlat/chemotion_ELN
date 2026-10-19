@@ -17,7 +17,10 @@ export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
     const { wellplate } = props;
-    const hasComment = wellplate.container?.description && wellplate.container.description.trim() !== '';
+    const hasComment = Boolean(
+      wellplate.container?.description
+      && wellplate.container.description.trim() !== ''
+    );
     this.state = {
       wellplate,
       activeContainer: 0,

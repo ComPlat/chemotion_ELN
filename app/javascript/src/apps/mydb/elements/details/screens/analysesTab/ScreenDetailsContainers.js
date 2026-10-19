@@ -17,7 +17,10 @@ export default class ScreenDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { screen } = props;
-    const hasComment = screen.container?.description && screen.container.description.trim() !== '';
+    const hasComment = Boolean(
+      screen.container?.description
+      && screen.container.description.trim() !== ''
+    );
     this.state = {
       screen,
       activeContainer: 0,

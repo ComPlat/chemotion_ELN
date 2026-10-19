@@ -1,4 +1,11 @@
 class ElementPolicy
+  # A SequenceBasedMacromolecule is not itself collected: its collections are those of its
+  # samples (SequenceBasedMacromolecule#collections), so it is shared at the samples' detail level.
+  # collection_shares has no sequencebasedmacromolecule_detail_level column.
+  DETAIL_LEVEL_ELEMENT_NAMES = {
+    'SequenceBasedMacromolecule' => 'sequencebasedmacromoleculesample',
+  }.freeze
+
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -127,8 +134,13 @@ class ElementPolicy
       .any?
   end
 
+  def detail_level_field
+    element_name = DETAIL_LEVEL_ELEMENT_NAMES[record.class.name] ||
+                   Labimotion::Utils.element_name_dc(record.class.to_s)
+    "#{element_name}_detail_level"
+  end
+
   def record_shared_with_minimum_detail_level?(detail_level)
-    detail_level_field = "#{Labimotion::Utils.element_name_dc(record.class.to_s)}_detail_level"
     record
       .collections
       .shared_with_minimum_detail_level(user, detail_level_field, detail_level)

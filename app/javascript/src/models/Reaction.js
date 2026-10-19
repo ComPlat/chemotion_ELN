@@ -11,6 +11,7 @@ import Sample from 'src/models/Sample';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Component from 'src/models/Component';
 import Container from 'src/models/Container';
+import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -25,6 +26,21 @@ const TemperatureDefault = {
   userText: '',
   data: []
 };
+
+const TemperatureNumberPattern = '-?(?:\\d+(?:[.,]\\d*)?|[.,]\\d+)';
+const NumericTemperatureTextPattern = new RegExp(
+  `^(${TemperatureNumberPattern})(?:\\s*(?:~|-|–|to)\\s*(${TemperatureNumberPattern}))?$`,
+  'i'
+);
+
+const parseNumericTemperatureText = (text) => {
+  if (typeof text !== 'string' || text === '') { return null; }
+
+  const match = text.trim().match(NumericTemperatureTextPattern);
+  return match ? match.slice(1).filter((value) => value !== undefined) : null;
+};
+
+const isNumericTemperatureText = (text) => parseNumericTemperatureText(text) !== null;
 
 export const convertTemperature = (temperature, fromUnit, toUnit) => {
   if (fromUnit === toUnit) {
@@ -118,6 +134,9 @@ export default class Reaction extends Element {
 
   static PURIFICATION_SOLVENTS = 'purification_solvents';
 
+  // Mirrors Reaction::CONCENTRATION_MODES on the Ruby side.
+  static CONCENTRATION_MODES = REACTION_CONCENTRATION_MODES;
+
   // material group
   static materialGroups = [
     Reaction.PRODUCTS,
@@ -165,7 +184,7 @@ export default class Reaction extends Element {
       variations: [],
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
-      use_reaction_volume: false,
+      concentration_mode: Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY,
       reaction_type: 'standard',
       lock_reaction_volume: false,
       gaseous: false,
@@ -203,6 +222,26 @@ export default class Reaction extends Element {
 
   isInteractionReaction() {
     return this.reaction_type === 'interaction';
+  }
+
+  schemeSvgRequest() {
+    const productsOnly = this.isInteractionReaction();
+
+    return {
+      materialsSvgPaths: {
+        starting_materials: this.starting_materials.map((material) => material.svgPath),
+        reactants: this.reactantsWithSbmm.map((material) => material.svgPath),
+        products: this.products.map((material) => [material.svgPath, material.equivalent])
+      },
+      temperature: this.temperature_display_with_unit,
+      solvents: this.solvents
+        .map((solvent) => solvent.preferred_label)
+        .filter((solvent) => solvent),
+      duration: this.duration,
+      conditions: this.conditions,
+      productsOnly,
+      showYield: !productsOnly,
+    };
   }
 
   phValueForSerialize() {
@@ -254,7 +293,7 @@ export default class Reaction extends Element {
       variations: this.variations,
       vessel_size: this.vessel_size,
       volume: this.volume,
-      use_reaction_volume: this.use_reaction_volume,
+      concentration_mode: this.concentration_mode,
       reaction_type: this.reaction_type || 'standard',
       lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
@@ -381,6 +420,15 @@ export default class Reaction extends Element {
     return `${minTemp} ~ ${maxTemp}`;
   }
 
+  // Temperature label for the reaction scheme, e.g. "25 °C" or "21 ~ 25 °C".
+  // Numeric single values and ranges get the unit; free text (e.g. "reflux") is left as-is.
+  // Validate the rendered value so typed text and chart-derived data use the same grammar.
+  get temperature_display_with_unit() {
+    const temperature = this.temperature_display;
+    const numeric = isNumericTemperatureText(String(temperature));
+    return numeric ? `${temperature} ${this._temperature.valueUnit}` : temperature;
+  }
+
   get temperature() {
     return this._temperature;
   }
@@ -409,9 +457,12 @@ export default class Reaction extends Element {
     const oldUnit = temperature.valueUnit;
     temperature.valueUnit = newUnit;
 
-    // If userText is number only, treat as normal temperature value
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
-      temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
+    // Convert numeric user text, including both endpoints of a temperature range.
+    const numericValues = parseNumericTemperatureText(temperature.userText);
+    if (numericValues) {
+      temperature.userText = numericValues
+        .map((value) => convertTemperature(value.replace(',', '.'), oldUnit, newUnit).toFixed(2))
+        .join(' ~ ');
     }
 
     temperature.data.forEach((data, index, theArray) => {
@@ -1147,15 +1198,17 @@ export default class Reaction extends Element {
    *
    * Rules:
    * - If equivalents are unlocked, concentration edits are always allowed.
-   * - If equivalents are locked, `use_reaction_volume` must be enabled and
-   *   a positive reaction volume must be set.
+   * - If equivalents are locked, the mode must be `reaction_volume` and a
+   *   positive reaction volume must be set.
    *
    * @param {boolean} lockEquivColumn - Whether the equivalents column is locked.
    * @returns {boolean}
    */
   canUpdateConcentration(lockEquivColumn) {
     if (!lockEquivColumn) return true;
-    return !!(this.use_reaction_volume && this.hasValidReactionVolume);
+
+    return this.concentration_mode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      && this.hasValidReactionVolume;
   }
 
   /**
@@ -1410,23 +1463,33 @@ export default class Reaction extends Element {
   }
 
   /**
-   * Returns the volume (L) to use for concentration calculations.
+   * Returns the volume (L) to use for concentration calculations, based on the
+   * reaction's `concentration_mode`:
    *
-   * Priority:
-   * 1. Explicit reaction volume when `use_reaction_volume` is enabled and valid.
-   * 2. Calculated combined reaction volume from materials.
+   * - `reaction_volume`: the explicit reaction volume when valid, otherwise
+   *   falls back to the default solvents-only basis.
+   * - `solvents_only` (default): the summed solvent volume.
+   * - `combined`: solvents + reactants + starting materials.
    *
    * @returns {number|null} Volume in liters, or null if no valid volume is available
    */
   reactionVolumeForConcentration() {
-    if (this.use_reaction_volume) {
-      const reactionVolume = Number(this.volume);
-      if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
-        return reactionVolume;
-      }
-    }
+    const modes = Reaction.CONCENTRATION_MODES;
 
-    return this.calculateCombinedReactionVolume();
+    switch (this.concentration_mode) {
+      case modes.REACTION_VOLUME: {
+        const reactionVolume = Number(this.volume);
+        if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+          return reactionVolume;
+        }
+        return this.solventVolume;
+      }
+      case modes.COMBINED:
+        return this.calculateCombinedReactionVolume();
+      case modes.SOLVENTS_ONLY:
+      default:
+        return this.solventVolume;
+    }
   }
 
   /**
@@ -1456,13 +1519,13 @@ export default class Reaction extends Element {
    * Formula: volume (L) = amount_mol / concentration (mol/L)
    *
    * On a valid positive `concentration` and a sample with positive
-   * `amount_mol`, this sets `reaction.volume` to the computed value,
-   * enables `use_reaction_volume`, and recalculates concentrations for all
-   * materials.
+   * `amount_mol`, this sets `reaction.volume` to the computed value, switches
+   * `concentration_mode` to `reaction_volume`, and recalculates concentrations
+   * for all materials.
    *
    * @param {Sample} sample
    * @param {number} concentration - New concentration in mol/L.
-   * @returns {{ volume: number, useReactionVolume: true } | null}
+   * @returns {{volume: number, concentrationMode: string}|null}
    *   Describes the applied changes so the caller can persist them via
    *   `onInputChange`, or `null` if no change was applied.
    */
@@ -1476,10 +1539,14 @@ export default class Reaction extends Element {
 
     const newVolume = amountMol / concentration;
     this.volume = newVolume;
-    this.use_reaction_volume = true;
+    this.resetPreservedConcentrationExcept(sample);
+    this.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
     this.updateAllConcentrations();
 
-    return { volume: newVolume, useReactionVolume: true };
+    return {
+      volume: newVolume,
+      concentrationMode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+    };
   }
 
   /**

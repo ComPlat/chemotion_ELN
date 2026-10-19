@@ -6,6 +6,10 @@ import {
   MaterialOverlay, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
+
+const SAMPLE_LABELS = ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'];
+const SAMPLE_LABELS_WITH_SUM = [...SAMPLE_LABELS, 'sum_formula'];
 
 const concentrationEnabledMaterialTypes = ['startingMaterials', 'reactants'];
 
@@ -119,6 +123,17 @@ function computeCombinedReactionVolume(row = {}) {
   return totalVolume > 0 ? totalVolume : null;
 }
 
+function computeSolventsOnlyReactionVolume(row = {}) {
+  const targetUnit = getStandardUnits('volume')[0];
+  const totalVolume = Object.values(row.solvents || {}).reduce((sum, solvent) => {
+    const entry = solvent?.volume;
+    const converted = convertUnit(entry?.value, entry?.unit ?? targetUnit, targetUnit);
+    return Number.isFinite(converted) && converted > 0 ? sum + converted : sum;
+  }, 0);
+
+  return totalVolume > 0 ? totalVolume : null;
+}
+
 function getValidReactionVolume(volume) {
   const parsedVolume = Number(volume);
   return Number.isFinite(parsedVolume) && parsedVolume > 0 ? parsedVolume : null;
@@ -145,9 +160,18 @@ function getReactionVolumeForRow(context = {}, row = {}) {
 
 function resolveReactionVolumeFromContext(context = {}, row = {}) {
   const {
+    concentrationMode,
     useReactionVolume,
     lockReactionVolume,
   } = context;
+
+  if (concentrationMode === REACTION_CONCENTRATION_MODES.SOLVENTS_ONLY) {
+    return computeSolventsOnlyReactionVolume(row);
+  }
+
+  if (concentrationMode === REACTION_CONCENTRATION_MODES.REACTION_VOLUME) {
+    return getReactionVolumeForRow(context, row) ?? computeSolventsOnlyReactionVolume(row);
+  }
 
   const editScopedReactionVolume = getValidReactionVolume(context.editScopedReactionVolume);
   if (lockReactionVolume && !useReactionVolume && editScopedReactionVolume) {
@@ -202,7 +226,11 @@ function updateVariationsRowOnConcentrationMaterialChange(
     && material.aux.gasType !== 'feedstock';
 
   const effectiveConcentrationContext = shouldAutoEnableConcentration
-    ? { ...concentrationContext, useReactionVolume: true }
+    ? {
+      ...concentrationContext,
+      concentrationMode: REACTION_CONCENTRATION_MODES.REACTION_VOLUME,
+      useReactionVolume: true,
+    }
     : concentrationContext;
 
   if (!shouldPropagateConcentrationOnEdit(material, changedEntry, effectiveConcentrationContext)) {
@@ -440,6 +468,9 @@ function cellIsEditable(params) {
   const { data, colDef } = params;
   const { entry, field } = colDef;
   const cellData = get(data, field);
+  if (!cellData) {
+    return false;
+  }
   const { isReference, gasType, materialType } = cellData.aux;
 
   switch (entry) {
@@ -571,7 +602,7 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
   const gasType = getMaterialGasType(materialCopy, gasMode);
   const entries = getMaterialEntries(materialType, gasType);
   let names = new Set([]);
-  ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
+  SAMPLE_LABELS.forEach((name) => {
     if (materialCopy[name]) {
       names.add(materialCopy[name]);
     }
@@ -721,5 +752,7 @@ export {
   computeCombinedReactionVolume,
   resolveReactionVolumeFromContext,
   cellIsEditable,
+  SAMPLE_LABELS,
+  SAMPLE_LABELS_WITH_SUM,
   getValidReactionVolume,
 };

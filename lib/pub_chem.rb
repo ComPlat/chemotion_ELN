@@ -245,6 +245,52 @@ module PubChem
     end
   end
 
+  # Resolve a name or a CAS number to a CID; PubChem indexes both as synonyms.
+  def self.get_cid_from_identifier(identifier)
+    return nil if identifier.blank?
+
+    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' }, format: 'plain' }
+    # CGI.escape would encode a space as "+", which is a literal plus inside a path segment.
+    encoded = ERB::Util.url_encode(identifier.to_s.strip)
+    page = "#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/name/#{encoded}/cids/JSON"
+    begin
+      resp = HTTParty.get(page, options)
+      return nil unless resp.success?
+
+      result = JSON.parse(resp.body, symbolize_names: true)
+      return nil if fault_response?(result)
+
+      result.dig(:IdentifierList, :CID)&.first
+    rescue StandardError => e
+      Rails.logger.error ["with identifier: #{identifier}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+      nil
+    end
+  end
+
+  # Chemical Vendors entries for a CID; each carries the vendor's own catalogue URL.
+  def self.get_vendor_sources_from_cid(cid)
+    cid = Integer(cid, exception: false) unless cid.is_a?(Integer)
+    result = cid && fetch_categories_from_cid(cid)
+    return [] unless result
+
+    categories = result.dig(:SourceCategories, :Categories) || []
+    vendors = categories.find { |category| category[:Category] == 'Chemical Vendors' }
+    vendors ? Array(vendors[:Sources]) : []
+  end
+
+  def self.fetch_categories_from_cid(cid)
+    options = { timeout: 15, headers: { 'Content-Type' => 'text/json' }, format: 'plain' }
+    page = "#{http_s}#{PUBCHEM_HOST}/rest/pug_view/categories/compound/#{cid}/JSON"
+    resp = HTTParty.get(page, options)
+    return nil unless resp.success?
+
+    result = JSON.parse(resp.body, symbolize_names: true)
+    fault_response?(result) ? nil : result
+  rescue StandardError => e
+    Rails.logger.error ["with cid: #{cid}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+    nil
+  end
+
   FTP_PATH = 'ftp.ncbi.nlm.nih.gov'
 
   # return list of week directory names

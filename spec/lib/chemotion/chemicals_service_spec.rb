@@ -3,6 +3,11 @@
 require 'rails_helper'
 
 describe Chemotion::ChemicalsService do
+  # The folder spec/support/isolated_safety_sheets.rb gives this example, never public/.
+  def sheet_file(relative = '')
+    Chemotion::GenerateFileHashUtils.safety_sheets_root.join(relative.delete_prefix('/safety_sheets/'))
+  end
+
   describe '.validate_product_number!' do
     it 'raises when product_number is nil' do
       expect { described_class.validate_product_number!(nil) }.to raise_error(StandardError)
@@ -21,38 +26,588 @@ describe Chemotion::ChemicalsService do
     end
   end
 
+  describe 'keeping sheet files inside the safety sheets folder' do
+    let(:root) { sheet_file }
+
+    it 'maps a sheet path into its vendor folder' do
+      expect(described_class.safety_sheet_disk_path('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
+        .to eq(root.join('merck', '179124_aaaaaaaaaaaaaaaa.pdf'))
+    end
+
+    it 'refuses a path that climbs out of the folder or names no file', :aggregate_failures do
+      ['/safety_sheets/../config/x.pdf', '/safety_sheets/merck/../../x.pdf', '/safety_sheets/merck/a\\b.pdf',
+       '/safety_sheets/merck', '/etc/passwd', '/safety_sheets/.hidden/x.pdf'].each do |path|
+        expect { described_class.safety_sheet_disk_path(path) }.to raise_error(ArgumentError, /Not a safety sheet path/)
+      end
+    end
+
+    it 'refuses to build a sheet path from a product number or vendor carrying a path', :aggregate_failures do
+      expect { described_class.generate_safety_sheet_file_path('merck', '../../x', 'a' * 16) }
+        .to raise_error(ArgumentError)
+      expect { described_class.generate_safety_sheet_file_path('../merck', '1', 'a' * 16) }
+        .to raise_error(ArgumentError)
+    end
+
+    it 'writes nothing when there is nothing readable to write' do
+      expect { described_class.write_file('/safety_sheets/merck/x.pdf', nil) }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe '.write_file with a Grape upload' do
+    let(:relative_path) { '/safety_sheets/testvendor/upload.pdf' }
+    let(:full_path) { sheet_file(relative_path) }
+
+    it 'writes the upload when the hash is keyed by symbol' do
+      described_class.write_file(relative_path, { tempfile: StringIO.new('%PDF symbol') })
+      expect(File.read(full_path)).to eq('%PDF symbol')
+    end
+
+    it 'writes the upload when the hash is keyed by string' do
+      described_class.write_file(relative_path, { 'tempfile' => StringIO.new('%PDF string') })
+      expect(File.read(full_path)).to eq('%PDF string')
+    end
+
+    it 'rewinds an upload whose hash was already computed' do
+      io = StringIO.new('%PDF rewound')
+      io.read
+      described_class.write_file(relative_path, { tempfile: io })
+      expect(File.read(full_path)).to eq('%PDF rewound')
+    end
+  end
+
+  describe '.fisher_sds' do
+    def source(registry, url)
+      { RegistryID: registry, SourceRecordURL: url }
+    end
+
+    it 'prefixes an all-numeric Thermo catalogue code with AC' do
+      part, url = described_class.fisher_sds(
+        source('GID_900000000130357', 'https://www.thermofisher.com/order/catalog/product/327840025'), 'en'
+      )
+      expect(part).to eq('AC327840025')
+      expect(url).to start_with('https://www.fishersci.com/store/msds?partNumber=AC327840025')
+    end
+
+    it 'uses a Fisher Chemical catalogue number unchanged' do
+      part, url = described_class.fisher_sds(source('A111', nil), 'en')
+      expect(part).to eq('A111')
+      expect(url).to include('partNumber=A111')
+    end
+
+    it 'maps a letter-prefixed dotted code to an ALFAA SKU on DirectWebViewer' do
+      part, url = described_class.fisher_sds(
+        source('GID_1', 'https://www.thermofisher.com/order/catalog/product/B22935.06'), 'de'
+      )
+      expect(part).to eq('ALFAAB22935')
+      expect(url).to eq(
+        'https://documents.thermofisher.com/directwebviewer/private/results.aspx' \
+        '?page=NewSearch&LANGUAGE=d__DE&SUBFORMAT=d__CLP1&SKU=ALFAAB22935&PLANT=d__ALF',
+      )
+    end
+
+    it 'falls back to English for a language Thermo does not publish' do
+      _, url = described_class.fisher_sds(
+        source('GID_1', 'https://www.thermofisher.com/order/catalog/product/L10407.AU'), 'it'
+      )
+      expect(url).to include('LANGUAGE=d__EN')
+    end
+
+    it 'builds no SDS link for an all-numeric dotted code' do
+      expect(
+        described_class.fisher_sds(
+          source('GID_1', 'https://www.thermofisher.com/order/catalog/product/019392.K7'), 'en'
+        ),
+      ).to be_nil
+    end
+  end
+
+  describe 'save routing' do
+    it 'offers no save route for a catalogue-only vendor' do
+      expect(described_class.vendor_save_modes('abcr GmbH')).to eq([])
+    end
+
+    it 'falls back to the other route for a vendor that has one' do
+      expect(described_class.vendor_save_modes('Sigma-Aldrich')).to eq(%w[browser server])
+      expect(described_class.vendor_save_modes('Thermo Fisher Scientific')).to eq(%w[server browser])
+    end
+
+    it 'offers no fallback for a catalogue-only vendor' do
+      expect(described_class.vendor_save_modes('abcr GmbH')).to be_empty
+    end
+  end
+
+  describe '.thermofisher' do
+    let(:sources) do
+      [{ SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+         SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' },
+       { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124' }]
+    end
+
+    it 'resolves the Fisher catalogue entry through PubChem' do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+      expect(described_class.thermofisher('Acetone', 'en')).to include(
+        'fisher_product_number' => 'AC327840025',
+        'save_modes' => %w[server browser],
+      )
+    end
+
+    it 'ignores vendors other than the Fisher lineage' do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180,
+                                         get_vendor_sources_from_cid: [sources.last])
+      expect(described_class.thermofisher('Acetone', 'en'))
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+    end
+
+    it 'reports a miss when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.thermofisher('Nonexistent', 'en'))
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+    end
+  end
+
+  describe '.no_sheet_found' do
+    it 'names the vendor the way the UI names it' do
+      expect(described_class.no_sheet_found(described_class::SDS_VENDOR))
+        .to eq('No safety data sheet found from Sigma-Aldrich')
+      expect(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+        .to eq('No safety data sheet found from Thermofisher')
+    end
+
+    it 'never calls Sigma-Aldrich by its parent company' do
+      expect(described_class.no_sheet_found(described_class::SDS_VENDOR)).not_to include('Merck')
+    end
+  end
+
+  describe 'narrowing a vendor search by product number' do
+    let(:sources) do
+      [{ SourceName: 'Sigma-Aldrich', RegistryID: '00560_SIAL',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sial/00560' },
+       { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+         SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124' },
+       { SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+         SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' }]
+    end
+
+    before do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+    end
+
+    it 'keeps only the vendor holding that number' do
+      overview = described_class.vendor_overview('Acetone', 'en', '179124')
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Sigma-Aldrich'])
+      expect(overview['sds_vendors'].first['products'].pluck('merck_product_number')).to eq(['179124'])
+      expect(overview['sds_vendors'].first['count']).to eq(1)
+    end
+
+    it 'matches a Fisher code through its catalogue prefix' do
+      overview = described_class.vendor_overview('Acetone', 'en', '327840025')
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Thermo Fisher Scientific'])
+      expect(overview['sds_vendors'].first['products'].first['fisher_product_number']).to eq('AC327840025')
+    end
+
+    it 'ignores separators and case in the number the user typed' do
+      overview = described_class.vendor_overview('Acetone', 'en', ' 179-124 ')
+      expect(overview['sds_vendors'].first['products'].pluck('merck_product_number')).to eq(['179124'])
+    end
+
+    it 'returns no vendor when nothing carries that number' do
+      overview = described_class.vendor_overview('Acetone', 'en', '999999')
+      expect(overview['sds_vendors']).to be_empty
+      expect(overview['catalogue_vendors']).to be_empty
+    end
+
+    it 'says so in the same words a single vendor would' do
+      overview = described_class.vendor_overview('Acetone', 'en', '999999')
+      expect(overview['message']).to eq(described_class.no_sheet_found(described_class::ALL_VENDORS))
+      expect(overview['message']).to eq('No safety data sheet found from any vendor')
+    end
+
+    it 'carries no message when vendors were found' do
+      expect(described_class.vendor_overview('Acetone', 'en')).not_to have_key('message')
+    end
+
+    it 'says the same when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.vendor_overview('Nonexistent', 'en')['message'])
+        .to eq(described_class.no_sheet_found(described_class::ALL_VENDORS))
+    end
+
+    it 'leaves the listing whole when no number is given' do
+      expect(described_class.vendor_overview('Acetone', 'en')['sds_vendors'].size).to eq(2)
+    end
+
+    it 'picks the Sigma entry the number names, not the highest-ranked brand' do
+      expect(described_class.merck('Acetone', 'en', '00560')).to include('merck_product_number' => '00560')
+      expect(described_class.merck('Acetone', 'en')).to include('merck_product_number' => '179124')
+    end
+
+    it 'reports a miss when the number matches no Sigma entry' do
+      expect(described_class.merck('Acetone', 'en', '999999'))
+        .to eq(described_class.no_sheet_found(described_class::SDS_VENDOR))
+    end
+
+    it 'narrows the Thermofisher lookup the same way' do
+      expect(described_class.thermofisher('Acetone', 'en', '327840025'))
+        .to include('fisher_product_number' => 'AC327840025')
+      expect(described_class.thermofisher('Acetone', 'en', '999999'))
+        .to eq(described_class.no_sheet_found(described_class::THERMO_VENDOR))
+    end
+  end
+
+  describe '.duplicate_sheet_message' do
+    it 'names the catalogue number the sheet is already held under' do
+      expect(described_class.duplicate_sheet_message('/safety_sheets/fisher/AC196660010_web_2be7b427e93cc619.pdf'))
+        .to eq('This sample already holds this sheet. It is the same document as AC196660010.')
+    end
+
+    it 'reads a sheet saved under the current naming' do
+      expect(described_class.duplicate_sheet_message('/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf'))
+        .to include('as 392693.')
+    end
+
+    it 'falls back to a plain sentence when the name says nothing' do
+      expect(described_class.duplicate_sheet_message(nil))
+        .to eq('This sample already holds this safety data sheet.')
+    end
+  end
+
+  describe '.sheet_already_saved?' do
+    let(:saved) { '/safety_sheets/merck/a_1111111111111111.pdf' }
+    let(:data) { [{ 'safetySheetPath' => [{ 'a_1111111111111111_link' => saved }] }] }
+
+    it 'spots the same file already on this sample' do
+      expect(described_class.sheet_already_saved?(data, saved)).to be true
+    end
+
+    it 'lets a different sheet for the same product through' do
+      expect(described_class.sheet_already_saved?(data, '/safety_sheets/merck/a_2222222222222222.pdf')).to be false
+    end
+
+    it 'holds no opinion on an empty sample', :aggregate_failures do
+      expect(described_class.sheet_already_saved?([{}], '/safety_sheets/merck/a.pdf')).to be false
+      expect(described_class.sheet_already_saved?(nil, '/safety_sheets/merck/a.pdf')).to be false
+    end
+  end
+
+  describe 'saving a second sheet for one product number' do
+    let(:vendor) { 'merck' }
+    let(:product) { '270709' }
+    let(:link) { 'https://www.sigmaaldrich.com/sheet.pdf' }
+    let(:first_initials) { Digest::MD5.hexdigest('%PDF first')[0..15] }
+
+    before do
+      FileUtils.mkdir_p(sheet_file(vendor))
+      # The name carries the content hash, which is how a duplicate is found.
+      File.write(sheet_file("#{vendor}/#{product}_#{first_initials}.pdf"), '%PDF first')
+    end
+
+    # The old code globbed <product>_web_*.pdf and returned that file without ever
+    # fetching, so a second language or revision could never be saved.
+    it 'writes the second sheet rather than handing back the first', :aggregate_failures do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF second')
+        true
+      end
+
+      result = described_class.create_sds_file(link, product, vendor)
+      expect(result).to match(%r{\A/safety_sheets/#{vendor}/#{product}_[a-f0-9]{16}\.pdf\z})
+      expect(result).not_to end_with("#{first_initials}.pdf")
+      expect(File.read(sheet_file(result))).to eq('%PDF second')
+    end
+
+    it 'hands back the file already held when the bytes repeat' do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF first')
+        true
+      end
+
+      result = described_class.create_sds_file(link, product, vendor)
+      expect(result).to eq("/safety_sheets/#{vendor}/#{product}_#{first_initials}.pdf")
+    end
+  end
+
+  describe '.sds_limit_reached?' do
+    def with_sheets(count)
+      [{ 'safetySheetPath' => Array.new(count) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } } }]
+    end
+
+    it 'allows a save below the cap' do
+      expect(described_class.sds_limit_reached?(with_sheets(described_class::MAX_SAVED_SDS - 1))).to be false
+    end
+
+    it 'refuses a save at the cap' do
+      expect(described_class.sds_limit_reached?(with_sheets(described_class::MAX_SAVED_SDS))).to be true
+    end
+
+    it 'treats a chemical with no sheets yet as free' do
+      expect(described_class.sds_limit_reached?([{}])).to be false
+      expect(described_class.sds_limit_reached?(nil)).to be false
+    end
+  end
+
+  describe '.save_vendor_sheet' do
+    let(:sample) { create(:sample) }
+    let(:held) { '/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf' }
+    let(:product_info) do
+      { 'vendor' => 'Merck', 'productNumber' => '179124', 'sdsLink' => 'https://www.sigmaaldrich.com/x' }
+    end
+
+    def save(sheets = [])
+      described_class.save_vendor_sheet(sample_id: sample.id, cas: '67-64-1', product_info: product_info,
+                                        chemical_data: [{ 'safetySheetPath' => sheets }])
+    end
+
+    it 'records the fetched sheet on a new chemical', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file).and_return(held)
+
+      chemical = save
+      expect(chemical).to be_a(Chemical)
+      expect(chemical.chemical_data[0]['safetySheetPath']).to eq([{ '179124_aaaaaaaaaaaaaaaa_link' => held }])
+      expect(described_class).to have_received(:create_sds_file)
+        .with('https://www.sigmaaldrich.com/x', '179124', 'merck')
+    end
+
+    it 'refuses at the cap without fetching', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file)
+      full = Array.new(described_class::MAX_SAVED_SDS) { |i| { "p#{i}_link" => "/safety_sheets/merck/p#{i}.pdf" } }
+
+      expect(save(full)).to include(final: true, status: 422)
+      expect(described_class).not_to have_received(:create_sds_file)
+    end
+
+    it 'passes a download error on as a 400' do
+      allow(described_class).to receive(:create_sds_file).and_return({ error: 'vendor timed out' })
+      expect(save).to eq(error: 'vendor timed out', status: 400)
+    end
+
+    it 'refuses a download that produced no file' do
+      allow(described_class).to receive(:create_sds_file).and_return(false)
+      expect(save).to eq(error: 'Could not retrieve the SDS from the vendor', status: 400)
+    end
+
+    it 'refuses a product number that would write outside the sheets folder', :aggregate_failures do
+      allow(described_class).to receive(:request_pdf_file) do |_url, path|
+        File.write(path, '%PDF escape')
+        true
+      end
+      product_info['productNumber'] = '../../../tmp/escaped'
+
+      expect(save).to eq(status: 400, error: 'Product number is invalid')
+      expect(described_class).not_to have_received(:request_pdf_file)
+      expect(Rails.root.glob('tmp/escaped_*.pdf')).to be_empty
+    end
+
+    it 'refuses a row that is missing or incomplete before fetching anything', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file)
+      save_with = lambda do |info|
+        described_class.save_vendor_sheet(sample_id: sample.id, cas: '67-64-1', product_info: info,
+                                          chemical_data: [{}])
+      end
+
+      expect(save_with.call(nil)).to eq(error: 'Vendor product info is missing', status: 400)
+      expect(save_with.call('Merck')).to eq(error: 'Vendor product info is missing', status: 400)
+      expect(save_with.call(product_info.except('vendor'))).to eq(error: 'Vendor name is missing', status: 400)
+      expect(save_with.call(product_info.merge('vendor' => 'Thermo Fisher/..')))
+        .to eq(error: 'Vendor name is invalid', status: 400)
+      expect(save_with.call(product_info.except('sdsLink'))).to eq(error: 'Safety sheet link is missing', status: 400)
+      expect(save_with.call(product_info.merge('productNumber' => 12)))
+        .to eq(error: 'Product number is invalid', status: 400)
+      expect(described_class).not_to have_received(:create_sds_file)
+    end
+
+    it 'refuses a sheet the sample already holds as final', :aggregate_failures do
+      allow(described_class).to receive(:create_sds_file).and_return(held)
+
+      result = save([{ '179124_aaaaaaaaaaaaaaaa_link' => held }])
+      expect(result).to include(final: true, status: 422)
+      expect(result[:error]).to include('179124')
+    end
+  end
+
+  describe 'error hashes' do
+    it 'names the cap and the action in the limit error' do
+      expect(described_class.sds_limit_error('saving')).to eq(
+        error: "A sample can hold at most #{described_class::MAX_SAVED_SDS} safety data sheets. " \
+               'Delete one before saving another.',
+        final: true,
+        status: 422,
+      )
+    end
+
+    it 'names the held sheet in the duplicate error' do
+      expect(described_class.duplicate_sheet_error('/safety_sheets/merck/179124_aaaaaaaaaaaaaaaa.pdf'))
+        .to include(error: a_string_including('179124'), final: true, status: 422)
+    end
+  end
+
+  describe '.fetch_allowed_url' do
+    let(:pdf) { instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }) }
+
+    def redirect_to(location)
+      instance_double(HTTParty::Response, headers: { 'Location' => location }, code: 302)
+    end
+
+    it 'follows a redirect that stays on an allowed host' do
+      allow(HTTParty).to receive(:get).with('https://www.fishersci.com/start', anything)
+                                      .and_return(redirect_to('https://www.fishersci.com/final.pdf'))
+      allow(HTTParty).to receive(:get).with('https://www.fishersci.com/final.pdf', anything).and_return(pdf)
+      expect(described_class.fetch_allowed_url('https://www.fishersci.com/start')).to eq(pdf)
+    end
+
+    it 'refuses a redirect that leaves the allowlist' do
+      allow(HTTParty).to receive(:get).and_return(redirect_to('https://evil.example.com/x.pdf'))
+      expect { described_class.fetch_allowed_url('https://www.fishersci.com/start') }
+        .to raise_error(StandardError, /not allowed/)
+    end
+
+    it 'gives up rather than following a redirect loop' do
+      looping = redirect_to('https://www.fishersci.com/again')
+      allow(HTTParty).to receive(:get).and_return(looping)
+      expect(described_class.fetch_allowed_url('https://www.fishersci.com/start')).to eq(looping)
+    end
+  end
+
+  describe '.merck and vendor grouping' do
+    let(:vendor_groups) { described_class.grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(180), 'en') }
+    let(:sources) do
+      [
+        { SourceName: 'Sigma-Aldrich', RegistryID: '00560_SIAL',
+          SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sial/00560?utm_source=pubchem' },
+        { SourceName: 'Sigma-Aldrich', RegistryID: '179124_SIGALD',
+          SourceRecordURL: 'https://www.sigmaaldrich.com/catalog/product/sigald/179124?utm_source=pubchem' },
+        { SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+          SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/327840025' },
+        { SourceName: 'Glentham Life Sciences Ltd.', RegistryID: 'GK3021',
+          SourceRecordURL: 'https://www.glentham.com/en/products/product/GK3021/' },
+      ]
+    end
+
+    before do
+      allow(PubChem).to receive_messages(get_cid_from_identifier: 180, get_vendor_sources_from_cid: sources)
+    end
+
+    it 'prefers the sigald brand over sial when both are listed' do
+      expect(described_class.merck('Acetone', 'en')).to eq(
+        'merck_link' => 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124',
+        'merck_product_number' => '179124',
+        'merck_product_link' => 'https://www.sigmaaldrich.com/DE/de/product/sigald/179124',
+        'save_modes' => %w[browser server],
+      )
+    end
+
+    it 'falls back to English when the language is not a two-letter code', :aggregate_failures do
+      expect(described_class.merck('Acetone', 'de')['merck_link']).to eq('https://www.sigmaaldrich.com/DE/de/sds/sigald/179124')
+      expect(described_class.merck('Acetone', '../../x')['merck_link'])
+        .to eq('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124')
+      expect(described_class.merck('Acetone', nil)['merck_link']).to eq('https://www.sigmaaldrich.com/DE/en/sds/sigald/179124')
+    end
+
+    it 'reports a miss when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.merck('Nonexistent', 'en'))
+        .to eq(described_class.no_sheet_found(described_class::SDS_VENDOR))
+    end
+
+    it 'groups vendors and puts the SDS-capable one first' do
+      groups = vendor_groups
+      expect(groups.pluck('vendor')).to eq(
+        ['Sigma-Aldrich', 'Thermo Fisher Scientific', 'Glentham Life Sciences Ltd.'],
+      )
+      expect(groups.first).to include('count' => 2, 'sds_supported' => true)
+    end
+
+    it 'builds an AC-prefixed Fisher SDS link from an all-numeric Thermo catalogue code' do
+      thermo = vendor_groups.find { |g| g['vendor'].start_with?('Thermo') }
+      expect(thermo['sds_supported']).to be true
+      expect(thermo['products'].first).to include(
+        'fisher_product_number' => 'AC327840025',
+        'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=AC327840025' \
+                         '&productDescription=&language=EN&countryCode=US',
+      )
+    end
+
+    it 'uses a Fisher Chemical RegistryID verbatim as the part number' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Fisher Chemical', RegistryID: 'A111', SourceRecordURL: nil }],
+      )
+      group = vendor_groups.first
+      expect(group['products'].first).to eq(
+        'fisher_link' => 'https://www.fishersci.com/store/msds?partNumber=A111' \
+                         '&productDescription=&language=EN&countryCode=US',
+        'fisher_product_number' => 'A111',
+        'save_modes' => %w[server browser],
+      )
+    end
+
+    it 'leaves a dotted Thermo code as a catalogue link with no SDS' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Thermo Fisher Scientific', RegistryID: 'GID_900000000130357',
+           SourceRecordURL: 'https://www.thermofisher.com/order/catalog/product/019392.K7' }],
+      )
+      group = vendor_groups.first
+      expect(group['sds_supported']).to be false
+      expect(group['products'].first).not_to have_key('fisher_link')
+    end
+
+    it 'gives a catalogue-only vendor a product link and no SDS link' do
+      glentham = vendor_groups.find { |g| g['vendor'].start_with?('Glentham') }
+      expect(glentham['sds_supported']).to be false
+      expect(glentham['products'].first).to eq(
+        'label' => 'GK3021', 'product_link' => 'https://www.glentham.com/en/products/product/GK3021/',
+      )
+    end
+
+    it 'splits curated vendors into sheet sources and catalogue-only ones' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        sources + [{ SourceName: 'abcr GmbH', RegistryID: 'AB148930',
+                     SourceRecordURL: 'https://abcr.com/de_en/AB148930' },
+                   { SourceName: 'VladaChem', RegistryID: 'V1',
+                     SourceRecordURL: 'https://www.vladachem.com/product.php?products=67-64-1' }],
+      )
+      overview = described_class.vendor_overview('Acetone', 'en')
+      expect(overview['sds_vendors'].pluck('vendor')).to eq(['Sigma-Aldrich', 'Thermo Fisher Scientific'])
+      expect(overview['catalogue_vendors'].pluck('vendor'))
+        .to contain_exactly('abcr GmbH', 'Glentham Life Sciences Ltd.')
+      expect(overview['catalogue_vendors'].pluck('vendor')).not_to include('VladaChem')
+    end
+
+    it 'counts every vendor and links to the full PubChem list' do
+      overview = described_class.vendor_overview('Acetone', 'en')
+      expect(overview['vendor_count']).to eq(3)
+      expect(overview['pubchem_url']).to eq(
+        'https://pubchem.ncbi.nlm.nih.gov/compound/180#section=Chemical-Vendors',
+      )
+    end
+
+    it 'returns an empty overview when PubChem knows no CID' do
+      allow(PubChem).to receive(:get_cid_from_identifier).and_return(nil)
+      expect(described_class.vendor_overview('Nonexistent', 'en')).to eq(
+        'sds_vendors' => [],
+        'catalogue_vendors' => [],
+        'vendor_count' => 0,
+        'message' => described_class.no_sheet_found(described_class::ALL_VENDORS),
+      )
+    end
+
+    it 'falls back to the URL segment when RegistryID is an internal PubChem GID' do
+      allow(PubChem).to receive(:get_vendor_sources_from_cid).and_return(
+        [{ SourceName: 'Oakwood Products', RegistryID: 'GID_900000000999999',
+           SourceRecordURL: 'https://oakwoodchemical.com/products/035905' }],
+      )
+      expect(vendor_groups.first['products'].first['label']).to eq('035905')
+    end
+  end
+
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
-      let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }
       let(:relative_path) { '/safety_sheets/merck/252549_test.pdf' }
-      let(:full_path) { File.join('public', relative_path) }
-
-      before { FileUtils.rm_f(full_path) }
-
-      it 'downloads and writes PDF returning true (delegates to request_pdf_file)' do
-        pdf_body = '%PDF test'
-        allow(HTTParty).to receive(:get).with(link, anything).and_return(
-          instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }, body: pdf_body),
-        )
-        # request_pdf_file invoked internally when no upload given -> returns true
-        result = described_class.write_file(relative_path, nil, link)
-        expect(result).to be(true)
-        expect(File.exist?(full_path)).to be true
-      end
-
-      it 'returns false when remote content not PDF' do
-        allow(HTTParty).to receive(:get).and_return(
-          instance_double(HTTParty::Response, headers: { 'Content-Type' => 'text/html' }, body: '<html/>'),
-        )
-        result = described_class.write_file(relative_path, nil, link)
-        expect(result).to be(false)
-        expect(File.exist?(full_path)).to be false
-      end
+      let(:full_path) { sheet_file(relative_path) }
 
       it 'writes uploaded tempfile (hash with tempfile) returning bytes written' do
         io = StringIO.new('uploaded content')
         file_param = { 'tempfile' => io }
-        result = described_class.write_file(relative_path, file_param, nil)
+        result = described_class.write_file(relative_path, file_param)
         expect(result).to be > 0
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('uploaded content')
@@ -60,7 +615,7 @@ describe Chemotion::ChemicalsService do
 
       it 'writes IO object directly (e.g. StringIO) returning bytes written' do
         io = StringIO.new('direct content')
-        result = described_class.write_file(relative_path, io, nil)
+        result = described_class.write_file(relative_path, io)
         expect(result).to be > 0
         expect(File.exist?(full_path)).to be true
         expect(File.binread(full_path)).to eq('direct content')
@@ -68,7 +623,8 @@ describe Chemotion::ChemicalsService do
     end
 
     context 'when creating SDS file (API download path)' do
-      let(:link) { 'https://www.alfa.com/en/catalog/A14672' }
+      # Must be an ALLOWED_DOMAINS host, or validate_url_for_request! rejects it before the download.
+      let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sial/A14672' }
       let(:product_number) { 'A14672' }
       let(:vendor) { 'thermofischer' }
       let(:full_hash) { 'a' * 32 }
@@ -79,21 +635,22 @@ describe Chemotion::ChemicalsService do
           instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' }, body: '%PDF test'),
         )
         allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_return(full_hash)
-        FileUtils.mkdir_p('public/safety_sheets/thermofischer')
+        FileUtils.mkdir_p(sheet_file(vendor))
       end
 
-      it 'returns existing file path if duplicate detected' do
-        existing_path = "/safety_sheets/#{vendor}/#{product_number}_web_#{hash_initials}.pdf"
-        allow(Chemotion::GenerateFileHashUtils).to receive(:find_duplicate_file_by_hash).and_return(existing_path)
+      it 'reuses the file already on disk when the bytes are the same' do
+        existing_path = "/safety_sheets/#{vendor}/#{product_number}_#{hash_initials}.pdf"
+        allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(existing_path)
         result = described_class.create_sds_file(link, product_number, vendor)
         expect(result).to eq(existing_path)
       end
 
-      it 'downloads, saves new file, returns its relative path when no duplicate' do
-        allow(Chemotion::GenerateFileHashUtils).to receive(:find_duplicate_file_by_hash).and_return(nil)
+      it 'writes a new file, with no web marker, when nothing matches', :aggregate_failures do
+        allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(nil)
         result = described_class.create_sds_file(link, product_number, vendor)
-        expect(result).to match(%r{^/safety_sheets/#{vendor}/#{product_number}_web_[a-f0-9]{16}\.pdf$})
-        expect(File.exist?(File.join('public', result))).to be true
+        expect(result).to match(%r{^/safety_sheets/#{vendor}/#{product_number}_[a-f0-9]{16}\.pdf$})
+        expect(result).not_to include('_web_')
+        expect(File.exist?(sheet_file(result))).to be true
       end
 
       it 'returns error hash when request_pdf_file returns error hash' do
@@ -111,24 +668,6 @@ describe Chemotion::ChemicalsService do
         allow(described_class).to receive(:request_pdf_file).and_return(false)
         result = described_class.create_sds_file(link, product_number, vendor)
         expect(result).to be(false)
-      end
-    end
-
-    context 'with chem_properties_alfa' do
-      it 'constructs chemical properties hash for alfa vendor' do
-        properties = ['formula', 'NaI', 'formula Weight', '149.89', 'form', 'powder', 'melting point', '651°']
-        chemical_properties = described_class.chem_properties_alfa(properties)
-        expect(chemical_properties.keys).to match_array(%w[formula formula_weight form melting_point])
-      end
-    end
-
-    context 'when chem_properties_merck' do
-      it 'constructs chemical properties hash for merck vendor' do
-        chem_properties_names = %w[grade quality_level form mp ph]
-        chem_properties_values = ['200', '>1 (vs air)', '≤0.002% N compounds≤0.01% insolubles', '661 °C',
-                                  '6.0-9.0 (25 °C, 5%)']
-        chemical_properties = described_class.chem_properties_merck(chem_properties_names, chem_properties_values.dup)
-        expect(chemical_properties.keys).to include('grade', 'quality_level', 'form', 'melting_point', 'ph')
       end
     end
 
@@ -161,95 +700,39 @@ describe Chemotion::ChemicalsService do
       end
     end
 
-    context 'when clean_property_name' do
-      it 'handles abbreviations and german forms' do
-        expect(described_class.clean_property_name('mp (schmelzpunkt)')).to eq('melting_point')
-        expect(described_class.clean_property_name('bp')).to eq('boiling_point')
-        expect(described_class.clean_property_name('qualitätsniveau')).to eq('quality level')
-      end
-
-      it 'returns nil for blank' do
-        expect(described_class.clean_property_name('')).to be_nil
-      end
-    end
-
     context 'with generate_safety_sheet_file_path' do
-      it 'builds path with web signature when flagged' do
-        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678', true)
-        expect(path).to eq('/safety_sheets/merck/270709_web_abcd1234efgh5678.pdf')
-      end
-
-      it 'builds path without web signature when flag false' do
-        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678', false)
+      it 'names a sheet by vendor, product and content hash' do
+        path = described_class.generate_safety_sheet_file_path('merck', '270709', 'abcd1234efgh5678')
         expect(path).to eq('/safety_sheets/merck/270709_abcd1234efgh5678.pdf')
-      end
-    end
-
-    context 'with chemical_has_vendor_product?' do
-      let(:chemical) { build(:chemical, chemical_data: [{ 'merckProductInfo' => { 'productNumber' => '270709' } }]) }
-
-      it 'returns true when vendor+product present' do
-        expect(described_class.chemical_has_vendor_product?(chemical, 'merck', '270709')).to be true
-      end
-
-      it 'returns false when product number different' do
-        expect(described_class.chemical_has_vendor_product?(chemical, 'merck', '111111')).to be false
-      end
-
-      it 'returns false when chemical_data malformed' do
-        malformed = build(:chemical, chemical_data: [])
-        expect(described_class.chemical_has_vendor_product?(malformed, 'merck', '270709')).to be false
       end
     end
 
     context 'with update_chemical_data' do
       let(:data) { [{ 'safetySheetPath' => [] }] }
       # Use only hex chars so regex in service matches
-      let(:file_path) { '/safety_sheets/merck/270709_web_abcd1234efab5678.pdf' }
+      let(:file_path) { '/safety_sheets/merck/270709_abcd1234efab5678.pdf' }
 
       it 'appends new safety sheet key when absent' do
-        updated = described_class.update_chemical_data(data, file_path, '270709', 'merck')
+        updated = described_class.update_chemical_data(data, file_path, '270709')
         keys = updated[0]['safetySheetPath'].flat_map(&:keys)
         expect(keys.first).to eq('270709_abcd1234efab5678_link')
       end
 
       it 'does not duplicate existing safety sheet key' do
-        described_class.update_chemical_data(data, file_path, '270709', 'merck')
-        updated = described_class.update_chemical_data(data, file_path, '270709', 'merck')
+        described_class.update_chemical_data(data, file_path, '270709')
+        updated = described_class.update_chemical_data(data, file_path, '270709')
         expect(updated[0]['safetySheetPath'].size).to eq(1)
       end
 
+      it 'records a file reused from another vendor folder' do
+        reused = '/safety_sheets/fisher/AC123_abcd1234efab5678.pdf'
+        updated = described_class.update_chemical_data(data, reused, '270709')
+        expect(updated[0]['safetySheetPath'].flat_map(&:values)).to eq([reused])
+      end
+
       it 'returns original data when pattern does not match' do
-        unchanged = described_class.update_chemical_data(data, '/invalid/path.pdf', '270709', 'merck')
+        unchanged = described_class.update_chemical_data(data, '/invalid/path.pdf', '270709')
         expect(unchanged[0]['safetySheetPath']).to be_empty
-      end
-    end
-
-    context 'when finding existing or creating safety sheet' do
-      let(:link) { 'http://example.com/file.pdf' }
-
-      it 'returns existing path if found' do
-        allow(described_class).to receive(:find_existing_file_by_vendor_product_number_signature)
-          .and_return('/safety_sheets/merck/270709_web_hash.pdf')
-        result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
-        expect(result).to eq('/safety_sheets/merck/270709_web_hash.pdf')
-      end
-
-      it 'creates new file when none exists' do
-        allow(described_class).to receive_messages(find_existing_file_by_vendor_product_number_signature: nil,
-                                                   create_sds_file: '/safety_sheets/merck/270709_web_newhash.pdf')
-        result = described_class.find_existing_or_create_safety_sheet(link, 'merck', '270709')
-        expect(result).to eq('/safety_sheets/merck/270709_web_newhash.pdf')
-      end
-    end
-
-    context 'when extracting vendor key from path' do
-      it 'returns nil when product_number missing' do
-        expect(described_class.extract_vendor_key_from_path('/safety_sheets/merck/270709_hash.pdf', nil)).to be_nil
-      end
-
-      it 'returns nil when file_path nil' do
-        expect(described_class.extract_vendor_key_from_path(nil, '270709')).to be_nil
       end
     end
 
@@ -263,12 +746,21 @@ describe Chemotion::ChemicalsService do
         expect(result[:error]).to include('net')
       end
 
-      it 'warns and returns false for non-pdf content' do
-        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'text/html' })
+      it 'refuses a page that is not a PDF however it is labelled' do
+        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/pdf' },
+                                                   body: '<html>Access Denied</html>')
         allow(HTTParty).to receive(:get).and_return(resp)
         allow(Rails.logger).to receive(:warn)
-        result = described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)
-        expect(result).to be false
+        expect(described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)).to be false
+      end
+
+      # Fisher labels the same sheet octet-stream under load; the bytes are what matter.
+      it 'accepts a PDF sent under the wrong content type', :aggregate_failures do
+        resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'application/octet-stream' },
+                                                   body: '%PDF-1.4 body')
+        allow(HTTParty).to receive(:get).and_return(resp)
+        expect(described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)).to be true
+        expect(File.read(tmp_path)).to eq('%PDF-1.4 body')
       end
     end
 

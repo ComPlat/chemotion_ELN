@@ -440,7 +440,70 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'POST /api/v1/wellplates/subwellplates' do
-    pending 'TODO: Add missing spec'
+    let(:sample) { create(:sample) }
+    let!(:well) { create(:well, wellplate: wellplate, sample: sample, position_x: 1, position_y: 1) }
+
+    let(:params) do
+      {
+        ui_state: {
+          wellplate: { all: true, included_ids: [], excluded_ids: [] },
+          currentCollectionId: collection.id,
+        },
+      }
+    end
+
+    before do
+      post '/api/v1/wellplates/subwellplates', params: params, as: :json
+    end
+
+    it 'splits the wellplate into a subwellplate in the target collection' do
+      expect(response).to have_http_status :created
+
+      subwellplate = Wellplate.find_by(name: "#{wellplate.name}-Split")
+      expect(subwellplate).not_to be_nil
+      expect(subwellplate.collections).to include(collection)
+    end
+
+    it 'creates exactly one subwell' do
+      subwellplate = Wellplate.find_by(name: "#{wellplate.name}-Split")
+      expect(subwellplate.wells.count).to eq(1)
+    end
+
+    it 'carries over the position and readouts' do
+      subwell = Wellplate.find_by(name: "#{wellplate.name}-Split").wells.first
+      expect(subwell).to have_attributes(
+        position_x: well.position_x, position_y: well.position_y, readouts: well.readouts,
+      )
+    end
+
+    it "splits the well's sample and links it as the subwell's sample" do
+      subwell = Wellplate.find_by(name: "#{wellplate.name}-Split").wells.first
+      expect(subwell.sample).to have_attributes(parent: sample)
+      expect(subwell.sample.id).not_to eq(sample.id)
+    end
+
+    context 'when the collection is a read-only share' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |shared_collection|
+          create(:collection_share, collection: shared_collection, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let(:wellplate) { create(:wellplate, collections: [read_only_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            wellplate: { all: true, included_ids: [], excluded_ids: [] },
+            currentCollectionId: read_only_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subwellplate' do
+        expect(response).to have_http_status :unauthorized
+        expect(Wellplate.find_by(name: "#{wellplate.name}-Split")).to be_nil
+      end
+    end
   end
 
   describe 'PUT /api/v1/wellplates/import_spreadsheet/:id' do
@@ -487,13 +550,9 @@ describe Chemotion::WellplateAPI do
     end
   end
 
-  describe 'POST /api/v1/wellplates/well_label' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'POST /api/v1/wellplates/well_color_code' do
-    pending 'TODO: Add missing spec'
-  end
+  # POST /api/v1/wellplates/well_label and /well_color_code were removed in #1930
+  # (label/color_code are now set through PUT /wellplates/:id instead); their pending
+  # specs tested routes that no longer exist and were removed along with them.
 
   describe 'GET /api/v1/wellplates/template' do
     context 'when wellplate does not exit' do

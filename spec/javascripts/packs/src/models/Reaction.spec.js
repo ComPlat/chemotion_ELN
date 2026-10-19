@@ -2,6 +2,8 @@ import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
+  from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 function randFloat(min, max, precision) {
@@ -160,15 +162,24 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction.CONCENTRATION_MODES', () => {
+    it('exposes the shared frozen concentration modes object', () => {
+      expect(Reaction.CONCENTRATION_MODES).toBe(REACTION_CONCENTRATION_MODES);
+      expect(Object.isFrozen(Reaction.CONCENTRATION_MODES)).toBe(true);
+      expect(isReactionConcentrationMode(REACTION_CONCENTRATION_MODES.COMBINED)).toBe(true);
+      expect(isReactionConcentrationMode('invalid')).toBe(false);
+    });
+  });
+
   describe('Reaction.buildEmpty()', () => {
     it('should initialize volume as null', () => {
       const emptyReaction = Reaction.buildEmpty(1);
       expect(emptyReaction.volume).toBe(null);
     });
 
-    it('should initialize use_reaction_volume as false', () => {
+    it('should initialize concentration_mode as solvents_only', () => {
       const emptyReaction = Reaction.buildEmpty(1);
-      expect(emptyReaction.use_reaction_volume).toBe(false);
+      expect(emptyReaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
     });
 
     it('should initialize lock_reaction_volume as false', () => {
@@ -184,10 +195,16 @@ describe('Reaction', () => {
       expect(serialized.volume).toBe(0.5);
     });
 
-    it('should include use_reaction_volume in serialized output', () => {
-      reaction.use_reaction_volume = true;
+    it('should include concentration_mode in serialized output', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       const serialized = reaction.serialize();
-      expect(serialized.use_reaction_volume).toBe(true);
+      expect(serialized.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.COMBINED);
+    });
+
+    it('should not include use_reaction_volume in serialized output', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+      const serialized = reaction.serialize();
+      expect(Object.prototype.hasOwnProperty.call(serialized, 'use_reaction_volume')).toBe(false);
     });
 
     it('should include lock_reaction_volume in serialized output', () => {
@@ -354,8 +371,8 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.reactionVolumeForConcentration()', () => {
-    it('uses explicit reaction volume when enabled and valid', () => {
-      reaction.use_reaction_volume = true;
+    it('uses explicit reaction volume in reaction_volume mode when valid', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
 
@@ -364,8 +381,8 @@ describe('Reaction', () => {
       expect(result).toBe(0.5);
     });
 
-    it('uses combined volume when explicit reaction volume is disabled', () => {
-      reaction.use_reaction_volume = false;
+    it('uses combined volume in combined mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
 
@@ -374,14 +391,36 @@ describe('Reaction', () => {
       expect(result).toBe(0.2);
     });
 
-    it('falls back to combined volume when explicit reaction volume is invalid', () => {
-      reaction.use_reaction_volume = true;
-      reaction.volume = 0;
+    it('uses solvent volume in solvents_only mode', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+      reaction.volume = 0.5;
       reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
 
       const result = reaction.reactionVolumeForConcentration();
 
-      expect(result).toBe(0.2);
+      expect(result).toBe(0.05);
+    });
+
+    it('falls back to solvent volume in reaction_volume mode when the volume is invalid', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+      reaction.volume = 0;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.05);
+    });
+
+    it('defaults to solvent volume when concentration_mode is missing', () => {
+      reaction.concentration_mode = undefined;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+      Object.defineProperty(reaction, 'solventVolume', { get: () => 0.05, configurable: true });
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.05);
     });
   });
 
@@ -405,20 +444,17 @@ describe('Reaction', () => {
 
   describe('Reaction.canUpdateConcentration()', () => {
     it('always allows updates when equivalents are unlocked', () => {
-      reaction.use_reaction_volume = false;
       reaction.volume = null;
       expect(reaction.canUpdateConcentration(false)).toBe(true);
     });
 
-    it('requires use_reaction_volume and a valid volume when equivalents are locked', () => {
-      reaction.use_reaction_volume = true;
+    it('requires reaction_volume mode and a valid volume when equivalents are locked', () => {
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
       expect(reaction.canUpdateConcentration(true)).toBe(true);
-
-      reaction.use_reaction_volume = false;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.COMBINED;
       expect(reaction.canUpdateConcentration(true)).toBe(false);
-
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0;
       expect(reaction.canUpdateConcentration(true)).toBe(false);
     });
@@ -727,17 +763,24 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.deriveVolumeFromSampleConcentration()', () => {
-    it('sets volume, enables use_reaction_volume, and recalculates concentrations', () => {
+    it('releases stale preservation, switches to reaction_volume mode, and recalculates concentrations', () => {
       const sample = { amount_mol: 0.5 };
-      let updateCalled = false;
-      reaction.updateAllConcentrations = () => { updateCalled = true; };
+      const calls = [];
+      reaction.resetPreservedConcentrationExcept = (editedSample) => {
+        expect(editedSample).toBe(sample);
+        calls.push('reset');
+      };
+      reaction.updateAllConcentrations = () => { calls.push('update'); };
 
       const result = reaction.deriveVolumeFromSampleConcentration(sample, 2);
 
-      expect(result).toEqual({ volume: 0.25, useReactionVolume: true });
+      expect(result).toEqual({
+        volume: 0.25,
+        concentrationMode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      });
       expect(reaction.volume).toBe(0.25);
-      expect(reaction.use_reaction_volume).toBe(true);
-      expect(updateCalled).toBe(true);
+      expect(reaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.REACTION_VOLUME);
+      expect(calls).toEqual(['reset', 'update']);
     });
 
     it('returns null when the concentration is not positive', () => {
@@ -781,7 +824,6 @@ describe('Reaction', () => {
       reaction.starting_materials = [material1];
       reaction.reactants = [material2];
       reaction.volume = 0.5;
-      reaction.use_reaction_volume = false;
 
       reaction.updateAllConcentrations();
 
@@ -807,12 +849,182 @@ describe('Reaction', () => {
       reaction.reactants = [];
       reaction.products = [];
       reaction.reactant_sbmm_samples = [sbmmReactant];
-      reaction.use_reaction_volume = true;
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
       reaction.volume = 0.5;
 
       reaction.updateAllConcentrations();
 
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
+
+      Object.defineProperty(reaction, 'solventVolume', {
+        get: () => 0.1,
+        configurable: true,
+      });
+      reaction.concentration_mode = Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY;
+      reaction.updateAllConcentrations();
+
+      expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.2, 8);
+    });
+  });
+
+  describe('Reaction.temperature_display_with_unit', () => {
+    it('appends the unit to a single numeric value', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '25', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('25 °C');
+    });
+
+    it('appends the unit when a single datum produces a numeric display value', () => {
+      reaction.temperature = {
+        valueUnit: '°C', userText: '', data: [{ value: 25 }]
+      };
+
+      expect(reaction.temperature_display).toBe(25);
+      expect(reaction.temperature_display_with_unit).toBe('25 °C');
+    });
+
+    it('appends the unit to a generated range', () => {
+      reaction.temperature = {
+        valueUnit: '°C',
+        userText: '',
+        data: [{ value: 21 }, { value: 25 }],
+      };
+      expect(reaction.temperature_display_with_unit).toBe('21 ~ 25 °C');
+    });
+
+    [
+      '-',
+      '2|5',
+    ].forEach((value) => {
+      it(`does not append a unit to malformed chart data "${value}"`, () => {
+        reaction.temperature = {
+          valueUnit: '°C', userText: '', data: [{ value }, { value: '25' }]
+        };
+
+        expect(reaction.temperature_display_with_unit).not.toContain('°C');
+      });
+    });
+
+    [
+      ['20-25', '20-25 °C'],
+      ['21~25', '21~25 °C'],
+      ['21 – 25', '21 – 25 °C'],
+      ['-78 to 25', '-78 to 25 °C'],
+      ['25,5', '25,5 °C'],
+    ].forEach(([userText, expected]) => {
+      it(`appends the unit to common numeric format "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+        expect(reaction.temperature_display_with_unit).toBe(expected);
+      });
+    });
+
+    it('appends the unit to a negative range', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '-10 ~ 5', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('-10 ~ 5 °C');
+    });
+
+    ['reflux', '0x1A', '0b1010'].forEach((userText) => {
+      it(`leaves non-decimal text untouched: "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+        expect(reaction.temperature_display_with_unit).toBe(userText);
+      });
+    });
+
+    it('leaves an empty temperature empty', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('');
+    });
+
+    it('keeps the unit on values with three or more decimals', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '25.5678', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('25.5678 °C');
+    });
+
+    it('keeps the unit on a user-typed range with high-precision endpoints', () => {
+      reaction.temperature = { valueUnit: '°C', userText: '21.333 ~ 25', data: [] };
+      expect(reaction.temperature_display_with_unit).toBe('21.333 ~ 25 °C');
+    });
+  });
+
+  describe('Reaction.convertTemperature', () => {
+    it('converts both endpoints and the unit of a user-entered range', () => {
+      reaction.temperature = {
+        valueUnit: '°C',
+        userText: '21 ~ 25',
+        data: [{ value: 21 }, { value: 25 }],
+      };
+
+      reaction.convertTemperature('°F');
+
+      expect(reaction.temperature_display_with_unit).toBe('69.80 ~ 77.00 °F');
+      expect(reaction.temperature.data).toEqual([{ value: '69.80' }, { value: '77.00' }]);
+    });
+
+    [
+      ['20-25', '68.00 ~ 77.00 °F'],
+      ['21~25', '69.80 ~ 77.00 °F'],
+      ['21 – 25', '69.80 ~ 77.00 °F'],
+      ['-78 to 25', '-108.40 ~ 77.00 °F'],
+      ['25,5', '77.90 °F'],
+    ].forEach(([userText, expected]) => {
+      it(`converts common numeric format "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+
+        reaction.convertTemperature('°F');
+
+        expect(reaction.temperature_display_with_unit).toBe(expected);
+      });
+    });
+
+    ['0x1A', '0b1010'].forEach((userText) => {
+      it(`does not convert non-decimal numeric literal "${userText}"`, () => {
+        reaction.temperature = { valueUnit: '°C', userText, data: [] };
+
+        reaction.convertTemperature('°F');
+
+        expect(reaction.temperature).toEqual({
+          valueUnit: '°F', userText, data: []
+        });
+        expect(reaction.temperature_display_with_unit).toBe(userText);
+      });
+    });
+  });
+
+  describe('Reaction.schemeSvgRequest', () => {
+    it('builds the complete SVG request for an interaction reaction', () => {
+      const startingMaterial = reaction.starting_materials[0];
+      const reactant = reaction.starting_materials[1];
+      const product = reaction.products[0];
+
+      startingMaterial.sample_svg_file = 'starting.svg';
+      reactant.sample_svg_file = 'reactant.svg';
+      product.sample_svg_file = 'product.svg';
+      product.equivalent = 0.75;
+      material.sample_svg_file = 'solvent.svg';
+      material.external_label = 'Water';
+
+      reaction.starting_materials = [startingMaterial];
+      reaction.reactants = [reactant];
+      reaction.reactant_sbmm_samples = [];
+      reaction.products = [product];
+      reaction.solvents = [material];
+      reaction.temperature = { valueUnit: '°C', userText: '-10 ~ 5', data: [] };
+      reaction.duration = '2 Hour(s)';
+      reaction.conditions = 'under nitrogen';
+      reaction.reaction_type = 'interaction';
+
+      expect(reaction.schemeSvgRequest()).toEqual({
+        materialsSvgPaths: {
+          starting_materials: ['/images/samples/starting.svg'],
+          reactants: ['/images/samples/reactant.svg'],
+          products: [['/images/samples/product.svg', 0.75]],
+        },
+        temperature: '-10 ~ 5 °C',
+        solvents: ['Water'],
+        duration: '2 Hour(s)',
+        conditions: 'under nitrogen',
+        productsOnly: true,
+        showYield: false,
+      });
     });
   });
 

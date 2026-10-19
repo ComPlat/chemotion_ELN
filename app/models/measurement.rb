@@ -5,16 +5,17 @@
 # Table name: measurements
 #
 #  id          :bigint           not null, primary key
-#  description :string           not null
-#  value       :decimal(, )      not null
-#  unit        :string           not null
 #  deleted_at  :datetime
-#  well_id     :bigint
-#  sample_id   :bigint           not null
+#  description :string           not null
+#  metadata    :jsonb
+#  source_type :string
+#  unit        :string           not null
+#  value       :decimal(, )      not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  source_type :string
+#  sample_id   :bigint           not null
 #  source_id   :bigint
+#  well_id     :bigint
 #
 # Indexes
 #

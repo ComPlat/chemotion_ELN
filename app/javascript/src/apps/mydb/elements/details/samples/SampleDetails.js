@@ -113,7 +113,7 @@ const sampleTitle = (sample) => {
 // Split around the collection badge so the header reads in the same order as the list row
 // (SampleGroupItem): reaction, collection, analyses.
 const sampleTitleAppendixLeading = (sample) => (
-  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} size="sm" variant="secondary" />
 );
 
 const sampleTitleAppendix = (sample, handleFastInput) => (

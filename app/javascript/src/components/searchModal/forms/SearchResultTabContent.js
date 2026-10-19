@@ -9,6 +9,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { byIdsModelParams } from 'src/utilities/searchRequestParams';
 
 const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
@@ -27,12 +28,10 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const model = key === 'cell_line' ? 'cell_lines' : key;
-
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: model,
+        ...byIdsModelParams(key),
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,

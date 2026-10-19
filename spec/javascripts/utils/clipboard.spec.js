@@ -61,6 +61,70 @@ describe('copyToClipboard', () => {
     });
   });
 
+  describe('with an html flavour', () => {
+    let originalClipboardItem;
+
+    let originalBlob;
+
+    // Blob contents are not readable under this jsdom, so record the parts instead.
+    class FakeBlob {
+      constructor(parts, { type }) { this.content = parts.join(''); this.type = type; }
+    }
+
+    // Records the flavours handed to the constructor so the spec can read both blobs.
+    class FakeClipboardItem {
+      constructor(items) { this.items = items; }
+    }
+
+    beforeEach(() => {
+      originalClipboardItem = window.ClipboardItem;
+      originalBlob = global.Blob;
+      window.ClipboardItem = FakeClipboardItem;
+      global.Blob = FakeBlob;
+      window.isSecureContext = true;
+    });
+
+    afterEach(() => {
+      window.ClipboardItem = originalClipboardItem;
+      global.Blob = originalBlob;
+    });
+
+    it('writes text/plain and text/html in one ClipboardItem', async () => {
+      const write = sinon.stub().resolves();
+      const writeText = sinon.stub().resolves();
+      navigator.clipboard = { write, writeText };
+
+      const result = await copyToClipboard('H225: x', { html: '<b>H225</b>: x' });
+
+      expect(result).toBe(true);
+      expect(writeText.called).toBe(false);
+      const [item] = write.firstCall.args[0];
+      expect(item).toBeInstanceOf(FakeClipboardItem);
+      expect(item.items['text/plain'].content).toEqual('H225: x');
+      expect(item.items['text/html'].content).toEqual('<b>H225</b>: x');
+      expect(item.items['text/html'].type).toEqual('text/html');
+    });
+
+    it('falls back to writeText when write rejects', async () => {
+      const writeText = sinon.stub().resolves();
+      navigator.clipboard = { write: sinon.stub().rejects(new Error('denied')), writeText };
+
+      expect(await copyToClipboard('plain', { html: '<p>plain</p>' })).toBe(true);
+      expect(writeText.calledOnceWith('plain')).toBe(true);
+    });
+
+    it('falls back to writeText when ClipboardItem is unavailable', async () => {
+      window.ClipboardItem = undefined;
+      const write = sinon.stub().resolves();
+      const writeText = sinon.stub().resolves();
+      navigator.clipboard = { write, writeText };
+
+      expect(await copyToClipboard('plain', { html: '<p>plain</p>' })).toBe(true);
+      expect(write.called).toBe(false);
+      expect(writeText.calledOnceWith('plain')).toBe(true);
+    });
+  });
+
   describe('non-secure context (no navigator.clipboard)', () => {
     it('copies through the legacy textarea/execCommand path and resolves true', async () => {
       window.isSecureContext = false;

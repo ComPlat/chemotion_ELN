@@ -6,6 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import { isPreviewableAttachment } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -90,12 +91,13 @@ export default class ContainerDatasets extends Component {
   };
 
   reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs that actually have thumbnails
+    // Get all saved, non-deleted attachment IDs the preview modal can show: the same rule as
+    // the carousel candidates in getContainerImageData, or the stored preference is ignored
     const allAttachments = analysisContainer?.children?.flatMap(
       (child) => (child.attachments || [])
     ) || [];
     const savedAttachments = allAttachments.filter(
-      (att) => !att.is_deleted && !att.is_new && att.thumb === true
+      (att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att)
     );
     const validAttachmentIds = savedAttachments
       .map((att) => Number(att.id))
@@ -107,14 +109,20 @@ export default class ContainerDatasets extends Component {
 
     if (!preferredIsValid) {
       // Need to reassign
-      if (validAttachmentIds.length > 0) {
-        // Assign first available
+      // Auto-assign only a file with a thumbnail, so the header has an image to show. Without
+      // one (e.g. a PDF whose thumbnail wasn't generated), leave it unset: the header keeps its
+      // default attachment and the modal opens on the first candidate. A PDF chosen by hand
+      // still counts as valid above.
+      const thumbnailed = savedAttachments.find(
+        (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
+      );
+      if (thumbnailed) {
         analysisContainer.extended_metadata = {
           ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(validAttachmentIds[0]),
+          preferred_thumbnail: String(Number(thumbnailed.id)),
         };
       } else {
-        // No attachments available - clear preferred
+        // Nothing with a thumbnail - clear preferred
         analysisContainer.extended_metadata = {
           ...analysisContainer.extended_metadata,
           preferred_thumbnail: null,

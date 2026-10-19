@@ -31,7 +31,7 @@ function ColumnMappingComponent({
   ];
 
   const chemicalSampleKeys = [...sampleKeys,
-    'status', 'vendor', 'order_number', 'amount', 'volume', 'price',
+    'status', 'vendor', 'order_number', 'product_number', 'amount', 'volume', 'price',
     'person', 'required_date', 'ordered_date', 'expiration_date',
     'delivery_date', 'opening_date', 'storage_temperature', 'required_by', 'safety_sheet_link_merck',
     'safety_sheet_link_thermofischer', 'product_link_merck', 'product_link_thermofischer',

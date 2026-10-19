@@ -32,7 +32,7 @@ export default function DetailCard({
       <Card.Header>
         <div className="d-flex align-items-center">
           <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
-            <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center gap-1">
               <div className="d-flex align-items-center me-2">
                 {titleIcon && <span className="me-1">{titleIcon}</span>}
                 {titleTooltip ? (

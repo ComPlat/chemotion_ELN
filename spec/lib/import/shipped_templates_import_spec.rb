@@ -96,6 +96,11 @@ RSpec.describe 'Import of the shipped template files' do
         run_import('public/xlsx/chemical_import_example.xlsx', 'chemical_import_example.xlsx', 'chemical')
         expect(Sample.where(inventory_sample: true).count).to be_positive
       end
+
+      it 'carries the product number through to chemical_data' do
+        run_import('public/xlsx/chemical_import_example.xlsx', 'chemical_import_example.xlsx', 'chemical')
+        expect(Chemical.last.chemical_data[0]['product_number']).to eq('179124')
+      end
     end
 
     # This is the path that imported nothing: the job called create_samples, which lands in the
@@ -122,6 +127,11 @@ RSpec.describe 'Import of the shipped template files' do
       it 'creates the linked chemical records' do
         expect { run_import('public/sdf/chemical_import_example.sdf', 'chemical_import_example.sdf', 'chemical') }
           .to change(Chemical, :count).by_at_least(1)
+      end
+
+      it 'carries the product number through to chemical_data' do
+        run_import('public/sdf/chemical_import_example.sdf', 'chemical_import_example.sdf', 'chemical')
+        expect(Chemical.last.chemical_data[0]['product_number']).to eq('179124')
       end
     end
 

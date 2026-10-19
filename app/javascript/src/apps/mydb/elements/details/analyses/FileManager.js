@@ -147,7 +147,7 @@ class VirtualFolderNode {
     }
     const relPath = path.slice(1);
     if (relPath.length === 0) {
-      const fp = `${this.fullPath}/${this.name}/${file.name}`;
+      const fp = [this.fullPath, this.name, file.name].filter(Boolean).join('/');
       // eslint-disable-next-line no-param-reassign
       file.isDirectory = false;
       // eslint-disable-next-line no-param-reassign
@@ -157,7 +157,7 @@ class VirtualFolderNode {
     }
     let item = this.subFiles.find((obj) => obj.name === relPath[0]);
     if (!item) {
-      const fp = `${this.fullPath}/${this.name}`;
+      const fp = [this.fullPath, this.name].filter(Boolean).join('/');
       item = new VirtualFolderNode(relPath[0], fp, this.depth + 1);
       this.subFiles.push(item);
     }

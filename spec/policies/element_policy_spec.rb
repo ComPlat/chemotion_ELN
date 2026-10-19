@@ -401,4 +401,52 @@ describe ElementPolicy do
       end
     end
   end
+
+  # Regression: the detail-level column was derived from the record class, and there is no
+  # sequencebasedmacromolecule_detail_level column, so any detail-level check on an SBMM raised
+  # PG::UndefinedColumn. An SBMM is collected through its samples and uses their detail level.
+  describe 'with a SequenceBasedMacromolecule' do
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:element_policy) { described_class.new(user, sbmm) }
+    let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
+
+    context 'when its sample is in a collection shared to me with edit permission and full detail' do
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [shared_collection_of_other_user])
+      end
+
+      it 'allows update and read_dataset' do
+        expect(element_policy.update?).to be true
+        expect(element_policy.read_dataset?).to be true
+      end
+    end
+
+    context 'when its sample is in a collection shared to me below full detail' do
+      before do
+        shared_collection_of_other_user.collection_shares.update_all( # rubocop:disable Rails/SkipsModelValidations
+          sequencebasedmacromoleculesample_detail_level: 2,
+        )
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [shared_collection_of_other_user])
+      end
+
+      it 'denies update and read_dataset' do
+        expect(element_policy.update?).to be false
+        expect(element_policy.read_dataset?).to be false
+      end
+    end
+
+    context 'when it is not shared with me at all' do
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [own_collection_of_other_user])
+      end
+
+      it 'denies update and read_dataset without raising' do
+        expect(element_policy.update?).to be false
+        expect(element_policy.read_dataset?).to be false
+      end
+    end
+  end
 end

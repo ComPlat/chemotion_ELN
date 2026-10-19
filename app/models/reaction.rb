@@ -5,6 +5,7 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
+#  concentration_mode     :string           default("solvents_only"), not null
 #  conditions             :string
 #  created_by             :integer
 #  dangerous_products     :string           default([]), is an Array
@@ -61,6 +62,9 @@ class Reaction < ApplicationRecord
     standard: 'standard',
     interaction: 'interaction',
   }
+
+  NUMERIC_TEMPERATURE_TEXT_PATTERN =
+    /\A-?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:\s*(?:~|-|–|to)\s*-?(?:\d+(?:[.,]\d*)?|[.,]\d+))?\z/i.freeze
 
   has_logidze
   acts_as_paranoid
@@ -170,6 +174,7 @@ class Reaction < ApplicationRecord
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
 
   before_validation :set_default_reaction_type
+  before_validation :synchronize_legacy_reaction_volume_flag
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
@@ -182,7 +187,15 @@ class Reaction < ApplicationRecord
 
   has_one :container, as: :containable
 
+  CONCENTRATION_MODES = %w[solvents_only combined reaction_volume].freeze
+
   validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
+  validates :concentration_mode, inclusion: { in: CONCENTRATION_MODES }
+
+  # Temporary compatibility API. concentration_mode remains authoritative.
+  def use_reaction_volume # rubocop:disable Naming/PredicateMethod
+    concentration_mode == 'reaction_volume'
+  end
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
@@ -204,23 +217,25 @@ class Reaction < ApplicationRecord
   end
 
   def temperature_display
-    userText = (temperature && temperature['userText']) || ''
-    return userText if userText != ''
+    user_text = (temperature && temperature['userText']) || ''
+    return user_text if user_text != ''
 
-    return '' if !temperature || !temperature['data'] || temperature['data'].empty?
-
-    arrayData = temperature['data']
-    maxTemp = (arrayData.max_by { |x| x['value'] })['value']
-    minTemp = (arrayData.min_by { |x| x['value'] })['value']
-
-    return '' if minTemp.nil? || maxTemp.nil?
-
-    "#{minTemp} ~ #{maxTemp}"
+    temperature_data_display
   end
 
+  # Returns the displayed temperature with its unit when the value is numeric.
+  #
+  # The numeric grammar is aligned with the JS +Reaction#temperature_display_with_unit+ getter,
+  # so the on-screen editor and server-composed outputs agree on whether to append a unit.
+  # Free text such as +reflux+ is returned unchanged.
+  #
+  # @return [String] the temperature display, with its unit appended when numeric
   def temperature_display_with_unit
     tp = temperature_display
-    tp.empty? ? '' : "#{tp} #{temperature['valueUnit']}"
+    return '' if tp.empty?
+
+    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(tp.strip)
+    numeric ? "#{tp} #{temperature['valueUnit']}" : tp
   end
 
   def description_contents
@@ -340,6 +355,20 @@ class Reaction < ApplicationRecord
 
   private
 
+  def temperature_data_display
+    array_data = temperature&.[]('data')
+    return '' if array_data.blank?
+
+    min_entry, max_entry = array_data.minmax_by { |entry| entry['value'].to_f }
+    min_temp = min_entry['value']
+    max_temp = max_entry['value']
+
+    return '' if min_temp.nil? || max_temp.nil?
+    return min_temp.to_s if min_temp == max_temp
+
+    "#{min_temp} ~ #{max_temp}"
+  end
+
   def link_variation?(current_variations, variation_id, analysis_id)
     return false if variation_id.blank?
 
@@ -412,6 +441,10 @@ class Reaction < ApplicationRecord
 
   def set_default_reaction_type
     self.reaction_type = 'standard' if reaction_type.blank?
+  end
+
+  def synchronize_legacy_reaction_volume_flag
+    self[:use_reaction_volume] = concentration_mode == 'reaction_volume'
   end
 
   def scrubber(value)

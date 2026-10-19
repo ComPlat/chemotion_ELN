@@ -1,5 +1,26 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: molecule_names
+#
+#  id          :integer          not null, primary key
+#  deleted_at  :datetime
+#  description :text
+#  name        :string           not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  molecule_id :integer
+#  user_id     :integer
+#
+# Indexes
+#
+#  index_molecule_names_on_deleted_at               (deleted_at)
+#  index_molecule_names_on_molecule_id              (molecule_id)
+#  index_molecule_names_on_name                     (name)
+#  index_molecule_names_on_user_id                  (user_id)
+#  index_molecule_names_on_user_id_and_molecule_id  (user_id,molecule_id)
+#
 require 'rails_helper'
 
 RSpec.describe MoleculeName, type: :model do

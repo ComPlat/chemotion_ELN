@@ -2,6 +2,9 @@ import expect from 'expect';
 import sinon from 'sinon';
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import Component from 'src/models/Component';
+import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
@@ -200,6 +203,161 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
   });
 });
 
+describe('ReactionDetailsScheme — SBMM event resolution with colliding IDs', () => {
+  it('updates only the SBMM sample when a regular sample has the same ID', () => {
+    const regularSample = { id: 'shared-id', external_label: 'regular' };
+    const sbmmSample = {
+      id: 'shared-id',
+      type: 'sequence_based_macromolecule_sample',
+      external_label: 'old SBMM label',
+    };
+    const reaction = {
+      starting_materials: [],
+      reactants: [regularSample],
+      reactant_sbmm_samples: [sbmmSample],
+      solvents: [],
+      products: [],
+      findReactionSample: sinon.stub().callsFake((sampleId, isSbmm) => (
+        isSbmm ? sbmmSample : regularSample
+      )),
+    };
+    const ctx = {
+      props: { reaction },
+      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      updatedSamplesForExternalLabelChange:
+        ReactionDetailsScheme.prototype.updatedSamplesForExternalLabelChange,
+    };
+
+    ReactionDetailsScheme.prototype.updatedReactionForExternalLabelChange.call(ctx, {
+      sampleID: 'shared-id',
+      externalLabel: 'new SBMM label',
+      isSbmm: true,
+    });
+
+    expect(reaction.findReactionSample.calledWith('shared-id', true)).toBe(true);
+    expect(regularSample.external_label).toBe('regular');
+    expect(sbmmSample.external_label).toBe('new SBMM label');
+  });
+
+  it('resolves an SBMM amount-type change without mutating the regular sample', () => {
+    const regularSample = { id: 'shared-id', amountType: 'target' };
+    const sbmmSample = {
+      id: 'shared-id',
+      type: 'sequence_based_macromolecule_sample',
+      amountType: 'target',
+    };
+    const reaction = {
+      findReactionSample: sinon.stub().callsFake((sampleId, isSbmm) => (
+        isSbmm ? sbmmSample : regularSample
+      )),
+    };
+    const updatedReactionWithSample = sinon.stub().returns(reaction);
+    const ctx = {
+      props: { reaction },
+      updatedReactionWithSample,
+      updatedSamplesForAmountChange:
+        ReactionDetailsScheme.prototype.updatedSamplesForAmountChange,
+    };
+
+    ReactionDetailsScheme.prototype.updatedReactionForAmountTypeChange.call(ctx, {
+      sampleID: 'shared-id',
+      amountType: 'real',
+      isSbmm: true,
+    });
+
+    expect(reaction.findReactionSample.calledWith('shared-id', true)).toBe(true);
+    expect(regularSample.amountType).toBe('target');
+    expect(sbmmSample.amountType).toBe('real');
+    expect(updatedReactionWithSample.firstCall.args[3]).toBe(true);
+  });
+});
+
+describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type collision', () => {
+  let gasStoreStub;
+
+  const buildCtx = () => ({
+    props: {
+      reaction: {
+        referenceMaterial: { amount_value: 1, amount_mol: 1, coefficient: 1 },
+        updateReferenceAmountForLockedEquivalents: sinon.stub(),
+      },
+    },
+    state: { lockEquivColumn: false },
+  });
+
+  const makeCandidate = (isSbmm) => ({
+    id: 'shared-id',
+    ...(isSbmm ? { type: 'sequence_based_macromolecule_sample' } : {}),
+    reference: true,
+    amount_value: 10,
+    amount_g: 10,
+    amount_mol: 2,
+    maxAmount: 100,
+    equivalent: 0.5,
+    coefficient: 1,
+    gas_type: 'off',
+    molecule_molecular_weight: 100,
+    purity: 1,
+    isMixture: () => false,
+  });
+
+  const makeEditedSample = (isSbmm) => ({
+    id: 'shared-id',
+    ...(isSbmm ? { type: 'sequence_based_macromolecule_sample' } : {}),
+    reference: false,
+    gas_type: 'off',
+  });
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+      reactionVesselSizeValue: 0,
+    });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  it('matches distinct sample copies when both ID and kind match', () => {
+    const sample = makeCandidate(false);
+
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      buildCtx(),
+      [sample],
+      makeEditedSample(false),
+      'reactants'
+    );
+
+    expect(sample.equivalent).toBe(0.1);
+  });
+
+  it('does not treat a regular sample as the edited SBMM when their IDs collide', () => {
+    const sample = makeCandidate(false);
+
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      buildCtx(),
+      [sample],
+      makeEditedSample(true),
+      'reactants'
+    );
+
+    expect(sample.equivalent).toBe(2);
+  });
+
+  it('does not treat an SBMM sample as the edited regular sample when their IDs collide', () => {
+    const sample = makeCandidate(true);
+
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      buildCtx(),
+      [sample],
+      makeEditedSample(false),
+      'reactants'
+    );
+
+    expect(sample.equivalent).toBe(2);
+  });
+});
+
 // Regression tests for the solvent volume calculation:
 // - Eq unlocked: a solvent's volume stays fixed; only its (derived) equivalent updates.
 // - Eq locked: a solvent's volume scales with the reference (equivalent * ref.amount_mol).
@@ -220,6 +378,8 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     },
     state: { lockEquivColumn },
     computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
+    handleEquivalentBasedAmountUpdate:
+      ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
   });
 
   const makeSolvent = (overrides = {}) => ({
@@ -232,6 +392,9 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     coefficient: 1,
     gas_type: 'off',
     reference: false,
+    isMixture: () => false,
+    isGas: () => false,
+    setAmount: sinon.spy(),
     setAmountAndNormalizeToGram: sinon.spy(),
     ...overrides,
   });
@@ -300,6 +463,562 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — solvent volume
     // Volume stays fixed while unlocked.
     expect(solvent.setAmountAndNormalizeToGram.called).toBe(false);
     expect(result[0].amount_value).toBe(0.01);
+  });
+});
+
+// Regression tests for the Eq-edit highlight bug:
+// When the Eq of a starting material/reactant is edited, the recalculation is molar-amount
+// based, so the sample's amount_unit must stay 'mol' (which highlights the Amount field),
+// NOT be normalized to 'g' (which would highlight the Mass field). Gas and reference-less
+// mixture samples keep the old gram-normalized behavior so their calculations are unchanged.
+describe('ReactionDetailsScheme#updatedSamplesForEquivalentChange — recalculated field is Amount', () => {
+  const buildCtx = (referenceMaterial = { amount_mol: 0.1, coefficient: 1 }) => ({
+    props: { reaction: { referenceMaterial } },
+    handleEquivalentBasedAmountUpdate:
+      ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+    warnIfMixtureMassExceeded: sinon.spy(),
+  });
+
+  const makeMaterial = (overrides = {}) => ({
+    id: 'mat-1',
+    reference: false,
+    gas_type: 'off',
+    equivalent: 1,
+    amount_mol: 0.05,
+    amount_g: 5,
+    amount_unit: 'g',
+    coefficient: 1,
+    isMixture: () => false,
+    hasComponents: () => false,
+    isGas: () => false,
+    setAmount: sinon.spy(),
+    setAmountAndNormalizeToGram: sinon.spy(),
+    ...overrides,
+  });
+
+  const makeSbmm = (overrides = {}) => ({
+    id: 'mat-1',
+    type: 'sequence_based_macromolecule_sample',
+    reference: false,
+    gas_type: 'off',
+    equivalent: 1,
+    amount_mol: 0.05,
+    amount_g: 5,
+    coefficient: 1,
+    applyAmountFromEquivalent: sinon.spy(),
+    ...overrides,
+  });
+
+  const makeRealGas = () => new Sample({
+    id: 'mat-1',
+    amountType: 'target',
+    target_amount_value: 5,
+    target_amount_unit: 'g',
+    purity: 1,
+    molecule: { molecular_weight: 100 },
+    coefficient: 1,
+    gas_type: 'gas',
+    gas_phase_data: {
+      time: { unit: 'h', value: null },
+      temperature: { unit: 'K', value: 298.15 },
+      turnover_number: null,
+      part_per_million: 0,
+      turnover_frequency: { unit: 'TON/h', value: null },
+    },
+    sample_type: 'Micromolecule',
+    reference: false,
+    equivalent: 1,
+  });
+
+  const makeRealMixture = () => {
+    const mixture = new Sample({
+      id: 'mat-1',
+      amountType: 'target',
+      target_amount_value: 5,
+      target_amount_unit: 'g',
+      coefficient: 1,
+      gas_type: 'off',
+      sample_type: 'Mixture',
+      reference: false,
+      equivalent: 1,
+    });
+    const referenceComponent = new Component({});
+    referenceComponent.reference = true;
+    referenceComponent.amount_mol = 0.1;
+    referenceComponent.component_properties = { relative_molecular_weight: 50 };
+    referenceComponent.relative_molecular_weight = 50;
+    mixture.initialComponents([referenceComponent]);
+    mixture.sample_details = { reference_component_changed: false };
+    return mixture;
+  };
+
+  const applyDirectEquivalentEdit = (material, equivalent = 0) => {
+    const reference = {
+      id: 'ref-1',
+      reference: true,
+      amount_value: 0,
+      amount_mol: 0,
+      coefficient: 1,
+      gas_type: 'off',
+    };
+    const reaction = {
+      referenceMaterial: reference,
+      starting_materials: [reference],
+      reactants: [material],
+      reactant_sbmm_samples: [],
+      solvents: [],
+      products: [],
+      findReactionSample: sinon.stub().returns(material),
+    };
+    const ctx = {
+      props: { reaction },
+      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      updatedSamplesForEquivalentChange:
+        ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange,
+      handleEquivalentBasedAmountUpdate:
+        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+      warnIfMixtureMassExceeded: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+      sampleID: material.id,
+      equivalent,
+      isSbmm: false,
+    });
+
+    return material;
+  };
+
+  it('does not run mixture user-edit handling during a locked-Eq rescale', () => {
+    const reference = {
+      id: 'ref-1',
+      reference: true,
+      amount_value: 0.2,
+      amount_mol: 0.002,
+      coefficient: 1,
+      gas_type: 'off',
+    };
+    const mixture = makeRealMixture();
+    mixture.equivalent = 2;
+    mixture.sample_details = {
+      reference_component_changed: true,
+      previous_amount_mol: 0.07,
+      previous_amount_g: 4,
+    };
+    mixture.getLockReactionEquivColumn = () => true;
+    const reaction = {
+      referenceMaterial: reference,
+      updateReferenceAmountForLockedEquivalents: sinon.stub(),
+    };
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn: true },
+      handleEquivalentBasedAmountUpdate:
+        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+    };
+
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [mixture],
+      reference,
+      'reactants'
+    );
+
+    expect(mixture.amount_unit).toBe('g');
+    expect(mixture.amount_g).toBeCloseTo(0.2, 10);
+    expect(mixture.sample_details.reference_component_changed).toBe(true);
+    expect(mixture.sample_details.previous_amount_mol).toBe(0.07);
+    expect(mixture.sample_details.previous_amount_g).toBe(4);
+    expect(mixture.reference_component.amount_mol).toBeCloseTo(0.004, 10);
+  });
+
+  it('keeps a zero-amount regular sample mol-primary after a direct zero Eq edit', () => {
+    const material = new Sample({
+      id: 'mat-1',
+      amountType: 'target',
+      target_amount_value: 0,
+      target_amount_unit: 'g',
+      purity: 1,
+      molecule: { molecular_weight: 100 },
+      coefficient: 1,
+      gas_type: 'off',
+      sample_type: 'Micromolecule',
+      reference: false,
+    });
+
+    applyDirectEquivalentEdit(material);
+
+    expect(material.amount_unit).toBe('mol');
+    expect(material.amount_value).toBe(0);
+    expect(material.equivalent).toBe(0);
+  });
+
+  it('keeps a zero-amount gas sample gram-primary after a direct zero Eq edit', () => {
+    const gas = makeRealGas();
+    gas.setAmountAndNormalizeToGram({ value: 0, unit: 'mol' });
+
+    applyDirectEquivalentEdit(gas);
+
+    expect(gas.amount_unit).toBe('g');
+    expect(gas.amount_value).toBe(0);
+    expect(gas.equivalent).toBe(0);
+  });
+
+  it('keeps a zero-amount mixture gram-primary after a direct zero Eq edit', () => {
+    const mixture = makeRealMixture();
+    mixture.setAmountAndNormalizeToGram({ value: 0, unit: 'mol' });
+
+    applyDirectEquivalentEdit(mixture);
+
+    expect(mixture.amount_unit).toBe('g');
+    expect(mixture.amount_g).toBe(0);
+    expect(mixture.amount_mol).toBe(0);
+    expect(mixture.equivalent).toBe(0);
+  });
+
+  it('keeps Amount active when a locked Eq is rescaled from the reference', () => {
+    const reference = new Sample({
+      id: 'ref-1',
+      amountType: 'target',
+      target_amount_value: 0.1,
+      target_amount_unit: 'g',
+      purity: 1,
+      molecule: { molecular_weight: 100 },
+      coefficient: 1,
+      gas_type: 'off',
+      sample_type: 'Micromolecule',
+      reference: true,
+    });
+    const material = new Sample({
+      id: 'mat-1',
+      amountType: 'target',
+      target_amount_value: 0.2,
+      target_amount_unit: 'g',
+      purity: 1,
+      molecule: { molecular_weight: 100 },
+      coefficient: 1,
+      gas_type: 'off',
+      sample_type: 'Micromolecule',
+      reference: false,
+      equivalent: 2,
+    });
+    const reaction = {
+      referenceMaterial: reference,
+      starting_materials: [reference],
+      reactants: [material],
+      reactant_sbmm_samples: [],
+      solvents: [],
+      products: [],
+      findReactionSample: sinon.stub().callsFake((sampleId) => (
+        sampleId === reference.id ? reference : material
+      )),
+      updateReferenceAmountForLockedEquivalents: sinon.stub(),
+    };
+    const ctx = {
+      props: { reaction },
+      state: { lockEquivColumn: true },
+      updatedReactionWithSample: ReactionDetailsScheme.prototype.updatedReactionWithSample,
+      updatedSamplesForEquivalentChange:
+        ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange,
+      handleEquivalentBasedAmountUpdate:
+        ReactionDetailsScheme.prototype.handleEquivalentBasedAmountUpdate,
+      warnIfMixtureMassExceeded: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+      sampleID: 'ref-1',
+      equivalent: 1,
+      isSbmm: false,
+      isEquivalentEdit: false,
+    });
+
+    expect(reference.amount_unit).toBe('g');
+    expect(reference.amount_g).toBeCloseTo(0.1, 10);
+    expect(reference.amount_mol).toBeCloseTo(0.001, 10);
+    expect(reference.equivalent).toBeCloseTo(1, 10);
+
+    ReactionDetailsScheme.prototype.updatedReactionForEquivalentChange.call(ctx, {
+      sampleID: 'mat-1',
+      equivalent: 3,
+      isSbmm: false,
+    });
+
+    expect(material.amount_unit).toBe('mol');
+    expect(material.amount_g).toBeCloseTo(0.3, 10);
+    expect(material.amount_mol).toBeCloseTo(0.003, 10);
+    expect(material.equivalent).toBeCloseTo(3, 10);
+
+    reference.setAmount({ value: 0.2, unit: 'g' });
+    ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(
+      ctx,
+      [material],
+      reference,
+      'reactants'
+    );
+
+    expect(material.amount_unit).toBe('mol');
+    expect(material.amount_g).toBeCloseTo(0.6, 10);
+    expect(material.amount_mol).toBeCloseTo(0.006, 10);
+    expect(material.equivalent).toBeCloseTo(3, 10);
+  });
+
+  it('does not write an amount when the equivalent produces NaN', () => {
+    const ctx = buildCtx();
+    const material = makeMaterial();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 'n.d', gas_type: 'off' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(material.setAmount.called).toBe(false);
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.amount_mol).toBe(0.05);
+    expect(material.amount_g).toBe(5);
+  });
+
+  it('sets a regular material amount in mol (unit=mol) so the Amount field is highlighted', () => {
+    const ctx = buildCtx();
+    const material = makeMaterial();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    // equivalent (3) * reference amount_mol (0.1) = 0.3 mol
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.setAmount.calledOnce).toBe(true);
+    const arg = material.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.3) < 1e-9).toBe(true);
+  });
+
+  it('keeps the gram-normalized path for a real gas material', () => {
+    const ctx = buildCtx();
+    const gas = makeRealGas();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [gas],
+      { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(gas.target_amount_unit).toBe('g');
+    expect(gas.target_amount_value).toBeCloseTo(30, 10);
+  });
+
+  // Fallback branch: when the reference has no usable amount_mol, the new amount is derived
+  // from the sample's own amount_mol (equivalent * sample.amount_mol) rather than from the
+  // reference. It delegates to the same amount-update policy as the primary branch: a regular
+  // material must stay in 'mol' (Amount highlighted), while gas/mixture samples retain their
+  // specialized behavior.
+  it('sets a regular material amount in mol via the fallback when the reference has no amount', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const material = makeMaterial({ amount_value: 5, amount_mol: 0.05 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    // equivalent (3) * sample amount_mol (0.05) = 0.15 mol
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.setAmount.calledOnce).toBe(true);
+    const arg = material.setAmount.firstCall.args[0];
+    expect(arg.unit).toBe('mol');
+    expect(Math.abs(arg.value - 0.15) < 1e-9).toBe(true);
+  });
+
+  it('keeps a real gas material gram-normalized in the no-reference fallback', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const gas = makeRealGas();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [gas],
+      { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(gas.target_amount_unit).toBe('g');
+    expect(gas.target_amount_value).toBe(0);
+  });
+
+  it('updates a real mixture from its reference component MW in the fallback', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const mixture = makeRealMixture();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [mixture],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(mixture.amount_unit).toBe('g');
+    expect(mixture.amount_g).toBeCloseTo(15, 10);
+    expect(mixture.amount_mol).toBeCloseTo(0.3, 10);
+    expect(mixture.equivalent).toBe(0);
+  });
+
+  it('keeps a real gas sample gram-normalized during a render-time refresh', () => {
+    const ctx = buildCtx();
+    const gas = makeRealGas();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [gas],
+      { id: 'mat-1', equivalent: 3, gas_type: 'gas' },
+      'reactants'
+    );
+
+    expect(gas.target_amount_unit).toBe('g');
+    expect(gas.target_amount_value).toBeCloseTo(30, 10);
+  });
+
+  it('updates a real mixture from its reference component MW during a render-time refresh', () => {
+    const ctx = buildCtx();
+    const mixture = makeRealMixture();
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [mixture],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    expect(mixture.amount_unit).toBe('g');
+    expect(mixture.amount_g).toBeCloseTo(15, 10);
+    expect(mixture.amount_mol).toBeCloseTo(0.3, 10);
+    expect(mixture.equivalent).toBeCloseTo(3, 10);
+  });
+
+  it('preserves the Mass highlight during a render-time refresh after a sample-detail save', () => {
+    const ctx = buildCtx();
+    const material = makeMaterial({ amount_unit: 'g' });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    expect(material.setAmount.called).toBe(false);
+    expect(material.setAmountAndNormalizeToGram.calledOnce).toBe(true);
+  });
+
+  it('preserves the Mass highlight in the no-reference fallback after a sample-detail save', () => {
+    const ctx = buildCtx({ amount_mol: 0, coefficient: 1 });
+    const material = makeMaterial({ amount_unit: 'g', amount_value: 5, amount_mol: 0.05 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    expect(material.setAmount.called).toBe(false);
+    expect(material.setAmountAndNormalizeToGram.calledOnce).toBe(true);
+  });
+
+  it('preserves the Amount highlight during a render-time refresh when it is already active', () => {
+    const ctx = buildCtx();
+    const material = makeMaterial({ amount_unit: 'mol' });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      { id: 'mat-1', equivalent: 3, gas_type: 'off' },
+      'reactants'
+    );
+
+    expect(material.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(material.setAmount.calledOnce).toBe(true);
+  });
+
+  it('recalculates mass after a Sample Details purity change under locked Eq', () => {
+    const ctx = buildCtx({ amount_mol: 0.001, coefficient: 1 });
+    const sampleAttributes = {
+      id: 'mat-1',
+      amountType: 'target',
+      target_amount_value: 0.2,
+      target_amount_unit: 'g',
+      purity: 1,
+      molecule: { molecular_weight: 100 },
+      coefficient: 1,
+      gas_type: 'off',
+      sample_type: 'Micromolecule',
+      reference: false,
+    };
+    const material = new Sample(sampleAttributes);
+    const editedSample = new Sample({ ...sampleAttributes, purity: 0.5, equivalent: 2 });
+
+    expect(material.amount_mol).toBeCloseTo(0.002, 10);
+    material.purity = editedSample.purity;
+    expect(material.amount_mol).toBeCloseTo(0.001, 10);
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [material],
+      editedSample,
+      'reactants'
+    );
+
+    expect(material.amount_unit).toBe('g');
+    expect(material.amount_g).toBeCloseTo(0.4, 10);
+    expect(material.amount_mol).toBeCloseTo(0.002, 10);
+    expect(material.equivalent).toBeCloseTo(2, 10);
+  });
+
+  it('does not update a regular sample when an SBMM sample has the same ID', () => {
+    const ctx = buildCtx();
+    const regularSample = makeMaterial();
+    const editedSbmm = makeSbmm({ equivalent: 3 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [regularSample],
+      editedSbmm,
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(regularSample.setAmount.called).toBe(false);
+    expect(regularSample.setAmountAndNormalizeToGram.called).toBe(false);
+    expect(ctx.warnIfMixtureMassExceeded.called).toBe(false);
+  });
+
+  it('does not update an SBMM sample when a regular sample has the same ID', () => {
+    const ctx = buildCtx();
+    const sbmmSample = makeSbmm();
+    const editedRegularSample = makeMaterial({ equivalent: 3 });
+
+    ReactionDetailsScheme.prototype.updatedSamplesForEquivalentChange.call(
+      ctx,
+      [sbmmSample],
+      editedRegularSample,
+      'reactants',
+      { isEquivalentEdit: true }
+    );
+
+    expect(sbmmSample.applyAmountFromEquivalent.called).toBe(false);
+    expect(ctx.warnIfMixtureMassExceeded.called).toBe(false);
   });
 });
 
@@ -570,7 +1289,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
 
 describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', () => {
   it('warns and returns null when no reaction volume can be resolved', () => {
-    // Locked volume + use_reaction_volume off + all-solid materials =>
+    // Locked volume + no usable concentration-basis volume + all-solid materials =>
     // reactionVolumeForConcentration() is null. The edit must surface a
     // warning rather than silently proceed with an unusable volume.
     const reaction = { reactionVolumeForConcentration: () => null };
@@ -661,6 +1380,110 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
     expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
     expect(onInputChange.called).toBe(false);
+  });
+});
+
+describe('ReactionDetailsScheme#handleConcentrationModeChange', () => {
+  it('releases preserved concentrations before recalculating with the new basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      hasValidReactionVolume: true,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    ReactionDetailsScheme.prototype.handleConcentrationModeChange.call(
+      instance, Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY
+    );
+
+    expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
+    expect(reaction.concentration_mode).toBe(Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
+    expect(onInputChange.calledOnce).toBe(true);
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+  });
+});
+
+describe('ReactionDetailsScheme#updateVolume', () => {
+  it('releases preserved concentrations when changing an existing reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = { props: { reaction, onInputChange } };
+
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+
+    expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(reaction.resetPreservedConcentrationExcept.calledBefore(
+      reaction.updateAllConcentrations
+    )).toBe(true);
+    expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
+    expect(onInputChange.calledWith('concentrationMode')).toBe(false);
+  });
+
+  it('records the volume without changing the basis or recomputing on a non-reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = { props: { reaction, onInputChange } };
+
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0.25 });
+
+    expect(onInputChange.calledWith('volume', 0.25)).toBe(true);
+    expect(onInputChange.calledWith('concentrationMode')).toBe(false);
+    expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
+    expect(reaction.updateAllConcentrations.called).toBe(false);
+  });
+
+  it('recomputes and warns when a set reaction volume is cleared on the reaction-volume basis', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      volume: 5,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    // NumeralInputWithUnitsCompo reports a cleared field as numeric 0, not ''.
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
+
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
+  });
+
+  it('does not warn on a transient zero while typing a reaction volume from empty', () => {
+    const reaction = {
+      concentration_mode: Reaction.CONCENTRATION_MODES.REACTION_VOLUME,
+      volume: null,
+      resetPreservedConcentrationExcept: sinon.spy(),
+      updateAllConcentrations: sinon.spy(),
+    };
+    const onInputChange = sinon.spy();
+    const instance = {
+      props: { reaction, onInputChange },
+      showReactionVolumeRequiredWarning: sinon.spy(),
+    };
+
+    // Same callback shape as clearing (value 0), but no prior volume to remove.
+    ReactionDetailsScheme.prototype.updateVolume.call(instance, { value: 0 });
+
+    expect(reaction.updateAllConcentrations.calledOnce).toBe(true);
+    expect(instance.showReactionVolumeRequiredWarning.called).toBe(false);
   });
 });
 

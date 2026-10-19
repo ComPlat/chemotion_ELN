@@ -8,6 +8,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { listFilterParams } from 'src/utilities/searchRequestParams';
 
 export default class Search extends React.Component {
   static contextType = StoreContext;
@@ -37,7 +38,7 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(updatedSelection);
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
       {
-        selection: updatedSelection, collectionId, isPublic
+        selection: updatedSelection, collectionId, isPublic, listFilters: listFilterParams(uiState)
       }
     );
   }

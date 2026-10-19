@@ -66,3 +66,13 @@ Object.defineProperty(global, 'navigator', {
 // Return file.preview when set (react-dropzone pattern) so test assertions stay deterministic.
 global.URL.createObjectURL = (file) => (file && file.preview) || 'blob:mock-url';
 global.URL.revokeObjectURL = () => {};
+
+// Components fire requests from componentDidMount, and Node's fetch rejects the
+// relative URLs the fetchers use ("Failed to parse URL from /api/v1/..."), which
+// the api client then logs — flooding the run with stack traces for calls no spec
+// asserts on. Default every unstubbed request to an empty 200 instead. A fresh
+// Response per call because a body can only be consumed once. Specs that exercise
+// a request assert on it as before, via sinon.stub(global, 'fetch').
+global.fetch = () => Promise.resolve(
+  new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
+);

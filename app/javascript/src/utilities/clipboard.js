@@ -37,15 +37,31 @@ function copyWithExecCommand(text) {
   }
 }
 
-// Copies text to the clipboard, resolving to true on success and false on failure,
-// and toasts on failure so callers get feedback for free. navigator.clipboard requires
-// a secure context (https / localhost); on plain http:// origins it is undefined, so
-// fall back to the legacy execCommand path.
-export async function copyToClipboard(text) {
+// Writes text/plain and text/html together; resolves false where ClipboardItem is unsupported.
+async function writeRich(value, html) {
+  if (typeof window.ClipboardItem !== 'function' || typeof navigator.clipboard.write !== 'function') return false;
+  try {
+    await navigator.clipboard.write([new window.ClipboardItem({
+      'text/plain': new Blob([value], { type: 'text/plain' }),
+      'text/html': new Blob([html], { type: 'text/html' }),
+    })]);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Resolves true on success, false (with an error toast) on failure. Tries html+text, then
+// text only, then execCommand, since navigator.clipboard is undefined on plain http://.
+export async function copyToClipboard(text, { html } = {}) {
   const value = text == null ? '' : String(text);
   let ok = false;
 
-  if (navigator?.clipboard && window.isSecureContext) {
+  if (html && navigator?.clipboard && window.isSecureContext) {
+    ok = await writeRich(value, String(html));
+  }
+
+  if (!ok && navigator?.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(value);
       ok = true;

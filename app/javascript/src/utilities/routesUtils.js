@@ -9,6 +9,7 @@ import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
+import { listFilterParams } from 'src/utilities/searchRequestParams';
 
 const collectionShow = (e) => {
   UserActions.fetchCurrentUser();
@@ -27,6 +28,7 @@ const collectionShow = (e) => {
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
+        listFilters: listFilterParams(uiState),
       });
     } else {
       if (currentSearchByID) {

@@ -13,6 +13,7 @@ function AppModal({
   onChangeTitle,
   notification,
   notificationType,
+  headerExtra,
   children,
   showFooter,
   extendedFooter,
@@ -41,6 +42,11 @@ function AppModal({
 
   const shouldShowFooter = showFooter ?? (extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction));
   const editableTitleValue = typeof title === 'string' ? title : '';
+  const notificationAlert = notification && (
+    <Alert variant={notificationType} role="status">
+      {notification}
+    </Alert>
+  );
 
   return (
     <Modal
@@ -54,7 +60,10 @@ function AppModal({
       onHide={onHide}
       {...rest}
     >
-      <Modal.Header className="d-flex justify-content-between align-items-center">
+      <Modal.Header
+        className={headerExtra ? 'align-items-center' : 'd-flex justify-content-between align-items-center'}
+        style={headerExtra ? { display: 'grid', gridTemplateColumns: 'auto 1fr auto', columnGap: '1rem' } : undefined}
+      >
         {onChangeTitle ? (
           <InputGroup>
             <Form.Control
@@ -71,13 +80,13 @@ function AppModal({
         ) : (
           <Modal.Title>{title}</Modal.Title>
         )}
-        {notification && (
-          <Alert
-            variant={notificationType}
-            role="status"
-          >
-            {notification}
-          </Alert>
+        {headerExtra ? (
+          <div className="d-flex justify-content-center">
+            {notificationAlert}
+            {headerExtra}
+          </div>
+        ) : (
+          notificationAlert
         )}
         <button
           type="button"
@@ -121,6 +130,8 @@ AppModal.propTypes = {
   notification: PropTypes.string,
   /** Notification visual style */
   notificationType: PropTypes.oneOf(['warning', 'info', 'success', 'danger']),
+  /** Optional third header item (between title and close button), evenly spaced by justify-content */
+  headerExtra: PropTypes.node,
   /** Modal body content */
   children: PropTypes.node.isRequired,
   /** Overrides automatic footer visibility when set */
@@ -153,6 +164,7 @@ AppModal.defaultProps = {
   onChangeTitle: undefined,
   notification: undefined,
   notificationType: 'info',
+  headerExtra: undefined,
   onRequestClose: undefined,
   primaryActionLabel: undefined,
   onPrimaryAction: undefined,

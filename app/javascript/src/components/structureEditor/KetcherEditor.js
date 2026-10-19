@@ -39,7 +39,6 @@ import {
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
-  buttonClickForRectangleSelection,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -198,6 +197,9 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   const iframeRef = useRef();
   const eventCleanupRef = useRef(() => { });
+  // Prevent duplicate 'init' messages from Ketcher (fired on iframe resize/recomposite
+  // triggered by parent-document reflows) from resetting the canvas mid-session.
+  const initHandledRef = useRef(false);
   useEffect(() => {
     canvasIframeRefSetter(iframeRef);
     return () => canvasIframeRefSetter(null);
@@ -316,10 +318,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
     [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => {
-      // Clear _selection before clicking so the rect-select change event does not
-      // queue a MOVE_ATOM that races with the upcoming onPasteNewShapes call.
+      // Do NOT click rect-select here — that fires a Ketcher change event which
+      // triggers onTemplateMove → setMolecule → visible restart flash.
+      // rect-select is activated at the end of onPasteNewShapes, which is the
+      // only place it's actually needed.
       try { editor._structureDef.editor.editor._selection = null; } catch (e) { /* ignore */ }
-      await buttonClickForRectangleSelection(iframeRef);
       setShowShapes(!showShapes);
     },
     [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => {
@@ -338,6 +341,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   // attach click listeners to the iframe and initialize the editor
   useEffect(() => {
     if (!editor) return () => { };
+    initHandledRef.current = false; // fresh editor — allow the next 'init' through
 
     const cleanup = setupEditorIframe({
       iframeRef,
@@ -545,6 +549,13 @@ const KetcherEditor = forwardRef((props, ref) => {
   const loadContent = async (event) => {
     try {
       if (event?.data?.eventType === 'init') {
+        // Ignore spurious duplicate 'init' messages — Ketcher re-fires 'init' when
+        // the iframe is resized by a parent-document reflow (e.g. modal image loads).
+        // Responding to a second 'init' would call prepareKetcherData(initMol) and
+        // wipe every polymer shape the user drew.
+        if (initHandledRef.current) return;
+        initHandledRef.current = true;
+
         window.editor = editor;
         if (editor && editor.structureDef) {
           // Store cleanup function in ref for later use
@@ -647,7 +658,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         onApply={async (contents) => {
           const draftContent = deltaToDraftContent(contents);
           await onAddTextFromEditor(editor, draftContent, selectedImageForTextNode, selectedTextNodeContent !== null);
-          // Update button state after text is added/updated
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
           setSelectedTextNodeContent(null);

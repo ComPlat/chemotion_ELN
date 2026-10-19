@@ -1,9 +1,11 @@
 import React from 'react';
-import { configure, shallow } from 'enzyme';
+import { configure, mount, shallow } from 'enzyme';
+import { Button } from 'react-bootstrap';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import SafetyPhrasesEditor, { normalizeSafetyPhrases } from 'src/components/chemicals/SafetyPhrasesEditor';
+import SafetyPhrasesEditor, { normalizeSafetyPhrases, SafetyPhrasesCopyButton } from 'src/components/chemicals/SafetyPhrasesEditor';
+import CopyButton from 'src/components/common/CopyButton';
 
 configure({ adapter: new Adapter() });
 
@@ -75,6 +77,44 @@ describe('SafetyPhrasesEditor', () => {
     expect(sectionWithPrefix(wrapper, 'safety-h-phrases').exists()).toBe(true);
     expect(sectionWithPrefix(wrapper, 'safety-p-phrases').exists()).toBe(true);
     expect(pictogramSection(wrapper).exists()).toBe(true);
+  });
+
+  describe('folding the three sections', () => {
+    // PhraseSection renders a CollapsibleSection, so the body is two levels down.
+    const bodyOf = (section) => section.shallow().shallow();
+
+    const editorWith = (value) => shallow(
+      React.createElement(SafetyPhrasesEditor, { value, onChange: sinon.spy() })
+    );
+
+    it('starts folded while a section holds nothing', () => {
+      const inner = bodyOf(sectionWithPrefix(editorWith(null), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(true);
+      expect(inner.text()).toEqual(expect.stringContaining('none added yet'));
+    });
+
+    it('starts open when the section already holds statements', () => {
+      const value = { h_statements: { H315: ' Causes skin irritation' } };
+      const inner = bodyOf(sectionWithPrefix(editorWith(value), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(false);
+      expect(inner.text()).toEqual(expect.stringContaining('1'));
+    });
+
+    it('folds pictograms on the same terms', () => {
+      const empty = bodyOf(pictogramSection(editorWith(null)));
+      expect(empty.find('div[hidden=true]').exists()).toBe(true);
+
+      const filled = bodyOf(pictogramSection(editorWith({ pictograms: ['GHS07'] })));
+      expect(filled.find('div[hidden=true]').exists()).toBe(false);
+    });
+
+    it('opens an empty section on the caret', () => {
+      const inner = bodyOf(sectionWithPrefix(editorWith(null), 'safety-h-phrases'));
+      expect(inner.find('div[hidden=true]').exists()).toBe(true);
+
+      inner.find(Button).simulate('click');
+      expect(inner.find('div[hidden=true]').exists()).toBe(false);
+    });
   });
 
   it('passes existing phrases through as section items', () => {
@@ -208,5 +248,104 @@ describe('SafetyPhrasesEditor', () => {
     );
     sectionWithPrefix(wrapper, 'safety-h-phrases').prop('onAdd')(null);
     expect(onChange.called).toBe(false);
+  });
+
+  describe('copy buttons', () => {
+    const PHRASES = {
+      h_statements: { H225: ' Highly flammable liquid and vapour.', 'H301+H311': ' Toxic.' },
+      p_statements: {},
+      pictograms: ['GHS07'],
+    };
+    let wrapper;
+    let writeText;
+    let originalIsSecureContext;
+
+    const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
+    const mountEditor = async (value) => {
+      wrapper = mount(React.createElement(SafetyPhrasesEditor, { value, onChange: sinon.spy() }));
+      await flush();
+      wrapper.update();
+    };
+    const mountCopyAll = async (value) => {
+      wrapper = mount(React.createElement(SafetyPhrasesCopyButton, { value }));
+      await flush();
+      wrapper.update();
+    };
+    const copyButton = (label) => wrapper.find(`button[aria-label="${label}"]`);
+    const clickAndRead = async (label) => {
+      copyButton(label).simulate('click');
+      await flush();
+      return writeText.lastCall.args[0];
+    };
+
+    beforeEach(() => {
+      originalIsSecureContext = window.isSecureContext;
+      window.isSecureContext = true;
+      writeText = sinon.stub().resolves();
+      navigator.clipboard = { writeText };
+    });
+
+    afterEach(() => {
+      if (wrapper) wrapper.unmount();
+      wrapper = null;
+      window.isSecureContext = originalIsSecureContext;
+      delete navigator.clipboard;
+    });
+
+    it('renders a copy button per section and per phrase, leaving copy all to the heading', async () => {
+      await mountEditor(PHRASES);
+      expect(copyButton('Copy all safety phrases and pictograms')).toHaveLength(0);
+      ['Copy hazard statements',
+        'Copy precautionary statements', 'Copy pictograms', 'Copy H225', 'Copy H301+H311']
+        .forEach((label) => expect(copyButton(label)).toHaveLength(1));
+    });
+
+    it('disables the copy button of an empty section, and copy all when nothing is set', async () => {
+      await mountEditor(PHRASES);
+      expect(copyButton('Copy precautionary statements').prop('disabled')).toBe(true);
+      expect(copyButton('Copy hazard statements').prop('disabled')).toBe(false);
+      wrapper.unmount();
+
+      await mountEditor(null);
+      expect(wrapper.find(CopyButton).everyWhere((b) => b.prop('disabled'))).toBe(true);
+      wrapper.unmount();
+
+      await mountCopyAll(null);
+      expect(copyButton('Copy all safety phrases and pictograms').prop('disabled')).toBe(true);
+    });
+
+    it('copies a single phrase as "code: text"', async () => {
+      await mountEditor(PHRASES);
+      expect(await clickAndRead('Copy H225')).toEqual('H225: Highly flammable liquid and vapour.');
+    });
+
+    it('copies a section with its heading', async () => {
+      await mountEditor(PHRASES);
+      expect(await clickAndRead('Copy hazard statements'))
+        .toEqual('Hazard Statements\nH225: Highly flammable liquid and vapour.\nH301+H311: Toxic.');
+      expect(await clickAndRead('Copy pictograms')).toEqual('Pictograms\nGHS07: Harmful Irritant');
+    });
+
+    it('copies every shown section and skips the empty one', async () => {
+      await mountCopyAll(PHRASES);
+      expect(await clickAndRead('Copy all safety phrases and pictograms')).toEqual([
+        'Hazard Statements',
+        'H225: Highly flammable liquid and vapour.',
+        'H301+H311: Toxic.',
+        '',
+        'Pictograms',
+        'GHS07: Harmful Irritant',
+      ].join('\n'));
+    });
+
+    it('keeps the row copy control focusable while hidden and reveals it on focus', async () => {
+      await mountEditor(PHRASES);
+      const row = () => wrapper.find('li[data-code="H225"]');
+      expect(copyButton('Copy H225').hasClass('opacity-0')).toBe(true);
+      row().simulate('focus');
+      expect(copyButton('Copy H225').hasClass('opacity-100')).toBe(true);
+      row().simulate('mouseleave');
+      expect(copyButton('Copy H225').hasClass('opacity-0')).toBe(true);
+    });
   });
 });
