@@ -19,6 +19,25 @@ POLYMER_SINGLE_MOLFILE = Rails.root.join('spec/fixtures/files/polymer_single_tem
 
 POLYMER_MULTI_MOLFILE = Rails.root.join('spec/fixtures/files/polymer_multi_template.mol').read.freeze
 
+POLYMER_LEGACY_MOLFILE = Rails.root.join('spec/fixtures/files/polymer_broken_legacy.mol').read.freeze
+
+POLYMER_TEXTNODE_MOLFILE = Rails.root.join('spec/fixtures/files/polymer_with_textnode.mol').read.freeze
+
+# Plain (non-polymer) CTAB. Ketcher will sometimes append an empty
+# "> <PolymersList>" block to this shape; PR #3533 on main guards against
+# writing/keeping that empty block. Used by the empty-tag regression spec.
+PLAIN_CTAB_MOLFILE = <<~MOL
+
+
+    Ketcher 01010100002D
+
+    2  1  0  0  0  0  0  0  0  0999 V2000
+      0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+      0.0000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1  2  1  0     0  0
+  M  END
+MOL
+
 describe 'Polymer Surface Chemistry' do
   # The sign_in/browser-fixture before hook below is scoped to this inner group only —
   # it must not leak into the model-level 'SVG auto-heal' group beneath it, which is
@@ -342,6 +361,176 @@ describe 'Polymer Surface Chemistry' do
         expect(File.exist?(svg_path)).to be(true)
         expect(File.read(svg_path)).to include('<svg')
       end
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Molfile format round-trip (no browser). Guards for the SDF tag chars
+  # "> <...>", TextNode Unicode labels, empty-PolymersList tag emission
+  # (main PR #3533), and the ketcher-rails 2016-2024 legacy layout where
+  # "> <PolymersList>" is written inside the CTAB, ahead of "M  END"
+  # (main PR #3486, `data_block_body`).
+  # ---------------------------------------------------------------------------
+  describe 'Molfile round-trip', type: :model do
+    let!(:user) { create(:person, account_active: true, confirmed_at: Time.zone.now) }
+
+    describe 'TextNode block preservation' do
+      let!(:mol) do
+        create(:molecule,
+               molfile: POLYMER_TEXTNODE_MOLFILE,
+               is_partial: true,
+               inchikey: 'POLYMER-TEXTNODE-001',
+               sum_formular: 'R')
+      end
+      let!(:sample) { create(:sample, name: 'Polymer TextNode', creator: user, molecule: mol) }
+
+      it 'keeps both "> <TextNode>" and "> </TextNode>" through save + reload' do
+        sample.molfile = POLYMER_TEXTNODE_MOLFILE
+        sample.save!
+        sample.reload
+        expect(sample.molfile).to include('> <TextNode>')
+        expect(sample.molfile).to include('> </TextNode>')
+        expect(sample.molfile).to include('> <PolymersList>')
+      end
+
+      it 'preserves the Unicode label bytes ("α", "wt.%") end-to-end' do
+        sample.molfile = POLYMER_TEXTNODE_MOLFILE
+        sample.save!
+        sample.reload
+        expect(sample.molfile.force_encoding('UTF-8')).to include('10 wt.% α-Al2O3')
+      end
+    end
+
+    describe 'to_utf8 scrubbing on non-UTF-8 molfile bytes' do
+      # These specs cover helpers that only exist on main (`to_utf8`,
+      # `polymers_list_payload`, `has_polymer_content?` — merged in PRs #3486/#3533).
+      # They stay skipped on the pre-merge branch and auto-activate once main is merged
+      # in, at which point they become regression guards for the merge itself.
+      before do
+        skip 'requires main: MolfilePolymerSupport.to_utf8' unless
+          Chemotion::MolfilePolymerSupport.respond_to?(:to_utf8)
+      end
+
+      it 'does not raise ArgumentError when the molfile carries a stray Latin-1 byte' do
+        # 0xE4 is Latin-1 "ä". Force it into a byte position inside a TextNode label so
+        # the sanitizer / regex path runs against it. Bare force_encoding would leave
+        # the string invalid UTF-8; MolfilePolymerSupport.to_utf8 scrubs it.
+        bad = POLYMER_TEXTNODE_MOLFILE.dup.force_encoding('ASCII-8BIT')
+        bad << "\xE4".b
+        expect { Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(bad) }.not_to raise_error
+        expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(bad)).to be true
+        expect(Chemotion::MolfilePolymerSupport.has_text_node_tag?(bad)).to be true
+      end
+
+      it 'returns a valid-UTF-8 string from to_utf8' do
+        bad = (+"\xE4hello").force_encoding('ASCII-8BIT')
+        result = Chemotion::MolfilePolymerSupport.to_utf8(bad)
+        expect(result.encoding.name).to eq('UTF-8')
+        expect(result.valid_encoding?).to be true
+      end
+    end
+
+    describe 'Empty PolymersList tag guard (main PR #3533)' do
+      let!(:plain_molecule) do
+        create(:molecule, molfile: PLAIN_CTAB_MOLFILE, inchikey: 'PLAIN-NO-POLYMER-001')
+      end
+      let!(:sample) { create(:sample, name: 'Plain Sample', creator: user, molecule: plain_molecule) }
+
+      before do
+        skip 'requires main: MolfilePolymerSupport.polymers_list_payload' unless
+          Chemotion::MolfilePolymerSupport.respond_to?(:polymers_list_payload)
+      end
+
+      it 'does not persist an empty "> <PolymersList>" block for a non-polymer sample' do
+        sample.molfile = PLAIN_CTAB_MOLFILE
+        sample.save!
+        sample.reload
+        # Either the block is absent, or if present it must carry a payload — never
+        # an empty tag block, which triggers false-positive polymer detection.
+        expect(Chemotion::MolfilePolymerSupport.polymers_list_payload(sample.molfile.to_s)).to eq('')
+        expect(Chemotion::MolfilePolymerSupport.has_polymer_content?(sample.molfile.to_s)).to be false
+      end
+    end
+
+    describe 'Legacy layout: "> <PolymersList>" ahead of "M END"' do
+      before do
+        skip 'requires main: MolfilePolymerSupport.polymers_list_payload' unless
+          Chemotion::MolfilePolymerSupport.respond_to?(:polymers_list_payload)
+      end
+
+      it 'extracts the payload without swallowing the M END marker' do
+        payload = Chemotion::MolfilePolymerSupport.polymers_list_payload(POLYMER_LEGACY_MOLFILE)
+        expect(payload).not_to be_empty
+        expect(payload).not_to include('M  END')
+        expect(payload).to include('/')
+      end
+
+      it 'reports the fixture as having polymer content' do
+        expect(Chemotion::MolfilePolymerSupport.has_polymer_content?(POLYMER_LEGACY_MOLFILE)).to be true
+      end
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # HierarchicalMaterial sample subtype. Model-level to keep the run cheap;
+  # UI-only concerns (PubchemLabels hidden, "Material" label swap) live in
+  # spec/javascripts specs for Sample / SampleDetails / SampleForm.
+  # ---------------------------------------------------------------------------
+  describe 'HierarchicalMaterial sample', type: :model do
+    let!(:user) { create(:person, account_active: true, confirmed_at: Time.zone.now) }
+    let!(:molecule) do
+      create(:molecule,
+             molfile: POLYMER_SINGLE_MOLFILE,
+             is_partial: true,
+             inchikey: 'HM-INCHIKEY-001',
+             sum_formular: 'R')
+    end
+
+    it 'exposes the HierarchicalMaterial sample_type constant' do
+      expect(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).to eq('HierarchicalMaterial')
+      expect(Sample::SAMPLE_TYPES).to include('HierarchicalMaterial')
+    end
+
+    it 'auto-tags sample_type as HierarchicalMaterial when the molfile carries a PolymersList payload' do
+      # set_sample_type_hierarchical_if_polymers_list before_save callback
+      sample = create(:sample, name: 'Auto HM', creator: user, molecule: molecule)
+      sample.molfile = POLYMER_SINGLE_MOLFILE
+      sample.save!
+      sample.reload
+      expect(sample.sample_type).to eq('HierarchicalMaterial')
+    end
+
+    it 'persists the hierarchical property columns through save + reload' do # rubocop:disable RSpec/MultipleExpectations
+      sample = create(:sample, name: 'HM props', creator: user, molecule: molecule)
+      sample.sample_type = 'HierarchicalMaterial'
+      sample.assign_attributes(
+        height: 12.5,
+        width: 3.0,
+        length: 8.0,
+        diameter: 1.2,
+        storage_condition: 'inert atmosphere',
+        material: 'Pd/C',
+        cspi: 'CSPI-001',
+        shape: 'sphere',
+        sieve_fraction: '40-60 mesh',
+        layer_thickness: '10 nm',
+        liquid_medium: 'toluene',
+        stabilizer: 'BHT',
+      )
+      sample.save!
+      sample.reload
+      expect(sample.height).to eq(12.5)
+      expect(sample.width).to eq(3.0)
+      expect(sample.length).to eq(8.0)
+      expect(sample.diameter).to eq(1.2)
+      expect(sample.storage_condition).to eq('inert atmosphere')
+      expect(sample.material).to eq('Pd/C')
+      expect(sample.cspi).to eq('CSPI-001')
+      expect(sample.shape).to eq('sphere')
+      expect(sample.sieve_fraction).to eq('40-60 mesh')
+      expect(sample.layer_thickness).to eq('10 nm')
+      expect(sample.liquid_medium).to eq('toluene')
+      expect(sample.stabilizer).to eq('BHT')
     end
   end
 end

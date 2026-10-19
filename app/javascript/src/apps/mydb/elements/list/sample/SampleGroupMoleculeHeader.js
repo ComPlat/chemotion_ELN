@@ -47,10 +47,10 @@ function MoleculeHeader({ sample }) {
             <div className="flex-grow-1 sample-group-molecule-header__name">
               <SampleName sample={sample} />
               <div className="d-flex align-items-center gap-1 h5">
-                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
-                  <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
+                {sample.molecule?.chem_repo?.id && (
+                  <ChemrepoLabels chemrepoId={sample.molecule?.chem_repo?.id} />
                 )}
-                <PubchemLabels element={sample} />
+                { !sample.isHierarchicalMaterial() && <PubchemLabels element={sample} /> }
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
               </div>
             </div>

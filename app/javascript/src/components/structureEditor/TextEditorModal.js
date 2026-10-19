@@ -7,6 +7,8 @@ import {
 import AppModal from 'src/components/common/AppModal';
 import QuillEditor from 'src/components/QuillEditor';
 import Delta from 'quill-delta';
+import { markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
+import { draftContentToDelta, isDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 
 // Convert a Draft.js content object to a Quill Delta preserving bold/italic/underline.
 const draftToQuillDelta = (draftContent) => {
@@ -54,13 +56,20 @@ function TextEditorModal({
   initialValue = null,
   initialText = null
 }) {
+  const toDelta = (value) => {
+    if (value == null || value === '') return new Delta();
+    if (isDraftContent(value)) return draftContentToDelta(value);
+    try {
+      return markdownToDelta(value);
+    } catch {
+      return new Delta().insert(typeof value === 'string' ? value : String(value));
+    }
+  };
+
+  // Convert initial text / Draft content / markdown to Delta if provided
   const getInitialDelta = () => {
     if (initialValue) return initialValue;
-    if (initialText) {
-      const draft = parseDraftFromInitialText(initialText);
-      if (draft) return draftToQuillDelta(draft);
-      return new Delta().insert(initialText);
-    }
+    if (initialText != null) return toDelta(initialText);
     return new Delta();
   };
 
@@ -71,8 +80,7 @@ function TextEditorModal({
     if (initialValue) {
       setEditorValue(initialValue);
     } else if (initialText !== null) {
-      const draft = parseDraftFromInitialText(initialText);
-      setEditorValue(draft ? draftToQuillDelta(draft) : new Delta().insert(initialText));
+      setEditorValue(toDelta(initialText));
     } else {
       setEditorValue(new Delta());
     }
@@ -125,7 +133,13 @@ TextEditorModal.propTypes = {
   onCloseClick: PropTypes.func,
   onApply: PropTypes.func,
   initialValue: PropTypes.shape({}),
-  initialText: PropTypes.string
+  initialText: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      blocks: PropTypes.arrayOf(PropTypes.shape({})),
+      entityMap: PropTypes.shape({})
+    })
+  ])
 };
 
 TextEditorModal.defaultProps = {

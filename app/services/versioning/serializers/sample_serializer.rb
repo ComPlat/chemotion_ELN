@@ -122,6 +122,20 @@ module Versioning
           fingerprint_id: {
             kind: :hidden,
           },
+          state: { label: 'State', revert: %i[state] },
+          height: { label: 'Height', revert: %i[height] },
+          width: { label: 'Width', revert: %i[width] },
+          length: { label: 'Length', revert: %i[length] },
+          diameter: { label: 'Diameter', revert: %i[diameter] },
+          storage_condition: { label: 'Storage condition', revert: %i[storage_condition] },
+          material: { label: 'Material', revert: %i[material] },
+          cspi: { label: 'CSPI', revert: %i[cspi] },
+          particle_size: { label: 'Particle size', revert: %i[particle_size] },
+          shape: { label: 'Shape', revert: %i[shape] },
+          sieve_fraction: { label: 'Sieve fraction', revert: %i[sieve_fraction] },
+          layer_thickness: { label: 'Layer thickness', revert: %i[layer_thickness] },
+          liquid_medium: { label: 'Liquid medium', revert: %i[liquid_medium] },
+          stabilizer: { label: 'Stabilizer', revert: %i[stabilizer] },
         }.with_indifferent_access
       end
 
