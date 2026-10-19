@@ -171,6 +171,49 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(tab.hasReactionMixtureConflict()).toBe(false);
   });
 
+  ['mass', 'composition'].forEach((edit) => {
+    it(`keeps a sample-list mixture ${edit} save in the open reaction and its next save payload`, async () => {
+      const { reaction, mixture } = build();
+      reaction.purification_solvents = [];
+      reaction.segments = [];
+      const tab = new Sample(JSON.parse(JSON.stringify({ ...mixture.serializeMaterial(), tag: mixture.tag })));
+      tab.initialComponents(tab.components.map((component) => Component.deserializeData({
+        ...component,
+        component_properties: {
+          ...component.component_properties,
+          molecule: mixture.components.find((entry) => entry.id === component.id).molecule,
+        },
+      })));
+      expect(tab.belongTo).toBeUndefined();
+      expect(tab.isDetachedMixtureDraft).toBeFalsy();
+      const updateMaterial = sandbox.spy(reaction, 'updateMaterial');
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = {
+        selecteds: [reaction, tab], currentElement: tab, activeKey: 1, refreshCoefficient: [],
+      };
+
+      if (edit === 'mass') tab.setAmount({ value: massG * 2, unit: 'g' });
+      else tab.updateComponentRatio(tab.components[1], 3, 'solid', { lockAmountColumnSolids: false });
+      const expected = tab.serializeMaterial();
+      const { element: saved } = await new Promise((resolve) => {
+        new ElementActions().updateSample(tab)(resolve);
+      });
+      // Saving replaces the sample tab with the API response; returning activates the reaction.
+      store.changeCurrentElement(saved);
+      store.changeCurrentElement(reaction);
+
+      sinon.assert.calledWith(updateMaterial, saved);
+      const material = reaction.sampleById(tab.id);
+      expect(material.amount_g).toBeCloseTo(tab.amount_g, 12);
+      expect(material.components.map((component) => component.amount_mol))
+        .toEqual(tab.components.map((component) => component.amount_mol));
+      const payload = reaction.serialize().materials.starting_materials.find((entry) => entry.id === tab.id);
+      expect(payload.target_amount_value).toBe(expected.target_amount_value);
+      expect(payload.target_amount_unit).toBe(expected.target_amount_unit);
+      expect(payload.components).toEqual(expected.components);
+    });
+  });
+
   it('updates the draft baseline after saving so a second editor save is allowed', async () => {
     const { reaction, mixture } = build();
     let draft;
@@ -521,6 +564,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     [false, true].forEach((returnBeforeDiscard) => {
       it(`discards an unsaved mixture ${edit} edit${returnBeforeDiscard ? ' after switching tabs' : ''}`, async () => {
         const { reaction, mixture } = build();
+        const updateMaterial = sandbox.spy(reaction, 'updateMaterial');
         reaction.type = 'reaction';
         reaction.updateChecksum();
         const original = reaction.checksum();
@@ -532,6 +576,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
           });
         });
         editorSample.belongTo = reaction;
+        expect(editorSample.isDetachedMixtureDraft).toBe(true);
         if (edit === 'ratio') {
           editorSample.updateComponentRatio(editorSample.components[1], 0, 'solid');
         } else {
@@ -563,6 +608,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
         expect(reaction.sampleById(mixture.id)).toBe(mixture);
         expect(reaction.checksum()).toBe(original);
         expect(reaction.isPendingToSave).toBe(false);
+        sinon.assert.notCalled(updateMaterial);
         sinon.assert.notCalled(SamplesFetcher.update);
         sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
         sinon.assert.notCalled(fetchStub);
@@ -737,18 +783,97 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     sinon.assert.calledOnce(dispatch);
   });
 
-  it('does not dispatch a successful save when equivalent persistence fails', async () => {
+  [undefined, null, NaN, Infinity, 'n.d'].forEach((equivalent) => {
+    it(`refreshes a saved mixture without sending an unusable equivalent=${equivalent}`, async () => {
+      const { reaction, mixture } = build();
+      reaction.referenceMaterial.setAmount({ value: 0, unit: 'mol' });
+      mixture.equivalent = equivalent;
+      const dispatch = sinon.spy();
+
+      await new ElementActions().updateSampleForReaction(mixture, reaction)(dispatch);
+
+      sinon.assert.calledOnce(SamplesFetcher.update);
+      sinon.assert.notCalled(fetchStub);
+      sinon.assert.calledOnce(dispatch);
+    });
+  });
+
+  it('persists zero as a valid mixture equivalent', async () => {
     const { reaction, mixture } = build();
-    mixture.setReferenceComponent(1);
-    fetchStub.resolves(new Response('{}', { status: 401 }));
-    const dispatch = sinon.spy();
-    const stopLoading = sandbox.stub(LoadingActions, 'stop');
-    const logError = sandbox.stub(console, 'log');
+    reaction.referenceMaterial.setAmount({ value: 0, unit: 'mol' });
+    mixture.equivalent = 0;
 
-    await new ElementActions().updateSampleForReaction(mixture, reaction)(dispatch);
+    await new ElementActions().updateSampleForReaction(mixture, reaction)(sinon.spy());
 
-    sinon.assert.notCalled(dispatch);
-    sinon.assert.calledOnce(stopLoading);
-    sinon.assert.calledOnce(logError);
+    sinon.assert.calledOnce(fetchStub);
+    expect(persistedEquivalent).toBe(0);
+  });
+
+  ['HTTP', 'network'].forEach((failure) => {
+    [false, true].forEach((closeView) => {
+      it(`allows retry after an equivalent ${failure} failure, close=${closeView}`, async () => {
+        const { reaction, mixture } = build();
+        let draft;
+        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+        draft.belongTo = reaction;
+        draft.setAmount({ value: massG * 2, unit: 'g' });
+        if (failure === 'HTTP') fetchStub.onFirstCall().resolves(new Response('{}', { status: 401 }));
+        else fetchStub.onFirstCall().rejects(new TypeError('Failed to fetch'));
+        const dispatch = sinon.spy(({ sample }) => { draft = sample; });
+        const stopLoading = sandbox.stub(LoadingActions, 'stop');
+        sandbox.stub(console, 'log');
+        const notifications = [];
+        const dispose = addMiddleware(rootStore.notificationsStore, (call, next) => {
+          if (call.name === 'add') notifications.push(call.args[0]);
+          return next(call);
+        });
+
+        try {
+          await new ElementActions().updateSampleForReaction(draft, reaction, closeView)(dispatch);
+
+          sinon.assert.calledOnce(dispatch);
+          sinon.assert.calledOnce(stopLoading);
+          expect(dispatch.firstCall.args[0].closeView).toBe(false);
+          expect(notifications[0].title).toBe('Mixture saved; reaction equivalent not saved');
+          expect(draft.hasReactionMixtureConflict()).toBe(false);
+          expect(draft.isEdited).toBe(false);
+          expect(draft.amount_g).toBeCloseTo(massG * 2, 12);
+          expect(reaction.sampleById(draft.id).amount_g).toBeCloseTo(massG * 2, 12);
+
+          draft.name = 'Retry after equivalent failure';
+          await new ElementActions().updateSampleForReaction(draft, reaction, closeView)(dispatch);
+
+          sinon.assert.calledTwice(dispatch);
+          sinon.assert.calledTwice(fetchStub);
+          expect(dispatch.secondCall.args[0].closeView).toBe(closeView);
+          expect(draft.hasReactionMixtureConflict()).toBe(false);
+          expect(persistedEquivalent).toBeCloseTo(1.2, 12);
+          expect(notifications.length).toBe(1);
+        } finally {
+          dispose();
+        }
+      });
+    });
+  });
+
+  ['components', 'sample'].forEach((stage) => {
+    it(`does not apply an unsaved mixture when saving the ${stage} fails`, async () => {
+      const { reaction, mixture } = build();
+      const original = reaction.checksum();
+      let draft;
+      new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+      draft.setAmount({ value: massG * 2, unit: 'g' });
+      const fetcher = stage === 'components' ? ComponentsFetcher.saveOrUpdateComponents : SamplesFetcher.update;
+      fetcher.rejects(new Error('Save failed'));
+      sandbox.stub(console, 'log');
+      const dispatch = sinon.spy();
+
+      await new ElementActions().updateSampleForReaction(draft, reaction)(dispatch);
+
+      sinon.assert.notCalled(dispatch);
+      sinon.assert.notCalled(fetchStub);
+      expect(reaction.checksum()).toBe(original);
+      expect(draft.hasReactionMixtureConflict(reaction)).toBe(false);
+    });
   });
 });
