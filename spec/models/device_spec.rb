@@ -113,6 +113,24 @@ RSpec.describe Device do
       expect(legacy.reload.update(serial_number: '42')).to be true
     end
 
+    it 'rejects clearing the abbreviation of an existing device' do
+      [nil, ''].each do |blank|
+        device.name_abbreviation = blank
+
+        expect(device).not_to be_valid
+        expect(device.errors.details[:name_abbreviation]).to eq [{ error: :blank }]
+      end
+    end
+
+    it 'rejects an empty abbreviation that is already in use' do
+      device.update_column(:name_abbreviation, '') # rubocop:disable Rails/SkipsModelValidations
+      other = create(:device)
+      other.name_abbreviation = ''
+
+      expect(other).not_to be_valid
+      expect(other.errors.messages[:name_abbreviation]).to include 'Is already in use'
+    end
+
     it 'can validate a soft-deleted device' do
       device.destroy
 
