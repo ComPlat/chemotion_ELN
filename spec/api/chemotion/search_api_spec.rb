@@ -1127,6 +1127,93 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/<element type> by search method in a shared collection' do
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let(:sample_detail_level) { 0 }
+    let!(:shared_sample) { create(:sample, name: 'Shared water', creator: owner, collections: [shared_collection]) }
+    let!(:shared_reaction) do
+      create(:reaction, name: 'Shared reaction', samples: [shared_sample], creator: owner,
+                        collections: [shared_collection])
+    end
+    let(:params) do
+      {
+        selection: { elementType: element_type, search_by_method: search_method, name: name },
+        collection_id: shared_collection.id, page: 1, per_page: 15
+      }
+    end
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user,
+                                sample_detail_level: sample_detail_level,
+                                sequencebasedmacromoleculesample_detail_level: 0,
+                                devicedescription_detail_level: 0)
+      post "/api/v1/search/#{element_type}", params: params
+    end
+
+    [
+      ['samples', 'sample_name', 'Shared water'],
+      %w[samples cano_smiles C],
+      ['reactions', 'sample_name', 'Shared water'],
+    ].each do |type, method, term|
+      context "with #{method} on #{type} at sample detail level 0" do
+        let(:element_type) { type }
+        let(:search_method) { method }
+        let(:name) { term }
+
+        it 'finds nothing' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(type, 'totalElements')).to eq 0
+        end
+      end
+    end
+
+    context 'with sample_name on samples at a higher sample detail level' do
+      let(:sample_detail_level) { 10 }
+      let(:element_type) { 'samples' }
+      let(:search_method) { 'sample_name' }
+      let(:name) { 'Shared water' }
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [shared_sample.id]
+      end
+    end
+
+    context 'with reaction_name on reactions at sample detail level 0' do
+      let(:element_type) { 'reactions' }
+      let(:search_method) { 'reaction_name' }
+      let(:name) { 'Shared reaction' }
+
+      it 'finds the reaction' do
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [shared_reaction.id]
+      end
+    end
+
+    context 'with a method of another element type' do
+      let(:sample_detail_level) { 10 }
+      let(:element_type) { 'samples' }
+      let(:search_method) { 'reaction_name' }
+      let(:name) { 'Shared reaction' }
+
+      it 'finds nothing' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+      end
+    end
+
+    %w[sequence_based_macromolecule_samples device_descriptions].each do |type|
+      context "with substring on #{type} at detail level 0" do
+        let(:element_type) { type }
+        let(:search_method) { 'substring' }
+        let(:name) { 'Shared' }
+
+        it 'finds nothing' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(type, 'totalElements').to_i).to eq 0
+        end
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/samples with a structure search method' do
     let(:url) { '/api/v1/search/samples' }
     let(:params) do
