@@ -105,6 +105,32 @@ RSpec.describe Chemotion::AdminDeviceAPI do
       end
     end
 
+    context 'when the update is invalid' do
+      let(:other_person) { create(:person) }
+      let(:params) do
+        {
+          name: '',
+          name_abbreviation: device.name_abbreviation,
+          people: [other_person.id],
+        }
+      end
+
+      it 'returns the errors and keeps the device people unchanged' do
+        put "/api/v1/admin_devices/#{device.id}", params: params
+
+        expect(parsed_json_response['errors']).to include('name')
+        expect(device.reload.people).to contain_exactly(person)
+      end
+    end
+
+    context 'when the device does not exist' do
+      it 'returns 404' do
+        put '/api/v1/admin_devices/0', params: { name: 'x', name_abbreviation: 'x' }
+
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
     context 'when deleting user device relation' do
       let(:params) do
         {
