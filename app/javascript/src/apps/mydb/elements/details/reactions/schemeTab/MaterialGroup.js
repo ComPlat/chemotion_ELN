@@ -489,7 +489,12 @@ const GeneralMaterialGroup = ({
     </OverlayTrigger>
   ) : null;
 
-  const refTHead = materialGroup !== 'products' ? groupHeaders.ref : specialRefTHead;
+  const carryOnTHead = reaction.isMultiStep?.() ? (
+    <OverlayTrigger placement="top" overlay={<Tooltip id="carryOnHeaderTitle">Carry on to next step</Tooltip>}>
+      <span>Next</span>
+    </OverlayTrigger>
+  ) : null;
+  const refTHead = materialGroup !== 'products' ? groupHeaders.ref : (specialRefTHead || carryOnTHead);
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
