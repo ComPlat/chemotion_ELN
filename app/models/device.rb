@@ -60,7 +60,7 @@ class Device < ApplicationRecord
   has_many :device_descriptions, dependent: :nullify
 
   validates :name, presence: true
-  validate :unique_name_abbreviation
+  validate :unique_name_abbreviation, if: :will_save_change_to_name_abbreviation?
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create

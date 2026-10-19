@@ -105,6 +105,14 @@ RSpec.describe Device do
       expect(new_device.errors[:name_abbreviation]).to be_present
     end
 
+    it 'still saves other changes to a device whose abbreviation is already duplicated' do
+      create(:device, name_abbreviation: 'NMR_1')
+      legacy = create(:device, name_abbreviation: 'Nmr_x')
+      legacy.update_column(:name_abbreviation, 'nmr_1') # rubocop:disable Rails/SkipsModelValidations
+
+      expect(legacy.reload.update(serial_number: '42')).to be true
+    end
+
     it 'can validate a soft-deleted device' do
       device.destroy
 
