@@ -124,11 +124,18 @@ export default class SampleDetailsComponents extends React.Component {
         currentComponent.handleVolumeChange(amount, totalVolume);
         SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
-      case 'mol':
-        // amount given, update volume/mass
-        currentComponent.handleAmountChange(amount, totalVolume);
+      case 'mol': {
+        // amount given, update volume/mass. The Mass lock lives under the mixture's id,
+        // which the component cannot resolve from its own parent_id, so pass it in.
+        const lockAmountColumnSolids = ComponentStore.getLockStateForSample(
+          ComponentStore.getState(),
+          'lockAmountColumnSolids',
+          sample?.id
+        );
+        currentComponent.handleAmountChange(amount, totalVolume, lockAmountColumnSolids);
         SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
+      }
       case 'mol/l':
         // starting conc./target concentration changes
         currentComponent.handleConcentrationChange(amount, totalVolume, concType, lockColumn);
@@ -386,8 +393,17 @@ export default class SampleDetailsComponents extends React.Component {
       return;
     }
 
+    // The Mass lock is stored under the mixture's id, which the component cannot resolve
+    // from its own parent_id, so look it up here and pass it in.
+    const lockAmountColumnSolids = ComponentStore.getLockStateForSample(
+      ComponentStore.getState(),
+      'lockAmountColumnSolids',
+      sample?.id
+    );
+
     sample.updateComponentRatio(currentComponent, newRatio, materialGroup, {
       concentrationLocked: currentComponent.isComponentConcentrationLocked(),
+      lockAmountColumnSolids,
     });
   }
 
@@ -546,6 +562,8 @@ export default class SampleDetailsComponents extends React.Component {
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action) {
     const { sample, onChange } = this.props;
 
+    if (action === 'merge' && sample.isReactionLinked() && (srcMat?.reference || tagMat?.reference)) return;
+
     sample.components = this.normalizeComponents(sample.components);
 
     if (action === 'move') {
@@ -575,6 +593,8 @@ export default class SampleDetailsComponents extends React.Component {
    */
   async deleteMixtureComponent(component) {
     const { sample, onChange, setComponentDeletionLoading } = this.props;
+
+    if (sample.isReactionLinked() && component?.reference) return;
 
     // Set loading state for component deletion
     setComponentDeletionLoading(true);
@@ -606,6 +626,9 @@ export default class SampleDetailsComponents extends React.Component {
   updateSampleForReferenceChanged(changeEvent) {
     const { sample } = this.props;
     const { sampleID } = changeEvent;
+
+    // Reaction-linked references must be switched in the reaction row so dependents update.
+    if (sample.isReactionLinked()) return;
 
     // Validate component exists
     if (!this.findComponentById(sample, sampleID)) {
@@ -652,6 +675,7 @@ export default class SampleDetailsComponents extends React.Component {
     const { showModal, droppedMaterial } = this.state;
     const { srcMat, tagMat } = droppedMaterial || {};
     const sameMolecule = Sample.haveSameMolecule(srcMat, tagMat);
+    const referenceProtected = this.props.sample.isReactionLinked() && (srcMat?.reference || tagMat?.reference);
 
     return (
       <AppModal
@@ -661,10 +685,17 @@ export default class SampleDetailsComponents extends React.Component {
         primaryActionLabel="Move"
         onPrimaryAction={() => this.handleModalAction('move')}
         extendedFooter={(
-          <Button variant="primary" onClick={() => this.handleModalAction('merge')}>Merge</Button>
+          <Button variant="primary" disabled={!!referenceProtected} onClick={() => this.handleModalAction('merge')}>
+            Merge
+          </Button>
         )}
       >
         <p>Do you want to merge or move this component?</p>
+        {referenceProtected && (
+          <p>
+            Select another reference component in the reaction’s material row before deleting or merging this component.
+          </p>
+        )}
         {sameMolecule ? (
           <p className="text-warning">
             <strong>Warning:</strong> These components share the same molecule.
