@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import expect from 'expect';
 import sinon from 'sinon';
 import ElementActionDispatcher, { ElementActions } from 'src/stores/alt/actions/ElementActions';
@@ -5,6 +6,8 @@ import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails'
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import { SampleComponent } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent';
+import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
@@ -12,6 +15,10 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
+// The spec package uses dependencies installed in the repository root.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { addMiddleware } from 'mobx-state-tree';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   const massG = 0.006 * 182.22 + 0.012 * 94.11;
@@ -22,7 +29,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
   const build = () => {
     const reaction = new Reaction({
-      id: 101, name: 'Unsaved reaction name',
+      id: 101, type: 'reaction', name: 'Unsaved reaction name',
       starting_materials: [
         sampleData(10, 0.01, 'mol', { reference: true, equivalent: 1 }),
         sampleData(1315, massG, 'g', {
@@ -72,6 +79,170 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   afterEach(() => { sandbox.restore(); });
+
+  it('edits a cloned mixture component mass without changing the reaction component', () => {
+    const { reaction, mixture } = build();
+    let draft;
+    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    const component = draft.components[1];
+    const source = mixture.components[1];
+    const originalMass = source.amount_g;
+
+    component.handleVolumeChange({ value: component.molecule_molecular_weight * 0.02125, unit: 'g' }, 0);
+
+    expect(component.amount_mol).toBeCloseTo(0.02125, 12);
+    expect(source.amount_mol).toBeCloseTo(0.012, 12);
+    expect(source.amount_g).toBe(originalMass);
+  });
+
+  ['mass', 'reference'].forEach((edit) => {
+    [false, true].forEach((dirtyDraft) => {
+      it(`synchronizes a reaction ${edit} edit with a mixture tab, unsaved draft=${dirtyDraft}`, async () => {
+        const { reaction, mixture } = build();
+        let draft;
+        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+        draft.belongTo = reaction;
+        const originalMass = draft.amount_g;
+        expect(draft.isEdited).toBe(false);
+        if (dirtyDraft) draft.name = 'Unsaved composition note';
+        const draftBefore = draft.checksum();
+        if (edit === 'mass') mixture.setAmount({ value: massG * 2, unit: 'g' });
+        else mixture.setReferenceComponent(1, { preserveRatios: true });
+        const reactionBefore = reaction.checksum();
+        const store = Object.create(ElementStore.StoreModel.prototype);
+        store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
+
+        store.synchronizeElements(reaction);
+
+        expect(reaction.checksum()).toBe(reactionBefore);
+        if (dirtyDraft) {
+          expect(draft.checksum()).toBe(draftBefore);
+          expect(draft.amount_g).toBeCloseTo(originalMass, 12);
+          expect(draft.hasReactionMixtureConflict()).toBe(true);
+          const notifications = [];
+          const dispose = addMiddleware(rootStore.notificationsStore, (call, next) => {
+            if (call.name === 'add') notifications.push(call.args[0]);
+            return next(call);
+          });
+          const dispatch = sinon.spy();
+          try {
+            await new ElementActions().updateSampleForReaction(draft, reaction)(dispatch);
+          } finally {
+            dispose();
+          }
+          expect(notifications[0].title).toBe('Mixture changed in the reaction');
+          sinon.assert.notCalled(dispatch);
+          sinon.assert.notCalled(SamplesFetcher.update);
+          sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+          sinon.assert.notCalled(fetchStub);
+          expect(draft.isEdited).toBe(true);
+          expect(reaction.checksum()).toBe(reactionBefore);
+        } else {
+          expect(draft.amount_g).toBeCloseTo(mixture.amount_g, 12);
+          expect(draft.amount_mol).toBeCloseTo(mixture.amount_mol, 12);
+          expect(draft.reference_component.id).toBe(mixture.reference_component.id);
+          expect(draft.components[0]).not.toBe(mixture.components[0]);
+          expect(draft.isEdited).toBe(false);
+          expect(draft.hasReactionMixtureConflict()).toBe(false);
+          await new ElementActions().updateSampleForReaction(draft, reaction)(sinon.spy());
+          expect(reaction.sampleById(mixture.id).amount_g).toBeCloseTo(mixture.amount_g, 12);
+          expect(reaction.sampleById(mixture.id).amount_mol).toBeCloseTo(mixture.amount_mol, 12);
+        }
+      });
+    });
+  });
+
+  it('refreshes a clean saved mixture tab opened independently of the reaction', () => {
+    const { reaction, mixture } = build();
+    const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
+    tab.initialComponents(tab.components.map(Component.deserializeData));
+    expect(tab.isEdited).toBe(false);
+    mixture.setAmount({ value: massG * 2, unit: 'g' });
+    mixture.setReferenceComponent(1, { preserveRatios: true });
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
+
+    store.synchronizeElements(reaction);
+
+    expect(tab.amount_g).toBeCloseTo(massG * 2, 12);
+    expect(tab.amount_mol).toBeCloseTo(0.024, 12);
+    expect(tab.reference_component.id).toBe(2);
+    expect(tab.isEdited).toBe(false);
+    expect(tab.hasReactionMixtureConflict()).toBe(false);
+  });
+
+  it('updates the draft baseline after saving so a second editor save is allowed', async () => {
+    const { reaction, mixture } = build();
+    let draft;
+    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    draft.belongTo = reaction;
+    draft.name = 'First edit';
+    const dispatch = sinon.spy(({ sample }) => { draft = sample; });
+
+    await new ElementActions().updateSampleForReaction(draft, reaction, false)(dispatch);
+    expect(draft.hasReactionMixtureConflict()).toBe(false);
+    expect(draft.isEdited).toBe(false);
+    draft.name = 'Second edit';
+    await new ElementActions().updateSampleForReaction(draft, reaction, false)(dispatch);
+
+    sinon.assert.calledTwice(dispatch);
+    expect(reaction.sampleById(mixture.id).name).toBe('Second edit');
+    expect(draft.hasReactionMixtureConflict()).toBe(false);
+  });
+
+  it('keeps loaded editor components when the reaction row has not loaded them', () => {
+    const { reaction, mixture } = build();
+    let draft;
+    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    draft.belongTo = reaction;
+    mixture.components = [];
+    mixture.setAmount({ value: massG * 2, unit: 'g' });
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
+
+    store.synchronizeElements(reaction);
+
+    expect(draft.components.length).toBe(2);
+    expect(draft.components[0].amount_mol).toBeCloseTo(0.012, 12);
+    expect(draft.components[1].amount_mol).toBeCloseTo(0.024, 12);
+    expect(draft.hasReactionMixtureConflict()).toBe(false);
+    expect(draft.isEdited).toBe(false);
+  });
+
+  it('does not report a conflict when raw reaction components are initialized without edits', () => {
+    const { reaction, mixture } = build();
+    mixture.components = mixture.components.map((component) => component.serializeComponent());
+    let draft;
+    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    draft.belongTo = reaction;
+    draft.name = 'Unsaved editor change';
+
+    mixture.initialComponents(mixture.components.map(Component.deserializeData));
+
+    expect(draft.hasReactionMixtureConflict()).toBe(false);
+  });
+
+  [false, true].forEach((closeView) => {
+    it(`keeps a conflicting draft open on Save, close view=${closeView}`, () => {
+      const { reaction, mixture } = build();
+      let draft;
+      new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+      draft.belongTo = reaction;
+      draft.name = 'Unsaved edits';
+      mixture.setAmount({ value: massG * 2, unit: 'g' });
+      const details = Object.create(SampleDetails.prototype);
+      details.state = { sample: draft };
+      details.context = { notifications: { add: sinon.spy() } };
+      const save = sandbox.spy(ElementActionDispatcher, 'updateSampleForReaction');
+
+      details.handleSubmit(closeView);
+
+      sinon.assert.calledOnce(details.context.notifications.add);
+      sinon.assert.notCalled(save);
+      sinon.assert.notCalled(SamplesFetcher.update);
+      expect(draft.isEdited).toBe(true);
+    });
+  });
 
   [['g', true], ['g', false], ['mol', true], ['mol', false]].forEach(([unit, closeView]) => {
     it(`persists both ${unit} reference switches before dispatch with closeView=${closeView}`, async () => {
@@ -289,6 +460,53 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
         sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
         sinon.assert.notCalled(fetchStub);
       });
+    });
+  });
+
+  [false, true].forEach((discardBeforeUnmount) => {
+    it(`discards a pending component edit flushed on unmount, discard first=${discardBeforeUnmount}`, async () => {
+      const { reaction, mixture } = build();
+      reaction.type = 'reaction';
+      reaction.updateChecksum();
+      const original = reaction.checksum();
+      let draft;
+      await new Promise((resolve) => {
+        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+          draft = sample;
+          resolve();
+        });
+      });
+      draft.belongTo = reaction;
+      const editor = Object.create(SampleDetailsComponents.prototype);
+      editor.props = { sample: draft, onChange: () => { draft.changed = true; } };
+      const row = new SampleComponent({
+        sample: draft, material: draft.components[1], materialGroup: 'solid',
+        onChange: (event) => editor.onChangeComponent(event),
+      });
+      const clock = sandbox.useFakeTimers();
+      row.debounceHandleAmountChange({ value: 0.018, unit: 'mol' }, 0.012, '', false);
+      clock.tick(100);
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = {
+        selecteds: [reaction, draft], currentElement: draft, activeKey: 1, refreshCoefficient: [],
+      };
+      store.setState = (update) => { store.state = { ...store.state, ...update }; };
+      store.resetCurrentElement = (key, selecteds) => store.changeCurrentElement(selecteds[key]);
+
+      if (!discardBeforeUnmount) row.componentWillUnmount();
+      store.handleClose({ deleteEl: draft, force: true });
+      if (discardBeforeUnmount) row.componentWillUnmount();
+      clock.tick(1000);
+
+      expect(draft.components[1].amount_mol).toBeCloseTo(0.018, 12);
+      expect(mixture.components[1].amount_mol).toBeCloseTo(0.012, 12);
+      expect(store.state.selecteds).toEqual([reaction]);
+      expect(store.state.currentElement).toBe(reaction);
+      expect(reaction.checksum()).toBe(original);
+      sinon.assert.notCalled(SamplesFetcher.update);
+      sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+      sinon.assert.notCalled(fullReactionSave);
+      sinon.assert.notCalled(fetchStub);
     });
   });
 

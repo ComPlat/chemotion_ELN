@@ -1424,6 +1424,7 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
           expect(reaction.referenceMaterial.amount_unit).toBe(unit);
           expect(reaction.referenceMaterial.amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
+          expect(reaction.referenceMaterial.components.map((component) => component.equivalent)).toEqual([1, 0.5]);
           expect(reaction.referenceMaterial.sample_details.previous_amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.sample_details.previous_amount_mol).toBeCloseTo(0.01, 10);
           expect(reaction.reactants[0].amount_mol).toBeCloseTo(lockEquivColumn ? 0.02 : 0.04, 10);
@@ -1434,6 +1435,7 @@ describe('ReactionDetailsScheme mixture reference switch — stored units and sh
           expect(reaction.referenceMaterial.amount_unit).toBe(unit);
           expect(reaction.referenceMaterial.amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.02, 10);
+          expect(reaction.referenceMaterial.components.map((component) => component.equivalent)).toEqual([1, 0.5]);
           expect(reaction.referenceMaterial.sample_details.previous_amount_g).toBeCloseTo(1, 10);
           expect(reaction.referenceMaterial.sample_details.previous_amount_mol).toBeCloseTo(0.02, 10);
           expect(reaction.reactants[0].amount_mol).toBeCloseTo(0.04, 10);
@@ -1529,6 +1531,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
         reopenedMixture.initialComponents(savedMixture.components.map(Component.deserializeData));
 
         expect(reopenedMixture.reference_component.id).toBe('r2');
+        expect(reopenedMixture.components.map((component) => component.equivalent)).toEqual([1, 0.5]);
         expect(reopenedMixture.amount_unit).toBe(unit);
         expect(reopenedMixture.amount_g).toBeCloseTo(1, 10);
         expect(reopenedMixture.amount_mol).toBeCloseTo(0.01, 10);
@@ -1560,6 +1563,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
           expect(mixture.amount_unit).toBe(unit);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
+          expect(mixture.components.map((component) => component.equivalent)).toEqual([1, 0.5]);
           expect(mixture.sample_details.reference_component_changed).toBe(false);
           expect(mixture.equivalent).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);
@@ -1571,6 +1575,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
           expect(mixture.amount_unit).toBe(unit);
           expect(mixture.amount_g).toBeCloseTo(1, 10);
           expect(mixture.amount_mol).toBeCloseTo(0.02, 10);
+          expect(mixture.components.map((component) => component.equivalent)).toEqual([1, 0.5]);
           expect(mixture.sample_details.reference_component_changed).toBe(false);
           expect(mixture.equivalent).toBeCloseTo(2, 10);
           expect(mixture.amount_mol).toBeCloseTo(mixture.equivalent * reaction.referenceMaterial.amount_mol, 10);

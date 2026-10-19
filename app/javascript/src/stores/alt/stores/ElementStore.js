@@ -2,7 +2,9 @@ import {
   last,
   slice,
   intersectionWith,
-  findIndex
+  findIndex,
+  cloneDeep,
+  omit
 } from 'lodash';
 import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
@@ -1785,8 +1787,26 @@ class ElementStore {
       const { samples } = previous;
       selecteds.map((nextSample) => {
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
-        // Keep the mixture editor's draft intact when returning from its reaction.
-        if (previousSample && !nextSample.isMixture()) {
+        if (previousSample && nextSample.isMixture()) {
+          const sourceState = previousSample.mixtureReactionState();
+          // Keep unsaved composition edits. The save guard will report a conflict
+          // if the reaction quantity or reference changed since this draft opened.
+          if (nextSample.isEdited || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
+
+          const refreshed = new Sample(cloneDeep(omit(previousSample, ['belongTo', '_equivalent', 'reference'])));
+          refreshed.belongTo = previous;
+          refreshed.isDetachedMixtureDraft = true;
+          refreshed._mixtureDraftSourceState = sourceState;
+          // The reaction row may not have fetched its components yet. Keep the
+          // editor's loaded composition and scale it to the latest reaction amount.
+          const components = refreshed.hasComponents() ? refreshed.components : cloneDeep(nextSample.components || []);
+          refreshed.initialComponents(components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          refreshed.syncMixtureComponentAmounts();
+          Object.assign(nextSample, refreshed);
+          nextSample.updateChecksum();
+        } else if (previousSample) {
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;

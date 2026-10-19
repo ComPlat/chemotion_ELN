@@ -848,6 +848,47 @@ describe('Component', () => {
       expect(component.equivalent).toBe(2.0);
       expect(component.amount_mol).toBe(originalAmountMol);
     });
+
+    // CR-4: the Mass lock is stored under the mixture's id, which differs from a real
+    // component's parent_id (its source sample). The lock must be passed in by the caller,
+    // not looked up in the store by parent_id, or it is silently ignored.
+    it('honors the passed Mass lock for an existing solid mass regardless of parent_id', () => {
+      component.material_group = 'solid';
+      component.equivalent = 1.0;
+      component.purity = 0.9;
+      component.amount_g = 1.25;
+      component.amount_mol = 0.005;
+      component.molecule.molecular_weight = 100;
+      component.parent_id = 'source-sample'; // not the mixture id where the lock lives
+      // Lock lives under the mixture id, so a store lookup by parent_id would miss.
+      ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { mixture: true } });
+      const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+      component.updateRatio(2.0, 'solid', 10, 0.005, true);
+
+      // Mass stays put, purity is derived from the new amount: 0.01 * 100 / 1.25 = 0.8.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBe(1.25);
+      expect(component.purity).toBeCloseTo(0.8, 6);
+      sinon.assert.calledOnce(purityUpdate);
+      purityUpdate.restore();
+    });
+
+    it('recalculates an existing solid mass when the Mass lock is passed as false', () => {
+      component.material_group = 'solid';
+      component.equivalent = 1.0;
+      component.purity = 0.9;
+      component.amount_g = 1.25;
+      component.amount_mol = 0.005;
+      component.molecule.molecular_weight = 100;
+      component.parent_id = 'source-sample';
+
+      component.updateRatio(2.0, 'solid', 10, 0.005, false);
+
+      // Unlocked: mass is recomputed from the new amount and purity.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBeCloseTo((0.01 * 100) / 0.9, 6);
+    });
   });
 
   describe('updateAmountFromRatio', () => {
@@ -871,6 +912,44 @@ describe('Component', () => {
         expect(component.equivalent).toBe(2);
         sinon.assert.notCalled(purityUpdate);
       });
+    });
+
+    // S17: a Mass-locked solid that already has a mass but no amount must keep its mass when
+    // the amount is filled from the ratio; purity is derived instead of the mass being overwritten.
+    it('keeps an existing solid mass and derives purity when the Mass lock is passed as true', () => {
+      component.material_group = 'solid';
+      component.parent_id = 'source-sample'; // not the mixture id; lock must be passed in
+      component.amount_g = 1.25;
+      component.amount_mol = 0;
+      component.equivalent = 1;
+      component.purity = 0.5;
+      component.molecule.molecular_weight = 100;
+      const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+      component.updateAmountFromRatio(1, 0.01, 0.01, true);
+
+      // Mass stays put; purity is re-derived: 0.01 * 100 / 1.25 = 0.8.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBe(1.25);
+      expect(component.purity).toBeCloseTo(0.8, 6);
+      sinon.assert.calledOnce(purityUpdate);
+      purityUpdate.restore();
+    });
+
+    it('overwrites an existing solid mass when the Mass lock is passed as false', () => {
+      component.material_group = 'solid';
+      component.parent_id = 'source-sample';
+      component.amount_g = 1.25;
+      component.amount_mol = 0;
+      component.equivalent = 1;
+      component.purity = 0.5;
+      component.molecule.molecular_weight = 100;
+
+      component.updateAmountFromRatio(1, 0.01, 0.01, false);
+
+      // Unlocked: mass is recomputed from the filled amount and purity.
+      expect(component.amount_g).toBeCloseTo((0.01 * 100) / 0.5, 6);
+      expect(component.purity).toBe(0.5);
     });
   });
 
@@ -913,6 +992,30 @@ describe('Component', () => {
       const referenceComponent = { id: 'ref_123', amount_mol: 0 };
       component.id = 'comp_123';
       component.amount_mol = 1.0;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe('n.d');
+    });
+
+    // S16: a ratio typed before the reference had an amount must survive a later edit
+    // (e.g. a purity change) that re-derives ratios while the reference is still empty.
+    it('preserves a positive typed ratio when the reference has no amount', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0 };
+      component.id = 'comp_123';
+      component.amount_mol = 0;
+      component.equivalent = 2;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe(2);
+    });
+
+    it('sets n.d when the reference has no amount and no positive ratio was typed', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0 };
+      component.id = 'comp_123';
+      component.amount_mol = 0;
+      component.equivalent = 'n.d';
 
       component.updateRatioFromReference(referenceComponent);
 
