@@ -49,7 +49,10 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
-import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
+import {
+  sampleAssociationLockNotification,
+  mixtureReactionConflictNotification
+} from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 
@@ -459,6 +462,11 @@ export class ElementActions {
 
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
+      if (sample.hasReactionMixtureConflict(reaction)) {
+        rootStore.notificationsStore.add(mixtureReactionConflictNotification());
+        LoadingActions.stop();
+        return;
+      }
       try {
         // Save components first if it's a mixture and capture the API response so
         // newly inserted rows pick up their real DB ids on subsequent saves.
@@ -488,6 +496,12 @@ export class ElementActions {
         if (newSample.isMixture() && !reaction.isNew && savedReactionId === reaction.id) {
           const material = reaction.sampleById(newSample.id);
           await ReactionsFetcher.updateMaterialEquivalent(reaction.id, material.id, material.equivalent);
+        }
+
+        if (sample.isDetachedMixtureDraft) {
+          newSample.isDetachedMixtureDraft = true;
+          newSample._mixtureDraftSourceState = reaction.sampleById(newSample.id).mixtureReactionState();
+          newSample.updateChecksum();
         }
 
         dispatch({
@@ -594,6 +608,8 @@ export class ElementActions {
         // Open the pending reaction state without sharing mutable editor data.
         // Eq and material reference stay on the reaction association, as with the sample API.
         const sample = new Sample(_.cloneDeep(_.omit(params.sample, ['belongTo', '_equivalent', 'reference'])));
+        sample.isDetachedMixtureDraft = true;
+        sample._mixtureDraftSourceState = params.sample.mixtureReactionState();
         sample.initialComponents(sample.components.map((component) => (
           component instanceof Component ? component : Component.deserializeData(component)
         )));
@@ -604,6 +620,11 @@ export class ElementActions {
       }
       SamplesFetcher.fetchById(params.sample.id)
         .then((result) => {
+          if (result.isMixture()) {
+            result.isDetachedMixtureDraft = true;
+            result._mixtureDraftSourceState = params.sample.mixtureReactionState();
+            result.updateChecksum();
+          }
           params.coefficient = sampleCoefficient;
           params.sample = result;
           dispatch(params);
