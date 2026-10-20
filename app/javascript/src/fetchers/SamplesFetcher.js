@@ -74,7 +74,7 @@ export default class SamplesFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(sample))
+      .then(() => AnnotationsFetcher.updateAnnotations(sample))
       .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
       .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Sample', json.sample.id, delFiles))
       .then(() => this.fetchById(sample.id));

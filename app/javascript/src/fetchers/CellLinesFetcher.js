@@ -86,7 +86,7 @@ export default class CellLinesFetcher {
     const params = extractApiParameter(cellLineItem);
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(cellLineItem.container)
-      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(cellLineItem))
+      .then(() => AnnotationsFetcher.updateAnnotations(cellLineItem))
       .then(() => ApiClient.putJson('/api/v1/cell_lines', {
         body: params,
         handleResponseError: (exception) => {

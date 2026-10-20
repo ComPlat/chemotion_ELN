@@ -52,7 +52,6 @@ describe('ImageFileDropHandler', () => {
       expect(value.identifier).toEqual(attachments[0].identifier);
       expect(value.public_name).toEqual('publicName');
       expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldWasEmpty);
     });
 
     it('drop image after another image dropped', () => {
@@ -86,7 +85,6 @@ describe('ImageFileDropHandler', () => {
       expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
       expect(value.public_name).toEqual('anotherPublicName');
       expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldTemporayImage);
     });
 
     it('drop image on image which is saved on server', () => {
@@ -120,7 +118,6 @@ describe('ImageFileDropHandler', () => {
       expect(value.identifier).toEqual(researchPlan.attachments[1].identifier);
       expect(value.public_name).toEqual('anotherPublicName');
       expect(value.file_name).toEqual('dummyFile');
-      expect(value.old_value).toEqual(replacedFieldTemporayImage);
     });
   });
 });

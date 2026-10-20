@@ -82,7 +82,10 @@ export default class ReactionsFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => this.updateAnnotationsInReaction(reaction))
+      .then(() => Promise.all([
+        AnnotationsFetcher.updateAnnotationsOfAttachments(reaction),
+        this.updateAnnotationsInReaction(reaction),
+      ]))
       .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
       .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', json.reaction.id, delFiles))
       .then(() => this.fetchById(reaction.id));

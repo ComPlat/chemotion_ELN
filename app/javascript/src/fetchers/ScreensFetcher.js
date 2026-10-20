@@ -45,7 +45,7 @@ export default class ScreensFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(screen))
+      .then(() => AnnotationsFetcher.updateAnnotations(screen))
       .then(() => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() }))
       .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Screen', json.screen.id, delFiles))
       .then(() => this.fetchById(screen.id));
