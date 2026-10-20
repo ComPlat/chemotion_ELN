@@ -274,7 +274,6 @@ export default class ResearchPlan extends Element {
       .forEach((value) => {
         value.public_name = value.identifier;
         delete value.identifier;
-        delete value.old_value;
       });
   }
 
