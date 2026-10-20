@@ -1,3 +1,5 @@
+import { clampTemperatureText } from 'src/models/Reaction';
+
 const setReactionByType = (reaction, type, value) => {
   let options = {};
 
@@ -41,7 +43,7 @@ const setReactionByType = (reaction, type, value) => {
       reaction.tlc_description = value;
       break;
     case 'temperature':
-      reaction.temperature.userText = value;
+      reaction.temperature.userText = clampTemperatureText(value, reaction.temperature.valueUnit);
       options = {updateGraphic: true}
       break;
     case 'temperatureUnit':
