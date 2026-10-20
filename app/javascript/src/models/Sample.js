@@ -513,7 +513,6 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
-      attachments: this.attachments,
     });
 
     return serialized;

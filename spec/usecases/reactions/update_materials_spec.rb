@@ -210,6 +210,35 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
+    # Regression: copying a reaction whose product has element-level attachments
+    # raised ActiveRecord::AssociationTypeMismatch because create_new_sample passed
+    # the attachments array of hashes directly into Sample.new.
+    context 'when a new product carries an attachments array (reaction copy scenario)' do
+      let(:product_with_attachments) do
+        {
+          'products' => [
+            'name' => 'product_with_attachment',
+            'target_amount_unit' => 'mg',
+            'target_amount_value' => 10.0,
+            'equivalent' => 1,
+            'reference' => false,
+            'is_new' => true,
+            'molfile' => molfile,
+            'container' => root_container,
+            'gas_phase_data' => gas_phase_data,
+            'attachments' => [{ 'id' => 1, 'filename' => 'report.pdf', 'is_new' => false }],
+          ],
+        }
+      end
+
+      it 'creates the sample without raising AssociationTypeMismatch' do
+        expect do
+          described_class.new(reaction, product_with_attachments, user, vessel_size).execute!
+        end.not_to raise_error
+        expect(Sample.find_by(name: 'product_with_attachment')).to be_present
+      end
+    end
+
     context 'when sample is a new mixture sub-sample' do
       let(:molecule_a) { create(:molecule) }
       let(:molecule_b) { create(:molecule) }

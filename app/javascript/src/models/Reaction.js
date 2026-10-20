@@ -299,7 +299,6 @@ export default class Reaction extends Element {
       lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
-      attachments: this.attachments,
     });
   }
 
