@@ -487,8 +487,10 @@ export class ElementActions {
           newSample.initialComponents(refreshed);
         }
 
-        // Update the material in the reaction and dispatch
-        currentReaction.updateMaterial(newSample);
+        // Keep a saved mixture editor independent of subsequent reaction edits.
+        const reactionMaterial = newSample.isMixture()
+          ? new Sample(_.cloneDeep(_.omit(newSample, ['belongTo']))) : newSample;
+        currentReaction.updateMaterial(reactionMaterial);
         currentReaction.changed = true;
 
         // Persist only the edited mixture's existing association, keeping other

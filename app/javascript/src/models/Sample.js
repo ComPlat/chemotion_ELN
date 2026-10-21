@@ -2022,15 +2022,15 @@ export default class Sample extends Element {
     // Store the volume values before calculateTotalMixtureMass overwrites them
     this.sample_details.total_mixture_volume_l = totalVolume;
 
-    // updates the mass and density
-    // Note: calculateTotalMixtureMass() sets amount_unit to 'g' and amount_value to mass,
-    // so we need to restore volume values after it runs
+    // Recalculate the mass and density from the composition and entered volume.
     this.calculateTotalMixtureMass({ totalVolumeL: totalVolume });
 
-    // Restore volume values after mass calculation
-    // This ensures amount_l getter returns the correct volume value
-    this.amount_value = totalVolume;
-    this.amount_unit = 'l';
+    // A positive volume remains the entered quantity. Clearing it keeps the
+    // calculated grams; storing 0 l would discard the component and solvent mass.
+    if (totalVolume > 0) {
+      this.amount_value = totalVolume;
+      this.amount_unit = 'l';
+    }
 
     this.handleTotalVolumeChangeForMixture(totalVolume);
   }
@@ -2303,7 +2303,24 @@ export default class Sample extends Element {
    * @param {string} newSampleType - The new sample type
    */
   updateSampleType(newSampleType) {
+    if (!this.isMixture() && newSampleType === SAMPLE_TYPE_MIXTURE) {
+      this.prepareForMixtureConversion();
+    }
     this.sample_type = newSampleType;
+  }
+
+  /** Preserves physical mass and resets density and molarity before switching to a mixture. */
+  prepareForMixtureConversion() {
+    // Resolve mass while the original density and molarity are still available.
+    const massG = this.amount_g;
+    const hasPositiveMass = Number.isFinite(massG) && massG > 0;
+
+    if (this.amount_unit !== 'g' && hasPositiveMass) {
+      this.amount_value = massG;
+      this.amount_unit = 'g';
+    }
+
+    this.setDensity({ value: 0 });
   }
 
   /**
@@ -2541,7 +2558,7 @@ export default class Sample extends Element {
   }
 
   /**
-   * Switches the reference component while preserving the mixture's physical mass.
+   * Switches the reference component, preserving mass by default or moles for a locked reaction material.
    *
    * The selected component is marked as the reference and all others as non-reference.
    * Reaction schemes preserve composition ratios while changing the molar basis;
@@ -2550,17 +2567,25 @@ export default class Sample extends Element {
    * the function exits without making any changes.
    *
    * @param {number} componentIndex - The index of the component to set as reference.
-   * @param {Object} options - Whether to preserve the mixture's composition ratios.
+   * @param {Object} [options] - Reference-switch constraints.
+   * @param {boolean} [options.preserveRatios=false] - Keep the mixture's composition ratios.
+   * @param {boolean} [options.preserveAmountMol=false] - Keep moles fixed and rescale the physical quantity.
+   * @returns {boolean} Whether the reference selection was applied.
    */
-  setReferenceComponent(componentIndex, { preserveRatios = false } = {}) {
+  setReferenceComponent(componentIndex, { preserveRatios = false, preserveAmountMol = false } = {}) {
     const referenceComponent = this.components?.[componentIndex];
-    if (!referenceComponent) return;
+    if (!referenceComponent) return false;
 
     // Read mass using the old reference before a mol-stored amount changes its basis.
     // Initial reference selection has no previous molar basis to preserve.
     const previousReference = this.reference_component;
     const hadReference = !!previousReference;
     const mixtureMassG = hadReference ? Number(this.amount_g) : NaN;
+    const mixtureAmountMol = hadReference && preserveAmountMol ? Number(this.amount_mol) : NaN;
+    if (hadReference && preserveAmountMol
+      && !Sample.canPreserveAmountAfterReferenceChange(mixtureAmountMol, mixtureMassG, referenceComponent)) {
+      return false;
+    }
 
     this.components.forEach((component, index) => {
       component.reference = (index === componentIndex);
@@ -2572,10 +2597,41 @@ export default class Sample extends Element {
 
     if (hadReference) {
       this.updateReferenceComponentDetails(referenceComponent);
-      this.preserveMassAfterReferenceChange(mixtureMassG);
+      if (preserveAmountMol) {
+        this.preserveAmountAfterReferenceChange(mixtureAmountMol, mixtureMassG);
+      } else {
+        this.preserveMassAfterReferenceChange(mixtureMassG);
+      }
     }
 
     if (!preserveRatios) this.updateMixtureComponentEquivalent();
+    return true;
+  }
+
+  /** Checks whether the selected component can preserve moles with a finite, nonnegative mass. */
+  static canPreserveAmountAfterReferenceChange(amountMol, massG, referenceComponent) {
+    const relativeWeight = Number(referenceComponent.relative_molecular_weight);
+    return Number.isFinite(amountMol) && amountMol >= 0
+      && Number.isFinite(massG) && massG >= 0
+      && Number.isFinite(relativeWeight) && relativeWeight > 0
+      && Number.isFinite(amountMol * relativeWeight);
+  }
+
+  /** Keeps a locked material's moles and stored unit, scaling its components and internal solvents once. */
+  preserveAmountAfterReferenceChange(amountMol, previousMassG) {
+    const massG = amountMol * Number(this.reference_component.relative_molecular_weight);
+    const storedUnit = this.amount_unit;
+    const gramsPerLiter = storedUnit === 'l' ? this.convertToGram(1, 'l') : null;
+    const volumeL = Number.isFinite(gramsPerLiter) && gramsPerLiter > 0 ? massG / gramsPerLiter : null;
+    const keepVolume = storedUnit === 'l' && Number.isFinite(volumeL) && (volumeL > 0 || massG === 0);
+
+    this.amount_value = storedUnit === 'mol' ? amountMol : (keepVolume ? volumeL : massG);
+    this.amount_unit = storedUnit === 'mol' || keepVolume ? storedUnit : 'g';
+    this.sample_details.previous_amount_g = previousMassG;
+    this.sample_details.previous_amount_mol = amountMol;
+
+    this.updateComponentAmounts();
+    this.updateSolventVolumes(previousMassG);
   }
 
   /** Records the selected reference's molecular weights and clears its transient change flag. */
@@ -2963,9 +3019,13 @@ export default class Sample extends Element {
   async addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved) {
     const { default: Component } = await import('src/models/Component');
 
-    const newComponents = resolved.map(
-      (molecule) => new Component(Sample.buildNew(molecule, this.collection_id))
-    );
+    // Read after molecule resolution so edits made while it was loading are retained.
+    const unallocatedMassG = this.isMixture() && !this.hasComponents() ? Number(this.amount_g) : 0;
+    const newComponents = resolved.map((molecule) => {
+      const component = new Component(Sample.buildNew(molecule, this.collection_id));
+      component.resetAmounts();
+      return component;
+    });
     if (resolved.length === unknownSmiles.length) {
       staleComponents.forEach((c) => this.deleteMixtureComponent(c));
     }
@@ -2976,6 +3036,17 @@ export default class Sample extends Element {
       // Every fetch failed — still refresh totals/ratios.
       this.calculateTotalMixtureMass();
       this.updateMixtureComponentEquivalent();
+    }
+
+    // Fresh structure rows have no quantities yet. Keep the entered total mass
+    // until the user assigns their amounts, including when molecule resolution fails.
+    if (Number.isFinite(unallocatedMassG) && unallocatedMassG > 0
+      && !(this.components || []).some((component) => Number(component.amount_mol) > 0)) {
+      this.amount_value = unallocatedMassG;
+      this.amount_unit = 'g';
+      this.total_mixture_mass_g = unallocatedMassG;
+
+      this.updateMixtureDensity();
     }
   }
 
@@ -3081,10 +3152,12 @@ export default class Sample extends Element {
     }
 
     // --- Step 2: Determine total/solvent volume info ---
-    // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
-    let totalVolumeL = editedTotalVolumeL ?? ((this.sample_details.total_mixture_volume_l != null)
-      ? this.sample_details.total_mixture_volume_l
-      : (this.amount_l || 0));
+    // Only an entered volume can supply the remaining-volume mass. amount_l may
+    // derive from the previous mass/density; feeding it back makes ratio edits drift.
+    if (this.sample_details.total_mixture_volume_l == null && this.amount_unit === 'l') {
+      this.sample_details.total_mixture_volume_l = this.amount_value;
+    }
+    let totalVolumeL = editedTotalVolumeL ?? this.sample_details.total_mixture_volume_l ?? 0;
     const storedMassG = Number(this.total_mixture_mass_g);
     const portionMassG = Number(this.amount_g);
     if (editedTotalVolumeL === undefined && this.parent_id != null
@@ -3130,7 +3203,6 @@ export default class Sample extends Element {
     // persist an older zero-edit recovery basis for these recomputed quantities.
     delete this.sample_details.solvent_scaling_mass_g;
 
-    // Calculation of the density in g/ml = total mass/total volume. So density is recalculated here.
     this.updateMixtureDensity();
 
     // Update relative molecular weights after total mass calculation
@@ -3159,14 +3231,14 @@ export default class Sample extends Element {
     this.initializeSampleDetails();
 
     const totalMassG = Number(this.sample_details.total_mixture_mass_g) || 0;
-    // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
-    const totalVolumeL = (this.sample_details.total_mixture_volume_l != null)
-      ? this.sample_details.total_mixture_volume_l
-      : (this.amount_l || 0);
+    // A mass-derived amount_l cannot establish the volume used to derive density.
+    const totalVolumeL = this.sample_details.total_mixture_volume_l
+      ?? (this.amount_unit === 'l' ? this.amount_value : 0);
     const totalVolumeML = parseFloat(totalVolumeL) * 1000;
 
-    // Calculate and set density if valid
-    if (this.isMixtureLiquid() && totalVolumeML > 0) {
+    // An entered positive total volume supplies a liquid basis even if the
+    // previous density was cleared and all components are solids.
+    if (totalVolumeML > 0) {
       const density = totalMassG / totalVolumeML;
       this.setDensity({ value: density });
     } else {
