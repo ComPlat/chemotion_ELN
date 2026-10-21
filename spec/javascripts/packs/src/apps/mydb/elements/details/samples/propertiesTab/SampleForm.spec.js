@@ -38,6 +38,54 @@ describe('SampleForm new property inputs', () => {
     instance.context = { notifications: { add: (n) => notificationCalls.push(n) } };
   });
 
+  describe('mixture volume and density display', () => {
+    it('does not display a mass-derived volume or inherited density when no total volume is stored', () => {
+      sample.sample_type = 'Mixture';
+      sample.amount_value = 7.256;
+      sample.amount_unit = 'g';
+      sample.density = 0.864;
+      sample.sample_details = {};
+      const checksum = sample.checksum();
+
+      expect(instance.totalMixtureVolume(sample).props.value).toBe(0);
+      expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(null);
+      expect(sample.checksum()).toBe(checksum);
+      expect(sample.density).toBe(0.864);
+      expect(sample.sample_details.total_mixture_volume_l).toBeUndefined();
+    });
+
+    it('displays an explicitly entered total volume and its density', () => {
+      sample.sample_type = 'Mixture';
+      sample.density = 1.18;
+      sample.sample_details = { total_mixture_volume_l: 0.01 };
+
+      expect(instance.totalMixtureVolume(sample).props.value).toBe(0.01);
+      expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(1.18);
+    });
+
+    it('keeps an explicit zero volume ahead of a stored quantity in liters', () => {
+      sample.sample_type = 'Mixture';
+      sample.amount_value = 0.01;
+      sample.amount_unit = 'l';
+      sample.density = 1.18;
+      sample.sample_details = { total_mixture_volume_l: 0 };
+
+      expect(instance.totalMixtureVolume(sample).props.value).toBe(0);
+      expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(null);
+    });
+
+    it('displays a quantity explicitly entered in liters when no separate total volume was stored', () => {
+      sample.sample_type = 'Mixture';
+      sample.amount_value = 0.005;
+      sample.amount_unit = 'l';
+      sample.density = 2;
+      sample.sample_details = {};
+
+      expect(instance.totalMixtureVolume(sample).props.value).toBe(0.005);
+      expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(2);
+    });
+  });
+
   describe('numericInputWithAddon', () => {
     it('stores the parsed value as typed without clamping (clamp is on blur)', () => {
       const wrapper = shallow(instance.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100));

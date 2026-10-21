@@ -200,3 +200,46 @@ describe('SampleComponent reference switching for reaction-linked mixtures', () 
     });
   });
 });
+
+describe('SampleComponent liquid ratio round trips', () => {
+  it('reverses the reported ethanol Ratio input edits with a 2 M stock and inherited density', () => {
+    const sample = new Sample({
+      id: 'reported-liquid-ratio', sample_type: 'Mixture', can_update: true,
+      amount_value: 7.26, amount_unit: 'g', density: 0.864,
+      sample_details: { total_mixture_mass_g: 7.26 },
+    });
+    sample.initialComponents([
+      new Component({
+        id: 'solid', position: 0, reference: true, equivalent: 1, material_group: 'solid',
+        amount_mol: 0.01, amount_g: 1.8, purity: 1, molecule: { molecular_weight: 180 },
+      }),
+      new Component({
+        id: 'ethanol', position: 1, reference: false, equivalent: 1, material_group: 'liquid',
+        amount_mol: 0.01, amount_g: 0.46, amount_l: 0.000575,
+        purity: 1, density: 0.8, starting_molarity_value: 0, molecule: { molecular_weight: 46 },
+      }),
+      new Component({
+        id: 'stock', position: 2, reference: false, equivalent: 1, material_group: 'liquid',
+        amount_mol: 0.01, amount_l: 0.005, purity: 1, density: 0, starting_molarity_value: 2,
+        molecule: { molecular_weight: 100 },
+      }),
+    ]);
+    const editor = Object.create(SampleDetailsComponents.prototype);
+    editor.props = { sample, onChange: sinon.spy() };
+    const row = Object.create(SampleComponent.prototype);
+    row.props = {
+      sample, material: sample.components[1], materialGroup: 'liquid',
+      onChange: (event) => editor.onChangeComponent(event),
+    };
+
+    [0.5, 1, 0.5, 1, 0.5, 1].forEach((ratio) => {
+      row.componentRatio(row.props.material).props.children.props.onChange({ value: ratio });
+
+      expect(sample.amount_g).toBeCloseTo(1.8 + 0.46 * ratio + 5, 12);
+      expect(sample.components[0].amount_mol).toBeCloseTo(0.01, 12);
+      expect(sample.components[1].amount_mol).toBeCloseTo(0.01 * ratio, 12);
+      expect(sample.components[2].amount_l).toBeCloseTo(0.005, 12);
+      expect(sample.sample_details.total_mixture_volume_l).toBeUndefined();
+    });
+  });
+});

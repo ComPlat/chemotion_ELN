@@ -8,10 +8,201 @@ import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+// App imports resolve through the repository root across the spec package boundary.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
   const product = await SampleFactory.build('SampleFactory.water_100g');
+
+  describe('Sample.updateSampleType()', () => {
+    it('clears inherited density and molarity when a single molecule becomes a mixture', () => {
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 7.26, amount_unit: 'g', density: 0.864, molarity_value: 2,
+      });
+
+      sample.updateSampleType('Mixture');
+
+      expect(sample.isMixture()).toBe(true);
+      expect(sample.density).toBe(0);
+      expect(sample.molarity_value).toBe(0);
+      expect(sample.amount_g).toBe(7.26);
+    });
+
+    ['l', 'mol'].forEach((unit) => {
+      it(`preserves known mass when clearing a single molecule's ${unit} conversion basis`, () => {
+        const sample = new Sample({
+          sample_type: 'Micromolecule', amount_value: unit === 'l' ? 0.01 : 0.05, amount_unit: unit,
+          density: 0.8, molarity_value: 0, purity: 0.5, molecule: { molecular_weight: 100 },
+        });
+        const massG = sample.amount_g;
+
+        sample.updateSampleType('Mixture');
+
+        expect(sample.amount_unit).toBe('g');
+        expect(sample.amount_g).toBeCloseTo(massG, 12);
+        expect(sample.density).toBe(0);
+        expect(sample.molarity_value).toBe(0);
+      });
+    });
+
+    it('retains calculated density when reselecting the mixture type', () => {
+      const sample = new Sample({ sample_type: 'Mixture', density: 0.864 });
+
+      sample.updateSampleType('Mixture');
+
+      expect(sample.density).toBe(0.864);
+    });
+
+    it('retains single-molecule density and molarity when reselecting its type', () => {
+      const sample = new Sample({ sample_type: 'Micromolecule', density: 0.864, molarity_value: 2 });
+
+      sample.updateSampleType('Micromolecule');
+
+      expect(sample.density).toBe(0.864);
+      expect(sample.molarity_value).toBe(2);
+    });
+  });
+
+  describe('Sample single-molecule conversion through the form', () => {
+    let sandbox;
+
+    beforeEach(() => { sandbox = sinon.createSandbox(); });
+    afterEach(() => { sandbox.restore(); });
+
+    const quantities = [
+      { name: 'grams', value: 0.587, unit: 'g', density: 0.864, molarity: 0 },
+      { name: 'millimoles', value: 0.005, unit: 'mol', density: 0.864, molarity: 0 },
+      { name: 'milliliters', value: 0.00068, unit: 'l', density: 0.864, molarity: 0 },
+      { name: 'stock molarity', value: 0.00068, unit: 'l', density: 0, molarity: 0.5 },
+    ];
+
+    ['target', 'real'].forEach((amountType) => {
+      quantities.forEach(({ name, value, unit, density, molarity }) => {
+        it(`keeps the known ${amountType} mass after component creation from ${name}`, async () => {
+          const molecule = { id: 501, cano_smiles: 'CCCC(C)CO', molecular_weight: 102.2, molfile: 'source molfile' };
+          const sample = new Sample({
+            id: 315, sample_type: 'Micromolecule', amountType, purity: 1, density, molarity_value: molarity,
+            [`${amountType}_amount_value`]: value, [`${amountType}_amount_unit`]: unit,
+            molecule, molfile: molecule.molfile,
+          });
+          const knownMass = sample.amount_g;
+          const fetch = sandbox.stub(MoleculesFetcher, 'fetchBySmi').resolves(molecule);
+          const create = sandbox.spy(sample, 'createComponentsFromCurrentSample');
+          const form = Object.create(SampleForm.prototype);
+          form.props = { sample, handleSampleChanged: sinon.spy() };
+          form.setState = (state) => { form.state = { ...form.state, ...state }; };
+
+          form.handleSampleTypeChanged({ value: 'Mixture', label: 'Mixture' });
+          await create.firstCall.returnValue;
+
+          sinon.assert.calledOnce(fetch);
+          expect(sample.components).toHaveLength(1);
+          expect(sample.amount_unit).toBe('g');
+          expect(sample.amount_g).toBeCloseTo(knownMass, 12);
+          expect(sample.total_mixture_mass_g).toBeCloseTo(knownMass, 12);
+          expect(sample.density).toBe(0);
+          expect(sample.molarity_value).toBe(0);
+          expect(sample.components[0].amount_mol).toBe(0);
+          expect(sample.components[0].amount_g).toBe(0);
+          expect(sample.components[0].amount_l).toBe(0);
+          expect(sample.components[0].equivalent).toBe(1);
+          sinon.assert.calledTwice(form.props.handleSampleChanged);
+
+          const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+          expect(payload[`${amountType}_amount_value`]).toBeCloseTo(knownMass, 12);
+          expect(payload[`${amountType}_amount_unit`]).toBe('g');
+          const reopened = new Sample(payload);
+          reopened.initialComponents(payload.components.map(Component.deserializeData));
+          expect(reopened.amount_g).toBeCloseTo(knownMass, 12);
+        });
+      });
+    });
+
+    it('keeps the latest mass entered while component molecules are loading', async () => {
+      const molecule = { id: 501, cano_smiles: 'CCO', molecular_weight: 46 };
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 3, amount_unit: 'g', molecule,
+      });
+      let resolveMolecule;
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').returns(new Promise((resolve) => { resolveMolecule = resolve; }));
+      sample.updateSampleType('Mixture');
+      const conversion = sample.createComponentsFromCurrentSample();
+
+      sample.setAmount({ value: 4, unit: 'g' });
+      resolveMolecule(molecule);
+      await conversion;
+
+      expect(sample.amount_g).toBe(4);
+      expect(sample.total_mixture_mass_g).toBe(4);
+      expect(sample.components[0].amount_mol).toBe(0);
+    });
+
+    it('keeps a molar quantity with less than full purity as known physical mass', async () => {
+      const molecule = { id: 501, cano_smiles: 'CCO', molecular_weight: 46 };
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 0.005, amount_unit: 'mol', purity: 0.5, molecule,
+      });
+      const knownMass = sample.amount_g;
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').resolves(molecule);
+      sample.updateSampleType('Mixture');
+
+      await sample.createComponentsFromCurrentSample();
+
+      expect(sample.amount_g).toBeCloseTo(knownMass, 12);
+      expect(sample.purity).toBe(0.5);
+      expect(sample.components[0].amount_mol).toBe(0);
+    });
+
+    it('keeps zero quantities finite when converting an empty sample', async () => {
+      const molecule = { id: 501, cano_smiles: 'CCO', molecular_weight: 46 };
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 0, amount_unit: 'g', molecule,
+      });
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').resolves(molecule);
+      sample.updateSampleType('Mixture');
+
+      await sample.createComponentsFromCurrentSample();
+
+      expect(sample.amount_g).toBe(0);
+      expect(sample.components[0].amount_mol).toBe(0);
+      expect(sample.components[0].amount_g).toBe(0);
+      expect(sample.components[0].amount_l).toBe(0);
+    });
+
+    it('keeps unallocated mass when a compound has multiple structure fragments', async () => {
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 3, amount_unit: 'g', purity: 1,
+        density: 0.8, molarity_value: 0, molecule: { cano_smiles: 'CCO.CC' },
+      });
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').callsFake(async (smiles) => ({
+        id: smiles === 'CCO' ? 1 : 2, cano_smiles: smiles, molecular_weight: 46,
+      }));
+      sample.updateSampleType('Mixture');
+
+      await sample.createComponentsFromCurrentSample();
+
+      expect(sample.amount_g).toBe(3);
+      expect(sample.total_mixture_mass_g).toBe(3);
+      expect(sample.components).toHaveLength(2);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual([0, 0]);
+    });
+
+    it('keeps the known mass if the molecule lookup fails during conversion', async () => {
+      const sample = new Sample({
+        sample_type: 'Micromolecule', amount_value: 3, amount_unit: 'g',
+        molecule: { cano_smiles: 'CCO', molecular_weight: 46 },
+      });
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').resolves(undefined);
+      sample.updateSampleType('Mixture');
+
+      await sample.createComponentsFromCurrentSample();
+
+      expect(sample.amount_g).toBe(3);
+      expect(sample.total_mixture_mass_g).toBe(3);
+    });
+  });
 
   describe('Sample.calculateMaxAmount()', () => {
     context('when input is valid', () => {
@@ -295,6 +486,70 @@ describe('Sample', async () => {
       reference.amount_mol = 0.01;
       sample.updateMixtureComponentsFromReferenceAmount();
       expect(other.amount_mol).toBe(0.02);
+    });
+
+    ['g', 'mol', 'l'].forEach((unit) => {
+      it(`keeps moles and conserves physical mass over repeated constrained ${unit} reference switches`, () => {
+        const sample = new Sample({
+          sample_type: 'Mixture', amountType: 'target', equivalent: 2, density: 1, molarity_value: 0,
+          target_amount_value: { g: 3.4, mol: 0.012, l: 0.0034 }[unit], target_amount_unit: unit,
+          sample_details: { total_mixture_mass_g: 3.4, reference_component_changed: false },
+          solvent: [{ amount_l: 0.001, density: 1 }],
+        });
+        sample.initialComponents([
+          new Component({
+            id: 1, position: 0, reference: true, material_group: 'solid', purity: 1,
+            amount_mol: 0.012, amount_g: 1.2, relative_molecular_weight: 3.4 / 0.012,
+            molecule: { molecular_weight: 100 },
+          }),
+          new Component({
+            id: 2, position: 1, reference: false, material_group: 'solid', purity: 1,
+            amount_mol: 0.006, amount_g: 1.2, relative_molecular_weight: 3.4 / 0.006,
+            molecule: { molecular_weight: 200 },
+          }),
+        ]);
+
+        for (let cycle = 0; cycle < 3; cycle += 1) {
+          [1, 0].forEach((index) => {
+            const scale = index === 1 ? 2 : 1;
+            expect(sample.setReferenceComponent(index, { preserveAmountMol: true })).toBe(true);
+
+            expect(sample.amount_unit).toBe(unit);
+            expect(sample.amount_mol).toBeCloseTo(0.012, 12);
+            expect(sample.equivalent).toBe(2);
+            expect(sample.amount_g).toBeCloseTo(3.4 * scale, 12);
+            expect(sample.components[0].amount_mol).toBeCloseTo(0.012 * scale, 12);
+            expect(sample.components[1].amount_mol).toBeCloseTo(0.006 * scale, 12);
+            expect(sample.solvent[0].amount_l).toBeCloseTo(0.001 * scale, 12);
+            const componentMass = sample.components.reduce((sum, component) => sum + component.amount_g, 0);
+            expect(componentMass + sample.solvent[0].amount_l * 1000).toBeCloseTo(sample.amount_g, 12);
+          });
+        }
+      });
+    });
+
+    [1, 0.4].forEach((purity) => {
+      it(`retains moles and mass conversion for a molarity-based volume with purity ${purity}`, () => {
+        const sample = new Sample({
+          sample_type: 'Mixture', amountType: 'target', equivalent: 2, density: 0, molarity_value: 2, purity,
+          target_amount_value: 0.017, target_amount_unit: 'l',
+          sample_details: { reference_component_changed: false },
+        });
+        sample.initialComponents([100, 200].map((weight, index) => new Component({
+          id: index + 1, position: index, reference: index === 0, material_group: 'solid', purity: 1,
+          amount_mol: 0.012 / (index + 1), amount_g: 1.2,
+          relative_molecular_weight: 3.4 / (0.012 / (index + 1)),
+          molecule: { molecular_weight: weight },
+        })));
+
+        expect(sample.setReferenceComponent(1, { preserveAmountMol: true })).toBe(true);
+
+        expect(sample.amount_unit).toBe('l');
+        expect(sample.amount_value).toBeCloseTo(0.017, 12);
+        expect(sample.amount_mol).toBeCloseTo(0.012, 12);
+        expect(sample.amount_g).toBeCloseTo(6.8, 12);
+        expect(sample.equivalent).toBe(2);
+      });
     });
 
     ['target', 'real'].forEach((amountType) => {
@@ -2208,7 +2463,81 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.setTotalMixtureVolume()', () => {
+    ['target', 'real'].forEach((amountType) => {
+      [false, true].forEach((hasSolvent) => {
+        it(`keeps component mass when clearing ${amountType} volume, internal solvent=${hasSolvent}`, () => {
+          const sample = new Sample({
+            sample_type: 'Mixture', amountType,
+            [`${amountType}_amount_value`]: 10, [`${amountType}_amount_unit`]: 'g', density: 2,
+            sample_details: { total_mixture_mass_g: 10, total_mixture_volume_l: 0.005 },
+            solvent: hasSolvent ? [{ amount_l: 0.005, density: 1 }] : [],
+          });
+          sample.initialComponents([150, 200].map((molecularWeight, index) => new Component({
+            id: index + 1, position: index, reference: index === 0, material_group: 'solid', purity: 1,
+            amount_mol: index === 0 ? 0.02 : 0.01, amount_g: index === 0 ? 3 : 2,
+            relative_molecular_weight: index === 0 ? 500 : 1000,
+            molecule: { molecular_weight: molecularWeight },
+          })));
+          sample.setTotalMixtureVolume(0.005);
+          expect(sample.amount_g).toBeCloseTo(10, 12);
+
+          sample.setTotalMixtureVolume(0);
+
+          const expectedMass = hasSolvent ? 10 : 5;
+          expect(sample.total_mixture_volume_l).toBe(0);
+          expect(sample.density).toBe(0);
+          expect(sample.amount_unit).toBe('g');
+          expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+          expect(sample.total_mixture_mass_g).toBeCloseTo(expectedMass, 12);
+          expect(sample.amount_mol).toBeCloseTo(0.02, 12);
+          expect(sample.components.map((component) => component.amount_mol)).toEqual([0.02, 0.01]);
+          if (hasSolvent) expect(sample.solvent[0].amount_l).toBe(0.005);
+
+          const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+          expect(payload[`${amountType}_amount_unit`]).toBe('g');
+          expect(payload[`${amountType}_amount_value`]).toBeCloseTo(expectedMass, 12);
+          const reopened = new Sample(payload);
+          reopened.initialComponents(payload.components.map(Component.deserializeData));
+          expect(reopened.amount_g).toBeCloseTo(expectedMass, 12);
+          expect(reopened.amount_mol).toBeCloseTo(0.02, 12);
+
+          // A later positive volume must still use the volume-based quantity.
+          sample.setTotalMixtureVolume(0.005);
+          expect(sample.amount_unit).toBe('l');
+          expect(sample.amount_l).toBe(0.005);
+          expect(sample.amount_g).toBeCloseTo(10, 12);
+        });
+      });
+    });
+  });
+
   describe('Sample.calculateTotalMixtureMass()', () => {
+    ['entered total', 'liters', 'zero'].forEach((volumeSource) => {
+      it(`keeps an explicit ${volumeSource} volume stable across recalculations`, () => {
+        const sample = new Sample({
+          sample_type: 'Mixture', density: 1.1,
+          amount_value: volumeSource === 'liters' ? 0.01 : 11,
+          amount_unit: volumeSource === 'liters' ? 'l' : 'g',
+          sample_details: volumeSource === 'liters' ? {} : {
+            total_mixture_volume_l: volumeSource === 'zero' ? 0 : 0.01,
+          },
+        });
+        sample.components = [
+          { material_group: 'solid', amount_g: 1 },
+          { material_group: 'liquid', density: 0.8, amount_l: 0.0025 },
+        ];
+
+        for (let iteration = 0; iteration < 3; iteration += 1) {
+          sample.calculateTotalMixtureMass();
+
+          expect(sample.amount_g).toBeCloseTo(volumeSource === 'zero' ? 3 : 11, 12);
+          expect(sample.total_mixture_volume_l).toBe(volumeSource === 'zero' ? 0 : 0.01);
+          expect(sample.density).toBeCloseTo(volumeSource === 'zero' ? 0 : 1.1, 12);
+        }
+      });
+    });
+
     it('keeps a zero-mass portion total volume, including when liters have no density', () => {
       const portion = new Sample({
         id: 502, parent_id: 500, sample_type: 'Mixture', amount_value: 0.01, amount_unit: 'l', density: 0,
@@ -2366,6 +2695,20 @@ describe('Sample', async () => {
 
       // 7.5 g / 15 mL = 0.5 g/mL
       expect(s.density).toBeCloseTo(0.5, 6);
+    });
+
+    it('clears a saved density when no total volume was entered', () => {
+      const sample = new Sample({
+        sample_type: 'Mixture', amount_value: 7.26, amount_unit: 'g', density: 0.864,
+        sample_details: { total_mixture_mass_g: 7.26 },
+      });
+      sample.components = [{ material_group: 'liquid' }];
+
+      sample.updateMixtureDensity();
+      sample.updateMixtureDensity();
+
+      expect(sample.density).toBe(0);
+      expect(sample.amount_g).toBe(7.26);
     });
 
     it('resets density to 0 when volume is missing', () => {

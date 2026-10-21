@@ -1066,6 +1066,8 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureVolume(sample) {
     const isDisabled = sample.isMethodDisabled('amount_value') || !sample.can_update;
+    const totalVolume = sample.sample_details?.total_mixture_volume_l
+      ?? (sample.amount_unit === 'l' ? sample.amount_value : 0);
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
@@ -1074,7 +1076,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <NumeralInputWithUnitsCompo
-        value={sample.amount_l}
+        value={totalVolume}
         unit="l"
         label="Total volume"
         metricPrefix={prefix}
@@ -1100,9 +1102,10 @@ export default class SampleForm extends React.Component {
 
     if (isDisabled) return null;
 
-    // Pass null/undefined when density is not set, so it displays as "n.d."
-    // Only pass the actual value if density is set (including 0)
-    const density = (sample.density != null && sample.density !== '') ? sample.density : null;
+    // A legacy density alone does not establish an entered mixture volume.
+    const totalVolume = sample.sample_details?.total_mixture_volume_l
+      ?? (sample.amount_unit === 'l' ? sample.amount_value : 0);
+    const density = totalVolume > 0 && sample.density != null && sample.density !== '' ? sample.density : null;
 
     return (
       <div>
