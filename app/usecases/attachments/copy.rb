@@ -4,11 +4,14 @@ module Usecases
   module Attachments
     class Copy
       def self.execute!(attachments, element, current_user_id)
+        access = Usecases::Attachments::Access.new(User.find(current_user_id))
+
         attachments.each do |attach|
-          original_attach = Attachment.find attach[:id]
+          original_attach = Attachment.find_by(id: attach[:id])
+          next unless access.read?(original_attach)
+
           copy_attach = Attachment.new(
-            attachable_id: element.id,
-            attachable_type: element.class.name,
+            attachable: element,
             created_by: current_user_id,
             created_for: current_user_id,
             filename: original_attach.filename,

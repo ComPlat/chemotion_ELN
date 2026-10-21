@@ -113,6 +113,101 @@ describe Chemotion::ResearchPlanAPI do
         end
       end
 
+      context 'when copying attachments' do
+        let(:collection) { create(:collection, user: user) }
+        let(:owner) { create(:person) }
+        let(:source_collection) { create(:collection, user: owner) }
+        let(:source_plan) { create(:research_plan, creator: owner, collections: [source_collection]) }
+        let!(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
+        let(:params) do
+          {
+            name: 'Copied Plan',
+            collection_id: collection.id,
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            body: [{ type: 'image', value: { public_name: source.identifier } }],
+            attachments: [{ id: source.id }],
+          }
+        end
+
+        context 'when the source research plan is not readable' do
+          it 'creates the plan without copying the attachment or its annotation' do
+            expect do
+              post '/api/v1/research_plans', params: params, as: :json
+            end.not_to change(Attachment, :count)
+
+            expect(response).to have_http_status(:created)
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          end
+        end
+
+        context 'when the attachment ID does not exist' do
+          it 'creates the plan without copying any attachment' do
+            params[:attachments] = [{ id: -1 }]
+
+            expect do
+              post '/api/v1/research_plans', params: params, as: :json
+            end.not_to change(Attachment, :count)
+
+            expect(response).to have_http_status(:created)
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          end
+        end
+
+        context 'when the source research plan is shared read-only' do
+          let(:detail_level) { 10 }
+
+          before do
+            create(:collection_share, collection: source_collection, shared_with: user,
+                                      permission_level: CollectionShare.permission_level(:read_elements),
+                                      researchplan_detail_level: detail_level)
+          end
+
+          it 'copies the readable file and annotation and updates the body reference' do
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            copy = copied_plan.attachments.take!
+            expect([copy.read_file, copy.attachment(:annotation).read]).to match(
+              [source.read_file, a_string_including("/api/v1/attachments/image/#{copy.id}")],
+            )
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(copy.identifier)
+          end
+
+          context 'when the share does not allow reading datasets' do
+            let(:detail_level) { 2 }
+
+            it 'does not copy the attachment' do
+              expect do
+                post '/api/v1/research_plans', params: params, as: :json
+              end.not_to change(Attachment, :count)
+
+              expect(response).to have_http_status(:created)
+            end
+          end
+        end
+
+        context 'when the request also includes a readable attachment' do
+          let!(:readable_source) do
+            create(:attachment, attachable: create(:research_plan, creator: user, collections: [collection]))
+          end
+
+          it 'copies only the readable attachment and skips unknown IDs' do
+            params[:attachments].unshift({ id: -1 })
+            params[:attachments] << { id: readable_source.id }
+            params[:attachments] << { id: -2 }
+
+            expect do
+              post '/api/v1/research_plans', params: params, as: :json
+            end.to change(Attachment, :count).by(1)
+
+            expect(response).to have_http_status(:created)
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.attachments.take!.read_file).to eq(readable_source.read_file)
+          end
+        end
+      end
+
       context 'when collection_id points to a read-only shared collection' do
         let(:other_user) { create(:person) }
         let(:read_only_collection) do
