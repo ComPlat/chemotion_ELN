@@ -1794,7 +1794,7 @@ class ElementStore {
           const sourceState = previousSample.mixtureReactionState();
           // Keep unsaved composition edits. The save guard will report a conflict
           // if the reaction quantity or reference changed since this draft opened.
-          if (nextSample.isEdited || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
+          if (nextSample.isPendingToSave || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
 
           const refreshed = new Sample(cloneDeep(omit(previousSample, ['belongTo', '_equivalent', 'reference'])));
           refreshed.belongTo = reaction;

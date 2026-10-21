@@ -127,6 +127,75 @@ describe('SampleDetailsComponents solid ratio edits', () => {
   });
 });
 
+describe('SampleDetailsComponents liquid ratio round trips', () => {
+  let sandbox;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    sandbox.stub(ComponentStore, 'getState').returns({ ...ComponentStore.getState(), lockedComponents: [] });
+  });
+  afterEach(() => { sandbox.restore(); });
+
+  [false, true].forEach((isPortion) => {
+    [false, true].forEach((hasSolvent) => {
+      [0.8, 1.2].forEach((density) => {
+        it(`reverses liquid ratios, portion=${isPortion}, solvent=${hasSolvent}, density=${density}`, () => {
+          const initialMass = hasSolvent ? 4 : 3;
+          const initialVolume = 2 / density / 1000 + (hasSolvent ? 0.001 : 0);
+          let sample = new Sample({
+            id: 'liquid-ratio', parent_id: isPortion ? 'stock' : null,
+            sample_type: 'Mixture', amount_value: initialMass, amount_unit: 'g',
+            density: initialMass / (initialVolume * 1000),
+            sample_details: { total_mixture_mass_g: initialMass },
+            solvent: hasSolvent ? [{ amount_l: 0.001, density: 1 }] : [],
+          });
+          sample.initialComponents([
+            new Component({
+              id: 'reference', position: 0, reference: true, material_group: 'solid',
+              amount_mol: 0.01, amount_g: 1, purity: 1, molecule: { molecular_weight: 100 },
+            }),
+            new Component({
+              id: 'liquid', position: 1, reference: false, material_group: 'liquid',
+              amount_mol: 0.01, amount_g: 2, amount_l: 2 / density / 1000,
+              purity: 1, density, starting_molarity_value: 0, molecule: { molecular_weight: 200 },
+            }),
+          ]);
+          const editor = Object.create(SampleDetailsComponents.prototype);
+          editor.props = { sample, onChange: sinon.spy() };
+
+          [2, 1, 3, 1, 2, 1].forEach((ratio) => {
+            editor.onChangeComponent({
+              type: 'ratioChanged', sampleID: 'liquid', newRatio: ratio, materialGroup: 'liquid',
+            });
+
+            const expectedMass = 1 + ratio * 2 + (hasSolvent ? 1 : 0);
+            expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+            expect(sample.components[0].amount_mol).toBeCloseTo(0.01, 12);
+            expect(sample.components[1].amount_mol).toBeCloseTo(0.01 * ratio, 12);
+            expect(sample.components[1].amount_l).toBeCloseTo(2 * ratio / density / 1000, 12);
+            expect(sample.density).toBe(0);
+            expect(sample.total_mixture_volume_l).toBe(0);
+            if (hasSolvent) expect(sample.solvent[0].amount_l).toBeCloseTo(0.001, 12);
+            sample.calculateTotalMixtureMass();
+            expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+
+            // Reopening between edits must not turn a derived volume into an entered total volume.
+            const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+            payload.components.forEach((entry, index) => {
+              entry.component_properties.molecule = sample.components[index].molecule;
+            });
+            sample = new Sample(payload);
+            sample.initialComponents(payload.components.map(Component.deserializeData));
+            editor.props.sample = sample;
+            sample.calculateTotalMixtureMass();
+            expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+          });
+        });
+      });
+    });
+  });
+});
+
 describe('SampleDetailsComponents ratio fill after a reference amount is entered', () => {
   let sandbox;
 

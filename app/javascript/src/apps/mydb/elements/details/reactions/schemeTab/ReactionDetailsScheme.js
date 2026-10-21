@@ -1182,10 +1182,19 @@ export default class ReactionDetailsScheme extends React.Component {
     }
     updatedSample.belongTo = reaction;
 
-    updatedSample.setReferenceComponent(referenceComponentIndex, { preserveRatios: true });
-
     const { referenceMaterial } = reaction;
-    if (referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
+    const preserveAmountMol = !!(lockEquivColumn && referenceMaterial
+      && !isSameMaterial(updatedSample, referenceMaterial));
+    if (!updatedSample.setReferenceComponent(referenceComponentIndex, { preserveRatios: true, preserveAmountMol })) {
+      this.context.notifications.add({
+        message: 'Cannot keep equivalents locked without a valid amount '
+          + 'and relative molecular weight for this component.',
+        level: 'warning',
+      });
+      return reaction;
+    }
+
+    if (!preserveAmountMol && referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
       updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
     }
 
@@ -1207,11 +1216,14 @@ export default class ReactionDetailsScheme extends React.Component {
       return updatedReaction;
     }
 
-    // The selected component changes the concentration's molar basis even though
-    // the mixture mass and reaction volume stay fixed. Refresh it here because
-    // rendering skips concentration updates while the equivalent column is locked.
+    // A locked switch can change physical volume; refresh derived concentrations
+    // without changing any other material's quantity or preserved concentration.
     updatedSample.preserveConcentration = false;
-    updatedSample.updateConcentrationFromSolvent(reaction);
+    if (preserveAmountMol) {
+      reaction.updateAllConcentrations();
+    } else {
+      updatedSample.updateConcentrationFromSolvent(reaction);
+    }
 
     // Mark the sample as changed for persistence
     updatedSample.changed = true;
