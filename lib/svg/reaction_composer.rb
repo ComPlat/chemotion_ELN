@@ -741,6 +741,7 @@ module SVG
       @temperature = step[:temperature]
       @duration = step[:duration]
       @conditions = step[:conditions].presence
+      @solvents = Array(step[:solvents]).compact_blank if step.key?(:solvents)
       @num_reactants = (step[:reactants] || []).size
       init_arrow_width
     end

@@ -366,6 +366,14 @@ class Reaction < ApplicationRecord
     { 'ops' => ops }
   end
 
+  def self.step_temperature_text(temperature)
+    value = temperature.is_a?(Hash) ? temperature['userText'] : nil
+    return '' if value.blank?
+
+    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(value.strip)
+    numeric ? "#{value} #{temperature['valueUnit']}".strip : value
+  end
+
   private
 
   def temperature_data_display
@@ -444,7 +452,7 @@ class Reaction < ApplicationRecord
   end
 
   def scheme_steps_svg_paths
-    reaction_steps.map do |step|
+    reaction_steps.each_with_index.map do |step, index|
       {
         starting_materials: step_material_paths(:reactions_starting_material_samples, :starting_materials, step),
         reactants: step_material_paths(:reactions_reactant_samples, :reactants, step),
@@ -453,16 +461,19 @@ class Reaction < ApplicationRecord
         temperature: step_temperature_with_unit(step),
         duration: step.duration,
         conditions: step.conditions,
+        solvents: step_solvent_names(step, index),
       }
     end
   end
 
-  def step_temperature_with_unit(step)
-    value = step.temperature.is_a?(Hash) ? step.temperature['userText'] : nil
-    return '' if value.blank?
+  def step_solvent_names(step, index)
+    names = reactions_solvent_samples.includes(:sample).where(reaction_step_id: step.id)
+                                     .filter_map { |row| row.sample&.preferred_label }
+    names.presence || (index.zero? && solvents.empty? ? [solvent].compact_blank : [])
+  end
 
-    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(value.strip)
-    numeric ? "#{value} #{step.temperature['valueUnit']}".strip : value
+  def step_temperature_with_unit(step)
+    self.class.step_temperature_text(step.temperature)
   end
 
   def step_material_paths(resource, prop, step)

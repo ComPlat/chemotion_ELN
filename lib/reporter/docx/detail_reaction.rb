@@ -33,6 +33,7 @@ module Reporter
           reactants: reactants,
           products: products,
           solvents: displayed_solvents.presence,
+          steps: steps,
           description: desc_content,
           description_check: content_check(clean_desc),
           purification: purification.presence,
@@ -726,6 +727,49 @@ module Reporter
         output
       end
 
+      def steps
+        live = Array(obj.reaction_steps).sort_by { |step| step[:position] }
+        unless obj.reaction_type == 'multi_step' && live.any?
+          return [{ title: nil, starting_materials: starting_materials, reactants: reactants,
+                    products: products, solvents: displayed_solvents.presence }]
+        end
+
+        live.each_with_index.map { |step, index| step_hash(step, index, index.positive? ? live[index - 1] : nil) }
+      end
+
+      def step_hash(step, index, previous) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        carried = previous ? in_step(obj.products, previous[:id]).select { |p| p[:carry_on] } : []
+        own_starting = in_step(obj.starting_materials, step[:id])
+        own_reactants = in_step(obj.reactants, step[:id])
+        ref = step_ref(carried + own_starting + own_reactants)
+        sbmm = index.zero? ? reactant_sbmm_samples.map { |s| sbmm_material_hash(s) } : []
+        {
+          title: "Step #{index + 1}",
+          starting_materials: carried.map { |p| carried_hash(p, ref) } + own_starting.map { |s| material_hash(s) },
+          reactants: own_reactants.map { |r| material_hash(r) } + sbmm,
+          products: in_step(obj.products, step[:id]).map { |p| material_hash(p, true) },
+          solvents: displayed_solvents(in_step(solvents, step[:id])).presence,
+        }
+      end
+
+      def step_ref(candidates)
+        candidates.find { |material| material[:step_reference] } || candidates.first
+      end
+
+      def in_step(materials, step_id)
+        Array(materials).select { |material| material[:reaction_step_id] == step_id }
+      end
+
+      def carried_hash(product, ref)
+        ref_mmol = raw_mmol(ref) if ref
+        equivalent = ref_mmol.to_f.positive? ? raw_mmol(product).to_f / ref_mmol : nil
+        material_hash(product, true).merge(equiv: format_scientific(equivalent, digit))
+      end
+
+      def raw_mmol(material)
+        material[:real_amount_mmol].to_f.positive? ? material[:real_amount_mmol] : material[:amount_mmol]
+      end
+
       def purification
         puri = obj.purification
         return puri if puri == '***'
@@ -754,9 +798,9 @@ module Reporter
         obj.solvent
       end
 
-      def displayed_solvents
-        if solvents.present?
-          solvents.map do |solvent|
+      def displayed_solvents(list = solvents) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        if list.present?
+          list.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.real_amount_value && s.real_amount_value != 0
                        " (#{valid_digit(s.real_amount_ml, digit)}ml)"

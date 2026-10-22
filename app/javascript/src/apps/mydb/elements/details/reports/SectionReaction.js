@@ -33,13 +33,19 @@ const SectionReaction = ({reaction, settings, configs}) => {
                   svgPath={svgPath}
                   isProductOnly={!configs.Showallchemi}
                   products={products} />
-      <MaterialContent  show={settings.material}
-                        starting_materials={starting_materials}
-                        reactants={reactants}
-                        products={products} />
-      <SolventContent show={settings.material}
-                      solvents={solvents}
-                      solvent={solvent} />
+      {reaction.isMultiStep?.()
+        ? <StepsMaterialContent show={settings.material} reaction={reaction} />
+        : (
+          <>
+            <MaterialContent  show={settings.material}
+                              starting_materials={starting_materials}
+                              reactants={reactants}
+                              products={products} />
+            <SolventContent show={settings.material}
+                            solvents={solvents}
+                            solvent={solvent} />
+          </>
+        )}
       <h4> Description </h4>
       <DescriptionContent show={settings.description && description}
                           description={description} />
@@ -201,6 +207,39 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
       </div>
       : null
   );
+};
+
+const StepsMaterialContent = ({ show, reaction }) => {
+  if (!show) return null;
+  const liveSteps = reaction.reaction_steps.filter((step) => !step._destroy);
+  const typedSolvent = reaction.solvents.length === 0 && reaction.solvent
+    ? <SolventContent key="typed-solvent" show solvents={[]} solvent={reaction.solvent} />
+    : null;
+
+  return [...liveSteps.map((step, index) => {
+    const ref = reaction.stepReference(step);
+    const carried = reaction.carriedProductsIntoStep(step.id).map((product) => (
+      Object.assign(Object.create(product), {
+        equivalent: ref?.amount_mol ? product.amount_mol / ref.amount_mol : null,
+      })
+    ));
+    return (
+      <div key={step.id} className="mb-3">
+        <h4>{`Step ${index + 1}`}</h4>
+        <MaterialContent
+          show
+          starting_materials={[...carried, ...reaction.materialsForStep('starting_materials', step.id)]}
+          reactants={reaction.materialsForStep('reactants', step.id)}
+          products={reaction.materialsForStep('products', step.id)}
+        />
+        <SolventContent
+          show={reaction.materialsForStep('solvents', step.id).length > 0}
+          solvents={reaction.materialsForStep('solvents', step.id)}
+          solvent=""
+        />
+      </div>
+    );
+  }), typedSolvent];
 };
 
 const SolventContent = ({ show, solvents, solvent }) => {

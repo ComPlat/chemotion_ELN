@@ -86,6 +86,50 @@ RSpec.describe ReactionStep do
       expect(rows[:carried].reload.equivalent).to be_within(1e-6).of(0.8)
     end
 
+    it 'groups the Word report materials per step, with the carried product first in step 2' do
+      reaction.update!(reaction_type: 'multi_step')
+      rows[:reagent].update!(step_reference: true)
+      steps = word_report_steps(reaction)
+
+      counts = steps.map { |s| [s[:title], s[:starting_materials].size, s[:reactants].size, s[:products].size] }
+
+      expect(counts).to eq([['Step 1', 1, 0, 1], ['Step 2', 1, 1, 1]])
+      expect(Float(steps[1][:starting_materials].first[:equiv])).to be_within(0.01).of(8.0 / 12)
+    end
+
+    it 'gives each step arrow only its own solvents' do
+      reaction.update!(reaction_type: 'multi_step')
+      ReactionsSolventSample.create!(reaction: reaction, sample: mol.call(1), reaction_step: first)
+
+      solvents = reaction.reload.send(:scheme_steps_svg_paths).pluck(:solvents)
+
+      expect(solvents.map(&:size)).to eq([1, 0])
+    end
+
+    it 'draws one arrow per step in the Word report picture' do
+      reaction.update!(reaction_type: 'multi_step')
+      data = Entities::ReactionReportEntity.represent(
+        reaction.reload, current_user: user, detail_levels: { Reaction => 10, Sample => 10 }
+      ).serializable_hash
+      diagram = Reporter::Docx::DiagramReaction.new(obj: OpenStruct.new(data), format: 'png') # rubocop:disable Style/OpenStructUse
+
+      expect(diagram.send(:steps_svg_paths).map { |s| s[:products].size }).to eq([0, 1])
+    end
+
+    it 'keeps a standard reaction as one untitled block in the Word report' do
+      steps = word_report_steps(reaction)
+
+      expect(steps.pluck(:title)).to eq([nil])
+      expect(steps[0][:products].size).to eq(2)
+    end
+
+    def word_report_steps(rxn)
+      data = Entities::ReactionReportEntity.represent(
+        rxn.reload, current_user: user, detail_levels: { Reaction => 10, Sample => 10 }
+      ).serializable_hash
+      Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(data)).send(:steps) # rubocop:disable Style/OpenStructUse
+    end
+
     it 'uses the reagent once it is picked as the step reference' do
       rows[:reagent].update!(step_reference: true)
       rows.each_value(&:update_equivalent)
