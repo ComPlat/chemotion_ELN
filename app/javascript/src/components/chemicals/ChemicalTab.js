@@ -157,7 +157,8 @@ export default class ChemicalTab extends React.Component {
     }
 
     // A finished SDS job refetches the sample (cf. NoticeButton); pick up its chemical data too.
-    if (prevProps.sample !== sample && sample && !sample.is_new) {
+    // Not over unsaved edits: the built-in reader saves the sample while its phrases are still unsaved.
+    if (prevProps.sample !== sample && sample && !sample.is_new && !chemical?.isEdited) {
       this.fetchChemical(sample);
     }
   }
