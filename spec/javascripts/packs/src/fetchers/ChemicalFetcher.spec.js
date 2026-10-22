@@ -242,6 +242,43 @@ describe('ChemicalFetcher methods', () => {
       await expect(ChemicalFetcher.extractFromSds(sheetPath)).rejects.toThrow('Failed to fetch');
     });
   });
+
+  describe('extractSds', () => {
+    const json = (body, status) => new Response(JSON.stringify(body), { status });
+    const failure = (promise) => promise.then(() => null, (error) => error);
+
+    it('resolves once the job is queued', async () => {
+      fetchStub.resolves(json({ message: 'SDS extraction job submitted', sample_id: 19 }, 202));
+
+      await expect(ChemicalFetcher.extractSds(19)).resolves.toEqual({
+        message: 'SDS extraction job submitted', sample_id: 19,
+      });
+    });
+
+    it('rejects a refused submit with the reason and the status', async () => {
+      fetchStub.resolves(json({ error: 'An extraction is already running for this sample.' }, 409));
+
+      const error = await failure(ChemicalFetcher.extractSds(19));
+
+      expect(error.message).toEqual('An extraction is already running for this sample.');
+      expect(error.status).toEqual(409);
+    });
+
+    it('rejects a failure whose body is not JSON with its status', async () => {
+      fetchStub.resolves(new Response('<html>Bad Gateway</html>', { status: 502 }));
+
+      const error = await failure(ChemicalFetcher.extractSds(19));
+
+      expect(error.message).toEqual('HTTP 502');
+      expect(error.status).toEqual(502);
+    });
+
+    it('rejects a success status that carries an error', async () => {
+      fetchStub.resolves(json({ error: 'Chemical not found for this sample' }, 201));
+
+      await expect(ChemicalFetcher.extractSds(19)).rejects.toThrow('Chemical not found for this sample');
+    });
+  });
 });
 
 describe('ChemicalFetcher.saveSafetySheets error reporting', () => {

@@ -113,4 +113,120 @@ export default class AdminFetcher {
   static restartJob(id) {
     return ApiClient.putJson('/api/v1/admin/jobs/restart/', { body: { id } });
   }
+
+  // ── Admin LLM configuration ──────────────────────────────────────────────────
+
+  static fetchLlmConfig() {
+    return fetch('/api/v1/admin/llm_config', {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static updateLlmConfig(params) {
+    return fetch('/api/v1/admin/llm_config', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  // ── The institution's LLM providers ─────────────────────────────────────────
+  //
+  // The admin-side counterpart of the user's own provider list: same records,
+  // same shape, scoped 'global' instead of to one user.
+
+  static fetchInstitutionLlmProviders() {
+    return fetch('/api/v1/admin/llm_providers', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { providers: [] }))
+      .then((d) => d.providers || [])
+      .catch(() => []);
+  }
+
+  static createInstitutionLlmProvider(params = {}) {
+    return AdminFetcher.llmProviderRequest('/api/v1/admin/llm_providers', 'POST', params);
+  }
+
+  static updateInstitutionLlmProvider(id, params = {}) {
+    return AdminFetcher.llmProviderRequest(`/api/v1/admin/llm_providers/${id}`, 'PUT', params);
+  }
+
+  static deleteInstitutionLlmProvider(id) {
+    return AdminFetcher.llmProviderRequest(`/api/v1/admin/llm_providers/${id}`, 'DELETE');
+  }
+
+  // Test a SAVED provider — the key stays on the server, so nothing has to be
+  // re-typed to re-test one.
+  static verifyInstitutionLlmProvider(id) {
+    return AdminFetcher.llmProviderRequest(`/api/v1/admin/llm_providers/${id}/verify`, 'POST');
+  }
+
+  // Test the values on the form, before there is a record to test.
+  static testLlmConfig(params = {}) {
+    return AdminFetcher.llmProviderRequest('/api/v1/admin/llm_providers/test', 'POST', params);
+  }
+
+  // Replace one provider's access rules as a set — see the admin AI page's
+  // Institution Provider Access tab.
+  static updateInstitutionLlmGrants(id, grants) {
+    return AdminFetcher.llmProviderRequest(`/api/v1/admin/llm_providers/${id}/grants`, 'PUT', { grants });
+  }
+
+  static deleteInstitutionLlmApiKey(id) {
+    return AdminFetcher.llmProviderRequest(`/api/v1/admin/llm_providers/${id}/api_key`, 'DELETE');
+  }
+
+  static fetchInstitutionLlmModels(id, { refresh = false } = {}) {
+    return fetch(`/api/v1/admin/llm_providers/${id}/models`, {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+      .then((r) => (r.ok ? r.json() : { models: [] }))
+      .then((d) => d.models || [])
+      .catch(() => []);
+  }
+
+  // Shared plumbing for the provider CRUD calls: they differ only in verb and
+  // URL, and all report the server's message on failure.
+  static llmProviderRequest(url, method, params) {
+    return fetch(url, {
+      credentials: 'same-origin',
+      method,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: params ? JSON.stringify(params) : undefined,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json()
+            .catch(() => ({}))
+            .then((body) => {
+              throw new Error(body.error || body.message || `HTTP ${response.status}`);
+            });
+        }
+        return response.json();
+      });
+  }
+
+  // Configurable provider presets (config/llm_provider_profiles.yml). Resolves to
+  // [] on error so the preset picker just hides.
+  static fetchLlmProviderProfiles() {
+    return fetch('/api/v1/llm/provider_profiles', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { profiles: [] }))
+      .then((d) => d.profiles || [])
+      .catch(() => []);
+  }
+
 }
