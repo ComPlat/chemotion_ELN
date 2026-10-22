@@ -895,7 +895,8 @@ export default class ChemicalTab extends React.Component {
     return { written, skipped };
   }
 
-  // The AI's wording goes through the built-in reader's unit checks, and is reported the same way.
+  // The AI's wording goes through the built-in reader's unit checks. No toast: ExtractSdsJob's
+  // notification is the one report of a finished run.
   mapLlmPropertiesToSample(chemical) {
     const { sample, handleUpdateSample } = this.props;
     if (!(sample instanceof Sample) || !handleUpdateSample) return;
@@ -903,15 +904,7 @@ export default class ChemicalTab extends React.Component {
     const properties = chemical?._chemical_data?.[0]?.extractedProperties;
     if (!properties || Object.keys(properties).length === 0) return;
 
-    const mapped = this.mapToSampleProperties(properties, parseSdsQuantity);
-    const parts = ChemicalTab.propertySummary(mapped);
-    if (!parts.length) return;
-    this.notify({
-      title: 'AI extraction applied to the sample',
-      message: `${parts.join('. ')}.`,
-      level: mapped.written.length ? 'success' : 'warning',
-      position: 'tc',
-    });
+    this.mapToSampleProperties(properties, parseSdsQuantity);
   }
 
   chemicalStatus(data) {
