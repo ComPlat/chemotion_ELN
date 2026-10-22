@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, OverlayTrigger } from 'react-bootstrap';
+import {
+  Button, OverlayTrigger, Tab, Tabs
+} from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -1250,7 +1252,12 @@ describe('ChemicalTab extraction mode picker', () => {
   });
 });
 
-describe('ChemicalTab AI result modal', () => {
+describe('ChemicalTab fetched properties tabs', () => {
+  const SHEET = '/safety_sheets/merck/33009_0123456789abcdef.pdf';
+  const OTHER = '/safety_sheets/thermofisher/A12345_0123456789abcdef.pdf';
+  const AI = {
+    extracted_at: '2026-10-07T09:00:00Z', chemical_name: 'Phenol', model: 'kit.glm-5.3-flash', sheet_path: SHEET,
+  };
   let instance;
 
   beforeEach(() => {
@@ -1267,24 +1274,68 @@ describe('ChemicalTab AI result modal', () => {
 
   afterEach(() => { sinon.restore(); });
 
-  it('renders nothing before an AI extraction has run', () => {
-    instance.setState({ chemical: createChemical([{}]) });
+  const open = (data, sheet = SHEET) => {
+    instance.setState({ chemical: createChemical([data]) });
+    instance.handlePropertiesModal(sheet);
+    return shallow(<div>{instance.renderPropertiesModal()}</div>).find(AppModal);
+  };
+  const tabKeys = (modal) => modal.find(Tab).map((t) => t.prop('eventKey'));
+  const viewDisabled = (sheet) => shallow(<div>{instance.renderSdsExtraction(sheet)}</div>)
+    .find(Button).filterWhere((b) => b.find('i.fa-file-text').exists())
+    .prop('disabled');
 
-    expect(instance.renderAiResultModal()).toBe(null);
+  it('shows only the built-in tab when the AI has not read the sheet', () => {
+    expect(tabKeys(open({ sdsExtractedProperties: { [SHEET]: { form: 'Liquid' } } }))).toEqual(['builtin']);
   });
 
-  it('shows the result stored under aiExtraction', () => {
-    instance.setState({
-      chemical: createChemical([{
-        aiExtraction: { extracted_at: '2026-10-07T09:00:00Z', chemical_name: 'Phenol', model: 'kit.glm-5.3-flash' },
-        extractedProperties: { boiling_point: '181.7 °C' },
-      }]),
-    });
+  it('shows only the AI tab when the built-in reader has not read the sheet', () => {
+    const modal = open({ aiExtraction: AI, extractedProperties: { boiling_point: '181.7 °C' } });
 
-    const modal = shallow(<div>{instance.renderAiResultModal()}</div>).find(AppModal);
-    expect(modal.prop('title')).toEqual('Extracted Data using AI');
+    expect(tabKeys(modal)).toEqual(['ai']);
     const metadata = modal.find({ controlId: 'aiMetadataSection' }).find({ as: 'textarea' });
     expect(metadata.prop('value')).toEqual('Chemical: Phenol');
+  });
+
+  it('shows both tabs, the built-in one first, and copies the tab that is open', () => {
+    const data = {
+      sdsExtractedProperties: { [SHEET]: { form: 'Liquid' } },
+      aiExtraction: AI,
+      extractedProperties: { boiling_point: '181.7 °C' },
+    };
+    const modal = open(data);
+    const copyText = (m) => shallow(<div>{m.prop('title')}</div>).find(CopyButton).prop('text');
+
+    expect(tabKeys(modal)).toEqual(['builtin', 'ai']);
+    expect(modal.find(Tabs).prop('activeKey')).toEqual('builtin');
+    expect(copyText(modal)).toEqual('Form: Liquid');
+
+    modal.find(Tabs).prop('onSelect')('ai');
+    const switched = shallow(<div>{instance.renderPropertiesModal()}</div>).find(AppModal);
+    expect(switched.find(Tabs).prop('activeKey')).toEqual('ai');
+    expect(copyText(switched)).toEqual('Boiling point: 181.7 °C');
+  });
+
+  it('keeps the AI result to the sheet it was read from', () => {
+    instance.setState({ chemical: createChemical([{ aiExtraction: AI }]) });
+
+    expect(viewDisabled(SHEET)).toBe(false);
+    expect(viewDisabled(OTHER)).toBe(true);
+    expect(tabKeys(open({ aiExtraction: AI }, OTHER))).toEqual([]);
+  });
+
+  it('shows an AI result that names no sheet under every sheet', () => {
+    const legacy = { extracted_at: AI.extracted_at, chemical_name: 'Phenol' };
+    instance.setState({ chemical: createChemical([{ aiExtraction: legacy }]) });
+
+    expect(viewDisabled(OTHER)).toBe(false);
+    expect(tabKeys(open({ aiExtraction: legacy }, OTHER))).toEqual(['ai']);
+  });
+
+  it('no longer offers the AI result from the extraction picker', () => {
+    instance.setState({ chemical: createChemical([{ aiExtraction: AI }]) });
+
+    const picker = shallow(<div>{instance.renderModePicker(SHEET)}</div>);
+    expect(picker.text()).not.toContain('View last AI extraction');
   });
 });
 

@@ -84,6 +84,7 @@ class ExtractSdsJob < ApplicationJob
   def perform(sample_id:, user_id:, sheet_path: nil)
     self.priority = self.class.default_priority
     start_notification(sample_id, user_id)
+    @sheet_path = sheet_path
 
     chemical = Chemical.find_by(sample_id: sample_id)
     return fail_with("SDS extraction failed: no chemical record for sample #{sample_id}.") unless chemical
@@ -376,6 +377,8 @@ class ExtractSdsJob < ApplicationJob
       'requested_model' => requested_model,
       'chemical_name' => extraction_result['chemical_name'],
       'signal_word' => extraction_result['signal_word'],
+      # The sheet whose properties-view shows this result. Cf. ChemicalTab#aiExtractionFor.
+      'sheet_path' => @sheet_path,
     }
 
     if extraction_result['is_mixture']
