@@ -57,10 +57,12 @@ export default class ReactionDetailsMainProperties extends Component {
       vesselSizeField,
       durationField,
       reactionVolumeField,
+      firstStepTemperature,
     } = this.props;
     const { temperature } = reaction;
     const { showTemperatureChart } = this.state;
     const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
+    const temperatureLocked = !permitOn(reaction) || firstStepTemperature;
 
     return (
       <>
@@ -72,8 +74,8 @@ export default class ReactionDetailsMainProperties extends Component {
           )}
           <Col sm={temperatureColSize}>
             <Form.Group>
-              <Form.Label>Temperature</Form.Label>
-              <InputGroup>
+              <Form.Label>{firstStepTemperature ? 'Temperature (Step 1)' : 'Temperature'}</Form.Label>
+              <InputGroup title={firstStepTemperature ? 'Set per step in the Scheme tab' : undefined}>
                 <OverlayTrigger
                   placement="bottom"
                   overlay={(
@@ -91,12 +93,12 @@ export default class ReactionDetailsMainProperties extends Component {
                 <Form.Control
                   type="text"
                   value={reaction.temperature_display || ''}
-                  disabled={!permitOn(reaction)}
+                  disabled={temperatureLocked}
                   placeholder="Temperature..."
                   onChange={(event) => onInputChange('temperature', event)}
                 />
                 <Button
-                  disabled={!permitOn(reaction)}
+                  disabled={temperatureLocked}
                   variant="light"
                   onClick={() => this.changeUnit()}
                 >
@@ -129,12 +131,14 @@ export default class ReactionDetailsMainProperties extends Component {
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
             </Col>
-            <Col>
-              <EditableTable
-                temperature={temperature}
-                updateTemperature={this.updateTemperature}
-              />
-            </Col>
+            {!firstStepTemperature && (
+              <Col>
+                <EditableTable
+                  temperature={temperature}
+                  updateTemperature={this.updateTemperature}
+                />
+              </Col>
+            )}
           </Row>
         )}
       </>
@@ -154,6 +158,7 @@ ReactionDetailsMainProperties.propTypes = {
   vesselSizeField: PropTypes.node,
   durationField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
+  firstStepTemperature: PropTypes.bool,
 };
 
 ReactionDetailsMainProperties.defaultProps = {
@@ -167,4 +172,5 @@ ReactionDetailsMainProperties.defaultProps = {
   vesselSizeField: null,
   durationField: null,
   reactionVolumeField: null,
+  firstStepTemperature: false,
 };

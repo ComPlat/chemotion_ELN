@@ -81,6 +81,7 @@ export default class ReactionDetailsProperties extends Component {
           leadingField={typeField}
           leadingFieldColSize={9}
           temperatureColSize={3}
+          firstStepTemperature={reaction.isMultiStep()}
         />
         <Form.Group className="mx-1 my-3">
           <Form.Label>Dangerous products</Form.Label>
