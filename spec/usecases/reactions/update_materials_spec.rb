@@ -217,16 +217,18 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:product_with_attachments) do
         {
           'products' => [
-            'name' => 'product_with_attachment',
-            'target_amount_unit' => 'mg',
-            'target_amount_value' => 10.0,
-            'equivalent' => 1,
-            'reference' => false,
-            'is_new' => true,
-            'molfile' => molfile,
-            'container' => root_container,
-            'gas_phase_data' => gas_phase_data,
-            'attachments' => [{ 'id' => 1, 'filename' => 'report.pdf', 'is_new' => false }],
+            {
+              'name' => 'product_with_attachment',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 10.0,
+              'equivalent' => 1,
+              'reference' => false,
+              'is_new' => true,
+              'molfile' => molfile,
+              'container' => root_container,
+              'gas_phase_data' => gas_phase_data,
+              'attachments' => [{ 'id' => 1, 'filename' => 'report.pdf', 'is_new' => false }],
+            },
           ],
         }
       end

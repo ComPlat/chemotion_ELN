@@ -166,8 +166,7 @@ export class AttachmentTab extends Component {
   }
 
   createAttachmentPreviews() {
-    const { attachments, element } = this.props;
-    const elementFrozen = Object.isFrozen(element);
+    const { attachments } = this.props;
     attachments.map((attachment) => {
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
@@ -176,14 +175,6 @@ export class AttachmentTab extends Component {
               if (!Object.isFrozen(attachment)) {
                 attachment.preview = `data:image/png;base64,${result}`;
               }
-              // Update _checksum without resetting `changed` — calling updateChecksum()
-              // would clear `changed: true` set by handleAttachmentDrop, hiding the save button.
-              // Skip for MobX frozen elements (SBMM, DeviceDescription) — their changed
-              // state is tracked by the store, not element._checksum.
-              if (!elementFrozen) {
-                // eslint-disable-next-line no-underscore-dangle
-                element._checksum = element.checksum();
-              }
               if (this._mounted) this.forceUpdate();
             }
           }
@@ -191,10 +182,6 @@ export class AttachmentTab extends Component {
       } else {
         if (!Object.isFrozen(attachment) && !attachment.preview) {
           attachment.preview = '/images/wild_card/not_available.svg';
-        }
-        if (!elementFrozen) {
-          // eslint-disable-next-line no-underscore-dangle
-          element._checksum = element.checksum();
         }
         this.forceUpdate();
       }

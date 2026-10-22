@@ -69,6 +69,10 @@ export default class Sample extends Element {
   //   return false;
   // }
 
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   constructor(args) {
     let argsNew = args;
     argsNew = prepareRangeBound(argsNew, 'boiling_point');

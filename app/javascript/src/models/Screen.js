@@ -4,6 +4,10 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 export default class Screen extends Element {
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   constructor(args) {
     super(args);
   }

@@ -123,6 +123,10 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 };
 
 export default class Reaction extends Element {
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   // reaction material types
   static STARTING_MATERIALS = 'starting_materials';
 
