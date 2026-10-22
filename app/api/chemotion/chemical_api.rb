@@ -3,6 +3,24 @@
 module Chemotion
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
+
+    helpers do
+      # Only for endpoints declaring both ids under exactly_one_of; params also holds undeclared keys.
+      def chemical_element
+        sbmm_id = params[:sequence_based_macromolecule_sample_id]
+        sbmm_id ? SequenceBasedMacromoleculeSample.find_by(id: sbmm_id) : Sample.find_by(id: params[:sample_id])
+      end
+
+      # Inventory data includes amounts and locations, which SampleEntity hides below full detail.
+      def authorize_chemical_read!(element = chemical_element)
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, element).read_full_detail?
+      end
+
+      def authorize_chemical_write!(element = chemical_element)
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, element).update?
+      end
+    end
+
     resource :chemicals do
       desc 'update chemicals'
       params do
@@ -13,6 +31,7 @@ module Chemotion
         exactly_one_of :sample_id, :sequence_based_macromolecule_sample_id
       end
       put do
+        authorize_chemical_write!
         Chemotion::ChemicalsService.handle_exceptions do
           attributes = declared(params, include_missing: false)
           if params[:chemical_data].present? || params[:cas].present?
@@ -41,6 +60,7 @@ module Chemotion
       end
 
       get do
+        authorize_chemical_read!
         Chemotion::ChemicalsService.handle_exceptions do
           if params[:sequence_based_macromolecule_sample_id]
             Chemical.find_by(
@@ -63,6 +83,7 @@ module Chemotion
         end
 
         post do
+          authorize_chemical_write!
           Chemotion::ChemicalsService.handle_exceptions do
             attributes = declared(params, include_missing: false) || {}
             if params[:sequence_based_macromolecule_sample_id]
@@ -122,6 +143,7 @@ module Chemotion
           optional :vendor_product, type: String
         end
         post do
+          authorize_chemical_write!(Sample.find_by(id: params[:sample_id]))
           result = Chemotion::ChemicalsService.handle_exceptions do
             Chemotion::ChemicalsService.save_vendor_sheet(
               sample_id: params[:sample_id],
@@ -151,6 +173,7 @@ module Chemotion
         end
 
         post do
+          authorize_chemical_write!(Sample.find_by(id: params[:sample_id]))
           result = Chemotion::ManualSdsService.create_manual_sds(
             sample_id: params[:sample_id],
             cas: params[:cas],
