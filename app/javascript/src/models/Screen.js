@@ -79,7 +79,6 @@ export default class Screen extends Element {
       wellplate_ids: this.wellplateIDs,
       research_plan_ids: this.researchPlanIDs,
       user_labels: this.user_labels || [],
-      attachments: this.attachments,
       container: this.container,
       segments: this.segments.map(s => s.serialize()),
       component_graph_data: this.component_graph_data
