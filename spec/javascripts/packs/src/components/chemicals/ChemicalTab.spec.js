@@ -6,6 +6,9 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
+// RootStore first: ChemicalTab reaches src/models/Sample before src/models/Component, which trips
+// the circular-import crash noted in MetadataFetcher.spec.js.
+import 'src/stores/mobx/RootStore';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
