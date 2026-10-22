@@ -195,6 +195,12 @@ export default class ReactionDetails extends Component {
 
   renderReactionTypeSelect(reaction) {
     const selectedReactionType = reaction.reaction_type || 'standard';
+    const nonDefaultScheme = reaction.gaseous || reaction.weight_percentage;
+    const typeOptions = Reaction.reaction_type_options.map((option) => (
+      option.value === 'multi_step' && nonDefaultScheme && selectedReactionType !== 'multi_step'
+        ? { ...option, isDisabled: true, label: `${option.label} (needs Default scheme)` }
+        : option
+    ));
 
     return (
       <Form.Group className="reaction-details-toolbar__group mb-0 me-2" ref={this.reactionTypeDropdownRef}>
@@ -202,9 +208,9 @@ export default class ReactionDetails extends Component {
           size="sm"
           name="reaction_type"
           isClearable={false}
-          options={Reaction.reaction_type_options}
+          options={typeOptions}
           formatOptionLabel={formatReactionTypeOption}
-          value={Reaction.reaction_type_options.find(({ value }) => value === selectedReactionType)}
+          value={typeOptions.find(({ value }) => value === selectedReactionType)}
           isDisabled={!permitOn(reaction)}
           onChange={(option) => this.requestReactionTypeChange(reaction, option?.value || 'standard')}
         />
@@ -968,6 +974,7 @@ export default class ReactionDetails extends Component {
       schemeChangeConfirmMessage,
     } = this.state;
     const isInteractionReaction = reaction.isInteractionReaction();
+    const schemeLockedToDefault = reaction.isMultiStep() && !reaction.gaseous && !reaction.weight_percentage;
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
     let documentationLink;
@@ -1002,12 +1009,15 @@ export default class ReactionDetails extends Component {
           <div className="d-flex align-items-center">
             {this.renderReactionTypeSelect(reaction)}
             {!isInteractionReaction && (
-              <Dropdown ref={this.schemeDropdownRef}>
+              <Dropdown
+                ref={this.schemeDropdownRef}
+                title={schemeLockedToDefault ? 'Multi-step uses the Default scheme' : undefined}
+              >
                 <Dropdown.Toggle
                   variant="info"
                   size="sm"
                   id="scheme-type-dropdown"
-                  disabled={!permitOn(reaction)}
+                  disabled={!permitOn(reaction) || schemeLockedToDefault}
                 >
                   <i className="fa fa-cog" />
                   <span className="ms-1">
