@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
   ListGroup, ListGroupItem, InputGroup, Row, Col,
-  ButtonGroup, Badge, Popover
+  ButtonGroup, Badge, Popover, Tabs, Tab
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
@@ -116,12 +116,12 @@ export default class ChemicalTab extends React.Component {
       // The AI route runs as a background job; aiExtractingSheet is the row that started it.
       loadingExtractSds: false,
       aiExtractingSheet: '',
-      showAiResultModal: false,
       llmAvailable: false,
       modePickerSheet: '',
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewPropertiesForSheet: '',
+      propertiesTab: '',
       showModal: false,
       searchResults: [],
     };
@@ -340,7 +340,8 @@ export default class ChemicalTab extends React.Component {
   handlePropertiesModal(sheetPath) {
     this.setState({
       viewChemicalPropertiesModal: true,
-      viewPropertiesForSheet: sheetPath
+      viewPropertiesForSheet: sheetPath,
+      propertiesTab: '',
     });
   }
 
@@ -1926,14 +1927,20 @@ export default class ChemicalTab extends React.Component {
     return sheetPath ? this.allExtractedProperties()[sheetPath] : undefined;
   }
 
+  // One AI result per chemical; one recorded without a sheet_path shows under every sheet.
+  aiExtractionFor(sheetPath) {
+    const { chemical } = this.state;
+    const ai = chemical?._chemical_data?.[0]?.aiExtraction;
+    if (!sheetPath || !ai?.extracted_at) return undefined;
+    return !ai.sheet_path || ai.sheet_path === sheetPath ? ai : undefined;
+  }
+
   runExtraction = (sheetPath, mode) => {
     this.setState({ modePickerSheet: '' });
     return mode === 'ai' ? this.extractWithAi(sheetPath) : this.extractFromSheet(sheetPath);
   };
 
   renderModePicker = (sheetPath) => {
-    const { chemical } = this.state;
-    const hasAiResult = !!chemical?._chemical_data?.[0]?.aiExtraction?.extracted_at;
     const option = (id, mode, icon, title, hint, badge) => (
       <button
         type="button"
@@ -1971,16 +1978,6 @@ export default class ChemicalTab extends React.Component {
             'AI extraction',
             'Your AI provider reads the sheet; takes up to a minute, review the result'
           )}
-          {hasAiResult && (
-            <Button
-              variant="link"
-              size="sm"
-              className="px-0 mt-1"
-              onClick={() => this.setState({ modePickerSheet: '', showAiResultModal: true })}
-            >
-              View last AI extraction
-            </Button>
-          )}
         </Popover.Body>
       </Popover>
     );
@@ -1993,7 +1990,7 @@ export default class ChemicalTab extends React.Component {
     const {
       loadingQuerySafetySheets, extractingSheet, loadingExtractSds, aiExtractingSheet, llmAvailable, modePickerSheet
     } = this.state;
-    const extracted = this.extractedPropertiesFor(sheetPath);
+    const extracted = !!this.extractedPropertiesFor(sheetPath) || !!this.aiExtractionFor(sheetPath);
     const isSaved = EXTRACTABLE_SHEET.test(sheetPath || '');
     const isReading = extractingSheet === sheetPath;
     const isAiRunning = loadingExtractSds && aiExtractingSheet === sheetPath;
@@ -2304,13 +2301,9 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
-  renderAiResultModal() {
-    const { showAiResultModal, chemical } = this.state;
-    const entry = chemical?._chemical_data?.[0];
-    if (!entry?.aiExtraction?.extracted_at) return null;
-
-    const aiData = entry.aiExtraction;
-    const extractedProps = entry.extractedProperties || {};
+  renderAiExtraction(aiData) {
+    const { chemical } = this.state;
+    const extractedProps = chemical?._chemical_data?.[0]?.extractedProperties || {};
     const extractedAt = new Date(aiData.extracted_at).toLocaleString();
 
     const metadataLines = [
@@ -2343,14 +2336,7 @@ export default class ChemicalTab extends React.Component {
     );
 
     return (
-      <AppModal
-        title="Extracted Data using AI"
-        show={showAiResultModal}
-        onHide={() => this.setState({ showAiResultModal: false })}
-        size="lg"
-        closeLabel="Close"
-        showFooter
-      >
+      <>
         <p className="text-muted small mb-3">
           Safety phrases (H/P codes, GHS pictograms) are shown in the Safety Phrases section.
           AI results may contain inaccuracies, so review them against the sheet.
@@ -2359,23 +2345,26 @@ export default class ChemicalTab extends React.Component {
         {mixtureLines
           && textArea('aiMixtureSection', 'Mixture Components', mixtureLines.length + 1, mixtureLines.join('\n'))}
         {textArea('aiPropertiesSection', 'Extracted Physical Properties', 6, propertiesDisplay)}
-        <p className="text-muted small mb-3">
+        <p className="text-muted small mb-0">
           {`Extracted at: ${extractedAt}`}
           {aiData.model && `, Task was performed using ${aiData.model}`}
           {aiData.requested_model && aiData.requested_model !== aiData.model
             && ` (requested ${aiData.requested_model}, unavailable, fell back to default)`}
         </p>
-      </AppModal>
+      </>
     );
   }
 
+  // A tab per route that has a result for this sheet; copy all copies the open one.
   renderPropertiesModal() {
-    const { viewChemicalPropertiesModal, viewPropertiesForSheet } = this.state;
-    const properties = this.extractedPropertiesFor(viewPropertiesForSheet);
-    const fetchedChemicalProperties = properties
-      ? JSON.stringify(properties, null, '\n')
-      : 'Please extract from a safety data sheet first to view results';
-    const copy = formatProperties(properties);
+    const {
+      viewChemicalPropertiesModal, viewPropertiesForSheet, propertiesTab, chemical
+    } = this.state;
+    const builtin = this.extractedPropertiesFor(viewPropertiesForSheet);
+    const ai = this.aiExtractionFor(viewPropertiesForSheet);
+    const tabs = [builtin && 'builtin', ai && 'ai'].filter(Boolean);
+    const activeTab = tabs.includes(propertiesTab) ? propertiesTab : tabs[0];
+    const copy = formatProperties(activeTab === 'ai' ? chemical?._chemical_data?.[0]?.extractedProperties : builtin);
 
     return (
       <AppModal
@@ -2401,17 +2390,37 @@ export default class ChemicalTab extends React.Component {
         closeLabel="Close"
         showFooter
       >
-        <Form.Group controlId="propertiesModal">
-          <Form.Control
-            as="textarea"
-            className="w-100"
-            readOnly
-            disabled
-            type="text"
-            rows={10}
-            value={fetchedChemicalProperties}
-          />
-        </Form.Group>
+        {activeTab ? (
+          <Tabs
+            id="fetched-properties-tabs"
+            activeKey={activeTab}
+            onSelect={(key) => this.setState({ propertiesTab: key })}
+            className="mb-3"
+          >
+            {builtin && (
+              <Tab eventKey="builtin" title="Built-in reader">
+                <Form.Group controlId="propertiesModal">
+                  <Form.Control
+                    as="textarea"
+                    className="w-100"
+                    readOnly
+                    disabled
+                    type="text"
+                    rows={10}
+                    value={JSON.stringify(builtin, null, '\n')}
+                  />
+                </Form.Group>
+              </Tab>
+            )}
+            {ai && (
+              <Tab eventKey="ai" title="AI extraction">
+                {this.renderAiExtraction(ai)}
+              </Tab>
+            )}
+          </Tabs>
+        ) : (
+          <p className="text-muted mb-0">Please extract from a safety data sheet first to view results</p>
+        )}
       </AppModal>
     );
   }
@@ -2459,7 +2468,6 @@ export default class ChemicalTab extends React.Component {
         </Accordion>
 
         {this.renderPropertiesModal()}
-        {this.renderAiResultModal()}
 
         <SDSAttachmentModal
           show={showModal}

@@ -105,6 +105,23 @@ RSpec.describe ExtractSdsJob do
         expect(SdsPdfTextExtractor).to have_received(:extract).with(other)
       end
 
+      it 'records which sheet the result was read from' do
+        other = Rails.public_path.join('safety_sheets/merck/other.pdf').to_s
+        allow(File).to receive(:exist?).with(other).and_return(true)
+        allow(SdsPdfTextExtractor).to receive(:extract).with(other).and_return('SDS text content')
+
+        described_class.new.perform(sample_id: sample.id, user_id: user.id,
+                                    sheet_path: '/safety_sheets/merck/other.pdf')
+
+        expect(chemical.reload.chemical_data[0]['aiExtraction']['sheet_path']).to eq('/safety_sheets/merck/other.pdf')
+      end
+
+      it 'records no sheet when it read the last saved one' do
+        described_class.new.perform(sample_id: sample.id, user_id: user.id)
+
+        expect(chemical.reload.chemical_data[0]['aiExtraction']).not_to have_key('sheet_path')
+      end
+
       it 'refuses a given sheet outside the safety sheets folder' do
         job = described_class.new
         job.perform(sample_id: sample.id, user_id: user.id, sheet_path: '/safety_sheets/../../config/database.yml')
