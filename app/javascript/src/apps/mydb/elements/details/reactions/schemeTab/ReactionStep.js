@@ -8,6 +8,19 @@ import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reacti
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 import { permitOn } from 'src/components/common/uis';
+import { correctPrefix, formatDisplayValue } from 'src/utilities/MathUtils';
+
+const amountText = (value, unit) => value > 0 && `${correctPrefix(value, 3)}${unit}`;
+
+const carriedAmounts = (sample) => [
+  amountText(sample.amount_g, 'g'),
+  amountText(sample.amount_l, 'L'),
+  amountText(sample.amount_mol, 'mol'),
+  sample.molecule_molecular_weight && `MW ${formatDisplayValue(sample.molecule_molecular_weight, 4)} g/mol`,
+  sample.has_density && `d ${sample.density}`,
+  sample.purity != null && `purity ${sample.purity}`,
+  Number.isFinite(sample.equivalent) && `yield ${Math.round(sample.equivalent * 100)}%`,
+].filter(Boolean).join(' · ');
 
 const ReactionStep = ({
   reaction,
@@ -69,14 +82,14 @@ const ReactionStep = ({
         {`Starting material \u2014 ${carriedProducts.map(labelFor).join(', ')}, `}
         {`carried from step ${step.position - 1}`}
       </div>
-      <div className="d-flex flex-wrap gap-3 ms-4 mt-1 small">
+      <div className="d-flex flex-column gap-1 ms-4 mt-1 small">
         {carriedProducts.map((product) => (
           <Form.Check
             key={product.id}
             type="radio"
             id={`step-ref-${stepId}-${product.id}`}
             name={`reference-${stepId}`}
-            label={`Ref: ${labelFor(product)}`}
+            label={`Ref: ${labelFor(product)} — ${carriedAmounts(product)}`}
             checked={reaction.stepReference(step) === product}
             disabled={!permitOn(reaction)}
             onChange={() => onMaterialsChange({
