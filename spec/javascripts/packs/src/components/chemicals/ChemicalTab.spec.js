@@ -1112,6 +1112,65 @@ describe('ChemicalTab extraction from a saved sheet', () => {
   });
 });
 
+describe('ChemicalTab when the store hands back a new sample', () => {
+  const sheetPath = '/safety_sheets/merck/252549_c0161049cda26386.pdf';
+  let wrapper;
+
+  const savedSample = () => {
+    const saved = Sample.buildEmpty(2);
+    saved.isNew = false;
+    return saved;
+  };
+  const serverChemical = () => {
+    const chemical = createChemical([{ safetySheetPath: [{ merck_link: sheetPath }] }]);
+    chemical.updateChecksum();
+    return chemical;
+  };
+  const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
+
+  beforeEach(async () => {
+    sinon.stub(ChemicalFetcher, 'fetchChemical').callsFake(() => Promise.resolve(serverChemical()));
+    sinon.stub(ChemicalFetcher, 'llmAvailable').resolves(false);
+    sinon.stub(ElementActions, 'updateSample');
+    wrapper = shallow(React.createElement(ChemicalTab, {
+      sample: savedSample(),
+      type: 'sample',
+      saveInventory: false,
+      editChemical: sinon.spy(),
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+    }));
+    sinon.stub(wrapper.instance(), 'notify');
+    await flush();
+  });
+
+  afterEach(() => { sinon.restore(); });
+
+  it('keeps what the built-in reader filled in when saving the sample replaces it', async () => {
+    sinon.stub(ChemicalFetcher, 'extractFromSds').resolves({
+      safetyPhrases: { h_statements: { H225: ' Highly flammable' }, p_statements: {}, pictograms: [] },
+      properties: { form: 'liquid' },
+      diagnostics: { notes: [], errors: [], phrases: { source: 'codes' } },
+    });
+
+    await wrapper.instance().extractFromSheet(sheetPath);
+    expect(ElementActions.updateSample.calledOnce).toBe(true);
+    wrapper.setProps({ sample: savedSample() });
+    await flush();
+
+    const data = wrapper.state('chemical')._chemical_data[0];
+    expect(Object.keys(data.safetyPhrases.h_statements)).toEqual(['H225']);
+    expect(data.sdsExtractedProperties[sheetPath]).toEqual({ form: 'liquid' });
+  });
+
+  it('still picks up the chemical data of a refetched sample when nothing is unsaved', async () => {
+    wrapper.setProps({ sample: savedSample() });
+    await flush();
+
+    expect(ChemicalFetcher.fetchChemical.calledTwice).toBe(true);
+  });
+});
+
 describe('ChemicalTab extraction mode picker', () => {
   const sheetPath = '/safety_sheets/merck/33009_0123456789abcdef.pdf';
   let instance;
