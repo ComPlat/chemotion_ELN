@@ -1390,23 +1390,19 @@ describe('ChemicalTab LLM property mapping, values the sample cannot take', () =
     });
   });
 
-  it('saves nothing and says which fields it left out when none fits', () => {
+  it('saves nothing when no value fits', () => {
     mapAi({ boiling_point: '148 °F (64 °C)', density: '790 kg/m³ at 20 °C' });
 
     expect(handleUpdateSample.called).toBe(false);
     expect(ElementActions.updateSample.called).toBe(false);
-    expect(notify.firstCall.args[0].message)
-      .toEqual(expect.stringContaining('Not in a unit the sample takes: boiling point, density'));
   });
 
-  it('saves what fits and reports both', () => {
+  it('saves what fits without a toast of its own, leaving the report to the job notification', () => {
     mapAi({ flash_point: '11 °C (52 °F)', density: '790 kg/m³ at 20 °C' });
 
     expect(handleUpdateSample.calledOnceWith(llmSample)).toBe(true);
     expect(ElementActions.updateSample.calledOnce).toBe(true);
-    const { message } = notify.firstCall.args[0];
-    expect(message).toEqual(expect.stringContaining('Sample properties set: flash point'));
-    expect(message).toEqual(expect.stringContaining('Not in a unit the sample takes: density'));
+    expect(notify.called).toBe(false);
   });
 });
 
