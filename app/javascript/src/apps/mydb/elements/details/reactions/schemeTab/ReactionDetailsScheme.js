@@ -399,7 +399,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
     // only when no reference material exists (regular or SBMM) triggers updatedReactionForReferenceChange
     const referenceRelatedGroup = ['starting_materials', 'reactants'];
-    const inFirstStep = (m) => !reaction.isMultiStep?.() || !reaction.isLaterStep(reaction.stepOf(m));
+    const inFirstStep = (m) => reaction.isFirstStepMaterial(m);
     if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
       // Determine which array to use: reactants may include SBMM samples, so use reactantsWithSbmm
       const materialsArray = (materialGroup === 'reactants'
@@ -478,7 +478,7 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
     if (reaction.isMultiStep()) {
       const newReference = !reaction.referenceMaterial && reaction.starting_materials
-        .find((material) => !reaction.isLaterStep(reaction.stepOf(material)));
+        .find((material) => reaction.isFirstStepMaterial(material));
       if (newReference) {
         this.updatedReactionForReferenceChange({ sampleID: newReference.id });
       } else {
@@ -2858,7 +2858,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // if no reference material then mark first starting material
     const refM = reaction.isMultiStep()
-      ? reaction.starting_materials.find((material) => !reaction.isLaterStep(reaction.stepOf(material)))
+      ? reaction.starting_materials.find((material) => reaction.isFirstStepMaterial(material))
       : reaction.starting_materials[0];
     if (!reaction.referenceMaterial && refM) {
       if (isSbmmSample(refM)) {

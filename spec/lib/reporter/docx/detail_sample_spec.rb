@@ -45,5 +45,12 @@ describe 'Reporter::Docx::DetailSample' do
 
       expect(instance.send(:init_item)).to eq([{ 'insert' => "step two\n" }])
     end
+
+    it 'skips the text when it is hidden by a low detail level' do
+      hidden = Reporter::Docx::DetailSample.new(sample: OpenStruct.new(reaction_description: '***'), # rubocop:disable Style/OpenStructUse
+                                                spl_settings: all_spl_settings)
+
+      expect(hidden.send(:init_item)).to eq([])
+    end
   end
 end

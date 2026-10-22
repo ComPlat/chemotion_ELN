@@ -264,7 +264,9 @@ class Material extends Component {
         <Form.Check
           type="radio"
           disabled={!permitOn(reaction)}
-          name={reaction.isMultiStep?.() ? `reference-${material.reaction_step_id}` : 'reference'}
+          name={reaction.isMultiStep?.()
+            ? `reference-${material.reaction_step_id ?? reaction.reaction_steps.find((step) => !step._destroy)?.id}`
+            : 'reference'}
           checked={this.isReference(material)}
           onChange={(e) => this.handleReferenceChange(e)}
           size="sm"
