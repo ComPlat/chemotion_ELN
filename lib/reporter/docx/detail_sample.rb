@@ -63,7 +63,8 @@ module Reporter
       def init_item
         item = []
         if @spl_settings[:reaction_description]
-          description = obj&.reaction_description&.dig('ops').presence
+          text = obj&.reaction_description
+          description = text.is_a?(Hash) ? text['ops'].presence : nil
           item += description.map(&:to_h) if description
         end
         item

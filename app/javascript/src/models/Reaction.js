@@ -1,4 +1,5 @@
 import {
+  cloneDeep,
   isEmpty,
   round,
 } from 'lodash';
@@ -634,6 +635,9 @@ export default class Reaction extends Element {
 
   buildCopy(params = {}, keepAmounts = false) {
     const copy = super.buildCopy();
+    copy.temperature = cloneDeep(this.temperature);
+    copy.vessel_size = cloneDeep(this.vessel_size);
+    copy.reaction_steps = cloneDeep(this.reaction_steps);
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map((sample) => {
@@ -1080,6 +1084,12 @@ export default class Reaction extends Element {
     return this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id) || null;
   }
 
+  isFirstStepMaterial(material) {
+    if (!this.isMultiStep()) return true;
+    const inDeletedStep = this.reaction_steps.some((step) => step._destroy && step.id === material.reaction_step_id);
+    return !inDeletedStep && !this.isLaterStep(this.stepOf(material));
+  }
+
   isLaterStep(step) {
     return !!step && this.reaction_steps.filter((entry) => !entry._destroy)[0]?.id !== step.id;
   }
@@ -1238,6 +1248,8 @@ export default class Reaction extends Element {
     const destroyedStepIds = new Set(
       this.reaction_steps.filter((step) => step._destroy).map((step) => step.id)
     );
+    const mergedDescription = this.mergedStepsDescription();
+    if (mergedDescription) this.description = mergedDescription;
     this.reaction_steps = [];
     ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((group) => {
       if (this[group]) {
@@ -1245,6 +1257,7 @@ export default class Reaction extends Element {
         this[group].forEach((material) => {
           material.reaction_step_id = null;
           material.carry_on = false;
+          material.step_reference = false;
         });
       }
     });
@@ -1255,6 +1268,22 @@ export default class Reaction extends Element {
         material.equivalent = material.amount_mol / reference.amount_mol;
       }
     });
+    this.products.forEach((product) => {
+      if (product.gas_type === 'gas' || !Number.isFinite(product.amount_mol)) return;
+      const stoichiometryCoeff = (product.coefficient || 1.0) / (reference.coefficient || 1.0);
+      product.equivalent = product.amount_mol / reference.amount_mol / stoichiometryCoeff;
+    });
+  }
+
+  mergedStepsDescription() {
+    const texts = this.reaction_steps.filter((step) => !step._destroy).map((step) => step.description?.ops || []);
+    const hasText = (ops) => ops.some((op) => typeof op.insert !== 'string' || op.insert.trim() !== '');
+    if (!texts.slice(1).some(hasText)) return null;
+
+    const ops = texts.flatMap((stepOps, index) => (hasText(stepOps)
+      ? [{ insert: `Step ${index + 1}: `, attributes: { bold: true } }, ...stepOps]
+      : []));
+    return { ops };
   }
 
   get sampleCount() {

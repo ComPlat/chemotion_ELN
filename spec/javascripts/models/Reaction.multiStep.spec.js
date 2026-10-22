@@ -150,6 +150,21 @@ describe('Reaction multi-step', () => {
     expect(reaction.reaction_steps[0]._destroy).toEqual(undefined);
   });
 
+  it('does not share temperature or vessel size with a copy', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1, temperature: { userText: '80' }, vessel_size: { amount: 5 } }];
+    reaction.temperature = { data: [], userText: '25', valueUnit: '°C' };
+
+    const copy = reaction.buildCopy();
+    copy.temperature.userText = '99';
+    copy.reaction_steps[0].temperature.userText = '99';
+    copy.reaction_steps[0].vessel_size.amount = 99;
+
+    expect([reaction.temperature.userText, reaction.reaction_steps[0].temperature.userText,
+      reaction.reaction_steps[0].vessel_size.amount]).toEqual(['25', '80', 5]);
+  });
+
   it('leaves a standard reaction alone', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.starting_materials[0].reference = true;
@@ -288,6 +303,66 @@ describe('Reaction multi-step', () => {
     reaction.clearMultiStep();
 
     expect(merged.equivalent).toBeCloseTo(0.5);
+  });
+
+  it('measures product yields against the reaction reference and clears step refs when leaving multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const [start, stepTwoStart] = reaction.starting_materials;
+    start.reaction_step_id = 1;
+    start.reference = true;
+    start.setAmount({ value: 0.01, unit: 'mol' });
+    stepTwoStart.reaction_step_id = 2;
+    stepTwoStart.step_reference = true;
+    const [, product] = reaction.products;
+    product.reaction_step_id = 2;
+    product.setAmount({ value: 0.004, unit: 'mol' });
+    product.equivalent = 0.6667;
+    start.coefficient = 1;
+    product.coefficient = 1;
+
+    reaction.clearMultiStep();
+
+    expect([+product.equivalent.toFixed(4), stepTwoStart.step_reference]).toEqual([0.4, false]);
+  });
+
+  it('never counts a material of a deleted step as a step 1 material', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2, _destroy: true }];
+    const [first, deleted] = reaction.starting_materials;
+    first.reaction_step_id = 1;
+    deleted.reaction_step_id = 2;
+    const sbmmLike = { reaction_step_id: null };
+
+    expect([first, deleted, sbmmLike].map((m) => reaction.isFirstStepMaterial(m))).toEqual([true, false, true]);
+  });
+
+  it('merges every step text into the description when leaving multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, description: { ops: [{ insert: 'heat it\n' }] } },
+      { id: 2, position: 2, description: { ops: [{ insert: 'cool it\n' }] } },
+    ];
+
+    reaction.clearMultiStep();
+
+    expect(reaction.description.ops.map((op) => op.insert).join('')).toEqual('Step 1: heat it\nStep 2: cool it\n');
+  });
+
+  it('keeps a later step text when only that step has text on leaving multi-step', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, description: { ops: [{ insert: '\n' }] } },
+      { id: 2, position: 2, description: { ops: [{ insert: 'cool it\n' }] } },
+    ];
+
+    reaction.clearMultiStep();
+
+    expect(reaction.description.ops.map((op) => op.insert).join('')).toEqual('Step 2: cool it\n');
   });
 
   it('adds the unit only to a numeric step temperature in the scheme', async () => {
