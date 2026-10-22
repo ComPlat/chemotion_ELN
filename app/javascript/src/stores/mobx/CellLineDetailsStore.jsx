@@ -182,6 +182,10 @@ export const CellLineDetailsStore = types
         container_type: container.container_type
       });
     },
+    syncAttachmentsAfterSave(id, attachments) {
+      const item = self.cellLineItem.get(id);
+      if (item) { item.attachments = attachments; }
+    },
     convertCellLineToModel(jsCellLineModel) {
       if (self.cellLineItem.has(jsCellLineModel.id)) {
         return;

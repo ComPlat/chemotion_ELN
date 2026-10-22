@@ -101,7 +101,14 @@ export default class CellLinesFetcher {
         return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)
           .then(() => {
             rootStore.notificationsStore.add(successfullyUpdatedParameter);
-            return this.fetchById(cellLineItem.id);
+            return this.fetchById(cellLineItem.id)
+              .then((freshCellLine) => {
+                rootStore.cellLineDetailsStore.syncAttachmentsAfterSave(
+                  cellLineItem.id,
+                  freshCellLine.attachments || []
+                );
+                return freshCellLine;
+              });
           });
       });
   }
