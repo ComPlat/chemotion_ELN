@@ -113,12 +113,14 @@ describe Usecases::Attachments::Copy do
     end
 
     context 'when the attachment is in an unreadable analysis container' do
-      let(:sample) { create(:sample, collections: [create(:collection)]) }
-      let(:source) do
-        create(:attachment, attachable: create(:container, containable: sample), created_for: user.id)
-      end
+      let(:sample_collection) { create(:collection) }
+      let(:sample) { create(:sample, collections: [sample_collection]) }
+      let(:analysis) { create(:container, parent: sample.container.analyses_container, container_type: 'analysis') }
+      let(:dataset) { create(:container, parent: analysis, container_type: 'dataset') }
+      let(:source) { create(:attachment, attachable: dataset, created_for: user.id) }
 
       it 'does not copy the attachment' do
+        expect(source.root_element).to eq(sample)
         expect(research_plan.attachments).to be_empty
       end
     end
@@ -174,6 +176,25 @@ describe Usecases::Attachments::Copy do
 
       expect { described_class.execute!(entries, plan, user) }.to change(Attachment, :count).by(2)
       expect(Attachment).to have_received(:where).with(id: entries.pluck(:id)).once
+    end
+
+    it 'uploads each original once directly to permanent storage' do
+      entries = [{ id: first_source.id }]
+      plan = research_plan
+      uploads = { cache: [], store: [] }
+      uploads.each do |storage, ids|
+        allow(Shrine.storages.fetch(storage)).to receive(:upload).and_wrap_original do |upload, io, id, **options|
+          ids << id
+          upload.call(io, id, **options)
+        end
+      end
+
+      described_class.execute!(entries, plan, user)
+
+      copy = plan.attachments.take!
+      expect(uploads.transform_values { |ids| ids.count(copy.attachment.id) }).to eq(cache: 0, store: 1)
+      expect(copy.read_file).to eq(first_source.read_file)
+      expect(copy.attachment(:annotation)).to be_present
     end
   end
 

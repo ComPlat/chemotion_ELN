@@ -217,6 +217,12 @@ describe Chemotion::ResearchPlanAPI do
         end
 
         context 'when an attachment request is malformed' do
+          it 'rejects a string entry before creating any records or files' do
+            request_params = params.merge(attachments: [source.id.to_s])
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+
           it 'rejects invalid entries before creating any records or files' do
             request_params = params
             request_params[:attachments] = [source.id]
