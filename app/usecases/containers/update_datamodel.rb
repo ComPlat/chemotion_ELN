@@ -10,29 +10,46 @@ module Usecases
         @variation_links = []
       end
 
-      def update_datamodel(container)
-        # TODO: check this logic, not sure this is still needed + containable_type should not be null
-        root_container = if container[:is_new]
-                           Container.create(
-                             # name: "root",
-                             container_type: container[:containable_type], # should be 'root'
-                           )
-                         else
-                           Container.find_by id: container[:id]
-                           # root_container.name = "root" #if it is created from client.side
-                         end
-        # root_container.save!
-        # ODOT
-        unless container[:description].nil? || root_container.nil?
-          root_container[:description] = container[:description]
-          root_container.save!
-        end
+      def update_datamodel(container, element: nil, creating: false)
+        return element&.container unless current_user && container
+
+        @element = element
+        @variation_links.clear
+        root_container = resolve_root(container, creating)
+        @root_container = root_container&.root
+        return element&.container unless writable_root?(root_container)
+
+        update_description(root_container, container[:description])
         create_or_update_containers(container[:children], root_container, current_user) if container[:children].present?
         flush_variation_links(root_container)
         root_container
       end
 
       private
+
+      def update_description(container, description)
+        container.update!(description: description) unless description.nil?
+      end
+
+      def resolve_root(container, creating)
+        @new_root_id = nil
+        if creating || (container[:is_new] && @element && @element.container.nil? && writable_element?(@element))
+          root = Container.create!(container_type: 'root')
+          @new_root_id = root.id
+          return root
+        end
+        return if container[:is_new]
+
+        Container.find_by(id: container[:id])
+      end
+
+      def target_root?(container)
+        @new_root_id.present? || @element.nil? || container == @element.container
+      end
+
+      def writable_root?(container)
+        target_root?(container) && can_update_container?(container)
+      end
 
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       # rubocop:disable Metrics/BlockLength
@@ -69,7 +86,7 @@ module Usecases
             )
           else
             # Update container
-            next unless (container = Container.find_by(id: child[:id]))
+            next unless (container = scoped_container(child[:id]))
 
             container.update!(
               name: child[:name],
@@ -92,23 +109,17 @@ module Usecases
         return if attachments.empty?
 
         can_update = can_update_container?(container)
-        can_edit = true
         return unless can_update
 
         attachments.each do |att|
-          if att[:is_new]
-            attachment = Attachment.where(key: att[:id], attachable: nil).last
-          else
-            attachment = Attachment.where(id: att[:id]).last
-            container_id = attachment&.container_id
-            if container_id
-              att_container = Container.find(container_id)
-              can_edit = can_update_container?(att_container)
-            end
-          end
-          next unless attachment
+          attachment = if att[:is_new]
+                         Attachment.where(key: att[:id], attachable_id: nil, created_for: current_user.id).last
+                       else
+                         Attachment.find_by(id: att[:id])
+                       end
+          next unless attachment && writable_attachment?(attachment)
 
-          if att[:is_deleted] && can_edit
+          if att[:is_deleted]
             attachment.destroy!
             next
           end
@@ -133,21 +144,39 @@ module Usecases
       end
 
       def delete_containers_and_attachments(container)
-        Attachment.where_container(container[:id]).destroy_all
-        if container[:children]&.length&.positive?
-          container[:children].each do |tmp|
-            delete_containers_and_attachments(tmp)
-          end
-        end
-        Container.where(id: container[:id]).destroy_all
+        target = scoped_container(container[:id])
+        return unless target
+
+        target.children.each { |child| delete_containers_and_attachments(id: child.id) }
+        target.attachments.destroy_all
+        target.destroy!
+      end
+
+      def scoped_container(id)
+        @root_container&.descendants&.find_by(id: id)
+      end
+
+      def writable_attachment?(attachment)
+        return attachment.created_for == current_user.id if attachment.attachable_id.nil?
+        return attachment.attachable&.root == @root_container if attachment.attachable_type == 'Container'
+
+        element = @element || @root_container&.root_element
+        element.present? && attachment.attachable == element
       end
 
       def can_update_container?(container)
-        if (element = container.root.containable)
-          ElementPolicy.new(current_user, element).update?
-        else
-          true
-        end
+        root = container&.root
+        return false unless root && root == @root_container
+        return true if root.id == @new_root_id
+
+        element = @element || root.containable
+        element.present? && writable_element?(element)
+      end
+
+      def writable_element?(element)
+        return true if element.is_a?(VesselTemplate) && element == @element
+
+        ElementPolicy.new(current_user, element).update?
       end
     end
   end

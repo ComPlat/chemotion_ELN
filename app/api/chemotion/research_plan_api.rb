@@ -78,7 +78,7 @@ module Chemotion
         literatures = attributes.delete(:literatures)
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
-        research_plan.container = update_datamodel(params[:container])
+        research_plan.container = update_datamodel(params[:container], element: research_plan, creating: true)
         research_plan.save!
 
         create_literatures_and_literals(research_plan, literatures)
@@ -200,8 +200,9 @@ module Chemotion
         end
 
         put do
+          research_plan = ResearchPlan.find(params[:id])
           attributes = declared(params.except(:segments, :user_labels), include_missing: false)
-          update_datamodel(attributes[:container])
+          update_datamodel(attributes[:container], element: research_plan, creating: false)
           attributes.delete(:container)
           attributes.delete(:literatures)
 
