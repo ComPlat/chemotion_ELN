@@ -6,6 +6,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
@@ -37,7 +38,16 @@ export default class ResearchPlansFetcher {
         const { id } = json.research_plan;
         return this.researchPlanAttachments(researchPlan, id)
           .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, id, 'ResearchPlan', true))
-          .then(() => this.researchPlanElement(json, id));
+          .then(() => {
+            if (json.attachments_omitted) {
+              rootStore.notificationsStore.add({
+                message: 'Research plan created, but some attachments could not be copied and were omitted.',
+                level: 'warning',
+                autoDismiss: 0,
+              });
+            }
+            return this.researchPlanElement(json, id);
+          });
       });
   }
 

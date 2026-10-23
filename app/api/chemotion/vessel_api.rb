@@ -99,9 +99,10 @@ module Chemotion
         if params[:container]
           begin
             root = Container.create_root_container(containable: vessel_template)
+            vessel_template.container = root
             params[:container][:id] = root.id
             params[:container][:is_new] = false
-            update_datamodel(params[:container].deep_dup)
+            update_datamodel(params[:container].deep_dup, element: vessel_template, creating: false)
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
           end
@@ -171,7 +172,9 @@ module Chemotion
 
         if params[:container]
           begin
-            vessel_template.container = update_datamodel(params[:container].deep_dup)
+            vessel_template.container = update_datamodel(
+              params[:container].deep_dup, element: vessel_template, creating: vessel_template.container.nil?
+            )
             vessel_template.save!
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
@@ -241,13 +244,14 @@ module Chemotion
         if params[:container]
           begin
             if vessel_template.container.present?
-              vessel_template.container.update!(update_datamodel(params[:container]).attributes)
+              update_datamodel(params[:container], element: vessel_template, creating: false)
             else
               root = Container.create_root_container(containable: vessel_template)
+              vessel_template.container = root
               params[:container][:id] = root.id
               params[:container][:is_new] = false
 
-              update_datamodel(params[:container].deep_dup)
+              update_datamodel(params[:container].deep_dup, element: vessel_template, creating: false)
             end
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)

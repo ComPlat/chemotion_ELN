@@ -15,7 +15,7 @@ module Chemotion
         @element_policy = ElementPolicy.new(current_user, @container.root_element)
         error!('401 Unauthorized', 401) unless @element_policy.update?
 
-        update_datamodel(params[:container])
+        update_datamodel(params[:container], element: @container.root_element, creating: false)
 
         root_element = @container.root_element
 

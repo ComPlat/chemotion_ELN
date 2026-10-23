@@ -104,14 +104,16 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
-  def update_body_attachments(original_identifier, copy_identifier)
-    attach = body&.detect { |x| x['value']['public_name'] == original_identifier }
-    if attach.present?
-      attach['id'] = SecureRandom.uuid
-      attach['value']['public_name'] = copy_identifier
+  def update_body_attachments(replacements)
+    body&.each do |field|
+      next unless field['type'] == 'image'
+      next unless (identifier = replacements[field.dig('value', 'public_name')])
+
+      field['id'] = SecureRandom.uuid
+      field['value']['public_name'] = identifier
     end
 
-    save!
+    save! if changed?
   end
 
   def set_short_label

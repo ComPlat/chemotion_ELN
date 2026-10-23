@@ -9,7 +9,6 @@ module Usecases
         @current_user = current_user
       end
 
-      # rubocop:disable Metrics/AbcSize
       def create(params)
         sample = nil
         SequenceBasedMacromoleculeSample.transaction do
@@ -21,10 +20,7 @@ module Usecases
           sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes,
                                                                       :collection_id, :container))
           sample.user = current_user
-          if params[:container]
-            sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user)
-                                                                      .update_datamodel(params[:container])
-          end
+          update_container(sample, params[:container], creating: true)
           sample.sequence_based_macromolecule = sbmm
 
           sample.sequence_based_macromolecule.save!
@@ -35,7 +31,6 @@ module Usecases
 
         sample
       end
-      # rubocop:enable Metrics/AbcSize
 
       def update(sample, params)
         # TODO: Prüfen ob der User das Update überhaupt durchführen darf
@@ -47,9 +42,7 @@ module Usecases
 
           sample.sequence_based_macromolecule = sbmm
           sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
-          if params[:container]
-            sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container])
-          end
+          update_container(sample, params[:container], creating: false)
 
           sample.sequence_based_macromolecule.save!
           sample.save!
@@ -59,6 +52,14 @@ module Usecases
       end
 
       private
+
+      def update_container(sample, container, creating:)
+        return unless container
+
+        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(
+          container, element: sample, creating: creating
+        )
+      end
 
       def target_collections(params)
         collections = []
