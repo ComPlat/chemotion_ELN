@@ -5,6 +5,10 @@ module Reporter
       s.present? && s['value'].present? && s['value'] || 'xx'
     end
 
+    def self.product_name(product)
+      product[:carry_on] ? "#{product[:showed_name]} (intermediate)" : product[:showed_name]
+    end
+
     def self.get_rinchi_keys(obj)
       long_key = obj[:rinchi_long_key]
       web_key = obj[:rinchi_web_key]
