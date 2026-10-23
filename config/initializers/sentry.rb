@@ -8,4 +8,7 @@ Sentry.init do |config|
   # of transactions for performance monitoring.
   # We recommend adjusting this value in production
   config.traces_sample_rate = ENV['SENTRY_BACKEND_SAMPLE_RATE'].to_f
+
+  config.before_send = ->(event, hint) { InventoryIntegration::SentryScrubber.event(event, hint) }
+  config.before_breadcrumb = ->(breadcrumb, hint) { InventoryIntegration::SentryScrubber.breadcrumb(breadcrumb, hint) }
 end

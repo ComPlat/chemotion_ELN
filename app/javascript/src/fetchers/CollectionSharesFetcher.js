@@ -25,8 +25,9 @@ export default class CollectionSharesFetcher {
   }
 
   static updateCollectionShare(collectionShareId, params) {
+    // A refused edit resolves to { error } so the caller can say why.
     return ApiClient.putJson(`/api/v1/collection_shares/${collectionShareId}`, { body: params })
-      .then((json) => json.collection_share);
+      .then((json) => (json?.error ? { error: json.error } : json?.collection_share));
   }
 
   /**

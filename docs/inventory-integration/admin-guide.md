@@ -38,6 +38,56 @@ Copy `config/inventory_integration.yml.example` to `config/inventory_integration
 | `inbound_api.enabled` | Lets external systems call Chemotion's inventory API with scoped tokens |
 | `credentials.<name>.<field>_env` | Secrets held by IT in environment variables, referenced by name in the admin interface |
 
+## Admin setup
+
+The admin page **Inventory Integration** appears once IT has enabled the feature.
+
+1. **Inventories.** Pick the person who manages the stock (lab or inventory manager), then either one
+   of their collections or a new one. The collection stays theirs. Its samples are marked as
+   chemicals, including samples added later. Archiving an inventory keeps its samples and shares.
+2. **Connections.** One per inventory. Pick a system IT enabled, enter the base URL (its host must be
+   on IT's allow-list), the settings and the credentials, or choose a credential IT holds.
+   - Stored credentials are encrypted and never shown again; leaving a credential field empty keeps
+     the stored value.
+   - **Test** checks reachability, credentials and scope. **Activate** needs a passing test of
+     exactly the current settings and an accepted mapping; changing anything a test depends on
+     returns the connection to draft.
+   - **Fields the external system owns** stay read-only in Chemotion, also for the owner.
+   - **Owners may share this inventory only with**: optional list of users and groups, e.g. to keep a
+     register's data inside a department. Empty means anyone.
+3. **Mapping.** A system with a built-in mapping offers **Use built-in mapping**, which stores it as
+   version 1 and accepts it. Every accepted version stays in the history.
+
+No data moves yet: pulling records and scheduled syncs come with the sync engine.
+
+## Field access per share
+
+Inventory collections have one more section in their share dialog: for each group of inventory
+fields, whether this share sees it (`read`), may change it (`edit`) or does not see it (`hidden`).
+The owner sets it, or a sharee with "Manage shares", who cannot grant more than they hold.
+
+| Group | Fields | Levels |
+| --- | --- | --- |
+| Substance and safety | Hazard and precautionary statements, pictograms, safety data sheets, disposal | read, edit (never hidden) |
+| Stock | Amount, volume, status, expiry, delivery and opening dates, storage temperature | hidden, read, edit |
+| Location | Building, room and cabinet | hidden, read, edit |
+| Procurement | Vendor, order and product numbers, price, order and required dates | hidden, read, edit |
+| People | Owner, groups, person, borrowed by | hidden, read |
+| Notes | Important notes | hidden, read, edit |
+| External system | Source, external id, last sync | hidden, read |
+
+- Picking a role fills in its defaults. A share without its own setting gets the defaults of its
+  permission level: read elements as reviewer, edit or add elements as partner, remove elements as
+  user, manage shares and above as supervisor.
+- A user reached by several shares (direct and through groups) gets the most permissive level per group.
+- Edit needs at least "Edit elements"; below it, edit counts as read.
+- The owner and admins see and edit everything, except fields the external system owns.
+- Share changes are kept in the share's history with the user who made them.
+
+Not enforced yet: the settings are stored and computed, but the inventory tab, sample details,
+search, exports and copies apply them only from the following releases. Until then, do not rely on
+`hidden` to keep data from a sharee.
+
 ## The record format
 
 Every route (adapters, files, the inventory API) produces the same record, `chemotion.inventory/v1`:
@@ -80,5 +130,6 @@ Run reports and validation results use stable codes.
 | `auth.unauthorized`, `auth.forbidden` | The external system refused the credentials or the scope |
 | `upstream.not_found`, `upstream.shape`, `upstream.rate_limited` | The external system answered with nothing, an unexpected shape, or a rate limit |
 | `transport.timeout` | The external system did not answer in time |
+| `adapter.failed` | The adapter stopped with an unexpected error; the server log has the details |
 | `link.conflict` | Both sides changed a field |
 | `push.uncertain`, `push.worklist` | A write-back may or may not have arrived, or needs to be booked by hand |

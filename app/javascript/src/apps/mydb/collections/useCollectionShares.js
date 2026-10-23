@@ -32,6 +32,7 @@ export default function useCollectionShares(collectionsStore) {
       wellplateDetailLevel: collectionShare.wellplate_detail_level,
       screenDetailLevel: collectionShare.screen_detail_level,
       elementDetailLevel: collectionShare.element_detail_level,
+      inventoryFieldAccess: collectionShare.inventory_field_access,
     });
     setShareModal({
       action: 'edit',

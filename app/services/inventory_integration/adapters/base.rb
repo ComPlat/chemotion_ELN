@@ -29,6 +29,11 @@ module InventoryIntegration
         def capability?(capability)
           manifest.fetch(:capabilities).include?(capability)
         end
+
+        # How requests carry the credentials, e.g. Transport::Auth::Basic.new(secrets.fetch(:user), ...).
+        def http_auth(secrets:, settings:) # rubocop:disable Lint/UnusedMethodArgument
+          InventoryIntegration::Transport::Auth::None.new
+        end
       end
 
       attr_reader :connection, :secrets, :http

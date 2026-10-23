@@ -339,9 +339,11 @@ export const CollectionsStore = types
     }),
     addCollectionShare: flow(function* addCollectionShare(params) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
-      if (response.status === 204) {
+      if (response?.status === 204) {
         self.fetchCollections()
         self.getSharedWithUsers(params.collection_id)
+      } else if (response?.error) {
+        self.notifyShareRefused(response.error)
       }
     }),
     takeOwnership: flow(function* takeOwnership(collectionId) {
@@ -352,7 +354,9 @@ export const CollectionsStore = types
     }),
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
       const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
-      if (collectionShare) {
+      if (collectionShare?.error) {
+        self.notifyShareRefused(collectionShare.error)
+      } else if (collectionShare) {
         // apply_to_subcollections/include_new_subcollections can cascade this edit onto
         // descendants not previously shared — PUT's response only carries the one edited share,
         // never the cascade's effect on those descendants' `shared` flag, so own_collections has
@@ -361,6 +365,12 @@ export const CollectionsStore = types
         self.getSharedWithUsers(collectionShare.collection_id)
       }
     }),
+    // e.g. field access above the editor's own, or a sharee the inventory's connection excludes
+    notifyShareRefused(message) {
+      getRoot(self).notificationsStore.add({
+        title: 'Sharing not saved', message, level: 'error', autoDismiss: 10
+      })
+    },
     deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId, collectionId) {
       const success = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
       if (success) {

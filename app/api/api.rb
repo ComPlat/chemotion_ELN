@@ -246,6 +246,7 @@ class API < Grape::API
   mount Chemotion::SequenceBasedMacromoleculeAPI
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
   mount Chemotion::CollectionShareAPI
+  mount Chemotion::InventoryIntegrationAPI
   mount Chemotion::CollectionElementsAPI
   mount Chemotion::AuthenticationAPI
 

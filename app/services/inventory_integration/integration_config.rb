@@ -105,6 +105,17 @@ module InventoryIntegration
       @settings.fetch('time_zone', 'Europe/Berlin')
     end
 
+    def encryption_key_env
+      @settings['encryption_key_env']
+    end
+
+    # IT-held secrets by name, e.g. { 'goechem_kit' => { 'api_key' => 'GOECHEM_KIT_API_KEY' } }.
+    def credential_refs
+      (@settings['credentials'] || {}).transform_values do |references|
+        references.transform_keys { |field| field.delete_suffix('_env') }
+      end
+    end
+
     def description
       return "misconfigured - #{errors.join('; ')}" if misconfigured?
       return 'not configured - feature off' if status == :off
@@ -182,7 +193,10 @@ module InventoryIntegration
       credentials.each do |name, references|
         next @errors << "credentials.#{name} must be a mapping" unless references.is_a?(Hash)
 
-        references.each { |field, env_name| check_env_name("credentials.#{name}.#{field}", env_name) }
+        references.each do |field, env_name|
+          @errors << "credentials.#{name}.#{field} must end in _env" unless field.end_with?('_env')
+          check_env_name("credentials.#{name}.#{field}", env_name)
+        end
       end
     end
 
