@@ -46,6 +46,17 @@ class CellLineDetails extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    if (prevProps.cellLineItem !== cellLineItem && cellLineItem?.attachments) {
+      const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+      if (mobXItem && !mobXItem.changed) {
+        cellLineDetailsStore.syncAttachmentsAfterSave(cellLineItem.id, cellLineItem.attachments);
+      }
+    }
+  }
+
   handleSubmit(cellLineItem) {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);

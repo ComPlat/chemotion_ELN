@@ -95,20 +95,14 @@ export default class CellLinesFetcher {
           return cellLineItem;
         },
       }))
-      .then((json) => {
+      .then(() => {
         const newFiles = (cellLineItem.attachments || []).filter((a) => a.is_new && !a.is_deleted);
         const delFiles = (cellLineItem.attachments || []).filter((a) => !a.is_new && a.is_deleted);
         return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)
-          .then(() => {
+          .then(() => this.fetchById(cellLineItem.id))
+          .then((freshCellLine) => {
             rootStore.notificationsStore.add(successfullyUpdatedParameter);
-            return this.fetchById(cellLineItem.id)
-              .then((freshCellLine) => {
-                rootStore.cellLineDetailsStore.syncAttachmentsAfterSave(
-                  cellLineItem.id,
-                  freshCellLine.attachments || []
-                );
-                return freshCellLine;
-              });
+            return freshCellLine;
           });
       });
   }
