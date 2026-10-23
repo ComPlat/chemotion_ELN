@@ -38,7 +38,8 @@ module ReactionRinchi
     mols_rcts = starting_materials.map(&mole_molfile_or_no)
     mols_agts = reactants.map(&mole_molfile_or_no)
     mols_sols = solvents.map(&mole_molfile_or_no)
-    mols_prds = products.map(&mole_molfile_or_no)
+    carried_ids = persisted? ? ReactionsProductSample.where(reaction_id: id, carry_on: true).pluck(:sample_id) : []
+    mols_prds = products.reject { |product| carried_ids.include?(product.id) }.map(&mole_molfile_or_no)
 
     [mols_rcts, mols_prds, (mols_agts + mols_sols)]
   end
