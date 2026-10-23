@@ -49,8 +49,7 @@ module Usecases
         end
         private :dataset_child_parent_for_file
 
-        # rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/MethodLength
-        def generate_comparison_dataset!(container, analyses_compared)
+        def generate_comparison_dataset!(container, analyses_compared) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
           list_file = []
           list_file_names = []
           combined_image_filename = 'combined_image.png'
@@ -69,7 +68,7 @@ module Usecases
           target_id = dataset_child.id
           new_analyses_compared_list = []
 
-          analyses_compared.each do |entry|
+          analyses_compared.each do |entry| # rubocop:disable Metrics/BlockLength
             attachment = Attachment.find_by(id: entry.dig('file', 'id'))
             next unless attachment
 
@@ -111,9 +110,8 @@ module Usecases
           end
 
           container.extended_metadata['analyses_compared'] = new_analyses_compared_list
-          # rubocop:disable Rails/SkipsModelValidations -- bulk update of JSON metadata; callbacks not required
-          container.update_column(:extended_metadata, container.extended_metadata)
-          # rubocop:enable Rails/SkipsModelValidations
+          # bulk update of JSON metadata; callbacks not required
+          container.update_column(:extended_metadata, container.extended_metadata) # rubocop:disable Rails/SkipsModelValidations
 
           return if list_file.empty?
 
@@ -133,7 +131,6 @@ module Usecases
             thumb: true,
           )
         end
-        # rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/MethodLength
       end
     end
   end

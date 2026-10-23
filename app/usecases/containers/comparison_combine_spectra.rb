@@ -7,7 +7,7 @@ module Usecases
       class ContainerNotFound < StandardError; end
 
       class << self
-        def execute!(params, current_user:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+        def execute!(params, current_user:)
           extras = parse_extras(params[:extras])
           delete_attachments!(extras)
 
@@ -164,15 +164,14 @@ module Usecases
         end
 
         def update_comparison_metadata!(dataset_container, analyses_compared)
-          # rubocop:disable Rails/SkipsModelValidations -- bulk update of JSON metadata; validations not required here
-          dataset_container.update_column(
+          # bulk update of JSON metadata; validations not required here
+          dataset_container.update_column( # rubocop:disable Rails/SkipsModelValidations
             :extended_metadata,
             (dataset_container.extended_metadata || {}).merge(
               'is_comparison' => 'true',
               'analyses_compared' => analyses_compared,
             ),
           )
-          # rubocop:enable Rails/SkipsModelValidations
         end
 
         def normalized_compare_entry(entry)
