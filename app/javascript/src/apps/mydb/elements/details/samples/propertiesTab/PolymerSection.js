@@ -85,10 +85,19 @@ export default class PolymerSection extends React.Component {
     this.props.handleSampleChanged(sample);
   }
 
+  static isReactionMaterial(sample, residue) {
+    const flag = residue.custom_info?.reaction_product;
+    return Boolean(sample.reaction_product || flag === true || flag === 'true'
+      || sample.tag?.taggable_data?.reaction_id);
+  }
+
   customInfoRadio(label, value, residue, sample) {
     const relComposition = sample.elemental_compositions
       .find((item) => item.composition_type === value);
     const relLoading = relComposition?.loading;
+    // a reaction material can always opt into the mass-difference calculation,
+    // which the reaction scheme then fills on the next amount change
+    const massDiffAllowed = value === 'mass_diff' && PolymerSection.isReactionMaterial(sample, residue);
 
     return (
       <Form.Check
@@ -98,7 +107,7 @@ export default class PolymerSection extends React.Component {
         checked={residue.custom_info.loading_type === value}
         name="loading_type"
         value={value}
-        disabled={value !== 'external' && !(value === 'found' && relComposition) && !relLoading}
+        disabled={value !== 'external' && !(value === 'found' && relComposition) && !relLoading && !massDiffAllowed}
         label={label}
       />
     );
