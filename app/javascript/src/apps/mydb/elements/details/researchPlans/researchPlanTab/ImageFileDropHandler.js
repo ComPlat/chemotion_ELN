@@ -19,7 +19,6 @@ export default class ImageFileDropHandler {
       file_name: attachmentFromFile.name,
       public_name: URL.createObjectURL(files[0]),
       identifier: attachmentFromFile.identifier,
-      old_value: replace
     };
     return value;
   }

@@ -171,7 +171,6 @@ module Chemotion
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
               policy: @element_policy,
             ),
-            attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             literatures: Entities::LiteratureEntity.represent(
               citation_for_elements(params[:id], 'ResearchPlan'),
               with_user_info: true,
@@ -363,7 +362,6 @@ module Chemotion
                 ).detail_levels,
                 policy: @element_policy,
               ),
-              attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e
             error!(e, 500)
@@ -398,7 +396,6 @@ module Chemotion
                 ).detail_levels,
                 policy: @element_policy,
               ),
-              attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
           rescue StandardError => e
             error!(e, 500)

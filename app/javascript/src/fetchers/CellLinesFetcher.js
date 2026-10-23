@@ -47,13 +47,17 @@ export default class CellLinesFetcher {
           return cellLine;
         },
       }))
-      .then((json) => GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
-        .then(() => {
-          rootStore.notificationsStore.add(successfullyCreatedParameter);
-          // eslint-disable-next-line no-param-reassign
-          user.cell_lines_count += 1;
-          return this.cellLineElement(params.collection_id, json);
-        }));
+      .then((json) => {
+        const newFiles = (cellLine.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+        return GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', json.id, []))
+          .then(() => {
+            rootStore.notificationsStore.add(successfullyCreatedParameter);
+            // eslint-disable-next-line no-param-reassign
+            user.cell_lines_count += 1;
+            return this.fetchById(json.id);
+          });
+      });
   }
 
   static getAllCellLineNames() {
@@ -82,7 +86,7 @@ export default class CellLinesFetcher {
     const params = extractApiParameter(cellLineItem);
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(cellLineItem.container)
-      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(cellLineItem))
+      .then(() => AnnotationsFetcher.updateAnnotations(cellLineItem))
       .then(() => ApiClient.putJson('/api/v1/cell_lines', {
         body: params,
         handleResponseError: (exception) => {
@@ -91,9 +95,15 @@ export default class CellLinesFetcher {
           return cellLineItem;
         },
       }))
-      .then((json) => {
-        rootStore.notificationsStore.add(successfullyUpdatedParameter);
-        return this.cellLineElement(params.collection_id, json);
+      .then(() => {
+        const newFiles = (cellLineItem.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+        const delFiles = (cellLineItem.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+        return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)
+          .then(() => this.fetchById(cellLineItem.id))
+          .then((freshCellLine) => {
+            rootStore.notificationsStore.add(successfullyUpdatedParameter);
+            return freshCellLine;
+          });
       });
   }
 
