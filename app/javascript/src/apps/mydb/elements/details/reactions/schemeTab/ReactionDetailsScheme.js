@@ -6,14 +6,13 @@ import {
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
-import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+import ReactionStep from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionStep';
 import Sample from 'src/models/Sample';
-import Reaction from 'src/models/Reaction';
+import Reaction, { STEP_FIELD_DEFAULTS } from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
-import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
@@ -22,6 +21,7 @@ import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/scheme
 import { rolesOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
+import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { permitOn } from 'src/components/common/uis';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -45,11 +45,21 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 
+const STEP_EVENT_VALUE_TYPES = ['temperature', 'timestampStart', 'timestampStop'];
+
 const isSameMaterial = (first, second) => (
   first?.id != null
   && second?.id != null
   && first.id === second.id
   && isSbmmSample(first) === isSbmmSample(second)
+);
+
+const referenceFor = (reaction, sample) => (
+  reaction.isMultiStep?.() ? reaction.referenceFor(sample) : reaction.referenceMaterial
+);
+
+const isReference = (reaction, sample) => (
+  reaction.isMultiStep?.() ? reaction.isReference(sample) : sample.reference
 );
 
 export default class ReactionDetailsScheme extends React.Component {
@@ -68,6 +78,7 @@ export default class ReactionDetailsScheme extends React.Component {
     };
 
     this.reactQuillRef = React.createRef();
+    this.stepQuillRefs = {};
     this.additionQuillRef = React.createRef();
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
@@ -78,6 +89,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
     this.dropSbmmSample = this.dropSbmmSample.bind(this);
+    this.activeDropStepId = null;
     this.switchEquiv = this.switchEquiv.bind(this);
     this.switchYield = this.switchYield.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
@@ -149,6 +161,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { reaction, onReactionChange } = this.props;
+    const stepId = this.activeDropStepId ?? null;
     let splitSample;
 
     if (srcSample instanceof Molecule || isNewSample) {
@@ -164,6 +177,7 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
     splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
+    splitSample.reaction_step_id = stepId;
 
     // Solvents are never reference materials
     if (tagGroup === 'solvents') {
@@ -219,6 +233,15 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropSbmmSample(srcSbmmSample, tagMaterial) {
     const { reaction, onReactionChange } = this.props;
+    const dropStep = reaction.reaction_steps.find((step) => step.id === this.activeDropStepId);
+    if (reaction.isMultiStep() && reaction.isLaterStep(dropStep)) {
+      this.context.notifications.add({
+        title: 'SBMM sample not added',
+        message: 'SBMM samples can only be added to step 1 for now.',
+        level: 'warning'
+      });
+      return;
+    }
 
     // Create a split copy (like buildChildWithoutCounter for samples)
     const splitSbmmSample = srcSbmmSample.buildChildWithoutCounter();
@@ -376,19 +399,20 @@ export default class ReactionDetailsScheme extends React.Component {
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
     // only when no reference material exists (regular or SBMM) triggers updatedReactionForReferenceChange
     const referenceRelatedGroup = ['starting_materials', 'reactants'];
+    const inFirstStep = (m) => reaction.isFirstStepMaterial(m);
     if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
       // Determine which array to use: reactants may include SBMM samples, so use reactantsWithSbmm
-      const materialsArray = materialGroup === 'reactants'
+      const materialsArray = (materialGroup === 'reactants'
         ? reaction.reactantsWithSbmm
-        : reaction[materialGroup];
+        : reaction[materialGroup]).filter(inFirstStep);
 
       if (materialsArray.length === 0) {
         // No materials left in the deleted group, try to set reference from the other group
         const refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
         // When looking for alternative reference in 'reactants', use reactantsWithSbmm
-        const refMaterialsArray = refMaterialGroup === 'reactants'
+        const refMaterialsArray = (refMaterialGroup === 'reactants'
           ? reaction.reactantsWithSbmm
-          : reaction[refMaterialGroup];
+          : reaction[refMaterialGroup]).filter(inFirstStep);
         if (refMaterialsArray.length > 0) {
           const nextReferenceSample = refMaterialsArray[0];
           const event = {
@@ -419,6 +443,7 @@ export default class ReactionDetailsScheme extends React.Component {
       this.updatedReactionForCatalystDeletion();
     }
 
+    this.recalculateLaterSteps();
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -434,13 +459,32 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
+    const targetStepId = this.activeDropStepId ?? null;
+    if (!reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
+      this.context.notifications.add({
+        title: 'Cannot move this product',
+        message: 'The next step needs it as its starting material. Delete that step first.',
+        level: 'warning'
+      });
+      return;
+    }
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
+    srcMat.reaction_step_id = targetStepId;
 
     // Translate UI group names to actual storage arrays for SBMM samples
     const actualSrcGroup = Reaction.storageGroupFor(srcMat, srcGroup);
     const actualTagGroup = Reaction.storageGroupFor(tagMat, tagGroup);
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
+    if (reaction.isMultiStep()) {
+      const newReference = !reaction.referenceMaterial && reaction.starting_materials
+        .find((material) => reaction.isFirstStepMaterial(material));
+      if (newReference) {
+        this.updatedReactionForReferenceChange({ sampleID: newReference.id });
+      } else {
+        this.recalculateLaterSteps();
+      }
+    }
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -610,11 +654,28 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   addSampleTo(e, type) {
-    const { onInputChange } = this.props;
+    const { onInputChange, onReactionChange, reaction } = this.props;
     const { paragraph } = e;
+
+    if (type === 'description' && reaction.isMultiStep()) {
+      const inserted = reaction.reaction_steps.filter((step) => {
+        const editor = this.stepQuillRefs[step.id]?.current?.editor;
+        return editor && ReactionDetailsScheme.insertParagraph(
+          editor,
+          paragraph,
+          (contents) => this.setStepField(step.id, 'description', contents)
+        );
+      });
+      if (inserted.length) onReactionChange(reaction);
+      return;
+    }
 
     let quillEditor = this.reactQuillRef.current.editor;
     if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
+    ReactionDetailsScheme.insertParagraph(quillEditor, paragraph, (contents) => onInputChange(type, contents));
+  }
+
+  static insertParagraph(quillEditor, paragraph, onInserted) {
     const range = quillEditor.getSelection();
     if (range) {
       let contents = quillEditor.getContents();
@@ -629,8 +690,10 @@ export default class ReactionDetailsScheme extends React.Component {
       range.length = 0;
       range.index += insertDelta.length();
       quillEditor.setSelection(range);
-      onInputChange(type, new Delta(contents));
+      onInserted(new Delta(contents));
+      return true;
     }
+    return false;
   }
 
   /**
@@ -683,18 +746,53 @@ export default class ReactionDetailsScheme extends React.Component {
       return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
     }
 
+    const step = reaction.isMultiStep?.() && (changeEvent.stepId != null
+      ? reaction.reaction_steps.find((entry) => entry.id === changeEvent.stepId)
+      : reaction.stepOf(sample));
+    if (step && reaction.isLaterStep(step)) {
+      reaction.setStepReference(step, sampleID);
+      this.recalculateStepEquivalents(step);
+      return reaction;
+    }
+
     if (isSbmm) {
       reaction.markSbmmSampleAsReference(sampleID);
     } else {
       reaction.markSampleAsReference(sampleID);
     }
 
-    return this.updatedReactionWithSample(
+    const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForReferenceChange.bind(this),
       sample,
       undefined,
       true
     );
+    this.recalculateLaterSteps();
+    return updatedReaction;
+  }
+
+  recalculateLaterSteps() {
+    const { reaction } = this.props;
+    if (!reaction.isMultiStep?.()) return;
+    reaction.reaction_steps
+      .filter((entry) => !entry._destroy && reaction.isLaterStep(entry))
+      .forEach((entry) => this.recalculateStepEquivalents(entry));
+  }
+
+  recalculateStepEquivalents(step) {
+    const { reaction } = this.props;
+    const referenceMaterial = reaction.stepReference(step);
+    if (!referenceMaterial) return;
+    ['starting_materials', 'reactants', 'solvents', 'products'].forEach((materialGroup) => {
+      reaction.materialsForStep(materialGroup, step.id).forEach((sample) => {
+        sample.reference = false;
+        if (sample === referenceMaterial) {
+          sample.equivalent = 1.0;
+        } else {
+          this.updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup);
+        }
+      });
+    });
   }
 
   /**
@@ -736,7 +834,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
       // A feedstock's concentration is derived from the gas vessel size,
       // so it must be refreshed whenever its own amount changes.
-      updatedSample.updateConcentrationFromSolvent(updatedReaction);
+      updatedSample.updateConcentrationFromSolvent(updatedReaction.volumeContextFor(updatedSample));
     }
 
     return updatedReaction;
@@ -798,7 +896,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
       // A feedstock's concentration is derived from the gas vessel volume,
       // so it must be refreshed whenever its own amount changes.
-      updatedSample.updateConcentrationFromSolvent(updatedReaction);
+      updatedSample.updateConcentrationFromSolvent(updatedReaction.volumeContextFor(updatedSample));
     }
 
     return updatedReaction;
@@ -972,7 +1070,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
     updatedSample.weight_percentage = weightPercentage;
     if (weightPercentage == null || weightPercentage === 0) {
-      updatedSample.equivalent = updatedSample.amount_mol / reaction.referenceMaterial.amount_mol;
+      const referenceMaterial = referenceFor(reaction, updatedSample);
+      if (referenceMaterial?.amount_mol) {
+        updatedSample.equivalent = updatedSample.amount_mol / referenceMaterial.amount_mol;
+      }
     }
     return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
@@ -1018,7 +1119,7 @@ export default class ReactionDetailsScheme extends React.Component {
       if (!updatedSample.gas_phase_data) {
         updatedSample.gas_phase_data = null;
       }
-      const { referenceMaterial } = reaction;
+      const referenceMaterial = referenceFor(reaction, updatedSample);
       const stoichiometryCoeff = (updatedSample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (referenceMaterial && stoichiometryCoeff) {
         updatedSample = this.calculateEquivalentForProduct(updatedSample, referenceMaterial, stoichiometryCoeff);
@@ -1204,7 +1305,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // If the updated sample is the reference material, update equivalents of all other samples
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
     // other samples' equivalents are recalculated, just like when amount_g or amount_l changes
-    if (reaction.referenceMaterial && isSameMaterial(updatedSample, reaction.referenceMaterial)) {
+    const referenceMaterial = referenceFor(reaction, updatedSample);
+    if (referenceMaterial && isSameMaterial(updatedSample, referenceMaterial)) {
       return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
     }
 
@@ -1292,8 +1394,8 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.amount_value = referenceComponent.amount_mol;
     }
 
-    // Calculate equivalent relative to the reaction's reference material since the amount_mol gets updated
-    const referenceMaterial = reaction?.referenceMaterial;
+    // Calculate equivalent relative to the reference material since the amount_mol gets updated
+    const referenceMaterial = reaction && referenceFor(reaction, updatedSample);
     if (referenceMaterial?.amount_mol > 0) {
       updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
     }
@@ -1333,7 +1435,8 @@ export default class ReactionDetailsScheme extends React.Component {
       return this.handleFeedstockConcentrationChange(updatedSample, concentrationValue);
     }
 
-    if (!this.guardConcentrationUpdate(reaction)) {
+    const volumeContext = reaction.volumeContextFor(updatedSample);
+    if (!this.guardConcentrationUpdate(volumeContext)) {
       return reaction;
     }
 
@@ -1350,7 +1453,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // amount from concentration × volume instead (otherwise the typed value
     // would be silently discarded on the next recompute).
     const hasAmount = Number.isFinite(updatedSample.amount_mol) && updatedSample.amount_mol > 0;
-    if (reaction.isVolumeLocked || !hasAmount) {
+    if (volumeContext.isVolumeLocked || !hasAmount) {
       return this.handleFixedVolumeConcentrationChange(updatedSample, concentrationValue);
     }
 
@@ -1451,10 +1554,12 @@ export default class ReactionDetailsScheme extends React.Component {
   applyDerivedVolumeFromConcentration(reaction, sample, concentration) {
     const { onInputChange } = this.props;
     const previousMode = reaction.concentration_mode;
+    const isStepMaterial = !!reaction.stepOf(sample);
     const applied = reaction.deriveVolumeFromSampleConcentration(sample, concentration);
+    if (applied && isStepMaterial) reaction.changed = true;
 
     if (applied && onInputChange) {
-      onInputChange('volume', applied.volume);
+      if (!isStepMaterial) onInputChange('volume', applied.volume);
       onInputChange('concentrationMode', applied.concentrationMode);
 
       // Typing a concentration directly defines the reaction volume, which only
@@ -1513,7 +1618,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 
-    const reactionVolume = this.resolveReactionVolumeForConcentrationOrWarn(reaction);
+    const reactionVolume = this.resolveReactionVolumeForConcentrationOrWarn(
+      reaction.volumeContextFor(updatedSample)
+    );
     if (reactionVolume == null) {
       return reaction;
     }
@@ -1557,24 +1664,20 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const { referenceMaterial } = reaction;
-    if (!referenceMaterial) {
-      return;
-    }
-
     const materialsToUpdate = [
       ...reaction.starting_materials,
       ...reaction.reactants,
     ];
 
     materialsToUpdate.forEach((material) => {
-      if (!material.reference && material.amount_mol) {
-        if (referenceMaterial.amount_mol === 0) {
-          material.equivalent = 0;
-        } else {
-          material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
-        }
-      }
+      if (isReference(reaction, material) || !material.amount_mol) return;
+
+      const referenceMaterial = referenceFor(reaction, material);
+      if (!referenceMaterial) return;
+
+      material.equivalent = referenceMaterial.amount_mol === 0
+        ? 0
+        : material.amount_mol / referenceMaterial.amount_mol;
     });
   }
 
@@ -1735,12 +1838,12 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const { reaction } = this.props;
-    const { referenceMaterial } = reaction;
     const { lockEquivColumn } = this.state;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     let stoichiometryCoeff = 1.0;
 
     return samples.map((sample) => {
+      const referenceMaterial = referenceFor(reaction, sample);
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
 
       // If equivalents are locked and this is the reference sample,
@@ -1750,7 +1853,7 @@ export default class ReactionDetailsScheme extends React.Component {
       if (referenceMaterial) {
         const isUpdatedSample = isSameMaterial(sample, updatedSample);
         if (isUpdatedSample) {
-          if (!updatedSample.reference && referenceMaterial.amount_value) {
+          if (!isReference(reaction, updatedSample) && referenceMaterial.amount_value) {
             if (materialGroup === 'products') {
               if (updatedSample.contains_residues && updatedSample.gas_type !== 'gas') {
                 const massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
@@ -1765,7 +1868,7 @@ export default class ReactionDetailsScheme extends React.Component {
               } else if (!lockEquivColumn) {
                 if (referenceMaterial.amount_mol > 0) {
                   sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-                } else if (!sample.reference) {
+                } else if (!isReference(reaction, sample)) {
                   // Set equivalent to 0 when reference material has no values (amount_mol = 0)
                   sample.equivalent = 0.0;
                 }
@@ -1802,7 +1905,7 @@ export default class ReactionDetailsScheme extends React.Component {
               // yield taking into account stoichiometry:
               if (referenceMaterial.amount_mol > 0) {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-              } else if (!sample.reference) {
+              } else if (!isReference(reaction, sample)) {
                 // Set equivalent to 0 when reference material has no values (amount_mol = 0)
                 sample.equivalent = 0.0;
               }
@@ -1824,7 +1927,7 @@ export default class ReactionDetailsScheme extends React.Component {
         // so the solvent still scales from its (now valid) equivalent under lock.
         if ((materialGroup === 'starting_materials'
           || materialGroup === 'reactants'
-          || materialGroup === 'solvents') && !sample.reference && !lockEquivColumn) {
+          || materialGroup === 'solvents') && !isReference(reaction, sample) && !lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
           if (referenceMaterial.amount_mol > 0) {
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
@@ -1950,11 +2053,12 @@ export default class ReactionDetailsScheme extends React.Component {
     materialGroup,
     { isEquivalentEdit = false } = {}
   ) {
-    const { reaction: { referenceMaterial } } = this.props;
-    const referenceAmountMol = Number(referenceMaterial?.amount_mol);
-    const hasReferenceAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol > 0;
+    const { reaction } = this.props;
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
+      const referenceMaterial = referenceFor(reaction, sample);
+      const referenceAmountMol = Number(referenceMaterial?.amount_mol);
+      const hasReferenceAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol > 0;
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       const isUpdatedSample = isSameMaterial(sample, updatedSample);
       if (isUpdatedSample && updatedSample.equivalent != null) {
@@ -1974,7 +2078,7 @@ export default class ReactionDetailsScheme extends React.Component {
         /* eslint-disable no-param-reassign, no-unused-expressions */
         if (materialGroup === 'products') {
           sample = this.calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff);
-        } else if (sample.reference) {
+        } else if (isReference(reaction, sample)) {
           // NB: sample equivalent independent of coeff
           sample.equivalent = 1;
         } else if (hasReferenceAmountMol) {
@@ -2018,7 +2122,7 @@ export default class ReactionDetailsScheme extends React.Component {
         } else {
           sample.weight_percentage = updatedSample.weight_percentage;
           if (updatedSample.weight_percentage == null || updatedSample.weight_percentage === 0) {
-            sample.equivalent = sample.amount_mol / reaction.referenceMaterial.amount_mol;
+            sample.equivalent = sample.amount_mol / referenceFor(reaction, sample).amount_mol;
           }
         }
       }
@@ -2076,28 +2180,34 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.equivalent = 1.0;
         sample.reference = true;
       } else {
-        // Both Sample and SequenceBasedMacromoleculeSample have amount_mol getter
-        const sampleAmountMol = sample.amount_mol;
-        const referenceAmountMol = referenceMaterial.amount_mol;
-
-        if (sample.amount_value || sampleAmountMol) {
-          if (referenceMaterial && referenceAmountMol > 0) {
-            if (materialGroup === 'products') {
-              const refCoeff = referenceMaterial.coefficient || 1;
-              const sampleCoeff = sample.coefficient || 1;
-              sample.equivalent = (sampleAmountMol * refCoeff) / (referenceAmountMol * sampleCoeff);
-            } else {
-              sample.equivalent = sampleAmountMol / referenceAmountMol;
-            }
-          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
-            // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
-            sample.equivalent = 0.0;
-          }
-        }
+        this.updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup);
         sample.reference = false;
       }
       return sample;
     });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  updateEquivalentAgainstReference(sample, referenceMaterial, materialGroup) {
+    // Both Sample and SequenceBasedMacromoleculeSample have amount_mol getter
+    const sampleAmountMol = sample.amount_mol;
+    const referenceAmountMol = referenceMaterial.amount_mol;
+
+    if (sample.amount_value || sampleAmountMol) {
+      if (referenceMaterial && referenceAmountMol > 0) {
+        if (materialGroup === 'products') {
+          const refCoeff = referenceMaterial.coefficient || 1;
+          const sampleCoeff = sample.coefficient || 1;
+          sample.equivalent = (sampleAmountMol * refCoeff) / (referenceAmountMol * sampleCoeff);
+        } else {
+          sample.equivalent = sampleAmountMol / referenceAmountMol;
+        }
+      } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants')
+        && referenceMaterial && !sample.reference) {
+        // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
+        sample.equivalent = 0.0;
+      }
+    }
   }
 
   updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
@@ -2247,9 +2357,13 @@ export default class ReactionDetailsScheme extends React.Component {
     return unit === 'l' ? numericValue : numericValue * 0.001;
   }
 
-  updateVesselSize(e) {
+  updateVesselSize(e, onChange = null) {
     const { onInputChange, reaction } = this.props;
     const value = this.normalizeVesselSizeValue(e.target.value);
+    if (onChange) {
+      onChange('vesselSizeAmount', value);
+      return;
+    }
     onInputChange('vesselSizeAmount', value);
     this.handleMaterialsChange({
       type: 'VesselSizeChanged',
@@ -2257,9 +2371,13 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updateVesselSizeOnBlur(e) {
+  updateVesselSizeOnBlur(e, onChange = null) {
     const { onInputChange, reaction } = this.props;
     const value = this.normalizeVesselSizeValue(e.target.value);
+    if (onChange) {
+      onChange('vesselSizeAmount', value);
+      return;
+    }
     onInputChange('vesselSizeAmount', value);
     if (value !== '') {
       this.handleMaterialsChange({
@@ -2269,22 +2387,26 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  changeVesselSizeUnit() {
+  changeVesselSizeUnit(source = null, onChange = null) {
     const { onInputChange, reaction } = this.props;
-    if (reaction.vessel_size.unit === 'ml') {
-      onInputChange('vesselSizeUnit', 'l');
-    } else if (reaction.vessel_size.unit === 'l') {
-      onInputChange('vesselSizeUnit', 'ml');
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    if (target.vessel_size.unit === 'ml') {
+      change('vesselSizeUnit', 'l');
+    } else if (target.vessel_size.unit === 'l') {
+      change('vesselSizeUnit', 'ml');
     }
   }
 
-  changePhOperator() {
+  changePhOperator(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
     const operators = ['=', '<', '>'];
-    const currentIndex = operators.indexOf(reaction.ph_operator || '=');
+    const currentIndex = operators.indexOf(target.ph_operator || '=');
     const nextOperator = operators[(currentIndex + 1) % operators.length];
 
-    onInputChange('phOperator', nextOperator);
+    change('phOperator', nextOperator);
   }
 
   // Ensure first mixture becomes the reference with Eq=1,
@@ -2300,7 +2422,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    const refMol = reaction.referenceMaterial?.amount_mol || 0;
+    const refMol = referenceFor(reaction, splitSample)?.amount_mol || 0;
     if (refMol > 0 && typeof splitSample.amount_mol === 'number') {
       splitSample.equivalent = splitSample.amount_mol / refMol;
     } else {
@@ -2309,8 +2431,9 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  reactionVesselSize() {
+  reactionVesselSize(source = null, onChange = null) {
     const { reaction } = this.props;
+    const target = source || reaction;
     return (
       <Form.Group>
         <Form.Label>Vessel size</Form.Label>
@@ -2318,18 +2441,18 @@ export default class ReactionDetailsScheme extends React.Component {
           <Form.Control
             name="reaction_vessel_size"
             type="text"
-            value={reaction.vessel_size?.amount ?? ''}
+            value={target.vessel_size?.amount ?? ''}
             disabled={reaction.can_update === false}
-            onChange={(event) => this.updateVesselSize(event)}
-            onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
+            onChange={(event) => this.updateVesselSize(event, onChange)}
+            onBlur={(event) => this.updateVesselSizeOnBlur(event, onChange)}
             className="flex-grow-1 Select-control"
           />
           <Button
             disabled={reaction.can_update === false}
             variant="light"
-            onClick={() => this.changeVesselSizeUnit()}
+            onClick={() => this.changeVesselSizeUnit(target, onChange)}
           >
-            {reaction.vessel_size?.unit || 'ml'}
+            {target.vessel_size?.unit || 'ml'}
           </Button>
         </InputGroup>
       </Form.Group>
@@ -2348,11 +2471,13 @@ export default class ReactionDetailsScheme extends React.Component {
     return Number.isFinite(parsedVolume) ? parsedVolume : undefined;
   }
 
-  switchVolumeLock() {
+  switchVolumeLock(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
-    const willLockVolume = !reaction.isVolumeLocked;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    const willLockVolume = !target.isVolumeLocked;
 
-    if (willLockVolume && !reaction.hasValidReactionVolume) {
+    if (willLockVolume && !target.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before locking the reaction volume.'
       );
@@ -2366,7 +2491,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // session while every other material updates.
     reaction.resetPreservedConcentrationExcept();
 
-    onInputChange('lockReactionVolume', !reaction.isVolumeLocked);
+    change('lockReactionVolume', !target.isVolumeLocked);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -2390,8 +2515,9 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  reactionVolume() {
+  reactionVolume(source = null, onChange = null) {
     const { reaction } = this.props;
+    const target = source || reaction;
     const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
 
     const metricPrefixes = ['m', 'u', 'n'];
@@ -2399,7 +2525,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const prefix = 'm';
 
     if (!isDisabled) {
-      const volumeValue = ReactionDetailsScheme.parseVolumeValue(reaction.volume);
+      const volumeValue = ReactionDetailsScheme.parseVolumeValue(target.volume);
 
       return (
         <Form.Group>
@@ -2418,11 +2544,11 @@ export default class ReactionDetailsScheme extends React.Component {
               <Button
                 id="lock_reaction_volume_btn"
                 size="sm"
-                variant={reaction.isVolumeLocked ? 'warning' : 'light'}
-                onClick={this.switchVolumeLock}
+                variant={target.isVolumeLocked ? 'warning' : 'light'}
+                onClick={() => this.switchVolumeLock(target, onChange)}
                 className="ms-1 py-0 px-1"
               >
-                <i className={reaction.isVolumeLocked ? 'fa fa-lock' : 'fa fa-unlock'} />
+                <i className={target.isVolumeLocked ? 'fa fa-lock' : 'fa fa-unlock'} />
               </Button>
             </OverlayTrigger>
           </Form.Label>
@@ -2435,10 +2561,10 @@ export default class ReactionDetailsScheme extends React.Component {
             title="Reaction volume"
             active
             id="numInput_reaction_volume_l"
-            disabled={reaction.isVolumeLocked}
+            disabled={target.isVolumeLocked}
             disableUnitButtonPadding
-            onChange={(e) => this.updateVolume(e)}
-            onMetricsChange={(e) => this.updateVolume(e)}
+            onChange={(e) => this.updateVolume(e, target, onChange)}
+            onMetricsChange={(e) => this.updateVolume(e, target, onChange)}
           />
         </Form.Group>
       );
@@ -2446,26 +2572,28 @@ export default class ReactionDetailsScheme extends React.Component {
     return null;
   }
 
-  updateVolume(e) {
+  updateVolume(e, source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
     if (!e || e.value === undefined) return;
 
     // Whether a usable volume existed before this change. NumeralInputWithUnitsCompo
     // reports a cleared field as numeric 0 (not ''), so the new value alone cannot
     // tell "cleared an existing volume" from "typing 0 toward 0.25". A prior usable
     // volume distinguishes the two: clearing removes one, typing from empty does not.
-    const previousVolume = Number(reaction.volume);
+    const previousVolume = Number(target.volume);
     const hadUsableVolume = Number.isFinite(previousVolume) && previousVolume > 0;
 
     // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
     const newVolume = e.value === '' ? null : e.value;
-    onInputChange('volume', newVolume);
+    change('volume', newVolume);
 
     // Entering, changing, or clearing the reaction volume must not change the
     // chosen basis; the Conc dropdown is the only control for that. The volume
     // field is a concentration denominator only on the reaction-volume basis, so
     // recalculate (including when it is cleared) solely in that mode.
-    if (reaction.concentration_mode !== Reaction.CONCENTRATION_MODES.REACTION_VOLUME) return;
+    if (target.concentration_mode !== Reaction.CONCENTRATION_MODES.REACTION_VOLUME) return;
 
     reaction.resetPreservedConcentrationExcept();
     reaction.updateAllConcentrations();
@@ -2506,10 +2634,12 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.updateAllConcentrations();
   }
 
-  renderPhConditionProperty() {
+  renderPhConditionProperty(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
-    const operator = reaction.ph_operator || '=';
-    const value = reaction.ph_value ?? '';
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+    const operator = target.ph_operator || '=';
+    const value = target.ph_value ?? '';
     const isDisabled = !permitOn(reaction);
 
     return (
@@ -2520,7 +2650,7 @@ export default class ReactionDetailsScheme extends React.Component {
             className="reaction-ph-operator"
             disabled={isDisabled}
             variant="primary"
-            onClick={() => this.changePhOperator()}
+            onClick={() => this.changePhOperator(target, change)}
           >
             {operator}
           </Button>
@@ -2530,11 +2660,154 @@ export default class ReactionDetailsScheme extends React.Component {
             value={value}
             disabled={isDisabled}
             placeholder="value"
-            onChange={(event) => onInputChange('phValue', event.target.value)}
+            onChange={(event) => change('phValue', event.target.value)}
           />
         </InputGroup>
       </Form.Group>
     );
+  }
+
+  handleToggleCarryOn(product, step) {
+    const { reaction, onReactionChange } = this.props;
+    reaction.toggleCarryOn(product.id);
+    const steps = reaction.reaction_steps;
+    const isLastStep = steps.length > 0 && steps[steps.length - 1].id === step.id;
+    if (product.carry_on && isLastStep) reaction.addStep();
+    this.recalculateLaterSteps();
+    reaction.changed = true;
+    onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  handleConditionsChange(value, stepId) {
+    const { reaction, onInputChange, onReactionChange } = this.props;
+    if (stepId == null) {
+      onInputChange('conditions', value);
+    } else {
+      this.setStepField(stepId, 'conditions', value);
+    }
+    onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  stepView(step) {
+    const { reaction } = this.props;
+    return reaction.stepContext(step);
+  }
+
+  handleStepInputChange(step, type, event) {
+    const { reaction, onReactionChange, onInputChange } = this.props;
+    if (type === 'status') {
+      onInputChange(type, event);
+      return;
+    }
+    const value = STEP_EVENT_VALUE_TYPES.includes(type) ? event.target.value : event;
+    const view = this.stepView(step);
+    setReactionByType(view, type, value);
+    Object.keys(STEP_FIELD_DEFAULTS).forEach((field) => this.setStepField(step.id, field, view[field]));
+    onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  setStepField(stepId, field, value) {
+    const { reaction } = this.props;
+    const step = reaction.reaction_steps.find((entry) => entry.id === stepId);
+    if (!step) return;
+    step[field] = value;
+    reaction.mirrorFirstStep();
+    reaction.changed = true;
+  }
+
+  handleDeleteStep(step) {
+    const { reaction, onReactionChange } = this.props;
+    const target = reaction.reaction_steps.find((entry) => entry.id === step.id);
+    if (!target) return;
+
+    if (!target._destroy) {
+      const doomed = [
+        ...reaction.starting_materials || [],
+        ...reaction.reactants || [],
+        ...reaction.solvents || [],
+        ...reaction.products || [],
+      ].filter((material) => material.reaction_step_id === step.id).length;
+      const message = doomed > 0
+        ? `Delete step ${step.position}? Saving will permanently delete its ${doomed} material`
+          + `${doomed === 1 ? '' : 's'} and everything recorded on them.`
+        : `Delete step ${step.position}?`;
+      // eslint-disable-next-line no-alert
+      if (!window.confirm(message)) return;
+    }
+
+    target._destroy = !target._destroy;
+    if (!target._destroy) this.recalculateLaterSteps();
+    reaction.changed = true;
+    onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  stepQuillRef(stepId) {
+    if (!this.stepQuillRefs[stepId]) this.stepQuillRefs[stepId] = React.createRef();
+    return this.stepQuillRefs[stepId];
+  }
+
+  renderStepDescription(step) {
+    const { reaction, onReactionChange } = this.props;
+    const { reactionDescTemplate } = this.state;
+    if (!permitOn(reaction)) return <QuillViewer value={step.description} />;
+
+    return (
+      <ReactionDescriptionEditor
+        height="100%"
+        reactQuillRef={this.stepQuillRef(step.id)}
+        template={reactionDescTemplate}
+        value={step.description}
+        updateTextTemplates={this.updateTextTemplates}
+        onChange={(contents) => {
+          this.setStepField(step.id, 'description', contents);
+          onReactionChange(reaction);
+        }}
+      />
+    );
+  }
+
+  renderStep(step) {
+    const { reaction } = this.props;
+    const { lockEquivColumn, displayYieldField } = this.state;
+    const stepId = step ? step.id : null;
+    const bindStep = (handler) => (...args) => {
+      this.activeDropStepId = stepId;
+      return handler(...args);
+    };
+    const stepSource = step ? this.stepView(step) : null;
+    const stepChange = step ? (type, event) => this.handleStepInputChange(step, type, event) : null;
+    return (
+      <ReactionStep
+        key={step ? step.id : 'standard'}
+        reaction={reaction}
+        step={step}
+        stepSource={stepSource}
+        onStepInputChange={stepChange}
+        phField={step ? this.renderPhConditionProperty(stepSource, stepChange) : null}
+        vesselSizeField={step ? this.reactionVesselSize(stepSource, stepChange) : null}
+        reactionVolumeField={step ? this.reactionVolume(stepSource, stepChange) : null}
+        descriptionField={step ? this.renderStepDescription(step) : null}
+        isInteractionReaction={reaction.isInteractionReaction()}
+        lockEquivColumn={lockEquivColumn}
+        displayYieldField={displayYieldField}
+        dropMaterial={bindStep(this.dropMaterial)}
+        deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+        dropSample={bindStep(this.dropSample)}
+        dropSbmmSample={bindStep(this.dropSbmmSample)}
+        onMaterialsChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+        switchEquiv={this.switchEquiv}
+        switchYield={this.switchYield}
+        onConditionsChange={(value, id) => this.handleConditionsChange(value, id)}
+        onToggleCarryOn={(product, entry) => this.handleToggleCarryOn(product, entry)}
+        onConcentrationModeChange={this.handleConcentrationModeChange}
+        onDeleteStep={(entry) => this.handleDeleteStep(entry)}
+      />
+    );
+  }
+
+  renderSteps() {
+    const { reaction } = this.props;
+    return reaction.reaction_steps.map((step) => this.renderStep(step));
   }
 
   render() {
@@ -2565,11 +2838,12 @@ export default class ReactionDetailsScheme extends React.Component {
         this.recalculateEquivalentsForMaterials(reaction);
       }
       reaction.products.map((sample) => {
-        sample.updateConcentrationFromSolvent(reaction);
-        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+        sample.updateConcentrationFromSolvent(reaction.volumeContextFor(sample));
+        const productReference = referenceFor(reaction, sample);
+        if (typeof (productReference) !== 'undefined' && productReference) {
           if (sample.contains_residues) {
-            sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
-              * (sample.molecule.molecular_weight - referenceMaterial.molecule.molecular_weight));
+            sample.maxAmount = productReference.amount_g + (productReference.amount_mol
+              * (sample.molecule.molecular_weight - productReference.molecule.molecular_weight));
           }
         }
       });
@@ -2578,12 +2852,14 @@ export default class ReactionDetailsScheme extends React.Component {
     // Update concentrations for all materials when volumes change
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
       reaction.allReactionMaterials.forEach((sample) => {
-        sample.updateConcentrationFromSolvent(reaction);
+        sample.updateConcentrationFromSolvent(reaction.volumeContextFor(sample));
       });
     }
 
     // if no reference material then mark first starting material
-    const refM = reaction.starting_materials[0];
+    const refM = reaction.isMultiStep()
+      ? reaction.starting_materials.find((material) => reaction.isFirstStepMaterial(material))
+      : reaction.starting_materials[0];
     if (!reaction.referenceMaterial && refM) {
       if (isSbmmSample(refM)) {
         reaction.markSbmmSampleAsReference(refM.id);
@@ -2602,96 +2878,30 @@ export default class ReactionDetailsScheme extends React.Component {
     return (
       <>
         <div className="mt-2 border-top">
-          <MaterialGroup
-            reaction={reaction}
-            materialGroup="starting_materials"
-            materials={reaction.starting_materials}
-            dropMaterial={this.dropMaterial}
-            deleteMaterial={
-              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-            }
-            dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
-            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-            switchEquiv={this.switchEquiv}
-            lockEquivColumn={this.state.lockEquivColumn}
-            onConcentrationModeChange={this.handleConcentrationModeChange}
-          />
-          <MaterialGroup
-            reaction={reaction}
-            materialGroup="reactants"
-            materials={reaction.reactantsWithSbmm}
-            dropMaterial={this.dropMaterial}
-            deleteMaterial={
-              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-            }
-            dropSample={this.dropSample}
-            dropSbmmSample={this.dropSbmmSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
-            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-            switchEquiv={this.switchEquiv}
-            lockEquivColumn={lockEquivColumn}
-            headIndex={reaction.starting_materials.length ?? 0}
-          />
-          <MaterialGroup
-            reaction={reaction}
-            materialGroup="solvents"
-            materials={reaction.solvents}
-            dropMaterial={this.dropMaterial}
-            deleteMaterial={
-              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-            }
-            dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
-            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-            switchEquiv={this.switchEquiv}
-            lockEquivColumn={this.state.lockEquivColumn}
-          />
-          <MaterialGroup
-            reaction={reaction}
-            materialGroup="products"
-            materials={reaction.products}
-            dropMaterial={this.dropMaterial}
-            deleteMaterial={
-              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-            }
-            dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
-            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-            switchEquiv={this.switchEquiv}
-            lockEquivColumn={this.state.lockEquivColumn}
-            switchYield={this.switchYield}
-            displayYieldField={displayYieldField}
-          />
-          {!isInteractionReaction && (
-            <ReactionConditions
-              conditions={reaction.conditions}
-              isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-              onChange={(conditions) => {
-                onInputChange('conditions', conditions);
-                onReactionChange(reaction, { updateGraphic: true });
-              }}
-            />
-          )}
+          {reaction.isMultiStep()
+            ? this.renderSteps()
+            : this.renderStep(null)}
         </div>
 
-        <ReactionDetailsMainProperties
-          reaction={reaction}
-          onInputChange={onInputChange}
-          showSchemeFields
-          phField={this.renderPhConditionProperty()}
-          vesselSizeField={isInteractionReaction ? null : this.reactionVesselSize()}
-          durationField={isInteractionReaction ? (
-            <ReactionDetailsDuration
-              reaction={reaction}
-              onInputChange={onInputChange}
-              isInteractionReaction
-              inlineInteractionField
-            />
-          ) : null}
-          reactionVolumeField={this.reactionVolume()}
-        />
-        {!isInteractionReaction && (
+        {!reaction.isMultiStep() && (
+          <ReactionDetailsMainProperties
+            reaction={reaction}
+            onInputChange={onInputChange}
+            showSchemeFields
+            phField={this.renderPhConditionProperty()}
+            vesselSizeField={isInteractionReaction ? null : this.reactionVesselSize()}
+            durationField={isInteractionReaction ? (
+              <ReactionDetailsDuration
+                reaction={reaction}
+                onInputChange={onInputChange}
+                isInteractionReaction
+                inlineInteractionField
+              />
+            ) : null}
+            reactionVolumeField={this.reactionVolume()}
+          />
+        )}
+        {!isInteractionReaction && !reaction.isMultiStep() && (
           <ReactionDetailsDuration
             reaction={reaction}
             onInputChange={onInputChange}
@@ -2716,26 +2926,28 @@ export default class ReactionDetailsScheme extends React.Component {
             </Col>
           </Row>
         )}
-        <Row className="mb-3">
-          <Form.Group>
-            <Form.Label>Description</Form.Label>
-            <div>
-              {
-                permitOn(reaction)
-                  ? (
-                    <ReactionDescriptionEditor
-                      height="100%"
-                      reactQuillRef={this.reactQuillRef}
-                      template={reactionDescTemplate}
-                      value={reaction.description}
-                      updateTextTemplates={this.updateTextTemplates}
-                      onChange={(event) => onInputChange('description', event)}
-                    />
-                  ) : <QuillViewer value={reaction.description} />
-              }
-            </div>
-          </Form.Group>
-        </Row>
+        {!reaction.isMultiStep() && (
+          <Row className="mb-3">
+            <Form.Group>
+              <Form.Label>Description</Form.Label>
+              <div>
+                {
+                  permitOn(reaction)
+                    ? (
+                      <ReactionDescriptionEditor
+                        height="100%"
+                        reactQuillRef={this.reactQuillRef}
+                        template={reactionDescTemplate}
+                        value={reaction.description}
+                        updateTextTemplates={this.updateTextTemplates}
+                        onChange={(event) => onInputChange('description', event)}
+                      />
+                    ) : <QuillViewer value={reaction.description} />
+                }
+              </div>
+            </Form.Group>
+          </Row>
+        )}
         <ReactionDetailsPurification
           reaction={reaction}
           onReactionChange={onReactionChange}

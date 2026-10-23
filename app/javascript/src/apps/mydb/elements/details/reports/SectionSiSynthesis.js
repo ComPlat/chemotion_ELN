@@ -13,6 +13,12 @@ const onlyBlank = (target) => {
   return !content;
 };
 
+const intermediateLabel = (product) => (product.carry_on ? ' (intermediate)' : '');
+
+const paragraphPerStep = (ops) => ops.flatMap((op, index) => (
+  index > 0 && op.attributes?.bold && /^Step \d+: $/.test(op.insert) ? [{ insert: '\n' }, op] : [op]
+));
+
 const deltaUserSerial = (molecule, molSerials) => {
   const insert = UserSerial(molecule, molSerials);
   return { insert, attributes: { bold: 'true' } };
@@ -26,7 +32,7 @@ const Title = ({ el, counter, molSerials }) => {
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = p.showedName();
     title = smn
-      ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
+      ? [...title, <span key={key}>{smn}{intermediateLabel(p)} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
   title = title.slice(0, -1);
@@ -90,7 +96,7 @@ const productContent = (products, settings, molSerials) => {
       ...prdIdentifier(counter, m, molSerials),
       { insert: ': ' },
       deltaSampleMoleculeName(p),
-      { insert: '; ' },
+      { insert: `${intermediateLabel(p)}; ` },
     ] : [];
 
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
@@ -291,7 +297,7 @@ const DangerBlock = ({ el }) => {
 
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
-  let block = rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []);
+  let block = paragraphPerStep(rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []));
   block = [{ insert: '\n' }, ...block, { insert: '\n' }];
   return block;
 };
@@ -400,3 +406,4 @@ const SectionSiSynthesis = ({
 };
 
 export default SectionSiSynthesis;
+export { intermediateLabel, paragraphPerStep };

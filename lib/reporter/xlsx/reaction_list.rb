@@ -73,7 +73,7 @@ module Reporter
         @sheet.add_row [
           serial,
           '',
-          p[:showed_name],
+          Reporter::Helper.product_name(p),
           p[:molecule][:inchistring],
           p[:molecule][:inchikey],
           long_key,

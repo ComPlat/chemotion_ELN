@@ -132,9 +132,15 @@ export default class ReactionDetails extends Component {
     this.state.showWtInfoModal = false;
     this.state.pendingSchemeType = null;
     this.state.schemeChangeConfirmMessage = null;
+    this.state.pendingReactionType = null;
+    this.state.reactionTypeConfirmMessage = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
+    this.reactionTypeDropdownRef = createRef();
+    this.confirmReactionTypeChange = this.confirmReactionTypeChange.bind(this);
+    this.cancelReactionTypeChange = this.cancelReactionTypeChange.bind(this);
+    this.requestReactionTypeChange = this.requestReactionTypeChange.bind(this);
     this.headerNameInputRef = createRef();
     // If reaction type is Interaction, always regenerate the scheme preview on load because
     // they intentionally use the products-only graphic, even if an older SVG exists.
@@ -151,21 +157,83 @@ export default class ReactionDetails extends Component {
     this.setState({ showWtInfoModal: false });
   }
 
+  requestReactionTypeChange(reaction, nextType) {
+    const leavingMultiStep = reaction.isMultiStep() && nextType !== 'multi_step';
+    if (leavingMultiStep && reaction.hasMultiStepData()) {
+      this.setState({
+        pendingReactionType: nextType,
+        reactionTypeConfirmMessage: (
+          <>
+            Leaving Multi-step removes the extra steps. Their materials are kept and merged into this reaction.
+            <br />
+            Switch reaction type?
+          </>
+        ),
+      });
+      return;
+    }
+    if (leavingMultiStep) reaction.clearMultiStep();
+    this.handleInputChange('reactionType', nextType);
+  }
+
+  confirmReactionTypeChange() {
+    const { reaction } = this.state;
+    const { pendingReactionType } = this.state;
+    reaction.clearMultiStep();
+    this.setState({
+      pendingReactionType: null,
+      reactionTypeConfirmMessage: null,
+    }, () => this.handleInputChange('reactionType', pendingReactionType || 'standard'));
+  }
+
+  cancelReactionTypeChange() {
+    this.setState({
+      pendingReactionType: null,
+      reactionTypeConfirmMessage: null,
+    });
+  }
+
   renderReactionTypeSelect(reaction) {
     const selectedReactionType = reaction.reaction_type || 'standard';
+    const nonDefaultScheme = reaction.gaseous || reaction.weight_percentage;
+    const typeOptions = Reaction.reaction_type_options.map((option) => (
+      option.value === 'multi_step' && nonDefaultScheme && selectedReactionType !== 'multi_step'
+        ? { ...option, isDisabled: true, label: `${option.label} (needs Default scheme)` }
+        : option
+    ));
 
     return (
-      <Form.Group className="reaction-details-toolbar__group mb-0 me-2">
+      <Form.Group className="reaction-details-toolbar__group mb-0 me-2" ref={this.reactionTypeDropdownRef}>
         <Select
           size="sm"
           name="reaction_type"
           isClearable={false}
-          options={Reaction.reaction_type_options}
+          options={typeOptions}
           formatOptionLabel={formatReactionTypeOption}
-          value={Reaction.reaction_type_options.find(({ value }) => value === selectedReactionType)}
+          value={typeOptions.find(({ value }) => value === selectedReactionType)}
           isDisabled={!permitOn(reaction)}
-          onChange={(option) => this.handleInputChange('reactionType', option?.value || 'standard')}
+          onChange={(option) => this.requestReactionTypeChange(reaction, option?.value || 'standard')}
         />
+        <Overlay
+          target={() => this.reactionTypeDropdownRef.current}
+          show={!!this.state.reactionTypeConfirmMessage}
+          placement="bottom"
+          rootClose
+          onHide={this.cancelReactionTypeChange}
+        >
+          <Tooltip placement="bottom" className="in" id="reaction-type-change-confirm-tooltip">
+            {this.state.reactionTypeConfirmMessage}
+            <br />
+            <ButtonToolbar className="justify-content-center mt-1">
+              <Button variant="danger" size="xxsm" onClick={this.confirmReactionTypeChange}>
+                Confirm
+              </Button>
+              <Button variant="warning" size="xxsm" onClick={this.cancelReactionTypeChange}>
+                Discard
+              </Button>
+            </ButtonToolbar>
+          </Tooltip>
+        </Overlay>
       </Form.Group>
     );
   }
@@ -246,6 +314,7 @@ export default class ReactionDetails extends Component {
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
     const nextSchemeChangeConfirmMessage = nextState.schemeChangeConfirmMessage;
+    const nextReactionTypeConfirmMessage = nextState.reactionTypeConfirmMessage;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
     const nextIsEditingHeaderName = nextState.isEditingHeaderName;
@@ -253,7 +322,7 @@ export default class ReactionDetails extends Component {
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
       schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion,
-      isEditingHeaderName, headerNameDraft
+      isEditingHeaderName, headerNameDraft, reactionTypeConfirmMessage
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -264,6 +333,7 @@ export default class ReactionDetails extends Component {
       || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
       || nextSchemeChangeConfirmMessage !== schemeChangeConfirmMessage
+      || nextReactionTypeConfirmMessage !== reactionTypeConfirmMessage
       || nextShowWtInfoModal !== showWtInfoModal
       || nextReactionSvgVersion !== reactionSvgVersion
       || nextIsEditingHeaderName !== isEditingHeaderName
@@ -810,18 +880,15 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const { referenceMaterial } = reaction;
-    if (!referenceMaterial || !referenceMaterial.amount_mol) {
-      return;
-    }
-
     const materialsToUpdate = [
       ...reaction.starting_materials,
       ...reaction.reactants,
     ];
 
     materialsToUpdate.forEach((material) => {
-      if (!material.reference && material.amount_mol) {
+      const referenceMaterial = reaction.referenceFor(material);
+      if (!referenceMaterial || !referenceMaterial.amount_mol) return;
+      if (!reaction.isReference(material) && material.amount_mol) {
         material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
       }
     });
@@ -907,6 +974,7 @@ export default class ReactionDetails extends Component {
       schemeChangeConfirmMessage,
     } = this.state;
     const isInteractionReaction = reaction.isInteractionReaction();
+    const schemeLockedToDefault = reaction.isMultiStep() && !reaction.gaseous && !reaction.weight_percentage;
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
     let documentationLink;
@@ -941,12 +1009,15 @@ export default class ReactionDetails extends Component {
           <div className="d-flex align-items-center">
             {this.renderReactionTypeSelect(reaction)}
             {!isInteractionReaction && (
-              <Dropdown ref={this.schemeDropdownRef}>
+              <Dropdown
+                ref={this.schemeDropdownRef}
+                title={schemeLockedToDefault ? 'Multi-step uses the Default scheme' : undefined}
+              >
                 <Dropdown.Toggle
                   variant="info"
                   size="sm"
                   id="scheme-type-dropdown"
-                  disabled={!permitOn(reaction)}
+                  disabled={!permitOn(reaction) || schemeLockedToDefault}
                 >
                   <i className="fa fa-cog" />
                   <span className="ms-1">

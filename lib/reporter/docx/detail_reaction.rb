@@ -33,8 +33,9 @@ module Reporter
           reactants: reactants,
           products: products,
           solvents: displayed_solvents.presence,
+          steps: steps,
           description: desc_content,
-          description_check: content_check(clean_desc),
+          description_check: content_check(clean_desc) && !text_per_step?,
           purification: purification.presence,
           dangerous_products: dangerous_products.presence,
           tlc_rf: rf_value,
@@ -138,6 +139,7 @@ module Reporter
         obj.products.each_with_index do |p, idx|
           delta = delta +
                   sample_molecule_name_delta(p, font_size, true, idx, @std_rxn, @template) +
+                  intermediate_delta(p, font_size) +
                   [{ 'attributes' => { 'font-size' => font_size },
                      'insert' => ' (' }] +
                   mol_serial_delta(p[:molecule][:id], font_size) +
@@ -166,7 +168,7 @@ module Reporter
           counter += 1
           m = p[:molecule]
           cas = (p[:xref] && p[:xref][:cas]) || '- '
-          mol_name = sample_molecule_name_delta(p)
+          mol_name = sample_molecule_name_delta(p) + intermediate_delta(p)
           delta += st_name ? name_delta(mol_name, counter, p) : []
           delta += st_formula ? sum_formular_delta(m) : []
           delta += st_cas ? cas_delta(cas) : []
@@ -179,6 +181,10 @@ module Reporter
           delta += [{ 'insert' => "\n" }]
         end
         delta
+      end
+
+      def intermediate_delta(product, font_size = 12)
+        product[:carry_on] ? [{ 'attributes' => { 'font-size' => font_size }, 'insert' => ' (intermediate)' }] : []
       end
 
       def is_disable_all
@@ -726,6 +732,68 @@ module Reporter
         output
       end
 
+      def steps
+        live = Array(obj.reaction_steps).sort_by { |step| step[:position] }
+        unless multi_step_report?
+          return [{ title: nil, starting_materials: starting_materials, reactants: reactants,
+                    products: products, solvents: displayed_solvents.presence }]
+        end
+
+        live.each_with_index.map { |step, index| step_hash(step, index, index.positive? ? live[index - 1] : nil) }
+      end
+
+      def step_hash(step, index, previous) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        carried = previous ? in_step(obj.products, previous[:id]).select { |p| p[:carry_on] } : []
+        own_starting = in_step(obj.starting_materials, step[:id])
+        own_reactants = in_step(obj.reactants, step[:id])
+        ref = step_ref(carried + own_starting + own_reactants)
+        sbmm = index.zero? ? reactant_sbmm_samples.map { |s| sbmm_material_hash(s) } : []
+        {
+          title: "Step #{index + 1}",
+          starting_materials: carried.map { |p| carried_hash(p, ref) } + own_starting.map { |s| material_hash(s) },
+          reactants: own_reactants.map { |r| material_hash(r) } + sbmm,
+          products: in_step(obj.products, step[:id]).map { |p| material_hash(p, true) },
+          solvents: displayed_solvents(in_step(solvents, step[:id])).presence,
+          description: step_description(step, index),
+        }
+      end
+
+      def multi_step_report?
+        obj.reaction_type == 'multi_step' && Array(obj.reaction_steps).any?
+      end
+
+      def text_per_step?
+        multi_step_report? && @rxn_settings[:material]
+      end
+
+      def step_description(step, index)
+        return unless @rxn_settings[:description] && step[:description].present?
+
+        ops = rm_redundant_newline(step[:description].deep_stringify_keys['ops'])
+        return unless content_check('ops' => ops)
+
+        heading = { 'insert' => "Step #{index + 1}: ", 'attributes' => { 'bold' => true } }
+        description('ops' => [heading] + ops).first
+      end
+
+      def step_ref(candidates)
+        candidates.find { |material| material[:step_reference] } || candidates.first
+      end
+
+      def in_step(materials, step_id)
+        Array(materials).select { |material| material[:reaction_step_id] == step_id }
+      end
+
+      def carried_hash(product, ref)
+        ref_mmol = raw_mmol(ref) if ref
+        equivalent = ref_mmol.to_f.positive? ? raw_mmol(product).to_f / ref_mmol : nil
+        material_hash(product, true).merge(equiv: format_scientific(equivalent, digit))
+      end
+
+      def raw_mmol(material)
+        material[:real_amount_mmol].to_f.positive? ? material[:real_amount_mmol] : material[:amount_mmol]
+      end
+
       def purification
         puri = obj.purification
         return puri if puri == '***'
@@ -740,8 +808,8 @@ module Reporter
         dang.compact.join(', ')
       end
 
-      def description
-        delta_desc = obj.description.deep_stringify_keys['ops']
+      def description(delta = obj.description)
+        delta_desc = delta.deep_stringify_keys['ops']
         clean_desc = { 'ops' => rm_redundant_newline(delta_desc) }
         [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
@@ -754,9 +822,9 @@ module Reporter
         obj.solvent
       end
 
-      def displayed_solvents
-        if solvents.present?
-          solvents.map do |solvent|
+      def displayed_solvents(list = solvents) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        if list.present?
+          list.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.real_amount_value && s.real_amount_value != 0
                        " (#{valid_digit(s.real_amount_ml, digit)}ml)"
@@ -837,8 +905,15 @@ module Reporter
         return [] if ['gp'].include?(obj.role)
 
         delta_desc = obj.description.deep_stringify_keys['ops']
-        clean_desc = remove_redundant_space_break(delta_desc)
+        clean_desc = paragraph_per_step(remove_redundant_space_break(delta_desc))
         (@std_rxn ? [] : [{ 'insert' => "\n" }]) + clean_desc + (@std_rxn ? [] : [{ 'insert' => "\n" }])
+      end
+
+      def paragraph_per_step(ops)
+        ops.each_with_index.flat_map do |op, index|
+          step_heading = op.dig('attributes', 'bold') && op['insert'].to_s.match?(/\AStep \d+: \z/)
+          index.positive? && step_heading ? [{ 'insert' => "\n" }, op] : [op]
+        end
       end
 
       def observation_delta
