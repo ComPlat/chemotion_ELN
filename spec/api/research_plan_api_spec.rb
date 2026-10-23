@@ -138,6 +138,17 @@ describe Chemotion::ResearchPlanAPI do
             expect(response).to have_http_status(:created)
             expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
           end
+
+          it 'removes the skipped image from the body and exported document' do
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            html = Export::ExportResearchPlan.new(user, copied_plan, :html).to_html
+
+            expect(copied_plan.body).to eq([])
+            expect(html).not_to include(source.attachment.url)
+            expect(Nokogiri::HTML(html).css('img')).to be_empty
+          end
         end
 
         context 'when the attachment ID does not exist' do
@@ -150,6 +161,16 @@ describe Chemotion::ResearchPlanAPI do
 
             expect(response).to have_http_status(:created)
             expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          end
+
+          it 'also removes unreadable body references when the supplied ID is missing' do
+            params[:attachments] = [{ id: -1 }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.body).to eq([])
+            expect(Export::ExportResearchPlan.new(user, copied_plan, :html).to_html)
+              .not_to include(source.attachment.url)
           end
         end
 
@@ -183,6 +204,17 @@ describe Chemotion::ResearchPlanAPI do
               end.not_to change(Attachment, :count)
 
               expect(response).to have_http_status(:created)
+            end
+
+            it 'does not export the skipped source image from the copied plan' do
+              post '/api/v1/research_plans', params: params, as: :json
+
+              copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+              html = Export::ExportResearchPlan.new(user, copied_plan, :html).to_html
+
+              expect(copied_plan.body).to eq([])
+              expect(html).not_to include(source.attachment.url)
+              expect(Nokogiri::HTML(html).css('img')).to be_empty
             end
           end
         end

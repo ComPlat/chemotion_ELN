@@ -58,6 +58,37 @@ describe Usecases::Attachments::Copy do
       end
     end
 
+    context 'when the body references an unreadable image more than once' do
+      let(:collection) { create(:collection) }
+      let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
+      let(:text_field) do
+        { 'type' => 'richtext', 'value' => { 'ops' => [{ 'insert' => "Keep this text\n" }] } }
+      end
+      let(:research_plan) do
+        create(:research_plan, body: [
+                 text_field,
+                 { type: 'image', value: { public_name: source.identifier } },
+                 { type: 'image', value: { public_name: source.identifier } },
+               ])
+      end
+
+      it 'removes every unreadable image while retaining other fields' do
+        expect(research_plan.reload.body).to eq([text_field])
+      end
+    end
+
+    context 'when the body references a readable unattached image' do
+      let(:source) { create(:attachment, attachable: nil, created_for: user.id) }
+      let(:image) { create(:attachment, :with_png_image, attachable: nil, created_for: user.id) }
+      let(:research_plan) do
+        create(:research_plan, body: [{ type: 'image', value: { public_name: image.identifier } }])
+      end
+
+      it 'keeps the image field for the pending upload' do
+        expect(research_plan.reload.body.first.dig('value', 'public_name')).to eq(image.identifier)
+      end
+    end
+
     context 'when the attachment is in an unreadable analysis container' do
       let(:sample) { create(:sample, collections: [create(:collection)]) }
       let(:source) do

@@ -5,7 +5,11 @@ require 'rails_helper'
 describe Export::ExportResearchPlan do
   describe '#to_relative_html' do
     let(:user) { create(:person) }
-    let(:research_plan) { create(:research_plan, creator: user) }
+    let(:collection) { create(:collection, user: user) }
+    let(:research_plan) { create(:research_plan, creator: user, collections: [collection]) }
+    let(:owner) { create(:person) }
+    let(:source_collection) { create(:collection, user: owner) }
+    let(:source_plan) { create(:research_plan, creator: owner, collections: [source_collection]) }
     let(:attachment) do
       create(
         :attachment,
@@ -41,6 +45,79 @@ describe Export::ExportResearchPlan do
       generated_html = exporter.to_relative_html
 
       expect(generated_html).to include(attachment.attachment_data['id'])
+    end
+
+    context 'when the image belongs to another user' do
+      let(:attachment) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
+
+      it 'omits an unreadable image referenced directly in the body' do
+        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+      end
+    end
+
+    context 'when the source plan is shared read-only below dataset visibility' do
+      let(:attachment) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
+
+      before do
+        create(:collection_share, collection: source_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  researchplan_detail_level: 2)
+      end
+
+      it 'omits the image even though the source plan can be read' do
+        expect(ElementPolicy.new(user, source_plan).read?).to be true
+        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+      end
+    end
+
+    context 'when the source plan is shared read-only with dataset visibility' do
+      let(:attachment) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
+
+      before do
+        create(:collection_share, collection: source_collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  researchplan_detail_level: 10)
+      end
+
+      it 'exports the readable image' do
+        expect(exporter.to_html).to include(attachment.attachment.url)
+      end
+    end
+
+    context 'when the image attachment was deleted' do
+      before { attachment.destroy! }
+
+      it 'omits the missing attachment instead of using a public-image path' do
+        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+      end
+    end
+
+    context 'when the image reference is empty' do
+      before { research_plan.update!(body: [{ type: 'image', value: { public_name: nil } }]) }
+
+      it 'omits the empty image' do
+        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+      end
+    end
+
+    context 'when the field references a legacy public image' do
+      let(:public_name) { "#{SecureRandom.uuid}.png" }
+
+      before { research_plan.update!(body: [{ type: 'image', value: { public_name: public_name } }]) }
+
+      it 'keeps the legacy public-image path' do
+        expect(exporter.to_html).to include("/images/research_plans/#{public_name}")
+      end
+    end
+
+    context 'when the reference contains a path' do
+      before do
+        research_plan.update!(body: [{ type: 'image', value: { public_name: '../../uploads/private.png' } }])
+      end
+
+      it 'omits the image' do
+        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+      end
     end
   end
 

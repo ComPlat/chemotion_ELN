@@ -26,6 +26,7 @@ module Export
       @name = research_plan.name
       @fields = []
       @export_format = export_format
+      @attachment_access = Usecases::Attachments::Access.new(current_user)
       # Retain PNG Tempfiles until the export finishes so GC does not delete
       # them before Pandoc/HTML rendering reads the paths.
       @png_tempfiles = []
@@ -155,13 +156,27 @@ module Export
     end
 
     def image_field(field)
-      attachment = Attachment.find_by(identifier: field['value']['public_name'])
-      image_location = attachment&.attachment&.url || "/images/research_plans/#{field['value']['public_name']}"
+      image_location = image_location_for(field.dig('value', 'public_name'))
+      return if image_location.blank?
 
       {
         type: field['type'],
         src: image_location,
       }
+    end
+
+    def image_location_for(public_name)
+      return unless public_name.is_a?(String)
+      return if public_name.blank?
+
+      attachment = Attachment.find_by(identifier: public_name)
+      if attachment
+        return unless @attachment_access.read?(attachment)
+
+        attachment.attachment&.url
+      elsif public_name.match?(/\A[\w-]+\.\w+\z/)
+        "/images/research_plans/#{public_name}"
+      end
     end
 
     def sample_field(field)
