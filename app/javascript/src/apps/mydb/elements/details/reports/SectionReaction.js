@@ -10,6 +10,8 @@ const SectionReaction = ({reaction, settings, configs}) => {
          tlc_solvents, rf_value, status } = reaction;
   const dangerousProducts = dangerous_products;
 
+  const textPerStep = reaction.isMultiStep?.() && settings.material;
+
   const has_analyses = !!(products.find((sample) => sample.analysesPresent()));
 
   const showPuri = settings.purification
@@ -33,8 +35,8 @@ const SectionReaction = ({reaction, settings, configs}) => {
                   svgPath={svgPath}
                   isProductOnly={!configs.Showallchemi}
                   products={products} />
-      {reaction.isMultiStep?.()
-        ? <StepsMaterialContent show={settings.material} reaction={reaction} />
+      {textPerStep
+        ? <StepsMaterialContent reaction={reaction} showDescription={settings.description} />
         : (
           <>
             <MaterialContent  show={settings.material}
@@ -46,9 +48,13 @@ const SectionReaction = ({reaction, settings, configs}) => {
                             solvent={solvent} />
           </>
         )}
-      <h4> Description </h4>
-      <DescriptionContent show={settings.description && description}
-                          description={description} />
+      {!textPerStep && (
+        <>
+          <h4> Description </h4>
+          <DescriptionContent show={settings.description && description}
+                              description={description} />
+        </>
+      )}
       <PurificationContent
         show={showPuri}
         puri={purification}
@@ -209,8 +215,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   );
 };
 
-const StepsMaterialContent = ({ show, reaction }) => {
-  if (!show) return null;
+const StepsMaterialContent = ({ reaction, showDescription }) => {
   const liveSteps = reaction.reaction_steps.filter((step) => !step._destroy);
   const typedSolvent = reaction.solvents.length === 0 && reaction.solvent
     ? <SolventContent key="typed-solvent" show solvents={[]} solvent={reaction.solvent} />
@@ -218,6 +223,7 @@ const StepsMaterialContent = ({ show, reaction }) => {
 
   return [...liveSteps.map((step, index) => {
     const ref = reaction.stepReference(step);
+    const stepOps = step.description?.ops || [];
     const carried = reaction.carriedProductsIntoStep(step.id).map((product) => (
       Object.assign(Object.create(product), {
         equivalent: ref?.amount_mol ? product.amount_mol / ref.amount_mol : null,
@@ -236,6 +242,10 @@ const StepsMaterialContent = ({ show, reaction }) => {
           show={reaction.materialsForStep('solvents', step.id).length > 0}
           solvents={reaction.materialsForStep('solvents', step.id)}
           solvent=""
+        />
+        <DescriptionContent
+          show={showDescription && stepOps.some((op) => typeof op.insert !== 'string' || op.insert.trim())}
+          description={{ ops: [{ insert: `Step ${index + 1}: `, attributes: { bold: true } }, ...stepOps] }}
         />
       </div>
     );
