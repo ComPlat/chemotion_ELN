@@ -1,0 +1,15 @@
+{
+  "schema": "chemotion.inventory.rest/v1",
+  "list": {
+    "method": "GET", "path": "/api/inventory/containers",
+    "query": { "workgroup": "{{settings.workgroup_id}}" },
+    "records_path": "data",
+    "changed_since": { "param": "updated_after", "format": "iso8601", "overlap_minutes": 10 }
+  },
+  "detail": { "method": "GET", "path": "/api/inventory/containers/{{external_id}}", "record_path": "data" },
+  "auth": { "type": "bearer", "secret": "api_token" },
+  "pagination": { "style": "next_link", "next_link_path": "links.next", "page_size": 100, "max_pages": 1000 },
+  "headers": { "Accept": "application/json" },
+  "rate_limit": { "requests_per_second": 2 },
+  "not_found_statuses": [404, 410]
+}

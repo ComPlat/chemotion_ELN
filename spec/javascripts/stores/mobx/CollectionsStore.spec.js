@@ -1,6 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import expect from 'expect';
 import sinon from 'sinon';
+import toast from 'react-hot-toast';
 import { RootStore } from 'src/stores/mobx/RootStore';
 import { Collection } from 'src/stores/mobx/CollectionsStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -145,6 +146,17 @@ describe('CollectionsStore', () => {
       await store.updateCollectionShare(7, { permission_level: 1, apply_to_subcollections: true });
 
       expect(fetchCollectionsStub.called).toBe(true);
+    });
+
+    it('says why a refused update was not saved', async () => {
+      updateStub.resolves({ error: 'field access above your own: location' });
+      const toastStub = sinon.stub(toast, 'error');
+
+      await store.updateCollectionShare(7, { permission_level: 1 });
+
+      expect(fetchCollectionsStub.called).toBe(false);
+      expect(toastStub.firstCall.args[0]).toBe('field access above your own: location');
+      toastStub.restore();
     });
 
     it('does not refetch when the update fails (falsy response)', async () => {

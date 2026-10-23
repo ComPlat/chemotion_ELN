@@ -1,0 +1,2 @@
+{ "contract": "chemotion.inventory/v1", "external_id": "x", "kind": "container", "version": "1",
+  "substance": { "cas": "64-17-6" } }

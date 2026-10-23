@@ -1,0 +1,49 @@
+# External inventory integration: what this server allows. Copy to config/inventory_integration.yml.
+# Rails merges `shared:` into every environment.
+#
+# Without this file the feature is off: no admin page, no jobs, no API. A file that is present
+# but invalid (unknown setting or adapter, malformed host, bad CIDR range, ...) is logged at boot
+# and the feature refuses to run until it is fixed.
+#
+# Admins choose connections, mappings and schedules in the admin interface; this file only
+# decides which adapters and external hosts they may use at all.
+shared:
+  :enabled: true
+  :time_zone: 'Europe/Berlin'
+  # Optional dedicated key for stored credentials; otherwise derived from secret_key_base.
+  :encryption_key_env: 'INVENTORY_INTEGRATION_ENCRYPTION_KEY'
+  :adapters:
+    :goechem:
+      :enabled: true
+      # Exact host names, or '*.example.edu' for all subdomains.
+      :allowed_hosts: ['goechem.example.edu']
+      # Shortest pull interval an admin may choose for this adapter ('12h', '7d').
+      :min_pull_interval: '7d'
+  :network:
+    # Private ranges registers on the intranet may use; link-local and metadata stay blocked.
+    :allow_private_cidrs: ['10.0.0.0/8']
+    # Hosts reachable over plain http; everything else needs https.
+    :allow_http_hosts: []
+    :open_timeout: 5
+    :read_timeout: 30
+    :max_response_mb: 25
+  :scheduler:
+    # Checks hourly for due syncs; CRON_CONFIG_INVENTORY_SYNC overrides, 'disabled' stops it.
+    :enabled: true
+    :max_pull_frequency: 'weekly'
+    :slice_budget_minutes: 15
+  :write_back:
+    # Global switch: a connection writes back only with this AND its own setting on.
+    :enabled: false
+  :inbound_api:
+    :enabled: false
+    :max_batch: 500
+  # Secrets held by IT, referenced by name in the admin interface instead of typed in.
+  :credentials:
+    :goechem_kit:
+      :api_key_env: 'GOECHEM_KIT_API_KEY'
+      :basic_user_env: 'GOECHEM_KIT_USER'
+      :basic_password_env: 'GOECHEM_KIT_PASSWORD'
+
+test:
+  :enabled: false
