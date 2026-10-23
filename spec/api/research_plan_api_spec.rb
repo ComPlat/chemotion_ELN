@@ -145,6 +145,63 @@ describe Chemotion::ResearchPlanAPI do
           expect(attachment_files).to eq(files_before)
         end
 
+        context 'when reporting omitted attachments' do
+          it 'reports the same warning for missing and unreadable IDs without exposing their details' do
+            params[:body] = []
+            post '/api/v1/research_plans', params: params, as: :json
+            unreadable_result = JSON.parse(response.body).except('research_plan')
+
+            params[:attachments] = [{ id: -1 }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(unreadable_result).to eq('attachments_omitted' => true)
+            expect(JSON.parse(response.body).except('research_plan')).to eq(unreadable_result)
+          end
+
+          it 'also reports unreadable body images when no attachment IDs are supplied' do
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').body).to eq([])
+          end
+
+          it 'does not reveal whether a deleted ID matches an unreadable body image' do
+            params[:attachments].first[:is_deleted] = true
+            post '/api/v1/research_plans', params: params, as: :json
+            unreadable_result = JSON.parse(response.body).except('research_plan')
+
+            params[:attachments] = [{ id: -1, is_deleted: true }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(unreadable_result).to eq('attachments_omitted' => true)
+            expect(JSON.parse(response.body).except('research_plan')).to eq(unreadable_result)
+          end
+
+          context 'when the attachments are readable' do
+            let(:owner) { user }
+
+            it 'does not report omissions for successfully copied attachments' do
+              post '/api/v1/research_plans', params: params, as: :json
+
+              expect(response).to have_http_status(:created)
+              expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments.count).to eq(1)
+            end
+
+            it 'does not report attachments that were deliberately deleted' do
+              params[:attachments].first[:is_deleted] = true
+              post '/api/v1/research_plans', params: params, as: :json
+
+              expect(response).to have_http_status(:created)
+              expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              expect(ResearchPlan.find_by!(name: 'Copied Plan').body).to eq([])
+            end
+          end
+        end
+
         context 'when requested attachments are marked as deleted' do
           let(:owner) { user }
 

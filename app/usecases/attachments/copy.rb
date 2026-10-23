@@ -6,6 +6,8 @@ module Usecases
       class Error < StandardError; end
       class InvalidInput < Error; end
 
+      attr_reader :attachments_omitted
+
       def self.execute!(attachments, element, current_user)
         new(attachments, current_user).transaction { |copy| copy.execute!(element) }
       end
@@ -16,6 +18,7 @@ module Usecases
         @current_user = current_user
         @access = Access.new(current_user)
         @created_files = []
+        @attachments_omitted = false
       end
 
       # The caller includes plan creation and collection membership in this transaction.
@@ -30,6 +33,7 @@ module Usecases
       end
 
       def execute!(element)
+        @attachments_omitted = false
         originals = find_originals(element)
         sources = readable_sources(originals[:by_id])
         raise Error, 'Unable to copy attachment files' if sources.any? { |attachment| attachment.attachment.blank? }
@@ -56,8 +60,15 @@ module Usecases
 
       def readable_sources(originals)
         @entries.reject { |entry| entry[:is_new] || @deleted_ids.include?(entry[:id].to_s) }
-                .filter_map { |entry| originals[entry[:id].to_s] }.uniq
-                .select { |attachment| @access.read?(attachment) }
+                .filter_map do |entry|
+          attachment = originals[entry[:id].to_s]
+          if @access.read?(attachment)
+            attachment
+          else
+            @attachments_omitted = true
+            nil
+          end
+        end.uniq
       end
 
       def valid_entry?(entry)
@@ -110,7 +121,9 @@ module Usecases
         return false unless field['type'] == 'image'
 
         identifier = field.dig('value', 'public_name')
-        deleted.include?(identifier) || unreadable_body_image?(identifier, originals)
+        unreadable = unreadable_body_image?(identifier, originals)
+        @attachments_omitted ||= unreadable
+        unreadable || deleted.include?(identifier)
       end
 
       def unreadable_body_image?(identifier, originals)

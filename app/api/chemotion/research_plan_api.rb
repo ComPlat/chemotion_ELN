@@ -102,6 +102,7 @@ module Chemotion
                   with: Entities::ResearchPlanEntity,
                   root: :research_plan,
                   policy: @element_policy
+          present :attachments_omitted, true if copier.attachments_omitted
         end
       rescue Usecases::Attachments::Copy::InvalidInput => e
         error!(e.message, 400)
