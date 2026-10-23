@@ -116,6 +116,10 @@ RSpec.describe ReactionStep do
       expect(diagram.send(:steps_svg_paths).map { |s| s[:products].size }).to eq([0, 1])
     end
 
+    it 'leaves the carried product out of the reaction RInChI products' do
+      expect(reaction.reload.send(:retrieve_molfiles)[1].size).to eq(1)
+    end
+
     it 'keeps a standard reaction as one untitled block in the Word report' do
       steps = word_report_steps(reaction)
 
