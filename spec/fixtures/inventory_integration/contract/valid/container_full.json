@@ -1,0 +1,21 @@
+{
+  "contract": "chemotion.inventory/v1",
+  "external_id": "15739:1167609600",
+  "kind": "container",
+  "version": "1730000123",
+  "changed_at": "2026-10-01T08:30:00Z",
+  "substance": { "name": "Ethanol", "cas": "64-17-5", "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N", "purity": 0.99 },
+  "product": { "vendor": "Sigma-Aldrich", "catalog_number": "A001", "gtin": "04061838000000", "lot_number": "BCDE1234",
+               "price": { "value": 12.5, "currency": "EUR" }, "expires_on": "2027-01-31" },
+  "quantity": { "initial": { "value": 500, "unit": "mL" }, "remaining": { "value": 250, "unit": "mL" } },
+  "status": "available",
+  "location": { "path": ["Building 30.42", "Room 101", "Cabinet 3"] },
+  "owner": { "group": "AK Example" },
+  "barcode": "QR-000123",
+  "hazard": { "h_statements": ["H225", "H319", "EUH066"], "p_statements": ["P210", "P305+P351+P338"],
+              "pictograms": ["GHS02", "GHS07"], "signal_word": "danger", "storage_class": "3",
+              "un_number": "UN1170", "wgk": "1", "flags": ["svhc"],
+              "sds": { "url": "https://example.org/sds.pdf", "date": "2025-02-01", "language": "de" } },
+  "properties": { "boiling_point_c": [78, 79], "flash_point_c": 13, "density_g_ml": 0.789 },
+  "extensions": { "goechem": { "cid": 107 } }
+}
