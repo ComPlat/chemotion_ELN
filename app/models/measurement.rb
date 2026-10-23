@@ -32,13 +32,16 @@ class Measurement < ApplicationRecord
   belongs_to :sample, optional: false
   belongs_to :source, polymorphic: true
 
-  before_save :strip_whitespaces
+  # The columns are NOT NULL, but an empty string is valid (e.g. MTT results have no unit).
+  validates :description, :unit, exclusion: { in: [nil], message: :blank }
+  validates :value, presence: true
+
+  before_validation :strip_whitespaces
 
   private
 
   def strip_whitespaces
-    self.description.strip!
-    self.unit.strip!
-    self.source_type.strip! # should not be needed but it's still user input...
+    self.description = description&.strip
+    self.unit = unit&.strip
   end
 end
