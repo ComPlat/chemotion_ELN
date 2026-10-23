@@ -82,10 +82,12 @@ class Sample < ApplicationRecord
 
   SAMPLE_TYPE_MIXTURE = 'Mixture'
   SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+  SAMPLE_TYPE_MOF = 'MOF'
 
   SAMPLE_TYPES = [
     SAMPLE_TYPE_MICROMOLECULE,
     SAMPLE_TYPE_MIXTURE,
+    SAMPLE_TYPE_MOF,
   ].freeze
 
   multisearchable against: %i[

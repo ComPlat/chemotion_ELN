@@ -107,6 +107,7 @@ class UIStore {
       showDeviceManagement: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
+      hasMof: false,
       matrices: {},
       thirdPartyApps: [],
       version: {},
