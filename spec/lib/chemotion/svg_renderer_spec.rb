@@ -418,5 +418,25 @@ RSpec.describe Chemotion::SvgRenderer do
         expect(result[0]).to include('α-Al2O3')
       end
     end
+
+    context 'when the molfile is UTF-8-labelled but contains an invalid byte sequence' do
+      # Simulates unescape_textnode_octal_in_molfile output:
+      # bytes.pack('C*').force_encoding('UTF-8') — no scrub, so stray bytes remain.
+      # parse_polymer_payload is the crash site (its gsub raises before reaching parse_text_nodes).
+      let(:bad_utf8_molfile) do
+        File.binread(file_fixture('polymer_with_textnode.mol'))
+            .sub('Al2O3'.b, "Al2O3\xB0".b)
+            .force_encoding('UTF-8')
+      end
+
+      it 'does not raise in parse_polymer_payload' do
+        expect { described_class.send(:parse_polymer_payload, bad_utf8_molfile) }.not_to raise_error
+      end
+
+      it 'preserves the valid UTF-8 characters in the TextNode label' do
+        result = described_class.send(:parse_polymer_payload, bad_utf8_molfile)
+        expect(result[:text_by_index][0]).to include('α-Al2O3')
+      end
+    end
   end
 end

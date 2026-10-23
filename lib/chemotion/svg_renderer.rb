@@ -197,7 +197,7 @@ module Chemotion
     end
 
     def self.parse_polymer_payload(struct)
-      source = struct.to_s
+      source = Chemotion::MolfilePolymerSupport.to_utf8(struct)
       # Strip PolymersList/TextNode only for cleaned_struct (used for rendering); polymers/text_by_index are from full source for injection.
       cleaned_struct = source
                        .gsub(/^> <PolymersList>\R.*?(?=^> <|\z)/m, '')
