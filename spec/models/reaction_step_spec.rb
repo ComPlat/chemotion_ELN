@@ -181,6 +181,31 @@ RSpec.describe ReactionStep do
       )
     end
 
+    it 'puts each step text under its step in the Word report, unless the materials are hidden' do
+      detail = lambda do |settings|
+        data = Entities::ReactionReportEntity.represent(
+          multi.reload, current_user: create(:person), detail_levels: { Reaction => 10, Sample => 10 }
+        ).serializable_hash
+        Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(data), rxn_settings: settings) # rubocop:disable Style/OpenStructUse
+      end
+
+      expect(detail.call(material: true, description: true).send(:steps).pluck(:description).map(&:present?))
+        .to eq([true, true])
+      expect(detail.call(material: false, description: true).send(:text_per_step?)).to be(false)
+      expect(detail.call(material: true, description: false).send(:steps).pluck(:description)).to eq([nil, nil])
+    end
+
+    it 'starts each step on a new line and marks the carried product as intermediate in the SI report' do
+      data = Entities::ReactionReportEntity.represent(
+        multi.reload, current_user: create(:person), detail_levels: { Reaction => 10, Sample => 10 }
+      ).serializable_hash
+      detail = Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(data), template: 'supporting_information') # rubocop:disable Style/OpenStructUse
+
+      expect(detail.send(:single_description_delta).pluck('insert').join).to include("heat it \nStep 2: ")
+      expect(detail.send(:intermediate_delta, { carry_on: true }).pluck('insert')).to eq([' (intermediate)'])
+      expect(detail.send(:intermediate_delta, { carry_on: false })).to eq([])
+    end
+
     it 'keeps the reaction text for a standard reaction' do
       standard = create(:reaction, description: text.call('stir'))
       sample = create(:sample)

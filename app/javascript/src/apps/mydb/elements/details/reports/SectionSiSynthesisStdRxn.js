@@ -6,6 +6,7 @@ import { rmOpsRedundantSpaceBreak, frontBreak } from 'src/utilities/quillFormat'
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { Alphabet } from 'src/utilities/ElementUtils';
 import { UserSerial, CapitalizeFirstLetter } from 'src/utilities/ReportHelper';
+import { intermediateLabel, paragraphPerStep } from 'src/apps/mydb/elements/details/reports/SectionSiSynthesis';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;
@@ -26,7 +27,7 @@ const Title = ({ el, counter, molSerials }) => {
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = i == 0 ? CapitalizeFirstLetter(p.showedName()) : p.showedName();
     title = smn
-      ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
+      ? [...title, <span key={key}>{smn}{intermediateLabel(p)} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
   title = title.slice(0, -1);
@@ -90,7 +91,7 @@ const productContent = (products, settings, molSerials) => {
       ...prdIdentifier(counter, m, molSerials),
       { insert: ': ' },
       deltaSampleMoleculeName(p),
-      { insert: '; ' },
+      { insert: `${intermediateLabel(p)}; ` },
     ] : [];
 
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
@@ -294,7 +295,7 @@ const DangerBlock = ({ el }) => {
 
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
-  let block = rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []);
+  let block = paragraphPerStep(rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []));
   block = [{ insert: '\n' }, ...block];
   return block;
 };
