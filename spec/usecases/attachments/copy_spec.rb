@@ -12,7 +12,7 @@ describe Usecases::Attachments::Copy do
     let(:attachments) { [{ id: source.id }] }
 
     before do
-      described_class.execute!(attachments, research_plan, user.id)
+      described_class.execute!(attachments, research_plan, user)
     end
 
     context 'when the attachment ID does not exist' do
@@ -35,6 +35,29 @@ describe Usecases::Attachments::Copy do
         expect(copy).to be_present
         expect(copy.filename).to eq(source.filename)
         expect(copy.attachment(:annotation)).to be_nil
+      end
+    end
+
+    context 'when the attachment is marked as deleted' do
+      let(:source) { create(:attachment, :with_png_image, attachable: source_plan) }
+      let(:attachments) { [{ id: source.id, is_deleted: true }] }
+      let(:research_plan) do
+        create(:research_plan, body: [{ type: 'image', value: { public_name: source.identifier } }])
+      end
+
+      it 'copies neither the file nor its body image' do
+        expect(research_plan.attachments).to be_empty
+        expect(research_plan.reload.body).to eq([])
+        expect(source.reload.attachment.exists?).to be true
+      end
+    end
+
+    context 'when a duplicate entry marks the same attachment as deleted' do
+      let(:source) { create(:attachment, attachable: source_plan) }
+      let(:attachments) { [{ id: source.id }, { id: source.id.to_s, is_deleted: true }] }
+
+      it 'does not create a copy' do
+        expect(research_plan.attachments).to be_empty
       end
     end
 
@@ -117,6 +140,65 @@ describe Usecases::Attachments::Copy do
         expect(copy.read_file).to eq(source.read_file)
         expect([copy.created_by, copy.created_for]).to eq([user.id, user.id])
       end
+    end
+  end
+
+  describe 'batch copying' do
+    let(:first_source) { create(:attachment, :with_png_image, attachable: source_plan) }
+    let(:second_source) { create(:attachment, attachable: source_plan) }
+    let(:research_plan) do
+      create(:research_plan, body: [
+               { id: 'first', type: 'image', value: { public_name: first_source.identifier } },
+               { id: 'second', type: 'image', value: { public_name: first_source.identifier } },
+               { id: 'third', type: 'image', value: { public_name: second_source.identifier } },
+               { id: 'text', type: 'richtext', value: nil },
+             ])
+    end
+
+    it 'rewrites every image reference and saves the body once' do
+      plan = research_plan
+      allow(plan).to receive(:save!).and_call_original
+
+      described_class.execute!([{ id: first_source.id }, { id: second_source.id }], plan, user)
+
+      references = plan.reload.body.first(3).map { |field| field.dig('value', 'public_name') }
+      expect(plan).to have_received(:save!).once
+      expect(references).to eq([references.first, references.first, references.last])
+      expect(references.uniq).to match_array(plan.attachments.pluck(:identifier))
+    end
+
+    it 'loads the supplied IDs in one batch and deduplicates repeated IDs' do
+      entries = [{ id: first_source.id.to_s }, { id: second_source.id }, { id: first_source.id.to_s }]
+      plan = research_plan
+      allow(Attachment).to receive(:where).and_call_original
+
+      expect { described_class.execute!(entries, plan, user) }.to change(Attachment, :count).by(2)
+      expect(Attachment).to have_received(:where).with(id: entries.pluck(:id)).once
+    end
+  end
+
+  describe 'empty and invalid input' do
+    it 'reuses the supplied user without querying it again for an empty copy list' do
+      plan = research_plan
+      current_user = user
+      allow(User).to receive(:find).and_call_original
+
+      described_class.execute!([], plan, current_user)
+
+      expect(User).not_to have_received(:find)
+    end
+
+    it 'still removes unreadable body images when no attachments are requested' do
+      image = create(:attachment, attachable: create(:research_plan))
+      plan = create(:research_plan, body: [{ type: 'image', value: { public_name: image.identifier } }])
+
+      described_class.execute!([], plan, user)
+
+      expect(plan.reload.body).to eq([])
+    end
+
+    it 'rejects malformed entries before executing the transaction' do
+      expect { described_class.new([123], user) }.to raise_error(described_class::InvalidInput)
     end
   end
 end

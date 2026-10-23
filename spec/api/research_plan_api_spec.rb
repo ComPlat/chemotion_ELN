@@ -129,6 +129,108 @@ describe Chemotion::ResearchPlanAPI do
           }
         end
 
+        def attachment_files
+          Shrine.storages.values.flat_map do |storage|
+            Dir.glob(storage.directory.join('**', '*')).select { |path| File.file?(path) }
+          end.uniq.sort
+        end
+
+        def expect_atomic_copy_failure(request_params, status)
+          files_before = attachment_files
+          expect do
+            post '/api/v1/research_plans', params: request_params, as: :json
+          end.not_to(change { [ResearchPlan.count, Container.count, Attachment.count, CollectionsResearchPlan.count] })
+
+          expect(response).to have_http_status(status)
+          expect(attachment_files).to eq(files_before)
+        end
+
+        context 'when requested attachments are marked as deleted' do
+          let(:owner) { user }
+
+          it 'does not copy the file, annotation, or body image' do
+            params[:attachments].first[:is_deleted] = true
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect(copied_plan.attachments).to be_empty
+            expect(copied_plan.body).to eq([])
+          end
+        end
+
+        context 'when an attachment request is malformed' do
+          it 'rejects invalid entries before creating any records or files' do
+            request_params = params
+            request_params[:attachments] = [source.id]
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+
+          it 'rejects an object used as an attachment ID' do
+            request_params = params
+            request_params[:attachments] = [{ id: { unexpected: 'value' } }]
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+        end
+
+        context 'when copying readable files' do
+          let(:owner) { user }
+
+          it 'rolls back the plan and its container when a source has no file' do
+            missing = create(:attachment, attachable: source_plan, file_path: nil, file_data: nil)
+            request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'cleans up an earlier copy when a later stored file is missing' do
+            missing = create(:attachment, attachable: source_plan)
+            missing.attachment.delete
+            request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'rolls back earlier copies when a later copy exceeds the user quota' do
+            small = create(:attachment, attachable: source_plan, created_for: user.id)
+            request_params = params.merge(attachments: [{ id: small.id }, { id: source.id }])
+            user.update!(used_space: 0, allocated_space: small.filesize + 1)
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'cleans up the copied image and annotation when a later creation step fails' do
+            request_params = params
+            copier = Usecases::Attachments::Copy.new(request_params[:attachments], user)
+            allow(Usecases::Attachments::Copy).to receive(:new).and_return(copier)
+            allow(copier).to receive(:execute!).and_wrap_original do |execute, *arguments|
+              execute.call(*arguments)
+              raise Usecases::Attachments::Copy::Error, 'Later creation step failed'
+            end
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'keeps a body image uploaded into the new plan\'s own dataset' do
+            upload = create(:attachment, :with_png_image, attachable: nil, created_for: user.id)
+            request_params = params.merge(attachments: [], body: [
+                                            { type: 'image', value: { public_name: upload.identifier } },
+                                          ])
+            request_params[:container][:children] = [{
+              is_new: true, container_type: 'dataset', extended_metadata: {},
+              attachments: [{ id: upload.key, is_new: true }]
+            }]
+            post '/api/v1/research_plans', params: request_params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect(upload.reload.root_element).to eq(copied_plan)
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(upload.identifier)
+          end
+        end
+
         context 'when the source research plan is not readable' do
           it 'creates the plan without copying the attachment or its annotation' do
             expect do
