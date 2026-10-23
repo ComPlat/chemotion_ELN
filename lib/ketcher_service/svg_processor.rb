@@ -34,6 +34,10 @@ module KetcherService
         end
       end
       @svg.search('desc').each(&:remove)
+      @svg.xpath('//*[@style]').each do |element|
+        cleaned = element['style'].to_s.gsub(/-webkit-tap-highlight-color\s*:\s*[^;]*;?\s*/, '')
+        element['style'] = cleaned
+      end
     end
 
     def find_extrema
