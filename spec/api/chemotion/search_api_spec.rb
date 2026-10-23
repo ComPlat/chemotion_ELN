@@ -1127,6 +1127,103 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/advanced on chemical data' do
+    subject(:do_request) { post url, params: params, as: :json }
+
+    let(:url) { '/api/v1/search/advanced' }
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let!(:shared_sample) do
+      create(:sample, name: 'Stocked water', external_label: 'EXT-1', creator: owner,
+                      collections: [shared_collection])
+    end
+    let(:search_collection) { shared_collection }
+    let(:params) do
+      {
+        selection: { elementType: :advanced, search_by_method: :advanced, advanced_params: advanced_params },
+        collection_id: search_collection.id, page: 1, per_page: 15
+      }
+    end
+    let(:status_filter) do
+      [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+         field: { column: 'status', table: 'chemicals' }, value: 'Available' }]
+    end
+    let(:external_label_on_chemicals) do
+      [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '', value: '',
+         field: { column: 'external_label', table: 'chemicals' }, sub_values: [{ status: 'Available' }] }]
+    end
+
+    before do
+      create(:chemical, sample: shared_sample, chemical_data: [{ 'status' => 'Available' }])
+    end
+
+    context 'when the collection is shared at sample detail level 0' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 0)
+        do_request
+      end
+
+      context 'with an external label filter on chemical data' do
+        let(:advanced_params) { external_label_on_chemicals }
+
+        it 'refuses the filter' do
+          expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+          expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+        end
+      end
+
+      context 'with an external label filter on the sample' do
+        let(:advanced_params) do
+          [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+             field: { column: 'external_label', table: 'samples' }, value: 'EXT-1' }]
+        end
+
+        it 'finds the sample' do
+          expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+        end
+      end
+    end
+
+    context 'when the collection is shared below full sample detail' do
+      let(:advanced_params) { status_filter }
+
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 1)
+        do_request
+      end
+
+      it 'refuses the filter' do
+        expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+        expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+      end
+    end
+
+    context 'when the collection is shared at full sample detail' do
+      let(:advanced_params) { status_filter }
+
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user,
+                                  sample_detail_level: Collection::OWNER_LEVEL)
+        do_request
+      end
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+      end
+    end
+
+    context 'when the collection is the user own' do
+      let(:owner) { user }
+      let(:advanced_params) { status_filter }
+
+      before { do_request }
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/<element type> by search method in a shared collection' do
     let(:owner) { create(:person) }
     let(:shared_collection) { create(:collection, user: owner) }

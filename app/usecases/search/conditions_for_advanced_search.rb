@@ -225,7 +225,7 @@ module Usecases
         filter['field']['column'] = filter['field']['column'] || filter['field']['field']
         adv_field = filter['field'].to_h.merge(@detail_levels).symbolize_keys
         whitelisted_table?(**adv_field) && field_table_of_table?(filter) &&
-          filter_with_detail_level?(**adv_field, table: filter['table'])
+          filter_with_detail_level?(**adv_field, table: filter['table'], field_table: filter['field']['table'])
       end
 
       # The field table must be the searched table, or one that is searched through it.
@@ -247,15 +247,20 @@ module Usecases
         API::WL_TABLES.key?(table) && API::WL_TABLES[table].include?(column)
       end
 
-      # desc: return true if the detail level allow to access the column
-      def filter_with_detail_level?(table:, column:, sample_detail_level:, reaction_detail_level:, **_)
-        # TODO: filter according to columns
+      # Whether the collection's detail levels allow filtering +table+ on +field_table+.+column+.
+      def filter_with_detail_level?(table:, field_table:, column:, **levels)
+        case table
+        when 'samples' then sample_field_allowed?(field_table, column, levels.fetch(:sample_detail_level))
+        when 'reactions' then levels.fetch(:reaction_detail_level) > -1
+        else true
+        end
+      end
 
-        return true unless table.in?(%w[samples reactions])
-        return true if table == 'samples' && (sample_detail_level.positive? || column == 'external_label')
-        return true if table == 'reactions' && reaction_detail_level > -1
+      # Chemical data needs full sample detail, as the chemicals API requires.
+      def sample_field_allowed?(field_table, column, detail_level)
+        return detail_level >= Collection::OWNER_LEVEL if field_table == 'chemicals'
 
-        false
+        detail_level.positive? || (field_table == 'samples' && column == 'external_label')
       end
 
       def duration_interval_by_unit(unit)
