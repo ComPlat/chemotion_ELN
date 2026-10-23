@@ -94,13 +94,23 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
     expect(container.extended_metadata['hyperlinks']).to eq links
   end
 
-  it 'reverts container content back to none when there was none' do
+  it 'reverts container hyperlinks back to an empty list when there were none' do
+    container = create(:container, extended_metadata: { 'status' => 'Confirmed' })
+    round_trip(container, Versioning::Serializers::ContainerSerializer, Versioning::Reverters::ContainerReverter,
+               'extended_metadata.hyperlinks',
+               extended_metadata: { 'status' => 'Confirmed', 'hyperlinks' => ['https://example.org'].to_json })
+
+    expect(container.extended_metadata['hyperlinks']).to eq '[]'
+    expect(JSON.parse(container.extended_metadata.fetch('hyperlinks', '[]'))).to eq []
+  end
+
+  it 'reverts container content back to an empty delta when there was none' do
     container = create(:container, extended_metadata: { 'status' => 'Confirmed' })
     round_trip(container, Versioning::Serializers::ContainerSerializer, Versioning::Reverters::ContainerReverter,
                'extended_metadata.content',
                extended_metadata: { 'status' => 'Confirmed', 'content' => '{"ops":[{"insert":"typed\\n"}]}' })
 
-    expect(container.extended_metadata['content']).to be_nil
+    expect(container.extended_metadata['content']).to eq '{"ops":[{"insert":""}]}'
   end
 
   it 'reverts device description setup descriptions to the stored hash' do
