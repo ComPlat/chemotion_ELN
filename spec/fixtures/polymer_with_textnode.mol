@@ -1,0 +1,20 @@
+null
+  Ketcher  6232611422D 1   1.00000     0.00000     0
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+
+> <PolymersList>
+0/52/1.50-2.00
+
+> <TextNode>
+0#oee0kg#t_52_0#10 wt.% α-Al2O3
+
+> </TextNode>
+
+> <TextNodeMeta>
+{"blocks":[{"key":"oee0kg","text":"10 wt.% α-Al2O3","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":15}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+
+> </TextNodeMeta>
+$$$$
