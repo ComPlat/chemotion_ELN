@@ -2,7 +2,9 @@ import {
   last,
   slice,
   intersectionWith,
-  findIndex
+  findIndex,
+  cloneDeep,
+  omit
 } from 'lodash';
 import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
@@ -940,7 +942,9 @@ class ElementStore {
       return { refreshCoefficient: updatedCoefficient };
     });
 
-    if (sample.isMixture()) {
+    const componentsLoaded = sample.hasComponents()
+      && sample.components.every((component) => component instanceof Component);
+    if (sample.isMixture() && !componentsLoaded) {
       ComponentsFetcher.fetchComponentsBySampleId(sample.id)
         .then(async (components) => {
           const sampleComponents = components.map((component) => {
@@ -1745,7 +1749,9 @@ class ElementStore {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
       const openedReaction = selecteds.find((el) => SameEleTypId(el, { type: 'reaction', id: rId }));
-      if (openedReaction) {
+      // Detached mixture drafts are applied by their save action, never by switching
+      // or closing tabs (including Discard). Sample-list mixtures still synchronize.
+      if (openedReaction && !previous.isDetachedMixtureDraft) {
         if (refreshCoefficient && refreshCoefficient.length > 0) {
           refreshCoefficient.forEach((element) => {
             if (element.sId === previous.id) {
@@ -1778,10 +1784,32 @@ class ElementStore {
     }
 
     if (previous instanceof Reaction) {
-      const { samples } = previous;
+      const reaction = selecteds.find((element) => SameEleTypId(element, previous)) || previous;
+      const { samples } = reaction;
       selecteds.map((nextSample) => {
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
-        if (previousSample) {
+        if (previousSample && nextSample.isMixture()) {
+          // Rebind even when preserving a dirty draft or when the quantity is unchanged.
+          nextSample.belongTo = reaction;
+          const sourceState = previousSample.mixtureReactionState();
+          // Keep unsaved composition edits. The save guard will report a conflict
+          // if the reaction quantity or reference changed since this draft opened.
+          if (nextSample.isEdited || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
+
+          const refreshed = new Sample(cloneDeep(omit(previousSample, ['belongTo', '_equivalent', 'reference'])));
+          refreshed.belongTo = reaction;
+          refreshed.isDetachedMixtureDraft = true;
+          refreshed._mixtureDraftSourceState = sourceState;
+          // The reaction row may not have fetched its components yet. Keep the
+          // editor's loaded composition and scale it to the latest reaction amount.
+          const components = refreshed.hasComponents() ? refreshed.components : cloneDeep(nextSample.components || []);
+          refreshed.initialComponents(components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          refreshed.syncMixtureComponentAmounts();
+          Object.assign(nextSample, refreshed);
+          nextSample.updateChecksum();
+        } else if (previousSample) {
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;

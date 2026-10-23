@@ -85,6 +85,26 @@ export default class Component extends Sample {
     this._amount_l = amount_l;
   }
 
+  /** Keeps mass and volume on the same scale as the component's molar amount. */
+  updatePhysicalAmounts() {
+    if (this.amount_mol == null) return;
+    const amountMol = Number(this.amount_mol);
+    const molecularWeight = Number(this.molecule_molecular_weight);
+    const purity = Number(this.purity || 1);
+    if (!Number.isFinite(amountMol) || amountMol < 0
+      || !Number.isFinite(molecularWeight) || molecularWeight <= 0
+      || !Number.isFinite(purity) || purity <= 0) return;
+
+    this.amount_g = amountMol * molecularWeight / purity;
+    if (this.material_group === 'liquid') {
+      if (this.density > 0) {
+        this.amount_l = this.amount_g / (this.density * 1000);
+      } else if (this.starting_molarity_value > 0) {
+        this.amount_l = amountMol / this.starting_molarity_value;
+      }
+    }
+  }
+
   /**
    * @returns {string} Path to the molecule SVG image, if available.
    */
@@ -172,8 +192,10 @@ export default class Component extends Sample {
    * Handles molar amount change and recalculates dependent fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
-  handleAmountChange(amount, totalVolume) {
+  handleAmountChange(amount, totalVolume, lockAmountColumnSolids = null) {
     if (Number.isNaN(amount.value) || amount.unit !== 'mol') return;
 
     this.amount_mol = amount.value;
@@ -183,7 +205,7 @@ export default class Component extends Sample {
     if (this.material_group === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (this.material_group === 'solid') {
-      this.calculateMassFromAmount(purity);
+      this.calculateMassFromAmount(purity, lockAmountColumnSolids);
     }
 
     this.calculateTargetConcentration(totalVolume);
@@ -200,25 +222,18 @@ export default class Component extends Sample {
   }
 
   /**
-   * Calculates mass or updates purity for solid based on lock flag.
+   * Calculates mass or updates purity for a solid based on the Mass lock.
+   * The lock preserves an existing positive mass; an empty solid initializes its mass.
+   * The lock is stored under the mixture's id, which a component cannot resolve from its own
+   * parent_id (its source sample). Callers must therefore pass the lock state in; when omitted
+   * it defaults to unlocked (recompute mass) rather than looking it up under the wrong id.
    * @param {number} purity
-   * @param {boolean} [lockAmountColumnSolids] - Optional lock state. If not provided, will be retrieved from store using parent_id as sampleId.
+   * @param {boolean} [lockAmountColumnSolids=false] - Mass lock state, resolved by the caller.
    */
-  calculateMassFromAmount(purity, lockAmountColumnSolids = null) {
+  calculateMassFromAmount(purity, lockAmountColumnSolids = false) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    let lockState = lockAmountColumnSolids;
-    if (lockState === null) {
-      // Try to get lock state from store using parent_id as sample ID
-      try {
-        const componentState = ComponentStore.getState();
-        lockState = ComponentStore.getLockStateForSample(componentState, 'lockAmountColumnSolids', this.parent_id);
-      } catch (e) {
-        // Fallback to false if store is not available
-        lockState = false;
-      }
-    }
-
-    if (lockState) {
+    const massG = Number(this.amount_g);
+    if (lockAmountColumnSolids && Number.isFinite(massG) && massG > 0) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -340,7 +355,7 @@ export default class Component extends Sample {
   }
 
   /**
-   * Resets all amount and concentration fields to zero.
+   * Resets all amount and concentration fields, and the component ratio, to zero.
    * Used when a same-molecule merge collapses a duplicate component into this one.
    */
   resetAmounts() {
@@ -349,6 +364,7 @@ export default class Component extends Sample {
     this.amount_l = 0;
     this.molarity_value = 0;
     this.concn = 0;
+    this.equivalent = 0;
   }
 
   /**
@@ -520,11 +536,11 @@ export default class Component extends Sample {
    * @param {string} materialGroup - 'liquid' or 'solid'.
    * @param {number} totalVolume - Total mixture volume.
    * @param {number} referenceMoles - Amount in mol of reference component.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
    */
-  updateRatio(newRatio, materialGroup, totalVolume, referenceMoles) {
+  updateRatio(newRatio, materialGroup, totalVolume, referenceMoles, lockAmountColumnSolids = null) {
     if (this.equivalent === newRatio) { return; }
-
-    const purity = this.purity || 1.0;
 
     // Calculate new amount based on ratio and reference moles
     // If reference moles is 0, set amount to 0
@@ -532,15 +548,52 @@ export default class Component extends Sample {
     this.amount_mol = referenceMoles === 0 ? 0 : newRatio * referenceMoles;
     this.equivalent = newRatio;
 
+    this.recalculateAmountDerivedFields(materialGroup, totalVolume, lockAmountColumnSolids);
+  }
+
+  /**
+   * Recomputes mass/volume and concentration after amount_mol and equivalent have been set.
+   * Shared by the ratio-change (updateRatio) and ratio-fill (updateAmountFromRatio) paths so
+   * they cannot drift apart. Honors the Mass lock for a solid that already has a mass; an empty
+   * solid ignores the lock so a zero mass is never used to infer purity.
+   * @param {string} materialGroup - 'liquid' or 'solid'.
+   * @param {number} totalVolume - Total mixture volume.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
+   */
+  recalculateAmountDerivedFields(materialGroup, totalVolume, lockAmountColumnSolids = null) {
+    const purity = this.purity || 1.0;
+
     // Volume(Liquid)/Mass(Solid) Calculation
     if (materialGroup === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (materialGroup === 'solid') {
-      this.calculateMassFromAmount(purity);
+      this.calculateMassFromAmount(purity, lockAmountColumnSolids);
     }
 
     // Total concentration calculation
     this.calculateTargetConcentration(totalVolume);
+  }
+
+  /**
+   * Re-applies an already-set ratio after the reference amount changes, deriving
+   * amount = ratio * referenceMoles and refreshing volume/mass and concentration.
+   *
+   * Unlike updateRatio, there is no early return when the ratio is unchanged: the
+   * caller is reacting to a reference-amount change, so the amount must be
+   * recomputed even though the equivalent stays the same (e.g. a ratio typed while
+   * the reference had no amount must now produce a real amount).
+   * @param {number} ratio - The existing equivalent ratio to keep.
+   * @param {number} referenceMoles - Amount in mol of the reference component.
+   * @param {number} totalVolume - Total mixture volume.
+   * @param {?boolean} [lockAmountColumnSolids=null] - Mass lock state, resolved by the caller
+   *   from the mixture's id. Omitted or null means unlocked.
+   */
+  updateAmountFromRatio(ratio, referenceMoles, totalVolume, lockAmountColumnSolids = null) {
+    this.amount_mol = ratio * referenceMoles;
+    this.equivalent = ratio;
+
+    this.recalculateAmountDerivedFields(this.material_group, totalVolume, lockAmountColumnSolids);
   }
 
   // Case 1(Solids): Mass given -> Calculate Amount
@@ -549,10 +602,10 @@ export default class Component extends Sample {
    * Calculates amount (mol) from mass (g), molecular weight, and purity for solids.
    * @param {number} purity - The purity value.
    */
-  calculateAmountFromMass = (purity) => {
+  calculateAmountFromMass(purity) {
     // Formula: amount [mol] = (mass[g] * purity) / molecularMass [g/mol]
     this.amount_mol = (this.amount_g * purity) / this.molecule_molecular_weight;
-  };
+  }
 
   /**
    * Updates the equivalent ratio from the reference component.
@@ -571,11 +624,22 @@ export default class Component extends Sample {
     }
 
     const refAmountMol = referenceComponent.amount_mol ?? 0;
+
+    // When the reference has no amount, the ratio cannot be derived from amounts. Preserve a
+    // positive typed ratio (e.g. a ratio typed before the reference had an amount) instead of
+    // wiping it; otherwise mark it not-determined. This matches updateMixtureComponentEquivalent.
+    if (!refAmountMol || Number.isNaN(refAmountMol)) {
+      const currentEq = this.equivalent;
+      const hasPositiveRatio = Number.isFinite(currentEq) && currentEq > 0;
+      this.equivalent = hasPositiveRatio ? currentEq : 'n.d';
+      return;
+    }
+
     const currentAmountMol = this.amount_mol ?? 0;
 
-    // If either amount is 0 or NaN, set ratio to 0
-    if (!refAmountMol || !currentAmountMol || Number.isNaN(refAmountMol) || Number.isNaN(currentAmountMol)) {
-      this.equivalent = 0;
+    // The reference has an amount but this component has none: the ratio is not determined.
+    if (!currentAmountMol || Number.isNaN(currentAmountMol)) {
+      this.equivalent = 'n.d';
       return;
     }
 
@@ -636,8 +700,13 @@ export default class Component extends Sample {
    * Shows notification if calculated purity exceeds 1.
    */
   updatePurityFromAmount() {
+    const massG = Number(this.amount_g);
+    if (!Number.isFinite(massG) || massG <= 0) return;
+
     // purity = amount_mol * (Molweight / mass_g)
-    const purity = parseFloat((this.amount_mol * (this.molecule_molecular_weight / this.amount_g)).toFixed(6));
+    const purity = parseFloat((this.amount_mol * (this.molecule_molecular_weight / massG)).toFixed(6));
+    // Cleared or invalid amounts cannot determine purity; retain the entered value.
+    if (!Number.isFinite(purity) || purity <= 0) return;
 
     if (purity <= 1) {
       this.purity = purity;
@@ -667,16 +736,21 @@ export default class Component extends Sample {
 
     const totalMixtureMass = sample.total_mixture_mass_g || 0;
     const componentAmountMol = this.amount_mol || 0;
+    const storedRelativeMW = Number(this.relative_molecular_weight);
+    const hasStoredRelativeMW = Number.isFinite(storedRelativeMW) && storedRelativeMW > 0;
 
-    const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
-      ? totalMixtureMass / componentAmountMol
-      : 0;
+    // A cleared/reset component must lose its old weight, otherwise the next
+    // total-mass edit restores its previous amount through relative-MW scaling.
+    let relativeMW = 0;
+    if (componentAmountMol > 0) {
+      relativeMW = totalMixtureMass > 0
+        ? totalMixtureMass / componentAmountMol
+        : (hasStoredRelativeMW ? storedRelativeMW : 0);
+    }
 
-    // Ensure component_properties exists
-    this.component_properties = this.component_properties || {};
-
-    // Assign calculated value
-    this.component_properties.relative_molecular_weight = relativeMW;
+    // Store the canonical runtime value. serializeComponent nests it under
+    // component_properties when preparing the API payload.
+    this.relative_molecular_weight = relativeMW;
 
     // Return summary for reporting/debugging
     return {

@@ -68,8 +68,7 @@ module UnitConvertable
           0
         end
       when 'mol'
-        mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
-        value / (purity || 1.0) * mol_weight
+        convert_moles_to_gram(value)
       else
         value
       end
@@ -125,5 +124,14 @@ module UnitConvertable
 
     val_g = self.convert_to_gram(value, unit)
     self.convert_to_unit(val_g, 'l', true)
+  end
+
+  private
+
+  def convert_moles_to_gram(value)
+    mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
+    # Match the UI's default for nil/zero purity instead of dividing by zero.
+    secure_purity = purity.to_f.zero? ? 1.0 : purity
+    value / secure_purity * mol_weight
   end
 end

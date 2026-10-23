@@ -91,6 +91,17 @@ export default class ReactionsFetcher {
     return Promise.all(tasks);
   }
 
+  static updateMaterialEquivalent(reactionId, sampleId, equivalent) {
+    return ApiClient.putJson(`/api/v1/reactions/${reactionId}/materials/${sampleId}/equivalent`, {
+      body: { equivalent },
+      handleResponseSuccess: (response) => {
+        if (!response.ok) { throw new Error(`Saving material equivalent failed: HTTP ${response.status}`); }
+        return response.json();
+      },
+      handleResponseError: (error) => { throw error; },
+    });
+  }
+
   static reactionElement(json, id) {
     if (json.error) {
       return new Reaction({ id: `${id}:error:Reaction ${id} is not accessible!` });
