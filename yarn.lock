@@ -1113,29 +1113,6 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@complat/chem-spectra-client@1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@complat/chem-spectra-client/-/chem-spectra-client-1.3.5.tgz#b8926a7481bc6ed9a3b5132fe35d9411841cad44"
-  integrity sha512-10dEy3xu6m5KrGeQ61uLKeNV6utujww0FwQjq4jOoo+L4f48aWUwI6WDuVCZ8kCjweGN1PRpiQnJHYME3zFTvw==
-  dependencies:
-    "@complat/react-spectra-editor" "1.3.5"
-    "@emotion/react" "^11.11.1"
-    "@emotion/styled" "^11.11.0"
-    "@mui/icons-material" "^5.14.9"
-    "@mui/material" "^5.14.10"
-    "@mui/styles" "^5.14.10"
-    base-64 "^0.1.0"
-    classnames "^2.2.6"
-    humps "^2.0.1"
-    prop-types "^15.6.2"
-    react-copy-to-clipboard "^5.1.0"
-    react-dropzone "^8.0.3"
-    react-notification-system "^0.2.17"
-    react-redux "7.2.9"
-    redux "^4.1.1"
-    redux-form "^8.3.7"
-    redux-saga "^1.1.3"
-
 "@complat/chemotion-converter-client@~0.16.2":
   version "0.16.2"
   resolved "https://registry.yarnpkg.com/@complat/chemotion-converter-client/-/chemotion-converter-client-0.16.2.tgz#e6a3c43a1c68878953c530dbe012df27e2559319"
@@ -1149,42 +1126,6 @@
     react-select "^5.10.2"
     uuid "^13.0.0"
     zustand "^4.5.7"
-
-"@complat/react-spectra-editor@1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.5.tgz#67413be000949a19a715706fd8314aa4096f7ffd"
-  integrity sha512-9au3vqAna6BC1VfIuIhC9/D2iI5nUCAtwqibEmlZabqDur4B83Gr6lzefWh/xcrAPQKtAoGydBBVuBA2Y38NLg==
-  dependencies:
-    "@complat/react-svg-file-zoom-pan" "1.1.4"
-    "@emotion/react" "^11.11.1"
-    "@emotion/styled" "^11.11.0"
-    "@mdi/js" "^7.2.96"
-    "@mdi/react" "^1.6.1"
-    "@mui/icons-material" "^5.14.9"
-    "@mui/material" "^5.14.9"
-    "@mui/styles" "^5.14.9"
-    "@popperjs/core" "^2.11.8"
-    "@types/jest" "^29.5.0"
-    "@types/node" "^18.15.11"
-    "@types/react" "^18.0.34"
-    "@types/react-dom" "^18.0.11"
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    browserslist "^4.21.5"
-    classnames "^2.3.2"
-    d3 "^7.8.5"
-    d3-tip "^0.9.1"
-    jcampconverter "4.1.0"
-    ml-savitzky-golay-generalized "1.1.1"
-    prop-types "^15.8.1"
-    react-dropzone "^8.0.3"
-    react-quill "^2.0.0"
-    react-redux "^7.2.0"
-    redux "^4.1.1"
-    redux-saga "^1.1.3"
-    redux-undo "^1.1.0"
-    regenerator-transform "^0.13.3"
-    reselect "^4.0.0"
-    typescript "^5.0.4"
 
 "@complat/react-spectra-editor@1.8.5":
   version "1.8.5"
@@ -1223,15 +1164,6 @@
     regenerator-transform "^0.13.3"
     reselect "^4.0.0"
     typescript "^5.0.4"
-
-"@complat/react-svg-file-zoom-pan@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.4.tgz#292e44e4b9ad0e8efa1f0b6d52358baa75dc13b5"
-  integrity sha512-1VjX7OEMPZJ0PZmUZxE1ZvUVEFU6h67FEyJphu6sXVzIYA8TG+JZwBaKh/V2k8nplA6hqGohbydX8oo2GJ1VwA==
-  dependencies:
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    d3 "^7.8.5"
-    regenerator-transform "^0.13.3"
 
 "@complat/react-svg-file-zoom-pan@1.1.5":
   version "1.1.5"
@@ -1984,7 +1916,7 @@
   dependencies:
     "@babel/runtime" "^7.23.9"
 
-"@mui/material@^5.14.10", "@mui/material@^5.14.9":
+"@mui/material@^5.14.9":
   version "5.18.0"
   resolved "https://registry.yarnpkg.com/@mui/material/-/material-5.18.0.tgz#71e72d52338252edc6f8d9461e04fdf0d61905cd"
   integrity sha512-bbH/HaJZpFtXGvWg3TsBWG4eyt3gah3E7nCNU8GLyRjVoWcA91Vm/T+sjHfUcwgJSw9iLtucfHBoq+qW/T30aA==
@@ -2022,7 +1954,7 @@
     csstype "^3.1.3"
     prop-types "^15.8.1"
 
-"@mui/styles@^5.14.10", "@mui/styles@^5.14.9":
+"@mui/styles@^5.14.9":
   version "5.18.0"
   resolved "https://registry.yarnpkg.com/@mui/styles/-/styles-5.18.0.tgz#e70330282e2c64880cc5f36f3fd9fa94257177d5"
   integrity sha512-GDgFUfl2MMN8iGrYTuhJ0hHRoja2kVOlXnHb5d3BBQCHFxOBaAPDKQxaNkoAwRf/vBhhwXWDsJA2XlkNHUPBgA==
@@ -5877,7 +5809,7 @@ cosmiconfig@^7.0.0, cosmiconfig@^7.0.1:
     path-type "^4.0.0"
     yaml "^1.10.0"
 
-create-react-class@^15.5.1, create-react-class@^15.6.3:
+create-react-class@^15.6.3:
   version "15.7.0"
   resolved "https://registry.yarnpkg.com/create-react-class/-/create-react-class-15.7.0.tgz#7499d7ca2e69bb51d13faf59bd04f0c65a1d6c1e"
   integrity sha512-QZv4sFWG9S5RUvkTYWbflxeZX+JG7Cz0Tn33rQBJ+WFQTqTfUTjMjiv9tnfXazjsO5r0KhPs+AqCjyrQX6h2ng==
@@ -7382,7 +7314,7 @@ es-to-primitive@^1.3.0:
     is-date-object "^1.1.0"
     is-symbol "^1.1.1"
 
-es6-error@^4.0.1, es6-error@^4.1.1:
+es6-error@^4.0.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/es6-error/-/es6-error-4.1.1.tgz#9e3af407459deed47e9a91f9b885a84eb05c561d"
   integrity sha512-Um/+FxMr9CISWh0bi5Zv0iOD+4cFh5qLeks1qhAopKVAJw3drgKbKySikp7wGhDL0HPeaja0P5ULZrxLkniUVg==
@@ -9417,11 +9349,6 @@ is-promise@2.1.0:
   resolved "https://registry.yarnpkg.com/is-promise/-/is-promise-2.1.0.tgz#79a2a9ece7f096e80f36d2b2f3bc16c1ff4bf3fa"
   integrity sha512-NECAi6wp6CgMesHuVUEK8JwjCvm/tvnn5pCbB42JOHp3mgUizN0nagXu4HEqQZBkieGEQ+jVcMKWqoVd6CDbLQ==
 
-is-promise@^2.1.0:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/is-promise/-/is-promise-2.2.2.tgz#39ab959ccbf9a774cf079f7b40c7a26f763135f1"
-  integrity sha512-+lP4/6lKUBfQjZ2pdxThZvLUAafmZb8OAxFb8XXtiQmS35INgr85hdOGoEs124ez1FCnZJt6jau/T+alh58QFQ==
-
 is-regex@^1.0.5, is-regex@^1.1.4, is-regex@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/is-regex/-/is-regex-1.2.1.tgz#76d70a3ed10ef9be48eb577887d74205bf0cad22"
@@ -10380,7 +10307,7 @@ lodash.once@^4.1.1:
   resolved "https://registry.yarnpkg.com/lodash.once/-/lodash.once-4.1.1.tgz#0dd3971213c7c56df880977d504c88fb471a97ac"
   integrity sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==
 
-lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.23, lodash@^4.17.4, lodash@^4.18.1:
+lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.23, lodash@^4.17.4, lodash@^4.18.1:
   version "4.18.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.18.1.tgz#ff2b66c1f6326d59513de2407bf881439812771c"
   integrity sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==
@@ -11758,7 +11685,7 @@ nyc@^15.1.0:
     test-exclude "^6.0.0"
     yargs "^15.0.2"
 
-object-assign@^4.0.1, object-assign@^4.1.0, object-assign@^4.1.1:
+object-assign@^4.1.0, object-assign@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
   integrity sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==
@@ -12546,7 +12473,7 @@ prop-types@15.6.2:
     loose-envify "^1.3.1"
     object-assign "^4.1.1"
 
-prop-types@^15.0.0, prop-types@^15.5.10, prop-types@^15.5.6, prop-types@^15.5.7, prop-types@^15.6.0, prop-types@^15.6.1, prop-types@^15.6.2, prop-types@^15.7.0, prop-types@^15.7.2, prop-types@^15.8.1:
+prop-types@^15.0.0, prop-types@^15.5.10, prop-types@^15.5.7, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.0, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -13211,14 +13138,6 @@ react-contextmenu@^2.14.0:
     classnames "^2.2.5"
     object-assign "^4.1.0"
 
-react-copy-to-clipboard@^5.1.0:
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/react-copy-to-clipboard/-/react-copy-to-clipboard-5.1.1.tgz#76adb8be03616e99692fcf3f762365ed3fb5ff16"
-  integrity sha512-s+HrzLyJBxrpGTYXF15dTgMjAJpEPZT/Yp6NytAtZMRngejxt6Pt5WrfFxLAcsqUDU6sY1Jz6tyHwIicE1U2Xg==
-  dependencies:
-    copy-to-clipboard "^3.3.3"
-    prop-types "^15.8.1"
-
 react-date-picker@^9.2.0:
   version "9.3.0"
   resolved "https://registry.yarnpkg.com/react-date-picker/-/react-date-picker-9.3.0.tgz#efec200f76518f9805fb0ceff7b79067cec2bfd3"
@@ -13402,7 +13321,7 @@ react-inlinesvg@^4.5.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react-is@^16.13.1, react-is@^16.3.2, react-is@^16.4.2, react-is@^16.7.0, react-is@^16.8.4:
+react-is@^16.13.1, react-is@^16.3.2, react-is@^16.7.0, react-is@^16.8.4:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
@@ -13458,15 +13377,6 @@ react-molviewer@^1.1.3:
     react-async-script-loader "^0.3.0"
     regenerator-runtime "^0.14.1"
 
-react-notification-system@^0.2.17:
-  version "0.2.17"
-  resolved "https://registry.yarnpkg.com/react-notification-system/-/react-notification-system-0.2.17.tgz#a60eddbb62225ad8f9fc5d7837546bf6cdb36818"
-  integrity sha512-i/ruSKE7aO05hpBt7MvbqLVCu2bzkoo5ApE3PXfj9Dh6oQOpjvaGPswmziuQiensRyMkWsb9mVh/8OmXzMERtw==
-  dependencies:
-    create-react-class "^15.5.1"
-    object-assign "^4.0.1"
-    prop-types "^15.5.6"
-
 react-onclickoutside@^6.13.0:
   version "6.13.2"
   resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-6.13.2.tgz#caa6df2c0cfe017506548fa810303fb85d13fb7c"
@@ -13503,7 +13413,7 @@ react-quill@^2.0.0:
     lodash "^4.17.4"
     quill "^1.3.7"
 
-react-redux@7.2.9, react-redux@^7.2.0:
+react-redux@7.2.9:
   version "7.2.9"
   resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.2.9.tgz#09488fbb9416a4efe3735b7235055442b042481d"
   integrity sha512-Gx4L3uM182jEEayZfRbI/G11ZpYdNAnBs70lFVMNdHJI76XYtR+7m0MN+eAs7UHBPhWXcnFPaS+9owSCJQHNpQ==
@@ -13754,20 +13664,6 @@ redent@^3.0.0:
   dependencies:
     indent-string "^4.0.0"
     strip-indent "^3.0.0"
-
-redux-form@^8.3.7:
-  version "8.3.10"
-  resolved "https://registry.yarnpkg.com/redux-form/-/redux-form-8.3.10.tgz#335657fafd4b26b91b4ce65371cd9dabe3648158"
-  integrity sha512-Eeog8dJYUxCSZI/oBoy7VkprvMjj1lpUnHa3LwjVNZvYDNeiRZMoZoaAT+6nlK2YQ4aiBopKUMiLe4ihUOHCGg==
-  dependencies:
-    "@babel/runtime" "^7.9.2"
-    es6-error "^4.1.1"
-    hoist-non-react-statics "^3.3.2"
-    invariant "^2.2.4"
-    is-promise "^2.1.0"
-    lodash "^4.17.15"
-    prop-types "^15.6.1"
-    react-is "^16.4.2"
 
 redux-saga@^1.1.3:
   version "1.5.0"
