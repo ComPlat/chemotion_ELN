@@ -44,7 +44,7 @@ RSpec.describe Device do
 
   before do
     device.people << user
-    device.save
+    device.save!
   end
 
   it 'handles user device relationship correctly' do
@@ -88,6 +88,101 @@ RSpec.describe Device do
       new_device = build(:device, name_abbreviation: abbreviation, email: email)
       expect(new_device).to be_valid
       expect { new_device.save! }.not_to raise_error
+    end
+  end
+
+  describe 'name abbreviation uniqueness' do
+    it 'rejects an abbreviation that differs only in case' do
+      taken = create(:device, name_abbreviation: 'Ab_c')
+
+      duplicate = build(:device, name_abbreviation: taken.name_abbreviation.upcase)
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors.of_kind?(:name_abbreviation, :taken)).to be true
+    end
+
+    it 'lets a device change the case of its own abbreviation' do
+      device.name_abbreviation = device.name_abbreviation.swapcase
+
+      expect(device).to be_valid
+    end
+
+    it 'adds errors instead of raising when the abbreviation is missing' do
+      new_device = described_class.new(name: 'x')
+
+      expect(new_device).not_to be_valid
+      expect(new_device.errors[:name_abbreviation]).to be_present
+    end
+
+    it 'still saves other changes to a device whose abbreviation is already duplicated' do
+      create(:device, name_abbreviation: 'NMR_1')
+      legacy = create(:device, name_abbreviation: 'Nmr_x')
+      legacy.update_column(:name_abbreviation, 'nmr_1') # rubocop:disable Rails/SkipsModelValidations
+
+      expect(legacy.reload.update(serial_number: '42')).to be true
+    end
+
+    it 'rejects clearing the abbreviation of an existing device' do
+      [nil, ''].each do |blank|
+        device.name_abbreviation = blank
+
+        expect(device).not_to be_valid
+        expect(device.errors.details[:name_abbreviation]).to eq [{ error: :blank }]
+      end
+    end
+
+    it 'rejects an empty abbreviation that is already in use' do
+      device.update_column(:name_abbreviation, '') # rubocop:disable Rails/SkipsModelValidations
+      other = create(:device)
+      other.name_abbreviation = ''
+
+      expect(other).not_to be_valid
+      expect(other.errors.of_kind?(:name_abbreviation, :taken)).to be true
+      expect(other.errors.messages[:name_abbreviation]).to include 'Is already in use'
+    end
+
+    it 'can validate a soft-deleted device' do
+      device.destroy
+
+      expect { described_class.only_deleted.find(device.id).valid? }.not_to raise_error
+    end
+  end
+
+  describe 'sftp keyfile validation' do
+    let(:keydir) { Dir.mktmpdir }
+    let(:sftp_device) do
+      build(:device, datacollector_method: 'filewatchersftp', datacollector_dir: '/data',
+                     datacollector_user: 'user', datacollector_host: 'host',
+                     datacollector_authentication: 'keyfile', datacollector_key_name: 'id_test')
+    end
+
+    before { allow(Rails.configuration.datacollectors).to receive(:keydir).and_return(keydir) }
+
+    after { FileUtils.remove_entry(keydir) }
+
+    it 'accepts an existing key file' do
+      FileUtils.touch(File.join(keydir, 'id_test'))
+
+      expect(sftp_device).to be_valid
+    end
+
+    it 'reports a key file that does not exist' do
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :not_found }]
+    end
+
+    it 'reports a missing key name as blank' do
+      sftp_device.datacollector_key_name = nil
+
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :blank }]
+    end
+
+    it 'reports the key file as not found when no key directory is configured' do
+      allow(Rails.configuration.datacollectors).to receive(:keydir).and_return(nil)
+
+      expect(sftp_device).not_to be_valid
+      expect(sftp_device.errors.details[:datacollector_key_name]).to eq [{ error: :not_found }]
     end
   end
 end
