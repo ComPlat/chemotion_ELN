@@ -32,8 +32,10 @@ module Chemotion
         { status: false }
       end
 
-      # Replaces the combined-spectra image of a container. The new attachment is saved before
-      # the old one is destroyed, so a failure cannot leave the container without an image.
+      # Replaces the combined-spectra image of a container. The container row is locked so
+      # concurrent combines do not each add an image, and the new attachment is saved before the
+      # old one is destroyed. The transaction covers the rows only: stored files are written and
+      # removed by attachment callbacks.
       #
       # @param container_id [Integer] id of the dataset container holding the spectra
       # @param filename [String] the combined image's filename (+<container>.new_combined.png+)
@@ -41,6 +43,7 @@ module Chemotion
       # @return [Attachment] the new combined image
       def replace_combined_image(container_id, filename, image)
         ActiveRecord::Base.transaction do
+          Container.lock.find(container_id)
           old = Attachment.find_by(
             filename: filename, attachable_type: 'Container', attachable_id: container_id,
           )
@@ -63,6 +66,7 @@ module Chemotion
 
         current_data_types = {}
         current_data_types = JSON.parse(File.read(file_path)) if File.exist?(file_path)
+        stored_data_types = current_data_types.deep_dup
 
         keys_to_check = default_data_types['datatypes'].keys
         result = {
@@ -84,16 +88,15 @@ module Chemotion
 
           result['default_data_types'][key] = default_values
         end
-        save_data_types(file_path, current_data_types)
+        save_data_types(file_path, current_data_types, stored_data_types)
         result
       end
 
-      # Writes the data types file only when its content changes.
-      def save_data_types(file_path, current_data_types)
-        content = JSON.pretty_generate(current_data_types)
-        return if File.exist?(file_path) && File.read(file_path) == content
+      # Writes the merged data types, unless they equal what was read from the file.
+      def save_data_types(file_path, current_data_types, stored_data_types)
+        return if current_data_types == stored_data_types
 
-        File.write(file_path, content)
+        File.write(file_path, JSON.pretty_generate(current_data_types))
       end
     end
 
@@ -118,16 +121,21 @@ module Chemotion
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
 
-          spectra = Attachment.where(id: pm[:spectra_ids], attachable_type: 'Container').to_a
-          error!('404 Not Found', 404) if spectra.empty? || spectra.size != pm[:spectra_ids].uniq.size
+          front_id = pm[:spectra_ids][pm[:front_spectra_idx]]
+          ids = pm[:spectra_ids].uniq
+          # keep the request order, and skip spectra deleted since the client listed them (a save
+          # can replace related edit files); the combined image goes to the last spectrum's container
+          spectra = Attachment.where(id: ids, attachable_type: 'Container').index_by(&:id).values_at(*ids).compact
+          error!('404 Not Found', 404) if spectra.empty?
 
-          # the combined image goes to the container of the last spectrum
           target = spectra.last
           access = Usecases::Attachments::Access.new(current_user)
           error!('401 Unauthorized', 401) unless spectra.all? { |att| access.read?(att) } && access.write?(target)
+          error!('Spectra must belong to an analysis', 422) if target.attachable_id.nil?
 
+          front_idx = spectra.index { |att| att.id == front_id } || 0
           _, image = Chemotion::Jcamp::CombineImg.combine(
-            spectra.map(&:abs_path), pm[:front_spectra_idx], spectra.map(&:filename), pm[:extras]
+            spectra.map(&:abs_path), front_idx, spectra.map(&:filename), pm[:extras]
           )
 
           content_type('application/json')

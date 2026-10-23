@@ -45,13 +45,15 @@ describe Chemotion::ChemSpectraAPI do
       end
     end
     let(:spectra_ids) { spectra.map(&:id) }
+    let(:front_spectra_idx) { 0 }
     let(:combined_images) do
       Attachment.where(filename: 'dataset.new_combined.png', attachable_type: 'Container', attachable_id: dataset.id)
     end
 
     before do
       allow(Chemotion::Jcamp::CombineImg).to receive(:combine).and_return([nil, image])
-      post '/api/v1/chemspectra/file/combine_spectra', params: { spectra_ids: spectra_ids, front_spectra_idx: 0 }
+      post '/api/v1/chemspectra/file/combine_spectra',
+           params: { spectra_ids: spectra_ids, front_spectra_idx: front_spectra_idx }
     end
 
     after { image.close! }
@@ -92,13 +94,53 @@ describe Chemotion::ChemSpectraAPI do
       end
     end
 
-    context 'when a spectrum does not exist' do
+    context 'when the spectra are listed out of id order' do
       let(:current_user) { owner }
-      let(:spectra_ids) { spectra.map(&:id) + [0] }
+      let(:spectra_ids) { spectra.map(&:id).reverse }
+
+      it 'combines them in the requested order' do
+        expect(response).to have_http_status(:created)
+        expect(Chemotion::Jcamp::CombineImg).to have_received(:combine)
+          .with(spectra.reverse.map(&:abs_path), 0, spectra.reverse.map(&:filename), nil)
+      end
+    end
+
+    context 'when a listed spectrum no longer exists' do
+      let(:current_user) { owner }
+      let(:deleted) do
+        create(:attachment, attachable: dataset, created_by: owner.id, created_for: owner.id).tap(&:destroy)
+      end
+      let(:spectra_ids) { [deleted.id, *spectra.map(&:id)] }
+      let(:front_spectra_idx) { 2 }
+
+      it 'combines the remaining spectra and keeps the requested front spectrum' do
+        expect(response).to have_http_status(:created)
+        expect(Chemotion::Jcamp::CombineImg).to have_received(:combine)
+          .with(spectra.map(&:abs_path), 1, spectra.map(&:filename), nil)
+        expect(combined_images.pluck(:id)).not_to include(old_image.id)
+      end
+    end
+
+    context 'when none of the spectra exist' do
+      let(:current_user) { owner }
+      let(:spectra_ids) { [0] }
 
       it 'returns not found and keeps the existing image' do
         expect(response).to have_http_status(:not_found)
         expect(combined_images.pluck(:id)).to eq([old_image.id])
+      end
+    end
+
+    context 'when the spectra are not in an analysis' do
+      let(:current_user) { owner }
+      let(:unsorted) do
+        create(:attachment, attachable: nil, attachable_type: 'Container', created_by: owner.id, created_for: owner.id)
+      end
+      let(:spectra_ids) { [unsorted.id] }
+
+      it 'refuses without combining' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Chemotion::Jcamp::CombineImg).not_to have_received(:combine)
       end
     end
   end

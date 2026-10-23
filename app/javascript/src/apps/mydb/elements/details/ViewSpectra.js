@@ -767,7 +767,16 @@ class ViewSpectra extends React.Component {
         combineIds,
         combineCurveIdx,
         combineExtras,
-        () => resolve(),
+        (_combined, errorMessage) => {
+          if (errorMessage) {
+            this.context.notifications.add({
+              message: errorMessage.message || String(errorMessage),
+              level: 'error',
+              position: 'tc',
+            });
+          }
+          resolve();
+        },
       );
     });
   }
