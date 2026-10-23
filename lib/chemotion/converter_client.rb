@@ -24,7 +24,37 @@ module Chemotion
       end
     end
 
+    JSON_HEADERS = { 'Content-Type' => 'application/json' }.freeze
+
     class << self
+      # Creates a profile from +data+.
+      #
+      # converter-app migrates and json-schema-validates the profile on write and
+      # answers 400 with an +errors+ body when it does not validate — a
+      # {RequestError} carrying that body, so the caller can relay it instead of
+      # collapsing it to +nil+ the way {Labimotion::Converter.create_profile} does.
+      #
+      # @param data [Hash] the profile payload
+      # @return [Hash] the created (migrated/validated) profile
+      # @raise [RequestError]
+      def create_profile(data)
+        parse(request(:post, 'profiles', body: data.to_json, headers: JSON_HEADERS))
+      end
+
+      # Updates the profile identified by +profile_id+ with +data+.
+      #
+      # Same write-time migration/validation contract as {.create_profile}: a
+      # legacy profile that no longer validates comes back as a {RequestError}
+      # (HTTP 400 + +errors+ body) rather than a swallowed +nil+.
+      #
+      # @param profile_id [String] the profile id
+      # @param data [Hash] the profile payload
+      # @return [Hash] the updated (migrated/validated) profile
+      # @raise [RequestError]
+      def update_profile(profile_id, data)
+        parse(request(:put, "profiles/#{profile_id}", body: data.to_json, headers: JSON_HEADERS))
+      end
+
       # Restores +profile_id+ to an earlier +version+.
       #
       # @param hard [Boolean] discard the versions newer than +version+
