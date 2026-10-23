@@ -10,6 +10,22 @@ module Chemotion
   class SearchAPI < Grape::API
     include Grape::Kaminari
 
+    # Text searches (search_by_method) on sample data; they need a sample detail level above 0.
+    SAMPLE_TEXT_SEARCHES = %w[
+      iupac_name inchistring inchikey cano_smiles sample_name sample_short_label molecule_name substring
+    ].freeze
+    REACTION_TEXT_SEARCHES = %w[reaction_name reaction_short_label reaction_status reaction_rinchi_string].freeze
+    SBMM_SAMPLE_TEXT_SEARCHES = %w[
+      sbmm_sample_name sbmm_sample_short_label sbmm_sample_organism sbmm_sample_taxon_id sbmm_sample_strain
+      sbmm_sample_tissue sbmm_systematic_name sbmm_short_name sbmm_other_identifier sbmm_own_identifier
+      sbmm_ec_numbers sbmm_organism sbmm_taxon_id sbmm_strain sbmm_tissue
+    ].freeze
+    DEVICE_DESCRIPTION_TEXT_SEARCHES = %w[
+      device_description_name device_description_short_label device_description_vendor_device_name
+      device_description_vendor_device_id device_description_serial_number device_description_vendor_company_name
+      device_description_general_tags device_description_ontologies
+    ].freeze
+
     # TODO: implement search cache?
     helpers CollectionHelpers
     helpers do
@@ -93,6 +109,34 @@ module Chemotion
         params[:selection][:advanced_params]
       end
 
+      # Runs the text search +search_by_method+ on +scope+ (one element type in the current collection) if the
+      # method exists for that type and the collection's detail levels allow it, as in {#search_elements}.
+      #
+      # @param scope [ActiveRecord::Relation] the element type's records in the current collection
+      # @return [ActiveRecord::Relation] the matching records, or none when the search is not allowed
+      def search_by_detail_level(scope)
+        method = search_by_method.to_s
+        sample_data = SAMPLE_TEXT_SEARCHES.include?(method) && (@dl_s || 0).positive?
+        allowed =
+          case scope.klass.name
+          when 'Sample'
+            sample_data || (%w[sum_formula sample_external_label].include?(method) && (@dl_s || 0) > -1)
+          when 'Reaction'
+            sample_data || REACTION_TEXT_SEARCHES.include?(method)
+          when 'Wellplate'
+            sample_data || method == 'wellplate_name'
+          when 'Screen'
+            %w[screen_name conditions requirements substring].include?(method)
+          when 'SequenceBasedMacromoleculeSample'
+            (SBMM_SAMPLE_TEXT_SEARCHES + ['substring']).include?(method) && (@dl_sbmms || 0).positive?
+          when 'DeviceDescription'
+            (DEVICE_DESCRIPTION_TEXT_SEARCHES + ['substring']).include?(method) && (@dl_dd || 0).positive?
+          else
+            false
+          end
+        allowed ? scope.search_by(method, params[:selection][:name]) : scope.none
+      end
+
       def id_params
         params[:selection][:id_params]
       end
@@ -135,10 +179,10 @@ module Chemotion
           detail_levels: dl,
           params: params[:selection][:advanced_params],
         ).filter!
+        return Sample.none if conditions[:error].present? || conditions[:model_name].blank?
 
-        query_cond = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
         scope = conditions[:model_name].by_collection_id(c_id.to_i)
-                                       .where(query_cond)
+                                       .where(conditions[:query])
                                        .joins(conditions[:joins].join(' '))
         scope = order_by_molecule(scope) if conditions[:model_name] == Sample
         if %w[ResearchPlan Wellplate].include?(conditions[:model_name].to_s)
@@ -423,21 +467,23 @@ module Chemotion
                   CelllineSample.by_material_name(arg, c_id)
                 when 'cell_line_sample_name'
                   CelllineSample.by_sample_name(arg, c_id)
-                when 'sbmm_sample_name', 'sbmm_sample_short_label', 'sbmm_sample_organism', 'sbmm_sample_taxon_id',
-                     'sbmm_sample_strain', 'sbmm_sample_tissue', 'sbmm_systematic_name', 'sbmm_short_name',
-                     'sbmm_other_identifier', 'sbmm_own_identifier', 'sbmm_ec_numbers',
-                     'sbmm_organism', 'sbmm_taxon_id', 'sbmm_strain', 'sbmm_tissue'
-                  SequenceBasedMacromoleculeSample.by_collection_id(c_id)
-                                                  .joins(:sequence_based_macromolecule)
-                                                  .order('sequence_based_macromolecule_samples.updated_at DESC')
-                                                  .search_by(search_method, arg)
-                when 'device_description_name', 'device_description_short_label',
-                     'device_description_vendor_device_name', 'device_description_vendor_device_id',
-                     'device_description_serial_number', 'device_description_vendor_company_name',
-                     'device_description_general_tags', 'device_description_ontologies'
-                  DeviceDescription.by_collection_id(c_id)
-                                   .order('device_descriptions.updated_at DESC')
-                                   .search_by(search_method, arg)
+                when *SBMM_SAMPLE_TEXT_SEARCHES
+                  if (dl[:sequencebasedmacromoleculesample_detail_level] || 0).positive?
+                    SequenceBasedMacromoleculeSample.by_collection_id(c_id)
+                                                    .joins(:sequence_based_macromolecule)
+                                                    .order('sequence_based_macromolecule_samples.updated_at DESC')
+                                                    .search_by(search_method, arg)
+                  else
+                    SequenceBasedMacromoleculeSample.none
+                  end
+                when *DEVICE_DESCRIPTION_TEXT_SEARCHES
+                  if (dl[:devicedescription_detail_level] || 0).positive?
+                    DeviceDescription.by_collection_id(c_id)
+                                     .order('device_descriptions.updated_at DESC')
+                                     .search_by(search_method, arg)
+                  else
+                    DeviceDescription.none
+                  end
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -683,9 +729,13 @@ module Chemotion
             when 'structure'
               sample_structure_search
             when 'cas'
-              Sample.by_collection_id(@c_id).by_sample_xref_cas(params[:selection][:name])
+              if (@dl_s || 0).positive?
+                Sample.by_collection_id(@c_id).by_sample_xref_cas(params[:selection][:name])
+              else
+                Sample.none
+              end
             else
-              Sample.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
+              search_by_detail_level(Sample.by_collection_id(@c_id))
             end
 
           serialization_by_elements_and_page(
@@ -719,7 +769,7 @@ module Chemotion
               ).compact.uniq
               Reaction.by_collection_id(@c_id).where(id: reaction_ids)
             else
-              Reaction.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
+              search_by_detail_level(Reaction.by_collection_id(@c_id))
             end
 
           serialization_by_elements_and_page(
@@ -746,7 +796,7 @@ module Chemotion
               associated_samples = sample_structure_search
               Wellplate.by_collection_id(@c_id).by_sample_ids(associated_samples.pluck(:id))
             else
-              Wellplate.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
+              search_by_detail_level(Wellplate.by_collection_id(@c_id))
             end
 
           serialization_by_elements_and_page(
@@ -774,7 +824,7 @@ module Chemotion
               well_ids = Wellplate.by_sample_ids(associated_samples.pluck(:id))
               Screen.by_collection_id(@c_id).by_wellplate_ids(well_ids)
             else
-              Screen.by_collection_id(@c_id).search_by(search_by_method, params[:selection][:name])
+              search_by_detail_level(Screen.by_collection_id(@c_id))
             end
 
           serialization_by_elements_and_page(
@@ -795,9 +845,9 @@ module Chemotion
         end
 
         post do
-          sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(@c_id)
-                                                         .joins(:sequence_based_macromolecule)
-                                                         .search_by(search_by_method, params[:selection][:name])
+          sbmm_samples = search_by_detail_level(
+            SequenceBasedMacromoleculeSample.by_collection_id(@c_id).joins(:sequence_based_macromolecule),
+          )
 
           serialization_by_elements_and_page(
             elements_by_scope(sbmm_samples),
@@ -817,11 +867,10 @@ module Chemotion
         end
 
         post do
-          sbmm_samples = DeviceDescription.by_collection_id(@c_id)
-                                          .search_by(search_by_method, params[:selection][:name])
+          device_descriptions = search_by_detail_level(DeviceDescription.by_collection_id(@c_id))
 
           serialization_by_elements_and_page(
-            elements_by_scope(sbmm_samples),
+            elements_by_scope(device_descriptions),
             params[:page],
           )
         end

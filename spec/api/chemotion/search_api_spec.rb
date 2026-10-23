@@ -983,6 +983,357 @@ describe Chemotion::SearchAPI do
         expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 1
       end
     end
+
+    context 'with quotes in user supplied values' do
+      let(:base_param) { { link: '', element_id: 0 } }
+
+      context 'when a general tag value contains a quote' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'device_descriptions', unit: '',
+                            field: { column: 'general_tags', table: 'device_descriptions' },
+                            value: "o'brien")]
+        end
+
+        it 'treats the value as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when the unit contains a quote' do
+        let(:advanced_params) do
+          [base_param.merge(match: '>=', table: 'samples', unit: "g'",
+                            field: { column: 'target_amount_value' }, value: '0')]
+        end
+
+        it 'treats the unit as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when the column is not a plain identifier' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'device_descriptions', unit: '',
+                            field: { column: 'name desc' }, value: 'no match')]
+        end
+
+        it 'rejects the filter' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('device_descriptions', 'error')).to include('is not allowed')
+        end
+      end
+
+      context 'when generic field names contain quotes' do
+        let(:advanced_params) do
+          [base_param.merge(match: 'ILIKE', table: 'samples', unit: '',
+                            field: { table: 'segments', key: "layer'", column: "field'", element_id: 1 },
+                            value: 'x')]
+        end
+
+        it 'treats them as literals' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when a value next to a searched word contains a question mark' do
+        let(:advanced_params) do
+          [base_param.merge(match: '>=', table: 'samples', unit: 'g?',
+                            field: { column: 'target_amount_value', table: 'samples' }, value: '0')]
+        end
+
+        it 'treats the value as a literal' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        end
+      end
+
+      context 'when searched words of several rows contain question marks' do
+        let(:advanced_params) do
+          [
+            base_param.merge(match: 'ILIKE', table: 'samples', unit: '',
+                             field: { column: 'name', table: 'samples' }, value: 'Wat?'),
+            base_param.merge(link: 'OR', match: 'ILIKE', table: 'samples', unit: '',
+                             field: { column: 'name', table: 'samples' }, value: 'Water'),
+          ]
+        end
+
+        it 'binds each word to its own row' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
+        end
+      end
+    end
+
+    context 'when the field table does not belong to the searched table' do
+      let(:advanced_params) do
+        [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+           field: { column: 'name', table: 'device_descriptions' }, value: 'Water' }]
+      end
+
+      it 'refuses the filter' do
+        expect(response).to have_http_status(:created)
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+        expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+      end
+    end
+
+    context 'when the searched table is not an element table' do
+      let(:advanced_params) do
+        [{ link: '', match: 'ILIKE', table: 'segments', element_id: 0, unit: '',
+           field: { column: 'name', table: 'segments', key: 'layer', element_id: 1 }, value: 'Water' }]
+      end
+
+      it 'refuses the filter' do
+        expect(response).to have_http_status(:created)
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/advanced in a collection shared at sample detail level 0' do
+    let(:url) { '/api/v1/search/advanced' }
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let!(:shared_sample) { create(:sample, name: 'Shared water', creator: owner, collections: [shared_collection]) }
+    let(:params) do
+      {
+        selection: { elementType: :advanced, search_by_method: :advanced, advanced_params: advanced_params },
+        collection_id: shared_collection.id, page: 1, per_page: 15
+      }
+    end
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 0)
+      do_request
+    end
+
+    [
+      { column: 'name', table: 'samples' },
+      { column: 'name', table: 'device_descriptions' },
+      { column: 'iupac_name', table: 'molecules' },
+    ].each do |field|
+      context "with a #{field[:table]}.#{field[:column]} filter" do
+        let(:advanced_params) do
+          [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '', field: field, value: 'water' }]
+        end
+
+        it 'finds no samples' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+        end
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/advanced on chemical data' do
+    subject(:do_request) { post url, params: params, as: :json }
+
+    let(:url) { '/api/v1/search/advanced' }
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let!(:shared_sample) do
+      create(:sample, name: 'Stocked water', external_label: 'EXT-1', creator: owner,
+                      collections: [shared_collection])
+    end
+    let(:search_collection) { shared_collection }
+    let(:params) do
+      {
+        selection: { elementType: :advanced, search_by_method: :advanced, advanced_params: advanced_params },
+        collection_id: search_collection.id, page: 1, per_page: 15
+      }
+    end
+    let(:status_filter) do
+      [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+         field: { column: 'status', table: 'chemicals' }, value: 'Available' }]
+    end
+    let(:external_label_on_chemicals) do
+      [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '', value: '',
+         field: { column: 'external_label', table: 'chemicals' }, sub_values: [{ status: 'Available' }] }]
+    end
+
+    before do
+      create(:chemical, sample: shared_sample, chemical_data: [{ 'status' => 'Available' }])
+    end
+
+    context 'when the collection is shared at sample detail level 0' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 0)
+        do_request
+      end
+
+      context 'with an external label filter on chemical data' do
+        let(:advanced_params) { external_label_on_chemicals }
+
+        it 'refuses the filter' do
+          expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+          expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+        end
+      end
+
+      context 'with an external label filter on the sample' do
+        let(:advanced_params) do
+          [{ link: '', match: 'ILIKE', table: 'samples', element_id: 0, unit: '',
+             field: { column: 'external_label', table: 'samples' }, value: 'EXT-1' }]
+        end
+
+        it 'finds the sample' do
+          expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+        end
+      end
+    end
+
+    context 'when the collection is shared below full sample detail' do
+      let(:advanced_params) { status_filter }
+
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: 1)
+        do_request
+      end
+
+      it 'refuses the filter' do
+        expect(parsed_json_response.dig('samples', 'ids')).not_to include(shared_sample.id)
+        expect(parsed_json_response.dig('samples', 'error')).to include('is not allowed')
+      end
+    end
+
+    context 'when the collection is shared at full sample detail' do
+      let(:advanced_params) { status_filter }
+
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: user,
+                                  sample_detail_level: Collection::OWNER_LEVEL)
+        do_request
+      end
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+      end
+    end
+
+    context 'when the collection is the user own' do
+      let(:owner) { user }
+      let(:advanced_params) { status_filter }
+
+      before { do_request }
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to include(shared_sample.id)
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/<element type> by search method in a shared collection' do
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let(:sample_detail_level) { 0 }
+    let!(:shared_sample) { create(:sample, name: 'Shared water', creator: owner, collections: [shared_collection]) }
+    let!(:shared_reaction) do
+      create(:reaction, name: 'Shared reaction', samples: [shared_sample], creator: owner,
+                        collections: [shared_collection])
+    end
+    let(:params) do
+      {
+        selection: { elementType: element_type, search_by_method: search_method, name: name },
+        collection_id: shared_collection.id, page: 1, per_page: 15
+      }
+    end
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user,
+                                sample_detail_level: sample_detail_level,
+                                sequencebasedmacromoleculesample_detail_level: 0,
+                                devicedescription_detail_level: 0)
+      post "/api/v1/search/#{element_type}", params: params
+    end
+
+    [
+      ['samples', 'sample_name', 'Shared water'],
+      %w[samples cano_smiles C],
+      ['reactions', 'sample_name', 'Shared water'],
+    ].each do |type, method, term|
+      context "with #{method} on #{type} at sample detail level 0" do
+        let(:element_type) { type }
+        let(:search_method) { method }
+        let(:name) { term }
+
+        it 'finds nothing' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(type, 'totalElements')).to eq 0
+        end
+      end
+    end
+
+    context 'with sample_name on samples at a higher sample detail level' do
+      let(:sample_detail_level) { 10 }
+      let(:element_type) { 'samples' }
+      let(:search_method) { 'sample_name' }
+      let(:name) { 'Shared water' }
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [shared_sample.id]
+      end
+    end
+
+    context 'with reaction_name on reactions at sample detail level 0' do
+      let(:element_type) { 'reactions' }
+      let(:search_method) { 'reaction_name' }
+      let(:name) { 'Shared reaction' }
+
+      it 'finds the reaction' do
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [shared_reaction.id]
+      end
+    end
+
+    context 'with a method of another element type' do
+      let(:sample_detail_level) { 10 }
+      let(:element_type) { 'samples' }
+      let(:search_method) { 'reaction_name' }
+      let(:name) { 'Shared reaction' }
+
+      it 'finds nothing' do
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+      end
+    end
+
+    %w[sequence_based_macromolecule_samples device_descriptions].each do |type|
+      context "with substring on #{type} at detail level 0" do
+        let(:element_type) { type }
+        let(:search_method) { 'substring' }
+        let(:name) { 'Shared' }
+
+        it 'finds nothing' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(type, 'totalElements').to_i).to eq 0
+        end
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/samples with a structure search method' do
+    let(:url) { '/api/v1/search/samples' }
+    let(:params) do
+      {
+        selection: {
+          elementType: :samples,
+          search_by_method: 'fingerprint_sub',
+          name: sample_a.molfile,
+        },
+        collection_id: collection.id,
+        page: 1,
+        per_page: 15,
+      }
+    end
+
+    before do
+      do_request
+    end
+
+    it 'does not run the structure search' do
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+    end
   end
 
   describe 'POST /api/v1/search/structure' do
@@ -1112,6 +1463,37 @@ describe Chemotion::SearchAPI do
           expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
           expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
+        end
+      end
+
+      context 'when the molfile header contains a quote' do
+        let(:molfile) { sample_a.molfile.sub(/\A[^\n]*/, "it's a title") }
+        let(:params) do
+          {
+            selection: {
+              elementType: :structure,
+              molfile: molfile,
+              search_type: 'sub',
+              search_by_method: :structure,
+              structure_search: true,
+            },
+            collection_id: collection.id,
+            page: 1,
+            per_page: 15,
+            molecule_sort: true,
+          }
+        end
+
+        before do
+          do_request
+        end
+
+        it 'treats the molfile as a literal and returns the matching samples' do
+          expected_ids =
+            Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id, sample_b.id]
+
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig('samples', 'ids')).to include(*expected_ids)
         end
       end
 
