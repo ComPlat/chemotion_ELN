@@ -55,6 +55,9 @@ const CompareSpectraHeader = ({
         onChange={handleChange}
         maxTagCount={2}
         getPopupContainer={(triggerNode) => triggerNode.parentNode}
+        // Native scrolling: the virtual list draws a faint custom scrollbar and, estimating
+        // unrendered row heights, can stop short of the last entries.
+        virtual={false}
       />
       <Button
         className="ms-auto"

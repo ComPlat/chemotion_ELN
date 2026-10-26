@@ -419,6 +419,9 @@ const CompareInlineEditor = ({
             placement="bottomLeft"
             dropdownAlign={{ overflow: { adjustX: true, adjustY: false } }}
             listHeight={200}
+            // Native scrolling: the virtual list draws a faint custom scrollbar and, estimating
+            // unrendered row heights, can stop short of the last entries.
+            virtual={false}
             onChange={(value, _label, info) => handleSelectionChange(displayedMenuItems, value, info)}
             disabled={disabled || (generated && !isAdding)}
             maxTagCount={2}
