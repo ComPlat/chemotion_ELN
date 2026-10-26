@@ -95,14 +95,10 @@ export default class Component extends Sample {
       || !Number.isFinite(molecularWeight) || molecularWeight <= 0
       || !Number.isFinite(purity) || purity <= 0) return;
 
-    this.amount_g = amountMol * molecularWeight / purity;
-    if (this.material_group === 'liquid') {
-      if (this.density > 0) {
-        this.amount_l = this.amount_g / (this.density * 1000);
-      } else if (this.starting_molarity_value > 0) {
-        this.amount_l = amountMol / this.starting_molarity_value;
-      }
-    }
+    // Loading or rescaling known moles must not infer a new purity from the UI's Mass lock.
+    this.calculateMassFromAmount(purity, false);
+
+    if (this.material_group === 'liquid') this.calculateVolumeForLiquid(purity);
   }
 
   /**
@@ -525,7 +521,7 @@ export default class Component extends Sample {
    */
   calculateVolumeFromConcentration() {
     this.density = 0;
-    this.amount_l = this.amount_mol / (this.starting_molarity_value);
+    this.amount_l = this.amount_mol / (this.starting_molarity_value * (this.purity || 1));
   }
 
   // Case 4: Ratio changes

@@ -77,7 +77,7 @@ module Usecases
       # Attributes of an SBMM sample that a split made from a copy of it does not take over.
       SBMM_COPY_EXCLUDED_ATTRIBUTES = %w[id short_label ancestry user_id created_at updated_at deleted_at].freeze
 
-      attr_reader :current_user
+      attr_reader :current_user, :material_id_map
 
       # Variations group => client key => persisted key, filled by {#execute!}: the id a material was
       # sent with (a preliminary uuid for a new one) and the id of the sample it was saved as, with the
@@ -90,12 +90,14 @@ module Usecases
 
       # @param origin_reaction [Reaction, nil] for a copy: the source reaction, already access-checked;
       #   variations keys naming its materials are mapped to the copy's by group position
-      def initialize(reaction, materials, user, vessel_size, origin_reaction: nil)
+      def initialize(reaction, materials, user, vessel_size, origin_reaction: nil, preserve_removed_sample_ids: [])
         @origin_reaction = origin_reaction
         @reaction = reaction
         @materials = build_materials(materials)
         @current_user = user
         @vessel_size = vessel_size
+        @material_id_map = {}
+        @preserved_sample_ids = Array(preserve_removed_sample_ids)
       end
 
       def execute!
@@ -135,6 +137,7 @@ module Usecases
                 )
 
                 reconcile_mixture_components(modified_sample, sample)
+                record_material_ids(sample, modified_sample)
 
                 if sample.segments
                   modified_sample.save_segments(segments: sample.segments,
@@ -183,6 +186,17 @@ module Usecases
           key_map: variation_key_map, origin_reaction: @origin_reaction,
         )
         @reaction.variations = reconciled unless reconciled == @reaction.variations
+      end
+
+      def record_material_ids(sample, modified_sample)
+        return unless sample.is_new && sample.id
+
+        component_ids = Array(sample.components).map { |component| component['id'] || component[:id] }
+        persisted_ids = modified_sample.components.order(:id).pluck(:id)
+        @material_id_map[sample.id] = {
+          id: modified_sample.id,
+          component_ids: component_ids.zip(persisted_ids).to_h,
+        }
       end
 
       # Reconcile a mixture sample's persisted components with the client payload,
@@ -456,8 +470,11 @@ module Usecases
         sample_ids_to_delete = current_sample_ids - modified_sample_ids
         shared_ids = ReactionsSample.where(sample_id: sample_ids_to_delete)
                                     .where.not(reaction_id: [@reaction.id, nil]).distinct.pluck(:sample_id)
-        @reaction.reactions_samples.where(sample_id: shared_ids).destroy_all
-        Sample.where(id: sample_ids_to_delete - shared_ids).destroy_all
+        preserved = Sample.where(id: sample_ids_to_delete & @preserved_sample_ids,
+                                 sample_type: Sample::SAMPLE_TYPE_MIXTURE).pluck(:id)
+        retained_ids = shared_ids | preserved
+        @reaction.reactions_samples.where(sample_id: retained_ids).destroy_all
+        Sample.where(id: sample_ids_to_delete - retained_ids).destroy_all
       end
 
       def destroy_unused_sbmm_samples(modified_sbmm_ids)

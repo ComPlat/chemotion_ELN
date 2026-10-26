@@ -21,7 +21,7 @@ export default class UIFetcher {
       .then((json) => {
         const samples = json.samples.map((s) => new Sample(s));
         const reactions = json.reactions.map((r) => {
-          const reaction = new Reaction(r);
+          const reaction = new Reaction(r).recordPersistedMaterials();
           reaction.samples.forEach((sample) => {
             if (sample.isMixture() && sample.hasComponents()) {
               // Report components use the same nested API format as reaction materials.
