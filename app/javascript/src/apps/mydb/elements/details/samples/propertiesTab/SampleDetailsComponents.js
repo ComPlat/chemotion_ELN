@@ -149,12 +149,12 @@ export default class SampleDetailsComponents extends React.Component {
    * Updates dependent amounts and ratios, then mixture totals, after the reference's
    * molar amount changes through an amount, density or purity edit.
    */
-  updateMixtureAfterReferenceAmountChange() {
+  updateMixtureAfterReferenceAmountChange({ preserveUnallocatedMass = false } = {}) {
     const { sample } = this.props;
 
     // Initialize missing amounts from ratios; preserve existing component quantities.
     sample.updateMixtureComponentsFromReferenceAmount();
-    sample.calculateTotalMixtureMass();
+    sample.calculateTotalMixtureMass({ preserveUnallocatedMass });
   }
 
   /**
@@ -323,6 +323,7 @@ export default class SampleDetailsComponents extends React.Component {
     if (!currentComponent) {
       return;
     }
+    const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
 
     // Set active amount unit for highlighting consistency
     if (amount && amount.unit) {
@@ -337,13 +338,13 @@ export default class SampleDetailsComponents extends React.Component {
 
     if (isReferenceComponent) {
       // Debouncing groups rapid keystrokes; pauses or later edits trigger another update.
-      this.updateMixtureAfterReferenceAmountChange();
+      this.updateMixtureAfterReferenceAmountChange({ preserveUnallocatedMass });
     } else {
       if (referenceComponent) {
         // Non-reference changed → only update its own equivalent against the reference
         currentComponent.updateRatioFromReference(referenceComponent);
       }
-      sample.calculateTotalMixtureMass();
+      sample.calculateTotalMixtureMass({ preserveUnallocatedMass });
     }
   }
 
@@ -359,6 +360,7 @@ export default class SampleDetailsComponents extends React.Component {
     if (!currentComponent) {
       return;
     }
+    const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
 
     currentComponent.handleDensityChange(amount, lockColumn);
 
@@ -374,11 +376,11 @@ export default class SampleDetailsComponents extends React.Component {
 
     if (isReferenceComponent) {
       // Density can derive a reference amount from volume, so apply the same reference policy.
-      this.updateMixtureAfterReferenceAmountChange();
+      this.updateMixtureAfterReferenceAmountChange({ preserveUnallocatedMass });
     } else {
       // Non-reference (or no reference set) → recompute ratios from amounts.
       sample.updateMixtureComponentEquivalent();
-      sample.calculateTotalMixtureMass();
+      sample.calculateTotalMixtureMass({ preserveUnallocatedMass });
     }
   }
 
@@ -445,6 +447,7 @@ export default class SampleDetailsComponents extends React.Component {
       });
       return;
     }
+    const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
 
     SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
@@ -455,9 +458,9 @@ export default class SampleDetailsComponents extends React.Component {
     const purityChangesAmount = materialGroup === 'liquid'
       || (materialGroup === 'solid' && lockAmountColumnSolids);
     if (isReferenceComponent && purityChangesAmount) {
-      this.updateMixtureAfterReferenceAmountChange();
+      this.updateMixtureAfterReferenceAmountChange({ preserveUnallocatedMass });
     } else {
-      sample.calculateTotalMixtureMass();
+      sample.calculateTotalMixtureMass({ preserveUnallocatedMass });
     }
   }
 

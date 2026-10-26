@@ -9,6 +9,80 @@ import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import alt from 'src/stores/alt/alt';
 import { rootStore } from 'src/stores/mobx/RootStore';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
+
+describe('SampleDetailsComponents unallocated mass after conversion', () => {
+  let sandbox;
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    sandbox.stub(ComponentStore, 'getState').returns({
+      ...ComponentStore.getState(), lockedComponents: [], lockAmountColumnSolidsBySample: {},
+    });
+    sandbox.stub(MoleculesFetcher, 'fetchBySmi').callsFake(async (smiles) => ({
+      id: smiles === 'CCO' ? 501 : 502, cano_smiles: smiles, molecular_weight: smiles === 'CCO' ? 46 : 58,
+    }));
+  });
+  afterEach(() => { sandbox.restore(); });
+
+  const convert = async (amountType) => {
+    const sample = new Sample({
+      sample_type: 'Micromolecule', amountType, amount_value: 3, amount_unit: 'g', purity: 1,
+      density: 0.8, molecule: { cano_smiles: 'CCO.CCCC', molecular_weight: 104 }, molfile: 'source',
+    });
+    const conversion = sandbox.spy(sample, 'createComponentsFromCurrentSample');
+    const form = Object.create(SampleForm.prototype);
+    form.props = { sample, handleSampleChanged: () => {} };
+    form.setState = () => {};
+    form.handleSampleTypeChanged({ value: 'Mixture', label: 'Mixture' });
+    await conversion.firstCall.returnValue;
+    return sample;
+  };
+  const editorFor = (sample) => new SampleDetailsComponents({ sample, onChange: () => {} });
+
+  ['target', 'real'].forEach((amountType) => {
+    [0, 1].forEach((index) => {
+      ['density', 'purity', 'stock concentration'].forEach((property) => {
+        it(`keeps unallocated ${amountType} mass after a ${property} edit on component ${index}`, async () => {
+          let sample = await convert(amountType);
+          const sampleID = sample.components[index].id;
+          const event = property === 'density'
+            ? { type: 'densityChanged', amount: { value: 0.8, unit: 'g/ml' } }
+            : property === 'purity'
+              ? { type: 'purityChanged', amount: { value: 0.5 } }
+              : { type: 'amountChanged', amount: { value: 2, unit: 'mol/l' }, concType: 'startingConc' };
+          editorFor(sample).onChangeComponent({ ...event, sampleID, materialGroup: 'liquid', lockColumn: false });
+          expect(sample.amount_g).toBe(3);
+          expect(sample.total_mixture_mass_g).toBe(3);
+          expect(sample.components.map((component) => component.amount_mol)).toEqual([0, 0]);
+
+          const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+          payload.components.forEach((entry, position) => {
+            entry.component_properties.molecule = sample.components[position].molecule;
+          });
+          sample = new Sample(payload);
+          sample.amountType = amountType;
+          sample.initialComponents(payload.components.map(Component.deserializeData));
+          const editor = editorFor(sample);
+          editor.onChangeComponent({ ...event, sampleID, materialGroup: 'liquid', lockColumn: false });
+          expect(sample.amount_g).toBe(3);
+          expect(sample.hasUnallocatedMixtureMass()).toBe(true);
+
+          editor.onChangeComponent({
+            type: 'amountChanged', sampleID, amount: { value: 0.01, unit: 'mol' }, materialGroup: 'liquid',
+          });
+          expect(sample.amount_g).toBeGreaterThan(0);
+          expect(sample.hasUnallocatedMixtureMass()).toBe(false);
+          editor.onChangeComponent({
+            type: 'amountChanged', sampleID, amount: { value: 0, unit: 'mol' }, materialGroup: 'liquid',
+          });
+          expect(sample.amount_g).toBe(0);
+          expect(sample.total_mixture_mass_g).toBe(0);
+        });
+      });
+    });
+  });
+});
 
 describe('SampleDetailsComponents reaction product ratios', () => {
   let sandbox;

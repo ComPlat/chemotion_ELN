@@ -1209,6 +1209,15 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    const relativeWeight = Number(updatedSample.reference_component.relative_molecular_weight);
+    if (!Number.isFinite(relativeWeight) || relativeWeight <= 0) {
+      this.context.notifications.add({
+        message: 'The selected component has no usable relative molecular weight. '
+          + 'The mixture mass is kept; check the component amount and equivalent before saving.',
+        level: 'warning',
+      });
+    }
+
     const product = reaction.products?.some((sample) => isSameMaterial(sample, updatedSample));
     if (product && referenceMaterial) {
       this.updatedSamplesForAmountChange([updatedSample], updatedSample, 'products');

@@ -1020,13 +1020,7 @@ export default class Sample extends Element {
       return;
     }
 
-    const massG = Number(this.amount_g);
-    const hasRelativeWeights = this.components.some((entry) => {
-      const weight = Number(entry.relative_molecular_weight);
-      return Number.isFinite(weight) && weight > 0;
-    });
-    const hasUnallocatedMass = Number.isFinite(massG) && massG > 0 && !hasRelativeWeights
-      && !this.components.some((entry) => Number(entry.amount_mol) > 0);
+    const hasUnallocatedMass = this.hasUnallocatedMixtureMass();
 
     component.updateRatio(ratio, materialGroup, this.amount_l, referenceComponent.amount_mol, lockAmountColumnSolids);
     if (concentrationLocked) this.updateTotalVolume(component.amount_mol, component.concn);
@@ -1038,6 +1032,17 @@ export default class Sample extends Element {
       if (!this.components.some((entry) => Number(entry.amount_mol) > 0)) return;
     }
     this.calculateTotalMixtureMass();
+  }
+
+  /** Whether a known mixture mass has not yet been assigned to any component quantities or weights. */
+  hasUnallocatedMixtureMass() {
+    const massG = Number(this.amount_g);
+    return this.isMixture() && this.hasComponents() && Number.isFinite(massG) && massG > 0
+      && !this.components.some((component) => {
+        const weight = Number(component.relative_molecular_weight);
+        return (Number.isFinite(weight) && weight > 0) || ['amount_mol', 'amount_g', 'amount_l']
+          .some((field) => Number(component[field]) > 0);
+      });
   }
 
   /** Redistributes a product's fixed mass using its molar ratios rather than stored relative weights. */
@@ -3407,7 +3412,7 @@ export default class Sample extends Element {
    * - If at least one component is liquid, also calculates and stores mixture density (g/ml) as
    *   total_mixture_mass_g/total_volume in the sample.
    */
-  calculateTotalMixtureMass({ totalVolumeL: editedTotalVolumeL } = {}) {
+  calculateTotalMixtureMass({ totalVolumeL: editedTotalVolumeL, preserveUnallocatedMass = false } = {}) {
     this.initializeSampleDetails();
 
     if (!this.isMixture()) {
@@ -3447,6 +3452,10 @@ export default class Sample extends Element {
       // --- Step 4: Sum solvents only when total volume is NOT present
       totalMass += this.mixtureSolventMass();
     }
+    // A property edit on a fresh mixture does not allocate its known mass.
+    // Callers capture this state before editing, so clearing established amounts can still produce zero.
+    if (preserveUnallocatedMass && totalMass === 0) return;
+
     this.sample_details.total_mixture_mass_g = totalMass;
     // Set amount directly without triggering updateMixtureComponentAmounts()
     // to preserve user's amount_mol inputs when calculating total mass
