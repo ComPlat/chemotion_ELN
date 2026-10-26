@@ -283,6 +283,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — sample type co
       },
     },
     state: { lockEquivColumn: false },
+    computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
   });
 
   const makeCandidate = (isSbmm) => ({
