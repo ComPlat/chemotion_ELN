@@ -156,7 +156,7 @@ export default function ReactionSchemeGraphic({
     </Popover>
   );
 
-  const svgContainerClass = reaction.isMultiStep()
+  const svgContainerClass = reaction.reaction_steps.filter((step) => !step._destroy).length > 1
     ? 'Reaction-scheme-graphic__svg-container Reaction-scheme-graphic__svg-container--tall'
     : 'Reaction-scheme-graphic__svg-container';
 
