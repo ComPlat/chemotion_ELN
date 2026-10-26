@@ -1942,3 +1942,23 @@ describe('ReactionDetailsScheme — SBMM drop in a multi-step reaction', () => {
     expect(notify.called).toEqual(false);
   });
 });
+
+describe('ReactionDetailsScheme#checkMassMolecule — limit uses both coefficients', () => {
+  const check = (productGrams) => {
+    const notify = sinon.stub();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.context = { notifications: { add: notify } };
+    const ref = { amount_mol: 0.01, coefficient: 2, molecule: { molecular_weight: 100 } };
+    const product = { amount_g: productGrams, coefficient: 1, molecule: { molecular_weight: 100 } };
+    instance.checkMassMolecule(ref, product);
+    return notify.called;
+  };
+
+  it('warns above the 2 A -> B limit of 0.5 g', () => {
+    expect(check(0.8)).toEqual(true);
+  });
+
+  it('stays quiet within the limit', () => {
+    expect(check(0.4)).toEqual(false);
+  });
+});
