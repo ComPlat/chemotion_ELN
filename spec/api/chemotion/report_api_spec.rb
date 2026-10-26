@@ -918,6 +918,51 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'GET /api/v1/archives/:id/variations_xlsx' do
+      let(:variations) do
+        [{ 'id' => SecureRandom.uuid, 'idx' => 1, 'data' => { 'id' => SecureRandom.uuid } }]
+      end
+      let(:hidden) { create(:reaction, collections: [create(:collection, user: other)]) }
+      let(:xlsx_mime_type) { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+
+      before do
+        [r1, hidden].each { |r| r.update_columns(variations: variations) } # rubocop:disable Rails/SkipsModelValidations
+        rp1.update!(objects: [{ 'id' => r1.id, 'type' => 'reaction' }, { 'id' => r2.id, 'type' => 'reaction' },
+                              { 'id' => hidden.id, 'type' => 'reaction' }])
+      end
+
+      it 'returns a sheet for each readable reaction with variations' do
+        get "/api/v1/archives/#{rp1.id}/variations_xlsx"
+
+        expect(response.headers['Content-Type']).to eq xlsx_mime_type
+        expect(response.headers['Content-Disposition']).to include('ELN_Report_1_variations.xlsx')
+        file = Tempfile.new(%w[variations .xlsx])
+        file.binmode
+        file.write(response.body)
+        file.close
+        expect(Roo::Spreadsheet.open(file.path, extension: :xlsx).sheets).to eq([r1.short_label])
+      end
+
+      it 'returns 204 when no reaction of the report has variations' do
+        get "/api/v1/archives/#{rp3.id}/variations_xlsx"
+
+        expect(response.status).to eq 204
+      end
+
+      it 'returns 404 for the archive of someone else' do
+        get "/api/v1/archives/#{rp_others.id}/variations_xlsx"
+
+        expect(response.status).to eq 404
+      end
+
+      it 'flags the archives that have variations' do
+        get '/api/v1/archives/all'
+
+        flags = JSON.parse(response.body)['archives'].to_h { |a| [a['id'], a['has_variations']] }
+        expect(flags).to include(rp1.id => true, rp3.id => false)
+      end
+    end
+
     describe 'Delete /api/v1/archives/' do
       #  let!(:a_mine) { user.reports.create }
       #  let!(:a_others) { other.reports.create }

@@ -236,6 +236,23 @@ module Chemotion
           attachment&.destroy!
           report.destroy!
         end
+
+        desc 'return the variations of the reactions of a report as a spreadsheet'
+        get :variations_xlsx do
+          report = current_user.reports.find(params[:id])
+          export = Export::ExportReactionVariations.new(current_user)
+          report.reactions_with_variations.each do |reaction|
+            export.add_reaction(reaction) if ElementPolicy.new(current_user, reaction).read?
+          end
+          return status 204 if export.empty?
+
+          env['api.format'] = :binary
+          content_type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+          # Plain filename=, which getFileName in FetcherHelper.js reads.
+          name = File.basename(report.file_name.to_s, '.*').gsub(/[^\w.-]/, '_').presence || 'report'
+          header('Content-Disposition', "attachment; filename=\"#{name}_variations.xlsx\"")
+          export.read
+        end
       end
     end
 
