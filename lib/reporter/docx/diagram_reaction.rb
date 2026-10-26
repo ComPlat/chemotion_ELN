@@ -7,26 +7,26 @@ module Reporter
       def set_svg(products_only)
         si = @template == 'supporting_information'
         show_yield = !si
-        if products_only
-          @svg_data = SVG::ProductsComposer
-                      .new(materials_svg_paths,
-                           is_report: true,
-                           show_yield: show_yield,
-                           supporting_information: si)
-                      .compose_svg
-        else
-          @svg_data = SVG::ReactionComposer
-                      .new(materials_svg_paths,
-                           solvents: solvents,
-                           temperature: temperature_svg_paths,
-                           duration: obj.duration,
-                           conditions: obj.conditions,
-                           is_report: true,
-                           show_yield: show_yield,
-                           supporting_information: si,
-                           steps: steps_svg_paths)
-                      .compose_reaction_svg
-        end
+        @svg_data = if products_only
+                      SVG::ProductsComposer
+                        .new(materials_svg_paths,
+                             is_report: true,
+                             show_yield: show_yield,
+                             supporting_information: si)
+                        .compose_svg
+                    else
+                      SVG::ReactionComposer
+                        .new(materials_svg_paths,
+                             solvents: solvents,
+                             temperature: temperature_svg_paths,
+                             duration: obj.duration,
+                             conditions: obj.conditions,
+                             is_report: true,
+                             show_yield: show_yield,
+                             supporting_information: si,
+                             steps: steps_svg_paths)
+                        .compose_reaction_svg
+                    end
       end
 
       def load_svg_paths
