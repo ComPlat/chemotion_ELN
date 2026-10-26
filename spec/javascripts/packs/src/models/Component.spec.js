@@ -125,6 +125,27 @@ describe('Component', () => {
     const amount = { value: 10, unit: 'ml' };
     const totalVolume = 2; // L
 
+    [1, 0.15, 0.52].forEach((purity) => {
+      it(`keeps serialized stock-liquid mass current through volume edits and clearing at purity ${purity}`, () => {
+        component.molecule = { id: 101, molecular_weight: 100 };
+        component.purity = purity;
+        component.density = 0;
+        component.starting_molarity_value = 0.5;
+        component.amount_g = 999;
+
+        [0.002, 0.004, 0].forEach((volume) => {
+          component.handleVolumeChange({ value: volume, unit: 'l' }, totalVolume);
+
+          const saved = JSON.parse(JSON.stringify(component.serializeComponent())).component_properties;
+          expect(saved.amount_l).toBe(volume);
+          expect(saved.amount_mol).toBeCloseTo(0.5 * volume * purity, 12);
+          expect(saved.amount_g).toBeCloseTo(0.5 * volume * 100, 12);
+          expect(saved.purity).toBe(purity);
+          expect(Component.componentMassInMixture(component)).toBeCloseTo(volume * 1000, 12);
+        });
+      });
+    });
+
     it('should update volume and calculate amount when the component is liquid', () => {
       component.material_group = 'liquid';
       component.density = 1.5;
