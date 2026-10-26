@@ -72,6 +72,25 @@ module Reporter
         }
       end
 
+      # The variations with their values as numbers rather than the text the docx templates show,
+      # for the variations spreadsheet of an archived report (see Export::ExportReactionVariations).
+      # Resolved against the reaction the same way as #variations; amounts are in g, ml and mmol.
+      def variation_records
+        obj.variations.map do |variation|
+          diff = variation_diff(variation[:data])
+          vessel_size = variation_vessel_size(diff)
+
+          {
+            idx: variation[:idx],
+            group: Array(variation[:group]).join('.'),
+            notes: variation[:notes],
+            temperature: variation_temperature(diff),
+            duration: diff.fetch(:duration, obj.duration),
+            materials: variation_material_records(diff, vessel_size),
+          }
+        end
+      end
+
       private
 
       # A variation is a diff against this reaction: it carries only what it changes, and whatever
@@ -137,6 +156,29 @@ module Reporter
             variation_material(material, collection == :products, vessel_size)
           end
         end
+      end
+
+      def variation_material_records(diff, vessel_size)
+        VARIATION_MATERIAL_GROUPS.transform_values do |collection|
+          variation_group_materials(collection, Array(diff[collection])).map do |material|
+            variation_material_record(material, collection == :products, vessel_size)
+          end
+        end
+      end
+
+      def variation_material_record(material, is_product, vessel_size)
+        s = OpenStruct.new(material) # rubocop:disable Style/OpenStructUse
+        mass, volume, amount = assigned_amount_base(s, is_product: is_product, vessel_size: vessel_size)
+        equivalent = Float(s.equivalent, exception: false)
+
+        {
+          label: variation_material_label(material),
+          mass_g: mass,
+          volume_ml: volume,
+          amount_mmol: amount,
+          equivalent: is_product ? nil : equivalent,
+          yield_percent: is_product && equivalent ? equivalent * 100 : nil,
+        }
       end
 
       def variation_group_materials(collection, changes)
@@ -569,15 +611,20 @@ module Reporter
       # Mass, volume and amount of a material, in its display units: the real amounts, or - for
       # anything but a product whose real amount is not set - the target ones.
       def assigned_amount(sample, is_product: false, vessel_size: @obj.vessel_size)
-        mass = sample.real_amount_g == 0.0 && !is_product ? sample.amount_g : sample.real_amount_g
-        vol = sample.real_amount_ml == 0.0 && !is_product ? sample.amount_ml : sample.real_amount_ml
-        mmol = assigned_amount_mmol(sample, mass, is_product, vessel_size)
+        mass, vol, mmol = assigned_amount_base(sample, is_product: is_product, vessel_size: vessel_size)
 
         mass = met_pre_conv(mass, 'n', assigned_metric_pref(sample, 0))
         vol = met_pre_conv(vol, 'm', assigned_metric_pref(sample, 1))
         mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(sample, 2, %w[m n])) if mmol.present?
 
         [mass, vol, mmol]
+      end
+
+      # The amounts in g, ml and mmol, before the sample's metric prefixes are applied.
+      def assigned_amount_base(sample, is_product: false, vessel_size: @obj.vessel_size)
+        mass = sample.real_amount_g == 0.0 && !is_product ? sample.amount_g : sample.real_amount_g
+        vol = sample.real_amount_ml == 0.0 && !is_product ? sample.amount_ml : sample.real_amount_ml
+        [mass, vol, assigned_amount_mmol(sample, mass, is_product, vessel_size)]
       end
 
       def assigned_amount_mmol(sample, mass, is_product, vessel_size)

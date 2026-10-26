@@ -61,6 +61,19 @@ class Report < ApplicationRecord
 
   after_destroy :delete_job
 
+  # The reactions of the report that have variations - archived reports keep only element ids,
+  # so these are the reactions as they are now.
+  def reactions_with_variations
+    ids = objects.filter_map do |object|
+      object = object.to_h.with_indifferent_access
+      object[:id] if object[:type].to_s.casecmp?('reaction')
+    end
+    return Reaction.none if ids.empty?
+
+    # A non-empty array has at least one object in it.
+    Reaction.where(id: ids).where("variations @> '[{}]'").order(:id)
+  end
+
   def create_docx
     worker, args = REPORT_WORKERS.fetch(template, [Reporter::Worker, {}])
     worker.new(report: self, template_path: self.class.template_path(template), **args).process

@@ -9,6 +9,7 @@ module Entities
       :downloadable,
       :file_description,
       :file_name,
+      :has_variations,
       :id,
       :img_format,
       :mol_serials,
@@ -37,6 +38,11 @@ module Entities
       @downloaded ||= object.reports_users
                             .find { |ru| ru.user_id == current_user_id }
                             &.downloaded_at.present?
+    end
+
+    # Whether the report has a reaction with variations, i.e. a variations spreadsheet to offer.
+    def has_variations # rubocop:disable Naming/PredicateMethod, Naming/PredicatePrefix
+      object.reactions_with_variations.exists?
     end
 
     def unread
