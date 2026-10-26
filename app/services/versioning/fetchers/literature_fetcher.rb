@@ -18,14 +18,29 @@ module Versioning
           literature = Literature.with_deleted.with_log_data.find(literature_id)
           name = ["Reference: #{reference_label(literature)}"]
 
-          merge_by_request(
-            literals.flat_map { |literal| Versioning::Serializers::LiteralSerializer.call(literal, name) } +
-            Versioning::Serializers::LiteratureSerializer.call(literature, name),
+          literal_versions = literals.flat_map do |literal|
+            Versioning::Serializers::LiteralSerializer.call(literal, name)
+          end
+          literature_versions = linked_literature_versions(
+            Versioning::Serializers::LiteratureSerializer.call(literature, name), literals, literal_versions
           )
+
+          merge_by_request(literal_versions + literature_versions)
         end
       end
 
       private
+
+      # A literature is shared by all elements citing it: only show its changes from the time it is linked to this
+      # element, i.e. made in the same request as one of the literals or later.
+      def linked_literature_versions(literature_versions, literals, literal_versions)
+        request_uuids = literal_versions.pluck(:uuid).compact
+        linked_since = literals.map(&:created_at).min.change(usec: 0)
+
+        literature_versions.select do |version|
+          request_uuids.include?(version[:uuid]) || version[:time] >= linked_since
+        end
+      end
 
       # For the user, the literal and its literature are one reference: changes to both made in the same request
       # are shown as a single entry.

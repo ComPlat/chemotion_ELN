@@ -69,6 +69,15 @@ RSpec.describe Versioning::Fetchers::LiteratureFetcher do
     )
   end
 
+  it 'does not list the literature changes from before it was cited by this element' do
+    travel_to(1.day.ago) do
+      as_request { create(:literal, literature: literature, element: create(:sample), user: user) }
+    end
+    create_literal
+
+    expect(versions.map { |version| version[:changes].keys }).to eq [['litype']]
+  end
+
   it 'lists the literature changes only once when it is cited twice' do
     as_request { literature }
     create_literal(litype: 'citedOwn')
