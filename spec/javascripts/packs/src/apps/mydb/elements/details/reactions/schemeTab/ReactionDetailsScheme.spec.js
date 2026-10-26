@@ -7,6 +7,38 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
+describe('ReactionDetailsScheme initial yield display', () => {
+  it('defaults to yield with no products and does not update state during render', () => {
+    const instance = new ReactionDetailsScheme({
+      reaction: Reaction.buildEmpty(1),
+      environmentConditionsOpen: false,
+      onInputChange: sinon.spy(),
+      onReactionChange: sinon.spy(),
+    });
+    const setState = sinon.spy(instance, 'setState');
+
+    expect(instance.state.displayYieldField).toBe(true);
+    instance.render();
+    expect(setState.called).toBe(false);
+  });
+
+  it('initially displays yield when product conversion rates are empty or zero', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.products = [{}, { conversion_rate: null }, { conversion_rate: 0 }];
+    const instance = new ReactionDetailsScheme({ reaction });
+
+    expect(instance.state.displayYieldField).toBe(true);
+  });
+
+  it('initially displays conversion when any product has a nonzero conversion rate', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.products = [{ conversion_rate: 0 }, { conversion_rate: 50 }];
+    const instance = new ReactionDetailsScheme({ reaction });
+
+    expect(instance.state.displayYieldField).toBe(false);
+  });
+});
+
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
