@@ -1724,7 +1724,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // mass check apply to 'polymers' only
     if (!updatedS.contains_residues) {
       mFull = referenceM.amount_mol * mwb;
-      const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
+      const maxTheoAmount = mFull * ((updatedS.coefficient || 1.0) / (referenceM.coefficient || 1.0));
       if (updatedS.amount_g > maxTheoAmount) {
         errorMsg = 'Experimental mass value is larger than possible\n'
           + 'by 100% conversion! Please check your data.';
