@@ -1825,6 +1825,9 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
         expect(mixture.amount_mol).toBeCloseTo(0.01, 10);
         expect(mixture.equivalent).toBeCloseTo(1, 10);
         expect(mixture.sample_details.reference_component_changed).toBe(false);
+        sinon.assert.calledOnce(scheme.context.notifications.add);
+        expect(scheme.context.notifications.add.firstCall.args[0].level).toBe('warning');
+        expect(scheme.context.notifications.add.firstCall.args[0].message).toContain('relative molecular weight');
       });
 
       it(`keeps the row selection consistent for an unusable ${unit} reference with lock=${lockEquivColumn}`, () => {
@@ -1843,6 +1846,7 @@ describe('ReactionDetailsScheme non-reference mixture component switch', () => {
         expect(mixture.reference_component.id).toBe(expectedId);
         expect(row.props.material.components.find((component) => component.reference).id).toBe(expectedId);
         expect(mixture.equivalent).toBe(lockEquivColumn ? 2 : 1);
+        sinon.assert.calledOnce(scheme.context.notifications.add);
       });
     });
   });
