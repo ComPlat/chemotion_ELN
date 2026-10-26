@@ -116,6 +116,7 @@ RSpec.describe Sample do
       expect(sample.reload.storage_condition).to eq('room temperature')
     end
 
+    # rubocop:disable RSpec/MultipleExpectations
     it 'persists and returns height, width, length, diameter when set on the column' do
       sample = create(:sample, height: 2.5, width: 1.0, length: 3.0, diameter: 0.5)
       expect(sample.height).to eq(2.5)
@@ -128,6 +129,7 @@ RSpec.describe Sample do
       expect(sample.length).to eq(3.0)
       expect(sample.diameter).to eq(0.5)
     end
+    # rubocop:enable RSpec/MultipleExpectations
 
     it 'falls back to sample_details when column is blank' do
       sample = create(:sample, sample_details: { 'storage_condition' => 'freezer' })
@@ -468,6 +470,7 @@ RSpec.describe Sample do
   end
 
   describe 'molfiles with polymers' do
+    # rubocop:disable Layout/LineLength
     # 3 R# with bonds, PolymersList + TextNode
     let(:molfile_three_r_with_bonds) do
       <<~MOL
@@ -544,7 +547,9 @@ RSpec.describe Sample do
         $$$$
       MOL
     end
+    # rubocop:enable Layout/LineLength
 
+    # rubocop:disable RSpec/MultipleExpectations
     it 'recognizes molfile with 3 R# and bonds (PolymersList + TextNode)' do
       expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_with_bonds)).to be true
       expect(Chemotion::MolfilePolymerSupport.has_text_node_tag?(molfile_three_r_with_bonds)).to be true
@@ -568,6 +573,7 @@ RSpec.describe Sample do
       expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 10, height: 1.0, width: 1.0)
       expect(payload[:text_by_index]).to eq(0 => '1wt.% pdpt')
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
   context 'when counting samples created by user' do

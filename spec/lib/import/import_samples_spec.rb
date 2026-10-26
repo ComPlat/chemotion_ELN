@@ -349,6 +349,7 @@ RSpec.describe 'Import::ImportSamples' do
           importer.send(:parse_composition_table_data)
         end
 
+        # rubocop:disable RSpec/MultipleExpectations
         it 'parses rows into composition_table_data keyed by sample uuid' do
           expect(importer.composition_table_data.keys).to include('uuid-abc')
           rows = importer.composition_table_data['uuid-abc']
@@ -356,6 +357,7 @@ RSpec.describe 'Import::ImportSamples' do
           expect(rows[0]).to eq(source: '50% Pd', weight_ratio_exp: 50.0, molar_mass: 106.4)
           expect(rows[1]).to eq(source: '50% support', weight_ratio_exp: 50.0, molar_mass: 200.0)
         end
+        # rubocop:enable RSpec/MultipleExpectations
       end
     end
 
@@ -375,6 +377,7 @@ RSpec.describe 'Import::ImportSamples' do
         allow(Molecule).to receive(:find_or_create_dummy).and_return(dummy_molecule)
       end
 
+      # rubocop:disable RSpec/MultipleExpectations
       it 'creates HierarchicalMaterial components with source, weight_ratio_exp, molar_mass' do
         importer.send(:apply_composition_table_data, sample_with_uuid, row_with_uuid)
         sample_with_uuid.reload
@@ -385,6 +388,7 @@ RSpec.describe 'Import::ImportSamples' do
         expect(hm.first.component_properties['molar_mass']).to eq(106.4)
         expect(hm.second.component_properties['source']).to eq('40% support')
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
       it 'updates sample_type to HierarchicalMaterial when not already hierarchical or mixture' do
         sample_with_uuid.update!(sample_type: 'Micromolecule')

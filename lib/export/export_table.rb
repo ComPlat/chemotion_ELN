@@ -17,14 +17,14 @@ module Export
       'diameter', 'diameter unit', 'state', 'color', 'storage condition',
       'material', 'cspi', 'cspi unit', 'particle size', 'particle size unit',
       'shape', 'sieve fraction', 'sieve fraction unit',
-      'layer thickness', 'layer thickness unit', 'liquid medium', 'stabilizer'
+      'layer thickness', 'layer thickness unit', 'liquid medium', 'stabilizer',
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10
     HEADERS_SAMPLE_10 = HEADERS_SAMPLE_0 + [
       'molfile', 'sample readout', 'image', 'identifier', 'molecule name',
       'canonical smiles', 'sum formula', 'inchistring', 'InChI',
-      'residue_type', 'polymer_type', 'loading', 'loading_type'
+      'residue_type', 'polymer_type', 'loading', 'loading_type',
     ].freeze
 
     HEADERS_SAMPLE_ID = [

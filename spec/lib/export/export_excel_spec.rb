@@ -151,7 +151,8 @@ RSpec.describe 'Export::ExportExcel' do
         expect(result[:total_molar_exp]).to eq(0.0)
       end
 
-      it 'builds one row and totals for a single component with % and molar_mass' do # rubocop:disable RSpec/MultipleExpectations
+      # rubocop:disable RSpec/MultipleExpectations
+      it 'builds one row and totals for a single component with % and molar_mass' do
         comps = [{ 'source' => '60% Pd', 'weight_ratio_exp' => 60.0, 'molar_mass' => 106.4 }]
         result = exporter.send(:build_composition_rows, comps)
         expect(result[:rows].size).to eq(1)
@@ -162,6 +163,7 @@ RSpec.describe 'Export::ExportExcel' do
         expect(result[:total_molar_calc]).to be_a(Float)
         expect(result[:total_molar_exp]).to be_a(Float)
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
       it 'splits remainder among components without weight ratio when one has %' do
         comps = [

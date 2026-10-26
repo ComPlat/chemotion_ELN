@@ -16,6 +16,7 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
   end
 
   # Three polymer molfiles: (1) 3 R# with bonds, (2) 3 R# no bonds, (3) 1 R#
+  # rubocop:disable Layout/LineLength
   let(:molfile_three_r_with_bonds) do
     <<~MOL
       null
@@ -89,6 +90,7 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       $$$$
     MOL
   end
+  # rubocop:enable Layout/LineLength
 
   describe '.polymers_list_payload' do
     it 'returns the payload of a populated block' do
@@ -258,7 +260,8 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
   end
 
   describe '.clean_molfile_for_inchikey' do
-    it 'strips PolymersList and TextNode and keeps only CTAB for 3 R# with bonds' do # rubocop:disable RSpec/MultipleExpectations
+    # rubocop:disable RSpec/MultipleExpectations
+    it 'strips PolymersList and TextNode and keeps only CTAB for 3 R# with bonds' do
       cleaned = described_class.clean_molfile_for_inchikey(molfile_three_r_with_bonds)
       expect(cleaned).not_to include('> <PolymersList>')
       expect(cleaned).not_to include('> <TextNode>')
@@ -266,8 +269,9 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       expect(cleaned).to include('R#')
       expect(cleaned.lines.last.strip).to eq('M  END')
     end
+    # rubocop:enable RSpec/MultipleExpectations
 
-    it 'strips PolymersList and TextNode for 3 R# no bonds' do
+    it 'strips PolymersList and TextNode for 3 R# no bonds' do # rubocop:disable RSpec/MultipleExpectations
       cleaned = described_class.clean_molfile_for_inchikey(molfile_three_r_no_bonds)
       expect(cleaned).not_to include('> <PolymersList>')
       expect(cleaned).not_to include('> <TextNode>')
@@ -282,14 +286,14 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       expect(cleaned).to include('18.8287')
     end
 
-    it 'returns nil for nil or blank' do
+    it 'returns nil for nil or blank' do # rubocop:disable RSpec/MultipleExpectations
       expect(described_class.clean_molfile_for_inchikey(nil)).to be_nil
       expect(described_class.clean_molfile_for_inchikey('')).to be_nil
     end
   end
 
   describe '.keep_only_ctab' do
-    it 'keeps only up to first M END for polymer molfile' do
+    it 'keeps only up to first M END for polymer molfile' do # rubocop:disable RSpec/MultipleExpectations
       result = described_class.keep_only_ctab(molfile_three_r_with_bonds)
       expect(result).to include('M  END')
       expect(result).not_to include('> <PolymersList>')

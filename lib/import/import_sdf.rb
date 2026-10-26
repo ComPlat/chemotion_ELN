@@ -476,7 +476,8 @@ class Import::ImportSdf < Import::ImportSamples
     layer_thickness liquid_medium stabilizer
   ].freeze
 
-  def assign_hierarchical_material_columns(sample, row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  def assign_hierarchical_material_columns(sample, row)
     HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
     HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
     sample.xref['physical_state'] = row['state'] if row['state'].present?
@@ -488,6 +489,7 @@ class Import::ImportSdf < Import::ImportSamples
 
     sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
 
   # Columns copied across as-is, plus the xref sub-hash ones.

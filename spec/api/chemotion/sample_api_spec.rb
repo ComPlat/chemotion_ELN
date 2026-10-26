@@ -868,7 +868,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves layer_thickness via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] }),
+          params: base_params.merge(
+            sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).layer_thickness).to eq('75')
@@ -876,7 +878,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves liquid_medium via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'liquid_medium' => 'Ethanol', 'selected_properties' => ['liquid_medium'] }),
+          params: base_params.merge(
+            sample_details: { 'liquid_medium' => 'Ethanol', 'selected_properties' => ['liquid_medium'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).liquid_medium).to eq('Ethanol')
@@ -884,7 +888,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves stabilizer via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'stabilizer' => 'PVP', 'selected_properties' => ['stabilizer'] }),
+          params: base_params.merge(
+            sample_details: { 'stabilizer' => 'PVP', 'selected_properties' => ['stabilizer'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).stabilizer).to eq('PVP')
@@ -892,7 +898,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves sieve_fraction dropdown value via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'sieve_fraction' => 'fine_powder', 'selected_properties' => ['sieve_fraction'] }),
+          params: base_params.merge(
+            sample_details: { 'sieve_fraction' => 'fine_powder', 'selected_properties' => ['sieve_fraction'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).sieve_fraction).to eq('fine_powder')
@@ -900,7 +908,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves monolith material dropdown value via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'material' => 'cordierite', 'selected_properties' => ['material'] }),
+          params: base_params.merge(
+            sample_details: { 'material' => 'cordierite', 'selected_properties' => ['material'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).material).to eq('cordierite')
@@ -908,7 +918,9 @@ describe Chemotion::SampleAPI do
 
       it 'saves cell density (cspi) with CPSI unit via sample_details' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'cspi' => '400', 'cspi_unit' => 'CPSI', 'selected_properties' => ['cspi'] }),
+          params: base_params.merge(
+            sample_details: { 'cspi' => '400', 'cspi_unit' => 'CPSI', 'selected_properties' => ['cspi'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         reloaded = Sample.find(sample.id)
@@ -916,6 +928,7 @@ describe Chemotion::SampleAPI do
         expect(reloaded.sample_details['cspi_unit']).to eq('CPSI')
       end
 
+      # rubocop:disable RSpec/MultipleExpectations
       it 'exposes new fields in the API response' do
         sample.update!(layer_thickness: '50', liquid_medium: 'Water', stabilizer: 'PEG')
         get "/api/v1/samples/#{sample.id}", as: :json
@@ -925,10 +938,13 @@ describe Chemotion::SampleAPI do
         expect(s['liquid_medium']).to eq('Water')
         expect(s['stabilizer']).to eq('PEG')
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
       it 'persists layer_thickness to the DB column (not only sample_details)' do
         put "/api/v1/samples/#{sample.id}",
-          params: base_params.merge(sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] }),
+          params: base_params.merge(
+            sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] },
+          ),
           as: :json
         expect(response).to have_http_status :ok
         expect(Sample.find(sample.id).read_attribute(:layer_thickness)).to eq('75')
