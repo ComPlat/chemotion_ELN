@@ -932,7 +932,7 @@ module ReportHelpers
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
         description: ['s.description', '"description"', 0],
-        molfile: ["convert_from(s.molfile, 'UTF8')", 'molfile', 1],
+        molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
         purity: ['s.purity', '"purity"', 0],
         solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],

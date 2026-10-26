@@ -138,14 +138,20 @@ const onAtomDelete = async (editor) => {
     // 3rd resettle aliases in inspired atom alias A
     dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
 
-    // Sync textList to remove any orphaned text nodes (whose alias was deleted above).
+    // Sync textList to remove orphaned image-linked text nodes whose image was deleted.
+    // Free-standing labels (not in textNodeStruct) are always kept.
     // saveMoveCanvas re-injects all of textList into the canvas, so this must be done
-    // before that call, otherwise the orphaned text node reappears on the canvas.
+    // before that call, otherwise orphaned text nodes reappear on the canvas.
     const activeTextKeys = new Set(Object.values(textNodeStruct));
     textListSetter(textList.filter((item) => {
       try {
         const { key } = JSON.parse(item.data.content).blocks[0];
-        return activeTextKeys.has(key);
+        // Keep free-standing labels (not linked to any image)
+        if (!activeTextKeys.has(key)) return true;
+        // Keep image-linked labels whose image survived
+        const linkedAlias = Object.entries(textNodeStruct).find(([, v]) => v === key)?.[0];
+        const imgIdx = linkedAlias !== undefined ? parseInt(linkedAlias, 10) : -1;
+        return imagesList.some((_, i) => i === imgIdx);
       } catch (_e) {
         return false;
       }

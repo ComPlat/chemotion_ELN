@@ -250,8 +250,6 @@ class Sample < ApplicationRecord
     end
   }
 
-  before_save :set_sample_type_hierarchical_if_polymers_list
-  before_create :set_residue_polymer_type_for_hierarchical_material
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name

@@ -298,7 +298,7 @@ export default class SampleDetails extends React.Component {
 
   handleSampleChanged(sample, cb) {
     this.setState({
-      sample: cloneDeep(sample),
+      sample,
     }, () => {
       if (typeof cb === 'function') {
         cb();
@@ -308,9 +308,8 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     const { sample } = this.state;
-    const updatedSample = cloneDeep(sample);
-    updatedSample.setAmountAndNormalizeToGram(amount);
-    this.setState({ sample: updatedSample });
+    sample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample });
   }
 
   handleFastInput(smi, cas) {
@@ -378,7 +377,7 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher', { components, textNodesFormula } = {}) {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
@@ -387,22 +386,24 @@ export default class SampleDetails extends React.Component {
 
     // For HierarchicalMaterial: preserve user-entered molar_mass and weight_ratio_exp
     // when Ketcher rebuilds components from text nodes (which resets these to 0).
-    if (sample.isHierarchicalMaterial() && components?.length > 0 && sample.components?.length > 0) {
-      const existingComponents = sample.components;
-      components.forEach((newComp) => {
-        const existing = existingComponents.find((c) => {
-          const existingSource = c.source || c.component_properties?.source;
-          return existingSource && existingSource === newComp.source;
+    if (sample.isHierarchicalMaterial() && components?.length > 0) {
+      if (sample.components?.length > 0) {
+        const existingComponents = sample.components;
+        components.forEach((newComp) => {
+          const existing = existingComponents.find((c) => {
+            const existingSource = c.source || c.component_properties?.source;
+            return existingSource && existingSource === newComp.source;
+          });
+          if (existing) {
+            const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
+            const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
+            if (existingMolarMass != null) newComp.molar_mass = existingMolarMass;
+            if (existingWeightRatioExp != null) newComp.weight_ratio_exp = existingWeightRatioExp;
+          }
         });
-        if (existing) {
-          const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
-          const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
-          if (existingMolarMass != null) newComp.molar_mass = existingMolarMass;
-          if (existingWeightRatioExp != null) newComp.weight_ratio_exp = existingWeightRatioExp;
-        }
-      });
+      }
+      sample.components = components;
     }
-    sample.components = components;
 
     this.setState({ loadingMolecule: true });
 

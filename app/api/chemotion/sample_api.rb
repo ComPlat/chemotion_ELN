@@ -423,17 +423,13 @@ module Chemotion
             next unless sample_details_param.key?(field.to_s)
 
             sd_value = sample_details_param.delete(field.to_s)
-            # If direct attribute has a value, don't let an empty sample_details value overwrite it
-            next if attributes[field].present? && sd_value.blank?
+            next if attributes[field].present?
 
             attributes[field] = sd_value
           end
 
-          # Merge remaining sample_details with existing ones
-          if sample_details_param.present?
-            existing = @sample.sample_details || {}
-            attributes[:sample_details] = existing.deep_merge(sample_details_param)
-          end
+          # Replace sample_details entirely so cleared keys are not preserved
+          attributes[:sample_details] = sample_details_param if sample_details_param.present?
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)

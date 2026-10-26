@@ -990,6 +990,12 @@ module Import
       case db_column
       when 'cas', 'refractive_index', 'form', 'solubility', 'inventory_label'
         handle_xref_fields(sample, db_column, value)
+      when 'color'
+        sample['xref']['color'] = value if value.present?
+      when 'state'
+        sample['xref']['physical_state'] = value if value.present?
+      when 'particle_size'
+        sample['xref']['particle_size'] = value if value.present?
       when 'mn.name'
         assign_molecule_name_id(sample, value)
       when 'flash_point'

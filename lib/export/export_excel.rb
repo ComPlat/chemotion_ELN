@@ -477,6 +477,8 @@ module Export
 
     # Renders one sample's rows (component rows + totals row) into the composition sheet.
     def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/AbcSize
+      return if withhold_shared_sample?(sample)
+
       sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
       components = begin
         JSON.parse(sample['components'] || '[]')

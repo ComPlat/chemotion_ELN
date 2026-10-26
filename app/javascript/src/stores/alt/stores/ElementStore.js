@@ -830,7 +830,9 @@ class ElementStore {
         .then((savedComponents) => {
           const refreshed = Component.refreshFromApi(savedComponents, components);
           element.initialComponents(refreshed);
-          this.changeCurrentElement(element);
+          if (!closeView) {
+            this.changeCurrentElement(element);
+          }
         })
         .catch((errorMessage) => {
           console.log(errorMessage);

@@ -466,7 +466,7 @@ class Import::ImportSdf < Import::ImportSamples
   # to 0.0. String columns and the mirrored xref/color pair are copied as-is.
   HM_FLOAT_COLUMNS = %w[height width length diameter].freeze
   HM_STRING_COLUMNS = %w[
-    storage_condition material cspi particle_size shape sieve_fraction
+    storage_condition material cspi shape sieve_fraction
     layer_thickness liquid_medium stabilizer
   ].freeze
   # Columns that surface in the sample form's "additional properties" picker. Kept out of the
@@ -479,11 +479,9 @@ class Import::ImportSdf < Import::ImportSamples
   def assign_hierarchical_material_columns(sample, row) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
     HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
-    sample['state'] = row['state'] if row['state'].present?
-    if row['color'].present?
-      sample['color'] = row['color']
-      sample['xref']['color'] = row['color']
-    end
+    sample.xref['physical_state'] = row['state'] if row['state'].present?
+    sample.xref['color'] = row['color'] if row['color'].present?
+    sample.xref['particle_size'] = row['particle_size'] if row['particle_size'].present?
 
     selected_props = HM_ADDITIONAL_PROPERTY_KEYS.select { |k| row[k].to_s.strip.present? }
     return if selected_props.empty?
