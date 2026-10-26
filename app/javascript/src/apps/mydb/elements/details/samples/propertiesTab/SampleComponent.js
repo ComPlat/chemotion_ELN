@@ -776,6 +776,35 @@ export class SampleComponent extends Component {
     );
   }
 
+  componentPurity(material) {
+    const { sample } = this.props;
+    const input = (
+      <NumeralInputWithUnitsCompo
+        precision={4}
+        value={material.purity || 1}
+        disabled={this.isPurityDisabled(sample, material)}
+        onChange={(e) => this.handlePurityChange(e, material.purity)}
+      />
+    );
+
+    if (material.material_group !== 'liquid' || !material.starting_molarity_value) return input;
+
+    const hint = 'Purity comes from the source sample and is locked while a stock concentration is set. '
+      + 'It is included when calculating the amount.';
+
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`stock-purity-${this.componentId()}`}>{hint}</Tooltip>}
+      >
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} aria-label={hint}>
+          <div style={{ pointerEvents: 'none' }}>{input}</div>
+        </div>
+      </OverlayTrigger>
+    );
+  }
+
   /**
    * Renders a table row for a mixture (liquid) component.
    * @param {Object} props - The component props
@@ -818,12 +847,7 @@ export class SampleComponent extends Component {
         {
           enableComponentPurity && (
             <td style={{ verticalAlign: 'top' }}>
-              <NumeralInputWithUnitsCompo
-                precision={4}
-                value={material.purity || 1}
-                disabled={this.isPurityDisabled(sample, material)}
-                onChange={(e) => this.handlePurityChange(e, material.purity)}
-              />
+              {this.componentPurity(material)}
             </td>
           )
         }
@@ -880,12 +904,7 @@ export class SampleComponent extends Component {
         {
           enableComponentPurity && (
             <td style={{ verticalAlign: 'top' }}>
-              <NumeralInputWithUnitsCompo
-                precision={4}
-                value={material.purity || 1}
-                disabled={this.isPurityDisabled(sample, material)}
-                onChange={(e) => this.handlePurityChange(e, material.purity)}
-              />
+              {this.componentPurity(material)}
             </td>
           )
         }
