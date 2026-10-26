@@ -368,13 +368,10 @@ export default class SampleDetails extends React.Component {
 
   handleStructureEditorSave(molfile, svg, info, editorId) {
     const { sample } = this.state;
-    sample.molfile = molfile;
     const svgFile = svg; // SVG is passed as 4th parameter
     const editor = editorId || 'ketcher'; // editorId is passed as 6th parameter
     const config = info; // info might contain config data like smiles
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
-    sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -391,6 +388,16 @@ export default class SampleDetails extends React.Component {
       if (!result || result == null) {
         throw new Error('No molecule returned!');
       }
+      if (sample.isMixture()) {
+        const { staleComponents } = sample.partitionEditedSmiles((result.cano_smiles || '').split('.'));
+        if (sample.rejectLinkedReferenceChange(staleComponents)) {
+          this.setState({ loadingMolecule: false });
+          return;
+        }
+      }
+      sample.molfile = molfile;
+      sample.contains_residues = molfile?.indexOf(' R# ') > -1;
+      sample.formulaChanged = true;
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
@@ -425,6 +432,7 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
+    this.state.sample.rebindReactionMixtureDraft();
     if (this.state.sample.hasReactionMixtureConflict()) {
       this.context.notifications.add(mixtureReactionConflictNotification());
       return;

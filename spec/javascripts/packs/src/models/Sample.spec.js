@@ -16,6 +16,43 @@ describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
   const product = await SampleFactory.build('SampleFactory.water_100g');
 
+  describe('legacy mixture reference state', () => {
+    ['g', 'mol', 'l'].forEach((unit) => {
+      [false, true].forEach((lock) => {
+        it(`clears the inherited flag without losing physical mass, unit=${unit}, lock=${lock}`, () => {
+          const details = { reference_component_changed: true, previous_amount_mol: 99, previous_amount_g: 10 };
+          const sample = new Sample({
+            sample_type: 'Mixture', amountType: 'target', density: 1, molarity_value: 0,
+            target_amount_unit: unit, target_amount_value: { g: 10, mol: 0.02, l: 0.01 }[unit],
+            sample_details: details,
+          });
+          sample.getLockReactionEquivColumn = () => lock;
+          sample.initialComponents([new Component({
+            id: 1, position: 0, reference: true, relative_molecular_weight: 250, amount_mol: 0.04,
+          })]);
+          expect(sample.sample_details.reference_component_changed).toBe(false);
+          expect(details.reference_component_changed).toBe(true);
+          expect(sample.amount_g).toBeCloseTo(10, 12);
+          expect(sample.amount_mol).toBeCloseTo(0.04, 12);
+          expect(sample.isEdited).toBe(false);
+        });
+      });
+    });
+
+    it('reloads a stock liquid component without halving its entered volume', () => {
+      const sample = new Sample({ sample_type: 'Mixture', parent_id: 1, amount_value: 1, amount_unit: 'g' });
+      const component = new Component({
+        id: 2, position: 0, reference: true, material_group: 'liquid', purity: 0.5,
+        amount_mol: 0.005, amount_l: 0.01, relative_molecular_weight: 200,
+        density: 0, starting_molarity_value: 1, molecule: { molecular_weight: 100 },
+      });
+      sample.initialComponents([component]);
+      expect(component.amount_l).toBeCloseTo(0.01, 12);
+      sample.initialComponents([Component.deserializeData(component.serializeComponent())]);
+      expect(sample.components[0].amount_l).toBeCloseTo(0.01, 12);
+    });
+  });
+
   describe('Sample.updateSampleType()', () => {
     it('clears inherited density and molarity when a single molecule becomes a mixture', () => {
       const sample = new Sample({
@@ -402,7 +439,28 @@ describe('Sample', async () => {
   });
 
   describe('Sample.setReferenceComponent()', () => {
-    it('preserves 1:2:2 composition ratios through reaction reference switches and reloads', () => {
+    it('uses the new reference for displayed ratios, subsequent edits and saved component amounts', () => {
+      const sample = new Sample({ sample_type: 'Mixture', amount_value: 4.5, amount_unit: 'g' });
+      sample.initialComponents([0.01, 0.02, 0.005].map((amount, index) => new Component({
+        id: index + 1, position: index, reference: index === 0, amount_mol: amount,
+        amount_g: amount * 100, equivalent: amount / 0.01, relative_molecular_weight: 4.5 / amount,
+        molecule: { molecular_weight: 100 }, material_group: 'solid', purity: 1,
+      })));
+
+      sample.setReferenceComponent(1, { preserveRatios: true });
+
+      expect(sample.components.map((component) => component.equivalent)).toEqual([0.5, 1, 0.25]);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual([0.01, 0.02, 0.005]);
+      sample.updateComponentRatio(sample.components[2], 1, 'solid', { lockAmountColumnSolids: false });
+      expect(sample.components[2].amount_mol).toBeCloseTo(0.02, 12);
+      const saved = sample.serializeMaterial().components;
+      const referenceMol = saved[1].component_properties.amount_mol;
+      saved.forEach(({ component_properties: properties }) => {
+        expect(properties.equivalent).toBeCloseTo(properties.amount_mol / referenceMol, 12);
+      });
+    });
+
+    it('rebases ratios while preserving composition through reaction reference switches and reloads', () => {
       const massG = 7.7617331;
       const amounts = [0.004195364, 0.008390728, 0.008390728];
       const ratios = [1, 2, 2];
@@ -415,7 +473,8 @@ describe('Sample', async () => {
       [1, 2, 0].forEach((referenceIndex) => {
         mixture.setReferenceComponent(referenceIndex, { preserveRatios: true });
 
-        expect(mixture.components.map((component) => component.equivalent)).toEqual(ratios);
+        expect(mixture.components.map((component) => component.equivalent))
+          .toEqual(ratios.map((ratio) => ratio / ratios[referenceIndex]));
         expect(mixture.amount_g).toBeCloseTo(massG, 10);
         expect(mixture.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
         mixture.components.forEach((component, index) => {
@@ -427,7 +486,8 @@ describe('Sample', async () => {
         mixture.initialComponents(payload.components.map(Component.deserializeData));
 
         expect(mixture.reference_component.id).toBe(referenceIndex + 1);
-        expect(mixture.components.map((component) => component.equivalent)).toEqual(ratios);
+        expect(mixture.components.map((component) => component.equivalent))
+          .toEqual(ratios.map((ratio) => ratio / ratios[referenceIndex]));
         expect(mixture.amount_mol).toBeCloseTo(amounts[referenceIndex], 12);
         expect(mixture.isEdited).toBe(false);
       });
@@ -3724,6 +3784,100 @@ describe('Sample', async () => {
       await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
 
       expect(fetchStub.called).toBe(false);
+    });
+  });
+
+  describe('reaction-linked mixture reference protection', () => {
+    const build = () => {
+      const sample = new Sample({
+        id: 812, sample_type: 'Mixture', amount_value: 3, amount_unit: 'g',
+        tag: { taggable_data: { resources: [{ resource_context_type: 'Reaction' }] } },
+      });
+      sample.initialComponents(['CCO', 'CCC'].map((smiles, index) => new Component({
+        id: index + 1, position: index, reference: index === 0, amount_mol: 0.01,
+        amount_g: 1.5, relative_molecular_weight: 300, material_group: 'solid', purity: 1,
+        molecule: { id: index + 20, cano_smiles: smiles, molecular_weight: 150 },
+      })));
+      return sample;
+    };
+
+    ['delete', 'merge source', 'merge target', 'merge same molecule', 'merge different molecule', 'switch',
+      'remove fragment', 'replace fragment', 'replace several fragments'].forEach((operation) => {
+      it(`rejects ${operation} without changing the linked reference or quantities`, async () => {
+        const sample = build();
+        const before = sample.serializeMaterial();
+        const fetch = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+        try {
+          const [reference, other] = sample.components;
+          if (operation === 'delete') sample.deleteMixtureComponent(reference);
+          else if (operation === 'merge source') await sample.mergeComponents(reference, 'solid', other, 'solid');
+          else if (operation === 'merge target') await sample.mergeComponents(other, 'solid', reference, 'solid');
+          else if (operation === 'merge same molecule') sample.mergeSameMoleculeComponents(other, reference);
+          else if (operation === 'merge different molecule') {
+            await sample.mergeDifferentMoleculeComponents(other, reference, 'solid');
+          }
+          else if (operation === 'switch') expect(sample.setReferenceComponent(1)).toBe(false);
+          else {
+            const fragments = {
+              'remove fragment': ['CCC'], 'replace fragment': ['CCCC', 'CCC'],
+              'replace several fragments': ['CCCC', 'CCCCC'],
+            }[operation];
+            expect(await sample.splitSmilesToMolecule(fragments, 'ketcher')).toBe(false);
+          }
+          expect(sample.serializeMaterial()).toEqual(before);
+          sinon.assert.notCalled(fetch);
+        } finally {
+          fetch.restore();
+        }
+      });
+    });
+
+    it('keeps the reference protected if it changes while a merge fetch is pending', async () => {
+      const sample = build();
+      const other = sample.components[1];
+      const third = new Component({
+        ...other, id: 3, position: 2, molecule: { id: 22, cano_smiles: 'CCCC', molecular_weight: 150 },
+      });
+      sample.components.push(third);
+      let resolveFetch;
+      const fetch = sinon.stub(MoleculesFetcher, 'fetchBySmi').returns(new Promise((resolve) => {
+        resolveFetch = resolve;
+      }));
+      try {
+        const pendingMerge = sample.mergeComponents(other, 'solid', third, 'solid');
+        sample.setReferenceComponent(1, { fromReactionScheme: true, preserveRatios: true });
+        const before = sample.serializeMaterial();
+        resolveFetch({ id: 99, cano_smiles: 'CCC.CCCC', molecular_weight: 300 });
+        await pendingMerge;
+        expect(sample.serializeMaterial()).toEqual(before);
+        expect(sample.reference_component).toBe(other);
+      } finally {
+        fetch.restore();
+      }
+    });
+
+    it('allows the reaction scheme to switch the reference while retaining physical mass', () => {
+      const sample = build();
+      expect(sample.setReferenceComponent(1, { fromReactionScheme: true, preserveRatios: true })).toBe(true);
+      expect(sample.reference_component.id).toBe(2);
+      expect(sample.amount_g).toBe(3);
+    });
+
+    it('still allows editing and deleting a non-reference fragment in a linked mixture', async () => {
+      const sample = build();
+      const reference = sample.reference_component;
+      const fetch = sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves({
+        id: 100, cano_smiles: 'CCCC', molecular_weight: 150,
+      });
+      try {
+        await sample.splitSmilesToMolecule(['CCO', 'CCCC'], 'ketcher');
+        expect(sample.components[1].molecule.id).toBe(100);
+        expect(sample.reference_component).toBe(reference);
+        expect(sample.deleteMixtureComponent(sample.components[1])).toBe(true);
+        expect(sample.components).toEqual([reference]);
+      } finally {
+        fetch.restore();
+      }
     });
   });
 

@@ -1185,7 +1185,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const { referenceMaterial } = reaction;
     const preserveAmountMol = !!(lockEquivColumn && referenceMaterial
       && !isSameMaterial(updatedSample, referenceMaterial));
-    if (!updatedSample.setReferenceComponent(referenceComponentIndex, { preserveRatios: true, preserveAmountMol })) {
+    if (!updatedSample.setReferenceComponent(referenceComponentIndex, {
+      preserveRatios: true, preserveAmountMol, fromReactionScheme: true,
+    })) {
       this.context.notifications.add({
         message: 'Cannot keep equivalents locked without a valid amount '
           + 'and relative molecular weight for this component.',
@@ -1194,9 +1196,15 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
-    if (!preserveAmountMol && referenceMaterial?.amount_mol > 0 && !isSameMaterial(updatedSample, referenceMaterial)) {
+    const product = reaction.products?.some((sample) => isSameMaterial(sample, updatedSample));
+    if (product && referenceMaterial) {
+      this.updatedSamplesForAmountChange([updatedSample], updatedSample, 'products');
+    } else if (!preserveAmountMol && referenceMaterial?.amount_mol > 0
+      && !isSameMaterial(updatedSample, referenceMaterial)) {
       updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
     }
+
+    updatedSample.preserveConcentration = false;
 
     // If the updated sample is the reference material, update equivalents of all other samples
     // This ensures that when reference sample's amount_mol changes (due to reference component switch),
@@ -1211,6 +1219,8 @@ export default class ReactionDetailsScheme extends React.Component {
       if (lockEquivColumn) {
         updatedReaction.resetPreservedConcentrationExcept(updatedSample);
         updatedReaction.updateAllConcentrations();
+      } else {
+        updatedReaction.sampleById(updatedSample.id).updateConcentrationFromSolvent(updatedReaction);
       }
 
       return updatedReaction;
@@ -1218,7 +1228,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // A locked switch can change physical volume; refresh derived concentrations
     // without changing any other material's quantity or preserved concentration.
-    updatedSample.preserveConcentration = false;
     if (preserveAmountMol) {
       reaction.updateAllConcentrations();
     } else {
@@ -1673,6 +1682,8 @@ export default class ReactionDetailsScheme extends React.Component {
     let stoichiometryCoeff = 1.0;
 
     return samples.map((sample) => {
+      const gramsPerMol = sample.isMixture?.() ? sample.reference_component?.relative_molecular_weight
+        : sample.molecule_molecular_weight / (sample.purity || 1);
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
 
       // If equivalents are locked and this is the reference sample,
@@ -1689,7 +1700,7 @@ export default class ReactionDetailsScheme extends React.Component {
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
-              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * gramsPerMol;
               // yield taking into account stoichiometry:
               if (updatedSample.isGas()) {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
@@ -1730,7 +1741,7 @@ export default class ReactionDetailsScheme extends React.Component {
               this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
             } else {
               // calculate equivalent, don't touch real amount
-              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * gramsPerMol;
               // yield taking into account stoichiometry:
               if (referenceMaterial.amount_mol > 0) {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
@@ -1785,7 +1796,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * gramsPerMol;
         }
         // Update TON values for gas products when catalyst amount changes
         if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.isGas()) {

@@ -75,6 +75,25 @@ export default class Sample extends Element {
     argsNew = prepareRangeBound(argsNew, 'boiling_point');
     argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
+    if (this.isMixture() && this.sample_details?.reference_component_changed) {
+      // Old mol-stored mixtures used this snapshot to preserve their physical mass.
+      const previousMass = this.sample_details.previous_amount_g;
+      if (this.amount_unit === 'mol' && Number.isFinite(previousMass) && previousMass >= 0) {
+        this.amount_value = previousMass;
+        this.amount_unit = 'g';
+      }
+      this.sample_details = { ...this.sample_details, reference_component_changed: false };
+      this.updateChecksum();
+    }
+  }
+
+  get belongTo() {
+    return this._belongTo;
+  }
+
+  set belongTo(element) {
+    // Editor context is not part of sample data and must never make reaction serialization cyclic.
+    Object.defineProperty(this, '_belongTo', { value: element, writable: true, configurable: true });
   }
 
   cleanBoilingMelting() {
@@ -307,11 +326,51 @@ export default class Sample extends Element {
       || this.components?.find((component) => component.component_properties?.reference);
     return JSON.stringify({
       amountType: this.amountType,
-      amount: this.amount_value,
-      unit: this.amount_unit,
+      massG: this.amount_g,
       density: this.density,
       referenceComponentId: referenceComponent?.id,
+      componentIds: this.components?.map((component) => component.id).sort(),
     });
+  }
+
+  /** Overlay reaction quantities while retaining the editor's freshly fetched sample details. */
+  applyReactionMixtureQuantities(material) {
+    const sourceComponents = material.components || [];
+    if (sourceComponents.length > 0
+      && !_.isEqual(sourceComponents.map((component) => component.id).sort(),
+        (this.components || []).map((component) => component.id).sort())) {
+      throw new Error('The mixture composition changed. Reload the reaction before opening this mixture.');
+    }
+
+    Object.assign(this, _.cloneDeep(_.pick(material, [
+      'amountType', 'target_amount_value', 'target_amount_unit', 'real_amount_value', 'real_amount_unit',
+      'density', 'concn', 'preserveConcentration',
+    ])));
+    this.sample_details = {
+      ...this.sample_details,
+      ..._.cloneDeep(_.pick(material.sample_details, [
+        'total_mixture_volume_l', 'total_mixture_mass_g', 'previous_amount_g', 'previous_amount_mol',
+        'solvent_scaling_mass_g', 'reference_molecular_weight', 'reference_relative_molecular_weight',
+        'reference_component_changed',
+      ])),
+    };
+    (this.components || []).forEach((component) => {
+      const source = sourceComponents.find((entry) => entry.id === component.id);
+      if (!source) return;
+      Object.assign(component, _.cloneDeep(_.pick(source.component_properties || source, [
+        'amount_mol', 'amount_g', 'amount_l', 'relative_molecular_weight', 'reference',
+      ])));
+    });
+    if (Array.isArray(this.solvent) && Array.isArray(material.solvent)) {
+      this.solvent.forEach((solvent, index) => {
+        const source = material.solvent[index];
+        if (source && _.isEqual(_.omit(solvent, ['amount_l']), _.omit(source, ['amount_l']))) {
+          solvent.amount_l = source.amount_l;
+        }
+      });
+    }
+    this.syncMixtureComponentAmounts();
+    this.updateMixtureComponentEquivalent();
   }
 
   /** A toolbar save replaces the open reaction; editor context may still hold its previous instance. */
@@ -327,7 +386,53 @@ export default class Sample extends Element {
     if (!this.isMixture() || !this.isDetachedMixtureDraft || !this._mixtureDraftSourceState) return false;
 
     const material = this.resolveReactionContext(reaction)?.sampleById?.(this.id);
-    return !material || material.mixtureReactionState() !== this._mixtureDraftSourceState;
+    return !material
+      || !Sample.sameMixtureReactionState(material.mixtureReactionState(), this._mixtureDraftSourceState);
+  }
+
+  /** Keep open drafts attached after persistence, or detach when their reaction row was removed. */
+  rebindReactionMixtureDraft(reaction = this.resolveReactionContext()) {
+    if (!this.isMixture() || !this.isDetachedMixtureDraft || !reaction) return;
+    if (this.belongTo?.id != null && this.belongTo.id !== reaction.id) return;
+    const mapping = reaction._mixtureMaterialIdMap?.[this.id];
+    if (!reaction.sampleById(this.id) && mapping && reaction.sampleById(mapping.id)) {
+      const pending = this.changed || this.isEdited;
+      this.id = mapping.id;
+      this.isNew = false;
+      (this.components || []).forEach((component) => {
+        component.id = mapping.component_ids[component.id] || component.id;
+      });
+      const baseline = JSON.parse(this._mixtureDraftSourceState);
+      baseline.referenceComponentId = mapping.component_ids[baseline.referenceComponentId]
+        || baseline.referenceComponentId;
+      baseline.componentIds = baseline.componentIds?.map((id) => mapping.component_ids[id] || id).sort();
+      this._mixtureDraftSourceState = JSON.stringify(baseline);
+      if (!pending) this.updateChecksum();
+    }
+    if (reaction.sampleById(this.id)) {
+      this.belongTo = reaction;
+    } else {
+      if (!this.isNew) {
+        if (!reaction._detachedMixtureMaterialIds) {
+          Object.defineProperty(reaction, '_detachedMixtureMaterialIds', { value: new Set() });
+        }
+        reaction._detachedMixtureMaterialIds.add(this.id);
+      }
+      this.belongTo = undefined;
+      delete this.isDetachedMixtureDraft;
+      delete this._mixtureDraftSourceState;
+      delete this.matGroup;
+    }
+  }
+
+  static sameMixtureReactionState(left, right) {
+    if (left === right) return true;
+    if (!left || !right) return false;
+    const first = JSON.parse(left);
+    const second = JSON.parse(right);
+    const sameMass = Number.isFinite(first.massG) && Number.isFinite(second.massG)
+      && Math.abs(first.massG - second.massG) <= 1e-9 * Math.max(Math.abs(first.massG), Math.abs(second.massG), 1e-6);
+    return sameMass && _.isEqual(_.omit(first, ['massG']), _.omit(second, ['massG']));
   }
 
   /**
@@ -1409,7 +1514,7 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    // For mixtures, always use calculateMixtureAmountMol() to respect reference_component_changed flag
+    // For mixtures, derive moles from the selected component and its relative molecular weight
     // This ensures that when reference component is switched, amount_mol updates correctly
     // even if amount_unit is 'mol'
     if (this.isMixture()) {
@@ -1683,7 +1788,7 @@ export default class Sample extends Element {
    * 1. If no reference component exists, return 0.
    * 2. If `amount_value` is empty, null, or NaN, return the current `amount_g` (no change).
    * 3. If `amount_value` is 0, return 0.
-   * 4. If the reference component has NOT changed AND `relative_molecular_weight > 0`:
+   * 4. If `relative_molecular_weight > 0`:
    *    - Use direct calculation: grams = amount_value × relative_molecular_weight
    * 5. If both `previous_amount_mol` and `previous_amount_g` are valid (> 0):
    *    - Use ratio-based calculation: grams = previous_amount_g × (amount_value / previous_amount_mol)
@@ -1709,46 +1814,29 @@ export default class Sample extends Element {
       return 0;
     }
 
-    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
-    const lockReactionEquivColumn = this.getLockReactionEquivColumn();
     const relMolWeight = referenceComponent.relative_molecular_weight;
     const prevMol = this.sample_details?.previous_amount_mol;
     const prevG = this.sample_details?.previous_amount_g;
 
-    // Case 1: When reference component has changed
-    if (hasReferenceChanged) {
-      // If equivalent is locked, recalculate amount_g using new reference component's relMolWeight
-      // Otherwise, preserve the previous amount_g (amount_g remains fixed)
-      if (lockReactionEquivColumn && relMolWeight && relMolWeight > 0 && Number.isFinite(currentMol)) {
-        // Recalculate amount_g from amount_mol using new reference component's relative molecular weight
-        return currentMol * relMolWeight;
-      }
-      // Equivalent not locked: preserve amount_g (only if prevG is valid)
-      if (Number.isFinite(prevG) && prevG > 0) {
-        return prevG;
-      }
-    }
-
-    // Case 2: Direct calculation using relative molecular weight (most reliable)
+    // Prefer the selected component’s relative molecular weight.
     if (relMolWeight && relMolWeight > 0) {
       return currentMol * relMolWeight;
     }
 
-    // Case 3: Ratio-based recalculation (fallback when relMolWeight not available)
+    // Fall back to the previous mass-to-moles ratio when the relative MW is unavailable.
     // Only use ratio if BOTH previous values are valid and > 0
     if (Number.isFinite(prevMol) && prevMol > 0 && Number.isFinite(prevG) && prevG > 0) {
       return prevG * (currentMol / prevMol);
     }
 
-    // Case 4: Cannot determine - return 'n.d'
+    // The available data cannot determine the mass.
     return 'n.d';
   }
 
   /**
    * Calculates the amount in moles for mixture samples.
-   * Handles two cases:
-   * 1. Initial case: When the reference component has been changed, uses amount_mol of reference component
-   * 2. Based on amount_g/amount_l changes: Uses formula amount_mol = total mass (g) / reference_component.rel_mol_weight (g/mol)
+   * Uses total mass divided by the selected component’s relative molecular weight.
+   * Without a relative molecular weight, falls back to that component’s known amount.
    *
    * @returns {number} The calculated amount in moles or fallback value
    */
@@ -1758,38 +1846,8 @@ export default class Sample extends Element {
       return 'n.d';
     }
 
-    // Check if the reference component has been changed (flag set during reference change)
-    // Default to false when the flag is not set, so we only treat it as "changed"
-    // when some other logic explicitly marks it as true.
-    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
-    const lockReactionEquivColumn = this.getLockReactionEquivColumn();
-
-    // Get the reference component's relative molecular weight
     const relMolWeight = referenceComponent.relative_molecular_weight;
-
-    let result;
-
-    // Case 1: Initial case - when the reference has been changed
-    if (hasReferenceChanged) {
-      // If equivalent is locked, preserve the current amount_mol from sample_details
-      // Otherwise, use amount_mol of reference component
-      if (lockReactionEquivColumn) {
-        // Return the amount_mol stored in sample_details
-        result = this.sample_details?.previous_amount_mol || 0;
-      } else {
-        // Equivalent not locked, use amount_mol of reference component
-        result = referenceComponent.amount_mol || 0;
-      }
-
-      // Don't reset the flag immediately - let it persist for the calculation chain
-      // The flag will be reset externally after all calculations are complete
-    } else if (relMolWeight && relMolWeight > 0) {
-      // Case 2: Based on amount_g/amount_l changes - use total mass / relative molecular weight
-      result = this.amount_g / relMolWeight;
-    } else {
-      // Case 3: Fallback to using amount_mol of the reference component
-      result = referenceComponent.amount_mol || 'n.d';
-    }
+    const result = relMolWeight > 0 ? this.amount_g / relMolWeight : (referenceComponent.amount_mol || 'n.d');
 
     return result;
   }
@@ -2335,8 +2393,8 @@ export default class Sample extends Element {
       // Preserve loaded relative MWs: reaction children retain the stock's total mixture mass,
       // while their component amounts reflect the portion used. Recalculate only when the
       // editor derives total mass from those same component amounts in calculateTotalMixtureMass.
-      // Keep saved composition ratios, including when a reaction selected a reference
-      // whose ratio is not one. Derive ratios only for uninitialized/legacy components.
+      // Keep loaded composition ratios; reference switches normalize them to the selected component.
+      // Derive missing ratios only for uninitialized/legacy components.
       if (!this.reference_component || this.components.some((component) => component.equivalent == null)) {
         this.updateMixtureComponentEquivalent();
       }
@@ -2480,6 +2538,7 @@ export default class Sample extends Element {
    * @param {Object} componentToDelete - The component to delete.
    */
   deleteMixtureComponent(componentToDelete) {
+    if (this.rejectLinkedReferenceChange([componentToDelete])) return false;
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
@@ -2495,6 +2554,20 @@ export default class Sample extends Element {
     if (!this.hasComponents()) {
       this.clearMoleculeData();
     }
+    return true;
+  }
+
+  /** Reference changes in linked mixtures must go through the reaction scheme. */
+  rejectLinkedReferenceChange(components) {
+    if (!this.isReactionLinked() || !components.some((component) => component?.reference)) return false;
+
+    rootStore.notificationsStore.add({
+      title: 'Mixture reference is used in a reaction',
+      message: 'Change the reference component in the reaction scheme before removing or replacing it here.',
+      level: 'warning',
+      position: 'tr',
+    });
+    return true;
   }
 
   /**
@@ -2506,6 +2579,7 @@ export default class Sample extends Element {
    * @param {Object} tagMat - The component to keep, whose amounts will be cleared.
    */
   mergeSameMoleculeComponents(srcMat, tagMat) {
+    if (this.rejectLinkedReferenceChange([srcMat, tagMat])) return;
     this.deleteMixtureComponent(srcMat);
     tagMat.resetAmounts();
     // Re-run after reset so mass and equivalents reflect the zeroed amounts.
@@ -2561,24 +2635,30 @@ export default class Sample extends Element {
    * Switches the reference component, preserving mass by default or moles for a locked reaction material.
    *
    * The selected component is marked as the reference and all others as non-reference.
-   * Reaction schemes preserve composition ratios while changing the molar basis;
-   * the standalone mixture editor normalizes ratios against the selected reference.
+   * Ratios are normalized against the selected reference without changing composition.
    * If the provided index is invalid or the components array is missing,
    * the function exits without making any changes.
    *
    * @param {number} componentIndex - The index of the component to set as reference.
    * @param {Object} [options] - Reference-switch constraints.
-   * @param {boolean} [options.preserveRatios=false] - Keep the mixture's composition ratios.
+   * @param {boolean} [options.preserveRatios=false] - Preserve unresolved composition ratios, rebased to the new reference.
    * @param {boolean} [options.preserveAmountMol=false] - Keep moles fixed and rescale the physical quantity.
+   * @param {boolean} [options.fromReactionScheme=false] - Allow the scheme to update a linked reference and its dependents.
    * @returns {boolean} Whether the reference selection was applied.
    */
-  setReferenceComponent(componentIndex, { preserveRatios = false, preserveAmountMol = false } = {}) {
+  setReferenceComponent(componentIndex, {
+    preserveRatios = false, preserveAmountMol = false, fromReactionScheme = false,
+  } = {}) {
     const referenceComponent = this.components?.[componentIndex];
     if (!referenceComponent) return false;
 
     // Read mass using the old reference before a mol-stored amount changes its basis.
     // Initial reference selection has no previous molar basis to preserve.
     const previousReference = this.reference_component;
+    if (!fromReactionScheme && previousReference !== referenceComponent
+      && this.rejectLinkedReferenceChange([previousReference])) return false;
+
+    const referenceRatio = Number(referenceComponent.equivalent);
     const hadReference = !!previousReference;
     const mixtureMassG = hadReference ? Number(this.amount_g) : NaN;
     const mixtureAmountMol = hadReference && preserveAmountMol ? Number(this.amount_mol) : NaN;
@@ -2592,6 +2672,9 @@ export default class Sample extends Element {
       if (!preserveRatios && !component.reference && previousReference !== referenceComponent) {
         // Ratios against the old reference cannot initialize amounts under the new one.
         component.equivalent = 'n.d';
+      } else if (preserveRatios && Number.isFinite(referenceRatio) && referenceRatio > 0
+        && Number.isFinite(component.equivalent)) {
+        component.equivalent /= referenceRatio;
       }
     });
 
@@ -2604,7 +2687,7 @@ export default class Sample extends Element {
       }
     }
 
-    if (!preserveRatios) this.updateMixtureComponentEquivalent();
+    this.updateMixtureComponentEquivalent();
     return true;
   }
 
@@ -2730,6 +2813,7 @@ export default class Sample extends Element {
    *   (matching updateMixtureComponentEquivalent), so a later reference change updates
    *   the ratio rather than the amount the user already established.
    * A typed ratio fills the missing amount once, when a reference edit is committed.
+   * Ratios are intentionally non-sticky: there is no persistent ratio-driven mode.
    * A debounce pause or blur can commit that first value; subsequent corrections keep
    * the generated component amount fixed, just like a directly entered amount.
    *
@@ -2819,6 +2903,7 @@ export default class Sample extends Element {
    * @param {string} tagGroup - Material group for the new merged component.
    */
   async mergeDifferentMoleculeComponents(srcMat, tagMat, tagGroup) {
+    if (this.rejectLinkedReferenceChange([srcMat, tagMat])) return;
     const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
 
     try {
@@ -2830,9 +2915,11 @@ export default class Sample extends Element {
 
       const { default: Component } = await import('src/models/Component');
 
-      await this.addMixtureComponent(new Component(newSample));
+      if (this.rejectLinkedReferenceChange([srcMat, tagMat])) return;
+      this.addMixtureComponentSync(new Component(newSample));
       this.deleteMixtureComponent(tagMat);
       this.deleteMixtureComponent(srcMat);
+      await this.updateMixtureMolecule();
     } catch (error) {
       console.error('Error merging components:', error);
       NotificationActions.add({ message: 'Failed to merge components. Please try again.', level: 'error' });
@@ -2856,6 +2943,7 @@ export default class Sample extends Element {
 
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
     if (srcMat === tagMat) return;
+    if (this.rejectLinkedReferenceChange([srcMat, tagMat])) return;
 
     const srcIndex = this.components.findIndex((mat) => mat === srcMat);
     const tagIndex = this.components.findIndex((mat) => mat === tagMat);
@@ -2901,6 +2989,7 @@ export default class Sample extends Element {
    */
   async splitSmilesToMolecule(mixtureSmiles, editor) {
     const { staleComponents, unknownSmiles } = this.partitionEditedSmiles(mixtureSmiles);
+    if (this.rejectLinkedReferenceChange(staleComponents)) return false;
 
     // Nothing new to fetch — still delete stale components so the list stays
     // consistent with the edited structure.
@@ -2910,6 +2999,7 @@ export default class Sample extends Element {
     }
 
     const resolved = await Sample.fetchMoleculesForSmiles(unknownSmiles, editor);
+    if (this.rejectLinkedReferenceChange(staleComponents)) return false;
 
     // Mapping an edited fragment back to its component is only unambiguous for
     // a single edit — fragment order and component order are not guaranteed to
@@ -2968,6 +3058,7 @@ export default class Sample extends Element {
    */
   removeStaleComponents(staleComponents, mixtureSmiles) {
     if (staleComponents.length === 0) return;
+    if (this.rejectLinkedReferenceChange(staleComponents)) return;
 
     staleComponents.forEach((c) => this.deleteMixtureComponent(c));
     this.calculateTotalMixtureMass();
@@ -3018,6 +3109,7 @@ export default class Sample extends Element {
    */
   async addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved) {
     const { default: Component } = await import('src/models/Component');
+    if (this.rejectLinkedReferenceChange(staleComponents)) return;
 
     // Read after molecule resolution so edits made while it was loading are retained.
     const unallocatedMassG = this.isMixture() && !this.hasComponents() ? Number(this.amount_g) : 0;

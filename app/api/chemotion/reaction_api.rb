@@ -157,10 +157,18 @@ module Chemotion
       put ':id/materials/:sample_id/equivalent' do
         reaction = Reaction.find(params[:id])
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, reaction).update?
-        error!('Invalid equivalent', 422) unless params[:equivalent]&.finite?
+        equivalent = params[:equivalent]
+        error!('Invalid equivalent', 422) unless equivalent&.finite? && equivalent >= 0
 
         material = ReactionsSample.find_by!(reaction_id: reaction.id, sample_id: params[:sample_id])
-        material.update!(equivalent: params[:equivalent])
+        invalid_material = material.sample.sample_type != Sample::SAMPLE_TYPE_MIXTURE ||
+                           (material.reference && equivalent != 1) ||
+                           (material.weight_percentage.to_f.positive? && !material.reference &&
+                            !material.weight_percentage_reference) ||
+                           (material.is_a?(ReactionsProductSample) && equivalent > 1.0)
+        error!('Equivalent conflicts with the saved reaction material', 422) if invalid_material
+
+        material.update!(equivalent: equivalent)
 
         { equivalent: material.equivalent }
       rescue ActiveRecord::RecordNotFound
@@ -170,6 +178,7 @@ module Chemotion
       desc 'Update reaction by id'
       params do
         requires :id, type: Integer, desc: 'Reaction id'
+        optional :preserve_removed_sample_ids, type: Array[Integer], default: []
         optional :name, type: String
         optional :description, type: Hash
         optional :timestamp_start, type: String
@@ -222,6 +231,7 @@ module Chemotion
           update_element_labels(reaction, attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
           materials = attributes.delete(:materials)
+          preserved_sample_ids = attributes.delete(:preserve_removed_sample_ids)
           attributes.delete(:literatures)
           attributes.delete(:id)
 
@@ -235,7 +245,8 @@ module Chemotion
           reaction = Usecases::Reactions::UpdateMaterials.new(
             reaction, materials,
             current_user,
-            reaction_vessel_size
+            reaction_vessel_size,
+            preserve_removed_sample_ids: preserved_sample_ids
           ).execute!
           # Drop the keys of materials removed in this update, even if the Variations tab was never opened.
           update_variations_material_ids!(reaction)
@@ -250,6 +261,7 @@ module Chemotion
             ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
 
           {
+            material_id_map: material_update.material_id_map,
             reaction: Entities::ReactionEntity.represent(
               reaction,
               policy: @element_policy,
