@@ -120,6 +120,7 @@ export default class Component extends Sample {
     } else if (this.starting_molarity_value && this.starting_molarity_value > 0) { // if stock concentration is given
       this.calculateVolumeFromConcentration();
     }
+    this.calculateMassFromAmount(purity, false);
   }
 
   /**
@@ -384,9 +385,10 @@ export default class Component extends Sample {
   /**
    * Calculates concentration based on amount and total volume.
    * @param {number} totalVolume
+   * @param ignoreLock
    */
-  calculateTargetConcentration(totalVolume) {
-    if (this.isComponentConcentrationLocked()) return;
+  calculateTargetConcentration(totalVolume, { ignoreLock = false } = {}) {
+    if (!ignoreLock && this.isComponentConcentrationLocked()) return;
 
     const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : null;
 

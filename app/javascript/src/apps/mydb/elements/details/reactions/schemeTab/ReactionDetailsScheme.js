@@ -697,6 +697,16 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
+  /** Records the entered unit before a mixture quantity is normalized to grams. */
+  static recordMixtureAmountInputUnit(sample, unit) {
+    if (!sample.isMixture?.()) return;
+
+    sample.initializeSampleDetails();
+    sample.sample_details.reaction_amount_input_units = {
+      ...sample.sample_details.reaction_amount_input_units, [sample.amountType]: unit,
+    };
+  }
+
   /**
    * Handles amount changes for both regular and SBMM samples.
    *
@@ -715,6 +725,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
     updatedSample.initializeSampleDetails?.();
     updatedSample.sample_details.reference_component_changed = false;
+    ReactionDetailsScheme.recordMixtureAmountInputUnit(updatedSample, amount.unit);
     // Amount was edited directly by user, so concentration can be auto-recalculated again.
     updatedSample.preserveConcentration = false;
 
@@ -756,6 +767,8 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
     // A deleted row can flush a pending edit during unmount.
     if (!updatedSample) return reaction;
+
+    ReactionDetailsScheme.recordMixtureAmountInputUnit(updatedSample, amount.unit);
 
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);

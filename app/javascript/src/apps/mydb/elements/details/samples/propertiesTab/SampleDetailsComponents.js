@@ -362,6 +362,13 @@ export default class SampleDetailsComponents extends React.Component {
 
     currentComponent.handleDensityChange(amount, lockColumn);
 
+    if (sample.hasFixedProductMass()) {
+      sample.updateProductComponentRatio(currentComponent, currentComponent.equivalent, {
+        concentrationLocked: currentComponent.isComponentConcentrationLocked(),
+      });
+      return;
+    }
+
     const referenceComponent = sample.reference_component;
     const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
 
@@ -427,6 +434,15 @@ export default class SampleDetailsComponents extends React.Component {
 
     const currentComponent = this.findComponentById(sample, sampleID);
     if (!currentComponent) {
+      return;
+    }
+    if (sample.hasFixedProductMass()) {
+      if (!Number.isFinite(purity) || purity <= 0 || purity > 1) return;
+
+      currentComponent.purity = purity;
+      sample.updateProductComponentRatio(currentComponent, currentComponent.equivalent, {
+        concentrationLocked: currentComponent.isComponentConcentrationLocked(),
+      });
       return;
     }
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);

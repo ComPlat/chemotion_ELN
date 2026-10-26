@@ -4,9 +4,261 @@ import sinon from 'sinon';
 import { addMiddleware } from 'mobx-state-tree';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import Sample from 'src/models/Sample';
+import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import alt from 'src/stores/alt/alt';
 import { rootStore } from 'src/stores/mobx/RootStore';
+
+describe('SampleDetailsComponents reaction product ratios', () => {
+  let sandbox;
+  beforeEach(() => { sandbox = sinon.createSandbox(); });
+  afterEach(() => { sandbox.restore(); });
+
+  const build = (groups, { group = 'products', unit = 'g', amountType = 'real' } = {}) => {
+    const sample = new Sample({
+      id: 'mixture-product', sample_type: 'Mixture', amountType,
+      amount_value: unit === 'mol' ? 0.01 : 10, amount_unit: unit,
+      sample_details: { total_mixture_volume_l: 0 },
+    });
+    sample.initialComponents(groups.map((materialGroup, index) => new Component({
+      id: `component-${index}`, position: index, reference: index === 0,
+      material_group: materialGroup, equivalent: [1, 1, 2][index],
+      amount_mol: [0.01, 0.01, 0.02][index], density: materialGroup === 'liquid' ? 0.8 : 0,
+      purity: 1, molecule: { molecular_weight: [100, 200, 300][index] },
+    })));
+    sample.components.forEach((component) => component.updatePhysicalAmounts());
+    sample.total_mixture_mass_g = 10;
+    sample.calculateRelativeMolecularWeightsForComponents();
+    if (group) {
+      const reaction = new Reaction({ type: 'reaction', [group]: [sample] });
+      sample.belongTo = reaction;
+    }
+    const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+    return { sample, editor };
+  };
+  const editRatio = (editor, ratio) => editor.onChangeComponent({
+    type: 'ratioChanged', sampleID: 'component-1', newRatio: ratio,
+    materialGroup: editor.props.sample.components[1].material_group,
+  });
+
+  [['solid', 'solid', 'solid'], ['liquid', 'liquid', 'liquid'], ['solid', 'liquid', 'solid']]
+    .forEach((groups) => {
+      ['target', 'real'].forEach((amountType) => {
+        it(`keeps the ${amountType} product mass for ${groups.join('/')} through repeated ratio edits`, () => {
+          const { sample, editor } = build(groups, { amountType });
+
+          [3, 0, 2, 1].forEach((ratio) => {
+            editRatio(editor, ratio);
+
+            const denominator = 100 + ratio * 200 + 2 * 300;
+            [1, ratio, 2].forEach((componentRatio, index) => {
+              expect(sample.components[index].amount_mol).toBeCloseTo(10 * componentRatio / denominator, 12);
+              expect(sample.components[index].equivalent).toBe(componentRatio);
+            });
+            expect(sample.amount_g).toBe(10);
+            expect(sample.amount_unit).toBe('g');
+            expect(sample.total_mixture_mass_g).toBe(10);
+            expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+            expect(sample.amount_mol).toBeCloseTo(10 / denominator, 12);
+            sample.prepareMixtureForSave();
+            const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+            payload.components.forEach((entry, index) => {
+              entry.component_properties.molecule = sample.components[index].molecule;
+            });
+            const reopened = new Sample(payload);
+            reopened.initialComponents(payload.components.map(Component.deserializeData));
+            expect(reopened.amount_g).toBe(10);
+            expect(reopened.components.map((component) => component.amount_mol))
+              .toEqual(sample.components.map((component) => component.amount_mol));
+            expect(reopened.amount_mol).toBeCloseTo(10 / denominator, 12);
+          });
+        });
+      });
+    });
+
+  ['starting_materials', 'reactants', 'solvents', null].forEach((group) => {
+    it(`keeps reference moles fixed for ${group || 'standalone mixtures'}`, () => {
+      const { sample, editor } = build(['solid', 'solid', 'solid'], { group });
+      editRatio(editor, 3);
+      expect(sample.components[0].amount_mol).toBe(0.01);
+      expect(sample.components[1].amount_mol).toBe(0.03);
+      expect(sample.amount_g).toBeCloseTo(13, 12);
+    });
+  });
+
+  it('retains reference-driven ratio edits for a product entered in moles', () => {
+    const { sample, editor } = build(['solid', 'solid', 'solid'], { unit: 'mol' });
+    editRatio(editor, 3);
+    expect(sample.components[0].amount_mol).toBe(0.01);
+    expect(sample.components[1].amount_mol).toBe(0.03);
+    expect(sample.amount_g).toBeCloseTo(13, 12);
+  });
+
+  it('conserves physical mass and purity when a product component contains impurities', () => {
+    const { sample, editor } = build(['solid', 'liquid', 'solid']);
+    sample.components[1].purity = 0.5;
+    editRatio(editor, 3);
+    expect(sample.components[1].amount_mol).toBeCloseTo(30 / 1900, 12);
+    expect(sample.components[1].purity).toBe(0.5);
+    expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+    expect(sample.amount_g).toBe(10);
+  });
+
+  [NaN, Infinity, -1].forEach((ratio) => {
+    it(`ignores invalid product ratio ${ratio}`, () => {
+      const { sample, editor } = build(['solid', 'solid', 'solid']);
+      const amounts = sample.components.map((component) => component.amount_mol);
+      editRatio(editor, ratio);
+      expect(sample.amount_g).toBe(10);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual(amounts);
+      expect(sample.components[1].equivalent).toBe(1);
+    });
+  });
+
+  [1, 0.5].forEach((purity) => {
+    it(`uses solution mass for a 2 M stock liquid at purity ${purity}, including round trips`, () => {
+      const { sample, editor } = build(['solid', 'liquid', 'liquid']);
+      const weights = [180.16, 46.07, 1000 / (2 * purity)];
+      sample.components.forEach((component, index) => {
+        component.molecule.molecular_weight = [180.16, 46.07, 60.05][index];
+        component.equivalent = 1;
+        if (index === 2) {
+          component.density = 0;
+          component.starting_molarity_value = 2;
+          component.purity = purity;
+        }
+        component.amount_mol = 10 / weights.reduce((sum, weight) => sum + weight, 0);
+        component.updatePhysicalAmounts();
+      });
+      const originalAmount = sample.components[0].amount_mol;
+
+      [3, 1, 2, 1].forEach((ratio) => {
+        editRatio(editor, ratio);
+        const expected = 10 / (weights[0] + ratio * weights[1] + weights[2]);
+        expect(sample.components[0].amount_mol).toBeCloseTo(expected, 12);
+        expect(sample.components[2].amount_l).toBeCloseTo(expected / (2 * purity), 12);
+        sample.calculateTotalMixtureMass();
+        expect(sample.amount_g).toBeCloseTo(10, 12);
+      });
+      expect(sample.components[0].amount_mol).toBeCloseTo(originalAmount, 12);
+
+      editor.onChangeComponent({
+        type: 'densityChanged', sampleID: 'component-1', amount: { value: 0.8, unit: 'g/ml' }, lockColumn: false,
+      });
+      expect(sample.amount_g).toBeCloseTo(10, 12);
+      editor.onChangeComponent({
+        type: 'purityChanged', sampleID: 'component-2', amount: { value: 0.5 }, materialGroup: 'liquid',
+      });
+      sample.calculateTotalMixtureMass();
+      expect(sample.components[0].amount_mol).toBeCloseTo(10 / (180.16 + 46.07 + 1000), 12);
+      expect(sample.amount_g).toBeCloseTo(10, 12);
+    });
+  });
+
+  [0, 0.005].forEach((totalVolume) => {
+    it(`reserves internal solvent/remainder mass with total volume ${totalVolume}`, () => {
+      const { sample, editor } = build(['solid', 'liquid', 'solid']);
+      sample.solvent = [{ density: 1, amount_l: 0.005, ratio: 1 }];
+      sample.sample_details.total_mixture_volume_l = totalVolume;
+
+      [1, 3, 4, 0.5, 1].forEach((ratio) => {
+        editRatio(editor, ratio);
+        const scale = totalVolume > 0
+          ? Math.min(5 / 700, 10 / (700 + ratio * 200))
+          : 5 / (700 + ratio * 200);
+        expect(sample.components[0].amount_mol).toBeCloseTo(scale, 12);
+        expect(sample.solvent[0].amount_l).toBe(0.005);
+        expect(sample.total_mixture_volume_l).toBe(totalVolume);
+        sample.calculateTotalMixtureMass();
+        expect(sample.amount_g).toBeCloseTo(10, 12);
+        editor.onChangeComponent({
+          type: 'purityChanged', sampleID: 'component-0', amount: { value: 1 }, materialGroup: 'solid',
+        });
+        expect(sample.amount_g).toBeCloseTo(10, 12);
+      });
+    });
+  });
+
+  [true, false].forEach((locked) => {
+    [0, 1].forEach((index) => {
+      it(`redistributes purity edits on component ${index} with the Mass lock ${locked}`, () => {
+        const { sample, editor } = build(['solid', 'solid', 'solid']);
+        sandbox.stub(ComponentStore, 'getState').returns({
+          ...ComponentStore.getState(), lockAmountColumnSolidsBySample: { [sample.id]: locked }, lockedComponents: [],
+        });
+        editRatio(editor, 3);
+        editor.onChangeComponent({
+          type: 'purityChanged', sampleID: `component-${index}`,
+          amount: { value: 0.5 }, materialGroup: 'solid',
+        });
+        const denominator = index === 0 ? 200 + 600 + 600 : 100 + 1200 + 600;
+        expect(sample.components[0].amount_mol).toBeCloseTo(10 / denominator, 12);
+        expect(sample.components[index].purity).toBe(0.5);
+        expect(sample.components.map((component) => component.equivalent)).toEqual([1, 3, 2]);
+        sample.calculateTotalMixtureMass();
+        expect(sample.amount_g).toBeCloseTo(10, 12);
+        editRatio(editor, 1);
+        expect(sample.amount_g).toBeCloseTo(10, 12);
+      });
+    });
+  });
+
+  ['products', 'reactants'].forEach((group) => {
+    it(`resolves a sample-list mixture's ${group} role through resource tags`, () => {
+      const { sample, editor } = build(['solid', 'solid', 'solid'], { group });
+      const reaction = sample.belongTo;
+      sample.tag = { taggable_data: { resources: [
+        { resource_context_type: 'Reaction', resource_context_id: reaction.id },
+      ] } };
+      sample.belongTo = undefined;
+      sandbox.stub(alt, 'getStore').withArgs('ElementStore').returns({ getState: () => ({ selecteds: [reaction] }) });
+      editRatio(editor, 3);
+      expect(sample.amount_g).toBeCloseTo(group === 'products' ? 10 : 13, 12);
+      expect(sample.hasFixedProductMass()).toBe(group === 'products');
+      expect(sample.belongTo).toBeUndefined();
+    });
+  });
+
+  it('keeps a liquid-only product mass when Total volume already accounts for its entire mass', () => {
+    const { sample, editor } = build(['liquid', 'liquid', 'liquid']);
+    sample.sample_details.total_mixture_volume_l = 0.01;
+    [3, 1, 2, 1].forEach((ratio) => {
+      editRatio(editor, ratio);
+      expect(sample.components.reduce((sum, component) => sum + Sample.componentMassInMixture(component), 0))
+        .toBeCloseTo(9, 12);
+      sample.calculateTotalMixtureMass();
+      expect(sample.amount_g).toBeCloseTo(10, 12);
+    });
+    expect(sample.components[0].amount_mol).toBeCloseTo(0.01, 12);
+  });
+
+  it('balances a concentration-locked product volume and internal solvent through a zero ratio', () => {
+    const { sample, editor } = build(['solid', 'liquid', 'solid']);
+    sample.solvent = [{ density: 1, amount_l: 0.001 }];
+    sample.components[1].concn = 2;
+    sandbox.stub(ComponentStore, 'getState').returns({
+      ...ComponentStore.getState(), lockedComponents: [sample.components[1].id],
+    });
+    [3, 0, 1].forEach((ratio) => {
+      editRatio(editor, ratio);
+      expect(sample.components[1].concn).toBe(2);
+      expect(sample.total_mixture_volume_l).toBeCloseTo(sample.components[1].amount_mol / 2, 12);
+      sample.calculateTotalMixtureMass();
+      expect(sample.amount_g).toBeCloseTo(10, 12);
+    });
+  });
+
+  ['mol', 'l'].forEach((unit) => {
+    it(`does not fix mass after a ${unit} input has been normalized to grams`, () => {
+      const { sample, editor } = build(['solid', 'solid', 'solid']);
+      sample.sample_details.reaction_amount_input_units = { real: unit };
+      editRatio(editor, 3);
+      expect(sample.components[0].amount_mol).toBe(0.01);
+      expect(sample.amount_g).toBeCloseTo(13, 12);
+    });
+  });
+});
 
 describe('SampleDetailsComponents solid ratio edits', () => {
   let sandbox;

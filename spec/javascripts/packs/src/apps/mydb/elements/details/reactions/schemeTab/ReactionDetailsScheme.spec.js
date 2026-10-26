@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import expect from 'expect';
 import sinon from 'sinon';
 
@@ -10,6 +11,42 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+
+describe('ReactionDetailsScheme mixture amount input units', () => {
+  ['updatedReactionForAmountChange', 'updatedReactionForAmountUnitChange'].forEach((handler) => {
+    ['g', 'mol', 'l'].forEach((unit) => {
+      it(`remembers the user's ${unit} input through ${handler} and serialization`, () => {
+        const reaction = new Reaction({ type: 'reaction', products: [{
+          id: 'product', sample_type: 'Mixture', amountType: 'real', amount_value: 10, amount_unit: 'g',
+          density: 1, sample_details: { total_mixture_mass_g: 10 },
+        }] });
+        const product = reaction.products[0];
+        product.belongTo = reaction;
+        product.initialComponents([100, 200].map((weight, index) => new Component({
+          id: index, position: index, reference: index === 0, material_group: 'solid', purity: 1,
+          molecule: { molecular_weight: weight }, equivalent: 1, amount_mol: 10 / 300,
+          relative_molecular_weight: 300,
+        })));
+        const scheme = Object.create(ReactionDetailsScheme.prototype);
+        scheme.props = { reaction };
+        scheme.state = { lockEquivColumn: false };
+        scheme.updatedReactionWithSample = () => reaction;
+        scheme.warnIfMixtureMassExceeded = () => {};
+
+        scheme[handler]({ sampleID: product.id, amount: { value: 0.1, unit } });
+        // The mixture can subsequently normalize to grams during ordinary total calculations.
+        product.calculateTotalMixtureMass();
+        expect(product.amount_unit).toBe('g');
+        expect(product.sample_details.reaction_amount_input_units.real).toBe(unit);
+        expect(product.hasFixedProductMass()).toBe(unit === 'g');
+        const reloaded = new Sample(JSON.parse(JSON.stringify(product.serializeMaterial())));
+        reloaded.belongTo = reaction;
+        expect(reloaded.sample_details.reaction_amount_input_units.real).toBe(unit);
+        expect(reloaded.hasFixedProductMass()).toBe(unit === 'g');
+      });
+    });
+  });
+});
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
