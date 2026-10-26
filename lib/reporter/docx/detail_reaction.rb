@@ -1,6 +1,6 @@
 module Reporter
   module Docx
-    # rubocop:disable Metrics/ClassLength
+    # rubocop:disable-next Metrics/ClassLength
     class DetailReaction < Detail
       include Reactable
 
@@ -1142,6 +1142,5 @@ module Reporter
            'insert' => serial }]
       end
     end
-    # rubocop:enable Metrics/ClassLength
   end
 end
