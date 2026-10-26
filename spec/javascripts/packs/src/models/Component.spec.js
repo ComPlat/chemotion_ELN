@@ -70,6 +70,34 @@ describe('Component', () => {
   });
 
   describe('calculateVolumeForLiquid', () => {
+    ['amount', 'ratio', 'ratio fill'].forEach((edit) => {
+      it(`refreshes a liquid's serialized mass after a ${edit} edit`, () => {
+        component.density = 1;
+        component.amount_mol = 0.1;
+        component.amount_g = 0.1 * component.molecule_molecular_weight;
+        component.equivalent = 1;
+        if (edit === 'amount') component.handleAmountChange({ value: 0.3, unit: 'mol' }, 1);
+        else if (edit === 'ratio') component.updateRatio(3, 'liquid', 1, 0.1);
+        else component.updateAmountFromRatio(3, 0.1, 1);
+
+        const expectedMass = 0.3 * component.molecule_molecular_weight;
+        expect(component.amount_g).toBeCloseTo(expectedMass, 12);
+        expect(component.amount_l).toBeCloseTo(expectedMass / 1000, 12);
+        expect(component.serializeComponent().component_properties.amount_g).toBeCloseTo(expectedMass, 12);
+      });
+    });
+
+    it('keeps the stored solute mass current for a stock-solution ratio edit', () => {
+      component.density = 0;
+      component.starting_molarity_value = 2;
+      component.purity = 0.5;
+      component.amount_g = 999;
+      component.equivalent = 1;
+      component.updateRatio(3, 'liquid', 1, 0.1);
+      expect(component.amount_g).toBeCloseTo(0.3 * component.molecule_molecular_weight / 0.5, 12);
+      expect(component.amount_l).toBeCloseTo(0.3 / (2 * 0.5), 12);
+    });
+
     it('should calculate volume from density when density is provided', () => {
       component.density = 1.0; // g/mL
       component.amount_mol = 2; // mol

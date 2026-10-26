@@ -84,6 +84,78 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
   afterEach(() => { sandbox.restore(); });
 
+  ['products', 'reactants'].forEach((group) => {
+    it(`retains a list-opened mixture's ${group} role after saving with the reaction tab closed`, async () => {
+      const { reaction, mixture } = build();
+      reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+      reaction[group] = [mixture];
+      const listed = new Sample(mixture);
+      listed.initialComponents(mixture.components.map((component) => new Component({ ...component })));
+      listed.components.forEach((component) => component.updatePhysicalAmounts());
+      listed.tag = { taggable_data: { resources: [
+        { resource_context_type: 'Reaction', resource_context_id: reaction.id },
+      ] } };
+      SamplesFetcher.fetchById.resolves(listed);
+      sandbox.stub(ElementStore, 'getState').returns({ selecteds: [] });
+      const fetchReaction = sandbox.stub(ReactionsFetcher, 'fetchById').resolves(reaction);
+      let opened;
+      await new ElementActions().fetchSampleById(listed.id)((sample) => { opened = sample; });
+      sinon.assert.calledOnceWithExactly(fetchReaction, reaction.id);
+      expect(opened.hasFixedProductMass()).toBe(group === 'products');
+      expect(opened.belongTo).toBeUndefined();
+      expect(JSON.stringify(opened)).not.toContain('_mixtureReactionContext');
+
+      const editor = new SampleDetailsComponents({ sample: opened, onChange: () => {} });
+      editor.onChangeComponent({ type: 'ratioChanged', sampleID: 2, newRatio: 3, materialGroup: 'solid' });
+      const expectedMass = group === 'products' ? massG : 0.006 * (182.22 + 3 * 94.11);
+      expect(opened.amount_g).toBeCloseTo(expectedMass, 12);
+      const saved = await new Promise((resolve) => {
+        new ElementActions().updateSample(opened)(({ element }) => resolve(element));
+      });
+      expect(saved.hasFixedProductMass()).toBe(group === 'products');
+      expect(saved.amount_g).toBeCloseTo(expectedMass, 12);
+      if (group === 'products') {
+        saved.updateProductComponentRatio(saved.components[1], 1);
+        expect(saved.amount_g).toBeCloseTo(massG, 12);
+      }
+    });
+  });
+
+  it('saves and reopens a product ratio edit with its entered mass and redistributed moles', async () => {
+    const { reaction, mixture } = build();
+    reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+    reaction.products = [mixture];
+    mixture.belongTo = reaction;
+    let draft;
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
+    draft.belongTo = reaction;
+    const editor = new SampleDetailsComponents({ sample: draft, onChange: () => {} });
+    editor.onChangeComponent({
+      type: 'ratioChanged', sampleID: 2, newRatio: 3, materialGroup: 'solid',
+    });
+    const expectedMol = massG / (182.22 + 3 * 94.11);
+    expect(draft.amount_g).toBeCloseTo(massG, 12);
+    expect(draft.components[0].amount_mol).toBeCloseTo(expectedMol, 12);
+    expect(draft.components[1].amount_mol).toBeCloseTo(3 * expectedMol, 12);
+    // Editing a draft leaves the reaction row untouched until it is saved.
+    expect(mixture.components[0].amount_mol).toBe(0.006);
+
+    await new ElementActions().updateSampleForReaction(draft, reaction)(() => {});
+    expect(reaction.products[0].amount_g).toBeCloseTo(massG, 12);
+    expect(reaction.products[0].amount_mol).toBeCloseTo(expectedMol, 12);
+    expect(persistedEquivalent).toBeCloseTo(expectedMol / 0.01, 12);
+
+    let reopened;
+    await new ElementActions().showReactionMaterial({ sample: reaction.products[0], reaction })(({ sample }) => {
+      reopened = sample;
+    });
+    expect(reopened.amount_g).toBeCloseTo(massG, 12);
+    expect(reopened.amount_mol).toBeCloseTo(expectedMol, 12);
+    expect(reopened.components[1].amount_mol).toBeCloseTo(3 * expectedMol, 12);
+  });
+
   [false, true].forEach((hasComponents) => {
     it(`opens an unsaved reaction mixture without fetching its temporary ID, components=${hasComponents}`, async () => {
       const { reaction, mixture } = build();

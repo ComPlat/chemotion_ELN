@@ -96,6 +96,10 @@ export default class Sample extends Element {
     Object.defineProperty(this, '_belongTo', { value: element, writable: true, configurable: true });
   }
 
+  set mixtureReactionContext(reaction) {
+    Object.defineProperty(this, '_mixtureReactionContext', { value: reaction, writable: true, configurable: true });
+  }
+
   cleanBoilingMelting() {
     this.boiling_point = null;
     this.melting_point = null;
@@ -352,6 +356,7 @@ export default class Sample extends Element {
         'total_mixture_volume_l', 'total_mixture_mass_g', 'previous_amount_g', 'previous_amount_mol',
         'solvent_scaling_mass_g', 'reference_molecular_weight', 'reference_relative_molecular_weight',
         'reference_component_changed',
+        'reaction_amount_input_units',
       ])),
     };
     (this.components || []).forEach((component) => {
@@ -375,11 +380,32 @@ export default class Sample extends Element {
 
   /** A toolbar save replaces the open reaction; editor context may still hold its previous instance. */
   resolveReactionContext(reaction = this.belongTo) {
-    if (reaction?.type !== 'reaction' || reaction.id == null) return reaction;
-
     // Resolve lazily through the store registry to avoid a Sample/ElementStore import cycle.
     const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
-    return selecteds.find((element) => element.type === 'reaction' && element.id === reaction.id) || reaction;
+    if (reaction) {
+      if (reaction.type !== 'reaction' || reaction.id == null) return reaction;
+      return selecteds.find((element) => element.type === 'reaction' && element.id === reaction.id) || reaction;
+    }
+    const resourceIds = (this.tag?.taggable_data?.resources || [])
+      .filter((resource) => resource.resource_context_type === 'Reaction')
+      .map((resource) => resource.resource_context_id);
+    const linked = selecteds.filter((element) => element.type === 'reaction' && resourceIds.includes(element.id)
+      && element.samples?.some((sample) => sample.id === this.id));
+    return linked.find((element) => element.products?.some((sample) => sample.id === this.id))
+      || linked[0] || selecteds.find((element) => element.type === 'reaction'
+        && element.id === this._mixtureReactionContext?.id) || this._mixtureReactionContext;
+  }
+
+  /** Only a product entered as a mass uses mass-preserving composition edits. */
+  hasFixedProductMass() {
+    if (!this.isMixture() || this.amount_unit !== 'g') return false;
+
+    const reaction = this.resolveReactionContext();
+    const product = reaction?.products?.find((sample) => sample.id === this.id);
+    // Legacy samples have no input-unit metadata; retain their stored-unit behavior.
+    const inputUnit = this.sample_details?.reaction_amount_input_units?.[this.amountType]
+      ?? product?.sample_details?.reaction_amount_input_units?.[this.amountType] ?? this.amount_unit;
+    return !!product && inputUnit === 'g';
   }
 
   hasReactionMixtureConflict(reaction = this.belongTo) {
@@ -982,12 +1008,17 @@ export default class Sample extends Element {
     }
   }
 
-  /** Updates a component ratio, retaining entered mass until the composition can be initialized. */
+  /** Updates a component ratio, preserving gram-entered reaction product mass. */
   updateComponentRatio(
     component, ratio, materialGroup, { concentrationLocked = false, lockAmountColumnSolids = null } = {}
   ) {
     const referenceComponent = this.reference_component;
     if (!referenceComponent) return;
+
+    if (this.hasFixedProductMass()) {
+      this.updateProductComponentRatio(component, ratio, { concentrationLocked });
+      return;
+    }
 
     const massG = Number(this.amount_g);
     const hasRelativeWeights = this.components.some((entry) => {
@@ -1007,6 +1038,125 @@ export default class Sample extends Element {
       if (!this.components.some((entry) => Number(entry.amount_mol) > 0)) return;
     }
     this.calculateTotalMixtureMass();
+  }
+
+  /** Redistributes a product's fixed mass using its molar ratios rather than stored relative weights. */
+  updateProductComponentRatio(component, ratio, { concentrationLocked = false } = {}) {
+    const massG = Number(this.amount_g);
+    if (!Number.isFinite(massG) || massG < 0 || !Number.isFinite(ratio) || ratio < 0) return;
+
+    component.equivalent = ratio;
+    this.redistributeProductMixtureMass({ component, concentrationLocked });
+  }
+
+  /** Applies composition or volume edits only when the resulting amounts fit the current product mass. */
+  redistributeProductMixtureMass({
+    component = this.reference_component, concentrationLocked = false, totalVolumeL,
+  } = {}) {
+    const massG = Number(this.amount_g);
+    if (!Number.isFinite(massG) || massG < 0 || !this.hasComponents()) return false;
+    if (totalVolumeL !== undefined && (!Number.isFinite(totalVolumeL) || totalVolumeL < 0)) return false;
+
+    const mixtureComposition = this.getProductMixtureComposition();
+    if (!mixtureComposition) return false;
+
+    const { composition } = mixtureComposition;
+    const scale = this.productMixtureMolarScale(massG, mixtureComposition, component, {
+      concentrationLocked, totalVolumeL,
+    });
+    if (!Number.isFinite(scale) || scale < 0) return false;
+
+    const componentMassG = scale * mixtureComposition.weightedMass;
+    if (totalVolumeL !== undefined && componentMassG <= 8 * Number.EPSILON * Math.max(1, massG)) return false;
+
+    if (totalVolumeL !== undefined) {
+      this.initializeSampleDetails();
+      this.sample_details.total_mixture_volume_l = totalVolumeL;
+    }
+    composition.forEach((entry) => {
+      entry.component.amount_mol = scale * entry.ratio;
+      entry.component.updatePhysicalAmounts();
+    });
+
+    this.updateProductMixtureProperties(component, massG, {
+      concentrationLocked, volumeEdited: totalVolumeL !== undefined,
+    });
+    return true;
+  }
+
+  /** Validates molar ratios and calculates the physical mass per ratio unit. */
+  getProductMixtureComposition() {
+    const composition = this.components.map((entry) => ({
+      component: entry,
+      ratio: entry.equivalent,
+      massPerMole: Sample.componentMassPerMole(entry),
+    }));
+    if (!composition.every((entry) => Number.isFinite(entry.ratio) && entry.ratio >= 0
+      && Number.isFinite(entry.massPerMole) && entry.massPerMole > 0)) return null;
+
+    const weightedMass = composition.reduce(
+      (sum, entry) => sum + entry.ratio * entry.massPerMole, 0
+    );
+    if (!Number.isFinite(weightedMass) || weightedMass <= 0) return null;
+
+    const liquidWeight = composition.reduce((sum, entry) => sum
+      + (entry.component.material_group === 'liquid' ? entry.ratio * entry.massPerMole : 0), 0);
+
+    return { composition, weightedMass, liquidWeight, solidWeight: weightedMass - liquidWeight };
+  }
+
+  /** Solves the same component, solvent and total-volume mass balance as calculateTotalMixtureMass. */
+  productMixtureMolarScale(massG, composition, component, {
+    concentrationLocked = false, totalVolumeL,
+  } = {}) {
+    const { weightedMass, liquidWeight, solidWeight } = composition;
+    if (concentrationLocked && Number.isFinite(component.concn) && component.concn > 0) {
+      const volumeWeight = 1000 * component.equivalent / component.concn;
+      return volumeWeight > 0 ? massG / (solidWeight + Math.max(liquidWeight, volumeWeight))
+        : (massG - this.mixtureSolventMass()) / weightedMass;
+    }
+
+    const volumeMass = (totalVolumeL ?? this.resolveMixtureTotalVolume()) * 1000;
+    if (volumeMass > 0) {
+      // With liquids only, total volume can already account for the entire mass.
+      // Retain the current component mass rather than assigning the remainder twice.
+      const tolerance = 8 * Number.EPSILON * Math.max(1, massG, volumeMass);
+      if (solidWeight === 0 && Math.abs(massG - volumeMass) <= tolerance) {
+        const liquidMass = this.components.reduce((sum, entry) => sum + Sample.componentMassInMixture(entry), 0);
+        return Math.min(liquidMass, massG) / liquidWeight;
+      }
+      const scale = massG / weightedMass;
+      if (scale * liquidWeight >= volumeMass) return scale;
+      if (solidWeight > 0) return (massG - volumeMass) / solidWeight;
+      return null;
+    }
+    return (massG - this.mixtureSolventMass()) / weightedMass;
+  }
+
+  /** Physical solution mass per mole follows the same density/stock priority as component volume calculations. */
+  static componentMassPerMole(component) {
+    const purity = Number(component.purity ?? 1);
+    if (!Number.isFinite(purity) || purity <= 0) return NaN;
+    if (!['solid', 'liquid'].includes(component.material_group)) return NaN;
+    if (component.material_group === 'liquid' && !(component.density > 0)) {
+      const stock = Number(component.starting_molarity_value);
+      return Number.isFinite(stock) && stock > 0 ? 1000 / (stock * purity) : NaN;
+    }
+    return Number(component.molecule_molecular_weight) / purity;
+  }
+
+  /** Refreshes product mass, volume, molecular weights and concentrations after redistribution. */
+  updateProductMixtureProperties(component, massG, { concentrationLocked = false, volumeEdited = false } = {}) {
+    this.initializeSampleDetails();
+    this.sample_details.total_mixture_mass_g = massG;
+    if (concentrationLocked && Number.isFinite(component.concn) && component.concn > 0) {
+      this.sample_details.total_mixture_volume_l = component.amount_mol / component.concn;
+    }
+    this.updateMixtureDensity();
+    this.calculateRelativeMolecularWeightsForComponents();
+    const totalVolumeL = this.amount_l;
+    // An explicit volume edit takes priority over concentration locks to keep mass and ratios consistent.
+    this.components.forEach((entry) => entry.calculateTargetConcentration(totalVolumeL, { ignoreLock: volumeEdited }));
   }
 
   /** Checks whether a component can participate in mass initialization from positive ratios. */
@@ -2075,6 +2225,9 @@ export default class Sample extends Element {
    * @param totalVolume
    */
   setTotalMixtureVolume(totalVolume) {
+    if (this.hasFixedProductMass()) {
+      return this.redistributeProductMixtureMass({ totalVolumeL: totalVolume });
+    }
     this.initializeSampleDetails();
 
     // Store the volume values before calculateTotalMixtureMass overwrites them
@@ -3207,6 +3360,44 @@ export default class Sample extends Element {
     }
   }
 
+  /** Mass of a component as counted in the mixture, including stock-solution carrier mass. */
+  static componentMassInMixture(component) {
+    if (component.material_group === 'solid') return parseFloat(component.amount_g) || 0;
+    if (component.material_group === 'liquid') {
+      const density = component.density > 0 ? component.density : 1;
+      return density * (parseFloat(component.amount_l) || 0) * 1000;
+    }
+    return 0;
+  }
+
+  /** Internal solvents contribute their solution mass when no total volume is entered. */
+  mixtureSolventMass() {
+    return (Array.isArray(this.solvent) ? this.solvent : []).reduce((sum, solvent) => {
+      if (!solvent) return sum;
+      const density = solvent.density > 0 ? solvent.density : 1;
+      return sum + density * (parseFloat(solvent.amount_l) || 0) * 1000;
+    }, 0);
+  }
+
+  /** Normalizes an entered stock volume to the reaction portion before using its mass contribution. */
+  resolveMixtureTotalVolume(editedTotalVolumeL) {
+    this.initializeSampleDetails();
+    if (this.sample_details.total_mixture_volume_l == null && this.amount_unit === 'l') {
+      this.sample_details.total_mixture_volume_l = this.amount_value;
+    }
+    let totalVolumeL = editedTotalVolumeL ?? this.sample_details.total_mixture_volume_l ?? 0;
+    const storedMassG = Number(this.total_mixture_mass_g);
+    const portionMassG = Number(this.amount_g);
+    if (editedTotalVolumeL === undefined && this.parent_id != null
+      && this.sample_details.total_mixture_volume_l != null
+      && Number.isFinite(storedMassG) && storedMassG > 0
+      && Number.isFinite(portionMassG) && portionMassG > 0 && portionMassG !== storedMassG) {
+      totalVolumeL *= portionMassG / storedMassG;
+      this.sample_details.total_mixture_volume_l = totalVolumeL;
+    }
+    return parseFloat(totalVolumeL) || 0;
+  }
+
   /**
    * Calculates the total mass (g) of a mixture sample.
    * - Sums all masses of included solid materials (amount_g).
@@ -3229,39 +3420,16 @@ export default class Sample extends Element {
     // --- Step 1: Calculate component masses and sum liquid component masses (with densities) ---
     if (this.hasComponents()) {
       this.components.forEach((component) => {
-        if (component.material_group === 'solid') {
-          // For solids, use amount_g (already in grams)
-          totalMass += parseFloat(component.amount_g) || 0;
-        } else if (component.material_group === 'liquid') {
-          // For liquids, use density * volume (ml)
-          const density = (component.density && component.density > 0) ? component.density : 1; // g/ml
-          const componentVolumeML = (parseFloat(component.amount_l) || 0) * 1000;
-          const componentMassG = density * componentVolumeML;
-          totalMass += componentMassG;
-          totalLiquidComponentsMassG += componentMassG;
-        }
+        const massG = Sample.componentMassInMixture(component);
+        totalMass += massG;
+        if (component.material_group === 'liquid') totalLiquidComponentsMassG += massG;
       });
     }
 
     // --- Step 2: Determine total/solvent volume info ---
     // Only an entered volume can supply the remaining-volume mass. amount_l may
     // derive from the previous mass/density; feeding it back makes ratio edits drift.
-    if (this.sample_details.total_mixture_volume_l == null && this.amount_unit === 'l') {
-      this.sample_details.total_mixture_volume_l = this.amount_value;
-    }
-    let totalVolumeL = editedTotalVolumeL ?? this.sample_details.total_mixture_volume_l ?? 0;
-    const storedMassG = Number(this.total_mixture_mass_g);
-    const portionMassG = Number(this.amount_g);
-    if (editedTotalVolumeL === undefined && this.parent_id != null
-      && this.sample_details.total_mixture_volume_l != null
-      && Number.isFinite(storedMassG) && storedMassG > 0
-      && Number.isFinite(portionMassG) && portionMassG > 0 && portionMassG !== storedMassG) {
-      // The cloned total volume describes the stock. Match it to the portion's component
-      // masses before calculating a new total and relative MWs in the composition editor.
-      totalVolumeL *= portionMassG / storedMassG;
-      this.sample_details.total_mixture_volume_l = totalVolumeL;
-    }
-    const totalVolumeML = (parseFloat(totalVolumeL) || 0) * 1000;
+    const totalVolumeML = this.resolveMixtureTotalVolume(editedTotalVolumeL) * 1000;
     const hasTotalVolume = totalVolumeML > 0;
     const hasSolvents = Array.isArray(this.solvent) && this.solvent.length > 0;
 
@@ -3277,14 +3445,7 @@ export default class Sample extends Element {
       }
     } else if (hasSolvents) {
       // --- Step 4: Sum solvents only when total volume is NOT present
-      this.solvent.forEach((solv) => {
-        if (!solv) { return; }
-
-        const density = (solv.density && solv.density > 0) ? solv.density : 1; // g/mL
-        const volumeL = parseFloat(solv.amount_l ?? 0) || 0; // L
-        const volumeML = volumeL * 1000; // mL
-        totalMass += density * volumeML; // g
-      });
+      totalMass += this.mixtureSolventMass();
     }
     this.sample_details.total_mixture_mass_g = totalMass;
     // Set amount directly without triggering updateMixtureComponentAmounts()
