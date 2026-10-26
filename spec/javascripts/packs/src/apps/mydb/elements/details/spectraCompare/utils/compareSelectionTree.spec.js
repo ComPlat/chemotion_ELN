@@ -4,6 +4,7 @@ import { describe, it } from 'mocha';
 import {
   buildSelectionTree,
   enforceLockedSelection,
+  filterComparableAttachments,
   filterMenuByLayout,
   limitMenuToSelection,
   lockSelectedLeaves,
@@ -137,6 +138,27 @@ describe('compareSelectionTree', () => {
       const comparisonBranch = menuItems[0].children.find((n) => n.value === 7);
       expect(analysisBranch.children[0].children[0].value).toEqual(100);
       expect(comparisonBranch.children[0].children[0].value).toEqual(999);
+    });
+  });
+
+  describe('filterComparableAttachments', () => {
+    it('offers the per-curve JCAMPs of a BagIt archive before they are edited', () => {
+      const dataset = {
+        attachments: [
+          { id: 1, filename: 'run.zip' },
+          { id: 2, filename: 'run.1_bagit.jdx' },
+          { id: 3, filename: 'run.2_bagit.jdx' },
+          { id: 4, filename: 'run.2_bagit.edit.jdx' },
+          { id: 5, filename: 'run.1_bagit.png' },
+          { id: 6, filename: 'run.1_bagit.csv' },
+        ],
+      };
+      expect(filterComparableAttachments(dataset).map((att) => att.id)).toEqual([2, 3, 4]);
+    });
+
+    it('still skips an original upload without a generated addon', () => {
+      const dataset = { attachments: [{ id: 1, filename: 'sample.jdx' }, { id: 2, filename: 'sample.peak.jdx' }] };
+      expect(filterComparableAttachments(dataset).map((att) => att.id)).toEqual([2]);
     });
   });
 

@@ -5,6 +5,9 @@ import {
 } from 'src/apps/mydb/elements/details/spectraCompare/utils/containerLayout';
 
 const COMPARABLE_FILENAME = /(peak|edit|compared)/i;
+// Each curve of a BagIt archive is stored as "<stem>.<n>_bagit.jdx" and only gains an
+// ".edit." addon once it is saved from the editor (see JcampIds in SpectraHelper).
+const BAGIT_CURVE_FILENAME = /\.\d+_bagit\.[^.]+$/i;
 const JCAMP_EXT = new Set(['jdx', 'dx', 'jcamp']);
 
 const filenameExt = (filename = '') => {
@@ -18,7 +21,7 @@ export const filterComparableAttachments = (dataset) => {
     if (!att?.filename) return false;
     const ext = filenameExt(att.filename);
     if (!JCAMP_EXT.has(ext)) return false;
-    return COMPARABLE_FILENAME.test(att.filename);
+    return COMPARABLE_FILENAME.test(att.filename) || BAGIT_CURVE_FILENAME.test(att.filename);
   });
 };
 
