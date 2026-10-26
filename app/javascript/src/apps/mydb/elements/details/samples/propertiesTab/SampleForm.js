@@ -186,7 +186,14 @@ export default class SampleForm extends React.Component {
     const { handleSampleChanged } = this.props;
 
     const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
-    sample.setTotalMixtureVolume(totalVolume);
+    if (sample.setTotalMixtureVolume(totalVolume) === false) {
+      this.context.notifications.add({
+        title: 'Product mass kept',
+        message: 'This total volume leaves no mass for the components or exceeds the fixed product mass. '
+          + 'Reduce the volume or check the mixture composition.',
+        level: 'warning',
+      });
+    }
 
     // Trigger React re-render by calling handleSampleChanged directly
     // This ensures the UI updates to show the new concentration values

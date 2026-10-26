@@ -66,6 +66,22 @@ const handleFetch = (dispatch, fetch) => {
     })
 }
 
+// Resource tags identify links, not roles. Read the linked reaction to confirm product membership.
+const loadMixtureReactionContext = async (sample) => {
+  if (!sample.isMixture()) return;
+  let reaction = sample.resolveReactionContext();
+  if (!reaction) {
+    const ids = [...new Set((sample.tag?.taggable_data?.resources || [])
+      .filter((resource) => resource.resource_context_type === 'Reaction' && resource.resource_context_id != null)
+      .map((resource) => resource.resource_context_id))];
+    const results = await Promise.allSettled(ids.map((id) => ReactionsFetcher.fetchById(id)));
+    const linked = results.filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value).filter((element) => element.samples?.some((entry) => entry.id === sample.id));
+    reaction = linked.find((element) => element.products?.some((entry) => entry.id === sample.id)) || linked[0];
+  }
+  if (reaction) sample.mixtureReactionContext = reaction;
+};
+
 export class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
@@ -404,14 +420,13 @@ export class ElementActions {
   // -- Samples --
 
   fetchSampleById(id) {
-    return (dispatch) => {
-      SamplesFetcher.fetchById(id)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
+    return (dispatch) => SamplesFetcher.fetchById(id)
+      .then(async (result) => {
+        await loadMixtureReactionContext(result);
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   createSample(params, closeView = false) {
@@ -549,7 +564,10 @@ export class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView, components: params.components })
+          if (params.isMixture()){
+            result.mixtureReactionContext = params.resolveReactionContext();
+          }
+          dispatch({ element: result, closeView, components: params.components });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           // Ensure loading stops even on error
