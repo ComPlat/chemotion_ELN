@@ -340,10 +340,39 @@ const hasTextNodeMeta = (molfile) => {
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
-  const normalized = molfile.replace(/\r\n/g, '\n');
-  const lines = normalized.split('\n');
+  const normalized = molfile.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  let lines = normalized.split('\n');
+
+  // V2000 requires exactly 4 header lines before the atom block:
+  //   line 0: molecule name (may be empty)
+  //   line 1: program/timestamp ("  Ketcher  MMDDYYHHmm2D ...")
+  //   line 2: comment (may be empty)
+  //   line 3: counts ("aaabbb... V2000")
+  //
+  // ctabLinesOnly() calls trim() before splitting, removing the leading empty
+  // molecule-name line and shifting every subsequent line down by 1. Additionally,
+  // when Ketcher exports V2000 from a KET-loaded canvas, the program line omits the
+  // standard two-space II prefix and appears without leading spaces. In both cases
+  // Indigo reads the atom record at position 3 as the counts line and fails with
+  // readIntFix(3): "   " (atom coordinates start with spaces).
+  //
+  // Detect: if lines[0] contains the Ketcher program/timestamp marker ("Ketcher" or
+  // a numeric timestamp followed by 2D/3D), the molecule-name line is missing.
+  // Prepend an empty molecule name to restore the canonical 4-line header.
+  if (/Ketcher|\d{8,10}[23]D/.test(lines[0])) {
+    lines = ['', ...lines];
+  }
+
   const endIndex = lines.findIndex((line) => /^M\s+END/.test(line));
   if (endIndex === -1) return molfile;
+
+  // Additionally patch the counts line if it is all-whitespace (image-only canvas,
+  // 0 atoms). After the header fix above the counts line is always at index 3.
+  const isV3000 = lines.some((l) => /V3000/.test(l));
+  if (!isV3000 && lines.length > 3 && /^\s*$/.test(lines[3])) {
+    lines[3] = '  0  0  0  0  0  0  0  0  0  0999 V2000';
+  }
+
   return lines.slice(0, endIndex + 1).join('\n');
 };
 
