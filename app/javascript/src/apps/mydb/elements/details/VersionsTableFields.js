@@ -174,7 +174,7 @@ function VersionsTableFields(props) {
     const tr = rows.map((row, i) => {
       const td = columns.map((column, j) => (
         // eslint-disable-next-line react/no-array-index-key
-        <td style={{ height: '37px' }} key={j}>
+        <td style={{ height: '37px', whiteSpace: 'pre-line' }} key={j}>
           {row[column.colId]}
         </td>
       ));
@@ -242,8 +242,12 @@ function VersionsTableFields(props) {
           return (
             // eslint-disable-next-line react/no-array-index-key
             <React.Fragment key={j}>
-              <strong>{title}</strong>
-              <br />
+              {title && (
+                <>
+                  <strong>{title}</strong>
+                  <br />
+                </>
+              )}
               <div>
                 {(formatters[kind] || formatters.string)(content, title)}
               </div>

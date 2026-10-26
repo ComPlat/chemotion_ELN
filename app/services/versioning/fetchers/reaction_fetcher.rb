@@ -11,6 +11,7 @@ class Versioning::Fetchers::ReactionFetcher
 
   def call
     versions = Versioning::Serializers::ReactionSerializer.call(reaction)
+    versions += Versioning::Serializers::ReactionVariationsSerializer.call(reaction)
 
     reaction.reactions_samples.with_deleted.with_log_data.each do |reactions_sample|
       sample = Sample.with_log_data.with_deleted.find(reactions_sample.sample_id)
