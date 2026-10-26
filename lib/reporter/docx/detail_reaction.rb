@@ -14,15 +14,26 @@ module Reporter
       end
 
       def content
-        desc_content, clean_desc = description
-        obs_content, clean_obs = observation
+        text_content.merge(
+          material_content,
+          tlc_content,
+          analyses: analyses.presence,
+          literatures: literatures.presence,
+          not_last: id != last_id,
+          is_reaction: true,
+          gp_title_html: gp_title_html,
+          synthesis_title_html: synthesis_title_html,
+          synthesis_html: synthesis_html,
+          variations: variations,
+        )
+      end
 
-        # Show weight percentage column if any material actually provides a (positive) value
-        show_wp = (starting_materials + reactants).any? do |m|
-          m && m[:weight_percentage].present? && m[:weight_percentage].to_f.positive?
-        end
+      private
 
+      def material_content
         {
+          # flag for templates to show weight percentage column/header
+          show_weight_percentage: @obj.weight_percentage && weight_percentage_given?,
           title: title,
           short_label: short_label,
           collections: collection_label,
@@ -34,32 +45,39 @@ module Reporter
           products: products,
           solvents: displayed_solvents.presence,
           steps: steps,
+        }
+      end
+
+      def text_content
+        desc_content, clean_desc = description
+        obs_content, clean_obs = observation
+        {
           description: desc_content,
           description_check: content_check(clean_desc) && !text_per_step?,
+          observation: obs_content,
+          observation_check: content_check(clean_obs),
+        }
+      end
+
+      def tlc_content
+        {
           purification: purification.presence,
           dangerous_products: dangerous_products.presence,
           tlc_rf: rf_value,
           tlc_solvent: tlc_solvents,
           tlc_description: tlc_description,
-          observation: obs_content,
-          observation_check: content_check(clean_obs),
-          analyses: analyses.presence,
-          literatures: literatures.presence,
-          not_last: id != last_id,
           show_tlc_rf: rf_value.to_f != 0,
           show_tlc_solvent: tlc_solvents.present?,
           tlc_control: tlc_control,
-          is_reaction: true,
-          gp_title_html: gp_title_html,
-          synthesis_title_html: synthesis_title_html,
-          synthesis_html: synthesis_html,
-          variations: variations,
-          # flag for templates to show weight percentage column/header
-          show_weight_percentage: @obj.weight_percentage && show_wp,
         }
       end
 
-      private
+      # Show weight percentage column if any material actually provides a (positive) value
+      def weight_percentage_given?
+        (starting_materials + reactants).any? do |m|
+          m && m[:weight_percentage].present? && m[:weight_percentage].to_f.positive?
+        end
+      end
 
       def variations
         obj.variations.map do |var|
@@ -153,34 +171,35 @@ module Reporter
       end
 
       def products_delta
-        delta = []
-        counter = 0
-        st = @si_rxn_settings
-        st_name = st[:Name]
-        st_formula = st[:Formula]
-        st_cas = st[:CAS]
-        st_smiles = st[:Smiles]
-        st_inchi = st[:InChI]
-        st_ea = st[:EA]
-        st_m_mass = st[:'Molecular Mass']
-        st_e_mass = st[:'Exact Mass']
-        obj.products.each do |p|
-          counter += 1
-          m = p[:molecule]
-          cas = (p[:xref] && p[:xref][:cas]) || '- '
-          mol_name = sample_molecule_name_delta(p) + intermediate_delta(p)
-          delta += st_name ? name_delta(mol_name, counter, p) : []
-          delta += st_formula ? sum_formular_delta(m) : []
-          delta += st_cas ? cas_delta(cas) : []
-          delta += st_m_mass ? mol_mass_delta(m) : []
-          delta += st_e_mass ? eat_mass_delta(m) : []
-          delta += st_ea ? ea_delta(p) : []
-          delta += [{ 'insert' => "\n" }]
-          delta += st_smiles ? smiles_delta(m) + [{ 'insert' => "\n" }] : []
-          delta += st_inchi ? inchi_delta(m) + [{ 'insert' => "\n" }] : []
-          delta += [{ 'insert' => "\n" }]
-        end
-        delta
+        obj.products.each_with_index.flat_map { |product, index| product_delta(product, index + 1) }
+      end
+
+      def product_delta(product, counter)
+        newline = [{ 'insert' => "\n" }]
+        enabled_deltas(product_details(product, counter)) + newline +
+          enabled_deltas(product_ids(product[:molecule], newline)) + newline
+      end
+
+      def product_details(product, counter)
+        m = product[:molecule]
+        cas = (product[:xref] && product[:xref][:cas]) || '- '
+        mol_name = sample_molecule_name_delta(product) + intermediate_delta(product)
+        {
+          Name: -> { name_delta(mol_name, counter, product) },
+          Formula: -> { sum_formular_delta(m) },
+          CAS: -> { cas_delta(cas) },
+          'Molecular Mass': -> { mol_mass_delta(m) },
+          'Exact Mass': -> { eat_mass_delta(m) },
+          EA: -> { ea_delta(product) },
+        }
+      end
+
+      def product_ids(molecule, newline)
+        { Smiles: -> { smiles_delta(molecule) + newline }, InChI: -> { inchi_delta(molecule) + newline } }
+      end
+
+      def enabled_deltas(parts)
+        parts.flat_map { |setting, part| @si_rxn_settings[setting] ? part.call : [] }
       end
 
       def intermediate_delta(product, font_size = 12)
