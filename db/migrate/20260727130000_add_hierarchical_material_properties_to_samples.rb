@@ -8,6 +8,7 @@
 #     that storage. Any dev DB that ran an earlier iteration of this migration
 #     which had added those columns will have them dropped here.
 class AddHierarchicalMaterialPropertiesToSamples < ActiveRecord::Migration[6.1]
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Layout/LineLength, Style/IfUnlessModifier
   def up
     add_column :samples, :storage_condition, :string, comment: 'storage condition of the Hierarchical sample' unless column_exists?(:samples, :storage_condition)
     add_column :samples, :height, :float, comment: 'height of the Hierarchical sample (numeric, in cm or mm)' unless column_exists?(:samples, :height)
@@ -30,7 +31,9 @@ class AddHierarchicalMaterialPropertiesToSamples < ActiveRecord::Migration[6.1]
     remove_column :samples, :color if column_exists?(:samples, :color)
     remove_column :samples, :particle_size if column_exists?(:samples, :particle_size)
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Layout/LineLength, Style/IfUnlessModifier
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def down
     remove_column :samples, :storage_condition if column_exists?(:samples, :storage_condition)
     remove_column :samples, :height if column_exists?(:samples, :height)
@@ -44,6 +47,7 @@ class AddHierarchicalMaterialPropertiesToSamples < ActiveRecord::Migration[6.1]
     remove_column :samples, :layer_thickness if column_exists?(:samples, :layer_thickness)
     remove_column :samples, :liquid_medium if column_exists?(:samples, :liquid_medium)
     remove_column :samples, :stabilizer if column_exists?(:samples, :stabilizer)
-    # Note: does NOT restore state/color/particle_size — those live in xref.
+    # NOTE: does NOT restore state/color/particle_size — those live in xref.
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end

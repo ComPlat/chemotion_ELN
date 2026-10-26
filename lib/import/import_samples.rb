@@ -110,7 +110,7 @@ module Import
         # selecting the active sheet is not a missing-header problem and should not be reported as such.
         parse_sample_components_data
         parse_composition_table_data
-        xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
+        xlsx.default_sheet = @main_sheet_name
       rescue StandardError => e
         return error_prepare(e.message)
       end
@@ -236,7 +236,7 @@ module Import
     # Parses the sample_composition_table sheet (when present) into @composition_table_data.
     # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
     # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def parse_composition_table_data
       return unless xlsx.sheets.include?('sample_composition_table')
 
@@ -262,7 +262,7 @@ module Import
         weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
                              row_values[weight_ratio_idx].to_s.to_f
                            end
-        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?) # rubocop:disable Layout/LineLength
+        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?)
         next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
 
         @composition_table_data[current_sample_uuid] ||= []
@@ -273,7 +273,7 @@ module Import
         }
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Returns the sample uuid in effect after this row
     def parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
@@ -562,7 +562,7 @@ module Import
         release_connection_for_native_work
         molecule, molfile = process_row_data(row, index)
         ActiveRecord::Base.transaction(requires_new: true) do
-          unless molecule_not_exist(molecule, row, index)
+          unless molecule_not_exist?(molecule, row, index)
             sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
             saved = true
           end
@@ -990,6 +990,12 @@ module Import
       case db_column
       when 'cas', 'refractive_index', 'form', 'solubility', 'inventory_label'
         handle_xref_fields(sample, db_column, value)
+      when 'color'
+        sample['xref']['color'] = value if value.present?
+      when 'state'
+        sample['xref']['physical_state'] = value if value.present?
+      when 'particle_size'
+        sample['xref']['particle_size'] = value if value.present?
       when 'mn.name'
         assign_molecule_name_id(sample, value)
       when 'flash_point'
@@ -1036,9 +1042,9 @@ module Import
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
       elsif %w[
-               height width length diameter state storage_condition material cspi
-               particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
-             ].include?(db_column)
+        height width length diameter state storage_condition material cspi
+        particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+      ].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -1327,7 +1333,7 @@ module Import
       ActiveRecord::Base.transaction(requires_new: true) do
         sample_components_data.each_with_index do |component_data, index|
           molecule = process_component_row_data(component_data, index)
-          next if molecule_not_exist(molecule, component_data, index)
+          next if molecule_not_exist?(molecule, component_data, index)
 
           ImportComponents.component_save(component_data, sample, molecule, index)
         end
@@ -1373,7 +1379,6 @@ module Import
     def sanitize_molfile_for_import(molfile)
       Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
     end
-
 
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       sample = Sample.new(created_by: current_user_id)

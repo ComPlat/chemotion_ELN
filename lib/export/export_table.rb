@@ -72,6 +72,7 @@ module Export
       end
 
       return nil if parsed.nil?
+
       solvent_list = parsed.is_a?(Array) ? parsed : []
       solvent_values = solvent_list.map { |solvent| solvent.is_a?(Hash) ? solvent&.fetch('label', nil) : nil }
       solvent_values.compact.join('-')

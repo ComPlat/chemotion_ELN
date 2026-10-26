@@ -48,7 +48,7 @@ module Chemotion
             optional :molarity_value, type: Float, desc: 'Molarity value'
             optional :starting_molarity_value, type: Float, desc: 'Starting molarity value'
             optional :starting_molarity_unit, type: String, desc: 'Starting molarity unit'
-            requires :molecule_id, type: Integer, desc: 'Molecule ID'
+            optional :molecule_id, type: Integer, desc: 'Molecule ID'
             optional :equivalent, types: [Float, String], desc: 'Equivalent'
             optional :parent_id, type: Integer, desc: 'Parent ID'
             optional :material_group, type: String, desc: 'type of component e.g. liquid'

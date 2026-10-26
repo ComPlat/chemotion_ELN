@@ -38,7 +38,6 @@ PLAIN_CTAB_MOLFILE = <<~MOL
   M  END
 MOL
 
-
 describe 'Polymer Surface Chemistry' do
   # The sign_in/browser-fixture before hook below is scoped to this inner group only —
   # it must not leak into the model-level 'SVG auto-heal' group beneath it, which is
@@ -501,7 +500,8 @@ describe 'Polymer Surface Chemistry' do
       expect(sample.sample_type).to eq('HierarchicalMaterial')
     end
 
-    it 'persists the hierarchical property columns through save + reload' do # rubocop:disable RSpec/MultipleExpectations
+    # rubocop:disable RSpec/MultipleExpectations
+    it 'persists the hierarchical property columns through save + reload' do
       sample = create(:sample, name: 'HM props', creator: user, molecule: molecule)
       sample.sample_type = 'HierarchicalMaterial'
       sample.assign_attributes(
@@ -533,5 +533,6 @@ describe 'Polymer Surface Chemistry' do
       expect(sample.liquid_medium).to eq('toluene')
       expect(sample.stabilizer).to eq('BHT')
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 end

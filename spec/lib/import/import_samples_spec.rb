@@ -326,17 +326,17 @@ RSpec.describe 'Import::ImportSamples' do
         expect(importer.composition_table_data).to eq({})
       end
 
-      context 'when sample_composition_table sheet is present' do
+      context 'when sample_composition_table sheet is present' do # rubocop:disable RSpec/NestedGroups
         let(:comp_sheet) do
           sheet = instance_double(Roo::Excelx, 'comp_sheet')
           allow(sheet).to receive(:row).with(1).and_return(
-            ['Sample UUID', 'Source', 'Weight ratio exp.', 'Molar Mass (g/mol)']
+            ['Sample UUID', 'Source', 'Weight ratio exp.', 'Molar Mass (g/mol)'],
           )
           allow(sheet).to receive(:row).with(2).and_return(
-            ['uuid-abc', '50% Pd', 50.0, 106.4]
+            ['uuid-abc', '50% Pd', 50.0, 106.4],
           )
           allow(sheet).to receive(:row).with(3).and_return(
-            ['uuid-abc', '50% support', 50.0, 200.0]
+            ['uuid-abc', '50% support', 50.0, 200.0],
           )
           allow(sheet).to receive(:last_row).and_return(3)
           sheet
@@ -349,6 +349,7 @@ RSpec.describe 'Import::ImportSamples' do
           importer.send(:parse_composition_table_data)
         end
 
+        # rubocop:disable RSpec/MultipleExpectations
         it 'parses rows into composition_table_data keyed by sample uuid' do
           expect(importer.composition_table_data.keys).to include('uuid-abc')
           rows = importer.composition_table_data['uuid-abc']
@@ -356,10 +357,11 @@ RSpec.describe 'Import::ImportSamples' do
           expect(rows[0]).to eq(source: '50% Pd', weight_ratio_exp: 50.0, molar_mass: 106.4)
           expect(rows[1]).to eq(source: '50% support', weight_ratio_exp: 50.0, molar_mass: 200.0)
         end
+        # rubocop:enable RSpec/MultipleExpectations
       end
     end
 
-    describe '#apply_composition_table_data' do
+    describe '#apply_composition_table_data' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       let(:sample_with_uuid) { create(:valid_sample) }
       let(:sample_uuid) { 'test-composition-uuid' }
       let(:row_with_uuid) { { 'sample uuid' => sample_uuid } }
@@ -375,6 +377,7 @@ RSpec.describe 'Import::ImportSamples' do
         allow(Molecule).to receive(:find_or_create_dummy).and_return(dummy_molecule)
       end
 
+      # rubocop:disable RSpec/MultipleExpectations
       it 'creates HierarchicalMaterial components with source, weight_ratio_exp, molar_mass' do
         importer.send(:apply_composition_table_data, sample_with_uuid, row_with_uuid)
         sample_with_uuid.reload
@@ -385,6 +388,7 @@ RSpec.describe 'Import::ImportSamples' do
         expect(hm.first.component_properties['molar_mass']).to eq(106.4)
         expect(hm.second.component_properties['source']).to eq('40% support')
       end
+      # rubocop:enable RSpec/MultipleExpectations
 
       it 'updates sample_type to HierarchicalMaterial when not already hierarchical or mixture' do
         sample_with_uuid.update!(sample_type: 'Micromolecule')

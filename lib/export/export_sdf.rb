@@ -142,9 +142,7 @@ module Export
     # one for ordinary structures, and exporting it would carry the tag to the importing instance.
     def validate_molfile(molfile)
       s = molfile.to_s
-      if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
-        return s.rstrip.sub(/\${4}\s*\z/, '').rstrip
-      end
+      return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
 
       idx = s.index(MOLFILE_END_TAG)
       return s unless idx

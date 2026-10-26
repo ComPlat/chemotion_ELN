@@ -63,7 +63,7 @@ export default class ComponentsFetcher {
       }),
     }).then((response) => {
       if (response.ok) { return response.json(); }
-      return undefined;
+      return Promise.reject(new Error(`Save components failed: ${response.status}`));
     });
   }
 }

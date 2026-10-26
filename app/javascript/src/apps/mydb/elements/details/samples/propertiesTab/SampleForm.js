@@ -142,7 +142,7 @@ export default class SampleForm extends React.Component {
 
   handleAmountChanged(amount) {
     const { sample, handleSampleChanged } = this.props;
-    sample.setAmountAndNormalizeToGram(amount);
+    sample.setAmount(amount);
     sample.changed = true;
     handleSampleChanged(sample);
   }

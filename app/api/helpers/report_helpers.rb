@@ -932,7 +932,7 @@ module ReportHelpers
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
         description: ['s.description', '"description"', 0],
-        molfile: ["convert_from(s.molfile, 'UTF8')", 'molfile', 1],
+        molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
         purity: ['s.purity', '"purity"', 0],
         solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],
@@ -960,17 +960,29 @@ module ReportHelpers
         solubility: ['s."solubility"', '"solubility"', 0],
         color: ["s.xref->>'color'", '"color"', 0],
         form: ['s."form"', '"form"', 0],
-        height: ["COALESCE(s.height::text, s.sample_details->>'height', s.xref->>'height')", '"height"', 0],
+        height: [
+          "COALESCE(trim_scale(s.height::numeric)::text, s.sample_details->>'height', s.xref->>'height')",
+          '"height"', 0
+        ],
         height_unit: ["s.sample_details->>'height_unit'", '"height unit"', 0],
-        width: ["COALESCE(s.width::text, s.sample_details->>'width', s.xref->>'width')", '"width"', 0],
+        width: [
+          "COALESCE(trim_scale(s.width::numeric)::text, s.sample_details->>'width', s.xref->>'width')",
+          '"width"', 0
+        ],
         width_unit: ["s.sample_details->>'width_unit'", '"width unit"', 0],
-        length: ["COALESCE(s.length::text, s.sample_details->>'length', s.xref->>'length')", '"length"', 0],
+        length: [
+          "COALESCE(trim_scale(s.length::numeric)::text, s.sample_details->>'length', s.xref->>'length')",
+          '"length"', 0
+        ],
         length_unit: ["s.sample_details->>'length_unit'", '"length unit"', 0],
-        diameter: ["COALESCE(s.diameter::text, s.sample_details->>'diameter', s.xref->>'diameter')", '"diameter"', 0],
+        diameter: [
+          "COALESCE(trim_scale(s.diameter::numeric)::text, s.sample_details->>'diameter', s.xref->>'diameter')",
+          '"diameter"', 0
+        ],
         diameter_unit: ["s.sample_details->>'diameter_unit'", '"diameter unit"', 0],
         storage_condition: [
           "COALESCE(s.storage_condition, s.sample_details->>'storage_condition', s.xref->>'storage_condition')",
-          '"storage condition"', 0,
+          '"storage condition"', 0
         ],
         state: ["s.xref->>'physical_state'", '"state"', 0],
         material: ["COALESCE(s.material, s.sample_details->>'material', s.xref->>'material')", '"material"', 0],
@@ -978,29 +990,29 @@ module ReportHelpers
         cspi_unit: ["s.sample_details->>'cspi_unit'", '"cspi unit"', 0],
         particle_size: [
           "s.xref->>'particle_size'",
-          '"particle size"', 0,
+          '"particle size"', 0
         ],
         particle_size_unit: ["s.sample_details->>'particle_size_unit'", '"particle size unit"', 0],
         shape: ["COALESCE(s.shape, s.sample_details->>'shape', s.xref->>'shape')", '"shape"', 0],
         sieve_fraction: [
           "COALESCE(s.sieve_fraction, s.sample_details->>'sieve_fraction', s.xref->>'sieve_fraction')",
-          '"sieve fraction"', 0,
+          '"sieve fraction"', 0
         ],
         sieve_fraction_unit: ["s.sample_details->>'sieve_fraction_unit'", '"sieve fraction unit"', 0],
         layer_thickness: [
           "COALESCE(s.layer_thickness, s.sample_details->>'layer_thickness', s.xref->>'layer_thickness')",
-          '"layer thickness"', 0,
+          '"layer thickness"', 0
         ],
         layer_thickness_unit: ["s.sample_details->>'layer_thickness_unit'", '"layer thickness unit"', 0],
         liquid_medium: [
           "COALESCE(s.liquid_medium, s.sample_details->>'liquid_medium', s.xref->>'liquid_medium')",
-          '"liquid medium"', 0,
+          '"liquid medium"', 0
         ],
         stabilizer: [
           "COALESCE(s.stabilizer, s.sample_details->>'stabilizer', s.xref->>'stabilizer')",
-          '"stabilizer"', 0,
+          '"stabilizer"', 0
         ],
-        residue_type: ["res.residue_type", '"residue_type"', 1],
+        residue_type: ['res.residue_type', '"residue_type"', 1],
         polymer_type: ["res.custom_info->>'polymer_type'", '"polymer_type"', 1],
       },
       sample_id: {

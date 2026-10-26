@@ -155,13 +155,11 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     }
 
     if (useIndexedFormat && !hasCollision && Object.keys(polymerByAtomIndex).length > 0) {
-      // IMPORTANT:
-      // PolymersList index (first segment) is the R-group sequence index (0,1,2...)
-      // and NOT the raw atom index in the molfile atom block.
-      // Example: if R# atoms are at atom indices 0 and 3, entries "0/.." and "1/.."
-      // should map to atom 0 and atom 3 respectively.
-      let rGroupSequenceIndex = 0;
-      let maxUsedImageIndex = -1;
+      // PolymersList index (first segment) is the GLOBAL ATOM INDEX — the position of the atom
+      // across all mols flattened in mol order. This matches what templateAliasesPrepare stores.
+      // Example: mol0 has 6 C atoms + 1 R# at global index 6 → entry "6/95/1.00-1.00".
+      let globalAtomIndex = 0;
+      let localImageIndex = 0;
       for (const molName of mols) {
         const molecule = data[molName];
         if (!molecule?.atoms) continue;
@@ -175,23 +173,23 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
           if (aliasPass) {
-            const entry = polymerByAtomIndex[rGroupSequenceIndex];
+            const entry = polymerByAtomIndex[globalAtomIndex];
             if (entry) {
               const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
               data[molName].atoms[localIndex] = updateAtom(
                 atom.location,
                 templateType,
-                rGroupSequenceIndex
+                localImageIndex
               );
               const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
               if (newTemplate) collectedImages.push(newTemplate);
-              if (rGroupSequenceIndex > maxUsedImageIndex) maxUsedImageIndex = rGroupSequenceIndex;
+              localImageIndex += 1;
             }
-            rGroupSequenceIndex += 1;
           }
+          globalAtomIndex += 1;
         }
       }
-      imageUsedCounterSetter(maxUsedImageIndex >= 0 ? maxUsedImageIndex : 0);
+      imageUsedCounterSetter(localImageIndex > 0 ? localImageIndex - 1 : 0);
     } else {
       // Legacy: assign in consumption order (no atom index in polymer entries)
       let visitedAtoms = 0;

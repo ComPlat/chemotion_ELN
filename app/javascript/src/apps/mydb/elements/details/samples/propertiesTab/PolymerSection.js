@@ -25,11 +25,7 @@ export default class PolymerSection extends React.Component {
         if (loadingComp) { loadingComp.loading = null; }
       }
 
-      // call handleAmountChanged then handleSampleChanged so all mutations above
-      // are reflected in state (handleAmountChanged clones from state so we must
-      // follow with handleSampleChanged which clones from the already-mutated sample)
       handleAmountChanged(sample.amount);
-      handleSampleChanged(sample);
 
       let errorMessage;
       if (e.value == 0.0 && !e.showString)

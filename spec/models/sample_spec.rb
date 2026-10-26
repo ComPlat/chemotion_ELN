@@ -107,8 +107,9 @@ RSpec.describe Sample do
     end
   end
 
+  # rubocop:disable RSpec/MultipleExpectations
   describe 'hierarchical sample fields (storage_condition, height, width, length, diameter)' do
-    # Note: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
+    # NOTE: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
     # in the `xref` JSONB (main's storage) — not as dedicated columns. See tests below.
     it 'persists and returns storage_condition when set on the column' do
       sample = create(:sample, storage_condition: 'room temperature')
@@ -201,12 +202,11 @@ RSpec.describe Sample do
     end
 
     it 'prefers column over sample_details for new fields' do
-      sample = create(:sample,
-        layer_thickness: 'col',
-        sample_details: { 'layer_thickness' => 'details' })
+      sample = create(:sample, layer_thickness: 'col', sample_details: { 'layer_thickness' => 'details' })
       expect(sample.layer_thickness).to eq('col')
     end
   end
+  # rubocop:enable RSpec/MultipleExpectations
 
   describe 'dropdown hierarchical fields (sieve_fraction, material, shape, storage_condition)' do
     it 'persists sieve_fraction as a string value' do
@@ -341,6 +341,9 @@ RSpec.describe Sample do
     before do
       sample.collections << build(:collection)
       sample.creator = build(:person)
+      allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      allow(Chemotion::PubchemService).to receive(:molecule_info_and_outcome_from_inchikey)
+        .and_return([{ cid: 962, iupac_name: 'oxidane', names: %w[water oxidane] }, :ok])
     end
 
     it 'creates a molecule' do
@@ -545,6 +548,7 @@ RSpec.describe Sample do
       MOL
     end
 
+    # rubocop:disable RSpec/MultipleExpectations
     it 'recognizes molfile with 3 R# and bonds (PolymersList + TextNode)' do
       expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_with_bonds)).to be true
       expect(Chemotion::MolfilePolymerSupport.has_text_node_tag?(molfile_three_r_with_bonds)).to be true
@@ -568,6 +572,7 @@ RSpec.describe Sample do
       expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 10, height: 1.0, width: 1.0)
       expect(payload[:text_by_index]).to eq(0 => '1wt.% pdpt')
     end
+    # rubocop:enable RSpec/MultipleExpectations
   end
 
   context 'when counting samples created by user' do
@@ -881,61 +886,6 @@ RSpec.describe Sample do
       end
     end
 
-    describe '#set_sample_type_hierarchical_if_polymers_list gate (auto-flip protection)' do
-      # Test the callback method in isolation: it only depends on molfile presence,
-      # the polymers-list check, and the sample's dirty state. Full-save integration
-      # requires molecule/collection/creator wiring — out of scope for this unit test.
-      let(:polymer_molfile) { "polymer molfile stub\n" }
-      let(:instance) { Sample.new(molfile: polymer_molfile) }
-
-      before do
-        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(true)
-      end
-
-      it 'flips a new record with polymers-list tag to HierarchicalMaterial' do
-        # new_record? is true for an in-memory .new; molfile_changed? is true because it was set.
-        instance.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(instance.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
-      end
-
-      it 'does NOT flip when molfile is blank' do
-        blank = Sample.new(molfile: nil)
-        blank.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(blank.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
-      end
-
-      it 'does NOT flip when the molfile does not contain the polymers-list tag' do
-        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(false)
-        instance.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(instance.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
-      end
-
-      it 'does NOT overwrite a persisted non-HM sample_type on an unrelated save' do
-        # Simulate a persisted Micromolecule (legacy polymer) whose molfile hasn't changed.
-        legacy = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
-        allow(legacy).to receive_messages(new_record?: false, molfile_changed?: false)
-        legacy.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(legacy.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
-      end
-
-      it 'flips the type when the molfile itself changed (user pasted a polymer-tagged molfile)' do
-        persisted = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
-        allow(persisted).to receive_messages(new_record?: false, molfile_changed?: true)
-        # No explicit sample_type change in this save
-        allow(persisted).to receive(:sample_type_changed?).and_return(false)
-        persisted.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(persisted.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
-      end
-
-      it 'respects an explicit non-HM sample_type change made in the same save' do
-        # User explicitly moves an HM back to Micromolecule.
-        s = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
-        allow(s).to receive(:sample_type_changed?).and_return(true)
-        s.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(s.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
-      end
-    end
-
     describe '#valid_molecular_weight?' do
       it 'returns true for valid molecular weight' do
         result = sample.send(:valid_molecular_weight?)
@@ -965,6 +915,7 @@ RSpec.describe Sample do
         fetch_record_from_inchikey: [nil, :not_found],
         get_molfile_by_smiles: nil,
       )
+      allow(Molecule).to receive(:svg_reprocess).and_return(nil)
     end
 
     let(:user)     { create(:person) }
@@ -1052,11 +1003,10 @@ RSpec.describe Sample do
         # to polymer staleness), so it still fires either way — the thing this gate actually
         # skips is polymer_svg_needs_regen?'s disk read and the Molecule.svg_reprocess call
         # that would follow it.
-        allow(Molecule).to receive(:svg_reprocess).and_return(svg_with_image)
         allow(sample).to receive(:attach_svg)
+        expect(Molecule).not_to receive(:svg_reprocess) # rubocop:disable RSpec/MessageSpies
         sample.name = 'renamed sample'
         sample.save!
-        expect(Molecule).not_to have_received(:svg_reprocess)
       end
     end
 

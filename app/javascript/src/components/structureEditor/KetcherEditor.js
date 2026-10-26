@@ -138,14 +138,20 @@ const onAtomDelete = async (editor) => {
     // 3rd resettle aliases in inspired atom alias A
     dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
 
-    // Sync textList to remove any orphaned text nodes (whose alias was deleted above).
+    // Sync textList to remove orphaned image-linked text nodes whose image was deleted.
+    // Free-standing labels (not in textNodeStruct) are always kept.
     // saveMoveCanvas re-injects all of textList into the canvas, so this must be done
-    // before that call, otherwise the orphaned text node reappears on the canvas.
+    // before that call, otherwise orphaned text nodes reappear on the canvas.
     const activeTextKeys = new Set(Object.values(textNodeStruct));
     textListSetter(textList.filter((item) => {
       try {
         const { key } = JSON.parse(item.data.content).blocks[0];
-        return activeTextKeys.has(key);
+        // Keep free-standing labels (not linked to any image)
+        if (!activeTextKeys.has(key)) return true;
+        // Keep image-linked labels whose image survived
+        const linkedAlias = Object.entries(textNodeStruct).find(([, v]) => v === key)?.[0];
+        const imgIdx = linkedAlias !== undefined ? parseInt(linkedAlias, 10) : -1;
+        return imagesList.some((_, i) => i === imgIdx);
       } catch (_e) {
         return false;
       }
@@ -274,16 +280,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Default: button is disabled
       let shouldEnable = false;
 
-      // Check if a text node is selected and has an associated image
-      if (selectedTextKey) {
-        // Primary: textNodeStruct explicitly maps this key to a polymer image alias.
-        // Fallback: imagesList has entries, meaning polymer images are on the canvas —
-        // all text nodes on this canvas are polymer labels, so the selection is valid.
-        const hasAssociatedImage = Object.values(textNodeStruct).includes(selectedTextKey)
-          || imagesList.length > 0;
-        if (hasAssociatedImage) {
-          shouldEnable = true;
-        }
+      // Check if a text node is selected and has an associated image.
+      // Only enable when textNodeStruct explicitly maps this key to a polymer image —
+      // free-standing labels can coexist with polymer images on the same canvas.
+      if (selectedTextKey && Object.values(textNodeStruct).includes(selectedTextKey)) {
+        shouldEnable = true;
       }
 
       // Enable the button whenever a polymer image is selected.

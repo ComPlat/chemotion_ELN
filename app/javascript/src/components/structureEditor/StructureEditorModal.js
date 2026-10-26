@@ -89,7 +89,7 @@ function postComponents(components) {
       id: uuid(),
       name: 'HierarchicalMaterial',
       position: idx,
-      molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
+      molecule: null,
       template_category: Object.values(comp)[0],
       source: Object.keys(comp)[0],
       molar_mass: 0,
@@ -218,9 +218,10 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
+  handleStructureSave(molfile, svg, editorId, info = null, options = {}) {
     if (!this._isMounted) return;
     const { hasChildren, hasParent, onSave } = this.props;
+    const { components, textNodesFormula } = options;
     this.setState(
       {
         showModal: false,
@@ -228,7 +229,7 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, components, textNodesFormula, svg, info, editorId);
+          onSave(molfile, svg, info, editorId, { components, textNodesFormula });
         }
       }
     );
@@ -268,7 +269,7 @@ export default class StructureEditorModal extends React.Component {
       const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
       const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
       const components = componentsList ? postComponents(componentsList) : [];
-      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, null, { components, textNodesFormula });
       if (shouldSvg) onSVGStructureError(svgFailedMessage);
     } catch (error) {
       console.error('Error during save operation for Ketcher:', error);
