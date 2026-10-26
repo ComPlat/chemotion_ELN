@@ -64,7 +64,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     this.state = {
       lockEquivColumn,
-      displayYieldField: null,
+      displayYieldField: reaction.products.every((material) => !material.conversion_rate),
       reactionDescTemplate: textTemplate.toJS(),
     };
 
@@ -2591,13 +2591,6 @@ export default class ReactionDetailsScheme extends React.Component {
       } else {
         reaction.markSampleAsReference(refM.id);
       }
-    }
-
-    if (displayYieldField === null) {
-      const allHaveNoConversion = reaction.products.every(
-        (material) => !(material.conversion_rate && material.conversion_rate !== 0)
-      );
-      this.switchYield(allHaveNoConversion);
     }
 
     return (
