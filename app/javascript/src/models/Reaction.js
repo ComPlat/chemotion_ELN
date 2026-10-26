@@ -546,6 +546,14 @@ export default class Reaction extends Element {
     ];
   }
 
+  /** Snapshot only API-persisted associations; adding a material locally must not extend this set. */
+  recordPersistedMaterials() {
+    Object.defineProperty(this, '_persistedMaterialIds', {
+      value: new Set(this.samples.map((sample) => sample.id)), writable: true, configurable: true,
+    });
+    return this;
+  }
+
   // do not run any check based on ID on allReactionMaterials, as some sample materials may have the same ID as the SBMM samples
   get allReactionMaterials() {
     return [
@@ -1076,7 +1084,7 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material, refreshCoefficient) {
-    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    const cats = ['starting_materials', 'reactants', 'solvents', 'products', 'purification_solvents'];
     let i = 0;
     let group;
 
@@ -1120,10 +1128,10 @@ export default class Reaction extends Element {
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
     const refMat = this.referenceMaterial;
-    const referenceAmountMol = refMat.amount_mol;
+    const referenceAmountMol = refMat?.amount_mol;
 
     if (refMat && referenceAmountMol) {
-      ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+      ['_starting_materials', '_reactants', '_solvents', '_products', '_purification_solvents'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
@@ -1137,6 +1145,7 @@ export default class Reaction extends Element {
             if (g === '_products' && m.gas_type !== 'gas') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
               m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
+              if (m.isMixture()) m.equivalent = Math.min(m.equivalent, 1);
             } else {
               m.equivalent = amountMol / referenceAmountMol;
             }

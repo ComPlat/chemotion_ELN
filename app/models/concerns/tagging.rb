@@ -18,7 +18,7 @@ module Tagging
       args = { reaction_tag: reaction_id, resources_tag: true }
       element = 'sample'
     when 'ReactionsSolventSample', 'ReactionsPurificationSolventSample'
-      # Solvents are shared across many reactions, and the scalar reaction_id is last-writer-wins
+      # A sample can be a solvent in several reactions, and the scalar reaction_id is last-writer-wins
       # and never cleared, so writing it would mispoint the sample-list reaction badge and the
       # sync/equivalent readers to the latest link. The reaction-link guard reads `resources`,
       # so only that is written for solvents.

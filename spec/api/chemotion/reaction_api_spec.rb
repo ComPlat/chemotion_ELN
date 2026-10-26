@@ -240,6 +240,41 @@ describe Chemotion::ReactionAPI do
     end
     let(:endpoint) { "/api/v1/reactions/#{reaction.id}/materials/#{sample.id}/equivalent" }
 
+    it 'rejects a negative equivalent without changing the material' do
+      put endpoint, params: { equivalent: -0.5 }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(material.reload.equivalent).to eq(0.6)
+    end
+
+    it 'keeps a server-side reference at one despite an unsaved client reference switch' do
+      material.update!(reference: true, equivalent: 1)
+      put endpoint, params: { equivalent: 0.5 }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(material.reload.equivalent).to eq(1)
+      put endpoint, params: { equivalent: 1 }, as: :json
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'rejects a numeric equivalent for a material governed by weight percentage' do
+      material.update!(weight_percentage: 0.5, equivalent: nil)
+      put endpoint, params: { equivalent: 0.5 }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(material.reload.equivalent).to be_nil
+    end
+
+    it 'rejects ordinary samples outside this mixture-specific endpoint' do
+      sample.update!(sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+      put endpoint, params: { equivalent: 0.5 }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'rejects a product yield above 100 percent' do
+      material.update!(type: 'ReactionsProductSample')
+      put endpoint, params: { equivalent: 1.5 }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(ReactionsSample.find(material.id).equivalent).to eq(0.6)
+    end
+
     it 'persists the edited equivalent and returns it on reaction reload' do
       put endpoint, params: { equivalent: 1.2 }, as: :json
 
@@ -378,6 +413,46 @@ describe Chemotion::ReactionAPI do
       ReactionsProductSample.create!(
         reaction: reaction1, sample: sample4, equivalent: 1,
       )
+    end
+
+    context 'when an open mixture draft outlives its reaction row' do
+      it 'unlinks the removed mixture without deleting its sample or analyses' do
+        sample2.update!(sample_type: Sample::SAMPLE_TYPE_MIXTURE)
+        container_id = sample2.container.id
+        put "/api/v1/reactions/#{reaction1.id}", params: {
+          container: reaction_container, preserve_removed_sample_ids: [sample2.id],
+          materials: { starting_materials: [{ id: sample1.id, is_new: false, reference: true,
+                                              target_amount_value: 1, target_amount_unit: 'g', equivalent: 1 }] }
+        }, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(Sample.find(sample2.id).container.id).to eq(container_id)
+        expect(reaction1.reactions_samples.where(sample_id: sample2.id)).not_to exist
+        expect(sample2.reload.update(name: 'Saved standalone draft')).to be(true)
+      end
+
+      it 'returns explicit temporary ids for newly persisted mixtures and their components' do
+        stock = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, collections: [collection1])
+        components = Array.new(2) do |index|
+          { id: "new-component-#{index}", position: index, component_properties: {
+            molecule_id: stock.molecule_id, reference: index.zero?, amount_mol: 0.01,
+            relative_molecular_weight: 100
+          } }
+        end
+        put "/api/v1/reactions/#{reaction1.id}", params: {
+          container: reaction_container,
+          materials: { reactants: [{ id: 'new-mixture', parent_id: stock.id, is_new: true,
+                                     sample_type: Sample::SAMPLE_TYPE_MIXTURE, target_amount_value: 1,
+                                     target_amount_unit: 'g', equivalent: 1, components: components }] },
+        }, as: :json
+
+        expect(response).to have_http_status(:ok)
+        material = reaction1.reload.reactants.first
+        mapping = parsed_json_response.dig('material_id_map', 'new-mixture')
+        expect(mapping['id']).to eq(material.id)
+        expect(mapping['component_ids'].values).to match_array(material.components.pluck(:id))
+        expect(mapping['component_ids'].keys).to contain_exactly('new-component-0', 'new-component-1')
+      end
     end
 
     context 'when updating and reassigning existing materials' do

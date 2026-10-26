@@ -62,6 +62,7 @@ describe('UIFetcher.loadReport mixture preview', () => {
         expect(mixture.sample_details.total_mixture_mass_g).toBe(1.8522124);
         expect(mixture.isEdited).toBe(false);
         expect(reactions[0].isEdited).toBe(false);
+        expect(reactions[0]._persistedMaterialIds.has(mixture.id)).toBe(true);
         expect(text).toContain(referenceIndex === 1 ? '12.000' : '6.000');
         expect(text).toContain('2.223');
         expect(text).toContain(referenceIndex === 1 ? '1.200' : '0.600');

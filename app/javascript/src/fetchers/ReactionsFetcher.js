@@ -7,6 +7,7 @@ import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import alt from 'src/stores/alt/alt';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
@@ -19,7 +20,7 @@ export default class ReactionsFetcher {
     return ApiClient.getJson(`/api/v1/reactions?${preparedCollectionParams(id, updatedParams)}`, {
       handleResponseSuccess: (response) => response.json()
         .then((json) => ({
-          elements: json.reactions.map((reaction) => (new Reaction(reaction))),
+          elements: json.reactions.map((reaction) => new Reaction(reaction).recordPersistedMaterials()),
           totalElements: parseInt(response.headers.get('X-Total'), 10),
           page: parseInt(response.headers.get('X-Page'), 10),
           pages: parseInt(response.headers.get('X-Total-Pages'), 10),
@@ -79,8 +80,18 @@ export default class ReactionsFetcher {
 
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
-      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
+      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: this.reactionSavePayload(reaction) }))
       .then((json) => this.reactionElement(json, reaction.id));
+  }
+
+  static reactionSavePayload(reaction) {
+    const preserved = new Set(reaction._detachedMixtureMaterialIds || []);
+    const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
+    selecteds.forEach((sample) => {
+      if (sample.isDetachedMixtureDraft && sample.belongTo?.id === reaction.id
+        && !sample.isNew && !reaction.sampleById(sample.id)) preserved.add(sample.id);
+    });
+    return { ...reaction.serialize(), preserve_removed_sample_ids: [...preserved] };
   }
 
   static updateAnnotationsInReaction(reaction) {
@@ -109,7 +120,8 @@ export default class ReactionsFetcher {
 
     const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
 
-    const reaction = new Reaction(json.reaction);
+    const reaction = new Reaction(json.reaction).recordPersistedMaterials();
+    Object.defineProperty(reaction, '_mixtureMaterialIdMap', { value: json.material_id_map || {} });
     const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
     if (vesselSize) {
       GasPhaseReactionActions.setReactionVesselSize(vesselSize);

@@ -2,9 +2,7 @@ import {
   last,
   slice,
   intersectionWith,
-  findIndex,
-  cloneDeep,
-  omit
+  findIndex
 } from 'lodash';
 import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
@@ -1787,29 +1785,29 @@ class ElementStore {
       const reaction = selecteds.find((element) => SameEleTypId(element, previous)) || previous;
       const { samples } = reaction;
       selecteds.map((nextSample) => {
+        if (nextSample instanceof Sample && nextSample.isDetachedMixtureDraft) {
+          nextSample.rebindReactionMixtureDraft(reaction);
+        }
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
-        if (previousSample && nextSample.isMixture()) {
+        if (previousSample && nextSample.isMixture() && nextSample.isDetachedMixtureDraft) {
           // Rebind even when preserving a dirty draft or when the quantity is unchanged.
           nextSample.belongTo = reaction;
           const sourceState = previousSample.mixtureReactionState();
           // Keep unsaved composition edits. The save guard will report a conflict
           // if the reaction quantity or reference changed since this draft opened.
-          if (nextSample.isPendingToSave || nextSample._mixtureDraftSourceState === sourceState) return nextSample;
+          if (nextSample.isPendingToSave
+            || Sample.sameMixtureReactionState(nextSample._mixtureDraftSourceState, sourceState)) return nextSample;
 
-          const refreshed = new Sample(cloneDeep(omit(previousSample, ['belongTo', '_equivalent', 'reference'])));
-          refreshed.belongTo = reaction;
-          refreshed.isDetachedMixtureDraft = true;
-          refreshed._mixtureDraftSourceState = sourceState;
-          // The reaction row may not have fetched its components yet. Keep the
-          // editor's loaded composition and scale it to the latest reaction amount.
-          const components = refreshed.hasComponents() ? refreshed.components : cloneDeep(nextSample.components || []);
-          refreshed.initialComponents(components.map((component) => (
-            component instanceof Component ? component : Component.deserializeData(component)
-          )));
-          refreshed.syncMixtureComponentAmounts();
-          Object.assign(nextSample, refreshed);
+          try {
+            nextSample.applyReactionMixtureQuantities(previousSample);
+          } catch (error) {
+            // Keep the loaded draft when its composition no longer matches the reaction.
+            // Its unchanged baseline lets the save conflict guard explain the mismatch.
+            return nextSample;
+          }
+          nextSample._mixtureDraftSourceState = sourceState;
           nextSample.updateChecksum();
-        } else if (previousSample) {
+        } else if (previousSample && !nextSample.isMixture()) {
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;

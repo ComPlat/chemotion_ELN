@@ -24,6 +24,37 @@ describe('Component', () => {
     component.molecule = mockMolecule;
   });
 
+  describe('stock-solution physical amounts', () => {
+    [1, 0.5, 0.8].forEach((purity) => {
+      it(`preserves stock volume through molar conversion and reconstruction at purity ${purity}`, () => {
+        component.purity = purity;
+        component.density = 0;
+        component.starting_molarity_value = 1;
+        component.amount_l = 0.01;
+        component.calculateAmountFromConcentration(purity);
+        expect(component.amount_mol).toBeCloseTo(0.01 * purity, 12);
+
+        component.updatePhysicalAmounts();
+        component.updatePhysicalAmounts();
+
+        expect(component.amount_l).toBeCloseTo(0.01, 12);
+        expect(component.purity).toBe(purity);
+        expect(component.starting_molarity_value).toBe(1);
+        expect(component.density).toBe(0);
+      });
+    });
+
+    it('reconstructs known mass without applying the interactive Mass lock', () => {
+      component.material_group = 'solid';
+      component.purity = 0.5;
+      component.amount_mol = 0.01;
+      component.amount_g = 99;
+      component.updatePhysicalAmounts();
+      expect(component.amount_g).toBeCloseTo(0.01 * component.molecule_molecular_weight / 0.5, 12);
+      expect(component.purity).toBe(0.5);
+    });
+  });
+
   describe('has_density', () => {
     it('should return true when density > 0 and starting molarity value is 0', () => {
       component.density = 1.5;
@@ -403,15 +434,15 @@ describe('Component', () => {
       component.material_group = 'liquid';
       component.amount_l = 0.2; // Volume is set
       component.amount_mol = 0.5; // Amount is set and takes priority
-      component.purity = 0.95; // Set purity to verify it doesn't affect the calculation
+      component.purity = 0.95;
 
       component.handleStartingConcChange(startingConc);
 
       expect(component.starting_molarity_value).toBe(1.5);
 
       // amount_mol should be preserved and volume should be recalculated from amount and concentration
-      // amount_l = amount_mol / starting_molarity_value (purity is not used in this calculation)
-      const expectedAmountL = 0.5 / 1.5;
+      // Volume must invert mol = concentration * volume * purity.
+      const expectedAmountL = 0.5 / (1.5 * 0.95);
       expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
 
       // amount_mol should remain unchanged

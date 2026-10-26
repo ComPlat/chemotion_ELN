@@ -9,6 +9,8 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import { SampleComponent } from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponent';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -54,6 +56,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
         molecule: { molecular_weight: 94.11 }, material_group: 'solid', purity: 1,
       }),
     ]);
+    reaction.recordPersistedMaterials();
     return { reaction, mixture };
   };
 
@@ -67,6 +70,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     persistedEquivalent = 0.6;
     sandbox.stub(ComponentsFetcher, 'saveOrUpdateComponents').resolves([]);
     sandbox.stub(SamplesFetcher, 'update').callsFake(async (sample) => new Sample(sample));
+    sandbox.stub(SamplesFetcher, 'fetchById').callsFake(async (id) => build().reaction.sampleById(id));
     fullReactionSave = sandbox.spy(ReactionsFetcher, 'update');
     fetchStub = sandbox.stub(global, 'fetch').callsFake(async (url, options) => {
       expect(url).toBe('/api/v1/reactions/101/materials/1315/equivalent');
@@ -80,10 +84,179 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
   afterEach(() => { sandbox.restore(); });
 
-  it('edits a cloned mixture component mass without changing the reaction component', () => {
+  [false, true].forEach((hasComponents) => {
+    it(`opens an unsaved reaction mixture without fetching its temporary ID, components=${hasComponents}`, async () => {
+      const { reaction, mixture } = build();
+      const child = mixture.buildChildWithoutCounter();
+      if (!hasComponents) child.components = [];
+      child.setAmount({ value: massG / 2, unit: 'g' });
+      reaction.reactants = [child];
+      child.belongTo = reaction;
+      const fetchComponents = sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId');
+      let draft;
+
+      await new ElementActions().showReactionMaterial({ sample: child, reaction })(({ sample }) => {
+        draft = sample;
+      });
+
+      sinon.assert.notCalled(SamplesFetcher.fetchById);
+      sinon.assert.notCalled(fetchComponents);
+      expect(draft.id).toBe(child.id);
+      expect(draft.isNew).toBe(true);
+      expect(draft.parent_id).toBe(mixture.id);
+      expect(draft.amount_g).toBeCloseTo(massG / 2, 12);
+      expect(draft.isDetachedMixtureDraft).toBe(true);
+      if (hasComponents) {
+        expect(draft.components[0]).not.toBe(child.components[0]);
+        expect(draft.components[0].amount_mol).toBeCloseTo(0.003, 12);
+        draft.components[0].purity = 0.5;
+        expect(child.components[0].purity).toBe(1);
+      }
+    });
+  });
+
+  ['mg', 'mol', 'rounding'].forEach((representation) => {
+    it(`accepts an equivalent reaction quantity expressed as ${representation} while keeping draft edits`, async () => {
+      const { reaction, mixture } = build();
+      let draft;
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
+      draft.belongTo = reaction;
+      draft.purity = 0.5;
+      draft.changed = true;
+      if (representation === 'mg') { mixture.amount_value = massG * 1000; mixture.amount_unit = 'mg'; }
+      else if (representation === 'mol') { mixture.amount_value = 0.006; mixture.amount_unit = 'mol'; }
+      else mixture.amount_value = massG * (1 + 2e-10);
+      expect(draft.hasReactionMixtureConflict()).toBe(false);
+      await new ElementActions().updateSampleForReaction(draft, reaction, false)(sinon.spy());
+      sinon.assert.calledOnce(SamplesFetcher.update);
+    });
+  });
+
+  it('detaches an edited draft when its reaction row is removed and saves through the standalone action', async () => {
     const { reaction, mixture } = build();
     let draft;
-    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
+    draft.belongTo = reaction;
+    draft.name = 'Keep this edit';
+    draft.purity = 0.5;
+    draft.changed = true;
+    reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+    const save = sandbox.stub(ElementActionDispatcher, 'updateSample');
+
+    await new ElementActions().updateSampleForReaction(draft, reaction, false)(sinon.spy());
+
+    sinon.assert.calledOnceWithExactly(save, draft, false);
+    expect(draft.name).toBe('Keep this edit');
+    expect(draft.purity).toBe(0.5);
+    expect(draft.belongTo).toBeUndefined();
+    expect(draft.isDetachedMixtureDraft).toBeUndefined();
+    expect(draft.hasReactionMixtureConflict()).toBe(false);
+    sinon.assert.notCalled(fetchStub);
+  });
+
+  [false, true].forEach((leaveReactionBeforeSave) => {
+    it(`preserves a removed draft sample on toolbar save, detach first=${leaveReactionBeforeSave}`, async () => {
+      const { reaction, mixture } = build();
+      reaction.purification_solvents = [];
+      reaction.segments = [];
+      let draft;
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
+      draft.belongTo = reaction;
+      draft.purity = 0.5;
+      draft.changed = true;
+      reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== draft.id);
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
+      sandbox.stub(ElementStore, 'getState').callsFake(() => store.state);
+      if (leaveReactionBeforeSave) store.synchronizeElements(reaction);
+
+      const payload = ReactionsFetcher.reactionSavePayload(reaction);
+
+      expect(payload.preserve_removed_sample_ids).toEqual([draft.id]);
+      expect(payload.materials.starting_materials.map((sample) => sample.id)).not.toContain(draft.id);
+      expect(draft.purity).toBe(0.5);
+    });
+  });
+
+  [false, true].forEach((dirty) => {
+    it(`rekeys a newly persisted mixture draft without losing edits, dirty=${dirty}`, async () => {
+      const { reaction, mixture } = build();
+      mixture.isNew = true;
+      let draft;
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
+      draft.belongTo = reaction;
+      if (dirty) { draft.purity = 0.5; draft.changed = true; }
+      const originalState = draft._mixtureDraftSourceState;
+      mixture.id = 2000;
+      mixture.isNew = false;
+      mixture.components.forEach((component) => { component.id += 100; });
+      reaction.recordPersistedMaterials();
+      Object.defineProperty(reaction, '_mixtureMaterialIdMap', { value: {
+        1315: { id: 2000, component_ids: { 1: 101, 2: 102 } },
+      } });
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
+
+      store.synchronizeElements(reaction);
+
+      expect(draft.id).toBe(2000);
+      expect(draft.isNew).toBe(false);
+      expect(draft.belongTo).toBe(reaction);
+      expect(draft.reference_component.id).toBe(101);
+      expect(draft._mixtureDraftSourceState).not.toBe(originalState);
+      expect(draft.hasReactionMixtureConflict()).toBe(false);
+      expect(draft.purity).toBe(dirty ? 0.5 : 1);
+      expect(draft.isPendingToSave).toBe(dirty);
+      const equivalentSave = sandbox.stub(ReactionsFetcher, 'updateMaterialEquivalent').resolves({});
+      await new ElementActions().updateSampleForReaction(draft, reaction, false)(sinon.spy());
+      sinon.assert.calledOnce(SamplesFetcher.update);
+      sinon.assert.calledOnce(equivalentSave);
+    });
+  });
+
+  it('does not detach a mixture draft when switching to a different reaction', async () => {
+    const { reaction, mixture } = build();
+    let draft;
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
+    draft.belongTo = reaction;
+    const other = new Reaction({ id: 999, starting_materials: [], reactants: [], products: [], solvents: [] });
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, other, draft], refreshCoefficient: [] };
+    store.synchronizeElements(other);
+    expect(draft.belongTo).toBe(reaction);
+    expect(draft.isDetachedMixtureDraft).toBe(true);
+  });
+
+  it('keeps reaction checksums, clones and copies usable after a component reference switch', () => {
+    const { reaction, mixture } = build();
+    reaction.segments = [];
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn: false };
+    scheme.getReactionEquivLockState = () => false;
+    scheme.updatedReactionForComponentReferenceChange({ sampleID: mixture.id, componentId: 2 });
+    expect(mixture.belongTo).toBe(reaction);
+    expect(() => reaction.checksum()).not.toThrow();
+    expect(() => reaction.clone()).not.toThrow();
+    expect(() => Reaction.copyFromReactionAndCollectionId(reaction, 1, true)).not.toThrow();
+  });
+
+  it('edits a cloned mixture component mass without changing the reaction component', async () => {
+    const { reaction, mixture } = build();
+    let draft;
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
     const component = draft.components[1];
     const source = mixture.components[1];
     const originalMass = source.amount_g;
@@ -100,14 +273,16 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       it(`synchronizes a reaction ${edit} edit with a mixture tab, unsaved draft=${dirtyDraft}`, async () => {
         const { reaction, mixture } = build();
         let draft;
-        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+        await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+          draft = sample;
+        });
         draft.belongTo = reaction;
         const originalMass = draft.amount_g;
         expect(draft.isEdited).toBe(false);
         if (dirtyDraft) draft.name = 'Unsaved composition note';
         const draftBefore = draft.checksum();
         if (edit === 'mass') mixture.setAmount({ value: massG * 2, unit: 'g' });
-        else mixture.setReferenceComponent(1, { preserveRatios: true });
+        else mixture.setReferenceComponent(1, { preserveRatios: true, fromReactionScheme: true });
         const reactionBefore = reaction.checksum();
         const store = Object.create(ElementStore.StoreModel.prototype);
         store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
@@ -154,10 +329,12 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
   [['purity', 0.5], ['molarity_value', 2]].forEach(([field, value]) => {
     [false, true].forEach((reinitializeComponents) => {
-      it(`preserves an unsaved numeric ${field} edit on resync, reinitialized=${reinitializeComponents}`, () => {
+      it(`preserves an unsaved numeric ${field} edit on resync, reinitialized=${reinitializeComponents}`, async () => {
         const { reaction, mixture } = build();
         let draft;
-        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+        await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+          draft = sample;
+        });
         draft.belongTo = reaction;
         if (reinitializeComponents) {
           // Component initialization can refresh the checksum while changed still records pending edits.
@@ -195,7 +372,9 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     it(`resumes refreshing a clean mixture draft after saving its numeric ${field} edit`, async () => {
       const { reaction, mixture } = build();
       let draft;
-      new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
       draft.belongTo = reaction;
       draft[field] = value;
       draft.changed = true;
@@ -226,21 +405,153 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
-  it('refreshes a clean saved mixture tab opened independently of the reaction', () => {
+  [false, true].forEach((dirty) => {
+    it(`preserves sample-list save context and contents on reaction resync, dirty=${dirty}`, () => {
+      const { reaction, mixture } = build();
+      const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
+      tab.initialComponents(tab.components.map(Component.deserializeData));
+      if (dirty) { tab.purity = 0.5; tab.changed = true; }
+      const before = tab.serializeMaterial();
+      mixture.setAmount({ value: massG * 2, unit: 'g' });
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
+
+      store.synchronizeElements(reaction);
+
+      expect(tab.serializeMaterial()).toEqual(before);
+      expect(tab.belongTo).toBeUndefined();
+      expect(tab.isDetachedMixtureDraft).toBeUndefined();
+      expect(tab.isPendingToSave).toBe(dirty);
+    });
+  });
+
+  it('fetches newer sample details while retaining pending reaction quantities through resync and save', async () => {
+    const { reaction, mixture } = build();
+    const latest = build().mixture;
+    latest.description = 'Description saved in another session';
+    latest.name = 'Latest name';
+    latest.container = { id: 900, container_type: 'root', children: [] };
+    latest.components[1].name = 'Latest component name';
+    SamplesFetcher.fetchById.resolves(latest);
+    mixture.setAmount({ value: massG * 2, unit: 'g' });
+    mixture.setReferenceComponent(1, { preserveRatios: true, fromReactionScheme: true });
+    let draft;
+
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
+
+    expect(draft.description).toBe(latest.description);
+    expect(draft.name).toBe(latest.name);
+    expect(draft.container.id).toBe(900);
+    expect(draft.components[1].name).toBe('Latest component name');
+    expect(draft.reference_component.id).toBe(2);
+    expect(draft.amount_g).toBeCloseTo(massG * 2, 12);
+    expect(draft.components[1].amount_mol).toBeCloseTo(0.024, 12);
+    expect(latest.components[1].amount_mol).toBeCloseTo(0.012, 12);
+    mixture.setAmount({ value: massG * 3, unit: 'g' });
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, draft], refreshCoefficient: [] };
+    store.synchronizeElements(reaction);
+    expect(draft.description).toBe(latest.description);
+    expect(draft.container.id).toBe(900);
+    expect(draft.amount_g).toBeCloseTo(massG * 3, 12);
+
+    await new ElementActions().updateSampleForReaction(draft, reaction, false)(sinon.spy());
+
+    const saved = SamplesFetcher.update.firstCall.args[0];
+    expect(saved.description).toBe(latest.description);
+    expect(saved.container.id).toBe(900);
+    expect(saved.components[1].name).toBe('Latest component name');
+  });
+
+  ['remove', 'replace'].forEach((edit) => {
+    it(`rejects a structure-editor ${edit} of a linked reference before changing sample structure`, async () => {
+      const { reaction, mixture } = build();
+      mixture.belongTo = reaction;
+      mixture.molecule = { id: 123, cano_smiles: 'CCO.CCC' };
+      mixture.molfile = 'Original molfile';
+      mixture.components[0].molecule.cano_smiles = 'CCO';
+      mixture.components[1].molecule.cano_smiles = 'CCC';
+      mixture.updateChecksum();
+      const before = mixture.serializeMaterial();
+      const resultSmiles = edit === 'remove' ? 'CCC' : 'CCCC.CCC';
+      sandbox.stub(MoleculesFetcher, 'fetchBySmi').resolves({
+        id: 456, cano_smiles: resultSmiles, molfile: 'Edited molfile',
+      });
+      const details = Object.create(SampleDetails.prototype);
+      details.state = { sample: mixture };
+      details.setState = (update) => { details.state = { ...details.state, ...update }; };
+      details.context = { notifications: { add: sinon.spy() } };
+
+      await new Promise((resolve) => {
+        details.hideStructureEditor = resolve;
+        details.handleStructureEditorSave('Edited molfile', '', { smiles: resultSmiles }, 'ketcher');
+      });
+
+      expect(mixture.serializeMaterial()).toEqual(before);
+      expect(mixture.molecule.id).toBe(123);
+      expect(mixture.molfile).toBe('Original molfile');
+      expect(mixture.isPendingToSave).toBe(false);
+      expect(details.state.loadingMolecule).toBe(false);
+    });
+  });
+
+  it('loads components from the API before overlaying a pending reaction quantity', async () => {
+    const { reaction, mixture } = build();
+    const latest = build().mixture;
+    const components = latest.components.map((component) => component.serializeComponent());
+    latest.components = [];
+    SamplesFetcher.fetchById.resolves(latest);
+    const fetchComponents = sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').resolves(components);
+    mixture.setAmount({ value: massG * 2, unit: 'g' });
+    let draft;
+
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
+
+    sinon.assert.calledOnceWithExactly(fetchComponents, mixture.id);
+    expect(draft.components[0].amount_mol).toBeCloseTo(0.012, 12);
+    expect(draft.components[1].amount_mol).toBeCloseTo(0.024, 12);
+    expect(draft.hasReactionMixtureConflict(reaction)).toBe(false);
+  });
+
+  ['replaced', 'removed'].forEach((change) => {
+    it(`does not open a stale reaction composition over externally ${change} components`, async () => {
+      const { reaction, mixture } = build();
+      const latest = build().mixture;
+      if (change === 'replaced') latest.components[1].id = 200;
+      else latest.components = [];
+      SamplesFetcher.fetchById.resolves(latest);
+      sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').resolves([]);
+      const dispatch = sinon.spy();
+
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(dispatch);
+
+      sinon.assert.notCalled(dispatch);
+      sinon.assert.notCalled(SamplesFetcher.update);
+      expect(mixture.components[1].id).toBe(2);
+    });
+  });
+
+  it('keeps a sample-list mixture independent when leaving a reaction', async () => {
     const { reaction, mixture } = build();
     const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
     tab.initialComponents(tab.components.map(Component.deserializeData));
     expect(tab.isEdited).toBe(false);
     mixture.setAmount({ value: massG * 2, unit: 'g' });
-    mixture.setReferenceComponent(1, { preserveRatios: true });
+    mixture.setReferenceComponent(1, { preserveRatios: true, fromReactionScheme: true });
     const store = Object.create(ElementStore.StoreModel.prototype);
     store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
 
     store.synchronizeElements(reaction);
 
-    expect(tab.amount_g).toBeCloseTo(massG * 2, 12);
-    expect(tab.amount_mol).toBeCloseTo(0.024, 12);
-    expect(tab.reference_component.id).toBe(2);
+    expect(tab.amount_g).toBeCloseTo(massG, 12);
+    expect(tab.amount_mol).toBeCloseTo(0.006, 12);
+    expect(tab.reference_component.id).toBe(1);
+    expect(tab.belongTo).toBeUndefined();
+    expect(tab.isDetachedMixtureDraft).toBeUndefined();
     expect(tab.isEdited).toBe(false);
     expect(tab.hasReactionMixtureConflict()).toBe(false);
   });
@@ -326,7 +637,9 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   it('updates the draft baseline after saving so a second editor save is allowed', async () => {
     const { reaction, mixture } = build();
     let draft;
-    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
     draft.belongTo = reaction;
     draft.name = 'First edit';
     const dispatch = sinon.spy(({ sample }) => { draft = sample; });
@@ -342,10 +655,12 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(draft.hasReactionMixtureConflict()).toBe(false);
   });
 
-  it('keeps loaded editor components when the reaction row has not loaded them', () => {
+  it('keeps loaded editor components when the reaction row has not loaded them', async () => {
     const { reaction, mixture } = build();
     let draft;
-    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
     draft.belongTo = reaction;
     mixture.components = [];
     mixture.setAmount({ value: massG * 2, unit: 'g' });
@@ -361,11 +676,13 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(draft.isEdited).toBe(false);
   });
 
-  it('does not report a conflict when raw reaction components are initialized without edits', () => {
+  it('does not report a conflict when raw reaction components are initialized without edits', async () => {
     const { reaction, mixture } = build();
     mixture.components = mixture.components.map((component) => component.serializeComponent());
     let draft;
-    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
     draft.belongTo = reaction;
     draft.name = 'Unsaved editor change';
 
@@ -374,19 +691,21 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(draft.hasReactionMixtureConflict()).toBe(false);
   });
 
-  const buildAfterReactionToolbarSave = (dirtyBeforeSave = false) => {
+  const buildAfterReactionToolbarSave = async (dirtyBeforeSave = false) => {
     const { reaction, mixture } = build();
     reaction.purification_solvents = [];
     reaction.segments = [];
     let draft;
-    new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+    await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+      draft = sample;
+    });
     draft.belongTo = reaction;
     if (dirtyBeforeSave) draft.name = 'Unsaved composition edit';
     mixture.setAmount({ value: 12, unit: 'g' });
 
     // The toolbar save returns a new Reaction and new material objects with the same IDs.
     const payload = JSON.parse(JSON.stringify(reaction.serialize()));
-    const savedReaction = new Reaction({ ...payload, ...payload.materials });
+    const savedReaction = new Reaction({ ...payload, ...payload.materials }).recordPersistedMaterials();
     savedReaction.samples.forEach((sample) => {
       const original = reaction.sampleById(sample.id);
       // API responses include molecule data rather than only the IDs in the save payload.
@@ -412,8 +731,8 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   };
 
   [false, true].forEach((dirtyBeforeSave) => {
-    it(`rebinds a mixture draft to the toolbar-saved reaction, unsaved edits=${dirtyBeforeSave}`, () => {
-      const { savedReaction, draft } = buildAfterReactionToolbarSave(dirtyBeforeSave);
+    it(`rebinds a mixture draft to the toolbar-saved reaction, unsaved edits=${dirtyBeforeSave}`, async () => {
+      const { savedReaction, draft } = await buildAfterReactionToolbarSave(dirtyBeforeSave);
 
       expect(draft.belongTo).toBe(savedReaction);
       if (dirtyBeforeSave) {
@@ -429,7 +748,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   it('blocks a mixture save against the open reaction even when belongTo points to the pre-save copy', async () => {
-    const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+    const { reaction, savedReaction, draft } = await buildAfterReactionToolbarSave();
     draft.belongTo = reaction;
     draft.setAmount({ value: 12.5, unit: 'g' });
     savedReaction.sampleById(draft.id).setAmount({ value: 13, unit: 'g' });
@@ -447,8 +766,8 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   [false, true].forEach((closeView) => {
-    it(`keeps a conflicting draft open after a reaction toolbar save, close view=${closeView}`, () => {
-      const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+    it(`keeps a conflicting draft open after a reaction toolbar save, close view=${closeView}`, async () => {
+      const { reaction, savedReaction, draft } = await buildAfterReactionToolbarSave();
       draft.belongTo = reaction;
       draft.setAmount({ value: 12.5, unit: 'g' });
       savedReaction.sampleById(draft.id).setAmount({ value: 13, unit: 'g' });
@@ -467,7 +786,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   it('applies a nonconflicting mixture save to the open toolbar-saved reaction', async () => {
-    const { reaction, savedReaction, draft } = buildAfterReactionToolbarSave();
+    const { reaction, savedReaction, draft } = await buildAfterReactionToolbarSave();
     draft.belongTo = reaction;
     draft.setAmount({ value: 12.5, unit: 'g' });
     const dispatch = sinon.spy();
@@ -482,10 +801,12 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   [false, true].forEach((closeView) => {
-    it(`keeps a conflicting draft open on Save, close view=${closeView}`, () => {
+    it(`keeps a conflicting draft open on Save, close view=${closeView}`, async () => {
       const { reaction, mixture } = build();
       let draft;
-      new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
       draft.belongTo = reaction;
       draft.name = 'Unsaved edits';
       mixture.setAmount({ value: massG * 2, unit: 'g' });
@@ -512,7 +833,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       const dispatch = sinon.spy(() => {
         expect(persistedEquivalent).toBeCloseTo(reaction.sampleById(1315).equivalent, 12);
       });
-      mixture.setReferenceComponent(1);
+      mixture.setReferenceComponent(1, { fromReactionScheme: true });
 
       await action.updateSampleForReaction(mixture, reaction, closeView)(dispatch);
 
@@ -523,7 +844,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       expect(persistedEquivalent).toBeCloseTo(1.2, 12);
       expect(reaction.sampleById(1315).concn).toBeCloseTo(1.2, 12);
       const updated = reaction.sampleById(1315);
-      updated.setReferenceComponent(0);
+      updated.setReferenceComponent(0, { fromReactionScheme: true });
 
       await action.updateSampleForReaction(updated, reaction, closeView)(dispatch);
 
@@ -586,7 +907,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     );
     const standaloneSave = sandbox.stub(ElementActionDispatcher, 'updateSample');
 
-    // Save benzophenone without closing the editor, then switch back to phenol there.
+    // Repeated saves retain reaction context; switching a linked reference here is rejected.
     editor.state.sample.setReferenceComponent(0);
     SampleDetails.prototype.handleSubmit.call(editor, false);
     await pendingSave;
@@ -599,7 +920,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(reactionSave.callCount).toBe(2);
     sinon.assert.notCalled(standaloneSave);
     sinon.assert.calledTwice(fetchStub);
-    expect(persistedEquivalent).toBeCloseTo(1.2, 12);
+    expect(persistedEquivalent).toBeCloseTo(0.6, 12);
     expect(editor.state.sample.belongTo).toBe(reaction);
     sinon.assert.notCalled(fullReactionSave);
   });
@@ -608,7 +929,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     it(`preserves the unsaved component ${referenceIndex} selection when opening and returning from the editor`, async () => {
       const { reaction, mixture } = build();
       reaction.type = 'reaction';
-      mixture.setReferenceComponent(1 - referenceIndex);
+      mixture.setReferenceComponent(1 - referenceIndex, { fromReactionScheme: true });
       const persistedComponents = JSON.parse(JSON.stringify(mixture.components.map((component) => ({
         ...component.serializeComponent(),
         component_properties: {
@@ -619,7 +940,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       const persistedSample = new Sample(JSON.parse(JSON.stringify({
         ...mixture.serialize(), tag: mixture.tag, components: persistedComponents,
       })));
-      const fetchSample = sandbox.stub(SamplesFetcher, 'fetchById').resolves(persistedSample);
+      const fetchSample = SamplesFetcher.fetchById.resolves(persistedSample);
       const fetchComponents = sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').resolves(persistedComponents);
       const scheme = Object.create(ReactionDetailsScheme.prototype);
       scheme.props = { reaction };
@@ -661,7 +982,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       expect(returned.reference_component.id).toBe(referenceIndex + 1);
       expect(returned.amount_mol).toBeCloseTo(expectedMol, 12);
       expect(returned.equivalent).toBeCloseTo(expectedEquivalent, 12);
-      sinon.assert.notCalled(fetchSample);
+      sinon.assert.calledOnce(fetchSample);
       sinon.assert.notCalled(fetchComponents);
       sinon.assert.notCalled(SamplesFetcher.update);
       sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
@@ -778,7 +1099,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     const { reaction } = build();
     const current = reaction.referenceMaterial;
     const fetched = new Sample({ ...current, name: 'Fetched full sample' });
-    const fetchSample = sandbox.stub(SamplesFetcher, 'fetchById').resolves(fetched);
+    const fetchSample = SamplesFetcher.fetchById.resolves(fetched);
     const dispatch = sinon.spy();
 
     new ElementActions().showReactionMaterial({ sample: current, reaction })(dispatch);
@@ -819,7 +1140,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
       expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 12);
       await new ElementActions().updateSampleForReaction(opened.sample, reaction, false)(sinon.spy());
-      expect(persistedEquivalent).toBeCloseTo(switchInEditor ? 0.3 : 0.6, 12);
+      expect(persistedEquivalent).toBeCloseTo(0.6, 12);
       expect(reaction.sampleById(mixture.id).amount_g).toBeCloseTo(massG / 2, 12);
     });
   });
@@ -835,7 +1156,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     }))));
     const fetchedSample = new Sample({ ...mixture.serialize(), components: rawComponents });
     mixture.components = [];
-    const fetchSample = sandbox.stub(SamplesFetcher, 'fetchById').resolves(fetchedSample);
+    const fetchSample = SamplesFetcher.fetchById.resolves(fetchedSample);
     const fetchComponents = sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').resolves(rawComponents);
     let opened;
     await new Promise((resolve) => {
@@ -855,7 +1176,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     await Promise.resolve();
 
     expect(fetchSample.calledOnceWithExactly(mixture.id)).toBe(true);
-    expect(fetchComponents.calledOnceWithExactly(mixture.id)).toBe(true);
+    sinon.assert.notCalled(fetchComponents);
     expect(opened.sample.reference_component).toBeInstanceOf(Component);
     expect(opened.sample.reference_component.id).toBe(1);
     expect(opened.sample.amount_mol).toBeCloseTo(0.006, 12);
@@ -864,7 +1185,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   it('leaves associations pending for a new unsaved reaction', async () => {
     const { reaction, mixture } = build();
     reaction.isNew = true;
-    mixture.setReferenceComponent(1);
+    mixture.setReferenceComponent(1, { fromReactionScheme: true });
     const dispatch = sinon.spy();
 
     await new ElementActions().updateSampleForReaction(mixture, reaction)(dispatch);
@@ -876,14 +1197,57 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
   it('does not create an association for a material added only to the unsaved reaction state', async () => {
     const { reaction, mixture } = build();
-    mixture.tag = { taggable_data: {} };
-    mixture.setReferenceComponent(1);
+    reaction.starting_materials = [reaction.referenceMaterial];
+    reaction.recordPersistedMaterials();
+    reaction.starting_materials.push(mixture);
+    mixture.setReferenceComponent(1, { fromReactionScheme: true });
     const dispatch = sinon.spy();
 
     await new ElementActions().updateSampleForReaction(mixture, reaction)(dispatch);
 
     sinon.assert.notCalled(fetchStub);
     sinon.assert.calledOnce(dispatch);
+  });
+
+  ['starting_materials', 'reactants', 'products', 'solvents', 'purification_solvents'].forEach((group) => {
+    [undefined, 999].forEach((tagReactionId) => {
+      it(`persists a saved ${group} mixture equivalent with tag reaction=${tagReactionId}`, async () => {
+        const { reaction, mixture } = build();
+        reaction.starting_materials = [reaction.referenceMaterial];
+        reaction[group] = [...(reaction[group] || []), mixture];
+        reaction.recordPersistedMaterials();
+        mixture.tag = { taggable_data: { reaction_id: tagReactionId } };
+        mixture.setReferenceComponent(1, { fromReactionScheme: true });
+        await new ElementActions().updateSampleForReaction(mixture, reaction, false)(sinon.spy());
+        sinon.assert.calledOnce(fetchStub);
+        expect(persistedEquivalent).toBeCloseTo(group === 'products' ? 1 : 1.2, 12);
+        expect(reaction.sampleById(mixture.id).reference_component.id).toBe(2);
+      });
+    });
+  });
+
+  it('does not infer a persisted association from an existing reaction id or a matching tag', async () => {
+    const { reaction, mixture } = build();
+    delete reaction._persistedMaterialIds;
+    await new ElementActions().updateSampleForReaction(mixture, reaction, false)(sinon.spy());
+    sinon.assert.notCalled(fetchStub);
+    sinon.assert.calledOnce(SamplesFetcher.update);
+  });
+
+  it('hydrates a snapshot from the API without treating later local additions as persisted', () => {
+    const { reaction } = build();
+    reaction.segments = [];
+    reaction.purification_solvents = [];
+    reaction.variations = [];
+    const serialized = reaction.serialize();
+    const fetched = ReactionsFetcher.reactionElement({
+      reaction: { ...serialized, ...serialized.materials },
+    }, reaction.id);
+    expect([...fetched._persistedMaterialIds].sort()).toEqual([10, 1315, 20].sort());
+    fetched.purification_solvents.push(new Sample({ id: 333 }));
+    expect(fetched._persistedMaterialIds.has(333)).toBe(false);
+    expect(Object.keys(fetched)).not.toContain('_persistedMaterialIds');
+    expect(() => fetched.checksum()).not.toThrow();
   });
 
   it('keeps ordinary sample saves on the existing path', async () => {
@@ -927,7 +1291,9 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       it(`allows retry after an equivalent ${failure} failure, close=${closeView}`, async () => {
         const { reaction, mixture } = build();
         let draft;
-        new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+        await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+          draft = sample;
+        });
         draft.belongTo = reaction;
         draft.setAmount({ value: massG * 2, unit: 'g' });
         if (failure === 'HTTP') fetchStub.onFirstCall().resolves(new Response('{}', { status: 401 }));
@@ -974,7 +1340,9 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       const { reaction, mixture } = build();
       const original = reaction.checksum();
       let draft;
-      new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => { draft = sample; });
+      await new ElementActions().showReactionMaterial({ sample: mixture, reaction })(({ sample }) => {
+        draft = sample;
+      });
       draft.setAmount({ value: massG * 2, unit: 'g' });
       const fetcher = stage === 'components' ? ComponentsFetcher.saveOrUpdateComponents : SamplesFetcher.update;
       fetcher.rejects(new Error('Save failed'));

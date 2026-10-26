@@ -66,7 +66,7 @@ export default class SearchFetcher {
           break;
         case 'reactions':
           if (reactions && reactions.elements.length > 0) {
-            result.reactions.elements = reactions.elements.map((r) => (new Reaction(r)));
+            result.reactions.elements = reactions.elements.map((r) => new Reaction(r).recordPersistedMaterials());
           } else { result.reactions = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'wellplates':

@@ -463,11 +463,19 @@ export class ElementActions {
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
       const currentReaction = sample.isMixture() ? sample.resolveReactionContext(reaction) : reaction;
+      const wasDetachedDraft = sample.isDetachedMixtureDraft;
+      sample.rebindReactionMixtureDraft(currentReaction);
+
+      if (wasDetachedDraft && !sample.isDetachedMixtureDraft) {
+        const action = sample.isNew ? 'createSample' : 'updateSample';
+        return ElementActions.dispatcher[action](sample, closeView);
+      }
       if (sample.hasReactionMixtureConflict(currentReaction)) {
         rootStore.notificationsStore.add(mixtureReactionConflictNotification());
         LoadingActions.stop();
         return;
       }
+
       try {
         // Save components first if it's a mixture and capture the API response so
         // newly inserted rows pick up their real DB ids on subsequent saves.
@@ -495,10 +503,9 @@ export class ElementActions {
 
         // Persist only the edited mixture's existing association, keeping other
         // reaction edits pending until the user saves from the reaction toolbar.
-        const savedReactionId = newSample.tag?.taggable_data?.reaction_id;
         const material = currentReaction.sampleById(newSample.id);
         let equivalentSaveFailed = false;
-        if (newSample.isMixture() && !currentReaction.isNew && savedReactionId === currentReaction.id
+        if (newSample.isMixture() && !currentReaction.isNew && currentReaction._persistedMaterialIds?.has(material?.id)
           && Number.isFinite(material?.equivalent)) {
           try {
             await ReactionsFetcher.updateMaterialEquivalent(currentReaction.id, material.id, material.equivalent);
@@ -624,35 +631,41 @@ export class ElementActions {
 
   showReactionMaterial(params) {
     const sampleCoefficient = params.sample.coefficient;
-    return (dispatch) => {
-      if (params.sample.isMixture() && params.sample.hasComponents()) {
-        // Open the pending reaction state without sharing mutable editor data.
-        // Eq and material reference stay on the reaction association, as with the sample API.
-        const sample = new Sample(_.cloneDeep(_.omit(params.sample, ['belongTo', '_equivalent', 'reference'])));
-        sample.isDetachedMixtureDraft = true;
-        sample._mixtureDraftSourceState = params.sample.mixtureReactionState();
-        sample.initialComponents(sample.components.map((component) => (
-          component instanceof Component ? component : Component.deserializeData(component)
-        )));
+    return async (dispatch) => {
+      try {
+        const material = params.sample;
+        // New reaction portions have temporary IDs and no server record to overwrite.
+        const isNewMixture = material.isMixture() && material.isNew;
+        const fetched = isNewMixture ? material : await SamplesFetcher.fetchById(material.id);
+        let sample = fetched;
+        if (material.isMixture()) {
+          // Fetch non-quantity fields so saving cannot write an old reaction copy over newer sample details.
+          sample = new Sample(_.cloneDeep(_.omit(fetched, ['belongTo', '_equivalent', 'reference'])));
+          let components = sample.components || [];
+          if (!sample.hasComponents() && !isNewMixture) {
+            components = await ComponentsFetcher.fetchComponentsBySampleId(sample.id);
+          }
+          sample.initialComponents(components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          sample.applyReactionMixtureQuantities(material);
+          sample.isDetachedMixtureDraft = true;
+          sample._mixtureDraftSourceState = material.mixtureReactionState();
+          sample.updateChecksum();
+        }
         params.sample = sample;
         params.coefficient = sampleCoefficient;
         dispatch(params);
-        return;
+      } catch (errorMessage) {
+        console.log(errorMessage);
+        rootStore.notificationsStore.add({
+          title: 'Could not open reaction material',
+          message: String(errorMessage.message || errorMessage),
+          level: 'warning',
+          position: 'tr',
+        });
       }
-      SamplesFetcher.fetchById(params.sample.id)
-        .then((result) => {
-          if (result.isMixture()) {
-            result.isDetachedMixtureDraft = true;
-            result._mixtureDraftSourceState = params.sample.mixtureReactionState();
-            result.updateChecksum();
-          }
-          params.coefficient = sampleCoefficient;
-          params.sample = result;
-          dispatch(params);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        })
-    }
+    };
   }
 
   importSamplesFromFile(params) {
@@ -1522,4 +1535,5 @@ export class ElementActions {
   }
 }
 
-export default alt.createActions(ElementActions);
+ElementActions.dispatcher = alt.createActions(ElementActions);
+export default ElementActions.dispatcher;

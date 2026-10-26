@@ -24,6 +24,56 @@ RSpec.describe Reactable, type: :module do
   end
 
   describe '#update_equivalent' do
+    context 'with a quantified mixture reference' do
+      let(:mixture) do
+        create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                        real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'g')
+      end
+
+      before do
+        mixture.components.create!(
+          position: 0,
+          component_properties: {
+            molecule_id: mixture.molecule_id, reference: true,
+            relative_molecular_weight: 500, amount_mol: 0.02
+          },
+        )
+        create(:reactions_starting_material_sample, reaction: reaction, sample: mixture, reference: true, equivalent: 1)
+      end
+
+      it 'refreshes an ordinary reactant equivalent when its sample is saved separately' do
+        dependent = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+        association = create(:reactions_reactant_sample, reaction: reaction, sample: dependent, equivalent: 99)
+        dependent.update!(target_amount_value: 0.06)
+        expect(association.reload.equivalent).to be_within(1e-12).of(3)
+      end
+
+      it 'refreshes a product yield with its coefficient when its sample is saved separately' do
+        product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
+        association = create(:reactions_product_sample, reaction: reaction, sample: product,
+                                                        coefficient: 2, equivalent: 0.1)
+        product.update!(real_amount_value: 0.02)
+        expect(association.reload.equivalent).to be_within(1e-12).of(0.5)
+        product.update!(real_amount_value: 0.08)
+        expect(association.reload.equivalent).to eq(1)
+      end
+
+      it 'calculates a mixture material from its own reference relative MW' do
+        dependent = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                    real_amount_value: nil, target_amount_value: 5, target_amount_unit: 'g')
+        dependent.components.create!(
+          position: 0,
+          component_properties: {
+            molecule_id: dependent.molecule_id, reference: true,
+            relative_molecular_weight: 250
+          },
+        )
+        association = create(:reactions_reactant_sample, reaction: reaction, sample: dependent, equivalent: 99)
+        association.update_equivalent
+        expect(association.reload.equivalent).to eq(1)
+      end
+    end
+
     it 'preserves the client-calculated equivalent when the reference is a mixture' do
       mixture = create(
         :sample,

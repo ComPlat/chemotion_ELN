@@ -201,6 +201,42 @@ describe('SampleComponent reference switching for reaction-linked mixtures', () 
   });
 });
 
+describe('SampleComponent non-sticky ratios and amount debounce', () => {
+  [false, true].forEach((pauseAfterFirstDigit) => {
+    it(`commits multi-digit input with the existing debounce, pause after first digit=${pauseAfterFirstDigit}`, () => {
+      const clock = sinon.useFakeTimers();
+      const sample = new Sample({
+        id: 7000, sample_type: 'Mixture', amount_value: 0, amount_unit: 'g', density: 0, molarity_value: 0,
+      });
+      sample.initialComponents([1, 2].map((id, index) => new Component({
+        id, position: index, reference: index === 0, equivalent: id, material_group: 'solid',
+        amount_mol: 0, amount_g: 0, purity: 1, molecule: { molecular_weight: 100 },
+      })));
+      const editor = Object.create(SampleDetailsComponents.prototype);
+      editor.props = { sample, onChange: sinon.spy() };
+      const row = new SampleComponent({
+        sample, material: sample.components[0], materialGroup: 'solid',
+        onChange: (event) => editor.onChangeComponent(event),
+      });
+      try {
+        [1, 12, 125, 1256].forEach((value, index) => {
+          row.debounceHandleAmountChange({ value, unit: 'g' }, sample.components[0].amount_g, '', false);
+          clock.tick(index === 0 && pauseAfterFirstDigit ? 600 : 100);
+        });
+        if (!pauseAfterFirstDigit) expect(sample.components[0].amount_mol).toBe(0);
+        clock.tick(500);
+        expect(sample.components[0].amount_g).toBe(1256);
+        expect(sample.components[1].amount_g).toBeCloseTo(pauseAfterFirstDigit ? 2 : 2512, 12);
+        expect(sample.components[1].equivalent).toBeCloseTo(pauseAfterFirstDigit ? 2 / 1256 : 2, 12);
+        expect(editor.props.onChange.callCount).toBe(pauseAfterFirstDigit ? 2 : 1);
+      } finally {
+        row.componentWillUnmount();
+        clock.restore();
+      }
+    });
+  });
+});
+
 describe('SampleComponent liquid ratio round trips', () => {
   it('reverses the reported ethanol Ratio input edits with a 2 M stock and inherited density', () => {
     const sample = new Sample({

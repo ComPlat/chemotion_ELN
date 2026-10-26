@@ -118,6 +118,38 @@ describe Usecases::Reactions::UpdateMaterials do
     described_class.new(reaction_with_vessel_volume, products, user, vessel_size)
   end
 
+  describe 'new material identity mapping' do
+    it 'maps temporary material and component ids explicitly, including duplicate molecules' do
+      payload = reactants.deep_dup
+      component_data = Array.new(2) do |index|
+        {
+          'id' => "temporary-component-#{index}", 'position' => index,
+          'component_properties' => {
+            'molecule_id' => sample2.molecule_id, 'reference' => index.zero?,
+            'amount_mol' => 0.01, 'relative_molecular_weight' => 100
+          }
+        }
+      end
+      payload['reactants'].first.merge!(
+        'id' => 'temporary-mixture', 'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+        'components' => component_data
+      )
+      update = described_class.new(reaction, payload, user, vessel_size)
+
+      result = update.execute!
+
+      material = result.reactants.first
+      mapping = update.material_id_map.fetch('temporary-mixture')
+      expect(mapping[:id]).to eq(material.id)
+      persisted_ids = material.components.order(:id).pluck(:id)
+      expect(mapping[:component_ids]).to eq({
+                                              'temporary-component-0' => persisted_ids.first,
+                                              'temporary-component-1' => persisted_ids.last,
+                                            })
+      expect(persisted_ids.uniq.length).to eq(2)
+    end
+  end
+
   describe '#execute!' do
     let(:samples) { mixed_materials }
 
