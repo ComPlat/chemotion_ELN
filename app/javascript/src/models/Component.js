@@ -498,11 +498,12 @@ export default class Component extends Sample {
   // Case 1.2: Calculate Amount from Volume, Concentration, and Purity
 
   /**
-   * Calculates amount (mol) from volume (L), concentration (mol/L), and purity.
+   * Calculates amount (mol) and mass (g) from volume (L), concentration (mol/L), and purity.
    * @param {number} purity - The purity value.
    */
   calculateAmountFromConcentration(purity) {
     this.amount_mol = this.starting_molarity_value * this.amount_l * purity;
+    this.calculateMassFromAmount(purity, false);
   }
 
   // Case 2.1: Calculate Volume from Amount, Density, Molecular Weight, and Purity

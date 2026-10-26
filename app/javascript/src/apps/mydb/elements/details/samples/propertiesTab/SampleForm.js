@@ -1171,7 +1171,30 @@ export default class SampleForm extends React.Component {
         <NumeralInputWithUnitsCompo
           value={massG}
           unit="g"
-          label="Total mixture mass"
+          label={(
+            <>
+              Total mixture mass
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id={`info-total-mixture-mass-${sample.id}`}>
+                    <p className="mb-2">Total mass = solids + liquids (volume × density).</p>
+                    <p className="mb-2">
+                      Liquids and internal solvents without a density, including stock solutions, are counted at 1 g/ml.
+                    </p>
+                    <p className="mb-0">
+                      With a Total volume entered, the liquid mass is topped up to Total volume × 1 g/ml if needed,
+                      instead of adding internal solvents separately.
+                    </p>
+                  </Tooltip>
+                )}
+              >
+                <Button variant="link" className="p-0 ms-1" aria-label="How total mixture mass is calculated">
+                  <i className="fa fa-info-circle" aria-hidden="true" />
+                </Button>
+              </OverlayTrigger>
+            </>
+          )}
           metricPrefix="m"
           metricPrefixes={['m', 'n', 'u']}
           precision={6}
