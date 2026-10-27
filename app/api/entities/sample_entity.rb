@@ -3,7 +3,6 @@
 module Entities
   class SampleEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
-    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list
@@ -96,7 +95,7 @@ module Entities
       expose! :liquid_medium,           unless: :displayed_in_list
       expose! :stabilizer,              unless: :displayed_in_list
     end
-    # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
+    # rubocop:enable Layout/ExtraSpacing
 
     expose_timestamps
 
@@ -139,7 +138,7 @@ module Entities
     def molfile
       return unless object.respond_to?(:molfile)
       return if object.molfile.nil?
-    
+
       mf = object.molfile.dup.force_encoding('UTF-8')
       if mf.valid_encoding?
         mf.encode('UTF-8', universal_newline: true)

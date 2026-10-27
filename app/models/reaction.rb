@@ -287,7 +287,7 @@ class Reaction < ApplicationRecord
     # loading value, `equivalent` may be stale (e.g., left over from a save
     # made before the frontend HM branch existed). Return nil so the SVG
     # composer skips the yield label rather than rendering a misleading value.
-    if sample && sample.residues.any?
+    if sample&.residues&.any?
       loading = sample.residues.first.try(:custom_info).try(:[], 'loading')
       return nil if loading.blank? || loading.to_f.zero?
     end

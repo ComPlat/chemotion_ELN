@@ -590,6 +590,7 @@ class Sample < ApplicationRecord
 
   def loading
     return nil unless residues[0]
+
     val = residues[0].custom_info['loading']
     val.present? ? val.to_d : nil
   end

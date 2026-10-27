@@ -970,7 +970,7 @@ module ReportHelpers
         diameter_unit: ["s.sample_details->>'diameter_unit'", '"diameter unit"', 0],
         storage_condition: [
           "COALESCE(s.storage_condition, s.sample_details->>'storage_condition', s.xref->>'storage_condition')",
-          '"storage condition"', 0,
+          '"storage condition"', 0
         ],
         state: ["s.xref->>'physical_state'", '"state"', 0],
         material: ["COALESCE(s.material, s.sample_details->>'material', s.xref->>'material')", '"material"', 0],
@@ -978,29 +978,29 @@ module ReportHelpers
         cspi_unit: ["s.sample_details->>'cspi_unit'", '"cspi unit"', 0],
         particle_size: [
           "s.xref->>'particle_size'",
-          '"particle size"', 0,
+          '"particle size"', 0
         ],
         particle_size_unit: ["s.sample_details->>'particle_size_unit'", '"particle size unit"', 0],
         shape: ["COALESCE(s.shape, s.sample_details->>'shape', s.xref->>'shape')", '"shape"', 0],
         sieve_fraction: [
           "COALESCE(s.sieve_fraction, s.sample_details->>'sieve_fraction', s.xref->>'sieve_fraction')",
-          '"sieve fraction"', 0,
+          '"sieve fraction"', 0
         ],
         sieve_fraction_unit: ["s.sample_details->>'sieve_fraction_unit'", '"sieve fraction unit"', 0],
         layer_thickness: [
           "COALESCE(s.layer_thickness, s.sample_details->>'layer_thickness', s.xref->>'layer_thickness')",
-          '"layer thickness"', 0,
+          '"layer thickness"', 0
         ],
         layer_thickness_unit: ["s.sample_details->>'layer_thickness_unit'", '"layer thickness unit"', 0],
         liquid_medium: [
           "COALESCE(s.liquid_medium, s.sample_details->>'liquid_medium', s.xref->>'liquid_medium')",
-          '"liquid medium"', 0,
+          '"liquid medium"', 0
         ],
         stabilizer: [
           "COALESCE(s.stabilizer, s.sample_details->>'stabilizer', s.xref->>'stabilizer')",
-          '"stabilizer"', 0,
+          '"stabilizer"', 0
         ],
-        residue_type: ["res.residue_type", '"residue_type"', 1],
+        residue_type: ['res.residue_type', '"residue_type"', 1],
         polymer_type: ["res.custom_info->>'polymer_type'", '"polymer_type"', 1],
       },
       sample_id: {

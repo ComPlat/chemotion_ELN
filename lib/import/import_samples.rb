@@ -236,7 +236,7 @@ module Import
     # Parses the sample_composition_table sheet (when present) into @composition_table_data.
     # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
     # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def parse_composition_table_data
       return unless xlsx.sheets.include?('sample_composition_table')
 
@@ -262,7 +262,7 @@ module Import
         weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
                              row_values[weight_ratio_idx].to_s.to_f
                            end
-        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?) # rubocop:disable Layout/LineLength
+        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?)
         next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
 
         @composition_table_data[current_sample_uuid] ||= []
@@ -273,7 +273,7 @@ module Import
         }
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Returns the sample uuid in effect after this row
     def parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
@@ -1042,9 +1042,9 @@ module Import
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
       elsif %w[
-               height width length diameter state storage_condition material cspi
-               particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
-             ].include?(db_column)
+        height width length diameter state storage_condition material cspi
+        particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+      ].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -1379,7 +1379,6 @@ module Import
     def sanitize_molfile_for_import(molfile)
       Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
     end
-
 
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       sample = Sample.new(created_by: current_user_id)

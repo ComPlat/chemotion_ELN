@@ -44,8 +44,10 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 // helper to combine and prepare alias into a polymer list
 // Output format: atomIndex/templateId/size (e.g. 0/10/1.00-1.00 1/14/1.00-1.00) so load assigns correct template per atom.
 // Derive template id from image data (findTemplateByPayload) so we save the real shape type even when getKet() alias has wrong id.
-const templateAliasesPrepare = async (aliasesList) => {
+// atomIndexList: actual atom indices for each valid alias; falls back to the alias image counter when absent or shorter.
+const templateAliasesPrepare = async (aliasesList, atomIndexList = []) => {
   const polymersCombination = [];
+  let validCount = 0;
   for (let i = 0; i < aliasesList.length; i++) {
     if (!ALIAS_PATTERNS.threeParts.test(aliasesList[i])) continue;
     const parts = aliasesList[i].split('_');
@@ -63,10 +65,15 @@ const templateAliasesPrepare = async (aliasesList) => {
       }
     }
     if (!templateId) continue;
-    let idx = String(i);
+    // Use actual atom index when provided; fall back to alias image counter for extras
+    const atomIdx = atomIndexList.length > 0 && validCount < atomIndexList.length
+      ? atomIndexList[validCount]
+      : imagePlace;
+    let idx = String(atomIdx);
     idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
     idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;
     polymersCombination.push(idx);
+    validCount += 1;
   }
   return polymersCombination.join(' ');
 };

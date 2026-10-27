@@ -74,13 +74,25 @@ const arrangePolymers = async (canvasData, editor, ketData = null) => {
     return canvasData.split('\n');
   }
   const data = ketData ?? JSON.parse(await editor.structureDef.editor.getKet());
-  const atomsWithAlias = mols
-    .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
 
-  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
-  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
-  const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
+  // Collect polymer aliases and their global atom indices in one pass.
+  // Global index = position of atom across all mols flattened in mol order.
+  const listOfAtomsWithAlias = [];
+  const atomIndexList = [];
+  let globalIndex = 0;
+  for (const item of mols) {
+    const atoms = data[item]?.atoms ?? [];
+    for (const atom of atoms) {
+      if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+        listOfAtomsWithAlias.push(atom.alias);
+        atomIndexList.push(globalIndex);
+      }
+      globalIndex += 1;
+    }
+  }
+
+  const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
+  if (!processString) return canvasData.split('\n');
   const ctabLines = ctabLinesOnly(canvasData);
   return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
