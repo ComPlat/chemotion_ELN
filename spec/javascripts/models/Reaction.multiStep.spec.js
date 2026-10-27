@@ -506,3 +506,17 @@ describe('Reaction multi-step', () => {
     });
   });
 });
+
+describe('Reaction#hasSingleStep', () => {
+  it('is true for a new multi-step reaction and false once step 2 exists', () => {
+    const reaction = Reaction.buildEmpty();
+    expect(reaction.hasSingleStep()).toEqual(false);
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+    expect(reaction.hasSingleStep()).toEqual(true);
+
+    reaction.addStep();
+    expect(reaction.hasSingleStep()).toEqual(false);
+  });
+});
