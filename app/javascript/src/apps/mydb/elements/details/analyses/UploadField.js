@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import {
   OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip, Collapse
 } from 'react-bootstrap';
-import JSZip from 'jszip';
 import {
   addNewAnalyses,
   createAnalsesForSingelFiles,
@@ -13,7 +12,7 @@ import {
   createDataset
 } from 'src/apps/mydb/elements/details/analyses/utils';
 import {
-  ZipFileContainer, FileContainer, traverseDirectory, VirtualFolderNode
+  ZipFileContainer, FileContainer, traverseDirectory, handleZipFile
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
@@ -21,47 +20,6 @@ import AppModal from 'src/components/common/AppModal';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
-
-async function handleZipFile(zipFile) {
-  const zip = await JSZip.loadAsync(zipFile);
-  /*
-  Build the tree under an unnamed root so entries keep the archive's own structure
-  instead of being nested one level deeper under `<archive>/`. The root container is
-  still named after the archive once the tree is built: its name is what `getFile()`
-  calls the re-zipped file and what ends up as the analysis name, and an empty one
-  yields an analysis called "File: " and an archive called ".zip".
-  */
-  const rootFileName = '';
-
-  /*
-  The unnamed root adds no segment to its entries' paths, so it sits one level above the
-  top: a top-level entry is at depth 0 with a one-segment path, as a loose dropped file is.
-  `moveUp()` drops one leading segment per depth level, so a depth ahead of the path strips
-  the file name itself and every file of a re-zipped dataset lands on the same entry.
-  */
-  const files = new VirtualFolderNode(rootFileName, '', -1);
-
-  const readFilePromises = Object.entries(zip.files).map(async ([, entry]) => {
-    if (entry.dir) return; // skip directories
-
-    const segments = `${rootFileName}/${entry.name}`.split('/');
-    const fileName = segments.pop(); // "file.txt"
-    const path = segments;
-
-    const blob = await entry.async('blob');
-
-    // Convert blob to File for API consistency
-    const file = new File([blob], fileName, { type: blob.type });
-
-    files.addFile({ path, file });
-  });
-  await Promise.all(readFilePromises);
-
-  const rootContainer = files.clean();
-  rootContainer.name = zipFile.name.replace(/\.zip$/, '');
-
-  return rootContainer;
-}
 
 const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {
   const dropRef = useRef(null);
@@ -527,6 +485,5 @@ UploadField.propTypes = {
 
 export {
   UploadField,
-  FolderDropzone,
-  handleZipFile
+  FolderDropzone
 };
