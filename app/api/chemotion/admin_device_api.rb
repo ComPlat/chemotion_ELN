@@ -95,10 +95,9 @@ module Chemotion
 
         # assigning the associations writes them right away, so roll them back if the update fails
         ActiveRecord::Base.transaction do
-          people = params[:people].present? ? Person.where(id: params[:people]) : []
-          device.people = people
-          groups = params[:groups].present? ? Group.where(id: params[:groups]) : []
-          device.groups = groups
+          # leave people and groups as they are unless the request sends them; an empty array clears them
+          device.people = Person.where(id: params[:people]) if params.key?(:people)
+          device.groups = Group.where(id: params[:groups]) if params.key?(:groups)
 
           attributes = declared(params.except(:users, :people, :groups), include_missing: false)
           device.update!(attributes)

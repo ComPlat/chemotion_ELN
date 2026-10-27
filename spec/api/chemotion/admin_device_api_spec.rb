@@ -103,6 +103,26 @@ RSpec.describe Chemotion::AdminDeviceAPI do
         put "/api/v1/admin_devices/#{device.id}", params: params
         expect(parsed_json_response['device']).to include(params.stringify_keys)
       end
+
+      it 'keeps people and groups that the request does not send' do
+        group = create(:group)
+        device.groups << group
+
+        put "/api/v1/admin_devices/#{device.id}", params: params
+
+        expect(device.reload.people).to contain_exactly(person)
+        expect(device.groups).to contain_exactly(group)
+      end
+
+      it 'clears people and groups sent as empty arrays' do
+        device.groups << create(:group)
+
+        put "/api/v1/admin_devices/#{device.id}", params: params.merge(people: [], groups: []).to_json,
+                                                  headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(device.reload.people).to be_empty
+        expect(device.groups).to be_empty
+      end
     end
 
     context 'when the update is invalid' do
