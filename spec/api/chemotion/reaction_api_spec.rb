@@ -9,6 +9,10 @@ describe Chemotion::ReactionAPI do
   let(:new_root_container) { create(:root_container) }
   let(:other_user) { create(:person) }
 
+  def variation_entry(mass)
+    { 'aux' => { 'gasType' => 'off' }, 'mass' => { 'value' => mass, 'unit' => 'g' } }
+  end
+
   describe 'GET /api/v1/reactions' do
     let!(:collection1) do
       create(:collection, label: 'C1', user: user)
@@ -378,6 +382,44 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'when removing a material that is referenced by the variations' do
+      let(:params) do
+        {
+          'id' => reaction1.id,
+          'container' => reaction_container,
+          'materials' => {
+            'starting_materials' => [{ 'id' => sample1.id, 'reference' => true, 'equivalent' => 1, 'is_new' => false }],
+            'reactants' => [{ 'id' => sample2.id, 'equivalent' => 2, 'is_new' => false }],
+            'products' => [{ 'id' => sample3.id, 'equivalent' => 1, 'is_new' => false }],
+          },
+          'variations' => [{
+            'id' => 1,
+            'uuid' => SecureRandom.uuid,
+            'startingMaterials' => { sample1.id.to_s => variation_entry(1) },
+            'reactants' => { sample2.id.to_s => variation_entry(2) },
+            'products' => { sample3.id.to_s => variation_entry(3), sample4.id.to_s => variation_entry(4) },
+            'solvents' => {},
+          }],
+        }
+      end
+
+      before do
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+      end
+
+      it 'drops the removed material from the variations' do
+        variation = Reaction.find(reaction1.id).variations.first
+        expect(variation['startingMaterials']).to eq(sample1.id.to_s => variation_entry(1))
+        expect(variation['reactants']).to eq(sample2.id.to_s => variation_entry(2))
+        expect(variation['products']).to eq(sample3.id.to_s => variation_entry(3))
+      end
+
+      it 'returns the updated variations' do
+        products = JSON.parse(response.body)['reaction']['variations'].first['products']
+        expect(products.keys).to eq([sample3.id.to_s])
+      end
+    end
+
     context 'when updating volume through the legacy compatibility field' do
       let(:legacy_value) { true }
       let(:params) do
@@ -715,6 +757,56 @@ describe Chemotion::ReactionAPI do
       it 'create products with name realted to the reaction short_label' do
         product = r.products.first
         expect(product.name).to include(r.short_label)
+      end
+    end
+
+    context 'when copying a reaction whose variations reference a removed sample' do
+      let(:removed_sample) { create(:sample, name: 'Removed', collections: [collection1]) }
+      let(:params) do
+        {
+          'name' => 'r003',
+          'collection_id' => collection1.id,
+          'container' => new_root_container,
+          'materials' => {
+            'products' => [{
+              'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
+              'name' => 'Copied product',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 76.09596,
+              'reference' => true,
+              'equivalent' => 1,
+              'is_new' => true,
+              'is_split' => false,
+              'molfile' => molfile1,
+              'molecule_id' => sample1.molecule_id,
+              'container' => new_root_container,
+            }],
+          },
+          'variations' => [{
+            'id' => 1,
+            'uuid' => SecureRandom.uuid,
+            'startingMaterials' => { removed_sample.id.to_s => variation_entry(1) },
+            'reactants' => {},
+            'products' => { sample1.id.to_s => variation_entry(2) },
+            'solvents' => {},
+          }],
+        }
+      end
+      let(:r) { Reaction.find_by(name: 'r003') }
+
+      before do
+        removed_sample.destroy
+        post('/api/v1/reactions.json', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' })
+      end
+
+      it 'creates the reaction' do
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'remaps the source sample to the copied sample and drops the removed one' do
+        variation = r.variations.first
+        expect(variation['startingMaterials']).to eq({})
+        expect(variation['products']).to eq(r.products.first.id.to_s => variation_entry(2))
       end
     end
 

@@ -22,6 +22,12 @@ module Chemotion
         end
         attributes
       end
+
+      # Points the variations' material keys at the reaction's current samples (see UpdateVariations).
+      def update_variations_material_ids!(reaction)
+        variations = Usecases::Reactions::UpdateVariations.new(reaction).execute!
+        reaction.update!(variations: variations) unless variations == reaction.variations
+      end
     end
 
     resource :reactions do
@@ -212,6 +218,8 @@ module Chemotion
             current_user,
             reaction_vessel_size
           ).execute!
+          # Drop the keys of materials removed in this update, even if the Variations tab was never opened.
+          update_variations_material_ids!(reaction)
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -292,25 +300,26 @@ module Chemotion
         collection = writable_collection_for(collection_id)
         error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
-        reaction = Reaction.create!(attributes)
-        recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
+        # A failure in any step must not leave a half-created reaction behind (a retry would create another one).
+        reaction = ActiveRecord::Base.transaction do
+          reaction = Reaction.create!(attributes)
+          recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
-        create_literatures_and_literals(reaction, literatures)
-        reaction.container = update_datamodel(container_info)
-        reaction.save!
-        update_element_labels(reaction, params[:user_labels], current_user.id)
-        reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
-        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
-        # Use find_or_create_by so we don't violate the unique
-        # (reaction_id, collection_id) index when the chosen collection is the
-        # user's "All" collection (both inserts would otherwise be identical).
-        CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
-        # nil when the owning account has no "All" collection — a Group never gets one.
-        CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection) if all_collection
-        CollectionsReaction.update_tag_by_element_ids(reaction.id)
+          create_literatures_and_literals(reaction, literatures)
+          reaction.container = update_datamodel(container_info)
+          reaction.save!
+          update_element_labels(reaction, params[:user_labels], current_user.id)
+          reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
+          all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+          all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
+          # Use find_or_create_by so we don't violate the unique
+          # (reaction_id, collection_id) index when the chosen collection is the
+          # user's "All" collection (both inserts would otherwise be identical).
+          CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
+          # nil when the owning account has no "All" collection — a Group never gets one.
+          CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection) if all_collection
+          CollectionsReaction.update_tag_by_element_ids(reaction.id)
 
-        if reaction
           if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?
             materials['products'].map! do |prod|
               prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
@@ -328,21 +337,20 @@ module Chemotion
           ).execute!
           reaction.reload
 
-          reaction.update!(variations: Usecases::Reactions::UpdateVariations.new(
-            reaction,
-          ).execute!)
-
-          # save to profile
-          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
-          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
-
-          present(
-            reaction,
-            with: Entities::ReactionEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
-            root: :reaction,
-          )
+          update_variations_material_ids!(reaction)
+          reaction
         end
+
+        # save to profile
+        kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
+        recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
+        present(
+          reaction,
+          with: Entities::ReactionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+          root: :reaction,
+        )
       end
     end
   end
