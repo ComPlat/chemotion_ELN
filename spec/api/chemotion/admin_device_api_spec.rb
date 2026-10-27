@@ -114,6 +114,15 @@ RSpec.describe Chemotion::AdminDeviceAPI do
         expect(device.groups).to contain_exactly(group)
       end
 
+      it 'rejects people sent as objects instead of ids' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: params.merge(people: [{ id: person.id, name: person.name }]).to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(response).to have_http_status(:bad_request)
+        expect(device.reload.people).to contain_exactly(person)
+      end
+
       it 'clears people and groups sent as empty arrays' do
         device.groups << create(:group)
 

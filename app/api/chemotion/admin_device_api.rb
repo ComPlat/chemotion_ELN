@@ -67,8 +67,8 @@ module Chemotion
         optional :verification_status, type: String
         optional :account_active, type: Boolean
         optional :visibility, type: Boolean
-        optional :people, type: Array
-        optional :groups, type: Array
+        optional :people, type: Array[Integer]
+        optional :groups, type: Array[Integer]
         optional :datacollector_fields, type: Boolean, default: false
         optional :datacollector_method, type: String
         optional :datacollector_dir, type: String
