@@ -110,7 +110,7 @@ module Import
         # selecting the active sheet is not a missing-header problem and should not be reported as such.
         parse_sample_components_data
         parse_composition_table_data
-        xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
+        xlsx.default_sheet = @main_sheet_name
       rescue StandardError => e
         return error_prepare(e.message)
       end
@@ -562,7 +562,7 @@ module Import
         release_connection_for_native_work
         molecule, molfile = process_row_data(row, index)
         ActiveRecord::Base.transaction(requires_new: true) do
-          unless molecule_not_exist(molecule, row, index)
+          unless molecule_not_exist?(molecule, row, index)
             sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
             saved = true
           end
@@ -1333,7 +1333,7 @@ module Import
       ActiveRecord::Base.transaction(requires_new: true) do
         sample_components_data.each_with_index do |component_data, index|
           molecule = process_component_row_data(component_data, index)
-          next if molecule_not_exist(molecule, component_data, index)
+          next if molecule_not_exist?(molecule, component_data, index)
 
           ImportComponents.component_save(component_data, sample, molecule, index)
         end
