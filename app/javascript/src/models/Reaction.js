@@ -1101,6 +1101,10 @@ export default class Reaction extends Element {
     return this.reaction_type === 'multi_step';
   }
 
+  hasSingleStep() {
+    return this.isMultiStep() && this.reaction_steps.filter((step) => !step._destroy).length === 1;
+  }
+
   materialsForStep(group, stepId) {
     return this[group].filter((material) => material.reaction_step_id === stepId);
   }

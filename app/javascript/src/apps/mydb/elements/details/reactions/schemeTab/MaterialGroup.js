@@ -490,10 +490,14 @@ const GeneralMaterialGroup = ({
   ) : null;
 
   const carryOnTHead = reaction.isMultiStep?.() ? (
-    <OverlayTrigger placement="top" overlay={<Tooltip id="carryOnHeaderTitle">Carry on to next step</Tooltip>}>
+    <OverlayTrigger
+      placement="top"
+      overlay={<Tooltip id="carryOnHeaderTitle">Switch on to start the next step with this product</Tooltip>}
+    >
       <span>Next</span>
     </OverlayTrigger>
   ) : null;
+  const showNextStepHint = materialGroup === 'products' && permitOn(reaction) && reaction.hasSingleStep?.();
   const refTHead = materialGroup !== 'products' ? groupHeaders.ref : (specialRefTHead || carryOnTHead);
   /**
    * Add a (not yet persisted) sample to a material group
@@ -590,6 +594,11 @@ const GeneralMaterialGroup = ({
             )}
             <div className="reaction-material__delete-header" />
           </div>
+          {showNextStepHint && (
+            <div className="text-muted fs-6 px-2 py-1">
+              To add step 2, switch on Next for the product that moves on.
+            </div>
+          )}
 
           {contents}
         </div>
