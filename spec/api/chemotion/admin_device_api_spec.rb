@@ -135,20 +135,26 @@ RSpec.describe Chemotion::AdminDeviceAPI do
     end
 
     context 'when the update is invalid' do
+      let(:group) { create(:group) }
       let(:other_person) { create(:person) }
+      let(:other_group) { create(:group) }
       let(:params) do
         {
           name: '',
           name_abbreviation: device.name_abbreviation,
           people: [other_person.id],
+          groups: [other_group.id],
         }
       end
 
-      it 'returns the errors and keeps the device people unchanged' do
+      before { device.groups << group }
+
+      it 'returns the errors and keeps the device people and groups unchanged' do
         put "/api/v1/admin_devices/#{device.id}", params: params
 
         expect(parsed_json_response['errors']).to include('name')
         expect(device.reload.people).to contain_exactly(person)
+        expect(device.groups).to contain_exactly(group)
       end
     end
 
@@ -168,6 +174,28 @@ RSpec.describe Chemotion::AdminDeviceAPI do
             params: base_params.merge(datacollector_method: 'filewatcherlocal', datacollector_dir: '/does/not/exist')
 
         expect(parsed_json_response['errors']).to include('datacollector_dir')
+      end
+    end
+
+    context 'with a local watch directory given through a symlink' do
+      let(:whitelisted) { Rails.configuration.datacollectors.localcollectors.first[:path] }
+      let(:target) { File.join(whitelisted, "real-#{SecureRandom.hex(4)}") }
+      let(:link) { File.join(whitelisted, "link-#{SecureRandom.hex(4)}") }
+
+      before do
+        FileUtils.mkdir_p(target)
+        File.symlink(target, link)
+      end
+
+      after { FileUtils.rm_rf([link, target]) }
+
+      it 'stores the resolved directory' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: { name: device.name, name_abbreviation: device.name_abbreviation, datacollector_fields: true,
+                      datacollector_method: 'filewatcherlocal', datacollector_dir: link }
+
+        expect(parsed_json_response['device']).to include('datacollector_dir' => File.realpath(target))
+        expect(device.reload.datacollector_dir).to eq File.realpath(target)
       end
     end
 
