@@ -11,8 +11,8 @@ describe Chemotion::NmrdbAPI do
   let(:nmrdb) { instance_double(Simulation::Nmrdb, fetch: { response_1h: response_1h, response_13c: response_13c }) }
 
   before do
-    allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
-    allow_any_instance_of(NmrSimulation).to receive(:file_dir).and_return(file_dir)
+    allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user) # rubocop:disable RSpec/AnyInstance
+    allow_any_instance_of(NmrSimulation).to receive(:file_dir).and_return(file_dir) # rubocop:disable RSpec/AnyInstance
     allow(Simulation::Nmrdb).to receive(:new).and_return(nmrdb)
   end
 

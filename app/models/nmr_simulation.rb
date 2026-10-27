@@ -72,7 +72,7 @@ class NmrSimulation < ApplicationRecord
   end
 
   def file_dir
-    Rails.public_path.join('simulations', "#{source}").to_s
+    Rails.public_path.join('simulations', source.to_s).to_s
   end
 
   def read(path)
