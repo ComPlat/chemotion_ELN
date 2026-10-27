@@ -326,17 +326,17 @@ RSpec.describe 'Import::ImportSamples' do
         expect(importer.composition_table_data).to eq({})
       end
 
-      context 'when sample_composition_table sheet is present' do
+      context 'when sample_composition_table sheet is present' do # rubocop:disable RSpec/NestedGroups
         let(:comp_sheet) do
           sheet = instance_double(Roo::Excelx, 'comp_sheet')
           allow(sheet).to receive(:row).with(1).and_return(
-            ['Sample UUID', 'Source', 'Weight ratio exp.', 'Molar Mass (g/mol)']
+            ['Sample UUID', 'Source', 'Weight ratio exp.', 'Molar Mass (g/mol)'],
           )
           allow(sheet).to receive(:row).with(2).and_return(
-            ['uuid-abc', '50% Pd', 50.0, 106.4]
+            ['uuid-abc', '50% Pd', 50.0, 106.4],
           )
           allow(sheet).to receive(:row).with(3).and_return(
-            ['uuid-abc', '50% support', 50.0, 200.0]
+            ['uuid-abc', '50% support', 50.0, 200.0],
           )
           allow(sheet).to receive(:last_row).and_return(3)
           sheet
@@ -361,7 +361,7 @@ RSpec.describe 'Import::ImportSamples' do
       end
     end
 
-    describe '#apply_composition_table_data' do
+    describe '#apply_composition_table_data' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       let(:sample_with_uuid) { create(:valid_sample) }
       let(:sample_uuid) { 'test-composition-uuid' }
       let(:row_with_uuid) { { 'sample uuid' => sample_uuid } }

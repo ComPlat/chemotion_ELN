@@ -38,7 +38,6 @@ PLAIN_CTAB_MOLFILE = <<~MOL
   M  END
 MOL
 
-
 describe 'Polymer Surface Chemistry' do
   # The sign_in/browser-fixture before hook below is scoped to this inner group only —
   # it must not leak into the model-level 'SVG auto-heal' group beneath it, which is

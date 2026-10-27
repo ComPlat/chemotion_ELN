@@ -3,9 +3,7 @@
 require 'charlock_holmes'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
-# Same disable as its parent Import::ImportSamples: this importer was already far past the 200-line
-# limit before any of the recent work, and splitting it up is a refactor in its own right.
-# rubocop:disable-next Metrics/ClassLength
+# rubocop:disable Metrics/ClassLength, Style/ClassAndModuleChildren
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples,
@@ -143,7 +141,7 @@ class Import::ImportSdf < Import::ImportSamples
     end
     # Drop any entry that is blank or has no molfile body (e.g., stray tag blocks
     # left over from double-$$$$ separators in older exports).
-    @raw_data.reject! { |entry| entry.to_s.strip.empty? || !entry.to_s.include?('M  END') }
+    @raw_data.reject! { |entry| entry.to_s.strip.empty? || entry.to_s.exclude?('M  END') }
   end
 
   # An MDL record is title / program / comment / counts. Some editors -- Ketcher, including the SDF
@@ -491,7 +489,6 @@ class Import::ImportSdf < Import::ImportSamples
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-
   # Columns copied across as-is, plus the xref sub-hash ones.
   def assign_plain_columns(sample, row)
     %w[description location external_label name short_label dry_solvent].each do |key|
@@ -514,6 +511,7 @@ class Import::ImportSdf < Import::ImportSamples
 
   # Assign HierarchicalMaterial-specific fields from an SDF row.
   # These fields live in sample_details when the DB column does not exist yet.
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
   def assign_hierarchical_material_fields(sample, row)
     hm_float_fields = %w[height width length diameter particle_size sieve_fraction layer_thickness]
     hm_float_fields.each do |field|
@@ -524,12 +522,17 @@ class Import::ImportSdf < Import::ImportSamples
       sample[field] = row[field] if row[field].present?
     end
 
-    additional_property_keys = %w[sieve_fraction height diameter width length material cspi particle_size shape layer_thickness liquid_medium stabilizer]
+    additional_property_keys = %w[
+      sieve_fraction height diameter width length
+      material cspi particle_size shape
+      layer_thickness liquid_medium stabilizer
+    ]
     selected_props = additional_property_keys.select { |k| row[k].to_s.strip.present? }
-    if selected_props.any?
-      sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
-    end
+    return unless selected_props.any?
+
+    sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
   # Columns that need a unit or a range parsed out of the cell before they can be assigned.
   def assign_measurement_columns(sample, row)
@@ -920,3 +923,4 @@ class Import::ImportSdf < Import::ImportSamples
     mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
   end
 end
+# rubocop:enable Metrics/ClassLength, Style/ClassAndModuleChildren

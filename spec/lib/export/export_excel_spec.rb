@@ -198,7 +198,7 @@ RSpec.describe 'Export::ExportExcel' do
       it 'adds one row per sample when samples have no HierarchicalMaterial components' do
         samples = [
           { 'sample uuid' => 'uuid-1', 'sample name' => 'S1', 'short label' => 'S1', 'sample external label' => 'E1',
-            'components' => '[]' },
+            'components' => '[]', 'is_shared' => 'f' },
         ]
         exporter.generate_composition_table_components_sheet_with_samples('sample_composition_table', samples)
         xfile = exporter.instance_variable_get(:@xfile)
@@ -215,6 +215,7 @@ RSpec.describe 'Export::ExportExcel' do
             'sample name' => 'S1',
             'short label' => 'S1',
             'sample external label' => 'E1',
+            'is_shared' => 'f',
             'components' => [
               { 'name' => 'HierarchicalMaterial', 'source' => '50% Pd', 'weight_ratio_exp' => 50.0,
                 'molar_mass' => 106.4 },

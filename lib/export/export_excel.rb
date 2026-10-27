@@ -151,7 +151,7 @@ module Export
       headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
       sheet = @xfile.workbook.add_worksheet(name: table)
       grey = sheet.styles.add_style(
-        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] }
+        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] },
       )
       light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
       sheet.add_row(headers, style: grey)
@@ -437,46 +437,9 @@ module Export
 
     private
 
-    # Column keys pulled from the SQL result row for each sample.
-    COMPOSITION_SAMPLE_KEYS = [
-      'sample external label',
-      'sample name',
-      'short label',
-      'sample uuid',
-    ].freeze
-
-    # Headers for the calculated composition columns, matching the UI table.
-    COMPOSITION_COMP_HEADERS = [
-      'Source',
-      'Weight ratio exp.',
-      'Molar Mass (g/mol)',
-      'Weight ratio calc./%',
-      'Weight ratio (calc)/MM',
-      'Molar ratio (calc)/MM',
-      'Molar ratio exp/%',
-      'Molar ratio calc/%',
-    ].freeze
-
-    # Generates a composition table sheet replicating all calculations from the frontend
-    # sampleHierarchicalCompositions.js utility. Columns: sample identity + 8 per-component
-    # calculation columns. A bold totals row is appended after each sample's component rows.
-    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
-      @samples = samples
-      return if samples.nil?
-
-      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
-      sheet = @xfile.workbook.add_worksheet(name: table)
-      grey = sheet.styles.add_style(
-        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] },
-      )
-      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
-      sheet.add_row(headers, style: grey)
-      samples.each { |sample| render_composition_sample_rows(sheet, sample, light_grey) }
-      @samples = nil
-    end
-
     # Renders one sample's rows (component rows + totals row) into the composition sheet.
-    def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+    def render_composition_sample_rows(sheet, sample, light_grey)
       return if withhold_shared_sample?(sample)
 
       sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
@@ -520,6 +483,7 @@ module Export
       ]
       sheet.add_row(sample_values + totals_values, style: bold_style)
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     # Translates Component#parseComponentSource from the JS frontend model.
     # Returns a hash with :source, :component, :weight_ratio_calc.
@@ -587,7 +551,7 @@ module Export
                                   else
                                     '-'
                                   end
-        weight_ratio_calc_mm_col9 = (row[:weight_ratio_exp] / row[:molar_mass]).round(3) if row[:molar_mass].positive? # rubocop:disable Layout/LineLength
+        weight_ratio_calc_mm_col9 = (row[:weight_ratio_exp] / row[:molar_mass]).round(3) if row[:molar_mass].positive?
 
         row.merge(
           molar_ratio_calc_mm: row[:molar_ratio_calc_mm].round(3),

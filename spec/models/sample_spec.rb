@@ -108,7 +108,7 @@ RSpec.describe Sample do
   end
 
   describe 'hierarchical sample fields (storage_condition, height, width, length, diameter)' do
-    # Note: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
+    # NOTE: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
     # in the `xref` JSONB (main's storage) — not as dedicated columns. See tests below.
     it 'persists and returns storage_condition when set on the column' do
       sample = create(:sample, storage_condition: 'room temperature')
@@ -203,9 +203,7 @@ RSpec.describe Sample do
     end
 
     it 'prefers column over sample_details for new fields' do
-      sample = create(:sample,
-        layer_thickness: 'col',
-        sample_details: { 'layer_thickness' => 'details' })
+      sample = create(:sample, layer_thickness: 'col', sample_details: { 'layer_thickness' => 'details' })
       expect(sample.layer_thickness).to eq('col')
     end
   end
@@ -470,7 +468,6 @@ RSpec.describe Sample do
   end
 
   describe 'molfiles with polymers' do
-    # rubocop:disable Layout/LineLength
     # 3 R# with bonds, PolymersList + TextNode
     let(:molfile_three_r_with_bonds) do
       <<~MOL
@@ -547,7 +544,6 @@ RSpec.describe Sample do
         $$$$
       MOL
     end
-    # rubocop:enable Layout/LineLength
 
     # rubocop:disable RSpec/MultipleExpectations
     it 'recognizes molfile with 3 R# and bonds (PolymersList + TextNode)' do
@@ -892,7 +888,7 @@ RSpec.describe Sample do
       # the polymers-list check, and the sample's dirty state. Full-save integration
       # requires molecule/collection/creator wiring — out of scope for this unit test.
       let(:polymer_molfile) { "polymer molfile stub\n" }
-      let(:instance) { Sample.new(molfile: polymer_molfile) }
+      let(:instance) { described_class.new(molfile: polymer_molfile) }
 
       before do
         allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(true)
@@ -901,44 +897,45 @@ RSpec.describe Sample do
       it 'flips a new record with polymers-list tag to HierarchicalMaterial' do
         # new_record? is true for an in-memory .new; molfile_changed? is true because it was set.
         instance.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(instance.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+        expect(instance.sample_type).to eq(described_class::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
       end
 
       it 'does NOT flip when molfile is blank' do
-        blank = Sample.new(molfile: nil)
+        blank = described_class.new(molfile: nil)
         blank.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(blank.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+        expect(blank.sample_type).not_to eq(described_class::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
       end
 
       it 'does NOT flip when the molfile does not contain the polymers-list tag' do
         allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(false)
         instance.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(instance.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+        expect(instance.sample_type).not_to eq(described_class::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
       end
 
       it 'does NOT overwrite a persisted non-HM sample_type on an unrelated save' do
         # Simulate a persisted Micromolecule (legacy polymer) whose molfile hasn't changed.
-        legacy = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        legacy = described_class.new(molfile: polymer_molfile, sample_type: described_class::SAMPLE_TYPE_MICROMOLECULE)
         allow(legacy).to receive_messages(new_record?: false, molfile_changed?: false)
         legacy.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(legacy.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
+        expect(legacy.sample_type).to eq(described_class::SAMPLE_TYPE_MICROMOLECULE)
       end
 
       it 'flips the type when the molfile itself changed (user pasted a polymer-tagged molfile)' do
-        persisted = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        persisted = described_class.new(molfile: polymer_molfile,
+                                        sample_type: described_class::SAMPLE_TYPE_MICROMOLECULE)
         allow(persisted).to receive_messages(new_record?: false, molfile_changed?: true)
         # No explicit sample_type change in this save
         allow(persisted).to receive(:sample_type_changed?).and_return(false)
         persisted.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(persisted.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+        expect(persisted.sample_type).to eq(described_class::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
       end
 
       it 'respects an explicit non-HM sample_type change made in the same save' do
         # User explicitly moves an HM back to Micromolecule.
-        s = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        s = described_class.new(molfile: polymer_molfile, sample_type: described_class::SAMPLE_TYPE_MICROMOLECULE)
         allow(s).to receive(:sample_type_changed?).and_return(true)
         s.send(:set_sample_type_hierarchical_if_polymers_list)
-        expect(s.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
+        expect(s.sample_type).to eq(described_class::SAMPLE_TYPE_MICROMOLECULE)
       end
     end
 
