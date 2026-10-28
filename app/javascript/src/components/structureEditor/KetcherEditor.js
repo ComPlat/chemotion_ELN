@@ -280,16 +280,11 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Default: button is disabled
       let shouldEnable = false;
 
-      // Check if a text node is selected and has an associated image
-      if (selectedTextKey) {
-        // Primary: textNodeStruct explicitly maps this key to a polymer image alias.
-        // Fallback: imagesList has entries, meaning polymer images are on the canvas —
-        // all text nodes on this canvas are polymer labels, so the selection is valid.
-        const hasAssociatedImage = Object.values(textNodeStruct).includes(selectedTextKey)
-          || imagesList.length > 0;
-        if (hasAssociatedImage) {
-          shouldEnable = true;
-        }
+      // Check if a text node is selected and has an associated image.
+      // Only enable when textNodeStruct explicitly maps this key to a polymer image —
+      // free-standing labels can coexist with polymer images on the same canvas.
+      if (selectedTextKey && Object.values(textNodeStruct).includes(selectedTextKey)) {
+        shouldEnable = true;
       }
 
       // Enable the button whenever a polymer image is selected.
