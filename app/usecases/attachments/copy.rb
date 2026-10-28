@@ -131,7 +131,8 @@ module Usecases
         return true unless identifier.is_a?(String)
         return false if identifier.match?(/\A[\w-]+\.\w+\z/) # Legacy public-image filenames.
 
-        !@access.read?(originals[identifier])
+        # The browser uploads new images only after the plan has been created.
+        originals.key?(identifier) && !@access.read?(originals[identifier])
       end
 
       def cleanup_created_files

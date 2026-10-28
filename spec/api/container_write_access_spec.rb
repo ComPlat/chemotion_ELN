@@ -16,7 +16,7 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
   end
 
   def dataset_tree(attachment)
-    [node('analyses', children: [node('analysis', children: [node('dataset', attachments: [attachment])])])]
+    [node('analyses', children: [node('analysis', children: [node('dataset', attachments: Array.wrap(attachment))])])]
   end
 
   def element_update_path(path, factory, id)
@@ -24,6 +24,47 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
     return "/api/v1/vessels/templates/#{id}" if factory == :vessel_template
 
     "#{path}/#{id}"
+  end
+
+  shared_examples 'inbox attachment drops' do
+    let(:inbox_root) { create(:inbox_container_root, containable: user) }
+    let(:device_box) { create(:inbox_container, parent: inbox_root) }
+    let(:inbox_dataset) { create(:container, parent: device_box, container_type: 'dataset') }
+    let(:inbox_file) { create(:attachment, attachable: inbox_dataset, created_for: user.id) }
+
+    it 'moves a file dropped from the user\'s inbox into the sample dataset' do
+      container_data[:children] = dataset_tree(id: inbox_file.id, is_new: false)
+      saved = target.class.find_by!(name: save_element)
+
+      expect(inbox_file.reload.root_element).to eq(saved)
+      expect(inbox_file.attachable.container_type).to eq('dataset')
+      expect(inbox_dataset.reload.attachments).to be_empty
+    end
+
+    it 'moves all files dropped from an inbox dataset into the same sample dataset' do
+      second_file = create(:attachment, attachable: inbox_dataset, created_for: owner.id)
+      files = [inbox_file, second_file]
+      container_data[:children] = dataset_tree(files.map { |file| { id: file.id, is_new: false } })
+      saved = target.class.find_by!(name: save_element)
+
+      expect(files.map { |file| file.reload.root_element }).to eq([saved, saved])
+      expect(files.map(&:attachable).uniq.one?).to be true
+      expect(inbox_dataset.reload.attachments).to be_empty
+    end
+
+    it 'does not move or delete another user\'s inbox file, even if it was uploaded for this user' do
+      foreign_inbox = create(:inbox_container_root, containable: owner)
+      foreign_device = create(:inbox_container, parent: foreign_inbox)
+      foreign_dataset = create(:container, parent: foreign_device, container_type: 'dataset')
+      foreign_file = create(:attachment, attachable: foreign_dataset, created_for: user.id)
+      deleted_flags = [false, true]
+      deleted_flags.each do |deleted|
+        container_data[:children] = dataset_tree(id: foreign_file.id, is_new: false, is_deleted: deleted)
+        save_element
+
+        expect(foreign_file.reload.attachable).to eq(foreign_dataset)
+      end
+    end
   end
 
   shared_examples 'scoped container writes' do |path, factory|
@@ -87,6 +128,8 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
           expect(response).to have_http_status(operation == :create ? :created : :ok), response.body
           payload[:name]
         end
+
+        it_behaves_like 'inbox attachment drops' if factory == :sample
 
         it 'preserves foreign attachments when asked to move or delete them' do
           [false, true].each do |deleted| # rubocop:disable Performance/CollectionLiteralInLoop

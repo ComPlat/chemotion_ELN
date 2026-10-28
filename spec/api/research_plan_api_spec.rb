@@ -113,6 +113,64 @@ describe Chemotion::ResearchPlanAPI do
         end
       end
 
+      context 'when an image is uploaded after creating the plan' do
+        let(:collection) { create(:collection, user: user) }
+        let(:pending_identifier) { SecureRandom.uuid }
+        let(:image_field) do
+          { 'type' => 'image', 'value' => { 'public_name' => pending_identifier, 'file_name' => 'upload.png' } }
+        end
+        let(:copied_entries) { [] }
+        let(:copied_body) { [] }
+        let(:params) do
+          {
+            name: 'Plan with a pending image', collection_id: collection.id,
+            container: { is_new: true, children: [] }, body: copied_body + [image_field],
+            attachments: copied_entries + [{ id: pending_identifier, is_new: true }]
+          }
+        end
+
+        shared_examples 'a pending image upload' do
+          let(:created_plan) { ResearchPlan.find(JSON.parse(response.body).fetch('research_plan').fetch('id')) }
+
+          before { post '/api/v1/research_plans', params: params, as: :json }
+
+          it 'keeps the pending image field without reporting omitted attachments' do
+            expect(response).to have_http_status(:created)
+            expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+            expect(created_plan.body.last).to eq(image_field)
+          end
+
+          it 'connects the image field to the subsequent file upload' do
+            plan = created_plan
+            expect(Attachment.exists?(identifier: pending_identifier)).to be false
+
+            post '/api/v1/attachable/update_attachments_attachable', params: {
+              attachable_type: 'ResearchPlan', attachable_id: plan.id,
+              attfilesIdentifier: [pending_identifier],
+              files: [fixture_file_upload(Rails.root.join('spec/fixtures/upload.png'), 'image/png')]
+            }
+
+            expect(response).to have_http_status(:created)
+            expect(Attachment.find_by!(identifier: pending_identifier)).to have_attributes(
+              attachable: plan,
+              identifier: plan.reload.body.last.dig('value', 'public_name'),
+              read_file: Rails.root.join('spec/fixtures/upload.png').binread,
+            )
+          end
+        end
+
+        it_behaves_like 'a pending image upload'
+
+        context 'when also copying an existing image' do
+          let(:source_plan) { create(:research_plan, creator: user, collections: [collection]) }
+          let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
+          let(:copied_entries) { [{ id: source.id }] }
+          let(:copied_body) { [{ type: 'image', value: { public_name: source.identifier } }] }
+
+          it_behaves_like 'a pending image upload'
+        end
+      end
+
       context 'when copying attachments' do
         let(:collection) { create(:collection, user: user) }
         let(:owner) { create(:person) }

@@ -158,10 +158,17 @@ module Usecases
 
       def writable_attachment?(attachment)
         return attachment.created_for == current_user.id if attachment.attachable_id.nil?
-        return attachment.attachable&.root == @root_container if attachment.attachable_type == 'Container'
+        return writable_attachment_root?(attachment.attachable&.root) if attachment.attachable_type == 'Container'
 
         element = @element || @root_container&.root_element
         element.present? && attachment.attachable == element
+      end
+
+      def writable_attachment_root?(root)
+        return false unless root
+        return true if root == @root_container
+
+        root == current_user.container && root.containable == current_user
       end
 
       def can_update_container?(container)
