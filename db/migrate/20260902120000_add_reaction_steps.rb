@@ -25,6 +25,7 @@ class AddReactionSteps < ActiveRecord::Migration[6.1]
     change_table :reactions_samples, bulk: true do |t|
       t.bigint :reaction_step_id, null: true, default: nil
       t.boolean :carry_on, null: false, default: false
+      t.boolean :step_reference, null: false, default: false
       t.index :reaction_step_id
     end
   end
