@@ -34,10 +34,10 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
     setFilename(initialResult?.filename || null);
   }, [initialResult]);
 
-  const persist = useCallback((payload) => {
+  const persist = useCallback((payload, file = null) => {
     setResult(payload);
     if (payload?.filename) setFilename(payload.filename);
-    if (onResult) onResult({ result: payload });
+    if (onResult) onResult({ result: payload, file });
   }, [onResult]);
 
   const handleClear = useCallback(() => {
@@ -67,7 +67,7 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
         setError(response?.error || 'The MOF service could not analyze this CIF file.');
         return;
       }
-      persist({ ...response, filename: file.name });
+      persist({ ...response, filename: file.name }, file);
     } catch (e) {
       if (activeRequest.current === request) setError(e?.message || 'MOFid conversion failed');
     } finally {

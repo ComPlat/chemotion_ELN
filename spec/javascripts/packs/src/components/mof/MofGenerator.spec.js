@@ -35,14 +35,18 @@ describe('MofGenerator request lifecycle', () => {
     sinon.restore();
   });
 
-  const dropFile = (editor) => editor.find(Dropzone).prop('onDropAccepted')([{ name: 'framework.cif' }]);
+  const cifFile = { name: 'framework.cif' };
+  const dropFile = (editor) => editor.find(Dropzone).prop('onDropAccepted')([cifFile]);
 
-  it('persists a completed analysis with its filename', async () => {
+  it('persists a completed analysis with its filename and the dropped file', async () => {
     const pending = dropFile(wrapper);
     await Promise.resolve();
     finish({ mofid: 'generated identifier' });
     await pending;
-    sinon.assert.calledWith(onResult, { result: { mofid: 'generated identifier', filename: 'framework.cif' } });
+    sinon.assert.calledWith(onResult, {
+      result: { mofid: 'generated identifier', filename: 'framework.cif' },
+      file: cifFile,
+    });
   });
 
   it('ignores a conversion that finishes after the panel unmounts', async () => {

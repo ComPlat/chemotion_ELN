@@ -23,7 +23,9 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import MofGenerator from 'src/components/mof/MofGenerator';
 import MofDetails from 'src/components/mof/MofDetails';
-import { mofResultFromAnalysis, resolveFragments } from 'src/components/mof/mofUtils';
+import {
+  attachMofCif, detachMofCif, mofResultFromAnalysis, resolveFragments
+} from 'src/components/mof/mofUtils';
 import Sample from 'src/models/Sample';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
@@ -219,18 +221,21 @@ export default class SampleForm extends React.Component {
    * (SUR)MOF configuration (Format ID / Format Key / Topology / Catenation and
    * fragments are retrieved from the CIF output) and persists it onto
    * sample_details.mof, preserving any user-entered configuration flags.
-   * A null result (Clear) removes the mof block.
-   * @param {{ result: Object|null }} payload
+   * The CIF itself is kept as an attachment of the MOF analysis. A null result
+   * (Clear) removes the mof block and an unsaved CIF.
+   * @param {{ result: Object|null, file: File|null }} payload
    */
-  handleMofResult({ result }) {
+  handleMofResult({ result, file }) {
     const { sample, handleSampleChanged } = this.props;
     this.mofAnalysisRequest = {};
     const nextDetails = { ...(sample.sample_details || {}) };
 
+    const prev = sample.sample_details?.mof || {};
     if (!result) {
       delete nextDetails.mof;
+      detachMofCif(sample, prev.filename);
     } else {
-      const prev = sample.sample_details?.mof || {};
+      if (file) attachMofCif(sample, file, prev.filename);
       nextDetails.mof = {
         ...mofResultFromAnalysis(result),
         // keep configuration the user set that the CIF cannot provide

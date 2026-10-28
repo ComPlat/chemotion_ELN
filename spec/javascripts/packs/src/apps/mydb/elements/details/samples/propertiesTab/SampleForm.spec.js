@@ -5,6 +5,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 import SampleFactory from 'factories/SampleFactory';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import { MOF_CIF_MARKER } from 'src/components/mof/mofUtils';
 
 configure({ adapter: new Adapter() });
 
@@ -157,6 +158,22 @@ describe('SampleForm MOF analysis', () => {
     expect(sample.sample_details.mof.svg).toEqual(undefined);
     expect(sample.sample_details.unrelated).toEqual(true);
     sinon.assert.notCalled(fetchMolecule);
+  });
+
+  it('keeps the uploaded CIF in the MOF analysis and removes the unsaved CIF on Clear', () => {
+    sinon.stub(instance, 'resolveMofFragments');
+    sinon.stub(instance, 'attachMofMolecule');
+    const mofAnalysis = () => sample.analysesContainers()[0].children
+      .find((child) => child.extended_metadata[MOF_CIF_MARKER] === 'true');
+
+    instance.handleMofResult({
+      result: { mofid: 'C MOFid-v1.pcu.cat0', smiles_nodes: 'C', filename: 'a.cif' }, file: { name: 'a.cif' },
+    });
+    expect(mofAnalysis().children[0].attachments[0].filename).toEqual('a.cif');
+
+    instance.handleMofResult({ result: null });
+    expect(mofAnalysis()).toEqual(undefined);
+    expect(sample.sample_details.mof).toEqual(undefined);
   });
 
   it('does not restore MOF data when a fragment lookup finishes after Clear', async () => {

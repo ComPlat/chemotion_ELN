@@ -3,6 +3,16 @@
 // derive a new MOFid only when the user changes its structural inputs.
 
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import Container from 'src/models/Container';
+import Attachment from 'src/models/Attachment';
+import { chmoConversions } from 'src/components/OlsComponent';
+
+// The uploaded CIF is kept as an attachment of an X-ray diffraction analysis on
+// the sample, so it is saved, downloaded and exported like any analysis file.
+// The analysis is found by this extended_metadata marker (stored as a string in
+// hstore), not by its name, which users may edit.
+export const MOF_CIF_ANALYSIS_NAME = 'MOF structure (CIF)';
+export const MOF_CIF_MARKER = 'mof_cif';
 
 /**
  * Resolve a fragment's building-block SMILES into display identifiers using the
@@ -23,7 +33,7 @@ export const resolveFragmentIdentifiers = async (smiles) => {
       inchikey: molecule.inchikey || '',
       inchistring: molecule.inchistring || '',
       cano_smiles: molecule.cano_smiles || '',
-      molfile: molecule.molfile || '',
+      // no molfile: it is unused here and sample_details ships with every list row
       svg_file: molecule.molecule_svg_file || '',
     };
   } catch (e) {
@@ -166,4 +176,73 @@ export const mofResultFromAnalysis = (result = {}) => {
     filename: result.filename || null,
   };
   return details;
+};
+
+const isMofCifAnalysis = (container) => container.container_type === 'analysis'
+  && !container.is_deleted
+  && `${container.extended_metadata?.[MOF_CIF_MARKER] ?? ''}` === 'true';
+
+const findMofCifAnalysis = (sample) => sample.analysesContainers()
+  .flatMap((analyses) => analyses.children)
+  .find(isMofCifAnalysis);
+
+const datasetsOf = (analysis) => analysis.children
+  .filter((child) => child.container_type === 'dataset' && !child.is_deleted);
+
+// Drop the managed CIF only while it is unsaved. Saved CIFs are never deleted
+// here (the save path destroys deleted attachments), so earlier uploads stay in
+// the analysis as history, and files the user added there are left alone.
+const dropUnsavedCif = (analysis, filename) => {
+  if (!filename) return;
+  datasetsOf(analysis).forEach((dataset) => {
+    dataset.attachments = dataset.attachments
+      .filter((attachment) => !(attachment.is_new && attachment.filename === filename));
+  });
+};
+
+const removeAnalysisIfEmpty = (sample, analysis) => {
+  const empty = analysis.is_new && datasetsOf(analysis).every((dataset) => dataset.attachments.length === 0);
+  if (!empty) return;
+  sample.analysesContainers().forEach((analyses) => {
+    analyses.children = analyses.children.filter((child) => child !== analysis);
+  });
+};
+
+/**
+ * Keep the uploaded CIF on the sample, in the marked MOF analysis (created with
+ * a dataset on first use). An unsaved previous CIF is replaced; a saved one stays.
+ * @param {Sample} sample
+ * @param {File} file
+ * @param {string|null} previousFilename - filename of the CIF analyzed before
+ */
+export const attachMofCif = (sample, file, previousFilename = null) => {
+  let analysis = findMofCifAnalysis(sample);
+  if (!analysis) {
+    analysis = Container.buildAnalysis(chmoConversions.crystal_structure.value, MOF_CIF_ANALYSIS_NAME);
+    analysis.extended_metadata[MOF_CIF_MARKER] = 'true';
+    sample.addAnalysis(analysis);
+  }
+  dropUnsavedCif(analysis, previousFilename);
+
+  let [dataset] = datasetsOf(analysis);
+  if (!dataset) {
+    dataset = Container.buildEmpty();
+    dataset.container_type = 'dataset';
+    dataset.name = MOF_CIF_ANALYSIS_NAME;
+    analysis.children.push(dataset);
+  }
+  dataset.attachments.push(Attachment.fromFile(file));
+};
+
+/**
+ * Undo an unsaved CIF upload (Clear). A saved CIF stays in the analysis; the
+ * user can delete it in the Analyses tab.
+ * @param {Sample} sample
+ * @param {string|null} filename - filename of the analyzed CIF
+ */
+export const detachMofCif = (sample, filename) => {
+  const analysis = findMofCifAnalysis(sample);
+  if (!analysis) return;
+  dropUnsavedCif(analysis, filename);
+  removeAnalysisIfEmpty(sample, analysis);
 };
