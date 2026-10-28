@@ -56,6 +56,20 @@ RSpec.describe MofService do
   end
 
   describe '#analyze' do
+    ['http://converter:4000/api/v1', 'http://converter:4000/api/v1/'].each do |base_url|
+      context "with base URL #{base_url}" do
+        let(:service_url) { base_url }
+
+        it 'preserves the API prefix and appends mofid exactly once' do
+          stub = stub_request(:post, 'http://converter:4000/api/v1/mofid')
+                 .to_return(status: 200, body: converter_response.to_json)
+
+          expect(described_class.new(cif).analyze['mofid']).to eq(converter_response['mofid.mofid'])
+          expect(stub).to have_been_requested.once
+        end
+      end
+    end
+
     it 'strips the "mofid." prefix and returns the bare MOFid fields' do
       stub_request(:post, "#{service_url}mofid")
         .to_return(status: 200, body: converter_response.to_json, headers: { 'Content-Type' => 'application/json' })
@@ -96,7 +110,8 @@ RSpec.describe MofService do
     end
 
     it 'returns nil when the converter errors' do
-      stub_request(:post, "#{service_url}mofid").to_return(status: 400, body: '{"error":"File could not be used to generate MOFid"}')
+      stub_request(:post, "#{service_url}mofid")
+        .to_return(status: 400, body: '{"error":"File could not be used to generate MOFid"}')
 
       expect(described_class.new(cif).analyze).to be_nil
     end

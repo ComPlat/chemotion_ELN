@@ -125,9 +125,6 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
   </>
 );
 
-// Read-only structure preview for MOF samples: renders the SVG generated
-// (server-side) from the building-block SMILES the pipeline returned. No
-// editing — falls back to topology / upload hints when no SVG is available.
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;

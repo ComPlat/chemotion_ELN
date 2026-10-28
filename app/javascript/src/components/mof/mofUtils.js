@@ -1,13 +1,6 @@
 // Helpers for the (SUR)MOF configuration: turning a CIF-analysis result into the
-// structured sample_details.mof shape, and re-assembling the MOFid string from
-// the editable fields.
-//
-// A MOFid string has the grammar:
-//   <building-block SMILES joined by '.'> <FormatID>.<Topology>.<Catenation>
-// e.g. "[Cu][Cu].[O-]C(=O)c1ccccc1 MOFid-v1.tbo.cat0"
-//
-// So the "MOF identifier" shown in the UI is derived from the fragments' SMILES
-// plus the Format ID / Topology / Catenation fields (all retrievable from the CIF).
+// structured sample_details.mof shape. Preserve the converter's full identifiers;
+// derive a new MOFid only when the user changes its structural inputs.
 
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
@@ -70,6 +63,13 @@ export const buildMofid = (mof = {}) => {
   return [smiles, suffix].filter(Boolean).join(' ');
 };
 
+// Metadata edits must not discard the converter's version suffix or structure name.
+export const patchMofDetails = (mof = {}, patch = {}) => {
+  const next = { ...mof, ...patch };
+  if (buildMofid(next) !== buildMofid(mof)) next.mofid = buildMofid(next);
+  return next;
+};
+
 // The MOF service may return string or array values (e.g. smiles_nodes can be a
 // list of building blocks). Coerce to a single string for regex/splitting.
 const asText = (value) => (Array.isArray(value) ? value.join(' ') : `${value ?? ''}`);
@@ -86,11 +86,6 @@ const matchToken = (text, regex, fallback) => {
   return found ? found[0] : fallback;
 };
 
-// The mofid pipeline appends a reference token to the MOFkey (".NO_REF" when no
-// CSD/CCDC reference is known). The reference web-mofid tool omits it, so drop a
-// trailing "NO_REF": "…MOFkey-v1.tbo.NO_REF" -> "…MOFkey-v1.tbo".
-const stripMofkeyReference = (mofkey) => asText(mofkey).replace(/\.NO_REF\s*$/i, '');
-
 const normalizeCatenation = (result) => {
   if (result.cat !== undefined && result.cat !== null && `${result.cat}` !== '') {
     return /^\d+$/.test(`${result.cat}`) ? `cat${result.cat}` : `${result.cat}`;
@@ -101,14 +96,13 @@ const normalizeCatenation = (result) => {
 const fragmentsFromResult = (result) => {
   const rows = [];
   // ratios is aligned index-for-index with toSmilesList(smiles) (the converter
-  // splits smiles_nodes / smiles_linkers the same way); default to 1 when the
-  // stoichiometry could not be derived.
+  // splits smiles_nodes / smiles_linkers the same way). Unknown ratios stay null.
   const push = (smiles, typeFunction, ratios) => {
     toSmilesList(smiles).forEach((s, i) => rows.push({
       type_function: typeFunction,
       iupac: '',
       smiles: s,
-      ratio: Array.isArray(ratios) && ratios[i] != null ? ratios[i] : 1,
+      ratio: Array.isArray(ratios) && ratios[i] != null ? ratios[i] : null,
       comment: '',
     }));
   };
@@ -143,7 +137,7 @@ export const splitMofkey = (mofkey) => {
  * Map a raw MOF-service analysis result onto the structured sample_details.mof
  * fields, retrieving Format ID / Format Key / Topology / Catenation from the CIF
  * output. Format Key and Topology are split out of the MOFkey; Format ID and
- * Catenation come from the MOFid. The MOFid is re-derived so it stays consistent.
+ * Catenation come from the MOFid. Full identifiers are kept as returned.
  *
  * @param {Object} result - MofFetcher.analyze response
  * @returns {Object} structured mof details
@@ -163,13 +157,13 @@ export const mofResultFromAnalysis = (result = {}) => {
     substrate: '',
     coating: '',
     dimensions: '',
-    mofkey: stripMofkeyReference(result.mofkey),
+    mofid: asText(result.mofid),
+    mofkey: asText(result.mofkey),
     // keep the raw analysis fields (coerced to strings) for reference / display
     smiles: asText(result.smiles),
     smiles_nodes: asText(result.smiles_nodes),
     smiles_linkers: asText(result.smiles_linkers),
     filename: result.filename || null,
   };
-  details.mofid = buildMofid(details);
   return details;
 };

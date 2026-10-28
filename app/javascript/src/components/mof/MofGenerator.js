@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert, Button, OverlayTrigger, Spinner, Tooltip
@@ -20,11 +20,14 @@ const readFileText = (file) => new Promise((resolve, reject) => {
  * MOF CIF panel: drop analyzes immediately → Clear → results table.
  */
 const MofGenerator = ({ onResult, initialResult, disabled }) => {
-  const hasMof = UIStore.getState().hasMof;
+  const { hasMof } = UIStore.getState();
   const [filename, setFilename] = useState(initialResult?.filename || null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(initialResult);
+  const activeRequest = useRef(null);
+
+  useLayoutEffect(() => () => { activeRequest.current = null; }, []);
 
   useEffect(() => {
     setResult(initialResult || null);
@@ -38,13 +41,17 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
   }, [onResult]);
 
   const handleClear = useCallback(() => {
+    activeRequest.current = null;
+    setSubmitting(false);
     setFilename(null);
     setError(null);
     persist(null);
   }, [persist]);
 
   const analyzeFile = useCallback(async (file) => {
-    if (!file || submitting || disabled || !hasMof) return;
+    if (!file || activeRequest.current || disabled || !hasMof) return;
+    const request = {};
+    activeRequest.current = request;
 
     setFilename(file.name);
     setError(null);
@@ -53,18 +60,23 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
 
     try {
       const cif = await readFileText(file);
+      if (activeRequest.current !== request) return;
       const response = await MofFetcher.analyze(cif);
+      if (activeRequest.current !== request) return;
       if (!response?.mofid) {
         setError(response?.error || 'The MOF service could not analyze this CIF file.');
         return;
       }
       persist({ ...response, filename: file.name });
     } catch (e) {
-      setError(e?.message || 'MOFid conversion failed');
+      if (activeRequest.current === request) setError(e?.message || 'MOFid conversion failed');
     } finally {
-      setSubmitting(false);
+      if (activeRequest.current === request) {
+        activeRequest.current = null;
+        setSubmitting(false);
+      }
     }
-  }, [submitting, disabled, hasMof, persist]);
+  }, [disabled, hasMof, persist]);
 
   const onDropAccepted = useCallback((acceptedFiles) => {
     const file = acceptedFiles?.[0];
@@ -73,7 +85,7 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
       setError('Only .cif files are accepted');
       return;
     }
-    analyzeFile(file);
+    return analyzeFile(file);
   }, [analyzeFile]);
 
   const onDropRejected = useCallback(() => {

@@ -65,13 +65,12 @@ export default class SampleForm extends React.Component {
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleMofResult = this.handleMofResult.bind(this);
     this.handleMofDetailsChanged = this.handleMofDetailsChanged.bind(this);
-    this.fetchMofPreviewSvg = this.fetchMofPreviewSvg.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
     const { isMolNameLoading } = this.state;
-    if (this.props != prevProps && isMolNameLoading) {
+    if (this.props !== prevProps && isMolNameLoading) {
       this.setState({ isMolNameLoading: false });
     }
 
@@ -86,6 +85,10 @@ export default class SampleForm extends React.Component {
         moleculeNameInputValue: String(displayValue)
       });
     }
+  }
+
+  componentWillUnmount() {
+    this.mofAnalysisRequest = {};
   }
 
   handleToggle = (key) => {
@@ -221,6 +224,7 @@ export default class SampleForm extends React.Component {
    */
   handleMofResult({ result }) {
     const { sample, handleSampleChanged } = this.props;
+    this.mofAnalysisRequest = {};
     const nextDetails = { ...(sample.sample_details || {}) };
 
     if (!result) {
@@ -230,6 +234,10 @@ export default class SampleForm extends React.Component {
       nextDetails.mof = {
         ...mofResultFromAnalysis(result),
         // keep configuration the user set that the CIF cannot provide
+        name: prev.name || '',
+        substrate: prev.substrate || '',
+        coating: prev.coating || '',
+        dimensions: prev.dimensions || '',
         format_comments: prev.format_comments || '',
         defects: prev.defects || [],
       };
@@ -239,9 +247,7 @@ export default class SampleForm extends React.Component {
     sample.changed = true;
     handleSampleChanged(sample);
 
-    // Fetch a read-only structure preview from the building-block SMILES.
     if (result) {
-      this.fetchMofPreviewSvg(sample);
       this.resolveMofFragments(sample);
       this.attachMofMolecule(sample);
     }
@@ -256,15 +262,17 @@ export default class SampleForm extends React.Component {
     const { handleSampleChanged } = this.props;
     const mof = sample.sample_details?.mof;
     if (!mof?.fragments?.length) return;
+    const request = this.mofAnalysisRequest;
 
-    resolveFragments(mof.fragments)
+    return resolveFragments(mof.fragments)
       .then((fragments) => {
-        // Merge into the CURRENT mof, not the snapshot captured above: the
-        // concurrent attachMofMolecule / fetchMofPreviewSvg calls also write to
-        // sample_details.mof, and reusing the stale snapshot would clobber the
-        // identifiers / preview they stored.
-        const currentMof = sample.sample_details?.mof || mof;
-        sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments } };
+        const currentMof = sample.sample_details?.mof;
+        if (request !== this.mofAnalysisRequest || sample !== this.props.sample || !sample.isMof() || !currentMof) return;
+        // Only enrich rows that have not been edited since this request started.
+        const currentFragments = currentMof.fragments.map((frag, index) => (
+          frag === mof.fragments[index] ? fragments[index] : frag
+        ));
+        sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments: currentFragments } };
         sample.changed = true;
         handleSampleChanged(sample);
       })
@@ -281,6 +289,9 @@ export default class SampleForm extends React.Component {
    */
   attachMofMolecule(sample) {
     const { handleSampleChanged } = this.props;
+    const analysisRequest = this.mofAnalysisRequest;
+    const request = {};
+    this.mofMoleculeRequest = request;
     const fragments = sample.sample_details?.mof?.fragments || [];
     const combinedSmiles = [...new Set(
       fragments
@@ -293,8 +304,10 @@ export default class SampleForm extends React.Component {
     // Skip the network call when the building blocks have not changed.
     if (Sample.sameSmilesSet(combinedSmiles, sample.molecule_cano_smiles)) return;
 
-    MoleculeFetcher.fetchBySmi(combinedSmiles, null, sample.molfile, 'ketcher')
+    return MoleculeFetcher.fetchBySmi(combinedSmiles, null, sample.molfile, 'ketcher')
       .then((molecule) => {
+        if (request !== this.mofMoleculeRequest || analysisRequest !== this.mofAnalysisRequest
+          || sample !== this.props.sample || !sample.isMof() || !sample.sample_details?.mof) return;
         if (!molecule || !molecule.id) return;
         sample.molecule = molecule;
         sample.molecule_id = molecule.id;
@@ -306,7 +319,7 @@ export default class SampleForm extends React.Component {
   }
 
   /**
-   * Persists edits made in the (SUR)MOF details modal onto sample_details.mof.
+   * Persists edits made in the (SUR)MOF details editor onto sample_details.mof.
    * @param {Object} mof - the updated mof configuration
    */
   handleMofDetailsChanged(mof) {
@@ -316,31 +329,6 @@ export default class SampleForm extends React.Component {
     handleSampleChanged(sample);
     // Rebuild the attached molecule if the fragment SMILES changed (no-op otherwise).
     this.attachMofMolecule(sample);
-  }
-
-  /**
-   * Renders the MOF's building-block SMILES to an SVG (server-side, same path
-   * mixtures use) and stores the file name on sample_details.mof.svg for a
-   * read-only structure preview. Best-effort: failures leave no preview.
-   * @param {Sample} sample
-   */
-  fetchMofPreviewSvg(sample) {
-    const smiles = sample.sample_details?.mof?.smiles;
-    if (!smiles) return;
-
-    MoleculeFetcher.fetchBySmi(smiles, null, null, 'ketcher')
-      .then((molecule) => {
-        const currentMof = sample.sample_details?.mof;
-        // ignore a stale response (cleared or re-analyzed meanwhile)
-        if (!molecule?.molecule_svg_file || !currentMof || currentMof.smiles !== smiles) return;
-        sample.sample_details = {
-          ...sample.sample_details,
-          mof: { ...currentMof, svg: molecule.molecule_svg_file },
-        };
-        sample.changed = true;
-        this.props.handleSampleChanged(sample);
-      })
-      .catch(() => { /* preview is best-effort */ });
   }
 
   /**
@@ -1669,6 +1657,7 @@ export default class SampleForm extends React.Component {
             <Col>
               <h5>MOF structure (CIF)</h5>
               <MofGenerator
+                key={sample.id}
                 onResult={this.handleMofResult}
                 initialResult={sample.sample_details?.mof}
                 disabled={!sample.can_update}

@@ -1,19 +1,17 @@
 import React, {
-  useCallback, useContext, useMemo, useState
+  useCallback, useContext, useLayoutEffect, useMemo, useRef, useState
 } from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Button, Col, Form, OverlayTrigger, Popover, Row, Table
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
-import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { buildMofid, resolveFragmentIdentifiers } from 'src/components/mof/mofUtils';
+import { patchMofDetails, resolveFragmentIdentifiers } from 'src/components/mof/mofUtils';
 
 // Inline (SUR)MOF configuration, shown on the Properties tab when the sample
 // type is MOF. Persisted on sample_details.mof; see mofUtils.js for the field
-// shape and how the MOFid is assembled from Format ID / Topology / Catenation
-// plus the fragment SMILES.
+// shape and how identifiers are preserved while editing metadata.
 
 const FORMAT_ID_OPTIONS = [{ label: 'MOFid-v1', value: 'MOFid-v1' }];
 const FORMAT_KEY_OPTIONS = [{ label: 'MOFkey-v1', value: 'MOFkey-v1' }];
@@ -27,7 +25,7 @@ const emptyFragment = () => ({
   type_function: '',
   iupac: '',
   smiles: '',
-  ratio: 1,
+  ratio: null,
   comment: '',
 });
 
@@ -38,7 +36,7 @@ const emptyDefect = () => ({
 
 /**
  * (SUR)MOF details editor. Fully controlled: every edit calls onChange with the
- * next mof object (with the MOFid re-derived) so it can be persisted onto
+ * next mof object so it can be persisted onto
  * sample_details.mof. Uses Chemotion's shared Select / Form components.
  */
 const MofDetails = ({ mof, onChange, disabled }) => {
@@ -49,12 +47,15 @@ const MofDetails = ({ mof, onChange, disabled }) => {
   const [extraCols, setExtraCols] = useState({ smiles: false, inchikey: false, comment: false });
   const toggleCol = useCallback((key) => setExtraCols((cols) => ({ ...cols, [key]: !cols[key] })), []);
   const { notifications } = useContext(StoreContext) || {};
+  const latest = useRef({ mof, onChange, disabled });
+  useLayoutEffect(() => {
+    latest.current = { mof, onChange, disabled };
+    return () => { latest.current = null; };
+  }, [mof, onChange, disabled]);
 
-  // Persist a patch, keeping the derived MOFid in sync with its inputs.
+  // Preserve the full analysis identifier unless its structural inputs change.
   const update = useCallback((patch) => {
-    const next = { ...(mof || {}), ...patch };
-    next.mofid = buildMofid(next);
-    onChange(next);
+    onChange(patchMofDetails(mof || {}, patch));
   }, [mof, onChange]);
 
   const updateFragment = useCallback((index, patch) => {
@@ -65,25 +66,37 @@ const MofDetails = ({ mof, onChange, disabled }) => {
   // to linker ratio of 1:6), so it is a non-negative number and not capped at 1.
   // A negative or non-numeric entry warns and is floored at 0.
   const updateRatio = useCallback((index, value) => {
+    if (value === '') {
+      updateFragment(index, { ratio: null });
+      return;
+    }
     const numeric = Number(value);
-    if (Number.isNaN(numeric) || numeric < 0) {
+    if (!Number.isFinite(numeric) || numeric < 0) {
       notifications?.add?.({
         message: 'Ratio value should be a non-negative number',
         level: 'error',
       });
     }
-    const safe = Number.isNaN(numeric) ? 0 : Math.max(0, numeric);
+    const safe = Number.isFinite(numeric) ? Math.max(0, numeric) : 0;
     updateFragment(index, { ratio: safe });
   }, [updateFragment, notifications]);
 
   // After a SMILES is edited, resolve it into IUPAC / sum formula / structure SVG
   // so the popover and name stay in sync with the entered structure.
   const resolveRow = useCallback(async (index) => {
-    const smiles = `${fragments[index]?.smiles ?? ''}`.trim();
+    const fragment = fragments[index];
+    const smiles = `${fragment?.smiles ?? ''}`.trim();
     if (!smiles || disabled) return;
     const patch = await resolveFragmentIdentifiers(smiles);
-    if (Object.keys(patch).length) updateFragment(index, patch);
-  }, [fragments, disabled, updateFragment]);
+    const { current } = latest;
+    // Ignore results for a removed/edited row or an unmounted/read-only editor.
+    if (!current || current.disabled || current.mof?.fragments?.[index] !== fragment) return;
+    if (Object.keys(patch).length) {
+      current.onChange(patchMofDetails(current.mof, {
+        fragments: current.mof.fragments.map((frag, idx) => (idx === index ? { ...frag, ...patch } : frag)),
+      }));
+    }
+  }, [fragments, disabled]);
 
   const addFragment = useCallback(() => {
     update({ fragments: [...fragments, emptyFragment()] });
@@ -105,7 +118,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     update({ defects: defects.filter((_, idx) => idx !== index) });
   }, [defects, update]);
 
-  const cell = (index, field, placeholder = '', onBlur = undefined) => (
+  const cell = (index, field, placeholder = '') => (
     <Form.Control
       size="sm"
       type="text"
@@ -113,7 +126,6 @@ const MofDetails = ({ mof, onChange, disabled }) => {
       placeholder={placeholder}
       disabled={disabled}
       onChange={(e) => updateFragment(index, { [field]: e.target.value })}
-      onBlur={onBlur}
     />
   );
 
@@ -228,17 +240,34 @@ const MofDetails = ({ mof, onChange, disabled }) => {
                     </span>
                   )}
                 </td>
-                {extraCols.smiles && <td>{cell(index, 'smiles', 'SMILES', () => resolveRow(index))}</td>}
+                {extraCols.smiles && (
+                  <td>
+                    <Form.Control
+                      size="sm"
+                      type="text"
+                      value={frag.smiles || ''}
+                      placeholder="SMILES"
+                      disabled={disabled}
+                      onChange={(e) => updateFragment(index, { smiles: e.target.value })}
+                      onBlur={() => resolveRow(index)}
+                    />
+                  </td>
+                )}
                 {extraCols.inchikey && (
                   <td className="align-middle text-break font-monospace small">{frag.inchikey || ''}</td>
                 )}
                 <td>{cell(index, 'iupac')}</td>
               <td>
-                <NumeralInputWithUnitsCompo
-                  precision={4}
-                  value={frag.ratio == null || frag.ratio === '' ? 1 : (Number(frag.ratio) || 0)}
+                <Form.Control
+                  size="sm"
+                  type="number"
+                  min={0}
+                  step="any"
+                  aria-label="Fragment ratio"
+                  placeholder="Unknown"
+                  value={frag.ratio ?? ''}
                   disabled={disabled}
-                  onChange={(e) => updateRatio(index, e.value)}
+                  onChange={(e) => updateRatio(index, e.target.value)}
                 />
               </td>
               {extraCols.comment && <td>{cell(index, 'comment')}</td>}
@@ -373,8 +402,8 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           as="textarea"
           rows={2}
           readOnly
-          value={buildMofid(data)}
-          placeholder="Assembled from the fragment SMILES and Format ID / Topology / Catenation"
+          value={data.mofid || ''}
+          placeholder="Generated from the CIF or entered building blocks"
         />
       </Form.Group>
 
