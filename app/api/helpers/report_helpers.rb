@@ -960,13 +960,25 @@ module ReportHelpers
         solubility: ['s."solubility"', '"solubility"', 0],
         color: ["s.xref->>'color'", '"color"', 0],
         form: ['s."form"', '"form"', 0],
-        height: ["COALESCE(s.height::text, s.sample_details->>'height', s.xref->>'height')", '"height"', 0],
+        height: [
+          "COALESCE(trim_scale(s.height::numeric)::text, s.sample_details->>'height', s.xref->>'height')",
+          '"height"', 0
+        ],
         height_unit: ["s.sample_details->>'height_unit'", '"height unit"', 0],
-        width: ["COALESCE(s.width::text, s.sample_details->>'width', s.xref->>'width')", '"width"', 0],
+        width: [
+          "COALESCE(trim_scale(s.width::numeric)::text, s.sample_details->>'width', s.xref->>'width')",
+          '"width"', 0
+        ],
         width_unit: ["s.sample_details->>'width_unit'", '"width unit"', 0],
-        length: ["COALESCE(s.length::text, s.sample_details->>'length', s.xref->>'length')", '"length"', 0],
+        length: [
+          "COALESCE(trim_scale(s.length::numeric)::text, s.sample_details->>'length', s.xref->>'length')",
+          '"length"', 0
+        ],
         length_unit: ["s.sample_details->>'length_unit'", '"length unit"', 0],
-        diameter: ["COALESCE(s.diameter::text, s.sample_details->>'diameter', s.xref->>'diameter')", '"diameter"', 0],
+        diameter: [
+          "COALESCE(trim_scale(s.diameter::numeric)::text, s.sample_details->>'diameter', s.xref->>'diameter')",
+          '"diameter"', 0
+        ],
         diameter_unit: ["s.sample_details->>'diameter_unit'", '"diameter unit"', 0],
         storage_condition: [
           "COALESCE(s.storage_condition, s.sample_details->>'storage_condition', s.xref->>'storage_condition')",

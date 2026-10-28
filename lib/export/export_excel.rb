@@ -486,6 +486,7 @@ module Export
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     # Translates Component#parseComponentSource from the JS frontend model.
+    # SYNC: keep in sync with parseComponentSource in src/models/Component.js
     # Returns a hash with :source, :component, :weight_ratio_calc.
     def parse_component_source(source)
       return { source: source, component: nil, weight_ratio_calc: 0.0 } if source.blank?
@@ -501,12 +502,14 @@ module Export
 
     # Returns the weight ratio for a component whose source does not encode a
     # percentage — equivalent to Component#calcWeightRatioWithoutWeight.
+    # SYNC: keep in sync with calcWeightRatioWithoutWeight in src/models/Component.js
     def calc_weight_ratio_without_weight(components)
       sum = components.sum { |item| parse_component_source(item['source'].to_s)[:weight_ratio_calc] }
       100.0 - sum
     end
 
     # Replicates buildHierarchicalMaterialRows from sampleHierarchicalCompositions.js.
+    # SYNC: keep in sync with buildHierarchicalMaterialRows in src/utilities/sampleHierarchicalCompositions.js
     # Accepts an array of HierarchicalMaterial component hashes and returns
     #   { rows: [...], total_molar_calc: Float, total_molar_exp: Float }
     # Each row hash contains the keys consumed by generate_composition_table_components_sheet_with_samples.

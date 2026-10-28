@@ -429,7 +429,7 @@ module Chemotion
           end
 
           # Replace sample_details entirely so cleared keys are not preserved
-          attributes[:sample_details] = sample_details_param if sample_details_param.present?
+          attributes[:sample_details] = sample_details_param
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
