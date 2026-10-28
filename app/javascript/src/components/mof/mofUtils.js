@@ -63,7 +63,7 @@ export const buildMofid = (mof = {}) => {
   return [smiles, suffix].filter(Boolean).join(' ');
 };
 
-// Metadata edits must not discard the converter's version suffix or structure name.
+// Metadata edits must not discard the structure name after ';'.
 export const patchMofDetails = (mof = {}, patch = {}) => {
   const next = { ...mof, ...patch };
   if (buildMofid(next) !== buildMofid(mof)) next.mofid = buildMofid(next);

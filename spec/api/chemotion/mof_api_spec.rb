@@ -53,6 +53,15 @@ describe Chemotion::MofAPI do
       )
     end
 
+    it 'names the MOFid after the given filename' do
+      stub_request(:post, "#{service_url}mofid")
+        .to_return(status: 200, body: converter_response.merge('mofid.mofid' => 'test.MOFid-v1.pcu.cat0;tmp').to_json)
+
+      post '/api/v1/mof/analyze', params: { cif: "data_test\n", filename: 'framework.cif' }, as: :json
+
+      expect(parsed_json_response['mofid']).to eq('test.MOFid-v1.pcu.cat0;framework')
+    end
+
     it 'returns 503 when the converter is not configured' do
       allow(Rails.configuration).to receive(:mof_service).and_return(
         mof_config(url: nil, disabled: true),

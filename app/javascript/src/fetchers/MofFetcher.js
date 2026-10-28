@@ -48,9 +48,10 @@ export default class MofFetcher {
   /**
    * Send CIF text to the backend and return MOFid identifiers.
    * @param {string} cif - CIF file contents
+   * @param {string} [filename] - original CIF filename, used as the MOFid name
    * @returns {Promise<Object>}
    */
-  static analyze(cif) {
-    return MofFetcher.postWithTimeout('/api/v1/mof/analyze', { cif });
+  static analyze(cif, filename) {
+    return MofFetcher.postWithTimeout('/api/v1/mof/analyze', { cif, filename });
   }
 }

@@ -30,9 +30,18 @@ class MofService
   # '.'-separated smiles_nodes / smiles_linkers.
   RATIO_KEYS = %w[node_ratios linker_ratios].freeze
 
+  # The converter tags both identifiers with its build, e.g.
+  # "...MOFid-v1.tbo.cat0.mofidwrapper0.1.0-mofid36873683". The standard MOFid /
+  # MOFkey end before that tag, so it is dropped.
+  WRAPPER_SUFFIX = /\.mofidwrapper[^;\s]*/.freeze
+
   # @param cif [String, nil] the CIF file contents
-  def initialize(cif = nil)
+  # @param filename [String, nil] the uploaded CIF's original name. The MOFid's
+  #   name part (after ';') is taken from it, because the converter only sees
+  #   our temp file and rewrites names anyway (e.g. "755080 (1)" -> "755080__1").
+  def initialize(cif = nil, filename: nil)
     @cif = cif
+    @name = File.basename(filename.to_s, '.*').presence
     @service_url = Rails.configuration.mof_service&.mof_service_url if Rails.configuration.respond_to?(:mof_service)
   end
 
@@ -67,17 +76,25 @@ class MofService
 
   private
 
-  # Strip the "mofid." namespace and turn the ratio strings into integer arrays.
+  # Strip the "mofid." namespace, clean the identifiers and turn the ratio
+  # strings into integer arrays.
   def normalize(data)
-    result = data.each_with_object({}) do |(key, value), acc|
-      acc[key.delete_prefix(MOFID_PREFIX)] = value
-    end
+    result = data.transform_keys { |key| key.delete_prefix(MOFID_PREFIX) }
+    clean_identifiers!(result)
     RATIO_KEYS.each do |ratio_key|
       next if result[ratio_key].blank?
 
       result[ratio_key] = result[ratio_key].to_s.split(',').filter_map { |n| Integer(n.strip, exception: false) }
     end
     result
+  end
+
+  # Drop the converter's build tag and name the MOFid after the original file.
+  def clean_identifiers!(result)
+    %w[mofid mofkey].each do |key|
+      result[key] = result[key].to_s.sub(WRAPPER_SUFFIX, '') if result[key].present?
+    end
+    result['mofid'] = with_name(result['mofid']) if result['mofid'].present?
   end
 
   # POSTs the CIF as a multipart `file` field to the converter's /mofid endpoint
@@ -121,6 +138,13 @@ class MofService
       file.close
       file.unlink
     end
+  end
+
+  # Replace the converter's name (our random temp filename) with the original
+  # one; without an original filename, leave the name off.
+  def with_name(mofid)
+    identifier = mofid.split(';', 2).first
+    @name ? "#{identifier};#{@name}" : identifier
   end
 
   def disabled?

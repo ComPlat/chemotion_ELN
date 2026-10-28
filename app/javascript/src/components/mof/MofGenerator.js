@@ -61,7 +61,7 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
     try {
       const cif = await readFileText(file);
       if (activeRequest.current !== request) return;
-      const response = await MofFetcher.analyze(cif);
+      const response = await MofFetcher.analyze(cif, file.name);
       if (activeRequest.current !== request) return;
       if (!response?.mofid) {
         setError(response?.error || 'The MOF service could not analyze this CIF file.');

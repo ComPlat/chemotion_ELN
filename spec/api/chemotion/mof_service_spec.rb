@@ -93,6 +93,30 @@ RSpec.describe MofService do
       expect(result['linker_ratios']).to eq([4])
     end
 
+    context 'when the converter tags the identifiers with its build and temp filename' do
+      let(:tagged_response) do
+        converter_response.merge(
+          'mofid.mofid' => "#{converter_response['mofid.mofid']}.mofidwrapper0.1.0-mofid36873683;mof2026-1-abc",
+          'mofid.mofkey' => "#{converter_response['mofid.mofkey']}.mofidwrapper0.1.0-mofid36873683",
+        )
+      end
+
+      before do
+        stub_request(:post, "#{service_url}mofid").to_return(status: 200, body: tagged_response.to_json)
+      end
+
+      it 'drops the build tag and names the MOFid after the original file' do
+        result = described_class.new(cif, filename: '755080 (1).cif').analyze
+
+        expect(result['mofid']).to eq("#{converter_response['mofid.mofid']};755080 (1)")
+        expect(result['mofkey']).to eq(converter_response['mofid.mofkey'])
+      end
+
+      it 'leaves the name off when the original filename is unknown' do
+        expect(described_class.new(cif).analyze['mofid']).to eq(converter_response['mofid.mofid'])
+      end
+    end
+
     it 'posts the CIF as a multipart file field' do
       stub = stub_request(:post, "#{service_url}mofid")
              .with(headers: { 'Content-Type' => %r{\Amultipart/form-data} })

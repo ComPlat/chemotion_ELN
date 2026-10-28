@@ -26,11 +26,13 @@ module Chemotion
         optional :cif, type: String, desc: 'CIF file contents'
         optional :file, type: File, desc: 'CIF file upload'
         exactly_one_of :cif, :file
+        optional :filename, type: String, desc: 'Original CIF filename, used as the MOFid name'
       end
       post :analyze do
         mof_service_available!
 
         cif = params[:cif].presence
+        filename = params[:filename]
         tempfile = nil
 
         if cif.blank? && params[:file]
@@ -48,7 +50,7 @@ module Chemotion
 
         assert_cif_size!(cif)
 
-        result = MofService.new(cif).analyze
+        result = MofService.new(cif, filename: filename).analyze
         error!({ error: 'Failed to analyze CIF' }, 422) if result.blank? || result['mofid'].blank?
 
         result
