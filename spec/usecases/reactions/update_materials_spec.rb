@@ -589,6 +589,100 @@ describe Usecases::Reactions::UpdateMaterials do
       expect(updated_sample.target_amount_unit).to eq(wp_reference_sample.target_amount_unit)
     end
   end
+
+  # A reaction copy made by an older client sent the original's purification solvents as
+  # persisted samples; saving the copy then moved them away from the original.
+  describe 'when the payload carries a sample that another reaction uses' do
+    let(:other_collection) { create(:collection, label: 'Other', user: user) }
+    let(:original) { create(:reaction, name: 'Reaction', collections: [collection]) }
+    let(:copy) { create(:reaction, name: 'Reaction', collections: [other_collection]) }
+    let(:solvent) do
+      create(:sample, name: 'solvent', target_amount_value: 10, target_amount_unit: 'ml',
+                      container: create(:container), collections: [collection])
+    end
+    let(:material) do
+      {
+        'id' => solvent.id,
+        'name' => 'solvent',
+        'target_amount_unit' => 'ml',
+        'target_amount_value' => 3,
+        'is_new' => false,
+        'molfile' => molfile,
+        'container' => root_container,
+      }
+    end
+
+    before do
+      allow(SVG::ReactionComposer).to receive(:new).and_return(
+        instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
+      )
+    end
+
+    context 'when it is a purification solvent of the original' do
+      before do
+        ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'leaves the original reaction its sample' do
+        expect(original.reload.purification_solvents).to contain_exactly(solvent)
+        expect(solvent.reload.target_amount_value).to eq(10)
+      end
+
+      it 'gives the copy a subsample of it' do
+        copied = copy.reload.purification_solvents
+        expect(copied.size).to eq(1)
+        expect(copied.first).not_to eq(solvent)
+        expect(copied.first.parent).to eq(solvent)
+      end
+
+      it 'puts the subsample in the copy collection, with the copied amount' do
+        copied = copy.reload.purification_solvents.first
+        expect(copied.target_amount_value).to eq(3)
+        expect(copied.collections).to include(other_collection)
+      end
+    end
+
+    context 'when it is a product of the original' do
+      before do
+        ReactionsProductSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'products' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'gives the copy a new sample and leaves the original its product' do
+        expect(original.reload.products).to contain_exactly(solvent)
+        product = copy.reload.products.first
+        expect(product).not_to eq(solvent)
+        expect(product.parent).to be_nil
+      end
+    end
+
+    context 'when the sample is also linked to this reaction' do
+      before do
+        ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        ReactionsPurificationSolventSample.create!(reaction: copy, sample: solvent, position: 0)
+        described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'keeps and updates the linked sample' do
+        expect(copy.reload.purification_solvents).to contain_exactly(solvent)
+        expect(original.reload.purification_solvents).to contain_exactly(solvent)
+        expect(solvent.reload.target_amount_value).to eq(3)
+      end
+    end
+
+    context 'when a sample moves between material groups of the same reaction' do
+      before do
+        ReactionsSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(original, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'moves its row to the new group' do
+        rows = ReactionsSample.where(sample_id: solvent.id)
+        expect(rows.pluck(:reaction_id, :type)).to eq([[original.id, 'ReactionsPurificationSolventSample']])
+      end
+    end
+  end
 end
 
 # rubocop:enable Style/OpenStructUse, RSpec/MultipleMemoizedHelpers
