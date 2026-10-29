@@ -166,6 +166,8 @@ export default class ReactionDetails extends Component {
           <>
             Leaving Multi-step removes the extra steps. Their materials are kept and merged into this reaction.
             <br />
+            Eq and yields of later steps will be recalculated against the first step&apos;s reference.
+            <br />
             Switch reaction type?
           </>
         ),
