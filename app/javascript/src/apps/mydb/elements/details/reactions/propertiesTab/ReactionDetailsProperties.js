@@ -6,7 +6,6 @@ import {
 import { Select } from 'src/components/common/Select';
 import 'moment-precise-range-plugin';
 import { dangerousProductsOptions } from 'src/components/staticDropdownOptions/options';
-import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/StringTag';
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
@@ -48,7 +47,7 @@ export default class ReactionDetailsProperties extends Component {
   render() {
     const { reaction, onInputChange } = this.props;
     const typeField = (
-      <Form.Group className="mb-0">
+      <Form.Group className="mx-1 my-3">
         <Form.Label>Type (Name Reaction Ontology)</Form.Label>
         <OlsTreeSelect
           selectName="rxno"
@@ -75,14 +74,7 @@ export default class ReactionDetailsProperties extends Component {
 
     return (
       <Form>
-        <ReactionDetailsMainProperties
-          reaction={reaction}
-          onInputChange={(type, event) => onInputChange(type, event)}
-          leadingField={typeField}
-          leadingFieldColSize={9}
-          temperatureColSize={3}
-          firstStepTemperature={reaction.isMultiStep()}
-        />
+        {typeField}
         <Form.Group className="mx-1 my-3">
           <Form.Label>Dangerous products</Form.Label>
           <Select

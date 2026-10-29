@@ -49,33 +49,24 @@ export default class ReactionDetailsMainProperties extends Component {
     const {
       reaction,
       onInputChange,
-      leadingField,
-      leadingFieldColSize,
       temperatureColSize,
       showSchemeFields,
       phField,
       vesselSizeField,
       durationField,
       reactionVolumeField,
-      firstStepTemperature,
     } = this.props;
     const { temperature } = reaction;
     const { showTemperatureChart } = this.state;
     const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
-    const temperatureLocked = !permitOn(reaction) || firstStepTemperature;
 
     return (
       <>
         <Row className={rowClassName}>
-          {leadingField && (
-            <Col sm={leadingFieldColSize}>
-              {leadingField}
-            </Col>
-          )}
           <Col sm={temperatureColSize}>
             <Form.Group>
-              <Form.Label>{firstStepTemperature ? 'Temperature (Step 1)' : 'Temperature'}</Form.Label>
-              <InputGroup title={firstStepTemperature ? 'Set per step in the Scheme tab' : undefined}>
+              <Form.Label>Temperature</Form.Label>
+              <InputGroup>
                 <OverlayTrigger
                   placement="bottom"
                   overlay={(
@@ -93,12 +84,12 @@ export default class ReactionDetailsMainProperties extends Component {
                 <Form.Control
                   type="text"
                   value={reaction.temperature_display || ''}
-                  disabled={temperatureLocked}
+                  disabled={!permitOn(reaction)}
                   placeholder="Temperature..."
                   onChange={(event) => onInputChange('temperature', event)}
                 />
                 <Button
-                  disabled={temperatureLocked}
+                  disabled={!permitOn(reaction)}
                   variant="light"
                   onClick={() => this.changeUnit()}
                 >
@@ -131,14 +122,12 @@ export default class ReactionDetailsMainProperties extends Component {
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
             </Col>
-            {!firstStepTemperature && (
-              <Col>
-                <EditableTable
-                  temperature={temperature}
-                  updateTemperature={this.updateTemperature}
-                />
-              </Col>
-            )}
+            <Col>
+              <EditableTable
+                temperature={temperature}
+                updateTemperature={this.updateTemperature}
+              />
+            </Col>
           </Row>
         )}
       </>
@@ -150,27 +139,21 @@ ReactionDetailsMainProperties.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   onInputChange: PropTypes.func,
-  leadingField: PropTypes.node,
-  leadingFieldColSize: PropTypes.number,
   temperatureColSize: PropTypes.number,
   showSchemeFields: PropTypes.bool,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
   durationField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
-  firstStepTemperature: PropTypes.bool,
 };
 
 ReactionDetailsMainProperties.defaultProps = {
   reaction: {},
   onInputChange: () => {},
-  leadingField: null,
-  leadingFieldColSize: 9,
   temperatureColSize: 3,
   showSchemeFields: false,
   phField: null,
   vesselSizeField: null,
   durationField: null,
   reactionVolumeField: null,
-  firstStepTemperature: false,
 };
