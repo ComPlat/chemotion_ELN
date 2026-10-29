@@ -83,5 +83,19 @@ RSpec.describe OlsTerm do
 
       expect(described_class.where(is_enabled: false).pluck(:term_id)).to contain_exactly('CHMO:1', 'CHMO:2')
     end
+
+    it 'only looks up the term in the given ontology' do
+      other = described_class.create!(owl_name: 'rxno', term_id: 'BFO:0000002')
+      create_term('BFO:0000002')
+
+      described_class.disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
+
+      expect(term('BFO:0000002').is_enabled).to be false
+      expect(other.reload.is_enabled).to be true
+    end
+
+    it 'requires the ontology name' do
+      expect { described_class.disable_branch_by(term_id: 'BFO:0000002') }.to raise_error(ArgumentError)
+    end
   end
 end

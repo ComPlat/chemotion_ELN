@@ -215,7 +215,7 @@ module Chemotion
             file_path = params[:file][:tempfile].path
             OlsTerm.delete_owl_by_name(owl_name)
             OlsTerm.import_and_create_ols_from_file_path(owl_name, file_path)
-            OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
+            OlsTerm.disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
             # discrete settings
             nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
             nmr_13c&.update!(synonym: '13C NMR')
