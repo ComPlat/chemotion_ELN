@@ -125,7 +125,8 @@ class OlsTerm < ApplicationRecord
         OlsTerm.where(owl_name: owl_name).find_each do |o|
           next if (root = o.root) == o
           next if root.root == root
-          new_a = root.ancestry + o.ancestry
+          # both are materialized_path2 strings ("/1/2/"), so drop the duplicate separator
+          new_a = root.ancestry + o.ancestry.delete_prefix('/')
           o.update_columns(ancestry: new_a)
           count += 1
         end
