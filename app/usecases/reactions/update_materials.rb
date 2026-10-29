@@ -160,6 +160,7 @@ module Usecases
       # Create or update a single sample, dispatching to the create-subsample,
       # create-new, or update-existing path.
       def persist_sample(sample, material_group, fixed_label, target_amount)
+        treat_foreign_sample_as_new(sample, material_group)
         return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
 
         if sample.parent_id && material_group != 'product'
@@ -167,6 +168,21 @@ module Usecases
         else
           create_new_sample(sample, fixed_label, target_amount)
         end
+      end
+
+      # A persisted sample that only other reactions use must not be updated or taken over
+      # by this one: it gets a new sample instead, as when a sample is dropped onto a
+      # reaction (a subsample of it, or a new sample for a product). A reaction copy made by
+      # an older client sends the original's samples this way. A sample already linked to
+      # this reaction stays as it is, even if another reaction links it too.
+      def treat_foreign_sample_as_new(sample, material_group)
+        return if sample.is_new
+
+        reaction_ids = ReactionsSample.where(sample_id: sample.id).pluck(:reaction_id)
+        return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
+
+        sample.parent_id ||= sample.id unless material_group == 'product'
+        sample.is_new = true
       end
 
       def create_sub_sample(sample, fixed_label, target_amount = nil)
@@ -307,11 +323,10 @@ module Usecases
 
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
+        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id, reaction_id: @reaction.id)
         weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
         if existing_association
           existing_association.update!(
-            reaction_id: @reaction.id,
             # equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
