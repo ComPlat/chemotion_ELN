@@ -2910,7 +2910,7 @@ export default class ReactionDetailsScheme extends React.Component {
         {/* Interaction mode intentionally drops ontology and role fields from the scheme tab. */}
         {!isInteractionReaction && (
           <Row className="mb-3">
-            <Col sm={3}>
+            <Col sm={6}>
               <Form.Group className="">
                 <Form.Label className="text-nowrap">Type (Name Reaction)</Form.Label>
                 <OlsTreeSelect
@@ -2921,7 +2921,7 @@ export default class ReactionDetailsScheme extends React.Component {
                 />
               </Form.Group>
             </Col>
-            <Col sm={3}>
+            <Col sm={6}>
               {this.renderRole()}
             </Col>
           </Row>
