@@ -113,6 +113,10 @@ $rm-columns: (
   }
   &__yield {
     @include align-header-data(map-get($rm-columns, "yield"));
+    // The input gives way to the warning of a yield above 100 %, which shares the cell with it.
+    &-data .form-control {
+      min-width: 0;
+    }
   }
   &__volume {
     @include align-header-data(map-get($rm-columns, "volume"));
@@ -170,6 +174,10 @@ $rm-columns: (
   }
   &__ref {
     @include align-header-data(map-get($rm-columns, "ref"));
+    // A variation's reference radios (MaterialRef): disabled, so the hover goes to the cell's tooltip.
+    &-data--locked * {
+      pointer-events: none;
+    }
   }
   &__target {
     @include align-header-data(map-get($rm-columns, "target"));

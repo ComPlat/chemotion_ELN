@@ -42,6 +42,8 @@ import GenericEl from 'src/models/GenericEl';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
+import { getVariationChangeHandler }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsEditRegistry';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -780,6 +782,17 @@ class ElementStore {
     }
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
+    /*
+    A reaction variation is edited through a detached clone of its parent reaction, recognizable
+    by its registration. The saved material only exists in that clone so far: hand it back to the
+    variations tab, which diffs it into the parent, and leave the current element alone - the
+    parent's detail view is already open, and the clone must not open as an element of its own.
+    */
+    const variationChangeHandler = getVariationChangeHandler(reaction.id);
+    if (variationChangeHandler) {
+      variationChangeHandler();
+      return;
+    }
     ElementActions.handleSvgReactionChange(reaction);
     this.changeCurrentElement(reaction);
   }
@@ -804,7 +817,11 @@ class ElementStore {
     // No need to do it again here
 
     if (closeView) {
-      this.changeCurrentElement(reaction);
+      // Not for a variation's detached clone (see handleCreateSampleForReaction): it must not
+      // open as an element of its own, and the parent's detail view is already open underneath.
+      if (!getVariationChangeHandler(reaction.id)) {
+        this.changeCurrentElement(reaction);
+      }
     } else {
       this.changeCurrentElement(sample);
     }
