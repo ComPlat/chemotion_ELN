@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import expect from 'expect';
@@ -7,6 +8,11 @@ import { addMiddleware } from 'mobx-state-tree';
 
 describe('Component', () => {
   let component;
+  const originalGetState = ComponentStore.getState;
+
+  afterEach(() => {
+    ComponentStore.getState = originalGetState;
+  });
 
   beforeEach(() => {
     const mockMolecule = { id: 101, molecular_weight: 18.010564684 };
@@ -16,6 +22,37 @@ describe('Component', () => {
     component.purity = 1.0; // Set a default purity
     component.material_group = 'liquid';
     component.molecule = mockMolecule;
+  });
+
+  describe('stock-solution physical amounts', () => {
+    [1, 0.5, 0.8].forEach((purity) => {
+      it(`preserves stock volume through molar conversion and reconstruction at purity ${purity}`, () => {
+        component.purity = purity;
+        component.density = 0;
+        component.starting_molarity_value = 1;
+        component.amount_l = 0.01;
+        component.calculateAmountFromConcentration(purity);
+        expect(component.amount_mol).toBeCloseTo(0.01 * purity, 12);
+
+        component.updatePhysicalAmounts();
+        component.updatePhysicalAmounts();
+
+        expect(component.amount_l).toBeCloseTo(0.01, 12);
+        expect(component.purity).toBe(purity);
+        expect(component.starting_molarity_value).toBe(1);
+        expect(component.density).toBe(0);
+      });
+    });
+
+    it('reconstructs known mass without applying the interactive Mass lock', () => {
+      component.material_group = 'solid';
+      component.purity = 0.5;
+      component.amount_mol = 0.01;
+      component.amount_g = 99;
+      component.updatePhysicalAmounts();
+      expect(component.amount_g).toBeCloseTo(0.01 * component.molecule_molecular_weight / 0.5, 12);
+      expect(component.purity).toBe(0.5);
+    });
   });
 
   describe('has_density', () => {
@@ -33,6 +70,34 @@ describe('Component', () => {
   });
 
   describe('calculateVolumeForLiquid', () => {
+    ['amount', 'ratio', 'ratio fill'].forEach((edit) => {
+      it(`refreshes a liquid's serialized mass after a ${edit} edit`, () => {
+        component.density = 1;
+        component.amount_mol = 0.1;
+        component.amount_g = 0.1 * component.molecule_molecular_weight;
+        component.equivalent = 1;
+        if (edit === 'amount') component.handleAmountChange({ value: 0.3, unit: 'mol' }, 1);
+        else if (edit === 'ratio') component.updateRatio(3, 'liquid', 1, 0.1);
+        else component.updateAmountFromRatio(3, 0.1, 1);
+
+        const expectedMass = 0.3 * component.molecule_molecular_weight;
+        expect(component.amount_g).toBeCloseTo(expectedMass, 12);
+        expect(component.amount_l).toBeCloseTo(expectedMass / 1000, 12);
+        expect(component.serializeComponent().component_properties.amount_g).toBeCloseTo(expectedMass, 12);
+      });
+    });
+
+    it('keeps the stored solute mass current for a stock-solution ratio edit', () => {
+      component.density = 0;
+      component.starting_molarity_value = 2;
+      component.purity = 0.5;
+      component.amount_g = 999;
+      component.equivalent = 1;
+      component.updateRatio(3, 'liquid', 1, 0.1);
+      expect(component.amount_g).toBeCloseTo(0.3 * component.molecule_molecular_weight / 0.5, 12);
+      expect(component.amount_l).toBeCloseTo(0.3 / (2 * 0.5), 12);
+    });
+
     it('should calculate volume from density when density is provided', () => {
       component.density = 1.0; // g/mL
       component.amount_mol = 2; // mol
@@ -59,6 +124,27 @@ describe('Component', () => {
   describe('handleVolumeChange', () => {
     const amount = { value: 10, unit: 'ml' };
     const totalVolume = 2; // L
+
+    [1, 0.15, 0.52].forEach((purity) => {
+      it(`keeps serialized stock-liquid mass current through volume edits and clearing at purity ${purity}`, () => {
+        component.molecule = { id: 101, molecular_weight: 100 };
+        component.purity = purity;
+        component.density = 0;
+        component.starting_molarity_value = 0.5;
+        component.amount_g = 999;
+
+        [0.002, 0.004, 0].forEach((volume) => {
+          component.handleVolumeChange({ value: volume, unit: 'l' }, totalVolume);
+
+          const saved = JSON.parse(JSON.stringify(component.serializeComponent())).component_properties;
+          expect(saved.amount_l).toBe(volume);
+          expect(saved.amount_mol).toBeCloseTo(0.5 * volume * purity, 12);
+          expect(saved.amount_g).toBeCloseTo(0.5 * volume * 100, 12);
+          expect(saved.purity).toBe(purity);
+          expect(Component.componentMassInMixture(component)).toBeCloseTo(volume * 1000, 12);
+        });
+      });
+    });
 
     it('should update volume and calculate amount when the component is liquid', () => {
       component.material_group = 'liquid';
@@ -158,6 +244,35 @@ describe('Component', () => {
   });
 
   describe('handleAmountChange', () => {
+    [0, undefined].forEach((mass) => {
+      it(`initializes a solid mass from typed moles under the Mass lock, initial mass=${mass}`, () => {
+        component.material_group = 'solid';
+        component.parent_id = 'source-sample';
+        component.amount_g = mass;
+        component.purity = 0.5;
+        component.molecule.molecular_weight = 100;
+
+        component.handleAmountChange({ unit: 'mol', value: 0.01 }, 0.1, true);
+
+        expect(component.amount_mol).toBe(0.01);
+        expect(component.amount_g).toBeCloseTo(2, 12);
+        expect(component.purity).toBe(0.5);
+        expect(component.concn).toBeCloseTo(0.1, 12);
+      });
+    });
+
+    it('preserves an existing solid mass and derives purity from typed moles under the Mass lock', () => {
+      component.material_group = 'solid';
+      component.amount_g = 2;
+      component.purity = 0.9;
+      component.molecule.molecular_weight = 100;
+
+      component.handleAmountChange({ unit: 'mol', value: 0.01 }, 0.1, true);
+
+      expect(component.amount_g).toBe(2);
+      expect(component.purity).toBeCloseTo(0.5, 12);
+    });
+
     it('should set amount in mol and calculate volume if stock (starting concentration), when material group is'
       + ' liquid', () => {
       const amount = { unit: 'mol', value: 2 };
@@ -368,15 +483,15 @@ describe('Component', () => {
       component.material_group = 'liquid';
       component.amount_l = 0.2; // Volume is set
       component.amount_mol = 0.5; // Amount is set and takes priority
-      component.purity = 0.95; // Set purity to verify it doesn't affect the calculation
+      component.purity = 0.95;
 
       component.handleStartingConcChange(startingConc);
 
       expect(component.starting_molarity_value).toBe(1.5);
 
       // amount_mol should be preserved and volume should be recalculated from amount and concentration
-      // amount_l = amount_mol / starting_molarity_value (purity is not used in this calculation)
-      const expectedAmountL = 0.5 / 1.5;
+      // Volume must invert mol = concentration * volume * purity.
+      const expectedAmountL = 0.5 / (1.5 * 0.95);
       expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
 
       // amount_mol should remain unchanged
@@ -569,8 +684,7 @@ describe('Component', () => {
       const result = component.calculateRelativeMolecularWeight(sample);
 
       expect(result).toBe(null);
-      expect(component.component_properties && component.component_properties.relative_molecular_weight)
-        .toBe(undefined);
+      expect(component.relative_molecular_weight).toBe(undefined);
     });
 
     it('calculates and assigns relative molecular weight for mixtures', () => {
@@ -592,8 +706,7 @@ describe('Component', () => {
         relative_molecular_weight: 18
       });
 
-      expect(component.component_properties).toBeTruthy();
-      expect(component.component_properties.relative_molecular_weight).toBe(18);
+      expect(component.relative_molecular_weight).toBe(18);
     });
 
     it('sets relative molecular weight to 0 when inputs are zero or missing', () => {
@@ -611,7 +724,35 @@ describe('Component', () => {
         amount_mol: 0,
         relative_molecular_weight: 0
       });
-      expect(component.component_properties.relative_molecular_weight).toBe(0);
+      expect(component.relative_molecular_weight).toBe(0);
+    });
+
+    it('preserves a loaded relative molecular weight when only the total mass is unknown', () => {
+      const sample = {
+        isMixture: () => true,
+        total_mixture_mass_g: 0
+      };
+
+      component.amount_mol = 0.01;
+      component.relative_molecular_weight = 50;
+
+      const result = component.calculateRelativeMolecularWeight(sample);
+
+      expect(component.relative_molecular_weight).toBe(50);
+      expect(result.relative_molecular_weight).toBe(50);
+    });
+
+    [0, 10].forEach((totalMass) => {
+      it(`clears stale relative molecular weight for a zero amount with total mass ${totalMass}`, () => {
+        const sample = { isMixture: () => true, total_mixture_mass_g: totalMass };
+        component.amount_mol = 0;
+        component.relative_molecular_weight = 50;
+
+        const result = component.calculateRelativeMolecularWeight(sample);
+
+        expect(result.relative_molecular_weight).toBe(0);
+        expect(component.serializeComponent().component_properties.relative_molecular_weight).toBe(0);
+      });
     });
   });
 
@@ -635,6 +776,7 @@ describe('Component', () => {
           material_group: 'solid',
           reference: true,
           purity: 0.95,
+          relative_molecular_weight: 18,
           molecule: {
             id: 'mol_123',
             iupac_name: 'Test Molecule',
@@ -661,6 +803,7 @@ describe('Component', () => {
       expect(component.material_group).toBe('solid');
       expect(component.reference).toBe(true);
       expect(component.purity).toBe(0.95);
+      expect(component.relative_molecular_weight).toBe(18);
       expect(component.molecule.id).toBe('mol_123');
       expect(component.molecule.iupac_name).toBe('Test Molecule');
       expect(component.molecule.molecular_weight).toBe(100);
@@ -815,6 +958,109 @@ describe('Component', () => {
       expect(component.equivalent).toBe(2.0);
       expect(component.amount_mol).toBe(originalAmountMol);
     });
+
+    // CR-4: the Mass lock is stored under the mixture's id, which differs from a real
+    // component's parent_id (its source sample). The lock must be passed in by the caller,
+    // not looked up in the store by parent_id, or it is silently ignored.
+    it('honors the passed Mass lock for an existing solid mass regardless of parent_id', () => {
+      component.material_group = 'solid';
+      component.equivalent = 1.0;
+      component.purity = 0.9;
+      component.amount_g = 1.25;
+      component.amount_mol = 0.005;
+      component.molecule.molecular_weight = 100;
+      component.parent_id = 'source-sample'; // not the mixture id where the lock lives
+      // Lock lives under the mixture id, so a store lookup by parent_id would miss.
+      ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { mixture: true } });
+      const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+      component.updateRatio(2.0, 'solid', 10, 0.005, true);
+
+      // Mass stays put, purity is derived from the new amount: 0.01 * 100 / 1.25 = 0.8.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBe(1.25);
+      expect(component.purity).toBeCloseTo(0.8, 6);
+      sinon.assert.calledOnce(purityUpdate);
+      purityUpdate.restore();
+    });
+
+    it('recalculates an existing solid mass when the Mass lock is passed as false', () => {
+      component.material_group = 'solid';
+      component.equivalent = 1.0;
+      component.purity = 0.9;
+      component.amount_g = 1.25;
+      component.amount_mol = 0.005;
+      component.molecule.molecular_weight = 100;
+      component.parent_id = 'source-sample';
+
+      component.updateRatio(2.0, 'solid', 10, 0.005, false);
+
+      // Unlocked: mass is recomputed from the new amount and purity.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBeCloseTo((0.01 * 100) / 0.9, 6);
+    });
+  });
+
+  describe('updateAmountFromRatio', () => {
+    [true, false].forEach((locked) => {
+      it(`fills a solid's mass without changing purity with Mass locked=${locked}`, () => {
+        component.material_group = 'solid';
+        component.parent_id = 'ratio-sample';
+        component.amount_g = 0;
+        component.amount_mol = 0;
+        component.equivalent = 2;
+        component.purity = 0.5;
+        component.molecule.molecular_weight = 100;
+        ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { 'ratio-sample': locked } });
+        const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+        component.updateAmountFromRatio(2, 0.01, 0.01);
+
+        expect(component.amount_mol).toBeCloseTo(0.02, 12);
+        expect(component.amount_g).toBeCloseTo(4, 12);
+        expect(component.purity).toBe(0.5);
+        expect(component.equivalent).toBe(2);
+        sinon.assert.notCalled(purityUpdate);
+      });
+    });
+
+    // S17: a Mass-locked solid that already has a mass but no amount must keep its mass when
+    // the amount is filled from the ratio; purity is derived instead of the mass being overwritten.
+    it('keeps an existing solid mass and derives purity when the Mass lock is passed as true', () => {
+      component.material_group = 'solid';
+      component.parent_id = 'source-sample'; // not the mixture id; lock must be passed in
+      component.amount_g = 1.25;
+      component.amount_mol = 0;
+      component.equivalent = 1;
+      component.purity = 0.5;
+      component.molecule.molecular_weight = 100;
+      const purityUpdate = sinon.spy(component, 'updatePurityFromAmount');
+
+      component.updateAmountFromRatio(1, 0.01, 0.01, true);
+
+      // Mass stays put; purity is re-derived: 0.01 * 100 / 1.25 = 0.8.
+      expect(component.amount_mol).toBeCloseTo(0.01, 12);
+      expect(component.amount_g).toBe(1.25);
+      expect(component.purity).toBeCloseTo(0.8, 6);
+      sinon.assert.calledOnce(purityUpdate);
+      purityUpdate.restore();
+    });
+
+    it('overwrites an existing solid mass when the Mass lock is passed as false', () => {
+      component.material_group = 'solid';
+      component.parent_id = 'source-sample';
+      component.amount_g = 1.25;
+      component.amount_mol = 0;
+      component.equivalent = 1;
+      component.purity = 0.5;
+      component.molecule.molecular_weight = 100;
+
+      component.updateAmountFromRatio(1, 0.01, 0.01, false);
+
+      // Unlocked: mass is recomputed from the filled amount and purity.
+      expect(component.amount_g).toBeCloseTo((0.01 * 100) / 0.5, 6);
+      expect(component.purity).toBe(0.5);
+    });
   });
 
   describe('updateRatioFromReference', () => {
@@ -852,24 +1098,51 @@ describe('Component', () => {
       expect(component.equivalent).toBeCloseTo(2.0, 6); // 1.0 / 0.5
     });
 
-    it('should set ratio to 0 when reference amount is invalid', () => {
+    it('should set ratio to n.d when reference amount is invalid', () => {
       const referenceComponent = { id: 'ref_123', amount_mol: 0 };
       component.id = 'comp_123';
       component.amount_mol = 1.0;
 
       component.updateRatioFromReference(referenceComponent);
 
-      expect(component.equivalent).toBe(0);
+      expect(component.equivalent).toBe('n.d');
     });
 
-    it('should set ratio to 0 when current amount is invalid', () => {
-      const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
+    // S16: a ratio typed before the reference had an amount must survive a later edit
+    // (e.g. a purity change) that re-derives ratios while the reference is still empty.
+    it('preserves a positive typed ratio when the reference has no amount', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0 };
       component.id = 'comp_123';
-      component.amount_mol = NaN;
+      component.amount_mol = 0;
+      component.equivalent = 2;
 
       component.updateRatioFromReference(referenceComponent);
 
-      expect(component.equivalent).toBe(0);
+      expect(component.equivalent).toBe(2);
+    });
+
+    it('sets n.d when the reference has no amount and no positive ratio was typed', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0 };
+      component.id = 'comp_123';
+      component.amount_mol = 0;
+      component.equivalent = 'n.d';
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe('n.d');
+    });
+
+    [0, null, NaN].forEach((amount) => {
+      it(`should set ratio to n.d when current amount is ${amount}`, () => {
+        const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
+        component.id = 'comp_123';
+        component.amount_mol = amount;
+
+        component.updateRatioFromReference(referenceComponent);
+
+        expect(component.equivalent).toBe('n.d');
+        expect(component.amount_mol).toBe(amount);
+      });
     });
   });
 
@@ -887,34 +1160,36 @@ describe('Component', () => {
   });
 
   describe('calculateMassFromAmount', () => {
-    it('should update purity when lockAmountColumnSolids is true', () => {
+    it('updates purity when the Mass lock is passed as true', () => {
       component.amount_mol = 0.1;
       component.amount_g = 2.0;
       component.molecule.molecular_weight = 18.015;
-      component.parent_id = 'sample_123';
 
-      // Mock store state with proper structure
-      ComponentStore.getState = () => ({
-        lockAmountColumnSolidsBySample: {
-          sample_123: true,
-        },
-      });
-
-      component.calculateMassFromAmount(component.purity);
+      component.calculateMassFromAmount(component.purity, true);
 
       const expectedPurity = (0.1 * 18.015) / 2.0;
       expect(component.purity).toBeCloseTo(expectedPurity, 6);
     });
 
-    it('should calculate mass when lockAmountColumnSolids is false', () => {
+    it('calculates mass when the Mass lock is passed as false', () => {
       component.amount_mol = 0.1;
       component.molecule.molecular_weight = 18.015;
       component.purity = 0.9;
 
-      // Mock store state
-      ComponentStore.getState = () => ({
-        lockAmountColumnSolids: false,
-      });
+      component.calculateMassFromAmount(component.purity, false);
+
+      const expectedMass = (0.1 * 18.015) / 0.9;
+      expect(component.amount_g).toBeCloseTo(expectedMass, 6);
+    });
+
+    it('defaults to unlocked (recomputes mass) when no lock is passed', () => {
+      component.amount_mol = 0.1;
+      component.amount_g = 2.0;
+      component.molecule.molecular_weight = 18.015;
+      component.purity = 0.9;
+      // parent_id must no longer be consulted; a lock stored under it is ignored.
+      component.parent_id = 'sample_123';
+      ComponentStore.getState = () => ({ lockAmountColumnSolidsBySample: { sample_123: true } });
 
       component.calculateMassFromAmount(component.purity);
 
@@ -924,6 +1199,27 @@ describe('Component', () => {
   });
 
   describe('updatePurityFromAmount', () => {
+    [
+      { label: 'empty mass', mass: 0, amount: 0.01 },
+      { label: 'zero divided by zero', mass: 0, amount: 0 },
+      { label: 'missing mass', mass: undefined, amount: 0.01 },
+      { label: 'negative mass', mass: -1, amount: 0.01 },
+      { label: 'infinite mass', mass: Infinity, amount: 0.01 },
+      { label: 'cleared amount', mass: 1, amount: 0 },
+      { label: 'invalid amount', mass: 1, amount: NaN },
+      { label: 'infinite amount', mass: 1, amount: Infinity },
+    ].forEach(({ label, mass, amount }) => {
+      it(`keeps the entered purity for ${label}`, () => {
+        component.amount_g = mass;
+        component.amount_mol = amount;
+        component.purity = 0.4;
+
+        component.updatePurityFromAmount();
+
+        expect(component.purity).toBe(0.4);
+      });
+    });
+
     it('should update purity correctly when calculated purity is <= 1', () => {
       component.amount_mol = 0.1;
       component.amount_g = 2.0;
@@ -1144,12 +1440,13 @@ describe('Component', () => {
   });
 
   describe('resetAmounts', () => {
-    it('sets amount_mol, amount_g, amount_l, molarity_value, and concn to 0', () => {
+    it('sets amount_mol, amount_g, amount_l, molarity_value, concn, and equivalent to 0', () => {
       component.amount_mol = 0.05;
       component.amount_g = 9.0;
       component.amount_l = 0.005;
       component.molarity_value = 0.5;
       component.concn = 0.5;
+      component.equivalent = 2.0;
 
       component.resetAmounts();
 
@@ -1158,17 +1455,16 @@ describe('Component', () => {
       expect(component.amount_l).toBe(0);
       expect(component.molarity_value).toBe(0);
       expect(component.concn).toBe(0);
+      expect(component.equivalent).toBe(0);
     });
 
-    it('does not affect purity, equivalent, or other fields', () => {
+    it('does not affect purity or density', () => {
       component.purity = 0.98;
-      component.equivalent = 2.0;
       component.density = 1.2;
 
       component.resetAmounts();
 
       expect(component.purity).toBe(0.98);
-      expect(component.equivalent).toBe(2.0);
       expect(component.density).toBe(1.2);
     });
   });

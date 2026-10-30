@@ -2,6 +2,12 @@ module UnitConvertable
   extend ActiveSupport::Concern
 
   def convert_to_unit amount_g, unit, m = false
+    if sample_type == Sample::SAMPLE_TYPE_MIXTURE && unit == 'mol'
+      weight = mixture_relative_molecular_weight
+      return nil unless weight
+
+      return amount_g / weight * (m ? 1000 : 1)
+    end
     val = if self.contains_residues
       case unit
       when 'g'
@@ -68,8 +74,7 @@ module UnitConvertable
           0
         end
       when 'mol'
-        mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
-        value / (purity || 1.0) * mol_weight
+        convert_moles_to_gram(value)
       else
         value
       end
@@ -125,5 +130,25 @@ module UnitConvertable
 
     val_g = self.convert_to_gram(value, unit)
     self.convert_to_unit(val_g, 'l', true)
+  end
+
+  # Relative MW includes the whole mixture's solvent mass and component purity.
+  def mixture_relative_molecular_weight
+    reference = components.find { |component| component.component_properties['reference'] == true } ||
+                components.min_by { |component| component.position.to_i }
+    properties = reference ? reference.component_properties : {}
+    weight = Float(properties['relative_molecular_weight'], exception: false)
+    weight if weight.to_f.positive? && weight.to_f.finite?
+  end
+
+  private
+
+  def convert_moles_to_gram(value)
+    return value * (mixture_relative_molecular_weight || 0) if sample_type == Sample::SAMPLE_TYPE_MIXTURE
+
+    mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
+    # Match the UI's default for nil/zero purity instead of dividing by zero.
+    secure_purity = purity.to_f.zero? ? 1.0 : purity
+    value / secure_purity * mol_weight
   end
 end

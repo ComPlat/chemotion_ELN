@@ -442,6 +442,57 @@ RSpec.describe Sample do
     end
   end
 
+  describe 'mixture molar conversions' do
+    let(:mixture) do
+      create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, purity: 0.5, density: 1, molarity_value: 0,
+                      real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'g')
+    end
+    let!(:reference_component) do
+      mixture.components.create!(
+        position: 0,
+        component_properties: {
+          molecule_id: mixture.molecule_id, reference: true,
+          relative_molecular_weight: 500, amount_mol: 0.02
+        },
+      )
+    end
+
+    [['g', 10], ['mg', 10_000], ['l', 0.01], ['mol', 0.02]].each do |unit, amount|
+      it "uses the reference relative MW to convert #{unit}, including component purity only once" do
+        expect(mixture.convert_amount_to_mol(amount, unit)).to eq(0.02)
+      end
+    end
+
+    it 'converts between mixture grams and mmol using the same basis' do
+      expect(mixture.amount_mmol).to eq(20)
+      expect(mixture.convert_to_gram(0.02, 'mol')).to eq(10)
+    end
+
+    it 'uses the selected reference component when it is not at position zero' do
+      properties = reference_component.component_properties.merge('reference' => false)
+      reference_component.update!(component_properties: properties)
+      mixture.components.create!(
+        position: 1,
+        component_properties: {
+          molecule_id: mixture.molecule_id, reference: true,
+          relative_molecular_weight: 250, amount_mol: 0.04
+        },
+      )
+      mixture.reload
+      expect(mixture.amount_mmol).to eq(40)
+      expect(mixture.convert_amount_to_mol(10, 'g')).to eq(0.04)
+    end
+
+    it 'leaves mass-based moles unknown if a legacy component has no valid relative MW' do
+      properties = reference_component.component_properties.except('relative_molecular_weight')
+      reference_component.update!(component_properties: properties)
+      mixture.reload
+      expect(mixture.amount_mmol).to be_nil
+      expect(mixture.convert_amount_to_mol(10, 'g')).to be_nil
+      expect(mixture.convert_amount_to_mol(0.02, 'mol')).to eq(0.02)
+    end
+  end
+
   describe '#convert_amount_to_mol' do
     let(:molecule) { create(:molecule, molecular_weight: 100.0) }
     let(:sample) { create(:sample, molecule: molecule, purity: 1.0, density: 1.2, molarity_value: 0.5) }
@@ -546,6 +597,18 @@ RSpec.describe Sample do
   describe 'unit conversion helper methods' do
     let(:molecule) { create(:molecule, molecular_weight: 180.0) }
     let(:sample) { create(:sample, molecule: molecule, purity: 0.9, density: 1.1, molarity_value: 2.0) }
+
+    describe 'mass from a molar amount' do
+      { nil => 1.8, 0.0 => 1.8, 1.0 => 1.8, 0.8 => 2.25 }.each do |purity, expected_mass|
+        it "calculates report mass with purity #{purity.inspect}" do
+          sample.purity = purity
+          sample.real_amount_value = 0.01
+          sample.real_amount_unit = 'mol'
+
+          expect(sample.amount_g(:real)).to be_within(1e-9).of(expected_mass)
+        end
+      end
+    end
 
     describe '#convert_liters_to_moles' do
       it 'uses molarity when available' do

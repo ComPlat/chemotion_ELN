@@ -34,4 +34,13 @@ const sampleAssociationMoveNotification = () => ({
   position: 'tr',
 });
 
-export { sampleAssociationLockNotification, sampleAssociationMoveNotification };
+const mixtureReactionConflictNotification = () => ({
+  title: 'Mixture changed in the reaction',
+  message: 'The reaction material changed while this mixture was open. '
+    + 'Your edits have been kept. Reopen the mixture from the reaction and reapply them before saving.',
+  level: 'warning',
+  autoDismiss: 10,
+  position: 'tr',
+});
+
+export { sampleAssociationLockNotification, sampleAssociationMoveNotification, mixtureReactionConflictNotification };

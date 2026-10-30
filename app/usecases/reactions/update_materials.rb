@@ -66,9 +66,9 @@ module Usecases
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
-      attr_reader :current_user
+      attr_reader :current_user, :material_id_map
 
-      def initialize(reaction, materials, user, vessel_size)
+      def initialize(reaction, materials, user, vessel_size, preserve_removed_sample_ids: [])
         @reaction = reaction
         @materials = {
           starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
@@ -80,6 +80,8 @@ module Usecases
         }
         @current_user = user
         @vessel_size = vessel_size
+        @material_id_map = {}
+        @preserved_sample_ids = Array(preserve_removed_sample_ids)
       end
 
       def execute!
@@ -119,6 +121,7 @@ module Usecases
                 )
 
                 reconcile_mixture_components(modified_sample, sample)
+                record_material_ids(sample, modified_sample)
 
                 if sample.segments
                   modified_sample.save_segments(segments: sample.segments,
@@ -144,6 +147,17 @@ module Usecases
         return unless container
 
         sample.container = update_datamodel(container, element: sample, creating: creating)
+      end
+
+      def record_material_ids(sample, modified_sample)
+        return unless sample.is_new && sample.id
+
+        component_ids = Array(sample.components).map { |component| component['id'] || component[:id] }
+        persisted_ids = modified_sample.components.order(:id).pluck(:id)
+        @material_id_map[sample.id] = {
+          id: modified_sample.id,
+          component_ids: component_ids.zip(persisted_ids).to_h,
+        }
       end
 
       # Reconcile a mixture sample's persisted components with the client payload,
@@ -358,7 +372,10 @@ module Usecases
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
         sample_ids_to_delete = current_sample_ids - modified_sample_ids
-        Sample.where(id: sample_ids_to_delete).destroy_all
+        preserved = Sample.where(id: sample_ids_to_delete & @preserved_sample_ids,
+                                 sample_type: Sample::SAMPLE_TYPE_MIXTURE).pluck(:id)
+        @reaction.reactions_samples.where(sample_id: preserved).destroy_all
+        Sample.where(id: sample_ids_to_delete - preserved).destroy_all
       end
 
       def destroy_unused_sbmm_samples(modified_sbmm_ids)

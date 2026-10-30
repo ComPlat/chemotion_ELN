@@ -49,7 +49,10 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
-import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
+import {
+  sampleAssociationLockNotification,
+  mixtureReactionConflictNotification
+} from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 
@@ -63,7 +66,23 @@ const handleFetch = (dispatch, fetch) => {
     })
 }
 
-class ElementActions {
+// Resource tags identify links, not roles. Read the linked reaction to confirm product membership.
+const loadMixtureReactionContext = async (sample) => {
+  if (!sample.isMixture()) return;
+  let reaction = sample.resolveReactionContext();
+  if (!reaction) {
+    const ids = [...new Set((sample.tag?.taggable_data?.resources || [])
+      .filter((resource) => resource.resource_context_type === 'Reaction' && resource.resource_context_id != null)
+      .map((resource) => resource.resource_context_id))];
+    const results = await Promise.allSettled(ids.map((id) => ReactionsFetcher.fetchById(id, { updateStores: false })));
+    const linked = results.filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value).filter((element) => element.samples?.some((entry) => entry.id === sample.id));
+    reaction = linked.find((element) => element.products?.some((entry) => entry.id === sample.id)) || linked[0];
+  }
+  if (reaction) sample.mixtureReactionContext = reaction;
+};
+
+export class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
       GenericElsFetcher.export(element, klass, exportFormat)
@@ -401,14 +420,13 @@ class ElementActions {
   // -- Samples --
 
   fetchSampleById(id) {
-    return (dispatch) => {
-      SamplesFetcher.fetchById(id)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
+    return (dispatch) => SamplesFetcher.fetchById(id)
+      .then(async (result) => {
+        await loadMixtureReactionContext(result);
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   createSample(params, closeView = false) {
@@ -459,6 +477,20 @@ class ElementActions {
 
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
+      const currentReaction = sample.isMixture() ? sample.resolveReactionContext(reaction) : reaction;
+      const wasDetachedDraft = sample.isDetachedMixtureDraft;
+      sample.rebindReactionMixtureDraft(currentReaction);
+
+      if (wasDetachedDraft && !sample.isDetachedMixtureDraft) {
+        const action = sample.isNew ? 'createSample' : 'updateSample';
+        return ElementActions.dispatcher[action](sample, closeView);
+      }
+      if (sample.hasReactionMixtureConflict(currentReaction)) {
+        rootStore.notificationsStore.add(mixtureReactionConflictNotification());
+        LoadingActions.stop();
+        return;
+      }
+
       try {
         // Save components first if it's a mixture and capture the API response so
         // newly inserted rows pick up their real DB ids on subsequent saves.
@@ -469,6 +501,8 @@ class ElementActions {
 
         // Update sample
         const newSample = await SamplesFetcher.update(sample);
+        // Keep subsequent editor saves attached to the reaction after the API replaces the sample.
+        newSample.belongTo = currentReaction;
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
@@ -476,14 +510,47 @@ class ElementActions {
           newSample.initialComponents(refreshed);
         }
 
-        // Update the material in the reaction and dispatch
-        reaction.updateMaterial(newSample);
-        reaction.changed = true;
+        // Keep a saved mixture editor independent of subsequent reaction edits.
+        const reactionMaterial = newSample.isMixture()
+          ? new Sample(_.cloneDeep(_.omit(newSample, ['belongTo']))) : newSample;
+        currentReaction.updateMaterial(reactionMaterial);
+        currentReaction.changed = true;
+
+        // Persist only the edited mixture's existing association, keeping other
+        // reaction edits pending until the user saves from the reaction toolbar.
+        const material = currentReaction.sampleById(newSample.id);
+        let equivalentSaveFailed = false;
+        if (newSample.isMixture() && !currentReaction.isNew && currentReaction._persistedMaterialIds?.has(material?.id)
+          && Number.isFinite(material?.equivalent)) {
+          try {
+            await ReactionsFetcher.updateMaterialEquivalent(currentReaction.id, material.id, material.equivalent);
+          } catch (errorMessage) {
+            // The mixture is already saved. Refresh its draft baseline even if this
+            // separate association update fails, so the user can retry without a conflict.
+            equivalentSaveFailed = true;
+            console.log(errorMessage);
+            rootStore.notificationsStore.add({
+              title: 'Mixture saved; reaction equivalent not saved',
+              message: 'Your mixture changes were saved. Retry saving this mixture or save the reaction '
+                + 'to update its equivalent.',
+              level: 'warning',
+              position: 'tr',
+              autoDismiss: 10,
+            });
+            LoadingActions.stop();
+          }
+        }
+
+        if (sample.isDetachedMixtureDraft) {
+          newSample.isDetachedMixtureDraft = true;
+          newSample._mixtureDraftSourceState = currentReaction.sampleById(newSample.id).mixtureReactionState();
+          newSample.updateChecksum();
+        }
 
         dispatch({
-          reaction,
+          reaction: currentReaction,
           sample: newSample,
-          closeView,
+          closeView: equivalentSaveFailed ? false : closeView,
         });
       } catch (errorMessage) {
         console.log(errorMessage);
@@ -497,7 +564,10 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView, components: params.components })
+          if (params.isMixture()){
+            result.mixtureReactionContext = params.resolveReactionContext();
+          }
+          dispatch({ element: result, closeView, components: params.components });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           // Ensure loading stops even on error
@@ -579,16 +649,41 @@ class ElementActions {
 
   showReactionMaterial(params) {
     const sampleCoefficient = params.sample.coefficient;
-    return (dispatch) => {
-      SamplesFetcher.fetchById(params.sample.id)
-        .then((result) => {
-          params.coefficient = sampleCoefficient;
-          params.sample = result;
-          dispatch(params);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        })
-    }
+    return async (dispatch) => {
+      try {
+        const material = params.sample;
+        // New reaction portions have temporary IDs and no server record to overwrite.
+        const isNewMixture = material.isMixture() && material.isNew;
+        const fetched = isNewMixture ? material : await SamplesFetcher.fetchById(material.id);
+        let sample = fetched;
+        if (material.isMixture()) {
+          // Fetch non-quantity fields so saving cannot write an old reaction copy over newer sample details.
+          sample = new Sample(_.cloneDeep(_.omit(fetched, ['belongTo', '_equivalent', 'reference'])));
+          let components = sample.components || [];
+          if (!sample.hasComponents() && !isNewMixture) {
+            components = await ComponentsFetcher.fetchComponentsBySampleId(sample.id);
+          }
+          sample.initialComponents(components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          sample.applyReactionMixtureQuantities(material);
+          sample.isDetachedMixtureDraft = true;
+          sample._mixtureDraftSourceState = material.mixtureReactionState();
+          sample.updateChecksum();
+        }
+        params.sample = sample;
+        params.coefficient = sampleCoefficient;
+        dispatch(params);
+      } catch (errorMessage) {
+        console.log(errorMessage);
+        rootStore.notificationsStore.add({
+          title: 'Could not open reaction material',
+          message: String(errorMessage.message || errorMessage),
+          level: 'warning',
+          position: 'tr',
+        });
+      }
+    };
   }
 
   importSamplesFromFile(params) {
@@ -1458,4 +1553,5 @@ class ElementActions {
   }
 }
 
-export default alt.createActions(ElementActions);
+ElementActions.dispatcher = alt.createActions(ElementActions);
+export default ElementActions.dispatcher;

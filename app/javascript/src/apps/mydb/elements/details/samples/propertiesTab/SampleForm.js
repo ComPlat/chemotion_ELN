@@ -93,9 +93,9 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form.Check
-        className={className}
+        className={`${className} d-inline-flex align-items-center gap-2`}
         style={{ margin: 0 }}
-        type="checkbox"
+        type="switch"
         id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
@@ -186,7 +186,14 @@ export default class SampleForm extends React.Component {
     const { handleSampleChanged } = this.props;
 
     const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
-    sample.setTotalMixtureVolume(totalVolume);
+    if (sample.setTotalMixtureVolume(totalVolume) === false) {
+      this.context.notifications.add({
+        title: 'Product mass kept',
+        message: 'This total volume leaves no mass for the components or exceeds the fixed product mass. '
+          + 'Reduce the volume or check the mixture composition.',
+        level: 'warning',
+      });
+    }
 
     // Trigger React re-render by calling handleSampleChanged directly
     // This ensures the UI updates to show the new concentration values
@@ -1066,6 +1073,8 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureVolume(sample) {
     const isDisabled = sample.isMethodDisabled('amount_value') || !sample.can_update;
+    const totalVolume = sample.sample_details?.total_mixture_volume_l
+      ?? (sample.amount_unit === 'l' ? sample.amount_value : 0);
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
@@ -1074,7 +1083,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <NumeralInputWithUnitsCompo
-        value={sample.amount_l}
+        value={totalVolume}
         unit="l"
         label="Total volume"
         metricPrefix={prefix}
@@ -1100,9 +1109,10 @@ export default class SampleForm extends React.Component {
 
     if (isDisabled) return null;
 
-    // Pass null/undefined when density is not set, so it displays as "n.d."
-    // Only pass the actual value if density is set (including 0)
-    const density = (sample.density != null && sample.density !== '') ? sample.density : null;
+    // A legacy density alone does not establish an entered mixture volume.
+    const totalVolume = sample.sample_details?.total_mixture_volume_l
+      ?? (sample.amount_unit === 'l' ? sample.amount_value : 0);
+    const density = totalVolume > 0 && sample.density != null && sample.density !== '' ? sample.density : null;
 
     return (
       <div>
@@ -1161,7 +1171,30 @@ export default class SampleForm extends React.Component {
         <NumeralInputWithUnitsCompo
           value={massG}
           unit="g"
-          label="Total mixture mass"
+          label={(
+            <>
+              Total mixture mass
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id={`info-total-mixture-mass-${sample.id}`}>
+                    <p className="mb-2">Total mass = solids + liquids (volume × density).</p>
+                    <p className="mb-2">
+                      Liquids and internal solvents without a density, including stock solutions, are counted at 1 g/ml.
+                    </p>
+                    <p className="mb-0">
+                      With a Total volume entered, the liquid mass is topped up to Total volume × 1 g/ml if needed,
+                      instead of adding internal solvents separately.
+                    </p>
+                  </Tooltip>
+                )}
+              >
+                <Button variant="link" className="p-0 ms-1" aria-label="How total mixture mass is calculated">
+                  <i className="fa fa-info-circle" aria-hidden="true" />
+                </Button>
+              </OverlayTrigger>
+            </>
+          )}
           metricPrefix="m"
           metricPrefixes={['m', 'n', 'u']}
           precision={6}

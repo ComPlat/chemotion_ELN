@@ -717,6 +717,14 @@ class ElementStore {
   handleFetchSampleById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
       if (result.isMixture()) {
+        // Normalize embedded API components before rendering can change their shape and checksum.
+        if (result.hasComponents()) {
+          const pendingToSave = result.isPendingToSave;
+          result.initialComponents(result.components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          if (pendingToSave) result.changed = true;
+        }
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -727,7 +735,13 @@ class ElementStore {
               };
               return new Component(sampleData);
             });
+            // Reaction quantities or local edits may change while this fetch is in flight.
+            const pendingToSave = result.isPendingToSave;
             await result.initialComponents(sampleComponents);
+            if (pendingToSave) {
+              result.syncMixtureComponentAmounts();
+              result.changed = true;
+            }
             if (this.state.currentElement === result) {
               this.setState({ currentElement: result });
             }
@@ -940,7 +954,9 @@ class ElementStore {
       return { refreshCoefficient: updatedCoefficient };
     });
 
-    if (sample.isMixture()) {
+    const componentsLoaded = sample.hasComponents()
+      && sample.components.every((component) => component instanceof Component);
+    if (sample.isMixture() && !componentsLoaded) {
       ComponentsFetcher.fetchComponentsBySampleId(sample.id)
         .then(async (components) => {
           const sampleComponents = components.map((component) => {
@@ -1745,7 +1761,9 @@ class ElementStore {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
       const openedReaction = selecteds.find((el) => SameEleTypId(el, { type: 'reaction', id: rId }));
-      if (openedReaction) {
+      // Detached mixture drafts are applied by their save action, never by switching
+      // or closing tabs (including Discard). Sample-list mixtures still synchronize.
+      if (openedReaction && !previous.isDetachedMixtureDraft) {
         if (refreshCoefficient && refreshCoefficient.length > 0) {
           refreshCoefficient.forEach((element) => {
             if (element.sId === previous.id) {
@@ -1778,16 +1796,46 @@ class ElementStore {
     }
 
     if (previous instanceof Reaction) {
-      const { samples } = previous;
+      const reaction = selecteds.find((element) => SameEleTypId(element, previous)) || previous;
+      const { samples } = reaction;
       selecteds.map((nextSample) => {
+        if (nextSample instanceof Sample && nextSample.isDetachedMixtureDraft) {
+          nextSample.rebindReactionMixtureDraft(reaction);
+        }
         const previousSample = samples.find((s) => SameEleTypId(nextSample, s));
-        if (previousSample) {
+        if (previousSample && nextSample.isMixture() && nextSample.isDetachedMixtureDraft) {
+          // Rebind even when preserving a dirty draft or when the quantity is unchanged.
+          nextSample.belongTo = reaction;
+          const sourceState = previousSample.mixtureReactionState();
+          // Keep unsaved composition edits. The save guard will report a conflict
+          // if the reaction quantity or reference changed since this draft opened.
+          if (nextSample.isPendingToSave
+            || Sample.sameMixtureReactionState(nextSample._mixtureDraftSourceState, sourceState)) return nextSample;
+
+          try {
+            nextSample.applyReactionMixtureQuantities(previousSample);
+          } catch (error) {
+            // Keep the loaded draft when its composition no longer matches the reaction.
+            // Its unchanged baseline lets the save conflict guard explain the mismatch.
+            return nextSample;
+          }
+          nextSample._mixtureDraftSourceState = sourceState;
+          nextSample.updateChecksum();
+        } else if (previousSample) {
+          const mixtureAmountChanged = nextSample.isMixture()
+            && (nextSample.amount_value !== previousSample.amount_value
+              || nextSample.amount_unit !== previousSample.amount_unit);
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;
           nextSample.density = previousSample.density;
           nextSample._molarity_unit = previousSample._molarity_unit;
           nextSample._molarity_value = previousSample._molarity_value;
+          if (nextSample.isMixture()) {
+            nextSample.syncMixtureComponentAmounts();
+            // Numeric-only edits need an explicit flag, including before components load.
+            if (mixtureAmountChanged) nextSample.changed = true;
+          }
         }
         return nextSample;
       });
