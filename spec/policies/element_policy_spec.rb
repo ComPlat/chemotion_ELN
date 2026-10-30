@@ -145,6 +145,24 @@ describe ElementPolicy do
     end
   end
 
+  describe '#copy_with_datasets?' do
+    let(:plan) { create(:research_plan, collections: [own_collection_of_other_user]) }
+
+    permissions = %i[read_elements edit_elements]
+    [1, 2, 3, 10].each do |detail|
+      permissions.each do |permission|
+        it "checks #{permission} and research-plan detail level #{detail}" do
+          create(:collection_share, collection: own_collection_of_other_user, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(permission),
+                                    researchplan_detail_level: detail)
+
+          allowed = permission == :edit_elements && detail >= 3
+          expect(described_class.new(user, plan).copy_with_datasets?).to be(allowed)
+        end
+      end
+    end
+  end
+
   describe '#share?' do
     context 'when the record is in an own collection' do
       before { own_collection_of_user.screens << screen }

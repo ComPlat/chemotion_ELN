@@ -193,6 +193,22 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
   context 'when updating a container directly' do
     let(:plan) { create(:research_plan, creator: user, collections: [collection]) }
 
+    it 'moves own inbox files through the container dialog save endpoint' do
+      inbox_root = create(:inbox_container_root, containable: user)
+      device_box = create(:inbox_container, parent: inbox_root)
+      inbox_dataset = create(:container, parent: device_box, container_type: 'dataset')
+      files = create_list(:attachment, 2, attachable: inbox_dataset, created_for: user.id)
+      children = dataset_tree(files.map { |file| { id: file.id, is_new: false } })
+
+      put '/api/v1/containers/container', params: {
+        container: { id: plan.container.id, children: children },
+      }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(files.map { |file| file.reload.root_element }).to eq([plan, plan])
+      expect(inbox_dataset.reload.attachments).to be_empty
+    end
+
     it 'skips foreign attachment moves and deletes within an own root' do
       [false, true].each do |deleted|
         container = { id: plan.container.id, children: dataset_tree(

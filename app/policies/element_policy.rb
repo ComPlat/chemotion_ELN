@@ -59,6 +59,10 @@ class ElementPolicy
       (record_shared_with_at_least?(:edit_elements) && record_shared_with_minimum_detail_level?(1))
   end
 
+  def copy_with_datasets?
+    copy? && read_dataset?
+  end
+
   # "Propagate this element onward" — the right to carry it into another collection. Bundled with
   # add_elements: being allowed to add an element somewhere is the same right as being allowed to
   # take it from where it is.

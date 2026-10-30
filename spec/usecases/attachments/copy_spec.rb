@@ -10,9 +10,10 @@ describe Usecases::Attachments::Copy do
 
   describe '.execute!' do
     let(:attachments) { [{ id: source.id }] }
+    let(:source_plan_id) { source_plan.id }
 
     before do
-      described_class.execute!(attachments, research_plan, user)
+      described_class.execute!(attachments, research_plan, user, source_plan_id: source_plan_id)
     end
 
     context 'when the attachment ID does not exist' do
@@ -74,6 +75,7 @@ describe Usecases::Attachments::Copy do
 
     context 'when the source research plan is not readable' do
       let(:collection) { create(:collection) }
+      let(:source_plan_id) { nil }
       let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
 
       it 'does not copy the attachment even if it was uploaded for the current user' do
@@ -83,6 +85,7 @@ describe Usecases::Attachments::Copy do
 
     context 'when the body references an unreadable image more than once' do
       let(:collection) { create(:collection) }
+      let(:source_plan_id) { nil }
       let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
       let(:text_field) do
         { 'type' => 'richtext', 'value' => { 'ops' => [{ 'insert' => "Keep this text\n" }] } }
@@ -113,8 +116,7 @@ describe Usecases::Attachments::Copy do
     end
 
     context 'when the attachment is in an unreadable analysis container' do
-      let(:sample_collection) { create(:collection) }
-      let(:sample) { create(:sample, collections: [sample_collection]) }
+      let(:sample) { create(:sample, collections: [create(:collection)]) }
       let(:analysis) { create(:container, parent: sample.container.analyses_container, container_type: 'analysis') }
       let(:dataset) { create(:container, parent: analysis, container_type: 'dataset') }
       let(:source) { create(:attachment, attachable: dataset, created_for: user.id) }
@@ -136,11 +138,9 @@ describe Usecases::Attachments::Copy do
     context 'when the attachment is unattached and belongs to the current user' do
       let(:source) { create(:attachment, attachable: nil, created_for: user.id) }
 
-      it 'copies the attachment' do
-        copy = research_plan.attachments.take!
-
-        expect(copy.read_file).to eq(source.read_file)
-        expect([copy.created_by, copy.created_for]).to eq([user.id, user.id])
+      it 'leaves the pending upload for the regular upload flow' do
+        expect(research_plan.attachments).to be_empty
+        expect(source.reload.attachable_id).to be_nil
       end
     end
   end
@@ -161,7 +161,8 @@ describe Usecases::Attachments::Copy do
       plan = research_plan
       allow(plan).to receive(:save!).and_call_original
 
-      described_class.execute!([{ id: first_source.id }, { id: second_source.id }], plan, user)
+      described_class.execute!([{ id: first_source.id }, { id: second_source.id }], plan, user,
+                               source_plan_id: source_plan.id)
 
       references = plan.reload.body.first(3).map { |field| field.dig('value', 'public_name') }
       expect(plan).to have_received(:save!).once
@@ -174,8 +175,10 @@ describe Usecases::Attachments::Copy do
       plan = research_plan
       allow(Attachment).to receive(:where).and_call_original
 
-      expect { described_class.execute!(entries, plan, user) }.to change(Attachment, :count).by(2)
-      expect(Attachment).to have_received(:where).with(id: entries.pluck(:id)).once
+      expect do
+        described_class.execute!(entries, plan, user, source_plan_id: source_plan.id)
+      end.to change(Attachment, :count).by(2)
+      expect(Attachment).to have_received(:where).with(attachable: source_plan).once
     end
 
     it 'uploads each original once directly to permanent storage' do
@@ -189,7 +192,7 @@ describe Usecases::Attachments::Copy do
         end
       end
 
-      described_class.execute!(entries, plan, user)
+      described_class.execute!(entries, plan, user, source_plan_id: source_plan.id)
 
       copy = plan.attachments.take!
       expect(uploads.transform_values { |ids| ids.count(copy.attachment.id) }).to eq(cache: 0, store: 1)
@@ -199,6 +202,20 @@ describe Usecases::Attachments::Copy do
   end
 
   describe 'empty and invalid input' do
+    it 'enforces source authorization even when called outside the API' do
+      foreign = create(:research_plan, collections: [create(:collection)])
+
+      expect do
+        described_class.new([], user, source_plan_id: foreign.id)
+      end.to raise_error(described_class::Forbidden)
+    end
+
+    it 'rejects a missing source with the same authorization error' do
+      expect do
+        described_class.new([], user, source_plan_id: -1)
+      end.to raise_error(described_class::Forbidden)
+    end
+
     it 'reuses the supplied user without querying it again for an empty copy list' do
       plan = research_plan
       current_user = user

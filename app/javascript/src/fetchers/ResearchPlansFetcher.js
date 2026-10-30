@@ -35,6 +35,15 @@ export default class ResearchPlansFetcher {
     return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container)
       .then(() => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() }))
       .then((json) => {
+        if (json.error) {
+          rootStore.notificationsStore.add({
+            message: json.error === '403 Forbidden'
+              ? 'Research plan could not be created. Check your source plan and destination collection permissions.'
+              : 'Research plan could not be created. Please try again.',
+            level: 'error',
+          });
+          throw new Error(json.error);
+        }
         const { id } = json.research_plan;
         return this.researchPlanAttachments(researchPlan, id)
           .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, id, 'ResearchPlan', true))

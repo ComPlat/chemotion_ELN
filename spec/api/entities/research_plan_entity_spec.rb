@@ -122,7 +122,7 @@ describe Entities::ResearchPlanEntity do
     context 'when represented with a policy' do
       let(:detail_level) { 10 }
       let(:policy) do
-        Struct.new(:update?, :copy?).new(true, true)
+        Struct.new(:update?, :copy_with_datasets?).new(true, true)
       end
 
       it 'returns the policy related attributes' do
@@ -136,7 +136,7 @@ describe Entities::ResearchPlanEntity do
     context 'when represented with a read-only policy' do
       let(:detail_level) { 10 }
       let(:policy) do
-        Struct.new(:update?, :copy?).new(false, false)
+        Struct.new(:update?, :copy_with_datasets?).new(false, false)
       end
 
       it 'returns can_update as false' do

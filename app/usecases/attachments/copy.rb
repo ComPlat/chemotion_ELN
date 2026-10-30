@@ -5,18 +5,21 @@ module Usecases
     class Copy
       class Error < StandardError; end
       class InvalidInput < Error; end
+      class Forbidden < Error; end
 
       attr_reader :attachments_omitted
 
-      def self.execute!(attachments, element, current_user)
-        new(attachments, current_user).transaction { |copy| copy.execute!(element) }
+      def self.execute!(attachments, element, current_user, source_plan_id: nil)
+        new(attachments, current_user, source_plan_id: source_plan_id).transaction { |copy| copy.execute!(element) }
       end
 
-      def initialize(attachments, current_user)
+      def initialize(attachments, current_user, source_plan_id: nil)
         @entries = validated_entries(attachments)
         @deleted_ids = @entries.select { |entry| entry[:is_deleted] }.pluck(:id).map(&:to_s)
         @current_user = current_user
         @access = Access.new(current_user)
+        @source_plan = authorized_source(source_plan_id)
+        @copy_all = attachments.nil? && @source_plan.present?
         @created_files = []
         @attachments_omitted = false
       end
@@ -43,11 +46,25 @@ module Usecases
         end
         return unless element.instance_of?(::ResearchPlan)
 
-        remove_skipped_body_images(element, originals)
+        remove_skipped_body_images(element, originals, replacements)
         element.update_body_attachments(replacements)
       end
 
       private
+
+      def authorized_source(id)
+        return if id.nil?
+
+        source = ResearchPlan.find_by(id: id)
+        raise Forbidden unless ElementPolicy.new(@current_user, source).copy_with_datasets?
+
+        source
+      end
+
+      def readable_source?(attachment)
+        @source_plan.present? && attachment&.attachable_type == 'ResearchPlan' &&
+          attachment.attachable_id == @source_plan.id && @access.read?(attachment)
+      end
 
       def validated_entries(attachments)
         attachments ||= []
@@ -59,10 +76,12 @@ module Usecases
       end
 
       def readable_sources(originals)
+        return originals.values.select { |attachment| readable_source?(attachment) } if @copy_all
+
         @entries.reject { |entry| entry[:is_new] || @deleted_ids.include?(entry[:id].to_s) }
                 .filter_map do |entry|
           attachment = originals[entry[:id].to_s]
-          if @access.read?(attachment)
+          if readable_source?(attachment)
             attachment
           else
             @attachments_omitted = true
@@ -87,8 +106,9 @@ module Usecases
                       else
                         []
                       end
-        rows = Attachment.where(id: @entries.reject { |entry| entry[:is_new] }.pluck(:id))
-                         .or(Attachment.where(identifier: identifiers.grep(String))).to_a
+        scope = @source_plan ? Attachment.where(attachable: @source_plan) : Attachment.none
+        scope = scope.where(id: @entries.reject { |entry| entry[:is_new] }.pluck(:id)) unless @copy_all
+        rows = scope.or(Attachment.where(identifier: identifiers.grep(String))).to_a
         { by_id: rows.index_by { |attachment| attachment.id.to_s }, by_identifier: rows.index_by(&:identifier) }
       end
 
@@ -110,29 +130,39 @@ module Usecases
         raise Error, 'Unable to copy attachment files', cause: e
       end
 
-      def remove_skipped_body_images(element, originals)
+      def remove_skipped_body_images(element, originals, replacements)
         deleted = @deleted_ids.filter_map { |id| originals[:by_id][id]&.identifier }
         element.body = element.body&.reject do |field|
-          skipped_body_image?(field, deleted, originals[:by_identifier])
+          skipped_body_image?(field, deleted, originals[:by_identifier], element, replacements)
         end
       end
 
-      def skipped_body_image?(field, deleted, originals)
+      def skipped_body_image?(field, deleted, originals, element, replacements)
         return false unless field['type'] == 'image'
 
         identifier = field.dig('value', 'public_name')
-        unreadable = unreadable_body_image?(identifier, originals)
+        unreadable = unreadable_body_image?(identifier, originals, element, replacements.keys + deleted)
         @attachments_omitted ||= unreadable
         unreadable || deleted.include?(identifier)
       end
 
-      def unreadable_body_image?(identifier, originals)
+      def unreadable_body_image?(identifier, originals, element, permitted_source_images)
         return false if identifier.blank?
         return true unless identifier.is_a?(String)
         return false if identifier.match?(/\A[\w-]+\.\w+\z/) # Legacy public-image filenames.
 
         # The browser uploads new images only after the plan has been created.
-        originals.key?(identifier) && !@access.read?(originals[identifier])
+        return false unless originals.key?(identifier)
+
+        !permitted_body_attachment?(originals[identifier], element, permitted_source_images)
+      end
+
+      def permitted_body_attachment?(attachment, element, permitted_source_images)
+        return false unless @access.read?(attachment)
+        return true if attachment.attachable_id.nil?
+        return permitted_source_images.include?(attachment.identifier) if readable_source?(attachment)
+
+        attachment.root_element == element
       end
 
       def cleanup_created_files

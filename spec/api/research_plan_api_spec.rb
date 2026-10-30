@@ -162,6 +162,7 @@ describe Chemotion::ResearchPlanAPI do
         it_behaves_like 'a pending image upload'
 
         context 'when also copying an existing image' do
+          let(:params) { super().merge(source_plan_id: source_plan.id) }
           let(:source_plan) { create(:research_plan, creator: user, collections: [collection]) }
           let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
           let(:copied_entries) { [{ id: source.id }] }
@@ -173,7 +174,7 @@ describe Chemotion::ResearchPlanAPI do
 
       context 'when copying attachments' do
         let(:collection) { create(:collection, user: user) }
-        let(:owner) { create(:person) }
+        let(:owner) { user }
         let(:source_collection) { create(:collection, user: owner) }
         let(:source_plan) { create(:research_plan, creator: owner, collections: [source_collection]) }
         let!(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
@@ -184,6 +185,7 @@ describe Chemotion::ResearchPlanAPI do
             container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
             body: [{ type: 'image', value: { public_name: source.identifier } }],
             attachments: [{ id: source.id }],
+            source_plan_id: source_plan.id,
           }
         end
 
@@ -204,6 +206,10 @@ describe Chemotion::ResearchPlanAPI do
         end
 
         context 'when reporting omitted attachments' do
+          let(:owner) { create(:person) }
+
+          before { params.delete(:source_plan_id) }
+
           it 'reports the same warning for missing and unreadable IDs without exposing their details' do
             params[:body] = []
             post '/api/v1/research_plans', params: params, as: :json
@@ -240,6 +246,8 @@ describe Chemotion::ResearchPlanAPI do
 
           context 'when the attachments are readable' do
             let(:owner) { user }
+
+            before { params[:source_plan_id] = source_plan.id }
 
             it 'does not report omissions for successfully copied attachments' do
               post '/api/v1/research_plans', params: params, as: :json
@@ -299,6 +307,45 @@ describe Chemotion::ResearchPlanAPI do
         context 'when copying readable files' do
           let(:owner) { user }
 
+          it 'copies source attachments server-side when only the source ID is supplied' do
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copy = ResearchPlan.find_by!(name: 'Copied Plan').attachments.take!
+            expect(response).to have_http_status(:created)
+            expect(copy.read_file).to eq(source.read_file)
+            expect(copy.attachment(:annotation).read).to include("/api/v1/attachments/image/#{copy.id}")
+          end
+
+          it 'does not copy even readable attachment IDs without a source plan' do
+            params.delete(:source_plan_id)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect([copied_plan.attachments.count, copied_plan.body]).to eq([0, []])
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+          end
+
+          it 'does not retain a body image from a different readable plan' do
+            other_plan = create(:research_plan, creator: user, collections: [collection])
+            foreign = create(:attachment, :with_png_image, attachable: other_plan)
+            params[:body] << { type: 'image', value: { public_name: foreign.identifier } }
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.body.size).to eq(1)
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(copied_plan.attachments.take!.identifier)
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+          end
+
+          it 'rejects a source plan that no longer exists without writing records or files' do
+            params[:source_plan_id] = -1
+
+            expect_atomic_copy_failure(params, :forbidden)
+          end
+
           it 'rolls back the plan and its container when a source has no file' do
             missing = create(:attachment, attachable: source_plan, file_path: nil, file_data: nil)
             request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
@@ -324,7 +371,9 @@ describe Chemotion::ResearchPlanAPI do
 
           it 'cleans up the copied image and annotation when a later creation step fails' do
             request_params = params
-            copier = Usecases::Attachments::Copy.new(request_params[:attachments], user)
+            copier = Usecases::Attachments::Copy.new(
+              request_params[:attachments], user, source_plan_id: source_plan.id
+            )
             allow(Usecases::Attachments::Copy).to receive(:new).and_return(copier)
             allow(copier).to receive(:execute!).and_wrap_original do |execute, *arguments|
               execute.call(*arguments)
@@ -353,16 +402,14 @@ describe Chemotion::ResearchPlanAPI do
         end
 
         context 'when the source research plan is not readable' do
-          it 'creates the plan without copying the attachment or its annotation' do
-            expect do
-              post '/api/v1/research_plans', params: params, as: :json
-            end.not_to change(Attachment, :count)
+          let(:owner) { create(:person) }
 
-            expect(response).to have_http_status(:created)
-            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          it 'rejects the copy before creating any records or files' do
+            expect_atomic_copy_failure(params, :forbidden)
           end
 
-          it 'removes the skipped image from the body and exported document' do
+          it 'removes unreadable image references if the source ID is omitted' do
+            params.delete(:source_plan_id)
             post '/api/v1/research_plans', params: params, as: :json
 
             copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
@@ -397,12 +444,14 @@ describe Chemotion::ResearchPlanAPI do
           end
         end
 
-        context 'when the source research plan is shared read-only' do
+        context 'when the source research plan is shared with copy permission' do
+          let(:owner) { create(:person) }
           let(:detail_level) { 10 }
+          let(:permission_level) { :edit_elements }
 
           before do
             create(:collection_share, collection: source_collection, shared_with: user,
-                                      permission_level: CollectionShare.permission_level(:read_elements),
+                                      permission_level: CollectionShare.permission_level(permission_level),
                                       researchplan_detail_level: detail_level)
           end
 
@@ -418,26 +467,37 @@ describe Chemotion::ResearchPlanAPI do
             expect(copied_plan.body.first.dig('value', 'public_name')).to eq(copy.identifier)
           end
 
-          context 'when the share does not allow reading datasets' do
-            let(:detail_level) { 2 }
+          context 'when the share is read-only' do
+            let(:permission_level) { :read_elements }
 
-            it 'does not copy the attachment' do
-              expect do
-                post '/api/v1/research_plans', params: params, as: :json
-              end.not_to change(Attachment, :count)
-
-              expect(response).to have_http_status(:created)
+            it 'rejects the copy even though the attachment can be downloaded' do
+              expect(Usecases::Attachments::Access.new(user).read?(source)).to be true
+              expect_atomic_copy_failure(params, :forbidden)
             end
 
-            it 'does not export the skipped source image from the copied plan' do
+            it 'cannot bypass the source permission by omitting its ID' do
+              params.delete(:source_plan_id)
               post '/api/v1/research_plans', params: params, as: :json
 
               copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
-              html = Export::ExportResearchPlan.new(user, copied_plan, :html).to_html
+              expect(response).to have_http_status(:created)
+              expect([copied_plan.attachments.count, copied_plan.body]).to eq([0, []])
+              expect(JSON.parse(response.body)['attachments_omitted']).to be true
+            end
+          end
 
-              expect(copied_plan.body).to eq([])
-              expect(html).not_to include(source.attachment.url)
-              expect(Nokogiri::HTML(html).css('img')).to be_empty
+          context 'when the share does not allow reading datasets' do
+            let(:detail_level) { 2 }
+
+            it 'rejects the copy instead of silently dropping all attachments' do
+              expect_atomic_copy_failure(params, :forbidden)
+            end
+
+            it 'returns can_copy false so the UI disables the copy action' do
+              get "/api/v1/research_plans/#{source_plan.id}"
+
+              expect(response).to have_http_status(:ok)
+              expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be false
             end
           end
         end
@@ -447,7 +507,7 @@ describe Chemotion::ResearchPlanAPI do
             create(:attachment, attachable: create(:research_plan, creator: user, collections: [collection]))
           end
 
-          it 'copies only the readable attachment and skips unknown IDs' do
+          it 'copies only attachments of the source plan and skips injected or unknown IDs' do
             params[:attachments].unshift({ id: -1 })
             params[:attachments] << { id: readable_source.id }
             params[:attachments] << { id: -2 }
@@ -458,7 +518,21 @@ describe Chemotion::ResearchPlanAPI do
 
             expect(response).to have_http_status(:created)
             copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
-            expect(copied_plan.attachments.take!.read_file).to eq(readable_source.read_file)
+            expect(copied_plan.attachments.take!.read_file).to eq(source.read_file)
+          end
+        end
+
+        context 'when the request includes attachments from a different private plan' do
+          it 'ignores foreign attachment IDs even with an authorized source plan' do
+            private_plan = create(:research_plan, collections: [create(:collection)])
+            foreign = create(:attachment, attachable: private_plan)
+            params[:attachments] << { id: foreign.id }
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.attachments.count).to eq(1)
+            expect(copied_plan.attachments.take!.read_file).to eq(source.read_file)
+            expect(foreign.reload.attachable).to eq(private_plan)
           end
         end
       end

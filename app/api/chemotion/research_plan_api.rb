@@ -63,13 +63,16 @@ module Chemotion
         optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
         optional :attachments, type: Array, desc: 'Attachments'
+        optional :source_plan_id, type: Integer, desc: 'Research plan to copy attachments from'
         optional :literatures, type: Hash
       end
       post do
         collection = writable_collection_for(params[:collection_id])
         error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
 
-        copier = Usecases::Attachments::Copy.new(params[:attachments], current_user)
+        copier = Usecases::Attachments::Copy.new(
+          params[:attachments], current_user, source_plan_id: params[:source_plan_id]
+        )
         copier.transaction do
           attributes = {
             name: params[:name],
@@ -104,6 +107,8 @@ module Chemotion
                   policy: @element_policy
           present :attachments_omitted, true if copier.attachments_omitted
         end
+      rescue Usecases::Attachments::Copy::Forbidden
+        error!('403 Forbidden', 403)
       rescue Usecases::Attachments::Copy::InvalidInput => e
         error!(e.message, 400)
       rescue Usecases::Attachments::Copy::Error

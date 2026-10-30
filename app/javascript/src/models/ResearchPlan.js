@@ -74,6 +74,7 @@ export default class ResearchPlan extends Element {
       name: this.name,
       body: this.body,
       attachments: this.attachments,
+      source_plan_id: this.source_plan_id,
       container: this.container,
       wellplate_ids: this.wellplateIDs,
       user_labels: this.user_labels || [],
@@ -296,6 +297,7 @@ export default class ResearchPlan extends Element {
   buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
+    copy.source_plan_id = this.source_plan_id || this.id;
     copy.attachments = this.attachments;
     copy.container = Container.init();
     copy.is_new = true;
