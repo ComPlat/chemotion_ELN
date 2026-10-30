@@ -477,23 +477,48 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
-  [false, true].forEach((dirty) => {
-    it(`preserves sample-list save context and contents on reaction resync, dirty=${dirty}`, () => {
-      const { reaction, mixture } = build();
-      const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
-      tab.initialComponents(tab.components.map(Component.deserializeData));
-      if (dirty) { tab.purity = 0.5; tab.changed = true; }
-      const before = tab.serializeMaterial();
-      mixture.setAmount({ value: massG * 2, unit: 'g' });
-      const store = Object.create(ElementStore.StoreModel.prototype);
-      store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
+  ['starting_materials', 'products'].forEach((group) => {
+    [false, true].forEach((dirty) => {
+      it(`syncs a sample-list mixture ${group} tab and save payload from the reaction, dirty=${dirty}`, () => {
+        const { reaction, mixture: originalMixture } = build();
+        if (group === 'products') {
+          reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== originalMixture.id);
+          reaction.products = [originalMixture];
+        }
+        const mixture = reaction.sampleById(originalMixture.id);
+        const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
+        tab.initialComponents(tab.components.map(Component.deserializeData));
+        if (dirty) { tab.purity = 0.5; tab.changed = true; }
+        const originalPurity = tab.purity;
+        const originalComponents = tab.components;
+        mixture.setAmount({ value: massG * 2, unit: 'g' });
+        mixture.density = 1.2;
+        mixture._molarity_unit = 'M';
+        mixture._molarity_value = 2;
+        mixture.container = { ...mixture.container, children: [
+          { id: 987, container_type: 'analysis', name: 'New reaction analysis', children: [], extended_metadata: {} },
+        ] };
+        const store = Object.create(ElementStore.StoreModel.prototype);
+        store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
 
-      store.synchronizeElements(reaction);
+        store.synchronizeElements(reaction);
 
-      expect(tab.serializeMaterial()).toEqual(before);
-      expect(tab.belongTo).toBeUndefined();
-      expect(tab.isDetachedMixtureDraft).toBeUndefined();
-      expect(tab.isPendingToSave).toBe(dirty);
+        expect(tab.amount_value).toBe(mixture.amount_value);
+        expect(tab.amount_unit).toBe(mixture.amount_unit);
+        expect(tab.density).toBe(mixture.density);
+        expect(tab._molarity_value).toBe(mixture._molarity_value);
+        expect(tab._molarity_unit).toBe(mixture._molarity_unit);
+        expect(tab.container).toBe(mixture.container);
+        const payload = tab.serialize();
+        expect(payload.target_amount_value).toBe(mixture.target_amount_value);
+        expect(payload.target_amount_unit).toBe(mixture.target_amount_unit);
+        expect(payload.container).toEqual(mixture.container);
+        expect(tab.purity).toBe(originalPurity);
+        expect(tab.components).toBe(originalComponents);
+        expect(tab.belongTo).toBeUndefined();
+        expect(tab.isDetachedMixtureDraft).toBeUndefined();
+        expect(tab.changed).toBe(dirty);
+      });
     });
   });
 
@@ -607,7 +632,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
-  it('keeps a sample-list mixture independent when leaving a reaction', async () => {
+  it('syncs sample-list mixture quantities without rebinding its composition when leaving a reaction', async () => {
     const { reaction, mixture } = build();
     const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
     tab.initialComponents(tab.components.map(Component.deserializeData));
@@ -619,12 +644,11 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
     store.synchronizeElements(reaction);
 
-    expect(tab.amount_g).toBeCloseTo(massG, 12);
-    expect(tab.amount_mol).toBeCloseTo(0.006, 12);
+    expect(tab.amount_g).toBeCloseTo(massG * 2, 12);
+    expect(tab.amount_mol).toBeCloseTo(0.012, 12);
     expect(tab.reference_component.id).toBe(1);
     expect(tab.belongTo).toBeUndefined();
     expect(tab.isDetachedMixtureDraft).toBeUndefined();
-    expect(tab.isEdited).toBe(false);
     expect(tab.hasReactionMixtureConflict()).toBe(false);
   });
 
