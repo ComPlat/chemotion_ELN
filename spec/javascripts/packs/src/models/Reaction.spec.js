@@ -160,6 +160,34 @@ describe('Reaction', () => {
       expect(copy.products[0]._target_amount_value).toBe(2.0);
       expect(copy.products[0].equivalent).toBe(0.8);
     });
+
+    it('copies every material group into new samples', () => {
+      const persisted = (sample, id) => Object.assign(sample, { id, is_new: false });
+      reaction.reactants = [persisted(materials[0], 102)];
+      reaction.solvents = [persisted(materials[1], 103)];
+      reaction.purification_solvents = [persisted(materials[2], 104)];
+      const originals = [
+        ...reaction.starting_materials, ...reaction.reactants, ...reaction.solvents,
+        ...reaction.purification_solvents, ...reaction.products,
+      ];
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      const { materials: serialized } = copy.serialize();
+      Object.entries(serialized).forEach(([group, list]) => {
+        list.forEach((m) => {
+          expect({ group, is_new: m.is_new }).toEqual({ group, is_new: true });
+          expect(originals.map((o) => o.id)).not.toContain(m.id);
+        });
+      });
+      expect(copy.purification_solvents.length).toBe(1);
+      expect(copy.purification_solvents[0]).not.toBe(reaction.purification_solvents[0]);
+    });
+
+    it('clears purification solvent real amounts when keepAmounts=false (default)', () => {
+      materials[0]._real_amount_value = 4.2;
+      reaction.purification_solvents = [materials[0]];
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      expect(copy.purification_solvents[0]._real_amount_value).toBe(null);
+    });
   });
 
   describe('Reaction.CONCENTRATION_MODES', () => {
