@@ -356,6 +356,7 @@ module Import
           'inventory_sample',
           'sample_type',
         ).merge(
+          sample_details: localize_sample_details(fields['sample_details']),
           created_by: @current_user_id,
           collections: fetch_many(
             'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid
@@ -951,6 +952,29 @@ module Import
       LOG
 
       @logger.error(log_content)
+    end
+
+    # MOF building blocks cache this instance's molecule id and SVG name. Those
+    # ids mean nothing on another instance, so look the molecule up again here.
+    def localize_sample_details(details)
+      fragments = details.is_a?(Hash) ? details.dig('mof', 'fragments') : nil
+      return details unless fragments.is_a?(Array)
+
+      details.merge('mof' => details['mof'].merge('fragments' => fragments.map { |frag| localize_mof_fragment(frag) }))
+    end
+
+    def localize_mof_fragment(fragment)
+      return fragment unless fragment.is_a?(Hash)
+
+      local = fragment.except('molecule_id', 'svg_file')
+      smiles = fragment['cano_smiles'].presence || fragment['smiles'].presence
+      molecule = smiles && Molecule.find_or_create_by_cano_smiles(smiles, defer_pubchem_lookup: @defer_pubchem_lookup)
+      return local unless molecule
+
+      local.merge('molecule_id' => molecule.id, 'svg_file' => molecule.molecule_svg_file)
+    rescue StandardError => e
+      Rails.logger.warn("MOF fragment #{smiles} could not be resolved on import: #{e.message}")
+      local
     end
 
     # When molfile has > <PolymersList>, find or create molecule and reprocess SVG so SvgRenderer can inject polymer images.
