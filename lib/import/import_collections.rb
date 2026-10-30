@@ -432,6 +432,7 @@ module Import
           'tlc_description',
           'rf_value',
           'temperature',
+          'environment',
           'status',
           'solvent',
           'short_label',

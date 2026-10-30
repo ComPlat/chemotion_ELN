@@ -59,6 +59,9 @@ const setReactionByType = (reaction, type, value) => {
       reaction.conditions = value;
       options = {updateGraphic: true}
       break;
+    case 'environment':
+      reaction.environment = value;
+      break;
     case 'phOperator':
       reaction.ph_operator = value;
       break;

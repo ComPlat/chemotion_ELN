@@ -214,6 +214,193 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction environment normalization', () => {
+    it('tolerates malformed imported condition shapes without spreading them into fields', () => {
+      [null, 'hot', 22, [], { value: { nested: '22' }, unit: ['°C'] }].forEach((temperature) => {
+        const r = new Reaction({ id: 1, environment: { temperature, humidity: null } });
+
+        expect(r.environment.temperature).toEqual({ value: '', unit: '°C' });
+        expect(r.environment.humidity).toEqual({ value: '', unit: '%' });
+        expect(r.isEdited).toBe(false);
+      });
+    });
+
+    it('keeps numeric legacy readings as strings and unknown unit keys intact', () => {
+      const r = new Reaction({
+        id: 1,
+        environment: { air_pressure: { value: 1013.25, unit: 'hPa', extra: 'ignored' }, extra: 'ignored' },
+      });
+
+      expect(r.environment.air_pressure).toEqual({ value: '1013.25', unit: 'hPa' });
+      expect(Object.keys(r.environment)).toEqual(['temperature', 'humidity', 'air_pressure']);
+      expect(r.isEdited).toBe(false);
+    });
+
+    it('keeps a loaded reaction unedited when reading jsonb-ordered environmental conditions', () => {
+      const r = new Reaction({
+        id: 1,
+        environment: {
+          humidity: { unit: '%', value: '45' },
+          temperature: { unit: '°C', value: '22' },
+          air_pressure: { unit: 'mbar', value: '1013' },
+        },
+      });
+      const checksum = r.checksum();
+      const env = r.environment;
+
+      expect(r.environment).toBe(env);
+      expect(r.checksum()).toBe(checksum);
+      expect(r.isEdited).toBe(false);
+
+      env.temperature.value = '23';
+      expect(r.isEdited).toBe(true);
+    });
+
+    it('gives new reactions independent environmental conditions', () => {
+      const first = Reaction.buildEmpty(1);
+      const second = Reaction.buildEmpty(1);
+      first.environment.temperature.value = '25';
+
+      expect(second.environment.temperature.value).toBe('');
+    });
+
+    it('keeps cloned environmental conditions independent of the saved reaction', () => {
+      const source = new Reaction({ id: 1, environment: { temperature: { value: '22' } } });
+      const copy = source.clone();
+      expect(copy.environment).toEqual(source.environment);
+      expect(copy.isEdited).toBe(false);
+
+      copy.environment.temperature.value = '23';
+
+      expect(source.environment.temperature.value).toBe('22');
+      expect(source.isEdited).toBe(false);
+      expect(copy.isEdited).toBe(true);
+    });
+
+    it('keeps copied environmental conditions independent of the source reaction', () => {
+      reaction.environment = { air_pressure: { value: '760', unit: 'torr' } };
+      reaction.updateChecksum();
+      const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
+      expect(copy.environment).toEqual(reaction.environment);
+
+      copy.environment.air_pressure.value = '750';
+
+      expect(reaction.environment.air_pressure.value).toBe('760');
+      expect(reaction.isEdited).toBe(false);
+    });
+
+    it('preserves environmental conditions when copying a reaction', () => {
+      const environment = {
+        temperature: { value: '22', unit: '°F' },
+        humidity: { value: '45', unit: '%' },
+        air_pressure: { value: '760', unit: 'torr' },
+      };
+      reaction.environment = environment;
+      const copy = Reaction.copyFromReactionAndCollectionId(reaction, 'newCollectionId');
+
+      expect(copy.environment).toEqual(environment);
+      expect(copy.isEnvironmentSet()).toBe(true);
+
+      copy.environment.temperature.value = '25';
+      expect(reaction.environment.temperature).toEqual({ value: '22', unit: '°F' });
+    });
+
+    it('normalizes environment from a model snapshot without modifying the input', () => {
+      const environment = { air_pressure: { unit: 'torr', value: '760' } };
+      const r = new Reaction({ id: 1, _environment: environment });
+
+      expect(r.environment.temperature).toEqual({ value: '', unit: '°C' });
+      expect(r.environment.air_pressure).toEqual({ value: '760', unit: 'torr' });
+      expect(environment).toEqual({ air_pressure: { unit: 'torr', value: '760' } });
+      expect(r.isEdited).toBe(false);
+    });
+
+    it('keeps a saved reaction unedited after serializing and reassigning the same conditions', () => {
+      reaction.environment = {
+        humidity: { unit: '%', value: '0' },
+        temperature: { unit: '°F', value: '-4.5' },
+        air_pressure: { unit: 'torr', value: '760' },
+      };
+      reaction.updateChecksum();
+      const environment = reaction.environment;
+      const serialized = reaction.serialize();
+
+      expect(reaction.environment).toBe(environment);
+      expect(reaction.isEdited).toBe(false);
+
+      reaction.environment = serialized.environment;
+      expect(reaction.isEdited).toBe(false);
+
+      const restored = new Reaction(serialized);
+      expect(restored.environment).toEqual(environment);
+      expect(restored.isEdited).toBe(false);
+    });
+
+    it('serializes and restores the selected air pressure unit with its measurement', () => {
+      reaction.environment = { air_pressure: { value: '760', unit: 'torr' } };
+      const restored = new Reaction(reaction.serialize());
+      expect(restored.environment.air_pressure).toEqual({ value: '760', unit: 'torr' });
+      expect(restored.isEnvironmentSet()).toBe(true);
+    });
+
+    it('excludes incomplete drafts from the indicator and serialized values', () => {
+      ['-', '.', '-.', '', 'NaN', 'Infinity'].forEach((value) => {
+        reaction.environment = { temperature: { value, unit: '°F' } };
+        expect(reaction.isEnvironmentSet()).toBe(false);
+        expect(reaction.serialize().environment.temperature).toEqual({ value: '', unit: '°F' });
+        expect(reaction.environment.temperature.value).toBe(value);
+      });
+    });
+
+    it('keeps valid measurements including zero, negatives and trailing decimal points', () => {
+      ['0', '-25.5', '.5', '1.'].forEach((value) => {
+        reaction.environment = { temperature: { value, unit: '°C' } };
+        expect(reaction.isEnvironmentSet()).toBe(true);
+        expect(reaction.serialize().environment.temperature.value).toBe(value);
+      });
+    });
+
+    // The panel dereferences environment.temperature.value / .humidity.value / .air_pressure.value
+    // without guarding the nested objects, so assignment must normalize to the full three-key
+    // shape regardless of what was persisted (missing, empty {}, or partial hash from a raw API write).
+    it('fills the full default shape when environment is missing', () => {
+      const r = new Reaction({ id: 1 });
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('backfills every sub-object when a bare {} was persisted', () => {
+      const r = new Reaction({ id: 1, environment: {} });
+      expect(r.environment).toEqual({
+        temperature: { value: '', unit: '°C' },
+        humidity: { value: '', unit: '%' },
+        air_pressure: { value: '', unit: 'mbar' },
+      });
+    });
+
+    it('normalizes a null assignment before establishing the checksum', () => {
+      const r = new Reaction({ id: 1, environment: null });
+      expect(r.environment.temperature).toEqual({ value: '', unit: '°C' });
+      expect(r.isEdited).toBe(false);
+    });
+
+    it('keeps persisted values while backfilling the missing conditions', () => {
+      const r = new Reaction({ id: 1, environment: { temperature: { value: '25', unit: 'K' } } });
+      const env = r.environment;
+      expect(env.temperature).toEqual({ value: '25', unit: 'K' });
+      expect(env.humidity).toEqual({ value: '', unit: '%' });
+      expect(env.air_pressure).toEqual({ value: '', unit: 'mbar' });
+    });
+
+    it('backfills a missing unit within a partially-filled condition', () => {
+      const r = new Reaction({ id: 1, environment: { temperature: { value: '25' } } });
+      expect(r.environment.temperature).toEqual({ value: '25', unit: '°C' });
+    });
+  });
+
   describe('Reaction.calculateCombinedReactionVolume()', () => {
     it('calculates combined volume from solvents and materials', async() => {
       const solvent = await SampleFactory.build('reactionConcentrations.water_100g');

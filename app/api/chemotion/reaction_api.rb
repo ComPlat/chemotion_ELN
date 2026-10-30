@@ -4,6 +4,12 @@
 module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
+    ENVIRONMENT_OBJECT_COERCER = lambda do |value|
+      raise ArgumentError, 'must be an object' unless value.is_a?(Hash)
+
+      value
+    end
+
     include Grape::Kaminari
     helpers CollectionHelpers
     helpers ContainerHelpers
@@ -13,6 +19,23 @@ module Chemotion
     helpers UserLabelHelpers
 
     helpers do
+      params :environment_params do
+        optional :environment, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+          optional :temperature, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String
+            optional :unit, type: String, values: %w[°C °F K], allow_blank: false
+          end
+          optional :humidity, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String
+            optional :unit, type: String, values: ['%'], allow_blank: false
+          end
+          optional :air_pressure, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String
+            optional :unit, type: String, values: %w[atm pa kpa mpa hpa torr bar mbar], allow_blank: false
+          end
+        end
+      end
+
       def normalize_legacy_concentration_mode!(attributes)
         return attributes unless attributes.key?(:use_reaction_volume)
 
@@ -153,6 +176,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
@@ -248,6 +272,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
