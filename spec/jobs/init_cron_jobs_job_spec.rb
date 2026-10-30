@@ -47,4 +47,26 @@ RSpec.describe InitCronJobsJob do
       "- #{dj.pluck(:run_at, :cron)}",
     )
   end
+
+  context 'with a default_cron entry' do
+    let(:cron_job_list) do
+      [{ job_class: DummyJob, enabled: :default, cron_variable: 'DUMMY_CRON', default_cron: '7 * * * *' }]
+    end
+
+    before { Delayed::Job.where(queue: 'dummy').delete_all }
+
+    it 'uses default_cron when the cron variable is unset' do
+      ENV['DUMMY_CRON'] = nil
+      described_class.perform_now(cron_job_list)
+      expect(Delayed::Job.where(queue: 'dummy').last&.cron).to eq('7 * * * *')
+    end
+
+    it 'enqueues nothing when the cron variable is disabled' do
+      ENV['DUMMY_CRON'] = 'disabled'
+      described_class.perform_now(cron_job_list)
+      expect(Delayed::Job.where(queue: 'dummy').count).to eq(0)
+    ensure
+      ENV['DUMMY_CRON'] = nil
+    end
+  end
 end

@@ -600,4 +600,101 @@ describe Chemotion::CollectionShareAPI do
       end
     end
   end
+
+  describe 'inventory field access' do
+    let(:inventory) { create(:inventory_managed_collection, collection: collection) }
+    let(:access) { { 'stock' => 'edit', 'location' => 'hidden', 'notes' => 'read' } }
+    let(:share_params) do
+      { collection_id: collection.id, user_ids: [other_user.id], inventory_field_access: access,
+        permission_level: CollectionShare.permission_level(:edit_elements), sample_detail_level: 10 }
+    end
+
+    before { inventory }
+
+    it 'stores the field access of a new share and audits changes to it', :aggregate_failures do
+      post '/api/v1/collection_shares/', params: share_params, as: :json
+      share = CollectionShare.find_by(collection: collection, shared_with: other_user)
+      expect(share.inventory_field_access).to eq access
+
+      put "/api/v1/collection_shares/#{share.id}", params: { inventory_field_access: { 'location' => 'read' } },
+                                                   as: :json
+      expect(response.parsed_body['collection_share']['inventory_field_access']).to eq('location' => 'read')
+      history = CollectionShare.with_log_data.find(share.id).log_data
+      expect(history.versions.size).to eq 2
+      expect(history.versions.last.responsible_id).to eq user.id
+    end
+
+    it 'refuses invalid maps, hidden safety data and field access on ordinary collections' do
+      hidden_safety = share_params.merge(inventory_field_access: { 'substance_safety' => 'hidden' })
+      post '/api/v1/collection_shares/', params: hidden_safety, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+
+      plain = create(:collection, user: user)
+      post '/api/v1/collection_shares/', params: share_params.merge(collection_id: plain.id), as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(CollectionShare.where(shared_with: other_user)).to be_empty
+    end
+
+    it 'keeps field access off ordinary sub-collections when cascading' do
+      child = create(:collection, user: user, parent: collection)
+      post '/api/v1/collection_shares/', params: share_params.merge(apply_to_subcollections: true), as: :json
+      expect(CollectionShare.find_by(collection: child, shared_with: other_user).inventory_field_access).to be_nil
+      root_share = CollectionShare.find_by(collection: collection, shared_with: other_user)
+      expect(root_share.inventory_field_access).to eq access
+    end
+
+    context 'when a supervisor manages the shares' do
+      let(:supervisor_access) { { 'stock' => 'edit', 'location' => 'read' } }
+
+      before do
+        create(:collection_share, collection: collection, shared_with: third_user,
+                                  inventory_field_access: supervisor_access,
+                                  permission_level: CollectionShare.permission_level(:manage_shares))
+        allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(third_user) # rubocop:disable RSpec/AnyInstance
+      end
+
+      it 'cannot copy a wider root map onto new inventory sub-collections' do
+        child = create(:collection, user: user, parent: collection)
+        create(:inventory_managed_collection, collection: child)
+        create(:collection_share, collection: child, shared_with: third_user,
+                                  inventory_field_access: { 'location' => 'hidden' },
+                                  permission_level: CollectionShare.permission_level(:manage_shares))
+        root_share = create(:collection_share, collection: collection, shared_with: other_user,
+                                               inventory_field_access: { 'location' => 'edit' },
+                                               permission_level: CollectionShare.permission_level(:edit_elements))
+        cascade = { sample_detail_level: 10, apply_to_subcollections: true, include_new_subcollections: true }
+        put "/api/v1/collection_shares/#{root_share.id}", params: cascade, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(CollectionShare.find_by(collection: child, shared_with: other_user)).to be_nil
+      end
+
+      it 'lets them grant up to their own access, not beyond' do
+        post '/api/v1/collection_shares/', params: share_params.merge(inventory_field_access: { 'location' => 'read' }),
+                                           as: :json
+        expect(response).to have_http_status(:created)
+
+        post '/api/v1/collection_shares/', params: share_params.merge(inventory_field_access: { 'location' => 'edit' }),
+                                           as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include('above your own: location')
+      end
+    end
+
+    it 'refuses a plain sharee' do
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(other_user) # rubocop:disable RSpec/AnyInstance
+      share = create(:collection_share, collection: collection, shared_with: other_user,
+                                        permission_level: CollectionShare.permission_level(:edit_elements))
+      put "/api/v1/collection_shares/#{share.id}", params: { inventory_field_access: { 'people' => 'read' } }, as: :json
+      expect(response).to have_http_status(:not_found)
+      expect(share.reload.inventory_field_access).to be_nil
+    end
+
+    it 'shares only with the users and groups the connection allows' do
+      create(:inventory_connection, managed_collection: inventory, allowed_sharee_ids: [third_user.id])
+      post '/api/v1/collection_shares/', params: share_params, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      post '/api/v1/collection_shares/', params: share_params.merge(user_ids: [third_user.id]), as: :json
+      expect(response).to have_http_status(:created)
+    end
+  end
 end

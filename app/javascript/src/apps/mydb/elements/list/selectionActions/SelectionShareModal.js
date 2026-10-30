@@ -1,5 +1,5 @@
 /* eslint-disable react/require-default-props */
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
@@ -8,10 +8,14 @@ import CollectionSelect from 'src/components/common/CollectionSelect';
 
 import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActions/SelectionSharingShortcuts';
 import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
+import InventoryFieldAccess, {
+  initialFieldAccess
+} from 'src/apps/mydb/elements/list/selectionActions/InventoryFieldAccess';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import InventoryIntegrationFetcher from 'src/fetchers/InventoryIntegrationFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -44,6 +48,20 @@ function SelectionShareModal({
   const [includeNewSubcollections, setIncludeNewSubcollections] = useState(false);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
+  // Set only for inventory collections, which carry per-share field access.
+  const [fieldAccessConfig, setFieldAccessConfig] = useState(null);
+  const [fieldAccess, setFieldAccess] = useState(collectionPermissions.inventoryFieldAccess || null);
+
+  useEffect(() => {
+    if (!collectionId || shareType === 'new') return;
+
+    InventoryIntegrationFetcher.fetchFieldAccess(collectionId).then((config) => {
+      if (!config?.inventory) return;
+
+      setFieldAccessConfig(config);
+      setFieldAccess((given) => initialFieldAccess(config, collectionPermissions.permissionLevel, given));
+    });
+  }, [collectionId, shareType, collectionPermissions.permissionLevel]);
 
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
@@ -70,6 +88,7 @@ function SelectionShareModal({
       sequencebasedmacromoleculesample_detail_level: 10,
       researchplan_detail_level: 10,
     };
+    if (fieldAccessConfig && fieldAccess) permissionsParams.inventory_field_access = fieldAccess;
 
     if (shareType === 'new') {
       // create new collection with shared elements
@@ -129,6 +148,7 @@ function SelectionShareModal({
     }
     permissionsAndDetailLevel.elementDetailLevel = permissions.elementDetailLevel;
     setPermissions(permissionsAndDetailLevel);
+    if (fieldAccessConfig?.role_defaults[val]) setFieldAccess(fieldAccessConfig.role_defaults[val]);
     setRole(val);
   };
 
@@ -332,6 +352,15 @@ function SelectionShareModal({
             <option value="10">Everything</option>
           </Form.Select>
         </Form.Group>
+        {fieldAccessConfig && fieldAccess && (
+          <InventoryFieldAccess
+            groups={fieldAccessConfig.groups}
+            access={fieldAccess}
+            ownAccess={fieldAccessConfig.own_access}
+            editAllowed={Number(permissions.permissionLevel) >= PermissionConst.EditElements}
+            onChange={(access) => { setFieldAccess(access); setRole(defaultRole); }}
+          />
+        )}
         {userSelect()}
       </Form>
     </AppModal>
@@ -353,6 +382,7 @@ SelectionShareModal.propTypes = {
     wellplateDetailLevel: PropTypes.number,
     screenDetailLevel: PropTypes.number,
     elementDetailLevel: PropTypes.number,
+    inventoryFieldAccess: PropTypes.objectOf(PropTypes.string),
   }),
   onHide: PropTypes.func.isRequired,
 };
