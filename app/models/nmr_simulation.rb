@@ -19,15 +19,18 @@
 #  index_nmr_sim_nmr_simulations_on_molecule_id_and_source  (molecule_id,source) UNIQUE
 #
 
-
 # NMR Simulation
 class NmrSimulation < ApplicationRecord
   self.table_name = 'nmr_sim_nmr_simulations'
   acts_as_paranoid
   belongs_to :molecule
 
-  before_validation :path_valid_or_to_fetch
-  validates :molecule_id, uniqueness: { scope: :source }
+  SOURCES = %w[nmrdb].freeze
+
+  before_validation :path_valid_or_to_fetch, if: :fetchable?
+  validates :source, inclusion: { in: SOURCES }
+  # the unique DB index on (molecule_id, source) also covers soft-deleted rows
+  validates :molecule_id, uniqueness: { scope: :source, conditions: -> { with_deleted } }
 
   def result
     { response_1h: read(path_1h), response_13c: read(path_13c) }
@@ -57,7 +60,8 @@ class NmrSimulation < ApplicationRecord
 
   def compose_and_save(type, json)
     file_path = generate_filepath(type)
-    File.open(file_dir + '/' + file_path, 'w') { |file| file.write(json) }
+    FileUtils.mkdir_p(file_dir)
+    File.write(File.join(file_dir, file_path), json)
     file_path
   end
 
@@ -68,15 +72,19 @@ class NmrSimulation < ApplicationRecord
   end
 
   def file_dir
-    File.join(Rails.root, 'public', 'simulations', "#{source}")
+    Rails.public_path.join('simulations', source.to_s).to_s
   end
 
   def read(path)
-    valid_file(path) ? File.open(file_dir + '/' + path) : nil
+    valid_file(path) ? File.read(File.join(file_dir, path)) : nil
   end
 
   def valid_file(path)
-    path && File.file?(file_dir + '/' + path)
+    path && File.file?(File.join(file_dir, path))
+  end
+
+  def fetchable?
+    molecule.present? && SOURCES.include?(source)
   end
 
   def path_valid_or_to_fetch
