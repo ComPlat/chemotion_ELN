@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+module Entities
+  module ReactionProcessEditor
+    class SampleEntity < Grape::Entity
+      expose :id
+      expose :short_label
+      expose :external_label
+      expose :name
+      expose :sample_svg_file
+      expose :metrics
+      expose :location
+      expose :hide_in_eln
+
+      expose :target_amount
+      expose :amounts
+
+      expose :intermediate_type
+
+      private
+
+      def intermediate_type
+        return 'Ontology' if object.is_a?(::ReactionProcessEditor::Ontology)
+
+        object.reactions_intermediate_samples.first&.intermediate_type
+      end
+
+      def target_amount
+        ::ReactionProcessEditor::SampleAmountsConverter.to_rpe(object)
+      end
+
+      def amounts
+        {
+          mg: object.amount_mg,
+          mmol: object.amount_mmol,
+          ml: object.amount_ml,
+        }
+      end
+
+      def svg_file
+        object.sample_svg_file
+      end
+    end
+  end
+end

@@ -1,0 +1,48 @@
+{
+	"vialPlates": [
+		{
+			"trayType": "HS_15",
+			"trayColumns": 5,
+			"trayRows": 3,
+			"vials": [
+				11568,
+				9646,
+				null,
+				16165,
+				56161,
+				619619,
+				null,
+				1196,
+				null,
+				196,
+				null,
+				null,
+				null,
+				null,
+				956191
+			]
+		},
+		{
+			"trayType": "HS_15",
+			"trayColumns": 5,
+			"trayRows": 3,
+			"vials": [
+				949456,
+				null,
+				1616,
+				15616,
+				616,
+				null,
+				null,
+				null,
+				1619,
+				6511960,
+				5196,
+				15198,
+				1598,
+				964949,
+				65196
+			]
+		}
+	]
+}

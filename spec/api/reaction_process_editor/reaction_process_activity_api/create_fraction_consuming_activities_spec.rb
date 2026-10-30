@@ -1,0 +1,49 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+describe ReactionProcessEditor::ReactionProcessActivityAPI, '.create_fraction_consuming_activities' do
+  include RequestSpecHelper
+
+  subject(:put_append_fraction_request) do
+    put("/api/v1/reaction_process_editor/reaction_process_activities/#{action.id}/create_fraction_consuming_activities",
+        params: pooling_group_params.to_json,
+        headers: authorization_header)
+  end
+
+  let!(:action) { create(:reaction_process_activity_add_sample, position: 3) }
+
+  let(:pooling_group_params) do
+    { fractions: [
+      { consuming_action_name: 'DISCARD', vials: %w[1 2] },
+      { consuming_action_name: 'EVAPORATION', vials: %w[3] },
+    ] }
+  end
+
+  let(:authorization_header) { authorized_header(action.creator) }
+
+  it_behaves_like 'authorization restricted API call'
+
+  it 'Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionConsumingActivity' do
+    allow(Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionConsumingActivity).to receive(:execute!)
+    put_append_fraction_request
+
+    expect(Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionConsumingActivity)
+      .to have_received(:execute!)
+      .with({ parent_action: anything,
+              fraction_params: { consuming_action_name: 'DISCARD', vials: %w[1 2] },
+              index: 0 })
+
+    expect(Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionConsumingActivity)
+      .to have_received(:execute!)
+      .with({ parent_action: anything,
+              fraction_params: { consuming_action_name: 'EVAPORATION', vials: %w[3] },
+              index: 1 })
+  end
+
+  it 'updates activity automation_control status' do
+    expect { put_append_fraction_request }.to change {
+      action.reload.workup.dig('automation_control', 'status')
+    }.to('HALT_RESOLVED_NEEDS_CONFIRMATION')
+  end
+end

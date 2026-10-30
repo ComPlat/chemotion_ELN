@@ -1,0 +1,68 @@
+# frozen_string_literal: true
+
+module Entities
+  module ReactionProcessEditor
+    class ReactionProcessEntity < Grape::Entity
+      expose :id, :short_label, :sample_setup, :initial_conditions
+
+      expose :reaction_process_steps, using: 'Entities::ReactionProcessEditor::ReactionProcessStepEntity'
+      expose :samples_preparations, using: 'Entities::ReactionProcessEditor::SamplePreparationEntity'
+      expose :reaction_process_vessels, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
+      expose :provenance, using: 'Entities::ReactionProcessEditor::ProvenanceEntity'
+      expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
+
+      expose :reaction_process_vessel, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
+
+      expose :reaction_svg_file
+      expose :reaction_default_conditions, :user_reaction_default_conditions
+
+      expose :select_options
+
+      expose :initial_sample_transfers, using: 'Entities::ReactionProcessEditor::ReactionProcessActivityEntity'
+
+      private
+
+      delegate :reaction, to: :object
+
+      def reaction_process_steps
+        @reaction_process_steps ||= object.reaction_process_steps
+                                          .includes(%i[reaction_process_activities reaction_process_vessel])
+                                          .order(:position)
+      end
+
+      def initial_sample_transfers
+        return [] unless object.sample
+
+        reaction_process_steps.map do |process_step|
+          process_step.reaction_process_activities.select do |activity|
+            activity.transfer?(sample_id: object.sample_id)
+          end
+        end.flatten
+      end
+
+      def samples_preparations
+        object.samples_preparations.includes([{ sample: %i[residues] }]).order(:created_at)
+      end
+
+      def provenance
+        object.provenance || ::ReactionProcessEditor::Provenance.new(reaction_process: object,
+                                                                     email: object.creator.email,
+                                                                     username: object.creator.name)
+      end
+
+      def reaction_default_conditions
+        #  Piggyback reaction_process_id for convenience in UI Navbar which is outside the reaction_process scope.
+        object.reaction_default_conditions.merge({ reaction_process_id: object.id })
+      end
+
+      def user_reaction_default_conditions
+        ::Entities::ReactionProcessEditor::Constants::Conditions::GLOBAL_DEFAULTS
+          .merge(object.user_default_conditions)
+      end
+
+      def select_options
+        SelectOptions::ReactionProcess.new.select_options_for(reaction_process: object)
+      end
+    end
+  end
+end
