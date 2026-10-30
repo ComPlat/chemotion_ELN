@@ -13,6 +13,19 @@ module Usecases
         new(attachments, current_user, source_plan_id: source_plan_id).transaction { |copy| copy.execute!(element) }
       end
 
+      # Public compatibility entry point used by Labimotion's attachment handler.
+      def self.update_annotation(original_attach, copy_attach_id)
+        original_attach = Attachment.find(original_attach) unless original_attach.is_a?(Attachment)
+        # PDFs can have thumbnails without carrying an annotation derivative.
+        return if original_attach.attachment(:annotation).blank?
+
+        loader = Usecases::Attachments::Annotation::AnnotationLoader.new
+        svg = loader.get_annotation_of_attachment(original_attach.id)
+
+        updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
+        updater.updated_annotated_string(svg, copy_attach_id)
+      end
+
       def initialize(attachments, current_user, source_plan_id: nil)
         @entries = validated_entries(attachments)
         @deleted_ids = @entries.select { |entry| entry[:is_deleted] }.pluck(:id).map(&:to_s)
@@ -124,7 +137,7 @@ module Usecases
         # Finish storage writes before committing the plan, including its annotation.
         copy.attachment_attacher.finalize
         copy.save!
-        update_annotation(original, copy.id)
+        self.class.update_annotation(original, copy.id)
         copy
       rescue StandardError => e
         raise Error, 'Unable to copy attachment files', cause: e
@@ -149,7 +162,7 @@ module Usecases
       def unreadable_body_image?(identifier, originals, element, permitted_source_images)
         return false if identifier.blank?
         return true unless identifier.is_a?(String)
-        return false if identifier.match?(/\A[\w-]+\.\w+\z/) # Legacy public-image filenames.
+        return false if ResearchPlan.legacy_image_filename?(identifier)
 
         # The browser uploads new images only after the plan has been created.
         return false unless originals.key?(identifier)
@@ -185,19 +198,6 @@ module Usecases
         end
       rescue StandardError => e
         Rails.logger.error("Unable to clean up copied attachment #{identifier}: #{e.message}")
-      end
-
-      def update_annotation(original_attach, copy_attach_id)
-        # Only image attachments carry an :annotation derivative. For PDFs and other
-        # non-annotatable files it is nil, and the loader would raise NoMethodError
-        # ("undefined method `url' for nil"), aborting the whole research-plan copy.
-        return if original_attach.attachment(:annotation).blank?
-
-        loader = Usecases::Attachments::Annotation::AnnotationLoader.new
-        svg = loader.get_annotation_of_attachment(original_attach.id)
-
-        updater = Usecases::Attachments::Annotation::AnnotationUpdater.new
-        updater.updated_annotated_string(svg, copy_attach_id)
       end
     end
   end

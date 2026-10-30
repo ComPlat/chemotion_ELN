@@ -172,4 +172,44 @@ describe('ResearchPlansFetcher.create', () => {
     sinon.assert.notCalled(uploadAttachments);
     sinon.assert.notCalled(uploadGenericFiles);
   });
+
+  [
+    { status: 400, error: 'Attachments must be an array of attachment objects' },
+    { status: 422, error: 'Unable to copy attachment files' },
+  ].forEach(({ status, error }) => {
+    it(`shows the server's message for a ${status} response and stops follow-up uploads`, async () => {
+      post.callsFake((url, options) => {
+        const result = new Response(JSON.stringify({ error }), { status });
+        return options.handleResponseSuccess ? options.handleResponseSuccess(result) : result.json();
+      });
+
+      await expect(ResearchPlansFetcher.create(plan)).rejects.toThrow(error);
+
+      sinon.assert.calledOnceWithExactly(notify, { message: error, level: 'error' });
+      sinon.assert.notCalled(uploadAttachments);
+      sinon.assert.notCalled(uploadGenericFiles);
+    });
+  });
+
+  [
+    { status: 500, error: 'Unexpected internal exception' },
+    { status: 400, error: { details: 'Unexpected response format' } },
+    { status: 422, error: '   ' },
+  ].forEach(({ status, error }) => {
+    it(`uses a fallback for an unexpected or empty error message (${status}: ${JSON.stringify(error)})`, async () => {
+      post.callsFake((url, options) => {
+        const result = new Response(JSON.stringify({ error }), { status });
+        return options.handleResponseSuccess ? options.handleResponseSuccess(result) : result.json();
+      });
+
+      await expect(ResearchPlansFetcher.create(plan)).rejects.toThrow();
+
+      sinon.assert.calledOnceWithExactly(notify, {
+        message: 'Research plan could not be created. Please try again.',
+        level: 'error',
+      });
+      sinon.assert.notCalled(uploadAttachments);
+      sinon.assert.notCalled(uploadGenericFiles);
+    });
+  });
 });

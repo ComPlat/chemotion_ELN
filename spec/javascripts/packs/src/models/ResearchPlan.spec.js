@@ -286,6 +286,20 @@ describe('ResearchPlan', () => {
       expect(draft.buildCopy().serialize().source_plan_id).toEqual(19);
     });
 
+    it('does not use an unsaved plan UUID as the source when copying through the collection action', () => {
+      const draft = ResearchPlan.buildEmpty(1);
+      const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(draft, 2);
+
+      expect(copy.id).not.toEqual(draft.id);
+      expect(JSON.parse(JSON.stringify(copy.serialize())).source_plan_id).toEqual(undefined);
+    });
+
+    it('does not introduce a source ID when duplicating a fresh draft more than once', () => {
+      const draft = ResearchPlan.buildEmpty(1);
+
+      expect(draft.buildCopy().buildCopy().serialize().source_plan_id).toEqual(undefined);
+    });
+
     it('does not send a source ID when creating a new plan', () => {
       const plan = ResearchPlan.buildEmpty(1);
 

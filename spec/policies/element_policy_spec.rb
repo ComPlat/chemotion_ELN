@@ -20,6 +20,17 @@ describe ElementPolicy do
 
   let(:element_policy) { described_class.new(user, screen) }
 
+  context 'when the record has no collections' do
+    let(:element_policy) { described_class.new(user, create(:vessel_template)) }
+
+    %i[read? update? copy? copy_with_datasets? share? destroy? read_dataset? read_structure?
+       read_full_detail? import? pass_ownership?].each do |permission|
+      it "denies #{permission} without raising" do
+        expect(element_policy.public_send(permission)).to be false
+      end
+    end
+  end
+
   describe '#read?' do
     context 'when the record is in an own collection' do
       before { own_collection_of_user.screens << screen }

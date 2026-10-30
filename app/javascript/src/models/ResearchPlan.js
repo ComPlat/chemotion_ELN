@@ -297,7 +297,7 @@ export default class ResearchPlan extends Element {
   buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
-    copy.source_plan_id = this.source_plan_id || this.id;
+    copy.source_plan_id = this.source_plan_id || (!this.isNew ? this.id : undefined);
     copy.attachments = this.attachments;
     copy.container = Container.init();
     copy.is_new = true;

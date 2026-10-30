@@ -174,7 +174,7 @@ module Export
         return unless @attachment_access.read?(attachment)
 
         attachment.attachment&.url
-      elsif public_name.match?(/\A[\w-]+\.\w+\z/)
+      elsif ResearchPlan.legacy_image_filename?(public_name)
         "/images/research_plans/#{public_name}"
       end
     end

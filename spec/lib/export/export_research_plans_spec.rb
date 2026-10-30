@@ -108,15 +108,23 @@ describe Export::ExportResearchPlan do
       it 'keeps the legacy public-image path' do
         expect(exporter.to_html).to include("/images/research_plans/#{public_name}")
       end
+
+      it 'keeps the complete legacy basename when it contains multiple dots' do
+        name = 'experiment.v2.final.png'
+        research_plan.update!(body: [{ type: 'image', value: { public_name: name } }])
+
+        expect(exporter.to_html).to include("/images/research_plans/#{name}")
+      end
     end
 
-    context 'when the reference contains a path' do
-      before do
-        research_plan.update!(body: [{ type: 'image', value: { public_name: '../../uploads/private.png' } }])
-      end
+    ['../../uploads/private.png', 'subdir/image.v2.png', 'subdir\\image.v2.png',
+     '/private.png', 'image.png?file=private', 'image.png#fragment', "image.png\n"].each do |public_name|
+      context "when the reference is not a safe legacy basename: #{public_name.inspect}" do
+        before { research_plan.update!(body: [{ type: 'image', value: { public_name: public_name } }]) }
 
-      it 'omits the image' do
-        expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+        it 'omits the image' do
+          expect(Nokogiri::HTML(exporter.to_html).css('img')).to be_empty
+        end
       end
     end
   end

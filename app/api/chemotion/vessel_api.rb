@@ -14,6 +14,12 @@ module Chemotion
     helpers ParamsHelpers
     helpers ContainerHelpers
 
+    helpers do
+      def initialize_template_container(template, container)
+        template.container = update_datamodel(container.deep_dup, element: template, creating: true)
+      end
+    end
+
     rescue_from ActiveRecord::RecordNotFound do
       error!('Resource not found', 401)
     end
@@ -98,11 +104,9 @@ module Chemotion
 
         if params[:container]
           begin
-            root = Container.create_root_container(containable: vessel_template)
-            vessel_template.container = root
-            params[:container][:id] = root.id
-            params[:container][:is_new] = false
-            update_datamodel(params[:container].deep_dup, element: vessel_template, creating: false)
+            vessel_template.with_lock do
+              initialize_template_container(vessel_template, params[:container]) unless vessel_template.container
+            end
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
           end
@@ -172,10 +176,9 @@ module Chemotion
 
         if params[:container]
           begin
-            vessel_template.container = update_datamodel(
-              params[:container].deep_dup, element: vessel_template, creating: vessel_template.container.nil?
-            )
-            vessel_template.save!
+            vessel_template.with_lock do
+              initialize_template_container(vessel_template, params[:container]) unless vessel_template.container
+            end
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
           end
@@ -237,25 +240,18 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(id: params[:id])
         error!('Vessel template not found', 404) unless vessel_template
 
-        template_params = params.slice(:name, :details, :material_details, :material_type, :vessel_type,
-                                       :volume_amount, :volume_unit).compact
-        vessel_template.update!(template_params)
+        begin
+          vessel_template.with_lock do
+            # Grape's error! throws rather than raises, so the rescue below does not turn this 403 into a 400.
+            error!('403 Forbidden', 403) if params[:container] && vessel_template.container.present?
 
-        if params[:container]
-          begin
-            if vessel_template.container.present?
-              update_datamodel(params[:container], element: vessel_template, creating: false)
-            else
-              root = Container.create_root_container(containable: vessel_template)
-              vessel_template.container = root
-              params[:container][:id] = root.id
-              params[:container][:is_new] = false
-
-              update_datamodel(params[:container].deep_dup, element: vessel_template, creating: false)
-            end
-          rescue StandardError => e
-            error!("Container update failed: #{e.message}", 400)
+            template_params = params.slice(:name, :details, :material_details, :material_type, :vessel_type,
+                                           :volume_amount, :volume_unit).compact
+            vessel_template.update!(template_params)
+            initialize_template_container(vessel_template, params[:container]) if params[:container]
           end
+        rescue StandardError => e
+          error!("Vessel template update failed: #{e.message}", 400)
         end
 
         vessel_template.reload

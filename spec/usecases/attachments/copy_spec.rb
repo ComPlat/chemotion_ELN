@@ -8,6 +8,40 @@ describe Usecases::Attachments::Copy do
   let(:collection) { create(:collection, user: user) }
   let(:source_plan) { create(:research_plan, collections: [collection]) }
 
+  describe '.update_annotation' do
+    let(:source) { create(:attachment, :with_png_image, attachable: source_plan) }
+    let(:destination) { create(:attachment, :with_png_image, attachable: research_plan) }
+    let(:loader) { Usecases::Attachments::Annotation::AnnotationLoader.new }
+
+    %i[id record].each do |input|
+      it "copies an annotation from an attachment #{input} and rewrites its image reference" do
+        original_svg = loader.get_annotation_of_attachment(source.id)
+        # Keep a distinctive label without relying on font rendering in ImageMagick.
+        File.write(source.attachment(:annotation).url, original_svg.sub('<svg ', '<svg id="copy-label" '))
+
+        described_class.update_annotation(input == :id ? source.id : source, destination.id)
+
+        annotation = loader.get_annotation_of_attachment(destination.reload.id)
+        expect(annotation).to include('copy-label', "/api/v1/attachments/image/#{destination.id}")
+        expect(annotation).not_to include("/api/v1/attachments/image/#{source.id}\"")
+        expect(loader.get_annotation_of_attachment(source.id)).to include("/api/v1/attachments/image/#{source.id}")
+      end
+    end
+
+    it 'does not attempt to load annotations for a PDF with thumbnail derivatives' do
+      pdf = create(:attachment, :with_pdf, attachable: source_plan)
+
+      expect { described_class.update_annotation(pdf.id, destination.id) }.not_to raise_error
+    end
+
+    it 'supports the pinned Labimotion attachment copy caller' do
+      copy = Labimotion::AttachmentHandler.copy(source, research_plan.id, 'ResearchPlan', user.id)
+
+      expect(Attachment.find(copy.id).read_file).to eq(Attachment.find(source.id).read_file)
+      expect(loader.get_annotation_of_attachment(copy.reload.id)).to include("/api/v1/attachments/image/#{copy.id}")
+    end
+  end
+
   describe '.execute!' do
     let(:attachments) { [{ id: source.id }] }
     let(:source_plan_id) { source_plan.id }

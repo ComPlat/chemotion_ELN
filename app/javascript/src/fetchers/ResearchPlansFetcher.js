@@ -31,15 +31,24 @@ export default class ResearchPlansFetcher {
 
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
+    let responseStatus;
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container)
-      .then(() => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() }))
+      .then(() => ApiClient.postJson('/api/v1/research_plans', {
+        body: researchPlan.serialize(),
+        handleResponseSuccess: (response) => {
+          responseStatus = response.status;
+          return response.json();
+        },
+      }))
       .then((json) => {
         if (json.error) {
+          const serverMessage = [400, 422].includes(responseStatus) && typeof json.error === 'string'
+            ? json.error.trim() : '';
           rootStore.notificationsStore.add({
             message: json.error === '403 Forbidden'
               ? 'Research plan could not be created. Check your source plan and destination collection permissions.'
-              : 'Research plan could not be created. Please try again.',
+              : serverMessage || 'Research plan could not be created. Please try again.',
             level: 'error',
           });
           throw new Error(json.error);

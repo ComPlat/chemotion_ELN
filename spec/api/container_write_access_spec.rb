@@ -110,7 +110,9 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
       end
     end
 
-    %i[create update].each do |operation|
+    missing_root_factories = %i[research_plan sample element]
+    operations = factory == :vessel_template ? %i[create] : %i[create update]
+    operations.each do |operation|
       context "when saving an element with #{operation}" do
         let(:container_data) do
           { id: target.container&.id, is_new: operation == :create, container_type: 'root', children: [] }
@@ -130,6 +132,21 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
         end
 
         it_behaves_like 'inbox attachment drops' if factory == :sample
+
+        if operation == :update && missing_root_factories.include?(factory)
+          it 'links a newly created root and its uploaded files to the saved element' do
+            target.container.update!(containable: nil)
+            target.reload
+            upload = create(:attachment, attachable: nil, created_for: user.id)
+            container_data.merge!(id: nil, is_new: true, children: dataset_tree(id: upload.key, is_new: true))
+
+            save_element
+
+            expect(target.reload.container).to be_present
+            expect(upload.reload.root_element).to eq(target)
+            expect(upload.attachable.root).to eq(target.container)
+          end
+        end
 
         it 'preserves foreign attachments when asked to move or delete them' do
           [false, true].each do |deleted| # rubocop:disable Performance/CollectionLiteralInLoop
@@ -235,10 +252,9 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
     end
   end
 
-  context 'when creating vessel instances with template containers' do
+  context 'when initializing template containers during bulk instance creation' do
     let(:template) do
-      create(:vessel_template, id: '12345678-1234-4000-8000-000000000001',
-                               container: Container.create_root_container)
+      create(:vessel_template, id: '12345678-1234-4000-8000-000000000001')
     end
 
     it 'attaches own uploads while preserving foreign attachments and containers' do
@@ -248,7 +264,7 @@ RSpec.describe 'Container writes through element APIs' do # rubocop:disable RSpe
                  [node('dataset', id: foreign_child.id, is_new: false, is_deleted: true)]
       post '/api/v1/vessels/bulk_create', params: {
         vessel_template_id: template.id, collection_id: collection.id, count: 1,
-        container: { id: template.container.id, children: children }
+        container: { id: foreign_plan.container.id, children: children }
       }, as: :json
 
       expect(response).to have_http_status(:created)

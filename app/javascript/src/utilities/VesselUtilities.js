@@ -71,7 +71,7 @@ const extractUpdateVesselTemplateApiParameter = (vessel) => ({
   vessel_type: vessel.vesselType,
   volume_amount: vessel.volumeAmount,
   volume_unit: vessel.volumeUnit,
-  container: vessel.container
+  ...(vessel.container?.isNew || vessel.container?.is_new ? { container: vessel.container } : {}),
 });
 
 const storeLatestVesselIds = (ids) => {

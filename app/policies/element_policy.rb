@@ -123,7 +123,8 @@ class ElementPolicy
   private
 
   def user_and_record_present?
-    user.present? && record.present?
+    # This policy grants access through collections; other record types have no applicable grant.
+    user.present? && record.present? && record.respond_to?(:collections)
   end
 
   def record_is_in_own_collection?

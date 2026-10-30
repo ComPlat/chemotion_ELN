@@ -34,13 +34,18 @@ module Usecases
       def resolve_root(container, creating)
         @new_root_id = nil
         if creating || (container[:is_new] && @element && @element.container.nil? && writable_element?(@element))
-          root = Container.create!(container_type: 'root')
-          @new_root_id = root.id
-          return root
+          return create_root(creating: creating)
         end
         return if container[:is_new]
 
         Container.find_by(id: container[:id])
+      end
+
+      def create_root(creating:)
+        root = Container.create!(container_type: 'root')
+        @element.container = root unless creating
+        @new_root_id = root.id
+        root
       end
 
       def target_root?(container)
@@ -181,8 +186,6 @@ module Usecases
       end
 
       def writable_element?(element)
-        return true if element.is_a?(VesselTemplate) && element == @element
-
         ElementPolicy.new(current_user, element).update?
       end
     end

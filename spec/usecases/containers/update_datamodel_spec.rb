@@ -66,7 +66,7 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
     expect(Attachment.exists?(source.id)).to be true
   end
 
-  it 'ignores injected descendant IDs when deleting an own subtree' do
+  it 'ignores descendant IDs from other roots' do
     own_child = create(:container, parent: element.container)
     foreign = create(:container, parent: other_element.container)
     source.update!(attachable: foreign)
@@ -82,6 +82,20 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
     usecase.update_datamodel(root_data([], root: orphan))
 
     expect(orphan.reload.description).to eq('Original')
+  end
+
+  it 'does not change an existing template tree for either user' do
+    template = create(:vessel_template, container: Container.create_root_container)
+    child = create(:container, parent: template.container, name: 'Original')
+    attachment = create(:attachment, attachable: child, created_for: user.id)
+    data = root_data([{ id: child.id, is_deleted: true }], root: template.container)
+
+    [user, owner].each do |acting_user|
+      described_class.new(acting_user).update_datamodel(data, element: template)
+
+      expect(child.reload.name).to eq('Original')
+      expect(attachment.reload.attachable).to eq(child)
+    end
   end
 
   it 'does not edit a root the user cannot update' do
@@ -132,7 +146,8 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
     result = usecase.update_datamodel({ is_new: true, children: [] }, element: element)
 
     expect(result).to be_persisted
-    expect(result).not_to eq(other_element.container)
+    expect(element.reload.container).to eq(result)
+    expect(result.reload.root_element).to eq(element)
   end
 
   it 'does not create a root on an inaccessible element' do

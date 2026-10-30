@@ -84,6 +84,10 @@ class ResearchPlan < ApplicationRecord
     image_atts[0] || attachments[0]
   end
 
+  def self.legacy_image_filename?(name)
+    name.is_a?(String) && name.match?(/\A[\w-]+(?:\.[\w-]+)+\z/)
+  end
+
   def create_root_container
     return unless container.nil?
 

@@ -507,7 +507,7 @@ describe Chemotion::ResearchPlanAPI do
             create(:attachment, attachable: create(:research_plan, creator: user, collections: [collection]))
           end
 
-          it 'copies only attachments of the source plan and skips injected or unknown IDs' do
+          it 'copies only attachments of the source plan and skips unrelated or unknown IDs' do
             params[:attachments].unshift({ id: -1 })
             params[:attachments] << { id: readable_source.id }
             params[:attachments] << { id: -2 }
