@@ -6,6 +6,10 @@ module Usecases
       class Error < StandardError; end
       class InvalidInput < Error; end
       class Forbidden < Error; end
+      class QuotaExceeded < Error; end
+
+      QUOTA_MESSAGE = 'Not enough storage space to copy the attachments. ' \
+                      'Free up space or copy the plan without them.'
 
       attr_reader :attachments_omitted
 
@@ -51,8 +55,8 @@ module Usecases
       def execute!(element)
         @attachments_omitted = false
         originals = find_originals(element)
-        sources = readable_sources(originals[:by_id])
-        raise Error, 'Unable to copy attachment files' if sources.any? { |attachment| attachment.attachment.blank? }
+        sources = stored_sources(readable_sources(originals[:by_id]))
+        ensure_quota!(sources)
 
         replacements = sources.to_h do |source|
           [source.identifier, copy_attachment(source, element).identifier]
@@ -103,6 +107,24 @@ module Usecases
         end.uniq
       end
 
+      # Legacy rows can lack a stored file; leave them out like unreadable ones.
+      def stored_sources(sources)
+        stored = sources.select { |attachment| attachment.attachment&.exists? }
+        @attachments_omitted ||= stored.size < sources.size
+        stored
+      end
+
+      # Mirrors Attachment#user_quota_exceeded? for the whole batch, before any file is written.
+      def ensure_quota!(sources)
+        return if sources.empty?
+
+        used, allocated = User.where(id: @current_user.id).pick(:used_space, :allocated_space)
+        return if allocated.to_i.zero?
+
+        needed = sources.sum { |attachment| attachment.attachment.size.to_i }
+        raise QuotaExceeded, QUOTA_MESSAGE if used.to_i + needed > allocated
+      end
+
       def valid_entry?(entry)
         return false unless entry.is_a?(Hash)
 
@@ -140,6 +162,9 @@ module Usecases
         self.class.update_annotation(original, copy.id)
         copy
       rescue StandardError => e
+        # Space can still run out mid-copy, e.g. through a concurrent upload.
+        raise QuotaExceeded, QUOTA_MESSAGE, cause: e if e.message == 'User quota exceeded'
+
         raise Error, 'Unable to copy attachment files', cause: e
       end
 
