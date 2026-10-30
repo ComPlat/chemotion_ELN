@@ -156,4 +156,32 @@ describe Chemotion::VersionAPI do
       expect(sample.reload.name).to eq 'first'
     end
   end
+
+  describe 'POST /api/v1/versions/revert for a literal' do
+    let(:reaction) { create(:reaction, collections: [create(:collection, user: user)]) }
+    let!(:literal) do
+      create(:literal, literature: create(:literature), element: reaction, user: user, litype: 'citedOwn')
+    end
+    let(:fields) { [{ value: nil, name: 'deleted_at' }, { value: 'citedOwn', name: 'litype' }] }
+    let(:params) { { changes: [{ db_id: literal.id, klass_name: 'Literal', fields: fields }] } }
+
+    before do
+      allow(ElementPolicy).to receive(:new).and_call_original
+      as_request { literal.update!(litype: 'referTo') }
+      as_request { literal.destroy! }
+    end
+
+    it 'restores the literal and its citation type' do
+      post '/api/v1/versions/revert', params: params
+
+      expect([response.status, Literal.find(literal.id).litype]).to eq [201, 'citedOwn']
+    end
+
+    it 'requires edit permission on the element' do
+      reaction.collections_reactions.destroy_all
+      post '/api/v1/versions/revert', params: params
+
+      expect([response.status, Literal.with_deleted.find(literal.id)]).to match [401, be_deleted]
+    end
+  end
 end

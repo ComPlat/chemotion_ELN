@@ -3,17 +3,17 @@
 # Table name: screens
 #
 #  id                     :integer          not null, primary key
+#  collaborator           :string
+#  component_graph_data   :jsonb
+#  conditions             :string
+#  deleted_at             :datetime
 #  description            :string
 #  name                   :string
-#  result                 :string
-#  collaborator           :string
-#  conditions             :string
+#  plain_text_description :text
 #  requirements           :string
+#  result                 :string
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  deleted_at             :datetime
-#  component_graph_data   :jsonb
-#  plain_text_description :text
 #
 # Indexes
 #

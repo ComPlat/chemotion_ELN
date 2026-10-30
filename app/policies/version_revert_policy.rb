@@ -12,6 +12,7 @@ class VersionRevertPolicy
     'Component' => ->(record) { [record.sample] },
     'Container' => ->(record) { [VersionRevertPolicy.container_element(record)] },
     'ElementalComposition' => ->(record) { [record.sample] },
+    'Literal' => ->(record) { [record.element] },
     'ReactionsSample' => ->(record) { [record.reaction, record.sample] },
     'ResearchPlanMetadata' => ->(record) { [record.research_plan] },
     'Residue' => ->(record) { [record.sample] },
