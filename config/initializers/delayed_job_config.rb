@@ -99,6 +99,7 @@ ActiveSupport.on_load(:active_record) do
     { job_class: RefreshElementTagJob, enabled: :default, cron_variable: 'CRON_CONFIG_REFRESH_ELEMENT_TAG' },
     { job_class: DiskUsageJob,         enabled: :default, cron_variable: 'CRON_CONFIG_DISK_USAGE' },
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
+    { job_class: ChemicalExpirationNotificationJob, enabled: :default, cron_variable: 'CRON_CONFIG_CHEMICAL_EXPIRATION' },
   ]
 
   # Delete all recurring jobs. Scoped to cron IS NOT NULL: InitCronJobsJob sets `cron:` only
