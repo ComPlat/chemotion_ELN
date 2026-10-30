@@ -65,6 +65,29 @@ RSpec.describe 'ImportCollection' do
       let(:import_id) { 'collection_reaction' }
       let(:attachment) { create(:attachment, :with_reaction_collection_zip) }
 
+      it 'preserves exported environmental measurements and units' do
+        environment = {
+          'temperature' => { 'value' => '72.5', 'unit' => '°F' },
+          'humidity' => { 'value' => '45', 'unit' => '%' },
+          'air_pressure' => { 'value' => '760', 'unit' => 'torr' },
+        }
+        importer.execute
+        source = Reaction.first
+        source.update!(environment: environment)
+        collection = Collection.find_by!(label: 'Fab-Col-Reaction')
+        export = Export::ExportCollections.new(SecureRandom.uuid, [collection.id])
+        export.prepare_data
+        export.to_file
+
+        exported_attachment = create(:attachment, file_path: export.file_path)
+        Import::ImportCollections.new(exported_attachment, user.id).execute
+
+        imported = Reaction.where.not(id: source.id).find_by!(name: source.name)
+        expect(imported.reload.environment).to eq(environment)
+      ensure
+        FileUtils.rm_f(export.file_path) if export
+      end
+
       it 'successfully import 1 reaction' do # rubocop:disable RSpec/MultipleExpectations
         importer.execute
 

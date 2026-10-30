@@ -158,7 +158,7 @@ export default class ReactionDetails extends Component {
     const selectedReactionType = reaction.reaction_type || 'standard';
 
     return (
-      <Form.Group className="reaction-details-toolbar__group mb-0 me-2">
+      <Form.Group className="reaction-details-toolbar__group mb-0">
         <Select
           size="sm"
           name="reaction_type"

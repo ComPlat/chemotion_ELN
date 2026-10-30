@@ -10,6 +10,9 @@ import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
+import { GenUnitBtn, getGenSI } from 'chem-generic-ui';
+import * as ReactionVariationsUtils
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 import EnvironmentConditionsPanel, { EnvironmentConditionsToggle }
   from 'src/apps/mydb/elements/details/reactions/schemeTab/EnvironmentConditions';
@@ -41,6 +44,37 @@ const changeInput = (wrapper, index, value) => {
 };
 
 describe('EnvironmentConditionsPanel', () => {
+  afterEach(() => sinon.restore());
+
+  describe('temperature hint', () => {
+    [
+      ['K', '-5', '0'],
+      ['°C', '-300', '-273.15'],
+      ['°F', '-500', '-459.67'],
+    ].forEach(([unit, below, minimum]) => {
+      it(`warns below absolute zero in ${unit} without changing the entered value`, () => {
+        const onChange = sinon.spy();
+        const wrapper = renderPanel(buildEnvironment({ temperature: { value: below, unit } }), onChange);
+
+        expect(wrapper.text()).toContain('Below absolute zero');
+        expect(wrapper.find('input').at(TEMPERATURE).prop('value')).toBe(below);
+        expect(onChange.called).toBe(false);
+
+        wrapper.setProps({ environment: buildEnvironment({ temperature: { value: minimum, unit } }) });
+        expect(wrapper.text()).not.toContain('Below absolute zero');
+        wrapper.unmount();
+      });
+    });
+
+    it('does not warn for valid, empty or incomplete temperature values', () => {
+      ['-25', '', '-', '.'].forEach((value) => {
+        const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit: '°C' } }));
+        expect(wrapper.text()).not.toContain('Below absolute zero');
+        wrapper.unmount();
+      });
+    });
+  });
+
   describe('numeric normalization', () => {
     it('strips letters and converts a decimal comma to a dot on temperature', () => {
       const onChange = sinon.spy();
@@ -105,6 +139,15 @@ describe('EnvironmentConditionsPanel', () => {
   });
 
   describe('temperature unit cycling', () => {
+    it('leaves an unknown legacy temperature unit unchanged', () => {
+      const onChange = sinon.spy();
+      const wrapper = renderPanel(buildEnvironment({ temperature: { value: '22', unit: 'C' } }), onChange);
+      wrapper.find('button').at(0).simulate('click');
+
+      expect(onChange.called).toBe(false);
+      wrapper.unmount();
+    });
+
     it('advances the unit and converts the entered value (°C to °F)', () => {
       const onChange = sinon.spy();
       const wrapper = renderPanel(buildEnvironment({ temperature: { value: '25', unit: '°C' } }), onChange);
@@ -164,7 +207,9 @@ describe('EnvironmentConditionsPanel', () => {
     it('cycles through all supported units and restores the original precision', () => {
       const onChange = sinon.spy();
       const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '1013.25789', unit: 'mbar' } }), onChange);
-      const units = ['atm', 'pa', 'kpa', 'mpa', 'hpa', 'torr', 'bar', 'mbar'];
+      const keys = getGenSI('pressure').map(({ key }) => key);
+      const start = keys.indexOf('mbar');
+      const units = [...keys.slice(start + 1), ...keys.slice(0, start + 1)];
       units.forEach((unit) => {
         cyclePressure(wrapper);
         const environment = onChange.lastCall.args[0];
@@ -180,6 +225,35 @@ describe('EnvironmentConditionsPanel', () => {
       const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '0.00101325', unit: 'mbar' } }), onChange);
       cyclePressure(wrapper);
       expect(onChange.lastCall.args[0].air_pressure).toEqual({ value: '0.000001', unit: 'atm' });
+      wrapper.unmount();
+    });
+
+    it('leaves the reading and unit unchanged when a legacy unit is unknown', () => {
+      const onChange = sinon.spy();
+      const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '1013.25', unit: 'hPa' } }), onChange);
+      wrapper.find(GenUnitBtn).prop('fnCb')({ unit: 'atm' });
+
+      expect(onChange.called).toBe(false);
+      expect(wrapper.prop('environment').air_pressure).toEqual({ value: '1013.25', unit: 'hPa' });
+      wrapper.unmount();
+    });
+
+    it('leaves the reading and unit unchanged when the target unit is unknown', () => {
+      const onChange = sinon.spy();
+      const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '1013.25', unit: 'mbar' } }), onChange);
+      wrapper.find(GenUnitBtn).prop('fnCb')({ unit: 'unknown' });
+
+      expect(onChange.called).toBe(false);
+      wrapper.unmount();
+    });
+
+    it('leaves the reading and unit unchanged when unit metadata is unavailable', () => {
+      sinon.stub(ReactionVariationsUtils, 'convertGenericUnit').returns(null);
+      const onChange = sinon.spy();
+      const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '1013.25', unit: 'mbar' } }), onChange);
+      wrapper.find(GenUnitBtn).prop('fnCb')({ unit: 'atm' });
+
+      expect(onChange.called).toBe(false);
       wrapper.unmount();
     });
 

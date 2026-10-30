@@ -3,36 +3,33 @@ import PropTypes from 'prop-types';
 import {
   Button, Collapse, Form, InputGroup, Row, Col
 } from 'react-bootstrap';
-import { GenUnitBtn, getGenSI } from 'chem-generic-ui';
+import { GenUnitBtn } from 'chem-generic-ui';
 
 import { convertTemperature } from 'src/models/Reaction';
 import { isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
+import { normalizeNumberInput } from 'src/utilities/MathUtils';
+import { convertGenericUnit }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 const TEMPERATURE_UNITS = ['°C', '°F', 'K'];
-
-// Restrict typed input to a number, mirroring the reaction Vessel size field: convert a
-// decimal comma to a dot, drop every non-numeric character, and keep a single decimal point.
-// Temperature additionally keeps a leading minus sign, since sub-zero values are valid.
-const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
-  const negative = allowNegative && `${raw}`.trim().startsWith('-');
-  // Stop at a second separator rather than silently appending its fractional digits.
-  const value = `${raw}`.replace(/,/g, '.').replace(/[^0-9.]/g, '').match(/^\d*(?:\.\d*)?/)[0];
-  return negative ? `-${value}` : value;
-};
 
 // Soft, non-blocking guidance shown as muted helper text. Numeric-only input already blocks
 // letters and (for humidity / air pressure) negatives, so this only gently nudges when a
 // value lands outside its usual physical range; it never blocks saving.
 const ENVIRONMENT_HINTS = {
+  temperature: (num, unit) => {
+    const minimum = { '°C': -273.15, '°F': -459.67, K: 0 }[unit];
+    return num < minimum ? 'Below absolute zero' : null;
+  },
   humidity: (num) => (num > 100 ? 'Usually 0 to 100%' : null),
 };
 
-const environmentFieldHint = (field, value) => {
+const environmentFieldHint = (field, value, unit) => {
   const hint = ENVIRONMENT_HINTS[field];
   const text = `${value ?? ''}`.trim();
   if (!hint || text === '') { return null; }
   const num = Number(text);
-  return Number.isFinite(num) ? hint(num) : null;
+  return Number.isFinite(num) ? hint(num, unit) : null;
 };
 
 // Toolbar toggle: sits next to the Status field, opens/closes the panel below the toolbar.
@@ -92,6 +89,8 @@ const EnvironmentConditionsPanel = ({
 
   const cycleTemperatureUnit = () => {
     const current = environment.temperature.unit || '°C';
+    if (!TEMPERATURE_UNITS.includes(current)) { return; }
+
     const nextUnit = TEMPERATURE_UNITS[(TEMPERATURE_UNITS.indexOf(current) + 1) % TEMPERATURE_UNITS.length];
     const { value } = environment.temperature;
     let nextValue = value;
@@ -121,12 +120,11 @@ const EnvironmentConditionsPanel = ({
       const previous = pressureConversion.current;
       const source = previous?.value === value && previous?.unit === pressure.unit
         ? previous.source : { value, unit: pressure.unit };
-      const units = getGenSI('pressure');
-      const fromUnit = units.find((unit) => unit.key === source.unit);
-      const toUnit = units.find((unit) => unit.key === updated.unit);
       // GenUnitBtn rounds each conversion to five decimal places. Convert from the
       // original reading with its unit metadata to preserve small pressure values.
-      const converted = Number(source.value) * toUnit.nm / fromUnit.nm;
+      const converted = convertGenericUnit(Number(source.value), source.unit, updated.unit, 'pressure');
+      if (converted === null || !Number.isFinite(converted)) { return; }
+
       nextValue = updated.unit === source.unit ? source.value
         : converted.toLocaleString('en-US', { useGrouping: false, maximumSignificantDigits: 15 });
       pressureConversion.current = { source, value: nextValue, unit: updated.unit };
@@ -165,6 +163,11 @@ const EnvironmentConditionsPanel = ({
                   {environment.temperature.unit || '°C'}
                 </Button>
               </InputGroup>
+              {environmentFieldHint('temperature', environment.temperature.value, environment.temperature.unit) && (
+                <Form.Text className="text-muted">
+                  {environmentFieldHint('temperature', environment.temperature.value, environment.temperature.unit)}
+                </Form.Text>
+              )}
             </Form.Group>
           </Col>
           <Col md={4}>

@@ -153,13 +153,19 @@ export default class Reaction extends Element {
     Reaction.PURIFICATION_SOLVENTS
   ];
 
+  constructor(args) {
+    const { _environment, ...attributes } = args || {};
+    // Route model snapshots (clone/buildCopy) through the normalizing setter before Element records the checksum.
+    super({ environment: _environment, ...attributes });
+  }
+
   static buildEmpty(collection_id) {
     const reaction = new Reaction({
       collection_id,
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
-      environment: JSON.parse(JSON.stringify(EnvironmentDefault)),
+      environment: EnvironmentDefault,
       ph_operator: '=',
       ph_value: null,
       description: Reaction.quillDefault(),
@@ -455,22 +461,26 @@ export default class Reaction extends Element {
 
   // Environmental conditions are stored as a single jsonb column shaped
   // { temperature: { value, unit }, humidity: { value, unit }, air_pressure: { value, unit } }
-  // (like vessel_size). The getter normalizes to the full default shape so a missing, empty
+  // (like vessel_size). Assignment normalizes to the full default shape so a missing, empty
   // ({}), or partial persisted hash (older records, or a raw API write of the unconstrained
   // Hash param) can't crash the panel, which dereferences environment.temperature.value etc.
   // without guarding the nested objects.
   get environment() {
-    const env = this._environment || {};
-    this._environment = {
-      temperature: { ...EnvironmentDefault.temperature, ...env.temperature },
-      humidity: { ...EnvironmentDefault.humidity, ...env.humidity },
-      air_pressure: { ...EnvironmentDefault.air_pressure, ...env.air_pressure },
-    };
     return this._environment;
   }
 
   set environment(environment) {
-    this._environment = environment;
+    const env = environment || {};
+    this._environment = Object.fromEntries(Object.entries(EnvironmentDefault).map(([field, defaults]) => {
+      const condition = env[field];
+      const value = condition?.value;
+      const unit = condition?.unit;
+
+      return [field, {
+        value: typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value)) ? `${value}` : '',
+        unit: typeof unit === 'string' && unit !== '' ? unit : defaults.unit,
+      }];
+    }));
   }
 
   // True when any environmental condition (temperature, humidity, air pressure)
@@ -671,6 +681,8 @@ export default class Reaction extends Element {
       timestamp_stop: '',
       rf_value: 0.00,
       status: '',
+      // Measured ambient readings belong to the original run, not the repeat.
+      environment: EnvironmentDefault,
     };
     const copy = reaction.buildCopy(params, keepAmounts);
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
