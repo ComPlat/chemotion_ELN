@@ -461,6 +461,25 @@ describe Chemotion::ResearchPlanAPI do
           end
         end
 
+        context 'when copying all attachments with a new dataset image' do
+          it 'keeps the new image without reporting it as an omitted source attachment' do
+            upload = create(:attachment, :with_png_image, attachable: nil, created_for: user.id)
+            request_params = params.merge(body: [{ type: 'image', value: { public_name: upload.identifier } }])
+            request_params.delete(:attachments)
+            request_params[:container][:children] = [{
+              is_new: true, container_type: 'dataset', extended_metadata: {},
+              attachments: [{ id: upload.key, is_new: true }]
+            }]
+            post '/api/v1/research_plans', params: request_params, as: :json
+
+            expect(response).to have_http_status(:created), response.body
+            expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect([upload.reload.root_element, copied_plan.body.first.dig('value', 'public_name')])
+              .to eq([copied_plan, upload.identifier])
+          end
+        end
+
         context 'when the source research plan is not readable' do
           let(:owner) { create(:person) }
 
@@ -546,18 +565,67 @@ describe Chemotion::ResearchPlanAPI do
             end
           end
 
-          context 'when the share does not allow reading datasets' do
-            let(:detail_level) { 2 }
+          context 'when the share does not allow copying the plan' do
+            let(:detail_level) { 0 }
 
-            it 'rejects the copy instead of silently dropping all attachments' do
+            it 'rejects the copy before creating any records or files' do
               expect_atomic_copy_failure(params, :forbidden)
             end
+          end
 
-            it 'returns can_copy false so the UI disables the copy action' do
-              get "/api/v1/research_plans/#{source_plan.id}"
+          [1, 2].each do |detail|
+            context "when the share allows plan copies at detail level #{detail}" do
+              let(:detail_level) { detail }
+              let(:text_field) do
+                { 'type' => 'richtext', 'value' => { 'ops' => [{ 'insert' => "Keep this text\n" }] } }
+              end
 
-              expect(response).to have_http_status(:ok)
-              expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be false
+              it 'copies the plan content and reports omitted attachments' do
+                params[:body].unshift(text_field)
+                post '/api/v1/research_plans', params: params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)['attachments_omitted']).to be true
+              end
+
+              it 'reports unreadable files when copying all source attachments without image fields' do
+                source.destroy!
+                create(:attachment, attachable: source_plan, created_for: owner.id)
+                params.delete(:attachments)
+                params[:body] = [text_field]
+                post '/api/v1/research_plans', params: params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)['attachments_omitted']).to be true
+              end
+
+              it 'copies a text-only plan without reporting omitted attachments' do
+                source.destroy!
+                request_params = params.merge(attachments: [], body: [text_field])
+                post '/api/v1/research_plans', params: request_params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              end
+
+              it 'returns can_copy true so the UI enables the copy action' do
+                get "/api/v1/research_plans/#{source_plan.id}"
+
+                expect(response).to have_http_status(:ok)
+                expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be true
+              end
             end
           end
         end

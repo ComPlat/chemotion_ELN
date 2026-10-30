@@ -122,7 +122,7 @@ describe Entities::ResearchPlanEntity do
     context 'when represented with a policy' do
       let(:detail_level) { 10 }
       let(:policy) do
-        Struct.new(:update?, :copy_with_datasets?).new(true, true)
+        Struct.new(:update?, :copy?).new(true, true)
       end
 
       it 'returns the policy related attributes' do
@@ -136,7 +136,7 @@ describe Entities::ResearchPlanEntity do
     context 'when represented with a read-only policy' do
       let(:detail_level) { 10 }
       let(:policy) do
-        Struct.new(:update?, :copy_with_datasets?).new(false, false)
+        Struct.new(:update?, :copy?).new(false, false)
       end
 
       it 'returns can_update as false' do
@@ -144,6 +144,15 @@ describe Entities::ResearchPlanEntity do
           can_copy: false,
           can_update: false,
         )
+      end
+    end
+
+    context 'when the policy allows copying the plan without reading datasets' do
+      let(:detail_level) { 2 }
+      let(:policy) { Struct.new(:update?, :copy?).new(false, true) }
+
+      it 'exposes the plan copy permission' do
+        expect(grape_entity_as_hash).to include(can_copy: true, can_update: false)
       end
     end
 

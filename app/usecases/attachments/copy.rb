@@ -73,14 +73,18 @@ module Usecases
         return if id.nil?
 
         source = ResearchPlan.find_by(id: id)
-        raise Forbidden unless ElementPolicy.new(@current_user, source).copy_with_datasets?
+        raise Forbidden unless ElementPolicy.new(@current_user, source).copy?
 
         source
       end
 
       def readable_source?(attachment)
+        source_attachment?(attachment) && @access.read?(attachment)
+      end
+
+      def source_attachment?(attachment)
         @source_plan.present? && attachment&.attachable_type == 'ResearchPlan' &&
-          attachment.attachable_id == @source_plan.id && @access.read?(attachment)
+          attachment.attachable_id == @source_plan.id
       end
 
       def validated_entries(attachments)
@@ -93,7 +97,7 @@ module Usecases
       end
 
       def readable_sources(originals)
-        return originals.values.select { |attachment| readable_source?(attachment) } if @copy_all
+        return all_readable_sources(originals) if @copy_all
 
         @entries.reject { |entry| entry[:is_new] || @deleted_ids.include?(entry[:id].to_s) }
                 .filter_map do |entry|
@@ -105,6 +109,13 @@ module Usecases
             nil
           end
         end.uniq
+      end
+
+      def all_readable_sources(originals)
+        candidates = originals.values.select { |attachment| source_attachment?(attachment) }
+        readable = candidates.select { |attachment| readable_source?(attachment) }
+        @attachments_omitted ||= readable.size < candidates.size
+        readable
       end
 
       # Legacy rows can lack a stored file; leave them out like unreadable ones.
