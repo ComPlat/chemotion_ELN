@@ -39,7 +39,7 @@ class D3LineChart {
       let seconds = parseFloat(timeArray[2].match(/\d+/g))
 
       let time = parseFloat((((seconds / 60) + minutes) / 60) + hours)
-      time = time.toFixed(4)
+      time = Number(time.toFixed(4))
 
       return { time: time, value: d.value }
     })

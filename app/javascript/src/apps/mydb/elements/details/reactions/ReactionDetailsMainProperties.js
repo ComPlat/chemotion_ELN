@@ -55,8 +55,12 @@ export default class ReactionDetailsMainProperties extends Component {
       vesselSizeField,
       durationField,
       reactionVolumeField,
+      stepTemperatures,
     } = this.props;
     const { temperature } = reaction;
+    const chartTemperature = stepTemperatures
+      ? { ...temperature, data: stepTemperatures.filter((row) => !row.typed) }
+      : temperature;
     const { showTemperatureChart } = this.state;
     const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
 
@@ -117,7 +121,7 @@ export default class ReactionDetailsMainProperties extends Component {
           <Row className="mb-2">
             <Col>
               <LineChartContainer
-                data={temperature}
+                data={chartTemperature}
                 xAxis="Time (h)"
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
@@ -126,6 +130,7 @@ export default class ReactionDetailsMainProperties extends Component {
               <EditableTable
                 temperature={temperature}
                 updateTemperature={this.updateTemperature}
+                otherStepRows={(stepTemperatures || []).filter((row) => row.step > 1 || row.typed)}
               />
             </Col>
           </Row>
@@ -145,6 +150,7 @@ ReactionDetailsMainProperties.propTypes = {
   vesselSizeField: PropTypes.node,
   durationField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
+  stepTemperatures: PropTypes.arrayOf(PropTypes.shape({ time: PropTypes.string, value: PropTypes.string })),
 };
 
 ReactionDetailsMainProperties.defaultProps = {
@@ -156,4 +162,5 @@ ReactionDetailsMainProperties.defaultProps = {
   vesselSizeField: null,
   durationField: null,
   reactionVolumeField: null,
+  stepTemperatures: null,
 };
