@@ -681,8 +681,6 @@ export default class Reaction extends Element {
       timestamp_stop: '',
       rf_value: 0.00,
       status: '',
-      // Measured ambient readings belong to the original run, not the repeat.
-      environment: EnvironmentDefault,
     };
     const copy = reaction.buildCopy(params, keepAmounts);
     copy.origin = { id: reaction.id, short_label: reaction.short_label };

@@ -289,20 +289,19 @@ describe('Reaction', () => {
       expect(reaction.isEdited).toBe(false);
     });
 
-    it('resets environmental conditions when copying a reaction to repeat the run', () => {
-      reaction.environment = {
+    it('preserves environmental conditions when copying a reaction', () => {
+      const environment = {
         temperature: { value: '22', unit: '°F' },
         humidity: { value: '45', unit: '%' },
         air_pressure: { value: '760', unit: 'torr' },
       };
+      reaction.environment = environment;
       const copy = Reaction.copyFromReactionAndCollectionId(reaction, 'newCollectionId');
 
-      expect(copy.environment).toEqual({
-        temperature: { value: '', unit: '°C' },
-        humidity: { value: '', unit: '%' },
-        air_pressure: { value: '', unit: 'mbar' },
-      });
-      expect(copy.isEnvironmentSet()).toBe(false);
+      expect(copy.environment).toEqual(environment);
+      expect(copy.isEnvironmentSet()).toBe(true);
+
+      copy.environment.temperature.value = '25';
       expect(reaction.environment.temperature).toEqual({ value: '22', unit: '°F' });
     });
 
