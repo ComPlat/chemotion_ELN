@@ -134,8 +134,8 @@ table.reaction-scheme-solvent {
   }
 
   &__group--status {
-    width: 220px;
-    min-width: 0;
+    flex: 0 0 220px;
+    max-width: 100%;
   }
 }
 

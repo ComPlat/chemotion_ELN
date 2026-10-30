@@ -123,6 +123,24 @@ const formatDisplayValue = (val, precision) => {
   return Number(val).toExponential(precision - 1);
 };
 
+/**
+ * Restrict typed text to a plain decimal number while the user is still editing.
+ *
+ * A decimal comma becomes a dot, every non-numeric character is dropped, and input stops
+ * at a second decimal separator rather than silently appending its fractional digits.
+ * Incomplete drafts such as "", "." or "-" are kept so the field stays editable.
+ *
+ * @param {string} raw - The raw input value.
+ * @param {Object} [options]
+ * @param {boolean} [options.allowNegative=false] - Keep a leading minus sign.
+ * @returns {string} - The normalized input.
+ */
+const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
+  const negative = allowNegative && `${raw}`.trim().startsWith('-');
+  const value = `${raw}`.replace(/,/g, '.').replace(/[^0-9.]/g, '').match(/^\d*(?:\.\d*)?/)[0];
+  return negative ? `-${value}` : value;
+};
+
 export {
   fixDigit,
   validDigit,
@@ -130,4 +148,5 @@ export {
   formatBytes,
   parseNumericString,
   formatDisplayValue,
+  normalizeNumberInput,
 };

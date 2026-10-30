@@ -11,6 +11,7 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { normalizeNumberInput } from 'src/utilities/MathUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
@@ -2233,16 +2234,6 @@ export default class ReactionDetailsScheme extends React.Component {
     return reaction;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  normalizeVesselSizeValue(raw) {
-    let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
-    const dotIndex = value.indexOf('.');
-    if (dotIndex !== -1) {
-      value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
-    }
-    return value;
-  }
-
   vesselSizeInLiters(normalizedValue, unit) {
     const numericValue = parseFloat(normalizedValue) || 0;
     return unit === 'l' ? numericValue : numericValue * 0.001;
@@ -2250,7 +2241,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVesselSize(e) {
     const { onInputChange, reaction } = this.props;
-    const value = this.normalizeVesselSizeValue(e.target.value);
+    const value = normalizeNumberInput(e.target.value);
     onInputChange('vesselSizeAmount', value);
     this.handleMaterialsChange({
       type: 'VesselSizeChanged',
@@ -2260,7 +2251,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVesselSizeOnBlur(e) {
     const { onInputChange, reaction } = this.props;
-    const value = this.normalizeVesselSizeValue(e.target.value);
+    const value = normalizeNumberInput(e.target.value);
     onInputChange('vesselSizeAmount', value);
     if (value !== '') {
       this.handleMaterialsChange({
