@@ -24,7 +24,9 @@ module Reporter
                              is_report: true,
                              show_yield: show_yield,
                              supporting_information: si,
-                             steps: steps_svg_paths)
+                             steps: steps_svg_paths,
+                             numbered_steps: obj.reaction_type == 'standard',
+                             hide: obj.scheme_hidden_parts)
                         .compose_reaction_svg
                     end
       end
@@ -54,7 +56,8 @@ module Reporter
       end
 
       def steps_svg_paths
-        return [] unless obj.reaction_type == 'multi_step'
+        hidden = obj.reaction_type == 'standard' && Array(obj.reaction_steps).size > 1
+        return [] unless obj.reaction_type == 'multi_step' || hidden
 
         Array(obj.reaction_steps).sort_by { |step| step[:position] }
                                  .each_with_index.map { |step, index| step_svg_paths(step, index) }

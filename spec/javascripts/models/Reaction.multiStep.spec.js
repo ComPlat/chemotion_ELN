@@ -104,8 +104,10 @@ describe('Reaction multi-step', () => {
 
     reaction.reaction_steps[0].description = { ops: [{ insert: 'step one\n' }] };
     reaction.reaction_steps[1].description = { ops: [{ insert: 'step two\n' }] };
+    reaction.reaction_steps[1].timestamp_stop = '30/09/2026 18:00:00';
     reaction.mirrorFirstStep();
-    expect(reaction.description).toEqual({ ops: [{ insert: 'step one\n' }] });
+    expect(reaction.description.ops.map((op) => op.insert).join('')).toEqual('Step 1: step one\nStep 2: step two\n');
+    expect(reaction.timestamp_stop).toEqual('30/09/2026 18:00:00');
   });
 
   it('drops a deleted step and its materials from the save payload and renumbers', async () => {
@@ -259,17 +261,20 @@ describe('Reaction multi-step', () => {
     expect(reaction.hasMultiStepData()).toEqual(true);
   });
 
-  it('clears steps, links and carry-on when leaving multi-step', async () => {
+  it('keeps steps, links and carry-on hidden when leaving multi-step, and sends them on save', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
     reaction.enterMultiStep();
+    reaction.addStep();
     reaction.products[0].carry_on = true;
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
 
-    expect(reaction.reaction_steps).toEqual([]);
-    expect(reaction.allReactionMaterials.every((m) => m.reaction_step_id === null)).toEqual(true);
-    expect(reaction.products.every((p) => p.carry_on === false)).toEqual(true);
+    expect(reaction.hasHiddenSteps()).toEqual(true);
+    expect(reaction.allReactionMaterials.every((m) => m.reaction_step_id === reaction.reaction_steps[0].id))
+      .toEqual(true);
+    expect([reaction.serialize().reaction_steps.length, reaction.products[0].carry_on]).toEqual([2, true]);
   });
 
   it('drops a deleted step materials and merges live ones when leaving multi-step', async () => {
@@ -282,7 +287,7 @@ describe('Reaction multi-step', () => {
     kept.reaction_step_id = 1;
     deleted.reaction_step_id = 2;
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
 
     expect(reaction.products.map((p) => p.id)).toEqual([kept.id]);
     expect(reaction.serialize().materials.products.map((p) => p.id)).toEqual([kept.id]);
@@ -300,12 +305,12 @@ describe('Reaction multi-step', () => {
     merged.setAmount({ value: 0.005, unit: 'mol' });
     merged.equivalent = 99;
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
 
     expect(merged.equivalent).toBeCloseTo(0.5);
   });
 
-  it('measures product yields against the reaction reference and clears step refs when leaving multi-step', async () => {
+  it('measures product yields against the reaction reference and keeps step refs when leaving multi-step', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';
     reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
@@ -322,9 +327,9 @@ describe('Reaction multi-step', () => {
     start.coefficient = 1;
     product.coefficient = 1;
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
 
-    expect([+product.equivalent.toFixed(4), stepTwoStart.step_reference]).toEqual([0.4, false]);
+    expect([+product.equivalent.toFixed(4), stepTwoStart.step_reference]).toEqual([0.4, true]);
   });
 
   it('never counts a material of a deleted step as a step 1 material', async () => {
@@ -347,7 +352,7 @@ describe('Reaction multi-step', () => {
       { id: 2, position: 2, description: { ops: [{ insert: 'cool it\n' }] } },
     ];
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
 
     expect(reaction.description.ops.map((op) => op.insert).join('')).toEqual('Step 1: heat it\nStep 2: cool it\n');
   });
@@ -360,7 +365,7 @@ describe('Reaction multi-step', () => {
       { id: 2, position: 2, description: { ops: [{ insert: 'cool it\n' }] } },
     ];
 
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
 
     expect(reaction.description.ops.map((op) => op.insert).join('')).toEqual('Step 2: cool it\n');
   });
@@ -518,5 +523,276 @@ describe('Reaction#hasSingleStep', () => {
 
     reaction.addStep();
     expect(reaction.hasSingleStep()).toEqual(false);
+  });
+});
+
+describe('Reaction with hidden steps (standard)', () => {
+  const text = (description) => description.ops.map((op) => op.insert).join('');
+  const bold = (insert) => ({ insert, attributes: { bold: true } });
+  const twoSteps = async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      {
+        id: 1,
+        position: 1,
+        description: { ops: [{ insert: 'heat it\n' }] },
+        temperature: { data: [], userText: '80', valueUnit: '°C' },
+        timestamp_stop: '30/09/2026 12:00:00',
+      },
+      {
+        id: 2, position: 2, description: { ops: [{ insert: 'cool it\n' }] }, timestamp_stop: '30/09/2026 15:00:00',
+      },
+    ];
+    reaction.allReactionMaterials.forEach((material) => { material.reaction_step_id = 1; });
+    reaction.products[0].carry_on = true;
+    return reaction;
+  };
+  const backToMultiStep = (reaction) => {
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+    return reaction.reaction_steps.map((step) => text(step.description));
+  };
+
+  it('splits the text back at the headings, keeping the text above Step 1 as the reaction own text', async () => {
+    const reaction = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    reaction.description = {
+      ops: [{ insert: 'general note\n' }, bold('Step 1: '), { insert: 'heat it\n' }, bold('Step 2: '), { insert: 'cool it slowly\n' }],
+    };
+
+    expect(backToMultiStep(reaction)).toEqual(['heat it\n', 'cool it slowly\n']);
+    expect(text(reaction.description)).toEqual('general note\nStep 1: heat it\nStep 2: cool it slowly\n');
+  });
+
+  it('keeps the text of a deleted heading with the step above and treats made-up headings as text', async () => {
+    const reaction = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    reaction.description = { ops: [bold('Step 1: '), { insert: 'heat it\nStep 5: odd\ncool it\n' }] };
+
+    expect(backToMultiStep(reaction)).toEqual(['heat it\nStep 5: odd\ncool it\n', '\n']);
+  });
+
+  it('treats a plain copy of step 1 as no text above Step 1', async () => {
+    const reaction = await twoSteps();
+    reaction.description = { ops: [{ insert: 'heat it\n' }] };
+    const loaded = new Reaction(reaction);
+
+    loaded.leaveMultiStep();
+
+    expect(text(loaded.description)).toEqual('Step 1: heat it\nStep 2: cool it\n');
+  });
+
+  it('copies standard edits back to step 1 and the stop to the last step', async () => {
+    const reaction = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    reaction.temperature = { data: [], userText: '90', valueUnit: '°C' };
+    reaction.timestamp_stop = '30/09/2026 16:00:00';
+
+    backToMultiStep(reaction);
+    const [first, last] = reaction.reaction_steps;
+
+    expect([first.temperature.userText, first.timestamp_stop, last.timestamp_stop])
+      .toEqual(['90', '30/09/2026 12:00:00', '30/09/2026 16:00:00']);
+  });
+
+  it('draws the intermediate in the standard picture', async () => {
+    const reaction = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+
+    expect(reaction.schemeSvgRequest().materialsSvgPaths.products.length).toEqual(reaction.products.length);
+  });
+});
+
+describe('Reaction#hiddenStepTemperatures', () => {
+  it('places each step temperature at its start time after step 1, or at 00:00:00 without one', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_steps = [
+      { id: 1, position: 1, timestamp_start: '30/09/2026 15:00:00', temperature: { data: [], userText: '80' } },
+      { id: 2, position: 2, timestamp_start: '30/09/2026 18:30:00', temperature: { data: [], userText: '25' } },
+      { id: 3, position: 3, temperature: { data: [{ time: '00:10:00', value: '5' }] } },
+    ];
+    reaction.temperature = { data: [], userText: '80' };
+    reaction.timestamp_start = '30/09/2026 15:00:00';
+
+    expect(reaction.hiddenStepTemperatures()).toEqual([
+      { step: 1, time: '00:00:00', value: '80', typed: true },
+      { step: 2, time: '03:30:00', value: '25', typed: true },
+      { step: 3, time: '00:10:00', value: '5' },
+    ]);
+  });
+
+  it('lists a step\'s typed text first, then its list rows, like the Temperature field of a Standard reaction', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_steps = [
+      { id: 1, position: 1, temperature: { data: [], userText: '20' } },
+      { id: 2, position: 2, temperature: { data: [{ time: '00:30:00', value: '60' }], userText: '20 ~ 40' } },
+    ];
+    reaction.temperature = { data: [], userText: '20' };
+
+    expect(reaction.hiddenStepTemperatures().map(({ step, value, typed }) => [step, value, !!typed])).toEqual([
+      [1, '20', true], [2, '20 ~ 40', true], [2, '60', false],
+    ]);
+  });
+});
+
+describe('Reaction#serialize for multi-step', () => {
+  it('saves the combined step text as the reaction description, even right after adding a step', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+    reaction.addStep({ description: { ops: [{ insert: 'cool it\n' }] } });
+
+    expect(reaction.serialize().description.ops.map((op) => op.insert).join('')).toEqual('Step 2: cool it\n');
+  });
+});
+
+describe('Reaction#hasHiddenSteps', () => {
+  it('only counts two or more kept steps, so a one-step reaction switched back looks like a plain one', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_steps = [{ id: 1, position: 1 }];
+    expect(reaction.hasHiddenSteps()).toEqual(false);
+
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    expect(reaction.hasHiddenSteps()).toEqual(true);
+  });
+});
+
+describe('Reaction with hidden steps, review fixes', () => {
+  const twoSteps = async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, conditions: 'UV', timestamp_start: '30/09/2026 15:00:00' },
+      { id: 2, position: 2, conditions: 'microwave', timestamp_start: '30/09/2026 14:00:00' },
+    ];
+    const [start, later] = reaction.starting_materials;
+    start.reaction_step_id = 1;
+    start.reference = true;
+    later.reaction_step_id = 2;
+    reaction.reactants.forEach((material) => { material.reaction_step_id = 1; });
+    reaction.products.forEach((material) => { material.reaction_step_id = 1; });
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    return { reaction, start, later };
+  };
+
+  it('shows and saves edits made in Standard as step 1 values right away', async () => {
+    const { reaction } = await twoSteps();
+    reaction.conditions = 'heat';
+
+    expect(reaction.stepsSvgPaths()[0].conditions).toEqual('heat');
+    expect(reaction.serialize().reaction_steps[0].conditions).toEqual('heat');
+  });
+
+  it('never gives a step before step 1 a negative time', async () => {
+    const { reaction } = await twoSteps();
+    reaction.temperature = { data: [], userText: '20' };
+    reaction.reaction_steps[1].temperature = { data: [], userText: '20' };
+
+    expect(reaction.hiddenStepTemperatures().map((point) => point.time)).toEqual(['00:00:00', '00:00:00']);
+  });
+
+  it('keeps a Ref picked on a later-step material as that step Ref when switching back', async () => {
+    const { reaction, start, later } = await twoSteps();
+    start.reference = false;
+    later.reference = true;
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+
+    expect([later.reference, later.step_reference, start.reference]).toEqual([false, true, true]);
+  });
+
+  it('finds a heading that Quill merged into the bold line above it', async () => {
+    const { reaction } = await twoSteps();
+    reaction.description = {
+      ops: [
+        { insert: 'note\nStep 1: ', attributes: { bold: true } },
+        { insert: 'heat it\n' },
+        { insert: 'Step 2: ', attributes: { bold: true } },
+        { insert: 'cool it\n' },
+      ],
+    };
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+
+    expect(reaction.reaction_steps.map((step) => step.description.ops.map((op) => op.insert).join('')))
+      .toEqual(['heat it\n', 'cool it\n']);
+  });
+});
+
+describe('Reaction hidden steps, edge cases', () => {
+  const twoSteps = async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    const [start, later] = reaction.starting_materials;
+    start.reaction_step_id = 1;
+    start.reference = true;
+    later.reaction_step_id = 2;
+    const [carried, final] = reaction.products;
+    carried.reaction_step_id = 1;
+    carried.carry_on = true;
+    final.reaction_step_id = 2;
+    reaction.reactants.forEach((material) => { material.reaction_step_id = 1; });
+    return {
+      reaction, start, later, carried, final,
+    };
+  };
+
+  it('keeps hidden steps out of an interaction reaction picture', async () => {
+    const { reaction } = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'interaction';
+
+    expect([reaction.hasHiddenSteps(), reaction.stepsSvgPaths(), reaction.schemeSvgRequest().numberedSteps])
+      .toEqual([false, [], false]);
+  });
+
+  it('carries the first step 1 product again when the carried one was removed while Standard', async () => {
+    const { reaction, carried } = await twoSteps();
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    carried.carry_on = false;
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+
+    expect(carried.carry_on).toEqual(true);
+  });
+
+  it('measures later-step materials against their step Ref again right after switching back', async () => {
+    const {
+      reaction, start, later, carried,
+    } = await twoSteps();
+    start.setAmount({ value: 0.01, unit: 'mol' });
+    carried.setAmount({ value: 0.004, unit: 'mol' });
+    later.setAmount({ value: 0.002, unit: 'mol' });
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+
+    expect(+later.equivalent.toFixed(4)).toEqual(+(later.amount_mol / carried.amount_mol).toFixed(4));
+  });
+});
+
+describe('Reaction#toggleSchemePart', () => {
+  it('switches an arrow part off and on, and sends it with the scheme and on save', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+
+    reaction.toggleSchemePart('solvents');
+    expect(reaction.schemeSvgRequest().hide).toEqual(['solvents']);
+    expect(reaction.serialize().scheme_hidden_parts).toEqual(['solvents']);
+
+    reaction.toggleSchemePart('solvents');
+    expect(reaction.scheme_hidden_parts).toEqual([]);
   });
 });

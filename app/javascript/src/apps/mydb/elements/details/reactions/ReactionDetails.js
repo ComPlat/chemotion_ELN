@@ -164,7 +164,9 @@ export default class ReactionDetails extends Component {
         pendingReactionType: nextType,
         reactionTypeConfirmMessage: (
           <>
-            Leaving Multi-step removes the extra steps. Their materials are kept and merged into this reaction.
+            Leaving Multi-step hides the steps; switching back to Multi-step restores them.
+            <br />
+            All materials are shown together in this reaction.
             <br />
             Eq and yields of later steps will be recalculated against the first step&apos;s reference.
             <br />
@@ -174,14 +176,14 @@ export default class ReactionDetails extends Component {
       });
       return;
     }
-    if (leavingMultiStep) reaction.clearMultiStep();
+    if (leavingMultiStep) reaction.leaveMultiStep();
     this.handleInputChange('reactionType', nextType);
   }
 
   confirmReactionTypeChange() {
     const { reaction } = this.state;
     const { pendingReactionType } = this.state;
-    reaction.clearMultiStep();
+    reaction.leaveMultiStep();
     this.setState({
       pendingReactionType: null,
       reactionTypeConfirmMessage: null,
@@ -1272,6 +1274,10 @@ export default class ReactionDetails extends Component {
           reaction={reaction}
           onToggleLabel={(materialId, isSbmm) => {
             reaction.toggleShowLabelForSample(materialId, isSbmm);
+            this.handleReactionChange(reaction, { updateGraphic: true });
+          }}
+          onToggleSchemePart={(part) => {
+            reaction.toggleSchemePart(part);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}

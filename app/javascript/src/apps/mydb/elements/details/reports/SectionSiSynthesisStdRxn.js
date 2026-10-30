@@ -27,7 +27,7 @@ const Title = ({ el, counter, molSerials }) => {
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = i == 0 ? CapitalizeFirstLetter(p.showedName()) : p.showedName();
     title = smn
-      ? [...title, <span key={key}>{smn}{intermediateLabel(p)} (<b>{us}</b>)</span>, comma]
+      ? [...title, <span key={key}>{smn}{intermediateLabel(p, el)} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
   title = title.slice(0, -1);
@@ -76,7 +76,7 @@ const prdIdentifier = (counter, mol, molSerials) => (
   ]
 );
 
-const productContent = (products, settings, molSerials) => {
+const productContent = (products, settings, molSerials, reaction) => {
   let content = [];
   let counter = 0;
 
@@ -91,7 +91,7 @@ const productContent = (products, settings, molSerials) => {
       ...prdIdentifier(counter, m, molSerials),
       { insert: ': ' },
       deltaSampleMoleculeName(p),
-      { insert: `${intermediateLabel(p)}; ` },
+      { insert: `${intermediateLabel(p, reaction)}; ` },
     ] : [];
 
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
@@ -122,11 +122,13 @@ const productContent = (products, settings, molSerials) => {
   return content;
 };
 
-const ProductsInfo = ({ products = [], settings, molSerials }) => {
+const ProductsInfo = ({
+  products = [], settings, molSerials, reaction
+}) => {
   const disableAll = isDisableAll(settings);
   if (disableAll) return null;
 
-  const content = productContent(products, settings, molSerials);
+  const content = productContent(products, settings, molSerials, reaction);
   return <QuillViewer value={{ ops: content }} />;
 };
 
@@ -366,6 +368,7 @@ const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
     />
     <ProductsInfo
       products={el.products}
+      reaction={el}
       settings={settings}
       molSerials={molSerials}
     />

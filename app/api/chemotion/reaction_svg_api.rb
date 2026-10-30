@@ -14,6 +14,8 @@ module Chemotion
         optional :products_only, type: Boolean, default: false
         optional :show_yield, type: Boolean, default: true
         optional :steps, type: Array, desc: 'per-step materials and conditions for multi-step schemes'
+        optional :numbered_steps, type: Boolean, default: false, desc: 'label the hidden steps of a standard reaction'
+        optional :hide, type: Array[String], desc: 'parts left off the arrow'
       end
       post do
         paths = params[:materials_svg_paths]
@@ -25,6 +27,8 @@ module Chemotion
           conditions: params[:conditions],
           show_yield: params[:show_yield],
           steps: Array(params[:steps]).map { |step| step.to_h.symbolize_keys },
+          numbered_steps: params[:numbered_steps],
+          hide: params[:hide],
         }
 
         composer = composer_class.new(paths, composer_options)

@@ -50,6 +50,7 @@ RSpec.describe ReactionStep do
   end
 
   describe 'per-step reference' do
+    let(:reaction) { create(:reaction, reaction_type: 'multi_step') }
     let(:user) { create(:person) }
     let(:mol) do
       lambda do |mmol, **real|
@@ -120,11 +121,55 @@ RSpec.describe ReactionStep do
       expect(reaction.reload.send(:retrieve_molfiles)[1].size).to eq(1)
     end
 
-    it 'keeps a standard reaction as one untitled block in the Word report' do
-      steps = word_report_steps(reaction)
+    context 'when switched back to standard with its steps kept' do
+      before { reaction.update!(reaction_type: 'standard') }
 
-      expect(steps.pluck(:title)).to eq([nil])
-      expect(steps[0][:products].size).to eq(2)
+      it 'keeps the steps and the carried link' do
+        expect(reaction.reload.reaction_steps.count).to eq(2)
+        expect(rows[:carried].reload.carry_on).to be true
+      end
+
+      it 'measures every equivalent against the reaction reference' do
+        rows.each_value(&:update_equivalent)
+
+        expect(rows[:reagent].reload.equivalent).to be_within(1e-6).of(1.2)
+        expect(rows[:final].reload.equivalent).to be_within(1e-6).of(0.6)
+      end
+
+      it 'counts the intermediate as a plain product in the RInChI, the picture and the reports' do
+        report_products = Entities::ReactionReportEntity.represent(
+          reaction.reload, current_user: user, detail_levels: { Reaction => 10, Sample => 10 }
+        ).serializable_hash[:products]
+
+        expect(reaction.send(:retrieve_molfiles)[1].size).to eq(2)
+        expect(reaction.send(:scheme_material_svg_paths, :reactions_product_samples, :products).size).to eq(2)
+        expect(report_products.pluck(:carry_on)).to all(be false)
+      end
+
+      it 'numbers the reactants and conditions per step in the scheme picture' do
+        first.update!(conditions: 'UV', temperature: { 'data' => [], 'userText' => '80', 'valueUnit' => '°C' })
+        second.update!(conditions: 'microwave', duration: '2 Hour(s)')
+
+        texts = reaction.reload.send(:scheme_composer).compose_reaction_svg.scan(%r{<text[^>]*>([^<]+)</text>}).flatten
+
+        expect(texts).to include('1. 80 °C, Aceton, UV', '2. 2 h, microwave', '2.')
+      end
+
+      it 'drops the parts switched off for the reaction from the scheme picture' do
+        first.update!(conditions: 'UV', temperature: { 'data' => [], 'userText' => '80', 'valueUnit' => '°C' })
+        reaction.update!(scheme_hidden_parts: %w[temperature solvents])
+
+        texts = reaction.reload.send(:scheme_composer).compose_reaction_svg.scan(%r{<text[^>]*>([^<]+)</text>}).flatten
+
+        expect(texts).to include('1. UV')
+      end
+
+      it 'keeps it as one untitled block in the Word report' do
+        steps = word_report_steps(reaction)
+
+        expect(steps.pluck(:title)).to eq([nil])
+        expect(steps[0][:products].size).to eq(2)
+      end
     end
 
     def word_report_steps(rxn)

@@ -1870,6 +1870,19 @@ describe('ReactionDetailsScheme — per-step reference', () => {
     expect(find('products', 'carried').equivalent).toBeCloseTo(1.6);
   });
 
+  it('keeps the hidden step of a material dragged while Standard', () => {
+    const { reaction, instance, final } = buildTwoSteps();
+    const stepId = final.reaction_step_id;
+    reaction.reaction_type = 'standard';
+    instance.props.onReactionChange = () => {};
+    instance.context = { notifications: { add: () => {} } };
+    instance.activeDropStepId = null;
+
+    instance.dropMaterial(final, 'products', null, 'reactants');
+
+    expect([stepId, final.reaction_step_id]).toEqual([2, 2]);
+  });
+
   it('measures step 2 against its carried product again after Undo', () => {
     const { reaction, instance, reagent } = buildTwoSteps();
     instance.props.onReactionChange = () => {};

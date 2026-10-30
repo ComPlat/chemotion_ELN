@@ -14,6 +14,8 @@ export default class ReactionSvgFetcher {
     productsOnly = false,
     showYield = true,
     steps = [],
+    numberedSteps = false,
+    hide = [],
   }) {
     const body = {
       materials_svg_paths: materialsSvgPaths,
@@ -24,6 +26,8 @@ export default class ReactionSvgFetcher {
       products_only: productsOnly,
       show_yield: showYield,
       steps,
+      numbered_steps: numberedSteps,
+      hide,
     };
 
     return ApiClient.postJson('/api/v1/reaction_svg', { body });

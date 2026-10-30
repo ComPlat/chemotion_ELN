@@ -39,7 +39,7 @@ module ReactionRinchi
   end
 
   def final_products
-    return products unless persisted?
+    return products unless persisted? && multi_step?
 
     carried_ids = ReactionsProductSample.where(reaction_id: id, carry_on: true).pluck(:sample_id)
     products.reject { |product| carried_ids.include?(product.id) }

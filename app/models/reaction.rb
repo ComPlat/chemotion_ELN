@@ -194,14 +194,6 @@ class Reaction < ApplicationRecord
 
   validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
   validates :concentration_mode, inclusion: { in: CONCENTRATION_MODES }
-  validate :multi_step_not_abandoned_with_data
-
-  def multi_step_not_abandoned_with_data
-    return unless reaction_type_changed?(from: 'multi_step')
-    return if reaction_steps.count <= 1 && reactions_samples.where(carry_on: true).none?
-
-    errors.add(:reaction_type, 'cannot leave Multi-step: delete the extra steps first')
-  end
 
   # Temporary compatibility API. concentration_mode remains authoritative.
   def use_reaction_volume # rubocop:disable Naming/PredicateMethod
@@ -287,10 +279,6 @@ class Reaction < ApplicationRecord
   def current_svg_full_path
     file_path = Rails.public_path.join('images', 'reactions', reaction_svg_file)
     File.file?(file_path) ? file_path : nil
-  end
-
-  def yield_amount(sample_id)
-    ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
   end
 
   def solvents_in_svg
@@ -431,7 +419,9 @@ class Reaction < ApplicationRecord
       conditions: conditions,
       show_yield: !interaction?,
       is_report: is_report,
-      steps: multi_step? ? scheme_steps_svg_paths : [],
+      steps: multi_step? || (standard? && reaction_steps.many?) ? scheme_steps_svg_paths : [],
+      numbered_steps: standard?,
+      hide: scheme_hidden_parts,
     }
     composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
     composer_class.new(scheme_materials_svg_paths, composer_options)
@@ -452,23 +442,29 @@ class Reaction < ApplicationRecord
   end
 
   def scheme_steps_svg_paths
+    rows = rows_by_step_and_type
     reaction_steps.each_with_index.map do |step, index|
+      step_rows = ->(type) { rows.fetch([step.id, type], []) }
+      carried, products = step_rows.call('ReactionsProductSample').partition(&:carry_on)
       {
-        starting_materials: step_material_paths(:reactions_starting_material_samples, :starting_materials, step),
-        reactants: step_material_paths(:reactions_reactant_samples, :reactants, step),
-        carried: step_product_paths(step, carried: true),
-        products: step_product_paths(step, carried: false),
+        starting_materials: build_svg_paths(step_rows.call('ReactionsStartingMaterialSample'), :starting_materials),
+        reactants: build_svg_paths(step_rows.call('ReactionsReactantSample'), :reactants),
+        carried: build_svg_paths(carried, :products),
+        products: build_svg_paths(products, :products),
         temperature: step_temperature_with_unit(step),
         duration: step.duration,
         conditions: step.conditions,
-        solvents: step_solvent_names(step, index),
+        solvents: step_solvent_names(step_rows.call('ReactionsSolventSample'), index),
       }
     end
   end
 
-  def step_solvent_names(step, index)
-    names = reactions_solvent_samples.includes(:sample).where(reaction_step_id: step.id)
-                                     .filter_map { |row| row.sample&.preferred_label }
+  def rows_by_step_and_type
+    reactions_samples.includes(sample: :molecule).order(:position).group_by { |row| [row.reaction_step_id, row.type] }
+  end
+
+  def step_solvent_names(rows, index)
+    names = rows.filter_map { |row| row.sample&.preferred_label }
     names.presence || (index.zero? && solvents.empty? ? [solvent].compact_blank : [])
   end
 
@@ -476,30 +472,19 @@ class Reaction < ApplicationRecord
     self.class.step_temperature_text(step.temperature)
   end
 
-  def step_material_paths(resource, prop, step)
-    rows = public_send(resource).includes(sample: :molecule).where(reaction_step_id: step.id)
-    build_svg_paths(rows, prop)
-  end
-
-  def step_product_paths(step, carried:)
-    rows = reactions_product_samples.includes(sample: :molecule)
-                                    .where(reaction_step_id: step.id, carry_on: carried)
-    build_svg_paths(rows, :products)
-  end
-
   def build_svg_paths(rows, prop)
     rows.map do |reactions_sample|
       sample = reactions_sample.sample
       params = [sample.get_svg_path]
       params[0] = sample.svg_text_path if reactions_sample.show_label
-      params.append(yield_amount(sample.id)) if prop == :products
+      params.append(reactions_sample.equivalent) if prop == :products
       params
     end
   end
 
   def scheme_material_svg_paths(resource, prop)
     rows = public_send(resource).includes(sample: :molecule)
-    rows = rows.where(carry_on: false) if prop == :products
+    rows = rows.where(carry_on: false) if prop == :products && multi_step?
     build_svg_paths(rows, prop)
   end
 
