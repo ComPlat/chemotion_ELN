@@ -75,6 +75,7 @@ export default class Sample extends Element {
     argsNew = prepareRangeBound(argsNew, 'boiling_point');
     argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
+    if (args?._mixtureReactionContext) this.mixtureReactionContext = args._mixtureReactionContext;
     if (this.isMixture() && this.sample_details?.reference_component_changed) {
       // Old mol-stored mixtures used this snapshot to preserve their physical mass.
       const previousMass = this.sample_details.previous_amount_g;
@@ -438,12 +439,8 @@ export default class Sample extends Element {
     if (reaction.sampleById(this.id)) {
       this.belongTo = reaction;
     } else {
-      if (!this.isNew) {
-        if (!reaction._detachedMixtureMaterialIds) {
-          Object.defineProperty(reaction, '_detachedMixtureMaterialIds', { value: new Set() });
-        }
-        reaction._detachedMixtureMaterialIds.add(this.id);
-      }
+      // Keep the origin on this open tab so closing it also revokes preservation on reaction save.
+      this.mixtureReactionContext = reaction;
       this.belongTo = undefined;
       delete this.isDetachedMixtureDraft;
       delete this._mixtureDraftSourceState;

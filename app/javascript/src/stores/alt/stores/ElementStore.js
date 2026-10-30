@@ -717,6 +717,14 @@ class ElementStore {
   handleFetchSampleById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
       if (result.isMixture()) {
+        // Normalize embedded API components before rendering can change their shape and checksum.
+        if (result.hasComponents()) {
+          const pendingToSave = result.isPendingToSave;
+          result.initialComponents(result.components.map((component) => (
+            component instanceof Component ? component : Component.deserializeData(component)
+          )));
+          if (pendingToSave) result.changed = true;
+        }
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -727,7 +735,13 @@ class ElementStore {
               };
               return new Component(sampleData);
             });
+            // Reaction quantities or local edits may change while this fetch is in flight.
+            const pendingToSave = result.isPendingToSave;
             await result.initialComponents(sampleComponents);
+            if (pendingToSave) {
+              result.syncMixtureComponentAmounts();
+              result.changed = true;
+            }
             if (this.state.currentElement === result) {
               this.setState({ currentElement: result });
             }
@@ -1808,12 +1822,20 @@ class ElementStore {
           nextSample._mixtureDraftSourceState = sourceState;
           nextSample.updateChecksum();
         } else if (previousSample) {
+          const mixtureAmountChanged = nextSample.isMixture()
+            && (nextSample.amount_value !== previousSample.amount_value
+              || nextSample.amount_unit !== previousSample.amount_unit);
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;
           nextSample.density = previousSample.density;
           nextSample._molarity_unit = previousSample._molarity_unit;
           nextSample._molarity_value = previousSample._molarity_value;
+          if (nextSample.isMixture()) {
+            nextSample.syncMixtureComponentAmounts();
+            // Numeric-only edits need an explicit flag, including before components load.
+            if (mixtureAmountChanged) nextSample.changed = true;
+          }
         }
         return nextSample;
       });
