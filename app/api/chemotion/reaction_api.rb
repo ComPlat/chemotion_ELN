@@ -196,6 +196,7 @@ module Chemotion
         optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :scheme_hidden_parts, type: Array[String]
         optional :weight_percentage, type: Boolean
       end
       route_param :id do
@@ -314,6 +315,7 @@ module Chemotion
         optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :scheme_hidden_parts, type: Array[String]
         optional :weight_percentage, type: Boolean
       end
 

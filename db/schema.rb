@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_30_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1219,6 +1219,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "ph_value"
     t.boolean "lock_reaction_volume", default: false, null: false
     t.string "concentration_mode", default: "solvents_only", null: false
+    t.string "scheme_hidden_parts", default: [], null: false, array: true
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
