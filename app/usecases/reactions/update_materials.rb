@@ -315,7 +315,7 @@ module Usecases
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- pre-existing size, out of scope for this PR
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
+        existing_association = ReactionsSample.find_by(reaction_id: @reaction.id, sample_id: modified_sample.id)
         weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
         if existing_association
           existing_association.update!(
@@ -333,7 +333,6 @@ module Usecases
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
           )
-        # sample was moved to other materialgroup
         else
           ReactionsSample.create!(
             sample_id: modified_sample.id,

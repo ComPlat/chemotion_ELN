@@ -27,7 +27,7 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:product_sample) do
     create(:reactions_product_sample,
            reaction: reaction,
-           sample: sample,
+           sample: create(:sample, name: 'GasProduct', container: create(:container)),
            gas_phase_data: gas_phase_data)
   end
 
@@ -450,6 +450,26 @@ describe Usecases::Reactions::UpdateMaterials do
                                                product_material_with_real_amount_value)
         expect(sample.real_amount_value).to eq(4.442921016193781e-09)
       end
+    end
+  end
+
+  describe '#execute! with a sample also linked to another reaction' do
+    let(:other_reaction) { create(:reaction, name: 'Other reaction', collections: [collection]) }
+
+    before do
+      # the other reaction's link is created first, so an unscoped lookup by sample_id would find it
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample, equivalent: 1)
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, equivalent: 1)
+      described_class.new(reaction, starting_materials, user, vessel_size).execute!
+    end
+
+    it 'keeps the link of the other reaction' do
+      expect(ReactionsSample.where(sample: sample).pluck(:reaction_id))
+        .to contain_exactly(reaction.id, other_reaction.id)
+    end
+
+    it 'links the sample to the saved reaction once' do
+      expect(reaction.reactions_samples.where(sample: sample).count).to eq(1)
     end
   end
 
