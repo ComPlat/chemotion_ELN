@@ -74,11 +74,12 @@ module Chemotion::ScifinderNService
   def self.provider_builder
     sfn_provider = Rails.configuration.sfn_config.provider
     res = ScifinderN.get_metadata(sfn_provider)
-    return unless res&.success?
+    return disable_provider('metadata request failed') unless res
 
-    sfn_provider[:sso] = res.headers.dig('location').first
-    sfn_provider[:authorization_endpoint] = res.dig('authorization_endpoint')
-    sfn_provider[:token_endpoint] = res.dig('token_endpoint')
+    endpoints = endpoints_from(res)
+    return disable_provider("unexpected metadata: HTTP #{res.code} #{res.content_type}".rstrip) unless endpoints
+
+    sfn_provider.merge!(endpoints)
     client_options = {
       site: sfn_provider[:host],
       authorize_url: URI.join(sfn_provider[:sso], sfn_provider[:authorization_endpoint]),
@@ -95,5 +96,25 @@ module Chemotion::ScifinderNService
                         authorize_params: authorize_params,
                         client_options: client_options
     end
+  rescue StandardError => e
+    disable_provider("#{e.class}: #{e.message}")
   end
+
+  def self.endpoints_from(res)
+    return unless res.success? && res.parsed_response.is_a?(Hash)
+
+    endpoints = {
+      sso: res.headers['location'],
+      authorization_endpoint: res.parsed_response['authorization_endpoint'],
+      token_endpoint: res.parsed_response['token_endpoint'],
+    }
+    endpoints if endpoints.values.all?(&:present?)
+  end
+
+  def self.disable_provider(reason)
+    Rails.logger.warn("SciFinder-n disabled: #{reason}")
+    Rails.configuration.sfn_config.provider = nil
+  end
+
+  private_class_method :endpoints_from, :disable_provider
 end
