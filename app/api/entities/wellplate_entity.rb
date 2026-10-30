@@ -32,6 +32,7 @@ module Entities
       expose! :segments,        anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :attachments,     anonymize_with: [],  unless: :displayed_in_list, using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 
