@@ -45,6 +45,8 @@ describe('ReactionSvgFetcher.fetchByReaction', () => {
       products_only: request.productsOnly,
       show_yield: request.showYield,
       steps: [],
+      numbered_steps: false,
+      hide: [],
     });
   });
 });

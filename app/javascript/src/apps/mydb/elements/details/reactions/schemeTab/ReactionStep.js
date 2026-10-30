@@ -7,6 +7,7 @@ import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/Ma
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
+import HiddenStepValues from 'src/apps/mydb/elements/details/reactions/schemeTab/HiddenStepValues';
 import { permitOn } from 'src/components/common/uis';
 import { correctPrefix, formatDisplayValue } from 'src/utilities/MathUtils';
 
@@ -177,6 +178,13 @@ const ReactionStep = ({
           conditions={conditions}
           isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
           onChange={(value) => onConditionsChange(value, stepId)}
+          hint={!step && (
+            <HiddenStepValues
+              reaction={reaction}
+              label="Conditions"
+              value={(entry) => (entry.conditions || '').split('\n').filter(Boolean).join('; ')}
+            />
+          )}
         />
       )}
     </>

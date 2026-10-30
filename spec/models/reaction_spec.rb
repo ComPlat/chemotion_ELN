@@ -410,23 +410,15 @@ RSpec.describe Reaction, type: :model do
       expect(reaction).to be_valid
     end
 
-    it 'refuses to go back to standard with more than one step' do
-      ReactionStep.create!(reaction: reaction, position: 1)
-      ReactionStep.create!(reaction: reaction, position: 2)
-
-      reaction.reaction_type = 'standard'
-
-      expect(reaction).not_to be_valid
-      expect(reaction.errors[:reaction_type].join).to include('delete the extra steps')
-    end
-
-    it 'refuses to go back to standard while a product is carried on' do
+    it 'goes back to standard keeping its steps and the carried product' do
       step = ReactionStep.create!(reaction: reaction, position: 1)
-      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
+      ReactionStep.create!(reaction: reaction, position: 2)
+      carried = create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
 
-      reaction.reaction_type = 'standard'
+      reaction.update!(reaction_type: 'standard')
 
-      expect(reaction).not_to be_valid
+      expect(reaction.reload.reaction_steps.count).to eq(2)
+      expect(carried.reload.carry_on).to be true
     end
   end
 

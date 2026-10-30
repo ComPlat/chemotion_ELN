@@ -44,6 +44,7 @@ import Component from 'src/models/Component';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
+import HiddenStepValues from 'src/apps/mydb/elements/details/reactions/schemeTab/HiddenStepValues';
 
 const STEP_EVENT_VALUE_TYPES = ['temperature', 'timestampStart', 'timestampStop'];
 
@@ -460,7 +461,8 @@ export default class ReactionDetailsScheme extends React.Component {
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
     const targetStepId = this.activeDropStepId ?? null;
-    if (!reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
+    const multiStep = reaction.isMultiStep();
+    if (multiStep && !reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
       this.context.notifications.add({
         title: 'Cannot move this product',
         message: 'The next step needs it as its starting material. Delete that step first.',
@@ -469,7 +471,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
-    srcMat.reaction_step_id = targetStepId;
+    if (multiStep) srcMat.reaction_step_id = targetStepId;
 
     // Translate UI group names to actual storage arrays for SBMM samples
     const actualSrcGroup = Reaction.storageGroupFor(srcMat, srcGroup);
@@ -2436,7 +2438,16 @@ export default class ReactionDetailsScheme extends React.Component {
     const target = source || reaction;
     return (
       <Form.Group>
-        <Form.Label>Vessel size</Form.Label>
+        <Form.Label>
+          Vessel size
+          {!source && (
+            <HiddenStepValues
+              reaction={reaction}
+              label="Vessel size"
+              value={(step) => (step.vessel_size?.amount ? `${step.vessel_size.amount} ${step.vessel_size.unit}` : '')}
+            />
+          )}
+        </Form.Label>
         <InputGroup>
           <Form.Control
             name="reaction_vessel_size"
@@ -2531,6 +2542,13 @@ export default class ReactionDetailsScheme extends React.Component {
         <Form.Group>
           <Form.Label>
             Reaction volume
+            {!source && (
+              <HiddenStepValues
+                reaction={reaction}
+                label="Reaction volume"
+                value={(step) => (step.volume ? `${Number((step.volume * 1000).toFixed(3))} ml` : '')}
+              />
+            )}
             <OverlayTrigger
               placement="top"
               overlay={(
@@ -2644,7 +2662,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
     return (
       <Form.Group>
-        <Form.Label>pH</Form.Label>
+        <Form.Label>
+          pH
+          {!source && (
+            <HiddenStepValues
+              reaction={reaction}
+              label="pH"
+              value={(step) => (step.ph_value != null ? `${step.ph_operator || '='} ${step.ph_value}` : '')}
+            />
+          )}
+        </Form.Label>
         <InputGroup>
           <Button
             className="reaction-ph-operator"
@@ -2899,6 +2926,7 @@ export default class ReactionDetailsScheme extends React.Component {
               />
             ) : null}
             reactionVolumeField={this.reactionVolume()}
+            stepTemperatures={reaction.hasHiddenSteps() ? reaction.hiddenStepTemperatures() : null}
           />
         )}
         {!isInteractionReaction && !reaction.isMultiStep() && (

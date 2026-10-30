@@ -1099,6 +1099,8 @@ describe('Reaction', () => {
         productsOnly: true,
         showYield: false,
         steps: [],
+        numberedSteps: false,
+        hide: [],
       });
     });
   });

@@ -54,7 +54,7 @@ class ReactionsSample < ApplicationRecord
   end
 
   def step_reference_row
-    reaction_step&.reference_row
+    reaction_step&.reference_row if reaction&.multi_step?
   end
 
   private
