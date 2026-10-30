@@ -87,13 +87,10 @@ module Reactable # rubocop:disable Metrics/ModuleLength
                      end
       else
         amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-        ref_amount =  if condition
-                        ref_record.sample.amount_mmol(:target) *
-                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
-                      else
-                        ref_record.sample.amount_mmol(:real) *
-                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
-                      end
+        ref_amount = condition ? ref_record.sample.amount_mmol(:target) : ref_record.sample.amount_mmol(:real)
+        return if mixture_stoichiometry && ref_amount.nil?
+
+        ref_amount = ref_amount * (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
       end
     else
       amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
