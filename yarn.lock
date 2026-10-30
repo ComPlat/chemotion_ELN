@@ -9710,10 +9710,10 @@ js-tree@^2.0.1:
   resolved "https://registry.yarnpkg.com/js-tree/-/js-tree-2.0.2.tgz#25cd00c55a236bd3e02578b25d1c6721803c4085"
   integrity sha512-+pqyPOy8vZXW5v+M16rpSFsUO7rtxxnDAKn70DtSkDYhlMUs7QHhprcq/b4FBCbZMeyFv2Pfg8NWgIle9qLMbw==
 
-js-yaml@^3.13.1, js-yaml@^3.15.1:
-  version "3.15.1"
-  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.15.1.tgz#24bc95028f361cdaaa84745b06a109c4486773c0"
-  integrity sha512-S99WuO3HlhO3XN41EtYUNl9zzXjoJx7QvmipxsJVxtCBT0YHEFy+iOJhjSvrmV12nYhWpZaM8lPHkJm0yUMbag==
+js-yaml@^3.13.1, js-yaml@^3.15.2:
+  version "3.15.2"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.15.2.tgz#3f83823ac6be17f570f23b2ecdef3777ff5ea364"
+  integrity sha512-6EuL879VkRA+1Cz578mKMiKvjPNEuk6+r1JaFzoSWejZmtf7xWbIyw1e3KkxlkzTIt9Taw6JBhEppG7utc1P+w==
   dependencies:
     argparse "^1.0.7"
     esprima "^4.0.0"
