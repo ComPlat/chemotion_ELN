@@ -22,6 +22,7 @@ class AddHierarchicalMaterialPropertiesToSamples < ActiveRecord::Migration[6.1]
     add_column :samples, :layer_thickness, :string, comment: 'Layer thickness of the Hierarchical sample' unless column_exists?(:samples, :layer_thickness)
     add_column :samples, :liquid_medium, :string, comment: 'Liquid medium of the Hierarchical sample' unless column_exists?(:samples, :liquid_medium)
     add_column :samples, :stabilizer, :string, comment: 'Stabilizer of the Hierarchical sample' unless column_exists?(:samples, :stabilizer)
+    add_column :samples, :dispersion, :float, comment: 'Dispersion (0–1) of the Hierarchical sample' unless column_exists?(:samples, :dispersion)
 
     # Clean up columns from earlier iterations of this branch that were later
     # decided to stay in `xref` (main's storage). Safe no-op on prod (columns
@@ -47,6 +48,7 @@ class AddHierarchicalMaterialPropertiesToSamples < ActiveRecord::Migration[6.1]
     remove_column :samples, :layer_thickness if column_exists?(:samples, :layer_thickness)
     remove_column :samples, :liquid_medium if column_exists?(:samples, :liquid_medium)
     remove_column :samples, :stabilizer if column_exists?(:samples, :stabilizer)
+    remove_column :samples, :dispersion if column_exists?(:samples, :dispersion)
     # NOTE: does NOT restore state/color/particle_size — those live in xref.
   end
   # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

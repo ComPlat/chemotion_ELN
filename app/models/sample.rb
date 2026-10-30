@@ -319,6 +319,8 @@ class Sample < ApplicationRecord
 
   validates :purity,
             numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0, allow_nil: true }
+  validates :dispersion,
+            numericality: { greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0, allow_nil: true }
   validate :has_collections
 
   delegate :computed_props, to: :molecule, prefix: true, allow_nil: true

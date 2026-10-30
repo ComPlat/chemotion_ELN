@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_30_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1450,6 +1450,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.string "layer_thickness", comment: "Layer thickness of the Hierarchical sample"
     t.string "liquid_medium", comment: "Liquid medium of the Hierarchical sample"
     t.string "stabilizer", comment: "Stabilizer of the Hierarchical sample"
+    t.float "dispersion"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"

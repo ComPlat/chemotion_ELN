@@ -768,7 +768,7 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     fetchOls('sample');
     this.handleRefreshElements('sample');
-    if (!closeView) {
+    if (!closeView && !isHierarchical) {
       this.navigateToNewElement(element);
     }
   }

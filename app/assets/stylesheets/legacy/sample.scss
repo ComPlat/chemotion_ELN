@@ -292,3 +292,170 @@
 .sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'] .ag-input-field-input {
   background-color: #f2f2f2 !important;
 }
+
+.sample-form-composition-grid.ag-theme-alpine .ag-popup,
+.sample-form-composition-grid.ag-theme-alpine .ag-tooltip {
+  z-index: 1050;
+}
+
+// Action column — expand / collapse / process
+.hm-expand-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 3px;
+  position: relative;
+}
+
+// Main toggle / process button — rounded rect indicator
+.hm-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+
+  // Unprocessed — dashed border signals "pending computation"
+  &--process {
+    border: 1.5px dashed #adb5bd;
+    background: transparent;
+    color: #6c757d;
+
+    &:hover {
+      border-color: #6c757d;
+      background: rgba(108, 117, 125, 0.06);
+    }
+  }
+
+  // Expanded — solid green fill signals "open / data loaded"
+  &--expanded {
+    border: 1.5px solid #198754;
+    background: rgba(25, 135, 84, 0.10);
+    color: #198754;
+
+    &:hover { background: rgba(25, 135, 84, 0.18); }
+  }
+
+  // Collapsed — blue outline signals "data exists but hidden"
+  &--collapsed {
+    border: 1.5px solid #6c99d0;
+    background: transparent;
+    color: #6c99d0;
+
+    &:hover { background: rgba(108, 153, 208, 0.10); }
+  }
+}
+
+// CSS-drawn chevron (no font rendering variance)
+.hm-chevron {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  flex-shrink: 0;
+
+  &--right { transform: rotate(-45deg) translate(0, 1px); }
+  &--down  { transform: rotate(45deg)  translate(-1px, 0); }
+}
+
+// CSS-drawn plus sign for the process button
+.hm-plus {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    background: currentColor;
+    border-radius: 1px;
+  }
+
+  &::before { width: 8px; height: 1.5px; top: 50%; left: 0; transform: translateY(-50%); }
+  &::after  { width: 1.5px; height: 8px; left: 50%; top: 0; transform: translateX(-50%); }
+}
+
+// Re-process button — same rounded-rect shape as .hm-action-btn, always visible for processed rows
+.hm-reprocess-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #6c99d0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  color: #6c99d0;
+
+  &:hover {
+    border-color: #3d6fa8;
+    background: rgba(108, 153, 208, 0.10);
+    color: #3d6fa8;
+  }
+}
+
+// CSS-drawn circular reload arrow inside .hm-reprocess-btn
+.hm-reload-icon {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+
+  // Arc: full border circle with one segment transparent
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    transform: rotate(-40deg);
+  }
+
+  // Arrowhead at the gap
+  &::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent;
+    border-bottom: 3px solid currentColor;
+    transform: rotate(28deg);
+  }
+}
+
+// Sub-rows (element breakdown after ▶ process) — dropdown panel feel
+.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row {
+  background-color: #f4f6fb !important;
+  border-left: 3px solid #6c99d0 !important;
+  box-shadow: inset 0 1px 0 #dce5f5;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row .ag-cell {
+  color: #3d5a80;
+  font-size: 0.82rem;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row:hover,
+.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row.ag-row-hover {
+  background-color: #e8eef8 !important;
+}
+
+// Parent rows with expanded sub-rows get a slight indicator at the bottom
+.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-parent-row {
+  border-left: 3px solid transparent;
+}

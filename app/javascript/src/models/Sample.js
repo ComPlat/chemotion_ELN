@@ -545,6 +545,8 @@ export default class Sample extends Element {
       layer_thickness: this.layer_thickness || '',
       liquid_medium: this.liquid_medium || '',
       stabilizer: this.stabilizer || '',
+      dispersion: this.dispersion ?? null,
+      custom_properties: (this.sample_details || {}).custom_properties || [],
     });
 
     return serialized;

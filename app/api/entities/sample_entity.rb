@@ -82,6 +82,7 @@ module Entities
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
       # Hierarchical material physical properties
       # (color, state, particle_size stay in xref — main's storage — already exposed via :xref)
+      expose! :dispersion,              unless: :displayed_in_list
       expose! :storage_condition,       unless: :displayed_in_list
       expose! :height,                  unless: :displayed_in_list
       expose! :width,                   unless: :displayed_in_list
@@ -94,6 +95,9 @@ module Entities
       expose! :layer_thickness,         unless: :displayed_in_list
       expose! :liquid_medium,           unless: :displayed_in_list
       expose! :stabilizer,              unless: :displayed_in_list
+      expose :custom_properties, unless: :displayed_in_list do |sample|
+        (sample.sample_details || {})['custom_properties'] || []
+      end
     end
     # rubocop:enable Layout/ExtraSpacing
 

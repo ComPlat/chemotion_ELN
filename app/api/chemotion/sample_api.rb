@@ -351,6 +351,8 @@ module Chemotion
         optional :layer_thickness, type: String, desc: 'layer thickness of the Hierarchical sample'
         optional :liquid_medium, type: String, desc: 'liquid medium of the Hierarchical sample'
         optional :stabilizer, type: String, desc: 'stabilizer of the Hierarchical sample'
+        optional :dispersion, type: Float, desc: 'dispersion of the Hierarchical sample (0–1)'
+        optional :custom_properties, type: Array, desc: 'user-defined label/value pairs'
       end
 
       route_param :id do
@@ -412,6 +414,10 @@ module Chemotion
 
           # Handle hierarchical fields - save to both DB columns and sample_details for backward compatibility
           sample_details_param = attributes.delete(:sample_details) || {}
+
+          # custom_properties is sent as a top-level param but stored inside sample_details
+          custom_props = attributes.delete(:custom_properties)
+          sample_details_param['custom_properties'] = custom_props if custom_props
 
           # Extract fields that have DB columns and save them directly
           # (color, state, particle_size stay in xref — main's storage)
@@ -554,7 +560,7 @@ module Chemotion
             %w[height width length storage_condition diameter material cspi
                shape sieve_fraction layer_thickness liquid_medium stabilizer]
               .index_with { |k| params[k.to_sym] },
-          ).compact,
+          ).merge(params[:custom_properties] ? { 'custom_properties' => params[:custom_properties] } : {}).compact,
           # Mirror hierarchical properties into DB columns so create + update stay in sync
           # (color, state, particle_size stay in xref — main's storage)
           height: params[:height],
@@ -569,6 +575,7 @@ module Chemotion
           layer_thickness: params[:layer_thickness],
           liquid_medium: params[:liquid_medium],
           stabilizer: params[:stabilizer],
+          dispersion: params[:dispersion],
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY

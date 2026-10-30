@@ -1,6 +1,7 @@
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
 
 export const HIERARCHICAL_PROPERTY_OPTIONS = [
+  { value: 'dispersion', label: 'Dispersion', placeholder: '0.00 – 1.00' },
   { value: 'sieve_fraction', label: 'Sieve fraction', placeholder: 'e.g., 100-200 µm' },
   { value: 'height', label: 'Height', placeholder: 'e.g., 5' },
   { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5' },

@@ -12,7 +12,7 @@ const MIDDLE_DOT_RE = /[·•⋅·‧]/g;
 const WEIGHT_PREFIX_RE = /^\d+\.?\d*\s*wt\.?%\s*|^\d+\.?\d*\s*%\s*/i;
 
 // Capture group version — used by extractWeightPrefix to get the numeric value
-const WEIGHT_PREFIX_CAPTURE_RE = /^(\d+\.?\d*)\s*(?:wt\.?%)?\s*%/i;
+const WEIGHT_PREFIX_CAPTURE_RE = /^(\d+\.?\d*)\s*(?:wt\.?%|%)/i;
 
 // Extract unique element symbols from a formula segment. Async — regex sourced from backend (cached).
 export async function extractElements(segment) {
