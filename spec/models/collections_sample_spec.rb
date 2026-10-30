@@ -109,3 +109,45 @@ RSpec.describe CollectionsSample, type: :model do
     end
   end
 end
+
+RSpec.describe CollectionsSample do
+  describe 'inventory sample flag' do
+    let(:plain_collection) { create(:collection) }
+    let(:inventory) { create(:inventory, prefix: 'INV') }
+    let(:inventory_collection) { create(:collection, inventory: inventory) }
+    let(:unlabelled_collection) { create(:collection, inventory: create(:inventory, prefix: nil, name: nil)) }
+    let(:sample) { create(:sample, collections: [plain_collection], inventory_sample: false) }
+
+    it 'flags a sample created in a labelled inventory collection' do
+      new_sample = create(:sample, collections: [inventory_collection], inventory_sample: false)
+
+      expect(new_sample.inventory_sample).to be true
+      expect(new_sample.reload.inventory_sample).to be true
+    end
+
+    it 'flags a sample added to a labelled inventory collection' do
+      sample.collections << inventory_collection
+
+      expect(sample.reload.inventory_sample).to be true
+    end
+
+    it 'flags samples copied into a labelled inventory collection' do
+      described_class.create_in_collection([sample.id], [inventory_collection.id])
+
+      expect(sample.reload.inventory_sample).to be true
+    end
+
+    it 'flags samples moved into a labelled inventory collection' do
+      described_class.move_to_collection([sample.id], [plain_collection.id], [inventory_collection.id])
+
+      expect(sample.reload.inventory_sample).to be true
+    end
+
+    it 'does not flag samples placed in a collection without a labelled inventory' do
+      described_class.create_in_collection([sample.id], [unlabelled_collection.id])
+      sample.collections << create(:collection)
+
+      expect(sample.reload.inventory_sample).to be false
+    end
+  end
+end
