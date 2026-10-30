@@ -68,7 +68,7 @@ module Reporter
         {
           label: serial,
           svg_image: svg_img,
-          showed_name: p[:showed_name],
+          showed_name: Reporter::Helper.product_name(p),
           inchi: p[:molecule][:inchistring],
           inchikey: p[:molecule][:inchikey],
           long_key: long_key,

@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
   Popover, ButtonGroup, Button, CloseButton, OverlayTrigger, Tooltip,
-  ButtonToolbar
+  ButtonToolbar, Form
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+
+const SCHEME_PARTS = [
+  ['reactants', 'Reactants'],
+  ['temperature', 'Temperature and duration'],
+  ['solvents', 'Solvents'],
+  ['conditions', 'Conditions'],
+];
 
 // Ensure popovers/tooltips from this toolbar render above the scheme toolbar (z-index: 11)
 // and above Bootstrap tooltips (z-index: 1080) when open
@@ -61,7 +68,7 @@ const renderSbmmImageToggle = (materialId, imageToggleButton, tooltipContainer) 
 );
 
 export default function ReactionSchemeGraphic({
-  reaction, onToggleLabel, onRefresh, isRefreshing
+  reaction, onToggleLabel, onToggleSchemePart, onRefresh, isRefreshing
 }) {
   const [svgProps, setSvgProps] = useState({});
   const tooltipContainer = typeof document !== 'undefined' ? document.body : undefined;
@@ -133,32 +140,54 @@ export default function ReactionSchemeGraphic({
         <CloseButton onClick={close} />
       </Popover.Header>
       {!isInteractionReaction && (
-        <>
-          <Popover.Body className="border-bottom py-1">
-            <h6 className="fs-9 fw-medium">Starting Materials</h6>
-            {reaction.starting_materials.map(
-              (material) => materialShowLabel(material, false, 'starting_materials')
-            )}
-          </Popover.Body>
-          <Popover.Body className="border-bottom py-1">
-            <h6 className="fs-9 fw-medium">Reactants</h6>
-            {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
-            {reaction.reactant_sbmm_samples.map(
-              (material) => materialShowLabel(material, true, 'sbmm_reactants')
-            )}
-          </Popover.Body>
-        </>
+        <Popover.Body className="border-bottom py-1">
+          <h6 className="fs-9 fw-medium">Arrow</h6>
+          {SCHEME_PARTS.map(([part, label]) => (
+            <Form.Check
+              key={part}
+              type="switch"
+              id={`scheme-part-${part}`}
+              label={label}
+              checked={!reaction.scheme_hidden_parts.includes(part)}
+              onChange={() => onToggleSchemePart(part)}
+            />
+          ))}
+        </Popover.Body>
       )}
-      <Popover.Body className="py-1">
-        <h6 className="fs-9 fw-medium">Products</h6>
-        {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
-      </Popover.Body>
+      <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+        {!isInteractionReaction && (
+          <>
+            <Popover.Body className="border-bottom py-1">
+              <h6 className="fs-9 fw-medium">Starting Materials</h6>
+              {reaction.starting_materials.map(
+                (material) => materialShowLabel(material, false, 'starting_materials')
+              )}
+            </Popover.Body>
+            <Popover.Body className="border-bottom py-1">
+              <h6 className="fs-9 fw-medium">Reactants</h6>
+              {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
+              {reaction.reactant_sbmm_samples.map(
+                (material) => materialShowLabel(material, true, 'sbmm_reactants')
+              )}
+            </Popover.Body>
+          </>
+        )}
+        <Popover.Body className="py-1">
+          <h6 className="fs-9 fw-medium">Products</h6>
+          {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
+        </Popover.Body>
+      </div>
     </Popover>
   );
 
+  const isTall = reaction.isMultiStep() && reaction.reaction_steps.filter((step) => !step._destroy).length > 1;
+  const svgContainerClass = isTall
+    ? 'Reaction-scheme-graphic__svg-container Reaction-scheme-graphic__svg-container--tall'
+    : 'Reaction-scheme-graphic__svg-container';
+
   return (
     <div className="Reaction-scheme-graphic__wrapper">
-      <div className="Reaction-scheme-graphic__svg-container">
+      <div className={svgContainerClass}>
         {isRefreshing && (
           <div className="Reaction-scheme-graphic__loader-overlay">
             <div className="text-center p-4">
@@ -205,6 +234,7 @@ export default function ReactionSchemeGraphic({
 ReactionSchemeGraphic.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onToggleLabel: PropTypes.func.isRequired,
+  onToggleSchemePart: PropTypes.func.isRequired,
   onRefresh: PropTypes.func,
   isRefreshing: PropTypes.bool,
 };

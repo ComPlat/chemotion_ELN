@@ -427,7 +427,9 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup, components: sample.components })
+          dispatch({
+            newSample, reaction, materialGroup, components: sample.components, stepId: sample.reaction_step_id,
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           LoadingActions.stop();

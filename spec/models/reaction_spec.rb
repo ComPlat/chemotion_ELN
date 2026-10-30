@@ -394,4 +394,61 @@ RSpec.describe Reaction, type: :model do
     end
 
   end
+
+  describe 'multi_step reaction type' do
+    let(:reaction) { create(:reaction, reaction_type: 'multi_step') }
+
+    it 'accepts multi_step' do
+      expect(reaction).to be_valid
+    end
+
+    it 'allows going back to standard with a single step and nothing carried' do
+      ReactionStep.create!(reaction: reaction, position: 1)
+
+      reaction.reaction_type = 'standard'
+
+      expect(reaction).to be_valid
+    end
+
+    it 'goes back to standard keeping its steps and the carried product' do
+      step = ReactionStep.create!(reaction: reaction, position: 1)
+      ReactionStep.create!(reaction: reaction, position: 2)
+      carried = create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
+
+      reaction.update!(reaction_type: 'standard')
+
+      expect(reaction.reload.reaction_steps.count).to eq(2)
+      expect(carried.reload.carry_on).to be true
+    end
+  end
+
+  describe 'carried products and the scheme' do
+    let(:reaction) { create(:reaction, reaction_type: 'multi_step') }
+    let(:step) { ReactionStep.create!(reaction: reaction, position: 1) }
+
+    it 'leaves a carried product out of the drawing' do
+      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: true)
+      create(:reactions_product_sample, reaction: reaction, reaction_step: step, carry_on: false)
+
+      drawn = reaction.send(:scheme_materials_svg_paths)[:products]
+
+      expect(drawn.length).to eq(1)
+    end
+
+    it 'adds the unit only to a numeric step temperature' do
+      step.update!(temperature: { 'data' => [], 'userText' => 'r.t.', 'valueUnit' => '°C' })
+      expect(reaction.send(:step_temperature_with_unit, step)).to eq('r.t.')
+
+      step.update!(temperature: { 'data' => [], 'userText' => '40', 'valueUnit' => '°C' })
+      expect(reaction.send(:step_temperature_with_unit, step)).to eq('40 °C')
+    end
+
+    it 'draws every product of a standard reaction' do
+      standard = create(:reaction)
+      create(:reactions_product_sample, reaction: standard)
+      create(:reactions_product_sample, reaction: standard)
+
+      expect(standard.send(:scheme_materials_svg_paths)[:products].length).to eq(2)
+    end
+  end
 end

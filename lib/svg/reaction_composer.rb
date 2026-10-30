@@ -15,6 +15,13 @@ module SVG
     WORD_SIZE_SVG_SCALE = 1.7
     ARROW_LENGTH_BASE = 120
     ARROW_LENGTH_SCALE = 50
+    STEP_LINE_LENGTH = 40
+    HIDDEN_PART_KEYS = {
+      'reactants' => %i[reactants],
+      'temperature' => %i[temperature duration],
+      'solvents' => %i[solvents],
+      'conditions' => %i[conditions],
+    }.freeze
     TIME_UNIT = {
       'se' => 'sec',
       'mi' => 'min',
@@ -34,7 +41,8 @@ module SVG
     attr_accessor :global_view_box_array
 
     def initialize(materials_svg_paths, options = {})
-      init_materials(materials_svg_paths)
+      hide_reactants = Array(options[:hide]).map(&:to_s).include?('reactants')
+      init_materials(hide_reactants ? materials_svg_paths.merge(reactants: []) : materials_svg_paths)
       init_parameters(options)
       init_word_size
       init_arrow_width
@@ -210,7 +218,7 @@ module SVG
 
     def compose_reaction_svg
       set_global_view_box_height
-      section_it
+      @steps.present? && !@numbered ? section_it_steps : section_it
       return "#{core_template_it.strip} #{sections_string_filtered}</svg>" if @core_only
 
       "#{template_it.strip} #{sections_string_filtered} </svg></svg>"
@@ -232,18 +240,31 @@ module SVG
     end
 
     def init_parameters(options)
+      options = without_hidden_parts(options)
       @is_report = options[:is_report]
       @solvents = (options[:solvents] || []).select(&:present?)
       @temperature = options[:temperature]
       @duration = options[:duration]
       # Use scrub_xml instead of scrub_svg for plain text conditions
       @conditions = options[:conditions] if options[:conditions].present?
+      init_steps(options)
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
       @box_height = 440
       @rails_path = options[:rails_path].nil? ? true : options[:rails_path]
       @core_only = options[:core_only].nil? ? false : options[:core_only]
+    end
+
+    def without_hidden_parts(options)
+      hidden_keys = Array(options[:hide]).flat_map { |part| HIDDEN_PART_KEYS[part.to_s] }.compact
+      options.except(*hidden_keys).merge(steps: options[:steps].to_a.map { |step| step.except(*hidden_keys) })
+    end
+
+    def init_steps(options)
+      @steps = options[:steps].to_a
+      @numbered = options[:numbered_steps] && @steps.present?
+      apply_numbered_steps if @numbered
     end
 
     def init_word_size
@@ -323,13 +344,59 @@ module SVG
 
       <<~XML
         <svg font-family="sans-serif">
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="30" font-size="#{word_size + 2}">#{tmdu}</text>
+          <text text-anchor="middle" x="#{arrow_width / 2}" y="#{first_line_y}" font-size="#{word_size + 2}">#{tmdu}</text>
         </svg>
       XML
     end
 
-    def parsed_duration
-      duration.to_s.strip.split.each_cons(2) do |amount, unit|
+    # A Standard reaction with hidden steps keeps one arrow, but labels each step's reactants and conditions "N.".
+    # Reactants and solvents with no step yet (added while Standard) are shown with step 1.
+    def apply_numbered_steps
+      @reactants = numbered_reactants
+      @num_reactants = [@reactants.count { |path| !Array(path).first.to_s.start_with?('step_label/') }, 1].max
+      @unassigned_solvents = @solvents - @steps.flat_map { |step| Array(step[:solvents]) }
+      @conditions = numbered_step_lines.join("\n").presence
+      @temperature = nil
+      @duration = nil
+      @solvents = []
+    end
+
+    def numbered_reactants
+      grouped = @steps.map { |step| Array(step[:reactants]) }
+      in_steps = grouped.flatten(1).map { |path| Array(path).first.to_s }
+      grouped[0] += @reactants.reject { |path| in_steps.include?(Array(path).first.to_s) }
+      grouped.each_with_index.flat_map do |paths, index|
+        paths.empty? ? [] : ["step_label/#{index + 1}", *paths]
+      end
+    end
+
+    def numbered_step_lines
+      @steps.each_with_index.flat_map do |step, index|
+        amount, unit = parsed_duration(step[:duration])
+        solvents = Array(step[:solvents]) + (index.zero? ? @unassigned_solvents : [])
+        parts = [step[:temperature], amount && "#{amount} #{unit}", *solvents,
+                 *step[:conditions].to_s.split("\n")].map { |part| part.to_s.strip }.compact_blank
+        parts.empty? ? [] : wrap_step_line("#{index + 1}. ", parts)
+      end
+    end
+
+    def wrap_step_line(prefix, parts)
+      first = [parts.shift]
+      fits = -> { "#{prefix}#{(first + [parts.first]).join(', ')}".length <= STEP_LINE_LENGTH }
+      first << parts.shift while parts.any? && fits.call
+      ["#{prefix}#{first.join(', ')}", parts.join(', ').presence].compact
+    end
+
+    def step_label_it(number, x_pos, y_pos)
+      <<~XML
+        <svg font-family="sans-serif" font-size="33">
+            <text x="#{x_pos}" y="#{y_pos + 16}">#{number}.</text>
+        </svg>
+      XML
+    end
+
+    def parsed_duration(text = duration)
+      text.to_s.strip.split.each_cons(2) do |amount, unit|
         mapped_unit = TIME_UNIT[unit.to_s[0, 2].downcase]
         next unless duration_amount?(amount) && mapped_unit.present?
 
@@ -344,8 +411,7 @@ module SVG
     end
 
     def conditions_it
-      y_init = 55
-      y_init += (actual_solvents_lines.size).ceil * 26 if solvents.present?
+      y_init = conditions_start_y
       return nil if conditions.blank?
 
       s_conditions = conditions.split("\n") || []
@@ -354,7 +420,7 @@ module SVG
         escaped = CGI.escapeHTML(condition.to_s)
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{escaped}</text>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + (index * line_gap)}" font-size="#{word_size}">#{escaped}</text>
           </svg>
         XML
       end.join(' ')
@@ -365,7 +431,7 @@ module SVG
       (actual_solvents_lines || solvents).map.with_index do |solvent, index|
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{55 + index * 25}" font-size="#{word_size}">#{solvent}</text>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{first_line_y + ((index + 1) * line_gap)}" font-size="#{word_size}">#{solvent}</text>
           </svg>
         XML
       end.join('  ')
@@ -400,15 +466,29 @@ module SVG
       max
     end
 
+    def conditions_start_y
+      y_init = first_line_y + line_gap
+      solvents.present? ? y_init + (actual_solvents_lines.size.ceil * (line_gap + 1)) : y_init
+    end
+
     # assign height scale for condition lines
+    # Lines under the arrow are spaced by the text size, so large text in busy schemes does not overlap.
+    def line_gap
+      [25, (word_size * 1.2).round].max
+    end
+
+    def first_line_y
+      [30, (word_size * 1.1).round].max
+    end
+
     def find_cond_max_height
       conditions_arr = conditions.try(:split, "\n") || []
-      conditions_arr.length * 75
+      conditions_arr.length * line_gap * 3
     end
 
     # assign height scale for solvent lines
     def find_solvent_max_height
-      actual_solvents_lines.length * 75
+      actual_solvents_lines.length * line_gap * 3
     end
 
     # sum of conditions and solvents height scale
@@ -525,7 +605,18 @@ module SVG
       output
     end
 
-    def compose_material_group(material_group, **options)
+    def step_label_or_divider(path, ind, group_width, y_center, label_before)
+      number = Array(path).first.to_s[%r{\Astep_label/(\d+)\z}, 1]
+      if number
+        x_pos = ind.positive? ? group_width + 60 : group_width
+        return [step_label_it(number, x_pos, y_center), x_pos + 50, true]
+      end
+      return ['', group_width, false] unless ind.positive? && !label_before
+
+      [divide_it(group_width + 50, y_center), group_width + 130, false]
+    end
+
+    def compose_material_group(material_group, **options) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       gvba = global_view_box_array
       w0 = gvba[2]
       x_shift = options[:start_at] || 0
@@ -534,12 +625,12 @@ module SVG
       output = ''
       vb_middle = gvba[3] / 2.round
       group_width = 0
+      label_before = false
       material_group.map.with_index do |m, ind|
-        if ind.positive?
-          group_width += 50
-          output += divide_it(group_width, y_center)
-          group_width += 80
-        end
+        separator, group_width, label_before = step_label_or_divider(m, ind, group_width, y_center, label_before)
+        output += separator
+        next if label_before
+
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
         vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
@@ -654,9 +745,100 @@ module SVG
       @sections = sections
     end
 
+    def section_it_steps
+      sections = {}
+      @branch_extent = 0
+      y_center = (global_view_box_array[3] / 2).round
+      @steps.each_with_index do |step, index|
+        next if step_empty?(step)
+
+        sections[:"sm#{index}"] = compose_step_input(step, index, y_center)
+        sections[:"re#{index}"], sections[:"ar#{index}"] = compose_step_arrow(step, y_center)
+        product_x = global_view_box_array[2]
+        sections[:"pr#{index}"] = compose_step_output(step, y_center)
+        sections[:"by#{index}"] = compose_step_byproducts(step, y_center, product_x)
+      end
+      fit_branches!
+      @sections = sections
+    end
+
+    # A step with nothing in it would otherwise draw an arrow pointing at empty space.
+    def step_empty?(step)
+      %i[starting_materials reactants carried products].all? { |key| step[key].blank? }
+    end
+
+    def compose_step_input(step, index, y_center)
+      return '' unless index.zero?
+
+      compose_material_group(step[:starting_materials] || [], start_at: 0, y_center: y_center)
+    end
+
+    def compose_step_arrow(step, y_center)
+      apply_step_labels(step)
+      arrow_x_shift = (global_view_box_array[2] += 50)
+      reactants_y = (y_center - (@arrow_width / 3)).round
+      reactants_svg = compose_material_group(
+        step[:reactants] || [],
+        start_at: global_view_box_array[2],
+        scale: REACTANT_SCALE,
+        arrow_width: true,
+        y_center: reactants_y,
+        is_reactants: true,
+      )
+      arrow_svg = compose_arrow_and_reaction_labels(start_at: arrow_x_shift, arrow_y_shift: y_center)
+      global_view_box_array[2] += 40
+      [reactants_svg, arrow_svg]
+    end
+
+    def compose_step_output(step, y_center)
+      chain = step[:carried].presence || step[:products] || []
+      @max_height_for_products = find_material_max_height(chain)
+      compose_material_group(chain, start_at: global_view_box_array[2], y_center: y_center)
+    end
+
+    # By-products hang below the chain so it stays readable which material moves on.
+    def compose_step_byproducts(step, y_center, product_x)
+      side = step[:carried].present? ? (step[:products] || []) : []
+      return '' if side.empty?
+
+      after_chain = global_view_box_array[2]
+      chain_half = (@max_height_for_products || 0) / 2
+      @max_height_for_products = find_material_max_height(side)
+      drop = (chain_half + (@max_height_for_products / 2) + (4 * YIELD_YOFFSET)).round
+      note_branch_extent(drop, y_center)
+      global_view_box_array[2] = product_x
+      svg = compose_material_group(side, start_at: product_x, y_center: y_center)
+      global_view_box_array[2] = [after_chain, global_view_box_array[2]].max
+      "<g transform='translate(0, #{drop})'>#{plus_sign_at(product_x, y_center)} #{svg}</g>"
+    end
+
+    def fit_branches!
+      global_view_box_array[3] = [global_view_box_array[3], @branch_extent.to_i].max
+    end
+
+    # The branch is centred on y_center and then shifted down, so its lowest point
+    # is the drop plus half the material, plus room for the yield label.
+    def note_branch_extent(drop, y_center)
+      bottom = drop + y_center + (@max_height_for_products / 2) + (4 * YIELD_YOFFSET)
+      @branch_extent = [@branch_extent, bottom].max
+    end
+
+    def plus_sign_at(x_at, y_center)
+      "<text x='#{x_at - 25}' y='#{y_center}' font-size='#{word_size + 6}' text-anchor='middle'>+</text>"
+    end
+
+    def apply_step_labels(step)
+      @temperature = step[:temperature]
+      @duration = step[:duration]
+      @conditions = step[:conditions].presence
+      @solvents = Array(step[:solvents]).compact_blank if step.key?(:solvents)
+      @num_reactants = (step[:reactants] || []).size
+      init_arrow_width
+    end
+
     def generate_filename
       filenames = { starting_materials: starting_materials, reactants: reactants, products: products }
-      key_base = "#{filenames.to_a}#{solvents}#{temperature}#{duration}#{conditions}"
+      key_base = "#{filenames.to_a}#{@steps}#{solvents}#{temperature}#{duration}#{conditions}"
       hash_of_filenames = Digest::SHA256.hexdigest(key_base)
       hash_of_filenames + '.svg'
     end

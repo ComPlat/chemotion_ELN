@@ -27,20 +27,22 @@ module ReactionRinchi
   end
 
   def retrieve_molfiles
-    mole_molfile_or_no = ->(x) {
-      mf = x.molecule_molfile || no_structure
-      version = x.molecule&.molfile_version
-      if version =~ /^(V2000).*T9/
-        mf = Chemotion::OpenBabelService.mofile_clear_coord_bonds(mf, $1)
-      end
-      mf
-    }
-    mols_rcts = starting_materials.map(&mole_molfile_or_no)
-    mols_agts = reactants.map(&mole_molfile_or_no)
-    mols_sols = solvents.map(&mole_molfile_or_no)
-    mols_prds = products.map(&mole_molfile_or_no)
+    [starting_materials, final_products, reactants + solvents].map do |materials|
+      materials.map { |material| molfile_for(material) }
+    end
+  end
 
-    [mols_rcts, mols_prds, (mols_agts + mols_sols)]
+  def molfile_for(material)
+    molfile = material.molecule_molfile || no_structure
+    match = material.molecule&.molfile_version&.match(/^(V2000).*T9/)
+    match ? Chemotion::OpenBabelService.mofile_clear_coord_bonds(molfile, match[1]) : molfile
+  end
+
+  def final_products
+    return products unless persisted? && multi_step?
+
+    carried_ids = ReactionsProductSample.where(reaction_id: id, carry_on: true).pluck(:sample_id)
+    products.reject { |product| carried_ids.include?(product.id) }
   end
 
   def no_structure

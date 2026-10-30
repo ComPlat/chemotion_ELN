@@ -61,6 +61,7 @@ class Reaction < ApplicationRecord
   enum reaction_type: {
     standard: 'standard',
     interaction: 'interaction',
+    multi_step: 'multi_step',
   }
 
   NUMERIC_TEMPERATURE_TEXT_PATTERN =
@@ -127,6 +128,8 @@ class Reaction < ApplicationRecord
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
+
+  has_many :reaction_steps, -> { order(:position) }, dependent: :destroy, inverse_of: :reaction
 
   has_many :reactions_samples, dependent: :destroy
   has_many :samples, through: :reactions_samples, source: :sample
@@ -252,8 +255,8 @@ class Reaction < ApplicationRecord
     else
       begin
         self.reaction_svg_file = scheme_composer.compose_reaction_svg_and_save
-      rescue StandardError => _e
-        Rails.logger.info('**** SVG::ReactionComposer failed ***')
+      rescue StandardError => e
+        Rails.logger.info("**** SVG::ReactionComposer failed: #{e.class}: #{e.message} ***")
       end
     end
     cleanup_previous_svg_file!
@@ -276,10 +279,6 @@ class Reaction < ApplicationRecord
   def current_svg_full_path
     file_path = Rails.public_path.join('images', 'reactions', reaction_svg_file)
     File.file?(file_path) ? file_path : nil
-  end
-
-  def yield_amount(sample_id)
-    ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
   end
 
   def solvents_in_svg
@@ -341,6 +340,28 @@ class Reaction < ApplicationRecord
     update(variations: current_variations) if changed.positive?
   end
 
+  def refresh_search_text
+    update_to_plain_text(true, false)
+  end
+
+  def steps_description(labels: false)
+    return description unless multi_step? && reaction_steps.any?
+
+    ops = reaction_steps.flat_map do |step|
+      heading = [{ 'insert' => "Step #{step.position}: ", 'attributes' => { 'bold' => true } }]
+      (labels ? heading : []) + Array(step.description&.dig('ops'))
+    end
+    { 'ops' => ops }
+  end
+
+  def self.step_temperature_text(temperature)
+    value = temperature.is_a?(Hash) ? temperature['userText'] : nil
+    return '' if value.blank?
+
+    numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(value.strip)
+    numeric ? "#{value} #{temperature['valueUnit']}".strip : value
+  end
+
   private
 
   def temperature_data_display
@@ -398,6 +419,9 @@ class Reaction < ApplicationRecord
       conditions: conditions,
       show_yield: !interaction?,
       is_report: is_report,
+      steps: multi_step? || (standard? && reaction_steps.many?) ? scheme_steps_svg_paths : [],
+      numbered_steps: standard?,
+      hide: scheme_hidden_parts,
     }
     composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
     composer_class.new(scheme_materials_svg_paths, composer_options)
@@ -417,14 +441,51 @@ class Reaction < ApplicationRecord
     paths
   end
 
-  def scheme_material_svg_paths(resource, prop)
-    public_send(resource).includes(sample: :molecule).map do |reactions_sample|
+  def scheme_steps_svg_paths
+    rows = rows_by_step_and_type
+    reaction_steps.each_with_index.map do |step, index|
+      step_rows = ->(type) { rows.fetch([step.id, type], []) }
+      carried, products = step_rows.call('ReactionsProductSample').partition(&:carry_on)
+      {
+        starting_materials: build_svg_paths(step_rows.call('ReactionsStartingMaterialSample'), :starting_materials),
+        reactants: build_svg_paths(step_rows.call('ReactionsReactantSample'), :reactants),
+        carried: build_svg_paths(carried, :products),
+        products: build_svg_paths(products, :products),
+        temperature: step_temperature_with_unit(step),
+        duration: step.duration,
+        conditions: step.conditions,
+        solvents: step_solvent_names(step_rows.call('ReactionsSolventSample'), index),
+      }
+    end
+  end
+
+  def rows_by_step_and_type
+    reactions_samples.includes(sample: :molecule).order(:position).group_by { |row| [row.reaction_step_id, row.type] }
+  end
+
+  def step_solvent_names(rows, index)
+    names = rows.filter_map { |row| row.sample&.preferred_label }
+    names.presence || (index.zero? && solvents.empty? ? [solvent].compact_blank : [])
+  end
+
+  def step_temperature_with_unit(step)
+    self.class.step_temperature_text(step.temperature)
+  end
+
+  def build_svg_paths(rows, prop)
+    rows.map do |reactions_sample|
       sample = reactions_sample.sample
       params = [sample.get_svg_path]
       params[0] = sample.svg_text_path if reactions_sample.show_label
-      params.append(yield_amount(sample.id)) if prop == :products
+      params.append(reactions_sample.equivalent) if prop == :products
       params
     end
+  end
+
+  def scheme_material_svg_paths(resource, prop)
+    rows = public_send(resource).includes(sample: :molecule)
+    rows = rows.where(carry_on: false) if prop == :products && multi_step?
+    build_svg_paths(rows, prop)
   end
 
   def set_default_reaction_type
@@ -460,7 +521,8 @@ class Reaction < ApplicationRecord
     update_columns(
       {
         plain_text_observation: observation_changed.presence && Chemotion::QuillToPlainText.convert(observation),
-        plain_text_description: description_changed.presence && Chemotion::QuillToPlainText.convert(description),
+        plain_text_description: description_changed.presence &&
+          Chemotion::QuillToPlainText.convert(steps_description),
       }.compact,
     )
   # NB: we don't want to raise an error if the conversion fails

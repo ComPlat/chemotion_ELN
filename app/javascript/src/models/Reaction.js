@@ -1,5 +1,7 @@
 import {
+  cloneDeep,
   isEmpty,
+  isEqual,
   round,
 } from 'lodash';
 import Delta from 'quill-delta';
@@ -20,6 +22,20 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 import { rootStore } from 'src/stores/mobx/RootStore';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
+
+export const STEP_FIELD_DEFAULTS = {
+  temperature: () => ({ data: [], userText: '', valueUnit: '°C' }),
+  vessel_size: () => ({ unit: 'ml', amount: null }),
+  duration: () => '',
+  timestamp_start: () => '',
+  timestamp_stop: () => '',
+  ph_operator: () => '=',
+  ph_value: () => null,
+  volume: () => null,
+  lock_reaction_volume: () => false,
+  conditions: () => '',
+  description: () => Element.quillDefault(),
+};
 
 const TemperatureDefault = {
   valueUnit: '°C',
@@ -97,6 +113,7 @@ const DurationDefault = {
 const ReactionTypeOptions = [
   { value: 'standard', label: 'Standard' },
   { value: 'interaction', label: 'Interaction' },
+  { value: 'multi_step', label: 'Multi-step' },
 ];
 
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
@@ -122,7 +139,23 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
   return 'Hour(s)';
 };
 
+const STEP_HEADING = /^Step (\d+): /;
+const opsOf = (description) => description?.ops || [];
+const hasText = (ops) => ops.some((op) => typeof op.insert !== 'string' || op.insert.trim() !== '');
+const emptyDescription = () => ({ ops: [{ insert: '\n' }] });
+const lineOps = (ops) => ops.flatMap((op) => (typeof op.insert === 'string'
+  ? (op.insert.match(/[^\n]*\n|[^\n]+/g) || []).map((insert) => ({ ...op, insert }))
+  : [op]));
+
 export default class Reaction extends Element {
+  constructor(args) {
+    super(args);
+    // buildCopy/clone assign _reaction_steps directly; re-run the setter to detach them.
+    this.reaction_steps = this._reaction_steps;
+    this._ownDescription = this.initialOwnDescription();
+    this.scheme_hidden_parts ||= [];
+  }
+
   // reaction material types
   static STARTING_MATERIALS = 'starting_materials';
 
@@ -188,6 +221,7 @@ export default class Reaction extends Element {
       reaction_type: 'standard',
       lock_reaction_volume: false,
       gaseous: false,
+      scheme_hidden_parts: [],
       weight_percentage: false
     });
     reaction.short_label = this.buildReactionShortLabel();
@@ -231,7 +265,9 @@ export default class Reaction extends Element {
       materialsSvgPaths: {
         starting_materials: this.starting_materials.map((material) => material.svgPath),
         reactants: this.reactantsWithSbmm.map((material) => material.svgPath),
-        products: this.products.map((material) => [material.svgPath, material.equivalent])
+        products: this.products
+          .filter((material) => !this.isMultiStep() || !material.carry_on)
+          .map((material) => [material.svgPath, material.equivalent])
       },
       temperature: this.temperature_display_with_unit,
       solvents: this.solvents
@@ -241,6 +277,9 @@ export default class Reaction extends Element {
       conditions: this.conditions,
       productsOnly,
       showYield: !productsOnly,
+      steps: this.stepsSvgPaths(),
+      numberedSteps: this.hasHiddenSteps(),
+      hide: this.scheme_hidden_parts,
     };
   }
 
@@ -250,10 +289,54 @@ export default class Reaction extends Element {
   }
 
   serialize() {
+    const liveSteps = this.reaction_steps.filter((step) => !step._destroy);
+    const destroyedStepIds = new Set(
+      this.reaction_steps.filter((step) => step._destroy).map((step) => step.id)
+    );
+    const stepPositionById = {};
+    liveSteps.forEach((step, index) => { stepPositionById[step.id] = index + 1; });
+    const dropDestroyed = (samples) => samples.filter(
+      (sample) => !destroyedStepIds.has(sample.reaction_step_id)
+    );
+    // Null would override the column defaults, so only set fields are sent.
+    const serializeStep = (step, index) => {
+      const fields = {
+        id: (typeof step.id === 'number') ? step.id : undefined,
+        position: index + 1,
+        description: step.description,
+        conditions: step.conditions,
+        duration: step.duration,
+        timestamp_start: step.timestamp_start,
+        timestamp_stop: step.timestamp_stop,
+        temperature: step.temperature,
+        ph_operator: step.ph_operator,
+        ph_value: step.ph_value,
+        vessel_size: step.vessel_size,
+        volume: step.volume,
+        lock_reaction_volume: step.lock_reaction_volume,
+      };
+      return Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== null && value !== undefined)
+      );
+    };
+    const withStepPosition = (sample) => {
+      const data = sample.serializeMaterial();
+      data.reaction_step_position = stepPositionById[sample.reaction_step_id] ?? null;
+      if (this.isLaterStep(this.stepOf(sample))) data.reference = false;
+      return data;
+    };
+    const lastLivePosition = liveSteps.length;
+    const withProductStepPosition = (sample) => {
+      const data = withStepPosition(sample);
+      const position = data.reaction_step_position;
+      data.carry_on = !!data.carry_on && position != null && position < lastLivePosition;
+      data.step_reference = data.step_reference && data.carry_on;
+      return data;
+    };
     return super.serialize({
       collection_id: this.collection_id,
       container: this.container,
-      description: this.description,
+      description: this.isMultiStep() ? this.combinedDescription() : this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
       ph_operator: this.ph_operator || '=',
@@ -265,13 +348,14 @@ export default class Reaction extends Element {
       literatures: this.literatures,
       research_plans: this.research_plans,
       materials: {
-        starting_materials: this.starting_materials.map((s) => s.serializeMaterial()),
-        reactants: this.reactants.map((s) => s.serializeMaterial()),
-        solvents: this.solvents.map((s) => s.serializeMaterial()),
+        starting_materials: dropDestroyed(this.starting_materials).map(withStepPosition),
+        reactants: dropDestroyed(this.reactants).map(withStepPosition),
+        solvents: dropDestroyed(this.solvents).map(withStepPosition),
         purification_solvents: this.purification_solvents.map((s) => s.serializeMaterial()),
-        products: this.products.map((s) => s.serializeMaterial()),
+        products: dropDestroyed(this.products).map(withProductStepPosition),
         reactant_sbmm_samples: (this.reactant_sbmm_samples || []).map((s) => s.serializeSbmmMaterial())
       },
+      reaction_steps: this.stepsView().map((step, index) => serializeStep(step, index)),
       name: this.name,
       observation: this.observation,
       origin: this.origin,
@@ -297,6 +381,7 @@ export default class Reaction extends Element {
       reaction_type: this.reaction_type || 'standard',
       lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
+      scheme_hidden_parts: this.scheme_hidden_parts,
       weight_percentage: this.weight_percentage,
     });
   }
@@ -565,6 +650,9 @@ export default class Reaction extends Element {
 
   buildCopy(params = {}, keepAmounts = false) {
     const copy = super.buildCopy();
+    copy.temperature = cloneDeep(this.temperature);
+    copy.vessel_size = cloneDeep(this.vessel_size);
+    copy.reaction_steps = cloneDeep(this.reaction_steps);
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map((sample) => {
@@ -626,6 +714,7 @@ export default class Reaction extends Element {
       status: '',
     };
     const copy = reaction.buildCopy(params, keepAmounts);
+    copy.reaction_steps = copy.reaction_steps.map((step) => ({ ...step, timestamp_start: '', timestamp_stop: '' }));
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
     copy.name = copy.nameFromRole(copy.role);
     return copy;
@@ -911,8 +1000,10 @@ export default class Reaction extends Element {
         if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
       }
 
-      if (!reference && this.starting_materials.length > 0) {
-        this._setAsReferenceMaterial(this.starting_materials[0]);
+      const firstStepStartingMaterials = this.starting_materials
+        .filter((m) => !this.isLaterStep(this.stepOf(m)));
+      if (!reference && firstStepStartingMaterials.length > 0) {
+        this._setAsReferenceMaterial(firstStepStartingMaterials[0]);
       } else {
         this._updateEquivalentForMaterial(material);
       }
@@ -955,7 +1046,393 @@ export default class Reaction extends Element {
    * @returns {Sample|SequenceBasedMacromoleculeSample|undefined} The reference material, or undefined if none exists
    */
   get referenceMaterial() {
-    return this.allReactionMaterials.find((sample) => sample.reference);
+    return this.allReactionMaterials.find((sample) => sample.reference && !this.isLaterStep(this.stepOf(sample)));
+  }
+
+  get reaction_steps() {
+    return this._reaction_steps || [];
+  }
+
+  set reaction_steps(steps) {
+    this._reaction_steps = (steps || [])
+      .map((step) => ({ ...step }))
+      .sort((a, b) => a.position - b.position);
+  }
+
+  isMultiStep() {
+    return this.reaction_type === 'multi_step';
+  }
+
+  hasSingleStep() {
+    return this.isMultiStep() && this.reaction_steps.filter((step) => !step._destroy).length === 1;
+  }
+
+  hasHiddenSteps() {
+    return this.reaction_type === 'standard' && this.reaction_steps.filter((step) => !step._destroy).length > 1;
+  }
+
+  // While Standard, step 1 follows the reaction's own fields and the last step its stop time, as saved.
+  stepsView() {
+    const steps = this.reaction_steps.filter((step) => !step._destroy);
+    if (this.isMultiStep() || steps.length === 0) return steps;
+    const overlay = Object.fromEntries(Object.keys(STEP_FIELD_DEFAULTS)
+      .filter((field) => !['description', 'timestamp_stop'].includes(field))
+      .map((field) => [field, cloneDeep(this[field])]));
+    const view = [{ ...steps[0], ...overlay }, ...steps.slice(1)];
+    view[view.length - 1] = { ...view[view.length - 1], timestamp_stop: this.timestamp_stop };
+    return view;
+  }
+
+  // Each step's temperature as time points, placed at its start relative to step 1's start (0 when unknown).
+  hiddenStepTemperatures() {
+    const steps = this.stepsView();
+    const startOf = (step) => moment(step.timestamp_start, 'DD/MM/YYYY HH:mm:ss', true);
+    const origin = steps[0] && startOf(steps[0]);
+    const toSeconds = (time) => String(time || '0').split(':').reduce((sum, part) => sum * 60 + Number(part || 0), 0);
+    const toTime = (seconds) => [Math.floor(seconds / 3600), Math.floor((seconds % 3600) / 60), seconds % 60]
+      .map((part) => String(part).padStart(2, '0')).join(':');
+    return steps.flatMap((step, index) => {
+      const known = origin?.isValid() && startOf(step).isValid();
+      const offset = known ? Math.max(0, startOf(step).diff(origin, 'seconds')) : 0;
+      const { data = [], userText } = step.temperature || {};
+      const number = index + 1;
+      const typed = userText ? [{ step: number, time: toTime(offset), value: userText, typed: true }] : [];
+      return [
+        ...typed,
+        ...data.map(({ time, value }) => ({ step: number, time: toTime(toSeconds(time) + offset), value })),
+      ];
+    });
+  }
+
+  materialsForStep(group, stepId) {
+    return this[group].filter((material) => material.reaction_step_id === stepId);
+  }
+
+  stepContext(step) {
+    const context = Object.create(this);
+    context.stepId = step.id;
+    context._durationDisplay = undefined;
+    Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
+      context[field] = step[field] ?? fallback();
+    });
+    ['starting_materials', 'reactants', 'solvents', 'products'].forEach((group) => {
+      Object.defineProperty(context, group, {
+        get: () => this.materialsForStep(group, step.id),
+        configurable: true,
+      });
+    });
+    const firstStep = this.reaction_steps.filter((entry) => !entry._destroy)[0];
+    Object.defineProperty(context, 'reactant_sbmm_samples', {
+      get: () => (firstStep && firstStep.id === step.id ? (this._reactant_sbmm_samples || []) : []),
+      configurable: true,
+    });
+    return context;
+  }
+
+  mirrorFirstStep() {
+    const steps = this.reaction_steps.filter((step) => !step._destroy);
+    const [first] = steps;
+    if (!first) return;
+    Object.entries(STEP_FIELD_DEFAULTS)
+      .filter(([field]) => field !== 'description')
+      .forEach(([field, fallback]) => { this[field] = first[field] ?? fallback(); });
+    this.timestamp_stop = steps[steps.length - 1].timestamp_stop;
+    this.description = this.combinedDescription();
+  }
+
+  combinedDescription() {
+    const steps = this.reaction_steps.filter((step) => !step._destroy);
+    const own = opsOf(this._ownDescription);
+    const ops = [
+      ...(hasText(own) ? own : []),
+      ...steps.flatMap((step, index) => {
+        const stepOps = opsOf(step.description);
+        return hasText(stepOps) ? [{ insert: `Step ${index + 1}: `, attributes: { bold: true } }, ...stepOps] : [];
+      }),
+    ];
+    return ops.length ? { ops } : emptyDescription();
+  }
+
+  // Text before the first "Step N:" heading is the reaction's own; a heading counts only at a line start
+  // and for the next existing step, so deleted or made-up headings leave their text with the step above.
+  splitDescription() {
+    const stepCount = this.reaction_steps.filter((step) => !step._destroy).length;
+    const chunks = [[]];
+    let atLineStart = true;
+    lineOps(opsOf(this.description)).forEach((op) => {
+      const text = typeof op.insert === 'string' ? op.insert : null;
+      const match = atLineStart && text && text.match(STEP_HEADING);
+      const position = match ? Number(match[1]) : 0;
+      if (position > chunks.length - 1 && position <= stepCount) {
+        while (chunks.length <= position) chunks.push([]);
+        const rest = text.slice(match[0].length);
+        if (rest) chunks[position].push({ ...op, insert: rest });
+      } else {
+        chunks[chunks.length - 1].push(op);
+      }
+      if (text !== null) atLineStart = text.endsWith('\n');
+    });
+    return chunks;
+  }
+
+  initialOwnDescription() {
+    const first = this.reaction_steps.find((step) => !step._destroy);
+    if (!first) return this.description;
+    const chunks = this.splitDescription();
+    const isStepOneCopy = chunks.length === 1 && isEqual(chunks[0], lineOps(opsOf(first.description)));
+    return isStepOneCopy ? null : { ops: chunks[0] };
+  }
+
+  restoreHiddenSteps() {
+    const steps = this.reaction_steps.filter((step) => !step._destroy);
+    const chunks = this.splitDescription();
+    this._ownDescription = { ops: chunks[0] };
+    steps.forEach((step, index) => {
+      step.description = chunks[index + 1]?.length ? { ops: chunks[index + 1] } : emptyDescription();
+    });
+    Object.keys(STEP_FIELD_DEFAULTS)
+      .filter((field) => !['description', 'timestamp_stop'].includes(field))
+      .forEach((field) => { steps[0][field] = cloneDeep(this[field]); });
+    steps[steps.length - 1].timestamp_stop = this.timestamp_stop;
+  }
+
+  stepOf(sample) {
+    if (!this.isMultiStep()) return null;
+    return this.reaction_steps.find((entry) => !entry._destroy && entry.id === sample.reaction_step_id) || null;
+  }
+
+  isFirstStepMaterial(material) {
+    if (!this.isMultiStep()) return true;
+    const inDeletedStep = this.reaction_steps.some((step) => step._destroy && step.id === material.reaction_step_id);
+    return !inDeletedStep && !this.isLaterStep(this.stepOf(material));
+  }
+
+  isLaterStep(step) {
+    return !!step && this.reaction_steps.filter((entry) => !entry._destroy)[0]?.id !== step.id;
+  }
+
+  stepReferenceCandidates(step) {
+    return [
+      ...this.carriedProductsIntoStep(step.id),
+      ...this.materialsForStep('starting_materials', step.id),
+      ...this.materialsForStep('reactants', step.id),
+    ];
+  }
+
+  stepReference(step) {
+    const candidates = this.stepReferenceCandidates(step);
+    return candidates.find((material) => material.step_reference) || candidates[0];
+  }
+
+  referenceFor(sample) {
+    const step = this.stepOf(sample);
+    return this.isLaterStep(step) ? this.stepReference(step) : this.referenceMaterial;
+  }
+
+  isReference(sample) {
+    const step = this.stepOf(sample);
+    return this.isLaterStep(step) ? this.stepReference(step) === sample : !!sample.reference;
+  }
+
+  setStepReference(step, sampleId) {
+    this.stepReferenceCandidates(step).forEach((material) => {
+      material.step_reference = material.id === sampleId;
+    });
+  }
+
+  volumeContextFor(sample) {
+    const step = this.stepOf(sample);
+    return step ? this.stepContext(step) : this;
+  }
+
+  stepsSvgPaths() {
+    if (!this.isMultiStep() && !this.hasHiddenSteps()) return [];
+
+    const stepTemperature = ({ userText, valueUnit } = {}) => {
+      if (!userText) return '';
+      return isNumericTemperatureText(userText) ? `${userText} ${valueUnit || ''}`.trim() : userText;
+    };
+    const stepProducts = (stepId, carried) => this.products
+      .filter((p) => p.reaction_step_id === stepId && !!p.carry_on === carried)
+      .map((p) => [p.svgPath, p.equivalent]);
+
+    return this.stepsView().map((step) => ({
+      starting_materials: this.materialsForStep('starting_materials', step.id).map((m) => [m.svgPath]),
+      reactants: this.materialsForStep('reactants', step.id).map((m) => [m.svgPath]),
+      carried: stepProducts(step.id, true),
+      products: stepProducts(step.id, false),
+      temperature: stepTemperature(step.temperature),
+      duration: step.duration || '',
+      conditions: step.conditions || '',
+      solvents: this.materialsForStep('solvents', step.id).map((solvent) => solvent.preferred_label).filter(Boolean),
+    }));
+  }
+
+  notCarriedIntoStep(stepId) {
+    const liveSteps = this.reaction_steps.filter((step) => !step._destroy);
+    const index = liveSteps.findIndex((step) => step.id === stepId);
+    if (index <= 0) return [];
+    const previous = liveSteps[index - 1];
+    return this.products.filter(
+      (product) => product.reaction_step_id === previous.id && !product.carry_on
+    );
+  }
+
+  carriedProductsIntoStep(stepId) {
+    const liveSteps = this.reaction_steps.filter((step) => !step._destroy);
+    const index = liveSteps.findIndex((step) => step.id === stepId);
+    if (index <= 0) return [];
+    const previous = liveSteps[index - 1];
+    return this.products.filter(
+      (product) => product.reaction_step_id === previous.id && product.carry_on
+    );
+  }
+
+  isCarryOnLocked(product) {
+    if (!product.carry_on) return false;
+    const liveSteps = this.reaction_steps.filter((step) => !step._destroy);
+    const index = liveSteps.findIndex((step) => step.id === product.reaction_step_id);
+    if (index < 0 || index === liveSteps.length - 1) return false;
+    return this.carriedProductsIntoStep(liveSteps[index + 1].id).length === 1;
+  }
+
+  prepareCarriedMove(material, targetGroup, targetStepId) {
+    const staysInStepProducts = targetGroup === 'products' && targetStepId === material.reaction_step_id;
+    if (!material.carry_on || staysInStepProducts) return true;
+    if (this.isCarryOnLocked(material)) return false;
+    material.carry_on = false;
+    return true;
+  }
+
+  canToggleStep(step) {
+    const steps = this.reaction_steps;
+    const index = steps.findIndex((entry) => entry.id === step.id);
+    if (index <= 0 || steps.slice(index + 1).some((entry) => !entry._destroy)) return false;
+    if (!step._destroy) return true;
+    const previous = steps[index - 1];
+    return !previous._destroy
+      && this.products.some((product) => product.reaction_step_id === previous.id && product.carry_on);
+  }
+
+  addStep(values = {}) {
+    const nextPosition = this.reaction_steps.length + 1;
+    const step = {
+      id: `new-${nextPosition}-${this.reaction_steps.length}`,
+      position: nextPosition,
+      ...values,
+    };
+    this.reaction_steps = [...this.reaction_steps, step];
+    return this.reaction_steps[this.reaction_steps.length - 1];
+  }
+
+  seedFirstStep() {
+    return this.addStep({
+      conditions: this.conditions,
+      duration: this.duration,
+      timestamp_start: this.timestamp_start,
+      timestamp_stop: this.timestamp_stop,
+      temperature: this.temperature ? { ...this.temperature } : this.temperature,
+      ph_operator: this.ph_operator,
+      ph_value: this.ph_value,
+      vessel_size: this.vessel_size ? { ...this.vessel_size } : this.vessel_size,
+      volume: this.volume,
+      lock_reaction_volume: this.lock_reaction_volume,
+      description: this.description ? JSON.parse(JSON.stringify(this.description)) : this.description,
+    });
+  }
+
+  enterMultiStep() {
+    if (this.reaction_steps.length === 0) {
+      this.seedFirstStep();
+      this._ownDescription = null;
+    } else {
+      this.restoreHiddenSteps();
+    }
+    const firstId = this.reaction_steps[0].id;
+    ['starting_materials', 'reactants', 'solvents', 'products'].forEach((group) => {
+      this[group].forEach((material) => {
+        if (material.reaction_step_id == null) material.reaction_step_id = firstId;
+      });
+    });
+    this.relinkCarriedProducts();
+    this.keepLaterStepReference();
+    this.recalculateStepEquivalents();
+    this.mirrorFirstStep();
+  }
+
+  // A step whose carried-in product was removed while Standard takes the first product of the step before.
+  relinkCarriedProducts() {
+    const steps = this.reaction_steps.filter((step) => !step._destroy);
+    steps.slice(1).forEach((step, index) => {
+      if (this.carriedProductsIntoStep(step.id).length) return;
+      const [product] = this.materialsForStep('products', steps[index].id);
+      if (product) product.carry_on = true;
+    });
+  }
+
+  recalculateStepEquivalents() {
+    if (this.weight_percentage) return;
+    [...this.starting_materials, ...this.reactants].forEach((material) => {
+      const reference = this.referenceFor(material);
+      if (reference && material !== reference && material.amount_mol && reference.amount_mol) {
+        material.equivalent = material.amount_mol / reference.amount_mol;
+      }
+    });
+    this.products.forEach((product) => {
+      const reference = this.referenceFor(product);
+      if (!reference?.amount_mol || product.gas_type === 'gas' || !Number.isFinite(product.amount_mol)) return;
+      const stoichiometryCoeff = (product.coefficient || 1.0) / (reference.coefficient || 1.0);
+      product.equivalent = product.amount_mol / reference.amount_mol / stoichiometryCoeff;
+    });
+  }
+
+  // A Ref picked on a later-step material while Standard becomes that step's Ref; step 1 needs its own.
+  keepLaterStepReference() {
+    const reference = this.allReactionMaterials.find((material) => material.reference);
+    const step = reference && this.stepOf(reference);
+    if (!this.isLaterStep(step)) return;
+    this.setStepReference(step, reference.id);
+    reference.reference = false;
+    const firstStepMaterial = [...this.starting_materials, ...this.reactants]
+      .find((material) => this.isFirstStepMaterial(material));
+    if (firstStepMaterial) firstStepMaterial.reference = true;
+  }
+
+  toggleCarryOn(sampleId) {
+    const product = this.products.find((material) => material.id === sampleId);
+    if (!product) return;
+    product.carry_on = !product.carry_on;
+    if (!product.carry_on) product.step_reference = false;
+  }
+
+  hasMultiStepData() {
+    return this.reaction_steps.length > 1 || this.products.some((product) => product.carry_on);
+  }
+
+  // Steps stay (hidden) so switching back restores them; only steps already marked for deletion go.
+  leaveMultiStep() {
+    const destroyedStepIds = new Set(
+      this.reaction_steps.filter((step) => step._destroy).map((step) => step.id)
+    );
+    this.mirrorFirstStep();
+    this.reaction_steps = this.reaction_steps.filter((step) => !step._destroy);
+    ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((group) => {
+      if (this[group]) {
+        this[group] = this[group].filter((material) => !destroyedStepIds.has(material.reaction_step_id));
+      }
+    });
+    const reference = this.referenceMaterial;
+    if (this.weight_percentage || !reference?.amount_mol) return;
+    [...this.starting_materials, ...this.reactants].forEach((material) => {
+      if (material !== reference && material.amount_mol) {
+        material.equivalent = material.amount_mol / reference.amount_mol;
+      }
+    });
+    this.products.forEach((product) => {
+      if (product.gas_type === 'gas' || !Number.isFinite(product.amount_mol)) return;
+      const stoichiometryCoeff = (product.coefficient || 1.0) / (reference.coefficient || 1.0);
+      product.equivalent = product.amount_mol / reference.amount_mol / stoichiometryCoeff;
+    });
   }
 
   get sampleCount() {
@@ -1010,13 +1487,18 @@ export default class Reaction extends Element {
     sample.show_label = isSbmm || (sample.decoupled && !sample.molfile) ? true : !sample.show_label;
   }
 
+  toggleSchemePart(part) {
+    const hidden = this.scheme_hidden_parts;
+    this.scheme_hidden_parts = hidden.includes(part) ? hidden.filter((p) => p !== part) : [...hidden, part];
+  }
+
   _setAsReferenceMaterial(sample) {
     sample.equivalent = 1;
     sample.reference = true;
   }
 
   _updateEquivalentForMaterial(sample) {
-    const referenceAmountMol = this.referenceMaterial.amount_mol;
+    const referenceAmountMol = this.referenceFor(sample)?.amount_mol;
     const sampleAmountMol = sample.amount_mol;
 
     if (Number.isFinite(referenceAmountMol) && referenceAmountMol > 0 && Number.isFinite(sampleAmountMol)) {
@@ -1089,6 +1571,9 @@ export default class Reaction extends Element {
           const existingMat = group[index];
           const mat = new Sample(material);
           mat.reference = existingMat.reference;
+          mat.reaction_step_id = existingMat.reaction_step_id;
+          mat.carry_on = existingMat.carry_on;
+          mat.step_reference = existingMat.step_reference;
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
@@ -1130,11 +1615,14 @@ export default class Reaction extends Element {
                 m.coefficient = refreshCoefficient.coefficient;
               }
             }
+            const ref = this.referenceFor(m);
+            const refAmountMol = ref?.amount_mol;
+            if (!refAmountMol) return m;
             if (g === '_products' && m.gas_type !== 'gas') {
-              const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
-              m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
+              const stoichiometryCoeff = (m.coefficient || 1.0) / (ref.coefficient || 1.0);
+              m.equivalent = amountMol / refAmountMol / stoichiometryCoeff;
             } else {
-              m.equivalent = amountMol / referenceAmountMol;
+              m.equivalent = amountMol / refAmountMol;
             }
             return m;
           });
@@ -1337,7 +1825,10 @@ export default class Reaction extends Element {
     if (startingMaterialsList.length == 0) { return; }
     const referenceSample = startingMaterialsList[0];
 
-    this.products.forEach((product) => product.calculateMaxAmount(referenceSample));
+    this.products.forEach((product) => {
+      const step = this.stepOf(product);
+      product.calculateMaxAmount(this.isLaterStep(step) ? this.stepReference(step) : referenceSample);
+    });
   }
 
   findReactionVesselSizeCatalystMaterialValues() {
@@ -1491,6 +1982,18 @@ export default class Reaction extends Element {
    * @returns {void}
    */
   updateAllConcentrations({ includeProducts = true } = {}) {
+    const liveSteps = this.isMultiStep() ? this.reaction_steps.filter((step) => !step._destroy) : [];
+    if (liveSteps.length) {
+      liveSteps.forEach((step) => {
+        const context = this.stepContext(step);
+        [
+          ...context.allReactionMaterials,
+          ...(includeProducts ? (context.products || []) : []),
+        ].forEach((material) => material.updateConcentrationFromSolvent(context));
+      });
+      return;
+    }
+
     const allMaterials = [
       ...this.allReactionMaterials,
       ...(includeProducts ? (this.products || []) : []),
@@ -1526,9 +2029,12 @@ export default class Reaction extends Element {
     if (amountMol <= 0) return null;
 
     const newVolume = amountMol / concentration;
-    this.volume = newVolume;
+    const step = this.stepOf(sample);
+    const target = step || this;
+    target.volume = newVolume;
     this.resetPreservedConcentrationExcept(sample);
     this.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+    if (step) this.mirrorFirstStep();
     this.updateAllConcentrations();
 
     return {
@@ -1581,9 +2087,11 @@ export default class Reaction extends Element {
   updateReferenceAmountForLockedEquivalents(referenceSample, updatedSample, lockEquivColumn) {
     if (!lockEquivColumn
       || !referenceSample
-      || !referenceSample.reference
+      || !this.isReference(referenceSample)
       || !updatedSample
-      || updatedSample.reference) {
+      || this.isReference(updatedSample)
+      || (this.isMultiStep() && this.referenceFor(updatedSample) !== referenceSample)
+      || this.products.includes(referenceSample)) {
       return;
     }
 

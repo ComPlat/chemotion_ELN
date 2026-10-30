@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Reactable module
-module Reactable
+module Reactable # rubocop:disable Metrics/ModuleLength
   extend ActiveSupport::Concern
 
   IDEAL_GAS_CONSTANT = 0.0821
@@ -26,7 +26,7 @@ module Reactable
     PER_HOUR: 'TON/h',
   }.freeze
 
-  def update_equivalent
+  def update_equivalent # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
        !reference && !weight_percentage_reference
       ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
@@ -36,12 +36,13 @@ module Reactable
 
     # The reference material must always keep Eq = 1.
     # Guard early to avoid transient recalculation paths during reaction save.
-    if reference && gas_type != 'gas'
+    step_ref = try(:step_reference_row)
+    if (step_ref ? step_ref == self : reference) && gas_type != 'gas'
       update!(equivalent: 1.0) unless (equivalent.to_f - 1.0).abs < 1e-6
       return
     end
 
-    ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
+    ref_record = step_ref || ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
 

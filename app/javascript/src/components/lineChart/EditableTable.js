@@ -1,210 +1,165 @@
-import React from 'react';
-import { Table } from 'react-bootstrap';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import {
+  Button, Form, InputGroup, Table
+} from 'react-bootstrap';
 
-import EditableCell from 'src/components/lineChart/EditableCell'
+const TIME_PATTERN = /^(\d+):([0-5]?\d)(?::([0-5]?\d))?$/;
+const VALUE_PATTERN = /^-?\d+(?:[.,]\d+)?$/;
 
-export default class EditableTable extends React.Component {
-  constructor(props) {
-    super(props)
+export const normalizeTime = (text) => {
+  const match = TIME_PATTERN.exec(String(text).trim());
+  if (!match) return null;
 
-    this.state = {
-      data: this.props.temperature.data,
-      newTime: "",
-      newTemperature: ""
+  const [, hours, minutes, seconds = '0'] = match;
+  return [hours, minutes, seconds].map((part) => part.padStart(2, '0')).join(':');
+};
+
+export const normalizeValue = (text) => {
+  const value = String(text).trim();
+  return VALUE_PATTERN.test(value) ? value.replace(',', '.') : null;
+};
+
+const toSeconds = (time) => String(time).split(':').reduce((sum, part) => (sum * 60) + Number(part), 0);
+
+export const sortByTime = (rows) => [...rows].sort((a, b) => toSeconds(a.time) - toSeconds(b.time));
+
+const NEW_ROW = { time: '00:00:00', value: '' };
+
+const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
+  const [draft, setDraft] = useState(NEW_ROW);
+  const rows = sortByTime(temperature.data);
+  const showSteps = otherStepRows.length > 0;
+  const entries = sortByTime([...rows.map((row, index) => ({ ...row, index, step: 1 })), ...otherStepRows]);
+  const draftTime = normalizeTime(draft.time);
+  const draftValue = normalizeValue(draft.value);
+
+  const commitCell = (index, field, normalize) => (event) => {
+    const normalized = normalize(event.target.value);
+    if (normalized === null || normalized === rows[index][field]) {
+      event.target.value = rows[index][field];
+      return;
     }
+    updateTemperature(sortByTime(rows.map((row, i) => (i === index ? { ...row, [field]: normalized } : row))));
+  };
 
-    this.onCellValueChange = this.onCellValueChange.bind(this)
-    this.removeRow = this.removeRow.bind(this)
-    this.addRow = this.addRow.bind(this)
+  const addRow = () => {
+    if (draftTime === null || draftValue === null) return;
+    updateTemperature(sortByTime([...rows, { time: draftTime, value: draftValue }]));
+    setDraft(NEW_ROW);
+  };
 
-    this.handleTimeOnchange = this.handleTimeOnchange.bind(this)
-    this.handleTemperatureOnchange = this.handleTemperatureOnchange.bind(this)
+  const units = { time: 'h:m:s', value: temperature.valueUnit };
+  const withUnit = (field, control) => (
+    <InputGroup size="sm">
+      {control}
+      <InputGroup.Text>{units[field]}</InputGroup.Text>
+    </InputGroup>
+  );
+  const cell = (row, field, normalize) => (row.index === undefined ? row[field] : withUnit(field, (
+    <Form.Control
+      key={`${field}-${row[field]}`}
+      defaultValue={row[field]}
+      aria-label={field}
+      onBlur={commitCell(row.index, field, normalize)}
+      onKeyDown={(event) => event.key === 'Enter' && event.target.blur()}
+    />
+  )));
 
-    this.handleNewTimeInput = this.handleNewTimeInput.bind(this)
-    this.handleNewTemperatureInput = this.handleNewTemperatureInput.bind(this)
-  }
-
-  componentDidUpdate(prevProps) {
-    const { temperature: { data } } = this.props;
-    if (data !== prevProps.temperature.data) {
-      data.sort((a, b) => (
-        Date.parse("01/01/2016 " + a.time) - Date.parse("01/01/2016 " + b.time)
-      ));
-
-      this.setState({ data });
-    }
-  }
-
-  handleTimeOnchange(oldVal, newVal) {
-    newVal = this.checkDefaultTime(newVal)
-    oldVal = this.checkDefaultTime(oldVal)
-
-    if (newVal.length > 8) {
-      newVal = newVal.substr(1)
-      newVal = newVal.replace(/:/g, "")
-      newVal = newVal.replace(/(\d)(?=(\d\d)+(?!\d))/g, "$1:")
-
-      return newVal
-    }
-
-    let timeRegex = /^(?:(?:(\d\d):)?([0-5]?\d):)?([0-5]?\d)$/g
-    let match = timeRegex.exec(newVal)
-
-    if (match != null) {
-      return (match[1] || "00") + ":" +
-        (match[2] || "00") + ":" +
-        (match[3] || "00")
-    } else {
-      return oldVal
-    }
-  }
-
-  handleTemperatureOnchange(oldVal, newVal) {
-    newVal = newVal.replace(/[^\d|-]/g, "")
-    return this.checkDefaultTemperature(newVal)
-  }
-
-  handleNewTimeInput(e) {
-    let newTime = e.target.value
-    newTime = this.handleTimeOnchange(this.state.newTime, newTime)
-    newTime = this.checkDefaultTime(newTime)
-
-    this.setState({ newTime: newTime })
-  }
-
-  handleNewTemperatureInput(e) {
-    let newTemperature = e.target.value
-    newTemperature = newTemperature.replace(/[^\d|-]/g, "")
-    newTemperature = this.checkDefaultTemperature(newTemperature)
-
-    this.setState({ newTemperature: newTemperature })
-  }
-
-  checkDefaultTime(time) {
-    if (typeof (time) == "undefined" || time == null ||
-      time == "")
-      return "00:00:00"
-    else
-      return time
-  }
-
-  checkDefaultTemperature(temperature) {
-    if (typeof (temperature) == "undefined" || temperature == null ||
-      temperature == "")
-      return "21"
-    else
-      return temperature
-  }
-
-  removeRow(uid) {
-    let { data } = this.state
-    let { updateTemperature } = this.props
-    if (uid > -1) {
-      data.splice(uid, 1)
-    }
-
-    this.setState({ data: data }, updateTemperature(data))
-  }
-
-  addRow() {
-    let { data } = this.state
-    let { updateTemperature } = this.props
-    let newTime = this.newTime.value
-    newTime = this.checkDefaultTime(newTime)
-    let newTemperature = this.newTemperature.value
-    newTemperature = this.checkDefaultTemperature(newTemperature)
-    let newData = { time: newTime, value: newTemperature }
-
-    data.push(newData)
-    this.setState({
-      data: data,
-      newTime: '',
-      newTemperature: ''
-    }, updateTemperature(data))
-  }
-
-  onCellValueChange(uid, type, newValue) {
-    let { data } = this.state
-    let { updateTemperature } = this.props
-
-    data[uid][type] = newValue
-
-    this.setState({ data: data }, updateTemperature(data))
-  }
-
-  render() {
-    let { data, newTime, newTemperature } = this.state
-    let { valueUnit } = this.props.temperature
-
-    var rows = []
-    for (let i = 0; i < data.length; i = i + 1) {
-      let row = (
-        <tr key={"rows_" + i}>
-          <td className="table-cell" key={"time_td_" + i}>
-            <EditableCell key={"time_cell_" + i} uid={i} type="time"
-              value={data[i].time} ref={"time_cell_" + i}
-              onCellValueChange={(uid, type, newValue) => this.onCellValueChange(uid, type, newValue)}
-              inputOnChange={(oldVal, newVal) => this.handleTimeOnchange(oldVal, newVal)} />
-          </td>
-          <td className="table-cell" key={"value_td_" + i}>
-            <div>
-              <div style={{ width: "65%", float: "left" }}>
-                <EditableCell key={"value_cell_" + i} uid={i} type="value"
-                  value={data[i].value} ref={"value_cell_" + i}
-                  onCellValueChange={(uid, type, newValue) => this.onCellValueChange(uid, type, newValue)}
-                  inputOnChange={(oldVal, newVal) => this.handleTemperatureOnchange(oldVal, newVal)} />
-              </div>
-              <i className="fa fa-minus clickable-icon" aria-hidden="true"
-                onClick={() => this.removeRow(i)} />
-            </div>
-          </td>
-        </tr>
-      )
-      rows.push(row)
-    }
-
-    return (
-      <Table responsive className="editable-table">
+  return (
+    <div className="overflow-y-auto" style={{ maxHeight: 280 }}>
+      <Table size="sm" className="mb-0">
         <thead>
           <tr>
-            <th> Time (hh:mm:ss) </th>
-            <th> Temperature ({valueUnit}) </th>
+            {showSteps && <th>Step</th>}
+            <th>Time (hh:mm:ss)</th>
+            <th>{`Temperature (${temperature.valueUnit})`}</th>
+            <th aria-label="actions" />
           </tr>
         </thead>
         <tbody>
-          {rows}
-          <tr>
-            <td className="table-cell">
-              <input
-                ref={(n) => { this.newTime = n; }}
-                value={newTime}
-                onChange={this.handleNewTimeInput}
-              />
+          {entries.map((row, position) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <tr key={position}>
+              {showSteps && <td>{row.step}</td>}
+              <td>{cell(row, 'time', normalizeTime)}</td>
+              <td>{cell(row, 'value', normalizeValue)}</td>
+              <td>
+                {row.index !== undefined && (
+                  <Button
+                    size="sm"
+                    variant="light"
+                    aria-label="Remove row"
+                    onClick={() => updateTemperature(rows.filter((_, i) => i !== row.index))}
+                  >
+                    <i className="fa fa-minus" />
+                  </Button>
+                )}
+              </td>
+            </tr>
+          ))}
+          <tr className="table-light">
+            {showSteps && <td>1</td>}
+            <td>
+              {withUnit('time', (
+                <Form.Control
+                  placeholder="New time"
+                  aria-label="New time"
+                  value={draft.time}
+                  isInvalid={draft.time !== '' && draftTime === null}
+                  onChange={(event) => setDraft({ ...draft, time: event.target.value })}
+                  onKeyDown={(event) => event.key === 'Enter' && addRow()}
+                />
+              ))}
             </td>
-            <td className="table-cell">
-              <div>
-                <input
-                  ref={(m) => { this.newTemperature = m; }}
-                  style={{ width: '65%' }}
-                  value={newTemperature}
-                  onChange={this.handleNewTemperatureInput}
+            <td>
+              {withUnit('value', (
+                <Form.Control
+                  placeholder="New temperature"
+                  aria-label="New temperature"
+                  value={draft.value}
+                  isInvalid={draft.value !== '' && draftValue === null}
+                  onChange={(event) => setDraft({ ...draft, value: event.target.value })}
+                  onKeyDown={(event) => event.key === 'Enter' && addRow()}
                 />
-                <i
-                  className="fa fa-plus clickable-icon"
-                  aria-hidden="true"
-                  onClick={this.addRow}
-                />
-              </div>
+              ))}
+            </td>
+            <td>
+              <Button
+                size="sm"
+                variant="success"
+                aria-label="Add row"
+                disabled={draftTime === null || draftValue === null}
+                onClick={addRow}
+              >
+                <i className="fa fa-plus" />
+              </Button>
             </td>
           </tr>
         </tbody>
       </Table>
-    );
-  }
-}
+    </div>
+  );
+};
 
-// EditableTable.propTypes = {
-//   onChangeHandler: PropTypes.func.isRequired,
-//   onCellValueChange: PropTypes.func.isRequired,
-//   onKeyDown: PropTypes.func.isRequired
-// }
+EditableTable.propTypes = {
+  temperature: PropTypes.shape({
+    valueUnit: PropTypes.string,
+    data: PropTypes.arrayOf(PropTypes.shape({
+      time: PropTypes.string,
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })),
+  }).isRequired,
+  updateTemperature: PropTypes.func.isRequired,
+  otherStepRows: PropTypes.arrayOf(PropTypes.shape({
+    step: PropTypes.number,
+    time: PropTypes.string,
+    value: PropTypes.string,
+  })),
+};
+
+EditableTable.defaultProps = {
+  otherStepRows: [],
+};
+
+export default EditableTable;

@@ -13,6 +13,14 @@ const onlyBlank = (target) => {
   return !content;
 };
 
+const intermediateLabel = (product, reaction) => (
+  reaction?.isMultiStep?.() && product.carry_on ? ' (intermediate)' : ''
+);
+
+const paragraphPerStep = (ops) => ops.flatMap((op, index) => (
+  index > 0 && op.attributes?.bold && /^Step \d+: $/.test(op.insert) ? [{ insert: '\n' }, op] : [op]
+));
+
 const deltaUserSerial = (molecule, molSerials) => {
   const insert = UserSerial(molecule, molSerials);
   return { insert, attributes: { bold: 'true' } };
@@ -26,7 +34,7 @@ const Title = ({ el, counter, molSerials }) => {
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = p.showedName();
     title = smn
-      ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
+      ? [...title, <span key={key}>{smn}{intermediateLabel(p, el)} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
   title = title.slice(0, -1);
@@ -75,7 +83,7 @@ const prdIdentifier = (counter, mol, molSerials) => (
   ]
 );
 
-const productContent = (products, settings, molSerials) => {
+const productContent = (products, settings, molSerials, reaction) => {
   let content = [];
   let counter = 0;
 
@@ -90,7 +98,7 @@ const productContent = (products, settings, molSerials) => {
       ...prdIdentifier(counter, m, molSerials),
       { insert: ': ' },
       deltaSampleMoleculeName(p),
-      { insert: '; ' },
+      { insert: `${intermediateLabel(p, reaction)}; ` },
     ] : [];
 
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
@@ -121,11 +129,13 @@ const productContent = (products, settings, molSerials) => {
   return content;
 };
 
-const ProductsInfo = ({ products = [], settings, molSerials }) => {
+const ProductsInfo = ({
+  products = [], settings, molSerials, reaction
+}) => {
   const disableAll = isDisableAll(settings);
   if (disableAll) return null;
 
-  const content = productContent(products, settings, molSerials);
+  const content = productContent(products, settings, molSerials, reaction);
   return <QuillViewer value={{ ops: content }} />;
 };
 
@@ -291,7 +301,7 @@ const DangerBlock = ({ el }) => {
 
 const descContent = (el) => {
   if (['gp', 'parts'].indexOf(el.role) >= 0) return [];
-  let block = rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []);
+  let block = paragraphPerStep(rmOpsRedundantSpaceBreak(Array.isArray(el.description?.ops) ? el.description.ops : []));
   block = [{ insert: '\n' }, ...block, { insert: '\n' }];
   return block;
 };
@@ -361,6 +371,7 @@ const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
     />
     <ProductsInfo
       products={el.products}
+      reaction={el}
       settings={settings}
       molSerials={molSerials}
     />
@@ -400,3 +411,4 @@ const SectionSiSynthesis = ({
 };
 
 export default SectionSiSynthesis;
+export { intermediateLabel, paragraphPerStep };
