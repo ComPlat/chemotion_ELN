@@ -48,12 +48,18 @@ module Chemotion
             optional :molarity_value, type: Float, desc: 'Molarity value'
             optional :starting_molarity_value, type: Float, desc: 'Starting molarity value'
             optional :starting_molarity_unit, type: String, desc: 'Starting molarity unit'
-            requires :molecule_id, type: Integer, desc: 'Molecule ID'
+            optional :molecule_id, type: Integer, desc: 'Molecule ID'
             optional :equivalent, types: [Float, String], desc: 'Equivalent'
             optional :parent_id, type: Integer, desc: 'Parent ID'
             optional :material_group, type: String, desc: 'type of component e.g. liquid'
             optional :reference, type: Boolean, desc: 'reference comp. for ratio calculations'
             optional :purity, type: Float, desc: 'Component purity'
+
+            # params Hierarchical Material
+            optional :template_category, type: String, desc: 'template for Hierarchical Material e.g basic, semantic'
+            optional :source, type: String, desc: 'source(textNode label) for Hierarchical Material'
+            optional :molar_mass, type: Float, desc: 'Molar mass value for Hierarchical Material'
+            optional :weight_ratio_exp, type: Float, desc: 'Weight ratio exp. for Hierarchical Material'
           end
         end
       end

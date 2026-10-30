@@ -8,6 +8,7 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 module Import
   class ImportSamples
     attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
+                :composition_table_data,
                 :mandatory_check, :mandatory_component_check, :rows,
                 :unprocessable, :processed, :collection_id, :current_user_id, :file_name
 
@@ -87,6 +88,7 @@ module Import
 
       @sample_with_components = []
       @sample_components_data = {}
+      @composition_table_data = {}
     end
 
     def process
@@ -107,7 +109,8 @@ module Import
         # Separated from the header checks above: a failure while parsing the components sheet or
         # selecting the active sheet is not a missing-header problem and should not be reported as such.
         parse_sample_components_data
-        xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
+        parse_composition_table_data
+        xlsx.default_sheet = @main_sheet_name
       rescue StandardError => e
         return error_prepare(e.message)
       end
@@ -177,10 +180,16 @@ module Import
       return unless component_sheet_exists?
 
       @mandatory_component_check = {}
-      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles'].each do |check|
+      ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles'].each do |check|
         @mandatory_component_check[check] = true if component_header.any? { |e| header_matches?(e, check) }
       end
-      raise 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)' if @mandatory_component_check.empty?
+      return unless @mandatory_component_check.empty?
+      return if component_sheet_has_only_sample_identity_columns?
+
+      raise(
+        'Column headers in components sheet should have: molfile, or Smiles ' \
+        '(or cano_smiles, canonical_smiles, canonical smiles)',
+      )
     end
 
     def row_to_hash(row)
@@ -214,6 +223,57 @@ module Import
         @unreadable_component_rows << row_index
       end
     end
+
+    def component_sheet_has_only_sample_identity_columns?
+      normalized_headers = component_header.map { |h| h.to_s.strip.downcase }
+      identity_headers = ['sample name', 'sample external label', 'sample uuid']
+      return false unless (normalized_headers - identity_headers).empty?
+
+      # If there are no extra columns beyond sample identity, treat this sheet as informational only.
+      true
+    end
+
+    # Parses the sample_composition_table sheet (when present) into @composition_table_data.
+    # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
+    # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def parse_composition_table_data
+      return unless xlsx.sheets.include?('sample_composition_table')
+
+      comp_sheet = xlsx.sheet('sample_composition_table')
+      headers = comp_sheet.row(1).map { |h| h.to_s.strip }
+      sample_uuid_idx = headers.index { |h| h.to_s.downcase == 'sample uuid' }
+      source_idx       = headers.index { |h| h.to_s.downcase == 'source' }
+      weight_ratio_idx = headers.index { |h| h.to_s.downcase.include?('weight ratio exp') }
+      molar_mass_idx   = headers.index { |h| h.to_s.downcase.include?('molar mass') }
+
+      return if sample_uuid_idx.nil? || source_idx.nil?
+
+      current_sample_uuid = nil
+      (2..comp_sheet.last_row).each do |row_index|
+        row_values = comp_sheet.row(row_index)
+        row_values.fill(nil, row_values.length...headers.length) if row_values.length < headers.length
+        uuid_cell = row_values[sample_uuid_idx].to_s.strip
+
+        current_sample_uuid = uuid_cell if uuid_cell.present?
+        next if current_sample_uuid.blank?
+
+        source_val = source_idx ? row_values[source_idx].to_s.strip : nil
+        weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
+                             row_values[weight_ratio_idx].to_s.to_f
+                           end
+        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?)
+        next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
+
+        @composition_table_data[current_sample_uuid] ||= []
+        @composition_table_data[current_sample_uuid] << {
+          source: source_val.presence,
+          weight_ratio_exp: weight_ratio_val,
+          molar_mass: molar_mass_val,
+        }
+      end
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Returns the sample uuid in effect after this row
     def parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
@@ -270,8 +330,6 @@ module Import
         end
       elsif smiles?(row)
         get_data_from_smiles(row, index)
-      else
-        nil
       end
     end
 
@@ -437,7 +495,7 @@ module Import
       molecule
     end
 
-    def molecule_not_exist(molecule, row, index)
+    def molecule_not_exist?(molecule, row, index)
       @unprocessable << { row: row, index: index } if molecule.nil?
       molecule.nil?
     end
@@ -504,7 +562,7 @@ module Import
         release_connection_for_native_work
         molecule, molfile = process_row_data(row, index)
         ActiveRecord::Base.transaction(requires_new: true) do
-          unless molecule_not_exist(molecule, row, index)
+          unless molecule_not_exist?(molecule, row, index)
             sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
             saved = true
           end
@@ -805,13 +863,12 @@ module Import
 
     def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
-
       smiles = (check['smiles'] && row_value_case_insensitive(row, 'smiles').presence) ||
                (check['cano_smiles'] && row_value_case_insensitive(row, 'cano_smiles').presence) ||
                (check['canonical_smiles'] && row_value_case_insensitive(row, 'canonical_smiles').presence) ||
                (check['canonical smiles'] && row_value_case_insensitive(row, 'canonical smiles').presence)
       smiles = sanitize_smiles_for_ob(smiles)
-      return nil if smiles.blank?
+      return if smiles.blank?
 
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey(smiles)
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile(smiles)
@@ -825,6 +882,57 @@ module Import
       return nil if inchikey.blank?
 
       assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
+    end
+
+    # Remove control chars and BOM so Open Babel accepts the SMILES string (e.g. from Excel).
+    def sanitize_smiles_for_ob(smiles)
+      return nil if smiles.nil?
+
+      s = smiles.to_s.encode('UTF-8', invalid: :replace, undef: :replace)
+      s = s.gsub(/\p{C}+/, ' ').strip
+      s.presence
+    end
+
+    # Keep only the CTAB (up to and including M  END). Strip SDF blocks (e.g. > <PolymersList>,
+    # > <TextNode>) that can cause molecule_info_from_molfile to return blank inchikey.
+    def sanitize_molfile_for_import(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s.force_encoding('UTF-8')
+      lines = molfile.lines
+      m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
+      if m_end_index
+        lines[0..m_end_index].join.rstrip
+      elsif (idx = molfile.index(/\sM\s+END\s/i))
+        # Single-line molfile: cut at M  END (include it)
+        end_marker = molfile.match(/\sM\s+END\s/i)[0]
+        molfile[0..(idx + end_marker.length - 1)].rstrip
+      else
+        molfile
+      end
+    end
+
+    # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200
+    # (octal UTF-8 byte sequences). Convert them back to the actual UTF-8 characters.
+    def unescape_textnode_octal_in_molfile(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s
+      return molfile unless molfile.include?('> <TextNode>')
+
+      # Match the entire TextNode block (works for both multi-line and single-line molfiles)
+      molfile.gsub(%r{> <TextNode>\s*([\s\S]*?)\s*> </TextNode>}i) do
+        content = Regexp.last_match(1)
+
+        # Collect consecutive octal escapes (e.g. \342\210\200) into one UTF-8 character.
+        # Integer#chr only works for 0-127 in ASCII; pack('C*') handles bytes > 127 correctly.
+        converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
+          bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }
+          bytes.pack('C*').force_encoding('UTF-8')
+        end
+
+        "> <TextNode>\n#{converted}\n> </TextNode>"
+      end
     end
 
     def included_fields
@@ -880,8 +988,14 @@ module Import
 
     def handle_sample_fields(sample, db_column, value)
       case db_column
-      when 'cas', 'refractive_index', 'form', 'color', 'solubility', 'inventory_label'
+      when 'cas', 'refractive_index', 'form', 'solubility', 'inventory_label'
         handle_xref_fields(sample, db_column, value)
+      when 'color'
+        sample['xref']['color'] = value if value.present?
+      when 'state'
+        sample['xref']['physical_state'] = value if value.present?
+      when 'particle_size'
+        sample['xref']['particle_size'] = value if value.present?
       when 'mn.name'
         assign_molecule_name_id(sample, value)
       when 'flash_point'
@@ -925,7 +1039,16 @@ module Import
     end
 
     def handle_default_fields(sample, db_column, value)
-      sample[db_column] = value || ''
+      if sample.has_attribute?(db_column)
+        sample[db_column] = value || ''
+      elsif %w[
+        height width length diameter state storage_condition material cspi
+        particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+      ].include?(db_column)
+        # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
+        sample.sample_details ||= {}
+        sample.sample_details[db_column] = value || ''
+      end
     end
 
     def process_fields(sample, map_column, field, row, molecule)
@@ -1081,10 +1204,25 @@ module Import
       sample.inventory_sample = true if @import_type == 'chemical'
       chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
       sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE if sample_has_components?(row)
+      # Set Hierarchical sample type from row so height/width/length/state/color/storage_condition apply
+      sample_type_val = row_value_case_insensitive(row, 'sample type').to_s.strip
+      if sample_type_val.present? &&
+         (sample_type_val.casecmp('hierarchicalmaterial').zero? || sample_type_val.casecmp('hierarchical').zero?)
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+      end
+      %w[height width length diameter particle_size sieve_fraction cspi layer_thickness].each do |field|
+        unit_val = row_value_case_insensitive(row, "#{field} unit").to_s.strip
+        unit_val = row_value_case_insensitive(row, "#{field}_unit").to_s.strip if unit_val.blank?
+        next if unit_val.blank?
+
+        sample.sample_details ||= {}
+        sample.sample_details["#{field}_unit"] = unit_val
+      end
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
       create_polymer_residue_if_needed(sample, row)
+      apply_composition_table_data(sample, row)
       processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
                      row: sheet_row(index))
     end
@@ -1144,6 +1282,48 @@ module Import
     # handle_sample_components), which already has @defer_pubchem_lookup set — a
     # component's molecule creation is deferred the same way as the outer
     # row's, and both flush together via #write_to_db's own Molecule.schedule_pubchem_lookup_since.
+
+    # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
+    # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def apply_composition_table_data(sample, sample_row)
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
+      return if sample_uuid.blank?
+
+      composition_rows = @composition_table_data.with_indifferent_access[sample_uuid]
+      return if composition_rows.blank?
+
+      if sample.sample_type != Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL &&
+         sample.sample_type != Sample::SAMPLE_TYPE_MIXTURE
+        sample.update!(sample_type: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      dummy_molecule = Molecule.find_or_create_dummy
+      return if dummy_molecule.blank?
+
+      hm_components = sample.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).order(:position).to_a
+      composition_rows.each_with_index do |row_data, idx|
+        props = {
+          'molecule_id' => dummy_molecule.id,
+          'source' => row_data[:source].to_s.presence,
+          'weight_ratio_exp' => row_data[:weight_ratio_exp],
+          'molar_mass' => row_data[:molar_mass],
+        }.compact
+        if hm_components[idx]
+          hm_components[idx].update!(component_properties: hm_components[idx].component_properties.merge(props))
+        else
+          sample.components.create!(
+            name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
+            position: idx,
+            component_properties: props,
+          )
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.error("apply_composition_table_data failed for sample: #{e.message}")
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
     def create_components(sample, sample_components_data)
       xlsx.default_sheet = 'sample_components'
 
@@ -1153,7 +1333,7 @@ module Import
       ActiveRecord::Base.transaction(requires_new: true) do
         sample_components_data.each_with_index do |component_data, index|
           molecule = process_component_row_data(component_data, index)
-          next if molecule_not_exist(molecule, component_data, index)
+          next if molecule_not_exist?(molecule, component_data, index)
 
           ImportComponents.component_save(component_data, sample, molecule, index)
         end
@@ -1263,6 +1443,21 @@ module Import
         id created_at updated_at molecule_id molfile impurities ancestry created_by
         short_label deleted_at sample_svg_file user_id identifier fingerprint_id molecule_name_id
       ]
+    end
+
+    # Explicitly map header names to database columns for new hierarchical properties
+    # This ensures they're recognized even if the header casing/spacing varies
+    def get_db_column_for_field(field_name)
+      field_normalized = field_name.to_s.strip.downcase.gsub(/\s+/, '_')
+      hierarchical_map = {
+        'height' => 'height', 'width' => 'width', 'length' => 'length', 'diameter' => 'diameter',
+        'state' => 'state', 'storage_condition' => 'storage_condition',
+        'material' => 'material', 'cspi' => 'cspi', 'particle_size' => 'particle_size',
+        'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction',
+        'layer_thickness' => 'layer_thickness', 'liquid_medium' => 'liquid_medium',
+        'stabilizer' => 'stabilizer'
+      }
+      hierarchical_map[field_normalized]
     end
 
     def error_process_file(error)

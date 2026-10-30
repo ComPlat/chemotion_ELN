@@ -21,6 +21,7 @@ import {
   imagesList,
   textList,
   allAtoms,
+  allTemplates,
   deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
@@ -154,12 +155,11 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     }
 
     if (useIndexedFormat && !hasCollision && Object.keys(polymerByAtomIndex).length > 0) {
-      // imageSeqCounter is the alias third-part index (0-based sequence of images collected).
-      // It must NOT be the KET atom index — placeImageOnAtoms uses it to index into imagesList.
-      let imageSeqCounter = 0;
-      // globalAtomIndex mirrors the save-side globalAtomOffset so polymerByAtomIndex
-      // (keyed by global index) resolves correctly across multiple molecules.
+      // PolymersList index (first segment) is the GLOBAL ATOM INDEX — the position of the atom
+      // across all mols flattened in mol order. This matches what templateAliasesPrepare stores.
+      // Example: mol0 has 6 C atoms + 1 R# at global index 6 → entry "6/95/1.00-1.00".
       let globalAtomIndex = 0;
+      let localImageIndex = 0;
       for (const molName of mols) {
         const molecule = data[molName];
         if (!molecule?.atoms) continue;
@@ -172,18 +172,24 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
             || atom.label === 'R'
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
-          const entry = polymerByAtomIndex[globalAtomIndex + localIndex];
-          if (entry && aliasPass) {
-            const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
-            data[molName].atoms[localIndex] = updateAtom(atom.location, templateType, imageSeqCounter);
-            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-            if (newTemplate) collectedImages.push(newTemplate);
-            imageSeqCounter++;
+          if (aliasPass) {
+            const entry = polymerByAtomIndex[globalAtomIndex];
+            if (entry) {
+              const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
+              data[molName].atoms[localIndex] = updateAtom(
+                atom.location,
+                templateType,
+                localImageIndex
+              );
+              const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+              if (newTemplate) collectedImages.push(newTemplate);
+              localImageIndex += 1;
+            }
           }
+          globalAtomIndex += 1;
         }
-        globalAtomIndex += molecule.atoms.length;
       }
-      imageUsedCounterSetter(imageSeqCounter > 0 ? imageSeqCounter - 1 : 0);
+      imageUsedCounterSetter(localImageIndex > 0 ? localImageIndex - 1 : 0);
     } else {
       // Legacy: assign in consumption order (no atom index in polymer entries)
       let visitedAtoms = 0;

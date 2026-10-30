@@ -684,7 +684,6 @@ module Chemotion
         g.remove if g['id'] == glyph_id
       end
     end
-
     def self.log_text_elements_snippet(svg)
       # No-op: previously logged SVG text elements for debugging.
     end

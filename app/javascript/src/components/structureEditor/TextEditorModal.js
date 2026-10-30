@@ -7,44 +7,9 @@ import {
 import AppModal from 'src/components/common/AppModal';
 import QuillEditor from 'src/components/QuillEditor';
 import Delta from 'quill-delta';
+import { markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
+import { draftContentToDelta, isDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 
-// Convert a Draft.js content object to a Quill Delta preserving bold/italic/underline.
-const draftToQuillDelta = (draftContent) => {
-  const block = draftContent?.blocks?.[0];
-  if (!block?.text) return new Delta();
-  const { text, inlineStyleRanges = [] } = block;
-  const charAttrs = Array.from({ length: text.length }, () => ({}));
-  for (const range of inlineStyleRanges) {
-    let attr;
-    if (range.style === 'BOLD') attr = 'bold';
-    else if (range.style === 'ITALIC') attr = 'italic';
-    else if (range.style === 'UNDERLINE') attr = 'underline';
-    else continue;
-    for (let i = range.offset; i < Math.min(range.offset + range.length, text.length); i++) {
-      charAttrs[i][attr] = true;
-    }
-  }
-  const ops = [];
-  let i = 0;
-  while (i < text.length) {
-    const key = JSON.stringify(charAttrs[i]);
-    let j = i + 1;
-    while (j < text.length && JSON.stringify(charAttrs[j]) === key) j += 1;
-    const op = { insert: text.slice(i, j) };
-    if (Object.keys(charAttrs[i]).length > 0) op.attributes = { ...charAttrs[i] };
-    ops.push(op);
-    i = j;
-  }
-  return new Delta(ops);
-};
-
-const parseDraftFromInitialText = (initialText) => {
-  try {
-    const parsed = JSON.parse(initialText);
-    if (parsed?.blocks) return parsed;
-  } catch { /* not JSON */ }
-  return null;
-};
 
 function TextEditorModal({
   loading = false,
@@ -54,26 +19,29 @@ function TextEditorModal({
   initialValue = null,
   initialText = null
 }) {
+  const toDelta = (value) => {
+    if (value == null || value === '') return new Delta();
+    if (isDraftContent(value)) return draftContentToDelta(value);
+    try {
+      return markdownToDelta(value);
+    } catch {
+      return new Delta().insert(typeof value === 'string' ? value : String(value));
+    }
+  };
+
+  // Convert initial text / Draft content / markdown to Delta if provided
   const getInitialDelta = () => {
     if (initialValue) return initialValue;
-    if (initialText) {
-      const draft = parseDraftFromInitialText(initialText);
-      if (draft) return draftToQuillDelta(draft);
-      return new Delta().insert(initialText);
-    }
+    if (initialText != null) return toDelta(initialText);
     return new Delta();
   };
 
   const [editorValue, setEditorValue] = useState(getInitialDelta());
 
   React.useEffect(() => {
-    if (!loading) return;
-    if (initialValue) {
-      setEditorValue(initialValue);
-    } else if (initialText !== null) {
-      const draft = parseDraftFromInitialText(initialText);
-      setEditorValue(draft ? draftToQuillDelta(draft) : new Delta().insert(initialText));
-    } else {
+    if (loading && initialText !== null) {
+      setEditorValue(toDelta(initialText));
+    } else if (loading && !initialText) {
       setEditorValue(new Delta());
     }
   }, [loading, initialText, initialValue]);
@@ -125,7 +93,13 @@ TextEditorModal.propTypes = {
   onCloseClick: PropTypes.func,
   onApply: PropTypes.func,
   initialValue: PropTypes.shape({}),
-  initialText: PropTypes.string
+  initialText: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      blocks: PropTypes.arrayOf(PropTypes.shape({})),
+      entityMap: PropTypes.shape({})
+    })
+  ])
 };
 
 TextEditorModal.defaultProps = {
