@@ -111,6 +111,8 @@ module Chemotion
         error!('403 Forbidden', 403)
       rescue Usecases::Attachments::Copy::InvalidInput => e
         error!(e.message, 400)
+      rescue Usecases::Attachments::Copy::QuotaExceeded => e
+        error!(e.message, 422)
       rescue Usecases::Attachments::Copy::Error
         error!('Unable to copy attachment files', 422)
       end
