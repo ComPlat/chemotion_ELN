@@ -448,6 +448,7 @@ module Import
           'concentration_mode',
           'volume',
           'reaction_type',
+          'scheme_hidden_parts',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

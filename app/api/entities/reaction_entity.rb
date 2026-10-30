@@ -61,6 +61,7 @@ module Entities
       expose! :lock_reaction_volume,  anonymize_with: false
       expose! :concentration_mode,    anonymize_with: -> { Reaction.column_defaults['concentration_mode'] }
       expose! :gaseous,               anonymize_with: false
+      expose! :scheme_hidden_parts,   anonymize_with: []
       expose! :weight_percentage,     anonymize_with: false
     end
     # rubocop:enable Metrics/BlockLength
