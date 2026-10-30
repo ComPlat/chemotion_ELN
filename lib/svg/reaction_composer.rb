@@ -240,23 +240,31 @@ module SVG
     end
 
     def init_parameters(options)
-      hidden_keys = Array(options[:hide]).flat_map { |part| HIDDEN_PART_KEYS[part.to_s] }.compact
-      options = options.except(*hidden_keys).merge(steps: options[:steps].to_a.map { |step| step.except(*hidden_keys) })
+      options = without_hidden_parts(options)
       @is_report = options[:is_report]
       @solvents = (options[:solvents] || []).select(&:present?)
       @temperature = options[:temperature]
       @duration = options[:duration]
       # Use scrub_xml instead of scrub_svg for plain text conditions
       @conditions = options[:conditions] if options[:conditions].present?
-      @steps = options[:steps].to_a
-      @numbered = options[:numbered_steps] && @steps.present?
-      apply_numbered_steps if @numbered
+      init_steps(options)
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
       @box_height = 440
       @rails_path = options[:rails_path].nil? ? true : options[:rails_path]
       @core_only = options[:core_only].nil? ? false : options[:core_only]
+    end
+
+    def without_hidden_parts(options)
+      hidden_keys = Array(options[:hide]).flat_map { |part| HIDDEN_PART_KEYS[part.to_s] }.compact
+      options.except(*hidden_keys).merge(steps: options[:steps].to_a.map { |step| step.except(*hidden_keys) })
+    end
+
+    def init_steps(options)
+      @steps = options[:steps].to_a
+      @numbered = options[:numbered_steps] && @steps.present?
+      apply_numbered_steps if @numbered
     end
 
     def init_word_size
@@ -403,8 +411,7 @@ module SVG
     end
 
     def conditions_it
-      y_init = first_line_y + line_gap
-      y_init += actual_solvents_lines.size.ceil * (line_gap + 1) if solvents.present?
+      y_init = conditions_start_y
       return nil if conditions.blank?
 
       s_conditions = conditions.split("\n") || []
@@ -457,6 +464,11 @@ module SVG
         max < vb[3] && (max = vb[3])
       end
       max
+    end
+
+    def conditions_start_y
+      y_init = first_line_y + line_gap
+      solvents.present? ? y_init + (actual_solvents_lines.size.ceil * (line_gap + 1)) : y_init
     end
 
     # assign height scale for condition lines
@@ -593,7 +605,18 @@ module SVG
       output
     end
 
-    def compose_material_group(material_group, **options)
+    def step_label_or_divider(path, ind, group_width, y_center, label_before)
+      number = Array(path).first.to_s[%r{\Astep_label/(\d+)\z}, 1]
+      if number
+        x_pos = ind.positive? ? group_width + 60 : group_width
+        return [step_label_it(number, x_pos, y_center), x_pos + 50, true]
+      end
+      return ['', group_width, false] unless ind.positive? && !label_before
+
+      [divide_it(group_width + 50, y_center), group_width + 130, false]
+    end
+
+    def compose_material_group(material_group, **options) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       gvba = global_view_box_array
       w0 = gvba[2]
       x_shift = options[:start_at] || 0
@@ -604,20 +627,10 @@ module SVG
       group_width = 0
       label_before = false
       material_group.map.with_index do |m, ind|
-        number = Array(m).first.to_s[%r{\Astep_label/(\d+)\z}, 1]
-        if number
-          group_width += 60 if ind.positive?
-          output += step_label_it(number, group_width, y_center)
-          group_width += 50
-          label_before = true
-          next
-        end
-        if ind.positive? && !label_before
-          group_width += 50
-          output += divide_it(group_width, y_center)
-          group_width += 80
-        end
-        label_before = false
+        separator, group_width, label_before = step_label_or_divider(m, ind, group_width, y_center, label_before)
+        output += separator
+        next if label_before
+
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
         vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
