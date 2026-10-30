@@ -441,7 +441,6 @@ module Export
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
     def render_composition_sample_rows(sheet, sample, light_grey)
       return if withhold_shared_sample?(sample)
-
       sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
       components = begin
         JSON.parse(sample['components'] || '[]')
@@ -554,7 +553,9 @@ module Export
                                   else
                                     '-'
                                   end
-        weight_ratio_calc_mm_col9 = (row[:weight_ratio_exp] / row[:molar_mass]).round(3) if row[:molar_mass].positive?
+        weight_ratio_calc_mm_col9 = if row[:molar_mass].positive?
+                                       (row[:weight_ratio_exp] / row[:molar_mass]).round(3)
+                                     end
 
         row.merge(
           molar_ratio_calc_mm: row[:molar_ratio_calc_mm].round(3),

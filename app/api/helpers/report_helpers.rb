@@ -990,7 +990,7 @@ module ReportHelpers
         cspi_unit: ["s.sample_details->>'cspi_unit'", '"cspi unit"', 0],
         particle_size: [
           "s.xref->>'particle_size'",
-          '"particle size"', 0
+          '"particle size"', 0,
         ],
         particle_size_unit: ["s.sample_details->>'particle_size_unit'", '"particle size unit"', 0],
         shape: ["COALESCE(s.shape, s.sample_details->>'shape', s.xref->>'shape')", '"shape"', 0],

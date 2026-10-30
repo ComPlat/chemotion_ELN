@@ -503,6 +503,8 @@ class Sample < ApplicationRecord
     reactions.first.try(:description)
   end
 
+
+
   def set_residue_polymer_type_for_hierarchical_material
     return unless new_record?
     return unless sample_type.to_s == SAMPLE_TYPE_HIERARCHICAL_MATERIAL

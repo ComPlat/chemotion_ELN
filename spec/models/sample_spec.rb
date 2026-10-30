@@ -886,6 +886,8 @@ RSpec.describe Sample do
       end
     end
 
+
+
     describe '#valid_molecular_weight?' do
       it 'returns true for valid molecular weight' do
         result = sample.send(:valid_molecular_weight?)

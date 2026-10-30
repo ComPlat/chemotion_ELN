@@ -254,7 +254,7 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
   end
 
   describe '.clean_molfile_for_inchikey' do
-    it 'strips PolymersList and TextNode and keeps only CTAB for 3 R# with bonds' do
+    it 'strips PolymersList and TextNode and keeps only CTAB for 3 R# with bonds' do # rubocop:disable RSpec/MultipleExpectations
       cleaned = described_class.clean_molfile_for_inchikey(molfile_three_r_with_bonds)
       expect(cleaned).not_to include('> <PolymersList>')
       expect(cleaned).not_to include('> <TextNode>')
@@ -270,7 +270,7 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       expect(cleaned).to include('M  END')
     end
 
-    it 'strips PolymersList and TextNode for single R# molfile' do
+    it 'strips PolymersList and TextNode for single R# molfile' do # rubocop:disable RSpec/MultipleExpectations
       cleaned = described_class.clean_molfile_for_inchikey(molfile_one_r)
       expect(cleaned).not_to include('> <PolymersList>')
       expect(cleaned).not_to include('> <TextNode>')
