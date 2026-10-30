@@ -1807,7 +1807,7 @@ class ElementStore {
           }
           nextSample._mixtureDraftSourceState = sourceState;
           nextSample.updateChecksum();
-        } else if (previousSample && !nextSample.isMixture()) {
+        } else if (previousSample) {
           nextSample.amount_value = previousSample.amount_value;
           nextSample.amount_unit = previousSample.amount_unit;
           nextSample.container = previousSample.container;

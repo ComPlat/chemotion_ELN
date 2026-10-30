@@ -74,6 +74,34 @@ RSpec.describe Reactable, type: :module do
       end
     end
 
+    %w[target real].each do |amount_type|
+      [false, true].each do |legacy_components|
+        it "preserves product yield on sample save with an unquantified #{amount_type} mixture reference, legacy components=#{legacy_components}" do
+          mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                    real_amount_value: nil, target_amount_value: nil,
+                                    "#{amount_type}_amount_value" => 10,
+                                    "#{amount_type}_amount_unit" => 'g')
+          if legacy_components
+            mixture.components.create!(
+              position: 0,
+              component_properties: { molecule_id: mixture.molecule_id, reference: true },
+            )
+          end
+          create(:reactions_starting_material_sample, reaction: reaction, sample: mixture,
+                                                     reference: true, equivalent: 1)
+          product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
+          association = create(:reactions_product_sample, reaction: reaction, sample: product,
+                                                          coefficient: 2, equivalent: 0.25)
+          expect(mixture.amount_mmol(amount_type)).to be_nil
+
+          expect { product.update!(real_amount_value: 0.02) }.not_to raise_error
+
+          expect(product.reload.real_amount_value).to eq(0.02)
+          expect(association.reload.equivalent).to eq(0.25)
+        end
+      end
+    end
+
     it 'preserves the client-calculated equivalent when the reference is a mixture' do
       mixture = create(
         :sample,

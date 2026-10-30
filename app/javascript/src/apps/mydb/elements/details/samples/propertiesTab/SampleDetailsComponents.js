@@ -720,7 +720,7 @@ export default class SampleDetailsComponents extends React.Component {
             <strong>Warning:</strong> These components share the same molecule.
             Merging will remove the source component and reset the target&apos;s
             amounts (mol, mass, volume, molarity, concentration) to zero.
-            {' '}Its ratio will reset to 0, or 1 if it is the reference component.
+            {' '}Its ratio will be n.d, or 1 if it is the reference component.
           </p>
         ) : (
           <p className="text-warning">
