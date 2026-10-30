@@ -50,6 +50,7 @@ export default class ProgressModal extends Component {
       <AppModal
         title="Uploading"
         show={loadingWithProgress}
+        onHide={() => {}}
         showFooter={false}
       >
         {progressValue}

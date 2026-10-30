@@ -148,7 +148,7 @@ function AnalysesContainer({ readonly }) {
             </div>
             <CommentBox
               isVisible={deviceDescriptionsStore.analysis_comment_box}
-              value={deviceDescription.container.description}
+              value={deviceDescription.container?.description || ''}
               handleCommentTextChange={deviceDescriptionsStore.changeAnalysisComment}
             />
             {mode === 'edit' ? (

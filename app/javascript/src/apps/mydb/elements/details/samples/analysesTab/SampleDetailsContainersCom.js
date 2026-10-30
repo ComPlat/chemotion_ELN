@@ -8,20 +8,17 @@ import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/Analysis
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
-function RndNotAvailable() {
-  return (
+const RndNotAvailable = () => (
     <p className="m-0">Not available.</p>
   );
-}
 
-function RndNoAnalyses({
+const RndNoAnalyses = ({
   addButton,
   toggleCommentBox,
   commentBoxVisible,
   containerDescription,
   handleCommentTextChange
-}) {
-  return (
+}) => (
     <div>
       <div className="d-flex justify-content-between align-items-center">
         <p className="m-0">There are currently no Analyses.</p>
@@ -45,9 +42,8 @@ function RndNoAnalyses({
       )}
     </div>
   );
-}
 
-function ReactionsDisplay({
+const ReactionsDisplay = ({
   sample,
   mode,
   readOnly,
@@ -68,8 +64,7 @@ function ReactionsDisplay({
   commentBoxVisible,
   toggleCommentBox,
   updateContainerPreferredThumbnail
-}) {
-  return (
+}) => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <AnalysisModeToggle mode={mode} onToggle={handleToggleMode} disabled={isDisabled} />
@@ -84,7 +79,7 @@ function ReactionsDisplay({
       </div>
       <CommentBox
         isVisible={commentBoxVisible}
-        value={sample.container.description}
+        value={sample.container.description || ''}
         handleCommentTextChange={handleCommentTextChange}
       />
       {mode === 'edit' ? (
@@ -101,7 +96,7 @@ function ReactionsDisplay({
             return (
               <Card
                 key={`${id}CRowEdit`}
-                className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+                className={`rounded-0 border-0${  isFirstTab ? '' : ' border-top'}`}
               >
                 <Card.Header className="rounded-0 p-0 border-bottom-0">
                   <AccordionHeaderWithButtons eventKey={id}>
@@ -165,7 +160,6 @@ function ReactionsDisplay({
       )}
     </div>
   );
-}
 
 export {
   RndNotAvailable, RndNoAnalyses, ReactionsDisplay
