@@ -166,7 +166,7 @@ describe Chemotion::ContainerAPI do
                  key: attachment_key,
                  filename: 'spectrum-v1.pdf',
                  attachable: nil,
-                 created_by: user.id)
+                 created_by: user.id, created_for: user.id)
         end
 
         it 'returns variations with the analysis container ID linked to the matching variation' do
@@ -225,7 +225,8 @@ describe Chemotion::ContainerAPI do
           # Simulate a pre-existing attachment whose filename is nil (no NOT NULL constraint,
           # no presence validation) rather than creating one with filename: nil directly, which
           # would hit the before_create jcamp-detection callback that assumes a filename.
-          attachment = create(:attachment, key: attachment_key, attachable: nil, created_by: user.id)
+          attachment = create(:attachment, key: attachment_key, attachable: nil,
+                                           created_by: user.id, created_for: user.id)
           attachment.update_columns(filename: nil) # rubocop:disable Rails/SkipsModelValidations
         end
 
@@ -279,7 +280,7 @@ describe Chemotion::ContainerAPI do
                  key: attachment_key,
                  filename: 'protocol-v2.pdf',
                  attachable: nil,
-                 created_by: user.id)
+                 created_by: user.id, created_for: user.id)
         end
 
         it 'does not link the attachment to any variation' do
@@ -345,7 +346,7 @@ describe Chemotion::ContainerAPI do
                  key: first_attachment_key,
                  filename: 'spectrum-v1.pdf',
                  attachable: nil,
-                 created_by: user.id)
+                 created_by: user.id, created_for: user.id)
         end
 
         it 'does not resave the reaction when the variation link already exists' do # rubocop:disable RSpec/MultipleExpectations
@@ -359,7 +360,7 @@ describe Chemotion::ContainerAPI do
                  key: second_attachment_key,
                  filename: 'spectrum-v1.pdf',
                  attachable: nil,
-                 created_by: user.id)
+                 created_by: user.id, created_for: user.id)
 
           put('/api/v1/containers/container',
               params: container_params_for(second_attachment_key).to_json,
@@ -437,8 +438,8 @@ describe Chemotion::ContainerAPI do
               'uuid-2' => { 'id' => '2', 'metadata' => { 'analyses' => [], 'notes' => '' } },
             },
           )
-          create(:attachment, key: first_attachment_key, filename: 'spectrum-v1.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
-          create(:attachment, key: second_attachment_key, filename: 'spectrum-v2.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
+          create(:attachment, key: first_attachment_key, filename: 'spectrum-v1.pdf', attachable: nil, created_by: user.id, created_for: user.id) # rubocop:disable Layout/LineLength
+          create(:attachment, key: second_attachment_key, filename: 'spectrum-v2.pdf', attachable: nil, created_by: user.id, created_for: user.id) # rubocop:disable Layout/LineLength
         end
 
         it 'links both variations with a single batched save' do # rubocop:disable RSpec/MultipleExpectations
