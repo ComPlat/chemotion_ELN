@@ -26,7 +26,7 @@ import {
 } from 'src/components/structureEditor/KetcherEditor';
 import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
 import {
-  addTextNodes
+  addTextNodes, forTextNodeHeader, parseDraftBlock
 } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   centerPositionCanvas,
@@ -109,15 +109,25 @@ const loadKetcherData = async (data, options = {}) => {
     imagesListSetter([]);
   }
 
-  // Text nodes are non-standard Ketcher extensions managed entirely in local state.
-  // The editor never returns them via getKet(), so we must never overwrite the local
-  // textList from editor data — doing so would silently wipe user text on every fetch.
-  // Only update textList when the incoming data actually contains text nodes (e.g. initial
-  // load where we injected them into the ket payload before calling setMolecule).
-  // Filter nodes with proper data.content to avoid evicting valid text nodes with malformed ones.
-  const textNodesFromEditor = nodes.filter((item) => item.type === 'text' && item.data?.content);
-  if (textNodesFromEditor.length > 0) {
-    textListSetter(textNodesFromEditor);
+  // Text nodes are managed entirely in local state and must never be overwritten from
+  // editor data fetched periodically (preserveImagesWhenEmpty === true path).
+  // Ketcher echoes back the plain-text nodes we injected via saveMoveCanvas — we must
+  // ignore those echoes so they don't corrupt or wipe textList entries.
+  // Only update textList on initial load (preserveImagesWhenEmpty === false), and only
+  // accept nodes with valid Draft.js JSON content so downstream JSON.parse calls are safe.
+  if (!preserveImagesWhenEmpty) {
+    const textNodesFromEditor = nodes.filter((item) => {
+      if (item.type !== 'text' || !item.data?.content) return false;
+      try {
+        const parsed = JSON.parse(item.data.content);
+        return Array.isArray(parsed?.blocks) && parsed.blocks.length > 0;
+      } catch (_e) {
+        return false;
+      }
+    });
+    if (textNodesFromEditor.length > 0) {
+      textListSetter(textNodesFromEditor);
+    }
   }
 
   // Mol refs are nodes with $ref; getKet() may omit images/text, so derive mols from structure
@@ -534,6 +544,27 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
 const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new Error('Editor instance is invalid');
+
+    // Ketcher 3.18 uses string interpolation (not JSON.stringify) when serialising text
+    // node content in getKet(). Plain-text content with non-ASCII characters (µ, °, α …)
+    // therefore produces invalid JSON.  Wrap any plain-text node with a minimal Draft.js
+    // envelope so getKet() can serialise it cleanly.  Our textList owns the canonical
+    // content; loadKetcherData (called below with preserveImagesWhenEmpty: true) will not
+    // overwrite textList from the echoed data, so this temporary wrap is invisible to the
+    // rest of the pipeline.
+    const ketcherStruct = editor._structureDef?.editor?.editor?.struct?.();
+    if (ketcherStruct?.texts) {
+      ketcherStruct.texts.forEach((textEntity) => {
+        if (textEntity.content && !parseDraftBlock(textEntity.content) && !textEntity.content.startsWith('{')) {
+          // eslint-disable-next-line no-param-reassign
+          textEntity.content = forTextNodeHeader(
+            `k${Math.random().toString(36).slice(2, 7)}`,
+            textEntity.content,
+          );
+        }
+      });
+    }
+
     const ketString = await editor.structureDef.editor.getKet();
     // Ketcher stores R# atoms as rg-label internally. Strip them so latestData
     // never contains rg-label — Indigo's KET loader rejects that type in every

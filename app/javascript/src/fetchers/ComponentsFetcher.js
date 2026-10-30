@@ -4,7 +4,7 @@ const COMPONENT_PROPERTY_KEYS = [
   'amount_mol', 'amount_l', 'amount_g', 'relative_molecular_weight', 'density',
   'molarity_unit', 'molarity_value', 'starting_molarity_value', 'starting_molarity_unit',
   'molecule_id', 'equivalent', 'parent_id', 'material_group', 'reference', 'purity', 'metrics',
-  'template_category', 'source', 'molar_mass', 'weight_ratio_exp'
+  'template_category', 'source', 'molar_mass', 'weight_ratio_exp', 'template_id'
 ];
 
 function serializePlainComponent(comp) {

@@ -13,7 +13,7 @@ import {
   adjustAtomCoordinates
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition, parseDraftBlock } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   mols, textNodeStruct, allTemplates, templatesBaseHashWithTemplateId, textList
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
@@ -147,7 +147,7 @@ const getUnpositionedTextNodes = (addedKeys) => {
   const list = [];
   for (let i = 0; i < textList.length; i++) {
     try {
-      const key = JSON.parse(textList[i].data.content).blocks[0]?.key;
+      const key = parseDraftBlock(textList[i].data?.content)?.key;
       if (key && !addedKeys.has(key)) {
         list.push(textList[i]);
       }
@@ -164,6 +164,7 @@ const placeTextOnAtoms = async () => {
     const updatedTextList = [];
     const addedKeys = new Set(); // avoid adding the same text node twice (e.g. single shape with one alias)
     for (const item of mols) {
+      if (!latestData[item]?.atoms) continue; // eslint-disable-line no-continue
       for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
 

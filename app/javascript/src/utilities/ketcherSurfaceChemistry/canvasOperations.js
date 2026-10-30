@@ -23,7 +23,7 @@ import {
   handleAddAtom,
   removeTextFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader, parseDraftBlock } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -117,7 +117,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
       if (textNodeKey && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         const polymerIndex = allAliasedAtoms.findIndex((a) => a.alias === atom.alias);
         for (const textItem of textList) {
-          const block = JSON.parse(textItem.data.content).blocks[0];
+          const block = parseDraftBlock(textItem.data?.content);
+          if (!block) continue; // eslint-disable-line no-continue
           if (textNodeKey === block.key) {
             const line = [
               polymerIndex,
@@ -215,7 +216,14 @@ const onDeleteText = async (editor) => {
 
     const surviving = [];
     for (const item of textList) {
-      const { key } = JSON.parse(item.data.content).blocks[0];
+      let key;
+      try {
+        key = JSON.parse(item.data.content).blocks?.[0]?.key;
+      } catch (_e) {
+        surviving.push(item); // plain-text node — keep it, can't match by key
+        continue; // eslint-disable-line no-continue
+      }
+      if (!key) { surviving.push(item); continue; } // eslint-disable-line no-continue
       const stillOnCanvas = ketcherTexts ? liveKeys.has(key) : Object.values(textNodeStruct).includes(key);
       if (stillOnCanvas) {
         surviving.push(item);
@@ -354,6 +362,27 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
     // Fetch latest data first to ensure we have current state
     await fetchKetcherData(editor);
 
+    // Collect all atoms with three-part aliases from latestData.
+    // Returns array of {alias, atomLocation} sorted by alias index ascending.
+    const getAllAliasedAtoms = () => {
+      const atoms = [];
+      for (const molName of mols) {
+        const mol = latestData[molName];
+        if (!mol?.atoms) continue; // eslint-disable-line no-continue
+        for (const atom of mol.atoms) {
+          if (atom?.alias && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+            atoms.push({ alias: atom.alias, atomLocation: atom.location });
+          }
+        }
+      }
+      atoms.sort((a, b) => {
+        const ai = parseInt(a.alias.split('_')[2], 10);
+        const bi = parseInt(b.alias.split('_')[2], 10);
+        return ai - bi;
+      });
+      return atoms;
+    };
+
     const resolveSelectedImageAtom = async (selectedImageIndex) => {
       if (Number.isNaN(selectedImageIndex)) return { atomLocation: null, alias: '' };
       // Ketcher selection and alias sync can lag a tick; retry a few times.
@@ -367,6 +396,22 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         await new Promise((resolve) => {
           setTimeout(() => resolve(), 40);
         });
+      }
+      // Fallback: Ketcher's internal entity ID drifts from alias index after repeated
+      // setMolecule calls. If there is exactly one aliased atom on the canvas, it must
+      // be the selected shape — use it directly.
+      // If there are multiple shapes, pick the one whose imagesList position matches
+      // selectedImageIndex modulo imagesList.length (best-effort).
+      const aliasedAtoms = getAllAliasedAtoms();
+      if (aliasedAtoms.length === 1) {
+        return { atomLocation: aliasedAtoms[0].atomLocation, alias: aliasedAtoms[0].alias };
+      }
+      if (aliasedAtoms.length > 1 && imagesList.length > 0) {
+        const safeIdx = selectedImageIndex % aliasedAtoms.length;
+        const candidate = aliasedAtoms[safeIdx];
+        if (candidate) {
+          return { atomLocation: candidate.atomLocation, alias: candidate.alias };
+        }
       }
       return { atomLocation: null, alias: '' };
     };
@@ -743,10 +788,18 @@ const getSvgFromCanvas = async (iframeRef) => {
         } catch (e) { /* ignore */ }
       });
       if (minX === Infinity || maxX === -Infinity) {
-        const fallbackBbox = canvasElement.getBBox();
-        minX = fallbackBbox.x; minY = fallbackBbox.y;
-        maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+        try {
+          const fallbackBbox = canvasElement.getBBox();
+          if (fallbackBbox) {
+            minX = fallbackBbox.x; minY = fallbackBbox.y;
+            maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+          }
+        } catch (_e) { /* canvas not in DOM or getBBox unsupported */ }
       }
+    }
+
+    if (minX === Infinity || maxX === -Infinity || minX == null) {
+      return { svg: null, message: 'No renderable content found in canvas' };
     }
 
     const padding = 5;
@@ -801,12 +854,131 @@ const getSvgFromCanvas = async (iframeRef) => {
   }
 };
 
-const applyCanvasDataToEditor = async (editor, dataCopy) => {
+const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
   }
-  const serialized = JSON.stringify(dataCopy);
+
+  // Ketcher 3.18 uses KET 2.0 for text nodes: { boundingBox, paragraphs } — not the old
+  // { data: { content, pos } } shape. Sending old-format nodes caused Ketcher to crash on
+  // every render tick (pos[0].x undefined) because pos was null-filled by getKet() or empty.
+  // Convert every internal text node to KET 2.0 before setMolecule; textList keeps the full
+  // Draft.js content as the internal source of truth and re-injects it on every save.
+  const isValidPoint = (p) => p != null && typeof p.x === 'number' && typeof p.y === 'number';
+
+  // Convert a Draft.js inlineStyleRanges array + text into KET 2.0 paragraphs parts.
+  // Each consecutive run of characters sharing the same style flags becomes one part.
+  // Supports: BOLD, ITALIC, SUPERSCRIPT, SUBSCRIPT, fontsize-N, CUSTOM_FONT_SIZE_Npx.
+  const draftBlockToKet2Paragraph = (block) => {
+    const text = block.text || '';
+    const ranges = block.inlineStyleRanges || [];
+
+    if (!text) return { parts: [{ text: '' }], indent: block.depth || 0 };
+
+    // Build a per-character style map
+    const charStyles = Array.from({ length: text.length }, () => ({
+      bold: false, italic: false, superscript: false, subscript: false, fontSize: null
+    }));
+
+    ranges.forEach(({ style, offset: o, length: l }) => {
+      const end = Math.min(o + l, text.length);
+      for (let i = o; i < end; i++) {
+        if (style === 'BOLD') charStyles[i].bold = true;
+        else if (style === 'ITALIC') charStyles[i].italic = true;
+        else if (style === 'SUPERSCRIPT') charStyles[i].superscript = true;
+        else if (style === 'SUBSCRIPT') charStyles[i].subscript = true;
+        else if (style.startsWith('fontsize-')) {
+          const sz = parseInt(style.slice(9), 10);
+          if (!Number.isNaN(sz)) charStyles[i].fontSize = sz;
+        } else if (style.startsWith('CUSTOM_FONT_SIZE_')) {
+          const sz = Math.round(parseFloat(style.slice(17)));
+          if (!Number.isNaN(sz)) charStyles[i].fontSize = sz;
+        }
+      }
+    });
+
+    // Group consecutive chars with identical style into parts
+    const parts = [];
+    let i = 0;
+    while (i < text.length) {
+      const s = charStyles[i];
+      let j = i + 1;
+      while (
+        j < text.length
+        && charStyles[j].bold === s.bold
+        && charStyles[j].italic === s.italic
+        && charStyles[j].superscript === s.superscript
+        && charStyles[j].subscript === s.subscript
+        && charStyles[j].fontSize === s.fontSize
+      ) { j++; }
+      const part = { text: text.slice(i, j) };
+      if (s.bold) part.bold = true;
+      if (s.italic) part.italic = true;
+      if (s.superscript) part.superscript = true;
+      if (s.subscript) part.subscript = true;
+      if (s.fontSize) part.font = { size: s.fontSize };
+      parts.push(part);
+      i = j;
+    }
+
+    return { parts: parts.length ? parts : [{ text: '' }], indent: block.depth || 0 };
+  };
+
+  // Full Draft.js content → KET 2.0 paragraphs array.
+  // Each Draft.js block becomes one paragraph; each style run becomes one part.
+  const draftContentToKet2Paragraphs = (content) => {
+    try {
+      const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+      if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
+        return parsed.blocks.map(draftBlockToKet2Paragraph);
+      }
+    } catch (_e) { /* fall through */ }
+    // Plain string fallback
+    const plain = typeof content === 'string' ? content : '';
+    return [{ parts: [{ text: plain }], indent: 0 }];
+  };
+
+  const toKet2TextNode = (node) => {
+    if (node.type !== 'text') return node;
+    if (node.boundingBox && node.paragraphs) return node; // already KET 2.0
+    if (!node.data?.content) return node;
+
+    const paragraphs = draftContentToKet2Paragraphs(node.data.content);
+
+    const { pos, position } = node.data;
+    let x = 4.4; let y = -10.4; let width = 0.71724853515625; let
+      height = 0.375;
+
+    if (pos && pos.length >= 4 && isValidPoint(pos[0]) && isValidPoint(pos[1]) && isValidPoint(pos[2])) {
+      x = pos[0].x;
+      y = pos[0].y;
+      width = Math.abs(pos[2].x - pos[0].x) || 0.71724853515625;
+      height = Math.abs(pos[0].y - pos[1].y) || 0.375;
+    } else if (position && isValidPoint(position)) {
+      x = position.x;
+      y = position.y;
+    }
+
+    return {
+      type: 'text',
+      boundingBox: { x, y, width: Math.max(width, 0.1), height: Math.max(height, 0.1) },
+      paragraphs,
+      indent: 0
+    };
+  };
+
+  let data = dataCopy;
+  if ((data.root?.nodes || []).some((n) => n.type === 'text')) {
+    data = JSON.parse(JSON.stringify(data));
+    data.root.nodes = data.root.nodes.map(toKet2TextNode);
+  }
+
+  const serialized = JSON.stringify(data);
+  if (recenter) {
+    await editor.structureDef.editor.setMolecule(serialized);
+    return;
+  }
   await editor.structureDef.editor.setMolecule(serialized, { preserveCanvasPosition: true });
 };
 
@@ -884,11 +1056,23 @@ const saveMoveCanvas = async (
 
 const centerPositionCanvas = async (editor) => {
   try {
-    const clone = editor._structureDef.editor.editor.struct().clone();
-    await editor._structureDef.editor.editor.renderAndRecoordinateStruct(clone);
+    // Use centerStruct() on the already-rendered ctab rather than renderAndRecoordinateStruct().
+    // renderAndRecoordinateStruct clones the struct and loads it into a fresh ctab via
+    // fromNewCanvas+update — those new render items have no visel.boundingBox yet, so
+    // centerStruct() falls back to new Box2Abs(atom.pp, atom.pp) and throws when pp is undefined.
+    // Calling centerStruct() directly reuses the existing render items (already painted by
+    // the previous setMolecule call) whose bounding boxes are already computed.
+    const internalEditor = editor._structureDef?.editor?.editor;
+    if (internalEditor?.render?.ctab?.molecule?.atoms?.size > 0) {
+      try {
+        internalEditor.centerStruct();
+      } catch (_e) {
+        // centering failed — atoms may still be mid-render; images still sync below
+      }
+    }
     await fetchKetcherData(editor);
     // syncImagesOnly: true ensures images follow the re-centered atom positions
-    saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
+    await saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
     await fetchKetcherData(editor);
   } catch (err) {
     await fetchKetcherData(editor);
@@ -951,6 +1135,14 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (textListCopy.length > 0 || textList.length > 0) {
     const textNodes = await placeTextOnAtoms();
     latestData.root.nodes = textNodes;
+
+    // Fallback: ensure textList is never silently dropped if placeTextOnAtoms fails
+    // (e.g. alias mismatch or missing mol key).
+    const hasText = latestData.root.nodes.some((n) => n.type === 'text');
+    if (!hasText && textList.length > 0) {
+      const nonText = latestData.root.nodes.filter((n) => n.type !== 'text');
+      latestData.root.nodes = [...nonText, ...textList];
+    }
   }
   await applyCanvasDataToEditor(editor, latestData);
   await fetchKetcherData(editor);
@@ -1066,12 +1258,15 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
     const keyText = textNodeStruct[alias];
     const parts = alias.split('_');
     for (const item of textList) {
-      const { key, text } = JSON.parse(item.data.content).blocks[0];
+      const block = parseDraftBlock(item.data?.content);
+      if (!block) continue; // eslint-disable-line no-continue
+      const { key, text } = block;
       if (key === keyText) {
         textNodeStructureModified[parts[2]] = text;
         // eslint-disable-next-line no-await-in-loop
         const categoryName = await findTemplateIdCategoryFromTemplates(parts[1]);
-        textNodeStructureForComponents.push({ [text]: categoryName });
+        // eslint-disable-next-line max-len
+        textNodeStructureForComponents.push({ label: text, category: categoryName, template_id: parseInt(parts[1], 10) });
       }
     }
   }

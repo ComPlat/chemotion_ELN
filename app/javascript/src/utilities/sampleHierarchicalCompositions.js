@@ -4,11 +4,13 @@ const buildHierarchicalMaterialRows = (components) => {
   const rowsData = [];
   let totalMolarCalc = 0;
   let totalMolarExp = 0;
+  let totalExpWtRatio = 0;
 
   components?.forEach((item, index) => {
     const {
       source,
       template_category,
+      template_id,
       name,
       parseComponentSource,
       calcWeightRatioWithoutWeight,
@@ -47,6 +49,7 @@ const buildHierarchicalMaterialRows = (components) => {
     // Accumulate totals as floats
     totalMolarCalc = parseFloat((totalMolarCalc + (molarRatioCalcMM || 0.0)).toFixed(10));
     totalMolarExp = parseFloat((totalMolarExp + (molarRatioExpMM || 0.0)).toFixed(10));
+    totalExpWtRatio = parseFloat((totalExpWtRatio + (weightRatioExpStateValue || 0.0)).toFixed(10));
 
     // Calculate Column 8: weight ratio (calc)/molar mass = weightRatioCalcProcessed / molarMassStateValue
     const weightRatioCalcMMValue = molarRatioCalcMM; // This is already weightRatioCalcProcessed / molarMassStateValue
@@ -54,6 +57,7 @@ const buildHierarchicalMaterialRows = (components) => {
     rowsData.push({
       index,
       template_category,
+      template_id,
       component,
       sourceAlias,
       molar_mass,
@@ -112,6 +116,7 @@ const buildHierarchicalMaterialRows = (components) => {
     rowsData: sortedRows,
     totalMolarCalc: parseFloat(totalMolarCalc.toFixed(3)),
     totalMolarExp: parseFloat(totalMolarExp.toFixed(3)),
+    totalExpWtRatio: parseFloat(totalExpWtRatio.toFixed(3)),
   };
 };
 

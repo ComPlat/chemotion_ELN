@@ -31,7 +31,7 @@ import {
   ButtonSelectors,
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { deepCompareContent, filterTextList, parseDraftBlock } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   runImageLayering,
@@ -144,17 +144,8 @@ const onAtomDelete = async (editor) => {
     // before that call, otherwise orphaned text nodes reappear on the canvas.
     const activeTextKeys = new Set(Object.values(textNodeStruct));
     textListSetter(textList.filter((item) => {
-      try {
-        const { key } = JSON.parse(item.data.content).blocks[0];
-        // Keep free-standing labels (not linked to any image)
-        if (!activeTextKeys.has(key)) return true;
-        // Keep image-linked labels whose image survived
-        const linkedAlias = Object.entries(textNodeStruct).find(([, v]) => v === key)?.[0];
-        const imgIdx = linkedAlias !== undefined ? parseInt(linkedAlias, 10) : -1;
-        return imagesList.some((_, i) => i === imgIdx);
-      } catch (_e) {
-        return false;
-      }
+      const block = parseDraftBlock(item.data?.content);
+      return block ? activeTextKeys.has(block.key) : false;
     }));
 
     dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
@@ -444,8 +435,17 @@ const KetcherEditor = forwardRef((props, ref) => {
 
     // Looks up the existing label text for an image index via textNodeStruct + textList.
     // Returns { content, textKey } where content is full Draft content (JSON string) or null.
+    // Falls back to alias-ordered lookup when Ketcher entity ID drifts from alias index.
     const getLabelForImage = async (imageIndex) => {
-      const { alias } = await findAtomByImageIndex(imageIndex);
+      let { alias } = await findAtomByImageIndex(imageIndex);
+      if (!alias) {
+        // Entity ID drift fallback: iterate textNodeStruct to find any alias that has a label.
+        // If exactly one labeled shape exists, use it regardless of index mismatch.
+        const labeledAliases = Object.entries(textNodeStruct).filter(([, key]) => key);
+        if (labeledAliases.length === 1) {
+          [alias] = labeledAliases[0];
+        }
+      }
       if (!alias) return { content: null, textKey: null };
       const textKey = textNodeStruct[alias];
       if (!textKey) return { content: null, textKey: null };
@@ -470,10 +470,21 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         if (currentSelection?.images?.length > 0) {
           // Image selected — use the image as the source of truth to find the label.
-          // This is reliable whether or not Ketcher also reports a text selection.
+          // Ketcher reports image entity IDs which can drift from alias indices after
+          // repeated setMolecule calls. Try to resolve to the alias-based index so that
+          // findAtomByImageIndex works reliably in onAddTextFromEditor.
           canvasSelectionsSetter(currentSelection);
-          imageNodeForTextNodeSetter(currentSelection.images);
-          const { content, textKey } = await getLabelForImage(currentSelection.images[0]);
+          const entityId = currentSelection.images[0];
+          let resolvedImageIndex = entityId;
+          const { alias: resolvedAlias } = await findAtomByImageIndex(entityId);
+          if (!resolvedAlias && imagesList.length > 0) {
+            // Entity ID drift fallback: Ketcher entity ID doesn't match alias index.
+            // Best-effort: if only one image, it must be index 0; otherwise wrap mod count.
+            if (imagesList.length === 1) resolvedImageIndex = 0;
+            else resolvedImageIndex = entityId % imagesList.length;
+          }
+          imageNodeForTextNodeSetter([resolvedImageIndex]);
+          const { content, textKey } = await getLabelForImage(resolvedImageIndex);
           selectedTextContent = content; // full Draft content (JSON string) or null
           selectedTextKey = textKey;
         } else if (currentSelection?.texts?.length > 0) {

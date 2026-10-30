@@ -397,6 +397,11 @@ module Chemotion
         { success: false, error: e.message }
       end
 
+      desc 'Return all element symbols from the periodic table'
+      get :element_symbols do
+        Chemotion::PeriodicTable::ELEMENTS.keys.map(&:to_s)
+      end
+
       desc 'update molfile and svg of molecule'
       params do
         requires :id, type: Integer, desc: 'Molecule ID'
