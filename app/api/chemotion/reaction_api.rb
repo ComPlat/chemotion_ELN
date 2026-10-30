@@ -200,7 +200,7 @@ module Chemotion
           attributes.delete(:literatures)
           attributes.delete(:id)
 
-          update_datamodel(attributes[:container])
+          update_datamodel(attributes[:container], element: reaction, creating: false)
           attributes.delete(:container)
           attributes.delete(:segments)
 
@@ -296,7 +296,7 @@ module Chemotion
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
         create_literatures_and_literals(reaction, literatures)
-        reaction.container = update_datamodel(container_info)
+        reaction.container = update_datamodel(container_info, element: reaction, creating: true)
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)

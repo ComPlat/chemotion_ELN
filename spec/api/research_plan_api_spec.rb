@@ -113,6 +113,430 @@ describe Chemotion::ResearchPlanAPI do
         end
       end
 
+      context 'when an image is uploaded after creating the plan' do
+        let(:collection) { create(:collection, user: user) }
+        let(:pending_identifier) { SecureRandom.uuid }
+        let(:image_field) do
+          { 'type' => 'image', 'value' => { 'public_name' => pending_identifier, 'file_name' => 'upload.png' } }
+        end
+        let(:copied_entries) { [] }
+        let(:copied_body) { [] }
+        let(:params) do
+          {
+            name: 'Plan with a pending image', collection_id: collection.id,
+            container: { is_new: true, children: [] }, body: copied_body + [image_field],
+            attachments: copied_entries + [{ id: pending_identifier, is_new: true }]
+          }
+        end
+
+        shared_examples 'a pending image upload' do
+          let(:created_plan) { ResearchPlan.find(JSON.parse(response.body).fetch('research_plan').fetch('id')) }
+
+          before { post '/api/v1/research_plans', params: params, as: :json }
+
+          it 'keeps the pending image field without reporting omitted attachments' do
+            expect(response).to have_http_status(:created)
+            expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+            expect(created_plan.body.last).to eq(image_field)
+          end
+
+          it 'connects the image field to the subsequent file upload' do
+            plan = created_plan
+            expect(Attachment.exists?(identifier: pending_identifier)).to be false
+
+            post '/api/v1/attachable/update_attachments_attachable', params: {
+              attachable_type: 'ResearchPlan', attachable_id: plan.id,
+              attfilesIdentifier: [pending_identifier],
+              files: [fixture_file_upload(Rails.root.join('spec/fixtures/upload.png'), 'image/png')]
+            }
+
+            expect(response).to have_http_status(:created)
+            expect(Attachment.find_by!(identifier: pending_identifier)).to have_attributes(
+              attachable: plan,
+              identifier: plan.reload.body.last.dig('value', 'public_name'),
+              read_file: Rails.root.join('spec/fixtures/upload.png').binread,
+            )
+          end
+        end
+
+        it_behaves_like 'a pending image upload'
+
+        context 'when also copying an existing image' do
+          let(:params) { super().merge(source_plan_id: source_plan.id) }
+          let(:source_plan) { create(:research_plan, creator: user, collections: [collection]) }
+          let(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: user.id) }
+          let(:copied_entries) { [{ id: source.id }] }
+          let(:copied_body) { [{ type: 'image', value: { public_name: source.identifier } }] }
+
+          it_behaves_like 'a pending image upload'
+        end
+      end
+
+      context 'when copying attachments' do
+        let(:collection) { create(:collection, user: user) }
+        let(:owner) { user }
+        let(:source_collection) { create(:collection, user: owner) }
+        let(:source_plan) { create(:research_plan, creator: owner, collections: [source_collection]) }
+        let!(:source) { create(:attachment, :with_png_image, attachable: source_plan, created_for: owner.id) }
+        let(:params) do
+          {
+            name: 'Copied Plan',
+            collection_id: collection.id,
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            body: [{ type: 'image', value: { public_name: source.identifier } }],
+            attachments: [{ id: source.id }],
+            source_plan_id: source_plan.id,
+          }
+        end
+
+        def attachment_files
+          Shrine.storages.values.flat_map do |storage|
+            Dir.glob(storage.directory.join('**', '*')).select { |path| File.file?(path) }
+          end.uniq.sort
+        end
+
+        def expect_atomic_copy_failure(request_params, status)
+          files_before = attachment_files
+          expect do
+            post '/api/v1/research_plans', params: request_params, as: :json
+          end.not_to(change { [ResearchPlan.count, Container.count, Attachment.count, CollectionsResearchPlan.count] })
+
+          expect(response).to have_http_status(status)
+          expect(attachment_files).to eq(files_before)
+        end
+
+        context 'when reporting omitted attachments' do
+          let(:owner) { create(:person) }
+
+          before { params.delete(:source_plan_id) }
+
+          it 'reports the same warning for missing and unreadable IDs without exposing their details' do
+            params[:body] = []
+            post '/api/v1/research_plans', params: params, as: :json
+            unreadable_result = JSON.parse(response.body).except('research_plan')
+
+            params[:attachments] = [{ id: -1 }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(unreadable_result).to eq('attachments_omitted' => true)
+            expect(JSON.parse(response.body).except('research_plan')).to eq(unreadable_result)
+          end
+
+          it 'also reports unreadable body images when no attachment IDs are supplied' do
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').body).to eq([])
+          end
+
+          it 'does not reveal whether a deleted ID matches an unreadable body image' do
+            params[:attachments].first[:is_deleted] = true
+            post '/api/v1/research_plans', params: params, as: :json
+            unreadable_result = JSON.parse(response.body).except('research_plan')
+
+            params[:attachments] = [{ id: -1, is_deleted: true }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(unreadable_result).to eq('attachments_omitted' => true)
+            expect(JSON.parse(response.body).except('research_plan')).to eq(unreadable_result)
+          end
+
+          context 'when the attachments are readable' do
+            let(:owner) { user }
+
+            before { params[:source_plan_id] = source_plan.id }
+
+            it 'does not report omissions for successfully copied attachments' do
+              post '/api/v1/research_plans', params: params, as: :json
+
+              expect(response).to have_http_status(:created)
+              expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments.count).to eq(1)
+            end
+
+            it 'does not report attachments that were deliberately deleted' do
+              params[:attachments].first[:is_deleted] = true
+              post '/api/v1/research_plans', params: params, as: :json
+
+              expect(response).to have_http_status(:created)
+              expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              expect(ResearchPlan.find_by!(name: 'Copied Plan').body).to eq([])
+            end
+          end
+        end
+
+        context 'when requested attachments are marked as deleted' do
+          let(:owner) { user }
+
+          it 'does not copy the file, annotation, or body image' do
+            params[:attachments].first[:is_deleted] = true
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect(copied_plan.attachments).to be_empty
+            expect(copied_plan.body).to eq([])
+          end
+        end
+
+        context 'when an attachment request is malformed' do
+          it 'rejects a string entry before creating any records or files' do
+            request_params = params.merge(attachments: [source.id.to_s])
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+
+          it 'rejects invalid entries before creating any records or files' do
+            request_params = params
+            request_params[:attachments] = [source.id]
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+
+          it 'rejects an object used as an attachment ID' do
+            request_params = params
+            request_params[:attachments] = [{ id: { unexpected: 'value' } }]
+
+            expect_atomic_copy_failure(request_params, :bad_request)
+          end
+        end
+
+        context 'when copying readable files' do
+          let(:owner) { user }
+
+          it 'copies source attachments server-side when only the source ID is supplied' do
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copy = ResearchPlan.find_by!(name: 'Copied Plan').attachments.take!
+            expect(response).to have_http_status(:created)
+            expect(copy.read_file).to eq(source.read_file)
+            expect(copy.attachment(:annotation).read).to include("/api/v1/attachments/image/#{copy.id}")
+          end
+
+          it 'does not copy even readable attachment IDs without a source plan' do
+            params.delete(:source_plan_id)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect([copied_plan.attachments.count, copied_plan.body]).to eq([0, []])
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+          end
+
+          it 'does not retain a body image from a different readable plan' do
+            other_plan = create(:research_plan, creator: user, collections: [collection])
+            foreign = create(:attachment, :with_png_image, attachable: other_plan)
+            params[:body] << { type: 'image', value: { public_name: foreign.identifier } }
+            params.delete(:attachments)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.body.size).to eq(1)
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(copied_plan.attachments.take!.identifier)
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+          end
+
+          it 'rejects a source plan that no longer exists without writing records or files' do
+            params[:source_plan_id] = -1
+
+            expect_atomic_copy_failure(params, :forbidden)
+          end
+
+          it 'rolls back the plan and its container when a source has no file' do
+            missing = create(:attachment, attachable: source_plan, file_path: nil, file_data: nil)
+            request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'cleans up an earlier copy when a later stored file is missing' do
+            missing = create(:attachment, attachable: source_plan)
+            missing.attachment.delete
+            request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'rolls back earlier copies when a later copy exceeds the user quota' do
+            small = create(:attachment, attachable: source_plan, created_for: user.id)
+            request_params = params.merge(attachments: [{ id: small.id }, { id: source.id }])
+            user.update!(used_space: 0, allocated_space: small.filesize + 1)
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'cleans up the copied image and annotation when a later creation step fails' do
+            request_params = params
+            copier = Usecases::Attachments::Copy.new(
+              request_params[:attachments], user, source_plan_id: source_plan.id
+            )
+            allow(Usecases::Attachments::Copy).to receive(:new).and_return(copier)
+            allow(copier).to receive(:execute!).and_wrap_original do |execute, *arguments|
+              execute.call(*arguments)
+              raise Usecases::Attachments::Copy::Error, 'Later creation step failed'
+            end
+
+            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+          end
+
+          it 'keeps a body image uploaded into the new plan\'s own dataset' do
+            upload = create(:attachment, :with_png_image, attachable: nil, created_for: user.id)
+            request_params = params.merge(attachments: [], body: [
+                                            { type: 'image', value: { public_name: upload.identifier } },
+                                          ])
+            request_params[:container][:children] = [{
+              is_new: true, container_type: 'dataset', extended_metadata: {},
+              attachments: [{ id: upload.key, is_new: true }]
+            }]
+            post '/api/v1/research_plans', params: request_params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(response).to have_http_status(:created)
+            expect(upload.reload.root_element).to eq(copied_plan)
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(upload.identifier)
+          end
+        end
+
+        context 'when the source research plan is not readable' do
+          let(:owner) { create(:person) }
+
+          it 'rejects the copy before creating any records or files' do
+            expect_atomic_copy_failure(params, :forbidden)
+          end
+
+          it 'removes unreadable image references if the source ID is omitted' do
+            params.delete(:source_plan_id)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            html = Export::ExportResearchPlan.new(user, copied_plan, :html).to_html
+
+            expect(copied_plan.body).to eq([])
+            expect(html).not_to include(source.attachment.url)
+            expect(Nokogiri::HTML(html).css('img')).to be_empty
+          end
+        end
+
+        context 'when the attachment ID does not exist' do
+          it 'creates the plan without copying any attachment' do
+            params[:attachments] = [{ id: -1 }]
+
+            expect do
+              post '/api/v1/research_plans', params: params, as: :json
+            end.not_to change(Attachment, :count)
+
+            expect(response).to have_http_status(:created)
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          end
+
+          it 'also removes unreadable body references when the supplied ID is missing' do
+            params[:attachments] = [{ id: -1 }]
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.body).to eq([])
+            expect(Export::ExportResearchPlan.new(user, copied_plan, :html).to_html)
+              .not_to include(source.attachment.url)
+          end
+        end
+
+        context 'when the source research plan is shared with copy permission' do
+          let(:owner) { create(:person) }
+          let(:detail_level) { 10 }
+          let(:permission_level) { :edit_elements }
+
+          before do
+            create(:collection_share, collection: source_collection, shared_with: user,
+                                      permission_level: CollectionShare.permission_level(permission_level),
+                                      researchplan_detail_level: detail_level)
+          end
+
+          it 'copies the readable file and annotation and updates the body reference' do
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created)
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            copy = copied_plan.attachments.take!
+            expect([copy.read_file, copy.attachment(:annotation).read]).to match(
+              [source.read_file, a_string_including("/api/v1/attachments/image/#{copy.id}")],
+            )
+            expect(copied_plan.body.first.dig('value', 'public_name')).to eq(copy.identifier)
+          end
+
+          context 'when the share is read-only' do
+            let(:permission_level) { :read_elements }
+
+            it 'rejects the copy even though the attachment can be downloaded' do
+              expect(Usecases::Attachments::Access.new(user).read?(source)).to be true
+              expect_atomic_copy_failure(params, :forbidden)
+            end
+
+            it 'cannot bypass the source permission by omitting its ID' do
+              params.delete(:source_plan_id)
+              post '/api/v1/research_plans', params: params, as: :json
+
+              copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+              expect(response).to have_http_status(:created)
+              expect([copied_plan.attachments.count, copied_plan.body]).to eq([0, []])
+              expect(JSON.parse(response.body)['attachments_omitted']).to be true
+            end
+          end
+
+          context 'when the share does not allow reading datasets' do
+            let(:detail_level) { 2 }
+
+            it 'rejects the copy instead of silently dropping all attachments' do
+              expect_atomic_copy_failure(params, :forbidden)
+            end
+
+            it 'returns can_copy false so the UI disables the copy action' do
+              get "/api/v1/research_plans/#{source_plan.id}"
+
+              expect(response).to have_http_status(:ok)
+              expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be false
+            end
+          end
+        end
+
+        context 'when the request also includes a readable attachment' do
+          let!(:readable_source) do
+            create(:attachment, attachable: create(:research_plan, creator: user, collections: [collection]))
+          end
+
+          it 'copies only attachments of the source plan and skips unrelated or unknown IDs' do
+            params[:attachments].unshift({ id: -1 })
+            params[:attachments] << { id: readable_source.id }
+            params[:attachments] << { id: -2 }
+
+            expect do
+              post '/api/v1/research_plans', params: params, as: :json
+            end.to change(Attachment, :count).by(1)
+
+            expect(response).to have_http_status(:created)
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.attachments.take!.read_file).to eq(source.read_file)
+          end
+        end
+
+        context 'when the request includes attachments from a different private plan' do
+          it 'ignores foreign attachment IDs even with an authorized source plan' do
+            private_plan = create(:research_plan, collections: [create(:collection)])
+            foreign = create(:attachment, attachable: private_plan)
+            params[:attachments] << { id: foreign.id }
+            post '/api/v1/research_plans', params: params, as: :json
+
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect(copied_plan.attachments.count).to eq(1)
+            expect(copied_plan.attachments.take!.read_file).to eq(source.read_file)
+            expect(foreign.reload.attachable).to eq(private_plan)
+          end
+        end
+      end
+
       context 'when collection_id points to a read-only shared collection' do
         let(:other_user) { create(:person) }
         let(:read_only_collection) do

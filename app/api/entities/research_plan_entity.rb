@@ -33,6 +33,10 @@ module Entities
 
     private
 
+    def can_copy
+      element_policy.try(:copy_with_datasets?) || false
+    end
+
     def attachment_count
       object.attachments.size
     end

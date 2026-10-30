@@ -393,7 +393,9 @@ class Attachment < ApplicationRecord
     return if file_path.nil?
     return unless File.exist?(file_path)
 
-    attachment_attacher.attach(File.open(file_path, binmode: true))
+    File.open(file_path, binmode: true) do |io|
+      attachment_attacher.attach(io)
+    end
     raise 'File to large' unless valid?
 
     raise 'User quota exceeded' if user_quota_exceeded?

@@ -140,6 +140,12 @@ module Usecases
 
       private
 
+      def update_sample_container(sample, container, creating:)
+        return unless container
+
+        sample.container = update_datamodel(container, element: sample, creating: creating)
+      end
+
       # Reconcile a mixture sample's persisted components with the client payload,
       # deleting the ones the user removed and creating/updating the rest via the
       # shared use case — the same flow the standalone component API uses. Without
@@ -199,7 +205,7 @@ module Usecases
         subsample.metrics = sample.metrics
         subsample.dry_solvent = sample.dry_solvent
         # add new data container
-        subsample.container = update_datamodel(sample.container) if sample.container
+        update_sample_container(subsample, sample.container, creating: true)
 
         subsample.save!
         subsample.reload
@@ -238,7 +244,7 @@ module Usecases
         new_sample.skip_inventory_label_update = true
 
         # add new data container
-        new_sample.container = update_datamodel(container_info)
+        update_sample_container(new_sample, container_info, creating: true)
 
         new_sample.collections << @reaction.collections
         new_sample.save!
@@ -299,7 +305,7 @@ module Usecases
           r.assign_attributes sample.residues_attributes[0]
         end
 
-        existing_sample.container = update_datamodel(sample.container) if sample.container
+        update_sample_container(existing_sample, sample.container, creating: false)
 
         existing_sample.skip_reaction_svg_update = true
         existing_sample.save!
