@@ -100,7 +100,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       const fetchReaction = sandbox.stub(ReactionsFetcher, 'fetchById').resolves(reaction);
       let opened;
       await new ElementActions().fetchSampleById(listed.id)((sample) => { opened = sample; });
-      sinon.assert.calledOnceWithExactly(fetchReaction, reaction.id);
+      sinon.assert.calledOnceWithExactly(fetchReaction, reaction.id, { updateStores: false });
       expect(opened.hasFixedProductMass()).toBe(group === 'products');
       expect(opened.belongTo).toBeUndefined();
       expect(JSON.stringify(opened)).not.toContain('_mixtureReactionContext');
@@ -109,12 +109,31 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       editor.onChangeComponent({ type: 'ratioChanged', sampleID: 2, newRatio: 3, materialGroup: 'solid' });
       const expectedMass = group === 'products' ? massG : 0.006 * (182.22 + 3 * 94.11);
       expect(opened.amount_g).toBeCloseTo(expectedMass, 12);
-      const saved = await new Promise((resolve) => {
-        new ElementActions().updateSample(opened)(({ element }) => resolve(element));
+      const details = {
+        state: { sample: opened, validCas: true },
+        context: { notifications: { add: sinon.spy() } },
+        matchSelectedCollection: () => false,
+        checkMolfileChange: () => {},
+        setState(update) { this.state = { ...this.state, ...update }; },
+      };
+      sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+      sandbox.stub(LoadingActions.start, 'defer');
+      let pendingSave;
+      sandbox.stub(ElementActionDispatcher, 'updateSample').callsFake((sample, closeView) => {
+        pendingSave = new ElementActions().updateSample(sample, closeView)(({ element }) => {
+          details.setState({ sample: element });
+        });
       });
-      expect(saved.hasFixedProductMass()).toBe(group === 'products');
-      expect(saved.amount_g).toBeCloseTo(expectedMass, 12);
+      for (let save = 0; save < 2; save += 1) {
+        SampleDetails.prototype.handleSubmit.call(details, false);
+        await pendingSave;
+        const saved = details.state.sample;
+        expect(saved.hasFixedProductMass()).toBe(group === 'products');
+        expect(saved.amount_g).toBeCloseTo(expectedMass, 12);
+        expect(JSON.stringify(saved)).not.toContain('_mixtureReactionContext');
+      }
       if (group === 'products') {
+        const saved = details.state.sample;
         saved.updateProductComponentRatio(saved.components[1], 1);
         expect(saved.amount_g).toBeCloseTo(massG, 12);
       }
@@ -253,6 +272,10 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       expect(payload.preserve_removed_sample_ids).toEqual([draft.id]);
       expect(payload.materials.starting_materials.map((sample) => sample.id)).not.toContain(draft.id);
       expect(draft.purity).toBe(0.5);
+
+      // Closing the tab must revoke preservation, including after it has detached.
+      store.state.selecteds = [reaction];
+      expect(ReactionsFetcher.reactionSavePayload(reaction).preserve_removed_sample_ids).toEqual([]);
     });
   });
 
@@ -477,13 +500,13 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
-  ['starting_materials', 'products'].forEach((group) => {
+  ['starting_materials', 'reactants', 'products'].forEach((group) => {
     [false, true].forEach((dirty) => {
       it(`syncs a sample-list mixture ${group} tab and save payload from the reaction, dirty=${dirty}`, () => {
         const { reaction, mixture: originalMixture } = build();
-        if (group === 'products') {
+        if (group !== 'starting_materials') {
           reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== originalMixture.id);
-          reaction.products = [originalMixture];
+          reaction[group] = [originalMixture];
         }
         const mixture = reaction.sampleById(originalMixture.id);
         const tab = new Sample(JSON.parse(JSON.stringify(mixture.serializeMaterial())));
@@ -505,6 +528,9 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
         expect(tab.amount_value).toBe(mixture.amount_value);
         expect(tab.amount_unit).toBe(mixture.amount_unit);
+        expect(tab.components[0].amount_mol).toBeCloseTo(0.012, 12);
+        expect(tab.components[1].amount_mol).toBeCloseTo(0.024, 12);
+        expect(tab.isPendingToSave).toBe(true);
         expect(tab.density).toBe(mixture.density);
         expect(tab._molarity_value).toBe(mixture._molarity_value);
         expect(tab._molarity_unit).toBe(mixture._molarity_unit);
@@ -517,7 +543,125 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
         expect(tab.components).toBe(originalComponents);
         expect(tab.belongTo).toBeUndefined();
         expect(tab.isDetachedMixtureDraft).toBeUndefined();
-        expect(tab.changed).toBe(dirty);
+        expect(tab.changed).toBe(true);
+      });
+    });
+  });
+
+  [false, true].forEach((embeddedComponents) => {
+    [null, 'name', 'purity'].forEach((edit) => {
+      it(`keeps an untouched sample clean through its first render and component fetch, embedded=${embeddedComponents}, edit=${edit}`, async () => {
+        const { mixture } = build();
+        const data = JSON.parse(JSON.stringify(mixture.serializeMaterial()));
+        if (!embeddedComponents) delete data.components;
+        const tab = new Sample(data);
+        const componentResponse = mixture.components.map((component) => ({
+          ...component.serializeComponent(),
+          component_properties: {
+            ...component.serializeComponent().component_properties,
+            molecule: { ...component.molecule },
+          },
+        }));
+        let resolveComponents;
+        const response = new Promise((resolve) => { resolveComponents = resolve; });
+        sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').returns(response);
+        sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+        const store = Object.create(ElementStore.StoreModel.prototype);
+        store.state = { selecteds: [], currentElement: null, refreshCoefficient: [] };
+        store.setState = (update) => { Object.assign(store.state, update); };
+        const editor = new SampleDetailsComponents({ sample: tab, onChange: () => {} });
+
+        store.handleFetchSampleById(tab);
+        editor.render();
+
+        expect(tab.isPendingToSave).toBe(false);
+        expect(store.isDeletable(tab)).toBe(true);
+        if (edit === 'name') tab.name = 'Name typed while loading';
+        if (edit === 'purity') { tab.purity = 0.9; tab.changed = true; }
+        resolveComponents(componentResponse);
+        await response;
+        await Promise.resolve();
+        editor.render();
+
+        expect(tab.isPendingToSave).toBe(edit !== null);
+        expect(store.isDeletable(tab)).toBe(edit === null);
+        expect(tab.changed).toBe(edit !== null);
+        expect(tab.amount_g).toBeCloseTo(massG, 12);
+        expect(tab.components[0].amount_mol).toBeCloseTo(0.006, 12);
+        expect(tab.components[1].amount_mol).toBeCloseTo(0.012, 12);
+        expect(tab.components.every((component) => component instanceof Component)).toBe(true);
+        if (edit === 'name') expect(tab.name).toBe('Name typed while loading');
+        if (edit === 'purity') expect(tab.purity).toBe(0.9);
+        sinon.assert.notCalled(SamplesFetcher.update);
+        sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+      });
+    });
+  });
+
+  ['reactants', 'products'].forEach((group) => {
+    [false, true].forEach((componentsLoadedFirst) => {
+      [false, true].forEach((dirty) => {
+        it(`syncs the first ${group} amount edit during sample-list loading, components first=${componentsLoadedFirst}, dirty=${dirty}`, async () => {
+          const { reaction, mixture: originalMixture } = build();
+          reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== originalMixture.id);
+          reaction[group] = [originalMixture];
+          const mixture = reaction.sampleById(originalMixture.id);
+          const data = JSON.parse(JSON.stringify(mixture.serializeMaterial()));
+          delete data.components;
+          const tab = new Sample(data);
+          const componentResponse = mixture.components.map((component) => ({
+            ...component.serializeComponent(),
+            component_properties: {
+              ...component.serializeComponent().component_properties,
+              molecule: { ...component.molecule },
+            },
+          }));
+          let resolveComponents;
+          const response = new Promise((resolve) => { resolveComponents = resolve; });
+          sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').returns(response);
+          sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+          const store = Object.create(ElementStore.StoreModel.prototype);
+          store.state = { selecteds: [reaction], currentElement: reaction, refreshCoefficient: [] };
+          store.setState = (update) => { Object.assign(store.state, update); };
+          const finishLoading = async () => {
+            resolveComponents(componentResponse);
+            await response;
+            await Promise.resolve();
+          };
+          store.handleFetchSampleById(tab);
+          if (dirty) { tab.purity = 0.9; tab.changed = true; }
+          if (componentsLoadedFirst) {
+            await finishLoading();
+            expect(tab.isPendingToSave).toBe(dirty);
+          }
+          mixture.setAmount({ value: massG * 2, unit: 'g' });
+          const reactionBefore = reaction.checksum();
+
+          store.synchronizeElements(reaction);
+          expect(tab.isPendingToSave).toBe(true);
+          if (!componentsLoadedFirst) await finishLoading();
+
+          expect(tab.isPendingToSave).toBe(true);
+          expect(tab.amount_g).toBeCloseTo(massG * 2, 12);
+          expect(tab.components[0].amount_mol).toBeCloseTo(0.012, 12);
+          expect(tab.components[1].amount_mol).toBeCloseTo(0.024, 12);
+          expect(tab.components[0].amount_g).toBeCloseTo(0.012 * 182.22, 12);
+          expect(tab.components[1].amount_g).toBeCloseTo(0.024 * 94.11, 12);
+          expect(tab.isPendingToSave).toBe(true);
+          expect(tab.purity).toBe(dirty ? 0.9 : 1);
+          expect(reaction.checksum()).toBe(reactionBefore);
+          expect(tab.belongTo).toBeUndefined();
+          expect(tab.isDetachedMixtureDraft).toBeUndefined();
+
+          // A second sync must neither scale again nor clear the pending save.
+          store.synchronizeElements(reaction);
+          expect(tab.components[0].amount_mol).toBeCloseTo(0.012, 12);
+          expect(tab.isPendingToSave).toBe(true);
+          await new ElementActions().updateSample(tab)(sinon.spy());
+          const saved = SamplesFetcher.update.firstCall.args[0];
+          expect(saved.components[1].amount_mol).toBeCloseTo(0.024, 12);
+          expect(saved.amount_g).toBeCloseTo(massG * 2, 12);
+        });
       });
     });
   });

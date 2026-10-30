@@ -46,9 +46,9 @@ export default class ReactionsFetcher {
     return { sort_column: sortColumn, sort_direction: direction };
   }
 
-  static fetchById(id) {
+  static fetchById(id, options = {}) {
     return ApiClient.getJson(`/api/v1/reactions/${id}`)
-      .then((json) => this.reactionElement(json, id));
+      .then((json) => this.reactionElement(json, id, options));
   }
 
   static findByShortLabel(shortLabel) {
@@ -85,10 +85,11 @@ export default class ReactionsFetcher {
   }
 
   static reactionSavePayload(reaction) {
-    const preserved = new Set(reaction._detachedMixtureMaterialIds || []);
+    const preserved = new Set();
     const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
     selecteds.forEach((sample) => {
-      if (sample.isDetachedMixtureDraft && sample.belongTo?.id === reaction.id
+      const origin = sample.isDetachedMixtureDraft ? sample.belongTo : sample._mixtureReactionContext;
+      if (sample.isMixture?.() && origin?.id === reaction.id
         && !sample.isNew && !reaction.sampleById(sample.id)) preserved.add(sample.id);
     });
     return { ...reaction.serialize(), preserve_removed_sample_ids: [...preserved] };
@@ -113,7 +114,7 @@ export default class ReactionsFetcher {
     });
   }
 
-  static reactionElement(json, id) {
+  static reactionElement(json, id, { updateStores = true } = {}) {
     if (json.error) {
       return new Reaction({ id: `${id}:error:Reaction ${id} is not accessible!` });
     }
@@ -122,17 +123,19 @@ export default class ReactionsFetcher {
 
     const reaction = new Reaction(json.reaction).recordPersistedMaterials();
     Object.defineProperty(reaction, '_mixtureMaterialIdMap', { value: json.material_id_map || {} });
-    const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
-    if (vesselSize) {
-      GasPhaseReactionActions.setReactionVesselSize(vesselSize);
-    }
-    if (catalystMoles) {
-      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
-    }
-    const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
-    if (weightPercentageReference) {
-      WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    if (updateStores) {
+      const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+      if (vesselSize) {
+        GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+      }
+      if (catalystMoles) {
+        GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+      }
+      const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+      if (weightPercentageReference) {
+        WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+      }
     }
     if (json.literatures && json.literatures.length > 0) {
       const tliteratures = json.literatures.map((literature) => new Literature(literature));

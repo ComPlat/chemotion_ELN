@@ -48,6 +48,33 @@ describe('ReactionDetailsScheme mixture amount input units', () => {
   });
 });
 
+describe('ReactionDetailsScheme mixture maximum amount fallback', () => {
+  [undefined, null, 0, 400].forEach((relativeWeight) => {
+    it(`calculates a finite maximum and detects excess mass with relative MW=${relativeWeight}`, () => {
+      const product = {
+        id: 'product', type: 'sample', isMixture: () => true, isGas: () => false,
+        reference_component: { relative_molecular_weight: relativeWeight },
+        molecule_molecular_weight: 100, purity: 0.5, coefficient: 1,
+        amount_mol: 0.03, amount_g: 5, amount_value: 5, gas_type: 'off',
+      };
+      const scheme = {
+        props: { reaction: {
+          referenceMaterial: { amount_mol: 0.01, amount_value: 0.01, coefficient: 1 },
+          updateReferenceAmountForLockedEquivalents: () => {},
+        } },
+        state: { lockEquivColumn: false },
+        triggerNotification: sinon.spy(),
+      };
+
+      ReactionDetailsScheme.prototype.updatedSamplesForAmountChange.call(scheme, [product], product, 'products');
+
+      expect(product.maxAmount).toBe(relativeWeight ? 4 : 2);
+      expect(product.equivalent).toBe(1);
+      sinon.assert.calledOnce(scheme.triggerNotification);
+    });
+  });
+});
+
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
