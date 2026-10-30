@@ -5,8 +5,7 @@ require 'rails_helper'
 # Authorization scope of the analyses/container tree applied on every element save.
 # The tree is supplied by the client, so the use case must only ever create, update, delete or move
 # containers and attachments that belong to the element being saved (or the caller's own unattached
-# uploads). A container or attachment id that falls outside the saved element's own tree is ignored,
-# even when another user's element owns it.
+# uploads). A container or attachment id that falls outside the saved element's own tree is ignored.
 RSpec.describe Usecases::Containers::UpdateDatamodel do
   subject(:usecase) { described_class.new(saver) }
 
@@ -89,7 +88,7 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
       expect(element_attachment.attachable_type).to eq('Sample')
     end
 
-    it 'denies a rootless/orphan root and applies none of its children' do
+    it 'does not apply children to a rootless/orphan root' do
       orphan_root = create(:container, container_type: 'root')
       orphan_child = create(:container, parent: orphan_root, container_type: 'analysis')
       orphan_attachment = create(:attachment, attachable: orphan_child, created_for: other.id)
@@ -99,6 +98,23 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
 
       expect(Container.exists?(orphan_child.id)).to be true
       expect(Attachment.exists?(orphan_attachment.id)).to be true
+    end
+
+    it 'refuses a root that belongs to an element the user may not update' do
+      other_root = other_sample.container
+      tree = { id: other_root.id, is_new: false, container_type: 'root', children: [] }
+
+      expect { usecase.update_datamodel(tree) }
+        .to raise_error(Usecases::Containers::Errors::Unauthorized)
+
+      expect(other_root.reload.containable).to eq(other_sample)
+      expect(other_sample.reload.container).to eq(other_root)
+    end
+
+    it 'treats a new or empty container as a no-op without touching anything' do
+      # An empty container (no id) is what create endpoints send; it must not raise.
+      expect { usecase.update_datamodel({}) }.not_to raise_error
+      expect(usecase.update_datamodel({})).to be_nil
     end
   end
 

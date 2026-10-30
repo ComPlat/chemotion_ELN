@@ -13,6 +13,12 @@ class API < Grape::API
   prefix :api
   version 'v1'
 
+  # A saved container tree whose root is not an element the user may update (or is missing/rootless)
+  # is refused by Usecases::Containers::UpdateDatamodel rather than silently applied.
+  rescue_from Usecases::Containers::Errors::Unauthorized do |_e|
+    error!({ error: 'You are not allowed to update this container tree' }, 403)
+  end
+
   # TODO: needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do # rubocop:disable Metrics/BlockLength
