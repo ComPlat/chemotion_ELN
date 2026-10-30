@@ -1704,8 +1704,8 @@ export default class ReactionDetailsScheme extends React.Component {
     let stoichiometryCoeff = 1.0;
 
     return samples.map((sample) => {
-      const gramsPerMol = sample.isMixture?.() ? sample.reference_component?.relative_molecular_weight
-        : sample.molecule_molecular_weight / (sample.purity || 1);
+      const gramsPerMol = (sample.isMixture?.() && sample.reference_component?.relative_molecular_weight)
+        || sample.molecule_molecular_weight / (sample.purity || 1);
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
 
       // If equivalents are locked and this is the reference sample,

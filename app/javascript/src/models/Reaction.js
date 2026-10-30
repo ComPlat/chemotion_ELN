@@ -1111,9 +1111,9 @@ export default class Reaction extends Element {
           }
 
           group[index] = mat;
-          // A saved sample carries its stock concentration. The attached material
-          // needs the reaction concentration even when the equivalent column is locked.
-          mat.preserveConcentration = false;
+          // Saved mixtures carry stock concentration and need reaction concentration.
+          // Ordinary materials can carry a concentration typed in the reaction.
+          if (mat.isMixture()) mat.preserveConcentration = false;
           mat.updateConcentrationFromSolvent(this);
           mat.updateChecksum();
           break;

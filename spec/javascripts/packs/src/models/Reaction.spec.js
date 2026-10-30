@@ -4,6 +4,7 @@ import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
   from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -112,6 +113,24 @@ describe('Reaction.updateMaterial concentration after sample-editor save', () =>
     reaction.updateMaterial(savedMixture(1));
 
     expect(reaction.sampleById('mixture').concn).toBe(null);
+  });
+
+  it('keeps a typed ordinary-material concentration when switching away from its sample tab', () => {
+    const reaction = build();
+    reaction.type = 'reaction';
+    const material = reaction.sampleById('other');
+    material.concn = 7;
+    material.preserveConcentration = true;
+    const tab = new Sample(material);
+    tab.type = 'sample';
+    tab.tag = { taggable_data: { reaction_id: reaction.id } };
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
+
+    store.synchronizeElements(tab);
+
+    expect(reaction.sampleById('other').concn).toBe(7);
+    expect(reaction.sampleById('other').preserveConcentration).toBe(true);
   });
 
   it('derives an ordinary saved sample concentration from the reaction rather than its stock molarity', () => {

@@ -74,7 +74,7 @@ const loadMixtureReactionContext = async (sample) => {
     const ids = [...new Set((sample.tag?.taggable_data?.resources || [])
       .filter((resource) => resource.resource_context_type === 'Reaction' && resource.resource_context_id != null)
       .map((resource) => resource.resource_context_id))];
-    const results = await Promise.allSettled(ids.map((id) => ReactionsFetcher.fetchById(id)));
+    const results = await Promise.allSettled(ids.map((id) => ReactionsFetcher.fetchById(id, { updateStores: false })));
     const linked = results.filter((result) => result.status === 'fulfilled')
       .map((result) => result.value).filter((element) => element.samples?.some((entry) => entry.id === sample.id));
     reaction = linked.find((element) => element.products?.some((entry) => entry.id === sample.id)) || linked[0];
