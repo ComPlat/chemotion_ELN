@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+# Registered first: Delayed::Worker builds its lifecycle (and with it the plugin list) on first use, and the
+# recurring-jobs setup below already enqueues jobs while booting.
+require Rails.root.join('lib/delayed/logidze_uuid_plugin')
+Delayed::Worker.plugins << Delayed::LogidzeUuidPlugin
+
 # Delayed::Worker.destroy_failed_jobs = false
 # Delayed::Worker.sleep_delay = 60
 # Delayed::Worker.max_attempts = 3

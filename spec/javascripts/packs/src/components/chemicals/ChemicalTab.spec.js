@@ -1366,3 +1366,35 @@ describe('ChemicalTab fetched properties copy button', () => {
     expect(copyButton().prop('html')).toContain('<td style="padding:2pt 12pt 2pt 0;vertical-align:top;font-weight:bold;">Form</td>');
   });
 });
+
+describe('ChemicalTab saving a change the server refuses', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('reports a failed save, keeps the edit pending and notifies', async () => {
+    sinon.stub(ChemicalFetcher, 'update').resolves({ error: '401 Unauthorized' });
+    const onInventorySaveComplete = sinon.spy();
+    const editChemical = sinon.spy();
+    const instance = shallow(React.createElement(ChemicalTab, {
+      sample,
+      type: 'sample',
+      saveInventory: false,
+      editChemical,
+      setSaveInventory: sinon.spy(),
+      handleUpdateSample: sinon.spy(),
+      onInventorySaveComplete,
+    })).instance();
+    const notify = sinon.stub(instance, 'notify');
+    const chemical = createChemical([{ status: 'Ordered' }]);
+    chemical.isNew = false;
+    instance.setState({ chemical });
+
+    instance.handleSubmitSave();
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    expect(onInventorySaveComplete.calledOnceWith(false)).toBe(true);
+    expect(editChemical.calledWith(true)).toBe(true);
+    expect(notify.calledOnce).toBe(true);
+  });
+});

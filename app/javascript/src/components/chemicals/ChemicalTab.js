@@ -200,7 +200,18 @@ export default class ChemicalTab extends React.Component {
 
     saveRequest
       .then((response) => {
-        if (response) {
+        // ChemotionApiClient resolves error statuses too; a refusal arrives as { error }.
+        if (response?.error) {
+          if (isNewChemical) chemical.isNew = true;
+          editChemical(true);
+          this.notify({
+            title: 'Inventory data not saved',
+            message: `The server refused the change (${response.error}).`,
+            level: 'error',
+            position: 'tc',
+          });
+          if (onInventorySaveComplete) onInventorySaveComplete(false);
+        } else if (response) {
           if (isNewChemical) {
             this.setState({ chemical });
           } else {

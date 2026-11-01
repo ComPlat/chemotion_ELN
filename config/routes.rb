@@ -55,10 +55,6 @@ Rails.application.routes.draw do
 
   get 'editor',      to: 'pages#editor'
 
-  # Standalone page for ChemSpectra
-  get 'chemspectra', to: 'pages#chemspectra'
-  get 'chemspectra-editor', to: 'pages#chemspectra_editor'
-
   # route for the radar oauth callback
   namespace :oauth do
     get 'radar/archive', to: 'radar#archive'

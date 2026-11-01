@@ -63,41 +63,56 @@ module Chemotion
         optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
         optional :attachments, type: Array, desc: 'Attachments'
+        optional :source_plan_id, type: Integer, desc: 'Research plan to copy attachments from'
         optional :literatures, type: Hash
       end
       post do
         collection = writable_collection_for(params[:collection_id])
         error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
 
-        attributes = {
-          name: params[:name],
-          body: params[:body],
-        }
+        copier = Usecases::Attachments::Copy.new(
+          params[:attachments], current_user, source_plan_id: params[:source_plan_id]
+        )
+        copier.transaction do
+          attributes = {
+            name: params[:name],
+            body: params[:body],
+          }
 
-        attributes.delete(:can_copy)
-        literatures = attributes.delete(:literatures)
-        research_plan = ResearchPlan.new attributes
-        research_plan.creator = current_user
-        research_plan.container = update_datamodel(params[:container])
-        research_plan.save!
+          attributes.delete(:can_copy)
+          literatures = attributes.delete(:literatures)
+          research_plan = ResearchPlan.new attributes
+          research_plan.creator = current_user
+          research_plan.container = update_datamodel(params[:container], element: research_plan, creating: true)
+          research_plan.save!
 
-        create_literatures_and_literals(research_plan, literatures)
+          research_plan.collections << collection if collection
 
-        research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        clone_attachs = params[:attachments]&.reject { |a| a[:is_new] }
-        Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
+          all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+          all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
+          # Avoid violating the unique (research_plan_id, collection_id) index when
+          # the chosen collection is already the user's "All" collection.
+          research_plan.collections << all_coll if all_coll && research_plan.collections.exclude?(all_coll)
 
-        research_plan.collections << collection if collection
+          create_literatures_and_literals(research_plan, literatures)
 
-        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
-        all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
-        # Avoid violating the unique (research_plan_id, collection_id) index when
-        # the chosen collection is already the user's "All" collection.
-        research_plan.collections << all_coll if all_coll && research_plan.collections.exclude?(all_coll)
+          research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
+          copier.execute!(research_plan)
 
-        update_element_labels(research_plan, params[:user_labels], current_user.id)
-        @element_policy = ElementPolicy.new(current_user, research_plan)
-        present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan, policy: @element_policy
+          update_element_labels(research_plan, params[:user_labels], current_user.id)
+          @element_policy = ElementPolicy.new(current_user, research_plan)
+          present research_plan.reload,
+                  with: Entities::ResearchPlanEntity,
+                  root: :research_plan,
+                  policy: @element_policy
+          present :attachments_omitted, true if copier.attachments_omitted
+        end
+      rescue Usecases::Attachments::Copy::Forbidden
+        error!('403 Forbidden', 403)
+      rescue Usecases::Attachments::Copy::InvalidInput => e
+        error!(e.message, 400)
+      rescue Usecases::Attachments::Copy::Error
+        error!('Unable to copy attachment files', 422)
       end
 
       namespace :table_schemas do
@@ -200,8 +215,9 @@ module Chemotion
         end
 
         put do
+          research_plan = ResearchPlan.find(params[:id])
           attributes = declared(params.except(:segments, :user_labels), include_missing: false)
-          update_datamodel(attributes[:container])
+          update_datamodel(attributes[:container], element: research_plan, creating: false)
           attributes.delete(:container)
           attributes.delete(:literatures)
 

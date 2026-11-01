@@ -1664,6 +1664,20 @@ export default class ReactionDetailsScheme extends React.Component {
     return { mFull, errorMsg };
   }
 
+  /**
+   * Whether a polymer residue carries a loading the user chose, which the
+   * mass-difference recalculation must not overwrite. The default residue
+   * ('external' with no external value) does not count as user-defined.
+   * @param {Object} customInfo - residue custom_info
+   * @returns {boolean}
+   */
+  static hasUserDefinedLoading(customInfo = {}) {
+    const { loading_type: loadingType, external_loading: externalLoading } = customInfo;
+    if (!loadingType || loadingType === 'mass_diff') return false;
+    if (loadingType === 'external') return parseFloat(externalLoading) > 0;
+    return true;
+  }
+
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
     if (!updatedS.amount_g || updatedS.amount_g === 0) {
       updatedS.equivalent = 0;
@@ -1674,8 +1688,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
     updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
 
-    const currentLoadingType = updatedS.residues[0].custom_info.loading_type;
-    const shouldOverwriteLoading = !currentLoadingType || currentLoadingType === 'mass_diff';
+    const shouldOverwriteLoading = !ReactionDetailsScheme.hasUserDefinedLoading(updatedS.residues[0].custom_info);
 
     if (shouldOverwriteLoading) {
       updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';

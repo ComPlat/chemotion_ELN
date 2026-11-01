@@ -1,5 +1,7 @@
 import Attachment from 'src/models/Attachment';
 import ResearchPlan from 'src/models/ResearchPlan';
+/* global describe, it */
+
 import expect from 'expect';
 describe('ResearchPlan', () => {
   const researchPlan = ResearchPlan.buildEmpty();
@@ -258,6 +260,50 @@ describe('ResearchPlan', () => {
     it('defaults can_update to true for a newly built research plan', () => {
       const plan = ResearchPlan.buildEmpty(1);
       expect(plan.can_update).toEqual(true);
+    });
+  });
+
+  describe('source plan for copying', () => {
+    it('serializes the persisted source ID when copying through the collection action', () => {
+      const source = ResearchPlan.buildEmpty(1);
+      source.id = 19;
+      source.is_new = false;
+
+      const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(source, 2);
+
+      expect(copy.id).not.toEqual(source.id);
+      expect(copy.serialize().source_plan_id).toEqual(19);
+      expect(copy.serialize().collection_id).toEqual(2);
+    });
+
+    it('preserves the original source when duplicating an unsaved copy draft', () => {
+      const source = ResearchPlan.buildEmpty(1);
+      source.id = 19;
+      source.is_new = false;
+
+      const draft = source.buildCopy();
+
+      expect(draft.buildCopy().serialize().source_plan_id).toEqual(19);
+    });
+
+    it('does not use an unsaved plan UUID as the source when copying through the collection action', () => {
+      const draft = ResearchPlan.buildEmpty(1);
+      const copy = ResearchPlan.copyFromResearchPlanAndCollectionId(draft, 2);
+
+      expect(copy.id).not.toEqual(draft.id);
+      expect(JSON.parse(JSON.stringify(copy.serialize())).source_plan_id).toEqual(undefined);
+    });
+
+    it('does not introduce a source ID when duplicating a fresh draft more than once', () => {
+      const draft = ResearchPlan.buildEmpty(1);
+
+      expect(draft.buildCopy().buildCopy().serialize().source_plan_id).toEqual(undefined);
+    });
+
+    it('does not send a source ID when creating a new plan', () => {
+      const plan = ResearchPlan.buildEmpty(1);
+
+      expect(JSON.parse(JSON.stringify(plan.serialize())).source_plan_id).toEqual(undefined);
     });
   });
 });

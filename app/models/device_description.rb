@@ -127,48 +127,36 @@ class DeviceDescription < ApplicationRecord
 
   after_create :set_short_label
 
+  SEARCH_TEXT_FIELDS = %w[
+    name short_label vendor_device_name vendor_device_id serial_number vendor_company_name
+  ].freeze
+
   def self.search_text_filter(term, field)
     Arel.sql(
-      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+      sanitize_sql_array(
+        ["COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE ?), '{}')", term],
+      ),
     )
   end
 
-  def self.search_array_filter(term, table, field)
-    Arel.sql(
-      'COALESCE(' \
-      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
-      ')',
-    )
-  end
-
-  def self.search_jsonb_label_filter(term, table, field)
-    Arel.sql(
-      'COALESCE(' \
-      "(SELECT array_agg(DISTINCT elem->'data'->>'label') FROM #{table} s " \
-      "CROSS JOIN jsonb_array_elements(s.#{field}) elem WHERE elem->'data'->>'label' ILIKE '#{term}'), '{}'" \
-      ')',
-    )
-  end
-
+  # Aggregates the matching values of the current relation (e.g. scoped to a collection) into one jsonb object.
   def self.by_search_fields(query)
     term = "%#{sanitize_sql_like(query)}%"
 
-    json_expr = Arel.sql(
-      'jsonb_build_object(' \
-      "'device_description_name', #{search_text_filter(term, 'device_descriptions.name')}, " \
-      "'device_description_short_label', #{search_text_filter(term, 'device_descriptions.short_label')}, " \
-      "'device_description_vendor_device_name', #{search_text_filter(term,
-                                                                     'device_descriptions.vendor_device_name')}, " \
-      "'device_description_vendor_device_id', #{search_text_filter(term, 'device_descriptions.vendor_device_id')}, " \
-      "'device_description_serial_number', #{search_text_filter(term, 'device_descriptions.serial_number')}, " \
-      "'device_description_vendor_company_name', #{search_text_filter(term,
-                                                                      'device_descriptions.vendor_company_name')}, " \
-      "'device_description_general_tags', #{search_array_filter(term, 'device_descriptions', 'general_tags')}, " \
-      "'device_description_ontologies', #{search_jsonb_label_filter(term, 'device_descriptions', 'ontologies')} " \
-      ')',
-    )
+    fields = SEARCH_TEXT_FIELDS.map do |field|
+      "'device_description_#{field}', #{search_text_filter(term, "device_descriptions.#{field}")}"
+    end
+    fields << "'device_description_general_tags', #{search_text_filter(term, 'dd_general_tag')}"
+    fields << "'device_description_ontologies', #{search_text_filter(term, "dd_ontology->'data'->>'label'")}"
 
-    select(json_expr.as('result')).take.result
+    select(Arel.sql("jsonb_build_object(#{fields.join(', ')})").as('result'))
+      .joins('LEFT JOIN LATERAL unnest(device_descriptions.general_tags) dd_general_tag ON TRUE')
+      .joins(
+        'LEFT JOIN LATERAL jsonb_array_elements(' \
+        "CASE jsonb_typeof(device_descriptions.ontologies) WHEN 'array' " \
+        "THEN device_descriptions.ontologies ELSE '[]'::jsonb END) dd_ontology ON TRUE",
+      )
+      .take.result
   end
 
   def searchable_general_tags

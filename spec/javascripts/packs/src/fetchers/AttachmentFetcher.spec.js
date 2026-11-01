@@ -64,4 +64,16 @@ describe('AttachmentFetcher.combineSpectra', () => {
     expect(body).toEqual({ spectra_ids: [10, 11], front_spectra_idx: 0 });
     expect(Object.prototype.hasOwnProperty.call(body, 'extras')).toEqual(false);
   });
+
+  it('rejects when the combine is refused', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ error: '401 Unauthorized' }), { status: 401 }));
+
+    let error;
+    try {
+      await AttachmentFetcher.combineSpectra([10, 11], 0);
+    } catch (e) {
+      error = e;
+    }
+    expect(error.message).toEqual('Could not update the combined spectra image (401)');
+  });
 });

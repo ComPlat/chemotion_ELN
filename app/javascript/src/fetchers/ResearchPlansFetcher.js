@@ -6,6 +6,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
@@ -30,14 +31,41 @@ export default class ResearchPlansFetcher {
 
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
+    let responseStatus;
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container)
-      .then(() => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() }))
+      .then(() => ApiClient.postJson('/api/v1/research_plans', {
+        body: researchPlan.serialize(),
+        handleResponseSuccess: (response) => {
+          responseStatus = response.status;
+          return response.json();
+        },
+      }))
       .then((json) => {
+        if (json.error) {
+          const serverMessage = [400, 422].includes(responseStatus) && typeof json.error === 'string'
+            ? json.error.trim() : '';
+          rootStore.notificationsStore.add({
+            message: json.error === '403 Forbidden'
+              ? 'Research plan could not be created. Check your source plan and destination collection permissions.'
+              : serverMessage || 'Research plan could not be created. Please try again.',
+            level: 'error',
+          });
+          throw new Error(json.error);
+        }
         const { id } = json.research_plan;
         return this.researchPlanAttachments(researchPlan, id)
           .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, id, 'ResearchPlan', true))
-          .then(() => this.researchPlanElement(json, id));
+          .then(() => {
+            if (json.attachments_omitted) {
+              rootStore.notificationsStore.add({
+                message: 'Research plan created, but some attachments could not be copied and were omitted.',
+                level: 'warning',
+                autoDismiss: 0,
+              });
+            }
+            return this.researchPlanElement(json, id);
+          });
       });
   }
 

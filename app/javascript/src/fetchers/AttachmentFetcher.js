@@ -451,8 +451,12 @@ export default class AttachmentFetcher {
         const fetchedFilesIdxs = json.files.map((file) => file.id);
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
 
+        // The spectrum is saved either way: a failed combine must not turn the save into an error.
         return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params)
-          .then(() => json); // this appears to be intentional, I didn't change this from the original code
+          .then(() => json, (error) => {
+            console.log(error); // eslint-disable-line no-console
+            return json;
+          });
       });
   }
 
@@ -550,27 +554,6 @@ export default class AttachmentFetcher {
     );
   }
 
-  static postCombineSpectra(body) {
-    return fetch(
-      '/api/v1/chemspectra/file/combine_spectra',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      },
-    )
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static postCombineSpectraComparison(body) {
     return fetch(
       '/api/v1/chemspectra/file/combine_spectra_comparison',
@@ -593,15 +576,25 @@ export default class AttachmentFetcher {
   }
 
   static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const extras = extraParams != null ? JSON.stringify(decamelizeKeys(extraParams)) : null;
-    const body = {
-      spectra_ids: jcampIds,
-      front_spectra_idx: curveIdx,
-    };
-    if (extras != null) {
-      body.extras = extras;
+    const body = { spectra_ids: jcampIds, front_spectra_idx: curveIdx };
+    if (extraParams != null) {
+      body.extras = JSON.stringify(decamelizeKeys(extraParams));
     }
-    return AttachmentFetcher.postCombineSpectra(body);
+    // Rejects on a non-2xx answer (the default handlers resolve the error body as a result),
+    // so a refused or failed combine reaches the caller.
+    return ApiClient.postJson(
+      '/api/v1/chemspectra/file/combine_spectra',
+      {
+        body,
+        handleResponseSuccess: (response) => {
+          if (!response.ok) {
+            throw new Error(`Could not update the combined spectra image (${response.status})`);
+          }
+          return response.json();
+        },
+        handleResponseError: (error) => { throw error; },
+      }
+    );
   }
 
   static combineSpectraComparison(jcampIds, containerId, curveIdx, editedDataSpectra) {

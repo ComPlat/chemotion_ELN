@@ -220,7 +220,16 @@ export default class SampleDetails extends React.Component {
       const snapshot = _pendingChemicalCreate;
       _pendingChemicalCreate = null;
       ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
-        .then(() => {
+        .then((result) => {
+          if (result?.error) {
+            this.context.notifications.add({
+              title: 'Inventory data not saved',
+              message: `The server refused the inventory data of the new sample (${result.error}).`,
+              level: 'error',
+              position: 'tc',
+            });
+            return;
+          }
           // Re-fetch chemical so ChemicalTab renders the newly-created record
           // without requiring a page refresh.
           this.chemicalTabRef.current?.fetchChemical(sample);

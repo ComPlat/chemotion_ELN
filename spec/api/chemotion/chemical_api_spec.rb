@@ -3,14 +3,14 @@
 require 'rails_helper'
 
 describe Chemotion::ChemicalAPI do
-  let!(:unauthorized_user) { create(:person) }
-  let!(:s) { create(:sample) }
+  let!(:user) { create(:person) }
+  let!(:s) { create(:sample, collections: [create(:collection, user: user)]) }
   let!(:chemical) { create(:chemical, sample_id: s.id) }
 
   # Global authentication stub to avoid extra nesting contexts
   before do
     allow(WardenAuthentication).to receive(:new).and_return(instance_double(WardenAuthentication,
-                                                                            current_user: unauthorized_user))
+                                                                            current_user: user))
   end
 
   describe 'GET find chemical /api/v1/chemicals' do
@@ -28,7 +28,8 @@ describe Chemotion::ChemicalAPI do
 
     context 'when chemical does not exist' do
       it 'returns new chemical object with null id' do
-        get "/api/v1/chemicals?sample_id=#{s.id + 100_000}"
+        sample_without_chemical = create(:sample, collections: s.collections)
+        get "/api/v1/chemicals?sample_id=#{sample_without_chemical.id}"
         expect(response.status).to eq 200
         expect(response.body).to include('"id":null')
       end
@@ -60,7 +61,7 @@ describe Chemotion::ChemicalAPI do
       it 'returns error payload (201 status due to implementation)' do
         allow(Chemical).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Chemical.new))
         post '/api/v1/chemicals/create', params: {
-          sample_id: 999_999, cas: '10-10-0', chemical_data: [{ 'x' => 'y' }]
+          sample_id: s.id, cas: '10-10-0', chemical_data: [{ 'x' => 'y' }]
         }
         expect(response.status).to eq 201
         expect(response.body).to include('error')
@@ -185,7 +186,7 @@ describe Chemotion::ChemicalAPI do
 
     # Insert success and error handling specs from additional coverage
     context 'when chemical_data present (success path)' do
-      let(:sample2) { create(:sample) }
+      let(:sample2) { create(:sample, collections: s.collections) }
       let(:chem) { create(:chemical, sample_id: sample2.id) }
 
       it 'updates chemical when chemical_data present' do
@@ -199,7 +200,7 @@ describe Chemotion::ChemicalAPI do
     end
 
     context 'when update raises ActiveRecord::RecordInvalid' do
-      let(:sample2) { create(:sample) }
+      let(:sample2) { create(:sample, collections: s.collections) }
 
       it 'returns error hash with 200' do
         chem = create(:chemical, sample_id: sample2.id)
@@ -213,7 +214,7 @@ describe Chemotion::ChemicalAPI do
     end
 
     context 'when update raises ActiveRecord::StatementInvalid' do
-      let(:sample2) { create(:sample) }
+      let(:sample2) { create(:sample, collections: s.collections) }
 
       it 'returns error hash with 200' do
         chem = create(:chemical, sample_id: sample2.id)
@@ -338,7 +339,7 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'POST save safety data sheet missing nested product info' do
-    let(:sample2) { create(:sample) }
+    let(:sample2) { create(:sample, collections: s.collections) }
 
     it 'returns 400 due to missing vendor product info' do
       post '/api/v1/chemicals/save_safety_datasheet',
@@ -559,7 +560,7 @@ describe Chemotion::ChemicalAPI do
 
     before do
       allow(WardenAuthentication).to receive(:new).and_return(warden_authentication_instance)
-      allow(warden_authentication_instance).to receive(:current_user).and_return(unauthorized_user)
+      allow(warden_authentication_instance).to receive(:current_user).and_return(user)
       allow(Chemotion::ManualSdsService).to receive(:create_manual_sds)
     end
 
@@ -633,7 +634,8 @@ describe Chemotion::ChemicalAPI do
   context 'with SBMM-based chemicals' do
     let(:sbmm) { create(:uniprot_sbmm) }
     let(:sbmm_sample) do
-      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: unauthorized_user)
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                   collections: s.collections.to_a)
     end
     let(:sbmm_chemical) { create(:chemical, :for_sbmm, sequence_based_macromolecule_sample: sbmm_sample) }
 
@@ -769,6 +771,172 @@ describe Chemotion::ChemicalAPI do
       it 'accepts a chemical that belongs only to an SBMM sample' do
         chem = Chemical.new(sequence_based_macromolecule_sample_id: sbmm_sample.id, chemical_data: [{}])
         expect(chem).to be_valid
+      end
+    end
+  end
+
+  describe 'authorization' do
+    let(:foreign_collection) { create(:collection) }
+    let(:foreign_sample) { create(:sample, collections: [foreign_collection]) }
+    let!(:foreign_chemical) do
+      create(:chemical, sample_id: foreign_sample.id, chemical_data: [{ 'status' => 'Available' }])
+    end
+
+    def update_foreign_chemical
+      put '/api/v1/chemicals', params: { sample_id: foreign_sample.id, chemical_data: [{ 'status' => 'Ordered' }] }
+    end
+
+    def share_foreign_collection(permission, sample_detail_level, sbmm_detail_level: 10)
+      create(:collection_share, collection: foreign_collection, shared_with: user,
+                                permission_level: CollectionShare.permission_level(permission),
+                                sample_detail_level: sample_detail_level,
+                                sequencebasedmacromoleculesample_detail_level: sbmm_detail_level)
+    end
+
+    context 'when the sample is in no collection the user owns or is shared' do
+      it 'refuses to read the chemical' do
+        get "/api/v1/chemicals?sample_id=#{foreign_sample.id}"
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'refuses to update the chemical' do
+        update_foreign_chemical
+        expect(response).to have_http_status(:unauthorized)
+        expect(foreign_chemical.reload.chemical_data).to eq [{ 'status' => 'Available' }]
+      end
+
+      it 'refuses to create a chemical' do
+        params = { sample_id: foreign_sample.id, cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }] }
+        expect { post '/api/v1/chemicals/create', params: params }.not_to change(Chemical, :count)
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'refuses to save a vendor safety data sheet' do
+        allow(Chemotion::ChemicalsService).to receive(:save_vendor_sheet)
+        post '/api/v1/chemicals/save_safety_datasheet',
+             params: { sample_id: foreign_sample.id, cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }] }
+        expect(response).to have_http_status(:unauthorized)
+        expect(Chemotion::ChemicalsService).not_to have_received(:save_vendor_sheet)
+      end
+
+      it 'refuses to save an uploaded safety data sheet' do
+        allow(Chemotion::ManualSdsService).to receive(:create_manual_sds)
+        post '/api/v1/chemicals/save_manual_sds',
+             params: { sample_id: foreign_sample.id, vendor_info: '{}', vendor_name: 'Vendor',
+                       vendor_product: 'vendorProductInfo',
+                       attached_file: fixture_file_upload('spec/fixtures/upload.pdf', 'application/pdf') }
+        expect(response).to have_http_status(:unauthorized)
+        expect(Chemotion::ManualSdsService).not_to have_received(:create_manual_sds)
+      end
+
+      it 'refuses an unknown sample id' do
+        get "/api/v1/chemicals?sample_id=#{foreign_sample.id + 100_000}"
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'checks the declared sample, not an undeclared SBMM id the user owns' do
+        own_sbmm_sample = create(:sequence_based_macromolecule_sample,
+                                 sequence_based_macromolecule: create(:uniprot_sbmm),
+                                 user: user, collections: s.collections.to_a)
+        allow(Chemotion::ChemicalsService).to receive(:save_vendor_sheet)
+        post '/api/v1/chemicals/save_safety_datasheet',
+             params: { sample_id: foreign_sample.id, sequence_based_macromolecule_sample_id: own_sbmm_sample.id,
+                       cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }] }
+        expect(response).to have_http_status(:unauthorized)
+        expect(Chemotion::ChemicalsService).not_to have_received(:save_vendor_sheet)
+      end
+    end
+
+    context 'when shared read-only with full sample detail' do
+      before { share_foreign_collection(:read_elements, 10) }
+
+      it 'returns the chemical' do
+        get "/api/v1/chemicals?sample_id=#{foreign_sample.id}"
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body['id']).to eq foreign_chemical.id
+      end
+
+      it 'refuses to update the chemical' do
+        update_foreign_chemical
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when shared read-only below full sample detail' do
+      before { share_foreign_collection(:read_elements, 2) }
+
+      it 'refuses to read the chemical' do
+        get "/api/v1/chemicals?sample_id=#{foreign_sample.id}"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when shared for editing with full sample detail' do
+      before { share_foreign_collection(:edit_elements, 10) }
+
+      it 'updates the chemical' do
+        update_foreign_chemical
+        expect(response).to have_http_status(:ok)
+        expect(foreign_chemical.reload.chemical_data).to eq [{ 'status' => 'Ordered' }]
+      end
+
+      it 'creates a chemical' do
+        params = { sample_id: foreign_sample.id, cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }] }
+        expect { post '/api/v1/chemicals/create', params: params }.to change(Chemical, :count).by(1)
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'saves a vendor safety data sheet' do
+        allow(Chemotion::ChemicalsService).to receive(:save_vendor_sheet).and_return(foreign_chemical)
+        post '/api/v1/chemicals/save_safety_datasheet',
+             params: { sample_id: foreign_sample.id, cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }] }
+        expect(response).to have_http_status(:created)
+        expect(Chemotion::ChemicalsService).to have_received(:save_vendor_sheet)
+      end
+    end
+
+    context 'when shared for editing below full sample detail' do
+      before { share_foreign_collection(:edit_elements, 2) }
+
+      it 'refuses to update the chemical' do
+        update_foreign_chemical
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with an SBMM sample in a foreign collection' do
+      let(:foreign_sbmm_sample) do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: create(:uniprot_sbmm),
+                                                     user: foreign_collection.user,
+                                                     collections: [foreign_collection])
+      end
+
+      it 'refuses to read, create or update its chemical' do
+        params = { sequence_based_macromolecule_sample_id: foreign_sbmm_sample.id }
+        get '/api/v1/chemicals', params: params
+        expect(response).to have_http_status(:unauthorized)
+        post '/api/v1/chemicals/create',
+             params: params.merge(cas: '64-17-5', chemical_data: [{ 'status' => 'Ordered' }])
+        expect(response).to have_http_status(:unauthorized)
+        put '/api/v1/chemicals', params: params.merge(chemical_data: [{ 'status' => 'Ordered' }])
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'checks the SBMM detail level, not the sample detail level' do
+        share_foreign_collection(:read_elements, 10, sbmm_detail_level: 2)
+        get '/api/v1/chemicals', params: { sequence_based_macromolecule_sample_id: foreign_sbmm_sample.id }
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'returns the chemical at full SBMM detail' do
+        share_foreign_collection(:read_elements, 2, sbmm_detail_level: 10)
+        get '/api/v1/chemicals', params: { sequence_based_macromolecule_sample_id: foreign_sbmm_sample.id }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'refuses an unknown SBMM sample id' do
+        get '/api/v1/chemicals', params: { sequence_based_macromolecule_sample_id: foreign_sbmm_sample.id + 100_000 }
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end

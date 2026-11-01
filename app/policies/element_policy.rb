@@ -59,6 +59,10 @@ class ElementPolicy
       (record_shared_with_at_least?(:edit_elements) && record_shared_with_minimum_detail_level?(1))
   end
 
+  def copy_with_datasets?
+    copy? && read_dataset?
+  end
+
   # "Propagate this element onward" — the right to carry it into another collection. Bundled with
   # add_elements: being allowed to add an element somewhere is the same right as being allowed to
   # take it from where it is.
@@ -119,7 +123,8 @@ class ElementPolicy
   private
 
   def user_and_record_present?
-    user.present? && record.present?
+    # This policy grants access through collections; other record types have no applicable grant.
+    user.present? && record.present? && record.respond_to?(:collections)
   end
 
   def record_is_in_own_collection?

@@ -122,9 +122,12 @@ module Entities
     end
 
     def molfile
-      return unless object.respond_to? :molfile
+      return unless object.respond_to?(:molfile)
 
-      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace)
+      mf = object.molfile
+      return if mf.nil?
+
+      mf.dup.force_encoding('UTF-8').scrub.encode('UTF-8', universal_newline: true)
     end
 
     def parent_id

@@ -1156,6 +1156,86 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
   });
 });
 
+// The default residue of a product ('external' without a value) must not block the
+// mass-difference loading; a loading the user chose must still be kept.
+describe('ReactionDetailsScheme#checkMassPolymer — loading_type of the product residue', () => {
+  // 0.025 mmol on 50 mg of resin; a 51 mg product of MW 150 gives equivalent 0.8
+  const makeRef = () => ({
+    amount_mol: 0.000025,
+    amount_g: 0.05,
+    coefficient: 1,
+    contains_residues: true,
+    loading: 0.5,
+    residues: [{ custom_info: { loading: 0.5 } }],
+    molecule: { molecular_weight: 100 },
+  });
+
+  const defaultProductResidue = () => {
+    const sample = new Sample({ reaction_product: true });
+    sample.setDefaultResidue();
+    return sample.residues[0];
+  };
+
+  const runCheck = (residue) => {
+    const product = {
+      id: 'prod-1',
+      amount_g: 0.051,
+      amount_mol: 0,
+      equivalent: 0,
+      contains_residues: true,
+      molecule: { molecular_weight: 150 },
+      residues: [residue],
+    };
+    const ctx = { context: { notifications: { add: sinon.spy() } } };
+    ctx.calculateEquivalent = ReactionDetailsScheme.prototype.calculateEquivalent.bind(ctx);
+    ReactionDetailsScheme.prototype.checkMassPolymer.call(ctx, makeRef(), product, {});
+    return product;
+  };
+
+  it('calculates the loading for the default residue of a new product', () => {
+    const product = runCheck(defaultProductResidue());
+    const { loading, loading_type: loadingType } = product.residues[0].custom_info;
+
+    expect(product.equivalent).toBeCloseTo(0.8, 6);
+    expect(loading).toBeCloseTo(0.3922, 4);
+    expect(loadingType).toEqual('mass_diff');
+  });
+
+  it('calculates the loading when external_loading is the hstore string "0.0"', () => {
+    const residue = defaultProductResidue();
+    residue.custom_info.external_loading = '0.0';
+    const product = runCheck(residue);
+
+    expect(product.residues[0].custom_info.loading).toBeCloseTo(0.3922, 4);
+  });
+
+  it('keeps a loading the user entered as external estimation', () => {
+    const residue = defaultProductResidue();
+    Object.assign(residue.custom_info, { external_loading: '1.2', loading: '1.2' });
+    const product = runCheck(residue);
+
+    expect(product.residues[0].custom_info.loading).toEqual('1.2');
+    expect(product.residues[0].custom_info.loading_type).toEqual('external');
+  });
+
+  it('keeps an elemental-analysis loading', () => {
+    const residue = defaultProductResidue();
+    Object.assign(residue.custom_info, { loading_type: 'found', loading: 0.7 });
+    const product = runCheck(residue);
+
+    expect(product.residues[0].custom_info.loading).toEqual(0.7);
+    expect(product.residues[0].custom_info.loading_type).toEqual('found');
+  });
+
+  it('recalculates a residue already on mass_diff', () => {
+    const residue = defaultProductResidue();
+    Object.assign(residue.custom_info, { loading_type: 'mass_diff', loading: 0.1 });
+    const product = runCheck(residue);
+
+    expect(product.residues[0].custom_info.loading).toBeCloseTo(0.3922, 4);
+  });
+});
+
 // B4 regression: yield clamp must not push to 100% when reference has no amount
 describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
   let gasStoreStub;

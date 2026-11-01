@@ -11,10 +11,7 @@ module Chemotion
       after_validation do
         resource = namespace.split('/')[2]
         if resource == 'revert'
-          result = params[:changes].reduce do |res, change|
-            res && ElementPolicy.new(current_user, change['klass_name'].constantize.find(change['db_id']))
-          end
-          error!('401 Unauthorized', 401) unless result
+          error!('401 Unauthorized', 401) unless VersionRevertPolicy.new(current_user, params[:changes]).allowed?
         else
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
                                                                    resource.classify.constantize.find(params[:id]))

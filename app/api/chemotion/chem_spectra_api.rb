@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
-
 # Belong to Chemotion module
 module Chemotion
   # API for ChemSpectra manipulation
@@ -10,28 +8,14 @@ module Chemotion
 
     helpers do
       def encode64(path)
-        target = (File.exist?(path) && File.binread(path)) || false
+        target = File.exist?(path) && IO.binread(path) || false
         Base64.encode64(target)
       end
 
-      def to_zip_file(filename, src, dst, img, predict)
-        Zip::OutputStream.write_buffer do |zip|
-          zip.put_next_entry "orig_#{src[:filename]}"
-          zip.write src[:tempfile].read
-          zip.put_next_entry "#{filename}.jdx"
-          zip.write dst.read
-          zip.put_next_entry "#{filename}.png"
-          zip.write img.read
-          unless predict.try(:[], 'output')
-                        .try(:[], 'result').try(:empty?)
-            zip.put_next_entry "#{filename}.json"
-            zip.write predict.to_json
-          end
-        end
-      end
-
       def get_molfile(params)
-        params[:molfile] = { tempfile: Tempfile.new } if params[:molfile].is_a? String
+        if params[:molfile].is_a? String
+          params[:molfile] = { tempfile: Tempfile.new }
+        end
         params[:molfile][:tempfile]
       end
 
@@ -44,39 +28,36 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue StandardError
+      rescue
         { status: false }
       end
 
-      def convert_to_zip(params)
-        file = params[:dst][:tempfile]
-        molfile = get_molfile(params)
-        jcamp, img = Chemotion::Jcamp::Create.spectrum(
-          file.path, molfile.path, false, params
-        )
-        predict = JSON.parse(params['predict'])
-        to_zip_file(params[:filename], params[:src], jcamp, img, predict)
-      rescue StandardError
-        error!('Save files error!', 500)
-      end
-
-      def convert_for_refresh(params)
-        file = params[:dst][:tempfile]
-        molfile = get_molfile(params)
-        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
-          file.path, molfile.path, false, params
-        )
-        jcamp = encode64(tmp_jcamp.path)
-        img = encode64(tmp_img.path)
-        { status: true, jcamp: jcamp, img: img }
-      rescue StandardError
-        { status: false }
-      end
-
-      def raw_file(att)
-        Base64.encode64(att.read_file)
-      rescue StandardError
-        nil
+      # Replaces the combined-spectra image of a container. The container row is locked so
+      # concurrent combines do not each add an image, and the new attachment is saved before the
+      # old one is destroyed. The transaction covers the rows only: stored files are written and
+      # removed by attachment callbacks.
+      #
+      # @param container_id [Integer] id of the dataset container holding the spectra
+      # @param filename [String] the combined image's filename (+<container>.new_combined.png+)
+      # @param image [Tempfile] the rendered image
+      # @return [Attachment] the new combined image
+      def replace_combined_image(container_id, filename, image)
+        ActiveRecord::Base.transaction do
+          Container.lock.find(container_id)
+          old = Attachment.find_by(
+            filename: filename, attachable_type: 'Container', attachable_id: container_id,
+          )
+          att = Attachment.create!(
+            filename: filename,
+            created_by: current_user.id,
+            created_for: current_user.id,
+            file_path: image.path,
+            attachable_type: 'Container',
+            attachable_id: container_id,
+          )
+          old&.destroy!
+          att
+        end
       end
 
       def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
@@ -85,6 +66,7 @@ module Chemotion
 
         current_data_types = {}
         current_data_types = JSON.parse(File.read(file_path)) if File.exist?(file_path)
+        stored_data_types = current_data_types.deep_dup
 
         keys_to_check = default_data_types['datatypes'].keys
         result = {
@@ -106,51 +88,15 @@ module Chemotion
 
           result['default_data_types'][key] = default_values
         end
-        save_data_types(file_path, current_data_types)
+        save_data_types(file_path, current_data_types, stored_data_types)
         result
       end
 
-      def save_data_types(file_path, current_data_types)
+      # Writes the merged data types, unless they equal what was read from the file.
+      def save_data_types(file_path, current_data_types, stored_data_types)
+        return if current_data_types == stored_data_types
+
         File.write(file_path, JSON.pretty_generate(current_data_types))
-      end
-
-      def combine_spectra(params)
-        list_file, list_file_names, container_id, combined_image_filename =
-          collect_spectra_combine_inputs(params)
-
-        _, image = Chemotion::Jcamp::CombineImg.combine(
-          list_file, params[:front_spectra_idx], list_file_names, params[:extras]
-        )
-
-        save_combined_spectra_image(image, combined_image_filename, container_id) if image
-        { status: true }
-      end
-
-      def collect_spectra_combine_inputs(params)
-        list_file = []
-        list_file_names = []
-        container_id = -1
-        combined_image_filename = ''
-        Attachment.where(id: params[:spectra_ids]).find_each do |att|
-          container = att.container
-          combined_image_filename = "#{container.name}.new_combined.png"
-          container_id = att.attachable_id
-          list_file_names.push(att.filename)
-          list_file.push(att.abs_path)
-        end
-        [list_file, list_file_names, container_id, combined_image_filename]
-      end
-
-      def save_combined_spectra_image(image, combined_image_filename, container_id)
-        Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)&.destroy!
-        Attachment.create!(
-          filename: combined_image_filename,
-          created_by: current_user.id,
-          created_for: current_user.id,
-          file_path: image.path,
-          attachable_type: 'Container',
-          attachable_id: container_id,
-        )
       end
     end
 
@@ -166,72 +112,40 @@ module Chemotion
           conversion(params)
         end
 
-        desc 'Save files'
-        params do
-          requires :src, type: Hash
-          requires :dst, type: Hash
-          requires :filename, type: String
-          requires :peaks_str, type: String
-          requires :shift_select_x, type: String
-          requires :shift_ref_name, type: String
-          requires :shift_ref_value, type: String
-          optional :integration, type: String
-          optional :multiplicity, type: String
-          optional :mass, type: String
-          optional :scan, type: String
-          optional :thres, type: String
-          optional :predict, type: String
-          optional :molfile
-          optional :waveLength, type: String
-          optional :cyclicvolta, type: String
-          optional :curveIdx, type: Integer
-        end
-        post 'save' do
-          env['api.format'] = :binary
-          content_type('application/zip, application/octet-stream')
-          filename = CGI.escape("#{params[:filename]}.zip")
-          header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-
-          zip_io = convert_to_zip(params)
-          zip_io.rewind
-          zip_io.read
-        end
-
-        desc 'Refresh files'
-        params do
-          requires :src, type: Hash
-          requires :dst, type: Hash
-          requires :molfile, type: Hash
-          requires :filename, type: String
-          requires :peaks_str, type: String
-          requires :shift_select_x, type: String
-          requires :shift_ref_name, type: String
-          requires :shift_ref_value, type: String
-          optional :integration, type: String
-          optional :multiplicity, type: String
-          optional :mass, type: String
-          optional :scan, type: String
-          optional :thres, type: String
-          optional :predict, type: String
-        end
-        post 'refresh' do
-          convert_for_refresh(params)
-        end
-
         desc 'Combine spectra'
         params do
           requires :spectra_ids, type: [Integer]
-          requires :front_spectra_idx, type: Integer
+          requires :front_spectra_idx, type: Integer # index of front spectra
           optional :extras, type: String
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
+
+          front_id = pm[:spectra_ids][pm[:front_spectra_idx]]
+          ids = pm[:spectra_ids].uniq
+          # keep the request order, and skip spectra deleted since the client listed them (a save
+          # can replace related edit files); the combined image goes to the last spectrum's container
+          spectra = Attachment.where(id: ids, attachable_type: 'Container').index_by(&:id).values_at(*ids).compact
+          error!('404 Not Found', 404) if spectra.empty?
+
+          target = spectra.last
+          access = Usecases::Attachments::Access.new(current_user)
+          error!('401 Unauthorized', 401) unless spectra.all? { |att| access.read?(att) } && access.write?(target)
+          error!('Spectra must belong to an analysis', 422) if target.attachable_id.nil?
+
+          front_idx = spectra.index { |att| att.id == front_id } || 0
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            spectra.map(&:abs_path), front_idx, spectra.map(&:filename), pm[:extras]
+          )
+
           content_type('application/json')
-          combine_spectra(pm)
-        rescue StandardError => e
-          Rails.logger.error "Error in combine_spectra: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          error!({ error: 'Server Error', message: e.message }, 500)
+          unless image.nil?
+            replace_combined_image(
+              target.attachable_id, "#{target.container.name}.new_combined.png", image
+            )
+          end
+
+          { status: true }
         end
 
         desc 'Combine spectra for comparison containers'
@@ -255,56 +169,11 @@ module Chemotion
         end
       end
 
-      resource :predict do
-        desc 'Predict NMR by peaks'
-        params do
-          requires :molfile, type: Hash
-          requires :layout, type: String
-          requires :peaks, type: String
-          requires :shift, type: String
-        end
-        post 'nmr_peaks_form' do
-          molfile = params['molfile']['tempfile']
-          rsp = Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
-            molfile, params[:layout], params[:peaks], params[:shift], false
-          )
-
-          content_type('application/json')
-          rsp
-        end
-
-        desc 'Predict IR'
-        params do
-          requires :molfile, type: Hash
-          requires :spectrum, type: Hash
-        end
-        post 'infrared' do
-          molfile = params['molfile']['tempfile']
-          spectrum = params['spectrum']['tempfile']
-          rsp = Chemotion::Jcamp::Predict::Ir.exec(
-            molfile, spectrum
-          )
-
-          content_type('application/json')
-          rsp
-        end
-      end
-
-      resource :molfile do
-        desc 'convert molfile'
-        params do
-          requires :molfile, type: Hash
-        end
-        post 'convert' do
-          molfile = params['molfile']['tempfile'].read
-          m = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-
-          content_type('application/json')
-          { smi: m[:smiles], mass: m[:mass], svg: m[:svg], status: true }
-        end
-      end
-
       resource :spectra_layouts do
+        before do
+          error!('401 Unauthorized', 401) unless current_user.is_a?(Admin)
+        end
+
         desc 'Get all spectra layouts and data types'
         get do
           url = Rails.configuration.spectra.chemspectra.url
@@ -335,5 +204,3 @@ module Chemotion
     end
   end
 end
-
-# rubocop:enable Metrics/ClassLength
