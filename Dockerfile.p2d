@@ -82,9 +82,7 @@ RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
     chmod +x /initialize.sh
 
-RUN RAILS_ENV=production bash bin/chem-ket2-install.sh && \
-    rm -rf public/editors/ketcher/standalone && \
-    ln -s ../ketcher2/standalone public/editors/ketcher/standalone
+RUN RAILS_ENV=production bash bin/chem-ket2-install.sh
 
 EXPOSE 4000
 

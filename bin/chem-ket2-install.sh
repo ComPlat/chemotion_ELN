@@ -63,31 +63,13 @@ log_file="${app_dir}log/install_${package_name_lower}.log"
 vecho "starting $(date) "
 editors_dir=public/editors/
 final_destination=${editors_dir}default
-relative_destination=${package_name_lower}/
-# if build_from_source add another subfolder
-if [ "$build_from_source" = true ]; then
-    relative_destination=${relative_destination}rebuilt/
-else
-    relative_destination=${relative_destination}built/
-fi
+relative_destination=ketcher/
 
 #function to make links
 make_links(){
     rm -f $final_destination
     ln -s $relative_destination $final_destination
     vecho "Created symlink $final_destination -> $relative_destination"
-
-    # create link for path from structure_editor.yml.example
-    example_path=$editors_dir$package_name_lower/$package_type
-
-    # check if the link exists
-    if [ -d $example_path ] && [ ! -L $example_path ]; then
-	vecho "Dir already exists: $example_path. Not symlinking"
-    else
-	rm -r $example_path
-        ln -s ../$relative_destination $example_path
-        vecho "symlinking $example_path to $relative_destination"
-    fi
 }
 
 # relative path in the package src to the tsconfig.json that should define the build directory
@@ -141,7 +123,7 @@ vecho "Package info: $package_info"
 # make a subfolder in the destination name after the $package_name and version as given in package_info json
 version="$(get_attribute $package_name 'version')"
 vecho "Version: $version"
-relative_destination=${relative_destination}${version}/$package_type/
+relative_destination=${relative_destination}${package_type}/
 destination=${editors_dir}$relative_destination
 mkdir -p $destination
 
