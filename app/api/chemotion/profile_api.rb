@@ -288,25 +288,10 @@ module Chemotion
         complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
         file_path = "#{complete_folder_path}/#{current_user.id}.json"
         begin
-          FileUtils.mkdir_p(complete_folder_path) unless File.directory?(complete_folder_path)
-          File.new(file_path, 'w') unless File.exist?(file_path)
+          # The settings file is the only store: GET reads it back directly.
+          FileUtils.mkdir_p(complete_folder_path)
           File.write(file_path, JSON(params[:data]))
-
-          template_attachment = Attachment.new(
-            bucket: 1,
-            filename: file_path,
-            key: 'ketcher-optns',
-            created_by: current_user.id,
-            created_for: current_user.id,
-            content_type: 'application/json',
-            file_path: file_path,
-          )
-          if template_attachment.save
-            { status: true, message: 'Ketcher options updated successfully' }
-          else
-            error_messages.push('Attachment could not be saved')
-            error!({ status: false, error_messages: error_messages.flatten }, 422)
-          end
+          { status: true, message: 'Ketcher options updated successfully' }
         rescue StandardError => e
           error_messages.push(e.message)
           error!({ status: false, error_messages: error_messages.flatten }, 500)

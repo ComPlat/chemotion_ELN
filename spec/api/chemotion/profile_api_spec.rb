@@ -278,7 +278,7 @@ describe Chemotion::ProfileAPI do
     end
 
     context 'when valid data is provided' do
-      it 'creates or updates the ketcher options file and saves the attachment' do
+      it 'creates or updates the ketcher options file' do
         put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
 
         expect(response).to have_http_status(:success)
@@ -287,19 +287,29 @@ describe Chemotion::ProfileAPI do
         file_content = JSON.parse(File.read(file_path))
         expect(file_content).to eq(valid_data.stringify_keys)
       end
-    end
 
-    context 'when the attachment cannot be saved' do
-      it 'returns a 422 error if the attachment record cannot be saved' do
-        attachment = instance_double(Attachment, save: false) # Create a double for the Attachment
-        allow(Attachment).to receive(:new).and_return(attachment) # Stub the creation of the attachment
+      it 'creates the folder when it does not exist yet' do
+        FileUtils.rm_rf(complete_folder_path)
 
         put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
 
-        expect(response).to have_http_status(:unprocessable_entity)
-        response_body = JSON.parse(response.body)
-        expect(response_body['status']).to be false
-        expect(response_body['error_messages']).not_to be_empty
+        expect(response).to have_http_status(:success)
+        expect(JSON.parse(File.read(file_path))).to eq(valid_data.stringify_keys)
+      end
+
+      it 'does not create an attachment record' do
+        expect do
+          put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
+        end.not_to change(Attachment, :count)
+      end
+    end
+
+    context 'when data is missing' do
+      it 'returns a 400 error' do
+        put '/api/v1/profiles/editors/ketcher-options', params: valid_data.to_json, headers: headers
+
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(response.body)['error']).to eq('data is missing')
       end
     end
 
