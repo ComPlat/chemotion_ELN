@@ -61,6 +61,15 @@ RSpec.describe SVG::ReactionComposer do
         expect(duration_svg).not_to include('Hour')
       end
     end
+
+    context 'with a temperature containing < and &' do
+      let(:duration) { '' }
+      let(:temperature) { '<0 & reflux' }
+
+      it 'keeps the svg valid' do
+        expect(duration_svg).to include('&lt;0 &amp; reflux')
+      end
+    end
   end
 
   describe 'composing the SVG' do

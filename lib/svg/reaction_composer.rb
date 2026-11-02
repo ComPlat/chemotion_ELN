@@ -344,7 +344,7 @@ module SVG
 
       <<~XML
         <svg font-family="sans-serif">
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="#{first_line_y}" font-size="#{word_size + 2}">#{tmdu}</text>
+          <text text-anchor="middle" x="#{arrow_width / 2}" y="#{first_line_y}" font-size="#{word_size + 2}">#{CGI.escapeHTML(tmdu)}</text>
         </svg>
       XML
     end
