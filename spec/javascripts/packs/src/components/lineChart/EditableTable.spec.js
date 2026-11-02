@@ -59,6 +59,20 @@ describe('EditableTable', () => {
     expect(update.lastCall.args[0]).toEqual([{ time: '01:00:00', value: '40' }]);
   });
 
+  it('keeps each row\'s own boxes when an edit moves it, even with equal times', () => {
+    const data = [{ time: '00:00:00', value: '10' }, { time: '00:00:00', value: '20' }, { time: '00:00:00', value: '30' }];
+    const wrapper = mount(<EditableTable temperature={temperature(data)} updateTemperature={() => {}} />);
+    const firstTime = wrapper.find('input[aria-label="time"]').first();
+    firstTime.getDOMNode().value = '00:20:00';
+    firstTime.simulate('blur', { target: firstTime.getDOMNode() });
+    const moved = [data[1], data[2], { time: '00:20:00', value: '10' }];
+    wrapper.setProps({ temperature: temperature(moved) });
+    wrapper.update();
+
+    const shown = wrapper.find('tbody tr').map((tr) => tr.find('input').map((input) => input.getDOMNode().value));
+    expect(shown.slice(0, 3)).toEqual([['00:00:00', '20'], ['00:00:00', '30'], ['00:20:00', '10']]);
+  });
+
   it('starts a new row at 00:00:00', () => {
     const wrapper = mount(<EditableTable temperature={temperature([])} updateTemperature={() => {}} />);
 

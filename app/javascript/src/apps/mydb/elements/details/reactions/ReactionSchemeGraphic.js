@@ -141,7 +141,7 @@ export default function ReactionSchemeGraphic({
       </Popover.Header>
       {!isInteractionReaction && (
         <Popover.Body className="border-bottom py-1">
-          <h6 className="fs-9 fw-medium">Arrow</h6>
+          <h6 className="fs-9 fw-medium">Scheme Arrow Display</h6>
           {SCHEME_PARTS.map(([part, label]) => (
             <Form.Check
               key={part}

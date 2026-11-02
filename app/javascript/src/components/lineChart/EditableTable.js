@@ -26,11 +26,24 @@ export const sortByTime = (rows) => [...rows].sort((a, b) => toSeconds(a.time) -
 
 const NEW_ROW = { time: '00:00:00', value: '' };
 
+const rowKeys = new WeakMap();
+let nextRowKey = 0;
+const keyOf = (row) => {
+  if (!rowKeys.has(row)) {
+    nextRowKey += 1;
+    rowKeys.set(row, nextRowKey);
+  }
+  return rowKeys.get(row);
+};
+
 const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
   const [draft, setDraft] = useState(NEW_ROW);
   const rows = sortByTime(temperature.data);
   const showSteps = otherStepRows.length > 0;
-  const entries = sortByTime([...rows.map((row, index) => ({ ...row, index, step: 1 })), ...otherStepRows]);
+  const entries = sortByTime([
+    ...rows.map((row, index) => ({ ...row, index, step: 1, key: keyOf(row) })),
+    ...otherStepRows.map((row, index) => ({ ...row, key: `step-${index}` })),
+  ]);
   const draftTime = normalizeTime(draft.time);
   const draftValue = normalizeValue(draft.value);
 
@@ -78,9 +91,8 @@ const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
           </tr>
         </thead>
         <tbody>
-          {entries.map((row, position) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <tr key={position}>
+          {entries.map((row) => (
+            <tr key={row.key}>
               {showSteps && <td>{row.step}</td>}
               <td>{cell(row, 'time', normalizeTime)}</td>
               <td>{cell(row, 'value', normalizeValue)}</td>
