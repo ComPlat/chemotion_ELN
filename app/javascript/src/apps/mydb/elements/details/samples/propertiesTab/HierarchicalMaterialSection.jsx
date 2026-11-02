@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'; // eslint-disable-line no-unused-vars
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup, Row, Col,
@@ -230,8 +230,6 @@ export default function HierarchicalMaterialSection({
   // Dispersion (0–1) — stored as a direct DB column
   const dispersionValue = sample.dispersion ?? '';
   const dispersionNum = parseFloat(dispersionValue);
-  const dispersionError = dispersionValue !== '' && !Number.isNaN(dispersionNum)
-    && (dispersionNum < 0 || dispersionNum > 1);
 
   const handleDispersionChange = (e) => {
     // eslint-disable-next-line react-hooks/immutability
@@ -319,40 +317,20 @@ export default function HierarchicalMaterialSection({
                 <Form.Group controlId="hierarchicalDispersion">
                   <Form.Label>
                     Dispersion
-                    {dispersionValue !== '' && !dispersionError && (
+                    {dispersionValue !== '' && !Number.isNaN(dispersionNum) && (
                       <span className="ms-2 text-muted" style={{ fontSize: '0.8em' }}>
                         {`${Math.round(dispersionNum * 100)}%`}
                       </span>
                     )}
                   </Form.Label>
-                  <div className="d-flex align-items-center gap-2">
-                    <Form.Range
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={dispersionError || dispersionValue === '' ? 0 : dispersionNum}
-                      disabled={!sample.can_update}
-                      onChange={handleDispersionChange}
-                      className="flex-grow-1"
-                    />
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="1"
-                      value={dispersionValue}
-                      disabled={!sample.can_update}
-                      placeholder="0–1"
-                      onChange={handleDispersionChange}
-                      isInvalid={dispersionError}
-                      style={{ width: '5rem', flexShrink: 0 }}
-                    />
-                  </div>
-                  {dispersionError && (
-                    <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
-                      Must be between 0 and 1
-                    </Form.Control.Feedback>
-                  )}
+                  <Form.Range
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={dispersionValue === '' || Number.isNaN(dispersionNum) ? 0 : dispersionNum}
+                    disabled={!sample.can_update}
+                    onChange={handleDispersionChange}
+                  />
                 </Form.Group>
               ) : (
                 <HierarchicalPropertyInput
@@ -387,37 +365,37 @@ export default function HierarchicalMaterialSection({
               {customProperties.map((prop, idx) => (
                 // eslint-disable-next-line react/no-array-index-key
                 <Col xs={3} key={`custom-${idx}`} className="mb-4">
-                  <Form.Group style={{ position: 'relative' }}>
-                    {sample.can_update && (
-                      <Button
+                  <Form.Group>
+                    <div className="d-flex align-items-center gap-1">
+                      <Form.Control
+                        type="text"
                         size="sm"
-                        variant="link"
-                        className="text-danger p-0 lh-1"
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
+                        autoFocus={!prop.label}
+                        value={prop.label}
+                        placeholder="Property name"
+                        disabled={!sample.can_update}
+                        className="border-0 rounded-0 px-0 fw-semibold flex-grow-1"
                         style={{
-                          position: 'absolute', top: 0, right: 0, fontSize: '1rem', zIndex: 1,
+                          background: 'transparent',
+                          fontSize: '0.875rem',
+                          boxShadow: 'none',
+                          minWidth: 0,
                         }}
-                        onClick={() => handleCustomPropertyRemove(idx)}
-                      >
-                        ×
-                      </Button>
-                    )}
-                    <Form.Control
-                      type="text"
-                      size="sm"
-                      // eslint-disable-next-line jsx-a11y/no-autofocus
-                      autoFocus={!prop.label}
-                      value={prop.label}
-                      placeholder="Property name"
-                      disabled={!sample.can_update}
-                      className="border-0 border-bottom rounded-0 px-0 fw-semibold"
-                      style={{
-                        background: 'transparent',
-                        fontSize: '0.875rem',
-                        boxShadow: 'none',
-                        paddingRight: '1.25rem',
-                      }}
-                      onChange={(e) => handleCustomPropertyChange(idx, 'label', e.target.value)}
-                    />
+                        onChange={(e) => handleCustomPropertyChange(idx, 'label', e.target.value)}
+                      />
+                      {sample.can_update && (
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="text-danger p-0 lh-1 flex-shrink-0"
+                          style={{ fontSize: '1rem' }}
+                          onClick={() => handleCustomPropertyRemove(idx)}
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
                     <Form.Control
                       type="text"
                       value={prop.value || ''}
