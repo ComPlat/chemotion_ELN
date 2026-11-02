@@ -120,7 +120,7 @@ export default class UsersFetcher {
 
   static updateUserKetcherOptions(list) {
     const data = JSON.parse(list);
-    return ApiClient.putJson('/api/v1/profiles/editors/ketcher-options', { body: data });
+    return ApiClient.putJson('/api/v1/profiles/editors/ketcher-options', { body: { data } });
   }
 
   static updateReactionShortLabel(params) {
