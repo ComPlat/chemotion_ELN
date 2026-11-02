@@ -180,7 +180,12 @@ else
     eval $_cmd || exit 1
     # remove zip file and copy to destination
     rm ${tmpdir}assets.zip
-    cp -r ${tmpdir}${package_type}/* ${destination}
+    # Some releases extract into a subfolder matching the package type; others extract to root.
+    if [ -d "${tmpdir}${package_type}" ]; then
+        cp -r ${tmpdir}${package_type}/* ${destination}
+    else
+        cp -r ${tmpdir}. ${destination}
+    fi
     rm -rf ${tmpdir}
 fi
 
