@@ -637,6 +637,8 @@ describe Usecases::Reactions::UpdateMaterials do
       create(:sample, name: 'solvent', target_amount_value: 10, target_amount_unit: 'ml',
                       container: create(:container), collections: [collection])
     end
+    # an older client sends the original sample's own root container, analyses included
+    # (indifferent access, as Grape params are: UpdateDatamodel reads it with symbol keys)
     let(:material) do
       {
         'id' => solvent.id,
@@ -645,7 +647,8 @@ describe Usecases::Reactions::UpdateMaterials do
         'target_amount_value' => 3,
         'is_new' => false,
         'molfile' => molfile,
-        'container' => root_container,
+        'container' => { 'id' => solvent.container.id, 'is_new' => false, 'containable_type' => 'root',
+                         'children' => [] }.with_indifferent_access,
       }
     end
 
@@ -656,6 +659,8 @@ describe Usecases::Reactions::UpdateMaterials do
     end
 
     context 'when it is a purification solvent of the original' do
+      let!(:original_container) { solvent.container }
+
       before do
         ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
         described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
@@ -666,21 +671,48 @@ describe Usecases::Reactions::UpdateMaterials do
         expect(solvent.reload.target_amount_value).to eq(10)
       end
 
-      it 'gives the copy a subsample of it' do
+      it 'leaves the original sample its container' do
+        expect(original_container.reload.containable).to eq(solvent)
+        expect(copy.reload.purification_solvents.first.container).not_to eq(original_container)
+      end
+
+      it 'gives the copy a new sample, as the current client copies it' do
         copied = copy.reload.purification_solvents
         expect(copied.size).to eq(1)
         expect(copied.first).not_to eq(solvent)
-        expect(copied.first.parent).to eq(solvent)
+        expect(copied.first.parent).to be_nil
       end
 
-      it 'puts the subsample in the copy collection, with the copied amount' do
+      it 'puts the new sample in the copy collection, with the copied amount' do
         copied = copy.reload.purification_solvents.first
         expect(copied.target_amount_value).to eq(3)
         expect(copied.collections).to include(other_collection)
       end
     end
 
+    context 'when it is a subsample of a stock sample' do
+      let(:stock) { create(:sample, name: 'stock', container: create(:container), collections: [collection]) }
+      let(:solvent) do
+        create(:sample, name: 'solvent', target_amount_value: 10, target_amount_unit: 'ml', parent: stock,
+                        container: create(:container), collections: [collection])
+      end
+
+      before do
+        ReactionsStartingMaterialSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'starting_materials' => [material.merge('parent_id' => stock.id)] },
+                            user, vessel_size).execute!
+      end
+
+      it 'gives the copy a subsample of the same stock, not of the original material' do
+        copied = copy.reload.starting_materials.first
+        expect(copied).not_to eq(solvent)
+        expect(copied.parent).to eq(stock)
+      end
+    end
+
     context 'when it is a product of the original' do
+      let!(:original_container) { solvent.container }
+
       before do
         ReactionsProductSample.create!(reaction: original, sample: solvent, position: 0)
         described_class.new(copy, { 'products' => [material] }, user, vessel_size).execute!
@@ -691,6 +723,43 @@ describe Usecases::Reactions::UpdateMaterials do
         product = copy.reload.products.first
         expect(product).not_to eq(solvent)
         expect(product.parent).to be_nil
+      end
+
+      it 'leaves the original product its container' do
+        expect(original_container.reload.containable).to eq(solvent)
+      end
+    end
+
+    context 'when it is an SBMM reactant of the original' do
+      let(:stock_sbmm) do
+        SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-UM-1',
+                                                 sequence_based_macromolecule: create(:uniprot_sbmm), user: user)
+      end
+      let(:sbmm) { stock_sbmm.create_sub_sequence_based_macromolecule_sample(user, [collection.id]) }
+
+      before do
+        ReactionsReactantSbmmSample.create!(reaction: original, sequence_based_macromolecule_sample: sbmm, position: 0)
+        # the client always sends the units (NOT NULL columns)
+        units = {
+          'concentration_unit' => 'ng/L', 'molarity_unit' => 'mol/L', 'activity_per_volume_unit' => 'U/L',
+          'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
+          'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
+        }
+        payload = { 'reactant_sbmm_samples' => [{
+          'id' => sbmm.id, 'is_new' => false, 'parent_id' => stock_sbmm.id, 'name' => 'SBMM copy', 'position' => 0
+        }.merge(units)] }
+        described_class.new(copy, payload, user, vessel_size).execute!
+      end
+
+      it 'leaves the original its SBMM sample, linked once' do
+        expect(ReactionsReactantSbmmSample.where(sequence_based_macromolecule_sample_id: sbmm.id)
+                                          .pluck(:reaction_id)).to eq([original.id])
+      end
+
+      it 'gives the copy a new split of the same stock' do
+        copied = ReactionsReactantSbmmSample.find_by(reaction_id: copy.id).sequence_based_macromolecule_sample
+        expect(copied).not_to eq(sbmm)
+        expect(copied.parent).to eq(stock_sbmm)
       end
     end
 

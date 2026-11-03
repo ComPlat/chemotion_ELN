@@ -161,7 +161,7 @@ module Usecases
       # Create or update a single sample, dispatching to the create-subsample,
       # create-new, or update-existing path.
       def persist_sample(sample, material_group, fixed_label, target_amount)
-        treat_foreign_sample_as_new(sample, material_group)
+        treat_foreign_sample_as_new(sample)
         return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
 
         if sample.parent_id && material_group != 'product'
@@ -171,19 +171,29 @@ module Usecases
         end
       end
 
-      # A persisted sample that only other reactions use must not be updated or taken over
-      # by this one: it gets a new sample instead, as when a sample is dropped onto a
-      # reaction (a subsample of it, or a new sample for a product). A reaction copy made by
-      # an older client sends the original's samples this way. A sample already linked to
-      # this reaction stays as it is, even if another reaction links it too.
-      def treat_foreign_sample_as_new(sample, material_group)
+      # Turns a persisted sample of another reaction into a new one for this reaction.
+      #
+      # A sample belongs to at most one reaction. A payload entry that names a persisted sample
+      # linked to another reaction (a reaction copy made by an older client sends the original's
+      # samples this way) must neither update that sample nor take over its link: it is created
+      # anew, the way the current client copies a material. A sample linked to no reaction may
+      # join this one; a sample already linked to this reaction is kept.
+      #
+      # Changes +sample+ in place, for the callers that follow: +is_new+ is set, and +container+
+      # is dropped, so the new sample gets a fresh root container instead of the original's
+      # (which holds the original's analyses). +parent_id+ is kept: with a parent the new
+      # sample is a subsample of it, without one (or for a product) a new sample.
+      #
+      # @param sample [OSample] payload entry of a material group
+      # @return [void]
+      def treat_foreign_sample_as_new(sample)
         return if sample.is_new
 
         reaction_ids = ReactionsSample.where(sample_id: sample.id).pluck(:reaction_id)
         return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
 
-        sample.parent_id ||= sample.id unless material_group == 'product'
         sample.is_new = true
+        sample.container = nil
       end
 
       def create_sub_sample(sample, fixed_label, target_amount = nil)
@@ -253,8 +263,8 @@ module Usecases
         new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
         new_sample.skip_inventory_label_update = true
 
-        # add new data container
-        new_sample.container = update_datamodel(container_info)
+        # add new data container (none in the payload when it named another reaction's sample)
+        new_sample.container = container_info ? update_datamodel(container_info) : Container.create_root_container
 
         new_sample.collections << @reaction.collections
         new_sample.save!
@@ -379,6 +389,7 @@ module Usecases
       def process_sbmm_samples(samples, modified_sbmm_ids)
         samples.each_with_index do |sbmm_data, idx|
           sbmm_data.position = idx if sbmm_data.position.nil?
+          treat_foreign_sbmm_as_new(sbmm_data)
           modified_sbmm = if sbmm_data.is_new
                             create_sub_sbmm_sample(sbmm_data)
                           else
@@ -387,6 +398,25 @@ module Usecases
           modified_sbmm_ids << modified_sbmm.id
           associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
         end
+      end
+
+      # Turns a persisted SBMM sample of another reaction into a new split for this reaction.
+      #
+      # The SBMM counterpart of {#treat_foreign_sample_as_new}: an SBMM sample linked to another
+      # reaction is neither updated nor linked a second time. Sets +is_new+ on +sbmm_data+ in
+      # place; the split is made from its parent, or from the sample itself if it has none.
+      #
+      # @param sbmm_data [OSbmmSample] payload entry of +reactant_sbmm_samples+
+      # @return [void]
+      def treat_foreign_sbmm_as_new(sbmm_data)
+        return if sbmm_data.is_new
+
+        reaction_ids = ReactionsReactantSbmmSample
+                       .where(sequence_based_macromolecule_sample_id: sbmm_data.id).pluck(:reaction_id)
+        return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
+
+        sbmm_data.parent_id ||= sbmm_data.id
+        sbmm_data.is_new = true
       end
 
       def create_sub_sbmm_sample(sbmm_data)
