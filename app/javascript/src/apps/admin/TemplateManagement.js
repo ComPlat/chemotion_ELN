@@ -1,12 +1,13 @@
 import React from 'react';
 import {
   Table, Button, Form, Tooltip,
-  OverlayTrigger, Popover, Card, Container
+  OverlayTrigger, Card, Container
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'src/components/common/Dropzone';
 import { Select } from 'src/components/common/Select';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
 
@@ -278,35 +279,12 @@ export default class TemplateManagement extends React.Component {
   }
 
   renderDeleteButton(template) {
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-          Delete this template?
-        </Popover.Header>
-        <Popover.Body>
-          <Button size="sm" variant="danger" className="me-1" onClick={() => this.handleDeleteTemplate(template)}>
-            Yes
-          </Button>
-          <Button size="sm" variant="warning" onClick={this.handleClick}>
-            No
-          </Button>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
       <div className="actions d-inline-block">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button size="sm" variant="danger">
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
+        <ConfirmDeleteButton
+          header="Delete this template?"
+          onConfirm={() => this.handleDeleteTemplate(template)}
+        />
       </div>
     );
   }
