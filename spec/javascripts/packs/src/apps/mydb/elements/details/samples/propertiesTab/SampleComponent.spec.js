@@ -1,3 +1,4 @@
+/* global describe, it, beforeEach, afterEach */
 import expect from 'expect';
 import sinon from 'sinon';
 import { configure, shallow } from 'enzyme';
@@ -8,6 +9,14 @@ import { SampleComponent } from 'src/apps/mydb/elements/details/samples/properti
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
+// App imports and dependencies resolve through the repository root across the spec package boundary.
+// eslint-disable-next-line import/no-extraneous-dependencies
+import Reaction from 'src/models/Reaction';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { addMiddleware } from 'mobx-state-tree';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 configure({ adapter: new Adapter() });
 
@@ -197,6 +206,72 @@ describe('SampleComponent reference switching for reaction-linked mixtures', () 
       expect(sample.components).toHaveLength(1);
       expect(sample.reference_component.id).toBe(1);
       expect(sample.amount_g).toBeCloseTo(1, 12);
+    });
+  });
+});
+
+describe('SampleComponent density typing for fixed-mass products', () => {
+  [false, true].forEach((validRatios) => {
+    ['blur', 'pause', 'unmount'].forEach((commit) => {
+      it(`commits density once on ${commit}, resolved ratios=${validRatios}`, () => {
+        const clock = sinon.useFakeTimers();
+        const notifications = [];
+        const dispose = addMiddleware(rootStore.notificationsStore, (call, next) => {
+          if (call.name === 'add') notifications.push(call.args[0]);
+          return next(call);
+        });
+        const sample = new Sample({
+          id: 'density-product', sample_type: 'Mixture', can_update: true, amountType: 'real',
+          amount_value: 10, amount_unit: 'g', sample_details: { total_mixture_volume_l: 0 },
+        });
+        sample.initialComponents([1, 2].map((id, index) => new Component({
+          id, position: index, reference: index === 0, material_group: 'liquid', density: 0.8, purity: 1,
+          equivalent: index === 0 || validRatios ? 1 : 'n.d', amount_mol: 0.05,
+          molecule: { molecular_weight: 100 },
+        })));
+        sample.components.forEach((component) => component.updatePhysicalAmounts());
+        sample.belongTo = new Reaction({ type: 'reaction', products: [sample] });
+        const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+        const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+        const onChange = sinon.spy((event) => editor.onChangeComponent(event));
+        const row = new SampleComponent({ sample, material: sample.components[0], materialGroup: 'liquid', onChange });
+        row.state.lockAmountColumn = false;
+        const input = shallow(row.componentDensity(row.props.material)).find(NumeralInputWithUnitsCompo).shallow();
+        let unmounted = false;
+
+        try {
+          ['0', '0.', '0.7', '0.79'].forEach((value) => {
+            input.find(Form.Control).simulate('change', {
+              target: { value, selectionStart: value.length, focus: sinon.spy() },
+            });
+            clock.tick(50);
+          });
+          sinon.assert.notCalled(onChange);
+          expect(notifications).toEqual([]);
+
+          if (commit === 'blur') input.find(Form.Control).simulate('blur');
+          else if (commit === 'pause') clock.tick(500);
+          else { row.componentWillUnmount(); unmounted = true; }
+
+          sinon.assert.calledOnce(onChange);
+          expect(onChange.firstCall.args[0].amount.value).toBe(0.79);
+          if (validRatios) {
+            expect(sample.components[0].density).toBe(0.79);
+            expect(sample.amount_g).toBe(10);
+            expect(notifications).toEqual([]);
+          } else {
+            expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+            expect(notifications).toHaveLength(1);
+          }
+          clock.tick(1000);
+          sinon.assert.calledOnce(onChange);
+        } finally {
+          if (!unmounted) row.componentWillUnmount();
+          input.unmount();
+          dispose();
+          clock.restore();
+        }
+      });
     });
   });
 });

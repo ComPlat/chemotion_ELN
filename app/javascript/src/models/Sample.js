@@ -376,7 +376,7 @@ export default class Sample extends Element {
       });
     }
     this.syncMixtureComponentAmounts();
-    this.updateMixtureComponentEquivalent();
+    this.updateMixtureComponentEquivalent({ preserveZeroRatios: true });
   }
 
   /** A toolbar save replaces the open reaction; editor context may still hold its previous instance. */
@@ -2551,7 +2551,7 @@ export default class Sample extends Element {
       // Keep loaded composition ratios; reference switches normalize them to the selected component.
       // Derive missing ratios only for uninitialized/legacy components.
       if (!this.reference_component || this.components.some((component) => component.equivalent == null)) {
-        this.updateMixtureComponentEquivalent();
+        this.updateMixtureComponentEquivalent({ preserveZeroRatios: true });
       }
       if (this.parent_id != null) {
         // Older reaction children persisted portion moles alongside stock masses/volumes.
@@ -2918,7 +2918,7 @@ export default class Sample extends Element {
    * @method updateMixtureComponentEquivalent
    * @returns {void}
    */
-  updateMixtureComponentEquivalent() {
+  updateMixtureComponentEquivalent({ preserveZeroRatios = false } = {}) {
     if (!this.hasComponents()) return;
 
     // Find the index of the component marked as reference
@@ -2939,6 +2939,11 @@ export default class Sample extends Element {
 
     // Set equivalent for each component
     this.components.forEach((component, index) => {
+      // Loading must distinguish an explicitly saved zero ratio from a cleared amount.
+      // Editing paths still derive n.d for missing amounts rather than guessing zero.
+      if (preserveZeroRatios && index !== referenceIndex
+        && component.equivalent === 0 && component.amount_mol === 0) return;
+
       if (index === referenceIndex) {
         component.equivalent = 1;
       } else if (!referenceMol || Number.isNaN(referenceMol)) {

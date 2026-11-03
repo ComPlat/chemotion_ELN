@@ -163,6 +163,7 @@ export class SampleComponent extends Component {
     this.debounceHandleAmountChange = debounce(this.handleAmountChange, 500);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleDensityChange = this.handleDensityChange.bind(this);
+    this.debounceHandleDensityChange = debounce(this.handleDensityChange, 500);
     this.handlePurityChange = this.handlePurityChange.bind(this);
     this.handleRatioChange = this.handleRatioChange.bind(this);
     this.handleReferenceChange = this.handleReferenceChange.bind(this);
@@ -178,6 +179,7 @@ export class SampleComponent extends Component {
     ComponentStore.unlisten(this.onComponentStoreChange);
     // Removing a focused input does not fire blur, so commit pending edits here.
     this.debounceHandleAmountChange.flush();
+    this.debounceHandleDensityChange.flush();
   }
 
   /**
@@ -752,7 +754,8 @@ export class SampleComponent extends Component {
           metricPrefixes={['n']}
           precision={4}
           disabled={!permitOn(sample) || lockColumn}
-          onChange={(e) => this.handleDensityChange(e, material.density, lockColumn)}
+          onChange={(e) => this.debounceHandleDensityChange(e, material.density, lockColumn)}
+          onBlur={() => this.debounceHandleDensityChange.flush()}
         />
       </td>
     );
