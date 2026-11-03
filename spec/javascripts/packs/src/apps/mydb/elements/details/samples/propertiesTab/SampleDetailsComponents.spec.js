@@ -116,6 +116,124 @@ describe('SampleDetailsComponents reaction product ratios', () => {
     materialGroup: editor.props.sample.components[1].material_group,
   });
 
+  describe('density and purity edits with unresolved product ratios', () => {
+    let notifications;
+    let dispose;
+
+    beforeEach(() => {
+      notifications = [];
+      dispose = addMiddleware(rootStore.notificationsStore, (call, next) => {
+        if (call.name === 'add') notifications.push(call.args[0]);
+        return next(call);
+      });
+    });
+    afterEach(() => { dispose(); });
+
+    ['target', 'real'].forEach((amountType) => {
+      ['density', 'purity'].forEach((property) => {
+        [1, 2].forEach((unresolvedIndex) => {
+          it(`keeps ${amountType} data on ${property} edits with n.d on component ${unresolvedIndex}`, () => {
+            const { sample, editor } = build(['solid', 'liquid', 'solid'], { amountType });
+            sample.components[unresolvedIndex].equivalent = 'n.d';
+            const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+            editor.onChangeComponent({
+              type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+              amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+              lockColumn: false,
+            });
+
+            expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+            expect(notifications).toEqual([expect.objectContaining({
+              level: 'warning',
+              message: 'Set a numeric ratio for every component before changing density or purity.',
+            })]);
+          });
+        });
+      });
+    });
+
+    ['density', 'purity'].forEach((property) => {
+      it(`allows a ${property} edit with a valid zero ratio`, () => {
+        const { sample, editor } = build(['solid', 'liquid', 'solid']);
+        editRatio(editor, 0);
+
+        editor.onChangeComponent({
+          type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+          amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+          lockColumn: false,
+        });
+
+        expect(sample.components[1][property]).toBe(property === 'density' ? 1.2 : 0.5);
+        expect(sample.amount_g).toBe(10);
+        expect(notifications).toEqual([]);
+      });
+    });
+
+    it('allows a density edit to repair a missing liquid mass basis', () => {
+      const { sample, editor } = build(['solid', 'liquid', 'solid']);
+      sample.components[1].density = 0;
+      sample.components[1].starting_molarity_value = 0;
+      expect(sample.getProductMixtureComposition()).toBe(null);
+
+      editor.onChangeComponent({
+        type: 'densityChanged', sampleID: 'component-1',
+        amount: { value: 1.2, unit: 'g/ml' }, lockColumn: false,
+      });
+
+      expect(sample.components[1].density).toBe(1.2);
+      expect(sample.getProductMixtureComposition()).not.toBe(null);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+      expect(notifications).toEqual([]);
+    });
+
+    ['density', 'purity'].forEach((property) => {
+      it(`allows the ${property} edit after the unresolved ratio is corrected`, () => {
+        const { sample, editor } = build(['solid', 'liquid', 'solid']);
+        sample.components[2].equivalent = 'n.d';
+        const event = {
+          type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+          amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+          lockColumn: false,
+        };
+        editor.onChangeComponent(event);
+        expect(notifications).toHaveLength(1);
+
+        editor.onChangeComponent({
+          type: 'ratioChanged', sampleID: 'component-2', materialGroup: 'solid', newRatio: 2,
+        });
+        editor.onChangeComponent(event);
+
+        expect(sample.components[1][property]).toBe(property === 'density' ? 1.2 : 0.5);
+        expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+        expect(sample.amount_g).toBe(10);
+        expect(notifications).toHaveLength(1);
+      });
+    });
+
+    [
+      { name: 'standalone mixture', group: null },
+      { name: 'reactant', group: 'reactants' },
+      { name: 'mol-entered product', group: 'products', unit: 'mol' },
+    ].forEach(({ name, group, unit = 'g' }) => {
+      ['density', 'purity'].forEach((property) => {
+        it(`keeps ${property} edits available for a ${name} with unresolved ratios`, () => {
+          const { sample, editor } = build(['solid', 'liquid', 'solid'], { group, unit });
+          sample.components[2].equivalent = 'n.d';
+
+          editor.onChangeComponent({
+            type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+            amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+            lockColumn: false,
+          });
+
+          expect(sample.components[1][property]).toBe(property === 'density' ? 1.2 : 0.5);
+          expect(notifications).toEqual([]);
+        });
+      });
+    });
+  });
+
   [['solid', 'solid', 'solid'], ['liquid', 'liquid', 'liquid'], ['solid', 'liquid', 'solid']]
     .forEach((groups) => {
       ['target', 'real'].forEach((amountType) => {

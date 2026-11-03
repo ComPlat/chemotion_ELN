@@ -883,6 +883,32 @@ describe('Sample', async () => {
     });
   });
 
+  describe('loading explicit zero component ratios', () => {
+    [0, 'n.d'].forEach((ratio) => {
+      it(`keeps a saved ${ratio} ratio when another component needs ratio initialization`, () => {
+        const sample = new Sample({ sample_type: 'Mixture', amount_value: 10, amount_unit: 'g' });
+        const components = [
+          { equivalent: 1, amount_mol: 0.01 },
+          { equivalent: ratio, amount_mol: 0 },
+          { amount_mol: 0.02 },
+        ].map((properties, index) => new Component({
+          id: index + 1, position: index, reference: index === 0, material_group: 'solid', purity: 1,
+          molecule: { molecular_weight: 100 }, ...properties,
+        }));
+
+        sample.initialComponents(components);
+
+        expect(sample.components[1].equivalent).toBe(ratio);
+        expect(sample.components[2].equivalent).toBe(2);
+
+        // An explicit amount clear still derives an unknown ratio, even after loading a zero.
+        sample.components[1].handleAmountChange({ value: 0, unit: 'mol' }, 0);
+        sample.updateMixtureComponentEquivalent();
+        expect(sample.components[1].equivalent).toBe('n.d');
+      });
+    });
+  });
+
   describe('Sample.prepareMixtureForSave()', () => {
     it('persists a settled reference-component state', () => {
       const sample = new Sample();

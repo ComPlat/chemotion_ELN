@@ -363,6 +363,66 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     expect(source.amount_g).toBe(originalMass);
   });
 
+  ['target', 'real'].forEach((amountType) => {
+    [0, 'n.d'].forEach((ratio) => {
+      it(`keeps a saved ${ratio} ratio when reopening a ${amountType} gram product from the reaction`, async () => {
+        const { reaction, mixture } = build();
+        reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+        reaction.products = [mixture];
+        mixture.belongTo = reaction;
+        mixture.amountType = amountType;
+        mixture[`${amountType}_amount_value`] = massG;
+        mixture[`${amountType}_amount_unit`] = 'g';
+        mixture.sample_details.total_mixture_volume_l = 0;
+        mixture.components.forEach((component) => {
+          component.material_group = 'liquid';
+          component.density = 0.8;
+          component.updatePhysicalAmounts();
+        });
+        mixture.updateProductComponentRatio(mixture.components[1], 0);
+        mixture.components[1].equivalent = ratio;
+        const apiSample = (sample) => new Sample(JSON.parse(JSON.stringify({
+          ...sample.serialize(),
+          components: sample.components.map((component) => ({
+            ...component.serializeComponent(),
+            component_properties: {
+              ...component.serializeComponent().component_properties, molecule: component.molecule,
+            },
+          })),
+        })));
+        SamplesFetcher.update.callsFake(async (sample) => apiSample(sample));
+
+        for (let cycle = 0; cycle < 2; cycle += 1) {
+          SamplesFetcher.fetchById.resolves(apiSample(reaction.sampleById(mixture.id)));
+          let draft;
+          await new ElementActions().showReactionMaterial({ sample: reaction.sampleById(mixture.id), reaction })(
+            ({ sample }) => { draft = sample; }
+          );
+          draft.belongTo = reaction;
+          expect(draft.components[1].equivalent).toBe(ratio);
+          expect(draft.components[1].amount_mol).toBe(0);
+
+          if (ratio === 0) {
+            const editor = new SampleDetailsComponents({ sample: draft, onChange: () => {} });
+            editor.onChangeComponent({
+              type: 'densityChanged', sampleID: draft.components[1].id,
+              amount: { value: 0.9, unit: 'g/ml' }, lockColumn: false,
+            });
+            editor.onChangeComponent({
+              type: 'purityChanged', sampleID: draft.components[1].id,
+              amount: { value: 0.5 }, materialGroup: 'liquid',
+            });
+            expect(draft.components[1].density).toBe(0.9);
+            expect(draft.components[1].purity).toBe(0.5);
+            expect(draft.amount_g).toBeCloseTo(massG, 12);
+          }
+          await new ElementActions().updateSampleForReaction(draft, reaction, false)(sinon.spy());
+          expect(reaction.sampleById(mixture.id).components[1].equivalent).toBe(ratio);
+        }
+      });
+    });
+  });
+
   ['mass', 'reference'].forEach((edit) => {
     [false, true].forEach((dirtyDraft) => {
       it(`synchronizes a reaction ${edit} edit with a mixture tab, unsaved draft=${dirtyDraft}`, async () => {

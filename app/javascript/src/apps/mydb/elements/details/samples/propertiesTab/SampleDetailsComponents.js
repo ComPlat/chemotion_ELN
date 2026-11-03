@@ -8,6 +8,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { checkComponentVolumeAndNotify } from 'src/utilities/VolumeUtils';
 import {
   ListGroup, ListGroupItem, Button
@@ -348,6 +349,24 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /** Reject unresolved ratios before a fixed-mass product edit can change component quantities. */
+  validateProductComponentRatios() {
+    const { sample } = this.props;
+    if (sample.components.every((component) => Number.isFinite(component.equivalent) && component.equivalent >= 0)) {
+      return true;
+    }
+
+    rootStore.notificationsStore.add({
+      title: 'Component ratios required',
+      message: 'Set a numeric ratio for every component before changing density or purity.',
+      uid: `mixture-product-ratios-${sample.id}`,
+      level: 'warning',
+      position: 'tr',
+      autoDismiss: 5,
+    });
+    return false;
+  }
+
   /**
    * Updates component density.
    * @param {Object} changeEvent - The change event
@@ -360,6 +379,8 @@ export default class SampleDetailsComponents extends React.Component {
     if (!currentComponent) {
       return;
     }
+    if (sample.hasFixedProductMass() && !this.validateProductComponentRatios()) return;
+
     const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
 
     currentComponent.handleDensityChange(amount, lockColumn);
@@ -440,6 +461,7 @@ export default class SampleDetailsComponents extends React.Component {
     }
     if (sample.hasFixedProductMass()) {
       if (!Number.isFinite(purity) || purity <= 0 || purity > 1) return;
+      if (!this.validateProductComponentRatios()) return;
 
       currentComponent.purity = purity;
       sample.updateProductComponentRatio(currentComponent, currentComponent.equivalent, {
