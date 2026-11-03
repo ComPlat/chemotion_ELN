@@ -49,6 +49,7 @@
 /config/compute_props.yml
 /config/converter.yml
 /config/sds_text_service.yml
+/config/inventory_integration.yml
 /config/ketcher_service.yml
 /config/structure_editors.yml
 /config/indigo_service.yml

@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "chemotion.inventory.run_report/v1",
+  "title": "Inventory sync run report",
+  "type": "object",
+  "required": ["format", "run", "counts", "error_summary", "errors", "warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "chemotion.inventory.run_report/v1" },
+    "run": { "type": "object" },
+    "source": { "type": "object" },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "seen": { "$ref": "#/definitions/count" },
+        "created": { "$ref": "#/definitions/count" },
+        "updated": { "$ref": "#/definitions/count" },
+        "unchanged": { "$ref": "#/definitions/count" },
+        "tombstoned": { "$ref": "#/definitions/count" },
+        "out_of_scope": { "$ref": "#/definitions/count" },
+        "conflicts": { "$ref": "#/definitions/count" },
+        "errors": { "$ref": "#/definitions/count" },
+        "skipped": { "$ref": "#/definitions/count" },
+        "unresolved_substances": { "$ref": "#/definitions/count" }
+      }
+    },
+    "substances": { "type": "object" },
+    "http": { "type": "object" },
+    "error_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "count"],
+        "properties": { "code": { "$ref": "#/definitions/code" }, "count": { "$ref": "#/definitions/count" } }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "external_id": { "type": "string" },
+          "phase": { "type": "string" },
+          "code": { "$ref": "#/definitions/code" },
+          "field": { "type": "string" },
+          "message": { "type": "string" },
+          "value": {}
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "count", "examples"],
+        "properties": {
+          "code": { "$ref": "#/definitions/code" },
+          "count": { "$ref": "#/definitions/count" },
+          "examples": { "type": "array", "maxItems": 5 }
+        }
+      }
+    },
+    "tombstone_guard": { "type": ["object", "null"] },
+    "dry_run": { "type": ["object", "null"] },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "definitions": {
+    "count": { "type": "integer", "minimum": 0 },
+    "code": { "type": "string", "pattern": "^[a-z_]+\\.[a-z_]+$" }
+  }
+}

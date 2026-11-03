@@ -17,6 +17,7 @@ module Entities
     expose! :screen_detail_level
     expose! :sequencebasedmacromoleculesample_detail_level
     expose! :wellplate_detail_level
+    expose! :inventory_field_access
 
     # Both dereference the association unguarded, and may: collection_shares.shared_with_id has a
     # FK to users, so the row cannot outlive the account, and the association is declared

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_23_100500) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -215,6 +215,8 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.integer "wellplate_detail_level", default: 0, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.jsonb "inventory_field_access"
+    t.jsonb "log_data"
     t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
     t.index ["collection_id", "shared_with_id"], name: "index_collection_shares_on_collection_id_and_shared_with_id", unique: true
     t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
@@ -870,6 +872,86 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
+  end
+
+  create_table "inventory_connections", force: :cascade do |t|
+    t.bigint "managed_collection_id", null: false
+    t.string "adapter_key", null: false
+    t.string "name", null: false
+    t.string "base_url"
+    t.string "source_key", null: false
+    t.string "scope_key", null: false
+    t.jsonb "settings", default: {}, null: false
+    t.text "credentials_ciphertext"
+    t.integer "credentials_key_version", limit: 2
+    t.string "credentials_fingerprint", limit: 16
+    t.string "credentials_ref"
+    t.bigint "active_mapping_version_id"
+    t.string "status", default: "draft", null: false
+    t.boolean "pull_enabled", default: true, null: false
+    t.boolean "push_enabled", default: false, null: false
+    t.string "profile", default: "standard", null: false
+    t.jsonb "field_authority", default: {}, null: false
+    t.integer "allowed_sharee_ids", array: true
+    t.boolean "dry_run_required", default: true, null: false
+    t.datetime "last_test_at"
+    t.boolean "last_test_ok"
+    t.string "last_test_digest", limit: 64
+    t.jsonb "last_test_report"
+    t.integer "created_by_id", null: false
+    t.integer "updated_by_id"
+    t.integer "lock_version", default: 0, null: false
+    t.datetime "archived_at"
+    t.jsonb "log_data"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["active_mapping_version_id"], name: "index_inventory_connections_on_active_mapping_version_id"
+    t.index ["adapter_key"], name: "index_inventory_connections_on_adapter_key"
+    t.index ["created_by_id"], name: "index_inventory_connections_on_created_by_id"
+    t.index ["managed_collection_id"], name: "index_inventory_connections_one_current", unique: true, where: "(archived_at IS NULL)"
+    t.index ["source_key", "scope_key"], name: "index_inventory_connections_on_source_and_scope", unique: true, where: "(archived_at IS NULL)"
+    t.index ["updated_by_id"], name: "index_inventory_connections_on_updated_by_id"
+  end
+
+  create_table "inventory_managed_collections", force: :cascade do |t|
+    t.integer "collection_id", null: false
+    t.jsonb "settings", default: {}, null: false
+    t.integer "created_by_id", null: false
+    t.datetime "archived_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_id"], name: "index_inventory_managed_collections_on_collection_id", unique: true
+    t.index ["created_by_id"], name: "index_inventory_managed_collections_on_created_by_id"
+  end
+
+  create_table "inventory_mapping_versions", force: :cascade do |t|
+    t.bigint "connection_id", null: false
+    t.integer "version", null: false
+    t.string "status", default: "draft", null: false
+    t.string "origin", null: false
+    t.string "preset_key"
+    t.bigint "based_on_version_id"
+    t.jsonb "mapping", null: false
+    t.jsonb "request_settings"
+    t.string "schema_version", default: "v1", null: false
+    t.jsonb "validation_report"
+    t.string "llm_task"
+    t.string "llm_model"
+    t.integer "created_by_id", null: false
+    t.integer "accepted_by_id"
+    t.datetime "accepted_at"
+    t.jsonb "log_data"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["accepted_by_id"], name: "index_inventory_mapping_versions_on_accepted_by_id"
+    t.index ["based_on_version_id"], name: "index_inventory_mapping_versions_on_based_on_version_id"
+    t.index ["connection_id", "version"], name: "index_inventory_mapping_versions_on_connection_id_and_version", unique: true
+    t.index ["connection_id"], name: "index_inventory_mapping_versions_one_active", unique: true, where: "((status)::text = 'active'::text)"
+    t.index ["created_by_id"], name: "index_inventory_mapping_versions_on_created_by_id"
+    t.check_constraint "((origin)::text <> 'assistant'::text) OR (llm_task IS NOT NULL)", name: "inventory_mapping_versions_assistant_task"
+    t.check_constraint "((status)::text <> 'active'::text) OR ((accepted_by_id IS NOT NULL) AND (accepted_at IS NOT NULL))", name: "inventory_mapping_versions_active_accepted"
+    t.check_constraint "(origin)::text = ANY ((ARRAY['manual'::character varying, 'preset'::character varying, 'assistant'::character varying, 'import'::character varying])::text[])", name: "inventory_mapping_versions_origin"
+    t.check_constraint "(status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'superseded'::character varying, 'discarded'::character varying])::text[])", name: "inventory_mapping_versions_status"
   end
 
   create_table "layer_tracks", force: :cascade do |t|
@@ -1878,6 +1960,16 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "dose_resp_outputs", "dose_resp_requests"
   add_foreign_key "components", "samples"
+  add_foreign_key "inventory_connections", "inventory_managed_collections", column: "managed_collection_id"
+  add_foreign_key "inventory_connections", "inventory_mapping_versions", column: "active_mapping_version_id"
+  add_foreign_key "inventory_connections", "users", column: "created_by_id"
+  add_foreign_key "inventory_connections", "users", column: "updated_by_id"
+  add_foreign_key "inventory_managed_collections", "collections"
+  add_foreign_key "inventory_managed_collections", "users", column: "created_by_id"
+  add_foreign_key "inventory_mapping_versions", "inventory_connections", column: "connection_id"
+  add_foreign_key "inventory_mapping_versions", "inventory_mapping_versions", column: "based_on_version_id"
+  add_foreign_key "inventory_mapping_versions", "users", column: "accepted_by_id"
+  add_foreign_key "inventory_mapping_versions", "users", column: "created_by_id"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
@@ -1887,6 +1979,23 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
   add_foreign_key "sequence_based_macromolecule_samples", "users"
+  create_function :inventory_mark_inventory_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.inventory_mark_inventory_sample()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM inventory_managed_collections
+          WHERE collection_id = NEW.collection_id AND archived_at IS NULL
+        ) THEN
+          UPDATE samples SET inventory_sample = true
+          WHERE id = NEW.sample_id AND inventory_sample IS DISTINCT FROM true;
+        END IF;
+        RETURN NEW;
+      END;
+      $function$
+  SQL
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
@@ -2877,5 +2986,17 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
+  SQL
+  create_trigger :inventory_mark_inventory_sample_trg, sql_definition: <<-SQL
+      CREATE TRIGGER inventory_mark_inventory_sample_trg AFTER INSERT OR UPDATE OF deleted_at, collection_id ON public.collections_samples FOR EACH ROW WHEN ((new.deleted_at IS NULL)) EXECUTE FUNCTION inventory_mark_inventory_sample()
+  SQL
+  create_trigger :logidze_on_collection_shares, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collection_shares BEFORE INSERT OR UPDATE ON public.collection_shares FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_inventory_connections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_inventory_connections BEFORE INSERT OR UPDATE ON public.inventory_connections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at', '{credentials_ciphertext}')
+  SQL
+  create_trigger :logidze_on_inventory_mapping_versions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_inventory_mapping_versions BEFORE INSERT OR UPDATE ON public.inventory_mapping_versions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 end

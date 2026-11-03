@@ -1,0 +1,23 @@
+{
+  "schema": "chemotion.inventory.mapping/v1",
+  "source": { "format": "json", "csv": null },
+  "identity": {
+    "external_id": { "from": "id" },
+    "version": { "from": "updated_at", "optional": true },
+    "changed_at": { "from": "updated_at", "transform": [{ "date": { "formats": ["iso8601"] } }], "optional": true },
+    "deleted": { "from": "archived", "transform": [{ "boolean": { "true_values": ["1", "true", "yes"] } }], "optional": true }
+  },
+  "fields": {
+    "substance.name": { "from": "chemical.name", "transform": ["trim"] },
+    "substance.cas": { "from": ["chemical.cas", "cas_no"], "transform": ["first_present", "cas"] },
+    "quantity.remaining.value": { "from": "amount", "transform": ["decimal_comma", "number"] },
+    "quantity.remaining.unit": { "from": "unit", "map": { "G": "g", "MG": "mg", "ML": "mL", "L": "L", "ST": "pcs" }, "on_unmapped": "error" },
+    "status": { "from": "state", "map": { "in stock": "available", "empty": "empty" }, "default": "unknown" },
+    "location.path": { "from": ["building", "room", "cabinet"], "transform": ["compact"] },
+    "product.expires_on": { "from": "expiry", "transform": [{ "date": { "formats": ["%d.%m.%Y", "%Y-%m-%d"] } }] },
+    "hazard.h_statements": { "from": "h_phrases", "transform": [{ "split": { "separators": [",", ";", " "] } }, "upcase"] }
+  },
+  "extensions": { "keep": ["internal_ref"] },
+  "writable": { "quantity.remaining": { "mode": "absolute" }, "location.path": {} },
+  "reverse": { "location.path": { "to": ["building", "room", "cabinet"] } }
+}

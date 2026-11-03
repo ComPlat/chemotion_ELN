@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "chemotion.inventory.rest/v1",
+  "title": "Generic REST request settings",
+  "type": "object",
+  "required": ["schema", "list", "auth", "pagination"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "chemotion.inventory.rest/v1" },
+    "list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "method": { "enum": ["GET"] },
+        "path": { "$ref": "#/definitions/relative_path" },
+        "query": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 300 } },
+        "records_path": { "type": "string", "maxLength": 300 },
+        "changed_since": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["param"],
+          "properties": {
+            "param": { "type": "string", "minLength": 1, "maxLength": 100 },
+            "format": { "enum": ["iso8601", "unix", "date"] },
+            "overlap_minutes": { "type": "integer", "minimum": 0, "maximum": 1440 }
+          }
+        }
+      }
+    },
+    "detail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "method": { "enum": ["GET"] },
+        "path": { "$ref": "#/definitions/relative_path" },
+        "record_path": { "type": "string", "maxLength": 300 }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["none", "header", "query", "bearer", "basic"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "secret": { "$ref": "#/definitions/secret_ref" },
+        "user_secret": { "$ref": "#/definitions/secret_ref" },
+        "password_secret": { "$ref": "#/definitions/secret_ref" }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["style"],
+      "properties": {
+        "style": { "enum": ["none", "page", "offset", "next_link", "cursor"] },
+        "page_param": { "$ref": "#/definitions/param" },
+        "size_param": { "$ref": "#/definitions/param" },
+        "start": { "type": "integer", "minimum": 0 },
+        "page_size": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "offset_param": { "$ref": "#/definitions/param" },
+        "limit_param": { "$ref": "#/definitions/param" },
+        "next_link_path": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "link_header": { "type": "boolean" },
+        "cursor_param": { "$ref": "#/definitions/param" },
+        "cursor_path": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "max_pages": { "type": "integer", "minimum": 1, "maximum": 100000 }
+      }
+    },
+    "headers": { "type": "object", "additionalProperties": { "type": "string", "maxLength": 500 } },
+    "rate_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "requests_per_second": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 } }
+    },
+    "not_found_statuses": { "type": "array", "items": { "type": "integer", "minimum": 400, "maximum": 499 } }
+  },
+  "definitions": {
+    "relative_path": { "type": "string", "pattern": "^/", "maxLength": 500 },
+    "param": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "secret_ref": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" }
+  }
+}

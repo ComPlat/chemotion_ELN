@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "chemotion.inventory/v1",
+  "title": "Chemotion inventory record",
+  "description": "One physical container, or one lot when the source has no container granularity.",
+  "x-status": "beta",
+  "x-contract-revision": 1,
+  "type": "object",
+  "required": ["contract", "external_id", "kind", "version", "substance"],
+  "additionalProperties": false,
+  "properties": {
+    "contract": { "const": "chemotion.inventory/v1" },
+    "external_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "kind": { "enum": ["container", "lot"] },
+    "external_parent_id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "version": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "changed_at": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" },
+    "deletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": { "enum": ["disposed", "removed", "out_of_scope", "unknown"] },
+        "at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "substance": {
+      "type": "object",
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["name"] }, { "required": ["cas"] }],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "cas": { "type": "string", "pattern": "^\\d{2,7}-\\d{2}-\\d$" },
+        "smiles": { "type": "string", "minLength": 1, "maxLength": 10000 },
+        "inchi": { "type": "string", "minLength": 1, "maxLength": 10000 },
+        "inchikey": { "type": "string", "pattern": "^[A-Z]{14}-[A-Z]{10}-[A-Z]$" },
+        "molfile": { "type": "string", "minLength": 1, "maxLength": 200000 },
+        "sum_formula": { "$ref": "#/definitions/text" },
+        "molecular_weight": { "type": "number", "exclusiveMinimum": 0 },
+        "purity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "concentration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "unit"],
+          "properties": {
+            "value": { "type": "number", "minimum": 0 },
+            "unit": { "enum": ["M", "mmol/L", "g/L", "wt%", "vol%"] }
+          }
+        }
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vendor": { "$ref": "#/definitions/text" },
+        "manufacturer": { "$ref": "#/definitions/text" },
+        "catalog_number": { "$ref": "#/definitions/text" },
+        "gtin": { "type": "string", "pattern": "^(\\d{8}|\\d{12}|\\d{13}|\\d{14})$" },
+        "lot_number": { "$ref": "#/definitions/text" },
+        "order_reference": { "$ref": "#/definitions/text" },
+        "price": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "currency"],
+          "properties": {
+            "value": { "type": "number", "minimum": 0 },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+          }
+        },
+        "manufactured_on": { "$ref": "#/definitions/date" },
+        "expires_on": { "$ref": "#/definitions/date" },
+        "received_on": { "$ref": "#/definitions/date" },
+        "opened_on": { "$ref": "#/definitions/date" }
+      }
+    },
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initial": { "$ref": "#/definitions/amount" },
+        "remaining": { "$ref": "#/definitions/amount" },
+        "container_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "status": { "enum": ["available", "empty", "to_order", "ordered", "disposed", "locked", "unknown"] },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "array", "maxItems": 8, "items": { "type": "string", "minLength": 1, "maxLength": 200 } },
+        "external_location_id": { "$ref": "#/definitions/text" },
+        "label": { "$ref": "#/definitions/text" }
+      }
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "group": { "$ref": "#/definitions/text" },
+        "person": { "$ref": "#/definitions/text" },
+        "cost_center": { "$ref": "#/definitions/text" }
+      }
+    },
+    "barcode": { "$ref": "#/definitions/text" },
+    "hazard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "h_statements": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^(H\\d{3}[A-Za-z]{0,2}|EUH\\d{3}[A-Za-z]?)$" }
+        },
+        "p_statements": { "type": "array", "items": { "type": "string", "pattern": "^P\\d{3}(\\+P\\d{3})*$" } },
+        "pictograms": { "type": "array", "items": { "type": "string", "pattern": "^GHS0[1-9]$" } },
+        "signal_word": { "enum": ["danger", "warning"] },
+        "storage_class": { "type": "string", "minLength": 1, "maxLength": 10 },
+        "un_number": { "type": "string", "pattern": "^UN\\d{4}$" },
+        "wgk": { "enum": ["1", "2", "3", "nwg"] },
+        "flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["cmr_1a", "cmr_1b", "cmr_2", "drug_precursor", "explosive_precursor", "svhc", "controlled"]
+          }
+        },
+        "sds": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "version": { "$ref": "#/definitions/text" },
+            "date": { "$ref": "#/definitions/date" },
+            "language": { "type": "string", "minLength": 2, "maxLength": 10 }
+          }
+        }
+      }
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "melting_point_c": { "$ref": "#/definitions/range" },
+        "boiling_point_c": { "$ref": "#/definitions/range" },
+        "flash_point_c": { "type": "number" },
+        "density_g_ml": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "extensions": { "type": "object", "additionalProperties": { "type": "object" } },
+    "provenance": { "type": "object" }
+  },
+  "definitions": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "date": { "type": "string", "format": "date" },
+    "range": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number", "minimum": 0 },
+        "unit": { "enum": ["kg", "g", "mg", "ug", "L", "mL", "uL", "mol", "mmol", "umol", "pcs"] }
+      }
+    }
+  }
+}
