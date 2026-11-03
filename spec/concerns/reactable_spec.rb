@@ -4,7 +4,9 @@ require 'spec_helper'
 
 RSpec.describe Reactable, type: :module do
   let(:reactable) { Class.new { include Reactable }.new }
-  let(:sample_with_target_amount) { create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol') }
+  let(:sample_with_target_amount) do
+    create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol')
+  end
   let(:sample_with_real_amount) do
     create(:sample, real_amount_value: 15, real_amount_unit: 'mol', target_amount_value: 10, target_amount_unit: 'g')
   end
@@ -74,9 +76,11 @@ RSpec.describe Reactable, type: :module do
       end
     end
 
+    legacy_component_options = [false, true]
     %w[target real].each do |amount_type|
-      [false, true].each do |legacy_components|
-        it "preserves product yield on sample save with an unquantified #{amount_type} mixture reference, legacy components=#{legacy_components}" do
+      legacy_component_options.each do |legacy_components|
+        it "preserves product yield on sample save with an unquantified #{amount_type} mixture reference, " \
+           "legacy components=#{legacy_components}" do
           mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
                                     real_amount_value: nil, target_amount_value: nil,
                                     "#{amount_type}_amount_value" => 10,
@@ -88,7 +92,7 @@ RSpec.describe Reactable, type: :module do
             )
           end
           create(:reactions_starting_material_sample, reaction: reaction, sample: mixture,
-                                                     reference: true, equivalent: 1)
+                                                      reference: true, equivalent: 1)
           product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
           association = create(:reactions_product_sample, reaction: reaction, sample: product,
                                                           coefficient: 2, equivalent: 0.25)
