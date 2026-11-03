@@ -1180,6 +1180,62 @@ describe('Sample', async () => {
       expect(ref.amount_g + other.amount_g).toBeCloseTo(1, 10);
     });
 
+    [undefined, null, 0].forEach((volume) => {
+      it(`initializes a gram mixture with residual density and entered volume ${volume}`, () => {
+        const { s, ref, other } = buildMixture(10);
+        s.density = 0.8;
+        s.sample_details = { total_mixture_volume_l: volume };
+        expect(s.amount_l).toBeCloseTo(0.0125, 12);
+
+        s.setAmount({ value: 10, unit: 'g' });
+
+        expect(ref.amount_mol).toBeCloseTo(10 / (282.55 + 2 * 114.23), 12);
+        expect(other.amount_mol).toBeCloseTo(ref.amount_mol * 2, 12);
+        expect(ref.amount_g + other.amount_g).toBeCloseTo(10, 12);
+        s.calculateTotalMixtureMass();
+        expect(s.amount_g).toBeCloseTo(10, 12);
+        expect(s.density).toBe(0);
+        expect(s.sample_details.total_mixture_volume_l).toBe(volume);
+      });
+    });
+
+    ['stored', 'litre amount', 'internal solvent'].forEach((source) => {
+      it(`does not distribute solvent-free mass when a positive volume comes from ${source}`, () => {
+        const { s, ref, other } = buildMixture(10);
+        s.density = 0.8;
+        s.sample_details = source === 'stored' ? { total_mixture_volume_l: 0.01 } : {};
+        if (source === 'litre amount') { s.amount_unit = 'l'; s.amount_value = 0.01; }
+        if (source === 'internal solvent') s.solvent = [{ amount_l: 0.001, density: 1 }];
+
+        s.updateComponentAmounts();
+
+        expect(ref.amount_mol || 0).toBe(0);
+        expect(other.amount_mol || 0).toBe(0);
+      });
+    });
+
+    it('does not infer a composition from an unknown ratio when residual density is present', () => {
+      const { s, ref, other } = buildMixture(10);
+      s.density = 0.8;
+      other.equivalent = 'n.d';
+
+      s.updateComponentAmounts();
+
+      expect(ref.amount_mol || 0).toBe(0);
+      expect(other.amount_mol || 0).toBe(0);
+      expect(s.amount_g).toBe(10);
+    });
+
+    it('reads entered volume without normalizing or modifying a reaction portion', () => {
+      const { s } = buildMixture(10);
+      s.parent_id = 123;
+      s.sample_details = Object.freeze({ total_mixture_mass_g: 20, total_mixture_volume_l: 0.01 });
+
+      expect(s.enteredMixtureTotalVolume()).toBe(0.01);
+      expect(s.sample_details).toEqual({ total_mixture_mass_g: 20, total_mixture_volume_l: 0.01 });
+      expect(s.amount_g).toBe(10);
+    });
+
     ['clear', 'merge'].forEach((operation) => {
       it(`does not restore a component after ${operation}, save/reload, and a mass edit`, async () => {
         const { s, ref, other } = buildMixture(1);

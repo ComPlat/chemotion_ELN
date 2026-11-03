@@ -1212,9 +1212,8 @@ export default class Sample extends Element {
       return;
     }
 
-    // Ratio initialization assumes no solvent mass. Match the volume basis used by
-    // calculateTotalMixtureMass, including its fallback to the sample's own volume.
-    const totalVolumeL = Number(this.sample_details?.total_mixture_volume_l ?? this.amount_l);
+    // Only an entered volume can reserve solvent mass; amount_l may derive from residual density.
+    const totalVolumeL = Number(this.enteredMixtureTotalVolume());
     if ((Array.isArray(this.solvent) && this.solvent.length > 0)
       || !Number.isFinite(totalVolumeL) || totalVolumeL !== 0) return;
 
@@ -3386,13 +3385,19 @@ export default class Sample extends Element {
     }, 0);
   }
 
+  /** Reads entered volume without deriving it from mass/density or modifying the sample. */
+  enteredMixtureTotalVolume() {
+    return this.sample_details?.total_mixture_volume_l
+      ?? (this.amount_unit === 'l' ? this.amount_value : 0);
+  }
+
   /** Normalizes an entered stock volume to the reaction portion before using its mass contribution. */
   resolveMixtureTotalVolume(editedTotalVolumeL) {
     this.initializeSampleDetails();
     if (this.sample_details.total_mixture_volume_l == null && this.amount_unit === 'l') {
       this.sample_details.total_mixture_volume_l = this.amount_value;
     }
-    let totalVolumeL = editedTotalVolumeL ?? this.sample_details.total_mixture_volume_l ?? 0;
+    let totalVolumeL = editedTotalVolumeL ?? this.enteredMixtureTotalVolume();
     const storedMassG = Number(this.total_mixture_mass_g);
     const portionMassG = Number(this.amount_g);
     if (editedTotalVolumeL === undefined && this.parent_id != null
@@ -3496,9 +3501,7 @@ export default class Sample extends Element {
 
     const totalMassG = Number(this.sample_details.total_mixture_mass_g) || 0;
     // A mass-derived amount_l cannot establish the volume used to derive density.
-    const totalVolumeL = this.sample_details.total_mixture_volume_l
-      ?? (this.amount_unit === 'l' ? this.amount_value : 0);
-    const totalVolumeML = parseFloat(totalVolumeL) * 1000;
+    const totalVolumeML = parseFloat(this.enteredMixtureTotalVolume()) * 1000;
 
     // An entered positive total volume supplies a liquid basis even if the
     // previous density was cleared and all components are solids.
