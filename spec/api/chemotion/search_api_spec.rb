@@ -670,6 +670,51 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  %w[advanced all].product(%i[sample reaction]).each do |endpoint, element_type|
+    describe "POST /api/v1/search/#{endpoint} on private notes of #{element_type.to_s.pluralize}" do
+      let(:url) { "/api/v1/search/#{endpoint}" }
+      let(:table) { element_type.to_s.pluralize }
+      let(:noted_element) { element_type == :sample ? sample_a : reaction }
+      let(:other_person) { create(:person) }
+      let(:notes) do
+        create(:private_note, noteable: noted_element, user_id: other_person.id, content: 'other note')
+        create(:private_note, noteable: noted_element, user_id: user.id, content: 'my own note')
+      end
+      let(:params) do
+        notes # the request is sent by the top-level before block, so the notes must exist first
+        {
+          selection: {
+            elementType: :advanced,
+            search_by_method: :advanced,
+            advanced_params: [
+              { link: '', match: 'ILIKE', table: table, element_id: 0, unit: '',
+                field: { column: 'content', table: table }, value: search_term },
+            ],
+          },
+          collection_id: collection.id, page: 1, per_page: 15
+        }
+      end
+
+      context "with a word in another user's note" do
+        let(:search_term) { 'other note' }
+
+        it 'does not match the note' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(table, 'ids')).to eq []
+        end
+      end
+
+      context "with a word in the user's own note" do
+        let(:search_term) { 'my own' }
+
+        it 'finds the element' do
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(table, 'ids')).to eq [noted_element.id]
+        end
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/reactions' do
     pending 'TODO: Add missing spec'
   end
