@@ -145,9 +145,12 @@ describe('Reaction', () => {
       reaction.reactants = [persisted(materials[0], 102)];
       reaction.solvents = [persisted(materials[1], 103)];
       reaction.purification_solvents = [persisted(materials[2], 104)];
+      reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
+        id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
+      })];
       const originals = [
         ...reaction.starting_materials, ...reaction.reactants, ...reaction.solvents,
-        ...reaction.purification_solvents, ...reaction.products,
+        ...reaction.purification_solvents, ...reaction.products, ...reaction.reactant_sbmm_samples,
       ];
       const copy = reaction.buildCopy({ collection_id: 'col1' });
       const { materials: serialized } = copy.serialize();
@@ -159,6 +162,8 @@ describe('Reaction', () => {
       });
       expect(copy.purification_solvents.length).toBe(1);
       expect(copy.purification_solvents[0]).not.toBe(reaction.purification_solvents[0]);
+      expect(serialized.reactant_sbmm_samples.length).toBe(1);
+      expect(serialized.reactant_sbmm_samples[0].parent_id).toBe(900);
     });
 
     it('clears purification solvent real amounts when keepAmounts=false (default)', () => {
