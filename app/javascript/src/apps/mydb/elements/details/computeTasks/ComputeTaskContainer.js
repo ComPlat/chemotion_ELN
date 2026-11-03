@@ -70,7 +70,7 @@ export default class ComputeTaskContainer extends React.Component {
 
     return (
       <DetailCard title="Task" onClose={this.onClose}>
-        <Table striped condensed hover>
+        <Table striped size="sm" hover>
           <thead>
             <tr>
               <th className="text-center">Sample</th>

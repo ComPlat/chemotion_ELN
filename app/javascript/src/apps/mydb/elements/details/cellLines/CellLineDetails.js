@@ -129,7 +129,9 @@ class CellLineDetails extends React.Component {
               <DetailsTabLiteratures
                 readOnly={readOnly}
                 element={cellLineItem}
-                literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+                literatures={
+                  cellLineItem.is_new && Array.isArray(cellLineItem.literatures) ? cellLineItem.literatures : null
+                }
               />
             </Tab>
           </Tabs>

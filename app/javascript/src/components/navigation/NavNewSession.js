@@ -55,7 +55,7 @@ const ExtendedSignInForm = ({
     remember_me: false,
     otp_attempt: ''
   });
-  const [showOtp, setShowOtp] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
@@ -155,7 +155,7 @@ const ExtendedSignInForm = ({
       </Form>
     </>
   );
-}
+};
 
 ExtendedSignInForm.propTypes = {
   url: PropTypes.string.isRequired,
@@ -175,7 +175,7 @@ const SignInForm = ({ authenticityToken }) => {
     password: '',
     otp_attempt: ''
   });
-  const [showOtp, setShowOtp] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
@@ -253,7 +253,7 @@ const SignInForm = ({ authenticityToken }) => {
       </Row>
     </Form>
   );
-}
+};
 
 SignInForm.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
@@ -293,7 +293,7 @@ const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {}
       )}
     </Row>
   );
-}
+};
 
 NewSession.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
@@ -304,13 +304,14 @@ NewSession.propTypes = {
     })
   ),
   extraRules: PropTypes.shape({
-    disable_db_login: PropTypes.bool.isRequired,
-    disable_signup: PropTypes.bool.isRequired,
-  }).isRequired
+    disable_db_login: PropTypes.bool,
+    disable_signup: PropTypes.bool,
+  })
 };
 
 NewSession.defaultProps = {
-  omniauthProviders: {}
+  omniauthProviders: {},
+  extraRules: {}
 };
 
 export default NewSession;

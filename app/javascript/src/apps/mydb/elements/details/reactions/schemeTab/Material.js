@@ -386,7 +386,6 @@ class Material extends Component {
               className="reaction-material__yield-data"
               name="yield"
               type="text"
-              bsClass="bs-form--compact form-control"
               size="sm"
               value={this.calculateYield(material, reaction) || 'n.d.'}
               disabled
