@@ -11,7 +11,7 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
-import { normalizeNumberInput } from 'src/utilities/MathUtils';
+import { normalizeVesselSizeValue } from 'src/utilities/MathUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
@@ -2241,7 +2241,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVesselSize(e) {
     const { onInputChange, reaction } = this.props;
-    const value = normalizeNumberInput(e.target.value);
+    const value = normalizeVesselSizeValue(e.target.value);
     onInputChange('vesselSizeAmount', value);
     this.handleMaterialsChange({
       type: 'VesselSizeChanged',
@@ -2251,7 +2251,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVesselSizeOnBlur(e) {
     const { onInputChange, reaction } = this.props;
-    const value = normalizeNumberInput(e.target.value);
+    const value = normalizeVesselSizeValue(e.target.value);
     onInputChange('vesselSizeAmount', value);
     if (value !== '') {
       this.handleMaterialsChange({

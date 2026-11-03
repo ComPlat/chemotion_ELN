@@ -1422,6 +1422,47 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
   });
 });
 
+describe('ReactionDetailsScheme vessel-size input', () => {
+  ['updateVesselSize', 'updateVesselSizeOnBlur'].forEach((handler) => {
+    ['l', 'ml'].forEach((unit) => {
+      [
+        ['1.2.5', '1.25'],
+        ['1,000.5', '1.0005'],
+        ['12.3.45', '12.345'], // Insert a dot into the middle of an existing decimal.
+        ['1,,25', '1.25'],
+        ['12,5 ml', '12.5'],
+        ['5.', '5.'],
+        ['.', '.'],
+        ['', ''],
+      ].forEach(([raw, normalized]) => {
+        it(`${handler} preserves ${JSON.stringify(raw)} as ${JSON.stringify(normalized)} in ${unit}`, () => {
+          const onInputChange = sinon.spy();
+          const reaction = Reaction.buildEmpty(1);
+          reaction.vessel_size = { unit };
+          const instance = new ReactionDetailsScheme({
+            reaction,
+            onInputChange,
+          });
+          const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
+
+          instance[handler]({ target: { value: raw } });
+
+          expect(onInputChange.calledOnceWithExactly('vesselSizeAmount', normalized)).toBe(true);
+          if (handler === 'updateVesselSizeOnBlur' && normalized === '') {
+            expect(handleMaterialsChange.called).toBe(false);
+          } else {
+            const numericValue = parseFloat(normalized) || 0;
+            expect(handleMaterialsChange.calledOnceWithExactly({
+              type: 'VesselSizeChanged',
+              vesselSizeInLiters: unit === 'l' ? numericValue : numericValue * 0.001,
+            })).toBe(true);
+          }
+        });
+      });
+    });
+  });
+});
+
 describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
   it('releases a feedstock preserveConcentration so it recomputes on vessel change', () => {
     const feedstock = {

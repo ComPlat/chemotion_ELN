@@ -11,6 +11,8 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import { GenUnitBtn, getGenSI } from 'chem-generic-ui';
+import Reaction from 'src/models/Reaction';
+import { ENVIRONMENT_UNITS, isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
 import * as ReactionVariationsUtils
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
@@ -101,13 +103,33 @@ describe('EnvironmentConditionsPanel', () => {
       expect(onChange.firstCall.args[0].air_pressure.value).toBe('1013.25');
     });
 
-    it('clears incomplete values on blur', () => {
+    it('clears newly typed incomplete values on blur', () => {
       ['-', '.', '-.'].forEach((value) => {
         const onChange = sinon.spy();
-        const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit: '°C' } }), onChange);
+        const wrapper = renderPanel(buildEnvironment(), onChange);
+        changeInput(wrapper, TEMPERATURE, value);
+        wrapper.setProps({ environment: onChange.lastCall.args[0] });
         wrapper.find('input').at(TEMPERATURE).simulate('blur');
-        expect(onChange.firstCall.args[0].temperature.value).toBe('');
+        expect(onChange.lastCall.args[0].temperature.value).toBe('');
         wrapper.unmount();
+      });
+    });
+
+    ['temperature', 'humidity', 'air_pressure'].forEach((field, index) => {
+      it(`preserves untouched imported ${field} text on blur`, () => {
+        ['20-22', '21,5', '-', '.', '-.'].forEach((value) => {
+          const environment = buildEnvironment();
+          environment[field].value = value;
+          const onChange = sinon.spy();
+          const wrapper = renderPanel(environment, onChange);
+
+          wrapper.find('input').at(index).simulate('focus');
+          wrapper.find('input').at(index).simulate('blur');
+
+          expect(wrapper.find('input').at(index).prop('value')).toBe(value);
+          expect(onChange.called).toBe(false);
+          wrapper.unmount();
+        });
       });
     });
 
@@ -139,12 +161,14 @@ describe('EnvironmentConditionsPanel', () => {
   });
 
   describe('temperature unit cycling', () => {
-    it('leaves an unknown legacy temperature unit unchanged', () => {
+    it('cycles an imported temperature after its unknown unit falls back to the default', () => {
       const onChange = sinon.spy();
-      const wrapper = renderPanel(buildEnvironment({ temperature: { value: '22', unit: 'C' } }), onChange);
+      const reaction = new Reaction({ environment: { temperature: { value: '22', unit: 'C' } } });
+      const wrapper = renderPanel(reaction.environment, onChange);
       wrapper.find('button').at(0).simulate('click');
 
-      expect(onChange.called).toBe(false);
+      expect(onChange.calledOnce).toBe(true);
+      expect(onChange.firstCall.args[0].temperature).toEqual({ value: '71.6', unit: '°F' });
       wrapper.unmount();
     });
 
@@ -166,6 +190,23 @@ describe('EnvironmentConditionsPanel', () => {
       }
       expect(wrapper.prop('environment').temperature).toEqual({ value: '20.123', unit: '°F' });
       wrapper.unmount();
+    });
+
+    ['1000000000000000000000', '-1000000000000000000000'].forEach((value) => {
+      it(`keeps large temperature ${value} numeric through a complete unit cycle`, () => {
+        const onChange = sinon.spy();
+        const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit: '°C' } }), onChange);
+
+        Reaction.temperature_unit.forEach(() => {
+          wrapper.find('button').at(0).simulate('click');
+          const environment = onChange.lastCall.args[0];
+          expect(isEnvironmentNumber(environment.temperature.value)).toBe(true);
+          wrapper.setProps({ environment });
+        });
+
+        expect(wrapper.prop('environment').temperature).toEqual({ value, unit: '°C' });
+        wrapper.unmount();
+      });
     });
 
     it('converts from a newly edited value instead of the previous original', () => {
@@ -192,6 +233,11 @@ describe('EnvironmentConditionsPanel', () => {
 
   describe('air pressure unit cycling', () => {
     const cyclePressure = (wrapper) => wrapper.find('button.gen-unit-btn').simulate('click');
+
+    it('keeps the library pressure keys aligned with the API-compatible units', () => {
+      const keys = getGenSI('pressure').map(({ key }) => key);
+      expect(keys.sort()).toEqual([...ENVIRONMENT_UNITS.air_pressure].sort());
+    });
 
     it('converts mbar to atm and keeps the other environment fields', () => {
       const onChange = sinon.spy();
@@ -228,13 +274,25 @@ describe('EnvironmentConditionsPanel', () => {
       wrapper.unmount();
     });
 
-    it('leaves the reading and unit unchanged when a legacy unit is unknown', () => {
+    it('cycles an imported pressure after normalizing its unit label', () => {
       const onChange = sinon.spy();
-      const wrapper = renderPanel(buildEnvironment({ air_pressure: { value: '1013.25', unit: 'hPa' } }), onChange);
-      wrapper.find(GenUnitBtn).prop('fnCb')({ unit: 'atm' });
+      const reaction = new Reaction({ environment: { air_pressure: { value: '1013.25', unit: 'hPa' } } });
+      const wrapper = renderPanel(reaction.environment, onChange);
+      cyclePressure(wrapper);
 
-      expect(onChange.called).toBe(false);
-      expect(wrapper.prop('environment').air_pressure).toEqual({ value: '1013.25', unit: 'hPa' });
+      expect(onChange.calledOnce).toBe(true);
+      expect(onChange.firstCall.args[0].air_pressure).toEqual({ value: '760', unit: 'torr' });
+      wrapper.unmount();
+    });
+
+    it('cycles an imported pressure after an unknown unit falls back to mbar', () => {
+      const onChange = sinon.spy();
+      const reaction = new Reaction({ environment: { air_pressure: { value: '1013.25', unit: 'unknown' } } });
+      const wrapper = renderPanel(reaction.environment, onChange);
+      cyclePressure(wrapper);
+
+      expect(onChange.calledOnce).toBe(true);
+      expect(onChange.firstCall.args[0].air_pressure).toEqual({ value: '1', unit: 'atm' });
       wrapper.unmount();
     });
 

@@ -13,14 +13,14 @@ import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
-import { isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
+import { ENVIRONMENT_UNITS, isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
 
-const TemperatureUnit = ['°C', '°F', 'K'];
+const TemperatureUnit = ENVIRONMENT_UNITS.temperature;
 
 const TemperatureDefault = {
   valueUnit: '°C',
@@ -165,7 +165,6 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
-      environment: EnvironmentDefault,
       ph_operator: '=',
       ph_value: null,
       description: Reaction.quillDefault(),
@@ -263,13 +262,6 @@ export default class Reaction extends Element {
     return Number.isFinite(v) ? v : null;
   }
 
-  environmentForSerialize() {
-    return Object.fromEntries(Object.entries(this.environment).map(([field, condition]) => [
-      field,
-      { ...condition, value: isEnvironmentNumber(condition.value) ? condition.value : '' },
-    ]));
-  }
-
   serialize() {
     return super.serialize({
       collection_id: this.collection_id,
@@ -277,7 +269,8 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
-      environment: this.environmentForSerialize(),
+      // API writes and imports may contain nonnumeric readings; saving must preserve them.
+      environment: this.environment,
       ph_operator: this.ph_operator || '=',
       ph_value: this.phValueForSerialize(),
       duration: this.duration,
@@ -475,10 +468,12 @@ export default class Reaction extends Element {
       const condition = env[field];
       const value = condition?.value;
       const unit = condition?.unit;
+      const unitKey = typeof unit === 'string' ? unit.trim().toLowerCase() : '';
+      const normalizedUnit = ENVIRONMENT_UNITS[field].find((key) => key.toLowerCase() === unitKey);
 
       return [field, {
         value: typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value)) ? `${value}` : '',
-        unit: typeof unit === 'string' && unit !== '' ? unit : defaults.unit,
+        unit: normalizedUnit || defaults.unit,
       }];
     }));
   }
@@ -486,12 +481,7 @@ export default class Reaction extends Element {
   // True when any environmental condition (temperature, humidity, air pressure)
   // holds a numeric value. Drives the check mark next to the toggle button.
   isEnvironmentSet() {
-    const env = this._environment;
-    if (!env) { return false; }
-    return ['temperature', 'humidity', 'air_pressure'].some((key) => {
-      const value = env[key]?.value;
-      return isEnvironmentNumber(value);
-    });
+    return Object.values(this.environment).some(({ value }) => isEnvironmentNumber(value));
   }
 
   get description_contents() {

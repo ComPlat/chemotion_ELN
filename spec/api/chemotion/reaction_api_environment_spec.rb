@@ -36,6 +36,16 @@ RSpec.describe Chemotion::ReactionAPI do
       expect(saved_environment).to eq(environment)
     end
 
+    %w[atm pa kpa mpa hpa torr bar mbar].each do |unit|
+      it "accepts the pressure unit key #{unit} used by the environment panel" do
+        environment = { 'air_pressure' => { 'value' => '21,5', 'unit' => unit } }
+        save_environment(environment: environment)
+
+        expect(response).to have_http_status(:created).or have_http_status(:ok)
+        expect(saved_environment).to eq(environment)
+      end
+    end
+
     it 'accepts partial objects and empty measurement values' do
       environment = { 'temperature' => { 'value' => '' }, 'humidity' => {} }
       save_environment(environment: environment)
