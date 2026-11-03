@@ -1,19 +1,24 @@
 # frozen_string_literal: true
 
-# Saving a reaction whose sample was also linked to another reaction could move that other
-# reaction's link to the saved one, so the saved reaction listed the sample twice and the other
-# reaction lost it. The lookup is now scoped to the saved reaction. This migration repairs the
-# links and adds a unique index so a reaction cannot link the same sample twice:
+# A sample belongs to at most one reaction, in one role. Saving a reaction whose sample was also
+# linked to another reaction could move that other reaction's link to the saved one, so the saved
+# reaction listed the sample twice and the other reaction lost it. The lookup is now scoped to the
+# saved reaction. This migration repairs the links and adds a unique index on the sample of a live
+# link:
 #
 # 1. A moved link is a live row that duplicates another link of its reaction, and whose logidze
 #    history names another reaction first. It goes back to that reaction, with the values it had
 #    there, if that reaction is not deleted and does not link the sample itself. If the moved link
 #    was updated after the own link of the reaction it is taken from, its current values are
 #    copied to the own link first, so that reaction keeps its latest values.
-# 2. Of the duplicates still left, the most recently updated row is kept, the others are
-#    soft deleted.
+# 2. A sample that still has several live links stays with the link of the earliest created
+#    reaction (the earlier link, if that reaction links it twice). Every other link gets a new
+#    sample, split from it as the reaction editor does when a sample is dropped onto a reaction.
+#    A link of a deleted reaction, or of a deleted sample, is soft deleted instead.
 class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
-  INDEX_NAME = 'index_reactions_samples_on_reaction_id_sample_id'
+  INDEX_NAME = 'index_reactions_samples_on_live_sample_id'
+  # the index of an earlier version of this migration
+  PREVIOUS_INDEX_NAME = 'index_reactions_samples_on_reaction_id_sample_id'
   # columns that saving a reaction writes to the link, and are restored from the history
   RESTORED_COLUMNS = %w[
     type reference equivalent position waste coefficient show_label gas_type gas_phase_data
@@ -24,26 +29,29 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
   JSONB_COLUMNS = %w[gas_phase_data].freeze
 
   def up
+    links = moved_links
+    moved_ids = links.pluck('id')
     # checked link by link, a reaction can get back one of several links moved from it
-    restored = moved_links.count do |link|
+    restored = links.count do |link|
       next false unless restorable?(link['snapshot']['reaction_id'], link['sample_id'])
 
-      keep_latest_values(link['id'])
+      keep_latest_values(link['id'], moved_ids)
       restore_link(link['id'], link['snapshot'])
       true
     end
     say "returned #{restored} reaction-sample link(s) to their original reaction"
 
-    removed = soft_delete_duplicates
-    say "soft deleted #{removed} duplicate reaction-sample link(s)"
+    split, removed = split_shared_samples
+    say "gave #{split} reaction-sample link(s) a new sample"
+    say "soft deleted #{removed} reaction-sample link(s) of a deleted reaction or sample"
 
-    add_index :reactions_samples, %i[reaction_id sample_id],
-              unique: true, where: 'deleted_at IS NULL', name: INDEX_NAME
+    add_index :reactions_samples, :sample_id, unique: true, where: 'deleted_at IS NULL', name: INDEX_NAME
   end
 
-  # The repaired links are not changed back.
+  # The repaired links and the new samples are not changed back.
   def down
-    remove_index :reactions_samples, name: INDEX_NAME
+    remove_index :reactions_samples, name: INDEX_NAME, if_exists: true
+    remove_index :reactions_samples, name: PREVIOUS_INDEX_NAME, if_exists: true
   end
 
   private
@@ -63,19 +71,21 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
     SQL
   end
 
-  # Copies the values of the moved link to the other links of its current reaction to the same
-  # sample that were updated before it.
-  def keep_latest_values(id)
+  # Copies the values of the moved link to the own links of its current reaction to the same sample
+  # that were updated before it. The own link takes the time of the moved link's last update, so a
+  # moved link updated later still wins.
+  def keep_latest_values(id, moved_ids)
     assignments = RESTORED_COLUMNS.map do |column|
       quoted = connection.quote_column_name(column)
       "#{quoted} = moved.#{quoted}"
     end
     execute(<<~SQL.squish)
-      UPDATE reactions_samples own SET #{assignments.join(', ')}, updated_at = now()
+      UPDATE reactions_samples own SET #{assignments.join(', ')}, updated_at = moved.updated_at
       FROM reactions_samples moved
       WHERE moved.id = #{connection.quote(id)}
         AND own.reaction_id = moved.reaction_id AND own.sample_id = moved.sample_id
-        AND own.id <> moved.id AND own.deleted_at IS NULL
+        AND own.id NOT IN (#{moved_ids.map { |moved_id| connection.quote(moved_id) }.join(', ')})
+        AND own.deleted_at IS NULL
         AND moved.updated_at IS NOT NULL
         AND (own.updated_at IS NULL OR own.updated_at < moved.updated_at)
     SQL
@@ -145,18 +155,52 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
     SQL
   end
 
-  def soft_delete_duplicates
-    execute(<<~SQL.squish).cmd_tuples
-      UPDATE reactions_samples SET deleted_at = now()
-      WHERE id IN (
-        SELECT id FROM (
-          SELECT id, row_number() OVER (
-            PARTITION BY reaction_id, sample_id ORDER BY updated_at DESC NULLS LAST, id DESC
+  # Returns the number of links that got a new sample, and the number of links soft deleted.
+  def split_shared_samples
+    links = extra_links
+    dead, live = links.partition { |link| link['dead'] }
+    soft_delete_links(dead.pluck('id')) if dead.any?
+    live.each { |link| give_new_sample(link['id']) }
+    [live.size, dead.size]
+  end
+
+  # Every live link of a sample but the first: links of live reactions first, by reaction creation
+  # and then link creation.
+  def extra_links
+    select_all(<<~SQL.squish).to_a
+      SELECT id, dead FROM (
+        SELECT rs.id,
+          (r.id IS NULL OR r.deleted_at IS NOT NULL OR s.id IS NULL OR s.deleted_at IS NOT NULL) AS dead,
+          row_number() OVER (
+            PARTITION BY rs.sample_id
+            ORDER BY (r.id IS NULL OR r.deleted_at IS NOT NULL), r.created_at NULLS LAST, r.id, rs.id
           ) AS rank
-          FROM reactions_samples WHERE deleted_at IS NULL
-        ) ranked
-        WHERE rank > 1
-      )
+        FROM reactions_samples rs
+        LEFT JOIN reactions r ON r.id = rs.reaction_id
+        LEFT JOIN samples s ON s.id = rs.sample_id
+        WHERE rs.deleted_at IS NULL
+      ) ranked
+      WHERE rank > 1
+      ORDER BY id
+    SQL
+  end
+
+  def soft_delete_links(ids)
+    quoted_ids = ids.map { |id| connection.quote(id) }.join(', ')
+    execute("UPDATE reactions_samples SET deleted_at = now() WHERE id IN (#{quoted_ids})")
+  end
+
+  def give_new_sample(link_id)
+    link = ReactionsSample.find(link_id)
+    reaction = link.reaction
+    sample = link.sample
+    user = User.with_deleted.find_by(id: reaction.created_by) || User.with_deleted.find_by(id: sample.created_by)
+    raise "no user to own a new sample for reaction-sample link #{link_id}" unless user
+
+    new_sample = sample.create_subsample(user, reaction.collections.pluck(:id), true, 'reaction')
+    execute(<<~SQL.squish)
+      UPDATE reactions_samples SET sample_id = #{connection.quote(new_sample.id)}, updated_at = now()
+      WHERE id = #{connection.quote(link_id)}
     SQL
   end
 end

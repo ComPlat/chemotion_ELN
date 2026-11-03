@@ -453,23 +453,17 @@ describe Usecases::Reactions::UpdateMaterials do
     end
   end
 
-  describe '#execute! with a sample also linked to another reaction' do
+  describe '#execute! with a sample of another reaction' do
     let(:other_reaction) { create(:reaction, name: 'Other reaction', collections: [collection]) }
 
     before do
-      # the other reaction's link is created first, so an unscoped lookup by sample_id would find it
       ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample, equivalent: 1)
-      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, equivalent: 1)
-      described_class.new(reaction, starting_materials, user, vessel_size).execute!
     end
 
-    it 'keeps the link of the other reaction' do
-      expect(ReactionsSample.where(sample: sample).pluck(:reaction_id))
-        .to contain_exactly(reaction.id, other_reaction.id)
-    end
-
-    it 'links the sample to the saved reaction once' do
-      expect(reaction.reactions_samples.where(sample: sample).count).to eq(1)
+    it 'does not take over the link of the other reaction' do
+      expect { described_class.new(reaction, starting_materials, user, vessel_size).execute! }
+        .to raise_error(ActiveRecord::RecordNotUnique)
+      expect(ReactionsSample.where(sample: sample).pluck(:reaction_id)).to eq([other_reaction.id])
     end
   end
 

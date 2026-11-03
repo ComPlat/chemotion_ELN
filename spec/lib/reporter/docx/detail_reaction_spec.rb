@@ -381,7 +381,8 @@ describe 'Reporter::Docx::DetailReaction' do
       let!(:first_serialized_reaction) { create_reaction_report(reaction_with_valid_vessel_size, sample3) }
       let(:invalid_vessel_size) { { 'amount' => nil, 'unit' => nil } }
       let!(:reaction_with_nil_vessel_size) { create(:reaction, vessel_size: invalid_vessel_size) }
-      let!(:second_serialized_reaction) { create_reaction_report(reaction_with_nil_vessel_size, sample3) }
+      let(:other_product) { create(:sample, name: 'Sample 3', collections: [collection]) }
+      let!(:second_serialized_reaction) { create_reaction_report(reaction_with_nil_vessel_size, other_product) }
       let!(:report_one) do
         Reporter::Docx::DetailReaction.new(
           reaction: OpenStruct.new(first_serialized_reaction),
