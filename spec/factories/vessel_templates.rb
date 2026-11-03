@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :vessel_template do
-    name { 'Vessel Template 1' }
+    sequence(:name) { |n| "Vessel Template #{n}" }
     details { 'multi-neck' }
     vessel_type { 'round bottom flask' }
     volume_amount { 500 }

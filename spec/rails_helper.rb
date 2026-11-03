@@ -2,13 +2,13 @@
 
 require 'simplecov'
 require 'simplecov-lcov'
-require "simplecov-html"
+require 'simplecov-html'
 
 SimpleCov::Formatter::LcovFormatter.config.report_with_single_file = true
 SimpleCov.formatters = SimpleCov::Formatter::MultiFormatter.new([
-  SimpleCov::Formatter::HTMLFormatter,
-  SimpleCov::Formatter::LcovFormatter,
-])
+                                                                  SimpleCov::Formatter::HTMLFormatter,
+                                                                  SimpleCov::Formatter::LcovFormatter,
+                                                                ])
 
 SimpleCov.start 'rails' do
   add_group 'GraphQL', 'app/graphql'
@@ -20,6 +20,8 @@ end
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 require 'spec_helper'
+require 'request_spec_helper'
+
 require File.expand_path('../config/environment', __dir__)
 require 'rspec/rails'
 # require 'capybara/rails'
@@ -41,7 +43,7 @@ require 'devise'
 # directory. Alternatively, in the individual `*_spec.rb` files, manually
 # require only the support files necessary.
 #
-Dir[Rails.root.join('spec/support/**/*.rb')].each { |f| require f }
+Rails.root.glob('spec/support/**/*.rb').sort.each { |f| require f }
 
 ActiveRecord::Migration.maintain_test_schema!
 
