@@ -33,7 +33,15 @@
     @extend .position-absolute;
     @extend .top-0;
     @extend .end-0;
+    @extend .gap-1;
     z-index: 11;
+  }
+
+  // Which scheme the graphic shows: the reaction's or one of its variations'.
+  &__variation-select {
+    width: auto;
+    @extend .py-0;
+    @extend .fs-9;
   }
 
   &__material-name {

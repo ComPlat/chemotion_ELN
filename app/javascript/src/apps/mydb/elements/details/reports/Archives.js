@@ -10,6 +10,7 @@ import {
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 import { stopBubble } from 'src/utilities/DomHelper';
 
 const clickDownloadReport = (e, archiveId, template) => {
@@ -43,6 +44,26 @@ const reportStatusBtn = (archive) => {
   );
 
   return downloadable ? downloadBtn : processBtn;
+};
+
+const clickDownloadVariations = (e, archiveId) => {
+  e.stopPropagation();
+  ReportsFetcher.downloadVariationsXlsx(archiveId);
+};
+
+const variationsBtn = (archive) => {
+  if (!archive.downloadable || !archive.has_variations) { return null; }
+
+  const onClickDownloadVariations = (e) => clickDownloadVariations(e, archive.id);
+  const variationsTP = <Tooltip id="download-variations-xlsx">Download variations (Excel)</Tooltip>;
+
+  return (
+    <OverlayTrigger placement="top" overlay={variationsTP}>
+      <Button variant="success" size="sm" onClick={onClickDownloadVariations}>
+        <i className="fa fa-file-excel-o" />
+      </Button>
+    </OverlayTrigger>
+  );
 };
 
 const clickToDelete = (e, archive) => {
@@ -186,6 +207,7 @@ const Archives = ({ archives }) => (
             <div className="d-flex gap-2">
               {cloneBtn(archive)}
               {reportStatusBtn(archive)}
+              {variationsBtn(archive)}
               {deleteBtn(archive)}
             </div>
           </div>

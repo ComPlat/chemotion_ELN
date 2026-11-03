@@ -84,7 +84,7 @@ const getComponentsTitle = (sample) => {
 /**
  * Component to display the sample name with formula and additional information
  */
-function SampleName({ sample }) {
+const SampleName = ({ sample }) => {
   /* eslint-disable camelcase */
   const {
     contains_residues,
@@ -141,7 +141,7 @@ function SampleName({ sample }) {
     </div>
   );
   /* eslint-enable camelcase */
-}
+};
 
 SampleName.propTypes = {
   sample: PropTypes.shape({

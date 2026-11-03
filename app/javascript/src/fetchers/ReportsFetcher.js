@@ -1,7 +1,7 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import _ from 'lodash';
 import { rootStore } from 'src/stores/mobx/RootStore';
-import { downloadBlob } from 'src/utilities/FetcherHelper';
+import { downloadBlob, getFileName } from 'src/utilities/FetcherHelper';
 
 export default class ReportsFetcher {
   static fetchArchives() {
@@ -85,5 +85,26 @@ export default class ReportsFetcher {
       .then((blob) => {
         downloadBlob(fileName, blob);
       });
+  }
+
+  // The variations of the reactions in an archived report, one sheet per reaction.
+  static downloadVariationsXlsx(archiveId) {
+    return ApiClient.getJson(`/api/v1/archives/${archiveId}/variations_xlsx`, {
+      headers: {},
+      handleResponseSuccess: (response) => {
+        if (response.status === 204) { throw Error('None of the reactions of this report has variations.'); }
+        if (!response.ok) { throw Error(response.statusText); }
+        const fileName = getFileName(response) || `report_${archiveId}_variations.xlsx`;
+        return response.blob().then((blob) => downloadBlob(fileName, blob));
+      },
+      handleResponseError: (error) => {
+        rootStore.notificationsStore.add({
+          title: 'Variations download failed',
+          message: error.message,
+          level: 'error',
+          position: 'tr',
+        });
+      },
+    });
   }
 }
