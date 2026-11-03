@@ -55,7 +55,20 @@ const getAttachmentFromContainer = (container) => {
     .filter((att) => att.filename?.toLowerCase().includes('combined'))
     .sort(byLatest)[0];
   const latestImageAttachment = [...attachments].sort(byLatest)[0];
-  return combinedImageAttachment || latestImageAttachment || null;
+  if (combinedImageAttachment || latestImageAttachment) {
+    return combinedImageAttachment || latestImageAttachment;
+  }
+
+  const preview = container.preview_img;
+  if (preview?.id) {
+    return {
+      id: preview.id,
+      filename: preview.filename,
+      thumb: true,
+    };
+  }
+
+  return null;
 };
 
 /**
