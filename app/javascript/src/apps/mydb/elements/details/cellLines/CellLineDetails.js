@@ -21,6 +21,7 @@ import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/properti
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -100,7 +101,13 @@ class CellLineDetails extends React.Component {
         saveDisabled={saveDisabled}
       >
         <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)}>
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(event) => this.handleTabChange(event)}
+            id="cell-line-details-tab"
+            mountOnEnter
+            unmountOnExit
+          >
             <Tab eventKey="tab1" title="Properties" key="tab1">
               {
                 !cellLineItem.isNew
@@ -130,6 +137,15 @@ class CellLineDetails extends React.Component {
                 readOnly={readOnly}
                 element={cellLineItem}
                 literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+              />
+            </Tab>
+            <Tab eventKey="tab4" title="History" key="tab4" disabled={cellLineItem.is_new}>
+              <VersionsTable
+                type="cellline_samples"
+                id={parseInt(cellLineItem.id, 10)}
+                element={cellLineItem}
+                parent={cellLineDetailsStore}
+                isEdited={mobXItem.changed}
               />
             </Tab>
           </Tabs>
