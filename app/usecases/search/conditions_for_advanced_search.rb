@@ -27,9 +27,10 @@ module Usecases
 
       attr_reader :params, :detail_levels
 
-      def initialize(detail_levels: {}, params: {})
+      def initialize(detail_levels: {}, params: {}, user: nil)
         @params = params
         @detail_levels = detail_levels
+        @user = user
 
         @table = ''
         @field_table = ''
@@ -306,6 +307,15 @@ module Usecases
           " (#{prop} ->> '#{unit}')::TEXT != '' AND #{valid_temperature(prop, number)} AND "
       end
 
+      def private_notes_join
+        ActiveRecord::Base.sanitize_sql_array(
+          ["INNER JOIN private_notes ON private_notes.noteable_type = :noteable_type
+            AND private_notes.noteable_id = #{@table}.id
+            AND private_notes.created_by = :user_id",
+           { noteable_type: @conditions[:model_name].to_s, user_id: @user&.id }],
+        )
+      end
+
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def special_non_generic_field_options(filter)
@@ -326,9 +336,7 @@ module Usecases
           end
           @conditions[:condition_table] = ''
         when 'content'
-          @conditions[:joins] <<
-            "INNER JOIN private_notes ON private_notes.noteable_type = #{quote(@conditions[:model_name])}
-            AND private_notes.noteable_id = #{@table}.id"
+          @conditions[:joins] << private_notes_join
           @conditions[:condition_table] = 'private_notes.'
         when 'temperature'
           # is_data_valid = valid_temperature("#{@table}.temperature", 'userText')

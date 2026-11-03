@@ -178,6 +178,7 @@ module Chemotion
         conditions = Usecases::Search::ConditionsForAdvancedSearch.new(
           detail_levels: dl,
           params: params[:selection][:advanced_params],
+          user: current_user,
         ).filter!
         return Sample.none if conditions[:error].present? || conditions[:model_name].blank?
 
@@ -680,6 +681,7 @@ module Chemotion
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,
               params: params[:selection][:advanced_params],
+              user: current_user,
             ).filter!
 
           results = Usecases::Search::AdvancedSearch.new(
