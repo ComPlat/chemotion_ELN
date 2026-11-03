@@ -1092,6 +1092,83 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  %w[advanced all].product(%i[sample reaction]).each do |endpoint, element_type|
+    describe "POST /api/v1/search/#{endpoint} on private notes" do
+      let(:url) { "/api/v1/search/#{endpoint}" }
+      let(:owner) { create(:person) }
+      let(:sharee) { create(:person) }
+      let(:user) { sharee }
+      let(:shared_collection) { create(:collection, user: owner) }
+      let(:search_term) { 'owner note' }
+      let(:params) do
+        {
+          selection: {
+            elementType: :advanced,
+            search_by_method: :advanced,
+            advanced_params: [
+              { link: '', match: 'ILIKE', table: table, element_id: 0, unit: '',
+                field: { column: 'content', table: table }, value: search_term },
+            ],
+          },
+          collection_id: shared_collection.id, page: 1, per_page: 15
+        }
+      end
+
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: sharee,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  sample_detail_level: 1, reaction_detail_level: 0)
+        create(:private_note, noteable: shared_element, user_id: owner.id, content: 'owner note')
+        create(:private_note, noteable: shared_element, user_id: sharee.id, content: 'my own note')
+      end
+
+      context "when searching #{element_type} notes" do
+        let(:table) { element_type.to_s.pluralize }
+        let(:shared_element) { create(element_type, creator: owner, collections: [shared_collection]) }
+
+        it "does not match the collection owner's note" do
+          do_request
+
+          expect(response).to have_http_status(:created)
+          expect(parsed_json_response.dig(table, 'ids')).to eq []
+        end
+
+        context "with a word in the user's own note" do
+          let(:search_term) { 'my own' }
+
+          it 'finds the shared element' do
+            do_request
+
+            expect(response).to have_http_status(:created)
+            expect(parsed_json_response.dig(table, 'ids')).to eq [shared_element.id]
+          end
+        end
+
+        context 'when the collection owner searches' do
+          let(:user) { owner }
+
+          it 'finds the element by their own note' do
+            do_request
+
+            expect(response).to have_http_status(:created)
+            expect(parsed_json_response.dig(table, 'ids')).to eq [shared_element.id]
+          end
+
+          context "with a word in the sharee's note" do
+            let(:search_term) { 'my own' }
+
+            it "does not match the sharee's note" do
+              do_request
+
+              expect(response).to have_http_status(:created)
+              expect(parsed_json_response.dig(table, 'ids')).to eq []
+            end
+          end
+        end
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/advanced in a collection shared at sample detail level 0' do
     let(:url) { '/api/v1/search/advanced' }
     let(:owner) { create(:person) }
