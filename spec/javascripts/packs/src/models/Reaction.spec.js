@@ -246,15 +246,49 @@ describe('Reaction', () => {
       });
     });
 
-    it('keeps numeric legacy readings as strings and unknown unit keys intact', () => {
+    it('keeps numeric legacy readings as strings and normalizes pressure unit labels', () => {
       const r = new Reaction({
         id: 1,
         environment: { air_pressure: { value: 1013.25, unit: 'hPa', extra: 'ignored' }, extra: 'ignored' },
       });
 
-      expect(r.environment.air_pressure).toEqual({ value: '1013.25', unit: 'hPa' });
+      expect(r.environment.air_pressure).toEqual({ value: '1013.25', unit: 'hpa' });
       expect(Object.keys(r.environment)).toEqual(['temperature', 'humidity', 'air_pressure']);
       expect(r.isEdited).toBe(false);
+    });
+
+    [
+      ['temperature', '°c', '°C'],
+      ['temperature', ' °f ', '°F'],
+      ['temperature', 'k', 'K'],
+      ['temperature', 'C', '°C'],
+      ['temperature', 'unknown', '°C'],
+      ['humidity', ' % ', '%'],
+      ['humidity', 'percent', '%'],
+      ['air_pressure', 'hPa', 'hpa'],
+      ['air_pressure', ' Pa ', 'pa'],
+      ['air_pressure', 'kPa', 'kpa'],
+      ['air_pressure', 'MPa', 'mpa'],
+      ['air_pressure', 'Torr', 'torr'],
+      ['air_pressure', 'ATM', 'atm'],
+      ['air_pressure', 'BAR', 'bar'],
+      ['air_pressure', 'mBar', 'mbar'],
+      ['air_pressure', 'unknown', 'mbar'],
+      ['air_pressure', '', 'mbar'],
+      ['air_pressure', null, 'mbar'],
+      ['air_pressure', ['hpa'], 'mbar'],
+    ].forEach(([field, unit, expectedUnit]) => {
+      it(`normalizes stored ${field} unit ${JSON.stringify(unit)} to ${expectedUnit} before saving`, () => {
+        const loaded = new Reaction({
+          ...reaction,
+          environment: { [field]: { value: '21,5', unit } },
+        });
+
+        expect(loaded.environment[field]).toEqual({ value: '21,5', unit: expectedUnit });
+        expect(loaded.isEdited).toBe(false);
+        expect(loaded.serialize().environment[field]).toEqual({ value: '21,5', unit: expectedUnit });
+        expect(loaded.isEdited).toBe(false);
+      });
     });
 
     it('keeps a loaded reaction unedited when reading jsonb-ordered environmental conditions', () => {
@@ -364,12 +398,38 @@ describe('Reaction', () => {
       expect(restored.isEnvironmentSet()).toBe(true);
     });
 
-    it('excludes incomplete drafts from the indicator and serialized values', () => {
+    it('excludes incomplete drafts and nonnumeric text from the indicator', () => {
       ['-', '.', '-.', '', 'NaN', 'Infinity'].forEach((value) => {
         reaction.environment = { temperature: { value, unit: '°F' } };
         expect(reaction.isEnvironmentSet()).toBe(false);
-        expect(reaction.serialize().environment.temperature).toEqual({ value: '', unit: '°F' });
         expect(reaction.environment.temperature.value).toBe(value);
+      });
+    });
+
+    ['temperature', 'humidity', 'air_pressure'].forEach((field) => {
+      ['20-22', '21,5', 'room temperature', 'NaN', 'Infinity', '-', '.', '-.'].forEach((value) => {
+        it(`preserves stored ${field} value ${JSON.stringify(value)} when renaming a reaction`, () => {
+          const loaded = new Reaction({
+            ...reaction,
+            environment: {
+              ...reaction.environment,
+              [field]: { ...reaction.environment[field], value },
+            },
+          });
+          const environment = loaded.environment;
+          expect(loaded.isEdited).toBe(false);
+
+          loaded.name = 'Renamed reaction';
+          const serialized = loaded.serialize();
+
+          expect(serialized.name).toBe('Renamed reaction');
+          expect(serialized.environment).toEqual(environment);
+          expect(serialized.environment[field].value).toBe(value);
+          expect(loaded.environment).toBe(environment);
+          const restored = new Reaction(serialized);
+          expect(restored.environment).toEqual(environment);
+          expect(restored.isEdited).toBe(false);
+        });
       });
     });
 

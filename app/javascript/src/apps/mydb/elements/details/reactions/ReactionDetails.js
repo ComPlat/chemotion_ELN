@@ -1021,7 +1021,7 @@ export default class ReactionDetails extends Component {
                   <Button
                     variant="outline-info"
                     size="sm"
-                    className="ms-2 d-flex justify-content-center"
+                    className="d-flex justify-content-center"
                     onClick={this.openWtInfoModal}
                     title="Weight percentage scheme info"
                   >

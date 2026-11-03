@@ -5,13 +5,11 @@ import {
 } from 'react-bootstrap';
 import { GenUnitBtn } from 'chem-generic-ui';
 
-import { convertTemperature } from 'src/models/Reaction';
+import Reaction, { convertTemperature } from 'src/models/Reaction';
 import { isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
 import { normalizeNumberInput } from 'src/utilities/MathUtils';
 import { convertGenericUnit }
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-
-const TEMPERATURE_UNITS = ['°C', '°F', 'K'];
 
 // Soft, non-blocking guidance shown as muted helper text. Numeric-only input already blocks
 // letters and (for humidity / air pressure) negatives, so this only gently nudges when a
@@ -72,6 +70,7 @@ const EnvironmentConditionsPanel = ({
 }) => {
   const temperatureConversion = useRef(null);
   const pressureConversion = useRef(null);
+  const editedFields = useRef(new Set());
 
   const updateField = (field, patch) => {
     onChange({
@@ -80,7 +79,14 @@ const EnvironmentConditionsPanel = ({
     });
   };
 
+  const changeValue = (field, value) => {
+    editedFields.current.add(field);
+    updateField(field, { value });
+  };
+
   const clearIncompleteValue = (field) => {
+    if (!editedFields.current.delete(field)) { return; }
+
     const { value } = environment[field];
     if (value && !isEnvironmentNumber(value)) {
       updateField(field, { value: '' });
@@ -88,10 +94,11 @@ const EnvironmentConditionsPanel = ({
   };
 
   const cycleTemperatureUnit = () => {
+    const units = Reaction.temperature_unit;
     const current = environment.temperature.unit || '°C';
-    if (!TEMPERATURE_UNITS.includes(current)) { return; }
+    if (!units.includes(current)) { return; }
 
-    const nextUnit = TEMPERATURE_UNITS[(TEMPERATURE_UNITS.indexOf(current) + 1) % TEMPERATURE_UNITS.length];
+    const nextUnit = units[(units.indexOf(current) + 1) % units.length];
     const { value } = environment.temperature;
     let nextValue = value;
     if (isEnvironmentNumber(value)) {
@@ -100,7 +107,8 @@ const EnvironmentConditionsPanel = ({
       const source = previous?.value === value && previous?.unit === current
         ? previous.source : { value, unit: current };
       nextValue = nextUnit === source.unit ? source.value
-        : `${Number(convertTemperature(source.value, source.unit, nextUnit).toFixed(12))}`;
+        : convertTemperature(source.value, source.unit, nextUnit)
+          .toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 12 });
       temperatureConversion.current = { source, value: nextValue, unit: nextUnit };
     }
     updateField('temperature', { value: nextValue, unit: nextUnit });
@@ -132,6 +140,11 @@ const EnvironmentConditionsPanel = ({
     updateField('air_pressure', { value: nextValue, unit: updated.unit });
   };
 
+  const temperatureHint = environmentFieldHint(
+    'temperature', environment.temperature.value, environment.temperature.unit
+  );
+  const humidityHint = environmentFieldHint('humidity', environment.humidity.value);
+
   return (
     <Collapse in={open}>
       <div id={panelId} className="environment-conditions mt-2 mb-3">
@@ -148,9 +161,7 @@ const EnvironmentConditionsPanel = ({
                   disabled={isDisabled}
                   onChange={(e) => {
                     temperatureConversion.current = null;
-                    updateField('temperature', {
-                      value: normalizeNumberInput(e.target.value, { allowNegative: true }),
-                    });
+                    changeValue('temperature', normalizeNumberInput(e.target.value, { allowNegative: true }));
                   }}
                   onBlur={() => clearIncompleteValue('temperature')}
                 />
@@ -163,9 +174,9 @@ const EnvironmentConditionsPanel = ({
                   {environment.temperature.unit || '°C'}
                 </Button>
               </InputGroup>
-              {environmentFieldHint('temperature', environment.temperature.value, environment.temperature.unit) && (
+              {temperatureHint && (
                 <Form.Text className="text-muted">
-                  {environmentFieldHint('temperature', environment.temperature.value, environment.temperature.unit)}
+                  {temperatureHint}
                 </Form.Text>
               )}
             </Form.Group>
@@ -180,14 +191,14 @@ const EnvironmentConditionsPanel = ({
                   value={environment.humidity.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
-                  onChange={(e) => updateField('humidity', { value: normalizeNumberInput(e.target.value) })}
+                  onChange={(e) => changeValue('humidity', normalizeNumberInput(e.target.value))}
                   onBlur={() => clearIncompleteValue('humidity')}
                 />
                 <InputGroup.Text>{environment.humidity.unit || '%'}</InputGroup.Text>
               </InputGroup>
-              {environmentFieldHint('humidity', environment.humidity.value) && (
+              {humidityHint && (
                 <Form.Text className="text-muted">
-                  {environmentFieldHint('humidity', environment.humidity.value)}
+                  {humidityHint}
                 </Form.Text>
               )}
             </Form.Group>
@@ -204,7 +215,7 @@ const EnvironmentConditionsPanel = ({
                   disabled={isDisabled}
                   onChange={(e) => {
                     pressureConversion.current = null;
-                    updateField('air_pressure', { value: normalizeNumberInput(e.target.value) });
+                    changeValue('air_pressure', normalizeNumberInput(e.target.value));
                   }}
                   onBlur={() => clearIncompleteValue('air_pressure')}
                 />

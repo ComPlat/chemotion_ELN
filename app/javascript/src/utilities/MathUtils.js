@@ -141,6 +141,16 @@ const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
   return negative ? `-${value}` : value;
 };
 
+// Preserve all vessel-size digits when removing extra decimal separators.
+const normalizeVesselSizeValue = (raw) => {
+  let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
+  const dotIndex = value.indexOf('.');
+  if (dotIndex !== -1) {
+    value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
+  }
+  return value;
+};
+
 export {
   fixDigit,
   validDigit,
@@ -149,4 +159,5 @@ export {
   parseNumericString,
   formatDisplayValue,
   normalizeNumberInput,
+  normalizeVesselSizeValue,
 };
