@@ -1,15 +1,9 @@
 class PagesController < ApplicationController
-  skip_before_action :authenticate_user!, only: %i[
-    home about chemspectra chemspectra_editor
-  ]
+  skip_before_action :authenticate_user!, only: %i[home about]
 
   def home; end
 
   def about; end
-
-  def chemspectra; end
-
-  def chemspectra_editor; end
 
   def docx; end
 

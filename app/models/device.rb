@@ -60,7 +60,11 @@ class Device < ApplicationRecord
   has_many :device_descriptions, dependent: :nullify
 
   validates :name, presence: true
-  validate :unique_name_abbreviation
+  with_options if: :will_save_change_to_name_abbreviation? do
+    validates :name_abbreviation, uniqueness: { case_sensitive: false, allow_nil: true, message: :in_use }
+    # on create, name_abbreviation_length already reports a missing abbreviation
+    validates :name_abbreviation, presence: true, on: :update
+  end
   validate :name_abbreviation_reserved_list, on: :create
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
@@ -87,14 +91,6 @@ class Device < ApplicationRecord
   # that sets deleted_at, rather than issuing a second write from a before_destroy callback.
   def paranoia_destroy_attributes
     super.merge(email: nil, name_abbreviation: nil)
-  end
-
-  def unique_name_abbreviation
-    devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',
-                                    Device.sanitize_sql_like(name_abbreviation.downcase).to_s)
-    return if devices.blank? || (devices.size == 1 && devices.first.id == id)
-
-    errors.add(:name_abbreviation, :in_use)
   end
 
   def name_abbr_config
@@ -210,7 +206,9 @@ class Device < ApplicationRecord
   def datacollector_check_sftp_keyfile_path
     return unless datacollector_sftp_values_present?
     return unless datacollector_method.end_with?('sftp') && datacollector_authentication == 'keyfile'
-    return if datacollector_key_dir_path.file? && datacollector_key_dir_path.exist?
+    # a missing key name is already reported by datacollector_check_keyfile
+    return if datacollector_key_name.blank?
+    return if datacollector_key_dir_path&.file?
 
     errors.add(:datacollector_key_name, :not_found)
   end

@@ -103,6 +103,108 @@ RSpec.describe Chemotion::AdminDeviceAPI do
         put "/api/v1/admin_devices/#{device.id}", params: params
         expect(parsed_json_response['device']).to include(params.stringify_keys)
       end
+
+      it 'keeps people and groups that the request does not send' do
+        group = create(:group)
+        device.groups << group
+
+        put "/api/v1/admin_devices/#{device.id}", params: params
+
+        expect(device.reload.people).to contain_exactly(person)
+        expect(device.groups).to contain_exactly(group)
+      end
+
+      it 'rejects people sent as objects instead of ids' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: params.merge(people: [{ id: person.id, name: person.name }]).to_json,
+            headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(response).to have_http_status(:bad_request)
+        expect(device.reload.people).to contain_exactly(person)
+      end
+
+      it 'clears people and groups sent as empty arrays' do
+        device.groups << create(:group)
+
+        put "/api/v1/admin_devices/#{device.id}", params: params.merge(people: [], groups: []).to_json,
+                                                  headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(device.reload.people).to be_empty
+        expect(device.groups).to be_empty
+      end
+    end
+
+    context 'when the update is invalid' do
+      let(:group) { create(:group) }
+      let(:other_person) { create(:person) }
+      let(:other_group) { create(:group) }
+      let(:params) do
+        {
+          name: '',
+          name_abbreviation: device.name_abbreviation,
+          people: [other_person.id],
+          groups: [other_group.id],
+        }
+      end
+
+      before { device.groups << group }
+
+      it 'returns the errors and keeps the device people and groups unchanged' do
+        put "/api/v1/admin_devices/#{device.id}", params: params
+
+        expect(parsed_json_response['errors']).to include('name')
+        expect(device.reload.people).to contain_exactly(person)
+        expect(device.groups).to contain_exactly(group)
+      end
+    end
+
+    context 'with incomplete data collector settings' do
+      let(:base_params) do
+        { name: device.name, name_abbreviation: device.name_abbreviation, datacollector_fields: true }
+      end
+
+      it 'reports a missing watch method' do
+        put "/api/v1/admin_devices/#{device.id}", params: base_params.merge(datacollector_dir: '/tmp')
+
+        expect(parsed_json_response['errors']).to include('datacollector_method')
+      end
+
+      it 'reports a local watch directory that does not exist' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: base_params.merge(datacollector_method: 'filewatcherlocal', datacollector_dir: '/does/not/exist')
+
+        expect(parsed_json_response['errors']).to include('datacollector_dir')
+      end
+    end
+
+    context 'with a local watch directory given through a symlink' do
+      let(:whitelisted) { Rails.configuration.datacollectors.localcollectors.first[:path] }
+      let(:target) { File.join(whitelisted, "real-#{SecureRandom.hex(4)}") }
+      let(:link) { File.join(whitelisted, "link-#{SecureRandom.hex(4)}") }
+
+      before do
+        FileUtils.mkdir_p(target)
+        File.symlink(target, link)
+      end
+
+      after { FileUtils.rm_rf([link, target]) }
+
+      it 'stores the resolved directory' do
+        put "/api/v1/admin_devices/#{device.id}",
+            params: { name: device.name, name_abbreviation: device.name_abbreviation, datacollector_fields: true,
+                      datacollector_method: 'filewatcherlocal', datacollector_dir: link }
+
+        expect(parsed_json_response['device']).to include('datacollector_dir' => File.realpath(target))
+        expect(device.reload.datacollector_dir).to eq File.realpath(target)
+      end
+    end
+
+    context 'when the device does not exist' do
+      it 'returns 404' do
+        put '/api/v1/admin_devices/0', params: { name: 'x', name_abbreviation: 'x' }
+
+        expect(response).to have_http_status(:not_found)
+      end
     end
 
     context 'when deleting user device relation' do

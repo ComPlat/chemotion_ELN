@@ -686,6 +686,28 @@ describe Chemotion::SampleAPI do
         expect(response).to have_http_status :unauthorized
       end
     end
+
+    context 'when molfile contains non-ASCII characters' do
+      # .b writes raw bytes into the bytea column, matching how PG returns them (ASCII-8BIT)
+      let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read.b }
+      let(:sample) do
+        create(:sample, collections: [collection]).tap do |s|
+          s.update_column(:molfile, textnode_molfile)
+        end
+      end
+
+      before { get "/api/v1/samples/#{sample.id}" }
+
+      it 'returns the molfile with non-ASCII characters intact' do
+        molfile = JSON.parse(response.body)['sample']['molfile']
+        expect(molfile).to include('α-Al2O3')
+      end
+
+      it 'does not replace non-ASCII bytes with U+FFFD' do
+        molfile = JSON.parse(response.body)['sample']['molfile']
+        expect(molfile).not_to include("�")
+      end
+    end
   end
 
   describe 'GET /api/v1/samples/fetchByShortLabel/:shortLabel' do
