@@ -270,6 +270,8 @@ function getVariationsSbmmID(id) {
 function normalizeSbmmForVariations(material) {
   return {
     ...material,
+    // The spread drops prototype getters; keep isNew so unsaved SBMM samples are filtered like samples.
+    isNew: material.isNew,
     id: getVariationsSbmmID(material.id),
     molecule_molecular_weight:
       material.molecule_molecular_weight
