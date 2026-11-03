@@ -263,13 +263,13 @@ describe Chemotion::ProfileAPI do
     let(:folder_path) { 'ketcher-optns' }
     let(:complete_folder_path) { Rails.root.join('uploads', Rails.env, folder_path) }
     let(:file_path) { "#{complete_folder_path}/#{user.id}.json" }
-    let(:valid_data) { { option1: 'value1', option2: 'value2' } }
+    let(:valid_data) { { rotationStep: 30, atomColoring: false, font: '30px Arial' } }
     let(:headers) { { 'Content-Type': 'application/json' } }
 
     before do
       # Ensure the file exists
       FileUtils.mkdir_p(complete_folder_path)
-      File.write(file_path, valid_data)
+      File.write(file_path, valid_data.to_json)
     end
 
     after do
@@ -304,6 +304,43 @@ describe Chemotion::ProfileAPI do
       end
     end
 
+    context 'when the data holds invalid entries' do
+      let(:junk) do
+        {
+          rotationStep: 500, colorOfAndCenters: 'not-a-colour', nested: { a: 1 }, list: [1, 2],
+          empty: nil, 'a b': true, longText: 'x' * 65
+        }
+      end
+
+      it 'stores only the valid entries and reports the dropped keys' do
+        put '/api/v1/profiles/editors/ketcher-options',
+            params: { data: valid_data.except(:rotationStep).merge(junk) }.to_json, headers: headers
+
+        expect(response).to have_http_status(:success)
+        expect(JSON.parse(response.body)['dropped_keys']).to match_array(junk.keys.map(&:to_s))
+        expect(JSON.parse(File.read(file_path))).to eq(valid_data.except(:rotationStep).stringify_keys)
+      end
+    end
+
+    context 'when the data is unusable as a whole' do
+      it 'rejects more than 100 entries' do
+        many = (1..101).to_h { |i| ["setting#{i}", true] }
+
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: many }.to_json, headers: headers
+
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(File.read(file_path))).to eq(valid_data.stringify_keys)
+      end
+
+      it 'rejects a payload larger than 16 KB' do
+        put '/api/v1/profiles/editors/ketcher-options',
+            params: { data: { blob: 'x' * 17_000 } }.to_json, headers: headers
+
+        expect(response).to have_http_status(:bad_request)
+        expect(JSON.parse(File.read(file_path))).to eq(valid_data.stringify_keys)
+      end
+    end
+
     context 'when data is missing' do
       it 'returns a 400 error' do
         put '/api/v1/profiles/editors/ketcher-options', params: valid_data.to_json, headers: headers
@@ -328,7 +365,7 @@ describe Chemotion::ProfileAPI do
   describe 'GET /api/v1/profiles/editors/ketcher-options' do
     context 'when the settings file exists' do
       it 'returns the Ketcher 2 settings successfully' do
-        file_content = { 'option1' => 'value1', 'option2' => 'value2' }.to_json
+        file_content = { 'rotationStep' => 30, 'atomColoring' => false }.to_json
         file_path = Rails.root.join('uploads', Rails.env, "ketcher-optns/#{user.id}.json")
 
         allow(File).to receive(:exist?).with(file_path).and_return(true)
@@ -338,6 +375,33 @@ describe Chemotion::ProfileAPI do
 
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => JSON.parse(file_content))
+      end
+    end
+
+    context 'when the settings file holds invalid entries' do
+      it 'returns only the valid entries' do
+        file_content = { 'rotationStep' => 30, 'nested' => { 'a' => 1 }, 'bondLength' => 'huge' }.to_json
+        file_path = Rails.root.join('uploads', Rails.env, "ketcher-optns/#{user.id}.json")
+
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        allow(File).to receive(:read).with(file_path).and_return(file_content)
+
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
+
+        expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => { 'rotationStep' => 30 })
+      end
+    end
+
+    context 'when the settings file does not hold an object' do
+      it 'returns empty settings' do
+        file_path = Rails.root.join('uploads', Rails.env, "ketcher-optns/#{user.id}.json")
+
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        allow(File).to receive(:read).with(file_path).and_return('[1, 2, 3]')
+
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
+
+        expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => {})
       end
     end
 

@@ -118,8 +118,16 @@ export default class UsersFetcher {
     return ApiClient.getJson('/api/v1/profiles/editors/ketcher-options');
   }
 
+  // Resolves to null without a request when the stored value is not a settings object.
   static updateUserKetcherOptions(list) {
-    const data = JSON.parse(list);
+    let data;
+    try {
+      data = JSON.parse(list);
+    } catch {
+      return Promise.resolve(null);
+    }
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) return Promise.resolve(null);
+
     return ApiClient.putJson('/api/v1/profiles/editors/ketcher-options', { body: { data } });
   }
 

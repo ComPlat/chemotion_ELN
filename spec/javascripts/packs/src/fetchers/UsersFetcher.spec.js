@@ -20,4 +20,11 @@ describe('UsersFetcher.updateUserKetcherOptions', () => {
     expect(options.method).toEqual('PUT');
     expect(JSON.parse(options.body)).toEqual({ data: settings });
   });
+
+  ['not json', 'null', '[1,2]', '"text"'].forEach((value) => {
+    it(`sends nothing for ${value}`, async () => {
+      expect(await UsersFetcher.updateUserKetcherOptions(value)).toBeNull();
+      expect(fetchStub.called).toBe(false);
+    });
+  });
 });

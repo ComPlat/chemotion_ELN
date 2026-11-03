@@ -16,6 +16,23 @@ module Chemotion
     end
   end
 
+  # Rejects a Ketcher settings payload that is unusable as a whole (too many
+  # entries or too large). Individual entries are checked by {KetcherOptionsSanitizer}.
+  class KetcherOptionsHash < Grape::Validations::Validators::Base
+    MAX_ENTRIES = 100
+    MAX_BYTES = 16_384
+
+    def validate_param!(attr_name, params)
+      value = params[attr_name]
+      return unless value.is_a?(Hash)
+
+      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+                                           message: 'has too many entries' if value.size > MAX_ENTRIES
+      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
+                                           message: 'is too large' if JSON(value).bytesize > MAX_BYTES
+    end
+  end
+
   # rubocop: disable Metrics/ClassLength
   class ProfileAPI < Grape::API
     helpers do
@@ -267,7 +284,8 @@ module Chemotion
 
         if File.exist?(complete_folder_path)
           begin
-            settings = JSON.parse(File.read(complete_folder_path))
+            # Files written before the settings were validated are cleaned on the way out too.
+            settings, = KetcherOptionsSanitizer.call(JSON.parse(File.read(complete_folder_path)))
             { status: true, settings: settings }
           rescue StandardError => e
             error_messages.push('Issues with reading settings file', e.message)
@@ -280,7 +298,7 @@ module Chemotion
 
       desc 'update user profile editor ketcher 2 setting options'
       params do
-        requires :data, type: Hash, desc: 'data structure for ketcher options'
+        requires :data, type: Hash, ketcher_options_hash: true, desc: 'data structure for ketcher options'
       end
       put 'editors/ketcher-options' do
         error_messages = []
@@ -288,10 +306,11 @@ module Chemotion
         complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
         file_path = "#{complete_folder_path}/#{current_user.id}.json"
         begin
+          settings, dropped_keys = KetcherOptionsSanitizer.call(params[:data])
           # The settings file is the only store: GET reads it back directly.
           FileUtils.mkdir_p(complete_folder_path)
-          File.write(file_path, JSON(params[:data]))
-          { status: true, message: 'Ketcher options updated successfully' }
+          File.write(file_path, JSON(settings))
+          { status: true, message: 'Ketcher options updated successfully', dropped_keys: dropped_keys }
         rescue StandardError => e
           error_messages.push(e.message)
           error!({ status: false, error_messages: error_messages.flatten }, 500)
