@@ -126,6 +126,7 @@ module Chemotion
         conditions = Usecases::Search::ConditionsForAdvancedSearch.new(
           detail_levels: dl,
           params: params[:selection][:advanced_params],
+          user: current_user,
         ).filter!
 
         query_cond = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
@@ -605,6 +606,7 @@ module Chemotion
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,
               params: params[:selection][:advanced_params],
+              user: current_user,
             ).filter!
 
           results = Usecases::Search::AdvancedSearch.new(
