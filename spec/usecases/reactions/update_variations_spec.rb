@@ -60,13 +60,19 @@ describe Usecases::Reactions::UpdateVariations do
   end
   let(:material_ids) do
     {
-      startingMaterials: [sample_e.id],
-      reactants: [sample_f.id],
-      products: [sample_g.id, sample_h.id],
+      startingMaterials: [sample_e.id.to_s],
+      reactants: [sample_f.id.to_s],
+      products: [sample_g.id.to_s, sample_h.id.to_s],
       solvents: [],
     }
   end
   let(:material_groups) { %w[startingMaterials reactants products solvents] }
+
+  def variation(materials)
+    uuid = SecureRandom.uuid
+    { 'uuid' => uuid, 'startingMaterials' => {}, 'reactants' => {}, 'products' => {}, 'solvents' => {} }
+      .merge(materials.transform_keys(&:to_s))
+  end
 
   it "updates variations' material IDs" do
     updated_variations = described_class.new(reaction_a).execute!
@@ -77,9 +83,78 @@ describe Usecases::Reactions::UpdateVariations do
     end
   end
 
-  it 'raises when no matching sample is found' do
-    expect do
-      described_class.new(reaction_b).execute!
-    end.to raise_error described_class::UpdateVariationsError
+  it 'keeps the material IDs of a reaction that references its own samples' do
+    reaction = create(
+      :reaction, starting_materials: [sample_e], reactants: [sample_f], products: [sample_g, sample_h],
+                 collections: [collection], creator: user
+    )
+    own_variations = [variation(
+      startingMaterials: { sample_e.id.to_s => { 'mass' => 1 } },
+      reactants: { sample_f.id.to_s => { 'mass' => 2 } },
+      products: { sample_g.id.to_s => { 'mass' => 3 }, sample_h.id.to_s => { 'mass' => 4 } },
+    )]
+    reaction.update!(variations: own_variations)
+
+    expect(described_class.new(reaction.reload).execute!).to eq(reaction.variations)
+  end
+
+  it 'drops material IDs without a matching sample instead of raising' do
+    updated_variations = described_class.new(reaction_b).execute!
+
+    updated_variations.each do |variation|
+      expect(variation['startingMaterials'].keys).to eq([sample_e.id.to_s])
+      expect(variation['reactants'].keys).to eq([sample_f.id.to_s])
+      expect(variation['products'].keys).to eq([sample_g.id.to_s])
+    end
+  end
+
+  it 'drops the material ID of a soft-deleted sample' do
+    removed_sample = create(:sample, molecule: molecule_x)
+    reaction = create(
+      :reaction, starting_materials: [sample_e], collections: [collection], creator: user
+    )
+    reaction.update!(variations: [variation(
+      startingMaterials: { sample_e.id.to_s => { 'mass' => 1 }, removed_sample.id.to_s => { 'mass' => 2 } },
+    )])
+    removed_sample.destroy
+
+    updated_variations = described_class.new(reaction.reload).execute!
+
+    expect(updated_variations.first['startingMaterials']).to eq(sample_e.id.to_s => { 'mass' => 1 })
+  end
+
+  it 'drops unknown keys, e.g., of sequence-based macromolecule samples of another reaction' do
+    reaction = create(:reaction, reactants: [sample_f], collections: [collection], creator: user)
+    reaction.update!(variations: [variation(
+      reactants: { sample_b.id.to_s => { 'mass' => 1 }, 'sbmm:999999' => { 'mass' => 2 } },
+    )])
+
+    updated_variations = described_class.new(reaction.reload).execute!
+
+    expect(updated_variations.first['reactants']).to eq(sample_f.id.to_s => { 'mass' => 1 })
+  end
+
+  it 'maps two source materials with the same molecule to distinct samples' do
+    source_sample_one = create(:sample, molecule: molecule_w)
+    source_sample_two = create(:sample, molecule: molecule_w)
+    copied_sample_one = create(:sample, molecule: molecule_w)
+    copied_sample_two = create(:sample, molecule: molecule_w)
+    reaction = create(
+      :reaction, starting_materials: [copied_sample_one, copied_sample_two],
+                 collections: [collection], creator: user
+    )
+    reaction.update!(variations: [variation(
+      startingMaterials: {
+        source_sample_one.id.to_s => { 'mass' => 1 },
+        source_sample_two.id.to_s => { 'mass' => 2 },
+      },
+    )])
+
+    updated_variations = described_class.new(reaction.reload).execute!
+
+    expect(updated_variations.first['startingMaterials']).to eq(
+      copied_sample_one.id.to_s => { 'mass' => 1 },
+      copied_sample_two.id.to_s => { 'mass' => 2 },
+    )
   end
 end
