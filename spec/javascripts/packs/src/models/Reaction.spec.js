@@ -311,22 +311,15 @@ describe('Reaction', () => {
     });
 
     [
-      ['temperature', '°c', '°C'],
-      ['temperature', ' °f ', '°F'],
-      ['temperature', 'k', 'K'],
-      ['temperature', 'C', '°C'],
-      ['temperature', 'unknown', '°C'],
+      ['temperature', '°C', '°C'],
+      ['temperature', ' °F ', '°F'],
+      ['temperature', 'K', 'K'],
       ['humidity', ' % ', '%'],
-      ['humidity', 'percent', '%'],
       ['air_pressure', 'hPa', 'hpa'],
       ['air_pressure', ' Pa ', 'pa'],
       ['air_pressure', 'kPa', 'kpa'],
       ['air_pressure', 'MPa', 'mpa'],
       ['air_pressure', 'Torr', 'torr'],
-      ['air_pressure', 'ATM', 'atm'],
-      ['air_pressure', 'BAR', 'bar'],
-      ['air_pressure', 'mBar', 'mbar'],
-      ['air_pressure', 'unknown', 'mbar'],
       ['air_pressure', '', 'mbar'],
       ['air_pressure', null, 'mbar'],
       ['air_pressure', ['hpa'], 'mbar'],
@@ -341,6 +334,36 @@ describe('Reaction', () => {
         expect(loaded.isEdited).toBe(false);
         expect(loaded.serialize().environment[field]).toEqual({ value: '21,5', unit: expectedUnit });
         expect(loaded.isEdited).toBe(false);
+      });
+    });
+
+    [
+      ['temperature', 'C'],
+      ['temperature', 'F'],
+      ['temperature', 'degF'],
+      ['temperature', '°c'],
+      ['temperature', ' °f '],
+      ['temperature', 'k'],
+      ['humidity', 'percent'],
+      ['air_pressure', 'psi'],
+      ['air_pressure', 'mPa'],
+      ['air_pressure', 'KPa'],
+      ['air_pressure', ' psi '],
+      ['air_pressure', 'unknown'],
+    ].forEach(([field, unit]) => {
+      it(`preserves unsupported ${field} unit ${JSON.stringify(unit)} when renaming and copying a reaction`, () => {
+        const reading = { value: '14.7', unit };
+        const loaded = new Reaction({ ...reaction, environment: { [field]: reading } });
+
+        expect(loaded.environment[field]).toEqual(reading);
+        expect(loaded.isEdited).toBe(false);
+        loaded.name = 'Renamed reaction';
+        expect(loaded.isEdited).toBe(true);
+        const serialized = loaded.serialize();
+        expect(serialized.environment[field]).toEqual(reading);
+        expect(new Reaction(serialized).environment[field]).toEqual(reading);
+        const copy = Reaction.copyFromReactionAndCollectionId(loaded, 1);
+        expect(copy.environment[field]).toEqual(reading);
       });
     });
 

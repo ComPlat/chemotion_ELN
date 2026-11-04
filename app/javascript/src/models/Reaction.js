@@ -13,7 +13,8 @@ import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
-import { ENVIRONMENT_UNITS, isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
+import { ENVIRONMENT_UNITS, isEnvironmentNumber, normalizeEnvironmentUnit } from 'src/utilities/EnvironmentConditions';
+import { convertTemperature } from 'src/utilities/MeasurementConversions';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -49,26 +50,7 @@ const EnvironmentDefault = {
   air_pressure: { value: '', unit: 'mbar' }
 };
 
-export const convertTemperature = (temperature, fromUnit, toUnit) => {
-  if (fromUnit === toUnit) {
-    return temperature;
-  }
-  const conversionTable = {
-    K: {
-      '°C': (t) => parseFloat(t) - 273.15,
-      '°F': (t) => (parseFloat(t) * 9 / 5) - 459.67
-    },
-    '°C': {
-      K: (t) => parseFloat(t) + 273.15,
-      '°F': (t) => (parseFloat(t) * 1.8) + 32
-    },
-    '°F': {
-      K: (t) => (parseFloat(t) + 459.67) * 5 / 9,
-      '°C': (t) => (parseFloat(t) - 32) / 1.8
-    }
-  };
-  return conversionTable[fromUnit][toUnit](temperature);
-};
+export { convertTemperature };
 
 const MomentUnit = {
   'Week(s)': 'weeks',
@@ -269,7 +251,6 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
-      // API writes and imports may contain nonnumeric readings; saving must preserve them.
       environment: this.environment,
       ph_operator: this.ph_operator || '=',
       ph_value: this.phValueForSerialize(),
@@ -468,8 +449,7 @@ export default class Reaction extends Element {
       const condition = env[field];
       const value = condition?.value;
       const unit = condition?.unit;
-      const unitKey = typeof unit === 'string' ? unit.trim().toLowerCase() : '';
-      const normalizedUnit = ENVIRONMENT_UNITS[field].find((key) => key.toLowerCase() === unitKey);
+      const normalizedUnit = normalizeEnvironmentUnit(field, unit);
 
       return [field, {
         value: typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value)) ? `${value}` : '',

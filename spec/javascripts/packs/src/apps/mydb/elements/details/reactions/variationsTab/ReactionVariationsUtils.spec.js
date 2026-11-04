@@ -4,13 +4,14 @@ import { cloneDeep } from 'lodash';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
-  addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit, getColumnDefinitions,
+  addMissingColumnsToVariations, getVariationsColumns, getColumnDefinitions,
   getUserFacingEntryName, getSegmentData, formatReactionSegments, processHeaderForCsvExport,
   setGroupColDefAttribute, setLeafColDefAttribute, getInitialLayout,
   getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
   getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
   persistRowOrder, setRowOrder, areVariationsEqualIgnoringOrder, persistTableLayout,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { convertGenericUnit } from 'src/utilities/MeasurementConversions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import {
   getReactionMaterials, getMaterialColumnGroupChild

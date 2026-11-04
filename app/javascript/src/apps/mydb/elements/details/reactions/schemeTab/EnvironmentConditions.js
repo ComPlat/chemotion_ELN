@@ -1,36 +1,26 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Collapse, Form, InputGroup, Row, Col
 } from 'react-bootstrap';
-import { GenUnitBtn } from 'chem-generic-ui';
-
-import Reaction, { convertTemperature } from 'src/models/Reaction';
-import { isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
+import { ENVIRONMENT_UNITS, PRESSURE_UNITS, isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
 import { normalizeNumberInput } from 'src/utilities/MathUtils';
-import { convertGenericUnit }
-  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { convertTemperature, convertGenericUnit } from 'src/utilities/MeasurementConversions';
 
-// Soft, non-blocking guidance shown as muted helper text. Numeric-only input already blocks
-// letters and (for humidity / air pressure) negatives, so this only gently nudges when a
-// value lands outside its usual physical range; it never blocks saving.
-const ENVIRONMENT_HINTS = {
-  temperature: (num, unit) => {
-    const minimum = { '°C': -273.15, '°F': -459.67, K: 0 }[unit];
-    return num < minimum ? 'Below absolute zero' : null;
-  },
-  humidity: (num) => (num > 100 ? 'Usually 0 to 100%' : null),
-};
+// Normalize stored decimal commas only for conversion; keep the original reading intact.
+const normalizeDecimalSeparator = (value) => `${value ?? ''}`.replace(',', '.');
+const UNSUPPORTED_UNIT_HINT = 'Unsupported unit; reading is read-only.';
+const REJECTED_INPUT_HINT = 'Input not accepted; previous value kept.';
 
-const environmentFieldHint = (field, value, unit) => {
-  const hint = ENVIRONMENT_HINTS[field];
+const humidityFieldHint = (value) => {
   const text = `${value ?? ''}`.trim();
-  if (!hint || text === '') { return null; }
+  if (text === '') { return null; }
+
   const num = Number(text);
-  return Number.isFinite(num) ? hint(num, unit) : null;
+  return Number.isFinite(num) && num > 100 ? 'Usually 0 to 100%' : null;
 };
 
-// Toolbar toggle: sits next to the Status field, opens/closes the panel below the toolbar.
+// Toolbar toggle next to Status. The panel starts the scheme content, after any saved-reaction comments.
 export const EnvironmentConditionsToggle = ({
   open, isSet, onToggle, panelId,
 }) => (
@@ -71,21 +61,48 @@ const EnvironmentConditionsPanel = ({
   const temperatureConversion = useRef(null);
   const pressureConversion = useRef(null);
   const editedFields = useRef(new Set());
+  const [inputHints, setInputHints] = useState({});
+  const isUnitSupported = (field) => {
+    const unit = environment[field].unit || (field === 'air_pressure' ? 'mbar' : '');
+    return !unit || ENVIRONMENT_UNITS[field].includes(unit);
+  };
+
+  const setFieldInputHint = (field, hint) => {
+    setInputHints((previous) => ({ ...previous, [field]: hint }));
+  };
+
+  const renderFieldHint = (field) => {
+    const hint = isUnitSupported(field)
+      ? inputHints[field] || (field === 'humidity' ? humidityFieldHint(environment.humidity.value) : null)
+      : UNSUPPORTED_UNIT_HINT;
+    return hint ? <Form.Text className="text-muted">{hint}</Form.Text> : null;
+  };
 
   const updateField = (field, patch) => {
+    setFieldInputHint(field, null);
     onChange({
       ...environment,
       [field]: { ...environment[field], ...patch },
     });
   };
 
-  const changeValue = (field, value) => {
+  const changeValue = (field, raw) => {
+    if (!isUnitSupported(field)) { return; }
+
+    const value = normalizeNumberInput(raw, { allowNegative: field === 'temperature' });
+    if (value === null) {
+      setFieldInputHint(field, REJECTED_INPUT_HINT);
+      return;
+    }
+
+    if (field === 'temperature') { temperatureConversion.current = null; }
+    if (field === 'air_pressure') { pressureConversion.current = null; }
     editedFields.current.add(field);
     updateField(field, { value });
   };
 
   const clearIncompleteValue = (field) => {
-    if (!editedFields.current.delete(field)) { return; }
+    if (!editedFields.current.delete(field) || !isUnitSupported(field)) { return; }
 
     const { value } = environment[field];
     if (value && !isEnvironmentNumber(value)) {
@@ -94,56 +111,61 @@ const EnvironmentConditionsPanel = ({
   };
 
   const cycleTemperatureUnit = () => {
-    const units = Reaction.temperature_unit;
+    const units = ENVIRONMENT_UNITS.temperature;
     const current = environment.temperature.unit || '°C';
     if (!units.includes(current)) { return; }
 
     const nextUnit = units[(units.indexOf(current) + 1) % units.length];
     const { value } = environment.temperature;
+    const normalizedValue = normalizeDecimalSeparator(value);
+    const isNumeric = isEnvironmentNumber(normalizedValue);
+    if (normalizedValue.trim() !== '' && !isNumeric) { return; }
+
     let nextValue = value;
-    if (isEnvironmentNumber(value)) {
+    if (isNumeric) {
       const previous = temperatureConversion.current;
       // Always convert from the original measurement until the value is edited.
       const source = previous?.value === value && previous?.unit === current
         ? previous.source : { value, unit: current };
       nextValue = nextUnit === source.unit ? source.value
-        : convertTemperature(source.value, source.unit, nextUnit)
+        : convertTemperature(normalizeDecimalSeparator(source.value), source.unit, nextUnit)
           .toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 12 });
       temperatureConversion.current = { source, value: nextValue, unit: nextUnit };
     }
     updateField('temperature', { value: nextValue, unit: nextUnit });
   };
 
-  const pressure = {
-    type: 'system-defined',
-    measurable_quantity: 'pressure',
-    unit: environment.air_pressure.unit || 'mbar',
-    values: [environment.air_pressure.value ?? ''],
-  };
+  const pressureUnit = environment.air_pressure.unit || 'mbar';
+  const pressureUnitLabel = PRESSURE_UNITS.find(({ key }) => key === pressureUnit)?.label || pressureUnit;
 
-  const changePressureUnit = (updated) => {
-    const [value] = pressure.values;
+  const cyclePressureUnit = () => {
+    const units = ENVIRONMENT_UNITS.air_pressure;
+    if (!units.includes(pressureUnit)) { return; }
+
+    const nextUnit = units[(units.indexOf(pressureUnit) + 1) % units.length];
+
+    const value = environment.air_pressure.value ?? '';
+    const normalizedValue = normalizeDecimalSeparator(value);
+    const isNumeric = isEnvironmentNumber(normalizedValue);
+    if (normalizedValue.trim() !== '' && !isNumeric) { return; }
+
     let nextValue = value;
-    if (isEnvironmentNumber(value)) {
+    if (isNumeric) {
       const previous = pressureConversion.current;
-      const source = previous?.value === value && previous?.unit === pressure.unit
-        ? previous.source : { value, unit: pressure.unit };
-      // GenUnitBtn rounds each conversion to five decimal places. Convert from the
-      // original reading with its unit metadata to preserve small pressure values.
-      const converted = convertGenericUnit(Number(source.value), source.unit, updated.unit, 'pressure');
+      const source = previous?.value === value && previous?.unit === pressureUnit
+        ? previous.source : { value, unit: pressureUnit };
+      // Convert from the original reading with the library factors to avoid rounding drift.
+      const converted = convertGenericUnit(
+        Number(normalizeDecimalSeparator(source.value)), source.unit, nextUnit, 'pressure'
+      );
       if (converted === null || !Number.isFinite(converted)) { return; }
 
-      nextValue = updated.unit === source.unit ? source.value
+      nextValue = nextUnit === source.unit ? source.value
         : converted.toLocaleString('en-US', { useGrouping: false, maximumSignificantDigits: 15 });
-      pressureConversion.current = { source, value: nextValue, unit: updated.unit };
+      pressureConversion.current = { source, value: nextValue, unit: nextUnit };
     }
-    updateField('air_pressure', { value: nextValue, unit: updated.unit });
+    updateField('air_pressure', { value: nextValue, unit: nextUnit });
   };
-
-  const temperatureHint = environmentFieldHint(
-    'temperature', environment.temperature.value, environment.temperature.unit
-  );
-  const humidityHint = environmentFieldHint('humidity', environment.humidity.value);
 
   return (
     <Collapse in={open}>
@@ -156,29 +178,23 @@ const EnvironmentConditionsPanel = ({
                 <Form.Control
                   type="text"
                   aria-label="Ambient temperature"
+                  readOnly={!isUnitSupported('temperature')}
                   value={environment.temperature.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
-                  onChange={(e) => {
-                    temperatureConversion.current = null;
-                    changeValue('temperature', normalizeNumberInput(e.target.value, { allowNegative: true }));
-                  }}
+                  onChange={(e) => changeValue('temperature', e.target.value)}
                   onBlur={() => clearIncompleteValue('temperature')}
                 />
                 <Button
                   variant="light"
-                  disabled={isDisabled}
+                  disabled={isDisabled || !isUnitSupported('temperature')}
                   onClick={cycleTemperatureUnit}
-                  title="Toggle unit"
+                  aria-label="Toggle temperature unit"
                 >
                   {environment.temperature.unit || '°C'}
                 </Button>
               </InputGroup>
-              {temperatureHint && (
-                <Form.Text className="text-muted">
-                  {temperatureHint}
-                </Form.Text>
-              )}
+              {renderFieldHint('temperature')}
             </Form.Group>
           </Col>
           <Col md={4}>
@@ -188,19 +204,16 @@ const EnvironmentConditionsPanel = ({
                 <Form.Control
                   type="text"
                   aria-label="Humidity"
+                  readOnly={!isUnitSupported('humidity')}
                   value={environment.humidity.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
-                  onChange={(e) => changeValue('humidity', normalizeNumberInput(e.target.value))}
+                  onChange={(e) => changeValue('humidity', e.target.value)}
                   onBlur={() => clearIncompleteValue('humidity')}
                 />
                 <InputGroup.Text>{environment.humidity.unit || '%'}</InputGroup.Text>
               </InputGroup>
-              {humidityHint && (
-                <Form.Text className="text-muted">
-                  {humidityHint}
-                </Form.Text>
-              )}
+              {renderFieldHint('humidity')}
             </Form.Group>
           </Col>
           <Col md={4}>
@@ -210,22 +223,25 @@ const EnvironmentConditionsPanel = ({
                 <Form.Control
                   type="text"
                   aria-label="Air pressure"
+                  readOnly={!isUnitSupported('air_pressure')}
                   value={environment.air_pressure.value ?? ''}
                   placeholder="value"
                   disabled={isDisabled}
-                  onChange={(e) => {
-                    pressureConversion.current = null;
-                    changeValue('air_pressure', normalizeNumberInput(e.target.value));
-                  }}
+                  onChange={(e) => changeValue('air_pressure', e.target.value)}
                   onBlur={() => clearIncompleteValue('air_pressure')}
                 />
-                <GenUnitBtn
-                  generic={pressure}
-                  variant="light"
-                  size={null}
-                  fnCb={changePressureUnit}
-                />
+                {isUnitSupported('air_pressure') ? (
+                  <Button
+                    variant="light"
+                    disabled={isDisabled}
+                    onClick={cyclePressureUnit}
+                    aria-label="Toggle air pressure unit"
+                  >
+                    {pressureUnitLabel}
+                  </Button>
+                ) : <InputGroup.Text>{pressureUnit}</InputGroup.Text>}
               </InputGroup>
+              {renderFieldHint('air_pressure')}
             </Form.Group>
           </Col>
         </Row>

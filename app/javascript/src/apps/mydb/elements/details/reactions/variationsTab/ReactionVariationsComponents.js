@@ -11,7 +11,7 @@ import { cloneDeep, isEqual } from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import {
   getVariationsRowName, convertUnit,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
+  getUserFacingEntryName, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -19,6 +19,7 @@ import {
   resolveReactionVolumeFromContext
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { parseNumericString } from 'src/utilities/MathUtils';
+import { convertGenericUnit } from 'src/utilities/MeasurementConversions';
 import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
