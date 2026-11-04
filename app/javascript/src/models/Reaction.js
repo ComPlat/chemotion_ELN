@@ -287,7 +287,7 @@ export default class Reaction extends Element {
       productsOnly,
       showYield: !productsOnly,
       steps: this.stepsSvgPaths(),
-      numberedSteps: this.hasHiddenSteps(),
+      numberedSteps: !productsOnly && this.hasHiddenSteps(),
       hide: this.scheme_hidden_parts,
     };
   }
@@ -1120,7 +1120,8 @@ export default class Reaction extends Element {
   }
 
   hasHiddenSteps() {
-    return this.reaction_type === 'standard' && this.reaction_steps.filter((step) => !step._destroy).length > 1;
+    return ['standard', 'interaction'].includes(this.reaction_type)
+      && this.reaction_steps.filter((step) => !step._destroy).length > 1;
   }
 
   // While Standard, step 1 follows the reaction's own fields and the last step its stop time, as saved.
@@ -1237,10 +1238,11 @@ export default class Reaction extends Element {
 
   restoreHiddenSteps() {
     const steps = this.reaction_steps.filter((step) => !step._destroy);
-    const chunks = this.splitDescription();
-    this._ownDescription = { ops: chunks[0] };
+    const [own, ...stepChunks] = this.splitDescription();
+    this._ownDescription = null;
     steps.forEach((step, index) => {
-      step.description = chunks[index + 1]?.length ? { ops: chunks[index + 1] } : emptyDescription();
+      const ops = [...(index === 0 && hasText(own) ? own : []), ...(stepChunks[index] || [])];
+      step.description = ops.length ? { ops } : emptyDescription();
     });
     Object.keys(STEP_FIELD_DEFAULTS)
       .filter((field) => !['description', 'timestamp_stop'].includes(field))
@@ -1298,7 +1300,7 @@ export default class Reaction extends Element {
   }
 
   stepsSvgPaths() {
-    if (!this.isMultiStep() && !this.hasHiddenSteps()) return [];
+    if (!this.isMultiStep() && !(this.reaction_type === 'standard' && this.hasHiddenSteps())) return [];
 
     const stepTemperature = (temperature = {}) => {
       const text = temperatureText(temperature);

@@ -565,7 +565,7 @@ describe('Reaction with hidden steps (standard)', () => {
     return reaction.reaction_steps.map((step) => text(step.description));
   };
 
-  it('splits the text back at the headings, keeping the text above Step 1 as the reaction own text', async () => {
+  it('splits the text back at the headings, moving the text above Step 1 into step 1', async () => {
     const reaction = await twoSteps();
     reaction.leaveMultiStep();
     reaction.reaction_type = 'standard';
@@ -573,8 +573,8 @@ describe('Reaction with hidden steps (standard)', () => {
       ops: [{ insert: 'general note\n' }, bold('Step 1: '), { insert: 'heat it\n' }, bold('Step 2: '), { insert: 'cool it slowly\n' }],
     };
 
-    expect(backToMultiStep(reaction)).toEqual(['heat it\n', 'cool it slowly\n']);
-    expect(text(reaction.description)).toEqual('general note\nStep 1: heat it\nStep 2: cool it slowly\n');
+    expect(backToMultiStep(reaction)).toEqual(['general note\nheat it\n', 'cool it slowly\n']);
+    expect(text(reaction.description)).toEqual('Step 1: general note\nheat it\nStep 2: cool it slowly\n');
   });
 
   it('keeps the text of a deleted heading with the step above and treats made-up headings as text', async () => {
@@ -671,6 +671,16 @@ describe('Reaction#hasHiddenSteps', () => {
     reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
     expect(reaction.hasHiddenSteps()).toEqual(true);
   });
+
+  it('counts the kept steps of an interaction reaction too, but not of a multi-step one', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+    reaction.reaction_type = 'interaction';
+    expect(reaction.hasHiddenSteps()).toEqual(true);
+
+    reaction.reaction_type = 'multi_step';
+    expect(reaction.hasHiddenSteps()).toEqual(false);
+  });
 });
 
 describe('Reaction with hidden steps, review fixes', () => {
@@ -734,7 +744,7 @@ describe('Reaction with hidden steps, review fixes', () => {
     reaction.enterMultiStep();
 
     expect(reaction.reaction_steps.map((step) => step.description.ops.map((op) => op.insert).join('')))
-      .toEqual(['heat it\n', 'cool it\n']);
+      .toEqual(['note\nheat it\n', 'cool it\n']);
   });
 });
 
@@ -763,7 +773,7 @@ describe('Reaction hidden steps, edge cases', () => {
     reaction.reaction_type = 'interaction';
 
     expect([reaction.hasHiddenSteps(), reaction.stepsSvgPaths(), reaction.schemeSvgRequest().numberedSteps])
-      .toEqual([false, [], false]);
+      .toEqual([true, [], false]);
   });
 
   it('carries the first step 1 product again when the carried one was removed while Standard', async () => {
