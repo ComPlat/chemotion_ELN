@@ -91,7 +91,7 @@ RSpec.describe ScifinderNCredential do
       end
     end
 
-    context 'when the refreshed credentials cannot be saved' do
+    context 'when the refresh response has no access token' do
       let(:expires_at) { 1.minute.ago }
 
       before do
@@ -113,6 +113,33 @@ RSpec.describe ScifinderNCredential do
           expires_at: be_within(1.second).of(expires_at),
         )
       end
+
+      it 'logs the error without the response values' do
+        credential.issued_token
+
+        expect(Rails.logger).to have_received(:error).with(satisfy { |msg| msg.exclude?('new-refresh') })
+      end
+    end
+
+    context 'when the refreshed credentials cannot be saved' do
+      let(:expires_at) { 1.minute.ago }
+
+      before do
+        allow(Chemotion::ScifinderNService).to receive(:provider_access)
+          .and_return(access_token: 'new-access', refresh_token: 'new-refresh', expires_at: 2.hours.from_now)
+        allow(credential).to receive(:update!).and_raise(ActiveRecord::ActiveRecordError, 'row new-refresh')
+        allow(Rails.logger).to receive(:error)
+      end
+
+      it 'returns nil' do
+        expect(credential.issued_token).to be_nil
+      end
+
+      it 'logs only the error class' do
+        credential.issued_token
+
+        expect(Rails.logger).to have_received(:error).with('Error while issuing token: ActiveRecord::ActiveRecordError')
+      end
     end
 
     context 'when refreshing fails' do
@@ -127,10 +154,10 @@ RSpec.describe ScifinderNCredential do
         expect(credential.issued_token).to be_nil
       end
 
-      it 'logs the error and keeps the stored credentials' do
+      it 'logs the error class and keeps the stored credentials' do
         credential.issued_token
 
-        expect(Rails.logger).to have_received(:error).with(/boom/)
+        expect(Rails.logger).to have_received(:error).with('Error while issuing token: StandardError')
         expect(credential.reload).to have_attributes(access_token: 'current-access', refresh_token: 'current-refresh')
       end
     end

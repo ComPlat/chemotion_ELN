@@ -24,6 +24,11 @@ class ScifinderNCredential < ApplicationRecord
     return if refresh_token.blank?
 
     access_set = Chemotion::ScifinderNService.provider_access(refresh_token)
+    if access_set[:access_token].blank?
+      Rails.logger.error('Error while issuing token: no access token in the refresh response')
+      return
+    end
+
     # Keep the stored refresh token if the provider does not issue a new one.
     update!(
       access_token: access_set[:access_token],
@@ -32,7 +37,7 @@ class ScifinderNCredential < ApplicationRecord
     )
     access_token
   rescue StandardError => e
-    Rails.logger.error("Error while issuing token: #{e}")
+    Rails.logger.error("Error while issuing token: #{e.class}")
     nil
   end
 end
