@@ -126,8 +126,7 @@ RSpec.describe ScifinderNCredential do
 
       before do
         allow(Chemotion::ScifinderNService).to receive(:provider_access)
-          .and_return(access_token: 'new-access', refresh_token: 'new-refresh', expires_at: 2.hours.from_now)
-        allow(credential).to receive(:update!).and_raise(ActiveRecord::ActiveRecordError, 'row new-refresh')
+          .and_return(access_token: 'new-access', refresh_token: 'new-refresh', expires_at: nil)
         allow(Rails.logger).to receive(:error)
       end
 
@@ -135,10 +134,28 @@ RSpec.describe ScifinderNCredential do
         expect(credential.issued_token).to be_nil
       end
 
+      it 'keeps the stored credentials, in memory and in the database' do
+        credential.issued_token
+
+        stored = {
+          access_token: 'current-access',
+          refresh_token: 'current-refresh',
+          expires_at: be_within(1.second).of(expires_at),
+        }
+        expect(credential).to have_attributes(stored)
+        expect(credential.reload).to have_attributes(stored)
+      end
+
+      it 'tries to refresh again on the next call' do
+        2.times { credential.issued_token }
+
+        expect(Chemotion::ScifinderNService).to have_received(:provider_access).with('current-refresh').twice
+      end
+
       it 'logs only the error class' do
         credential.issued_token
 
-        expect(Rails.logger).to have_received(:error).with('Error while issuing token: ActiveRecord::ActiveRecordError')
+        expect(Rails.logger).to have_received(:error).with('Error while issuing token: ActiveRecord::NotNullViolation')
       end
     end
 

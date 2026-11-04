@@ -37,6 +37,7 @@ class ScifinderNCredential < ApplicationRecord
     )
     access_token
   rescue StandardError => e
+    restore_attributes
     Rails.logger.error("Error while issuing token: #{e.class}")
     nil
   end
