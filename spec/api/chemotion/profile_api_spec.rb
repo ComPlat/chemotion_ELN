@@ -297,6 +297,23 @@ describe Chemotion::ProfileAPI do
         expect(JSON.parse(File.read(file_path))).to eq(valid_data.stringify_keys)
       end
 
+      it 'leaves no temporary file behind' do
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
+
+        expect(Dir.glob("#{complete_folder_path}/#{user.id}.json.*")).to be_empty
+      end
+
+      it 'keeps the previous file when the write fails' do
+        File.write(file_path, { rotationStep: 45 }.to_json)
+        allow(File).to receive(:rename).and_raise(StandardError.new('disk full'))
+
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
+
+        expect(response).to have_http_status(:internal_server_error)
+        expect(JSON.parse(File.read(file_path))).to eq('rotationStep' => 45)
+        expect(Dir.glob("#{complete_folder_path}/#{user.id}.json.*")).to be_empty
+      end
+
       it 'does not create an attachment record' do
         expect do
           put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
@@ -378,9 +395,9 @@ describe Chemotion::ProfileAPI do
       end
     end
 
-    context 'when the settings file holds invalid entries' do
-      it 'returns only the valid entries' do
-        file_content = { 'rotationStep' => 30, 'nested' => { 'a' => 1 }, 'bondLength' => 'huge' }.to_json
+    context 'when the settings file holds entries that are not flat scalars' do
+      it 'returns only the well-formed entries' do
+        file_content = { 'rotationStep' => 30, 'nested' => { 'a' => 1 }, 'list' => [1], 'a.b' => true }.to_json
         file_path = Rails.root.join('uploads', Rails.env, "ketcher-optns/#{user.id}.json")
 
         allow(File).to receive(:exist?).with(file_path).and_return(true)
@@ -389,6 +406,20 @@ describe Chemotion::ProfileAPI do
         get '/api/v1/profiles/editors/ketcher-options', headers: headers
 
         expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => { 'rotationStep' => 30 })
+      end
+    end
+
+    context 'when a stored value no longer matches its per-key rule' do
+      it 'keeps it, so a rule lagging behind Ketcher does not delete it' do
+        file_content = { 'showHydrogenLabels' => 'newChoice', 'rotationStep' => 120 }.to_json
+        file_path = Rails.root.join('uploads', Rails.env, "ketcher-optns/#{user.id}.json")
+
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        allow(File).to receive(:read).with(file_path).and_return(file_content)
+
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
+
+        expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => JSON.parse(file_content))
       end
     end
 

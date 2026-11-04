@@ -284,8 +284,9 @@ module Chemotion
 
         if File.exist?(complete_folder_path)
           begin
-            # Files written before the settings were validated are cleaned on the way out too.
-            settings, = KetcherOptionsSanitizer.call(JSON.parse(File.read(complete_folder_path)))
+            # Shape check only: files from before the validation are cleaned, but a
+            # per-key rule lagging behind a Ketcher upgrade never deletes a stored setting.
+            settings, = KetcherOptionsSanitizer.call(JSON.parse(File.read(complete_folder_path)), strict: false)
             { status: true, settings: settings }
           rescue StandardError => e
             error_messages.push('Issues with reading settings file', e.message)
@@ -305,15 +306,20 @@ module Chemotion
         folder_path = 'ketcher-optns'
         complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
         file_path = "#{complete_folder_path}/#{current_user.id}.json"
+        tmp_path = "#{file_path}.#{SecureRandom.hex(6)}.tmp"
         begin
           settings, dropped_keys = KetcherOptionsSanitizer.call(params[:data])
-          # The settings file is the only store: GET reads it back directly.
+          # The settings file is the only store: GET reads it back directly. Write a
+          # temp file and rename it, so a concurrent GET never reads a partial file.
           FileUtils.mkdir_p(complete_folder_path)
-          File.write(file_path, JSON(settings))
+          File.write(tmp_path, JSON(settings))
+          File.rename(tmp_path, file_path)
           { status: true, message: 'Ketcher options updated successfully', dropped_keys: dropped_keys }
         rescue StandardError => e
           error_messages.push(e.message)
           error!({ status: false, error_messages: error_messages.flatten }, 500)
+        ensure
+          FileUtils.rm_f(tmp_path)
         end
       end
     end

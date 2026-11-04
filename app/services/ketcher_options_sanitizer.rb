@@ -4,11 +4,14 @@
 # (+PUT /api/v1/profiles/editors/ketcher-options+) before they are written to
 # disk, and again when they are read back.
 #
-# Ketcher stores its settings as a flat object of scalars. Known keys are
-# checked against the rules of Ketcher's own settings schema; keys a newer
-# Ketcher may add are kept only if they look harmless (short identifier,
-# scalar value). Anything else is dropped, so Ketcher falls back to its
-# default for that setting.
+# Ketcher stores its settings as a flat object of scalars. Every entry must
+# have a short identifier as key and a boolean, finite number or short
+# string as value. When saving (+strict: true+), known keys must also match
+# the rules of Ketcher's own settings schema. When reading back
+# (+strict: false+), only the shape is checked, so a rule that lags behind a
+# Ketcher upgrade never deletes a setting that is already stored; Ketcher
+# validates the values it loads itself. Entries that fail are dropped, so
+# Ketcher falls back to its default for that setting.
 module KetcherOptionsSanitizer
   MAX_STRING_LENGTH = 64
   KEY_PATTERN = /\A[A-Za-z][A-Za-z0-9_-]{0,63}\z/.freeze
@@ -70,7 +73,8 @@ module KetcherOptionsSanitizer
     'carbonExplicitly' => BOOLEAN,
     'showCharge' => BOOLEAN,
     'showValence' => BOOLEAN,
-    'showHydrogenLabels' => one_of('Off', 'Hetero', 'Terminal', 'Terminal and Hetero', 'On'),
+    # stored values of Ketcher's ShowHydrogenLabels enum (Off = 'off', On = 'all')
+    'showHydrogenLabels' => one_of('off', 'Hetero', 'Terminal', 'Terminal and Hetero', 'all'),
     'aromaticCircle' => BOOLEAN,
     'bondSpacing' => integer_in(1..100),
     'bondThickness' => number_in(0.1..96),
@@ -102,19 +106,20 @@ module KetcherOptionsSanitizer
     'miewAtomLabel' => one_of('no', 'bright', 'blackAndWhite', 'black'),
   }.freeze
 
-  # Value rule for keys not in {RULES}: a boolean, a finite number or a short string.
+  # Shape rule for every value: a boolean, a finite number or a short string.
   GENERIC = ->(v) { BOOLEAN.call(v) || FINITE_NUMBER.call(v) || short_string?(v) }
 
-  # Splits Ketcher settings into the entries that may be stored and the keys that were dropped.
+  # Splits Ketcher settings into the entries that may be kept and the keys that were dropped.
   #
-  # @param raw [Hash] settings as received (string or symbol keys); anything else counts as empty
+  # @param raw [Hash] settings (string or symbol keys); anything else counts as empty
+  # @param strict [Boolean] also apply the per-key {RULES} (saving); +false+ checks the shape only (reading)
   # @return [Array(Hash, Array<String>)] +[clean, dropped_keys]+ — clean has string keys
-  def self.call(raw)
+  def self.call(raw, strict: true)
     return [{}, []] unless raw.is_a?(Hash)
 
     raw.each_with_object([{}, []]) do |(key, value), (clean, dropped)|
       name = key.to_s
-      if valid?(name, value)
+      if valid?(name, value, strict)
         clean[name] = value
       else
         dropped << name
@@ -122,11 +127,11 @@ module KetcherOptionsSanitizer
     end
   end
 
-  def self.valid?(name, value)
-    rule = RULES[name]
-    return rule.call(value) if rule
+  def self.valid?(name, value, strict)
+    return false unless KEY_PATTERN.match?(name) && GENERIC.call(value)
 
-    KEY_PATTERN.match?(name) && GENERIC.call(value)
+    rule = strict && RULES[name]
+    rule ? rule.call(value) : true
   end
 
   private_class_method :integer_in, :number_in, :one_of, :matching, :valid?

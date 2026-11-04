@@ -55,7 +55,7 @@ RSpec.describe KetcherOptionsSanitizer do
       'showCharge' => ['true', 1, nil],
       'resetToSelect' => ['on', nil],
       'stereoLabelStyle' => %w[iupac Other],
-      'showHydrogenLabels' => %w[terminal All],
+      'showHydrogenLabels' => %w[terminal Off On],
       'colorOfAndCenters' => %w[red #12345 #1234567 #gggggg],
       'imageResolution' => ['high', 72, '12345'],
       'absFlagLabel' => ['a' * 65, "AB\nS", 1],
@@ -75,10 +75,42 @@ RSpec.describe KetcherOptionsSanitizer do
       }
       expect(clean(limits)).to eq(limits)
     end
+
+    # The values Ketcher 3.18 stores for each choice (not the labels it shows).
+    {
+      'resetToSelect' => [true, 'paste', false],
+      'stereoLabelStyle' => %w[Iupac Classic On Off],
+      'colorStereogenicCenters' => %w[LabelsOnly BondsOnly LabelsAndBonds Off],
+      'showHydrogenLabels' => ['off', 'Hetero', 'Terminal', 'Terminal and Hetero', 'all'],
+      'fontszUnit' => %w[px cm pt inch],
+      'miewMode' => %w[LN BS LC],
+      'miewTheme' => %w[light dark],
+      'miewAtomLabel' => %w[no bright blackAndWhite black],
+    }.each do |key, values|
+      it "accepts every #{key} choice" do
+        values.each { |value| expect(clean(key => value)).to eq(key => value) }
+      end
+    end
+  end
+
+  describe 'reading back (strict: false)' do
+    def read(settings)
+      described_class.call(settings, strict: false)
+    end
+
+    it 'keeps well-formed values that a per-key rule would refuse' do
+      lagging = { 'showHydrogenLabels' => 'newChoice', 'rotationStep' => 120, 'fontszUnit' => 'em' }
+      expect(read(lagging)).to eq([lagging, []])
+    end
+
+    it 'still drops entries that are not flat scalars or have odd keys' do
+      junk = { 'nested' => { 'a' => 1 }, 'list' => [1], 'empty' => nil, 'a.b' => true, 'long' => 'x' * 65 }
+      expect(read(junk.merge('rotationStep' => 15))).to eq([{ 'rotationStep' => 15 }, junk.keys])
+    end
   end
 
   describe 'unknown keys' do
-    it 'keeps harmless scalars' do
+    it 'keeps short scalar values' do
       extra = { 'newSetting' => true, 'new-limit' => 3.5, 'newLabel' => 'x' }
       expect(clean(extra)).to eq(extra)
     end
@@ -89,7 +121,8 @@ RSpec.describe KetcherOptionsSanitizer do
     end
 
     it 'drops keys that are not short identifiers' do
-      junk = { '../evil' => true, 'a b' => true, '1st' => true, '' => true, "k#{'e' * 64}" => true }
+      junk = { 'a.b' => true, 'not/an-identifier' => true, 'a b' => true, '1st' => true, '' => true,
+               "k#{'e' * 64}" => true }
       expect(dropped(junk)).to eq(junk.keys)
     end
   end
