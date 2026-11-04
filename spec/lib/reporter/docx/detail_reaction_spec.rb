@@ -479,6 +479,34 @@ describe 'Reporter::Docx::DetailReaction' do
         output[:components]
       end
 
+      describe '#material_hash mixture product saved in the other amount mode' do
+        # Target 5 g, Real 6.013 g. Components were last saved in Target mode: 10 and 20 mmol.
+        def mixture_product(component_mmol:)
+          product_material(0.5).merge(
+            sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+            real_amount_g: 6.013, amount_g: 5.0, real_amount_mmol: nil, amount_mmol: nil,
+            sample_details: { 'reference_component_changed' => false },
+            components: component_mmol.each_with_index.map do |mmol, index|
+              { component_properties: {
+                'reference' => index.zero?, 'amount_mol' => mmol / 1000.0, 'equivalent' => [1.0, 2.0][index],
+                'relative_molecular_weight' => [500.0, 250.0][index], 'metrics' => 'mmmm'
+              } }
+            end,
+          )
+        end
+
+        [[:saved_in_target, [10.0, 20.0]], [:saved_in_real, [12.026, 24.052]]].each do |label, component_mmol|
+          it "reports components that agree with the Real header when #{label}" do
+            report = detail.send(:material_hash, mixture_product(component_mmol: component_mmol), true)
+            header_mmol = report[:mol].to_f
+            reference_mmol = report[:components].first[:amount_mol].to_f
+
+            expect(report[:components].map { |c| c[:equivalent].to_f }).to eq([1.0, 2.0])
+            expect(reference_mmol).to be_within(0.01).of(header_mmol)
+          end
+        end
+      end
+
       describe '#material_hash product equivalent' do
         it 'renders a numeric equivalent as a percentage' do
           expect(detail.send(:material_hash, product_material(0.85), true)[:equiv]).to eq('85%')

@@ -167,6 +167,7 @@ export default class SampleDetailsComponents extends React.Component {
 
     sample.components = this.normalizeComponents(sample.components);
 
+    let validateVolume = true;
     switch (changeEvent.type) {
       case 'amountChanged':
         this.updatedSampleForAmountUnitChange(changeEvent);
@@ -184,15 +185,17 @@ export default class SampleDetailsComponents extends React.Component {
         this.updateSampleForReferenceChanged(changeEvent);
         break;
       case 'purityChanged':
-        this.updatePurity(changeEvent);
+        validateVolume = this.updatePurity(changeEvent) !== false;
         break;
       case 'densityChanged':
-        this.updateDensity(changeEvent);
+        validateVolume = this.updateDensity(changeEvent) !== false;
         break;
       default:
         break;
     }
-    checkComponentVolumeAndNotify(sample);
+    if (validateVolume) {
+      checkComponentVolumeAndNotify(sample);
+    }
     onChange(sample);
   }
 
@@ -367,6 +370,52 @@ export default class SampleDetailsComponents extends React.Component {
     return false;
   }
 
+  /** Restores a property edit if the product mass cannot be redistributed. */
+  updateFixedProductComponent(component, applyChange, { allowDensityRecovery = false } = {}) {
+    const { sample } = this.props;
+    const previous = {
+      density: component.density,
+      purity: component.purity,
+      starting_molarity_value: component.starting_molarity_value,
+      amount_g: component.amount_g,
+      amount_l: component.amount_l,
+      amount_mol: component.amount_mol,
+    };
+    const details = sample.sample_details;
+    const previousVolume = details?.total_mixture_volume_l;
+    const compositionWasUnresolved = allowDensityRecovery && !sample.getProductMixtureComposition();
+    applyChange();
+
+    if (sample.redistributeProductMixtureMass({
+      component, concentrationLocked: component.isComponentConcentrationLocked(),
+    })) return true;
+
+    // Density remains editable while pre-existing component data is still incomplete.
+    const recoveringDensity = compositionWasUnresolved && component.density > 0
+      && !sample.getProductMixtureComposition();
+    if (!recoveringDensity) {
+      Object.assign(component, previous);
+      if (details) {
+        if (previousVolume === undefined) delete details.total_mixture_volume_l;
+        else details.total_mixture_volume_l = previousVolume;
+      }
+      sample.sample_details = details;
+    }
+    rootStore.notificationsStore.add({
+      title: recoveringDensity ? 'Density updated' : 'Component edit not applied',
+      message: recoveringDensity
+        ? 'Density updated. The product mass was kept. Complete the remaining component properties '
+          + 'to recalculate the mixture.'
+        : 'Could not recalculate the components at the current product mass. Check component properties, '
+          + 'ratios, and mixture volumes. Previous values were kept.',
+      uid: `mixture-product-component-edit-${sample.id}`,
+      level: recoveringDensity ? 'info' : 'warning',
+      position: 'tr',
+      autoDismiss: 5,
+    });
+    return false;
+  }
+
   /**
    * Updates component density.
    * @param {Object} changeEvent - The change event
@@ -379,18 +428,15 @@ export default class SampleDetailsComponents extends React.Component {
     if (!currentComponent) {
       return;
     }
-    if (sample.hasFixedProductMass() && !this.validateProductComponentRatios()) return;
+    if (sample.hasFixedProductMass()) {
+      if (!this.validateProductComponentRatios()) return false;
+      return this.updateFixedProductComponent(
+        currentComponent, () => currentComponent.handleDensityChange(amount, lockColumn), { allowDensityRecovery: true }
+      );
+    }
 
     const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
-
     currentComponent.handleDensityChange(amount, lockColumn);
-
-    if (sample.hasFixedProductMass()) {
-      sample.updateProductComponentRatio(currentComponent, currentComponent.equivalent, {
-        concentrationLocked: currentComponent.isComponentConcentrationLocked(),
-      });
-      return;
-    }
 
     const referenceComponent = sample.reference_component;
     const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
@@ -461,13 +507,11 @@ export default class SampleDetailsComponents extends React.Component {
     }
     if (sample.hasFixedProductMass()) {
       if (!Number.isFinite(purity) || purity <= 0 || purity > 1) return;
-      if (!this.validateProductComponentRatios()) return;
+      if (!this.validateProductComponentRatios()) return false;
 
-      currentComponent.purity = purity;
-      sample.updateProductComponentRatio(currentComponent, currentComponent.equivalent, {
-        concentrationLocked: currentComponent.isComponentConcentrationLocked(),
+      return this.updateFixedProductComponent(currentComponent, () => {
+        currentComponent.purity = purity;
       });
-      return;
     }
     const preserveUnallocatedMass = sample.hasUnallocatedMixtureMass();
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
