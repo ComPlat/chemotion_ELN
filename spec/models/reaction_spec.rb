@@ -443,6 +443,13 @@ RSpec.describe Reaction, type: :model do
       expect(reaction.send(:step_temperature_with_unit, step)).to eq('40 °C')
     end
 
+    it 'falls back to the range of the step temperature list' do
+      step.update!(temperature: { 'data' => [{ 'time' => '00:10:00', 'value' => '80' },
+                                             { 'time' => '00:20:00', 'value' => '-10.5' }],
+                                  'userText' => '', 'valueUnit' => '°C' })
+      expect(reaction.send(:step_temperature_with_unit, step)).to eq('-10.5 ~ 80 °C')
+    end
+
     it 'draws every product of a standard reaction' do
       standard = create(:reaction)
       create(:reactions_product_sample, reaction: standard)

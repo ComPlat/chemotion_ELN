@@ -381,6 +381,17 @@ describe('Reaction multi-step', () => {
     expect(reaction.stepsSvgPaths().map((step) => step.temperature)).toEqual(['r.t.', '40 °C']);
   });
 
+  it('shows the range of a step temperature list in the scheme when nothing is typed', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.reaction_type = 'multi_step';
+    reaction.reaction_steps = [
+      { id: 1, position: 1, temperature: { data: [{ time: '00:10:00', value: '80' }, { time: '00:20:00', value: '-10.5' }], userText: '', valueUnit: '°C' } },
+      { id: 2, position: 2, temperature: { data: [], userText: '', valueUnit: '°C' } },
+    ];
+
+    expect(reaction.stepsSvgPaths().map((step) => step.temperature)).toEqual(['-10.5 ~ 80 °C', '']);
+  });
+
   it('omits unset step fields so the database defaults apply', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';

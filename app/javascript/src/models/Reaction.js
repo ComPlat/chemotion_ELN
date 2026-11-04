@@ -58,6 +58,15 @@ const parseNumericTemperatureText = (text) => {
 
 const isNumericTemperatureText = (text) => parseNumericTemperatureText(text) !== null;
 
+const temperatureText = ({ userText, data = [] }) => {
+  if (userText) return userText;
+  if (data.length === 0) return '';
+  const values = data.map((o) => o.value);
+  const minTemp = Math.min(...values);
+  const maxTemp = Math.max(...values);
+  return minTemp === maxTemp ? minTemp : `${minTemp} ~ ${maxTemp}`;
+};
+
 export const convertTemperature = (temperature, fromUnit, toUnit) => {
   if (fromUnit === toUnit) {
     return temperature;
@@ -492,17 +501,7 @@ export default class Reaction extends Element {
   // Reaction Temperature
 
   get temperature_display() {
-    const { userText } = this._temperature;
-    if (userText !== '') { return userText; }
-
-    if (this._temperature.data.length === 0) { return ''; }
-
-    const arrayData = this._temperature.data;
-    const maxTemp = Math.max(...arrayData.map((o) => o.value));
-    const minTemp = Math.min(...arrayData.map((o) => o.value));
-
-    if (minTemp === maxTemp) { return minTemp; }
-    return `${minTemp} ~ ${maxTemp}`;
+    return temperatureText(this._temperature);
   }
 
   // Temperature label for the reaction scheme, e.g. "25 °C" or "21 ~ 25 °C".
@@ -1301,9 +1300,10 @@ export default class Reaction extends Element {
   stepsSvgPaths() {
     if (!this.isMultiStep() && !this.hasHiddenSteps()) return [];
 
-    const stepTemperature = ({ userText, valueUnit } = {}) => {
-      if (!userText) return '';
-      return isNumericTemperatureText(userText) ? `${userText} ${valueUnit || ''}`.trim() : userText;
+    const stepTemperature = (temperature = {}) => {
+      const text = temperatureText(temperature);
+      if (text === '') return '';
+      return isNumericTemperatureText(String(text)) ? `${text} ${temperature.valueUnit || ''}`.trim() : text;
     };
     const stepProducts = (stepId, carried) => this.products
       .filter((p) => p.reaction_step_id === stepId && !!p.carry_on === carried)

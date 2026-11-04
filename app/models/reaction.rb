@@ -356,17 +356,16 @@ class Reaction < ApplicationRecord
   end
 
   def self.step_temperature_text(temperature)
-    value = temperature.is_a?(Hash) ? temperature['userText'] : nil
+    return '' unless temperature.is_a?(Hash)
+
+    value = temperature['userText'].presence || temperature_range(temperature['data'])
     return '' if value.blank?
 
     numeric = NUMERIC_TEMPERATURE_TEXT_PATTERN.match?(value.strip)
     numeric ? "#{value} #{temperature['valueUnit']}".strip : value
   end
 
-  private
-
-  def temperature_data_display
-    array_data = temperature&.[]('data')
+  def self.temperature_range(array_data)
     return '' if array_data.blank?
 
     min_entry, max_entry = array_data.minmax_by { |entry| entry['value'].to_f }
@@ -377,6 +376,12 @@ class Reaction < ApplicationRecord
     return min_temp.to_s if min_temp == max_temp
 
     "#{min_temp} ~ #{max_temp}"
+  end
+
+  private
+
+  def temperature_data_display
+    self.class.temperature_range(temperature&.[]('data'))
   end
 
   def link_variation?(current_variations, variation_id, analysis_id)
