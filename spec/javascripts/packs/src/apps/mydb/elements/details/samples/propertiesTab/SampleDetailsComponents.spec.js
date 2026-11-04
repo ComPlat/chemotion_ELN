@@ -187,6 +187,154 @@ describe('SampleDetailsComponents reaction product ratios', () => {
       expect(notifications).toEqual([]);
     });
 
+    it('allows multiple missing liquid densities to be repaired one at a time', () => {
+      const { sample, editor } = build(['solid', 'liquid', 'liquid']);
+      sample.components.slice(1).forEach((component) => {
+        component.density = 0;
+        component.starting_molarity_value = 0;
+      });
+      const amounts = sample.components.map((component) => component.amount_mol);
+      editor.onChangeComponent({
+        type: 'densityChanged', sampleID: 'component-1',
+        amount: { value: 1.2, unit: 'g/ml' }, lockColumn: false,
+      });
+      expect(sample.components[1].density).toBe(1.2);
+      expect(sample.amount_g).toBe(10);
+      expect(sample.components.map((component) => component.amount_mol)).toEqual(amounts);
+      expect(notifications).toEqual([expect.objectContaining({ title: 'Density updated', level: 'info' })]);
+
+      editor.onChangeComponent({
+        type: 'densityChanged', sampleID: 'component-2',
+        amount: { value: 1.05, unit: 'g/ml' }, lockColumn: false,
+      });
+      expect(sample.components[2].density).toBe(1.05);
+      expect(sample.amount_g).toBe(10);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+      expect(notifications).toHaveLength(1);
+    });
+
+    it('shows only the edit notice when an existing volume mismatch remains after rollback', () => {
+      const { sample, editor } = build(['solid', 'liquid', 'liquid']);
+      sample.density = 2;
+      sample.components[2].density = 0;
+      sample.components[2].starting_molarity_value = 0;
+      const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+      editor.onChangeComponent({
+        type: 'purityChanged', sampleID: 'component-1', materialGroup: 'liquid', amount: { value: 0.5 },
+      });
+
+      expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+      expect(notifications).toEqual([expect.objectContaining({
+        title: 'Component edit not applied', level: 'warning',
+      })]);
+    });
+
+    ['target', 'real'].forEach((amountType) => {
+      ['density', 'purity'].forEach((property) => {
+        ['liquid mass', 'molecular weight'].forEach((missing) => {
+          it(`keeps ${amountType} mass during a ${property} edit with unknown ${missing}`, () => {
+            const { sample, editor } = build(['solid', 'liquid', 'liquid'], { amountType });
+            if (missing === 'liquid mass') {
+              sample.components[2].density = 0;
+              sample.components[2].starting_molarity_value = 0;
+            } else {
+              sample.components[2].molecule.molecular_weight = null;
+            }
+            sample.updateChecksum();
+            const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+            const detailsBefore = { ...sample.sample_details };
+            const amounts = sample.components.map((component) => [component.amount_mol, component.amount_g]);
+
+            editor.onChangeComponent({
+              type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+              amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+              lockColumn: false,
+            });
+
+            if (property === 'density') {
+              expect(sample.components[1].density).toBe(1.2);
+              expect(sample.components[1].amount_l).toBeCloseTo((0.01 * 200) / (1.2 * 1000), 12);
+              expect(sample.components.map((component) => [component.amount_mol, component.amount_g])).toEqual(amounts);
+              expect(sample.amount_g).toBe(10);
+              expect(sample.sample_details).toEqual(detailsBefore);
+              expect(sample.isPendingToSave).toBe(true);
+              expect(notifications).toEqual([expect.objectContaining({ title: 'Density updated', level: 'info' })]);
+            } else {
+              expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+              expect(sample.isPendingToSave).toBe(false);
+              expect(notifications).toEqual([expect.objectContaining({
+                title: 'Component edit not applied', level: 'warning',
+              })]);
+            }
+
+            // Completing the other component resumes redistribution without another notice.
+            sample.components[2].density = 0.8;
+            sample.components[2].molecule.molecular_weight = 300;
+            editor.onChangeComponent({
+              type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+              amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+              lockColumn: false,
+            });
+            expect(sample.components[1][property]).toBe(property === 'density' ? 1.2 : 0.5);
+            expect(sample.amount_g).toBe(10);
+            expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+            expect(notifications).toHaveLength(1);
+          });
+        });
+      });
+
+      it(`rolls back a ${amountType} density edit that invalidates a previously usable stock composition`, () => {
+        const { sample, editor } = build(['solid', 'liquid', 'solid'], { amountType });
+        sample.components[1].density = 0;
+        sample.components[1].starting_molarity_value = 2;
+        sample.components[1].molecule.molecular_weight = null;
+        expect(sample.getProductMixtureComposition()).not.toBe(null);
+        sample.updateChecksum();
+        const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+        editor.onChangeComponent({
+          type: 'densityChanged', sampleID: 'component-1',
+          amount: { value: 1.2, unit: 'g/ml' }, lockColumn: false,
+        });
+
+        expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+        expect(sample.isPendingToSave).toBe(false);
+        expect(notifications).toEqual([expect.objectContaining({
+          title: 'Component edit not applied', level: 'warning',
+        })]);
+      });
+
+      ['density', 'purity'].forEach((property) => {
+        it(`restores ${amountType} stock and portion volume when a ${property} edit cannot fit the mass`, () => {
+          const { sample, editor } = build(['liquid', 'liquid', 'liquid'], { amountType });
+          sample.parent_id = 99;
+          sample.amount_value = 5;
+          sample.sample_details.total_mixture_volume_l = 0.02;
+          sample.components[1].density = 0;
+          sample.components[1].starting_molarity_value = 2;
+          sample.components[1].updatePhysicalAmounts();
+          sample.updateChecksum();
+          const details = sample.sample_details;
+          const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+          editor.onChangeComponent({
+            type: `${property}Changed`, sampleID: 'component-1', materialGroup: 'liquid',
+            amount: property === 'density' ? { value: 1.2, unit: 'g/ml' } : { value: 0.5 },
+            lockColumn: false,
+          });
+
+          expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+          expect(sample.sample_details).toBe(details);
+          expect(details.total_mixture_volume_l).toBe(0.02);
+          expect(sample.isPendingToSave).toBe(false);
+          expect(notifications).toEqual([expect.objectContaining({
+            title: 'Component edit not applied', level: 'warning',
+          })]);
+        });
+      });
+    });
+
     ['density', 'purity'].forEach((property) => {
       it(`allows the ${property} edit after the unresolved ratio is corrected`, () => {
         const { sample, editor } = build(['solid', 'liquid', 'solid']);
