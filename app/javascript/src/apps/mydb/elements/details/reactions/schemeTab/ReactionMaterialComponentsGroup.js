@@ -100,7 +100,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
         {/* Total Conc */}
         <td>
           <NumeralInputWithUnitsCompo
-            value={component.concn || 0}
+            value={component.concn ?? null}
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}

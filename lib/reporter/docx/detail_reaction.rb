@@ -424,8 +424,12 @@ module Reporter
         mole_value ? mole_value * 1000 : 0
       end
 
+      def reported_mass(material, is_product: false)
+        material.real_amount_g == 0.0 && !is_product ? material.amount_g : material.real_amount_g
+      end
+
       def assigned_amount(s, is_product = false)
-        mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
+        mass = reported_mass(s, is_product: is_product)
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
         mmol = if s.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                  # Always use special function (returns moles, convert to millimoles)
@@ -437,8 +441,8 @@ module Reporter
                  calculate_amount_mmol(s)
                end
 
-        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
-        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
+        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0)) unless mass.nil?
+        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1)) unless vol.nil?
         mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(s, 2, %w[m n])) if mmol.present?
 
         [mass, vol, mmol]
@@ -520,19 +524,20 @@ module Reporter
         [amount_mol_unit, concn_unit]
       end
 
-      # Gets the molecular weight for a sample, using reference_relative_molecular_weight for mixtures
+      # Gets a mixture's relative molar mass from its selected reference component.
       # @param sample [OpenStruct] the sample object
       # @param molecule [Hash] the molecule hash containing molecular_weight
       # @return [Float, nil] the molecular weight to use
       def get_molecular_weight(sample, molecule)
-        # For mixtures, use reference_relative_molecular_weight if available
-        # Otherwise fall back to regular molecular_weight
-        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.sample_details
-          sample_details = sample.sample_details.transform_keys(&:to_sym)
-          sample_details[:reference_relative_molecular_weight] || molecule[:molecular_weight]
-        else
-          molecule[:molecular_weight]
-        end
+        return molecule[:molecular_weight] unless sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+
+        reference = find_reference_component(sample).to_h
+        relative_weight = normalize_component_properties(reference)[:relative_molecular_weight].to_f
+        return relative_weight if relative_weight.positive? && relative_weight.finite?
+
+        # Preserve the cached fallback for legacy mixtures without usable component data.
+        sample_details = (sample.sample_details || {}).transform_keys(&:to_sym)
+        sample_details[:reference_relative_molecular_weight] || molecule[:molecular_weight]
       end
 
       def material_hash(material, is_product = false)
@@ -591,12 +596,38 @@ module Reporter
         end
 
         # Process mixture components and set mixture-related flags
-        process_mixture_components(s, sample_hash)
+        process_mixture_components(s, sample_hash, is_product: is_product)
 
         sample_hash
       end
 
-      def process_mixture_components(material, sample_hash)
+      def component_ratio(component_props, reference_amount)
+        return 1.0 if component_props[:reference] == true
+
+        amount = Float(component_props[:amount_mol], exception: false)
+        return component_props[:equivalent] unless reference_amount.positive? && reference_amount.finite? &&
+                                                   amount&.finite? && amount >= 0
+
+        amount / reference_amount
+      end
+
+      def component_reference_amount(material)
+        reference_props = normalize_component_properties(find_reference_component(material).to_h)
+        Float(reference_props[:amount_mol], exception: false) || 0.0
+      end
+
+      def component_amount_scale(material, reference_amount, is_product)
+        return 1.0 unless reference_amount.positive? && reference_amount.finite?
+
+        reported_amount = calculate_mixture_amount_mol(material, reported_mass(material, is_product: is_product))
+        return 1.0 unless reported_amount&.finite? && reported_amount >= 0
+
+        # Stored components can belong to Target while the report uses Real (or vice versa).
+        # Relative molecular weight includes the whole mixture, including its solvents.
+        reported_amount / reference_amount
+      end
+
+      def process_mixture_components(material, sample_hash, is_product: false)
         # Check if material is a mixture with components
         # Always set components to an empty array to avoid nil errors in Sablon templates
         # This ensures s.components is always enumerable (never nil) for template conditionals
@@ -606,6 +637,8 @@ module Reporter
           components = material.components || []
           # Only set components if there are actual components to display
           if components.present? && components.any?
+            reference_amount = component_reference_amount(material)
+            amount_scale = component_amount_scale(material, reference_amount, is_product)
             sample_hash[:components] = components.map do |comp|
               comp_props = normalize_component_properties(comp)
               comp_mol = (comp_props[:molecule] || {}).transform_keys(&:to_sym)
@@ -618,11 +651,11 @@ module Reporter
               {
                 name: comp_mol[:iupac_name] || comp[:name] || '',
                 iupac_name: comp_mol[:iupac_name] || '',
-                amount_mol: format_scientific(amount_mol_value, digit),
+                amount_mol: format_scientific(amount_mol_value * amount_scale, digit),
                 amount_mol_unit: amount_mol_unit,
                 concn: format_scientific(concn_value, digit),
                 concn_unit: concn_unit,
-                equivalent: format_scientific(comp_props[:equivalent], digit),
+                equivalent: format_scientific(component_ratio(comp_props, reference_amount), digit),
                 purity: format_scientific(comp_props[:purity], digit),
                 reference: comp_props[:reference] || false,
                 molecular_weight: format_scientific(comp_mol[:molecular_weight], digit),

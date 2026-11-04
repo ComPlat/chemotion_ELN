@@ -51,3 +51,17 @@ describe('SearchFetcher with an active My Labels filter', () => {
     expect(sentSelection().list_filter_params).toEqual({});
   });
 });
+
+describe('SearchFetcher persisted reaction associations', () => {
+  it('records API material ids across groups without including later local additions', () => {
+    const result = SearchFetcher.getResultByKey({ reactions: { elements: [{
+      id: 10, starting_materials: [{ id: 1 }], reactants: [{ id: 2 }],
+      products: [{ id: 3 }], solvents: [{ id: 4 }], purification_solvents: [{ id: 5 }],
+    }] } }, 1);
+    const reaction = result.reactions.elements[0];
+    expect([...reaction._persistedMaterialIds].sort()).toEqual([1, 2, 3, 4, 5]);
+    reaction.solvents.push({ id: 6 });
+    expect(reaction._persistedMaterialIds.has(6)).toBe(false);
+    expect(Object.keys(reaction)).not.toContain('_persistedMaterialIds');
+  });
+});

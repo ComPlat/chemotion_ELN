@@ -461,6 +461,116 @@ describe 'Reporter::Docx::DetailReaction' do
         )
       end
 
+      def ratio_components(reference_index = 0)
+        [0.012, 0.006].each_with_index.map do |amount, index|
+          { component_properties: {
+            'reference' => index == reference_index,
+            'amount_mol' => amount.to_s,
+            'relative_molecular_weight' => index.zero? ? 250.0 : 500.0,
+            'equivalent' => (reference_index.zero? ? [2.0, 1.0] : [1.0, 0.5])[index],
+          } }
+        end
+      end
+
+      def reported_component_rows(components)
+        material = OpenStruct.new(sample_type: Sample::SAMPLE_TYPE_MIXTURE, components: components, metrics: 'mmmm')
+        output = {}
+        detail.send(:process_mixture_components, material, output)
+        output[:components]
+      end
+
+      describe '#material_hash mixture product saved in the other amount mode' do
+        # Target 5 g, Real 6.013 g. Components were last saved in Target mode: 10 and 20 mmol.
+        def mixture_product(component_mmol:)
+          product_material(0.5).merge(
+            sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+            real_amount_g: 6.013, amount_g: 5.0, real_amount_mmol: nil, amount_mmol: nil,
+            sample_details: { 'reference_component_changed' => false },
+            components: component_mmol.each_with_index.map do |mmol, index|
+              { component_properties: {
+                'reference' => index.zero?, 'amount_mol' => mmol / 1000.0, 'equivalent' => [1.0, 2.0][index],
+                'relative_molecular_weight' => [500.0, 250.0][index], 'metrics' => 'mmmm'
+              } }
+            end,
+          )
+        end
+
+        [[:saved_in_target, [10.0, 20.0]], [:saved_in_real, [12.026, 24.052]]].each do |label, component_mmol|
+          it "reports components that agree with the Real header when #{label}" do
+            material = mixture_product(component_mmol: component_mmol)
+            original = Marshal.load(Marshal.dump(material))
+            report = detail.send(:material_hash, material, true)
+            header_mmol = report[:mol].to_f
+            reference_mmol = report[:components].first[:amount_mol].to_f
+
+            expect(report[:components].map { |c| c[:equivalent].to_f }).to eq([1.0, 2.0])
+            expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([12.0, 24.1])
+            expect(reference_mmol).to be_within(0.01).of(header_mmol)
+            expect(report[:mass].to_f).to eq(6013.0)
+            expect(report[:equiv]).to eq('50%')
+            expect(material).to eq(original)
+          end
+        end
+
+        it 'uses the selected reference even when it is not the first component' do
+          material = mixture_product(component_mmol: [10.0, 20.0])
+          material[:components].reverse!
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([24.1, 12.0])
+          expect(report[:components].map { |c| c[:equivalent].to_f }).to eq([2.0, 1.0])
+        end
+
+        it 'uses the Target header for a reactant without a Real amount' do
+          material = mixture_product(component_mmol: [12.026, 24.052]).merge(real_amount_g: 0.0)
+
+          report = detail.send(:material_hash, material)
+
+          expect(report[:mass].to_f).to eq(5000.0)
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([10.0, 20.0])
+        end
+
+        it 'keeps a zero Real product header instead of falling back to Target' do
+          material = mixture_product(component_mmol: [10.0, 20.0]).merge(real_amount_g: 0.0)
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:mass].to_f).to eq(0.0)
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([0.0, 0.0])
+        end
+
+        it 'scales before display rounding and independently of the mass prefix' do
+          material = mixture_product(component_mmol: [10.0, 20.0]).merge(metrics: 'nmmm')
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:mass].to_f).to eq(6.01)
+          expect(report[:mass_unit]).to eq('g')
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([12.0, 24.1])
+        end
+
+        [nil, 0.0].each do |relative_weight|
+          it "keeps stored amounts when the reference relative weight is #{relative_weight.inspect}" do
+            material = mixture_product(component_mmol: [10.0, 20.0])
+            material[:components].first[:component_properties]['relative_molecular_weight'] = relative_weight
+
+            report = detail.send(:material_hash, material, true)
+
+            expect(report[:mol].to_f).to eq(10.0)
+            expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([10.0, 20.0])
+          end
+        end
+
+        it 'keeps stored amounts when the saved reference amount is zero' do
+          material = mixture_product(component_mmol: [0.0, 20.0])
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([0.0, 20.0])
+        end
+      end
+
       describe '#material_hash product equivalent' do
         it 'renders a numeric equivalent as a percentage' do
           expect(detail.send(:material_hash, product_material(0.85), true)[:equiv]).to eq('85%')
@@ -477,6 +587,142 @@ describe 'Reporter::Docx::DetailReaction' do
         it 'does not raise on a redacted placeholder equivalent' do
           expect { detail.send(:material_hash, product_material('***'), true) }.not_to raise_error
         end
+      end
+
+      it 'exports a finite ordinary reactant mass when purity is stored as zero' do
+        sample1.molecule.update!(molecular_weight: 466.5675, is_partial: false)
+        sample1.update!(real_amount_value: 0.00999988475469213, real_amount_unit: 'mol',
+                        purity: 0.0, metrics: 'mmmm')
+        material = reaction_serialized[:starting_materials].first
+        expected_mass_g = 4.66562123028482
+
+        expect(material[:real_amount_g]).to be_within(1e-9).of(expected_mass_g)
+        expect(detail.send(:assigned_amount, OpenStruct.new(material)).first)
+          .to be_within(1e-6).of(expected_mass_g * 1000)
+        expect(detail.send(:material_hash, material)[:mass]).not_to eq('n.d.')
+      end
+
+      it 'reports unknown mixture mass and volume as n.d. while preserving entered moles' do
+        sample1.update!(sample_type: Sample::SAMPLE_TYPE_MIXTURE, density: 1, molarity_value: 0,
+                        real_amount_value: 0.02, real_amount_unit: 'mol',
+                        target_amount_value: 0.02, target_amount_unit: 'mol')
+        sample1.components.create!(
+          position: 0,
+          component_properties: { molecule_id: sample1.molecule_id, reference: true, amount_mol: 0.02 },
+        )
+        material = reaction_serialized[:starting_materials].first
+
+        expect(material[:real_amount_g]).to be_nil
+        expect(material[:real_amount_ml]).to be_nil
+        report = detail.send(:material_hash, material)
+        expect(report[:mass]).to eq('n.d.')
+        expect(report[:vol]).to eq('n.d.')
+        expect(detail.send(:assigned_amount, OpenStruct.new(material)).last).to eq(20)
+      end
+
+      [0, 1].each do |reference_index|
+        it "uses component #{reference_index}'s relative molar mass when the cached reference is stale" do
+          weights = [370.43821082423443, 185.22124]
+          material = product_material(reference_index.zero? ? 0.6 : 1.2).merge(
+            sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+            real_amount_g: 2.2226292649454065,
+            sample_details: {
+              'reference_component_changed' => false,
+              'reference_relative_molecular_weight' => weights[1 - reference_index],
+            },
+            components: weights.each_with_index.map do |weight, index|
+              { component_properties: {
+                'reference' => index == reference_index,
+                'relative_molecular_weight' => weight,
+                'amount_mol' => index.zero? ? 0.006 : 0.011999861705630556,
+              } }
+            end,
+          )
+
+          row = detail.send(:material_hash, material)
+
+          expect(row[:mol_w]).to eq(reference_index.zero? ? '370' : '185')
+          expect(row[:mol]).to eq(reference_index.zero? ? '6.00' : '12.0')
+          expect(row[:equiv]).to eq(reference_index.zero? ? '0.600' : '1.20')
+        end
+      end
+
+      it 'uses the selected component relative molar mass without a cached sample_details value' do
+        sample = mixture_sample(rel_mol_weight: '370.43821082423443')
+        sample.sample_details = nil
+
+        expect(detail.send(:get_molecular_weight, sample, { molecular_weight: 276.32914 }))
+          .to be_within(1e-9).of(370.43821082423443)
+      end
+
+      it 'keeps the cached relative molar mass fallback for legacy mixtures without components' do
+        sample = OpenStruct.new(
+          sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+          sample_details: { 'reference_relative_molecular_weight' => 150.0 },
+          components: [],
+        )
+
+        expect(detail.send(:get_molecular_weight, sample, { molecular_weight: 100.0 })).to eq(150.0)
+      end
+
+      it 'keeps the cached fallback when the selected component relative molar mass is unavailable' do
+        [nil, 'n.d.', 0.0, Float::INFINITY].each do |weight|
+          sample = mixture_sample(rel_mol_weight: weight)
+          sample.sample_details['reference_relative_molecular_weight'] = 150.0
+
+          expect(detail.send(:get_molecular_weight, sample, { molecular_weight: 100.0 })).to eq(150.0)
+        end
+      end
+
+      it 'keeps ordinary sample molecular weights' do
+        sample = OpenStruct.new(sample_type: 'Micromolecule', sample_details: {})
+
+        expect(detail.send(:get_molecular_weight, sample, { molecular_weight: 466.5675 })).to eq(466.5675)
+      end
+
+      [0, 1].each do |reference_index|
+        it "normalizes DOCX component ratios to reference #{reference_index} without changing component values" do
+          components = ratio_components(reference_index)
+          original = Marshal.load(Marshal.dump(components))
+
+          rows = reported_component_rows(components)
+
+          expect(rows.pluck(:equivalent).map(&:to_f)).to eq(reference_index.zero? ? [1.0, 0.5] : [2.0, 1.0])
+          expect(rows.pluck(:amount_mol)).to eq(['12.0', '6.00'])
+          expect(rows.pluck(:relative_molecular_weight)).to eq(%w[250 500])
+          expect(components).to eq(original)
+        end
+      end
+
+      it 'keeps typed DOCX component ratios when the reference amount is unavailable' do
+        [nil, 'n.d.', 0.0, Float::INFINITY].each do |amount|
+          components = ratio_components
+          components.first[:component_properties]['amount_mol'] = amount
+
+          expect(reported_component_rows(components).pluck(:equivalent).map(&:to_f)).to eq([1.0, 1.0])
+        end
+      end
+
+      it 'keeps stored DOCX component ratios when no reference is selected' do
+        components = ratio_components
+        components.each { |component| component[:component_properties]['reference'] = false }
+
+        expect(reported_component_rows(components).pluck(:equivalent).map(&:to_f)).to eq([2.0, 1.0])
+      end
+
+      it 'keeps a typed DOCX component ratio when its amount is unavailable' do
+        components = ratio_components
+        components.last[:component_properties]['amount_mol'] = nil
+        components.last[:component_properties]['equivalent'] = 3.0
+
+        expect(reported_component_rows(components).last[:equivalent].to_f).to eq(3.0)
+      end
+
+      it 'reports a known zero component amount as a zero DOCX ratio' do
+        components = ratio_components
+        components.last[:component_properties]['amount_mol'] = 0.0
+
+        expect(reported_component_rows(components).last[:equivalent].to_f).to eq(0.0)
       end
 
       describe '#calculate_mixture_amount_mol' do

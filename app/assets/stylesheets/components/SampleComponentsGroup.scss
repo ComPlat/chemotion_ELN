@@ -25,6 +25,18 @@
   .col-total-conc { width: 16%; }
   .col-purity { width: 4%; }
 
+  // Delete cell sits at the end of each row. Give the trash button some room on
+  // its left (it would otherwise butt against the previous column) and trim the
+  // button padding so it stays compact, matching the reaction scheme.
+  .component-delete-cell {
+    vertical-align: top;
+    padding-left: 0.5rem;
+  }
+
+  .component-delete-btn.btn {
+    padding: 0.15rem 0.4rem;
+  }
+
   // Total concentration cell: lock button next to a growing input.
   .total-conc-cell {
     vertical-align: top;

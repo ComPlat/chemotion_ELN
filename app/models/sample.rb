@@ -674,6 +674,8 @@ class Sample < ApplicationRecord
     amount = coerce_amount(amount_value)
     return nil if amount.nil?
 
+    return convert_mixture_amount_to_mol(amount, unit) if sample_type == SAMPLE_TYPE_MIXTURE
+
     case unit
     when 'l'
       return convert_liters_to_moles(amount)
@@ -902,6 +904,13 @@ class Sample < ApplicationRecord
     return nil unless amount&.finite?
 
     amount
+  end
+
+  def convert_mixture_amount_to_mol(amount, unit)
+    return amount if unit == 'mol'
+    return nil unless %w[g mg].include?(unit) || (unit == 'l' && has_density)
+
+    convert_to_unit(convert_to_gram(amount, unit), 'mol')
   end
 
   def convert_liters_to_moles(amount)
