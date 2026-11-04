@@ -71,7 +71,7 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     sandbox.stub(ComponentsFetcher, 'saveOrUpdateComponents').resolves([]);
     sandbox.stub(SamplesFetcher, 'update').callsFake(async (sample) => new Sample(sample));
     sandbox.stub(SamplesFetcher, 'fetchById').callsFake(async (id) => build().reaction.sampleById(id));
-    fullReactionSave = sandbox.spy(ReactionsFetcher, 'update');
+    fullReactionSave = sandbox.stub(ReactionsFetcher, 'update').callThrough();
     fetchStub = sandbox.stub(global, 'fetch').callsFake(async (url, options) => {
       expect(url).toBe('/api/v1/reactions/101/materials/1315/equivalent');
       expect(options.method).toBe('PUT');
@@ -494,7 +494,12 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
       sandbox.stub(ElementStore, 'getState').callsFake(() => store.state);
       if (leaveReactionBeforeSave) store.synchronizeElements(reaction);
 
-      const payload = ReactionsFetcher.reactionSavePayload(reaction);
+      fullReactionSave.resolves(reaction);
+      const saveReaction = async () => {
+        await new Promise((resolve) => { new ElementActions().updateReaction(reaction)(resolve); });
+        return ReactionsFetcher.reactionSavePayload(...fullReactionSave.lastCall.args);
+      };
+      const payload = await saveReaction();
 
       expect(payload.preserve_removed_sample_ids).toEqual([draft.id]);
       expect(payload.materials.starting_materials.map((sample) => sample.id)).not.toContain(draft.id);
@@ -502,8 +507,33 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
 
       // Closing the tab must revoke preservation, including after it has detached.
       store.state.selecteds = [reaction];
-      expect(ReactionsFetcher.reactionSavePayload(reaction).preserve_removed_sample_ids).toEqual([]);
+      expect((await saveReaction()).preserve_removed_sample_ids).toEqual([]);
     });
+  });
+
+  it('passes only this reaction\'s existing removed mixture IDs to the fetcher, without duplicates', async () => {
+    const { reaction, mixture } = build();
+    reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+    const draft = new Sample(mixture);
+    draft.mixtureReactionContext = reaction;
+    const anotherReactionDraft = new Sample({ ...mixture, id: 222 });
+    anotherReactionDraft.mixtureReactionContext = new Reaction({ id: 999, type: 'reaction' });
+    const newDraft = new Sample({ ...mixture, id: 'new-mixture' });
+    newDraft.isNew = true;
+    newDraft.mixtureReactionContext = reaction;
+    const ordinary = new Sample({ id: 333, sample_type: 'Micromolecule' });
+    ordinary.mixtureReactionContext = reaction;
+    const retainedRow = new Sample({ ...mixture, id: 444 });
+    retainedRow.mixtureReactionContext = reaction;
+    reaction.reactants.push(retainedRow);
+    sandbox.stub(ElementStore, 'getState').returns({
+      selecteds: [reaction, draft, draft, anotherReactionDraft, newDraft, ordinary, retainedRow],
+    });
+    fullReactionSave.resolves(reaction);
+
+    await new Promise((resolve) => { new ElementActions().updateReaction(reaction)(resolve); });
+
+    sinon.assert.calledOnceWithExactly(fullReactionSave, reaction, [draft.id]);
   });
 
   [false, true].forEach((dirty) => {

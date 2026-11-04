@@ -82,6 +82,17 @@ const loadMixtureReactionContext = async (sample) => {
   if (reaction) sample.mixtureReactionContext = reaction;
 };
 
+const getPreservedMixtureSampleIds = (reaction) => {
+  const preserved = new Set();
+  const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
+  selecteds.forEach((sample) => {
+    const origin = sample.isDetachedMixtureDraft ? sample.belongTo : sample._mixtureReactionContext;
+    if (sample.isMixture?.() && origin?.id === reaction.id
+      && !sample.isNew && !reaction.sampleById(sample.id)) preserved.add(sample.id);
+  });
+  return [...preserved];
+};
+
 export class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
@@ -774,7 +785,7 @@ export class ElementActions {
 
   updateReaction(params, closeView = false) {
     return (dispatch) => {
-      ReactionsFetcher.update(params)
+      ReactionsFetcher.update(params, getPreservedMixtureSampleIds(params))
         .then((result) => {
           dispatch({ element: result, closeView });
         }).catch((errorMessage) => {

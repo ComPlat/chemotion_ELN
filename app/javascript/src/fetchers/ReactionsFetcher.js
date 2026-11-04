@@ -7,7 +7,6 @@ import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import alt from 'src/stores/alt/alt';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
@@ -71,7 +70,8 @@ export default class ReactionsFetcher {
       });
   }
 
-  static update(reaction) {
+  // Callers must pass IDs of open removed mixture drafts whose samples should survive this save.
+  static update(reaction, preserveRemovedSampleIds = []) {
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
       ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
@@ -80,19 +80,14 @@ export default class ReactionsFetcher {
 
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
-      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: this.reactionSavePayload(reaction) }))
+      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, {
+        body: this.reactionSavePayload(reaction, preserveRemovedSampleIds),
+      }))
       .then((json) => this.reactionElement(json, reaction.id));
   }
 
-  static reactionSavePayload(reaction) {
-    const preserved = new Set();
-    const selecteds = alt.getStore('ElementStore')?.getState()?.selecteds || [];
-    selecteds.forEach((sample) => {
-      const origin = sample.isDetachedMixtureDraft ? sample.belongTo : sample._mixtureReactionContext;
-      if (sample.isMixture?.() && origin?.id === reaction.id
-        && !sample.isNew && !reaction.sampleById(sample.id)) preserved.add(sample.id);
-    });
-    return { ...reaction.serialize(), preserve_removed_sample_ids: [...preserved] };
+  static reactionSavePayload(reaction, preserveRemovedSampleIds = []) {
+    return { ...reaction.serialize(), preserve_removed_sample_ids: [...preserveRemovedSampleIds] };
   }
 
   static updateAnnotationsInReaction(reaction) {
