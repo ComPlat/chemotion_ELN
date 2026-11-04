@@ -497,13 +497,77 @@ describe 'Reporter::Docx::DetailReaction' do
 
         [[:saved_in_target, [10.0, 20.0]], [:saved_in_real, [12.026, 24.052]]].each do |label, component_mmol|
           it "reports components that agree with the Real header when #{label}" do
-            report = detail.send(:material_hash, mixture_product(component_mmol: component_mmol), true)
+            material = mixture_product(component_mmol: component_mmol)
+            original = Marshal.load(Marshal.dump(material))
+            report = detail.send(:material_hash, material, true)
             header_mmol = report[:mol].to_f
             reference_mmol = report[:components].first[:amount_mol].to_f
 
             expect(report[:components].map { |c| c[:equivalent].to_f }).to eq([1.0, 2.0])
+            expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([12.0, 24.1])
             expect(reference_mmol).to be_within(0.01).of(header_mmol)
+            expect(report[:mass].to_f).to eq(6013.0)
+            expect(report[:equiv]).to eq('50%')
+            expect(material).to eq(original)
           end
+        end
+
+        it 'uses the selected reference even when it is not the first component' do
+          material = mixture_product(component_mmol: [10.0, 20.0])
+          material[:components].reverse!
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([24.1, 12.0])
+          expect(report[:components].map { |c| c[:equivalent].to_f }).to eq([2.0, 1.0])
+        end
+
+        it 'uses the Target header for a reactant without a Real amount' do
+          material = mixture_product(component_mmol: [12.026, 24.052]).merge(real_amount_g: 0.0)
+
+          report = detail.send(:material_hash, material)
+
+          expect(report[:mass].to_f).to eq(5000.0)
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([10.0, 20.0])
+        end
+
+        it 'keeps a zero Real product header instead of falling back to Target' do
+          material = mixture_product(component_mmol: [10.0, 20.0]).merge(real_amount_g: 0.0)
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:mass].to_f).to eq(0.0)
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([0.0, 0.0])
+        end
+
+        it 'scales before display rounding and independently of the mass prefix' do
+          material = mixture_product(component_mmol: [10.0, 20.0]).merge(metrics: 'nmmm')
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:mass].to_f).to eq(6.01)
+          expect(report[:mass_unit]).to eq('g')
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([12.0, 24.1])
+        end
+
+        [nil, 0.0].each do |relative_weight|
+          it "keeps stored amounts when the reference relative weight is #{relative_weight.inspect}" do
+            material = mixture_product(component_mmol: [10.0, 20.0])
+            material[:components].first[:component_properties]['relative_molecular_weight'] = relative_weight
+
+            report = detail.send(:material_hash, material, true)
+
+            expect(report[:mol].to_f).to eq(10.0)
+            expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([10.0, 20.0])
+          end
+        end
+
+        it 'keeps stored amounts when the saved reference amount is zero' do
+          material = mixture_product(component_mmol: [0.0, 20.0])
+
+          report = detail.send(:material_hash, material, true)
+
+          expect(report[:components].map { |c| c[:amount_mol].to_f }).to eq([0.0, 20.0])
         end
       end
 
