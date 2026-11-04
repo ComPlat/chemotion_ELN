@@ -65,6 +65,24 @@ RSpec.describe ScifinderNCredential do
       end
     end
 
+    context 'when another request refreshed the token in the meantime' do
+      let(:expires_at) { 1.minute.ago }
+      let(:stale_copy) { described_class.find(credential.id) }
+
+      before do
+        allow(Chemotion::ScifinderNService).to receive(:provider_access)
+          .and_return(access_token: 'new-access', refresh_token: 'new-refresh', expires_at: 2.hours.from_now)
+      end
+
+      it 'returns the refreshed access token without refreshing again' do
+        stale_copy
+        credential.issued_token
+
+        expect(stale_copy.issued_token).to eq 'new-access'
+        expect(Chemotion::ScifinderNService).to have_received(:provider_access).once
+      end
+    end
+
     context 'when the refresh response has no refresh token' do
       let(:expires_at) { 1.minute.ago }
 
