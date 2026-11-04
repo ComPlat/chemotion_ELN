@@ -510,6 +510,24 @@ describe 'Reporter::Docx::DetailReaction' do
         expect(detail.send(:material_hash, material)[:mass]).not_to eq('n.d.')
       end
 
+      it 'reports unknown mixture mass and volume as n.d. while preserving entered moles' do
+        sample1.update!(sample_type: Sample::SAMPLE_TYPE_MIXTURE, density: 1, molarity_value: 0,
+                        real_amount_value: 0.02, real_amount_unit: 'mol',
+                        target_amount_value: 0.02, target_amount_unit: 'mol')
+        sample1.components.create!(
+          position: 0,
+          component_properties: { molecule_id: sample1.molecule_id, reference: true, amount_mol: 0.02 },
+        )
+        material = reaction_serialized[:starting_materials].first
+
+        expect(material[:real_amount_g]).to be_nil
+        expect(material[:real_amount_ml]).to be_nil
+        report = detail.send(:material_hash, material)
+        expect(report[:mass]).to eq('n.d.')
+        expect(report[:vol]).to eq('n.d.')
+        expect(detail.send(:assigned_amount, OpenStruct.new(material)).last).to eq(20)
+      end
+
       [0, 1].each do |reference_index|
         it "uses component #{reference_index}'s relative molar mass when the cached reference is stale" do
           weights = [370.43821082423443, 185.22124]

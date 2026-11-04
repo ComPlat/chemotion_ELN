@@ -106,6 +106,22 @@ RSpec.describe Reactable, type: :module do
       end
     end
 
+    it 'saves a mol-entered mixture product with unknown mass and keeps its molar yield', :aggregate_failures do
+      reference = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+      create(:reactions_starting_material_sample, reaction: reaction, sample: reference, reference: true, equivalent: 1)
+      mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                real_amount_value: 0.02, real_amount_unit: 'mol')
+      association = create(:reactions_product_sample, reaction: reaction, sample: mixture, equivalent: 0.5)
+
+      mixture.update!(real_amount_value: 0.01)
+
+      expect(mixture.reload.real_amount_value).to eq(0.01)
+      expect(mixture.real_amount_unit).to eq('mol')
+      expect(mixture.amount_g(:real)).to be_nil
+      expect(mixture.amount_mmol(:real)).to eq(10)
+      expect(association.reload.equivalent).to eq(0.25)
+    end
+
     it 'preserves the client-calculated equivalent when the reference is a mixture' do
       mixture = create(
         :sample,

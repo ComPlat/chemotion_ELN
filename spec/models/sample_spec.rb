@@ -491,6 +491,69 @@ RSpec.describe Sample do
       expect(mixture.convert_amount_to_mol(10, 'g')).to be_nil
       expect(mixture.convert_amount_to_mol(0.02, 'mol')).to eq(0.02)
     end
+
+    context 'when amounts are entered in moles', :aggregate_failures do
+      before do
+        mixture.update!(target_amount_value: 0.02, target_amount_unit: 'mol',
+                        real_amount_value: 0.03, real_amount_unit: 'mol')
+      end
+
+      it 'converts known mixture masses and volumes for Target and Real' do
+        expect(mixture.amount_g(:target)).to eq(10)
+        expect(mixture.amount_mg(:target)).to eq(10_000)
+        expect(mixture.amount_ml(:target)).to eq(10)
+        expect(mixture.amount_g(:real)).to eq(15)
+        expect(mixture.amount_mg(:real)).to eq(15_000)
+        expect(mixture.amount_ml(:real)).to eq(15)
+      end
+
+      unknown_weights = [nil, '', 0, -500, 'Infinity']
+      unknown_weights.each do |weight|
+        it "keeps mass and derived volume unknown with relative MW=#{weight.inspect}" do
+          reference_component.update!(component_properties: reference_component.component_properties.merge(
+            'relative_molecular_weight' => weight,
+          ))
+          mixture.reload
+
+          expect(mixture.convert_to_gram(0.02, 'mol')).to be_nil
+          expect(mixture.amount_g(:target)).to be_nil
+          expect(mixture.amount_mg(:target)).to be_nil
+          expect(mixture.amount_ml(:target)).to be_nil
+          expect(mixture.amount_mmol(:target)).to eq(20)
+          expect(mixture.amount_g(:real)).to be_nil
+          expect(mixture.amount_mg(:real)).to be_nil
+          expect(mixture.amount_ml(:real)).to be_nil
+          expect(mixture.amount_mmol(:real)).to eq(30)
+        end
+      end
+
+      it 'saves and reloads entered moles without components or an invented mass' do
+        reference_component.destroy!
+        mixture.reload
+        mixture.update!(name: 'Unquantified mol mixture')
+        mixture.reload
+
+        expect(mixture.target_amount_value).to eq(0.02)
+        expect(mixture.real_amount_value).to eq(0.03)
+        expect(mixture.target_amount_unit).to eq('mol')
+        expect(mixture.real_amount_unit).to eq('mol')
+        expect(mixture.amount_g(:target)).to be_nil
+        expect(mixture.amount_mg(:real)).to be_nil
+        expect(mixture.amount_ml(:real)).to be_nil
+        expect(mixture.amount_mmol(:real)).to eq(30)
+      end
+
+      it 'keeps explicitly zero molar amounts at zero even without a molecular weight' do
+        reference_component.destroy!
+        mixture.update!(target_amount_value: 0, real_amount_value: 0)
+        mixture.reload
+
+        expect(mixture.amount_g(:target)).to eq(0)
+        expect(mixture.amount_mg(:real)).to eq(0)
+        expect(mixture.amount_ml(:real)).to eq(0)
+        expect(mixture.amount_mmol(:real)).to eq(0)
+      end
+    end
   end
 
   describe '#convert_amount_to_mol' do
