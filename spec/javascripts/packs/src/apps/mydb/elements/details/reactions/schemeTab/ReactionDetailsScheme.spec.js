@@ -1,6 +1,12 @@
 /* global describe, it, beforeEach, afterEach */
 import expect from 'expect';
 import sinon from 'sinon';
+// Runtime dependencies are installed in the repository root.
+/* eslint-disable import/no-extraneous-dependencies */
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { act } from 'react-dom/test-utils';
+/* eslint-enable import/no-extraneous-dependencies */
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
@@ -11,6 +17,71 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+
+describe('ReactionDetailsScheme yield display rendering', () => {
+  let sandbox;
+  let container;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    sandbox.stub(TextTemplateActions, 'fetchTextTemplates');
+    sandbox.stub(ReactionDetailsScheme.prototype, 'resetGasPhaseStore');
+    // Exercise the scheme's real render and lifecycle without mounting its unrelated editors.
+    const renderScheme = ReactionDetailsScheme.prototype.render;
+    sandbox.stub(ReactionDetailsScheme.prototype, 'render').callsFake(function renderDisplay() {
+      const tree = renderScheme.call(this);
+      const groups = React.Children.toArray(tree.props.children[0].props.children);
+      const products = groups.find((child) => child.props.materialGroup === 'products');
+      return React.createElement('span', null, products.props.displayYieldField ? 'Yield' : 'Conversion');
+    });
+  });
+
+  afterEach(() => {
+    act(() => { ReactDOM.unmountComponentAtNode(container); });
+    container.remove();
+    sandbox.restore();
+  });
+
+  [0, 25].forEach((conversionRate) => {
+    it(`keeps the default and user selection through Target/Real switches, conversion=${conversionRate}`, () => {
+      const errors = sandbox.stub(console, 'error');
+      const reaction = new Reaction({
+        id: 101, type: 'reaction', can_update: false,
+        starting_materials: [], reactants: [], solvents: [], purification_solvents: [],
+        products: [{
+          id: 'product', sample_type: 'Mixture', real_amount_value: 1, real_amount_unit: 'g',
+          target_amount_value: 2, target_amount_unit: 'g', conversion_rate: conversionRate,
+          molecule: { molecular_weight: 100 },
+        }],
+      });
+      let scheme;
+      const render = () => {
+        ReactDOM.render(React.createElement(ReactionDetailsScheme, {
+          reaction, onInputChange: sinon.spy(), onReactionChange: sinon.spy(),
+          ref: (instance) => { scheme = instance; },
+        }), container);
+      };
+      act(() => { render(); });
+      expect(container.textContent).toBe(conversionRate ? 'Conversion' : 'Yield');
+
+      // The explicit user choice must survive subsequent reaction renders.
+      act(() => { scheme.switchYield(!!conversionRate); });
+      ['target', 'real'].forEach((amountType) => {
+        act(() => {
+          scheme.handleMaterialsChange({ type: 'amountTypeChanged', sampleID: 'product', amountType });
+          render();
+        });
+        expect(container.textContent).toBe(conversionRate ? 'Yield' : 'Conversion');
+      });
+      const renderWarnings = errors.getCalls().filter((call) => /Cannot update/.test(String(call.args[0])));
+      expect(renderWarnings.map((call) => call.args[0])).toEqual([]);
+    });
+  });
+});
 
 describe('ReactionDetailsScheme mixture amount input units', () => {
   ['updatedReactionForAmountChange', 'updatedReactionForAmountUnitChange'].forEach((handler) => {

@@ -16,6 +16,52 @@ describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
   const product = await SampleFactory.build('SampleFactory.water_100g');
 
+  describe('legacy mixture input units', () => {
+    [
+      ['mol', 'l'], ['l', 'mol'], ['mol', 'g'], ['g', 'l'], ['g', 'g'],
+    ].forEach(([target, real]) => {
+      it(`remembers target=${target} and real=${real} independently without dirtying the sample`, () => {
+        const details = Object.freeze({ note: 'Keep this detail' });
+        const sample = new Sample({
+          id: 245, sample_type: 'Mixture', is_new: false,
+          target_amount_value: 0.02, target_amount_unit: target,
+          real_amount_value: 0.01, real_amount_unit: real, sample_details: details,
+        });
+        const expected = {};
+        if (target !== 'g') expected.target = target;
+        if (real !== 'g') expected.real = real;
+
+        expect(sample.sample_details.reaction_amount_input_units || {}).toEqual(expected);
+        expect(sample.sample_details.note).toBe('Keep this detail');
+        expect(details).toEqual({ note: 'Keep this detail' });
+        expect(sample.isEdited).toBe(false);
+        expect(sample.isPendingToSave).toBe(false);
+      });
+    });
+
+    ['target', 'real'].forEach((amountType) => {
+      it(`records a ${amountType} unit supplied through the active amount proxy`, () => {
+        const sample = new Sample({
+          id: 245, sample_type: 'Mixture', amountType, amount_value: 0.02, amount_unit: 'mol',
+        });
+        expect(sample.sample_details.reaction_amount_input_units).toEqual({ [amountType]: 'mol' });
+        expect(sample.isPendingToSave).toBe(false);
+      });
+    });
+
+    it('fills only missing entries and never modifies the supplied metadata', () => {
+      const units = Object.freeze({ real: 'g' });
+      const details = Object.freeze({ reaction_amount_input_units: units });
+      const sample = new Sample({
+        id: 245, sample_type: 'Mixture', target_amount_unit: 'l', real_amount_unit: 'mol',
+        sample_details: details,
+      });
+      expect(sample.sample_details.reaction_amount_input_units).toEqual({ target: 'l', real: 'g' });
+      expect(units).toEqual({ real: 'g' });
+      expect(sample.isPendingToSave).toBe(false);
+    });
+  });
+
   describe('legacy mixture reference state', () => {
     ['g', 'mol', 'l'].forEach((unit) => {
       [false, true].forEach((lock) => {
@@ -31,6 +77,7 @@ describe('Sample', async () => {
             id: 1, position: 0, reference: true, relative_molecular_weight: 250, amount_mol: 0.04,
           })]);
           expect(sample.sample_details.reference_component_changed).toBe(false);
+          if (unit !== 'g') expect(sample.sample_details.reaction_amount_input_units.target).toBe(unit);
           expect(details.reference_component_changed).toBe(true);
           expect(sample.amount_g).toBeCloseTo(10, 12);
           expect(sample.amount_mol).toBeCloseTo(0.04, 12);
@@ -2656,7 +2703,7 @@ describe('Sample', async () => {
 
   describe('Sample.calculateTotalMixtureMass()', () => {
     ['entered total', 'liters', 'zero'].forEach((volumeSource) => {
-      it(`keeps an explicit ${volumeSource} volume stable across recalculations`, () => {
+      it(`keeps the ${volumeSource} volume basis stable across recalculations`, () => {
         const sample = new Sample({
           sample_type: 'Mixture', density: 1.1,
           amount_value: volumeSource === 'liters' ? 0.01 : 11,
@@ -2673,9 +2720,13 @@ describe('Sample', async () => {
         for (let iteration = 0; iteration < 3; iteration += 1) {
           sample.calculateTotalMixtureMass();
 
-          expect(sample.amount_g).toBeCloseTo(volumeSource === 'zero' ? 3 : 11, 12);
-          expect(sample.total_mixture_volume_l).toBe(volumeSource === 'zero' ? 0 : 0.01);
-          expect(sample.density).toBeCloseTo(volumeSource === 'zero' ? 0 : 1.1, 12);
+          // A litre quantity supplies a density basis, not additional carrier mass.
+          expect(sample.amount_g).toBeCloseTo(volumeSource === 'entered total' ? 11 : 3, 12);
+          expect(sample.sample_details.total_mixture_volume_l).toBe(
+            volumeSource === 'liters' ? undefined : volumeSource === 'zero' ? 0 : 0.01
+          );
+          expect(sample.enteredMixtureTotalVolume()).toBe(volumeSource === 'zero' ? 0 : 0.01);
+          expect(sample.density).toBeCloseTo(volumeSource === 'zero' ? 0 : volumeSource === 'liters' ? 0.3 : 1.1, 12);
         }
       });
     });
