@@ -442,6 +442,60 @@ describe('SampleDetailsComponents reaction product ratios', () => {
   });
 
   ['mol', 'l'].forEach((unit) => {
+    ['target', 'real'].forEach((amountType) => {
+      it(`keeps legacy ${amountType} ${unit} products out of fixed-mass edits before and after reopening`, () => {
+        const { sample, editor } = build(['solid', 'liquid', 'solid'], { unit, amountType });
+        sample.components.forEach((component) => {
+          component.amount_mol = 0.02;
+          component.equivalent = 1;
+        });
+        // Litre quantities keep their saved basis until the stock liquid has a known density.
+        sample.components[1].density = 0;
+        sample.components[1].starting_molarity_value = 2;
+        sample.components.forEach((component) => component.updatePhysicalAmounts());
+        sample.total_mixture_mass_g = 18;
+        sample.density = 1.2;
+        sample.amount_value = unit === 'mol' ? 0.02 : 0.015;
+        sample.calculateRelativeMolecularWeightsForComponents();
+        sandbox.stub(ComponentStore, 'getState').returns({
+          ...ComponentStore.getState(), lockedComponents: [], lockAmountColumnSolidsBySample: { [sample.id]: false },
+        });
+
+        editor.onChangeComponent({
+          type: 'purityChanged', sampleID: 'component-0', materialGroup: 'solid', amount: { value: 0.5 },
+        });
+        expect(sample.amount_unit).toBe(unit === 'l' ? 'l' : 'g');
+        expect(sample.hasFixedProductMass()).toBe(false);
+        expect(sample.amount_g).toBeCloseTo(unit === 'l' ? 18 : 20, 12);
+        editor.onChangeComponent({
+          type: 'densityChanged', sampleID: 'component-1', amount: { value: 1.05, unit: 'g/ml' }, lockColumn: false,
+        });
+        sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.02, 12));
+        expect(sample.amount_g).toBeCloseTo(14, 12);
+
+        sample.prepareMixtureForSave();
+        const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+        expect(payload.sample_details.reaction_amount_input_units[amountType]).toBe(unit);
+        payload.components.forEach((component, index) => {
+          component.component_properties.molecule = sample.components[index].molecule;
+        });
+        const reopened = new Sample(payload);
+        reopened.amountType = amountType;
+        reopened.initialComponents(payload.components.map(Component.deserializeData));
+        reopened.belongTo = new Reaction({ type: 'reaction', products: [reopened] });
+        const reopenedEditor = new SampleDetailsComponents({ sample: reopened, onChange: () => {} });
+        reopenedEditor.onChangeComponent({
+          type: 'purityChanged', sampleID: 'component-0', materialGroup: 'solid', amount: { value: 0.25 },
+        });
+        reopenedEditor.onChangeComponent({
+          type: 'densityChanged', sampleID: 'component-1', amount: { value: 0.9, unit: 'g/ml' }, lockColumn: false,
+        });
+        reopened.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.02, 12));
+        expect(reopened.hasFixedProductMass()).toBe(false);
+        expect(reopened.amount_g).toBeCloseTo(18, 12);
+      });
+    });
+
     it(`does not fix mass after a ${unit} input has been normalized to grams`, () => {
       const { sample, editor } = build(['solid', 'solid', 'solid']);
       sample.sample_details.reaction_amount_input_units = { real: unit };
@@ -449,6 +503,175 @@ describe('SampleDetailsComponents reaction product ratios', () => {
       expect(sample.components[0].amount_mol).toBe(0.01);
       expect(sample.amount_g).toBeCloseTo(13, 12);
     });
+  });
+});
+
+describe('legacy litre product quantities', () => {
+  const amountMol = 0.0390907;
+  const massG = amountMol * (46.07 + 18.015);
+  const build = (litreType = 'real') => {
+    const sample = new Sample({
+      id: 245, sample_type: 'Mixture', amountType: litreType, can_update: true, parent_id: 99,
+      real_amount_value: litreType === 'real' ? 0.003 : 2, real_amount_unit: litreType === 'real' ? 'l' : 'g',
+      target_amount_value: litreType === 'target' ? 0.003 : 2, target_amount_unit: litreType === 'target' ? 'l' : 'g',
+      density: 0, sample_details: { total_mixture_mass_g: 7.26 },
+    });
+    sample.initialComponents([46.07, 18.015].map((weight, index) => new Component({
+      id: index + 1, position: index, reference: index === 0, equivalent: 1,
+      material_group: 'liquid', molecule: { molecular_weight: weight }, density: index === 0 ? 0.8 : 1,
+      purity: 1, amount_mol: amountMol, relative_molecular_weight: 64.085,
+    })));
+    sample.components.forEach((component) => component.updatePhysicalAmounts());
+    sample.belongTo = new Reaction({ type: 'reaction', products: [sample] });
+    const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+    return { sample, editor };
+  };
+  const reload = (sample) => {
+    const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+    payload.can_update = sample.can_update;
+    payload.components.forEach((component, index) => {
+      component.component_properties.molecule = sample.components[index].molecule;
+    });
+    const loaded = new Sample(payload);
+    loaded.initialComponents(payload.components.map(Component.deserializeData));
+    loaded.belongTo = new Reaction({ type: 'reaction', products: [loaded] });
+    return loaded;
+  };
+  const densityEdit = (editor) => editor.onChangeComponent({
+    type: 'densityChanged', sampleID: 2, amount: { value: 0.9, unit: 'g/ml' }, lockColumn: false,
+  });
+
+  const buildWithMissingDensity = () => {
+    const { sample } = build();
+    sample.real_amount_value = 0.005;
+    sample.sample_details.reaction_amount_volumes_l.real = 0.005;
+    sample.initialComponents([180.16, 46.07, 60.052].map((weight, index) => new Component({
+      id: index + 1, position: index, reference: index === 0, equivalent: 1,
+      material_group: index === 0 ? 'solid' : 'liquid', molecule: { molecular_weight: weight },
+      density: index === 1 ? 0.8 : 0, starting_molarity_value: index === 2 ? 2 : 0,
+      purity: 1, amount_mol: 0.01377, relative_molecular_weight: 286.282,
+    })));
+    sample.components.forEach((component) => component.updatePhysicalAmounts());
+    return sample;
+  };
+
+  it('keeps an unknown-density litre quantity through unrelated edits, saves and reopening', () => {
+    let sample = buildWithMissingDensity();
+    const form = Object.create(SampleForm.prototype);
+    expect(sample.components[2].amount_l).toBeCloseTo(0.006885, 12);
+    for (let cycle = 0; cycle < 2; cycle += 1) {
+      const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+      densityEdit(editor);
+      expect(sample.components[1].density).toBe(0.9);
+      sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.01377, 12));
+      expect(sample.amount_unit).toBe('l');
+      expect(sample.amount_value).toBe(0.005);
+      expect(sample.density).toBe(0);
+      expect(sample.sample_details.total_mixture_mass_g).toBe(7.26);
+      expect(form.totalMixtureDensity(sample).props.children.props.value).toBe(null);
+      sample = reload(sample);
+    }
+    const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+    editor.onChangeComponent({
+      type: 'densityChanged', sampleID: 3, amount: { value: 1.05, unit: 'g/ml' }, lockColumn: false,
+    });
+    const expectedMass = 0.01377 * (180.16 + 46.07 + 60.052);
+    expect(sample.amount_unit).toBe('g');
+    expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+    expect(sample.density).toBeCloseTo(expectedMass / 5, 12);
+    expect(sample.sample_details.reaction_amount_volumes_l.real).toBe(0.005);
+    sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.01377, 12));
+    sample = reload(sample);
+    expect(sample.amount_g).toBeCloseTo(expectedMass, 12);
+    expect(sample.mixtureAmountDensity()).toBeCloseTo(expectedMass / 5, 12);
+  });
+
+  it('preserves a saved mass when a litre-based mixture has a missing liquid density', () => {
+    const sample = buildWithMissingDensity();
+    sample.amount_unit = 'g';
+    sample.amount_value = 3.942;
+    sample.sample_details.total_mixture_mass_g = 3.942;
+    const editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+    densityEdit(editor);
+    expect(sample.amount_g).toBe(3.942);
+    expect(sample.sample_details.total_mixture_mass_g).toBe(3.942);
+    expect(sample.sample_details.reaction_amount_volumes_l.real).toBe(0.005);
+    sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.01377, 12));
+  });
+
+  it('keeps a litre quantity separate from entered Total volume through edits and reopening', () => {
+    let { sample, editor } = build();
+    for (let cycle = 0; cycle < 3; cycle += 1) {
+      densityEdit(editor);
+      expect(sample.amount_g).toBeCloseTo(massG, 12);
+      expect(sample.density).toBeCloseTo(massG / 3, 12);
+      expect(sample.sample_details.total_mixture_volume_l).toBeUndefined();
+      sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(amountMol, 12));
+      const form = Object.create(SampleForm.prototype);
+      expect(form.totalMixtureVolume(sample).props.value).toBeCloseTo(0.003, 12);
+      sample = reload(sample);
+      editor = new SampleDetailsComponents({ sample, onChange: () => {} });
+    }
+  });
+
+  ['real', 'target'].forEach((litreType) => {
+    it(`keeps ${litreType} litre volume independent of the other amount type's grams after saving`, () => {
+      const { sample, editor } = build(litreType);
+      const gramType = litreType === 'real' ? 'target' : 'real';
+      densityEdit(editor);
+      const litreMassG = sample[`${litreType}_amount_value`];
+      sample.amountType = gramType;
+      const form = Object.create(SampleForm.prototype);
+      expect(form.totalMixtureVolume(sample).props.value).toBe(0);
+      editor.onChangeComponent({
+        type: 'purityChanged', sampleID: 2, materialGroup: 'liquid', amount: { value: 0.8 },
+      });
+      expect(sample.amount_g).toBe(2);
+      expect(sample.components[1].purity).toBe(0.8);
+      expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(2, 12);
+      expect(sample[`${litreType}_amount_value`]).toBe(litreMassG);
+      expect(sample.density).toBeCloseTo(massG / 3, 12);
+
+      const reopened = reload(sample);
+      reopened.amountType = litreType;
+      expect(form.totalMixtureVolume(reopened).props.value).toBeCloseTo(0.003, 12);
+      expect(form.totalMixtureDensity(reopened).props.children.props.value).toBeCloseTo(massG / 3, 12);
+      reopened.amountType = gramType;
+      expect(form.totalMixtureVolume(reopened).props.value).toBe(0);
+    });
+  });
+
+  it('rescales the recorded litre quantity when its reaction amount is changed', () => {
+    const { sample, editor } = build();
+    densityEdit(editor);
+    const form = Object.create(SampleForm.prototype);
+    sample.setAmountAndNormalizeToGram({ value: massG * 2, unit: 'g' });
+    expect(form.totalMixtureVolume(sample).props.value).toBeCloseTo(0.006, 12);
+    expect(sample.mixtureAmountDensity()).toBeCloseTo(massG / 3, 12);
+    sample.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(amountMol * 2, 12));
+    sample.setAmount({ value: massG, unit: 'g' });
+    expect(form.totalMixtureVolume(sample).props.value).toBeCloseTo(0.003, 12);
+    sample.setAmount({ value: 0.006, unit: 'l' });
+    expect(sample.amount_g).toBeCloseTo(massG * 2, 12);
+    sample.setAmountAndNormalizeToGram({ value: 0.003, unit: 'l' });
+    expect(form.totalMixtureVolume(sample).props.value).toBeCloseTo(0.003, 12);
+    expect(sample.amount_g).toBeCloseTo(massG, 12);
+  });
+
+  it('retains a known litre quantity even when all component amounts are cleared', () => {
+    const { sample, editor } = build();
+    densityEdit(editor);
+    sample.components.forEach((component) => {
+      component.amount_mol = 0;
+      component.updatePhysicalAmounts();
+    });
+    sample.calculateTotalMixtureMass();
+    const reopened = reload(sample);
+    reopened.amountType = 'real';
+    expect(reopened.amount_g).toBe(0);
+    expect(reopened.enteredMixtureTotalVolume()).toBe(0.003);
+    reopened.setAmount({ value: 0, unit: 'l' });
+    expect(reopened.enteredMixtureTotalVolume()).toBe(0);
   });
 });
 

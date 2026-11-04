@@ -140,6 +140,233 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
+  ['reaction row', 'sample list'].forEach((path) => {
+    it(`saves component edits without guessing mass for an unknown-density stock liquid from the ${path}`, async () => {
+      const { reaction, mixture } = build();
+      const product = new Sample({
+        id: mixture.id, sample_type: 'Mixture', amountType: 'real', parent_id: 99, density: 0,
+        real_amount_value: 0.005, real_amount_unit: 'l', target_amount_value: 2, target_amount_unit: 'g',
+        sample_details: { total_mixture_mass_g: 7.26 },
+        tag: { taggable_data: { resources: [
+          { resource_context_type: 'Reaction', resource_context_id: reaction.id },
+        ] } },
+      });
+      product.initialComponents([180.16, 46.07, 60.052].map((weight, index) => new Component({
+        id: index + 1, position: index, reference: index === 0, equivalent: 1,
+        amount_mol: 0.01377, relative_molecular_weight: 286.282, purity: 1,
+        material_group: index === 0 ? 'solid' : 'liquid', density: index === 1 ? 0.8 : 0,
+        starting_molarity_value: index === 2 ? 2 : 0, molecule: { molecular_weight: weight },
+      })));
+      reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+      reaction.products = [product];
+      const apiSample = (sample) => {
+        const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+        payload.components.forEach((component, index) => {
+          component.component_properties.molecule = sample.components[index].molecule;
+        });
+        const loaded = new Sample(payload);
+        loaded.initialComponents(payload.components.map(Component.deserializeData));
+        return loaded;
+      };
+      let persisted = apiSample(product);
+      SamplesFetcher.fetchById.callsFake(async () => apiSample(persisted));
+      SamplesFetcher.update.callsFake(async (sample) => {
+        persisted = apiSample(sample);
+        return apiSample(persisted);
+      });
+      sandbox.stub(ElementStore, 'getState').returns({ selecteds: [] });
+      sandbox.stub(ReactionsFetcher, 'fetchById').resolves(reaction);
+
+      for (let cycle = 0; cycle < 3; cycle += 1) {
+        let opened;
+        if (path === 'reaction row') {
+          await new ElementActions().showReactionMaterial({ sample: reaction.sampleById(product.id), reaction })(
+            ({ sample }) => { opened = sample; }
+          );
+          opened.belongTo = reaction;
+        } else {
+          await new ElementActions().fetchSampleById(product.id)((sample) => { opened = sample; });
+        }
+        expect(opened.isPendingToSave).toBe(false);
+        const editor = new SampleDetailsComponents({ sample: opened, onChange: () => {} });
+        editor.onChangeComponent({
+          type: 'densityChanged', sampleID: cycle === 2 ? 3 : 2,
+          amount: { value: cycle === 2 ? 1.05 : 0.79, unit: 'g/ml' }, lockColumn: false,
+        });
+        opened.components.forEach((component) => expect(component.amount_mol).toBeCloseTo(0.01377, 12));
+        expect(opened.components[1].density).toBe(0.79);
+        if (path === 'reaction row') {
+          await new ElementActions().updateSampleForReaction(opened, reaction, false)(sinon.spy());
+        } else {
+          await new Promise((resolve) => { new ElementActions().updateSample(opened, false)(resolve); });
+        }
+        if (cycle < 2) {
+          expect(persisted.real_amount_unit).toBe('l');
+          expect(persisted.real_amount_value).toBe(0.005);
+          expect(persisted.density).toBe(0);
+          expect(persisted.sample_details.total_mixture_mass_g).toBe(7.26);
+        } else {
+          const expectedMass = 0.01377 * (180.16 + 46.07 + 60.052);
+          expect(persisted.real_amount_unit).toBe('g');
+          expect(persisted.real_amount_value).toBeCloseTo(expectedMass, 12);
+          expect(persisted.density).toBeCloseTo(expectedMass / 5, 12);
+        }
+        expect(persisted.target_amount_value).toBe(2);
+        expect(persisted.target_amount_unit).toBe('g');
+        expect(persisted.sample_details.reaction_amount_volumes_l).toEqual({ real: 0.005 });
+      }
+    });
+
+    it(`opens and saves a litre product with unknown mixture density from the ${path}`, async () => {
+      const { reaction, mixture } = build();
+      const amountMol = 0.0390907;
+      const product = new Sample({
+        id: mixture.id, sample_type: 'Mixture', amountType: 'real', parent_id: 99, density: 0,
+        real_amount_value: 0.003, real_amount_unit: 'l', target_amount_value: 2, target_amount_unit: 'g',
+        sample_details: { total_mixture_mass_g: 7.26 },
+        tag: { taggable_data: { resources: [
+          { resource_context_type: 'Reaction', resource_context_id: reaction.id },
+        ] } },
+      });
+      product.initialComponents([46.07, 18.015].map((weight, index) => new Component({
+        id: index + 1, position: index, reference: index === 0, equivalent: 1, material_group: 'liquid',
+        amount_mol: amountMol, relative_molecular_weight: 64.085, purity: 1, density: index === 0 ? 0.8 : 1,
+        molecule: { molecular_weight: weight },
+      })));
+      reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+      reaction.products = [product];
+      const apiSample = (sample) => {
+        const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+        payload.components.forEach((component, index) => {
+          component.component_properties.molecule = sample.components[index].molecule;
+        });
+        const loaded = new Sample(payload);
+        loaded.initialComponents(payload.components.map(Component.deserializeData));
+        return loaded;
+      };
+      let persisted = apiSample(product);
+      SamplesFetcher.fetchById.callsFake(async () => apiSample(persisted));
+      SamplesFetcher.update.callsFake(async (sample) => {
+        persisted = apiSample(sample);
+        return apiSample(persisted);
+      });
+      sandbox.stub(ElementStore, 'getState').returns({ selecteds: [] });
+      sandbox.stub(ReactionsFetcher, 'fetchById').resolves(reaction);
+
+      for (let cycle = 0; cycle < 2; cycle += 1) {
+        let opened;
+        if (path === 'reaction row') {
+          await new ElementActions().showReactionMaterial({ sample: reaction.sampleById(product.id), reaction })(
+            ({ sample }) => { opened = sample; }
+          );
+          opened.belongTo = reaction;
+        } else {
+          await new ElementActions().fetchSampleById(product.id)((sample) => { opened = sample; });
+        }
+        if (cycle === 0) {
+          expect(opened.amount_value).toBe(0.003);
+          expect(opened.amount_unit).toBe('l');
+        }
+        opened.components.forEach((component) => {
+          expect(component.amount_mol).toBeCloseTo(amountMol, 12);
+          expect(component.amount_g).toBeGreaterThan(0);
+        });
+        expect(opened.isPendingToSave).toBe(false);
+        const editor = new SampleDetailsComponents({ sample: opened, onChange: () => {} });
+        editor.onChangeComponent({
+          type: 'densityChanged', sampleID: 2,
+          amount: { value: cycle === 0 ? 0.9 : 1, unit: 'g/ml' }, lockColumn: false,
+        });
+        const expectedMass = amountMol * (46.07 + 18.015);
+        expect(opened.amount_g).toBeCloseTo(expectedMass, 12);
+        expect(opened.density).toBeCloseTo(expectedMass / 3, 12);
+        if (path === 'reaction row') {
+          await new ElementActions().updateSampleForReaction(opened, reaction, false)(sinon.spy());
+        } else {
+          await new Promise((resolve) => { new ElementActions().updateSample(opened, false)(resolve); });
+        }
+        expect(persisted.real_amount_value).toBeCloseTo(expectedMass, 12);
+        expect(persisted.real_amount_unit).toBe('g');
+        expect(persisted.sample_details.total_mixture_volume_l).toBeUndefined();
+      }
+    });
+  });
+
+  ['mol', 'l'].forEach((unit) => {
+    ['reaction row', 'sample list'].forEach((path) => {
+      it(`persists legacy ${unit} input metadata through editor saves from the ${path}`, async () => {
+        const { reaction, mixture } = build();
+        const legacy = new Sample({
+          ...mixture.serialize(), target_amount_unit: unit,
+          target_amount_value: unit === 'mol' ? 0.006 : massG / 1000, density: 1,
+          sample_details: { total_mixture_volume_l: 0 },
+          tag: { taggable_data: { resources: [
+            { resource_context_type: 'Reaction', resource_context_id: reaction.id },
+          ] } },
+        });
+        legacy.initialComponents(mixture.components);
+        reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);
+        reaction.products = [legacy];
+        sandbox.stub(ElementStore, 'getState').returns({ selecteds: [] });
+        sandbox.stub(ReactionsFetcher, 'fetchById').resolves(reaction);
+        sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+        sandbox.stub(LoadingActions.start, 'defer');
+
+        const apiSample = (sample) => {
+          const payload = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+          payload.components.forEach((component, index) => {
+            component.component_properties.molecule = sample.components[index].molecule;
+          });
+          const loaded = new Sample(payload);
+          loaded.initialComponents(payload.components.map(Component.deserializeData));
+          return loaded;
+        };
+        let persisted = apiSample(legacy);
+        SamplesFetcher.fetchById.callsFake(async () => apiSample(persisted));
+        SamplesFetcher.update.callsFake(async (sample) => {
+          const payload = JSON.parse(JSON.stringify(sample.serialize()));
+          expect(payload.sample_details.reaction_amount_input_units.target).toBe(unit);
+          persisted = apiSample(sample);
+          return apiSample(persisted);
+        });
+
+        let finishSave;
+        sandbox.stub(ElementActionDispatcher, 'updateSample').callsFake((sample) => {
+          new ElementActions().updateSample(sample, false)(finishSave);
+        });
+        sandbox.stub(ElementActionDispatcher, 'updateSampleForReaction').callsFake((sample, openedReaction) => {
+          new ElementActions().updateSampleForReaction(sample, openedReaction, false)(finishSave);
+        });
+
+        for (let cycle = 0; cycle < 2; cycle += 1) {
+          let opened;
+          if (path === 'reaction row') {
+            await new ElementActions().showReactionMaterial({ sample: reaction.sampleById(legacy.id), reaction })(
+              ({ sample }) => { opened = sample; }
+            );
+            opened.belongTo = reaction;
+          } else {
+            await new ElementActions().fetchSampleById(legacy.id)((sample) => { opened = sample; });
+          }
+          const editor = new SampleDetailsComponents({ sample: opened, onChange: () => {} });
+          editor.onChangeComponent({ type: 'ratioChanged', sampleID: 2, newRatio: 3 + cycle, materialGroup: 'solid' });
+          expect(opened.amount_unit).toBe('g');
+          expect(opened.hasFixedProductMass()).toBe(false);
+          expect(opened.components[0].amount_mol).toBeCloseTo(0.006, 12);
+          const details = {
+            state: { sample: opened, validCas: true },
+            context: { notifications: { add: sinon.spy() } },
+            matchSelectedCollection: () => false, checkMolfileChange: () => {}, setState: () => {},
+          };
+          const saved = new Promise((resolve) => { finishSave = resolve; });
+          SampleDetails.prototype.handleSubmit.call(details, false);
+          await saved;
+          expect(persisted.sample_details.reaction_amount_input_units.target).toBe(unit);
+        }
+      });
+    });
+  });
+
   it('saves and reopens a product ratio edit with its entered mass and redistributed moles', async () => {
     const { reaction, mixture } = build();
     reaction.starting_materials = reaction.starting_materials.filter((sample) => sample.id !== mixture.id);

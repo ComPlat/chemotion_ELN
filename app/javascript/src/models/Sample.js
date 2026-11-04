@@ -76,6 +76,7 @@ export default class Sample extends Element {
     argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
     if (args?._mixtureReactionContext) this.mixtureReactionContext = args._mixtureReactionContext;
+    this.initializeMixtureAmountInputs();
     if (this.isMixture() && this.sample_details?.reference_component_changed) {
       // Old mol-stored mixtures used this snapshot to preserve their physical mass.
       const previousMass = this.sample_details.previous_amount_g;
@@ -84,6 +85,35 @@ export default class Sample extends Element {
         this.amount_unit = 'g';
       }
       this.sample_details = { ...this.sample_details, reference_component_changed: false };
+      this.updateChecksum();
+    }
+  }
+
+  /** Captures stored mixture input units and volumes before quantities normalize to grams. */
+  initializeMixtureAmountInputs() {
+    if (!this.isMixture()) return;
+
+    const inputUnits = { ...this.sample_details?.reaction_amount_input_units };
+    const inputVolumes = { ...this.sample_details?.reaction_amount_volumes_l };
+    let recordedInputUnit = false;
+    ['target', 'real'].forEach((amountType) => {
+      const unit = this[`${amountType}_amount_unit`];
+      if (['mol', 'l'].includes(unit) && inputUnits[amountType] == null) {
+        inputUnits[amountType] = unit;
+        recordedInputUnit = true;
+      }
+      const value = this[`${amountType}_amount_value`];
+      if (unit === 'l' && inputUnits[amountType] === 'l' && Number.isFinite(value) && value >= 0
+        && inputVolumes[amountType] !== value) {
+        inputVolumes[amountType] = value;
+        recordedInputUnit = true;
+      }
+    });
+    if (recordedInputUnit) {
+      this.sample_details = { ...this.sample_details, reaction_amount_input_units: inputUnits };
+      if (Object.keys(inputVolumes).length) {
+        this.sample_details.reaction_amount_volumes_l = inputVolumes;
+      }
       this.updateChecksum();
     }
   }
@@ -358,6 +388,7 @@ export default class Sample extends Element {
         'solvent_scaling_mass_g', 'reference_molecular_weight', 'reference_relative_molecular_weight',
         'reference_component_changed',
         'reaction_amount_input_units',
+        'reaction_amount_volumes_l',
       ])),
     };
     (this.components || []).forEach((component) => {
@@ -1192,6 +1223,8 @@ export default class Sample extends Element {
   updateComponentAmounts() {
     const totalMassG = Number(this.amount_g);
     if (!Number.isFinite(totalMassG) || totalMassG < 0) return;
+    // A positive litre quantity without a mass conversion is unknown mass, not zero mass.
+    if (this.amount_unit === 'l' && this.amount_value > 0 && totalMassG === 0) return;
 
     const components = this.components || [];
     if (components.length === 0) return;
@@ -1395,7 +1428,10 @@ export default class Sample extends Element {
     // Set the basic amount properties
     this.amount_value = amount.value;
     this.amount_unit = amount.unit;
-    if (this.isMixture()) this.updateMixtureComponentAmounts();
+    if (this.isMixture()) {
+      this.updateMixtureQuantityVolume(amount, this.sample_details?.previous_amount_g);
+      this.updateMixtureComponentAmounts();
+    }
   }
 
   /**
@@ -1532,6 +1568,7 @@ export default class Sample extends Element {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
     if (this.isMixture()) {
+      this.updateMixtureQuantityVolume(amount, previousAmountG);
       this.updateComponentAmounts();
       // Programmatic Eq rescales must use the current mass, not an earlier user-edit snapshot.
       this.updateSolventVolumes(previousAmountG);
@@ -1753,7 +1790,8 @@ export default class Sample extends Element {
    * @returns {number} The calculated volume in liters, or 0 if the calculation cannot be performed.
    */
   calculateMixtureVolume(amount_g, purity = 1.0, molecularWeight = null) {
-    const { density, molarity_value } = this;
+    const { molarity_value } = this;
+    const density = this.mixtureAmountDensity();
 
     if (!this.isMixture() || !amount_g || amount_g <= 0) {
       return 0;
@@ -1889,6 +1927,9 @@ export default class Sample extends Element {
             const purity = this.purity || 1.0;
             const moles = this.calculateFeedstockOrGasMoles(purity, this.gas_type, amount_value);
             return moles * molecularWeight;
+          }
+          if (this.isMixture() && this.mixtureAmountDensity() > 0) {
+            return amount_value * this.mixtureAmountDensity() * 1000;
           }
           if (this.has_molarity && !gasPhaseCondition) {
             const molecularWeight = this.molecule_molecular_weight;
@@ -3385,19 +3426,46 @@ export default class Sample extends Element {
     }, 0);
   }
 
-  /** Reads entered volume without deriving it from mass/density or modifying the sample. */
+  /** A normalized litre quantity uses its own mass and volume to compute its density. */
+  mixtureAmountDensity(amountType = this.amountType) {
+    const volume = this.sample_details?.reaction_amount_volumes_l?.[amountType];
+    if (this[`${amountType}_amount_unit`] === 'g'
+      && this.sample_details?.reaction_amount_input_units?.[amountType] === 'l'
+      && volume > 0) {
+      return this[`${amountType}_amount_value`] / (volume * 1000);
+    }
+    return this.density;
+  }
+
+  /** Reads explicit Total volume or the active litre quantity without modifying the sample. */
   enteredMixtureTotalVolume() {
-    return this.sample_details?.total_mixture_volume_l
-      ?? (this.amount_unit === 'l' ? this.amount_value : 0);
+    if (this.sample_details?.total_mixture_volume_l != null) return this.sample_details.total_mixture_volume_l;
+    if (this.amount_unit === 'l') return this.amount_value;
+    if (this.sample_details?.reaction_amount_input_units?.[this.amountType] === 'l') {
+      return this.sample_details.reaction_amount_volumes_l?.[this.amountType] ?? 0;
+    }
+    return 0;
+  }
+
+  /** Explicit quantity edits and Eq rescales also rescale the active litre quantity's volume. */
+  updateMixtureQuantityVolume(amount, previousMassG) {
+    if (this.sample_details?.reaction_amount_input_units?.[this.amountType] !== 'l') return;
+
+    const volumes = this.sample_details.reaction_amount_volumes_l || {};
+    const previousVolume = volumes[this.amountType];
+    let volume = previousVolume;
+    if (amount.unit === 'l') volume = amount.value;
+    else if (previousMassG > 0 && previousVolume != null) volume *= this.amount_g / previousMassG;
+    if (Number.isFinite(volume) && volume >= 0) {
+      this.sample_details.reaction_amount_volumes_l = { ...volumes, [this.amountType]: volume };
+    }
   }
 
   /** Normalizes an entered stock volume to the reaction portion before using its mass contribution. */
   resolveMixtureTotalVolume(editedTotalVolumeL) {
     this.initializeSampleDetails();
-    if (this.sample_details.total_mixture_volume_l == null && this.amount_unit === 'l') {
-      this.sample_details.total_mixture_volume_l = this.amount_value;
-    }
-    let totalVolumeL = editedTotalVolumeL ?? this.enteredMixtureTotalVolume();
+    // A quantity entered in litres is not a separate Total volume with an inferred carrier mass.
+    let totalVolumeL = editedTotalVolumeL ?? this.sample_details.total_mixture_volume_l ?? 0;
     const storedMassG = Number(this.total_mixture_mass_g);
     const portionMassG = Number(this.amount_g);
     if (editedTotalVolumeL === undefined && this.parent_id != null
@@ -3415,6 +3483,7 @@ export default class Sample extends Element {
    * - Sums all masses of included solid materials (amount_g).
    * - For each liquid, mass = density [g/ml] * volume [ml] (if density is given),
    *   or 1 [g/ml] * volume [ml] if density is not given.
+   * - Litre-based quantities retain their saved quantity if a liquid's mass is unknown.
    * - Stores the total mass in sample_details.total_mixture_mass_g and returns it.
    * - If at least one component is liquid, also calculates and stores mixture density (g/ml) as
    *   total_mixture_mass_g/total_volume in the sample.
@@ -3426,6 +3495,15 @@ export default class Sample extends Element {
       return;
     }
 
+    // Stock concentration establishes solute mass and solution volume, but not solution mass.
+    // Keep the saved litre quantity (or its previously known mass) until density is available.
+    const inputUnit = this.sample_details.reaction_amount_input_units?.[this.amountType] ?? this.amount_unit;
+    if (inputUnit === 'l' && this.components?.some((component) => component.material_group === 'liquid'
+      && !(component.density > 0) && (component.amount_l > 0 || component.amount_g > 0 || component.amount_mol > 0))) {
+      return;
+    }
+
+    const quantityVolumeL = this.enteredMixtureTotalVolume();
     let totalMass = 0;
     let totalLiquidComponentsMassG = 0;
 
@@ -3472,7 +3550,7 @@ export default class Sample extends Element {
     // persist an older zero-edit recovery basis for these recomputed quantities.
     delete this.sample_details.solvent_scaling_mass_g;
 
-    this.updateMixtureDensity();
+    this.updateMixtureDensity(quantityVolumeL);
 
     // Update relative molecular weights after total mass calculation
     this.calculateRelativeMolecularWeightsForComponents();
@@ -3490,26 +3568,36 @@ export default class Sample extends Element {
    * 2. Initializes `sample_details` if missing.
    * 3. Retrieves total mixture mass (g) and total volume (L → converted to mL).
    * 4. If the mixture is liquid and volume > 0, computes and sets the density.
-   *    Otherwise, resets density to 0.
+   *    Otherwise, retains the other litre quantity's density or resets density to 0.
    *
    * @returns {void}
    */
-  updateMixtureDensity() {
+  updateMixtureDensity(quantityVolumeL) {
     if (!this.isMixture()) return;
 
     this.initializeSampleDetails();
 
     const totalMassG = Number(this.sample_details.total_mixture_mass_g) || 0;
     // A mass-derived amount_l cannot establish the volume used to derive density.
-    const totalVolumeML = parseFloat(this.enteredMixtureTotalVolume()) * 1000;
+    const totalVolumeML = parseFloat(this.sample_details.total_mixture_volume_l
+      ?? quantityVolumeL ?? this.enteredMixtureTotalVolume()) * 1000;
 
     // An entered positive total volume supplies a liquid basis even if the
     // previous density was cleared and all components are solids.
     if (totalVolumeML > 0) {
       const density = totalMassG / totalVolumeML;
       this.setDensity({ value: density });
+      if (this.sample_details.reaction_amount_input_units?.[this.amountType] === 'l') {
+        this.sample_details.reaction_amount_volumes_l = {
+          ...this.sample_details.reaction_amount_volumes_l, [this.amountType]: totalVolumeML / 1000,
+        };
+      }
     } else {
-      this.setDensity({ value: 0 });
+      // A gram-only edit must not erase the density of the other amount's litre quantity.
+      const otherType = this.amountType === 'real' ? 'target' : 'real';
+      const otherHasVolume = this.sample_details.reaction_amount_input_units?.[otherType] === 'l'
+        && this.sample_details.reaction_amount_volumes_l?.[otherType] > 0;
+      this.setDensity({ value: otherHasVolume ? this.mixtureAmountDensity(otherType) : 0 });
     }
   }
 

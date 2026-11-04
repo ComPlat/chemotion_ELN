@@ -236,6 +236,16 @@ describe('SampleForm new property inputs', () => {
       expect(instance.totalMixtureVolume(sample).props.value).toBe(0.005);
       expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(2);
     });
+
+    it('displays an unknown mixture density as n.d. rather than zero', () => {
+      sample.sample_type = 'Mixture';
+      sample.amount_value = 0.005;
+      sample.amount_unit = 'l';
+      sample.density = 0;
+      sample.sample_details = {};
+
+      expect(instance.totalMixtureDensity(sample).props.children.props.value).toBe(null);
+    });
   });
 
   describe('numericInputWithAddon', () => {
