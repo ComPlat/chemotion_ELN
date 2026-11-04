@@ -153,7 +153,8 @@ module Chemotion
               :container, :elemental_compositions, :molecule, :reactions_samples, :residues, :segments, :tag
             )
             reactions = reactions.includes(
-              :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
+              :container, :products, :purification_solvents, :reactants, :reaction_steps, :segments, :solvents,
+              :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
               serialized_element = Entities::SampleEntity.represent(
