@@ -245,19 +245,58 @@ describe Chemotion::UserAPI do
 
   describe 'GET /api/v1/devices/current_connection' do
     let(:device) { create(:device) }
-    let(:path) { NOVNC_DEVICES_DIR.join(device.id.to_s) }
+    let(:store) { ActiveSupport::Cache::MemoryStore.new }
+    let(:other_user) { create(:person) }
 
-    after { FileUtils.rm_f(path) }
+    before { stub_const('NOVNC_CONNECTIONS', store) }
+
+    def poll(id: device.id, status: 'true')
+      get '/api/v1/devices/current_connection', params: { id: id, status: status }
+    end
 
     context 'when the device belongs to the current user' do
-      before do
-        device.people << user
-        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      before { device.people << user }
+
+      it 'returns 200 and reports the user as watching' do
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
       end
 
-      it 'returns 200 and appends the connection status to the device log' do
-        expect(response).to have_http_status(:ok)
-        expect(File.read(path)).to include("#{user.id},1")
+      it 'reports the user as using when the display is focused' do
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'updates the entry of a user who polls again' do
+        poll
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'lists the other viewers of the device' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        poll
+        expect(parsed_json_response['result']).to contain_exactly("#{other_user.id},0", "#{user.id},1")
+      end
+
+      it 'drops viewers that stopped polling' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        travel(NOVNC_CONNECTION_TTL + 1.second) do
+          poll
+        end
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'returns 400 for an id with text after the number' do
+        poll(id: "#{device.id}abc")
+        expect(response).to have_http_status(:bad_request)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+
+      it 'returns 400 for a non-numeric id' do
+        poll(id: 'abc')
+        expect(response).to have_http_status(:bad_request)
       end
     end
 
