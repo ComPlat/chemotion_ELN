@@ -134,7 +134,7 @@ describe Chemotion::CollectionAPI do
         second_child = create(:collection, label: 'second child', position: 2, parent: parent_collection, user: user)
 
         creation = -> { post '/api/v1/collections', params: { parent_id: collection.id, label: 'new collection' } }
-        expect(creation).to change(Collection, :count).by(1)
+        expect { creation.call }.to change(Collection, :count).by(1)
 
         expect(parsed_json_response['collection']['position']).to eq 3
         expect(parsed_json_response['collection']['ancestry']).to eq "/#{parent_collection.id}/"

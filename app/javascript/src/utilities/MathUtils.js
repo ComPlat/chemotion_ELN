@@ -124,30 +124,32 @@ const formatDisplayValue = (val, precision) => {
 };
 
 /**
- * Restrict typed text to a plain decimal number while the user is still editing.
+ * Normalize decimal input without removing characters that could change its meaning.
  *
- * A decimal comma becomes a dot, every non-numeric character is dropped, and input stops
- * at a second decimal separator rather than silently appending its fractional digits.
+ * Accept a decimal comma, a Unicode minus, and consistently grouped decimal pastes.
+ * Reject scientific notation, malformed grouping, and other unexpected characters.
  * Incomplete drafts such as "", "." or "-" are kept so the field stays editable.
  *
  * @param {string} raw - The raw input value.
  * @param {Object} [options]
- * @param {boolean} [options.allowNegative=false] - Keep a leading minus sign.
- * @returns {string} - The normalized input.
+ * @param {boolean} [options.allowNegative=false] - Allow a leading minus sign.
+ * @returns {string|null} - The normalized input, or null when the edit must be refused.
  */
 const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
-  const negative = allowNegative && `${raw}`.trim().startsWith('-');
-  const value = `${raw}`.replace(/,/g, '.').replace(/[^0-9.]/g, '').match(/^\d*(?:\.\d*)?/)[0];
-  return negative ? `-${value}` : value;
-};
+  let value = `${raw}`.trim().replace(/\u2212/g, '-');
+  if (!allowNegative && value.startsWith('-')) { return null; }
 
-// Preserve all vessel-size digits when removing extra decimal separators.
-const normalizeVesselSizeValue = (raw) => {
-  let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
-  const dotIndex = value.indexOf('.');
-  if (dotIndex !== -1) {
-    value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
+  // With both separators present, require conventional three-digit grouping.
+  if (/^-?\d{1,3}(?:,\d{3})+\.\d*$/.test(value)) {
+    value = value.replace(/,/g, '');
+  } else if (/^-?\d{1,3}(?:\.\d{3})+,\d*$/.test(value)) {
+    value = value.replace(/\./g, '').replace(',', '.');
+  } else {
+    value = value.replace(',', '.');
   }
+
+  if (!/^-?\d*(?:\.\d*)?$/.test(value)) { return null; }
+  if (/\d/.test(value) && !Number.isFinite(Number(value))) { return null; }
   return value;
 };
 
@@ -159,5 +161,4 @@ export {
   parseNumericString,
   formatDisplayValue,
   normalizeNumberInput,
-  normalizeVesselSizeValue,
 };

@@ -16,7 +16,10 @@ RSpec.describe Chemotion::ReactionAPI do
   end
 
   shared_examples 'validates environmental conditions' do
+    let(:original_environment) { request_method == :put ? reaction.environment.deep_dup : {} }
+
     def save_environment(attributes)
+      original_environment
       public_send(request_method, request_path, params: base_params.merge(attributes), as: :json)
     end
 
@@ -42,7 +45,64 @@ RSpec.describe Chemotion::ReactionAPI do
         save_environment(environment: environment)
 
         expect(response).to have_http_status(:created).or have_http_status(:ok)
-        expect(saved_environment).to eq(environment)
+        expect(saved_environment).to eq(
+          original_environment.deep_merge('air_pressure' => { 'value' => '21.5', 'unit' => unit }),
+        )
+      end
+    end
+
+    it 'normalizes decimal commas in all measurements and the API response' do
+      save_environment(environment: {
+                         temperature: { value: '−4,5', unit: '°C' },
+                         humidity: { value: '45,5', unit: '%' },
+                         air_pressure: { value: '1013,25', unit: 'mbar' },
+                       })
+      expected = {
+        'temperature' => { 'value' => '-4.5', 'unit' => '°C' },
+        'humidity' => { 'value' => '45.5', 'unit' => '%' },
+        'air_pressure' => { 'value' => '1013.25', 'unit' => 'mbar' },
+      }
+
+      expect(response).to have_http_status(:created).or have_http_status(:ok)
+      expect(saved_environment).to eq expected
+      expect(response.parsed_body.fetch('reaction').fetch('environment')).to eq expected
+    end
+
+    [[0, '0'], [22.5, '22.5'], [0.00000001, '0.00000001']].each do |value, expected|
+      it "accepts the numeric JSON reading #{value.inspect} as a plain decimal" do
+        save_environment(environment: { air_pressure: { value: value, unit: 'pa' } })
+
+        expect(response).to have_http_status(:created).or have_http_status(:ok)
+        expect(saved_environment).to eq(
+          original_environment.deep_merge('air_pressure' => { 'value' => expected, 'unit' => 'pa' }),
+        )
+      end
+    end
+
+    %w[hot 20-22 - . -. 1.013e5 1013,25.7 NaN Infinity].each do |value|
+      it "rejects the new nonnumeric value #{value.inspect} without persisting changes" do
+        original = reaction.environment if request_method == :put
+        count = Reaction.count
+        save_environment(environment: { temperature: { value: value, unit: '°C' } })
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Reaction.count).to eq count
+        expect(reaction.reload.environment).to eq original if request_method == :put
+      end
+    end
+
+    [
+      %w[temperature C], %w[temperature F], %w[temperature degF],
+      %w[humidity percent],
+      %w[air_pressure psi], %w[air_pressure mPa], %w[air_pressure MPa],
+      %w[air_pressure hPa], %w[air_pressure Pa]
+    ].each do |field, unit|
+      it "preserves the imported #{field} unit #{unit} without interpreting it" do
+        environment = { field => { 'value' => '14.7', 'unit' => unit } }
+        save_environment(environment: environment)
+
+        expect(response).to have_http_status(:created).or have_http_status(:ok)
+        expect(saved_environment).to eq(original_environment.deep_merge(environment))
       end
     end
 
@@ -51,14 +111,14 @@ RSpec.describe Chemotion::ReactionAPI do
       save_environment(environment: environment)
 
       expect(response).to have_http_status(:created).or have_http_status(:ok)
-      expect(saved_environment).to eq(environment)
+      expect(saved_environment).to eq(original_environment.deep_merge(environment))
     end
 
     it 'accepts an empty environment object' do
       save_environment(environment: {})
 
       expect(response).to have_http_status(:created).or have_http_status(:ok)
-      expect(saved_environment).to eq({})
+      expect(saved_environment).to eq(original_environment)
     end
 
     it 'leaves existing or default conditions intact when environment is omitted' do
@@ -77,7 +137,9 @@ RSpec.describe Chemotion::ReactionAPI do
       save_environment(environment: environment)
 
       expect(response).to have_http_status(:created).or have_http_status(:ok)
-      expect(saved_environment).to eq('temperature' => { 'value' => '22', 'unit' => '°C' })
+      expect(saved_environment).to eq(
+        original_environment.deep_merge('temperature' => { 'value' => '22', 'unit' => '°C' }),
+      )
     end
 
     [
@@ -85,8 +147,7 @@ RSpec.describe Chemotion::ReactionAPI do
       { temperature: 'hot' }, { humidity: [] }, { air_pressure: nil },
       { temperature: { value: { nested: '22' } } },
       { humidity: { value: ['45'] } },
-      { temperature: { unit: 'C' } }, { humidity: { unit: 'percent' } },
-      { air_pressure: { unit: 'hPa' } }, { air_pressure: { unit: 'Pa' } },
+      { temperature: { unit: { nested: '°C' } } }, { humidity: { unit: ['%'] } },
       { temperature: { unit: nil } }, { air_pressure: { unit: '' } }
     ].each do |environment|
       it "rejects malformed environment #{environment.inspect}" do
@@ -111,6 +172,99 @@ RSpec.describe Chemotion::ReactionAPI do
   context 'when updating a reaction' do
     let(:request_method) { :put }
     let(:request_path) { "/api/v1/reactions/#{reaction.id}" }
+
+    context 'with recorded conditions' do
+      let(:recorded_environment) do
+        {
+          'temperature' => { 'value' => '-4.5', 'unit' => '°F' },
+          'humidity' => { 'value' => '45', 'unit' => '%' },
+          'air_pressure' => { 'value' => '14.7', 'unit' => 'psi' },
+        }
+      end
+
+      before { reaction.update!(environment: recorded_environment) }
+
+      it 'updates humidity without deleting the stored temperature or pressure' do
+        put request_path, params: base_params.merge(environment: { humidity: { value: '50', unit: '%' } }), as: :json
+        expected = recorded_environment.deep_merge('humidity' => { 'value' => '50' })
+
+        expect(response).to have_http_status(:ok)
+        expect(reaction.reload.environment).to eq expected
+        expect(response.parsed_body.fetch('reaction').fetch('environment')).to eq expected
+      end
+
+      it 'normalizes a value-only patch while preserving the stored unit and other readings' do
+        put request_path, params: base_params.merge(environment: { temperature: { value: '21,5' } }), as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(reaction.reload.environment).to eq(
+          recorded_environment.deep_merge('temperature' => { 'value' => '21.5' }),
+        )
+      end
+
+      it 'updates only the supplied unit without deleting the stored value' do
+        put request_path, params: base_params.merge(environment: { air_pressure: { unit: 'mPa' } }), as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(reaction.reload.environment).to eq(
+          recorded_environment.deep_merge('air_pressure' => { 'unit' => 'mPa' }),
+        )
+      end
+
+      it 'clears only a value explicitly set to an empty string' do
+        put request_path, params: base_params.merge(environment: { humidity: { value: '' } }), as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(reaction.reload.environment).to eq(recorded_environment.deep_merge('humidity' => { 'value' => '' }))
+      end
+
+      [{}, { 'humidity' => {} }].each do |environment|
+        it "keeps all recorded conditions when given #{environment.inspect}" do
+          put request_path, params: base_params.merge(environment: environment), as: :json
+
+          expect(response).to have_http_status(:ok)
+          expect(reaction.reload.environment).to eq recorded_environment
+        end
+      end
+
+      it 'rejects an invalid partial reading without changing any stored conditions' do
+        put request_path, params: base_params.merge(environment: { humidity: { value: 'hot' } }), as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(reaction.reload.environment).to eq recorded_environment
+      end
+
+      it 'accepts the full UI shape when clearing all three readings' do
+        cleared = recorded_environment.transform_values { |reading| reading.merge('value' => '') }
+        put request_path, params: base_params.merge(environment: cleared), as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(reaction.reload.environment).to eq cleared
+      end
+    end
+
+    it 'accepts a partial update when the stored environment is null' do
+      reaction.update!(environment: nil)
+      environment = { 'humidity' => { 'value' => '45', 'unit' => '%' } }
+      put request_path, params: base_params.merge(environment: environment), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(reaction.reload.environment).to eq environment
+    end
+
+    it 'keeps unsupported imported readings when saving an unrelated name change' do
+      environment = {
+        'temperature' => { 'value' => '22', 'unit' => 'degF' },
+        'humidity' => { 'value' => '45', 'unit' => 'percent' },
+        'air_pressure' => { 'value' => '14.7', 'unit' => 'mPa' },
+      }
+      reaction.update!(environment: environment)
+      put request_path, params: base_params.merge(name: 'Renamed reaction', environment: environment), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(reaction.reload.name).to eq('Renamed reaction')
+      expect(reaction.environment).to eq(environment)
+    end
 
     it_behaves_like 'validates environmental conditions'
   end

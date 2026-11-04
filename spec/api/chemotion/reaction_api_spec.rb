@@ -877,10 +877,15 @@ describe Chemotion::ReactionAPI do
       end
 
       it 'leaves no reaction behind when a step of the create fails' do
+        invalid_sample = Sample.new
+        invalid_sample.errors.add(:base, 'Material could not be saved')
         allow_any_instance_of(Usecases::Reactions::UpdateMaterials).to receive(:execute!) # rubocop:disable RSpec/AnyInstance
-          .and_raise(ActiveRecord::RecordInvalid)
+          .and_raise(ActiveRecord::RecordInvalid.new(invalid_sample))
 
-        expect { create_copy }.to raise_error(ActiveRecord::RecordInvalid)
+        create_copy
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(parsed_json_response['error']).to eq('Material could not be saved')
         expect(Reaction.with_deleted.where(name: 'r003')).to be_empty
       end
     end

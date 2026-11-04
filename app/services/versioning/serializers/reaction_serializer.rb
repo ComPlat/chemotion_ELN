@@ -26,6 +26,11 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         kind: :temperature,
         revert: %i[temperature],
       },
+      environment: {
+        label: 'Environment conditions',
+        kind: :json,
+        revert: %i[environment],
+      },
       reaction_svg_file: {
         label: 'Reaction scheme',
         kind: :image,

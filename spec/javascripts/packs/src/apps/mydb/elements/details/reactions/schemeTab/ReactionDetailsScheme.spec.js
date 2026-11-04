@@ -1426,11 +1426,14 @@ describe('ReactionDetailsScheme vessel-size input', () => {
   ['updateVesselSize', 'updateVesselSizeOnBlur'].forEach((handler) => {
     ['l', 'ml'].forEach((unit) => {
       [
-        ['1.2.5', '1.25'],
-        ['1,000.5', '1.0005'],
-        ['12.3.45', '12.345'], // Insert a dot into the middle of an existing decimal.
-        ['1,,25', '1.25'],
-        ['12,5 ml', '12.5'],
+        ['1,000.5', '1000.5'],
+        ['1.000,5', '1000.5'],
+        ['12,345,678.90', '12345678.90'],
+        ['12.345.678,90', '12345678.90'],
+        ['1,000.50000000000000001', '1000.50000000000000001'],
+        ['12,5', '12.5'],
+        ['0', '0'],
+        ['.5', '.5'],
         ['5.', '5.'],
         ['.', '.'],
         ['', ''],
@@ -1457,6 +1460,22 @@ describe('ReactionDetailsScheme vessel-size input', () => {
               vesselSizeInLiters: unit === 'l' ? numericValue : numericValue * 0.001,
             })).toBe(true);
           }
+        });
+      });
+
+      ['1.2.5', '12.3.45', '1,,25', '12,5 ml', '500abc.2xyz', '1.013e5', '1,00.5', '-5', '−5'].forEach((raw) => {
+        it(`${handler} rejects ${JSON.stringify(raw)} and keeps the previous vessel size in ${unit}`, () => {
+          const onInputChange = sinon.spy();
+          const reaction = Reaction.buildEmpty(1);
+          reaction.vessel_size = { amount: '42', unit };
+          const instance = new ReactionDetailsScheme({ reaction, onInputChange });
+          const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
+
+          instance[handler]({ target: { value: raw } });
+
+          expect(onInputChange.called).toBe(false);
+          expect(handleMaterialsChange.called).toBe(false);
+          expect(reaction.vessel_size).toEqual({ amount: '42', unit });
         });
       });
     });
