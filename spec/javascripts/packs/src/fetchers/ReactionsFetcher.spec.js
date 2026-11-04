@@ -6,6 +6,58 @@ import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import Reaction from 'src/models/Reaction';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+// Runtime dependencies are installed in the repository root.
+/* eslint-disable import/no-extraneous-dependencies */
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import alt from 'src/stores/alt/alt';
+/* eslint-enable import/no-extraneous-dependencies */
+
+describe('ReactionsFetcher reaction save preservation', () => {
+  let sandbox;
+  let reaction;
+  let put;
+  let getStore;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    reaction = { id: 17, products: [], serialize: () => ({ id: 17, materials: { products: [] } }) };
+    sandbox.stub(AttachmentFetcher, 'uploadNewAttachmentsForContainer').resolves();
+    sandbox.stub(GenericElsFetcher, 'uploadGenericFiles').resolves();
+    sandbox.stub(ReactionsFetcher, 'updateAnnotationsInReaction').resolves();
+    sandbox.stub(ReactionsFetcher, 'reactionElement').returns(reaction);
+    put = sandbox.stub(ApiClient, 'putJson').resolves({});
+    getStore = sandbox.stub(alt, 'getStore').throws(new Error('Unexpected store lookup'));
+  });
+
+  afterEach(() => { sandbox.restore(); });
+
+  it('builds the payload from explicit IDs without consulting open tabs', () => {
+    const ids = Object.freeze([42, 43]);
+    expect(ReactionsFetcher.reactionSavePayload(reaction, ids)).toEqual({
+      id: 17, materials: { products: [] }, preserve_removed_sample_ids: [42, 43],
+    });
+    expect(ReactionsFetcher.reactionSavePayload(reaction).preserve_removed_sample_ids).toEqual([]);
+    sinon.assert.notCalled(getStore);
+  });
+
+  it('sends the supplied preservation IDs in the reaction update request', async () => {
+    const saved = await ReactionsFetcher.update(reaction, [42]);
+
+    sinon.assert.calledOnceWithExactly(put, '/api/v1/reactions/17', { body: {
+      id: 17, materials: { products: [] }, preserve_removed_sample_ids: [42],
+    } });
+    expect(saved).toBe(reaction);
+    sinon.assert.notCalled(getStore);
+  });
+
+  it('defaults to no preserved samples when called without IDs', async () => {
+    await ReactionsFetcher.update(reaction);
+
+    expect(put.firstCall.args[1].body.preserve_removed_sample_ids).toEqual([]);
+    sinon.assert.notCalled(getStore);
+  });
+});
 
 describe('ReactionsFetcher background context loading', () => {
   let sandbox;
