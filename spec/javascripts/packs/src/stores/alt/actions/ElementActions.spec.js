@@ -915,6 +915,109 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
     });
   });
 
+  [false, true].forEach((embeddedComponents) => {
+    ['target', 'real'].forEach((amountType) => {
+      it(`opens a clean sample-list product on its ${amountType} basis, embedded=${embeddedComponents}`, async () => {
+        const storedMass = amountType === 'real' ? 5 : 6;
+        const components = [500, 250].map((weight, index) => new Component({
+          id: index + 1, position: index, reference: index === 0, equivalent: index + 1,
+          material_group: 'liquid', density: index === 0 ? 0.79 : 0, purity: 1,
+          amount_mol: storedMass / weight, relative_molecular_weight: weight,
+          molecule: { molecular_weight: index === 0 ? 46.07 : 18.015 },
+        }));
+        components.forEach((component) => component.updatePhysicalAmounts());
+        const componentResponse = components.map((component) => ({
+          ...component.serializeComponent(),
+          component_properties: {
+            ...component.serializeComponent().component_properties, molecule: component.molecule,
+          },
+        }));
+        const originalResponse = JSON.stringify(componentResponse);
+        const tab = new Sample({
+          id: 77, sample_type: 'Mixture', target_amount_value: 5, target_amount_unit: 'g',
+          real_amount_value: 6, real_amount_unit: 'g',
+          sample_details: { total_mixture_mass_g: storedMass, total_mixture_volume_l: 0 },
+          ...(embeddedComponents ? { components: JSON.parse(originalResponse) } : {}),
+        });
+        tab.amountType = amountType;
+        tab.mixtureReactionContext = new Reaction({ id: 99, type: 'reaction', products: [tab] });
+        tab.updateChecksum();
+        let resolveComponents;
+        const response = new Promise((resolve) => { resolveComponents = resolve; });
+        sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').returns(response);
+        sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+        const store = Object.create(ElementStore.StoreModel.prototype);
+        store.state = { selecteds: [], currentElement: null, refreshCoefficient: [] };
+        store.setState = (update) => { Object.assign(store.state, update); };
+        const expectAmounts = () => {
+          const mass = amountType === 'real' ? 6 : 5;
+          expect(tab.amount_g).toBe(mass);
+          tab.components.forEach((component, index) => {
+            expect(component.amount_mol).toBeCloseTo(mass / [500, 250][index], 12);
+          });
+          expect(tab.components.map((component) => component.equivalent)).toEqual([1, 2]);
+          expect(tab.components.map((component) => component.relative_molecular_weight)).toEqual([500, 250]);
+          expect(tab.isPendingToSave).toBe(false);
+          expect(tab.isEdited).toBe(false);
+        };
+
+        store.handleFetchSampleById(tab);
+        if (embeddedComponents) expectAmounts();
+        resolveComponents(componentResponse);
+        await response;
+        await Promise.resolve();
+        new SampleDetailsComponents({ sample: tab, onChange: () => {} }).render();
+
+        expectAmounts();
+        expect(tab.target_amount_value).toBe(5);
+        expect(tab.real_amount_value).toBe(6);
+        expect(tab.sample_details.total_mixture_mass_g).toBe(storedMass);
+        expect(JSON.stringify(componentResponse)).toBe(originalResponse);
+        sinon.assert.notCalled(SamplesFetcher.update);
+        sinon.assert.notCalled(ComponentsFetcher.saveOrUpdateComponents);
+      });
+    });
+  });
+
+  [['mol', 'mol'], ['l', 'l'], ['g', 'mol'], ['g', 'l'], ['g', 'g']].forEach(([unit, inputUnit]) => {
+    const standalone = unit === 'g' && inputUnit === 'g';
+    it(`keeps ${standalone ? 'standalone' : 'product'} ${inputUnit} amounts stored as ${unit}`, async () => {
+      const { reaction, mixture } = build();
+      reaction.products = [mixture];
+      const data = JSON.parse(JSON.stringify(mixture.serializeMaterial()));
+      data.real_amount_value = unit === 'g' ? 6 : 0.02;
+      data.real_amount_unit = unit;
+      data.sample_details.reaction_amount_input_units = { real: inputUnit };
+      const tab = new Sample(data);
+      tab.amountType = 'real';
+      if (!standalone) tab.mixtureReactionContext = reaction;
+      tab.updateChecksum();
+      const expectedMoles = mixture.components.map((component) => component.amount_mol);
+      const componentResponse = mixture.components.map((component) => ({
+        ...component.serializeComponent(),
+        component_properties: { ...component.serializeComponent().component_properties, molecule: component.molecule },
+      }));
+      let resolveComponents;
+      const response = new Promise((resolve) => { resolveComponents = resolve; });
+      sandbox.stub(ComponentsFetcher, 'fetchComponentsBySampleId').returns(response);
+      sandbox.stub(UIStore, 'getState').returns({ currentCollection: {} });
+      const store = Object.create(ElementStore.StoreModel.prototype);
+      store.state = { selecteds: [], currentElement: null, refreshCoefficient: [] };
+      store.setState = (update) => { Object.assign(store.state, update); };
+
+      store.handleFetchSampleById(tab);
+
+      expect(tab.components.map((component) => component.amount_mol)).toEqual(expectedMoles);
+      expect(tab.isPendingToSave).toBe(false);
+      resolveComponents(componentResponse);
+      await response;
+      await Promise.resolve();
+
+      expect(tab.components.map((component) => component.amount_mol)).toEqual(expectedMoles);
+      expect(tab.isPendingToSave).toBe(false);
+    });
+  });
+
   ['reactants', 'products'].forEach((group) => {
     [false, true].forEach((componentsLoadedFirst) => {
       [false, true].forEach((dirty) => {

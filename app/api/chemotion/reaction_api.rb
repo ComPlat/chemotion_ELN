@@ -246,12 +246,13 @@ module Chemotion
           reaction.touch
           reaction_vessel_size = attributes[:vessel_size]
           # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
-          reaction = Usecases::Reactions::UpdateMaterials.new(
+          material_update = Usecases::Reactions::UpdateMaterials.new(
             reaction, materials,
             current_user,
             reaction_vessel_size,
             preserve_removed_sample_ids: preserved_sample_ids
-          ).execute!
+          )
+          reaction = material_update.execute!
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
