@@ -723,7 +723,10 @@ class ElementStore {
           result.initialComponents(result.components.map((component) => (
             component instanceof Component ? component : Component.deserializeData(component)
           )));
+          // Stored components may belong to the other amount mode; opening is still a clean operation.
+          if (result.hasFixedProductMass()) result.syncMixtureComponentAmounts();
           if (pendingToSave) result.changed = true;
+          else result.updateChecksum();
         }
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
@@ -738,9 +741,14 @@ class ElementStore {
             // Reaction quantities or local edits may change while this fetch is in flight.
             const pendingToSave = result.isPendingToSave;
             await result.initialComponents(sampleComponents);
-            if (pendingToSave) {
+            if (pendingToSave || result.hasFixedProductMass()) {
               result.syncMixtureComponentAmounts();
+            }
+            if (pendingToSave) {
               result.changed = true;
+            }
+            else {
+              result.updateChecksum();
             }
             if (this.state.currentElement === result) {
               this.setState({ currentElement: result });

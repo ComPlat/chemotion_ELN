@@ -242,12 +242,13 @@ module Chemotion
           reaction.update!(attributes)
           reaction.touch
           reaction_vessel_size = attributes[:vessel_size]
-          reaction = Usecases::Reactions::UpdateMaterials.new(
+          material_update = Usecases::Reactions::UpdateMaterials.new(
             reaction, materials,
             current_user,
             reaction_vessel_size,
             preserve_removed_sample_ids: preserved_sample_ids
-          ).execute!
+          )
+          reaction = material_update.execute!
           # Drop the keys of materials removed in this update, even if the Variations tab was never opened.
           update_variations_material_ids!(reaction)
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
