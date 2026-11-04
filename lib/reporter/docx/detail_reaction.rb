@@ -424,8 +424,12 @@ module Reporter
         mole_value ? mole_value * 1000 : 0
       end
 
+      def reported_mass(material, is_product: false)
+        material.real_amount_g == 0.0 && !is_product ? material.amount_g : material.real_amount_g
+      end
+
       def assigned_amount(s, is_product = false)
-        mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
+        mass = reported_mass(s, is_product: is_product)
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
         mmol = if s.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                  # Always use special function (returns moles, convert to millimoles)
@@ -592,7 +596,7 @@ module Reporter
         end
 
         # Process mixture components and set mixture-related flags
-        process_mixture_components(s, sample_hash)
+        process_mixture_components(s, sample_hash, is_product: is_product)
 
         sample_hash
       end
@@ -612,7 +616,18 @@ module Reporter
         Float(reference_props[:amount_mol], exception: false) || 0.0
       end
 
-      def process_mixture_components(material, sample_hash)
+      def component_amount_scale(material, reference_amount, is_product)
+        return 1.0 unless reference_amount.positive? && reference_amount.finite?
+
+        reported_amount = calculate_mixture_amount_mol(material, reported_mass(material, is_product: is_product))
+        return 1.0 unless reported_amount&.finite? && reported_amount >= 0
+
+        # Stored components can belong to Target while the report uses Real (or vice versa).
+        # Relative molecular weight includes the whole mixture, including its solvents.
+        reported_amount / reference_amount
+      end
+
+      def process_mixture_components(material, sample_hash, is_product: false)
         # Check if material is a mixture with components
         # Always set components to an empty array to avoid nil errors in Sablon templates
         # This ensures s.components is always enumerable (never nil) for template conditionals
@@ -623,6 +638,7 @@ module Reporter
           # Only set components if there are actual components to display
           if components.present? && components.any?
             reference_amount = component_reference_amount(material)
+            amount_scale = component_amount_scale(material, reference_amount, is_product)
             sample_hash[:components] = components.map do |comp|
               comp_props = normalize_component_properties(comp)
               comp_mol = (comp_props[:molecule] || {}).transform_keys(&:to_sym)
@@ -635,7 +651,7 @@ module Reporter
               {
                 name: comp_mol[:iupac_name] || comp[:name] || '',
                 iupac_name: comp_mol[:iupac_name] || '',
-                amount_mol: format_scientific(amount_mol_value, digit),
+                amount_mol: format_scientific(amount_mol_value * amount_scale, digit),
                 amount_mol_unit: amount_mol_unit,
                 concn: format_scientific(concn_value, digit),
                 concn_unit: concn_unit,
