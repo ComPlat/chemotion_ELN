@@ -232,7 +232,7 @@ module Chemotion
           steps = attributes.delete(:reaction_steps)
           reaction_vessel_size = attributes[:vessel_size]
           ActiveRecord::Base.transaction do
-            # Steps sync first so leaving Multi-step validates against the removed rows.
+            # Steps save first so materials can be linked to their step ids by position.
             step_id_by_position = nil
             unless steps.nil?
               persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
