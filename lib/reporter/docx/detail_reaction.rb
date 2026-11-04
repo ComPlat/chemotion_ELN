@@ -437,8 +437,8 @@ module Reporter
                  calculate_amount_mmol(s)
                end
 
-        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
-        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
+        mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0)) unless mass.nil?
+        vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1)) unless vol.nil?
         mmol = met_pre_conv(mmol, 'm', assigned_metric_pref(s, 2, %w[m n])) if mmol.present?
 
         [mass, vol, mmol]
