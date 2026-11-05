@@ -48,4 +48,25 @@ describe Usecases::Measurements::BulkCreateFromRawData do
       end
     end
   end
+
+  context 'when an entry has an empty unit' do
+    # MTT results are sent without a unit
+    let(:sample) { create(:valid_sample, creator: current_user, collections: [collection]) }
+    let(:raw_data) do
+      [{
+        description: 'MTT Analysis',
+        sample_identifier: sample.short_label,
+        unit: '',
+        value: 0.42,
+      }.with_indifferent_access]
+    end
+
+    it 'creates the measurement without errors' do
+      result = nil
+      expect { result = described_class.new(current_user, params).execute! }.to change(Measurement, :count).by(1)
+
+      expect(result.first['errors']).to be_empty
+      expect(Measurement.last).to have_attributes(description: 'MTT Analysis', unit: '')
+    end
+  end
 end
