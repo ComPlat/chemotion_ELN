@@ -229,6 +229,6 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
 
   # The raw updates skip the ReactionsSample callbacks: refresh the reaction in the samples' element tags.
   def refresh_tags(sample_ids)
-    ReactionsSample.where(sample_id: sample_ids).find_each(&:update_tag)
+    ReactionsSample.where(sample_id: sample_ids).find_each { |link| link.update_tag if link.respond_to?(:update_tag) }
   end
 end
