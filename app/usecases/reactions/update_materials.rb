@@ -66,18 +66,32 @@ module Usecases
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
+      # Material group => its key in the materials param, in processing order (SBMM reactants follow).
+      MATERIAL_PARAMS = {
+        starting_material: 'starting_materials',
+        reactant: 'reactants',
+        solvent: 'solvents',
+        purification_solvent: 'purification_solvents',
+        product: 'products',
+      }.freeze
+
       attr_reader :current_user
 
-      def initialize(reaction, materials, user, vessel_size)
+      # Variations group => client key => persisted key, filled by {#execute!}: the id a material was
+      # sent with (a preliminary uuid for a new one) and the id of the sample it was saved as, with the
+      # +"sbmm:<id>"+ form for sequence-based macromolecule samples. See {ReactionVariationMaterialKeys}.
+      #
+      # @return [Hash{String => Hash{String => String}}]
+      def variation_key_map
+        @variation_key_map ||= Hash.new { |map, group| map[group] = {} }
+      end
+
+      # @param origin_reaction [Reaction, nil] for a copy: the source reaction, already access-checked;
+      #   variations keys naming its materials are mapped to the copy's by group position
+      def initialize(reaction, materials, user, vessel_size, origin_reaction: nil)
+        @origin_reaction = origin_reaction
         @reaction = reaction
-        @materials = {
-          starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
-          reactant: Array(materials['reactants']).map { |m| OSample.new(m) },
-          solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
-          purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
-          product: Array(materials['products']).map { |m| OSample.new(m) },
-          reactant_sbmm: Array(materials['reactant_sbmm_samples'] || []).map { |m| OSbmmSample.new(m) },
-        }
+        @materials = build_materials(materials)
         @current_user = user
         @vessel_size = vessel_size
       end
@@ -125,6 +139,7 @@ module Usecases
                                                 current_user_id: @current_user.id)
                 end
                 modified_sample_ids << modified_sample.id
+                record_variation_key(material_group, sample.id, modified_sample.id)
 
                 associate_sample_with_reaction(sample, modified_sample, material_group)
               end
@@ -134,16 +149,38 @@ module Usecases
           destroy_unused_sbmm_samples(modified_sbmm_ids)
         end
         @reaction.reload
+        reconcile_variation_material_keys
         @reaction.save! # to update the SVG
         @reaction
       end
 
       private
 
+      def build_materials(materials)
+        samples = MATERIAL_PARAMS.transform_values { |param| Array(materials[param]).map { |m| OSample.new(m) } }
+        samples.merge(reactant_sbmm: Array(materials['reactant_sbmm_samples']).map { |m| OSbmmSample.new(m) })
+      end
+
       def update_sample_container(sample, container, creating:)
         return unless container
 
         sample.container = update_datamodel(container, element: sample, creating: creating)
+      end
+
+      def record_variation_key(material_group, client_key, persisted_key)
+        group = ReactionVariationMaterialKeys.variations_group_for(material_group)
+        return if group.nil? || client_key.blank?
+
+        variation_key_map[group][client_key.to_s] = persisted_key.to_s
+      end
+
+      # Points the variations' material keys at the materials just linked, once all of them are saved,
+      # and drops keys of materials the reaction no longer has. See {ReactionVariationMaterialKeys}.
+      def reconcile_variation_material_keys
+        reconciled = @reaction.reconcile_variation_material_keys(
+          key_map: variation_key_map, origin_reaction: @origin_reaction,
+        )
+        @reaction.variations = reconciled unless reconciled == @reaction.variations
       end
 
       # Reconcile a mixture sample's persisted components with the client payload,
@@ -403,6 +440,11 @@ module Usecases
                             update_existing_sbmm_sample(sbmm_data)
                           end
           modified_sbmm_ids << modified_sbmm.id
+          record_variation_key(
+            'reactant_sbmm',
+            ReactionVariationMaterialKeys.sbmm_key(sbmm_data.id),
+            ReactionVariationMaterialKeys.sbmm_key(modified_sbmm.id),
+          )
           associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
         end
       end

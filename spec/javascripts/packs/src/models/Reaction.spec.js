@@ -151,6 +151,27 @@ describe('Reaction', () => {
       expect(copy.products[0].equivalent).toBe(null);
     });
 
+    it('re-keys the variations to the copied materials, by position, also for the same molecule', () => {
+      // Two starting materials of the same molecule whose id order differs from their position order.
+      reaction.starting_materials[0].id = 100;
+      reaction.starting_materials[1].id = 50;
+      reaction.variations = [{
+        id: 1,
+        uuid: 'row-1',
+        startingMaterials: { 100: { mass: 1 }, 50: { mass: 2 } },
+        reactants: {},
+        products: {},
+        solvents: { 'sbmm:7': { mass: 3 } },
+      }];
+
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      const [first, second] = copy.starting_materials;
+
+      expect(copy.variations[0].startingMaterials).toEqual({ [first.id]: { mass: 1 }, [second.id]: { mass: 2 } });
+      expect(copy.variations[0].solvents).toEqual({ 'sbmm:7': { mass: 3 } });
+      expect(reaction.variations[0].startingMaterials).toEqual({ 100: { mass: 1 }, 50: { mass: 2 } });
+    });
+
     it('preserves product amounts when keepAmounts=true', () => {
       reaction.products[0]._real_amount_value = 1.5;
       reaction.products[0]._target_amount_value = 2.0;

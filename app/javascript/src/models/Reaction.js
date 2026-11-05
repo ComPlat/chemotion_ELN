@@ -623,11 +623,41 @@ export default class Reaction extends Element {
       return copiedSample;
     });
 
+    copy.variations = Reaction.remapVariationMaterialKeys(this.variations, {
+      startingMaterials: [this.starting_materials, copy.starting_materials],
+      reactants: [this.reactants, copy.reactants],
+      products: [this.products, copy.products],
+      solvents: [this.solvents, copy.solvents],
+    });
+
     copy.rebuildProductName();
     copy.container = Container.init();
     copy.can_update = true;
     copy.can_copy = false;
     return copy;
+  }
+
+  /**
+   * Re-keys the variations' material groups from the source materials' ids to their copies' ids, so a
+   * copied reaction's variations name its own (still preliminary) samples. The backend translates those
+   * to the saved samples' ids on create. Keys without a counterpart (e.g., sequence-based macromolecule
+   * samples, which a copy shares with its source) are kept as they are.
+   * @param {Array<Object>} variations
+   * @param {Object<string, Array<Array<Object>>>} groupMaterials variations group => [sources, copies]
+   * @returns {Array<Object>}
+   */
+  static remapVariationMaterialKeys(variations, groupMaterials) {
+    return (variations || []).map((variation) => {
+      const remapped = { ...variation };
+      Object.entries(groupMaterials).forEach(([group, [sources, copies]]) => {
+        if (!variation[group]) { return; }
+        const idMap = new Map((sources || []).map((source, index) => [String(source.id), copies?.[index]?.id]));
+        remapped[group] = Object.fromEntries(
+          Object.entries(variation[group]).map(([key, entry]) => [idMap.get(key) ?? key, entry])
+        );
+      });
+      return remapped;
+    });
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
