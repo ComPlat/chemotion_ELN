@@ -217,6 +217,21 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     end
   end
 
+  context 'when two reactions link a purification solvent (a link without element tag)' do
+    let!(:new_link) { ReactionsPurificationSolventSample.create!(reaction: reaction, sample: sample) }
+
+    before do
+      ReactionsPurificationSolventSample.create!(reaction: other_reaction, sample: sample)
+      migration.up
+    end
+
+    it 'keeps the link in its reaction' do
+      expect(new_link.reload).to have_attributes(reaction_id: reaction.id, deleted_at: nil)
+    end
+
+    it_behaves_like 'a link given a new sample'
+  end
+
   context 'when some shared links can not get a new sample' do
     let(:failing_migration) { AddUniqueIndexToReactionsSamples.new }
     let(:second_sample) { create(:sample) }
