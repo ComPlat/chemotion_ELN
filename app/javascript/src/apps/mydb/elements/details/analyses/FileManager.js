@@ -288,21 +288,26 @@ function numberedName(name, n, isFile) {
 /*
 Advanced mode tells entries apart by key, so dropped roots must not share one. Two archives
 holding the same top-level folder (e.g. `X28721_10.zip` and `X28721_11.zip`, both holding
-`X28721/`) would otherwise list the same keys. A clashing archive is labelled with its own file
-name; anything else gets a numbered suffix. Only labels and keys change, not uploaded content.
+`X28721/`) would otherwise list the same keys. Every archive in such a clash is labelled with
+its own file name (`X28721_10`, `X28721_11`); whatever still clashes gets a numbered suffix.
+Only labels and keys change, not uploaded content.
 */
 function makeRootNamesUnique(containers) {
+  const counts = new Map();
+  containers.forEach(({ label }) => counts.set(label, (counts.get(label) || 0) + 1));
+
+  const wanted = containers.map((container) => {
+    const archiveName = container.archive?.file.name.replace(/\.zip$/i, '');
+    return counts.get(container.label) > 1 && archiveName ? archiveName : container.label;
+  });
+
   const taken = new Set();
-  containers.forEach((container) => {
-    let { label } = container;
-    if (taken.has(label)) {
-      const archiveName = container.archive?.file.name.replace(/\.zip$/i, '');
-      if (archiveName && !taken.has(archiveName)) {
-        label = archiveName;
-      }
-      for (let n = 2; taken.has(label); n += 1) {
-        label = numberedName(container.label, n, container.isFile);
-      }
+  containers.forEach((container, i) => {
+    let label = wanted[i];
+    for (let n = 2; taken.has(label); n += 1) {
+      label = numberedName(wanted[i], n, container.isFile);
+    }
+    if (label !== container.label) {
       container.relabelRoot(label);
     }
     taken.add(label);

@@ -152,8 +152,9 @@ describe('makeRootNamesUnique', () => {
   it('labels archives holding the same folder after their own file', async () => {
     const roots = await sameFolderArchives();
 
-    expect(roots.map((x) => x.label)).toEqual(['X28721', 'X28721_11']);
-    expect(roots.map((x) => x.key)).toEqual(['X28721', 'X28721_11']);
+    expect(roots.map((x) => x.label)).toEqual(['X28721_10', 'X28721_11']);
+    expect(roots.map((x) => x.key)).toEqual(['X28721_10', 'X28721_11']);
+    expect(keysBelow(roots[0])).toEqual(['X28721_10/10']);
     expect(keysBelow(roots[1])).toEqual(['X28721_11/11']);
     expect(keysBelow(roots[1].getNext()[0]).sort()).toEqual(['X28721_11/11/acqu', 'X28721_11/11/fid']);
   });
@@ -175,6 +176,24 @@ describe('makeRootNamesUnique', () => {
     folder.moveUpToRoot();
 
     expect(await entriesOf(await folder.getFile())).toEqual({ '11/fid': 'B', '11/acqu': 'C' });
+  });
+
+  it('leaves an archive alone when its folder name is not taken', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'X28721_10.zip')),
+      looseFile('B', 'other.jdx'),
+    ]);
+
+    expect(roots.map((x) => x.label)).toEqual(['X28721', 'other.jdx']);
+  });
+
+  it('numbers archives whose own file names clash as well', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'run.zip')),
+      await handleZipFile(await zipOf({ 'X28721/11/fid': 'B' }, 'run.ZIP')),
+    ]);
+
+    expect(roots.map((x) => x.label)).toEqual(['run', 'run (2)']);
   });
 
   it('numbers clashing files before their extension and uploads them unchanged', async () => {
