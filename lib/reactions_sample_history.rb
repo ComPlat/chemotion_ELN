@@ -12,6 +12,8 @@ module ReactionsSampleHistory
 
   module_function
 
+  # The versions of a row's history.
+  #
   # @param log_data [Hash, String, nil] a +log_data+ value
   # @return [Array<Hash>] the versions, oldest first; empty without history
   def versions(log_data)
@@ -19,13 +21,17 @@ module ReactionsSampleHistory
     data.is_a?(Hash) ? Array(data['h']) : []
   end
 
+  # The row as it was after the given versions.
+  #
   # @param versions [Array<Hash>] consecutive versions, starting with the first one
   # @return [Hash{String => Object}] the row as these versions build it
   def snapshot(versions)
     versions.each_with_object({}) { |version, row| apply_changes(row, version['c']) }
   end
 
-  # @return [String, nil] the uuid of the request that wrote the version
+  # The request that wrote a version.
+  #
+  # @return [String, nil] the request uuid; nil for versions written without request metadata
   def request_uuid(version)
     version.dig('m', 'uuid')
   end

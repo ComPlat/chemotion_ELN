@@ -20,8 +20,8 @@ require_relative '../../lib/reactions_sample_history'
 #    solvent), as they were before the first move. Columns someone else changed since are kept.
 #
 # Every link is repaired on its own: a link that can't be repaired is skipped and reported with its
-# id. A link is skipped when its original reaction is deleted or already has a material of that
-# molecule in that role, when its sample is deleted, or when its history changes the sample.
+# id. A link is skipped when its original reaction is deleted or got that material again after the
+# move, when its sample is deleted, or when its history changes the sample.
 # rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity -- one-off data repair kept in one migration
 class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
   History = ReactionsSampleHistory
@@ -31,6 +31,8 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     type reference equivalent position waste coefficient show_label gas_type gas_phase_data
     conversion_rate weight_percentage weight_percentage_reference
   ].freeze
+  # link columns added after the history backfill: older snapshots lack them, so restore the defaults
+  LATER_LINK_COLUMNS = { 'weight_percentage' => nil, 'weight_percentage_reference' => false }.freeze
   # flags a reaction holds on one material only
   SINGLE_FLAGS = %w[reference weight_percentage_reference].freeze
   # sample columns a reaction save wrote to an existing sample (UpdateMaterials#update_existing_sample)
@@ -38,8 +40,8 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     target_amount_value target_amount_unit real_amount_value real_amount_unit metrics
     name short_label external_label solvent dry_solvent
   ].freeze
-  # the amounts a split takes from the time it left a reaction
-  SPLIT_COLUMNS = %w[target_amount_value target_amount_unit real_amount_value real_amount_unit metrics].freeze
+  # what a split takes from the sample of the time it left a reaction (it keeps its own label)
+  SPLIT_COLUMNS = (SAMPLE_COLUMNS - %w[short_label]).freeze
   # without request metadata, versions written this close to a reaction save belong to that save
   SAVE_WINDOW_MS = 5_000
   # ids listed per reported outcome
@@ -47,7 +49,7 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
   REPORTS = {
     returned: 'returned to their original reaction',
     revived: 'revived (soft-deleted with their copy) and returned to their original reaction',
-    origin_has_it: 'skipped: the original reaction has a material of that molecule in that role again',
+    origin_has_it: 'skipped: the original reaction got a material of that molecule in that role after the move',
     origin_gone: 'skipped: the original reaction is deleted',
     sample_gone: 'skipped: the sample is deleted',
     sample_elsewhere: 'skipped: soft-deleted with its copy, and its sample has another live link now',
@@ -55,15 +57,25 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     no_history: 'skipped: the history names no first reaction',
     failed: 'failed and left unchanged',
   }.freeze
+  NOTES = {
+    kept_columns: 'kept a column someone other than a taker changed after the move',
+    analyses_after_move: 'have analyses added after the move (left on the original sample)',
+    other_data_after_move: 'have residues, components or segments changed after the move (left as they are)',
+    origin_variations: 'have no entry in the variations of their original reaction (dropped after the move)',
+    taker_memberships: "are still in a taker's collection that is not one of their reaction's (not changed)",
+  }.freeze
 
   def up
+    @started_at = select_value('SELECT clock_timestamp()')
     outcomes = Hash.new { |hash, key| hash[key] = [] }
     notes = Hash.new { |hash, key| hash[key] = [] }
     moved_links.each do |link|
-      outcome = ActiveRecord::Base.transaction(requires_new: true) { repair(link, notes) }
+      link_notes = Hash.new { |hash, key| hash[key] = [] }
+      outcome = ActiveRecord::Base.transaction(requires_new: true) { repair(link, link_notes) }
       outcomes[outcome] << link['id']
+      link_notes.each { |key, ids| notes[key].concat(ids) }
     rescue StandardError => e
-      outcomes[:failed] << "#{link['id']} (#{e.class})"
+      outcomes[:failed] << "#{link['id']} (#{e.class}: #{e.message.to_s.lines.first&.strip&.slice(0, 120)})"
     end
     report(outcomes, notes)
   end
@@ -92,7 +104,7 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
   # Returns one moved link and gives its takers their own samples.
   #
   # @param link [Hash] a row of {#moved_links}
-  # @param notes [Hash{Symbol => Array}] collects findings to report (ids)
+  # @param notes [Hash{Symbol => Array}] collects findings to report (sample ids), kept only on success
   # @return [Symbol] the outcome, a key of {REPORTS}
   def repair(link, notes)
     history = History.versions(link['log_data'])
@@ -101,13 +113,13 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     return skip if skip
 
     sample = Sample.find(link['sample_id'])
+    sample_history = sample_versions(sample.id)
     origin_id = stretches.first[:reaction_id]
-    give_takers_samples(link, sample, history, stretches)
-    # the values of the origin's last stretch (a chain can pass through it again)
-    last_in_origin = stretches.reverse.find { |stretch| stretch[:reaction_id] == origin_id }
-    restore_link(link['id'], origin_id, History.snapshot(history[0..last_in_origin[:last]]))
-    restore_sample(sample, history, stretches, notes)
-    note_leftovers(link, sample, history[stretches[1][:first]]['ts'], stretches.first[:reaction_id], notes)
+    new_sample_ids = give_takers_samples(link, sample, history, stretches, sample_history)
+    restore_link(link['id'], origin_id, origin_snapshot(history, stretches))
+    refresh_tags([sample.id, *new_sample_ids])
+    restore_sample(sample, history, stretches, sample_history, notes)
+    note_leftovers(link, sample, history, stretches, notes)
     link['live'] ? :returned : :revived
   end
 
@@ -118,47 +130,64 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
 
     origin_id = stretches.first[:reaction_id]
     return :origin_gone unless live_reaction?(origin_id)
-    return :origin_has_it if material?(origin_id, link['type'], link['molecule_id'])
+
+    origin_type = origin_snapshot(history, stretches)['type']
+    return :origin_has_it if readded?(origin_id, origin_type, link, history[stretches[1][:first]]['ts'])
 
     :sample_elsewhere if !link['live'] && other_live_link?(link)
   end
 
+  # The link as it was at the end of its last stretch in the original reaction (a chain can pass
+  # through the original again).
+  def origin_snapshot(history, stretches)
+    origin_id = stretches.first[:reaction_id]
+    last_in_origin = stretches.reverse.find { |stretch| stretch[:reaction_id] == origin_id }
+    with_later_defaults(History.snapshot(history[0..last_in_origin[:last]]))
+  end
+
   # The current holder (when its link is live) and every reaction the link passed through get a sample
-  # of their own, unless they have that material again or are deleted.
-  def give_takers_samples(link, sample, history, stretches)
+  # of their own, unless they got that material again after it left or are deleted.
+  #
+  # @return [Array<Integer>] the ids of the new samples
+  def give_takers_samples(link, sample, history, stretches, sample_history)
     origin_id = stretches.first[:reaction_id]
     holder_id = link['live'] ? link['reaction_id'] : nil
-    give_sample(holder_id, sample, current_link_values(link['id']), nil, link['id']) if holder_id
+    new_ids = []
+    new_ids << give_sample(holder_id, sample, current_link_values(link['id']), nil, link['id']) if holder_id
     stretches.each_with_index.drop(1).reverse_each.uniq { |stretch, _| stretch[:reaction_id] }.each do |stretch, index|
       reaction_id = stretch[:reaction_id]
       next if [origin_id, holder_id].include?(reaction_id) || index == stretches.size - 1
-      next unless live_reaction?(reaction_id) && !material?(reaction_id, link['type'], link['molecule_id'])
+      next unless live_reaction?(reaction_id)
 
+      values = with_later_defaults(History.snapshot(history[0..stretch[:last]]))
       left_at = history[stretches[index + 1][:first]]
-      give_sample(reaction_id, sample, History.snapshot(history[0..stretch[:last]]), left_at, link['id'])
+      next if readded?(reaction_id, values['type'], link, left_at['ts'])
+
+      new_ids << give_sample(reaction_id, sample, values, sample_before(sample_history, left_at), link['id'])
     end
+    new_ids
   end
 
   # Links the reaction to a new sample split from +sample+.
   #
   # @param values [Hash] the link values in that reaction
-  # @param left_at [Hash, nil] the link version that took the material out of that reaction: the split
-  #   takes the sample's amounts of that time; nil keeps the current amounts
+  # @param columns [Hash, nil] sample columns of the time the material left that reaction; nil keeps the
+  #   sample's current columns
   # @param moved_id [Integer] the moved link, ignored when checking the reaction's single flags
-  def give_sample(reaction_id, sample, values, left_at, moved_id)
+  # @return [Integer] the id of the new sample
+  def give_sample(reaction_id, sample, values, columns, moved_id)
     reaction = Reaction.find(reaction_id)
     new_sample = new_sample_for(reaction, sample, values['type'])
-    if left_at
-      amounts = sample_before(sample, left_at).slice(*SPLIT_COLUMNS)
-      new_sample.update_columns(amounts) if amounts.any? # rubocop:disable Rails/SkipsModelValidations
-    end
-    insert_link(reaction_id, new_sample.id, guard_single_flags(reaction_id, values.slice(*LINK_COLUMNS), moved_id))
+    taken = columns&.slice(*SPLIT_COLUMNS)
+    new_sample.update_columns(taken) if taken.present? # rubocop:disable Rails/SkipsModelValidations
+    create_link(reaction_id, new_sample.id, guard_single_flags(reaction_id, values.slice(*LINK_COLUMNS), moved_id))
     rekey_variations(reaction, values['type'], sample.id, new_sample.id)
+    new_sample.id
   end
 
   def new_sample_for(reaction, sample, type)
-    user = User.with_deleted.find_by(id: reaction.created_by) || User.with_deleted.find_by(id: sample.created_by)
-    raise ActiveRecord::RecordNotFound, "no user to own a sample of reaction #{reaction.id}" unless user
+    user = new_sample_owner(reaction, sample)
+    raise ActiveRecord::RecordNotFound, "no live user to own a sample of reaction #{reaction.id}" unless user
 
     new_sample = sample.create_subsample(user, reaction.collections.pluck(:id), true, 'reaction')
     # a product is a new sample, not a split (as the reaction editor creates it)
@@ -166,18 +195,27 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     new_sample
   end
 
+  # The owner of a new sample: the reaction's creator, else the sample's, else the owner of one of the
+  # reaction's collections. A sample's creator must be a live user.
+  #
+  # @return [User, nil] nil when none of them is a live user
+  def new_sample_owner(reaction, sample)
+    User.find_by(id: reaction.created_by) || User.find_by(id: sample.created_by) ||
+      User.find_by(id: reaction.collections.where.not(user_id: nil).select(:user_id))
+  end
+
   def current_link_values(link_id)
     select_all("SELECT #{LINK_COLUMNS.join(', ')} FROM reactions_samples WHERE id = #{connection.quote(link_id)}")
       .first
   end
 
-  def insert_link(reaction_id, sample_id, values)
-    columns = values.keys.map { |column| connection.quote_column_name(column) }
-    execute(<<~SQL.squish)
-      INSERT INTO reactions_samples (reaction_id, sample_id, #{columns.join(', ')}, created_at, updated_at)
-      VALUES (#{connection.quote(reaction_id)}, #{connection.quote(sample_id)},
-              #{values.values.map { |value| quote_value(value) }.join(', ')}, now(), now())
-    SQL
+  # Creates the link through its model, so the link callbacks (element tag, collections) run.
+  def create_link(reaction_id, sample_id, values)
+    attributes = values.to_h do |column, value|
+      [column, History::JSONB_COLUMNS.include?(column) ? History.parse_json(value) : value]
+    end
+    attributes.delete('type').constantize.create!(attributes.merge('reaction_id' => reaction_id,
+                                                                   'sample_id' => sample_id))
   end
 
   def restore_link(id, origin_id, snapshot)
@@ -185,6 +223,16 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     assignments = values.map { |column, value| "#{connection.quote_column_name(column)} = #{quote_value(value)}" }
     assignments << "reaction_id = #{connection.quote(origin_id)}" << 'deleted_at = NULL' << 'updated_at = now()'
     execute("UPDATE reactions_samples SET #{assignments.join(', ')} WHERE id = #{connection.quote(id)}")
+  end
+
+  # Fills the link columns an old snapshot lacks with their defaults.
+  def with_later_defaults(snapshot)
+    LATER_LINK_COLUMNS.merge(snapshot)
+  end
+
+  # Points the samples' element tags at the reaction of their live link (raw updates skip the callbacks).
+  def refresh_tags(sample_ids)
+    ReactionsSample.where(sample_id: sample_ids).find_each { |link| link.update_tag if link.respond_to?(:update_tag) }
   end
 
   # A reaction holds +reference+ and +weight_percentage_reference+ on one material only: a flag another
@@ -205,9 +253,7 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
   # Renames the old sample's key to the new sample in the reaction's stored variations (keyed by
   # variation uuid, or an array in older data), keeping their shape. Nothing else changes.
   def rekey_variations(reaction, type, sample_id, new_sample_id)
-    group = ReactionVariationMaterialKeys.variations_group_for(
-      type.delete_prefix('Reactions').delete_suffix('Sample').underscore,
-    )
+    group = variations_group(type)
     raw = reaction[:variations]
     return if group.nil? || raw.blank?
 
@@ -223,20 +269,28 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     variation.merge(group => materials.transform_keys { |key| key == old_key ? new_key : key })
   end
 
-  # Sets the sample's columns back to their values before the first move, where every later change of
-  # the column came from a save of a reaction that took it.
-  def restore_sample(sample, history, stretches, notes)
-    move = history[stretches[1][:first]]
-    before = sample_before(sample, move)
+  def variations_group(type)
+    material_group = type.delete_prefix('Reactions').delete_suffix('Sample').underscore
+    ReactionVariationMaterialKeys.variations_group_for(material_group)
+  end
+
+  # Sets the sample's columns back to their values when the link last left the original reaction, where
+  # every later change of the column came from a save of a reaction that took it.
+  def restore_sample(sample, history, stretches, sample_history, notes)
+    origin_id = stretches.first[:reaction_id]
+    last_in_origin = stretches.rindex { |stretch| stretch[:reaction_id] == origin_id }
+    taker_stretches = stretches.drop(last_in_origin + 1)
+    move = history[taker_stretches.first[:first]]
+    before = sample_before(sample_history, move)
     return if before.empty?
 
-    later = sample_versions(sample).reject { |version| before_move?(version, move) }
-    takers = taker_saves(stretches.drop(1).pluck(:reaction_id) - [stretches.first[:reaction_id]],
-                         move['ts'], history.drop(stretches[1][:first]))
-    restored = SAMPLE_COLUMNS.each_with_object({}) do |column, values|
-      changes = later.select { |version| version['c'].key?(column) }
-      next if changes.empty? || !before.key?(column)
-      next notes[:kept_columns] << sample.id unless changes.all? { |version| takers.call(version) }
+    later = sample_history.reject { |version| before_move?(version, move) }
+    changed = SAMPLE_COLUMNS.select { |column| before.key?(column) && later.any? { |v| v['c'].key?(column) } }
+    return if changed.empty?
+
+    takers = taker_saves(history, taker_stretches)
+    restored = changed.each_with_object({}) do |column, values|
+      next notes[:kept_columns] << sample.id unless later.select { |v| v['c'].key?(column) }.all?(&takers)
 
       values[column] = before[column]
     end
@@ -255,14 +309,15 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     notes[:restored_samples] << sample_id
   end
 
-  def sample_versions(sample)
-    History.versions(select_value("SELECT log_data FROM samples WHERE id = #{connection.quote(sample.id)}"))
+  def sample_versions(sample_id)
+    History.versions(select_value("SELECT log_data FROM samples WHERE id = #{connection.quote(sample_id)}"))
   end
 
   # The sample's columns before the save that wrote the given link version.
-  def sample_before(sample, move)
-    versions = sample_versions(sample)
-    before = versions.take_while { |version| before_move?(version, move) }
+  #
+  # @return [Hash] empty when the sample's history starts later
+  def sample_before(sample_history, move)
+    before = sample_history.take_while { |version| before_move?(version, move) }
     before.empty? ? {} : History.snapshot(before)
   end
 
@@ -273,11 +328,19 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     version['ts'] < (uuid ? move['ts'] : move['ts'] - SAVE_WINDOW_MS)
   end
 
-  # @return [Proc] whether a sample version was written by a save of one of the given reactions
-  def taker_saves(reaction_ids, since_ts, link_versions)
-    versions = link_versions + reaction_ids.flat_map do |id|
-      History.versions(select_value("SELECT log_data FROM reactions WHERE id = #{connection.quote(id)}"))
-             .select { |version| version['ts'] >= since_ts - SAVE_WINDOW_MS }
+  # Builds the test of whether a sample version was written by a save of a reaction that took the
+  # link: same request as one of the link's versions in a taker's stretch or as a version of a taker
+  # reaction since the link left the original, or (without request metadata) written within
+  # {SAVE_WINDOW_MS} of one.
+  #
+  # @param taker_stretches [Array<Hash>] the stretches after the link last left the original reaction
+  # @return [Proc] called with a sample version
+  def taker_saves(history, taker_stretches)
+    since_ts = history[taker_stretches.first[:first]]['ts']
+    versions = taker_stretches.flat_map { |stretch| history[stretch[:first]..stretch[:last]] }
+    taker_stretches.map { |stretch| stretch[:reaction_id] }.uniq.each do |id|
+      versions += History.versions(select_value("SELECT log_data FROM reactions WHERE id = #{connection.quote(id)}"))
+                         .select { |version| version['ts'] >= since_ts - SAVE_WINDOW_MS }
     end
     uuids = versions.filter_map { |version| History.request_uuid(version) }.to_set
     times = versions.pluck('ts')
@@ -289,39 +352,66 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
     end
   end
 
-  # Reports what a returned sample still carries from its takers: analyses added after the move, and
-  # memberships of a taker's collection that is not a collection of the original reaction (memberships
-  # have no history, so they are only reported).
-  def note_leftovers(link, sample, moved_ts, origin_id, notes)
+  # Reports what a returned sample still carries from its takers, and a returned material missing from
+  # its original reaction's variations: none of this is changed.
+  def note_leftovers(link, sample, history, stretches, notes)
+    moved_at = "to_timestamp(#{connection.quote(history[stretches[1][:first]]['ts'])} / 1000.0)"
+    origin_id = stretches.first[:reaction_id]
+    id = connection.quote(sample.id)
     notes[:analyses_after_move] << sample.id if select_value(<<~SQL.squish).present?
       SELECT 1 FROM containers c
       JOIN container_hierarchies h ON h.descendant_id = c.id
       JOIN containers root ON root.id = h.ancestor_id AND root.containable_type = 'Sample'
-        AND root.containable_id = #{connection.quote(sample.id)} AND root.container_type = 'root'
-      WHERE c.container_type = 'analysis' AND c.created_at > to_timestamp(#{connection.quote(moved_ts)} / 1000.0)
+        AND root.containable_id = #{id} AND root.container_type = 'root'
+      WHERE c.container_type = 'analysis' AND c.created_at > #{moved_at}
+    SQL
+    notes[:other_data_after_move] << sample.id if select_value(<<~SQL.squish).present?
+      SELECT 1 FROM residues WHERE sample_id = #{id} AND updated_at > #{moved_at}
+      UNION ALL SELECT 1 FROM components WHERE sample_id = #{id} AND updated_at > #{moved_at}
+      UNION ALL SELECT 1 FROM segments WHERE element_type = 'Sample' AND element_id = #{id} AND updated_at > #{moved_at}
     SQL
     notes[:taker_memberships] << sample.id if select_value(<<~SQL.squish).present?
       SELECT 1 FROM collections_samples cs
       JOIN collections_reactions taker ON taker.collection_id = cs.collection_id AND taker.deleted_at IS NULL
         AND taker.reaction_id = #{connection.quote(link['reaction_id'])}
-      WHERE cs.sample_id = #{connection.quote(sample.id)} AND cs.deleted_at IS NULL
+      WHERE cs.sample_id = #{id} AND cs.deleted_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM collections_reactions own WHERE own.collection_id = cs.collection_id
                           AND own.deleted_at IS NULL AND own.reaction_id = #{connection.quote(origin_id)})
     SQL
+    origin_type = origin_snapshot(history, stretches)['type']
+    notes[:origin_variations] << sample.id if variation_entry_missing?(origin_id, origin_type, sample.id)
+  end
+
+  # Whether the reaction has variations for the material's group, but none of them names the sample.
+  def variation_entry_missing?(reaction_id, type, sample_id)
+    group = variations_group(type)
+    raw = Reaction.find(reaction_id)[:variations]
+    return false if group.nil? || raw.blank?
+
+    variations = raw.is_a?(Hash) ? raw.values : Array(raw)
+    variations.none? do |variation|
+      variation.is_a?(Hash) && variation[group].is_a?(Hash) && variation[group].key?(sample_id.to_s)
+    end
   end
 
   def live_reaction?(id)
     select_value("SELECT 1 FROM reactions WHERE id = #{connection.quote(id)} AND deleted_at IS NULL").present?
   end
 
-  # Whether the reaction has a live link of that type to a sample of that molecule.
-  def material?(reaction_id, type, molecule_id)
-    return false if molecule_id.nil?
+  # Whether the reaction got a material of the link's molecule in that role after +since_ts+: a live
+  # link created then (not by this migration) whose own history starts in that reaction, so neither a
+  # material it always had nor a link this run returned to it.
+  def readded?(reaction_id, type, link, since_ts)
+    return false if link['molecule_id'].nil? || type.nil?
 
     select_value(<<~SQL.squish).present?
       SELECT 1 FROM reactions_samples rs JOIN samples s ON s.id = rs.sample_id AND s.deleted_at IS NULL
       WHERE rs.reaction_id = #{connection.quote(reaction_id)} AND rs.type = #{connection.quote(type)}
-        AND rs.deleted_at IS NULL AND s.molecule_id = #{connection.quote(molecule_id)}
+        AND rs.deleted_at IS NULL AND rs.id <> #{connection.quote(link['id'])}
+        AND s.molecule_id = #{connection.quote(link['molecule_id'])}
+        AND rs.created_at > to_timestamp(#{connection.quote(since_ts)} / 1000.0)
+        AND rs.created_at < #{connection.quote(@started_at)}
+        AND coalesce((rs.log_data #>> '{h,0,c,reaction_id}')::integer, rs.reaction_id) = rs.reaction_id
     SQL
   end
 
@@ -335,6 +425,8 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
 
   def same_value?(column, left, right)
     type = Sample.type_for_attribute(column)
+    return History.parse_json(left) == History.parse_json(right) if %i[jsonb json].include?(type.type)
+
     type.cast(left) == type.cast(right)
   end
 
@@ -348,13 +440,10 @@ class ReturnMaterialsMovedByReactionSaves < ActiveRecord::Migration[6.1]
       say "#{ids.size} moved reaction-sample link(s) #{text}#{listed(ids)}" if ids.any? || key == :returned
     end
     say "restored the columns of #{notes[:restored_samples].uniq.size} original sample(s) from before the move"
-    { kept_columns: 'kept a column someone other than a taker changed after the move',
-      analyses_after_move: 'have analyses added after the move (left on the original sample)',
-      taker_memberships: "are still in a taker's collection that is not one of their reaction's (not changed)" }
-      .each do |key, text|
-        ids = notes[key].uniq
-        say "#{ids.size} returned sample(s) #{text}#{listed(ids)}" if ids.any?
-      end
+    NOTES.each do |key, text|
+      ids = notes[key].uniq
+      say "#{ids.size} returned sample(s) #{text}#{listed(ids)}" if ids.any?
+    end
   end
 
   def listed(ids)

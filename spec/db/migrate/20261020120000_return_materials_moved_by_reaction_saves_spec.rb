@@ -34,10 +34,10 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
   end
 
   # An older client's save of +to+ that took the link: it writes its amount to the sample, then moves the link.
-  def move(link, to:, amount: 3, at: moved_at, by: user)
-    as_request(by, at) do
+  def move(link, to:, amount: 3, at: moved_at, name: nil)
+    as_request(user, at) do
       to.update!(updated_at: Time.current)
-      link.sample.update!(target_amount_value: amount)
+      link.sample.update!({ target_amount_value: amount, name: name }.compact)
       link.update!(reaction_id: to.id)
     end
   end
@@ -136,6 +136,108 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
     end
   end
 
+  context 'when a copy took two links of one molecule' do
+    let(:second) { old_sample(name: 'second', molecule: solvent.molecule) }
+    let!(:links) { [link_to(original, solvent), link_to(original, second, position: 1)] }
+
+    before do
+      links.each_with_index { |link, index| move(link, to: copy, at: moved_at + index.minutes) }
+      migration.up
+    end
+
+    it 'returns both, the second not blocked by the first' do
+      expect(links.map { |link| link.reload.reaction_id }).to eq([original.id, original.id])
+      expect(links_of(copy).count).to eq(2)
+    end
+  end
+
+  context 'when the original reaction always had another material of that molecule' do
+    let!(:link) { link_to(original, solvent) }
+
+    before do
+      link_to(original, old_sample(name: 'kept', molecule: solvent.molecule), position: 1)
+      move(link, to: copy)
+      migration.up
+    end
+
+    it 'still returns the link' do
+      expect(link.reload.reaction_id).to eq(original.id)
+    end
+  end
+
+  context 'when the creator of the copy is deleted' do
+    let(:copy_owner) { create(:person) }
+    let(:copy) { create(:reaction, name: 'Reaction', creator: copy_owner, collections: [copy_collection]) }
+    let!(:link) { link_to(original, solvent) }
+
+    before do
+      move(link, to: copy)
+      copy_owner.destroy
+      migration.up
+    end
+
+    it "gives the copy's new sample to the sample's live creator" do
+      expect(link.reload.reaction_id).to eq(original.id)
+      expect(links_of(copy).first.sample.created_by).to eq(user.id)
+    end
+  end
+
+  context 'when a starting material was moved' do
+    let(:sample) { old_sample }
+    let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample) }
+
+    before do
+      move(link, to: copy)
+      migration.up
+    end
+
+    it 'points the element tags at the reaction of each sample' do
+      expect(sample.reload.tag.taggable_data['reaction_id']).to eq(original.id)
+      expect(links_of(copy).first.sample.tag.taggable_data['reaction_id']).to eq(copy.id)
+    end
+  end
+
+  context 'when the history predates the weight percentage columns' do
+    let(:sample) { old_sample }
+    let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample) }
+
+    before do
+      ActiveRecord::Base.connection.execute(<<~SQL.squish)
+        UPDATE reactions_samples
+        SET log_data = jsonb_set(log_data, '{h,0,c}', (log_data #> '{h,0,c}') - 'weight_percentage' - 'weight_percentage_reference')
+        WHERE id = #{link.id}
+      SQL
+      move(link, to: copy)
+      as_request(user, moved_at + 1.minute) do
+        copy.update!(updated_at: Time.current)
+        link.update!(weight_percentage_reference: true, weight_percentage: 0.5)
+      end
+      migration.up
+    end
+
+    it 'returns the link with the default weight percentage values' do
+      expect(link.reload).to have_attributes(reaction_id: original.id, weight_percentage_reference: false,
+                                             weight_percentage: nil)
+    end
+  end
+
+  context 'when the link came back to the original reaction in between' do
+    let(:third) { create(:reaction, name: 'Reaction', creator: user, collections: [copy_collection]) }
+    let!(:link) { link_to(original, solvent) }
+
+    before do
+      move(link, to: copy, amount: 3)
+      move(link, to: original, amount: 7, at: moved_at + 1.hour)
+      move(link, to: third, amount: 5, at: moved_at + 2.hours)
+      migration.up
+    end
+
+    it "keeps the original's own change from when it had the link again" do
+      expect(link.reload.reaction_id).to eq(original.id)
+      expect(solvent.reload.target_amount_value).to eq(7)
+    end
+  end
+
   context 'when the original reaction has a new reference material since' do
     let(:sample) { old_sample }
     let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample, reference: true) }
@@ -163,14 +265,15 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
         copy.update!(updated_at: Time.current)
         link.update!(position: 1)
       end
-      move(link, to: third, amount: 5, at: moved_at + 1.hour)
+      move(link, to: third, amount: 5, at: moved_at + 1.hour, name: 'renamed')
       migration.up
     end
 
     it 'returns the link to the first reaction, and gives each copy its values', :aggregate_failures do
       expect(link.reload).to have_attributes(reaction_id: original.id, position: 2)
       expect(links_of(copy).first).to have_attributes(position: 1)
-      expect(links_of(copy).first.sample).to have_attributes(parent: solvent, target_amount_value: 3)
+      expect(links_of(copy).first.sample).to have_attributes(parent: solvent, target_amount_value: 3,
+                                                             name: 'solvent')
       expect(links_of(third).first.sample).to have_attributes(parent: solvent, target_amount_value: 5)
       expect(solvent.reload.target_amount_value).to eq(10)
     end
