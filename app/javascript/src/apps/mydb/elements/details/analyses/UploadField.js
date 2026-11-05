@@ -129,14 +129,14 @@ const FileListDisplay = ({ files }) => {
     }}
     >
       {files.map((file) => (
-        <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
+        <ListGroup.Item key={file.key} className="d-flex justify-content-between align-items-center">
 
-          <div style={{ overflow: 'auto' }} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
-            <strong>{file.name}</strong>
+          <div style={{ overflow: 'auto' }} key={`DIVV__${file.key}`} className="flex-grow-1 me-3">
+            <strong>{file.label}</strong>
             <div
               className="text-muted small"
             >
-              {file.fullPath || file.webkitRelativePath || file.name}
+              {file.key}
             </div>
           </div>
           <Badge bg="secondary">
