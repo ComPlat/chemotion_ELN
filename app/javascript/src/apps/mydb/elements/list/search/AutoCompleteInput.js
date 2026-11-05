@@ -77,9 +77,11 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   focusSuggestion(newFocus) {
-    let { suggestions, suggestionFocus, value, valueBeforeFocus } = this.state;
+    const { suggestions, value, valueBeforeFocus } = this.state;
+    // A hover or key event can still refer to an entry of a previous, longer result list.
+    if (!suggestions || !suggestions[newFocus]) { return; }
+
     let newState = {};
-    let sF = !suggestionFocus ? 0 : suggestionFocus;
     if (!valueBeforeFocus) {
       newState.valueBeforeFocus = value;
     }
@@ -89,18 +91,15 @@ export default class AutoCompleteInput extends React.Component {
       newState.value = suggestions[newFocus].name.name || suggestions[newFocus].name.value;
     }
 
+    // The highlight is rendered from suggestionFocus (see renderSuggestions).
     newState.suggestionFocus = newFocus;
-    ReactDOM.findDOMNode(this.refs['suggestion_' + sF])
-      .classList.remove('active');
-    let newFocusDom = ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus]);
-    newFocusDom.classList.add('active');
-
     this.setState(newState);
 
-    const listSuggestions = this.listSuggestions;
+    const newFocusDom = ReactDOM.findDOMNode(this.refs[`suggestion_${newFocus}`]);
+    const { listSuggestions } = this;
 
     // Scroll to element
-    if (listSuggestions &&
+    if (listSuggestions && newFocusDom &&
       (newFocusDom.offsetTop > (listSuggestions.scrollTop + listSuggestions.offsetHeight - 70) ||
         (newFocusDom.offsetTop < listSuggestions.scrollTop))) {
       listSuggestions.scrollTop = newFocusDom.offsetTop - (11 * listSuggestions.offsetTop);
@@ -125,6 +124,7 @@ export default class AutoCompleteInput extends React.Component {
       let newState = {};
       if (result.length > 0) {
         newState.suggestions = result;
+        newState.suggestionFocus = null;
         newState.showSuggestions = show;
       } else {
         newState.suggestions = null;
@@ -262,7 +262,7 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   renderSuggestions() {
-    const { suggestions, error } = this.state;
+    const { suggestions, suggestionFocus, error } = this.state;
     const types = {
       sample_name: { icon: 'icon-sample', label: 'Sample Name' },
       sample_short_label: { icon: 'icon-sample', label: 'Sample Short Label' },
@@ -342,6 +342,7 @@ export default class AutoCompleteInput extends React.Component {
               <ListGroup.Item
                 onClick={() => this.selectSuggestion()}
                 onMouseEnter={() => this.focusSuggestion(index)}
+                active={index === suggestionFocus}
                 key={'suggestion_' + index}
                 ref={'suggestion_' + index}
               >
