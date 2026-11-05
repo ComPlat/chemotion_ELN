@@ -38,6 +38,10 @@ class Component < ApplicationRecord
       return
     end
 
+    # HierarchicalMaterial components are structural canvas nodes, not molecules —
+    # they carry source/molar_mass/weight_ratio instead of molecule_id.
+    return if sample&.sample_type == Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+
     molecule_id = component_properties[:molecule_id] || component_properties['molecule_id']
     return if molecule_id.present? && molecule_id.to_i.positive?
 

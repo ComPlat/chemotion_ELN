@@ -2,12 +2,14 @@ module UnitConvertable
   extend ActiveSupport::Concern
 
   def convert_to_unit amount_g, unit, m = false
-    val = if self.contains_residues
+    val = if contains_residues
       case unit
       when 'g'
         amount_g
       when 'mol'
-        (self.loading * amount_g) / 1000.0 # loading is always in mmol/g
+        # loading is always in mmol/g; nil loading (HM without a value) yields 0 mol
+        loading_value = loading
+        loading_value ? (loading_value * amount_g) / 1000.0 : 0.0
       else
         amount_g
       end

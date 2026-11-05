@@ -3,9 +3,7 @@
 require 'charlock_holmes'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
-# Same disable as its parent Import::ImportSamples: this importer was already far past the 200-line
-# limit before any of the recent work, and splitting it up is a refactor in its own right.
-# rubocop:disable-next Metrics/ClassLength
+# rubocop:disable Metrics/ClassLength, Style/ClassAndModuleChildren
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples,
@@ -104,6 +102,20 @@ class Import::ImportSdf < Import::ImportSamples
       color: { field: 'color', displayName: 'Color' },
       form: { field: 'form', displayName: 'Form' },
       inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
+      height: { field: 'height', displayName: 'Height' },
+      width: { field: 'width', displayName: 'Width' },
+      length: { field: 'length', displayName: 'Length' },
+      diameter: { field: 'diameter', displayName: 'Diameter' },
+      state: { field: 'state', displayName: 'State' },
+      storage_condition: { field: 'storage_condition', displayName: 'Storage condition' },
+      material: { field: 'material', displayName: 'Material' },
+      cspi: { field: 'cspi', displayName: 'CSPI' },
+      particle_size: { field: 'particle_size', displayName: 'Particle size' },
+      shape: { field: 'shape', displayName: 'Shape' },
+      sieve_fraction: { field: 'sieve_fraction', displayName: 'Sieve fraction' },
+      layer_thickness: { field: 'layer_thickness', displayName: 'Layer thickness' },
+      liquid_medium: { field: 'liquid_medium', displayName: 'Liquid medium' },
+      stabilizer: { field: 'stabilizer', displayName: 'Stabilizer' },
     }
     return base.merge(CHEMICAL_KEYS_TO_MAP) if @import_type == 'chemical'
 
@@ -128,7 +140,9 @@ class Import::ImportSdf < Import::ImportSamples
     rescue StandardError => e
       @message[:error] << "Failed to read attachment file: #{e.message}"
     end
-    @raw_data.pop if @raw_data[-1].blank?
+    # Drop any entry that is blank or has no molfile body (e.g., stray tag blocks
+    # left over from double-$$$$ separators in older exports).
+    @raw_data.reject! { |entry| entry.to_s.strip.empty? || entry.to_s.exclude?('M  END') }
   end
 
   # An MDL record is title / program / comment / counts. Some editors -- Ketcher, including the SDF
@@ -367,6 +381,7 @@ class Import::ImportSdf < Import::ImportSamples
           # held across a later row's native work either.
           ActiveRecord::Base.transaction(requires_new: true) do
             sample = build_sample_from_row(resolved, row, attribs, error_messages)
+            assign_hierarchical_material_columns(sample, row)
             sample.collections << collection_for_import
             sample.collections << all_collections_for_user
             sample.save!
@@ -442,6 +457,33 @@ class Import::ImportSdf < Import::ImportSamples
     sample.decoupled = true if molfile_for_sample.nil? || assign_boolean_value(row['decoupled'])
     sample.inventory_sample = true if @import_type == 'chemical'
     sample
+  end
+
+  # HierarchicalMaterial subtype columns. Float dimensions are routed through the shared
+  # coercer so a cell like '12,5' or '12 mm' reads the same from an SDF as from a
+  # spreadsheet -- an unreadable value is reported by the coercer instead of falling silently
+  # to 0.0. String columns and the mirrored xref/color pair are copied as-is.
+  HM_FLOAT_COLUMNS = %w[height width length diameter].freeze
+  HM_STRING_COLUMNS = %w[
+    storage_condition material cspi shape sieve_fraction
+    layer_thickness liquid_medium stabilizer
+  ].freeze
+  # Columns that surface in the sample form's "additional properties" picker. Kept out of the
+  # required-columns set: what the user chose to fill on export is what re-appears on import.
+  HM_ADDITIONAL_PROPERTY_KEYS = %w[
+    sieve_fraction height diameter width length material cspi shape
+    layer_thickness liquid_medium stabilizer
+  ].freeze
+
+  def assign_hierarchical_material_columns(sample, row)
+    HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
+    HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
+    sample.xref['color'] = row['color'] if row['color'].present?
+
+    selected_props = HM_ADDITIONAL_PROPERTY_KEYS.select { |k| row[k].to_s.strip.present? }
+    return if selected_props.empty?
+
+    sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
   end
 
   # Columns copied across as-is, plus the xref sub-hash ones.
@@ -857,3 +899,4 @@ class Import::ImportSdf < Import::ImportSamples
        .concat(MOLFILE_BLOCK_END_LINE)
   end
 end
+# rubocop:enable Metrics/ClassLength, Style/ClassAndModuleChildren

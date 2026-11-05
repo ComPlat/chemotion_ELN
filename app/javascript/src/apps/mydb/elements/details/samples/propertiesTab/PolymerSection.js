@@ -8,15 +8,24 @@ import { Select } from 'src/components/common/Select';
 
 export default class PolymerSection extends React.Component {
   static contextType = StoreContext;
+
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
     residue.custom_info[name] = e.value;
 
     // make calculations if loading was changed
-    if (name == 'loading') {
-      handleAmountChanged(sample.amount);
+    if (name === 'loading') {
       if (residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
+
+      // clear the user-defined loading elemental composition when loading is cleared
+      if (e.value === null || e.value === 0 || e.value === '') {
+        const loadingComp = sample.elemental_compositions
+          .find((i) => i.composition_type === 'loading');
+        if (loadingComp) { loadingComp.loading = null; }
+      }
+
+      handleAmountChanged(sample.amount);
 
       let errorMessage;
       if (e.value == 0.0 && !e.showString)

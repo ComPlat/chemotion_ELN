@@ -52,8 +52,14 @@ describe('ComponentsFetcher methods', () => {
 
       fetchStub.resolves(new Response('', { status: 400 }));
 
-      const result = await ComponentsFetcher.saveOrUpdateComponents(sample, components);
-      expect(result).toBeUndefined();
+      let error;
+      try {
+        await ComponentsFetcher.saveOrUpdateComponents(sample, components);
+      } catch (e) {
+        error = e;
+      }
+      expect(error).toBeDefined();
+      expect(error.message).toContain('400');
       expect(fetchStub.calledOnce).toBe(true);
     });
   });

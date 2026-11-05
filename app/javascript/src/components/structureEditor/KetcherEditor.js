@@ -32,6 +32,7 @@ import {
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   runImageLayering,
   undoKetcher,
@@ -64,6 +65,7 @@ import {
   canvasIframeRefSetter,
   textNodeStruct,
   textList,
+  textListSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -129,11 +131,32 @@ const onAtomDelete = async (editor) => {
       removeFrom = 'atom-removal';
     }
     const missingList = removeFrom === 'image-removal' ? imagesDifferencesContainer : aliasDifferences;
+    if (missingList.length < 1) return;
     dataRes = await removeAtomFromData(dataRes, missingList);
 
     imageNodeCounter = imagesList.length - 1;
     // 3rd resettle aliases in inspired atom alias A
     dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
+
+    // Sync textList to remove orphaned image-linked text nodes whose image was deleted.
+    // Free-standing labels (not in textNodeStruct) are always kept.
+    // saveMoveCanvas re-injects all of textList into the canvas, so this must be done
+    // before that call, otherwise orphaned text nodes reappear on the canvas.
+    const activeTextKeys = new Set(Object.values(textNodeStruct));
+    textListSetter(textList.filter((item) => {
+      try {
+        const { key } = JSON.parse(item.data.content).blocks[0];
+        // Keep free-standing labels (not linked to any image)
+        if (!activeTextKeys.has(key)) return true;
+        // Keep image-linked labels whose image survived
+        const linkedAlias = Object.entries(textNodeStruct).find(([, v]) => v === key)?.[0];
+        const imgIdx = linkedAlias !== undefined ? parseInt(linkedAlias, 10) : -1;
+        return imagesList.some((_, i) => i === imgIdx);
+      } catch (_e) {
+        return false;
+      }
+    }));
+
     dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
     await saveMoveCanvas(editor, dataRes, false, true, false);
     deletedAtomsSetter([]);
@@ -177,7 +200,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   const [showShapes, setShowShapes] = useState(false);
   const [addLabelPopup, setAddLabelPopup] = useState(false);
   const [selectedTextNodeContent, setSelectedTextNodeContent] = useState(null);
-  // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
   const eventCleanupRef = useRef(() => { });
@@ -258,24 +280,27 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Default: button is disabled
       let shouldEnable = false;
 
-      // Check if a text node is selected and has an associated image
-      if (selectedTextKey) {
-        // Check if this text key exists in textNodeStruct (meaning it has an associated image)
-        const hasAssociatedImage = Object.values(textNodeStruct).includes(selectedTextKey);
-        if (hasAssociatedImage) {
-          shouldEnable = true;
-        }
+      // Check if a text node is selected and has an associated image.
+      // Only enable when textNodeStruct explicitly maps this key to a polymer image —
+      // free-standing labels can coexist with polymer images on the same canvas.
+      if (selectedTextKey && Object.values(textNodeStruct).includes(selectedTextKey)) {
+        shouldEnable = true;
       }
 
-      // If images are selected, check if any of them don't have labels yet
+      // Enable the button whenever a polymer image is selected.
+      // findAtomByImageIndex matches Ketcher's internal entity ID against the alias
+      // sequence counter — this works for newly added shapes (entity ID = 0 = counter)
+      // but fails after load because multiple setMolecule calls during the load path
+      // increment Ketcher's entity counter past 0 while the alias still has counter 0.
+      // imagesList tracks every polymer image we manage; if it has entries and Ketcher
+      // reports an image selection, the selected image must be one of ours.
       if (!shouldEnable && imageIndexes && imageIndexes.length > 0) {
-        // Check if the selected image already has a label
-        const imageIndex = imageIndexes[0];
-        const { alias } = await findAtomByImageIndex(imageIndex);
-
-        // Enable button only if image is selected AND doesn't have a label yet
-        if (alias && !textNodeStruct[alias]) {
+        if (imagesList.length > 0) {
           shouldEnable = true;
+        } else {
+          // Fallback for edge cases (e.g. imagesList not yet populated)
+          const { alias } = await findAtomByImageIndex(imageIndexes[0]);
+          if (alias) shouldEnable = true;
         }
       }
 
@@ -417,89 +442,146 @@ const KetcherEditor = forwardRef((props, ref) => {
       selectionLayeringTimer = setTimeout(() => runImageLayering(iframeRef), 80);
     };
 
+    // Looks up the existing label text for an image index via textNodeStruct + textList.
+    // Returns { content, textKey } where content is full Draft content (JSON string) or null.
+    const getLabelForImage = async (imageIndex) => {
+      const { alias } = await findAtomByImageIndex(imageIndex);
+      if (!alias) return { content: null, textKey: null };
+      const textKey = textNodeStruct[alias];
+      if (!textKey) return { content: null, textKey: null };
+      for (const tn of (textList || [])) {
+        try {
+          const c = JSON.parse(tn.data.content);
+          if (c.blocks[0].key === textKey) {
+            return { content: tn.data.content, textKey };
+          }
+        } catch (e) { /* skip malformed nodes */ }
+      }
+      return { content: null, textKey: null };
+    };
+
     const selectionChangeHandler = async () => {
       try {
         const currentSelection = editor?._structureDef?.editor?.editor?._selection;
         let selectedTextContent = null;
-
-        // Check if text nodes are selected
         let selectedTextKey = null;
-        if (currentSelection?.texts && currentSelection.texts.length > 0) {
-          // selectedText is an index into the nodes array
-          const selectedTextIndex = currentSelection.texts[0];
 
-          // Try to get the text node from latestData.root.nodes first
-          let selectedTextNode = null;
-          if (latestData?.root?.nodes && latestData.root.nodes[selectedTextIndex]) {
-            const node = latestData.root.nodes[selectedTextIndex];
-            if (node.type === 'text') {
-              selectedTextNode = node;
-            }
-          }
+        let linkedImageIndexes = null;
 
-          // If not found in latestData, try to find it in textList by index
-          // (textList might have a different order, so we'll search by matching structure)
-          if (!selectedTextNode && textList && textList.length > 0) {
-            // Find text node in textList - we'll match by checking if index corresponds
-            // Since we don't have direct mapping, we'll search all text nodes
-            for (const textNode of textList) {
-              try {
-                const content = JSON.parse(textNode.data.content);
-                const textKey = content.blocks[0].key;
-                // Check if this text node is associated with an image
-                const hasAssociatedImage = Object.values(textNodeStruct).includes(textKey);
-                if (hasAssociatedImage) {
-                  selectedTextNode = textNode;
-                  break;
+        if (currentSelection?.images?.length > 0) {
+          // Image selected — use the image as the source of truth to find the label.
+          // This is reliable whether or not Ketcher also reports a text selection.
+          canvasSelectionsSetter(currentSelection);
+          imageNodeForTextNodeSetter(currentSelection.images);
+          const { content, textKey } = await getLabelForImage(currentSelection.images[0]);
+          selectedTextContent = content; // full Draft content (JSON string) or null
+          selectedTextKey = textKey;
+        } else if (currentSelection?.texts?.length > 0) {
+          // Only a text node is selected (no image in selection).
+          // currentSelection.texts[0] is Ketcher's internal text entity ID, NOT an array index.
+          // Look it up directly from Ketcher's internal struct to get the exact content.
+          const selectedTextId = currentSelection.texts[0];
+
+          try {
+            const ketcherStruct = editor._structureDef?.editor?.editor?.struct?.();
+            const ketcherTextEntity = ketcherStruct?.texts?.get(selectedTextId);
+            if (ketcherTextEntity?.content) {
+              const parsedContent = JSON.parse(ketcherTextEntity.content);
+
+              // Ketcher 3.18+ converts stored Draft.js content to Lexical format internally.
+              // Try Draft.js format (blocks[0].key) first, then Lexical (root.children).
+              if (parsedContent?.blocks?.[0]) {
+                selectedTextKey = parsedContent.blocks[0].key;
+              } else if (parsedContent?.root) {
+                // Lexical format: match against textList by plain-text content
+                const lexicalText = parsedContent.root?.children?.[0]?.children?.[0]?.text ?? '';
+                for (const tn of (textList || [])) {
+                  try {
+                    const c = JSON.parse(tn.data.content);
+                    if (c.blocks?.[0]?.text === lexicalText) {
+                      selectedTextKey = c.blocks[0].key;
+                      selectedTextContent = tn.data.content;
+                      break;
+                    }
+                  } catch { /* skip malformed */ }
                 }
-              } catch (e) {
-                // Skip invalid nodes
               }
-            }
-          }
 
-          // If we found a text node, extract its content
-          if (selectedTextNode) {
-            try {
-              const content = JSON.parse(selectedTextNode.data.content);
-              selectedTextKey = content.blocks[0].key;
-              selectedTextContent = JSON.stringify(content);
+              // Use our Draft.js textList as the source of truth for content —
+              // Ketcher's internal representation may be Lexical JSON which the modal
+              // cannot render. Only fall back to Ketcher's content if textList has nothing.
+              if (selectedTextKey && !selectedTextContent) {
+                for (const tn of (textList || [])) {
+                  try {
+                    const c = JSON.parse(tn.data.content);
+                    if (c.blocks?.[0]?.key === selectedTextKey) {
+                      selectedTextContent = tn.data.content;
+                      break;
+                    }
+                  } catch { /* skip malformed */ }
+                }
+              }
+              if (!selectedTextContent) selectedTextContent = ketcherTextEntity.content;
 
-              // Find associated image index from alias
+              // Sync imageNodeForTextNode to the image linked with this text node.
+              // Try textNodeStruct first (populated on fresh add); fall back to imagesList
+              // indices when textNodeStruct wasn't repopulated after a load/reload.
               for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
                 if (textKeyInStruct === selectedTextKey) {
-                  // Extract image index from alias (last part after _)
                   const aliasParts = alias.split('_');
                   if (aliasParts.length >= 3) {
-                    const imageIndex = parseInt(aliasParts[2], 10);
-                    imageNodeForTextNodeSetter([imageIndex]);
+                    const imgIdx = parseInt(aliasParts[2], 10);
+                    imageNodeForTextNodeSetter([imgIdx]);
+                    linkedImageIndexes = [imgIdx];
                   }
                   break;
                 }
               }
-            } catch (e) {
-              console.error('Error parsing selected text node content:', e);
+              if (!linkedImageIndexes && imagesList.length > 0) {
+                // textNodeStruct lookup failed (e.g. after load); default to index 0.
+                // All text on this canvas belongs to a polymer image.
+                imageNodeForTextNodeSetter([0]);
+                linkedImageIndexes = [0];
+              }
             }
+          } catch (e) {
+            console.error('Error reading selected text node from Ketcher struct:', e);
           }
-        } else if (currentSelection?.images) {
-          canvasSelectionsSetter(currentSelection);
-          imageNodeForTextNodeSetter(currentSelection.images);
-          selectedTextContent = null;
-          selectedTextKey = null;
+        } else if (currentSelection?.atoms?.length > 0) {
+          // Atom selected — clicking the polymer bead area may hit the underlying R# atom
+          // rather than the SVG image overlay, especially for shapes loaded from saved data.
+          // Read each atom's alias from Ketcher's internal struct; if it follows the
+          // three-part alias pattern (TYPE_SUBTYPE_INDEX), treat it as a polymer image atom.
+          try {
+            const ketcherStruct = editor._structureDef?.editor?.editor?.struct?.();
+            for (const atomId of currentSelection.atoms) {
+              const atomEntity = ketcherStruct?.atoms?.get(atomId);
+              const alias = atomEntity?.alias;
+              if (alias && /^[^_]+_[^_]+_\d+$/.test(alias)) {
+                const aliasParts = alias.split('_');
+                const imgIdx = parseInt(aliasParts[2], 10);
+                imageNodeForTextNodeSetter([imgIdx]);
+                linkedImageIndexes = [imgIdx];
+                break;
+              }
+            }
+          } catch (e) {
+            console.error('Error reading selected atom alias from Ketcher struct:', e);
+          }
         } else {
           imageNodeForTextNodeSetter(null);
-          selectedTextContent = null;
-          selectedTextKey = null;
         }
 
         // Store selected text content for modal
         setSelectedTextNodeContent(selectedTextContent);
 
-        // Update button disabled state based on image/text selection and existing labels
-        await updateAddLabelButtonState(
-          currentSelection?.images || null,
-          selectedTextKey
-        );
+        // When a text label is clicked directly (no image in selection), pass the linked
+        // image index so updateAddLabelButtonState can find the alias even if textNodeStruct
+        // was reset on editor reload and the selectedTextKey path returns false.
+        const effectiveImages = currentSelection?.images?.length > 0
+          ? currentSelection.images
+          : linkedImageIndexes;
+        await updateAddLabelButtonState(effectiveImages, selectedTextKey);
 
         // Ketcher re-renders the canvas SVG on every selection change, which puts
         // <image> elements back inside their original <g> group and undoes layering.
@@ -653,40 +735,21 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          const deltaToContentJson = (delta, existingKey) => {
-            const ops = delta?.ops || [];
-            const key = existingKey || Math.random().toString(36).substring(2, 8);
-            const fontSize = 10;
-            let text = '';
-            const inlineStyleRanges = [];
-            let offset = 0;
-            for (const op of ops) {
-              if (typeof op.insert !== 'string') continue;
-              const chunk = op.insert.replace(/\n$/, '');
-              if (!chunk) continue;
-              const len = chunk.length;
-              text += chunk;
-              if (op.attributes?.bold) inlineStyleRanges.push({ style: 'BOLD', offset, length: len });
-              if (op.attributes?.italic) inlineStyleRanges.push({ style: 'ITALIC', offset, length: len });
-              if (op.attributes?.underline) inlineStyleRanges.push({ style: 'UNDERLINE', offset, length: len });
-              offset += len;
-            }
-            if (text.length > 0) inlineStyleRanges.push({ style: `fontsize-${fontSize}`, offset: 0, length: text.length });
-            return JSON.stringify({
-              blocks: [{ key, text, type: 'unstyled', depth: 0, inlineStyleRanges, entityRanges: [], data: { fontSize } }],
-              entityMap: {},
-            });
-          };
-
+          const draftContent = deltaToDraftContent(contents);
+          // Preserve the existing Draft.js block key when editing an existing text node
+          // so Ketcher can match the node by key for in-place updates.
           let existingKey;
           try {
             const existing = selectedTextNodeContent ? JSON.parse(selectedTextNodeContent) : null;
             existingKey = existing?.blocks?.[0]?.key;
           } catch { /* new node */ }
-
-          const contentJson = deltaToContentJson(contents, existingKey);
+          if (existingKey && draftContent?.blocks?.[0]) {
+            draftContent.blocks[0].key = existingKey;
+          }
+          const contentJson = JSON.stringify(draftContent);
 
           await onAddTextFromEditor(editor, contentJson, selectedImageForTextNode, selectedTextNodeContent !== null);
+          // Update button state after text is added/updated
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
           setSelectedTextNodeContent(null);
