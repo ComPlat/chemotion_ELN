@@ -11,16 +11,18 @@ import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variati
 
 configure({ adapter: new Adapter() });
 
-const STALE_SAMPLE_ID = '460341';
+// A sample id that none of the reaction's materials has.
+const STALE_SAMPLE_ID = '999001';
 
-async function mountWithStaleVariationKey(reaction) {
+function addStaleVariationKey(reaction) {
   const staleEntry = cloneDeep(Object.values(reaction.variations[0].startingMaterials)[0]);
   reaction.variations = reaction.variations.map((row) => ({
     ...row,
     startingMaterials: { ...row.startingMaterials, [STALE_SAMPLE_ID]: staleEntry },
   }));
-  const onReactionChange = sinon.spy();
+}
 
+async function mountReactionVariations(reaction, onReactionChange) {
   let wrapper;
   await act(async () => {
     wrapper = mount(<ReactionVariations reaction={reaction} onReactionChange={onReactionChange} />);
@@ -28,49 +30,72 @@ async function mountWithStaleVariationKey(reaction) {
   await act(async () => {
     await new Promise((resolve) => { setTimeout(resolve, 0); });
   });
-
   wrapper.update();
-  return { wrapper, onReactionChange };
+  return wrapper;
 }
 
 describe('ReactionVariations', () => {
   let userStoreStub;
+  let wrapper;
 
   beforeEach(() => {
     userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 }, segmentKlasses: [] });
   });
 
   afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
     userStoreStub.restore();
     localStorage.clear();
   });
 
-  it('drops variation keys of materials the reaction no longer has', async () => {
+  it('opens a reaction with a variation key of a removed material without marking it as changed', async () => {
     const reaction = await setUpReaction();
     reaction.is_new = false;
-    const ownStartingMaterialIDs = reaction.starting_materials.map((material) => material.id.toString());
+    addStaleVariationKey(reaction);
+    const storedVariations = cloneDeep(reaction.variations);
+    const onReactionChange = sinon.spy();
 
-    const { wrapper, onReactionChange } = await mountWithStaleVariationKey(reaction);
+    wrapper = await mountReactionVariations(reaction, onReactionChange);
 
     expect(wrapper.find('AgGridReact').exists()).toBe(true);
-    expect(onReactionChange.called).toBe(true);
-    reaction.variations.forEach((row) => {
-      expect(Object.keys(row.startingMaterials)).toEqual(ownStartingMaterialIDs);
-    });
-    wrapper.unmount();
+    expect(onReactionChange.called).toBe(false);
+    // The stale key is only hidden; the backend drops it on the next save.
+    expect(reaction.variations).toEqual(storedVariations);
   });
 
-  it('keeps the source sample keys of an unsaved copy for the backend to remap', async () => {
+  it('hands the pruning of a removed segment to the parent, but not the hidden material key', async () => {
+    const reaction = await setUpReaction();
+    reaction.is_new = false;
+    addStaleVariationKey(reaction);
+    // No segment classes are available in this setup, so any segment column is a removed one.
+    reaction.variations = reaction.variations.map((row) => ({
+      ...row,
+      segments: { ...(row.segments || {}), 'Removed segment': { value: 1 } },
+    }));
+    const onReactionChange = sinon.spy();
+
+    wrapper = await mountReactionVariations(reaction, onReactionChange);
+
+    expect(onReactionChange.calledOnce).toBe(true);
+    reaction.variations.forEach((row) => {
+      expect(Object.keys(row.segments || {})).not.toContain('Removed segment');
+      expect(Object.keys(row.startingMaterials)).toContain(STALE_SAMPLE_ID);
+    });
+  });
+
+  it('leaves the variations of an unsaved copy untouched', async () => {
     const reaction = await setUpReaction();
     reaction.is_new = true;
+    addStaleVariationKey(reaction);
+    const onReactionChange = sinon.spy();
 
-    const { wrapper, onReactionChange } = await mountWithStaleVariationKey(reaction);
+    wrapper = await mountReactionVariations(reaction, onReactionChange);
 
     expect(wrapper.text()).toContain('Save the reaction to enable the variations tab.');
     expect(onReactionChange.called).toBe(false);
     reaction.variations.forEach((row) => {
       expect(Object.keys(row.startingMaterials)).toContain(STALE_SAMPLE_ID);
     });
-    wrapper.unmount();
   });
 });
