@@ -597,6 +597,24 @@ export default class Reaction extends Element {
       }
       return copiedSample;
     });
+    copy.purification_solvents = this.purification_solvents.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
+      }
+      return copiedSample;
+    });
+    // An SBMM reactant is a split of a stock SBMM sample: the copy gets a new split of the same parent,
+    // which keeps what the source split was edited to (copied_from_id, e.g. a modified macromolecule).
+    copy.reactant_sbmm_samples = this.reactant_sbmm_samples.map((sbmm) => {
+      const copiedSbmm = sbmm.buildChildWithoutCounter();
+      copiedSbmm.parent_id = sbmm.parent_id || sbmm.id;
+      copiedSbmm.copied_from_id = sbmm.id;
+      return copiedSbmm;
+    });
     copy.products = this.products.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       if (!keepAmounts) {
@@ -607,11 +625,46 @@ export default class Reaction extends Element {
       return copiedSample;
     });
 
+    // SBMM reactants sit in the variations' reactants group under "sbmm:<id>" keys; the copy has its own splits
+    const sbmmKeys = (sbmms) => sbmms.map((sbmm) => ({ id: `sbmm:${sbmm.id}` }));
+    copy.variations = Reaction.remapVariationMaterialKeys(this.variations, {
+      startingMaterials: [this.starting_materials, copy.starting_materials],
+      reactants: [
+        [...this.reactants, ...sbmmKeys(this.reactant_sbmm_samples)],
+        [...copy.reactants, ...sbmmKeys(copy.reactant_sbmm_samples)],
+      ],
+      products: [this.products, copy.products],
+      solvents: [this.solvents, copy.solvents],
+    });
+
     copy.rebuildProductName();
     copy.container = Container.init();
     copy.can_update = true;
     copy.can_copy = false;
     return copy;
+  }
+
+  /**
+   * Re-keys the variations' material groups from the source materials' ids to their copies' ids, so a
+   * copied reaction's variations name its own (still preliminary) samples. The backend translates those
+   * to the saved samples' ids on create. Sequence-based macromolecule samples are passed in their
+   * `sbmm:<id>` key form (a copy gets its own splits). Keys without a counterpart are kept as they are.
+   * @param {Array<Object>} variations
+   * @param {Object<string, Array<Array<Object>>>} groupMaterials variations group => [sources, copies]
+   * @returns {Array<Object>}
+   */
+  static remapVariationMaterialKeys(variations, groupMaterials) {
+    return (variations || []).map((variation) => {
+      const remapped = { ...variation };
+      Object.entries(groupMaterials).forEach(([group, [sources, copies]]) => {
+        if (!variation[group]) { return; }
+        const idMap = new Map((sources || []).map((source, index) => [String(source.id), copies?.[index]?.id]));
+        remapped[group] = Object.fromEntries(
+          Object.entries(variation[group]).map(([key, entry]) => [idMap.get(key) ?? key, entry])
+        );
+      });
+      return remapped;
+    });
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {

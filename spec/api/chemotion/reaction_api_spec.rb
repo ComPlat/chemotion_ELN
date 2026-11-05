@@ -420,6 +420,46 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'when moving a material to another group and adding its column there in the same save' do
+      let(:params) do
+        {
+          'id' => reaction1.id,
+          'container' => reaction_container,
+          'materials' => {
+            'starting_materials' => [
+              { 'id' => sample1.id, 'reference' => true, 'equivalent' => 1, 'is_new' => false },
+              { 'id' => sample2.id, 'equivalent' => 2, 'is_new' => false },
+            ],
+            'reactants' => [],
+            'products' => [
+              { 'id' => sample3.id, 'equivalent' => 1, 'is_new' => false },
+              { 'id' => sample4.id, 'equivalent' => 1, 'is_new' => false },
+            ],
+          },
+          'variations' => [{
+            'id' => 1,
+            'uuid' => SecureRandom.uuid,
+            'startingMaterials' => { sample1.id.to_s => variation_entry(1), sample2.id.to_s => variation_entry(5) },
+            'reactants' => { sample2.id.to_s => variation_entry(2) },
+            'products' => { sample3.id.to_s => variation_entry(3), sample4.id.to_s => variation_entry(4) },
+            'solvents' => {},
+          }],
+        }
+      end
+
+      before do
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+      end
+
+      it 'keeps the new column and drops the old group key' do
+        variation = Reaction.find(reaction1.id).variations.first
+        expect(variation['startingMaterials']).to eq(
+          sample1.id.to_s => variation_entry(1), sample2.id.to_s => variation_entry(5),
+        )
+        expect(variation['reactants']).to eq({})
+      end
+    end
+
     context 'when updating volume through the legacy compatibility field' do
       let(:legacy_value) { true }
       let(:params) do
@@ -760,34 +800,39 @@ describe Chemotion::ReactionAPI do
       end
     end
 
-    context 'when copying a reaction whose variations reference a removed sample' do
+    context 'when copying a reaction with variations' do
+      let(:product_uuid) { 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335' }
       let(:removed_sample) { create(:sample, name: 'Removed', collections: [collection1]) }
+      let(:source_reaction) { create(:reaction, name: 'source', collections: [collection1]) }
+      let(:copied_product) do
+        {
+          'id' => product_uuid,
+          'name' => 'Copied product',
+          'target_amount_unit' => 'mg',
+          'target_amount_value' => 76.09596,
+          'reference' => true,
+          'equivalent' => 1,
+          'is_new' => true,
+          'is_split' => false,
+          'molfile' => molfile1,
+          'molecule_id' => sample1.molecule_id,
+          'container' => new_root_container,
+        }
+      end
+      let(:variation_products) { { product_uuid => variation_entry(2) } }
       let(:params) do
         {
           'name' => 'r003',
           'collection_id' => collection1.id,
           'container' => new_root_container,
-          'materials' => {
-            'products' => [{
-              'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
-              'name' => 'Copied product',
-              'target_amount_unit' => 'mg',
-              'target_amount_value' => 76.09596,
-              'reference' => true,
-              'equivalent' => 1,
-              'is_new' => true,
-              'is_split' => false,
-              'molfile' => molfile1,
-              'molecule_id' => sample1.molecule_id,
-              'container' => new_root_container,
-            }],
-          },
+          'origin' => { 'id' => source_reaction.id, 'short_label' => source_reaction.short_label },
+          'materials' => { 'products' => [copied_product] },
           'variations' => [{
             'id' => 1,
             'uuid' => SecureRandom.uuid,
             'startingMaterials' => { removed_sample.id.to_s => variation_entry(1) },
             'reactants' => {},
-            'products' => { sample1.id.to_s => variation_entry(2) },
+            'products' => variation_products,
             'solvents' => {},
           }],
         }
@@ -795,18 +840,49 @@ describe Chemotion::ReactionAPI do
       let(:r) { Reaction.find_by(name: 'r003') }
 
       before do
+        ReactionsProductSample.create!(reaction: source_reaction, sample: sample1, position: 0)
         removed_sample.destroy
+      end
+
+      def create_copy
         post('/api/v1/reactions.json', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' })
       end
 
-      it 'creates the reaction' do
-        expect(response).to have_http_status(:created)
-      end
+      it 'maps the preliminary material ids to the saved samples and drops the removed one' do
+        create_copy
 
-      it 'remaps the source sample to the copied sample and drops the removed one' do
+        expect(response).to have_http_status(:created)
         variation = r.variations.first
         expect(variation['startingMaterials']).to eq({})
         expect(variation['products']).to eq(r.products.first.id.to_s => variation_entry(2))
+      end
+
+      it "maps the source reaction's sample ids (older clients) to the copied samples by position" do
+        params['variations'].first['products'] = { sample1.id.to_s => variation_entry(2) }
+
+        create_copy
+
+        expect(r.variations.first['products']).to eq(r.products.first.id.to_s => variation_entry(2))
+      end
+
+      it 'does not use an origin reaction the user cannot read' do
+        unreadable = create(:reaction, name: 'unreadable', collections: [create(:collection, user: other_user)])
+        unreadable_product = create(:sample, name: 'unreadable product', collections: unreadable.collections)
+        ReactionsProductSample.create!(reaction: unreadable, sample: unreadable_product, position: 0)
+        params['origin'] = { 'id' => unreadable.id, 'short_label' => unreadable.short_label }
+        params['variations'].first['products'] = { unreadable_product.id.to_s => variation_entry(2) }
+
+        create_copy
+
+        expect(r.variations.first['products']).to eq({})
+      end
+
+      it 'leaves no reaction behind when a step of the create fails' do
+        allow_any_instance_of(Usecases::Reactions::UpdateMaterials).to receive(:execute!) # rubocop:disable RSpec/AnyInstance
+          .and_raise(ActiveRecord::RecordInvalid)
+
+        expect { create_copy }.to raise_error(ActiveRecord::RecordInvalid)
+        expect(Reaction.with_deleted.where(name: 'r003')).to be_empty
       end
     end
 

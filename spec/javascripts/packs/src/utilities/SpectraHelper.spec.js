@@ -3,7 +3,7 @@ import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
   JcampIds, BuildSpcInfos, cleaningNMRiumData, spectrumName,
-  inlineNotation,
+  inlineNotation, pickDefaultSelection,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
@@ -308,10 +308,84 @@ describe('SpectraHelper', () => {
             idAi: container.id,
             idDt: file.idDt,
             idx: file.id,
+            aasmState: 'state',
+            rootId: file.root_id,
           }
         ];
         expect(specInfo).toEqual(expectedValue);
       });
+    });
+  });
+
+  describe('.pickDefaultSelection()', () => {
+    const jcamp = { layout: FN.LIST_LAYOUT.H1 };
+    // rootId is the upload a spectrum descends from; omitted, the spectrum is its own upload.
+    const info = (idx, idDt, aasmState, rootId) => ({
+      idx, idDt, aasmState, rootId,
+    });
+    const meta = (idx, layout = jcamp) => ({ idx, jcamp: layout });
+
+    it('selects a single spectrum when the dataset holds several', () => {
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'peaked'), info(1, 10, 'peaked')];
+      const spcMetas = [meta(3), meta(2), meta(1)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 3, arrSpcIdx: [3] });
+    });
+
+    it('prefers the edited spectrum of an upload over its peaked one', () => {
+      const spcInfos = [info(12, 10, 'peaked', 5), info(11, 10, 'edited', 5)];
+      const spcMetas = [meta(12), meta(11)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 11, arrSpcIdx: [11] });
+    });
+
+    it('prefers a newer upload over an older edited one', () => {
+      // upload 5 was edited (id 30) after upload 8 was peaked (id 20)
+      const spcInfos = [info(30, 10, 'edited', 5), info(20, 10, 'peaked', 8), info(6, 10, 'peaked', 5)];
+      const spcMetas = [meta(30), meta(20), meta(6)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 20, arrSpcIdx: [20] });
+    });
+
+    it('prefers a peaked spectrum over one in another state of the same upload', () => {
+      const spcInfos = [info(13, 10, 'nmrium', 5), info(12, 10, 'peaked', 5)];
+      const spcMetas = [meta(13), meta(12)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 12, arrSpcIdx: [12] });
+    });
+
+    it('only considers spectra of the given dataset', () => {
+      const spcInfos = [info(3, 20, 'edited'), info(2, 10, 'peaked'), info(1, 10, 'peaked')];
+      const spcMetas = [meta(3), meta(2), meta(1)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('ignores infos without a decoded spectrum', () => {
+      const spcInfos = [info(3, 10, 'edited'), info(2, 10, 'peaked')];
+      const spcMetas = [meta(2)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('considers every spectrum when no dataset is given', () => {
+      const spcInfos = [info(3, 20, 'peaked'), info(2, 10, 'edited')];
+      const spcMetas = [meta(3), meta(2)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, null)).toEqual({ spcIdx: 3, arrSpcIdx: [3] });
+    });
+
+    it('keeps every file of an LC/MS dataset', () => {
+      const lcms = { layout: FN.LIST_LAYOUT.LC_MS };
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'peaked'), info(1, 10, 'edited')];
+      const spcMetas = [meta(3, lcms), meta(2, lcms), meta(1, lcms)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 3, arrSpcIdx: [3, 2, 1] });
+    });
+
+    it('keeps every curve of a cyclic voltammetry dataset', () => {
+      const cv = { layout: FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY };
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'edited')];
+      const spcMetas = [meta(3, cv), meta(2, cv)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 3, arrSpcIdx: [3, 2] });
+    });
+
+    it('returns an empty selection when nothing matches', () => {
+      expect(pickDefaultSelection([], [], 10)).toEqual({ spcIdx: 0, arrSpcIdx: [] });
+      expect(pickDefaultSelection([info(1, 20, 'peaked')], [meta(1)], 10))
+        .toEqual({ spcIdx: 1, arrSpcIdx: [] });
     });
   });
 

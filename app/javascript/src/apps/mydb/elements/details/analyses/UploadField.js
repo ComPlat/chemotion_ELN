@@ -12,7 +12,7 @@ import {
   createDataset
 } from 'src/apps/mydb/elements/details/analyses/utils';
 import {
-  ZipFileContainer, FileContainer, traverseDirectory, handleZipFile
+  ZipFileContainer, FileContainer, traverseDirectory, handleZipFile, makeRootNamesUnique
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
@@ -20,6 +20,8 @@ import AppModal from 'src/components/common/AppModal';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
+
+const isZipFile = (name) => /\.zip$/i.test(name);
 
 const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {
   const dropRef = useRef(null);
@@ -32,7 +34,7 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
       for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          if (!flatFileList && unzip && item.isFile && item.name.endsWith('.zip')) {
+          if (!flatFileList && unzip && item.isFile && isZipFile(item.name)) {
             filePromises.push(new Promise((resolve) => {
               item.file((file) => {
                 resolve(handleZipFile(file));
@@ -50,7 +52,7 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
           const flatFiles = await Promise.all(filteredFiles.map((f) => f.getFile()));
           handleChange(flatFiles);
         } else {
-          handleChange(filteredFiles);
+          handleChange(makeRootNamesUnique(filteredFiles));
         }
       });
     }
@@ -87,21 +89,19 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
         multiple
         onChange={async (event) => {
           const files = Array.from(event.target.files);
-          if (!flatFileList && unzip && files.length === 1 && files[0].name.endsWith('.zip')) {
-            const container = await handleZipFile(files[0]);
-            handleChange([container]);
+          // eslint-disable-next-line no-param-reassign,no-return-assign
+          files.forEach((x) => x.isFile = true);
+          if (flatFileList) {
+            const flatFiles = await Promise.all(files.map((x) => new FileContainer(x).getFile()));
+            handleChange(flatFiles);
             return;
           }
 
-          // eslint-disable-next-line no-param-reassign,no-return-assign
-          files.forEach((x) => x.isFile = true);
-          const preparedFiles = files.map((x) => new FileContainer(x));
-          if (flatFileList) {
-            const flatFiles = await Promise.all(preparedFiles.map((f) => f.getFile()));
-            handleChange(flatFiles);
-          } else {
-            handleChange(preparedFiles);
-          }
+          // Unpack every picked archive, as a drop does, so its folders can be expanded.
+          const preparedFiles = await Promise.all(files.map((x) => (
+            unzip && isZipFile(x.name) ? handleZipFile(x) : new FileContainer(x)
+          )));
+          handleChange(makeRootNamesUnique(preparedFiles));
         }}
         style={{ display: 'none' }}
       />
@@ -129,14 +129,14 @@ const FileListDisplay = ({ files }) => {
     }}
     >
       {files.map((file) => (
-        <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
+        <ListGroup.Item key={file.key} className="d-flex justify-content-between align-items-center">
 
-          <div style={{ overflow: 'auto' }} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
-            <strong>{file.name}</strong>
+          <div style={{ overflow: 'auto' }} key={`DIVV__${file.key}`} className="flex-grow-1 me-3">
+            <strong>{file.label}</strong>
             <div
               className="text-muted small"
             >
-              {file.fullPath || file.webkitRelativePath || file.name}
+              {file.key}
             </div>
           </div>
           <Badge bg="secondary">

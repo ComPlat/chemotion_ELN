@@ -23,10 +23,13 @@ module Chemotion
         attributes
       end
 
-      # Points the variations' material keys at the reaction's current samples (see UpdateVariations).
-      def update_variations_material_ids!(reaction)
-        variations = Usecases::Reactions::UpdateVariations.new(reaction).execute!
-        reaction.update!(variations: variations) unless variations == reaction.variations
+      # The reaction a copy names as its +origin+, if the current user may read it.
+      #
+      # @param origin [Hash, nil] the +origin+ attribute sent with the reaction
+      # @return [Reaction, nil]
+      def readable_origin_reaction(origin)
+        source = Reaction.find_by(id: origin&.dig('id'))
+        source if source && ElementPolicy.new(current_user, source).read?
       end
     end
 
@@ -213,13 +216,12 @@ module Chemotion
           reaction.update!(attributes)
           reaction.touch
           reaction_vessel_size = attributes[:vessel_size]
+          # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
           reaction = Usecases::Reactions::UpdateMaterials.new(
             reaction, materials,
             current_user,
             reaction_vessel_size
           ).execute!
-          # Drop the keys of materials removed in this update, even if the Variations tab was never opened.
-          update_variations_material_ids!(reaction)
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -300,7 +302,10 @@ module Chemotion
         collection = writable_collection_for(collection_id)
         error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
-        # A failure in any step must not leave a half-created reaction behind (a retry would create another one).
+        origin_reaction = readable_origin_reaction(attributes['origin'])
+        # Database writes are rolled back together if a step fails, so a failed create leaves no
+        # half-saved reaction behind. Files written meanwhile (SVGs) are not rolled back, and a client
+        # retrying after a timeout on a successful create still creates a second reaction.
         reaction = ActiveRecord::Base.transaction do
           reaction = Reaction.create!(attributes)
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -327,18 +332,14 @@ module Chemotion
               prod
             end
           end
-          reaction_vessel_size = attributes[:vessel_size]
-
-          reaction = Usecases::Reactions::UpdateMaterials.new(
+          # Also points a copy's variations keys at the saved materials (ReactionVariationMaterialKeys).
+          Usecases::Reactions::UpdateMaterials.new(
             reaction,
             materials,
             current_user,
-            reaction_vessel_size,
-          ).execute!
-          reaction.reload
-
-          update_variations_material_ids!(reaction)
-          reaction
+            attributes[:vessel_size],
+            origin_reaction: origin_reaction,
+          ).execute!.reload
         end
 
         # save to profile

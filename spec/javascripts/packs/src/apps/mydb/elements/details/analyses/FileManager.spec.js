@@ -1,7 +1,7 @@
 import expect from 'expect';
 import JSZip from 'jszip';
 import {
-  FileContainer, ZipFileContainer, handleZipFile
+  FileContainer, ZipFileContainer, handleZipFile, makeRootNamesUnique
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 
 async function zipOf(entries, name) {
@@ -135,5 +135,80 @@ describe('handleZipFile', () => {
       entries: { 'measurement/x.txt': 'X', 'measurement/measurement/a.jdx': 'A' },
     });
     expect(await zipped(['root', 'loose'])).toEqual(looseFirst);
+  });
+});
+
+describe('makeRootNamesUnique', () => {
+  const globalFileReader = global.FileReader;
+  before(() => { global.FileReader = window.FileReader; });
+  after(() => { global.FileReader = globalFileReader; });
+
+  const sameFolderArchives = async () => makeRootNamesUnique([
+    await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'X28721_10.zip')),
+    await handleZipFile(await zipOf({ 'X28721/11/fid': 'B', 'X28721/11/acqu': 'C' }, 'X28721_11.zip')),
+  ]);
+  const keysBelow = (container) => container.getNext().map((x) => x.key);
+
+  it('labels archives holding the same folder after their own file', async () => {
+    const roots = await sameFolderArchives();
+
+    expect(roots.map((x) => x.label)).toEqual(['X28721_10', 'X28721_11']);
+    expect(roots.map((x) => x.key)).toEqual(['X28721_10', 'X28721_11']);
+    expect(keysBelow(roots[0])).toEqual(['X28721_10/10']);
+    expect(keysBelow(roots[1])).toEqual(['X28721_11/11']);
+    expect(keysBelow(roots[1].getNext()[0]).sort()).toEqual(['X28721_11/11/acqu', 'X28721_11/11/fid']);
+  });
+
+  it('keeps the original folder name in a relabelled archive that is re-zipped', async () => {
+    const roots = await sameFolderArchives();
+    const folder = roots[1].getNext()[0];
+    folder.subFiles = folder.subFiles.filter((x) => x.name !== 'acqu');
+
+    const file = await roots[1].getFile();
+
+    expect(file.name).toEqual('X28721.zip');
+    expect(await entriesOf(file)).toEqual({ 'X28721/11/fid': 'B' });
+  });
+
+  it('keeps the original folder name in a subfolder taken from a relabelled archive', async () => {
+    const roots = await sameFolderArchives();
+    const folder = roots[1].getNext()[0];
+    folder.moveUpToRoot();
+
+    expect(await entriesOf(await folder.getFile())).toEqual({ '11/fid': 'B', '11/acqu': 'C' });
+  });
+
+  it('leaves an archive alone when its folder name is not taken', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'X28721_10.zip')),
+      looseFile('B', 'other.jdx'),
+    ]);
+
+    expect(roots.map((x) => x.label)).toEqual(['X28721', 'other.jdx']);
+  });
+
+  it('numbers archives whose own file names clash as well', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'run.zip')),
+      await handleZipFile(await zipOf({ 'X28721/11/fid': 'B' }, 'run.ZIP')),
+    ]);
+
+    expect(roots.map((x) => x.label)).toEqual(['run', 'run (2)']);
+  });
+
+  it('numbers clashing files before their extension and uploads them unchanged', async () => {
+    const roots = makeRootNamesUnique([looseFile('A', 'spectrum.jdx'), looseFile('B', 'spectrum.jdx')]);
+
+    expect(roots.map((x) => x.label)).toEqual(['spectrum.jdx', 'spectrum (2).jdx']);
+    expect(roots.map((x) => x.key)).toEqual(['spectrum.jdx', 'spectrum (2).jdx']);
+    expect((await roots[1].getFile()).name).toEqual('spectrum.jdx');
+  });
+
+  it('numbers clashing folders at the end', () => {
+    const folder = (name) => new FileContainer({ name, isFile: false, isDirectory: true });
+    const roots = makeRootNamesUnique([folder('data.v1'), folder('data.v1')]);
+
+    expect(roots.map((x) => x.label)).toEqual(['data.v1', 'data.v1 (2)']);
+    expect(roots.map((x) => x.name)).toEqual(['data.v1', 'data.v1']);
   });
 });
