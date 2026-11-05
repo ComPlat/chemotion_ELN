@@ -421,7 +421,7 @@ class Sample < ApplicationRecord
   # rubocop:disable Style/OptionalBooleanParameter
   def create_subsample user, collection_ids, copy_ea = false, type = nil, copy_components: true
     subsample = dup
-    subsample.xref['inventory_label'] = nil
+    subsample.xref = (xref || {}).merge('inventory_label' => nil)
     subsample.skip_inventory_label_update = true
     subsample.name = name if name.present?
     subsample.external_label = external_label if external_label.present?

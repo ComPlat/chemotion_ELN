@@ -347,6 +347,33 @@ RSpec.describe Sample do
     end
   end
 
+  describe '#create_subsample' do
+    let(:user) { create(:person) }
+    let(:collection) { create(:collection, user: user) }
+    let(:sample) { create(:sample, creator: user, collections: [collection]) }
+
+    it 'drops the inventory label and keeps the other xref entries' do
+      sample.update_columns(xref: { 'inventory_label' => 'INV-1', 'cas' => '50-00-0' }) # rubocop:disable Rails/SkipsModelValidations
+
+      subsample = sample.create_subsample(user, [collection.id])
+
+      expect(subsample.xref).to eq('inventory_label' => nil, 'cas' => '50-00-0')
+      expect(sample.reload.xref['inventory_label']).to eq('INV-1')
+    end
+
+    context 'when the sample has no xref (created before it defaulted to {})' do
+      before { sample.update_columns(xref: nil) } # rubocop:disable Rails/SkipsModelValidations
+
+      it 'creates the subsample' do
+        subsample = sample.create_subsample(user, [collection.id])
+
+        expect(subsample).to be_persisted
+        expect(subsample.parent).to eq(sample)
+        expect(subsample.xref).to eq('inventory_label' => nil)
+      end
+    end
+  end
+
   describe 'unit conversion' do
     let(:sample) { create(:sample) }
 
