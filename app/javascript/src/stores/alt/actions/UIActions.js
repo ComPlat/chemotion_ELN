@@ -14,14 +14,6 @@ class UIActions {
   expandSidebar = () => null;
   toggleSidebar = () => null;
 
-  showDeviceManagement() {
-    return null
-  }
-
-  closeDeviceManagement() {
-    return null
-  }
-
   selectTab(params) {
     return params;
   }
