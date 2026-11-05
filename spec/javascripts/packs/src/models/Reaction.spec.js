@@ -142,6 +142,8 @@ describe('Reaction', () => {
 
     it('copies every material group into new samples', () => {
       const persisted = (sample, id) => Object.assign(sample, { id, is_new: false });
+      reaction.starting_materials.forEach((sample, i) => persisted(sample, 110 + i));
+      reaction.products.forEach((sample, i) => persisted(sample, 120 + i));
       reaction.reactants = [persisted(materials[0], 102)];
       reaction.solvents = [persisted(materials[1], 103)];
       reaction.purification_solvents = [persisted(materials[2], 104)];

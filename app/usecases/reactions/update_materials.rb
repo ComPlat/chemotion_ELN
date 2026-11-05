@@ -188,7 +188,7 @@ module Usecases
       def treat_foreign_sample_as_new(sample)
         return if sample.is_new
 
-        reaction_ids = ReactionsSample.where(sample_id: sample.id).pluck(:reaction_id)
+        reaction_ids = ReactionsSample.get_reactions(sample.id)
         return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
 
         sample.is_new = true
@@ -401,18 +401,20 @@ module Usecases
       #
       # The SBMM counterpart of {#treat_foreign_sample_as_new}: an SBMM sample linked to another
       # reaction is neither updated nor linked a second time. Sets +is_new+ on +sbmm_data+ in
-      # place; the split is made from its parent, or from the sample itself if it has none.
+      # place; the split is made from its stock: the payload's +parent_id+, else the stored sample's
+      # parent, else the sample itself.
       #
       # @param sbmm_data [OSbmmSample] payload entry of +reactant_sbmm_samples+
       # @return [void]
       def treat_foreign_sbmm_as_new(sbmm_data)
         return if sbmm_data.is_new
 
-        reaction_ids = ReactionsReactantSbmmSample
-                       .where(sequence_based_macromolecule_sample_id: sbmm_data.id).pluck(:reaction_id)
+        reaction_ids = ReactionsReactantSbmmSample.get_reactions(sbmm_data.id)
         return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
 
-        sbmm_data.parent_id ||= sbmm_data.id
+        # older clients send no parent_id: take the stored one, so the split comes from the stock
+        stored = SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id)
+        sbmm_data.parent_id ||= stored&.parent_id || sbmm_data.id
         sbmm_data.is_new = true
       end
 
