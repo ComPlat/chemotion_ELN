@@ -147,6 +147,15 @@ describe Entities::ResearchPlanEntity do
       end
     end
 
+    context 'when the policy allows copying the plan without reading datasets' do
+      let(:detail_level) { 2 }
+      let(:policy) { Struct.new(:update?, :copy?).new(false, true) }
+
+      it 'exposes the plan copy permission' do
+        expect(grape_entity_as_hash).to include(can_copy: true, can_update: false)
+      end
+    end
+
     context 'when nested wellplates have different permissions than the research plan policy' do
       let(:detail_level) { 10 }
       let(:user) { create(:person) }

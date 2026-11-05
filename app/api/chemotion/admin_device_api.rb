@@ -67,8 +67,8 @@ module Chemotion
         optional :verification_status, type: String
         optional :account_active, type: Boolean
         optional :visibility, type: Boolean
-        optional :people, type: Array
-        optional :groups, type: Array
+        optional :people, type: Array[Integer]
+        optional :groups, type: Array[Integer]
         optional :datacollector_fields, type: Boolean, default: false
         optional :datacollector_method, type: String
         optional :datacollector_dir, type: String
@@ -83,20 +83,25 @@ module Chemotion
         optional :novnc_password, type: String
       end
       after_validation do
-        if params[:datacollector_fields] && params[:datacollector_method].end_with?('local')
+        # a missing method or directory is reported by the Device validations
+        if params[:datacollector_fields] && params[:datacollector_method]&.end_with?('local') &&
+           params[:datacollector_dir].present? && File.directory?(params[:datacollector_dir])
           params[:datacollector_dir] = Pathname.new(params[:datacollector_dir]).realpath.to_path
         end
       end
       put ':id' do
         device = Device.find_by(id: params[:id])
+        error!('device not found', 404) if device.nil?
 
-        people = params[:people].present? ? Person.where(id: params[:people]) : []
-        device.people = people
-        groups = params[:groups].present? ? Group.where(id: params[:groups]) : []
-        device.groups = groups
+        # assigning the associations writes them right away, so roll them back if the update fails
+        ActiveRecord::Base.transaction do
+          # leave people and groups as they are unless the request sends them; an empty array clears them
+          device.people = Person.where(id: params[:people]) if params.key?(:people)
+          device.groups = Group.where(id: params[:groups]) if params.key?(:groups)
 
-        attributes = declared(params.except(:users, :people, :groups), include_missing: false)
-        device.update!(attributes)
+          attributes = declared(params.except(:users, :people, :groups), include_missing: false)
+          device.update!(attributes)
+        end
         present device, with: Entities::DeviceEntity, root: 'device'
       rescue ActiveRecord::RecordInvalid
         { errors: device.errors.messages }

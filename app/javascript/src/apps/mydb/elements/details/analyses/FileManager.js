@@ -97,6 +97,12 @@ class FileContainer {
         return;
       }
 
+      // A dropped archive still holding all its files is uploaded as dropped instead of re-zipped.
+      if (this.archive && this.getAllFiles().length === this.archive.fileCount) {
+        resolve(this.archive.file);
+        return;
+      }
+
       this.moveUpToRoot();
 
       resolve(createZipFile(this.getAllFiles(), this.name));
@@ -211,6 +217,42 @@ function traverseDirectory(entry, parent = null, depth = 0) {
   });
 }
 
+// Entries the OS adds when compressing a folder, not part of the user's data.
+function isArchiveJunk(segments) {
+  return segments[0] === '__MACOSX' || segments[segments.length - 1] === '.DS_Store';
+}
+
+/*
+Unpack a dropped archive into the same tree a dropped folder gives: a root at depth 0 whose
+entries are `<root>/...`, one depth level per path segment. The root is named after the
+archive, or after its only top-level folder when the archive is a compressed folder, so
+re-zipped datasets carry that name and entries of different archives never share a path.
+*/
+async function handleZipFile(zipFile) {
+  const zip = await JSZip.loadAsync(zipFile);
+  const entries = Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .map((entry) => ({ entry, segments: entry.name.split('/').filter(Boolean) }))
+    .filter(({ segments }) => segments.length > 0 && !isArchiveJunk(segments));
+
+  const topLevel = new Set(entries.map(({ segments }) => segments[0]));
+  const isOneFolder = topLevel.size === 1 && entries.every(({ segments }) => segments.length > 1);
+  const rootName = isOneFolder ? [...topLevel][0] : (zipFile.name.replace(/\.zip$/i, '') || 'archive');
+
+  const blobs = await Promise.all(entries.map(({ entry }) => entry.async('blob')));
+  const root = new VirtualFolderNode(rootName, '');
+  entries.forEach(({ segments }, i) => {
+    const relPath = isOneFolder ? segments.slice(1) : segments;
+    const fileName = relPath.pop();
+    const file = new File([blobs[i]], fileName, { type: blobs[i].type });
+    root.addFile({ path: [rootName, ...relPath], file });
+  });
+
+  const rootContainer = root.clean();
+  rootContainer.archive = { file: zipFile, fileCount: entries.length };
+  return rootContainer;
+}
+
 class ZipFileContainer extends FileContainer {
   constructor(subFiles) {
     const fullPath = '';
@@ -238,6 +280,7 @@ class ZipFileContainer extends FileContainer {
 
 export {
   traverseDirectory,
+  handleZipFile,
   FileContainer,
   ZipFileContainer,
   VirtualFolderNode

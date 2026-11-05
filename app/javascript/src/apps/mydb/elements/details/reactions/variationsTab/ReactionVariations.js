@@ -169,15 +169,25 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       }
 
       setGridStore((previousGridStore) => {
-        const updatedSelectedColumns = {
+        const columnsWithAvailableSegments = {
           ...previousGridStore.selectedColumns,
           segments: previousGridStore.selectedColumns.segments.filter(
             (segment) => Object.hasOwn(segments, segment)
           )
         };
+        /*
+        Variations can reference materials the reaction no longer has, e.g., a material removed in the "Scheme" tab
+        while this tab was unmounted. Such columns can't be displayed.
+        An unsaved copy still references the source reaction's samples. Their data is kept for the backend,
+        which remaps them to the copied samples on create.
+        */
+        const updatedSelectedColumns = removeObsoleteMaterialColumns(
+          reactionMaterials,
+          columnsWithAvailableSegments
+        );
         let updatedReactionVariations = removeObsoleteColumnsFromVariations(
           previousGridStore.reactionVariations,
-          updatedSelectedColumns
+          reaction.isNew ? columnsWithAvailableSegments : updatedSelectedColumns
         );
         let updatedColumnDefinitions = getColumnDefinitions(
           updatedSelectedColumns,
