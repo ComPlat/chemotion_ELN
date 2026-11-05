@@ -207,6 +207,8 @@ module Usecases
         treat_foreign_sample_as_new(sample)
         return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
 
+        # a parent the user may not read is dropped: a new sample from the payload's own values instead
+        sample.parent_id = nil if sample.parent_id && !accessible_parent?(Sample, sample.parent_id)
         if sample.parent_id && material_group != 'product'
           create_sub_sample(sample, fixed_label, target_amount)
         else
@@ -220,7 +222,7 @@ module Usecases
       # linked to another reaction (a reaction copy made by an older client sends the original's
       # samples this way) must neither update that sample nor take over its link: it is created
       # anew, the way the current client copies a material. A sample linked to no reaction may
-      # join this one; a sample already linked to this reaction is kept.
+      # join this one if the user may update it; a sample already linked to this reaction is kept.
       #
       # Changes +sample+ in place, for the callers that follow: +is_new+ is set, and +container+
       # is dropped, so the new sample gets a fresh root container and none of the original's
@@ -233,10 +235,38 @@ module Usecases
         return if sample.is_new
 
         reaction_ids = ReactionsSample.get_reactions(sample.id)
-        return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
+        return if reaction_ids.include?(@reaction.id)
+        return if reaction_ids.empty? && ElementPolicy.update?(@current_user, Sample.find_by(id: sample.id))
 
         sample.is_new = true
         sample.container = nil
+      end
+
+      # Whether a new split may be made from +id+: the user may read it, or (for a copy) it is a
+      # material of the origin reaction or the parent of one; the origin is access-checked by the API.
+      #
+      # @param klass [Class] +Sample+ or +SequenceBasedMacromoleculeSample+
+      # @param id [Integer, String] the parent named in the payload
+      # @return [Boolean]
+      def accessible_parent?(klass, id)
+        record = klass.find_by(id: id)
+        return false unless record
+        return true if ElementPolicy.new(@current_user, record).read?
+
+        origin_materials(klass).any? { |material| [material.id, material.parent_id].include?(record.id) }
+      end
+
+      # The origin reaction's live materials, read from the link tables (not a possibly cached association).
+      def origin_materials(klass)
+        return [] unless @origin_reaction
+
+        links = if klass == Sample
+                  ReactionsSample.where(reaction_id: @origin_reaction.id).select(:sample_id)
+                else
+                  ReactionsReactantSbmmSample.where(reaction_id: @origin_reaction.id)
+                                             .select(:sequence_based_macromolecule_sample_id)
+                end
+        klass.where(id: links).to_a
       end
 
       def create_sub_sample(sample, fixed_label, target_amount = nil)
@@ -418,16 +448,24 @@ module Usecases
       end
       # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+      # A material another reaction still links (older data) loses only this reaction's link.
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
         sample_ids_to_delete = current_sample_ids - modified_sample_ids
-        Sample.where(id: sample_ids_to_delete).destroy_all
+        shared_ids = ReactionsSample.where(sample_id: sample_ids_to_delete)
+                                    .where.not(reaction_id: [@reaction.id, nil]).distinct.pluck(:sample_id)
+        @reaction.reactions_samples.where(sample_id: shared_ids).destroy_all
+        Sample.where(id: sample_ids_to_delete - shared_ids).destroy_all
       end
 
       def destroy_unused_sbmm_samples(modified_sbmm_ids)
         current_sbmm_ids = @reaction.reactions_reactant_sbmm_samples.pluck(:sequence_based_macromolecule_sample_id)
         sbmm_ids_to_delete = current_sbmm_ids - modified_sbmm_ids
-        SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete).destroy_all
+        shared_ids = ReactionsReactantSbmmSample.where(sequence_based_macromolecule_sample_id: sbmm_ids_to_delete)
+                                                .where.not(reaction_id: [@reaction.id, nil]).distinct
+                                                .pluck(:sequence_based_macromolecule_sample_id)
+        @reaction.reactions_reactant_sbmm_samples.where(sequence_based_macromolecule_sample_id: shared_ids).destroy_all
+        SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete - shared_ids).destroy_all
       end
 
       def process_sbmm_samples(samples, modified_sbmm_ids)
@@ -462,7 +500,9 @@ module Usecases
         return if sbmm_data.is_new
 
         reaction_ids = ReactionsReactantSbmmSample.get_reactions(sbmm_data.id)
-        return if reaction_ids.empty? || reaction_ids.include?(@reaction.id)
+        return if reaction_ids.include?(@reaction.id)
+        return if reaction_ids.empty? &&
+                  ElementPolicy.update?(@current_user, SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id))
 
         # older clients send no parent_id: take the stored one, so the split comes from the stock
         stored = SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id)
@@ -471,6 +511,11 @@ module Usecases
       end
 
       def create_sub_sbmm_sample(sbmm_data)
+        # an SBMM sample has no "new from payload" path: a split the user may not make is refused
+        unless accessible_parent?(SequenceBasedMacromoleculeSample, sbmm_data.parent_id)
+          raise ActiveRecord::RecordNotFound, "SBMM sample #{sbmm_data.parent_id} not found"
+        end
+
         parent_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.parent_id)
         modified_sbmm = parent_sbmm.create_sub_sequence_based_macromolecule_sample(
           @current_user,
