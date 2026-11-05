@@ -172,6 +172,22 @@ describe('Reaction', () => {
       expect(reaction.variations[0].startingMaterials).toEqual({ 100: { mass: 1 }, 50: { mass: 2 } });
     });
 
+    it('re-keys SBMM reactant variations to the copy\'s own split', () => {
+      reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
+        id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
+      })];
+      reaction.variations = [{
+        id: 1, uuid: 'row-1', startingMaterials: {}, reactants: { 'sbmm:106': { mass: 4 } }, products: {}, solvents: {},
+      }];
+
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      const [copiedSbmm] = copy.reactant_sbmm_samples;
+
+      expect(copiedSbmm.id).not.toBe(106);
+      expect(copy.variations[0].reactants).toEqual({ [`sbmm:${copiedSbmm.id}`]: { mass: 4 } });
+      expect(reaction.variations[0].reactants).toEqual({ 'sbmm:106': { mass: 4 } });
+    });
+
     it('preserves product amounts when keepAmounts=true', () => {
       reaction.products[0]._real_amount_value = 1.5;
       reaction.products[0]._target_amount_value = 2.0;

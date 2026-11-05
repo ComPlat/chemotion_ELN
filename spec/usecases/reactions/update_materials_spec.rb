@@ -764,6 +764,53 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
+    # the copy's variations name its SBMM reactant by the key it was sent with; saving maps it to the split
+    context 'when the copy has variations on its SBMM reactant' do
+      let(:stock_sbmm) do
+        SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-UV-1',
+                                                 sequence_based_macromolecule: create(:uniprot_sbmm), user: user)
+      end
+      let(:sbmm) { stock_sbmm.create_sub_sequence_based_macromolecule_sample(user, [collection.id]) }
+      let(:units) do
+        {
+          'concentration_unit' => 'ng/L', 'molarity_unit' => 'mol/L', 'activity_per_volume_unit' => 'U/L',
+          'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
+          'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
+        }
+      end
+      let(:entry) { { 'mass' => { 'value' => 4, 'unit' => 'g' } } }
+
+      def save_copy_with(sbmm_payload, key)
+        copy.update!(variations: [{ 'id' => 1, 'uuid' => SecureRandom.uuid, 'startingMaterials' => {},
+                                    'reactants' => { key => entry }, 'products' => {}, 'solvents' => {} }])
+        described_class.new(copy, { 'reactant_sbmm_samples' => [sbmm_payload.merge(units)] }, user, vessel_size)
+                       .execute!
+        copy.reload
+      end
+
+      def copied_sbmm_key
+        split = ReactionsReactantSbmmSample.find_by(reaction_id: copy.id).sequence_based_macromolecule_sample
+        "sbmm:#{split.id}"
+      end
+
+      before do
+        ReactionsReactantSbmmSample.create!(reaction: original, sequence_based_macromolecule_sample: sbmm, position: 0)
+      end
+
+      it 'maps the current client\'s preliminary key to the new split' do
+        uuid = SecureRandom.uuid
+        save_copy_with({ 'id' => uuid, 'is_new' => true, 'parent_id' => stock_sbmm.id, 'name' => 'SBMM copy',
+                         'position' => 0 }, "sbmm:#{uuid}")
+        expect(copy.variations.first['reactants'].keys).to eq([copied_sbmm_key])
+      end
+
+      it 'maps an older client\'s key of the original SBMM to the new split' do
+        save_copy_with({ 'id' => sbmm.id, 'is_new' => false, 'name' => 'SBMM copy', 'position' => 0 },
+                       "sbmm:#{sbmm.id}")
+        expect(copy.variations.first['reactants'].keys).to eq([copied_sbmm_key])
+      end
+    end
+
     context 'when the sample is also linked to this reaction' do
       before do
         ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)

@@ -623,9 +623,14 @@ export default class Reaction extends Element {
       return copiedSample;
     });
 
+    // SBMM reactants sit in the variations' reactants group under "sbmm:<id>" keys; the copy has its own splits
+    const sbmmKeys = (sbmms) => sbmms.map((sbmm) => ({ id: `sbmm:${sbmm.id}` }));
     copy.variations = Reaction.remapVariationMaterialKeys(this.variations, {
       startingMaterials: [this.starting_materials, copy.starting_materials],
-      reactants: [this.reactants, copy.reactants],
+      reactants: [
+        [...this.reactants, ...sbmmKeys(this.reactant_sbmm_samples)],
+        [...copy.reactants, ...sbmmKeys(copy.reactant_sbmm_samples)],
+      ],
       products: [this.products, copy.products],
       solvents: [this.solvents, copy.solvents],
     });
@@ -640,8 +645,8 @@ export default class Reaction extends Element {
   /**
    * Re-keys the variations' material groups from the source materials' ids to their copies' ids, so a
    * copied reaction's variations name its own (still preliminary) samples. The backend translates those
-   * to the saved samples' ids on create. Keys without a counterpart (e.g., sequence-based macromolecule
-   * samples, which a copy shares with its source) are kept as they are.
+   * to the saved samples' ids on create. Sequence-based macromolecule samples are passed in their
+   * `sbmm:<id>` key form (a copy gets its own splits). Keys without a counterpart are kept as they are.
    * @param {Array<Object>} variations
    * @param {Object<string, Array<Array<Object>>>} groupMaterials variations group => [sources, copies]
    * @returns {Array<Object>}
