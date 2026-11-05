@@ -12,6 +12,26 @@ RSpec.describe Usecases::Search::AllElementsSearch do
   let(:other_owner) { create(:person) }
   let(:other_collection) { create(:collection, user: other_owner) }
 
+  describe 'required collection context' do
+    it 'rejects a missing collection id' do
+      expect { described_class::Results.new(PgSearch::Document.none) }.to raise_error(ArgumentError, /collection_id/)
+    end
+
+    it 'rejects an explicit nil collection id' do
+      expect do
+        described_class::Results.new(PgSearch::Document.none, collection_id: nil)
+      end.to raise_error(ArgumentError, /collection_id/)
+    end
+
+    it 'supports empty results with a collection id' do
+      empty_results = described_class::Results.new(PgSearch::Document.none, collection_id: collection.id)
+
+      expect(empty_results).to be_empty
+      expect(empty_results.sequence_based_macromolecule_sample_ids).to be_empty
+      expect(empty_results.cell_line_ids).to be_empty
+    end
+  end
+
   shared_examples 'collection-scoped material expansion' do
     before do
       matching_sample

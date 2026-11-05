@@ -42,6 +42,21 @@ RSpec.describe Chemotion::SearchAPI do
         'ids' => [matching_sample.id], 'totalElements' => 1, 'elements' => [include('id' => matching_sample.id)],
       )
     end
+
+    context 'when sample text search is restricted by the collection share' do
+      let(:collection) { create(:collection, user: create(:person)) }
+
+      before do
+        create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 0)
+      end
+
+      it 'returns empty material results' do
+        do_request
+
+        expect(response).to have_http_status(:created)
+        expect(parsed_json_response.fetch(result_key)).to include('ids' => [], 'totalElements' => 0, 'elements' => [])
+      end
+    end
   end
 
   context 'when searching macromolecules' do

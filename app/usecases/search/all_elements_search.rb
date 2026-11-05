@@ -12,13 +12,16 @@ module Usecases
       end
 
       def search_by_substring
-        Results.new(PgSearch.multisearch(@term)).by_collection_id(@collection_id, @user, @pg_elements)
+        Results.new(PgSearch.multisearch(@term), collection_id: @collection_id)
+               .by_collection_id(@collection_id, @user, @pg_elements)
       end
 
       class Results
         attr_reader :results
 
-        def initialize(results, collection_id: nil)
+        def initialize(results, collection_id:)
+          raise ArgumentError, 'collection_id must be present' if collection_id.blank?
+
           @results = results
           @collection_id = collection_id
         end
@@ -36,11 +39,11 @@ module Usecases
           query = types.map do |type|
             "(#{searchable_type_for_query(type)} AND searchable_id IN (" \
               "SELECT #{type_id(type)} FROM #{collections_by_type(type)} " \
-              "WHERE collection_id = #{collection_id} AND deleted_at IS NULL))"
+              'WHERE collection_id = :collection_id AND deleted_at IS NULL))'
           end
           query.concat(material_collection_queries(types, collection_id))
 
-          @results = @results.where(query.join(' OR '))
+          @results = @results.where(query.join(' OR '), collection_id: collection_id)
           Results.new(@results, collection_id: collection_id)
         end
 
@@ -90,7 +93,7 @@ module Usecases
           sbmm_ids = filter_results_ids_by_type('SequenceBasedMacromolecule')
           sbmm_sample_ids_by_sbmm = []
 
-          if sbmm_ids
+          if sbmm_ids.present?
             sbmm_sample_ids_by_sbmm =
               SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
                                               .where(sequence_based_macromolecule_id: sbmm_ids, deleted_at: nil)
@@ -108,7 +111,7 @@ module Usecases
           cell_line_material_ids = filter_results_ids_by_type('CelllineMaterial')
           sample_ids_by_material = []
 
-          if cell_line_material_ids
+          if cell_line_material_ids.present?
             sample_ids_by_material = CelllineSample.by_collection_id(@collection_id)
                                                    .where(cellline_material_id: cell_line_material_ids).pluck(:id)
           end
