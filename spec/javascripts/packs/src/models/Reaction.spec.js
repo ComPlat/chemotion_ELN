@@ -172,6 +172,22 @@ describe('Reaction', () => {
       expect(reaction.variations[0].startingMaterials).toEqual({ 100: { mass: 1 }, 50: { mass: 2 } });
     });
 
+    it('re-keys SBMM reactant variations to the copy\'s own split', () => {
+      reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
+        id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
+      })];
+      reaction.variations = [{
+        id: 1, uuid: 'row-1', startingMaterials: {}, reactants: { 'sbmm:106': { mass: 4 } }, products: {}, solvents: {},
+      }];
+
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      const [copiedSbmm] = copy.reactant_sbmm_samples;
+
+      expect(copiedSbmm.id).not.toBe(106);
+      expect(copy.variations[0].reactants).toEqual({ [`sbmm:${copiedSbmm.id}`]: { mass: 4 } });
+      expect(reaction.variations[0].reactants).toEqual({ 'sbmm:106': { mass: 4 } });
+    });
+
     it('preserves product amounts when keepAmounts=true', () => {
       reaction.products[0]._real_amount_value = 1.5;
       reaction.products[0]._target_amount_value = 2.0;
@@ -180,6 +196,43 @@ describe('Reaction', () => {
       expect(copy.products[0]._real_amount_value).toBe(1.5);
       expect(copy.products[0]._target_amount_value).toBe(2.0);
       expect(copy.products[0].equivalent).toBe(0.8);
+    });
+
+    it('copies every material group into new samples', () => {
+      const persisted = (sample, id) => Object.assign(sample, { id, is_new: false });
+      reaction.starting_materials.forEach((sample, i) => persisted(sample, 110 + i));
+      reaction.products.forEach((sample, i) => persisted(sample, 120 + i));
+      reaction.reactants = [persisted(materials[0], 102)];
+      reaction.solvents = [persisted(materials[1], 103)];
+      reaction.purification_solvents = [persisted(materials[2], 104)];
+      reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
+        id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
+      })];
+      const originals = [
+        ...reaction.starting_materials, ...reaction.reactants, ...reaction.solvents,
+        ...reaction.purification_solvents, ...reaction.products, ...reaction.reactant_sbmm_samples,
+      ];
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      const { materials: serialized } = copy.serialize();
+      Object.entries(serialized).forEach(([group, list]) => {
+        list.forEach((m) => {
+          expect({ group, is_new: m.is_new }).toEqual({ group, is_new: true });
+          expect(originals.map((o) => o.id)).not.toContain(m.id);
+        });
+      });
+      expect(copy.purification_solvents.length).toBe(1);
+      expect(copy.purification_solvents[0]).not.toBe(reaction.purification_solvents[0]);
+      expect(serialized.reactant_sbmm_samples.length).toBe(1);
+      expect(serialized.reactant_sbmm_samples[0].parent_id).toBe(900);
+      // the backend takes the macromolecule and split metadata from the source split, not the stock
+      expect(serialized.reactant_sbmm_samples[0].copied_from_id).toBe(106);
+    });
+
+    it('clears purification solvent real amounts when keepAmounts=false (default)', () => {
+      materials[0]._real_amount_value = 4.2;
+      reaction.purification_solvents = [materials[0]];
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      expect(copy.purification_solvents[0]._real_amount_value).toBe(null);
     });
   });
 
