@@ -31,6 +31,8 @@ export default class AutoCompleteInput extends React.Component {
 
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneTyping = this.doneTyping.bind(this);
+    // Id of the latest suggestions request; a response with an older id is dropped.
+    this.suggestionsRequestId = 0;
   }
 
   componentDidMount() {
@@ -40,7 +42,13 @@ export default class AutoCompleteInput extends React.Component {
 
   componentWillUnmount() {
     UIStore.unlisten(this.onUIChange);
+    this.discardPendingSuggestions();
+  }
+
+  // Cancels the typing timer and makes any suggestions request still in flight stale.
+  discardPendingSuggestions() {
     clearTimeout(this.state.timeoutReference);
+    this.suggestionsRequestId += 1;
   }
 
   onUIChange(state) {
@@ -84,15 +92,13 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   focusSuggestion(newFocus) {
-    const {
-      suggestions, value, valueBeforeFocus, timeoutReference
-    } = this.state;
+    const { suggestions, value, valueBeforeFocus } = this.state;
     // A hover or key event can still refer to an entry of a previous, longer result list.
     if (!suggestions || !suggestions[newFocus]) { return; }
 
-    // Moving through the suggestions ends typing: drop the pending fetch, which would
-    // otherwise search for the focused name and replace the list (and the focus) under the user.
-    clearTimeout(timeoutReference);
+    // Moving through the suggestions ends typing: a pending or in-flight fetch would otherwise
+    // replace the list (and clear the focus) under the user.
+    this.discardPendingSuggestions();
 
     const newState = { timeoutReference: null };
     if (!valueBeforeFocus) {
@@ -120,6 +126,8 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   resetComponent() {
+    // results for the text that was just cleared must not reopen the list
+    this.suggestionsRequestId += 1;
     this.setState({
       value: '',
       valueBeforeFocus: null,
@@ -133,7 +141,12 @@ export default class AutoCompleteInput extends React.Component {
   // TODO implement continue fetching in the end of scroll
   fetchSuggestions(value, show = true) {
     let debounced = debounce(this.props.suggestions, 200);
+    this.suggestionsRequestId += 1;
+    const requestId = this.suggestionsRequestId;
     debounced(value).then(result => {
+      // Outdated: a newer request was made, the user moved through the list, or the input was cleared or unmounted.
+      if (requestId !== this.suggestionsRequestId) { return; }
+
       let newState = {};
       if (result.length > 0) {
         newState.suggestions = result;
@@ -216,7 +229,8 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   selectSuggestion() {
-    let { suggestions, suggestionFocus, timeoutReference, value } = this.state;
+    const { suggestions, suggestionFocus } = this.state;
+    let { value } = this.state;
     let { onSelectionChange } = this.props;
     this.setState({
       showSuggestions: false,
@@ -261,7 +275,7 @@ export default class AutoCompleteInput extends React.Component {
         }
     }
 
-    clearTimeout(timeoutReference);
+    this.discardPendingSuggestions();
     onSelectionChange(selection);
   }
 
