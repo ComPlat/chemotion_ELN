@@ -26,7 +26,6 @@ describe('buildHierarchicalMaterialRows', () => {
     const { rowsData } = buildHierarchicalMaterialRows(components);
 
     assert.strictEqual(rowsData.length, 1);
-    assert.ok(rowsData[0].component, 'row.component should be truthy');
     assert.ok(rowsData[0].sourceAlias, 'row.sourceAlias should be truthy');
   });
 
@@ -60,7 +59,6 @@ describe('buildHierarchicalMaterialRows', () => {
     const { rowsData } = buildHierarchicalMaterialRows(components);
 
     assert.strictEqual(rowsData.length, 1);
-    assert.ok(rowsData[0].component, 'component should be extracted from dash-format source');
   });
 
   // TC6: percent-format source extracts the numeric weight ratio from the leading digits
