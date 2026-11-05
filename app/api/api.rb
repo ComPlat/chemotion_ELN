@@ -199,7 +199,6 @@ class API < Grape::API
   mount Chemotion::PublicAPI
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
-  mount Chemotion::DeviceAPI
   mount Chemotion::InboxAPI
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
