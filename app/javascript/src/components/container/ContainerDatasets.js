@@ -6,7 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
-import { isPreviewableAttachment } from 'src/utilities/imageHelper';
+import { getContainerImageData } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -86,28 +86,17 @@ export default class ContainerDatasets extends Component {
       }
     });
 
-    // Reassign preferred thumbnail if needed, then propagate once to parent
-    this.reassignPreferredThumbnailIfNeeded(container);
+    // Clear a stale preferred thumbnail, then propagate once to parent
+    this.clearStalePreferredThumbnail(container);
   };
 
-  reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs the preview modal can show: the same rule as
-    // the carousel candidates in getContainerImageData, or the stored preference is ignored
-    const allAttachments = analysisContainer?.children?.flatMap(
-      (child) => (child.attachments || [])
-    ) || [];
-    const savedAttachments = allAttachments.filter(
-      (att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att)
-    );
-    const validAttachmentIds = savedAttachments
-      .map((att) => Number(att.id))
-      .filter((id) => !Number.isNaN(id) && id > 0);
-
+  clearStalePreferredThumbnail = (analysisContainer) => {
     const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
     // Only a preference that is set can go stale. An unset one stays unset, so the header
     // keeps following the default (see getAttachmentFromContainer: latest updated file) and
     // picks up new uploads, instead of pinning whichever file comes first.
-    if (currentPreferred && !validAttachmentIds.includes(Number(currentPreferred))) {
+    // Stale = no longer among the carousel candidates (same rule the header reads with).
+    if (currentPreferred && getContainerImageData(analysisContainer).preferredId === null) {
       // Clear it rather than pick a substitute: the header falls back to the default.
       analysisContainer.extended_metadata = {
         ...analysisContainer.extended_metadata,

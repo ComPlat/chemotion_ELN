@@ -1,6 +1,8 @@
 import expect from 'expect';
 import { describe, it } from 'mocha';
-import { getAttachmentFromContainer, isPreviewableAttachment } from 'src/utilities/imageHelper';
+import {
+  getAttachmentFromContainer, getContainerImageData, isPreviewableAttachment,
+} from 'src/utilities/imageHelper';
 
 describe('isPreviewableAttachment', () => {
   it('follows the server-provided previewable flag', () => {
@@ -55,5 +57,35 @@ describe('getAttachmentFromContainer', () => {
     };
     expect(getAttachmentFromContainer(container([png, deletedNewer]))).toBe(png);
     expect(getAttachmentFromContainer(container([deletedNewer]))).toBe(null);
+  });
+
+  it('skips attachments of a removed dataset', () => {
+    const newerPng = { ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000' };
+    const analysis = {
+      children: [
+        { container_type: 'dataset', is_deleted: true, attachments: [newerPng] },
+        { container_type: 'dataset', attachments: [png] },
+      ],
+    };
+    expect(getAttachmentFromContainer(analysis)).toBe(png);
+  });
+});
+
+describe('getContainerImageData', () => {
+  const png = { id: 1, filename: 'a.png', thumb: true };
+  const jpg = { id: 2, filename: 'b.jpg', thumb: true };
+  const analysis = (preferred) => ({
+    children: [
+      { container_type: 'dataset', is_deleted: true, attachments: [jpg] },
+      { container_type: 'dataset', attachments: [png] },
+    ],
+    extended_metadata: { preferred_thumbnail: preferred },
+  });
+
+  it('offers no candidates from a removed dataset and drops a preference pointing there', () => {
+    const data = getContainerImageData(analysis('2'));
+    expect(data.candidateIds).toEqual([1]);
+    expect(data.preferredId).toBe(null);
+    expect(getContainerImageData(analysis('1')).preferredId).toBe(1);
   });
 });

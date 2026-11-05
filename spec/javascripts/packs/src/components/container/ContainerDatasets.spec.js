@@ -8,7 +8,7 @@ import ContainerDatasets from 'src/components/container/ContainerDatasets';
 
 configure({ adapter: new Adapter() });
 
-describe('ContainerDatasets#reassignPreferredThumbnailIfNeeded', () => {
+describe('ContainerDatasets#clearStalePreferredThumbnail', () => {
   const docx = {
     id: 1, filename: 'data.docx', thumb: true, previewable: false,
   };
@@ -27,7 +27,7 @@ describe('ContainerDatasets#reassignPreferredThumbnailIfNeeded', () => {
     const wrapper = shallow(
       <ContainerDatasets container={container} rootContainer={{}} onChange={onChange} />
     );
-    wrapper.instance().reassignPreferredThumbnailIfNeeded(container);
+    wrapper.instance().clearStalePreferredThumbnail(container);
     return { preferred: container.extended_metadata.preferred_thumbnail, onChange };
   };
 
@@ -54,6 +54,18 @@ describe('ContainerDatasets#reassignPreferredThumbnailIfNeeded', () => {
   it('clears a preference pointing at a deleted or missing attachment', () => {
     expect(reassign(analysis([{ ...png, is_deleted: true }, pdf], '2')).preferred).toBe(null);
     expect(reassign(analysis([png], '99')).preferred).toBe(null);
+  });
+
+  it('clears a preference whose dataset was removed, keeps one in a remaining dataset', () => {
+    const twoDatasets = (preferred) => ({
+      children: [
+        { container_type: 'dataset', is_deleted: true, attachments: [png] },
+        { container_type: 'dataset', attachments: [pdf] },
+      ],
+      extended_metadata: { preferred_thumbnail: preferred },
+    });
+    expect(reassign(twoDatasets('2')).preferred).toBe(null);
+    expect(reassign(twoDatasets('3')).preferred).toBe('3');
   });
 
   it('clears the preference when nothing can be previewed', () => {

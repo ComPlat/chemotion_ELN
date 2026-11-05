@@ -233,6 +233,14 @@ export default class ImageModal extends Component {
     this.fetchPreviewThumbnail(); // refresh grey-area preview to the new preferred
   };
 
+  // drop the preferred image: the header goes back to the default (latest updated file)
+  handleUseDefault = () => {
+    if (!this.state.preferredId) return;
+    this.setState({ preferredId: null });
+    this.props.onPreferredThumbnailChange(null); // parent writes metadata + persists
+    this.fetchPreviewThumbnail();
+  };
+
   showPopObject() {
     const { thumbnail } = this.state;
     const { attachment } = ImageModal.derive(this.props);
@@ -255,7 +263,7 @@ export default class ImageModal extends Component {
     const canSetPreferred = selectedId && selectedId !== preferredId;
     return (
       <div className="d-flex flex-column" style={{ flex: '0 0 auto' }}>
-        <div className="d-flex justify-content-center mb-2" style={{ flex: '0 0 auto' }}>
+        <div className="d-flex flex-column align-items-center gap-1 mb-2" style={{ flex: '0 0 auto' }}>
           <Button
             variant="primary"
             size="sm"
@@ -265,6 +273,17 @@ export default class ImageModal extends Component {
             <i className="fa fa-star me-1" />
             {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
           </Button>
+          {preferredId && (
+            <Button
+              variant="link"
+              size="sm"
+              className="p-0"
+              title="Clear the preferred image and show the latest updated file"
+              onClick={this.handleUseDefault}
+            >
+              Use latest
+            </Button>
+          )}
         </div>
         <div
           className="d-flex flex-column flex-nowrap align-items-center gap-2 p-2"
