@@ -9,6 +9,8 @@ module Usecases
 
       # Raised when approving or rejecting a suggestion that is no longer pending.
       class AlreadyProcessed < StandardError; end
+
+      class UnknownRor < StandardError; end
     end
   end
 end

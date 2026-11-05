@@ -91,7 +91,11 @@ module Usecases
       end
 
       def not_in_registry!(value, field = nil)
-        error = field == :country ? Errors::CountryNotInRegistry : Errors::NotInRegistry
+        error = if field == :country
+                  Usecases::Affiliations::Errors::CountryNotInRegistry
+                else
+                  Usecases::Affiliations::Errors::NotInRegistry
+                end
         raise error, "'#{value}' is not in the affiliation registry yet. Please suggest it instead."
       end
 

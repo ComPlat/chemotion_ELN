@@ -22,6 +22,7 @@ module Usecases
       end
 
       def approve(id, edits = {})
+        edits = edits.merge(confirmed_ror_country(id, edits))
         suggestion = with_pending(id) do |s|
           s.assign_attributes(
             edits.slice(:organization, :department, :group, :country, :ror_id).transform_values(&:presence),
@@ -42,10 +43,28 @@ module Usecases
       end
 
       def withdraw(id)
-        @current_user.affiliation_suggestions.pending.find(id).destroy!
+        suggestion = @current_user.affiliation_suggestions.find(id)
+        suggestion.with_lock do
+          raise ActiveRecord::RecordNotFound unless suggestion.pending?
+
+          suggestion.destroy!
+        end
       end
 
       private
+
+      # Checked outside the row lock because it calls the ROR API. The country
+      # comes from ROR so one ROR id never ends up under two countries.
+      def confirmed_ror_country(id, edits)
+        ror_id = edits.key?(:ror_id) ? edits[:ror_id].presence : AffiliationSuggestion.find(id).ror_id
+        return {} if ror_id.blank?
+
+        valid_format = ror_id.match?(Usecases::Affiliations::UserAffiliations::ROR_ID_FORMAT)
+        ror = valid_format ? Chemotion::RorService.find(ror_id) : nil
+        raise Usecases::AffiliationSuggestions::Errors::UnknownRor, "'#{ror_id}' is not a known ROR id." unless ror
+
+        ror[:country].present? ? { country: ror[:country] } : {}
+      end
 
       # Lock the row so two admins (or a double-click) can't both process it.
       def with_pending(id)
@@ -111,7 +130,7 @@ module Usecases
 
       def ensure_no_pending_duplicate!(params)
         duplicate = @current_user.affiliation_suggestions.pending.any? do |s|
-          NAME_COLUMNS.all? { |col| same_value?(s[col], params[col]) }
+          (NAME_COLUMNS + [:country]).all? { |col| same_value?(s[col], params[col]) }
         end
         return unless duplicate
 

@@ -152,6 +152,17 @@ RSpec.describe Chemotion::AffiliationAPI do
       expect(response).to have_http_status(:created)
       expect(AffiliationSuggestion.last.target_user_affiliation_id).to eq(ua.id)
     end
+
+    it 'allows a pending suggestion for the same organization in another country' do
+      create(:affiliation_suggestion, user: user, organization: 'Acme', department: nil, country: 'Germany')
+      post '/api/v1/affiliation_suggestions', params: { organization: 'Acme', country: 'France' }
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'refuses an end date before the start date' do
+      post '/api/v1/affiliation_suggestions', params: { organization: 'KIT', from: '2026-01-01', to: '2020-01-01' }
+      expect(response).to have_http_status(422)
+    end
   end
 
   describe 'DELETE /api/v1/affiliation_suggestions/:id' do
@@ -168,6 +179,13 @@ RSpec.describe Chemotion::AffiliationAPI do
       expect { delete "/api/v1/affiliation_suggestions/#{sugg.id}" }
         .to change(AffiliationSuggestion, :count).by(-1)
       expect(response).to have_http_status(:ok)
+    end
+
+    it 'keeps a suggestion that was already approved', :aggregate_failures do
+      sugg = create(:affiliation_suggestion, user: user, organization: 'KIT', status: :approved)
+      expect { delete "/api/v1/affiliation_suggestions/#{sugg.id}" }
+        .not_to change(AffiliationSuggestion, :count)
+      expect(response).to have_http_status(404)
     end
   end
 

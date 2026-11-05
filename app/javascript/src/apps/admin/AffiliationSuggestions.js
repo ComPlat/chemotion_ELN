@@ -48,7 +48,11 @@ const AffiliationSuggestions = () => {
   const handleAction = (id, action, body = {}) => {
     AdminFetcher.updateAffiliationSuggestion(id, action, body)
       .then((result) => {
-        setActionError(result && result.error ? result.error : null);
+        if (!result) {
+          setActionError('Could not reach the server. Please try again.');
+          return;
+        }
+        setActionError(result.error || null);
         setEditSug(null);
         load(statusFilter);
       });

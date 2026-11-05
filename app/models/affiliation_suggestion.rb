@@ -36,4 +36,13 @@ class AffiliationSuggestion < ApplicationRecord
 
   validates :organization, presence: true
   validates :organization, :department, :group, :country, allow_blank: true, length: { maximum: 255 }
+  validate :end_date_after_start_date
+
+  private
+
+  def end_date_after_start_date
+    return if from.blank? || to.blank? || to >= from
+
+    errors.add(:to, 'must be after the start date')
+  end
 end

@@ -39,6 +39,12 @@ RSpec.describe AffiliationSuggestion, type: :model do
       expect(suggestion).not_to be_valid
     end
 
+    it 'is invalid when the end date is before the start date' do
+      suggestion = build(:affiliation_suggestion, user: user, organization: 'KIT',
+                                                  from: Date.new(2026, 1, 1), to: Date.new(2020, 1, 1))
+      expect(suggestion).not_to be_valid
+    end
+
     it 'is valid with organization and user' do
       suggestion = build(:affiliation_suggestion, user: user, organization: 'KIT')
       expect(suggestion).to be_valid

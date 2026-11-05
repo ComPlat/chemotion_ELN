@@ -39,8 +39,11 @@ module Chemotion
           { ok: true }
         rescue ActiveRecord::RecordNotFound
           error!({ error: 'Suggestion no longer exists (it may have been withdrawn).' }, 404)
-        rescue Usecases::AffiliationSuggestions::Errors::AlreadyProcessed, ActiveRecord::RecordInvalid => e
+        rescue Usecases::AffiliationSuggestions::Errors::AlreadyProcessed,
+               Usecases::AffiliationSuggestions::Errors::UnknownRor, ActiveRecord::RecordInvalid => e
           error!({ error: e.message }, 422)
+        rescue Chemotion::RorService::Unavailable
+          error!({ error: 'The ROR registry is unreachable. Please try again later.' }, 503)
         end
 
         desc 'Reject a suggestion'

@@ -58,6 +58,34 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
       allow(warden_instance).to receive(:current_user).and_return(admin)
       stub_const('AffiliationMailer', mailer_double)
+      allow(Chemotion::RorService).to receive(:find).with('04t3en479')
+                                                    .and_return({ ror_id: '04t3en479', country: 'Germany',
+                                                                  name: 'Karlsruhe Institute of Technology' })
+    end
+
+    it 'refuses a ROR id the registry does not know', :aggregate_failures do
+      allow(Chemotion::RorService).to receive(:find).with('0abcdef12').and_return(nil)
+      put "/api/v1/admin/affiliation_suggestions/#{suggestion.id}/approve", params: { ror_id: '0abcdef12' }
+
+      expect(response).to have_http_status(422)
+      expect(response.parsed_body['error']).to include('not a known ROR id')
+      expect(suggestion.reload).to be_pending
+    end
+
+    it 'answers 503 and keeps the suggestion pending when ROR is unreachable', :aggregate_failures do
+      allow(Chemotion::RorService).to receive(:find).and_raise(Chemotion::RorService::Unavailable)
+      sugg = create(:affiliation_suggestion, user: user, organization: 'KIT', department: nil, ror_id: '04t3en479')
+      put "/api/v1/admin/affiliation_suggestions/#{sugg.id}/approve"
+
+      expect(response).to have_http_status(503)
+      expect(sugg.reload).to be_pending
+    end
+
+    it 'takes the country from ROR, not from the suggestion' do
+      sugg = create(:affiliation_suggestion, user: user, organization: 'KIT', department: 'IOC',
+                                             country: 'France', ror_id: '04t3en479')
+      put "/api/v1/admin/affiliation_suggestions/#{sugg.id}/approve"
+      expect(Affiliation.find(sugg.reload.affiliation_id).country).to eq('Germany')
     end
 
     it 'creates a UserAffiliation and marks suggestion approved', :aggregate_failures do

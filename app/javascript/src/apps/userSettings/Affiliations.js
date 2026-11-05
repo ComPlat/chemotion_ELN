@@ -49,7 +49,7 @@ function Affiliations() {
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   };
-  const isPast = (entry) => !!entry.to && new Date(entry.to) < new Date();
+  const isPast = (entry) => !!entry.to && String(entry.to).slice(0, 10) < formatDateValue(new Date());
   const rorLink = (rorId) => rorId && (
     <a
       href={`https://ror.org/${rorId}`}
@@ -258,10 +258,10 @@ function Affiliations() {
   const submitSuggestion = (params, onDone) => {
     UserSettingsFetcher.createSuggestion(params)
       .then((result) => {
-        if (result && result.error) {
+        if (!result || result.error) {
           rootStore.notificationsStore.add({
             title: 'Request not submitted',
-            message: result.error,
+            message: result ? result.error : 'Could not reach the server. Please try again.',
             level: 'error',
             position: 'tc',
             dismissible: 'button',
