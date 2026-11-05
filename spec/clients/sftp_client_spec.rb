@@ -4,31 +4,38 @@ require 'rails_helper'
 
 RSpec.describe 'SFTPClient', if: ENV['DOCKER'] do
   context 'with invalid session/data' do
+    subject(:client) { SFTPClient.new(**settings) }
+
     let(:settings) do
       {
         host: '127.0.0.1',
-        port: '1',
-        username: 'none',
-        password: 'none'
+        port: 1,
+        user: 'none',
+        password: 'none',
       }
     end
 
-    subject { SFTPClient.new(settings) }
-
     describe 'upload, download, move and read a file' do
       it 'raises SFTPClientError' do
-        expect { subject.upload_file!('/invalid', '') }.to raise_error SFTPClientError
-        expect { subject.read_file('/invalid') }.to raise_error SFTPClientError
-        expect { subject.download_file!('', '') }.to raise_error SFTPClientError
-        expect { subject.write_to_file!('/invalid', '') }.to raise_error SFTPClientError
-        expect { subject.file_exists?('/invalid') }.to raise_error SFTPClientError
+        expect { client.upload_file!('/invalid', '') }.to raise_error SFTPClientError
+        expect { client.read_file('/invalid') }.to raise_error SFTPClientError
+        expect { client.download_file!('', '') }.to raise_error SFTPClientError
+        expect { client.write_to_file!('/invalid', '') }.to raise_error SFTPClientError
+        expect { client.exist?('/invalid') }.to raise_error SFTPClientError
       end
     end
   end
 
   context 'with valid username/password' do
-    # the sftp service of docker-compose.test.yml
-    subject { SFTPClient.new(host: 'sftp', user: 'sftp_test', port: '22', password: 'sftp_test') }
+    # defaults to the sftp service of docker-compose.test.yml
+    subject(:client) do
+      SFTPClient.new(
+        host: ENV.fetch('SFTP_TEST_HOST', 'sftp'),
+        port: ENV.fetch('SFTP_TEST_PORT', '22').to_i,
+        user: 'sftp_test',
+        password: 'sftp_test',
+      )
+    end
 
     describe 'upload, download, move and read a file' do
       let(:download_path) { "#{Rails.root}/spec/fixtures/download.txt" }
@@ -38,19 +45,19 @@ RSpec.describe 'SFTPClient', if: ENV['DOCKER'] do
       let(:write_path)    { 'uploads/upload3.txt' }
 
       before do
-        subject.upload_file!(fixture_path, upload_path)
+        client.upload_file!(fixture_path, upload_path)
         sleep 1
       end
 
       after do
-        subject.remove_file!(upload_path)
-        subject.remove_file!(move_path)
-        subject.remove_file!(write_path)
+        [upload_path, move_path, write_path].each do |path|
+          client.remove_file!(path) if client.exist?(path)
+        end
       end
 
       describe 'read_file' do
         it 'possible to read an uploaded file' do
-          expect(subject.read_file(upload_path)).to eq "Hello world\n"
+          expect(client.read_file(upload_path)).to eq "Hello world\n"
         end
       end
 
@@ -58,43 +65,43 @@ RSpec.describe 'SFTPClient', if: ENV['DOCKER'] do
         after { FileUtils.rm(download_path) if File.exist?(download_path) }
 
         it 'is possible to download an uploaded file' do
-          subject.download_file!(upload_path, download_path)
+          client.download_file!(upload_path, download_path)
           expect(FileUtils.compare_file(download_path, fixture_path)).to eq true
         end
       end
 
       describe 'move_file!' do
         it 'is possible to move a file' do
-          subject.move_file!(upload_path, move_path)
-          expect(subject.read_file(move_path)).to eq "Hello world\n"
+          client.move_file!(upload_path, move_path)
+          expect(client.read_file(move_path)).to eq "Hello world\n"
         end
       end
 
       describe 'write_to_file!' do
         it 'is possible to write a string to a file on the server' do
-          subject.write_to_file!(write_path, 'Testtest')
-          expect(subject.read_file(write_path)).to eq 'Testtest'
+          client.write_to_file!(write_path, 'Testtest')
+          expect(client.read_file(write_path)).to eq 'Testtest'
         end
 
         it 'is possible to write an utf-8 string to a file on the server' do
-          subject.write_to_file!(write_path, 'Tésttüst')
-          expect(subject.read_file(write_path)).to eq 'Tésttüst'
+          client.write_to_file!(write_path, 'Tésttüst')
+          expect(client.read_file(write_path)).to eq 'Tésttüst'
         end
 
         it 'overwrites existing file\'s content on the server' do
-          subject.write_to_file!(write_path, 'old content')
-          subject.write_to_file!(write_path, 'new content')
-          expect(subject.read_file(write_path)).to eq 'new content'
+          client.write_to_file!(write_path, 'old content')
+          client.write_to_file!(write_path, 'new content')
+          expect(client.read_file(write_path)).to eq 'new content'
         end
       end
 
-      describe 'file_exists?' do
+      describe 'exist?' do
         it 'returns true for an existing file' do
-          expect(subject.file_exists?(upload_path)).to eq true
+          expect(client.exist?(upload_path)).to eq true
         end
 
         it 'returns false for an non existing file' do
-          expect(subject.file_exists?('/invalid/path')).to eq false
+          expect(client.exist?('uploads/missing.txt')).to eq false
         end
       end
     end
