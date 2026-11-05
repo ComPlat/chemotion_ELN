@@ -85,7 +85,8 @@ const DatasetDropZone = ({ droppedPaths, setDroppedPaths }) => {
   const onDrop = useCallback((e) => {
     e.preventDefault();
     const path = e.dataTransfer.getData('text/plain');
-    const newDroppedPaths = droppedPaths.filter((p) => !p.startsWith(path));
+    // Drop the path itself and anything inside it, but not siblings sharing a name prefix.
+    const newDroppedPaths = droppedPaths.filter((p) => p !== path && !p.startsWith(`${path}/`));
     if (path) {
       setDroppedPaths([...newDroppedPaths, path]);
     }

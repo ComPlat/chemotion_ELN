@@ -109,6 +109,19 @@ class FileContainer {
     });
   }
 
+  // Give a root entry another name; every entry below it carries the new name in its path.
+  renameRoot(newName) {
+    this.name = newName;
+    this.setPathSegment(0, newName);
+  }
+
+  setPathSegment(index, value) {
+    const pathArray = this.fullPathArray;
+    pathArray[index] = value;
+    this.fullPath = pathArray.join('/');
+    this.subFiles.forEach((x) => x.setPathSegment(index, value));
+  }
+
   moveDown(folderName) {
     this.depth += 1;
     const pathArray = this.fullPathArray;
@@ -253,6 +266,31 @@ async function handleZipFile(zipFile) {
   return rootContainer;
 }
 
+/*
+Entries are told apart by their path, so dropped roots must not share a name. Two archives
+holding the same top-level folder (e.g. `X28721_10.zip` and `X28721_11.zip`, both holding
+`X28721/`) would otherwise list the same paths. A clashing archive falls back to its own file
+name; anything else gets a numbered suffix.
+*/
+function makeRootNamesUnique(containers) {
+  const taken = new Set();
+  containers.forEach((container) => {
+    let { name } = container;
+    if (taken.has(name)) {
+      const archiveName = container.archive?.file.name.replace(/\.zip$/i, '');
+      if (archiveName && !taken.has(archiveName)) {
+        name = archiveName;
+      }
+      for (let n = 2; taken.has(name); n += 1) {
+        name = `${container.name} (${n})`;
+      }
+      container.renameRoot(name);
+    }
+    taken.add(name);
+  });
+  return containers;
+}
+
 class ZipFileContainer extends FileContainer {
   constructor(subFiles) {
     const fullPath = '';
@@ -281,6 +319,7 @@ class ZipFileContainer extends FileContainer {
 export {
   traverseDirectory,
   handleZipFile,
+  makeRootNamesUnique,
   FileContainer,
   ZipFileContainer,
   VirtualFolderNode

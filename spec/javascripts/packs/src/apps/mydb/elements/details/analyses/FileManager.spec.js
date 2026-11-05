@@ -1,7 +1,7 @@
 import expect from 'expect';
 import JSZip from 'jszip';
 import {
-  FileContainer, ZipFileContainer, handleZipFile
+  FileContainer, ZipFileContainer, handleZipFile, makeRootNamesUnique
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 
 async function zipOf(entries, name) {
@@ -135,5 +135,39 @@ describe('handleZipFile', () => {
       entries: { 'measurement/x.txt': 'X', 'measurement/measurement/a.jdx': 'A' },
     });
     expect(await zipped(['root', 'loose'])).toEqual(looseFirst);
+  });
+});
+
+describe('makeRootNamesUnique', () => {
+  const globalFileReader = global.FileReader;
+  before(() => { global.FileReader = window.FileReader; });
+  after(() => { global.FileReader = globalFileReader; });
+
+  it('names archives holding the same folder after their own file', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'X28721_10.zip')),
+      await handleZipFile(await zipOf({ 'X28721/11/fid': 'B' }, 'X28721_11.zip')),
+    ]);
+
+    expect(roots.map((x) => x.fullPath)).toEqual(['X28721', 'X28721_11']);
+    expect(listedPaths(roots[1])).toEqual(['X28721_11/11']);
+    expect(roots[1].getNext()[0].subFiles.map((x) => x.fullPath)).toEqual(['X28721_11/11/fid']);
+  });
+
+  it('numbers clashing roots that are not archives', () => {
+    const roots = makeRootNamesUnique([looseFile('A', 'data'), looseFile('B', 'data')]);
+
+    expect(roots.map((x) => x.fullPath)).toEqual(['data', 'data (2)']);
+  });
+
+  it('keeps the entries of a renamed archive inside its uploaded zip', async () => {
+    const roots = makeRootNamesUnique([
+      await handleZipFile(await zipOf({ 'X28721/10/fid': 'A' }, 'X28721_10.zip')),
+      await handleZipFile(await zipOf({ 'X28721/11/fid': 'B', 'X28721/11/acqu': 'C' }, 'X28721_11.zip')),
+    ]);
+    const folder = roots[1].getNext()[0];
+    folder.moveUpToRoot();
+
+    expect(await entriesOf(await folder.getFile())).toEqual({ '11/fid': 'B', '11/acqu': 'C' });
   });
 });
