@@ -169,9 +169,10 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/devices' do
-    let(:own_device) { create(:device, :novnc_settings, novnc_password: 'vnc-password') }
-    let(:group_device) { create(:device, :novnc_settings) }
-    let(:unrelated_device) { create(:device) }
+    # named against creation order, so the sort is not satisfied by id order
+    let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings, name: 'Alpha IR') }
+    let!(:unrelated_device) { create(:device).tap { |device| device.people << create(:person) } }
     let!(:group) { create(:group, admins: [user], users: [user]) }
 
     before do
@@ -200,7 +201,7 @@ describe Chemotion::UserAPI do
 
       it 'lists it once, with the devices sorted by name' do
         names = parsed_json_response['currentDevices'].pluck('name')
-        expect(names).to eq([own_device.name, group_device.name].sort)
+        expect(names).to eq(['Alpha IR', 'Zeta NMR'])
       end
     end
   end
