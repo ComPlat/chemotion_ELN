@@ -18,12 +18,13 @@ module Usecases
       class Results
         attr_reader :results
 
-        def initialize(results)
+        def initialize(results, collection_id: nil)
           @results = results
+          @collection_id = collection_id
         end
 
         def first
-          Results.new(@results.first)
+          Results.new(@results.first, collection_id: @collection_id)
         end
 
         delegate :empty?, to: :@results
@@ -39,7 +40,7 @@ module Usecases
           end
 
           @results = @results.where(query.join(' OR '))
-          Results.new(@results)
+          Results.new(@results, collection_id: collection_id)
         end
 
         def searchable_type_for_query(type)
@@ -95,7 +96,8 @@ module Usecases
 
           if sbmm_ids
             sbmm_sample_ids_by_sbmm =
-              SequenceBasedMacromoleculeSample.where(sequence_based_macromolecule_id: sbmm_ids, deleted_at: nil)
+              SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
+                                              .where(sequence_based_macromolecule_id: sbmm_ids, deleted_at: nil)
                                               .pluck(:id)
           end
           (sbmm_sample_ids + sbmm_sample_ids_by_sbmm).uniq
@@ -111,7 +113,8 @@ module Usecases
           sample_ids_by_material = []
 
           if cell_line_material_ids
-            sample_ids_by_material = CelllineSample.where(cellline_material_id: cell_line_material_ids).pluck(:id)
+            sample_ids_by_material = CelllineSample.by_collection_id(@collection_id)
+                                                   .where(cellline_material_id: cell_line_material_ids).pluck(:id)
           end
           (cell_line_sample_ids + sample_ids_by_material).uniq
         end
