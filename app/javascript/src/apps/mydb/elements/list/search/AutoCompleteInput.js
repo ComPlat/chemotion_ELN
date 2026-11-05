@@ -38,6 +38,11 @@ export default class AutoCompleteInput extends React.Component {
     this.initInputWidth();
   }
 
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIChange);
+    clearTimeout(this.state.timeoutReference);
+  }
+
   onUIChange(state) {
     let inputDisabled = false;
     let value = '';
@@ -67,21 +72,29 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   focusNewSuggestionIndex(direction = 1) {
-    let { suggestions, suggestionFocus } = this.state;
-    let length = suggestions.length;
-    let sF = suggestionFocus == null ? length - 1 : suggestionFocus;
-    let newSuggestionIndex = sF + direction;
-    if (newSuggestionIndex >= length) { newSuggestionIndex = 0; }
-    if (newSuggestionIndex < 0) { newSuggestionIndex = length - 1; }
+    const { suggestions, suggestionFocus } = this.state;
+    if (!suggestions || suggestions.length === 0) { return; }
+
+    const { length } = suggestions;
+    // Nothing focused yet: Down starts at the first entry, Up at the last one.
+    const newSuggestionIndex = suggestionFocus == null
+      ? (direction > 0 ? 0 : length - 1)
+      : (suggestionFocus + direction + length) % length;
     this.focusSuggestion(newSuggestionIndex);
   }
 
   focusSuggestion(newFocus) {
-    const { suggestions, value, valueBeforeFocus } = this.state;
+    const {
+      suggestions, value, valueBeforeFocus, timeoutReference
+    } = this.state;
     // A hover or key event can still refer to an entry of a previous, longer result list.
     if (!suggestions || !suggestions[newFocus]) { return; }
 
-    let newState = {};
+    // Moving through the suggestions ends typing: drop the pending fetch, which would
+    // otherwise search for the focused name and replace the list (and the focus) under the user.
+    clearTimeout(timeoutReference);
+
+    const newState = { timeoutReference: null };
     if (!valueBeforeFocus) {
       newState.valueBeforeFocus = value;
     }
@@ -124,6 +137,7 @@ export default class AutoCompleteInput extends React.Component {
       let newState = {};
       if (result.length > 0) {
         newState.suggestions = result;
+        newState.error = '';
         newState.suggestionFocus = null;
         newState.showSuggestions = show;
       } else {
