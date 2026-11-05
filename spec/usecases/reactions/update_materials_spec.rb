@@ -765,6 +765,68 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
+    # a split can be edited away from its stock (e.g. to a modified protein); its copy keeps the edit
+    context "when the original's SBMM split was edited" do
+      let(:stock_sbmm) do
+        SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-UE-1',
+                                                 sequence_based_macromolecule: create(:uniprot_sbmm), user: user,
+                                                 collections: [collection])
+      end
+      let(:modified_protein) { create(:modified_uniprot_sbmm) }
+      let(:sbmm) do
+        split = stock_sbmm.create_sub_sequence_based_macromolecule_sample(user, [collection.id])
+        split.update!(sequence_based_macromolecule: modified_protein, supplier: 'split supplier',
+                      purification_method: 'split purification')
+        split
+      end
+      let(:units) do
+        {
+          'concentration_unit' => 'ng/L', 'molarity_unit' => 'mol/L', 'activity_per_volume_unit' => 'U/L',
+          'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
+          'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
+        }
+      end
+
+      before do
+        ReactionsReactantSbmmSample.create!(reaction: original, sequence_based_macromolecule_sample: sbmm, position: 0)
+      end
+
+      def save_copy_with(sbmm_payload)
+        described_class.new(copy, { 'reactant_sbmm_samples' => [sbmm_payload.merge(units)] }, user, vessel_size)
+                       .execute!
+        ReactionsReactantSbmmSample.find_by(reaction_id: copy.id).sequence_based_macromolecule_sample
+      end
+
+      def independent_copy_of_edited_split
+        have_attributes(
+          parent: stock_sbmm, sequence_based_macromolecule_id: modified_protein.id, supplier: 'split supplier',
+          purification_method: 'split purification', amount_as_used_mass_value: 3.0
+        )
+      end
+
+      it "keeps the split's macromolecule and metadata in a new split of the stock (current client)" do
+        copied = save_copy_with({ 'id' => SecureRandom.uuid, 'is_new' => true, 'parent_id' => stock_sbmm.id,
+                                  'copied_from_id' => sbmm.id, 'name' => 'SBMM copy', 'position' => 0,
+                                  'amount_as_used_mass_value' => 3.0 })
+        expect(copied).not_to eq(sbmm)
+        expect(copied).to independent_copy_of_edited_split
+      end
+
+      it "keeps the split's macromolecule and metadata in a new split of the stock (older client)" do
+        copied = save_copy_with({ 'id' => sbmm.id, 'is_new' => false, 'name' => 'SBMM copy', 'position' => 0,
+                                  'amount_as_used_mass_value' => 3.0 })
+        expect(copied).not_to eq(sbmm)
+        expect(copied).to independent_copy_of_edited_split
+      end
+
+      it 'leaves the source split and the stock as they were' do
+        save_copy_with({ 'id' => sbmm.id, 'is_new' => false, 'name' => 'SBMM copy', 'position' => 0,
+                         'amount_as_used_mass_value' => 3.0 })
+        expect([sbmm.reload, stock_sbmm.reload].map(&:sequence_based_macromolecule_id))
+          .to eq([modified_protein.id, stock_sbmm.sequence_based_macromolecule_id])
+      end
+    end
+
     # the copy's variations name its SBMM reactant by the key it was sent with; saving maps it to the split
     context 'when the copy has variations on its SBMM reactant' do
       let(:stock_sbmm) do

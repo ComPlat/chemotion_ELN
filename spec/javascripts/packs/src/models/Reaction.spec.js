@@ -224,6 +224,8 @@ describe('Reaction', () => {
       expect(copy.purification_solvents[0]).not.toBe(reaction.purification_solvents[0]);
       expect(serialized.reactant_sbmm_samples.length).toBe(1);
       expect(serialized.reactant_sbmm_samples[0].parent_id).toBe(900);
+      // the backend takes the macromolecule and split metadata from the source split, not the stock
+      expect(serialized.reactant_sbmm_samples[0].copied_from_id).toBe(106);
     });
 
     it('clears purification solvent real amounts when keepAmounts=false (default)', () => {

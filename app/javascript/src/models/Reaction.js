@@ -607,10 +607,12 @@ export default class Reaction extends Element {
       }
       return copiedSample;
     });
-    // An SBMM reactant is a split of a stock SBMM sample: the copy gets a new split of the same parent.
+    // An SBMM reactant is a split of a stock SBMM sample: the copy gets a new split of the same parent,
+    // which keeps what the source split was edited to (copied_from_id, e.g. a modified macromolecule).
     copy.reactant_sbmm_samples = this.reactant_sbmm_samples.map((sbmm) => {
       const copiedSbmm = sbmm.buildChildWithoutCounter();
       copiedSbmm.parent_id = sbmm.parent_id || sbmm.id;
+      copiedSbmm.copied_from_id = sbmm.id;
       return copiedSbmm;
     });
     copy.products = this.products.map((sample) => {

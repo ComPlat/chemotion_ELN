@@ -74,6 +74,8 @@ module Usecases
         purification_solvent: 'purification_solvents',
         product: 'products',
       }.freeze
+      # Attributes of an SBMM sample that a split made from a copy of it does not take over.
+      SBMM_COPY_EXCLUDED_ATTRIBUTES = %w[id short_label ancestry user_id created_at updated_at deleted_at].freeze
 
       attr_reader :current_user
 
@@ -507,9 +509,21 @@ module Usecases
         # older clients send no parent_id: take the stored one, so the split comes from the stock
         stored = SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id)
         sbmm_data.parent_id ||= stored&.parent_id || sbmm_data.id
+        # the new split keeps what the stored sample was edited to (see #create_sub_sbmm_sample)
+        sbmm_data.copied_from_id ||= sbmm_data.id
         sbmm_data.is_new = true
       end
 
+      # Creates a new split of the payload's stock (+parent_id+) for this reaction.
+      #
+      # When the payload is a copy of another split (+copied_from_id+, set by a reaction copy), the
+      # new split takes that split's attributes (the macromolecule, which an edit may have changed
+      # from the stock's, and its split-level metadata) instead of the stock's. The reaction-specific
+      # fields come from the payload in both cases.
+      #
+      # @param sbmm_data [OSbmmSample] payload entry of +reactant_sbmm_samples+
+      # @return [SequenceBasedMacromoleculeSample] the new split
+      # @raise [ActiveRecord::RecordNotFound] if the user may not split the stock or read the copied split
       def create_sub_sbmm_sample(sbmm_data)
         # an SBMM sample has no "new from payload" path: a split the user may not make is refused
         unless accessible_parent?(SequenceBasedMacromoleculeSample, sbmm_data.parent_id)
@@ -517,13 +531,15 @@ module Usecases
         end
 
         parent_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.parent_id)
+        copied_attributes = copied_sbmm_attributes(sbmm_data.copied_from_id, parent_sbmm)
         modified_sbmm = parent_sbmm.create_sub_sequence_based_macromolecule_sample(
           @current_user,
           @reaction.collections.pluck(:id),
         )
 
-        # Update with reaction-specific data
+        # Update with the copied split's attributes, if any, and the reaction-specific data
         modified_sbmm.update!(
+          **copied_attributes.symbolize_keys,
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
@@ -548,6 +564,22 @@ module Usecases
         )
 
         modified_sbmm
+      end
+
+      # The attributes a split copied from +copied_from_id+ takes over, or +{}+ when there is nothing to
+      # copy (no id, a temporary one, or the stock itself).
+      #
+      # @param copied_from_id [Integer, String, nil] id of the SBMM sample the payload was copied from
+      # @param parent_sbmm [SequenceBasedMacromoleculeSample] the stock the new split is made from
+      # @return [Hash{String => Object}]
+      # @raise [ActiveRecord::RecordNotFound] if the user may not read the copied SBMM sample
+      def copied_sbmm_attributes(copied_from_id, parent_sbmm)
+        return {} unless copied_from_id.to_s.match?(/\A\d+\z/) && copied_from_id.to_i != parent_sbmm.id
+        unless accessible_parent?(SequenceBasedMacromoleculeSample, copied_from_id)
+          raise ActiveRecord::RecordNotFound, "SBMM sample #{copied_from_id} not found"
+        end
+
+        SequenceBasedMacromoleculeSample.find(copied_from_id).attributes.except(*SBMM_COPY_EXCLUDED_ATTRIBUTES)
       end
 
       def update_existing_sbmm_sample(sbmm_data)
