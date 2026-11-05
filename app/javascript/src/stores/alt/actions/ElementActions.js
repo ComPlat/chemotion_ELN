@@ -52,16 +52,6 @@ import { sampleAssociationLockNotification } from 'src/utilities/notificationMes
 
 import _ from 'lodash';
 
-const handleFetch = (dispatch, fetch) => {
-  return fetch()
-    .then((result) => {
-      dispatch(result)
-    })
-    .catch((errorMessage) => {
-      console.log(errorMessage)
-    })
-}
-
 class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
