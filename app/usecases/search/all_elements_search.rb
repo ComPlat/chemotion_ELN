@@ -38,19 +38,15 @@ module Usecases
               "SELECT #{type_id(type)} FROM #{collections_by_type(type)} " \
               "WHERE collection_id = #{collection_id} AND deleted_at IS NULL))"
           end
+          query.concat(material_collection_queries(types, collection_id))
 
           @results = @results.where(query.join(' OR '))
           Results.new(@results, collection_id: collection_id)
         end
 
         def searchable_type_for_query(type)
-          if type == 'sequence_based_macromolecule_sample'
-            "(searchable_type = '#{type.camelize}' OR searchable_type = 'SequenceBasedMacromolecule')"
-          elsif type == 'cell_line'
-            "(searchable_type = 'CelllineSample' OR searchable_type = 'CelllineMaterial')"
-          else
-            "searchable_type = '#{type.camelize}'"
-          end
+          searchable_type = type == 'cell_line' ? 'CelllineSample' : type.camelize
+          "searchable_type = '#{searchable_type}'"
         end
 
         def type_id(type)
@@ -124,6 +120,20 @@ module Usecases
         end
 
         private
+
+        def material_collection_queries(types, collection_id)
+          queries = []
+          if types.include?('sequence_based_macromolecule_sample')
+            ids = SequenceBasedMacromoleculeSample.by_collection_id(collection_id)
+                                                  .select(:sequence_based_macromolecule_id)
+            queries << "(searchable_type = 'SequenceBasedMacromolecule' AND searchable_id IN (#{ids.to_sql}))"
+          end
+          if types.include?('cell_line')
+            ids = CelllineSample.by_collection_id(collection_id).select(:cellline_material_id)
+            queries << "(searchable_type = 'CelllineMaterial' AND searchable_id IN (#{ids.to_sql}))"
+          end
+          queries
+        end
 
         def filter_results_by_type(type)
           @results.where(searchable_type: type).includes(:searchable)
