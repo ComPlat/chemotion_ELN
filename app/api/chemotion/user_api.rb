@@ -196,10 +196,10 @@ module Chemotion
       end
 
       namespace :queryCurrentDevices do
-        desc 'fetch devices of current user'
+        desc "fetch current user's own devices and those of their groups"
         get do
-          data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
-          present data, with: Entities::DeviceEntity, root: 'currentDevices'
+          data = Device.by_user_ids([current_user.id, *current_user.group_ids]).distinct.order(:name)
+          present data, with: Entities::DeviceSimpleEntity, root: 'currentDevices'
         end
       end
 
