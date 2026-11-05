@@ -198,6 +198,47 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     it_behaves_like 'a link given a new sample'
   end
 
+  context 'when the reaction of the split link was created by a deleted user' do
+    let(:sample) { create(:sample, creator: create(:person)) }
+    let!(:new_link) { ReactionsReactantSample.create!(reaction: reaction, sample: sample) }
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample)
+      User.find(reaction.created_by).destroy
+      migration.up
+    end
+
+    it 'gives the new sample to the live creator of the sample' do
+      expect(new_link.reload.sample).to have_attributes(parent: sample, created_by: sample.created_by)
+    end
+
+    it "points the new sample's element tag at its reaction" do
+      expect(new_link.reload.sample.tag.taggable_data['reaction_id']).to eq(reaction.id)
+    end
+  end
+
+  context 'when some shared links can not get a new sample' do
+    let(:failing_migration) { AddUniqueIndexToReactionsSamples.new }
+    let(:second_sample) { create(:sample) }
+    let!(:new_links) do
+      [sample, second_sample].map do |shared|
+        ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: shared)
+        ReactionsReactantSample.create!(reaction: reaction, sample: shared)
+      end
+    end
+
+    before do
+      allow(failing_migration).to receive(:give_new_sample).and_raise(ActiveRecord::RecordInvalid)
+    end
+
+    it 'raises once, naming every link, and adds no index' do
+      expect { failing_migration.up }.to raise_error(RuntimeError) { |error|
+        expect(error.message).to include(*new_links.map { |link| "reaction-sample link #{link.id}" })
+      }
+      expect(index_exists.call).to be(false)
+    end
+  end
+
   context 'when a reaction links a sample in two roles' do
     let!(:first_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample) }
     let!(:new_link) { ReactionsProductSample.create!(reaction: reaction, sample: sample, equivalent: 0.8) }
