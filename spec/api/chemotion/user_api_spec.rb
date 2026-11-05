@@ -139,6 +139,44 @@ describe Chemotion::UserAPI do
     pending 'TODO: Add missing spec'
   end
 
+  describe 'GET /api/v1/groups/queryCurrentDevices' do
+    # named against creation order, so the sort is not satisfied by id order
+    let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings, name: 'Alpha IR') }
+    let!(:unrelated_device) { create(:device).tap { |device| device.people << create(:person) } }
+    let!(:group) { create(:group, admins: [user], users: [user]) }
+
+    before do
+      own_device.people << user
+      group_device.groups << group
+      get '/api/v1/groups/queryCurrentDevices'
+    end
+
+    it "returns the user's own devices and their groups' devices" do
+      ids = parsed_json_response['currentDevices'].pluck('id')
+      expect(ids).to include(own_device.id, group_device.id)
+      expect(ids).not_to include(unrelated_device.id)
+    end
+
+    it 'lists each device with its id, name and abbreviation', :aggregate_failures do
+      devices = parsed_json_response['currentDevices']
+      expect(devices.size).to eq(2)
+      expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
+    end
+
+    context 'when a device is linked to the user directly and through a group' do
+      before do
+        group_device.people << user
+        get '/api/v1/groups/queryCurrentDevices'
+      end
+
+      it 'lists it once, with the devices sorted by name' do
+        names = parsed_json_response['currentDevices'].pluck('name')
+        expect(names).to eq(['Alpha IR', 'Zeta NMR'])
+      end
+    end
+  end
+
   describe 'POST /api/v1/groups/create' do
     let(:params) do
       {
@@ -177,10 +215,6 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/groups/qrycurrent' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'GET /api/v1/groups/queryCurrentDevices' do
     pending 'TODO: Add missing spec'
   end
 
