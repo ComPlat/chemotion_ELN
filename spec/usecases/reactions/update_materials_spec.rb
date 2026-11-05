@@ -745,8 +745,9 @@ describe Usecases::Reactions::UpdateMaterials do
           'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
           'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
         }
+        # as an older client sends it: no parent_id (the reaction entity didn't expose it)
         payload = { 'reactant_sbmm_samples' => [{
-          'id' => sbmm.id, 'is_new' => false, 'parent_id' => stock_sbmm.id, 'name' => 'SBMM copy', 'position' => 0
+          'id' => sbmm.id, 'is_new' => false, 'name' => 'SBMM copy', 'position' => 0
         }.merge(units)] }
         described_class.new(copy, payload, user, vessel_size).execute!
       end
