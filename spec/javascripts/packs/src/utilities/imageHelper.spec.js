@@ -42,4 +42,18 @@ describe('getAttachmentFromContainer', () => {
     expect(getAttachmentFromContainer(container([png, newerPng, pptx]))).toBe(newerPng);
     expect(getAttachmentFromContainer(container([newerPng, combined]))).toBe(combined);
   });
+
+  it('defaults to the latest updated file regardless of array order', () => {
+    const newerPng = { ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000' };
+    expect(getAttachmentFromContainer(container([png, newerPng]))).toBe(newerPng);
+    expect(getAttachmentFromContainer(container([newerPng, png]))).toBe(newerPng);
+  });
+
+  it('skips attachments marked for deletion', () => {
+    const deletedNewer = {
+      ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000', is_deleted: true,
+    };
+    expect(getAttachmentFromContainer(container([png, deletedNewer]))).toBe(png);
+    expect(getAttachmentFromContainer(container([deletedNewer]))).toBe(null);
+  });
 });

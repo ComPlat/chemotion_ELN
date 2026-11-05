@@ -104,30 +104,15 @@ export default class ContainerDatasets extends Component {
       .filter((id) => !Number.isNaN(id) && id > 0);
 
     const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
-    const preferredIsValid = currentPreferred
-      && validAttachmentIds.includes(Number(currentPreferred));
-
-    if (!preferredIsValid) {
-      // Need to reassign
-      // Auto-assign only a file with a thumbnail, so the header has an image to show. Without
-      // one (e.g. a PDF whose thumbnail wasn't generated), leave it unset: the header keeps its
-      // default attachment and the modal opens on the first candidate. A PDF chosen by hand
-      // still counts as valid above.
-      const thumbnailed = savedAttachments.find(
-        (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
-      );
-      if (thumbnailed) {
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(Number(thumbnailed.id)),
-        };
-      } else {
-        // Nothing with a thumbnail - clear preferred
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: null,
-        };
-      }
+    // Only a preference that is set can go stale. An unset one stays unset, so the header
+    // keeps following the default (see getAttachmentFromContainer: latest updated file) and
+    // picks up new uploads, instead of pinning whichever file comes first.
+    if (currentPreferred && !validAttachmentIds.includes(Number(currentPreferred))) {
+      // Clear it rather than pick a substitute: the header falls back to the default.
+      analysisContainer.extended_metadata = {
+        ...analysisContainer.extended_metadata,
+        preferred_thumbnail: null,
+      };
     }
     // Propagate final state to parent once
     this.props.onChange(analysisContainer);

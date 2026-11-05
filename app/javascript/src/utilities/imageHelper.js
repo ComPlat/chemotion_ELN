@@ -30,7 +30,8 @@ const previewContainerImage = (
  * Extracts the most relevant attachment (combined or latest) from a container's dataset children.
  *
  * This function searches through all child containers of type 'dataset', collects their attachments,
- * filters those that have a thumbnail (`thumb`), and then returns the following in priority:
+ * filters those that have a thumbnail (`thumb`) and are not marked for deletion, and then
+ * returns the following in priority:
  * - The attachment whose filename includes the word "combined" (case-insensitive).
  * - Otherwise, the most recently updated attachment.
  * - If none are found, returns `null`.
@@ -47,7 +48,7 @@ const getAttachmentFromContainer = (container) => {
   const datasetChildren = container.children?.filter((child) => child.container_type === 'dataset') || [];
   const thumbnailed = datasetChildren
     .flatMap((child) => child.attachments || [])
-    .filter((att) => att.thumb);
+    .filter((att) => att.thumb && !att.is_deleted);
   const previewable = thumbnailed.filter(isPreviewableAttachment);
   const attachments = previewable.length ? previewable : thumbnailed;
   const byLatest = (a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf();
