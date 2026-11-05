@@ -520,6 +520,22 @@ export default class Reaction extends Element {
       }
       return copiedSample;
     });
+    copy.purification_solvents = this.purification_solvents.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
+      }
+      return copiedSample;
+    });
+    // An SBMM reactant is a split of a stock SBMM sample: the copy gets a new split of the same parent.
+    copy.reactant_sbmm_samples = this.reactant_sbmm_samples.map((sbmm) => {
+      const copiedSbmm = sbmm.buildChildWithoutCounter();
+      copiedSbmm.parent_id = sbmm.parent_id || sbmm.id;
+      return copiedSbmm;
+    });
     copy.products = this.products.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       copiedSample._real_amount_value = null;
