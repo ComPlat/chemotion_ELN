@@ -120,24 +120,28 @@ class OlsTerm < ApplicationRecord
     def rebuilt_ancestry_by_owl_name(owl_name)
       build_direct_parent_ancestry(owl_name)
       reprocess_count = 10
-      while reprocess_count.positive? do
+      while reprocess_count.positive?
         count = 0
         OlsTerm.where(owl_name: owl_name).find_each do |o|
           next if (root = o.root) == o
           next if root.root == root
-          new_a = root.ancestry + o.ancestry
-          o.update_columns(ancestry: new_a)
+
+          # both are materialized_path2 strings ("/1/2/"), so drop the duplicate separator
+          new_a = root.ancestry + o.ancestry.delete_prefix('/')
+          # skip validations: during the rebuild, intermediate paths are still partial
+          o.update_columns(ancestry: new_a) # rubocop:disable Rails/SkipsModelValidations
           count += 1
         end
-        break if count == 0
+        break if count.zero?
+
         reprocess_count -= 1
       end
     end
 
-    def disable_branch_by(args)
-      a = args.slice(:owl_name, :term_id)
-      node = find_by(**a)
+    def disable_branch_by(owl_name:, term_id:)
+      node = find_by(owl_name: owl_name, term_id: term_id)
       return unless node
+
       node_ids = [node.id] + node.descendants.pluck(:id)
       disable_by_ids(node_ids)
     end

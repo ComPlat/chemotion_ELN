@@ -121,6 +121,23 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 
+  describe 'POST /api/v1/admin/importOlsTerms' do
+    let(:file) { Rack::Test::UploadedFile.new(Tempfile.new(['chmo', '.owl']).path, 'application/rdf+xml') }
+
+    before do
+      allow(OlsTerm).to receive(:import_and_create_ols_from_file_path)
+      allow(OlsTerm).to receive(:write_public_file)
+      allow(OlsTerm).to receive(:disable_branch_by)
+    end
+
+    it 'disables the BFO:0000002 branch of the imported ontology only' do
+      post '/api/v1/admin/importOlsTerms/', params: { file: file }
+
+      expect(OlsTerm).to have_received(:disable_branch_by).with(owl_name: a_string_starting_with('chmo'),
+                                                                term_id: 'BFO:0000002')
+    end
+  end
+
   describe 'PUT /api/v1/admin/group_device/update/:id (action: NodeAdm)' do
     let!(:group_admin) { create(:person) }
     let!(:second_admin) { create(:person) }
