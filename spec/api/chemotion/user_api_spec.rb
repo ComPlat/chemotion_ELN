@@ -169,8 +169,8 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/devices' do
-    let(:own_device) { create(:device) }
-    let(:group_device) { create(:device) }
+    let(:own_device) { create(:device, :novnc_settings, novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings) }
     let(:unrelated_device) { create(:device) }
     let!(:group) { create(:group, admins: [user], users: [user]) }
 
@@ -184,6 +184,12 @@ describe Chemotion::UserAPI do
       ids = parsed_json_response['currentDevices'].pluck('id')
       expect(ids).to include(own_device.id, group_device.id)
       expect(ids).not_to include(unrelated_device.id)
+    end
+
+    it 'lists each device with its id, name and abbreviation', :aggregate_failures do
+      devices = parsed_json_response['currentDevices']
+      expect(devices.size).to eq(2)
+      expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
     end
   end
 

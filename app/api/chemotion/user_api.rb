@@ -78,7 +78,7 @@ module Chemotion
       desc "fetch current user's own devices and those of their groups"
       get 'devices' do
         data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
-        present data, with: Entities::DeviceEntity, root: 'currentDevices'
+        present data, with: Entities::DeviceSimpleEntity, root: 'currentDevices'
       end
 
       namespace :update_counter do
