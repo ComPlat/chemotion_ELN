@@ -191,6 +191,18 @@ describe Chemotion::UserAPI do
       expect(devices.size).to eq(2)
       expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
     end
+
+    context 'when a device is linked to the user directly and through a group' do
+      before do
+        group_device.people << user
+        get '/api/v1/users/devices'
+      end
+
+      it 'lists it once, with the devices sorted by name' do
+        names = parsed_json_response['currentDevices'].pluck('name')
+        expect(names).to eq([own_device.name, group_device.name].sort)
+      end
+    end
   end
 
   describe 'GET /api/v1/devices/{device_id}/metadata' do
