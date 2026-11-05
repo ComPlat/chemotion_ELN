@@ -647,4 +647,55 @@ RSpec.describe Import::ImportSdf do
       end
     end
   end
+
+  describe '#assign_hierarchical_material_columns' do
+    let(:importer) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
+    end
+    let(:hm_sample) do
+      create(:valid_sample,
+             sample_type: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
+             xref: {})
+    end
+
+    it 'maps color into xref.color' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'color' => 'red' })
+      expect(hm_sample.xref['color']).to eq('red')
+    end
+
+    it 'does not write state to xref.physical_state' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'state' => 'solid' })
+      expect(hm_sample.xref.key?('physical_state')).to be false
+    end
+
+    it 'does not write particle_size to xref.particle_size' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'particle_size' => '10' })
+      expect(hm_sample.xref.key?('particle_size')).to be false
+    end
+
+    it 'maps HM float columns onto the sample directly' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'height' => '5.5', 'diameter' => '2.0' })
+      expect(hm_sample.height).to eq(5.5)
+      expect(hm_sample.diameter).to eq(2.0)
+    end
+
+    it 'records filled HM keys in sample_details.selected_properties' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'height' => '5', 'material' => 'Al2O3' })
+      expect(hm_sample.sample_details['selected_properties']).to include('height', 'material')
+    end
+
+    it 'does not include particle_size in selected_properties' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'particle_size' => '10', 'height' => '5' })
+      selected = hm_sample.sample_details&.dig('selected_properties') || []
+      expect(selected).not_to include('particle_size')
+    end
+
+    # Regression: the old assign_hierarchical_material_fields tried sample['state'] and
+    # sample['particle_size'] as direct column writes. Those columns don't exist → rows were
+    # silently dropped. This verifies the sample can be saved when those SDF fields are present.
+    it 'does not raise when the row contains state and particle_size' do
+      importer.assign_hierarchical_material_columns(hm_sample, { 'state' => 'solid', 'particle_size' => '10' })
+      expect { hm_sample.save! }.not_to raise_error
+    end
+  end
 end

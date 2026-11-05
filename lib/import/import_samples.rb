@@ -1445,21 +1445,6 @@ module Import
       ]
     end
 
-    # Explicitly map header names to database columns for new hierarchical properties
-    # This ensures they're recognized even if the header casing/spacing varies
-    def get_db_column_for_field(field_name)
-      field_normalized = field_name.to_s.strip.downcase.gsub(/\s+/, '_')
-      hierarchical_map = {
-        'height' => 'height', 'width' => 'width', 'length' => 'length', 'diameter' => 'diameter',
-        'state' => 'state', 'storage_condition' => 'storage_condition',
-        'material' => 'material', 'cspi' => 'cspi', 'particle_size' => 'particle_size',
-        'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction',
-        'layer_thickness' => 'layer_thickness', 'liquid_medium' => 'liquid_medium',
-        'stabilizer' => 'stabilizer'
-      }
-      hierarchical_map[field_normalized]
-    end
-
     def error_process_file(error)
       { status: 'invalid',
         message: 'Can not process this type of file.',

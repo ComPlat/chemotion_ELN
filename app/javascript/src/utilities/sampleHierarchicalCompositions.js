@@ -54,7 +54,6 @@ const buildHierarchicalMaterialRows = (components) => {
     rowsData.push({
       index,
       template_category,
-      component,
       sourceAlias,
       molar_mass,
       weight_ratio_exp,

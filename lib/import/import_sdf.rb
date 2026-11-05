@@ -381,7 +381,7 @@ class Import::ImportSdf < Import::ImportSamples
           # held across a later row's native work either.
           ActiveRecord::Base.transaction(requires_new: true) do
             sample = build_sample_from_row(resolved, row, attribs, error_messages)
-            assign_hierarchical_material_fields(sample, row)
+            assign_hierarchical_material_columns(sample, row)
             sample.collections << collection_for_import
             sample.collections << all_collections_for_user
             sample.save!
@@ -471,24 +471,20 @@ class Import::ImportSdf < Import::ImportSamples
   # Columns that surface in the sample form's "additional properties" picker. Kept out of the
   # required-columns set: what the user chose to fill on export is what re-appears on import.
   HM_ADDITIONAL_PROPERTY_KEYS = %w[
-    sieve_fraction height diameter width length material cspi particle_size shape
+    sieve_fraction height diameter width length material cspi shape
     layer_thickness liquid_medium stabilizer
   ].freeze
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def assign_hierarchical_material_columns(sample, row)
     HM_FLOAT_COLUMNS.each { |key| assign_coerced(sample, key, row[key]) }
     HM_STRING_COLUMNS.each { |key| sample[key] = row[key] if row[key].present? }
-    sample.xref['physical_state'] = row['state'] if row['state'].present?
     sample.xref['color'] = row['color'] if row['color'].present?
-    sample.xref['particle_size'] = row['particle_size'] if row['particle_size'].present?
 
     selected_props = HM_ADDITIONAL_PROPERTY_KEYS.select { |k| row[k].to_s.strip.present? }
     return if selected_props.empty?
 
     sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   # Columns copied across as-is, plus the xref sub-hash ones.
   def assign_plain_columns(sample, row)
@@ -509,31 +505,6 @@ class Import::ImportSdf < Import::ImportSamples
     note_coercion_issue(key, note) if note
     sample['xref'][key] = value unless value.nil?
   end
-
-  # Assign HierarchicalMaterial-specific fields from an SDF row.
-  # These fields live in sample_details when the DB column does not exist yet.
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
-  def assign_hierarchical_material_fields(sample, row)
-    hm_float_fields = %w[height width length diameter particle_size sieve_fraction layer_thickness]
-    hm_float_fields.each do |field|
-      sample[field] = row[field].to_s.strip.to_f if row[field].present?
-    end
-    hm_string_fields = %w[state storage_condition material cspi shape liquid_medium stabilizer]
-    hm_string_fields.each do |field|
-      sample[field] = row[field] if row[field].present?
-    end
-
-    additional_property_keys = %w[
-      sieve_fraction height diameter width length
-      material cspi particle_size shape
-      layer_thickness liquid_medium stabilizer
-    ]
-    selected_props = additional_property_keys.select { |k| row[k].to_s.strip.present? }
-    return unless selected_props.any?
-
-    sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
-  end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
   # Columns that need a unit or a range parsed out of the cell before they can be assigned.
   def assign_measurement_columns(sample, row)

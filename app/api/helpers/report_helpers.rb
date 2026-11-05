@@ -269,7 +269,6 @@ module ReportHelpers
       sheet_name = :"#{table}_components"
       export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
       if columns_params.include?('composition_table')
-        Rails.logger.info("Generating composition table for components sheet, #{columns_params}")
         sheet_name = "#{table}_composition_table"
         export.generate_composition_table_components_sheet_with_samples(sheet_name, result)
       end

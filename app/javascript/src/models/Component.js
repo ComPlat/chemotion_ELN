@@ -14,7 +14,6 @@ export default class Component extends Sample {
   constructor(props) {
     super(props);
     this.calcWeightRatioWithoutWeight = this.calcWeightRatioWithoutWeight.bind(this);
-    this.weightRatioBasedExpCalc = this.weightRatioBasedExpCalc.bind(this);
     this.parseComponentSource = this.parseComponentSource.bind(this);
   }
 
@@ -654,12 +653,6 @@ export default class Component extends Sample {
     }
   }
 
-  weightRatioBasedExpCalc(weightRatioExpStateValue, stateValue) {
-    if (stateValue <= 0 || weightRatioExpStateValue <= 0) return 0;
-    const value = weightRatioExpStateValue / stateValue;
-    return value;
-  }
-
   /**
    * exp molar ratios (calc)/ molar mass
    */
@@ -681,7 +674,7 @@ export default class Component extends Sample {
         const parts = source.trim();
         const match = parts?.match(/^\d+/);
         weightRatioContent = match ? Number(match[0]) : 0;
-        compContent = source?.trim() || 'asdf';
+        compContent = source?.trim() || '';
       } else {
         const parts = source.split('-');
         sourceContent = source;

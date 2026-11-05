@@ -509,7 +509,6 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
-      // TODO: upate sample params
       sample.cleanBoilingMelting();
       const newSample = new Sample(sample);
       newSample.components = sample.components;

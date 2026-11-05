@@ -57,6 +57,17 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
+// Mirrors isDraftContent from deltaDraftContentConverter — kept local to avoid pulling
+// the quill-delta dependency into this bundle path.
+const isDraftContent = (value) => {
+  try {
+    const p = typeof value === 'string' ? JSON.parse(value) : value;
+    return Boolean(p && Array.isArray(p.blocks) && p.blocks.length > 0);
+  } catch (_e) {
+    return false;
+  }
+};
+
 // Use only CTAB (up to and including M  END) so we never duplicate > <PolymersList> when
 // the editor's molfile already contains a PolymersList section from a previous load.
 const ctabLinesOnly = (molfileString) => {
@@ -314,21 +325,7 @@ const onAddText = async (editor, selectedImageForTextNode) => {
   return true;
 };
 
-// Detect whether input is Draft.js raw content (object or JSON string form)
-const isDraftContent = (value) => {
-  try {
-    if (value == null) return false;
-    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-    return Boolean(
-      parsed
-      && Array.isArray(parsed.blocks)
-      && parsed.blocks.length > 0
-      && typeof parsed.blocks[0] === 'object'
-    );
-  } catch (_e) {
-    return false;
-  }
-};
+
 
 // Function to add text node from Quill editor content (Delta format)
 const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode = null, isUpdate = false) => {

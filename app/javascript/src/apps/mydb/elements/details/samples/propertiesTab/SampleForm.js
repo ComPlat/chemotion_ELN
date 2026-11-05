@@ -29,6 +29,52 @@ import HierarchicalMaterialSection from 'src/apps/mydb/elements/details/samples/
 import HierarchicalCompositionTable from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalCompositionTable';
 
 /**
+ * Parses HierarchicalMaterial components from the <TextNode> sections stored in a molfile.
+ * When switching a sample to HierarchicalMaterial type, this lets the composition table
+ * populate immediately from the existing structure — no need to reopen the editor.
+ *
+ * Molfile format for each text node line inside <TextNode>…</TextNode>:
+ *   <position>#<key>#<id>#<Draft.js content JSON>
+ * The Draft.js content's blocks[0].text holds the human-readable label (e.g. "1wt.% ptpd").
+ */
+function parseHMComponentsFromMolfile(molfile) {
+  if (!molfile) return [];
+  const components = [];
+  const sectionRegex = /> <TextNode>\n([\s\S]*?)> <\/TextNode>/g;
+  let sectionMatch;
+  while ((sectionMatch = sectionRegex.exec(molfile)) !== null) {
+    for (const line of sectionMatch[1].trim().split('\n')) {
+      const firstHash = line.indexOf('#');
+      if (firstHash === -1) continue;
+      const position = parseInt(line.slice(0, firstHash), 10);
+      const afterFirst = line.slice(firstHash + 1);
+      const secondHash = afterFirst.indexOf('#');
+      if (secondHash === -1) continue;
+      const afterSecond = afterFirst.slice(secondHash + 1);
+      const thirdHash = afterSecond.indexOf('#');
+      if (thirdHash === -1) continue;
+      const jsonStr = afterSecond.slice(thirdHash + 1);
+      try {
+        const content = JSON.parse(jsonStr);
+        const text = content?.blocks?.[0]?.text?.trim();
+        if (text) {
+          components.push({
+            id: `hm_parsed_${components.length}`,
+            name: 'HierarchicalMaterial',
+            position: Number.isNaN(position) ? components.length : position,
+            source: text,
+            molar_mass: 0.0,
+            weight_ratio_exp: 0.0,
+            template_category: 'semantic',
+          });
+        }
+      } catch (_e) { /* skip malformed lines */ }
+    }
+  }
+  return components;
+}
+
+/**
  * Normalizes components that may be in API-format (with nested component_properties)
  * to a flat format where source, molar_mass, weight_ratio_exp etc. are top-level fields.
  * This handles the case where the backend returns components with nested component_properties
@@ -95,12 +141,16 @@ export default class SampleForm extends React.Component {
 
     // Sync component state when the sample object or its components array is
     // replaced (e.g. after save returns a fresh Sample, or a child handler reassigns
-    // components). Parent already clones on setState (SampleDetails.handleSampleChanged),
-    // so reference equality is sufficient — no need for a per-render JSON diff.
+    // components).
+    // The length guard catches in-place mutation of sample.components (e.g. after
+    // the Ketcher editor extracts text nodes and assigns a new array to the same
+    // sample reference — prevSample === nextSample so reference equality misses it).
     const prevSample = prevProps.sample;
     const nextSample = this.props.sample;
+    const nextLen = nextSample?.components?.length ?? 0;
     if (prevSample !== nextSample
-      || (prevSample?.components || null) !== (nextSample?.components || null)) {
+      || (prevSample?.components || null) !== (nextSample?.components || null)
+      || this.state.components.length !== nextLen) {
       this.setState({ components: flattenApiFormatComponents(nextSample?.components || []) });
     }
 
@@ -165,6 +215,17 @@ export default class SampleForm extends React.Component {
     // If switching to Mixture, create component(s) from the current sample
     if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
       this.createComponentsFromCurrentSample(sample);
+    }
+
+    // When switching to HierarchicalMaterial and no components exist yet, auto-generate
+    // them from <TextNode> sections in the molfile so the composition table populates
+    // immediately — the user doesn't have to reopen the editor and save again.
+    if (sampleType.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL && !sample.components?.length) {
+      const parsed = parseHMComponentsFromMolfile(sample.molfile);
+      if (parsed.length > 0) {
+        sample.components = parsed;
+        this.setState({ components: flattenApiFormatComponents(parsed) });
+      }
     }
 
     handleSampleChanged(sample);
@@ -1354,16 +1415,6 @@ export default class SampleForm extends React.Component {
             setMoleculeLoading={setMoleculeLoading}
           />
         </Col>
-      </Row>
-    );
-  }
-
-  dimensionFieldGroup(sample) {
-    return (
-      <Row>
-        <Col>{this.textInput(sample, 'height', 'Height')}</Col>
-        <Col>{this.textInput(sample, 'width', 'Width')}</Col>
-        <Col>{this.textInput(sample, 'length', 'Length')}</Col>
       </Row>
     );
   }
