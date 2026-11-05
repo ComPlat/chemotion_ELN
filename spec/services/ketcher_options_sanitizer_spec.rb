@@ -57,7 +57,7 @@ RSpec.describe KetcherOptionsSanitizer do
       'stereoLabelStyle' => %w[iupac Other],
       'showHydrogenLabels' => %w[terminal Off On],
       'colorOfAndCenters' => %w[red #12345 #1234567 #gggggg],
-      'imageResolution' => ['high', 72, '12345'],
+      'imageResolution' => ['high', 72, '0', '123', '9999'],
       'absFlagLabel' => ['a' * 65, "AB\nS", 1],
       'miewTheme' => %w[blue],
     }.each do |key, bad_values|
@@ -83,6 +83,7 @@ RSpec.describe KetcherOptionsSanitizer do
       'colorStereogenicCenters' => %w[LabelsOnly BondsOnly LabelsAndBonds Off],
       'showHydrogenLabels' => ['off', 'Hetero', 'Terminal', 'Terminal and Hetero', 'all'],
       'fontszUnit' => %w[px cm pt inch],
+      'imageResolution' => %w[72 600],
       'miewMode' => %w[LN BS LC],
       'miewTheme' => %w[light dark],
       'miewAtomLabel' => %w[no bright blackAndWhite black],

@@ -87,7 +87,8 @@ module KetcherOptionsSanitizer
     'reactionComponentMarginSizeUnit' => one_of(*UNITS),
     'hashSpacing' => number_in(0.1..1000),
     'hashSpacingUnit' => one_of(*UNITS),
-    'imageResolution' => matching(/\A\d{1,4}\z/),
+    # stored values of Ketcher's image resolution enum (low = '72', high = '600')
+    'imageResolution' => one_of('72', '600'),
     # server
     'dearomatize-on-load' => BOOLEAN,
     'smart-layout' => BOOLEAN,
