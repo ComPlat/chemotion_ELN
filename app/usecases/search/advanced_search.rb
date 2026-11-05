@@ -112,7 +112,8 @@ module Usecases
         @elements[:sample_ids] = @user_samples.by_wellplate_ids(@elements[:wellplate_ids]).uniq.pluck(:id)
         @elements[:reaction_ids] =
           @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
-        @elements[:research_plan_ids] = ResearchPlansWellplate.get_research_plans(@elements[:wellplate_ids]).uniq
+        research_plan_ids = ResearchPlansWellplate.get_research_plans(@elements[:wellplate_ids])
+        @elements[:research_plan_ids] = @user_research_plans.where(id: research_plan_ids).pluck(:id).uniq
       end
 
       def screen_relations_element_ids
