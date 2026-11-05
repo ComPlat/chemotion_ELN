@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_26_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -913,6 +913,8 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "litype"
+    t.datetime "deleted_at"
+    t.jsonb "log_data"
     t.index ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature"
     t.index ["literature_id", "element_type", "element_id"], name: "index_on_literature"
   end
@@ -926,6 +928,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
@@ -2110,6 +2113,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
          select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
          where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
+         and l.deleted_at is null
        $function$
   SQL
   create_function :lab_record_layers_changes, sql_definition: <<-'SQL'
@@ -2778,8 +2782,12 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       END;
       $function$
   SQL
-
-
+  create_trigger :logidze_on_literatures, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_literals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literals BEFORE INSERT OR UPDATE ON public.literals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL

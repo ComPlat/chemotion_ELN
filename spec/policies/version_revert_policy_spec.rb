@@ -122,6 +122,20 @@ describe VersionRevertPolicy do
     expect(allowed?(change(material, ['deleted_at', nil]))).to be false
   end
 
+  it 'checks a literal against the element it is attached to, also when it is deleted' do
+    own_literal = create(:literal, literature: create(:literature), element: own_sample).tap(&:destroy)
+    other_literal = create(:literal, literature: create(:literature), element: other_sample).tap(&:destroy)
+
+    expect(allowed?(change(own_literal, ['deleted_at', nil], %w[litype citedOwn]))).to be true
+    expect(allowed?(change(other_literal, ['deleted_at', nil]))).to be false
+  end
+
+  it 'does not revert the literature a literal points to' do
+    literal = create(:literal, literature: create(:literature), element: own_sample)
+
+    expect(allowed?(change(literal, ['literature_id', create(:literature).id]))).to be false
+  end
+
   it 'requires edit access to a sample placed into a well' do
     wellplate = create(:wellplate, collections: [own_collection])
     well = create(:well, wellplate: wellplate, sample: own_sample)
