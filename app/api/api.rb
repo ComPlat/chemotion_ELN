@@ -200,7 +200,6 @@ class API < Grape::API
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
   mount Chemotion::InboxAPI
-  mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
   mount Chemotion::ExplorerAPI
