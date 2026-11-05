@@ -219,12 +219,14 @@ module Chemotion
 
         error!('Device not found', 404) unless device
 
-        # Record this viewer and drop those that stopped polling. Concurrent polls may lose
-        # one entry for a cycle; it is restored on that viewer's next poll.
+        # Record this viewer and drop those that stopped polling. An unreadable or malformed
+        # entry counts as empty and is overwritten. Concurrent polls may lose one entry for a
+        # cycle; it is restored on that viewer's next poll.
         now = Time.current.to_i
         key = "device/#{device.id}"
-        connections = (NOVNC_CONNECTIONS.read(key) || {}).select do |_user_id, (_state, polled_at)|
-          now - polled_at < NOVNC_CONNECTION_TTL
+        stored = NOVNC_CONNECTIONS.read(key)
+        connections = (stored.is_a?(Hash) ? stored : {}).select do |_user_id, entry|
+          entry.is_a?(Array) && entry.last.is_a?(Integer) && now - entry.last < NOVNC_CONNECTION_TTL
         end
         connections[current_user.id] = [params[:status] ? 1 : 0, now]
         NOVNC_CONNECTIONS.write(key, connections, expires_in: NOVNC_CONNECTION_TTL)

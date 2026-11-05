@@ -248,7 +248,11 @@ describe Chemotion::UserAPI do
     let(:store) { ActiveSupport::Cache::MemoryStore.new }
     let(:other_user) { create(:person) }
 
-    before { stub_const('NOVNC_CONNECTIONS', store) }
+    before do
+      stub_const('NOVNC_CONNECTIONS', store)
+      # The endpoint caches its device-access check; keep it from leaking across examples and runs.
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    end
 
     def poll(id: device.id, status: 'true')
       get '/api/v1/devices/current_connection', params: { id: id, status: status }
@@ -288,6 +292,20 @@ describe Chemotion::UserAPI do
         expect(parsed_json_response['result']).to eq(["#{user.id},1"])
       end
 
+      it 'replaces a malformed entry with the current viewer' do
+        store.write("device/#{device.id}", { other_user.id => [0, nil], 0 => 'x' })
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'answers an empty result when the store cannot be written' do
+        allow(store).to receive(:write).and_raise(Errno::ENOSPC)
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq([])
+      end
+
       it 'returns 400 for an id with text after the number' do
         poll(id: "#{device.id}abc")
         expect(response).to have_http_status(:bad_request)
@@ -305,8 +323,9 @@ describe Chemotion::UserAPI do
         get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
       end
 
-      it 'returns 404' do
+      it 'returns 404 and leaves the store untouched' do
         expect(response).to have_http_status(:not_found)
+        expect(store.read("device/#{device.id}")).to be_nil
       end
     end
   end
