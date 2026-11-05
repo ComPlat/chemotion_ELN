@@ -125,7 +125,11 @@ class SpectraStore {
     if (!fsm) return;
     const fetchedIdx = fsm.idx;
     const prevIdx = spcInfo.idx;
-    const fsi = Object.assign({}, spcInfo, { idx: fetchedIdx }); //  shortcut
+    const fetchedState = fetchedFiles.files[0]?.aasm_state;
+    const fsi = Object.assign({}, spcInfo, { // shortcut
+      idx: fetchedIdx,
+      aasmState: fetchedState || spcInfo.aasmState,
+    });
     const { spcInfos, spcMetas, arrSpcIdx } = this;
     const newSpcInfos = spcInfos.map(si => (
       si.idx === prevIdx ? fsi : si

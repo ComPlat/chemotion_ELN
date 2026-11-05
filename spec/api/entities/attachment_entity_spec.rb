@@ -21,5 +21,22 @@ describe Entities::AttachmentEntity do
         expect(grape_entity_as_hash).to include(previewable: false)
       end
     end
+
+    context 'with a derivative of an upload' do
+      let(:upload) { create(:attachment) }
+      let(:attachment) { create(:attachment, parent: upload) }
+
+      it 'exposes the upload as root_id' do
+        expect(grape_entity_as_hash).to include(root_id: upload.id)
+      end
+    end
+
+    context 'with an upload' do
+      let(:attachment) { create(:attachment) }
+
+      it 'exposes its own id as root_id' do
+        expect(grape_entity_as_hash).to include(root_id: attachment.id)
+      end
+    end
   end
 end

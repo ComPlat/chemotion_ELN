@@ -267,7 +267,9 @@ class ViewSpectra extends React.Component {
   }
 
   getSpcInfo(curveIdx = 0) {
-    const { spcInfos, spcIdx, arrSpcIdx } = this.state;
+    const {
+      spcInfos, spcIdx, arrSpcIdx, spcMetas,
+    } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
@@ -278,7 +280,10 @@ class ViewSpectra extends React.Component {
         info.label &&
         info.label.match(/_uvvis\.peak\.jdx$/i)
       ));
-      if (uvvisPeakFile && curveIdx === 0) {
+      const isLcmsSelection = spcMetas.some((spc) => (
+        arrSpcIdx.includes(spc.idx) && FN.isLCMsLayout(spc.jcamp?.layout)
+      ));
+      if (uvvisPeakFile && curveIdx === 0 && isLcmsSelection && arrSpcIdx.includes(uvvisPeakFile.idx)) {
         selectedIdx = uvvisPeakFile.idx;
       }
     }
