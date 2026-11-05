@@ -27,7 +27,8 @@ RSpec.describe 'SFTPClient', if: ENV['DOCKER'] do
   end
 
   context 'with valid username/password' do
-    subject { SFTPClient.with_default_settings }
+    # the sftp service of docker-compose.test.yml
+    subject { SFTPClient.new(host: 'sftp', user: 'sftp_test', port: '22', password: 'sftp_test') }
 
     describe 'upload, download, move and read a file' do
       let(:download_path) { "#{Rails.root}/spec/fixtures/download.txt" }
