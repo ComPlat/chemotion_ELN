@@ -37,6 +37,7 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
 
       keep_latest_values(link['id'], moved_ids)
       restore_link(link['id'], link['snapshot'])
+      refresh_tags([link['sample_id']])
       true
     end
     say "returned #{restored} reaction-sample link(s) to their original reaction"
@@ -156,11 +157,23 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
   end
 
   # Returns the number of links that got a new sample, and the number of links soft deleted.
+  #
+  # Each split runs in its own savepoint. The unique index needs every split, so failures don't skip:
+  # they are collected and raised together, naming every link, before the index is added.
+  #
+  # @raise [RuntimeError] listing every link that could not get a new sample
   def split_shared_samples
     links = extra_links
     dead, live = links.partition { |link| link['dead'] }
     soft_delete_links(dead.pluck('id')) if dead.any?
-    live.each { |link| give_new_sample(link['id']) }
+    failures = live.filter_map do |link|
+      ActiveRecord::Base.transaction(requires_new: true) { give_new_sample(link['id']) }
+      nil
+    rescue StandardError => e
+      "reaction-sample link #{link['id']} (sample #{link['sample_id']}): #{e.class}: #{e.message}"
+    end
+    raise "#{failures.size} shared sample link(s) could not get a new sample:\n#{failures.join("\n")}" if failures.any?
+
     [live.size, dead.size]
   end
 
@@ -168,8 +181,8 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
   # and then link creation.
   def extra_links
     select_all(<<~SQL.squish).to_a
-      SELECT id, dead FROM (
-        SELECT rs.id,
+      SELECT id, sample_id, dead FROM (
+        SELECT rs.id, rs.sample_id,
           (r.id IS NULL OR r.deleted_at IS NOT NULL OR s.id IS NULL OR s.deleted_at IS NOT NULL) AS dead,
           row_number() OVER (
             PARTITION BY rs.sample_id
@@ -194,13 +207,28 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1]
     link = ReactionsSample.find(link_id)
     reaction = link.reaction
     sample = link.sample
-    user = User.with_deleted.find_by(id: reaction.created_by) || User.with_deleted.find_by(id: sample.created_by)
-    raise "no user to own a new sample for reaction-sample link #{link_id}" unless user
+    user = new_sample_owner(reaction, sample)
+    raise "no live user to own a new sample for reaction #{reaction.id}" unless user
 
     new_sample = sample.create_subsample(user, reaction.collections.pluck(:id), true, 'reaction')
     execute(<<~SQL.squish)
       UPDATE reactions_samples SET sample_id = #{connection.quote(new_sample.id)}, updated_at = now()
       WHERE id = #{connection.quote(link_id)}
     SQL
+    refresh_tags([sample.id, new_sample.id])
+  end
+
+  # The owner of a new sample: the reaction's creator, else the sample's, else the owner of one of the
+  # reaction's collections. A sample's creator must be a live user.
+  #
+  # @return [User, nil] nil when none of them is a live user
+  def new_sample_owner(reaction, sample)
+    User.find_by(id: reaction.created_by) || User.find_by(id: sample.created_by) ||
+      User.find_by(id: reaction.collections.where.not(user_id: nil).select(:user_id))
+  end
+
+  # The raw updates skip the ReactionsSample callbacks: refresh the reaction in the samples' element tags.
+  def refresh_tags(sample_ids)
+    ReactionsSample.where(sample_id: sample_ids).find_each(&:update_tag)
   end
 end
