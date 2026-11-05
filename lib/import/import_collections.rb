@@ -477,6 +477,11 @@ module Import
         ReactionsProductSample,
       ].each do |model|
         @data.fetch(model.name, {}).each do |uuid, fields|
+          reaction = @instances.fetch('Reaction').fetch(fields.fetch('reaction_id'))
+          sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          # a sample belongs to one reaction in one role: a further link gets a sample of its own
+          sample = sample_for_another_link(sample, reaction) if sample.reactions_samples.exists?
+
           # create the reactions_sample
           reactions_sample = model.create!(fields.slice(
             'reference',
@@ -489,15 +494,18 @@ module Import
             'conversion_rate',
             'weight_percentage_reference',
             'weight_percentage',
-          ).merge(
-            reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
-            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
-          ))
+          ).merge(reaction: reaction, sample: sample))
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)
         end
       end
+    end
+
+    # A sample split from the given one, as the reaction editor creates it for a sample dropped
+    # onto a reaction.
+    def sample_for_another_link(sample, reaction)
+      sample.create_subsample(User.find(@current_user_id), reaction.collections.pluck(:id), true, 'reaction')
     end
 
     def import_wellplates

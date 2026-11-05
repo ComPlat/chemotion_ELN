@@ -27,7 +27,7 @@ describe Usecases::Reactions::UpdateMaterials do
   let(:product_sample) do
     create(:reactions_product_sample,
            reaction: reaction,
-           sample: sample,
+           sample: create(:sample, name: 'GasProduct', container: create(:container)),
            gas_phase_data: gas_phase_data)
   end
 
@@ -453,6 +453,22 @@ describe Usecases::Reactions::UpdateMaterials do
     end
   end
 
+  describe '#execute! with a sample of another reaction' do
+    let(:other_reaction) { create(:reaction, name: 'Other reaction', collections: [collection]) }
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample, equivalent: 1)
+    end
+
+    it 'does not take over the link of the other reaction' do
+      described_class.new(reaction, starting_materials, user, vessel_size).execute!
+
+      expect(ReactionsSample.where(sample: sample).pluck(:reaction_id)).to eq([other_reaction.id])
+      expect(reaction.reload.starting_materials.size).to eq(1)
+      expect(reaction.starting_materials).not_to include(sample)
+    end
+  end
+
   describe 'weight-percentage validation methods' do
     let(:reaction_with_weight_percentage) do
       create(:reaction, name: 'WP Reaction', collections: [collection], weight_percentage: true)
@@ -875,20 +891,6 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
-    context 'when the sample is also linked to this reaction' do
-      before do
-        ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
-        ReactionsPurificationSolventSample.create!(reaction: copy, sample: solvent, position: 0)
-        described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
-      end
-
-      it 'keeps and updates the linked sample' do
-        expect(copy.reload.purification_solvents).to contain_exactly(solvent)
-        expect(original.reload.purification_solvents).to contain_exactly(solvent)
-        expect(solvent.reload.target_amount_value).to eq(3)
-      end
-    end
-
     context 'when a sample moves between material groups of the same reaction' do
       before do
         ReactionsSolventSample.create!(reaction: original, sample: solvent, position: 0)
@@ -905,7 +907,6 @@ describe Usecases::Reactions::UpdateMaterials do
   describe 'when a removed material is still linked by another reaction' do
     let(:original) { create(:reaction, name: 'Reaction', collections: [collection]) }
     let(:copy) { create(:reaction, name: 'Reaction', collections: [collection]) }
-    let(:solvent) { create(:sample, name: 'solvent', container: create(:container), collections: [collection]) }
     let(:stock_sbmm) do
       SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-RM-1',
                                                sequence_based_macromolecule: create(:uniprot_sbmm), user: user,
@@ -917,17 +918,11 @@ describe Usecases::Reactions::UpdateMaterials do
       allow(SVG::ReactionComposer).to receive(:new).and_return(
         instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
       )
+      # samples can no longer be linked to two reactions (unique index); SBMM samples still can
       [original, copy].each do |linked|
-        ReactionsPurificationSolventSample.create!(reaction: linked, sample: solvent, position: 0)
         ReactionsReactantSbmmSample.create!(reaction: linked, sequence_based_macromolecule_sample: sbmm, position: 0)
       end
-      described_class.new(copy, { 'purification_solvents' => [], 'reactant_sbmm_samples' => [] },
-                          user, vessel_size).execute!
-    end
-
-    it "keeps the sample and the other reaction's link" do
-      expect(Sample.find_by(id: solvent.id)).to be_present
-      expect(ReactionsSample.where(sample_id: solvent.id).pluck(:reaction_id)).to eq([original.id])
+      described_class.new(copy, { 'reactant_sbmm_samples' => [] }, user, vessel_size).execute!
     end
 
     it "keeps the SBMM sample and the other reaction's link" do

@@ -1243,6 +1243,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
+    t.index ["sample_id"], name: "index_reactions_samples_on_live_sample_id", unique: true, where: "(deleted_at IS NULL)"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
 
