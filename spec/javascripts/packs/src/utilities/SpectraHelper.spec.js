@@ -3,7 +3,7 @@ import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
   JcampIds, BuildSpcInfos, cleaningNMRiumData, spectrumName,
-  inlineNotation,
+  inlineNotation, pickDefaultSelection,
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
@@ -308,10 +308,66 @@ describe('SpectraHelper', () => {
             idAi: container.id,
             idDt: file.idDt,
             idx: file.id,
+            aasmState: 'state',
           }
         ];
         expect(specInfo).toEqual(expectedValue);
       });
+    });
+  });
+
+  describe('.pickDefaultSelection()', () => {
+    const jcamp = { layout: FN.LIST_LAYOUT.H1 };
+    const info = (idx, idDt, aasmState) => ({ idx, idDt, aasmState });
+    const meta = (idx, layout = jcamp) => ({ idx, jcamp: layout });
+
+    it('selects a single spectrum when the dataset holds several', () => {
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'peaked'), info(1, 10, 'peaked')];
+      const spcMetas = [meta(3), meta(2), meta(1)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 3, arrSpcIdx: [3] });
+    });
+
+    it('prefers an edited spectrum over a peaked one', () => {
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'edited'), info(1, 10, 'edited')];
+      const spcMetas = [meta(3), meta(2), meta(1)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('prefers a peaked spectrum over one in another state', () => {
+      const spcInfos = [info(3, 10, 'nmrium'), info(2, 10, 'peaked')];
+      const spcMetas = [meta(3), meta(2)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('only considers spectra of the given dataset', () => {
+      const spcInfos = [info(3, 20, 'edited'), info(2, 10, 'peaked'), info(1, 10, 'peaked')];
+      const spcMetas = [meta(3), meta(2), meta(1)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('ignores infos without a decoded spectrum', () => {
+      const spcInfos = [info(3, 10, 'edited'), info(2, 10, 'peaked')];
+      const spcMetas = [meta(2)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('considers every spectrum when no dataset is given', () => {
+      const spcInfos = [info(3, 20, 'peaked'), info(2, 10, 'edited')];
+      const spcMetas = [meta(3), meta(2)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, null)).toEqual({ spcIdx: 2, arrSpcIdx: [2] });
+    });
+
+    it('keeps every file of an LC/MS dataset', () => {
+      const lcms = { layout: FN.LIST_LAYOUT.LC_MS };
+      const spcInfos = [info(3, 10, 'peaked'), info(2, 10, 'peaked'), info(1, 10, 'edited')];
+      const spcMetas = [meta(3, lcms), meta(2, lcms), meta(1, lcms)];
+      expect(pickDefaultSelection(spcInfos, spcMetas, 10)).toEqual({ spcIdx: 3, arrSpcIdx: [3, 2, 1] });
+    });
+
+    it('returns an empty selection when nothing matches', () => {
+      expect(pickDefaultSelection([], [], 10)).toEqual({ spcIdx: 0, arrSpcIdx: [] });
+      expect(pickDefaultSelection([info(1, 20, 'peaked')], [meta(1)], 10))
+        .toEqual({ spcIdx: 1, arrSpcIdx: [] });
     });
   });
 

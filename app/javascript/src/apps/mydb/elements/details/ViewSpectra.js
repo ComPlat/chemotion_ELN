@@ -13,7 +13,7 @@ import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
-import { inlineNotation } from 'src/utilities/SpectraHelper';
+import { inlineNotation, pickDefaultSelection } from 'src/utilities/SpectraHelper';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import {
   LcmsPageCache,
@@ -178,11 +178,8 @@ class ViewSpectra extends React.Component {
   onDSSelectChange(e) {
     const { value } = e;
     const { spcInfos, spcMetas } = this.state;
-    const sis = spcInfos.filter(x => x.idDt === value);
-    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
-    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
-    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
-    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
+    const { spcIdx, arrSpcIdx } = pickDefaultSelection(spcInfos, spcMetas, value);
+    SpectraActions.SelectIdx(spcIdx, arrSpcIdx);
   }
 
   getDSList() {

@@ -144,8 +144,38 @@ const BuildSpcInfos = (sample, container) => {
       idAi: container.id,
       idDt: file.idDt,
       idx: file.id,
+      aasmState: file.aasm_state,
     }
   ));
+};
+
+const DEFAULT_SELECTION_RANK = { edited: 0, peaked: 1 };
+
+/**
+ * Picks the spectra selected when ChemSpectra opens a dataset.
+ *
+ * One spectrum is selected: the first edited one, else the first peaked one, else the first
+ * one, in the order of +spcMetas+. LC/MS datasets keep every file, since that layout renders
+ * TIC, m/z and UV-Vis together.
+ *
+ * @param {Array<Object>} spcInfos spectra infos (+idx+, +idDt+, +aasmState+)
+ * @param {Array<Object>} spcMetas decoded spectra (+idx+, +jcamp+), in display order
+ * @param {number|string|null} idDt dataset id; falsy considers every spectrum
+ * @return {{spcIdx: number, arrSpcIdx: Array<number>}}
+ */
+const pickDefaultSelection = (spcInfos = [], spcMetas = [], idDt = null) => {
+  const infos = idDt ? spcInfos.filter((info) => info.idDt === idDt) : spcInfos;
+  const infoByIdx = new Map(infos.map((info) => [info.idx, info]));
+  const candidates = spcMetas.filter((spc) => infoByIdx.has(spc.idx));
+  if (candidates.length === 0) return { spcIdx: spcMetas[0]?.idx || 0, arrSpcIdx: [] };
+
+  if (candidates.some((spc) => spc.jcamp?.layout === FN.LIST_LAYOUT.LC_MS)) {
+    return { spcIdx: candidates[0].idx, arrSpcIdx: candidates.map((spc) => spc.idx) };
+  }
+
+  const rank = (spc) => DEFAULT_SELECTION_RANK[infoByIdx.get(spc.idx)?.aasmState] ?? 2;
+  const best = candidates.reduce((acc, spc) => (rank(spc) < rank(acc) ? spc : acc));
+  return { spcIdx: best.idx, arrSpcIdx: [best.idx] };
 };
 
 const BuildSpcInfosForNMRDisplayer = (sample, container) => {
@@ -936,7 +966,7 @@ const inlineNotation = (layout, data, metadata) => {
 };
 
 export {
-  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, pickDefaultSelection, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
   cleaningNMRiumData, inlineNotation,
   isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
   entryUrl, urlToEntry, findAttachmentForRef,
