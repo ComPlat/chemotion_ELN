@@ -224,7 +224,7 @@ function AdvancedAnalysesList({
               // eslint-disable-next-line no-constant-condition
               while (true) {
                 const loopIdx = iteratorIdx;
-                const newFileList = fl.filter((fileObj) => fileObj.fullPathArray[loopIdx] === fa[loopIdx]);
+                const newFileList = fl.filter((fileObj) => fileObj.keyArray[loopIdx] === fa[loopIdx]);
                 if (newFileList.length) {
                   fileList = newFileList;
                   iteratorIdx += 1;
