@@ -47,7 +47,7 @@ module Reporter
 
           obj[:products].each do |p|
             serial = Reporter::Helper.mol_serial(p[:molecule][:id], @mol_serials)
-            csv << [serial, '', p[:showed_name], p[:molecule][:inchistring],
+            csv << [serial, '', Reporter::Helper.product_name(p), p[:molecule][:inchistring],
                     p[:molecule][:inchikey], long_key, web_key, short_key, '']
           end
         end

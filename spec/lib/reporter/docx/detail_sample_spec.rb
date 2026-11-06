@@ -33,4 +33,24 @@ describe 'Reporter::Docx::DetailSample' do
       expect(content[:analyses]).to eq(target_html)
     end
   end
+
+  describe 'reaction description' do
+    it 'uses the text of the step the sample belongs to' do
+      reaction = create(:reaction, reaction_type: 'multi_step',
+                                   description: { 'ops' => [{ 'insert' => "step one\n" }] })
+      ReactionStep.create!(reaction: reaction, position: 1, description: { 'ops' => [{ 'insert' => "step one\n" }] })
+      second = ReactionStep.create!(reaction: reaction, position: 2,
+                                    description: { 'ops' => [{ 'insert' => "step two\n" }] })
+      ReactionsProductSample.create!(reaction: reaction, sample: sample, reaction_step: second)
+
+      expect(instance.send(:init_item)).to eq([{ 'insert' => "step two\n" }])
+    end
+
+    it 'skips the text when it is hidden by a low detail level' do
+      hidden = Reporter::Docx::DetailSample.new(sample: OpenStruct.new(reaction_description: '***'), # rubocop:disable Style/OpenStructUse
+                                                spl_settings: all_spl_settings)
+
+      expect(hidden.send(:init_item)).to eq([])
+    end
+  end
 end

@@ -184,12 +184,28 @@ module Chemotion
         optional :segments, type: Array
         optional :user_labels, type: Array
         optional :variations, type: [Hash]
+        optional :reaction_steps, type: Array do
+          optional :id, type: Integer
+          optional :position, type: Integer
+          optional :description, type: Hash
+          optional :conditions, type: String
+          optional :duration, type: String
+          optional :timestamp_start, type: String
+          optional :timestamp_stop, type: String
+          optional :temperature, type: Hash
+          optional :ph_operator, type: String
+          optional :ph_value, type: Float
+          optional :vessel_size, type: Hash
+          optional :volume, type: BigDecimal
+          optional :lock_reaction_volume, type: Boolean
+        end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
         optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :scheme_hidden_parts, type: Array[String]
         optional :weight_percentage, type: Boolean
       end
       route_param :id do
@@ -213,15 +229,25 @@ module Chemotion
           attributes.delete(:container)
           attributes.delete(:segments)
 
-          reaction.update!(attributes)
-          reaction.touch
+          steps = attributes.delete(:reaction_steps)
           reaction_vessel_size = attributes[:vessel_size]
-          # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
-          reaction = Usecases::Reactions::UpdateMaterials.new(
-            reaction, materials,
-            current_user,
-            reaction_vessel_size
-          ).execute!
+          ActiveRecord::Base.transaction do
+            # Steps save first so materials can be linked to their step ids by position.
+            step_id_by_position = nil
+            unless steps.nil?
+              persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
+              step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            end
+            reaction.update!(attributes)
+            reaction.touch # rubocop:disable Rails/SkipsModelValidations
+            # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction, materials,
+              current_user,
+              reaction_vessel_size,
+              step_id_by_position
+            ).execute!
+          end
           reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
           reaction.reload
           recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -278,12 +304,28 @@ module Chemotion
         optional :duration, type: String
         optional :rxno, type: String
         optional :variations, type: [Hash]
+        optional :reaction_steps, type: Array do
+          optional :id, type: Integer
+          optional :position, type: Integer
+          optional :description, type: Hash
+          optional :conditions, type: String
+          optional :duration, type: String
+          optional :timestamp_start, type: String
+          optional :timestamp_stop, type: String
+          optional :temperature, type: Hash
+          optional :ph_operator, type: String
+          optional :ph_value, type: Float
+          optional :vessel_size, type: Hash
+          optional :volume, type: BigDecimal
+          optional :lock_reaction_volume, type: Boolean
+        end
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
         optional :concentration_mode, type: String, values: Reaction::CONCENTRATION_MODES
         optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :scheme_hidden_parts, type: Array[String]
         optional :weight_percentage, type: Boolean
       end
 
@@ -291,6 +333,7 @@ module Chemotion
         attributes = declared(params, include_missing: false)
         normalize_legacy_concentration_mode!(attributes)
         materials = attributes.delete(:materials)
+        steps = attributes.delete(:reaction_steps)
         literatures = attributes.delete(:literatures)
         attributes.delete(:can_copy)
         collection_id = attributes.delete(:collection_id)
@@ -332,14 +375,20 @@ module Chemotion
               prod
             end
           end
-          # Also points a copy's variations keys at the saved materials (ReactionVariationMaterialKeys).
-          Usecases::Reactions::UpdateMaterials.new(
-            reaction,
-            materials,
-            current_user,
-            attributes[:vessel_size],
-            origin_reaction: origin_reaction,
-          ).execute!.reload
+          ActiveRecord::Base.transaction do
+            persisted_steps = Usecases::Reactions::UpdateSteps.new(reaction, steps).execute!
+            step_id_by_position = persisted_steps.index_by(&:position).transform_values(&:id)
+            # Also points a copy's variations keys at the saved materials (ReactionVariationMaterialKeys).
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction,
+              materials,
+              current_user,
+              attributes[:vessel_size],
+              step_id_by_position,
+              origin_reaction: origin_reaction,
+            ).execute!
+          end
+          reaction.reload
         end
 
         # save to profile

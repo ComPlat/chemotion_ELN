@@ -26,6 +26,10 @@ module Entities
       to: :"object.sample"
     )
 
+    def carry_on
+      object.carry_on && object.reaction.multi_step?
+    end
+
     def analyses
       return [] if detail_levels[Sample] < 2
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_30_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1155,6 +1155,27 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
+  create_table "reaction_steps", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "position", null: false
+    t.jsonb "temperature", default: {"data"=>[], "userText"=>"", "valueUnit"=>"°C"}
+    t.string "duration"
+    t.string "timestamp_start"
+    t.string "timestamp_stop"
+    t.string "conditions"
+    t.jsonb "description"
+    t.string "ph_operator", default: "=", null: false
+    t.float "ph_value"
+    t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
+    t.decimal "volume", precision: 10, scale: 4
+    t.boolean "lock_reaction_volume", default: false, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "index_reaction_steps_on_deleted_at"
+    t.index ["reaction_id"], name: "index_reaction_steps_on_reaction_id"
+  end
+
   create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -1198,6 +1219,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.float "ph_value"
     t.boolean "lock_reaction_volume", default: false, null: false
     t.string "concentration_mode", default: "solvents_only", null: false
+    t.string "scheme_hidden_parts", default: [], null: false, array: true
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1241,7 +1263,11 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.jsonb "log_data"
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
+    t.bigint "reaction_step_id"
+    t.boolean "carry_on", default: false, null: false
+    t.boolean "step_reference", default: false, null: false
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
+    t.index ["reaction_step_id"], name: "index_reactions_samples_on_reaction_step_id"
     t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end

@@ -12,7 +12,10 @@ export default class ReactionSvgFetcher {
     duration,
     conditions,
     productsOnly = false,
-    showYield = true
+    showYield = true,
+    steps = [],
+    numberedSteps = false,
+    hide = [],
   }) {
     const body = {
       materials_svg_paths: materialsSvgPaths,
@@ -22,6 +25,9 @@ export default class ReactionSvgFetcher {
       conditions: (typeof conditions === 'string') ? conditions : '',
       products_only: productsOnly,
       show_yield: showYield,
+      steps,
+      numbered_steps: numberedSteps,
+      hide,
     };
 
     return ApiClient.postJson('/api/v1/reaction_svg', { body });

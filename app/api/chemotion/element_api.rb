@@ -153,7 +153,8 @@ module Chemotion
               :container, :elemental_compositions, :molecule, :reactions_samples, :residues, :segments, :tag
             )
             reactions = reactions.includes(
-              :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
+              :container, :products, :purification_solvents, :reactants, :reaction_steps, :segments, :solvents,
+              :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
               serialized_element = Entities::SampleEntity.represent(
@@ -168,6 +169,9 @@ module Chemotion
                 reaction,
                 detail_levels: detail_levels,
               ).serializable_hash
+              unless serialized_element[:is_restricted]
+                serialized_element[:description] = reaction.steps_description(labels: true)
+              end
               serialized_element[:literatures] = citation_for_elements(reaction.id, 'Reaction')
               serialized_element
             end
