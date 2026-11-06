@@ -86,4 +86,32 @@ export default class ChemicalFetcher {
       handleResponseError: (error) => { throw error; },
     });
   }
+
+  // Whether an LLM provider is configured for the current user (personal or
+  // institution). Resolves to false on error so AI features fail safe (disabled).
+  static llmAvailable() {
+    return fetch('/api/v1/llm/available', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { available: false }))
+      .then((d) => !!d.available)
+      .catch(() => false);
+  }
+
+  // Queues the AI extraction job; sheetPath picks the saved sheet, else the job takes the last one.
+  // A refusal rejects with the server's reason and the HTTP status (409: a run is already going).
+  static extractSds(sampleId, sheetPath) {
+    return fetch('/api/v1/chemicals/extract_sds', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sample_id: sampleId, ...(sheetPath ? { path: sheetPath } : {}) })
+    }).then((response) => response.json().catch(() => ({})).then((body) => {
+      if (response.ok && !body.error) return body;
+      const error = new Error(body.error || `HTTP ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }));
+  }
 }
