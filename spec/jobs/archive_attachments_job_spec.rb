@@ -101,6 +101,23 @@ RSpec.describe ArchiveAttachmentsJob do
     end
   end
 
+  describe 'annotated images' do
+    it 'moves the flattened annotated image to cold with the file' do
+      orphan = create(:attachment, :with_annotation, attachable: nil)
+      flat_name = "#{orphan.attachment.id}_annotated.jpg"
+      hot_flat = File.join(orphan.attachment.storage.directory, flat_name)
+      FileUtils.cp(orphan.attachment.url, hot_flat)
+      orphan.attachment_data['derivatives']['annotation']['annotated_file_location'] = flat_name
+      orphan.update_columns(attachment_data: orphan.attachment_data, updated_at: 13.months.ago)
+
+      described_class.perform_now
+
+      cold_flat = File.join(Shrine.storages[:cold].directory, flat_name)
+      expect(orphan.reload.annotated_file_location).to eq cold_flat
+      expect([File.file?(cold_flat), File.exist?(hot_flat)]).to eq [true, false]
+    end
+  end
+
   describe 'archiving orphans (no collection id, how cron calls it)' do
     it 'archives an old attachment that was never attached to anything' do
       orphan = create(:attachment, attachable: nil)
@@ -134,6 +151,18 @@ RSpec.describe ArchiveAttachmentsJob do
       expect(storage_of(orphan)).to eq 'cold'
     end
 
+    it 'archives an attachment in the analyses of a deleted sample' do
+      sample = create(:sample)
+      analysis = create(:container, container_type: 'analysis', parent: sample.container)
+      orphan = create(:attachment, attachable: analysis)
+      orphan.update_column(:updated_at, 13.months.ago)
+      sample.destroy # soft delete keeps the container tree
+
+      described_class.perform_now
+
+      expect(storage_of(orphan)).to eq 'cold'
+    end
+
     it 'leaves an attachment whose parent is alive' do
       sample = create(:sample)
       attachment = create(:attachment, attachable: sample.container)
@@ -152,6 +181,18 @@ RSpec.describe ArchiveAttachmentsJob do
       described_class.perform_now
 
       expect(storage_of(fresh)).to eq 'store'
+    end
+
+    it 'does not archive or count a file read after the eligibility check' do
+      orphan = create(:attachment, attachable: nil)
+      orphan.update_column(:updated_at, 13.months.ago)
+      allow_any_instance_of(Attachment).to receive(:lock!).and_wrap_original do |lock, *args| # rubocop:disable RSpec/AnyInstance
+        Attachment.where(id: orphan.id).update_all(last_accessed_at: Time.current)
+        lock.call(*args)
+      end
+
+      expect(described_class.perform_now).to include(archived: 0)
+      expect(storage_of(orphan)).to eq 'store'
     end
 
     it 'leaves an old orphan that was read recently' do

@@ -40,7 +40,7 @@ class ArchiveAttachmentsJob < ApplicationJob
     archived = 0
 
     attachments_of(elements.klass.name, element_ids, older_than).find_each do |attachment|
-      archived += 1 if attachment.cold?(older_than: older_than) && archive(attachment)
+      archived += 1 if attachment.cold?(older_than: older_than) && archive(attachment, older_than)
     end
     archived
   end
@@ -60,25 +60,44 @@ class ArchiveAttachmentsJob < ApplicationJob
   def archive_orphans(older_than)
     archived = 0
     orphan_scopes(older_than).each do |scope|
-      scope.find_each { |attachment| archived += 1 if orphan_stale?(attachment, older_than) && archive(attachment) }
+      scope.find_each do |attachment|
+        archived += 1 if orphan_stale?(attachment, older_than) && archive(attachment, older_than)
+      end
     end
     Rails.logger.info("[#{self.class.name}] archived #{archived} orphan attachment(s)")
     archived
   end
 
-  # Two flavours of orphan: never attached, and pointing at a row that is gone or
-  # in the trash (soft-deleted parents are excluded by their own default scope).
+  # Three flavours of orphan: never attached, pointing at a row that is gone or
+  # in the trash (soft-deleted parents are excluded by their own default scope),
+  # and on a container tree whose element is gone (deleting a sample keeps its containers).
   def orphan_scopes(older_than)
     old = unread_since(older_than)
     scopes = [old.where(attachable_id: nil)]
 
     Attachment.distinct.where.not(attachable_type: nil).pluck(:attachable_type).each do |type|
-      klass = type.safe_constantize
-      next if klass.nil? || !klass.respond_to?(:select)
-
-      scopes << old.where(attachable_type: type).where.not(attachable_id: klass.select(:id))
+      klass = live_class(type)
+      scopes << old.where(attachable_type: type).where.not(attachable_id: klass.select(:id)) if klass
     end
-    scopes
+    scopes + dead_container_tree_scopes(old)
+  end
+
+  def dead_container_tree_scopes(old)
+    Container.where.not(containable_type: nil).distinct.pluck(:containable_type).filter_map do |type|
+      klass = live_class(type)
+      next unless klass
+
+      dead_roots = Container.where(containable_type: type).where.not(containable_id: klass.select(:id)).select(:id)
+      tree_ids = Container.hierarchy_class.where(ancestor_id: dead_roots).select(:descendant_id)
+      old.where(attachable_type: 'Container', attachable_id: tree_ids)
+    end
+  end
+
+  def live_class(type)
+    klass = type.safe_constantize
+    return nil unless klass.respond_to?(:columns_hash)
+
+    klass if klass.columns_hash[klass.primary_key]&.type == :integer # uuid keys (vessels) can't match
   end
 
   # Not Attachment#cold?: with no element, root_element falls back to the uploading
@@ -105,12 +124,13 @@ class ArchiveAttachmentsJob < ApplicationJob
   end
 
   # @return [Attachment, nil] the attachment if it moved, nil if there was nothing to move
-  def archive(attachment)
+  def archive(attachment, older_than)
     file = attachment.attachment
     # a row without a file must not abort the whole run
     return nil if file.nil? || Attachment.cold_storage_keys.include?(file.storage_key)
 
-    attachment.move_to_cold
+    return nil unless attachment.move_to_cold(older_than: older_than)
+
     Rails.logger.info("[#{self.class.name}] archived attachment #{attachment.id}")
     attachment
   end

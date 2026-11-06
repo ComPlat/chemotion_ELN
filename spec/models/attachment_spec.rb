@@ -140,6 +140,27 @@ RSpec.describe Attachment do
     end
   end
 
+  describe '.suppress_read_tracking' do
+    it 'keeps an outer block suppressed after a nested one ends' do
+      described_class.suppress_read_tracking do
+        described_class.suppress_read_tracking { nil }
+
+        expect(described_class).to be_read_tracking_suppressed
+      end
+      expect(described_class).not_to be_read_tracking_suppressed
+    end
+  end
+
+  describe 'reading through the tiered storage' do
+    it 'does not count a read when the file cannot be opened' do
+      attachment
+      allow(described_class).to receive(:on_read)
+
+      expect { Shrine.storages[:store].open('does-not-exist') }.to raise_error(Shrine::FileNotFound)
+      expect(described_class).not_to have_received(:on_read)
+    end
+  end
+
   describe '#cold_storage_key (routing across cold shelves)' do
     it 'always uses :cold when there is a single cold shelf' do
       allow(described_class).to receive(:cold_storage_keys).and_return([:cold])

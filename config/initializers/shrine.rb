@@ -10,8 +10,7 @@ end
 # Every read records the access date, so a recently-read file isn't archived.
 class TieredStorage < Shrine::Storage::FileSystem
   def open(id, **options)
-    Attachment.on_read(id) # cold reads are rare; unindexed lookup is fine
-    super
+    super.tap { Attachment.on_read(id) }
   end
 end
 
@@ -56,10 +55,13 @@ class StorageHealth
   # Archived rows keep pointing at cold after the config goes away (unset var,
   # dropped mount), and then no cold tier is left for tiers_to_check to look at.
   def self.lost_cold_tier_reason
-    return nil if Shrine.storages.keys.any? { |k| k.to_s.match?(/\Acold\d*\z/) }
-    return nil unless Attachment.where("attachment_data->>'storage' LIKE 'cold%'").exists?
+    storage = Arel.sql("attachment_data->>'storage'")
+    used = Attachment.where("attachment_data->>'storage' LIKE 'cold%'").distinct.pluck(storage)
+    missing = used - Shrine.storages.keys.map(&:to_s)
+    return nil if missing.empty?
 
-    'archived files exist but no cold storage is configured (set :cold in config/shrine.yml)'
+    "archived files exist on #{missing.sort.join(', ')} but that cold storage is not configured " \
+      '(set :cold in config/shrine.yml)'
   end
 
   def self.log_problems(logger = Rails.logger)

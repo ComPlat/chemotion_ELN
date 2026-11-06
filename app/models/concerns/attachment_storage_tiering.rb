@@ -16,8 +16,9 @@ module AttachmentStorageTiering
     (root_element&.updated_at || updated_at) < older_than
   end
 
-  def move_to_cold
-    move_to_tier(cold_storage_key)
+  # @return [Boolean] whether the file moved
+  def move_to_cold(older_than: nil)
+    move_to_tier(cold_storage_key, older_than: older_than)
   end
 
   # With several shelves, spread files across them by id.
@@ -43,10 +44,11 @@ module AttachmentStorageTiering
 
     # Internal tier moves read files too — don't count those as user reads.
     def suppress_read_tracking
+      previous = Thread.current[:suppress_attachment_read_tracking]
       Thread.current[:suppress_attachment_read_tracking] = true
       yield
     ensure
-      Thread.current[:suppress_attachment_read_tracking] = false
+      Thread.current[:suppress_attachment_read_tracking] = previous
     end
 
     def read_tracking_suppressed?
@@ -75,37 +77,61 @@ module AttachmentStorageTiering
     self.last_accessed_at = now
   end
 
-  def move_to_tier(storage_key)
+  def move_to_tier(storage_key, older_than: nil)
     self.class.suppress_read_tracking do
-      old_file = nil
-      old_derivatives = nil
-
-      # Lock the row, then re-check the tier so concurrent moves can't race.
-      with_lock do
-        attacher = attachment_attacher
-        file = attacher.file
-        next if file.nil?
-        next if file.storage_key == :cache # mid-upload, not persisted
-        next if file.storage_key == storage_key
-
-        old_file = file
-        old_derivatives = attacher.derivatives
-
-        old_file.rewind # or we copy from a mid-read cursor and lose bytes
-        attacher.set attacher.upload(old_file, storage_key)
-        if old_derivatives.present?
-          attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
-        end
-
-        # a normal save gets reverted by this model's callbacks
-        update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
-      end
+      # Lock the row, then re-check so concurrent moves and fresh reads win.
+      old = with_lock { copy_to_tier(storage_key) unless skip_move?(storage_key, older_than) }
 
       # Delete last, after the move is committed, so a crash can't lose the file.
-      next if old_file.nil?
+      next false unless old
 
-      old_file.delete
-      attachment_attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
+      delete_old_copies(old)
+      true
     end
+  end
+
+  def skip_move?(storage_key, older_than)
+    return true if older_than && last_accessed_at && last_accessed_at > older_than
+
+    file = attachment_attacher.file
+    # :cache means mid-upload, not persisted yet
+    file.nil? || file.storage_key == :cache || file.storage_key == storage_key
+  end
+
+  def copy_to_tier(storage_key)
+    attacher = attachment_attacher
+    old = { file: attacher.file, derivatives: attacher.derivatives }
+    flat_image_name = attachment_data.dig('derivatives', 'annotation', 'annotated_file_location')
+
+    old[:file].rewind # or we copy from a mid-read cursor and lose bytes
+    attacher.set attacher.upload(old[:file], storage_key)
+    if old[:derivatives].present?
+      attacher.set_derivatives attacher.upload_derivatives(old[:derivatives], storage: storage_key)
+    end
+    old[:flat_image] = copy_flat_image(flat_image_name, old[:file].storage, attacher.file.storage)
+
+    # a normal save gets reverted by this model's callbacks
+    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+    old
+  end
+
+  def delete_old_copies(old)
+    old[:file].delete
+    attachment_attacher.delete_derivatives(old[:derivatives]) if old[:derivatives].present?
+    FileUtils.rm_f(old[:flat_image]) if old[:flat_image]
+  end
+
+  # The annotated image is written next to the file, outside Shrine's derivatives.
+  def copy_flat_image(name, from_storage, to_storage)
+    return nil if name.blank?
+
+    source = File.join(from_storage.directory, name)
+    return nil unless File.file?(source)
+
+    target = File.join(to_storage.directory, name)
+    FileUtils.mkdir_p(File.dirname(target))
+    FileUtils.cp(source, target)
+    attachment_data['derivatives']['annotation']['annotated_file_location'] = name # Shrine drops extra keys
+    source
   end
 end

@@ -53,16 +53,34 @@ RSpec.describe StorageHealth do
         allow(Attachment).to receive(:where).and_call_original
         allow(Attachment).to receive(:where)
           .with("attachment_data->>'storage' LIKE 'cold%'")
-          .and_return(instance_double(ActiveRecord::Relation, exists?: true))
+          .and_return(instance_double(ActiveRecord::Relation, distinct: instance_double(ActiveRecord::Relation,
+                                                                                        pluck: %w[cold])))
       end
 
       it 'flags it when verifying files' do
         expect(described_class.problems(verify_files: true))
-          .to include('archived files exist but no cold storage is configured (set :cold in config/shrine.yml)')
+          .to include('archived files exist on cold but that cold storage is not configured ' \
+                      '(set :cold in config/shrine.yml)')
       end
 
       it 'does not query the database by default' do
         expect(described_class.problems).to eq([])
+      end
+    end
+
+    context 'when one of several cold shelves disappears but rows still point at it' do
+      before do
+        allow(Shrine).to receive(:storages).and_return(store: real_store, cold: real_store)
+        allow(Attachment).to receive(:where).and_call_original
+        allow(Attachment).to receive(:where)
+          .with("attachment_data->>'storage' LIKE 'cold%'")
+          .and_return(instance_double(ActiveRecord::Relation, distinct: instance_double(ActiveRecord::Relation,
+                                                                                        pluck: %w[cold cold2])))
+      end
+
+      it 'flags the missing shelf' do
+        expect(described_class.problems(verify_files: true))
+          .to include(a_string_starting_with('archived files exist on cold2 but'))
       end
     end
 
