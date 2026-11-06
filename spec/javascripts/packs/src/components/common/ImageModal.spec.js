@@ -104,18 +104,18 @@ describe('ImageModal', () => {
       expect(wrapper.state('selectedId')).toBe(11);
     });
 
-    it('"Use latest" clears the preferred image and is only offered while one is set', () => {
+    it('"Use default" clears the preferred image and is only offered while one is set', () => {
       const onPreferredThumbnailChange = sinon.spy();
       const analysis = { ...container([pdf, png]), extended_metadata: { preferred_thumbnail: '8' } };
       const wrapper = render({ container: analysis, onPreferredThumbnailChange });
       wrapper.setState({ thumbnails: [{ id: 8, filename: 'photo.png' }], selectedId: 8 });
-      const useLatest = () => wrapper.find('Button').filterWhere((b) => b.text() === 'Use latest');
+      const useDefault = () => wrapper.find('Button').filterWhere((b) => b.text() === 'Use default');
 
-      expect(useLatest().length).toBe(1);
-      useLatest().simulate('click');
+      expect(useDefault().length).toBe(1);
+      useDefault().simulate('click');
       expect(onPreferredThumbnailChange.calledOnceWith(null)).toBe(true);
       expect(wrapper.state('preferredId')).toBe(null);
-      expect(useLatest().length).toBe(0);
+      expect(useDefault().length).toBe(0);
     });
   });
 });

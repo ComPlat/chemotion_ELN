@@ -233,7 +233,7 @@ export default class ImageModal extends Component {
     this.fetchPreviewThumbnail(); // refresh grey-area preview to the new preferred
   };
 
-  // drop the preferred image: the header goes back to the default (latest updated file)
+  // drop the preferred image: the header goes back to the default (see getAttachmentFromContainer)
   handleUseDefault = () => {
     if (!this.state.preferredId) return;
     this.setState({ preferredId: null });
@@ -278,10 +278,10 @@ export default class ImageModal extends Component {
               variant="link"
               size="sm"
               className="p-0"
-              title="Clear the preferred image and show the latest updated file"
+              title="Clear the preferred image: show a combined spectra image, else the latest updated file"
               onClick={this.handleUseDefault}
             >
-              Use latest
+              Use default
             </Button>
           )}
         </div>
