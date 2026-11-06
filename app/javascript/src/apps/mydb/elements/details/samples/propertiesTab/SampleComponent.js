@@ -412,7 +412,7 @@ class SampleComponent extends Component {
       ? material.molecular_mass
       : (material.molecule && material.molecule.molecular_weight);
 
-    const relativeMolecularWeight = material.component_properties?.relative_molecular_weight;
+    const relativeMolecularWeight = material.relative_molecular_weight;
 
     return (
       <>
