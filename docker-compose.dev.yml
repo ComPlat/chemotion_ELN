@@ -152,7 +152,6 @@ services:
     working_dir: "/home/ubuntu/app"
     command: 'yarn run storybook'
 
-
 volumes:
   database:
     name: ${VOLUME_NAME_DB:-chemotion_eln_database}
