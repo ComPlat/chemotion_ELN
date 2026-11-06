@@ -1,5 +1,6 @@
 import { set, cloneDeep, isEqual } from 'lodash';
-import { convertTemperature, convertDuration } from 'src/models/Reaction';
+import { convertDuration } from 'src/models/Reaction';
+import { convertTemperature } from 'src/utilities/MeasurementConversions';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
@@ -115,17 +116,6 @@ function convertUnit(value, fromUnit, toUnit) {
 
   return value;
 }
-
-const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
-  const unitConfigs = getGenSI(genericQuantity);
-  if (!unitConfigs || unitConfigs.length === 0) return null;
-
-  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
-  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
-  if (!fromUnitConfig || !toUnitConfig) return null;
-
-  return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
-};
 
 function getStandardUnits(entry, gasType = 'off') {
   switch (entry) {
@@ -1005,7 +995,6 @@ export {
   gasConcentrationUnits,
   getStandardUnits,
   convertUnit,
-  convertGenericUnit,
   materialTypes,
   cellDataTypes,
   getVariationsRowName,

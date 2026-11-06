@@ -66,6 +66,9 @@ class Reaction < ApplicationRecord
   NUMERIC_TEMPERATURE_TEXT_PATTERN =
     /\A-?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:\s*(?:~|-|–|to)\s*-?(?:\d+(?:[.,]\d*)?|[.,]\d+))?\z/i.freeze
 
+  ENVIRONMENT_FIELDS = %w[temperature humidity air_pressure].freeze
+  ENVIRONMENT_NUMBER_PATTERN = /\A-?(?:\d+(?:\.\d*)?|\.\d+)\z/.freeze
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -176,6 +179,7 @@ class Reaction < ApplicationRecord
 
   before_validation :set_default_reaction_type
   before_validation :synchronize_legacy_reaction_volume_flag
+  before_validation :normalize_environment_values
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
@@ -192,6 +196,7 @@ class Reaction < ApplicationRecord
 
   validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
   validates :concentration_mode, inclusion: { in: CONCENTRATION_MODES }
+  validate :validate_environment_values
 
   # Temporary compatibility API. concentration_mode remains authoritative.
   def use_reaction_volume # rubocop:disable Naming/PredicateMethod
@@ -343,6 +348,57 @@ class Reaction < ApplicationRecord
   end
 
   private
+
+  def normalize_environment_number(value)
+    number = case value
+             when NilClass, String then value.to_s.strip.tr(',−', '.-')
+             when Integer then value.to_s
+             when Float, BigDecimal then BigDecimal(value.to_s).to_s('F')
+             end
+    return number if number == ''
+
+    number if ENVIRONMENT_NUMBER_PATTERN.match?(number.to_s) && number.to_f.finite?
+  end
+
+  def normalize_environment_values
+    return unless environment.is_a?(Hash)
+
+    normalized = environment.deep_dup
+    ENVIRONMENT_FIELDS.each do |field|
+      reading = normalized[field]
+      next unless reading.is_a?(Hash) && reading.key?('value')
+
+      number = normalize_environment_number(reading['value'])
+      reading['value'] = number unless number.nil?
+    end
+    self.environment = normalized
+  end
+
+  def validate_environment_values
+    return if environment.nil?
+
+    unless environment.is_a?(Hash)
+      errors.add(:environment, 'must be an object')
+      return
+    end
+
+    ENVIRONMENT_FIELDS.each do |field|
+      next unless environment.key?(field)
+
+      reading = environment[field]
+      next if valid_environment_reading?(field, reading)
+
+      errors.add(:environment, "#{field.humanize.downcase} must be a decimal number")
+    end
+  end
+
+  def valid_environment_reading?(field, reading)
+    return false unless reading.is_a?(Hash)
+    return true unless reading.key?('value')
+
+    number = normalize_environment_number(reading['value'])
+    !number.nil? && (field == 'temperature' || !number.start_with?('-'))
+  end
 
   def temperature_data_display
     array_data = temperature&.[]('data')

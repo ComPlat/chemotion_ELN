@@ -7,6 +7,38 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
+describe('ReactionDetailsScheme initial yield display', () => {
+  it('defaults to yield with no products and does not update state during render', () => {
+    const instance = new ReactionDetailsScheme({
+      reaction: Reaction.buildEmpty(1),
+      environmentConditionsOpen: false,
+      onInputChange: sinon.spy(),
+      onReactionChange: sinon.spy(),
+    });
+    const setState = sinon.spy(instance, 'setState');
+
+    expect(instance.state.displayYieldField).toBe(true);
+    instance.render();
+    expect(setState.called).toBe(false);
+  });
+
+  it('initially displays yield when product conversion rates are empty or zero', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.products = [{}, { conversion_rate: null }, { conversion_rate: 0 }];
+    const instance = new ReactionDetailsScheme({ reaction });
+
+    expect(instance.state.displayYieldField).toBe(true);
+  });
+
+  it('initially displays conversion when any product has a nonzero conversion rate', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.products = [{ conversion_rate: 0 }, { conversion_rate: 50 }];
+    const instance = new ReactionDetailsScheme({ reaction });
+
+    expect(instance.state.displayYieldField).toBe(false);
+  });
+});
+
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
@@ -1387,6 +1419,66 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
 
     expect(result).toBe(0.01);
     expect(instance.showReactionVolumeRequiredWarning.called).toBe(false);
+  });
+});
+
+describe('ReactionDetailsScheme vessel-size input', () => {
+  ['updateVesselSize', 'updateVesselSizeOnBlur'].forEach((handler) => {
+    ['l', 'ml'].forEach((unit) => {
+      [
+        ['1,000.5', '1000.5'],
+        ['1.000,5', '1000.5'],
+        ['12,345,678.90', '12345678.90'],
+        ['12.345.678,90', '12345678.90'],
+        ['1,000.50000000000000001', '1000.50000000000000001'],
+        ['12,5', '12.5'],
+        ['0', '0'],
+        ['.5', '.5'],
+        ['5.', '5.'],
+        ['.', '.'],
+        ['', ''],
+      ].forEach(([raw, normalized]) => {
+        it(`${handler} preserves ${JSON.stringify(raw)} as ${JSON.stringify(normalized)} in ${unit}`, () => {
+          const onInputChange = sinon.spy();
+          const reaction = Reaction.buildEmpty(1);
+          reaction.vessel_size = { unit };
+          const instance = new ReactionDetailsScheme({
+            reaction,
+            onInputChange,
+          });
+          const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
+
+          instance[handler]({ target: { value: raw } });
+
+          expect(onInputChange.calledOnceWithExactly('vesselSizeAmount', normalized)).toBe(true);
+          if (handler === 'updateVesselSizeOnBlur' && normalized === '') {
+            expect(handleMaterialsChange.called).toBe(false);
+          } else {
+            const numericValue = parseFloat(normalized) || 0;
+            expect(handleMaterialsChange.calledOnceWithExactly({
+              type: 'VesselSizeChanged',
+              vesselSizeInLiters: unit === 'l' ? numericValue : numericValue * 0.001,
+            })).toBe(true);
+          }
+        });
+      });
+
+      ['1.2.5', '12.3.45', '1,,25', '12,5 ml', '500abc.2xyz', '1.013e5', '1,00.5', '-5', '−5'].forEach((raw) => {
+        it(`${handler} rejects ${JSON.stringify(raw)} and keeps the previous vessel size in ${unit}`, () => {
+          const onInputChange = sinon.spy();
+          const reaction = Reaction.buildEmpty(1);
+          reaction.vessel_size = { amount: '42', unit };
+          const instance = new ReactionDetailsScheme({ reaction, onInputChange });
+          const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
+
+          instance[handler]({ target: { value: raw } });
+
+          expect(onInputChange.called).toBe(false);
+          expect(handleMaterialsChange.called).toBe(false);
+          expect(reaction.vessel_size).toEqual({ amount: '42', unit });
+        });
+      });
+    });
   });
 });
 

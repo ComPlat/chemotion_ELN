@@ -123,6 +123,36 @@ const formatDisplayValue = (val, precision) => {
   return Number(val).toExponential(precision - 1);
 };
 
+/**
+ * Normalize decimal input without removing characters that could change its meaning.
+ *
+ * Accept a decimal comma, a Unicode minus, and consistently grouped decimal pastes.
+ * Reject scientific notation, malformed grouping, and other unexpected characters.
+ * Incomplete drafts such as "", "." or "-" are kept so the field stays editable.
+ *
+ * @param {string} raw - The raw input value.
+ * @param {Object} [options]
+ * @param {boolean} [options.allowNegative=false] - Allow a leading minus sign.
+ * @returns {string|null} - The normalized input, or null when the edit must be refused.
+ */
+const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
+  let value = `${raw}`.trim().replace(/\u2212/g, '-');
+  if (!allowNegative && value.startsWith('-')) { return null; }
+
+  // With both separators present, require conventional three-digit grouping.
+  if (/^-?\d{1,3}(?:,\d{3})+\.\d*$/.test(value)) {
+    value = value.replace(/,/g, '');
+  } else if (/^-?\d{1,3}(?:\.\d{3})+,\d*$/.test(value)) {
+    value = value.replace(/\./g, '').replace(',', '.');
+  } else {
+    value = value.replace(',', '.');
+  }
+
+  if (!/^-?\d*(?:\.\d*)?$/.test(value)) { return null; }
+  if (/\d/.test(value) && !Number.isFinite(Number(value))) { return null; }
+  return value;
+};
+
 export {
   fixDigit,
   validDigit,
@@ -130,4 +160,5 @@ export {
   formatBytes,
   parseNumericString,
   formatDisplayValue,
+  normalizeNumberInput,
 };

@@ -4,6 +4,25 @@
 module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
+    ENVIRONMENT_OBJECT_COERCER = lambda do |value|
+      raise ArgumentError, 'must be an object' unless value.is_a?(Hash)
+
+      value
+    end
+
+    # Preserve numeric JSON values as plain decimals before Grape coerces them to strings.
+    ENVIRONMENT_VALUE_COERCER = lambda do |value|
+      case value
+      when Integer then value.to_s
+      when Numeric then BigDecimal(value.to_s).to_s('F')
+      else value
+      end
+    end
+
+    rescue_from ActiveRecord::RecordInvalid do |exception|
+      error!(exception.record.errors.full_messages.join(', '), 422)
+    end
+
     include Grape::Kaminari
     helpers CollectionHelpers
     helpers ContainerHelpers
@@ -13,6 +32,24 @@ module Chemotion
     helpers UserLabelHelpers
 
     helpers do
+      params :environment_params do
+        # Unsupported imported labels must round-trip unchanged; the UI renders them read-only.
+        optional :environment, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+          optional :temperature, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+          optional :humidity, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+          optional :air_pressure, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+        end
+      end
+
       def normalize_legacy_concentration_mode!(attributes)
         return attributes unless attributes.key?(:use_reaction_volume)
 
@@ -162,6 +199,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
@@ -202,6 +240,12 @@ module Chemotion
         put do
           reaction = @reaction
           attributes = declared(params, include_missing: false)
+          # Environment updates are nested patches; omitted readings, values and units stay intact.
+          if attributes.key?(:environment)
+            attributes[:environment] = (reaction.environment || {}).deep_merge(
+              attributes[:environment].deep_stringify_keys,
+            )
+          end
           normalize_legacy_concentration_mode!(attributes)
           update_element_labels(reaction, attributes[:user_labels], current_user.id)
           attributes.delete(:user_labels)
@@ -258,6 +302,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
