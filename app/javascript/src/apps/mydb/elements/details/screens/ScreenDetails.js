@@ -261,7 +261,7 @@ export default class ScreenDetails extends Component {
               <Form.Group>
                 <Form.Label>Description</Form.Label>
                 <RichTextEditor
-                  templateType="free_text"
+                  templateType="freeText"
                   specialCharacters
                   indent
                   height="230px"

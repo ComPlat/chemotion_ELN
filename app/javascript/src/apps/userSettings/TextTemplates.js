@@ -95,6 +95,7 @@ export class TemplateEditPanel extends React.Component {
       name: props.template?.name ?? '',
       text: props.template?.data?.text ?? '',
       icon: props.template?.data?.icon ?? '',
+      content: props.template?.data,
     };
 
     this.reactQuillRef = React.createRef();
@@ -107,6 +108,7 @@ export class TemplateEditPanel extends React.Component {
         name: template?.name ?? '',
         text: template?.data?.text ?? '',
         icon: template?.data?.icon ?? '',
+        content: template?.data,
       });
     }
   }
@@ -135,7 +137,9 @@ export class TemplateEditPanel extends React.Component {
 
   render() {
     const { template, readOnly } = this.props;
-    const { name, text, icon } = this.state;
+    const {
+      name, text, icon, content
+    } = this.state;
 
     const previewTemplate = {
       ...template,
@@ -224,8 +228,8 @@ export class TemplateEditPanel extends React.Component {
                 specialCharacters
                 indent
                 height="230px"
-                value={template.data}
-                onChange={() => {}}
+                value={content}
+                onChange={(delta) => this.setState({ content: delta })}
                 readOnly={readOnly}
               />
             </Form.Group>

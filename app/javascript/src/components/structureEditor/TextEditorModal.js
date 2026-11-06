@@ -107,6 +107,7 @@ function TextEditorModal({
             value={editorValue}
             onChange={handleChange}
             specialCharacters
+            indent
             height="200px"
           />
         </div>

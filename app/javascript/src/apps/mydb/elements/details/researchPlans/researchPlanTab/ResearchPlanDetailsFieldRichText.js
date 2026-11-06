@@ -13,7 +13,7 @@ export default class ResearchPlanDetailsFieldRichText extends Component {
     return (
       <div>
         <RichTextEditor
-          templateType="free_text"
+          templateType="freeText"
           specialCharacters
           indent
           height="230px"
