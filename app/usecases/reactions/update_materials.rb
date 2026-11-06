@@ -101,7 +101,7 @@ module Usecases
 
       # @param origin_reaction [Reaction, nil] for a copy: the source reaction, already access-checked;
       #   variations keys naming its materials are mapped to the copy's by group position
-      def initialize(reaction, materials, user, vessel_size, step_id_by_position = {}, origin_reaction: nil)
+      def initialize(reaction, materials, user, vessel_size, step_id_by_position = {}, origin_reaction: nil) # rubocop:disable Metrics/ParameterLists
         @origin_reaction = origin_reaction
         @reaction = reaction
         @step_id_by_position = step_id_by_position
