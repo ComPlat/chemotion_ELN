@@ -103,5 +103,19 @@ describe('ImageModal', () => {
       expect(wrapper.state('showModal')).toBe(true);
       expect(wrapper.state('selectedId')).toBe(11);
     });
+
+    it('"Use default" clears the preferred image and is only offered while one is set', () => {
+      const onPreferredThumbnailChange = sinon.spy();
+      const analysis = { ...container([pdf, png]), extended_metadata: { preferred_thumbnail: '8' } };
+      const wrapper = render({ container: analysis, onPreferredThumbnailChange });
+      wrapper.setState({ thumbnails: [{ id: 8, filename: 'photo.png' }], selectedId: 8 });
+      const useDefault = () => wrapper.find('Button').filterWhere((b) => b.text() === 'Use default');
+
+      expect(useDefault().length).toBe(1);
+      useDefault().simulate('click');
+      expect(onPreferredThumbnailChange.calledOnceWith(null)).toBe(true);
+      expect(wrapper.state('preferredId')).toBe(null);
+      expect(useDefault().length).toBe(0);
+    });
   });
 });
