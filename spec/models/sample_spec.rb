@@ -492,6 +492,53 @@ RSpec.describe Sample do
       expect(mixture.convert_amount_to_mol(0.02, 'mol')).to eq(0.02)
     end
 
+    it 'keeps mixture conversions unknown until a component is explicitly marked as reference', :aggregate_failures do
+      reference_component.update!(component_properties: reference_component.component_properties.merge('reference' => false))
+      mixture.reload
+
+      expect(mixture.mixture_relative_molecular_weight).to be_nil
+      expect(mixture.amount_mmol).to be_nil
+      expect(mixture.convert_amount_to_mol(10, 'g')).to be_nil
+      expect(mixture.convert_to_gram(0.02, 'mol')).to be_nil
+      expect(mixture.convert_amount_to_mol(0.02, 'mol')).to eq(0.02)
+
+      reference_component.update!(component_properties: reference_component.component_properties.merge('reference' => true))
+      mixture.reload
+      expect(mixture.amount_mmol).to eq(20)
+      expect(mixture.convert_to_gram(0.02, 'mol')).to eq(10)
+    end
+
+    context 'when amounts are entered in litres', :aggregate_failures do
+      before do
+        mixture.assign_attributes(target_amount_value: 0.01, target_amount_unit: 'l',
+                                  real_amount_value: 0.02, real_amount_unit: 'l')
+      end
+
+      [nil, 0].each do |density|
+        [0, 1].each do |molarity|
+          it "keeps mass and moles unknown with density=#{density.inspect} and molarity=#{molarity}" do
+            mixture.assign_attributes(density: density, molarity_value: molarity)
+
+            expect(mixture.convert_to_gram(0.01, 'l')).to be_nil
+            expect(mixture.amount_g(:target)).to be_nil
+            expect(mixture.amount_mg(:target)).to be_nil
+            expect(mixture.amount_mmol(:target)).to be_nil
+            expect(mixture.amount_g(:real)).to be_nil
+            expect(mixture.amount_mg(:real)).to be_nil
+            expect(mixture.amount_mmol(:real)).to be_nil
+            expect(mixture.amount_ml(:target)).to eq(10)
+            expect(mixture.amount_ml(:real)).to eq(20)
+
+            mixture.assign_attributes(density: 1, molarity_value: 0)
+            expect(mixture.amount_g(:target)).to eq(10)
+            expect(mixture.amount_mmol(:target)).to eq(20)
+            expect(mixture.amount_g(:real)).to eq(20)
+            expect(mixture.amount_mmol(:real)).to eq(40)
+          end
+        end
+      end
+    end
+
     context 'when amounts are entered in moles', :aggregate_failures do
       before do
         mixture.update!(target_amount_value: 0.02, target_amount_unit: 'mol',

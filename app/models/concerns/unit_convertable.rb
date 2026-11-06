@@ -49,6 +49,8 @@ module UnitConvertable
   end
 
   def convert_to_gram(value, unit)
+    return nil if sample_type == Sample::SAMPLE_TYPE_MIXTURE && unit == 'l' && !has_density
+
     if self.contains_residues
       case unit
       when 'g'
@@ -137,8 +139,7 @@ module UnitConvertable
 
   # Relative MW includes the whole mixture's solvent mass and component purity.
   def mixture_relative_molecular_weight
-    reference = components.find { |component| component.component_properties['reference'] == true } ||
-                components.min_by { |component| component.position.to_i }
+    reference = components.find { |component| component.component_properties['reference'] == true }
     properties = reference ? reference.component_properties : {}
     weight = Float(properties['relative_molecular_weight'], exception: false)
     weight if weight.to_f.positive? && weight.to_f.finite?

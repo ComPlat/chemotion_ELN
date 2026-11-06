@@ -479,19 +479,23 @@ describe 'Reporter::Docx::DetailReaction' do
         output[:components]
       end
 
+      # These groups reuse the helpers defined in this context, so they stay nested.
+      # rubocop:disable RSpec/NestedGroups
       describe '#material_hash mixture product saved in the other amount mode' do
         # Target 5 g, Real 6.013 g. Components were last saved in Target mode: 10 and 20 mmol.
         def mixture_product(component_mmol:)
+          equivalents = [1.0, 2.0]
+          relative_molecular_weights = [500.0, 250.0]
           product_material(0.5).merge(
             sample_type: Sample::SAMPLE_TYPE_MIXTURE,
             real_amount_g: 6.013, amount_g: 5.0, real_amount_mmol: nil, amount_mmol: nil,
             sample_details: { 'reference_component_changed' => false },
             components: component_mmol.each_with_index.map do |mmol, index|
               { component_properties: {
-                'reference' => index.zero?, 'amount_mol' => mmol / 1000.0, 'equivalent' => [1.0, 2.0][index],
-                'relative_molecular_weight' => [500.0, 250.0][index], 'metrics' => 'mmmm'
+                'reference' => index.zero?, 'amount_mol' => mmol / 1000.0, 'equivalent' => equivalents[index],
+                'relative_molecular_weight' => relative_molecular_weights[index], 'metrics' => 'mmmm'
               } }
-            end,
+            end
           )
         end
 
@@ -745,6 +749,7 @@ describe 'Reporter::Docx::DetailReaction' do
           expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(0.5)
         end
       end
+      # rubocop:enable RSpec/NestedGroups
     end
   end
 end
