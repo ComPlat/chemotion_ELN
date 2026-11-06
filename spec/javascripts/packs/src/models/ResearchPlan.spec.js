@@ -154,7 +154,6 @@ describe('ResearchPlan', () => {
         file_name: 'abc.png',
         public_name: 'abc',
         identifier: '123456',
-        old_value: 'abcdef'
       }
     };
 

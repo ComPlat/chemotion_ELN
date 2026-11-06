@@ -4,6 +4,10 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 export default class Screen extends Element {
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   constructor(args) {
     super(args);
   }
@@ -25,9 +29,10 @@ export default class Screen extends Element {
       wellplates: [],
       user_labels: [],
       research_plans: [],
+      attachments: [],
+      can_update: true,
       container: Container.init(),
       segments: [],
-      can_update: true,
       component_graph_data: {
         nodes: [],
         edges: []
@@ -51,6 +56,7 @@ export default class Screen extends Element {
       description: descriptionDefault,
       wellplates: clipboardWellplates,
       research_plans: [],
+      attachments: [],
       user_labels: [],
       container: Container.init(),
       segments: [],

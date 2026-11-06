@@ -47,7 +47,7 @@ module Entities
     expose! :purity_detection
     expose! :purification_method
 
-    expose! :attachments, using: 'Entities::AttachmentEntity'
+    expose! :attachments, unless: :displayed_in_list, using: 'Entities::AttachmentEntity'
     expose! :comments, using: 'Entities::CommentEntity'
     expose! :comment_count
     expose! :container, using: 'Entities::ContainerEntity'
