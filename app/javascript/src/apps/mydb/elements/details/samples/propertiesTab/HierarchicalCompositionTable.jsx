@@ -26,16 +26,17 @@ const COMPOSITION_DEFAULT_COL_DEF = {
   headerClass: ['border-end', 'px-2'],
 };
 
-// Type column renderer: shows material type for parent rows, active radio for sub-rows (children).
+// Type column renderer: shows material type for parent rows, active checkbox for sub-rows (children).
 const TypeCellRenderer = ({ data, onSetActive }) => {
   if (data?.isSubRow) {
+    const tooltip = data.isActive
+      ? `${data.element} is marked as active — it is included in the highlighted element set for this compound. Click to deselect.`
+      : `Mark ${data.element} as active to include it in the highlighted element set for this compound. Multiple elements can be selected.`;
     return (
-      <div className="d-flex align-items-center justify-content-center h-100">
+      <div className="d-flex align-items-center justify-content-center h-100" title={tooltip}>
         <Form.Check
           type="radio"
-          name={`active-subrow-${data.parentIndex}`}
           checked={!!data.isActive}
-          title={data.isActive ? 'Active element (click to deselect)' : 'Set as active element'}
           className="m-1"
           onChange={() => {}}
           onClick={(e) => { e.stopPropagation(); onSetActive(data.parentIndex, data.segIdx); }}
@@ -63,7 +64,9 @@ Chevron.propTypes = { dir: PropTypes.oneOf(['right', 'down']).isRequired };
 // Lives in a narrow first column so the Components cell stays clean text only.
 // Reload is always visible for expandable rows; toggle only appears after processing.
 const ExpandActionCellRenderer = ({ data, onProcess, onToggleCollapse }) => {
-  if (data?.isSubRow || data?.isSingleElement) return null;
+  if (data?.isSubRow) return null;
+  // Spec: support materials do not need element-level expansion
+  if (data?.materialType === 'Support') return null;
 
   const isCollapsed = data?.isCollapsed;
   return (
@@ -104,6 +107,17 @@ ExpandActionCellRenderer.defaultProps = {
 // shows "└ Element (parentFormula)" for element-level sub-rows.
 function ComponentsCellRenderer({ data }) {
   if (data?.isSubRow) {
+    if (data.unknown) {
+      return (
+        <span
+          className="ps-3 fst-italic text-danger"
+          title={`'${data.element}' not recognised — check capitalisation (e.g. 'PtPd' not 'ptpd')`}
+        >
+          {data.element}
+          {' ⚠'}
+        </span>
+      );
+    }
     return (
       <span className="ps-3 fst-italic" style={{ color: '#3d5a80' }}>
         {data.element}
@@ -177,11 +191,13 @@ const buildCompositionColumnDefs = (
     maxWidth: 64,
     suppressSizeToFit: true,
     suppressClickEdit: true,
+    suppressCellFocus: true,
     cellClass: ['border-end', 'p-0'],
     cellRenderer: ExpandActionCellRenderer,
     cellRendererParams: { onProcess, onToggleCollapse },
     valueGetter: (p) => {
-      if (p.data?.isSubRow || p.data?.isSingleElement) return 'none';
+      if (p.data?.isSubRow) return 'none';
+      if (p.data?.materialType === 'Support') return 'none';
       if (!p.data?.isProcessed) return 'unprocessed';
       return p.data?.isCollapsed ? 'collapsed' : 'expanded';
     },
@@ -214,6 +230,13 @@ const buildCompositionColumnDefs = (
     cellStyle: { overflow: 'hidden' },
     cellClass: (p) => ['lh-base', 'border-end', p.data?.isSubRow ? '' : 'px-1'],
     cellRenderer: ComponentsCellRenderer,
+    // valueGetter gives AG Grid a trackable value for sub-rows; without it, AG Grid sees
+    // sourceAlias=undefined before and after re-process and skips cell refresh entirely,
+    // leaving the ⚠ visible even after unknown:true→false correction.
+    valueGetter: (p) => {
+      if (p.data?.isSubRow) return `${p.data?.element ?? ''}:${p.data?.unknown ? '1' : '0'}`;
+      return p.data?.sourceAlias ?? '';
+    },
   },
   {
     // Mode B entry point: editing calcWt on a sub-row back-calculates stoich for the segment group
@@ -262,12 +285,13 @@ const buildCompositionColumnDefs = (
   {
     headerName: 'Molar mass [g/mol]',
     field: 'molar_mass',
-    editable: (p) => !p.data?.isSubRow,
-    headerTooltip: 'Molar mass in g/mol — atomic mass for element rows, compound mass for parent rows',
-    cellClass: (p) => [p.data?.isSubRow ? 'border-end' : 'editable-cell border-end'],
+    // Read-only for processed parent rows — MM is controlled by sub-row stoich × atomicMass
+    editable: (p) => !p.data?.isSubRow && !p.data?.isProcessed,
+    headerTooltip: 'Molar mass in g/mol — atomic mass for element rows, compound mass for parent rows. Read-only after processing (edit sub-row stoich to change).',
+    cellClass: (p) => [p.data?.isSubRow || p.data?.isProcessed ? 'border-end' : 'editable-cell border-end'],
     minWidth: 110,
     valueSetter: (params) => {
-      if (params.newValue != null && !params.data?.isSubRow) {
+      if (params.newValue != null && !params.data?.isSubRow && !params.data?.isProcessed) {
         onFieldChange(params.data.index, 'molar_mass', params.newValue);
       }
       return false;
@@ -357,13 +381,18 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
       .catch(() => setShapesJson(null));
   }, []);
 
-  // Reset sub-row state when the components array identity changes (e.g. after save/reload).
+  // Reset sub-row state only when the components list itself changes (added/removed/reordered),
+  // not on every parent re-render that produces a new array reference.
+  const componentsKey = useMemo(
+    () => (components || []).map((c) => `${c.index}:${c.sourceAlias}`).join('|'),
+    [components],
+  );
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setProcessedRows({});
     setActiveSubRows({});
     setCollapsedRows(new Set());
-  }, [components]);
+  }, [componentsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // A4 (revised): Parse the label into element-level sub-rows.
@@ -404,6 +433,12 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
         : effectiveWt;
 
       const elemCounts = parseFormulaToElements(seg.segment);
+
+      // Detect unrecognised characters left after element matching (e.g. "ptpd" in "O2ptpd").
+      // Add them as a single unknown entry so they appear as a sub-row rather than vanishing.
+      const unrecognised = seg.segment.replace(/([A-Z][a-z]?)(\d*\.?\d*)/g, '').replace(/\s/g, '');
+      if (unrecognised) elemCounts.push({ element: unrecognised, count: 1, unknown: true });
+
       if (elemCounts.length === 0) continue; // eslint-disable-line no-continue
 
       // Fetch atomic masses for each element symbol
@@ -418,8 +453,10 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
         (s, { count }, i) => (atomicMasses[i] ? s + count * atomicMasses[i] : s), 0,
       );
 
-      elemCounts.forEach(({ element, count }, i) => {
+      elemCounts.forEach(({ element, count, unknown: isUnknown }, i) => {
         const atomicMass = atomicMasses[i];
+        // Unknown tokens (e.g. "ptpd") have null atomicMass → calcWt stays null/empty.
+        // Known elements still get their proportional share from the recognised mass fraction.
         const calcWt = atomicMass && elemTotalMass > 0 && segCalcWt != null
           ? +((count * atomicMass / elemTotalMass * segCalcWt).toFixed(3))
           : null;
@@ -431,14 +468,24 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           expWt: '',
           segmentFormula: seg.segment,
           segmentCalcWt: segCalcWt,
+          unknown: isUnknown || false,
         });
       });
+    }
+
+    // Sync molar_mass to Σ(stoich × atomicMass) — more accurate than the compound-level
+    // mass service, and keeps the displayed field consistent with what mol% calculations use.
+    const effectiveMM = allSubRows.reduce(
+      (s, sr) => s + (parseFloat(sr.stoich) || 0) * (sr.atomicMass || 0), 0,
+    );
+    if (effectiveMM > 0) {
+      onFieldChange(rowData.index, 'molar_mass', parseFloat(effectiveMM.toFixed(3)));
     }
 
     setProcessedRows((prev) => ({ ...prev, [rowData.index]: allSubRows }));
     // Auto-expand the row after (re-)processing so sub-rows are immediately visible
     setCollapsedRows((prev) => { const next = new Set(prev); next.delete(rowData.index); return next; });
-  }, []);
+  }, [onFieldChange]);
 
   // Bidirectional calc: user edits stoich → recalculate calcWt for all elements in that segment.
   // Also syncs the parent compound's molar_mass to Σ(stoich_i × MM_i) so calc mol% stays correct.
@@ -522,8 +569,9 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
   // Radio-select: one active sub-row per parent. Clicking again deselects.
   const handleSetActiveSubRow = useCallback((parentIndex, segIdx) => {
     setActiveSubRows((prev) => {
-      const current = prev[parentIndex];
-      return { ...prev, [parentIndex]: current === segIdx ? null : segIdx };
+      const current = new Set(prev[parentIndex] || []);
+      if (current.has(segIdx)) { current.delete(segIdx); } else { current.add(segIdx); }
+      return { ...prev, [parentIndex]: current };
     });
   }, []);
 
@@ -632,15 +680,14 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           isProcessed: true,
           isCollapsed,
           isSingleElement: totalElements <= 1,
-          // When expanded, col 4 shows stoich sum instead of calc_wt/MM
-          molarRatioCalcMM: stoichSum > 0 ? parseFloat(stoichSum.toFixed(4)) : '-',
+          molarRatioCalcMM: compMM > 0 ? parseFloat(((parseFloat(row.weightRatioCalcProcessed) || 0) / compMM).toFixed(4)) : '-',
           calcMolPercent: parentCalcMolPct,
           expMolRatio: parseFloat(parentExpMol.toFixed(4)),
           expMolPercent: totalExpMol > 0 ? parseFloat((parentExpMol / totalExpMol * 100).toFixed(4)) : '-',
         });
 
         if (!isCollapsed) {
-          const activeIdx = activeSubRows[row.index] ?? null;
+          const activeSet = new Set(activeSubRows[row.index] || []);
           subRows.forEach((sr, segIdx) => {
             const stoich = parseFloat(sr.stoich) || 0;
             const elExpMol = sr.atomicMass > 0 ? (parseFloat(sr.expWt) || 0) / sr.atomicMass : 0;
@@ -660,7 +707,8 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
               expWt: sr.expWt,
               segmentFormula: sr.segmentFormula,
               segmentCalcWt: sr.segmentCalcWt,
-              isActive: activeIdx === segIdx,
+              isActive: activeSet.has(segIdx),
+              unknown: sr.unknown || false,
               materialType: row.materialType,
               materialSubType: row.materialSubType,
               _subRowId: `subrow-${row.index}-${segIdx}`,
