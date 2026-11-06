@@ -169,12 +169,12 @@ const EnvironmentConditionsPanel = ({
 
   return (
     <Collapse in={open}>
-      <div id={panelId} className="environment-conditions mt-2 mb-3">
-        <Row>
+      <div id={panelId} className="environment-conditions mt-2 mb-2">
+        <Row className="g-2">
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Ambient temperature</Form.Label>
-              <InputGroup>
+              <Form.Label className="small mb-1">Ambient temperature</Form.Label>
+              <InputGroup size="sm">
                 <Form.Control
                   type="text"
                   aria-label="Ambient temperature"
@@ -199,8 +199,8 @@ const EnvironmentConditionsPanel = ({
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Humidity</Form.Label>
-              <InputGroup>
+              <Form.Label className="small mb-1">Humidity</Form.Label>
+              <InputGroup size="sm">
                 <Form.Control
                   type="text"
                   aria-label="Humidity"
@@ -218,8 +218,8 @@ const EnvironmentConditionsPanel = ({
           </Col>
           <Col md={4}>
             <Form.Group as="fieldset" disabled={isDisabled}>
-              <Form.Label>Air pressure</Form.Label>
-              <InputGroup>
+              <Form.Label className="small mb-1">Air pressure</Form.Label>
+              <InputGroup size="sm">
                 <Form.Control
                   type="text"
                   aria-label="Air pressure"
