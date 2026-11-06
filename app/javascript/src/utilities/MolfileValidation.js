@@ -4,14 +4,20 @@ const ATOM_LINE = /^\s*-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+[A-Za-z*][A-Za-
 const COUNTS_LINE = /^[\s\d]{6}/;
 const END_LINE = /^M {2}END\s*$/;
 const V3000_COUNTS = /^M {2}V30 COUNTS (\d+) (\d+)/m;
-const V3000_ATOM_BLOCK = /^M {2}V30 BEGIN ATOM\s*$/m;
+const V3000_ATOM_BLOCK = /^M {2}V30 BEGIN ATOM\s*$([\s\S]*?)^M {2}V30 END ATOM\s*$/m;
+const V3000_ATOM_LINE = /^M {2}V30 \d+ [A-Za-z*#[]/;
 
 // V3000 keeps its real atom and bond counts in an M  V30 COUNTS line, not the counts line.
 const validateV3000 = (text) => {
   const counts = text.match(V3000_COUNTS);
   if (!counts) { return 'V3000 file has no COUNTS line'; }
   if (Number(counts[1]) < 1) { return 'this file holds no atoms'; }
-  if (!V3000_ATOM_BLOCK.test(text)) { return 'V3000 file has no atom block'; }
+  const block = text.replace(/-\r?\nM {2}V30 /g, '').match(V3000_ATOM_BLOCK);
+  if (!block) { return 'V3000 file has no atom block'; }
+  const found = block[1].split(/\r?\n/).filter((line) => V3000_ATOM_LINE.test(line)).length;
+  if (found !== Number(counts[1])) {
+    return `the COUNTS line promises ${counts[1]} atoms but the atom block holds ${found}`;
+  }
   return null;
 };
 

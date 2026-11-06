@@ -109,5 +109,16 @@ describe('MolfileValidation', () => {
       const text = 'x\n y\n\n  0  0  0     0  0              0 V3000\nM  V30 BEGIN CTAB\nM  END';
       expect(molfileProblem(text)).toEqual('V3000 file has no COUNTS line');
     });
+
+    it('rejects a V3000 file whose atom block is empty', () => {
+      const text = fixture('multiple_R.mol')
+        .replace(/(M {2}V30 BEGIN ATOM\r?\n)[\s\S]*?(M {2}V30 END ATOM)/, '$1$2');
+      expect(molfileProblem(text)).toMatch(/promises \d+ atoms but the atom block holds 0/);
+    });
+
+    it('rejects a V3000 file with an atom block but no end marker', () => {
+      const text = fixture('multiple_R.mol').replace(/M {2}V30 END ATOM\r?\n/, '');
+      expect(molfileProblem(text)).toEqual('V3000 file has no atom block');
+    });
   });
 });

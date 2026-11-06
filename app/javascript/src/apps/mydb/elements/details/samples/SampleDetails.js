@@ -366,11 +366,13 @@ export default class SampleDetails extends React.Component {
     if (loadingMolecule || molfileProblem(molfileInput)) { return; }
     this.createMoleculeFrom(
       MoleculesFetcher.fetchByMolfile(molfileInput),
-      'Cannot create molecule with the entered molfile!'
+      'Cannot create molecule with the entered molfile!',
+      undefined,
+      molfileInput
     );
   }
 
-  createMoleculeFrom(request, errorMessage, cas) {
+  createMoleculeFrom(request, errorMessage, cas, molfile) {
     const { sample } = this.state;
     this.setState({ loadingMolecule: true });
     request
@@ -383,13 +385,17 @@ export default class SampleDetails extends React.Component {
             position: 'tc'
           });
         } else {
-          sample.molfile = result.molfile;
+          // the server turns R# into C, so keep the user's polymer molfile like the structure editor does
+          const residues = Boolean(molfile?.includes(' R# '));
+          sample.molfile = residues ? molfile : result.molfile;
+          sample.contains_residues = residues;
+          if (residues) { sample.formulaChanged = true; }
           sample.molecule_id = result.id;
           sample.molecule = result;
           sample.decoupled = result.inchikey === 'DUMMY';
           if (cas !== undefined) { sample.xref = { ...sample.xref, cas }; }
           this.setState({
-            molfile: result.molfile,
+            molfile: sample.molfile,
             molfileInput: '',
             inchiString: result.inchistring,
             quickCreator: true,
