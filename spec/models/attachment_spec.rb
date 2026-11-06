@@ -2,6 +2,7 @@
 
 # rubocop:disable RSpec/NestedGroups
 # rubocop:disable RSpec/MessageSpies
+# rubocop:disable Rails/SkipsModelValidations
 
 # == Schema Information
 #
@@ -53,7 +54,7 @@ RSpec.describe Attachment do
     end
 
     it 'is false for other files, even with a thumbnail' do
-      attachment.update_column(:thumb, true) # rubocop:disable Rails/SkipsModelValidations
+      attachment.update_column(:thumb, true)
       expect(attachment).not_to be_previewable
     end
   end
@@ -957,7 +958,7 @@ RSpec.describe Attachment do
             :attachment, filename: 'spectra_file.edit.jdx', attachable: dataset_container,
                          aasm_state: 'edited', parent: attachment
           )
-          att.update_column(:aasm_state, 'queueing') # rubocop:disable Rails/SkipsModelValidations
+          att.update_column(:aasm_state, 'queueing')
           att
         end
         let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
@@ -1671,7 +1672,7 @@ RSpec.describe Attachment do
     let(:collection) { create(:collection, user: user) }
     let(:attachment) do
       create(:attachment, :with_pdf, filename: 'JB-R23.pdf').tap do |a|
-        a.update_columns(created_for: user.id) # rubocop:disable Rails/SkipsModelValidations
+        a.update_columns(created_for: user.id)
       end
     end
 
@@ -1692,7 +1693,7 @@ RSpec.describe Attachment do
     context 'when filename includes a variation suffix and one reaction matches' do
       let(:attachment) do
         create(:attachment, :with_pdf, filename: 'JB-R23-v2.pdf').tap do |a|
-          a.update_columns(created_for: user.id) # rubocop:disable Rails/SkipsModelValidations
+          a.update_columns(created_for: user.id)
         end
       end
       let!(:reaction) do
@@ -1784,7 +1785,6 @@ RSpec.describe Attachment do
   end
 
   # update_column back-dates timestamps to exercise the age checks.
-  # rubocop:disable Rails/SkipsModelValidations
   describe '#cold?' do
     let(:threshold) { 12.months.ago }
 
@@ -1849,8 +1849,8 @@ RSpec.describe Attachment do
       expect(attachment.cold?(older_than: threshold)).to be true
     end
   end
-  # rubocop:enable Rails/SkipsModelValidations
 end
 
 # rubocop:enable RSpec/NestedGroups
 # rubocop:enable RSpec/MessageSpies
+# rubocop:enable Rails/SkipsModelValidations

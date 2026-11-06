@@ -1,5 +1,8 @@
-require "shrine"
-require "shrine/storage/file_system"
+# frozen_string_literal: true
+
+# rubocop:disable Style/OneClassPerFile
+require 'shrine'
+require 'shrine/storage/file_system'
 shrine_storage = Rails.application.config_for :shrine
 
 Rails.application.configure do
@@ -9,8 +12,10 @@ end
 
 # Every read records the access date, so a recently-read file isn't archived.
 class TieredStorage < Shrine::Storage::FileSystem
+  alias untracked_open open
+
   def open(id, **options)
-    super.tap { Attachment.on_read(id) }
+    untracked_open(id, **options).tap { Attachment.on_read(id) }
   end
 end
 
@@ -101,3 +106,4 @@ class StorageHealth
 end
 
 StorageHealth.log_problems
+# rubocop:enable Style/OneClassPerFile

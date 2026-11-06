@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/SkipsModelValidations
 require 'rails_helper'
 require 'tmpdir'
 
-# rubocop:disable Rails/SkipsModelValidations
 RSpec.describe ArchiveAttachmentsJob do
   # Shrine hands each subclass a copy of the storages hash (`storages.dup` in its
   # `inherited` hook), so the uploader needs registering too: Shrine.storages is
