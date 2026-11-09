@@ -104,14 +104,18 @@ class OlsTerm < ApplicationRecord
       json_doc = Hash.from_xml(xml_doc).as_json
       all_terms = unique_term_nodes(Array.wrap(json_doc['RDF']['Class']))
       version_info = json_doc['RDF']['Ontology']
+      replacements = obsolete_replacements(all_terms)
       all_terms.each_slice(100) do |nodes|
-        create_from_owl_nodes(nodes, owl_name, version_info: version_info)
+        create_from_owl_nodes(nodes, owl_name, version_info: version_info, replacements: replacements)
       end
       rebuilt_ancestry_by_owl_name(owl_name)
     end
 
     # bulk insert from a slice of owl nodes
-    def create_from_owl_nodes(nodes, owl_name, version_info: {})
+    #
+    # @param replacements [Hash{String => String}] obsolete term id => replacing term id,
+    #   applied to parent links (see {#obsolete_replacements})
+    def create_from_owl_nodes(nodes, owl_name, version_info: {}, replacements: {})
       values = []
       created_at = Time.now
 
@@ -119,7 +123,7 @@ class OlsTerm < ApplicationRecord
       nodes.each do |node|
         next if (term_id = node_term_id(node)).nil? || node['deprecated'] == 'true' || node['label'].blank?
 
-        subClassTermId = extract_subclass_term_id_from_node(node)
+        subClassTermId = replaced_term_id(extract_subclass_term_id_from_node(node), replacements)
 
         if (synonyms = node['hasExactSynonym'].presence)
           if synonyms.is_a?(String)
@@ -200,6 +204,29 @@ class OlsTerm < ApplicationRecord
       return iri.split('/').last.tr('_', ':') if iri.match?(%r{/obo/[A-Za-z]+_\w+\z})
 
       node['id'].presence
+    end
+
+    # Maps each deprecated class that names its successor ("term replaced by",
+    # +IAO:0100001+) to that successor. Deprecated classes are not imported, so without
+    # this their subclasses would become roots.
+    #
+    # @param nodes [Array<Hash>] +owl:Class+ elements parsed with +Hash.from_xml+
+    # @return [Hash{String => String}] obsolete term id => replacing term id
+    def obsolete_replacements(nodes)
+      nodes.each_with_object({}) do |node, map|
+        next unless node['deprecated'] == 'true' && (term_id = node_term_id(node))
+
+        successor = node['IAO_0100001']
+        successor = successor['rdf:resource'] if successor.is_a?(Hash)
+        map[term_id] = successor.split('/').last.tr('_', ':') if successor.is_a?(String)
+      end
+    end
+
+    # Follows +replacements+ from +term_id+ to a term that is not replaced; stops on a loop.
+    def replaced_term_id(term_id, replacements)
+      seen = Set.new
+      term_id = replacements[term_id] while replacements.key?(term_id) && seen.add?(term_id)
+      term_id
     end
 
     # Keeps the first class of each term id, so an OWL file that declares an id twice

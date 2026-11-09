@@ -116,8 +116,22 @@ RSpec.describe OlsTerm do
           <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
                    xmlns:owl="http://www.w3.org/2002/07/owl#"
                    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-                   xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+                   xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#"
+                   xmlns:obo="http://purl.obolibrary.org/obo/">
             <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/chmo.owl"/>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/OBI_0000094">
+              <obo:IAO_0100001 rdf:resource="http://purl.obolibrary.org/obo/COB_0000110"/>
+              <rdfs:label>obsolete material processing</rdfs:label>
+              <owl:deprecated rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</owl:deprecated>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/COB_0000110">
+              <rdfs:label>material processing</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0002196">
+              <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/OBI_0000094"/>
+              <oboInOwl:id>CHMO:0002196</oboInOwl:id>
+              <rdfs:label>activation</rdfs:label>
+            </owl:Class>
             <owl:Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000002">
               <rdfs:label>continuant</rdfs:label>
             </owl:Class>
@@ -163,6 +177,13 @@ RSpec.describe OlsTerm do
 
       expect(term('CHMO:0002934').label).to eq 'open circuit voltage'
       expect(term('CHMO:0002937').label).to eq 'potentiostatic electrochemical impedance spectroscopy'
+    end
+
+    it 'hangs the subclasses of an obsolete class under the class replacing it' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(term('OBI:0000094')).to be_nil
+      expect(term('CHMO:0002196').parent).to eq term('COB:0000110')
     end
 
     it 'keeps the first class when a term id is declared twice' do
