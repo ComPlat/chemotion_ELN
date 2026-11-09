@@ -1,5 +1,77 @@
 # Chemotion_ELN Changelog
 
+# [v4.0.1]
+> (2026-11-09)
+
+> Patch release of v4.0.0: fixes across reactions, search, analyses and attachments, plus removal of unused legacy device and ChemSpectra code.
+
+## Upgrade notes
+
+* Reaction variations saved with keys of materials the reaction no longer has can be repaired with `rake reactions:repair_variation_keys`. It is a dry run by default that reports the keys it would drop; pass `'[false]'` to write ([#3690](https://github.com/ComPlat/chemotion_ELN/pull/3690)).
+* The standalone `/chemspectra` and `/chemspectra-editor` pages and the API routes only they used are removed; ChemSpectra stays available from analyses ([#3663](https://github.com/ComPlat/chemotion_ELN/pull/3663)).
+* The Indigo service image is pinned to `epmlsop/indigo-service:1.46.0` (was `1.35.0-rc.2`) in `.service-dependencies`.
+
+## Fixes
+
+### Reactions
+
+* Reaction variations: keys are mapped exactly to the copied or saved materials, keys of removed materials are dropped, a stale key no longer breaks the Variations tab, and opening the tab no longer marks the reaction as changed ([#3690](https://github.com/ComPlat/chemotion_ELN/pull/3690), [#3670](https://github.com/ComPlat/chemotion_ELN/pull/3670)).
+* Copying a reaction copies its purification solvents instead of moving them from the original, and sequence-based macromolecule reactants become new splits of the same stock ([#3676](https://github.com/ComPlat/chemotion_ELN/pull/3676)).
+* Polymer surface chemistry: a newly added product resin gets its loading calculated from the mass difference ([#3649](https://github.com/ComPlat/chemotion_ELN/pull/3649)).
+
+### Samples and molecules
+
+* Ketcher: the *Common Templates* picker is filled again, and Ketcher settings are saved to your profile again ([#3687](https://github.com/ComPlat/chemotion_ELN/pull/3687)).
+* NMR simulation returns its spectra to the simulation tab, and a simulation can be run again for a molecule whose earlier one was deleted ([#3668](https://github.com/ComPlat/chemotion_ELN/pull/3668)).
+* Chemicals: reading and saving inventory data follows the sample's permissions, and the Inventory tab reports a refused save instead of showing success ([#3661](https://github.com/ComPlat/chemotion_ELN/pull/3661)).
+* Non-ASCII characters in molfile labels (µ, °, α, é) survive reopening and saving a sample ([#3629](https://github.com/ComPlat/chemotion_ELN/pull/3629)).
+
+### Research plans and attachments
+
+* Copying a research plan works again for everyone allowed to copy it; attachments you cannot read, or whose file is missing, are left out with a warning, and the quota is checked before any file is written ([#3683](https://github.com/ComPlat/chemotion_ELN/pull/3683)).
+* Research plan copies take only the source plan's own attachments and are created in one step, and analyses are saved with the element they belong to ([#3656](https://github.com/ComPlat/chemotion_ELN/pull/3656)).
+* History: partial changes to extended metadata are shown and reverted correctly ([#3548](https://github.com/ComPlat/chemotion_ELN/pull/3548)).
+
+### Spectra and analyses
+
+* An analysis without a chosen preview image keeps showing its default preview and follows new uploads; a *Use default* link in the image dialog clears a chosen preview. Previews already chosen are kept ([#3703](https://github.com/ComPlat/chemotion_ELN/pull/3703)).
+* Analyses from upload: archives holding the same top-level folder are kept apart, every zip picked with the file browser is unpacked, and dropping a path no longer replaces siblings sharing its name prefix ([#3698](https://github.com/ComPlat/chemotion_ELN/pull/3698)).
+* ChemSpectra opens with a single spectrum selected when a dataset holds several; LC/MS and cyclic voltammetry datasets keep all files selected ([#3696](https://github.com/ComPlat/chemotion_ELN/pull/3696)).
+* Combining spectra checks access to each spectrum and to the receiving analysis, keeps the requested order, and the spectra editor reports a refused combine ([#3663](https://github.com/ComPlat/chemotion_ELN/pull/3663)).
+* Create Analyses from files or folders: re-zipped entries of a dropped archive keep their file names, so ChemSpectra can read them again ([#3652](https://github.com/ComPlat/chemotion_ELN/pull/3652)).
+
+### Search
+
+* Quick and advanced search return only elements of the searched collection: research plans linked to a wellplate, and samples reached through a matching macromolecule or cell line material. Valid macromolecule and cell line matches are no longer dropped ([#3701](https://github.com/ComPlat/chemotion_ELN/pull/3701)).
+* Advanced search for research plans works again, and linked samples, reactions and wellplates are listed only when they belong to the searched collection ([#3689](https://github.com/ComPlat/chemotion_ELN/pull/3689)).
+* Private Note search looks in your own notes ([#3688](https://github.com/ComPlat/chemotion_ELN/pull/3688)).
+* Search terms and condition values are bound as query parameters: a structure search with an apostrophe in the molfile header and advanced-search values containing `?` work again, and suggestions are limited to the current collection ([#3658](https://github.com/ComPlat/chemotion_ELN/pull/3658)).
+
+### Reports and export
+
+* XLSX and SDF exports fill the user labels and *updated at* columns again, and the export dialog offers the chemical volume next to the mass ([#3564](https://github.com/ComPlat/chemotion_ELN/pull/3564)).
+
+### Generic elements
+
+* LabIMotion 2.3.4 and chem-generic-ui 2.3.2: new elements, segments and datasets are built from the template's released version, uploads and docx exports are scoped to their element, and several layout fixes ([#3692](https://github.com/ComPlat/chemotion_ELN/pull/3692)).
+
+### Devices and measurements
+
+* Saving a measurement without description, unit or value returns validation errors instead of failing ([#3648](https://github.com/ComPlat/chemotion_ELN/pull/3648)).
+* Admin device editing: a failed update leaves the device's people and groups unchanged ([#3651](https://github.com/ComPlat/chemotion_ELN/pull/3651)).
+* Saving a device without name or abbreviation returns validation errors instead of failing ([#3634](https://github.com/ComPlat/chemotion_ELN/pull/3634)).
+
+### SciFinder-n
+
+* An unexpected answer from the CAS metadata endpoint disables SciFinder-n instead of stopping the ELN from starting ([#3674](https://github.com/ComPlat/chemotion_ELN/pull/3674)).
+* A failed token refresh is reported as no token, and the search answers with an error instead of being sent with a stale token ([#3650](https://github.com/ComPlat/chemotion_ELN/pull/3650)).
+
+## Maintenance
+
+* Legacy device and device-analysis code and API removed, and the global `SFTP_*` settings are no longer read (device data collection keeps each device's own SFTP settings); the *My Groups & Devices* list loads the user's devices in one query ([#3699](https://github.com/ComPlat/chemotion_ELN/pull/3699)).
+* Remote-display connection counters are kept in a cache store instead of per-device log files ([#3697](https://github.com/ComPlat/chemotion_ELN/pull/3697)).
+* Dependency bumps: nineteen JavaScript packages in one batch ([#3664](https://github.com/ComPlat/chemotion_ELN/pull/3664)), ip-address ([#3686](https://github.com/ComPlat/chemotion_ELN/pull/3686)), follow-redirects ([#3685](https://github.com/ComPlat/chemotion_ELN/pull/3685)).
+
 # [v4.0.0]
 > (2026-10-13)
 
