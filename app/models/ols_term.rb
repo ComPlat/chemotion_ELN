@@ -64,6 +64,22 @@ class OlsTerm < ApplicationRecord
 
     SQL_BULK_INSERT_SANITIZE = "#{SQL_BULK_INSERT} #{INSERT_VALUE_QUESTION_MARKS}"
 
+    SQL_REBUILD_ANCESTRY = <<~SQL.squish
+      WITH RECURSIVE terms AS (
+        SELECT id, term_id, ancestry_term_id FROM ols_terms WHERE owl_name = :owl_name
+      ), tree AS (
+        SELECT t.id, t.term_id, '/'::text AS path
+        FROM terms t
+        WHERE NOT EXISTS (SELECT 1 FROM terms p WHERE p.term_id = t.ancestry_term_id)
+        UNION ALL
+        SELECT c.id, c.term_id, tree.path || tree.id || '/'
+        FROM terms c JOIN tree ON c.ancestry_term_id = tree.term_id
+      )
+      UPDATE ols_terms o SET ancestry = coalesce(tree.path, '/')
+      FROM terms LEFT JOIN tree ON tree.id = terms.id
+      WHERE o.id = terms.id AND o.ancestry IS DISTINCT FROM coalesce(tree.path, '/')
+    SQL
+
     def delete_owl_by_name(owl_name)
       delete_sql =  sanitize_sql([ SQL_BULK_DELETE, owl_name])
       ApplicationRecord.connection.exec_query(delete_sql)
@@ -131,25 +147,17 @@ class OlsTerm < ApplicationRecord
       ApplicationRecord.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
     end
 
+    # Sets every term's +ancestry+ to its full materialized_path2 path ("/root/…/parent/")
+    # from the +ancestry_term_id+ links, whatever the order the terms were imported in.
+    #
+    # A term whose parent is not in the ontology is a root. Each term has a single parent,
+    # so the recursion from the roots cannot loop; terms on a cycle are never reached and
+    # become roots as well.
+    #
+    # @param owl_name [String] ontology name, e.g. +chmo+
+    # @return [Integer] number of terms whose ancestry changed
     def rebuilt_ancestry_by_owl_name(owl_name)
-      build_direct_parent_ancestry(owl_name)
-      reprocess_count = 10
-      while reprocess_count.positive?
-        count = 0
-        OlsTerm.where(owl_name: owl_name).find_each do |o|
-          next if (root = o.root) == o
-          next if root.root == root
-
-          # both are materialized_path2 strings ("/1/2/"), so drop the duplicate separator
-          new_a = root.ancestry + o.ancestry.delete_prefix('/')
-          # skip validations: during the rebuild, intermediate paths are still partial
-          o.update_columns(ancestry: new_a) # rubocop:disable Rails/SkipsModelValidations
-          count += 1
-        end
-        break if count.zero?
-
-        reprocess_count -= 1
-      end
+      connection.exec_update(sanitize_sql([SQL_REBUILD_ANCESTRY, { owl_name: owl_name }]))
     end
 
     def disable_branch_by(owl_name:, term_id:)
@@ -175,20 +183,6 @@ class OlsTerm < ApplicationRecord
     end
 
     private
-
-    def build_direct_parent_ancestry(owl_name)
-      where(owl_name: owl_name).find_each do |o|
-        next if o.ancestry_term_id.nil?
-        ancestor = OlsTerm.find_by(owl_name: owl_name, term_id: o.ancestry_term_id)
-        next if ancestor.nil?
-        if ancestor.ancestry.nil?
-          new_a = ancestor.id.to_s
-        else
-          new_a = ancestor.ancestry + ancestor.id.to_s + '/'
-        end
-        o.update_columns(ancestry: new_a)
-      end
-    end
 
     def extract_subclass_term_id_from_node(node)
       return nil unless node['subClassOf'].present?

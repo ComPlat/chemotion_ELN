@@ -70,6 +70,42 @@ RSpec.describe OlsTerm do
       expect(term('CHMO:4')).to be_valid
       expect(root.reload.descendants.count).to eq 3
     end
+
+    it 'builds the full path of a chain deeper than ten levels in reverse order' do
+      12.downto(2) { |i| create_term("CHMO:#{i}", parent: "CHMO:#{i - 1}") }
+      root = create_term('CHMO:1')
+
+      described_class.rebuilt_ancestry_by_owl_name(owl_name)
+
+      expected = (1..11).map { |i| term("CHMO:#{i}").id }
+      expect(term('CHMO:12').ancestry).to eq "/#{expected.join('/')}/"
+      expect(root.reload.descendants.count).to eq 11
+    end
+
+    it 'makes a term whose parent is not in the ontology a root' do
+      create_term('CHMO:2', parent: 'BFO:404')
+
+      described_class.rebuilt_ancestry_by_owl_name(owl_name)
+
+      expect(term('CHMO:2').ancestry).to eq '/'
+    end
+
+    it 'terminates on a cycle and leaves its terms as roots' do
+      create_term('CHMO:1', parent: 'CHMO:2')
+      create_term('CHMO:2', parent: 'CHMO:1')
+
+      described_class.rebuilt_ancestry_by_owl_name(owl_name)
+
+      expect(described_class.pluck(:ancestry)).to all(eq '/')
+    end
+
+    it 'changes nothing on a second run' do
+      create_term('CHMO:2', parent: 'CHMO:1')
+      create_term('CHMO:1')
+
+      expect(described_class.rebuilt_ancestry_by_owl_name(owl_name)).to eq 1
+      expect(described_class.rebuilt_ancestry_by_owl_name(owl_name)).to eq 0
+    end
   end
 
   describe '.disable_branch_by' do
