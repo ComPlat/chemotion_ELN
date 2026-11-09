@@ -29,6 +29,16 @@ class OlsTerm < ApplicationRecord
     title: '-- Recently selected --', selectable: false, children: [], value: 'recently selected'
   }.freeze
 
+  # Short synonyms of the CHMO terms offered as quick picks in OlsComponent.js, set on
+  # import so that a term picked from the tree gets the same value as the quick pick.
+  # Recent CHMO releases list some of these abbreviations as related synonyms only.
+  CHMO_SYNONYMS = {
+    'CHMO:0000595' => '13C NMR',
+    'CHMO:0001009' => 'HPLC',
+    'CHMO:0000630' => 'IR',
+    'CHMO:0000156' => 'XRD',
+  }.freeze
+
   class << self
     # rubocop:disable Lint/PercentStringArray
     # NB: quoted "desc" to avoid conflict reserved word in SQL
@@ -90,7 +100,7 @@ class OlsTerm < ApplicationRecord
     # - the BFO:0000002 (continuant) branch is disabled;
     # - the upper-level terms BFO:0000001 (entity) and BFO:0000003 (occurrent) are disabled
     #   on their own, so the term pickers start at their subclasses (e.g. process);
-    # - the CHMO 13C NMR term gets its short synonym.
+    # - the CHMO quick-pick terms get their short synonyms ({CHMO_SYNONYMS}).
     #
     # @param owl_name [String] ontology name, e.g. +chmo+
     # @param file_path [String] path to the OWL (RDF/XML) file
@@ -100,7 +110,9 @@ class OlsTerm < ApplicationRecord
       import_and_create_ols_from_file_path(owl_name, file_path)
       disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
       disable_by_ids(where(owl_name: owl_name, term_id: %w[BFO:0000001 BFO:0000003]).pluck(:id))
-      find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')&.update!(synonym: '13C NMR') if owl_name == 'chmo'
+      return unless owl_name == 'chmo'
+
+      CHMO_SYNONYMS.each { |term_id, synonym| find_by(owl_name: owl_name, term_id: term_id)&.update!(synonym: synonym) }
     end
 
     def import_and_create_ols_from_file_path(owl_name, file_path)

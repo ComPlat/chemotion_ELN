@@ -153,6 +153,12 @@ RSpec.describe OlsTerm do
               <oboInOwl:id>CHMO:0000001</oboInOwl:id>
               <rdfs:label>colorimetry</rdfs:label>
             </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000630">
+              <oboInOwl:hasExactSynonym>IR spectrometry</oboInOwl:hasExactSynonym>
+              <oboInOwl:hasExactSynonym>infrared spectroscopy</oboInOwl:hasExactSynonym>
+              <oboInOwl:hasRelatedSynonym>IR</oboInOwl:hasRelatedSynonym>
+              <rdfs:label>infrared absorption spectroscopy</rdfs:label>
+            </owl:Class>
             <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0002934">
               <rdfs:label>open circuit voltage</rdfs:label>
             </owl:Class>
@@ -193,6 +199,12 @@ RSpec.describe OlsTerm do
 
       expect(term('OBI:0000094')).to be_nil
       expect(term('CHMO:0002196').parent).to eq term('COB:0000110')
+    end
+
+    it 'gives the quick-pick terms their short synonym' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(term('CHMO:0000630').synonym).to eq 'IR'
     end
 
     it 'keeps the first class when a term id is declared twice' do
