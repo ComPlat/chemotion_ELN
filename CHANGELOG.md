@@ -18,6 +18,7 @@
 * Reaction variations: keys are mapped exactly to the copied or saved materials, keys of removed materials are dropped, a stale key no longer breaks the Variations tab, and opening the tab no longer marks the reaction as changed ([#3690](https://github.com/ComPlat/chemotion_ELN/pull/3690), [#3670](https://github.com/ComPlat/chemotion_ELN/pull/3670)).
 * Copying a reaction copies its purification solvents instead of moving them from the original, and sequence-based macromolecule reactants become new splits of the same stock ([#3676](https://github.com/ComPlat/chemotion_ELN/pull/3676)).
 * Polymer surface chemistry: a newly added product resin gets its loading calculated from the mass difference ([#3649](https://github.com/ComPlat/chemotion_ELN/pull/3649)).
+* A missing or zero material coefficient defaults to 1, so equivalents and variation yields no longer show infinite values; stored zeros are corrected on the next save ([#3633](https://github.com/ComPlat/chemotion_ELN/pull/3633)).
 
 ### Samples and molecules
 
