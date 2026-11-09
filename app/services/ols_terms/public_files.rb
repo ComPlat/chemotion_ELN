@@ -25,6 +25,9 @@ module OlsTerms
       ), '/'), '') || '/', '/') as ancestry
     SQL
 
+    # Siblings sorted by label; the term id breaks ties so the output is reproducible.
+    ORDER = %i[label term_id].freeze
+
     module_function
 
     # Writes both files for +owl_name+.
@@ -52,14 +55,14 @@ module OlsTerms
     # @param owl_name [String]
     # @return [Array<Hash>] every term of the ontology as a nested tree
     def full_tree(owl_name)
-      represent(OlsTerm.where(owl_name: owl_name).arrange_serializable(order: :label))
+      represent(OlsTerm.where(owl_name: owl_name).arrange_serializable(order: ORDER))
     end
 
     # @param owl_name [String]
     # @return [Array<Hash>] enabled terms as a nested tree, led by the "Recently selected" node
     def edited_tree(owl_name)
       terms = OlsTerm.where(owl_name: owl_name, is_enabled: true).select(EDITED_SELECT)
-      represent(terms.arrange_serializable(order: :label)).unshift(OlsTerm::NODE_RECENTLY_SELECTED.dup)
+      represent(terms.arrange_serializable(order: ORDER)).unshift(OlsTerm::NODE_RECENTLY_SELECTED.dup)
     end
 
     def represent(tree)
