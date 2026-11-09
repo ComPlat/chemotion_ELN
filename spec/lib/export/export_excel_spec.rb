@@ -61,6 +61,35 @@ RSpec.describe 'Export::ExportExcel' do
     end
   end
 
+  describe '.header_key' do
+    let(:samples) { instance_double(ActiveRecord::Result, columns: %w[s_id user_labels updated_at]) }
+
+    before do
+      exporter.instance_variable_set(:@samples, samples)
+      exporter.generate_headers(:sample)
+    end
+
+    it 'displays underscored aliases with spaces' do
+      expect(exporter.instance_variable_get(:@headers)).to include('user labels', 'updated at')
+    end
+
+    it 'maps a display header back to the result-set alias' do
+      expect(exporter.header_key('user labels')).to eq 'user_labels'
+    end
+
+    it 'leaves a header that needs no mapping alone' do
+      expect(exporter.header_key('sample uuid')).to eq 'sample uuid'
+    end
+
+    it 'emits the values of underscored columns in an owned row' do
+      row = exporter.filter_with_permission_and_detail_level(
+        'is_shared' => 'f', 'user_labels' => 'BUGREPRO-A', 'updated_at' => '2026-11-06 10:00',
+      )
+
+      expect(row).to include('BUGREPRO-A', '2026-11-06 10:00')
+    end
+  end
+
   describe '.get_image_from_svg' do
     let(:image_loading_result) { exporter.get_image_from_svg(image_path) }
 
