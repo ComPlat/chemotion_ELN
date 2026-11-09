@@ -132,8 +132,16 @@ RSpec.describe OlsTerm do
               <oboInOwl:id>CHMO:0002196</oboInOwl:id>
               <rdfs:label>activation</rdfs:label>
             </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000001">
+              <rdfs:label>entity</rdfs:label>
+            </owl:Class>
             <owl:Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000002">
+              <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000001"/>
               <rdfs:label>continuant</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000003">
+              <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000001"/>
+              <rdfs:label>occurrent</rdfs:label>
             </owl:Class>
             <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000953">
               <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000002"/>
@@ -141,6 +149,7 @@ RSpec.describe OlsTerm do
               <rdfs:label>microscope</rdfs:label>
             </owl:Class>
             <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000001">
+              <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000003"/>
               <oboInOwl:id>CHMO:0000001</oboInOwl:id>
               <rdfs:label>colorimetry</rdfs:label>
             </owl:Class>
@@ -198,11 +207,12 @@ RSpec.describe OlsTerm do
       expect(described_class.pluck(:term_id)).not_to include('CHMO:0000999')
     end
 
-    it 'disables the BFO:0000002 branch only' do
+    it 'disables the BFO:0000002 branch and the upper-level terms on their own' do
       described_class.import_owl(owl_name, owl.path)
 
-      expect(described_class.where(is_enabled: false).pluck(:term_id)).to contain_exactly('BFO:0000002',
-                                                                                          'CHMO:0000953')
+      expect(described_class.where(is_enabled: false).pluck(:term_id))
+        .to contain_exactly('BFO:0000001', 'BFO:0000002', 'BFO:0000003', 'CHMO:0000953')
+      expect(term('CHMO:0000001').is_enabled).to be true
     end
   end
 
