@@ -69,6 +69,20 @@ class OlsTerm < ApplicationRecord
       ApplicationRecord.connection.exec_query(delete_sql)
     end
 
+    # Replaces the terms of +owl_name+ with the classes of an OWL file and applies the
+    # post-import defaults: the BFO:0000002 (continuant) branch is disabled and the
+    # CHMO 13C NMR term gets its short synonym.
+    #
+    # @param owl_name [String] ontology name, e.g. +chmo+
+    # @param file_path [String] path to the OWL (RDF/XML) file
+    # @return [void]
+    def import_owl(owl_name, file_path)
+      delete_owl_by_name(owl_name)
+      import_and_create_ols_from_file_path(owl_name, file_path)
+      disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
+      find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')&.update!(synonym: '13C NMR') if owl_name == 'chmo'
+    end
+
     def import_and_create_ols_from_file_path(owl_name, file_path)
       xml_doc = Nokogiri::XML(File.open(file_path)).to_xml
       json_doc = Hash.from_xml(xml_doc).as_json
@@ -160,10 +174,6 @@ class OlsTerm < ApplicationRecord
       ApplicationRecord.connection.exec_query(sanitized_sql)
     end
 
-    def write_public_file(owl_name, owl)
-      file_path = Rails.public_path.join('ontologies', "#{owl_name}.json")
-      File.write(file_path, owl.to_json)
-    end
     private
 
     def build_direct_parent_ancestry(owl_name)
