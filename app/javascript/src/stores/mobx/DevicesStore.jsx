@@ -147,7 +147,10 @@ export const DevicesStore = types
       self.change_novnc_password = value;
     },
     clearDataCollector(device) {
-      let changedDevice = { ...device };
+      const changedDevice = { ...device };
+      // people and groups hold entity objects here, not ids; omit them so the API keeps them
+      delete changedDevice.people;
+      delete changedDevice.groups;
       changedDevice.datacollector_fields = false;
       changedDevice.datacollector_method = '';
       changedDevice.datacollector_dir = '';
@@ -159,7 +162,10 @@ export const DevicesStore = types
       self.updateDevice(changedDevice);
     },
     clearNovncSettings(device) {
-      let changedDevice = { ...device };
+      const changedDevice = { ...device };
+      // people and groups hold entity objects here, not ids; omit them so the API keeps them
+      delete changedDevice.people;
+      delete changedDevice.groups;
       changedDevice.novnc_token = '';
       changedDevice.novnc_target = '';
       changedDevice.novnc_password = '';

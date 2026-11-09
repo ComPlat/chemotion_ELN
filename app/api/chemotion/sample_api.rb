@@ -351,7 +351,7 @@ module Chemotion
           attributes[:solvent] = params[:solvent]
           attributes.delete(:literatures)
 
-          update_datamodel(attributes[:container])
+          update_datamodel(attributes[:container], element: @sample, creating: false)
           attributes.delete(:container)
 
           update_element_labels(@sample, attributes[:user_labels], current_user.id)
@@ -563,7 +563,7 @@ module Chemotion
         collections << all_coll if all_coll.present?
         sample.collections = collections.uniq
 
-        sample.container = update_datamodel(params[:container])
+        sample.container = update_datamodel(params[:container], element: sample, creating: true)
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 

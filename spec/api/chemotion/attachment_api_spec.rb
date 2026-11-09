@@ -745,6 +745,7 @@ describe Chemotion::AttachmentAPI do
       post '/api/v1/attachments/files', params: { ids: [attachment.id] }
       expect(response).to have_http_status(:created)
       expect(parsed_json_response['files'].first['id']).to eq(attachment.id)
+      expect(parsed_json_response['files'].first['aasm_state']).to eq(attachment.aasm_state)
     end
   end
 

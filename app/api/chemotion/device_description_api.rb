@@ -189,7 +189,11 @@ module Chemotion
         attributes = declared(params.except(:container), include_missing: false)
         attributes[:created_by] = current_user.id
         device_description = Usecases::DeviceDescriptions::Create.new(attributes, current_user).execute
-        device_description.container = update_datamodel(params[:container]) if params[:container].present?
+        if params[:container].present?
+          device_description.container = update_datamodel(
+            params[:container], element: device_description, creating: true
+          )
+        end
         device_description_with_entity(device_description)
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }
@@ -286,7 +290,11 @@ module Chemotion
         attributes = declared(params.except(:container), include_missing: false)
         device_description =
           Usecases::DeviceDescriptions::Update.new(attributes, device_description, current_user).execute
-        device_description.container = update_datamodel(params[:container]) if params[:container].present?
+        if params[:container].present?
+          device_description.container = update_datamodel(
+            params[:container], element: device_description, creating: false
+          )
+        end
         device_description_with_entity(device_description)
       rescue ActiveRecord::RecordInvalid
         { errors: device_description.errors.messages }

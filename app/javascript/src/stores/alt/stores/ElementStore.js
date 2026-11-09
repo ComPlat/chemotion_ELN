@@ -1,6 +1,4 @@
 import {
-  last,
-  slice,
   intersectionWith,
   findIndex
 } from 'lodash';
@@ -21,13 +19,6 @@ import Screen from 'src/models/Screen';
 import DeviceDescription from 'src/models/DeviceDescription';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
-import Device from 'src/models/Device';
-import Container from 'src/models/Container';
-import AnalysesExperiment from 'src/models/AnalysesExperiment';
-import DeviceAnalysis from 'src/models/DeviceAnalysis';
-import DeviceSample from 'src/models/DeviceSample';
-import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
@@ -35,7 +26,6 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { SameEleTypId } from 'src/utilities/ElementUtils';
 import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
-import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
 
@@ -85,11 +75,6 @@ class ElementStore {
         page: null,
         pages: null,
         perPage: null
-      },
-      devices: {
-        devices: [],
-        activeAccordionDevice: 0,
-        selectedDeviceId: -1
       },
       research_plans: {
         elements: [],
@@ -142,28 +127,7 @@ class ElementStore {
     };
 
     this.bindListeners({
-      handleFetchAllDevices: ElementActions.fetchAllDevices,
-      handleFetchDeviceById: ElementActions.fetchDeviceById,
-      handleCreateDevice: ElementActions.createDevice,
-      handleSaveDevice: ElementActions.saveDevice,
-      handleDeleteDevice: ElementActions.deleteDevice,
-      handleToggleDeviceType: ElementActions.toggleDeviceType,
-      handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
-      handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
-      handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleSetRefreshCoefficient: ElementActions.setRefreshCoefficient,
-      handleAddSampleToDevice: ElementActions.addSampleToDevice,
-      handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
-      handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
-      handleToggleTypeOfDeviceSample: ElementActions.toggleTypeOfDeviceSample,
-      handleChangeDeviceProp: ElementActions.changeDeviceProp,
-      handleFetchDeviceAnalysisById: ElementActions.fetchDeviceAnalysisById,
-      handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
-      handleOpenDeviceAnalysis: ElementActions.openDeviceAnalysis,
-      handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
-      handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
-      handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
-      handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchBasedOnSearchResultIds: ElementActions.fetchBasedOnSearchResultIds,
@@ -323,230 +287,8 @@ class ElementStore {
     });
   }
 
-  handleFetchAllDevices(devices) {
-    this.state.elements.devices.devices = devices;
-  }
-
-  handleFetchDeviceById(device) {
-    this.state.currentElement = device;
-  }
-
-  findDeviceIndexById(deviceId) {
-    const { devices } = this.state.elements.devices;
-    return devices.findIndex((e) => e.id === deviceId);
-  }
-
-  handleSaveDevice(device) {
-    const { devices } = this.state.elements.devices;
-    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum);
-    if (deviceKey === -1) {
-      this.state.elements.devices.devices.push(device);
-    } else {
-      this.state.elements.devices.devices[deviceKey] = device;
-    }
-  }
-
-  handleToggleDeviceType({ device, type }) {
-    if (device.types.includes(type)) {
-      device.types = device.types.filter((e) => e !== type);
-    } else {
-      device.types.push(type);
-    }
-    const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements.devices.devices[deviceKey] = device;
-  }
-
-  handleCreateDevice() {
-    const { devices } = this.state.elements.devices;
-    const newDevice = Device.buildEmpty();
-    const newKey = devices.length;
-    this.state.elements.devices.activeAccordionDevice = newKey;
-    this.state.elements.devices.devices.push(newDevice);
-  }
-
-  handleDeleteDevice(device) {
-    const { devices, activeAccordionDevice } = this.state.elements.devices;
-    this.state.elements.devices.devices = devices.filter((e) => e.id !== device.id);
-  }
-
-  handleAddSampleToDevice({ sample, device, options = { save: false } }) {
-    const deviceSample = DeviceSample.buildEmpty(device.id, sample);
-    device.samples.push(deviceSample);
-    if (options.save) {
-      ElementActions.saveDevice(device);
-      ElementActions.fetchDeviceById.defer(device.id);
-    }
-  }
-
-  handleAddSampleWithAnalysisToDevice({ sample, analysis, device }) {
-    // Note: #735
-    // this handleAddSampleWithAnalysisToDevice is unused so far but we still update '1H NMR' to the new type from OLS-chmo
-    // and 'NMR'(type) of DeviceSample as well
-    const kind = (analysis.kind || '').split('|')[0].trim();
-    switch (kind) {
-      case chmoConversions.nmr_1h.termId:
-        // add sample to device
-        const deviceSample = DeviceSample.buildEmpty(device.id, { id: sample.id, short_label: sample.short_label });
-        deviceSample.types = [chmoConversions.nmr_1h.value];
-        device.samples.push(deviceSample);
-        DeviceFetcher.update(device)
-          .then((device) => {
-            const savedDeviceSample = last(device.samples);
-            // add sampleAnalysis to experiments
-            let deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === chmoConversions.nmr_1h.value);
-            if (!deviceAnalysis) {
-              deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value);
-            }
-            const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id);
-            deviceAnalysis.experiments.push(newExperiment);
-            ElementActions.saveDeviceAnalysis.defer(deviceAnalysis);
-          });
-        break;
-    }
-  }
-
-  handleToggleTypeOfDeviceSample({ device, sample, type }) {
-    const sampleKey = device.samples.findIndex((s) => s.id === sample.id);
-    if (sample.types.includes(type)) {
-      sample.types = sample.types.filter((t) => t !== type);
-    } else {
-      sample.types.push(type);
-    }
-    device.samples[sampleKey] = sample;
-  }
-
-  handleOpenDeviceAnalysis({ device, type }) {
-    switch (type) {
-      case 'NMR':
-        const { currentCollection } = UIStore.getState();
-        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === 'NMR');
-
-        // update Device in case of sample was added by dnd and device was not saved
-        device.updateChecksum();
-        ElementActions.saveDevice(device);
-
-        if (deviceAnalysis) {
-          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
-        } else {
-          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
-        }
-        break;
-    }
-  }
-
-  handleRemoveSampleFromDevice({ sample, device }) {
-    device.samples = device.samples.filter((e) => e.id !== sample.id);
-    const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements.devices.devices[deviceKey] = device;
-  }
-
-  handleChangeDeviceProp({ device, prop, value }) {
-    device[prop] = value;
-    const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements.devices.devices[deviceKey] = device;
-  }
-
-  handleChangeActiveAccordionDevice(key) {
-    this.state.elements.devices.activeAccordionDevice = key;
-  }
-
-  handleChangeSelectedDeviceId(deviceId) {
-    this.state.elements.devices.selectedDeviceId = deviceId;
-  }
-
-  handleSetSelectedDeviceId(deviceId) {
-    this.state.elements.devices.selectedDeviceId = deviceId;
-  }
-
   handleSetRefreshCoefficient(obj) {
     this.setState({ refreshCoefficient: [obj] });
-  }
-
-  // TODO move these in Element Action ??
-  createSampleAnalysis(sampleId, type) {
-    return new Promise((resolve, reject) => {
-      SamplesFetcher.fetchById(sampleId)
-        .then((sample) => {
-          let analysis = Container.buildAnalysis(chmoConversions.others.value);
-          switch (type) {
-            case chmoConversions.nmr_1h.termId:
-              analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value);
-              break;
-          }
-          sample.addAnalysis(analysis);
-          SamplesFetcher.update(sample);
-          resolve(analysis);
-        });
-    });
-  }
-
-  createAnalysisExperiment(deviceSample, deviceAnalysis) {
-    return new Promise((resolve, reject) => {
-      this.createSampleAnalysis(deviceSample.sampleId, deviceAnalysis.analysisType)
-        .then((sampleAnalysis) => {
-          const experiment = AnalysesExperiment.buildEmpty(
-            deviceSample.sampleId,
-            deviceSample.shortLabel,
-            sampleAnalysis.id,
-            deviceSample.id
-          );
-          resolve(experiment);
-        });
-    });
-  }
-
-  handleCreateDeviceAnalysis({ device, analysisType }) {
-    const analysis = DeviceAnalysis.buildEmpty(device.id, analysisType);
-    const samplesOfAnalysisType = device.samples.filter((s) => s.types.includes(analysisType));
-    const promises = samplesOfAnalysisType.map((s) => this.createAnalysisExperiment(s, analysis));
-    Promise.all(promises)
-      .then((experiments) => {
-        experiments.map((experiment) => analysis.experiments.push(experiment));
-        ElementActions.saveDeviceAnalysis(analysis);
-      });
-  }
-
-  handleFetchDeviceAnalysisById({ analysis, device }) {
-    const { experiments } = analysis;
-    const samplesOfAnalysisType = device.samples.filter((s) => s.types.includes(analysis.analysisType));
-    const samplesWithoutOld = slice(samplesOfAnalysisType, experiments.length);
-    const promises = samplesWithoutOld.map((s) => this.createAnalysisExperiment(s, analysis));
-    Promise.all(promises)
-      .then((experiments) => {
-        experiments.map((experiment) => analysis.experiments.push(experiment));
-        ElementActions.saveDeviceAnalysis(analysis);
-      });
-  }
-
-  handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection } = UIStore.getState();
-    this.state.currentElement = analysis;
-
-    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
-  }
-
-  // eslint-disable-next-line object-curly-newline
-  handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
-    const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id);
-    analysis.experiments[experimentKey][prop] = value;
-    this.state.currentElement = analysis;
-  }
-
-  handleDeleteAnalysisExperiment({ device, analysis, experiment }) {
-    const sample = device.samples.find((s) => s.id === experiment.deviceSampleId);
-    const sampleKey = device.samples.findIndex((s) => s.id === experiment.deviceSampleId);
-    device.samples[sampleKey].types = sample.types.filter((t) => t !== analysis.analysisType);
-    ElementActions.saveDevice(device);
-    ElementActions.fetchDeviceAnalysisById.defer(analysis.id);
-  }
-
-  handleDuplicateAnalysisExperiment({ device, analysis, experiment }) {
-    const sample = device.samples.find((s) => s.id === experiment.deviceSampleId);
-    const newSample = DeviceSample.buildEmpty(analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel });
-    newSample.types = [analysis.analysisType];
-    device.samples.push(newSample);
-    ElementActions.saveDevice(device);
-    ElementActions.fetchDeviceAnalysisById.defer(analysis.id);
   }
 
   // SEARCH

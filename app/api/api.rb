@@ -76,7 +76,6 @@ class API < Grape::API
       request.path.start_with?(
         '/api/v1/authentication/',
         '/api/v1/public/',
-        '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
         '/api/v1/gate/ping',
@@ -200,10 +199,7 @@ class API < Grape::API
   mount Chemotion::PublicAPI
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
-  mount Chemotion::DeviceAPI
   mount Chemotion::InboxAPI
-  mount Chemotion::IconNmrAPI
-  mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
   mount Chemotion::ExplorerAPI

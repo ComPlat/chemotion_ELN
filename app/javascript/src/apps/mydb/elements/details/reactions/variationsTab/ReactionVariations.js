@@ -102,6 +102,10 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const gridWrapperRef = useRef(null);
   const [gridToken, setGridToken] = useState(0);
   const pendingReactionVariations = useRef(null);
+  // The variations as pruned for display on load; not propagated to the parent unless edited afterwards.
+  const loadedReactionVariations = useRef(null);
+  // The load-time pruning of removed segments only (material keys kept), which is handed to the parent.
+  const loadSegmentPrunedVariations = useRef(null);
   const previousReactionMaterialsHashes = useRef(reactionMaterialsHashes);
   const previousGasMode = useRef(gasMode);
   const previousAllReactionAnalyses = useRef(allReactionAnalyses);
@@ -169,12 +173,31 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       }
 
       setGridStore((previousGridStore) => {
-        const updatedSelectedColumns = {
+        const columnsWithAvailableSegments = {
           ...previousGridStore.selectedColumns,
           segments: previousGridStore.selectedColumns.segments.filter(
             (segment) => Object.hasOwn(segments, segment)
           )
         };
+        /*
+        Variations can reference materials the reaction no longer has, e.g., a material removed in the "Scheme" tab
+        while this tab was unmounted. Such columns can't be displayed, so they are pruned here for display only:
+        the propagation effect below doesn't hand the material pruning to the parent (the backend drops those keys
+        whenever it saves the materials), so merely opening the tab doesn't mark the reaction as changed.
+        Removed segments are pruned for real: the backend keeps their keys.
+        */
+        const segmentPrunedVariations = removeObsoleteColumnsFromVariations(
+          previousGridStore.reactionVariations,
+          columnsWithAvailableSegments
+        );
+        loadSegmentPrunedVariations.current = areVariationsEqualIgnoringOrder(
+          segmentPrunedVariations,
+          previousGridStore.reactionVariations
+        ) ? null : segmentPrunedVariations;
+        const updatedSelectedColumns = removeObsoleteMaterialColumns(
+          reactionMaterials,
+          columnsWithAvailableSegments
+        );
         let updatedReactionVariations = removeObsoleteColumnsFromVariations(
           previousGridStore.reactionVariations,
           updatedSelectedColumns
@@ -188,6 +211,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
         updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
         updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+        loadedReactionVariations.current = updatedReactionVariations;
 
         return {
           ...previousGridStore,
@@ -213,6 +237,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     Propagate updates to parent
     */
     if (!asyncDataLoaded) {
+      return;
+    }
+    /*
+    An unsaved reaction (e.g., a copy) keeps its variations untouched: its materials are all new, so their columns
+    can't be shown yet, and the backend maps the variations to the saved materials on create.
+    */
+    if (reaction.isNew) {
+      return;
+    }
+    if (reactionVariations === loadedReactionVariations.current) {
+      const segmentPrunedVariations = loadSegmentPrunedVariations.current;
+      loadSegmentPrunedVariations.current = null;
+      if (segmentPrunedVariations) {
+        reaction.variations = segmentPrunedVariations;
+        onReactionChange(reaction);
+      }
       return;
     }
     if (areVariationsEqualIgnoringOrder(reaction.variations, reactionVariations)) {
@@ -250,6 +290,14 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         reactionVariations: [],
         gridVersion: previousGridStore.gridVersion + 1,
       }));
+      /*
+      An unsaved reaction isn't propagated by the effect above, but this reset must reach it: entries made for the
+      previous gas mode don't fit the new one.
+      */
+      if (reaction.isNew && (reaction.variations ?? []).length > 0) {
+        reaction.variations = [];
+        onReactionChange(reaction);
+      }
 
       previousGasMode.current = gasMode;
       previousReactionMaterialsHashes.current = reactionMaterialsHashes;
@@ -310,6 +358,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }, [
     asyncDataLoaded,
     gasMode,
+    onReactionChange,
+    reaction,
     reactionMaterials,
     reactionMaterialsHashes,
     vesselVolume,

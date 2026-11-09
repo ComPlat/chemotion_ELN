@@ -36,9 +36,9 @@ const TreeNode = ({ node }) => {
 
   const handleClick = useCallback(() => setExpanded((prev) => !prev), []);
   const onDragStart = useCallback((e) => {
-    e.dataTransfer.setData('text/plain', node.fullPath);
+    e.dataTransfer.setData('text/plain', node.key);
     e.dataTransfer.effectAllowed = 'move';
-  }, [node.fullPath]);
+  }, [node.key]);
 
   if (node.marked) {
     return null;
@@ -55,7 +55,7 @@ const TreeNode = ({ node }) => {
         {hasChildren
           ? (expanded ? <i className="fa fa-folder-open me-1" /> : <i className="fa fa-folder me-1" />)
           : <i className="fa fa-file me-1" />}
-        {node.name}
+        {node.label}
       </div>
       {hasChildren && expanded && (
         <ul style={{ marginLeft: '1rem' }}>
@@ -85,7 +85,8 @@ const DatasetDropZone = ({ droppedPaths, setDroppedPaths }) => {
   const onDrop = useCallback((e) => {
     e.preventDefault();
     const path = e.dataTransfer.getData('text/plain');
-    const newDroppedPaths = droppedPaths.filter((p) => !p.startsWith(path));
+    // Drop the path itself and anything inside it, but not siblings sharing a name prefix.
+    const newDroppedPaths = droppedPaths.filter((p) => p !== path && !p.startsWith(`${path}/`));
     if (path) {
       setDroppedPaths([...newDroppedPaths, path]);
     }

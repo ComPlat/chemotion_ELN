@@ -169,7 +169,7 @@ module Chemotion
         end
 
         put do
-          update_datamodel(params[:container])
+          update_datamodel(params[:container], element: Wellplate.find(params[:id]), creating: false)
           params.delete(:container)
 
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false),
@@ -207,7 +207,7 @@ module Chemotion
         container = params[:container]
         params.delete(:container)
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
-        wellplate.container = update_datamodel(container)
+        wellplate.container = update_datamodel(container, element: wellplate, creating: true)
 
         wellplate.save!
         update_element_labels(wellplate, params[:user_labels], current_user.id)

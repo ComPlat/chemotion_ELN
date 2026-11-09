@@ -1,6 +1,8 @@
 import expect from 'expect';
 import { describe, it } from 'mocha';
-import { getAttachmentFromContainer, isPreviewableAttachment } from 'src/utilities/imageHelper';
+import {
+  getAttachmentFromContainer, getContainerImageData, isPreviewableAttachment,
+} from 'src/utilities/imageHelper';
 
 describe('isPreviewableAttachment', () => {
   it('follows the server-provided previewable flag', () => {
@@ -41,5 +43,49 @@ describe('getAttachmentFromContainer', () => {
     const combined = { ...png, id: 4, filename: 'combined.png' };
     expect(getAttachmentFromContainer(container([png, newerPng, pptx]))).toBe(newerPng);
     expect(getAttachmentFromContainer(container([newerPng, combined]))).toBe(combined);
+  });
+
+  it('defaults to the latest updated file regardless of array order', () => {
+    const newerPng = { ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000' };
+    expect(getAttachmentFromContainer(container([png, newerPng]))).toBe(newerPng);
+    expect(getAttachmentFromContainer(container([newerPng, png]))).toBe(newerPng);
+  });
+
+  it('skips attachments marked for deletion', () => {
+    const deletedNewer = {
+      ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000', is_deleted: true,
+    };
+    expect(getAttachmentFromContainer(container([png, deletedNewer]))).toBe(png);
+    expect(getAttachmentFromContainer(container([deletedNewer]))).toBe(null);
+  });
+
+  it('skips attachments of a removed dataset', () => {
+    const newerPng = { ...png, id: 3, updated_at: '03.01.2026, 10:00:00 +0000' };
+    const analysis = {
+      children: [
+        { container_type: 'dataset', is_deleted: true, attachments: [newerPng] },
+        { container_type: 'dataset', attachments: [png] },
+      ],
+    };
+    expect(getAttachmentFromContainer(analysis)).toBe(png);
+  });
+});
+
+describe('getContainerImageData', () => {
+  const png = { id: 1, filename: 'a.png', thumb: true };
+  const jpg = { id: 2, filename: 'b.jpg', thumb: true };
+  const analysis = (preferred) => ({
+    children: [
+      { container_type: 'dataset', is_deleted: true, attachments: [jpg] },
+      { container_type: 'dataset', attachments: [png] },
+    ],
+    extended_metadata: { preferred_thumbnail: preferred },
+  });
+
+  it('offers no candidates from a removed dataset and drops a preference pointing there', () => {
+    const data = getContainerImageData(analysis('2'));
+    expect(data.candidateIds).toEqual([1]);
+    expect(data.preferredId).toBe(null);
+    expect(getContainerImageData(analysis('1')).preferredId).toBe(1);
   });
 });

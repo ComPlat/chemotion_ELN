@@ -451,8 +451,12 @@ export default class AttachmentFetcher {
         const fetchedFilesIdxs = json.files.map((file) => file.id);
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
 
+        // The spectrum is saved either way: a failed combine must not turn the save into an error.
         return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params)
-          .then(() => json); // this appears to be intentional, I didn't change this from the original code
+          .then(() => json, (error) => {
+            console.log(error); // eslint-disable-line no-console
+            return json;
+          });
       });
   }
 
@@ -555,9 +559,20 @@ export default class AttachmentFetcher {
     if (extraParams != null) {
       body.extras = JSON.stringify(decamelizeKeys(extraParams));
     }
+    // Rejects on a non-2xx answer (the default handlers resolve the error body as a result),
+    // so a refused or failed combine reaches the caller.
     return ApiClient.postJson(
       '/api/v1/chemspectra/file/combine_spectra',
-      { body }
+      {
+        body,
+        handleResponseSuccess: (response) => {
+          if (!response.ok) {
+            throw new Error(`Could not update the combined spectra image (${response.status})`);
+          }
+          return response.json();
+        },
+        handleResponseError: (error) => { throw error; },
+      }
     );
   }
 

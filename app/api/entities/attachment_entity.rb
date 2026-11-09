@@ -10,6 +10,7 @@ module Entities
     expose :previewable?, as: :previewable,
                           documentation: { type: 'Boolean', desc: 'whether GET image/:id can serve this file' }
     expose :aasm_state, documentation: { type: 'String', desc: "processing state for analytics derivative" }
+    expose :root_id, documentation: { type: 'Integer', desc: 'id of the upload this derivative descends from' }
     expose :filesize, documentation: { type: 'Integer', desc: "filesize in bytes" }
     expose :edit_state, documentation: { type: 'String', desc: "edit state for external viewing/editing" }
     expose_timestamps

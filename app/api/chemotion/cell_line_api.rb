@@ -71,7 +71,7 @@ module Chemotion
         error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
-        cell_line_sample.container = update_datamodel(params[:container])
+        cell_line_sample.container = update_datamodel(params[:container], element: cell_line_sample, creating: true)
 
         return present cell_line_sample,
                        with: Entities::CellLineSampleEntity,
@@ -84,7 +84,7 @@ module Chemotion
       put do
         use_case = Usecases::CellLines::Update.new(params, current_user)
         cell_line_sample = use_case.execute!
-        cell_line_sample.container = update_datamodel(params[:container])
+        cell_line_sample.container = update_datamodel(params[:container], element: cell_line_sample, creating: false)
         return present cell_line_sample,
                        with: Entities::CellLineSampleEntity,
                        policy: ElementPolicy.new(current_user, cell_line_sample)
@@ -109,7 +109,9 @@ module Chemotion
           begin
             use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
             copied_cell_line_sample = use_case.execute!
-            copied_cell_line_sample.container = update_datamodel(params[:container])
+            copied_cell_line_sample.container = update_datamodel(
+              params[:container], element: copied_cell_line_sample, creating: true
+            )
           rescue StandardError => e
             error!(e, 400)
           end
@@ -138,7 +140,11 @@ module Chemotion
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])
             splitted_cell_line_sample = use_case.execute!
-            splitted_cell_line_sample.container = update_datamodel(params[:container]) if @params.key?('container')
+            if @params.key?('container')
+              splitted_cell_line_sample.container = update_datamodel(
+                params[:container], element: splitted_cell_line_sample, creating: true
+              )
+            end
           rescue StandardError => e
             error!(e, 400)
           end

@@ -24,6 +24,7 @@ module Chemotion
       def raw_file_obj(att)
         {
           id: att.id,
+          aasm_state: att.aasm_state,
           file: raw_file(att),
           predictions: JSON.parse(att.get_infer_json_content),
         }

@@ -67,6 +67,41 @@ RSpec.describe Attachment do
     end
   end
 
+  describe '#attach_file' do
+    let(:attachment) { create(:attachment, file_path: nil, file_data: nil) }
+
+    it 'closes the upload IO after storing the file' do
+      attachment.file_path = Rails.root.join('spec/fixtures/upload.txt')
+      upload_io = nil
+      allow(attachment.attachment_attacher).to receive(:attach).and_wrap_original do |attach, io|
+        upload_io = io
+        attach.call(io)
+      end
+
+      attachment.save!
+
+      expect(upload_io).to be_closed
+      expect(attachment.read_file).to eq("Hello world\n")
+    ensure
+      upload_io&.close
+    end
+
+    it 'closes the upload IO when storing the file raises' do
+      attachment.file_path = Rails.root.join('spec/fixtures/upload.txt')
+      upload_io = nil
+      allow(attachment.attachment_attacher).to receive(:attach) do |io|
+        upload_io = io
+        raise IOError, 'Upload failed'
+      end
+
+      expect { attachment.save! }.to raise_error(IOError, 'Upload failed')
+
+      expect(upload_io).to be_closed
+    ensure
+      upload_io&.close
+    end
+  end
+
   describe '#read_thumbnail' do
     context 'when no thumbnail exists' do
       it 'returns nil' do
