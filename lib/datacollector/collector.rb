@@ -13,13 +13,22 @@ module Datacollector
   class Collector
     # Execute the collection for devices
     # @param devices [Array<Device>] the devices to collect data from
-    # @option allowed_methods [Array<String>] only allow collection for given methods
+    # @param allowed_methods [Array<String>] only collect from devices using one of these methods (all if empty)
     def self.bulk_execute(devices, allowed_methods: [])
       logger = DCLogger.new(__method__)
       devices.each do |device|
-        new(device).execute(allowed_methods: allowed_methods)
+        next if allowed_methods.present? && allowed_methods.exclude?(device.datacollector_method)
+
+        new(device).execute
       rescue Errors::DatacollectorError, SFTPClientError => e
         logger.error(device.info, e.message)
+      rescue Delayed::WorkerTimeout
+        # a job timeout ends the run instead of being logged as one device's error
+        raise
+      rescue StandardError => e
+        # an unexpected error on one device must not stop the collection for the others
+        logger.error(device.info, "#{e.class}: #{e.message}\n#{Array(e.backtrace).first(10).join("\n")}")
+        Sentry.capture_exception(e, extra: { device: device.info })
       end
     end
 
@@ -58,12 +67,8 @@ module Datacollector
     # Collector main execution
     ##################################################################
 
-    # Executes the appropriate method based on the use_sftp attribute
-    #
-    # @param method [String] skip execution if the provided method is not the same as the device's method
-    def execute(allowed_methods: [])
-      return if allowed_methods.present? && allowed_methods.exclude?(method)
-
+    # Inspects the device's folder, or its user folders if the device is set up for them
+    def execute
       device.datacollector_user_level_selected ? inspect_user_folders : inspect_folder
     end
 
@@ -130,6 +135,8 @@ module Datacollector
 
         current_correspondence = correspondence || correspondence_by_file(device, file)
         attach_file_or_folder(current_correspondence, file)
+      rescue Delayed::WorkerTimeout
+        raise
       rescue StandardError => e
         log.error(e.message, e.backtrace.join('\n'))
       end
