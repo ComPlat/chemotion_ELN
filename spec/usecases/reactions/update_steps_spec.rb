@@ -15,6 +15,15 @@ describe Usecases::Reactions::UpdateSteps do
     expect(reaction.reaction_steps.map(&:conditions)).to eq(%w[first second])
   end
 
+  it 'saves the Type of each step' do
+    described_class.new(reaction, [
+                          { position: 1, rxno: 'RXNO:0000001 | reduction' },
+                          { position: 2, rxno: 'RXNO:0000002 | coupling' },
+                        ]).execute!
+
+    expect(reaction.reaction_steps.reload.map(&:rxno)).to eq(['RXNO:0000001 | reduction', 'RXNO:0000002 | coupling'])
+  end
+
   it 'updates a step that was sent back with its id' do
     step = ReactionStep.create!(reaction: reaction, position: 1, conditions: 'old')
 

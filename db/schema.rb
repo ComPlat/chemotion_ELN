@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_30_120000) do
+ActiveRecord::Schema.define(version: 2026_11_09_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1172,6 +1172,7 @@ ActiveRecord::Schema.define(version: 2026_10_30_120000) do
     t.datetime "deleted_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "rxno"
     t.index ["deleted_at"], name: "index_reaction_steps_on_deleted_at"
     t.index ["reaction_id"], name: "index_reaction_steps_on_reaction_id"
   end

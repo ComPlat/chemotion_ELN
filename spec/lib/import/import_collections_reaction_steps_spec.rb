@@ -47,6 +47,20 @@ RSpec.describe Import::ImportCollections do
     expect(imported.reaction_steps.map(&:description)).to eq([{ 'ops' => [{ 'insert' => "heat it\n" }] }, nil])
   end
 
+  it 'brings back every value of every step unchanged' do
+    reaction.reaction_steps.find_by(position: 2).update!(
+      temperature: { 'data' => [{ 'time' => '00:30:00', 'value' => '90' }], 'userText' => 'reflux',
+                     'valueUnit' => '°C' },
+      duration: '3 Hour(s)', timestamp_start: '09/11/2026 12:00:00', timestamp_stop: '09/11/2026 15:00:00',
+      ph_operator: '<', ph_value: 4.5, vessel_size: { 'unit' => 'ml', 'amount' => 25 },
+      lock_reaction_volume: true, rxno: 'RXNO:0000024 | Heck reaction',
+      description: { 'ops' => [{ 'insert' => "cool it\n" }] }
+    )
+    values = ->(steps) { steps.map { |step| step.attributes.except('id', 'reaction_id', 'created_at', 'updated_at') } }
+
+    expect(values.call(imported.reaction_steps)).to eq(values.call(reaction.reaction_steps.reload))
+  end
+
   it 'links each material to its imported step and keeps carry-on' do
     first, second = imported.reaction_steps
     links = imported.reactions_samples.map { |rs| [rs.type, rs.reaction_step_id, rs.carry_on, rs.step_reference] }

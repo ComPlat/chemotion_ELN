@@ -40,6 +40,22 @@ describe('EditableTable', () => {
     expect(update.firstCall.args[0]).toEqual([{ time: '01:30:00', value: '37.5' }, { time: '02:00:00', value: '80' }]);
   });
 
+  it('adds a typed row once focus leaves the new row, not while moving inside it', () => {
+    const update = sinon.spy();
+    const wrapper = mount(<EditableTable temperature={temperature([])} updateTemperature={update} />);
+    const timeInput = () => wrapper.find('input[aria-label="New time"]');
+    const valueInput = () => wrapper.find('input[aria-label="New temperature"]');
+
+    valueInput().simulate('change', { target: { value: '55' } });
+    valueInput().simulate('blur', { relatedTarget: timeInput().getDOMNode() });
+    timeInput().simulate('change', { target: { value: '5:00' } });
+    expect(update.called).toBe(false);
+
+    timeInput().simulate('blur', { relatedTarget: null });
+    expect(update.calledOnce).toBe(true);
+    expect(update.firstCall.args[0]).toEqual([{ time: '05:00:00', value: '55' }]);
+  });
+
   it('edits and removes a row, and ignores an invalid edit', () => {
     const update = sinon.spy();
     const wrapper = mount(

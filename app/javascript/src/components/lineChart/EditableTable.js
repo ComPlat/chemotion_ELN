@@ -62,6 +62,11 @@ const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
     setDraft(NEW_ROW);
   };
 
+  const addRowOnLeave = (event) => {
+    if (event.currentTarget.closest('tr').contains(event.relatedTarget)) return;
+    addRow();
+  };
+
   const units = { time: 'h:m:s', value: temperature.valueUnit };
   const withUnit = (field, control) => (
     <InputGroup size="sm">
@@ -120,6 +125,7 @@ const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
                   value={draft.time}
                   isInvalid={draft.time !== '' && draftTime === null}
                   onChange={(event) => setDraft({ ...draft, time: event.target.value })}
+                  onBlur={addRowOnLeave}
                   onKeyDown={(event) => event.key === 'Enter' && addRow()}
                 />
               ))}
@@ -132,6 +138,7 @@ const EditableTable = ({ temperature, updateTemperature, otherStepRows }) => {
                   value={draft.value}
                   isInvalid={draft.value !== '' && draftValue === null}
                   onChange={(event) => setDraft({ ...draft, value: event.target.value })}
+                  onBlur={addRowOnLeave}
                   onKeyDown={(event) => event.key === 'Enter' && addRow()}
                 />
               ))}

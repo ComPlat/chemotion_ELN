@@ -2652,6 +2652,33 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.updateAllConcentrations();
   }
 
+  renderReactionType(source = null, onChange = null) {
+    const { reaction, onInputChange } = this.props;
+    const target = source || reaction;
+    const change = onChange || onInputChange;
+
+    return (
+      <Form.Group>
+        <Form.Label className="text-nowrap">
+          Type (Name Reaction)
+          {!source && (
+            <HiddenStepValues
+              reaction={reaction}
+              label="Type"
+              value={(step) => (step.rxno || '').split('|').pop().trim()}
+            />
+          )}
+        </Form.Label>
+        <OlsTreeSelect
+          selectName="rxno"
+          selectedValue={(target.rxno && target.rxno.trim()) || ''}
+          onSelectChange={(event) => change('rxno', event.trim())}
+          selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+        />
+      </Form.Group>
+    );
+  }
+
   renderPhConditionProperty(source = null, onChange = null) {
     const { reaction, onInputChange } = this.props;
     const target = source || reaction;
@@ -2811,6 +2838,7 @@ export default class ReactionDetailsScheme extends React.Component {
         stepSource={stepSource}
         onStepInputChange={stepChange}
         phField={step ? this.renderPhConditionProperty(stepSource, stepChange) : null}
+        typeField={step && !reaction.isInteractionReaction() ? this.renderReactionType(stepSource, stepChange) : null}
         vesselSizeField={step ? this.reactionVesselSize(stepSource, stepChange) : null}
         reactionVolumeField={step ? this.reactionVolume(stepSource, stepChange) : null}
         descriptionField={step ? this.renderStepDescription(step) : null}
@@ -2938,18 +2966,12 @@ export default class ReactionDetailsScheme extends React.Component {
         {/* Interaction mode intentionally drops ontology and role fields from the scheme tab. */}
         {!isInteractionReaction && (
           <Row className="mb-3">
-            <Col sm={6}>
-              <Form.Group className="">
-                <Form.Label className="text-nowrap">Type (Name Reaction)</Form.Label>
-                <OlsTreeSelect
-                  selectName="rxno"
-                  selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                  onSelectChange={(event) => onInputChange('rxno', event.trim())}
-                  selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-                />
-              </Form.Group>
-            </Col>
-            <Col sm={6}>
+            {!reaction.isMultiStep() && (
+              <Col sm={6}>
+                {this.renderReactionType()}
+              </Col>
+            )}
+            <Col sm={reaction.isMultiStep() ? 12 : 6}>
               {this.renderRole()}
             </Col>
           </Row>

@@ -110,6 +110,30 @@ describe('Reaction multi-step', () => {
     expect(reaction.timestamp_stop).toEqual('30/09/2026 18:00:00');
   });
 
+  it('gives each step its own Type, keeps the reaction Type equal to step 1, and saves both', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    reaction.rxno = 'RXNO:0000001 | reduction';
+    reaction.enterMultiStep();
+    reaction.addStep({ rxno: 'RXNO:0000002 | coupling' });
+
+    expect(reaction.reaction_steps.map((step) => step.rxno))
+      .toEqual(['RXNO:0000001 | reduction', 'RXNO:0000002 | coupling']);
+
+    reaction.reaction_steps[0].rxno = 'RXNO:0000003 | oxidation';
+    reaction.mirrorFirstStep();
+    expect(reaction.rxno).toEqual('RXNO:0000003 | oxidation');
+    expect(reaction.serialize().reaction_steps.map((step) => step.rxno))
+      .toEqual(['RXNO:0000003 | oxidation', 'RXNO:0000002 | coupling']);
+
+    reaction.leaveMultiStep();
+    reaction.reaction_type = 'standard';
+    reaction.rxno = 'RXNO:0000004 | hydrolysis';
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+    expect(reaction.reaction_steps.map((step) => step.rxno))
+      .toEqual(['RXNO:0000004 | hydrolysis', 'RXNO:0000002 | coupling']);
+  });
+
   it('drops a deleted step and its materials from the save payload and renumbers', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.reaction_type = 'multi_step';

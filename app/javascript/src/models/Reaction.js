@@ -34,6 +34,7 @@ export const STEP_FIELD_DEFAULTS = {
   volume: () => null,
   lock_reaction_volume: () => false,
   conditions: () => '',
+  rxno: () => '',
   description: () => Element.quillDefault(),
 };
 
@@ -323,6 +324,7 @@ export default class Reaction extends Element {
         vessel_size: step.vessel_size,
         volume: step.volume,
         lock_reaction_volume: step.lock_reaction_volume,
+        rxno: step.rxno,
       };
       return Object.fromEntries(
         Object.entries(fields).filter(([, value]) => value !== null && value !== undefined)
@@ -1392,6 +1394,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size ? { ...this.vessel_size } : this.vessel_size,
       volume: this.volume,
       lock_reaction_volume: this.lock_reaction_volume,
+      rxno: this.rxno,
       description: this.description ? JSON.parse(JSON.stringify(this.description)) : this.description,
     });
   }

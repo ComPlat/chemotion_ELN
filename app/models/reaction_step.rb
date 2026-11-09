@@ -12,6 +12,7 @@
 #  ph_operator     :string           default("="), not null
 #  ph_value        :float
 #  position        :integer          not null
+#  rxno            :string
 #  temperature     :jsonb
 #  timestamp_start :string
 #  timestamp_stop  :string

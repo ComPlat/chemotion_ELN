@@ -15,5 +15,6 @@ module Entities
     expose! :vessel_size
     expose! :volume
     expose! :lock_reaction_volume
+    expose! :rxno
   end
 end

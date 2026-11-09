@@ -28,7 +28,7 @@ export default class ReactionDetailsMainProperties extends Component {
 
   updateTemperature(newData) {
     const { reaction: { temperature }, onInputChange } = this.props;
-    onInputChange('temperatureData', { ...temperature, data: newData });
+    onInputChange('temperatureData', { ...temperature, data: newData, userText: '' });
   }
 
   toggleTemperatureChart() {
@@ -102,19 +102,14 @@ export default class ReactionDetailsMainProperties extends Component {
               </InputGroup>
             </Form.Group>
           </Col>
-          {showSchemeFields && (
-            <>
-              <Col sm={3}>
-                {phField}
+          {showSchemeFields && [phField, durationField || vesselSizeField, reactionVolumeField]
+            .filter(Boolean)
+            .map((field, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <Col sm={temperatureColSize} key={index}>
+                {field}
               </Col>
-              <Col sm={3}>
-                {durationField || vesselSizeField}
-              </Col>
-              <Col sm={3}>
-                {reactionVolumeField}
-              </Col>
-            </>
-          )}
+            ))}
         </Row>
 
         {showTemperatureChart && (

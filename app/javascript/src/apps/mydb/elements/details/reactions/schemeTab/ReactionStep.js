@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button, Collapse } from 'react-bootstrap';
+import {
+  Form, Button, Collapse, Row, Col,
+} from 'react-bootstrap';
 
 import Reaction from 'src/models/Reaction';
 import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
@@ -46,6 +48,7 @@ const ReactionStep = ({
   vesselSizeField,
   reactionVolumeField,
   descriptionField,
+  typeField,
 }) => {
   const [open, setOpen] = useState(true);
   const stepId = step ? step.id : null;
@@ -233,7 +236,7 @@ const ReactionStep = ({
             reaction={stepSource}
             onInputChange={onStepInputChange}
             showSchemeFields
-            phField={phField}
+            temperatureColSize={4}
             vesselSizeField={vesselSizeField}
             reactionVolumeField={reactionVolumeField}
           />
@@ -243,6 +246,10 @@ const ReactionStep = ({
               onInputChange={onStepInputChange}
             />
           </div>
+          <Row className="mb-3">
+            <Col sm={4}>{phField}</Col>
+            {typeField && <Col sm={8}>{typeField}</Col>}
+          </Row>
           <div className="mb-2">
             <Form.Label className="mb-0 small">Description</Form.Label>
             {descriptionField}
@@ -295,6 +302,7 @@ ReactionStep.propTypes = {
   vesselSizeField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
   descriptionField: PropTypes.node,
+  typeField: PropTypes.node,
 };
 
 ReactionStep.defaultProps = {
@@ -307,6 +315,7 @@ ReactionStep.defaultProps = {
   vesselSizeField: null,
   reactionVolumeField: null,
   descriptionField: null,
+  typeField: null,
 };
 
 export default ReactionStep;
