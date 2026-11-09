@@ -102,7 +102,7 @@ class OlsTerm < ApplicationRecord
     def import_and_create_ols_from_file_path(owl_name, file_path)
       xml_doc = Nokogiri::XML(File.open(file_path)).to_xml
       json_doc = Hash.from_xml(xml_doc).as_json
-      all_terms = json_doc['RDF']['Class']
+      all_terms = unique_term_nodes(Array.wrap(json_doc['RDF']['Class']))
       version_info = json_doc['RDF']['Ontology']
       all_terms.each_slice(100) do |nodes|
         create_from_owl_nodes(nodes, owl_name, version_info: version_info)
@@ -116,7 +116,9 @@ class OlsTerm < ApplicationRecord
       created_at = Time.now
 
       # compile sanitized values
-      nodes.select{|node| node['id'].present? && node['deprecated'] != 'true' }.each do |node|
+      nodes.each do |node|
+        next if (term_id = node_term_id(node)).nil? || node['deprecated'] == 'true' || node['label'].blank?
+
         subClassTermId = extract_subclass_term_id_from_node(node)
 
         if (synonyms = node['hasExactSynonym'].presence)
@@ -131,7 +133,7 @@ class OlsTerm < ApplicationRecord
         # to correspond in order to SQL_BULK_INSERT listed columns
         value = [
           owl_name,
-          node['id'],
+          term_id,
           subClassTermId,
           node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
           synonym,
@@ -183,6 +185,33 @@ class OlsTerm < ApplicationRecord
     end
 
     private
+
+    # The term id of an OWL class: the id encoded in its OBO class IRI
+    # (+http://purl.obolibrary.org/obo/BFO_0000002+ gives +BFO:0000002+), the same mapping
+    # {#extract_subclass_term_id_from_node} applies to parent links; for other IRIs, its
+    # +oboInOwl:id+. The IRI wins because it is the class identifier: classes imported from
+    # other ontologies (BFO, OBI, IAO, ...) often carry no +oboInOwl:id+, and an annotation
+    # can be wrong.
+    #
+    # @param node [Hash] an +owl:Class+ element parsed with +Hash.from_xml+
+    # @return [String, nil] +nil+ for a class without either
+    def node_term_id(node)
+      iri = node['rdf:about'].to_s
+      return iri.split('/').last.tr('_', ':') if iri.match?(%r{/obo/[A-Za-z]+_\w+\z})
+
+      node['id'].presence
+    end
+
+    # Keeps the first class of each term id, so an OWL file that declares an id twice
+    # still imports.
+    def unique_term_nodes(nodes)
+      nodes.group_by { |node| node_term_id(node) }.flat_map do |term_id, same|
+        next same if term_id.nil?
+
+        Rails.logger.warn("OLS import: #{term_id} declared #{same.size} times, keeping the first") if same.size > 1
+        same.first
+      end
+    end
 
     def extract_subclass_term_id_from_node(node)
       return nil unless node['subClassOf'].present?

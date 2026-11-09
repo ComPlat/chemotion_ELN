@@ -108,6 +108,83 @@ RSpec.describe OlsTerm do
     end
   end
 
+  describe '.import_owl' do
+    let(:owl) do
+      Tempfile.new(['chmo', '.owl']).tap do |file|
+        file.write(<<~XML)
+          <?xml version="1.0"?>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                   xmlns:owl="http://www.w3.org/2002/07/owl#"
+                   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+                   xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+            <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/chmo.owl"/>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/BFO_0000002">
+              <rdfs:label>continuant</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000953">
+              <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/BFO_0000002"/>
+              <oboInOwl:id>CHMO:0000953</oboInOwl:id>
+              <rdfs:label>microscope</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000001">
+              <oboInOwl:id>CHMO:0000001</oboInOwl:id>
+              <rdfs:label>colorimetry</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0002934">
+              <rdfs:label>open circuit voltage</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0002937">
+              <oboInOwl:id>CHMO:0002934</oboInOwl:id>
+              <rdfs:label>potentiostatic electrochemical impedance spectroscopy</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000001">
+              <rdfs:label>colorimetry, declared again</rdfs:label>
+            </owl:Class>
+            <owl:Class rdf:about="http://purl.obolibrary.org/obo/CHMO_0000999">
+              <owl:deprecated rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</owl:deprecated>
+            </owl:Class>
+          </rdf:RDF>
+        XML
+        file.flush
+      end
+    end
+
+    after { owl.close! }
+
+    it 'imports classes without oboInOwl:id under the id of their IRI' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(term('BFO:0000002').label).to eq 'continuant'
+      expect(term('CHMO:0000953').parent).to eq term('BFO:0000002')
+    end
+
+    it 'takes the term id from the IRI when oboInOwl:id names another class' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(term('CHMO:0002934').label).to eq 'open circuit voltage'
+      expect(term('CHMO:0002937').label).to eq 'potentiostatic electrochemical impedance spectroscopy'
+    end
+
+    it 'keeps the first class when a term id is declared twice' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(term('CHMO:0000001').label).to eq 'colorimetry'
+    end
+
+    it 'skips deprecated classes' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(described_class.pluck(:term_id)).not_to include('CHMO:0000999')
+    end
+
+    it 'disables the BFO:0000002 branch only' do
+      described_class.import_owl(owl_name, owl.path)
+
+      expect(described_class.where(is_enabled: false).pluck(:term_id)).to contain_exactly('BFO:0000002',
+                                                                                          'CHMO:0000953')
+    end
+  end
+
   describe '.disable_branch_by' do
     it 'disables a term whose child came before it in the import' do
       create_term('CHMO:2', parent: 'CHMO:1')
