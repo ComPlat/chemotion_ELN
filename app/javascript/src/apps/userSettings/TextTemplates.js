@@ -9,8 +9,15 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
-// the editor keeps one closing line break of its own; save strips it, so add it back here
-const asEditorValue = (data) => ({ ...data, ops: [...(data?.ops || []), { insert: '\n' }] });
+// the editor keeps one closing line break of its own, which also carries the last line's
+// format (list, heading, indent); save strips it and keeps that format as lastLineFormat,
+// so add both back here
+const asEditorValue = (data) => {
+  const closingLineBreak = data?.lastLineFormat
+    ? { insert: '\n', attributes: data.lastLineFormat }
+    : { insert: '\n' };
+  return { ...data, ops: [...(data?.ops || []), closingLineBreak] };
+};
 
 function TemplateListItem({ name, selected, onSelect, onRemove, readOnly }) {
   return (
@@ -73,6 +80,7 @@ class TemplateEditPanel extends React.Component {
     const quill = this.reactQuillRef.current;
     const delta = quill.getContents();
     const deltaLength = delta.length();
+    const lastLineFormat = delta.ops[delta.ops.length - 1]?.attributes;
     const removeTrailingNewline = new Delta().retain(deltaLength - 1).delete(1);
     const { ops } = delta.compose(removeTrailingNewline);
 
@@ -86,6 +94,7 @@ class TemplateEditPanel extends React.Component {
         ops,
         text: text.trim() === '' ? null : text.trim(),
         icon: icon.trim() === '' ? null : icon.trim(),
+        ...(lastLineFormat && { lastLineFormat }),
       },
     });
   };
