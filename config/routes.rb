@@ -41,6 +41,7 @@ Rails.application.routes.draw do
   end
 
   authenticate :user do
+    get 'sfn_cb', to: 'pages#sfn_cb'
     get 'command_n_control', to: 'pages#home'
     get 'mydb/*any', to: 'pages#home'
     get 'mydb', to: 'pages#home'
