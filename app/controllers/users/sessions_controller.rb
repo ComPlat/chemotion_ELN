@@ -10,7 +10,6 @@ module Users
 
     # rubocop:disable Metrics/AbcSize
     def create
-      login = params[:user][:login]
       password = params[:user][:password]
       requested_user = find_requested_user
 
@@ -24,13 +23,13 @@ module Users
                                     requested_user.valid_password?(password)
 
       respond_to do |format|
-        format.html { super }
         format.json do
           # always run warden.authenticate to count failed_attempts and lock user if too many attempts
-          # add strategy name to avoid double count because User model declares
-          # `:database_authenticatable` and `:two_factor_authenticatable`, so warden.authenticate tries both strategies
           self.resource = warden.authenticate(:two_factor_authenticatable, auth_options)
-          token = Usecases::Authentication::BuildToken.execute!(username: login, password: password)
+          # by_user instead of execute!: the strategy above has already checked
+          # password and OTP (and counted a failed attempt); execute! would
+          # check the password again and count every failure twice.
+          token = Usecases::Authentication::BuildToken.by_user(resource)
 
           if resource.present? && token.present?
             # devise code
