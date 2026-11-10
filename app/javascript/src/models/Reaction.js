@@ -1831,7 +1831,10 @@ export default class Reaction extends Element {
     const { type, material } = this.findMaterialById(id);
     if (!type || !material) return 'n.d.';
     const amountLiters = material.amount_l;
-    const totalVolume = this.totalVolumeForMaterialGroup(type);
+    const totalVolume = this.isMultiStep()
+      ? this[type].filter((m) => m.reaction_step_id === material.reaction_step_id)
+        .reduce((sum, m) => sum + (m.amount_l || 0), 0)
+      : this.totalVolumeForMaterialGroup(type);
     if (Number.isNaN(amountLiters) || Number.isNaN(totalVolume) || totalVolume < 0 || amountLiters < 0) return 'n.d.'; // Ensure amount_l is valid
     return this.calculateVolumeRatio(amountLiters, totalVolume);
   }

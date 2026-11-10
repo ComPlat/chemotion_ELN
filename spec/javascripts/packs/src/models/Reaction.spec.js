@@ -74,6 +74,20 @@ describe('Reaction', () => {
       expect(reaction.volumeRatioByMaterialId(materials[3].id)).toBe('0.5%');
     });
 
+    it('divides by the solvents of the same step in a multi-step reaction, and by all of them otherwise', () => {
+      reaction.reaction_steps = [{ id: 1, position: 1 }, { id: 2, position: 2 }];
+      [materials[0], materials[1]].forEach((solvent) => { solvent.reaction_step_id = 1; });
+      materials[2].reaction_step_id = 2;
+      reaction.solvents = [materials[0], materials[1], materials[2]];
+
+      reaction.reaction_type = 'multi_step';
+      expect([0, 1, 2].map((i) => reaction.volumeRatioByMaterialId(materials[i].id)))
+        .toEqual(['50.0%', '50.0%', '100.0%']);
+
+      reaction.reaction_type = 'standard';
+      expect(reaction.volumeRatioByMaterialId(materials[2].id)).toBe('33.3%');
+    });
+
     it('should return "n.d." if the material cannot be found', () => {
       const result = reaction.volumeRatioByMaterialId(0);
       expect(result).toBe('n.d.');
