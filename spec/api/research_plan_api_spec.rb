@@ -113,6 +113,23 @@ describe Chemotion::ResearchPlanAPI do
         end
       end
 
+      it 'creates a plan without attachments when the user is already over quota' do
+        user.update!(used_space: 20, allocated_space: 10)
+        request_params = {
+          name: 'Plan without attachments',
+          body: [],
+          attachments: [],
+          container: { is_new: true, children: [] },
+        }
+
+        expect do
+          post '/api/v1/research_plans', params: request_params, as: :json
+        end.to change(ResearchPlan, :count).by(1)
+
+        expect(response).to have_http_status(:created), response.body
+        expect(ResearchPlan.find_by!(name: request_params[:name]).attachments).to be_empty
+      end
+
       context 'when an image is uploaded after creating the plan' do
         let(:collection) { create(:collection, user: user) }
         let(:pending_identifier) { SecureRandom.uuid }
@@ -346,27 +363,70 @@ describe Chemotion::ResearchPlanAPI do
             expect_atomic_copy_failure(params, :forbidden)
           end
 
-          it 'rolls back the plan and its container when a source has no file' do
-            missing = create(:attachment, attachable: source_plan, file_path: nil, file_data: nil)
+          def expect_copy_without(missing)
             request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
+            request_params[:body] += [{ type: 'image', value: { public_name: missing.identifier } }]
+            post '/api/v1/research_plans', params: request_params, as: :json
 
-            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+            expect(response).to have_http_status(:created), response.body
+            expect(JSON.parse(response.body)['attachments_omitted']).to be true
+            expect_only_source_copied
           end
 
-          it 'cleans up an earlier copy when a later stored file is missing' do
+          def expect_only_source_copied
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            copy = copied_plan.attachments.take!
+            expect([copied_plan.attachments.count, copy.read_file]).to eq([1, source.read_file])
+            expect(copied_plan.body.map { |field| field.dig('value', 'public_name') }).to eq([copy.identifier])
+          end
+
+          it 'omits a source without a stored file and copies the others' do
+            expect_copy_without(create(:attachment, attachable: source_plan, file_path: nil, file_data: nil))
+          end
+
+          it 'omits a source whose stored file is gone and copies the others' do
             missing = create(:attachment, attachable: source_plan)
             missing.attachment.delete
-            request_params = params.merge(attachments: [{ id: source.id }, { id: missing.id }])
-
-            expect_atomic_copy_failure(request_params, :unprocessable_entity)
+            expect_copy_without(missing)
           end
 
-          it 'rolls back earlier copies when a later copy exceeds the user quota' do
+          it 'refuses a copy that does not fit the quota before writing any file' do
             small = create(:attachment, attachable: source_plan, created_for: user.id)
             request_params = params.merge(attachments: [{ id: small.id }, { id: source.id }])
             user.update!(used_space: 0, allocated_space: small.filesize + 1)
 
             expect_atomic_copy_failure(request_params, :unprocessable_entity)
+            expect(JSON.parse(response.body)['error']).to eq(Usecases::Attachments::Copy::QUOTA_MESSAGE)
+          end
+
+          it 'copies without attachments when the user is already over quota' do
+            user.update!(used_space: 20, allocated_space: 10)
+            request_params = params.merge(attachments: [], body: [])
+
+            expect do
+              post '/api/v1/research_plans', params: request_params, as: :json
+            end.to change(ResearchPlan, :count).by(1)
+
+            expect(response).to have_http_status(:created), response.body
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments).to be_empty
+          end
+
+          it 'copies when the attachments exactly fill the remaining quota' do
+            user.update!(used_space: 100, allocated_space: 100 + source.attachment.size)
+            post '/api/v1/research_plans', params: params, as: :json
+
+            expect(response).to have_http_status(:created), response.body
+            expect(ResearchPlan.find_by!(name: 'Copied Plan').attachments.count).to eq(1)
+          end
+
+          it 'reports the quota when space runs out during the copy' do
+            copier = Usecases::Attachments::Copy.new(params[:attachments], user, source_plan_id: source_plan.id)
+            allow(Usecases::Attachments::Copy).to receive(:new).and_return(copier)
+            allow(copier).to receive(:ensure_quota!)
+            user.update!(used_space: 0, allocated_space: 1)
+
+            expect_atomic_copy_failure(params, :unprocessable_entity)
+            expect(JSON.parse(response.body)['error']).to eq(Usecases::Attachments::Copy::QUOTA_MESSAGE)
           end
 
           it 'cleans up the copied image and annotation when a later creation step fails' do
@@ -398,6 +458,25 @@ describe Chemotion::ResearchPlanAPI do
             expect(response).to have_http_status(:created)
             expect(upload.reload.root_element).to eq(copied_plan)
             expect(copied_plan.body.first.dig('value', 'public_name')).to eq(upload.identifier)
+          end
+        end
+
+        context 'when copying all attachments with a new dataset image' do
+          it 'keeps the new image without reporting it as an omitted source attachment' do
+            upload = create(:attachment, :with_png_image, attachable: nil, created_for: user.id)
+            request_params = params.merge(body: [{ type: 'image', value: { public_name: upload.identifier } }])
+            request_params.delete(:attachments)
+            request_params[:container][:children] = [{
+              is_new: true, container_type: 'dataset', extended_metadata: {},
+              attachments: [{ id: upload.key, is_new: true }]
+            }]
+            post '/api/v1/research_plans', params: request_params, as: :json
+
+            expect(response).to have_http_status(:created), response.body
+            expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+            copied_plan = ResearchPlan.find_by!(name: 'Copied Plan')
+            expect([upload.reload.root_element, copied_plan.body.first.dig('value', 'public_name')])
+              .to eq([copied_plan, upload.identifier])
           end
         end
 
@@ -486,18 +565,67 @@ describe Chemotion::ResearchPlanAPI do
             end
           end
 
-          context 'when the share does not allow reading datasets' do
-            let(:detail_level) { 2 }
+          context 'when the share does not allow copying the plan' do
+            let(:detail_level) { 0 }
 
-            it 'rejects the copy instead of silently dropping all attachments' do
+            it 'rejects the copy before creating any records or files' do
               expect_atomic_copy_failure(params, :forbidden)
             end
+          end
 
-            it 'returns can_copy false so the UI disables the copy action' do
-              get "/api/v1/research_plans/#{source_plan.id}"
+          [1, 2].each do |detail|
+            context "when the share allows plan copies at detail level #{detail}" do
+              let(:detail_level) { detail }
+              let(:text_field) do
+                { 'type' => 'richtext', 'value' => { 'ops' => [{ 'insert' => "Keep this text\n" }] } }
+              end
 
-              expect(response).to have_http_status(:ok)
-              expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be false
+              it 'copies the plan content and reports omitted attachments' do
+                params[:body].unshift(text_field)
+                post '/api/v1/research_plans', params: params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)['attachments_omitted']).to be true
+              end
+
+              it 'reports unreadable files when copying all source attachments without image fields' do
+                source.destroy!
+                create(:attachment, attachable: source_plan, created_for: owner.id)
+                params.delete(:attachments)
+                params[:body] = [text_field]
+                post '/api/v1/research_plans', params: params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)['attachments_omitted']).to be true
+              end
+
+              it 'copies a text-only plan without reporting omitted attachments' do
+                source.destroy!
+                request_params = params.merge(attachments: [], body: [text_field])
+                post '/api/v1/research_plans', params: request_params, as: :json
+
+                expect(response).to have_http_status(:created), response.body
+                expect(ResearchPlan.find_by!(name: 'Copied Plan')).to have_attributes(
+                  body: [text_field],
+                  attachments: be_empty,
+                )
+                expect(JSON.parse(response.body)).not_to have_key('attachments_omitted')
+              end
+
+              it 'returns can_copy true so the UI enables the copy action' do
+                get "/api/v1/research_plans/#{source_plan.id}"
+
+                expect(response).to have_http_status(:ok)
+                expect(JSON.parse(response.body).dig('research_plan', 'can_copy')).to be true
+              end
             end
           end
         end

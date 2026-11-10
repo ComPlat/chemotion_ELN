@@ -291,6 +291,52 @@ describe Chemotion::MoleculeAPI do
       end
     end
 
+    describe 'POST /api/v1/molecules/sf' do
+      let(:params) { { str: 'C', search: 'substances', ctype: 'x-mdl-molfile' } }
+
+      before { allow(Chemotion::ScifinderNService).to receive(:provider_search).and_return({}) }
+
+      context 'without a stored SciFinder-n credential' do
+        it 'returns an error without contacting SciFinder-n' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(JSON.parse(response.body)['errors'].first).to include('token missing or expired')
+          expect(Chemotion::ScifinderNService).not_to have_received(:provider_search)
+        end
+      end
+
+      context 'when the token cannot be issued' do
+        before do
+          ScifinderNCredential.create!(
+            access_token: 'access', refresh_token: 'refresh', expires_at: 1.minute.ago, created_by: user.id,
+          )
+          allow(Chemotion::ScifinderNService).to receive(:provider_access).and_raise(StandardError)
+        end
+
+        it 'returns an error without contacting SciFinder-n' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(JSON.parse(response.body)['errors'].first).to include('token missing or expired')
+          expect(Chemotion::ScifinderNService).not_to have_received(:provider_search)
+        end
+      end
+
+      context 'with a valid token' do
+        before do
+          ScifinderNCredential.create!(
+            access_token: 'access', refresh_token: 'refresh', expires_at: 1.hour.from_now, created_by: user.id,
+          )
+        end
+
+        it 'searches SciFinder-n with the access token' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(Chemotion::ScifinderNService).to have_received(:provider_search)
+            .with('substances', 'C', 'x-mdl-molfile', 'access')
+        end
+      end
+    end
+
     describe 'Post /api/v1/molecules/smiles' do
       let(:bad_smiles) { build(:smiles_set, from: :bad_smiles) }
       let(:pc_smiles) { build(:smiles_set, from: :pc400) } # rubocop:disable

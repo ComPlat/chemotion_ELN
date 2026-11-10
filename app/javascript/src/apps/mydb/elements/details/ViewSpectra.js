@@ -12,7 +12,7 @@ import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ResearchPlan from 'src/models/ResearchPlan';
-import { inlineNotation } from 'src/utilities/SpectraHelper';
+import { inlineNotation, pickDefaultSelection } from 'src/utilities/SpectraHelper';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import {
   LcmsPageCache,
@@ -181,11 +181,8 @@ class ViewSpectra extends React.Component {
   onDSSelectChange(e) {
     const { value } = e;
     const { spcInfos, spcMetas } = this.state;
-    const sis = spcInfos.filter(x => x.idDt === value);
-    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
-    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
-    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
-    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
+    const { spcIdx, arrSpcIdx } = pickDefaultSelection(spcInfos, spcMetas, value);
+    SpectraActions.SelectIdx(spcIdx, arrSpcIdx);
   }
 
   getDSList() {
@@ -246,7 +243,9 @@ class ViewSpectra extends React.Component {
   }
 
   getSpcInfo(curveIdx = 0) {
-    const { spcInfos, spcIdx, arrSpcIdx } = this.state;
+    const {
+      spcInfos, spcIdx, arrSpcIdx, spcMetas,
+    } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
@@ -257,7 +256,10 @@ class ViewSpectra extends React.Component {
         info.label &&
         info.label.match(/_uvvis\.peak\.jdx$/i)
       ));
-      if (uvvisPeakFile && curveIdx === 0) {
+      const isLcmsSelection = spcMetas.some((spc) => (
+        arrSpcIdx.includes(spc.idx) && FN.isLCMsLayout(spc.jcamp?.layout)
+      ));
+      if (uvvisPeakFile && curveIdx === 0 && isLcmsSelection && arrSpcIdx.includes(uvvisPeakFile.idx)) {
         selectedIdx = uvvisPeakFile.idx;
       }
     }

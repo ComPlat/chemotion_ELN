@@ -26,6 +26,11 @@ class FileContainer {
     this.name = file.name;
     this.depth = depth;
     this.fullPath = (fullPath || file.name).replace(/^\/|\/$/g, '');
+    // What the file list shows and how advanced mode refers to an entry. Unlike `name` and
+    // `fullPath`, which end up in the uploaded files, these change when a root is renamed
+    // (see makeRootNamesUnique) and stay put when an entry is moved up for zipping.
+    this.label = this.name;
+    this.key = this.fullPath;
     this.subFiles = [];
     this.marked = false;
   }
@@ -33,7 +38,7 @@ class FileContainer {
   static markAllByPaths(fileContainerList, paths) {
     fileContainerList.forEach((file) => {
       // eslint-disable-next-line no-param-reassign
-      file.marked = paths.includes(file.fullPath);
+      file.marked = paths.includes(file.key);
       FileContainer.markAllByPaths(file.subFiles, paths);
     });
   }
@@ -60,6 +65,10 @@ class FileContainer {
 
   get fullPathArray() {
     return FileContainer.pathAsArray(this.fullPath);
+  }
+
+  get keyArray() {
+    return FileContainer.pathAsArray(this.key);
   }
 
   content() {
@@ -97,10 +106,30 @@ class FileContainer {
         return;
       }
 
+      // A dropped archive still holding all its files is uploaded as dropped instead of re-zipped.
+      if (this.archive && this.getAllFiles().length === this.archive.fileCount) {
+        resolve(this.archive.file);
+        return;
+      }
+
       this.moveUpToRoot();
 
       resolve(createZipFile(this.getAllFiles(), this.name));
     });
+  }
+
+  // Show a root entry under another name. Only its label and the keys below it change; the
+  // uploaded file names and zip entries keep the original name.
+  relabelRoot(newLabel) {
+    this.label = newLabel;
+    this.setKeySegment(0, newLabel);
+  }
+
+  setKeySegment(index, value) {
+    const { keyArray } = this;
+    keyArray[index] = value;
+    this.key = keyArray.join('/');
+    this.subFiles.forEach((x) => x.setKeySegment(index, value));
   }
 
   moveDown(folderName) {
@@ -211,6 +240,81 @@ function traverseDirectory(entry, parent = null, depth = 0) {
   });
 }
 
+// Entries the OS adds when compressing a folder, not part of the user's data.
+function isArchiveJunk(segments) {
+  return segments[0] === '__MACOSX' || segments[segments.length - 1] === '.DS_Store';
+}
+
+/*
+Unpack a dropped archive into the same tree a dropped folder gives: a root at depth 0 whose
+entries are `<root>/...`, one depth level per path segment. The root is named after the
+archive, or after its only top-level folder when the archive is a compressed folder, so
+re-zipped datasets carry that name and entries of different archives never share a path.
+*/
+async function handleZipFile(zipFile) {
+  const zip = await JSZip.loadAsync(zipFile);
+  const entries = Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .map((entry) => ({ entry, segments: entry.name.split('/').filter(Boolean) }))
+    .filter(({ segments }) => segments.length > 0 && !isArchiveJunk(segments));
+
+  const topLevel = new Set(entries.map(({ segments }) => segments[0]));
+  const isOneFolder = topLevel.size === 1 && entries.every(({ segments }) => segments.length > 1);
+  const rootName = isOneFolder ? [...topLevel][0] : (zipFile.name.replace(/\.zip$/i, '') || 'archive');
+
+  const blobs = await Promise.all(entries.map(({ entry }) => entry.async('blob')));
+  const root = new VirtualFolderNode(rootName, '');
+  entries.forEach(({ segments }, i) => {
+    const relPath = isOneFolder ? segments.slice(1) : segments;
+    const fileName = relPath.pop();
+    const file = new File([blobs[i]], fileName, { type: blobs[i].type });
+    root.addFile({ path: [rootName, ...relPath], file });
+  });
+
+  const rootContainer = root.clean();
+  rootContainer.archive = { file: zipFile, fileCount: entries.length };
+  return rootContainer;
+}
+
+// `spectrum.jdx` -> `spectrum (2).jdx`, so the extension stays recognisable.
+function numberedName(name, n, isFile) {
+  const dot = name.lastIndexOf('.');
+  if (!isFile || dot <= 0) {
+    return `${name} (${n})`;
+  }
+  return `${name.slice(0, dot)} (${n})${name.slice(dot)}`;
+}
+
+/*
+Advanced mode tells entries apart by key, so dropped roots must not share one. Two archives
+holding the same top-level folder (e.g. `X28721_10.zip` and `X28721_11.zip`, both holding
+`X28721/`) would otherwise list the same keys. Every archive in such a clash is labelled with
+its own file name (`X28721_10`, `X28721_11`); whatever still clashes gets a numbered suffix.
+Only labels and keys change, not uploaded content.
+*/
+function makeRootNamesUnique(containers) {
+  const counts = new Map();
+  containers.forEach(({ label }) => counts.set(label, (counts.get(label) || 0) + 1));
+
+  const wanted = containers.map((container) => {
+    const archiveName = container.archive?.file.name.replace(/\.zip$/i, '');
+    return counts.get(container.label) > 1 && archiveName ? archiveName : container.label;
+  });
+
+  const taken = new Set();
+  containers.forEach((container, i) => {
+    let label = wanted[i];
+    for (let n = 2; taken.has(label); n += 1) {
+      label = numberedName(wanted[i], n, container.isFile);
+    }
+    if (label !== container.label) {
+      container.relabelRoot(label);
+    }
+    taken.add(label);
+  });
+  return containers;
+}
+
 class ZipFileContainer extends FileContainer {
   constructor(subFiles) {
     const fullPath = '';
@@ -238,6 +342,8 @@ class ZipFileContainer extends FileContainer {
 
 export {
   traverseDirectory,
+  handleZipFile,
+  makeRootNamesUnique,
   FileContainer,
   ZipFileContainer,
   VirtualFolderNode

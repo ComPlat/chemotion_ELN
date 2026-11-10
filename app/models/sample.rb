@@ -254,8 +254,6 @@ class Sample < ApplicationRecord
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
 
-  has_many :devices_samples
-  has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 

@@ -55,6 +55,10 @@ module Chemotion
         post do
           sfc = ScifinderNCredential.find_by(created_by: current_user.id)
           token = sfc&.issued_token
+          if token.blank?
+            return { errors: ['SciFinder-n token missing or expired. Go to Account & Profile and get a new token.'] }
+          end
+
           begin
             Chemotion::ScifinderNService.provider_search(params[:search], params[:str], params[:ctype], token)
           rescue StandardError => e

@@ -6,6 +6,10 @@ module Usecases
       class Error < StandardError; end
       class InvalidInput < Error; end
       class Forbidden < Error; end
+      class QuotaExceeded < Error; end
+
+      QUOTA_MESSAGE = 'Not enough storage space to copy the attachments. ' \
+                      'Free up space or copy the plan without them.'
 
       attr_reader :attachments_omitted
 
@@ -51,8 +55,8 @@ module Usecases
       def execute!(element)
         @attachments_omitted = false
         originals = find_originals(element)
-        sources = readable_sources(originals[:by_id])
-        raise Error, 'Unable to copy attachment files' if sources.any? { |attachment| attachment.attachment.blank? }
+        sources = stored_sources(readable_sources(originals[:by_id]))
+        ensure_quota!(sources)
 
         replacements = sources.to_h do |source|
           [source.identifier, copy_attachment(source, element).identifier]
@@ -69,14 +73,18 @@ module Usecases
         return if id.nil?
 
         source = ResearchPlan.find_by(id: id)
-        raise Forbidden unless ElementPolicy.new(@current_user, source).copy_with_datasets?
+        raise Forbidden unless ElementPolicy.new(@current_user, source).copy?
 
         source
       end
 
       def readable_source?(attachment)
+        source_attachment?(attachment) && @access.read?(attachment)
+      end
+
+      def source_attachment?(attachment)
         @source_plan.present? && attachment&.attachable_type == 'ResearchPlan' &&
-          attachment.attachable_id == @source_plan.id && @access.read?(attachment)
+          attachment.attachable_id == @source_plan.id
       end
 
       def validated_entries(attachments)
@@ -89,7 +97,7 @@ module Usecases
       end
 
       def readable_sources(originals)
-        return originals.values.select { |attachment| readable_source?(attachment) } if @copy_all
+        return all_readable_sources(originals) if @copy_all
 
         @entries.reject { |entry| entry[:is_new] || @deleted_ids.include?(entry[:id].to_s) }
                 .filter_map do |entry|
@@ -101,6 +109,31 @@ module Usecases
             nil
           end
         end.uniq
+      end
+
+      def all_readable_sources(originals)
+        candidates = originals.values.select { |attachment| source_attachment?(attachment) }
+        readable = candidates.select { |attachment| readable_source?(attachment) }
+        @attachments_omitted ||= readable.size < candidates.size
+        readable
+      end
+
+      # Legacy rows can lack a stored file; leave them out like unreadable ones.
+      def stored_sources(sources)
+        stored = sources.select { |attachment| attachment.attachment&.exists? }
+        @attachments_omitted ||= stored.size < sources.size
+        stored
+      end
+
+      # Mirrors Attachment#user_quota_exceeded? for the whole batch, before any file is written.
+      def ensure_quota!(sources)
+        return if sources.empty?
+
+        used, allocated = User.where(id: @current_user.id).pick(:used_space, :allocated_space)
+        return if allocated.to_i.zero?
+
+        needed = sources.sum { |attachment| attachment.attachment.size.to_i }
+        raise QuotaExceeded, QUOTA_MESSAGE if used.to_i + needed > allocated
       end
 
       def valid_entry?(entry)
@@ -140,6 +173,9 @@ module Usecases
         self.class.update_annotation(original, copy.id)
         copy
       rescue StandardError => e
+        # Space can still run out mid-copy, e.g. through a concurrent upload.
+        raise QuotaExceeded, QUOTA_MESSAGE, cause: e if e.message == 'User quota exceeded'
+
         raise Error, 'Unable to copy attachment files', cause: e
       end
 

@@ -1703,6 +1703,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       position: this.position,
       show_label: this.show_label || false,
       parent_id: this.parent_id,
+      copied_from_id: this.copied_from_id,
       is_new: this.is_new,
       is_split: this.is_split,
     };

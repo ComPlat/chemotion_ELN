@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import {
   OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip, Collapse
 } from 'react-bootstrap';
-import JSZip from 'jszip';
 import {
   addNewAnalyses,
   createAnalsesForSingelFiles,
@@ -13,7 +12,7 @@ import {
   createDataset
 } from 'src/apps/mydb/elements/details/analyses/utils';
 import {
-  ZipFileContainer, FileContainer, traverseDirectory, VirtualFolderNode
+  ZipFileContainer, FileContainer, traverseDirectory, handleZipFile, makeRootNamesUnique
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
@@ -22,40 +21,7 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
 
-async function handleZipFile(zipFile) {
-  const zip = await JSZip.loadAsync(zipFile);
-  /*
-  Build the tree under an unnamed root so entries keep the archive's own structure
-  instead of being nested one level deeper under `<archive>/`. The root container is
-  still named after the archive once the tree is built: its name is what `getFile()`
-  calls the re-zipped file and what ends up as the analysis name, and an empty one
-  yields an analysis called "File: " and an archive called ".zip".
-  */
-  const rootFileName = '';
-
-  const files = new VirtualFolderNode(rootFileName, '');
-
-  const readFilePromises = Object.entries(zip.files).map(async ([, entry]) => {
-    if (entry.dir) return; // skip directories
-
-    const segments = `${rootFileName}/${entry.name}`.split('/');
-    const fileName = segments.pop(); // "file.txt"
-    const path = segments;
-
-    const blob = await entry.async('blob');
-
-    // Convert blob to File for API consistency
-    const file = new File([blob], fileName, { type: blob.type });
-
-    files.addFile({ path, file });
-  });
-  await Promise.all(readFilePromises);
-
-  const rootContainer = files.clean();
-  rootContainer.name = zipFile.name.replace(/\.zip$/, '');
-
-  return rootContainer;
-}
+const isZipFile = (name) => /\.zip$/i.test(name);
 
 const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {
   const dropRef = useRef(null);
@@ -68,7 +34,7 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
       for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          if (!flatFileList && unzip && item.isFile && item.name.endsWith('.zip')) {
+          if (!flatFileList && unzip && item.isFile && isZipFile(item.name)) {
             filePromises.push(new Promise((resolve) => {
               item.file((file) => {
                 resolve(handleZipFile(file));
@@ -86,7 +52,7 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
           const flatFiles = await Promise.all(filteredFiles.map((f) => f.getFile()));
           handleChange(flatFiles);
         } else {
-          handleChange(filteredFiles);
+          handleChange(makeRootNamesUnique(filteredFiles));
         }
       });
     }
@@ -123,21 +89,19 @@ const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) =>
         multiple
         onChange={async (event) => {
           const files = Array.from(event.target.files);
-          if (!flatFileList && unzip && files.length === 1 && files[0].name.endsWith('.zip')) {
-            const container = await handleZipFile(files[0]);
-            handleChange([container]);
+          // eslint-disable-next-line no-param-reassign,no-return-assign
+          files.forEach((x) => x.isFile = true);
+          if (flatFileList) {
+            const flatFiles = await Promise.all(files.map((x) => new FileContainer(x).getFile()));
+            handleChange(flatFiles);
             return;
           }
 
-          // eslint-disable-next-line no-param-reassign,no-return-assign
-          files.forEach((x) => x.isFile = true);
-          const preparedFiles = files.map((x) => new FileContainer(x));
-          if (flatFileList) {
-            const flatFiles = await Promise.all(preparedFiles.map((f) => f.getFile()));
-            handleChange(flatFiles);
-          } else {
-            handleChange(preparedFiles);
-          }
+          // Unpack every picked archive, as a drop does, so its folders can be expanded.
+          const preparedFiles = await Promise.all(files.map((x) => (
+            unzip && isZipFile(x.name) ? handleZipFile(x) : new FileContainer(x)
+          )));
+          handleChange(makeRootNamesUnique(preparedFiles));
         }}
         style={{ display: 'none' }}
       />
@@ -165,14 +129,14 @@ const FileListDisplay = ({ files }) => {
     }}
     >
       {files.map((file) => (
-        <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
+        <ListGroup.Item key={file.key} className="d-flex justify-content-between align-items-center">
 
-          <div style={{ overflow: 'auto' }} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
-            <strong>{file.name}</strong>
+          <div style={{ overflow: 'auto' }} key={`DIVV__${file.key}`} className="flex-grow-1 me-3">
+            <strong>{file.label}</strong>
             <div
               className="text-muted small"
             >
-              {file.fullPath || file.webkitRelativePath || file.name}
+              {file.key}
             </div>
           </div>
           <Badge bg="secondary">

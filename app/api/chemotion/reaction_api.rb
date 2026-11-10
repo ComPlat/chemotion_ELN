@@ -22,6 +22,15 @@ module Chemotion
         end
         attributes
       end
+
+      # The reaction a copy names as its +origin+, if the current user may read it.
+      #
+      # @param origin [Hash, nil] the +origin+ attribute sent with the reaction
+      # @return [Reaction, nil]
+      def readable_origin_reaction(origin)
+        source = Reaction.find_by(id: origin&.dig('id'))
+        source if source && ElementPolicy.new(current_user, source).read?
+      end
     end
 
     resource :reactions do
@@ -207,6 +216,7 @@ module Chemotion
           reaction.update!(attributes)
           reaction.touch
           reaction_vessel_size = attributes[:vessel_size]
+          # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
           reaction = Usecases::Reactions::UpdateMaterials.new(
             reaction, materials,
             current_user,
@@ -292,25 +302,29 @@ module Chemotion
         collection = writable_collection_for(collection_id)
         error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
-        reaction = Reaction.create!(attributes)
-        recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
+        origin_reaction = readable_origin_reaction(attributes['origin'])
+        # Database writes are rolled back together if a step fails, so a failed create leaves no
+        # half-saved reaction behind. Files written meanwhile (SVGs) are not rolled back, and a client
+        # retrying after a timeout on a successful create still creates a second reaction.
+        reaction = ActiveRecord::Base.transaction do
+          reaction = Reaction.create!(attributes)
+          recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
-        create_literatures_and_literals(reaction, literatures)
-        reaction.container = update_datamodel(container_info, element: reaction, creating: true)
-        reaction.save!
-        update_element_labels(reaction, params[:user_labels], current_user.id)
-        reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
-        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
-        # Use find_or_create_by so we don't violate the unique
-        # (reaction_id, collection_id) index when the chosen collection is the
-        # user's "All" collection (both inserts would otherwise be identical).
-        CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
-        # nil when the owning account has no "All" collection — a Group never gets one.
-        CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection) if all_collection
-        CollectionsReaction.update_tag_by_element_ids(reaction.id)
+          create_literatures_and_literals(reaction, literatures)
+          reaction.container = update_datamodel(container_info, element: reaction, creating: true)
+          reaction.save!
+          update_element_labels(reaction, params[:user_labels], current_user.id)
+          reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
+          all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+          all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
+          # Use find_or_create_by so we don't violate the unique
+          # (reaction_id, collection_id) index when the chosen collection is the
+          # user's "All" collection (both inserts would otherwise be identical).
+          CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
+          # nil when the owning account has no "All" collection — a Group never gets one.
+          CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection) if all_collection
+          CollectionsReaction.update_tag_by_element_ids(reaction.id)
 
-        if reaction
           if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?
             materials['products'].map! do |prod|
               prod[:name]&.gsub! params['short_label'], reaction.short_label if params['short_label']
@@ -318,31 +332,26 @@ module Chemotion
               prod
             end
           end
-          reaction_vessel_size = attributes[:vessel_size]
-
-          reaction = Usecases::Reactions::UpdateMaterials.new(
+          # Also points a copy's variations keys at the saved materials (ReactionVariationMaterialKeys).
+          Usecases::Reactions::UpdateMaterials.new(
             reaction,
             materials,
             current_user,
-            reaction_vessel_size,
-          ).execute!
-          reaction.reload
-
-          reaction.update!(variations: Usecases::Reactions::UpdateVariations.new(
-            reaction,
-          ).execute!)
-
-          # save to profile
-          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
-          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
-
-          present(
-            reaction,
-            with: Entities::ReactionEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
-            root: :reaction,
-          )
+            attributes[:vessel_size],
+            origin_reaction: origin_reaction,
+          ).execute!.reload
         end
+
+        # save to profile
+        kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
+        recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
+        present(
+          reaction,
+          with: Entities::ReactionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+          root: :reaction,
+        )
       end
     end
   end

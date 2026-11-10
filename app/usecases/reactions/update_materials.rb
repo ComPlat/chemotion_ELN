@@ -66,18 +66,34 @@ module Usecases
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
+      # Material group => its key in the materials param, in processing order (SBMM reactants follow).
+      MATERIAL_PARAMS = {
+        starting_material: 'starting_materials',
+        reactant: 'reactants',
+        solvent: 'solvents',
+        purification_solvent: 'purification_solvents',
+        product: 'products',
+      }.freeze
+      # Attributes of an SBMM sample that a split made from a copy of it does not take over.
+      SBMM_COPY_EXCLUDED_ATTRIBUTES = %w[id short_label ancestry user_id created_at updated_at deleted_at].freeze
+
       attr_reader :current_user
 
-      def initialize(reaction, materials, user, vessel_size)
+      # Variations group => client key => persisted key, filled by {#execute!}: the id a material was
+      # sent with (a preliminary uuid for a new one) and the id of the sample it was saved as, with the
+      # +"sbmm:<id>"+ form for sequence-based macromolecule samples. See {ReactionVariationMaterialKeys}.
+      #
+      # @return [Hash{String => Hash{String => String}}]
+      def variation_key_map
+        @variation_key_map ||= Hash.new { |map, group| map[group] = {} }
+      end
+
+      # @param origin_reaction [Reaction, nil] for a copy: the source reaction, already access-checked;
+      #   variations keys naming its materials are mapped to the copy's by group position
+      def initialize(reaction, materials, user, vessel_size, origin_reaction: nil)
+        @origin_reaction = origin_reaction
         @reaction = reaction
-        @materials = {
-          starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
-          reactant: Array(materials['reactants']).map { |m| OSample.new(m) },
-          solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
-          purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
-          product: Array(materials['products']).map { |m| OSample.new(m) },
-          reactant_sbmm: Array(materials['reactant_sbmm_samples'] || []).map { |m| OSbmmSample.new(m) },
-        }
+        @materials = build_materials(materials)
         @current_user = user
         @vessel_size = vessel_size
       end
@@ -125,6 +141,7 @@ module Usecases
                                                 current_user_id: @current_user.id)
                 end
                 modified_sample_ids << modified_sample.id
+                record_variation_key(material_group, sample.id, modified_sample.id)
 
                 associate_sample_with_reaction(sample, modified_sample, material_group)
               end
@@ -134,16 +151,38 @@ module Usecases
           destroy_unused_sbmm_samples(modified_sbmm_ids)
         end
         @reaction.reload
+        reconcile_variation_material_keys
         @reaction.save! # to update the SVG
         @reaction
       end
 
       private
 
+      def build_materials(materials)
+        samples = MATERIAL_PARAMS.transform_values { |param| Array(materials[param]).map { |m| OSample.new(m) } }
+        samples.merge(reactant_sbmm: Array(materials['reactant_sbmm_samples']).map { |m| OSbmmSample.new(m) })
+      end
+
       def update_sample_container(sample, container, creating:)
         return unless container
 
         sample.container = update_datamodel(container, element: sample, creating: creating)
+      end
+
+      def record_variation_key(material_group, client_key, persisted_key)
+        group = ReactionVariationMaterialKeys.variations_group_for(material_group)
+        return if group.nil? || client_key.blank?
+
+        variation_key_map[group][client_key.to_s] = persisted_key.to_s
+      end
+
+      # Points the variations' material keys at the materials just linked, once all of them are saved,
+      # and drops keys of materials the reaction no longer has. See {ReactionVariationMaterialKeys}.
+      def reconcile_variation_material_keys
+        reconciled = @reaction.reconcile_variation_material_keys(
+          key_map: variation_key_map, origin_reaction: @origin_reaction,
+        )
+        @reaction.variations = reconciled unless reconciled == @reaction.variations
       end
 
       # Reconcile a mixture sample's persisted components with the client payload,
@@ -167,13 +206,69 @@ module Usecases
       # Create or update a single sample, dispatching to the create-subsample,
       # create-new, or update-existing path.
       def persist_sample(sample, material_group, fixed_label, target_amount)
+        treat_foreign_sample_as_new(sample)
         return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
 
+        # a parent the user may not read is dropped: a new sample from the payload's own values instead
+        sample.parent_id = nil if sample.parent_id && !accessible_parent?(Sample, sample.parent_id)
         if sample.parent_id && material_group != 'product'
           create_sub_sample(sample, fixed_label, target_amount)
         else
           create_new_sample(sample, fixed_label, target_amount)
         end
+      end
+
+      # Turns a persisted sample of another reaction into a new one for this reaction.
+      #
+      # A sample belongs to at most one reaction. A payload entry that names a persisted sample
+      # linked to another reaction (a reaction copy made by an older client sends the original's
+      # samples this way) must neither update that sample nor take over its link: it is created
+      # anew, the way the current client copies a material. A sample linked to no reaction may
+      # join this one if the user may update it; a sample already linked to this reaction is kept.
+      #
+      # Changes +sample+ in place, for the callers that follow: +is_new+ is set, and +container+
+      # is dropped, so the new sample gets a fresh root container and none of the original's
+      # analyses are processed for it. +parent_id+ is kept: with a parent the new sample is a
+      # subsample of it, without one (or for a product) a new sample.
+      #
+      # @param sample [OSample] payload entry of a material group
+      # @return [void]
+      def treat_foreign_sample_as_new(sample)
+        return if sample.is_new
+
+        reaction_ids = ReactionsSample.get_reactions(sample.id)
+        return if reaction_ids.include?(@reaction.id)
+        return if reaction_ids.empty? && ElementPolicy.update?(@current_user, Sample.find_by(id: sample.id))
+
+        sample.is_new = true
+        sample.container = nil
+      end
+
+      # Whether a new split may be made from +id+: the user may read it, or (for a copy) it is a
+      # material of the origin reaction or the parent of one; the origin is access-checked by the API.
+      #
+      # @param klass [Class] +Sample+ or +SequenceBasedMacromoleculeSample+
+      # @param id [Integer, String] the parent named in the payload
+      # @return [Boolean]
+      def accessible_parent?(klass, id)
+        record = klass.find_by(id: id)
+        return false unless record
+        return true if ElementPolicy.new(@current_user, record).read?
+
+        origin_materials(klass).any? { |material| [material.id, material.parent_id].include?(record.id) }
+      end
+
+      # The origin reaction's live materials, read from the link tables (not a possibly cached association).
+      def origin_materials(klass)
+        return [] unless @origin_reaction
+
+        links = if klass == Sample
+                  ReactionsSample.where(reaction_id: @origin_reaction.id).select(:sample_id)
+                else
+                  ReactionsReactantSbmmSample.where(reaction_id: @origin_reaction.id)
+                                             .select(:sequence_based_macromolecule_sample_id)
+                end
+        klass.where(id: links).to_a
       end
 
       def create_sub_sample(sample, fixed_label, target_amount = nil)
@@ -243,7 +338,8 @@ module Usecases
         new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
         new_sample.skip_inventory_label_update = true
 
-        # add new data container
+        # add new data container (none when the payload named another reaction's sample: the
+        # sample's after_create then builds a fresh root)
         update_sample_container(new_sample, container_info, creating: true)
 
         new_sample.collections << @reaction.collections
@@ -315,11 +411,10 @@ module Usecases
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- pre-existing size, out of scope for this PR
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
+        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id, reaction_id: @reaction.id)
         weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
         if existing_association
           existing_association.update!(
-            reaction_id: @reaction.id,
             equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
@@ -355,40 +450,96 @@ module Usecases
       end
       # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
+      # A material another reaction still links (older data) loses only this reaction's link.
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
         sample_ids_to_delete = current_sample_ids - modified_sample_ids
-        Sample.where(id: sample_ids_to_delete).destroy_all
+        shared_ids = ReactionsSample.where(sample_id: sample_ids_to_delete)
+                                    .where.not(reaction_id: [@reaction.id, nil]).distinct.pluck(:sample_id)
+        @reaction.reactions_samples.where(sample_id: shared_ids).destroy_all
+        Sample.where(id: sample_ids_to_delete - shared_ids).destroy_all
       end
 
       def destroy_unused_sbmm_samples(modified_sbmm_ids)
         current_sbmm_ids = @reaction.reactions_reactant_sbmm_samples.pluck(:sequence_based_macromolecule_sample_id)
         sbmm_ids_to_delete = current_sbmm_ids - modified_sbmm_ids
-        SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete).destroy_all
+        shared_ids = ReactionsReactantSbmmSample.where(sequence_based_macromolecule_sample_id: sbmm_ids_to_delete)
+                                                .where.not(reaction_id: [@reaction.id, nil]).distinct
+                                                .pluck(:sequence_based_macromolecule_sample_id)
+        @reaction.reactions_reactant_sbmm_samples.where(sequence_based_macromolecule_sample_id: shared_ids).destroy_all
+        SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete - shared_ids).destroy_all
       end
 
       def process_sbmm_samples(samples, modified_sbmm_ids)
         samples.each_with_index do |sbmm_data, idx|
           sbmm_data.position = idx if sbmm_data.position.nil?
+          treat_foreign_sbmm_as_new(sbmm_data)
           modified_sbmm = if sbmm_data.is_new
                             create_sub_sbmm_sample(sbmm_data)
                           else
                             update_existing_sbmm_sample(sbmm_data)
                           end
           modified_sbmm_ids << modified_sbmm.id
+          record_variation_key(
+            'reactant_sbmm',
+            ReactionVariationMaterialKeys.sbmm_key(sbmm_data.id),
+            ReactionVariationMaterialKeys.sbmm_key(modified_sbmm.id),
+          )
           associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
         end
       end
 
+      # Turns a persisted SBMM sample of another reaction into a new split for this reaction.
+      #
+      # The SBMM counterpart of {#treat_foreign_sample_as_new}: an SBMM sample linked to another
+      # reaction is neither updated nor linked a second time. Sets +is_new+ on +sbmm_data+ in
+      # place; the split is made from its stock: the payload's +parent_id+, else the stored sample's
+      # parent, else the sample itself.
+      #
+      # @param sbmm_data [OSbmmSample] payload entry of +reactant_sbmm_samples+
+      # @return [void]
+      def treat_foreign_sbmm_as_new(sbmm_data)
+        return if sbmm_data.is_new
+
+        reaction_ids = ReactionsReactantSbmmSample.get_reactions(sbmm_data.id)
+        return if reaction_ids.include?(@reaction.id)
+        return if reaction_ids.empty? &&
+                  ElementPolicy.update?(@current_user, SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id))
+
+        # older clients send no parent_id: take the stored one, so the split comes from the stock
+        stored = SequenceBasedMacromoleculeSample.find_by(id: sbmm_data.id)
+        sbmm_data.parent_id ||= stored&.parent_id || sbmm_data.id
+        # the new split keeps what the stored sample was edited to (see #create_sub_sbmm_sample)
+        sbmm_data.copied_from_id ||= sbmm_data.id
+        sbmm_data.is_new = true
+      end
+
+      # Creates a new split of the payload's stock (+parent_id+) for this reaction.
+      #
+      # When the payload is a copy of another split (+copied_from_id+, set by a reaction copy), the
+      # new split takes that split's attributes (the macromolecule, which an edit may have changed
+      # from the stock's, and its split-level metadata) instead of the stock's. The reaction-specific
+      # fields come from the payload in both cases.
+      #
+      # @param sbmm_data [OSbmmSample] payload entry of +reactant_sbmm_samples+
+      # @return [SequenceBasedMacromoleculeSample] the new split
+      # @raise [ActiveRecord::RecordNotFound] if the user may not split the stock or read the copied split
       def create_sub_sbmm_sample(sbmm_data)
+        # an SBMM sample has no "new from payload" path: a split the user may not make is refused
+        unless accessible_parent?(SequenceBasedMacromoleculeSample, sbmm_data.parent_id)
+          raise ActiveRecord::RecordNotFound, "SBMM sample #{sbmm_data.parent_id} not found"
+        end
+
         parent_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.parent_id)
+        copied_attributes = copied_sbmm_attributes(sbmm_data.copied_from_id, parent_sbmm)
         modified_sbmm = parent_sbmm.create_sub_sequence_based_macromolecule_sample(
           @current_user,
           @reaction.collections.pluck(:id),
         )
 
-        # Update with reaction-specific data
+        # Update with the copied split's attributes, if any, and the reaction-specific data
         modified_sbmm.update!(
+          **copied_attributes.symbolize_keys,
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
@@ -413,6 +564,22 @@ module Usecases
         )
 
         modified_sbmm
+      end
+
+      # The attributes a split copied from +copied_from_id+ takes over, or +{}+ when there is nothing to
+      # copy (no id, a temporary one, or the stock itself).
+      #
+      # @param copied_from_id [Integer, String, nil] id of the SBMM sample the payload was copied from
+      # @param parent_sbmm [SequenceBasedMacromoleculeSample] the stock the new split is made from
+      # @return [Hash{String => Object}]
+      # @raise [ActiveRecord::RecordNotFound] if the user may not read the copied SBMM sample
+      def copied_sbmm_attributes(copied_from_id, parent_sbmm)
+        return {} unless copied_from_id.to_s.match?(/\A\d+\z/) && copied_from_id.to_i != parent_sbmm.id
+        unless accessible_parent?(SequenceBasedMacromoleculeSample, copied_from_id)
+          raise ActiveRecord::RecordNotFound, "SBMM sample #{copied_from_id} not found"
+        end
+
+        SequenceBasedMacromoleculeSample.find(copied_from_id).attributes.except(*SBMM_COPY_EXCLUDED_ATTRIBUTES)
       end
 
       def update_existing_sbmm_sample(sbmm_data)

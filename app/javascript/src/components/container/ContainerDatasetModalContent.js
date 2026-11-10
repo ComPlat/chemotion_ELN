@@ -255,8 +255,8 @@ export class ContainerDatasetModalContent extends Component {
     const index = datasetContainer.attachments.indexOf(attachment);
     if (index === -1) return;
     // Mutate the working copy only. The deletion is committed to the parent exclusively
-    // via handleSave() -> onChange(), so Cancel reverts and preferred-thumbnail reassignment
-    // runs only on a real Save.
+    // via handleSave() -> onChange(), so Cancel reverts and a stale preferred thumbnail is
+    // cleared only on a real Save.
     datasetContainer.attachments[index].is_deleted = true;
     this.setState({ datasetContainer });
   }

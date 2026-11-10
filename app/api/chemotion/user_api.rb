@@ -77,8 +77,8 @@ module Chemotion
 
       desc "fetch current user's own devices and those of their groups"
       get 'devices' do
-        data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
-        present data, with: Entities::DeviceEntity, root: 'currentDevices'
+        data = Device.by_user_ids([current_user.id, *current_user.group_ids]).distinct.order(:name)
+        present data, with: Entities::DeviceSimpleEntity, root: 'currentDevices'
       end
 
       namespace :update_counter do
@@ -205,8 +205,8 @@ module Chemotion
 
       desc 'Get current connection status for a device'
       params do
-        requires :id, type: String, regexp: /\d+/
-        optional :status, type: String
+        requires :id, type: Integer, desc: 'device id'
+        optional :status, type: Boolean, default: false, desc: 'true when the viewer is only watching'
       end
 
       get 'current_connection' do
@@ -219,18 +219,22 @@ module Chemotion
 
         error!('Device not found', 404) unless device
 
-        path = NOVNC_DEVICES_DIR.join(params[:id])
-        status = params[:status] == 'true' ? 1 : 0
+        # Record this viewer and drop those that stopped polling. An unreadable or malformed
+        # entry counts as empty and is overwritten. Concurrent polls may lose one entry for a
+        # cycle; it is restored on that viewer's next poll.
+        now = Time.current.to_i
+        key = "device/#{device.id}"
+        stored = NOVNC_CONNECTIONS.read(key)
+        connections = (stored.is_a?(Hash) ? stored : {}).select do |_user_id, entry|
+          entry.is_a?(Array) && entry.last.is_a?(Integer) && now - entry.last < NOVNC_CONNECTION_TTL
+        end
+        connections[current_user.id] = [params[:status] ? 1 : 0, now]
+        NOVNC_CONNECTIONS.write(key, connections, expires_in: NOVNC_CONNECTION_TTL)
 
-        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
-        cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
-
-        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
-
-        { result: result }
-      rescue SystemCallError => e
+        { result: connections.map { |user_id, (state, _)| "#{user_id},#{state}" } }
+      rescue SystemCallError, IOError => e
         Rails.logger.error("current_connection: #{e.class} – #{e.message}")
-        error!('Internal server error', 500)
+        { result: [] }
       end
 
       desc 'Get deviceMetadata for a device accessible to the current user'

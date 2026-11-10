@@ -7,6 +7,7 @@ import {
   decodeSpectra,
   DEFAULT_PREDICTIONS,
 } from 'src/apps/mydb/elements/details/spectraCompare/services/spectraDecoder';
+import { pickDefaultSelection } from 'src/utilities/SpectraHelper';
 
 const defaultPred = DEFAULT_PREDICTIONS;
 
@@ -73,27 +74,12 @@ class SpectraStore {
     spcMetas.sort((a, b) => {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
-    let newArrSpcIdx = [];
-    let nextSpcIdx = spcMetas[0]?.idx || 0;
-    if (spcMetas.length >= 1) {
-      const currentInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0].idx);
-      const currentDatasetId = currentInfo?.idDt;
-      const datasetSpcInfos = currentDatasetId
-        ? sortedSpcInfo.filter((info) => info.idDt === currentDatasetId)
-        : sortedSpcInfo;
-      const datasetIdxs = datasetSpcInfos.map((info) => info.idx);
-      const datasetSpcMetas = spcMetas.filter((spc) => datasetIdxs.includes(spc.idx));
-      const spcInfoWithLabel = datasetSpcInfos.find(
-        info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
-      );
-      if (spcInfoWithLabel) {
-        newArrSpcIdx = [spcInfoWithLabel.idx];
-        nextSpcIdx = spcInfoWithLabel.idx;
-      } else {
-        newArrSpcIdx = datasetSpcMetas.map((spc) => spc.idx);
-        nextSpcIdx = datasetSpcMetas[0]?.idx || nextSpcIdx;
-      }
-    }
+    const firstInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0]?.idx);
+    const { spcIdx: nextSpcIdx, arrSpcIdx: newArrSpcIdx } = pickDefaultSelection(
+      sortedSpcInfo,
+      spcMetas,
+      firstInfo?.idDt,
+    );
 
     this.setState({
       spcInfos: sortedSpcInfo,
@@ -111,7 +97,11 @@ class SpectraStore {
     if (!fsm) return;
     const fetchedIdx = fsm.idx;
     const prevIdx = spcInfo.idx;
-    const fsi = Object.assign({}, spcInfo, { idx: fetchedIdx }); //  shortcut
+    const fetchedState = fetchedFiles.files[0]?.aasm_state;
+    const fsi = Object.assign({}, spcInfo, { // shortcut
+      idx: fetchedIdx,
+      aasmState: fetchedState || spcInfo.aasmState,
+    });
     const { spcInfos, spcMetas, arrSpcIdx } = this;
     const newSpcInfos = spcInfos.map(si => (
       si.idx === prevIdx ? fsi : si

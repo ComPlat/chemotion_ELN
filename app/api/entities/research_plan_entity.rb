@@ -34,7 +34,7 @@ module Entities
     private
 
     def can_copy
-      element_policy.try(:copy_with_datasets?) || false
+      element_policy.try(:copy?) || false
     end
 
     def attachment_count

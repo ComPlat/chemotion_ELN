@@ -145,8 +145,47 @@ const BuildSpcInfos = (sample, container) => {
       idAi: container.id,
       idDt: file.idDt,
       idx: file.id,
+      aasmState: file.aasm_state,
+      rootId: file.root_id,
     }
   ));
+};
+
+const DEFAULT_SELECTION_RANK = { edited: 0, peaked: 1 };
+
+/**
+ * Picks the spectra selected when ChemSpectra opens a dataset.
+ *
+ * One spectrum is selected, from the most recent upload of the dataset (the lineage with the
+ * highest +rootId+): its edited spectrum, else its peaked one, else its first one in the order
+ * of +spcMetas+. LC/MS and cyclic voltammetry datasets keep every file: LC/MS renders TIC, m/z
+ * and UV-Vis together, and a CV save rebuilds the combined image from the selected curves.
+ *
+ * @param {Array<Object>} spcInfos spectra infos (+idx+, +idDt+, +aasmState+, +rootId+)
+ * @param {Array<Object>} spcMetas decoded spectra (+idx+, +jcamp+), in display order
+ * @param {number|string|null} idDt dataset id; falsy considers every spectrum
+ * @return {{spcIdx: number, arrSpcIdx: Array<number>}}
+ */
+const pickDefaultSelection = (spcInfos = [], spcMetas = [], idDt = null) => {
+  const infos = idDt ? spcInfos.filter((info) => info.idDt === idDt) : spcInfos;
+  const infoByIdx = new Map(infos.map((info) => [info.idx, info]));
+  const candidates = spcMetas.filter((spc) => infoByIdx.has(spc.idx));
+  if (candidates.length === 0) return { spcIdx: spcMetas[0]?.idx || 0, arrSpcIdx: [] };
+
+  const keepsAll = candidates.some(({ jcamp }) => (
+    FN.isLCMsLayout(jcamp?.layout) || FN.isCyclicVoltaLayout(jcamp?.layout)
+  ));
+  if (keepsAll) {
+    return { spcIdx: candidates[0].idx, arrSpcIdx: candidates.map((spc) => spc.idx) };
+  }
+
+  const lineage = (spc) => infoByIdx.get(spc.idx)?.rootId ?? spc.idx;
+  const newestLineage = Math.max(...candidates.map(lineage));
+  const rank = (spc) => DEFAULT_SELECTION_RANK[infoByIdx.get(spc.idx)?.aasmState] ?? 2;
+  const best = candidates
+    .filter((spc) => lineage(spc) === newestLineage)
+    .reduce((acc, spc) => (rank(spc) < rank(acc) ? spc : acc));
+  return { spcIdx: best.idx, arrSpcIdx: [best.idx] };
 };
 
 const BuildSpcInfosForNMRDisplayer = (sample, container) => {
@@ -937,7 +976,7 @@ const inlineNotation = (layout, data, metadata) => {
 };
 
 export {
-  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, pickDefaultSelection, JcampIds, isNMRKind, isSpectrum2D, spectrumName,
   cleaningNMRiumData, inlineNotation,
   isAttachmentRef, isEphemeralUrl, splitArchiveRef, archiveMemberPath,
   entryUrl, urlToEntry, findAttachmentForRef,
