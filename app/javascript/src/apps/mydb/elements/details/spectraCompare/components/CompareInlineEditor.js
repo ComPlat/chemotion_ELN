@@ -128,6 +128,33 @@ const CompareInlineEditor = ({
     [sample, container],
   );
 
+  // rc-select only drops a tag's "x" for fully disabled nodes, but locked leaves use
+  // disableCheckbox (see lockSelectedLeaves), so render the tags here: while adding, the
+  // comparison's existing spectra cannot be removed, so their tags get no "x".
+  const renderTag = useCallback(({
+    label, value, closable, onClose,
+  }) => {
+    const removable = closable && !(isAdding && lockedCopyIds.includes(value));
+    return (
+      <span className="ant-select-selection-item" title={typeof label === 'string' ? label : undefined}>
+        <span className="ant-select-selection-item-content">{label}</span>
+        {removable && (
+          <span
+            className="ant-select-selection-item-remove"
+            role="button"
+            tabIndex={-1}
+            aria-label="Remove"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClose}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(e); }}
+          >
+            <i className="fa fa-times" />
+          </span>
+        )}
+      </span>
+    );
+  }, [isAdding, lockedCopyIds]);
+
   const displayedMenuItems = useMemo(
     () => (isAdding ? lockSelectedLeaves(menuItems, [...lockedCopyIds, ...lockedSourceIds]) : menuItems),
     [isAdding, menuItems, lockedCopyIds, lockedSourceIds],
@@ -424,7 +451,7 @@ const CompareInlineEditor = ({
             virtual={false}
             onChange={(value, _label, info) => handleSelectionChange(displayedMenuItems, value, info)}
             disabled={disabled || (generated && !isAdding)}
-            maxTagCount={2}
+            tagRender={renderTag}
           />
         </div>
       </Col>
