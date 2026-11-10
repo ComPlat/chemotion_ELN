@@ -21,6 +21,7 @@ class PagesController < ApplicationController
       # redirect the user to close the popup window
       render "oauth/token_registration_success"
     rescue StandardError
+      Rails.logger.error("SciFinder-n token registration failed: #{e.class}: #{e.message}")
       redirect_to '/500.html'
     end
   end
