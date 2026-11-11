@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Container, Card, Row, Col, Form, Button, Alert, Modal
@@ -15,6 +15,7 @@ import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
 import TextTemplates from 'src/apps/userSettings/TextTemplates';
+import LlmSettings from 'src/apps/userSettings/LlmSettings';
 
 const AuthenticationSettings = ({ currentUser }) => {
   return (
@@ -320,8 +321,28 @@ const AffiliationsSettings = () => {
     </Container>
   );
 }
+
+const AiSettings = ({ currentUser }) => (
+  <Container className="my-3 d-flex flex-column gap-3">
+    <LlmSettings userId={currentUser?.id} />
+  </Container>
+);
+
+AiSettings.propTypes = {
+  currentUser: PropTypes.shape({ id: PropTypes.number }).isRequired,
+};
+
 const AccountProfile = ({ currentUser, closeSettings }) => {
   const [currentSettings, setCurrentSettings] = useState('account');
+  // AI/LLM Settings is shown only when the user is granted at least one AI access
+  // gate (institution provider or personal API key). Hidden entirely otherwise.
+  const [aiAllowed, setAiAllowed] = useState(false);
+
+  useEffect(() => {
+    UsersFetcher.fetchLlmAccess()
+      .then((access) => setAiAllowed(!!access.any_allowed))
+      .catch(() => setAiAllowed(false));
+  }, []);
 
   const renderMain = () => {
     if (currentSettings === 'account') {
@@ -338,6 +359,9 @@ const AccountProfile = ({ currentUser, closeSettings }) => {
     }
     if (currentSettings === 'text-templates') {
       return <TextTemplates />;
+    }
+    if (currentSettings === 'ai' && aiAllowed) {
+      return <AiSettings currentUser={currentUser} />;
     }
     return null;
   };
@@ -380,6 +404,13 @@ const AccountProfile = ({ currentUser, closeSettings }) => {
                 selected={currentSettings === 'text-templates'}
                 onClick={() => setCurrentSettings('text-templates')}
               />
+              {aiAllowed && (
+                <TreeViewItem
+                  title="AI/LLM Settings"
+                  selected={currentSettings === 'ai'}
+                  onClick={() => setCurrentSettings('ai')}
+                />
+              )}
             </div>
           </div>
         </div>
