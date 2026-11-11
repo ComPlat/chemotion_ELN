@@ -5,6 +5,9 @@ module Errors
 
   class DecodeError < StandardError; end
 
+  # A validly signed token that was issued for something else (see JsonWebToken).
+  class WrongTokenPurpose < DecodeError; end
+
   class ExpiredSignature < StandardError; end
 
   class ApplicationError < StandardError; end

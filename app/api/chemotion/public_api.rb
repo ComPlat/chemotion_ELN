@@ -113,7 +113,7 @@ module Chemotion
         end
         get do
           content_type 'application/octet-stream'
-          payload = JsonWebToken.decode(params[:token])
+          payload = JsonWebToken.decode(params[:token], purpose: :editor)
           error!('401 Unauthorized', 401) if payload.empty?
 
           att_id = payload['att_id']&.to_i
@@ -139,7 +139,7 @@ module Chemotion
         # 7 - error has occurred while force saving the document.
         after_validation do
           error!('401 Unauthorized', 401) if params[:key].nil?
-          payload = JsonWebToken.decode(params[:key])
+          payload = JsonWebToken.decode(params[:key], purpose: :editor)
           error!('401 Unauthorized', 401) if payload.empty?
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 

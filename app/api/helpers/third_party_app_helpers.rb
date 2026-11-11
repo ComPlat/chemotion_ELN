@@ -104,7 +104,7 @@ module ThirdPartyAppHelpers
   end
 
   def encode_and_cache_token(payload = @payload)
-    @token = JsonWebToken.encode(payload, expiry_time)
+    @token = JsonWebToken.encode(payload, expiry_time, purpose: :third_party_app)
     cache.write(
       cache_key,
       { token: @token, download: 3, upload: 10 },

@@ -24,7 +24,7 @@ module Usecases
           last_name: user.last_name,
         }
 
-        JsonWebToken.encode(payload, 2.weeks.from_now)
+        JsonWebToken.encode(payload, 2.weeks.from_now, purpose: :login)
       end
     end
   end

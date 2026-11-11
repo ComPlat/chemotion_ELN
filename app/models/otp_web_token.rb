@@ -20,6 +20,6 @@ class OtpWebToken
       action: 'activate_2fa',
     }
 
-    JsonWebToken.encode(payload, 30.minutes.from_now)
+    JsonWebToken.encode(payload, 30.minutes.from_now, purpose: :two_factor_auth)
   end
 end

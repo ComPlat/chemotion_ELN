@@ -12,9 +12,16 @@ module Usecases
         request.headers['Authorization'].present?
       end
 
+      # A bearer token authenticates only the request that carries it. Storing the
+      # user in the session would turn the token into a cookie login, which also
+      # skips the 2FA check of the regular sign in.
+      def store?
+        false
+      end
+
       def authenticate!
         token = request.headers['Authorization'].to_s.sub(/^Bearer /, '')
-        payload = JsonWebToken.decode(token)
+        payload = JsonWebToken.decode(token, purpose: :login)
         resource = User.find_by(id: payload[:user_id])
 
         success!(resource) if validate(resource) { true }

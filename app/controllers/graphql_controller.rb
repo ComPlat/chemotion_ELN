@@ -39,7 +39,7 @@ class GraphqlController < ApplicationController
     return if current_token.blank?
 
     @current_user ||= begin
-      decoded_token = JsonWebToken.decode(current_token)
+      decoded_token = JsonWebToken.decode(current_token, purpose: :login)
       user_id = decoded_token[:user_id]
 
       User.find_by!(id: user_id)
