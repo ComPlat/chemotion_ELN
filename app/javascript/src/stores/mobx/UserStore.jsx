@@ -274,8 +274,26 @@ const UserStore = types.model(
     loginStatus: types.optional(types.string, ''),
     deviseMappings: types.frozen(defaultDeviseMappings),
     deviseErrorMessages: types.optional(types.string, ''),
+    // false until syncSession has asked the server who is logged in
+    sessionChecked: types.optional(types.boolean, false),
   }
 ).actions((self) => ({
+  // The role in localStorage is only written by the JSON sign in/up forms. A login
+  // that ends in a browser redirect (OmniAuth, an existing session or remember-me
+  // cookie) never writes it, and an expired session leaves a stale one behind.
+  // So on page load the server decides which role the frontend renders.
+  syncSession: flow(function* syncSession() {
+    const result = yield UsersFetcher.fetchCurrentUser();
+    if (result?.user) {
+      self.currentUser = User.create(result.user);
+      self.setRole(result.user.type);
+    } else if (result) {
+      // The server answered, but without a user: no valid session or token.
+      self.logout();
+    }
+    // No result at all means a network error; keep the stored role then.
+    self.sessionChecked = true;
+  }),
   fetchCurrentUser: flow(function* fetchCurrentUser() {
     const result = yield UsersFetcher.fetchCurrentUser();
     if (!result.error) {

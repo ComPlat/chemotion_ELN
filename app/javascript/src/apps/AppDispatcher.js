@@ -76,12 +76,18 @@ const PUBLIC_PATHS = [
 
 const AppDispatcher = () => {
   const { userStore } = useContext(StoreContext);
-  const { role, currentRoute } = userStore;
+  const { role, currentRoute, sessionChecked } = userStore;
 
   // The about page is public and the same for every role, so it must not be
   // overridden by the role based rules below (e.g. the Guest fallback to Home).
   if (currentRoute === '/about') {
     return (<About />);
+  }
+
+  // Until the server has confirmed the role, rendering would show the wrong app
+  // (e.g. the guest page for a user who just logged in via OmniAuth).
+  if (!sessionChecked) {
+    return null;
   }
 
   let app = (<Home />);
