@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Button, Collapse, Row, Col,
@@ -12,6 +12,36 @@ import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeT
 import HiddenStepValues from 'src/apps/mydb/elements/details/reactions/schemeTab/HiddenStepValues';
 import { permitOn } from 'src/components/common/uis';
 import { correctPrefix, formatDisplayValue } from 'src/utilities/MathUtils';
+
+const collapsedSteps = new Set();
+const collapseListeners = new Set();
+const allStepsCollapsed = (ids) => ids.every((id) => collapsedSteps.has(id));
+
+const useCollapseSignal = (onSignal) => useEffect(() => {
+  collapseListeners.add(onSignal);
+  return () => { collapseListeners.delete(onSignal); };
+}, [onSignal]);
+
+export const CollapseAllStepsButton = ({ stepIds }) => {
+  const [, setTick] = useState(0);
+  useCollapseSignal(useCallback(() => setTick((tick) => tick + 1), []));
+  const allCollapsed = allStepsCollapsed(stepIds);
+  const toggleAll = () => {
+    stepIds.forEach((id) => (allCollapsed ? collapsedSteps.delete(id) : collapsedSteps.add(id)));
+    collapseListeners.forEach((listener) => listener());
+  };
+
+  return (
+    <Button variant="light" size="sm" className="ms-2" onClick={toggleAll}>
+      <i className={`fa fa-${allCollapsed ? 'expand' : 'compress'} me-1`} />
+      {allCollapsed ? 'Expand all' : 'Collapse all'}
+    </Button>
+  );
+};
+
+CollapseAllStepsButton.propTypes = {
+  stepIds: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.number, PropTypes.string])).isRequired,
+};
 
 const amountText = (value, unit) => value > 0 && `${correctPrefix(value, 3)}${unit}`;
 
@@ -50,8 +80,14 @@ const ReactionStep = ({
   descriptionField,
   typeField,
 }) => {
-  const [open, setOpen] = useState(true);
   const stepId = step ? step.id : null;
+  const [open, setOpenState] = useState(!collapsedSteps.has(stepId));
+  useCollapseSignal(useCallback(() => setOpenState(!collapsedSteps.has(stepId)), [stepId]));
+  const setOpen = (value) => {
+    if (step) collapsedSteps[value ? 'delete' : 'add'](stepId);
+    setOpenState(value);
+    collapseListeners.forEach((listener) => listener());
+  };
   const carriedProducts = step ? reaction.carriedProductsIntoStep(stepId) : [];
   const destroyed = !!(step && step._destroy);
   const labelFor = (sample) => (

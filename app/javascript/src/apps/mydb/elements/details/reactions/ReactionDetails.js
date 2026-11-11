@@ -23,6 +23,7 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import { CollapseAllStepsButton } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionStep';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
@@ -1007,6 +1008,7 @@ export default class ReactionDetails extends Component {
         />
       );
     }
+    const stepIds = reaction.reaction_steps.map((step) => step.id);
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
@@ -1081,6 +1083,7 @@ export default class ReactionDetails extends Component {
                 </Tooltip>
               </Overlay>
             )}
+            {reaction.isMultiStep() && stepIds.length > 1 && <CollapseAllStepsButton stepIds={stepIds} />}
             {reaction.weight_percentage && (
               <>
                 <OverlayTrigger
