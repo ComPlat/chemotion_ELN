@@ -97,7 +97,7 @@ module Chemotion
           Chemotion::Application.config.version.each do |k, v|
             next if v.to_s == '0'
 
-            current_version << { k.humanize => v }
+            current_version << "#{k.humanize}: #{v}"
           end
           changelog_version = Chemotion::Application.config.version['version']&.delete('.')
           changelog_link =  "https://github.com/ComPlat/chemotion_ELN/blob/main/CHANGELOG.md##{changelog_version}"

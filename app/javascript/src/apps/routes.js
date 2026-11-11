@@ -10,6 +10,13 @@ const routes = {
     '/': 'Home',
   },
 
+  '/about': {
+    target: {
+      About() { routesUtils.syncCurrentRoute('/about'); }
+    },
+    '/': 'About',
+  },
+
   '/sign_in': {
     target: {
       SignIn() { routesUtils.syncCurrentRoute('/sign_in'); }

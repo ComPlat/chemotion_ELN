@@ -70,7 +70,7 @@ Rails.application.routes.draw do
   end
 
   get 'home', to: 'pages#home'
-  get 'about', to: 'pages#about'
+  get 'about', to: 'pages#home'
   get 'command_n_control', to: 'pages#home'
 
   get 'sign_in', to: 'pages#home'
