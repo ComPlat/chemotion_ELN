@@ -18,9 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     domElement
   );
 
+  // the role must come from the server before routing, see UserStore#syncSession
   // add redirect for admin route if route is not /admin
   // it can only run after Aviator.dispatch()
-  appRoutes().then(() => {
+  rootStore.userStore.syncSession().then(appRoutes).then(() => {
     Aviator.dispatch();
     if (rootStore.userStore.role === 'Admin' && document.location.pathname === '/') {
       aviatorNavigationToApp('/admin');
