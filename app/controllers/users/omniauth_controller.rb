@@ -20,6 +20,23 @@ module Users
       auth_handler
     end
 
+    # LDAP differs from the redirect-based providers: new users are auto-provisioned
+    # and signed in directly instead of being routed to the registration form.
+    def ldap
+      if user_signed_in?
+        current_user.link_omniauth(auth.provider, auth.uid)
+        redirect_to root_path
+      else
+        @user = User.find_or_create_from_omniauth!(auth_params)
+        if @user&.persisted?
+          sign_in_and_redirect @user, event: :authentication
+        else
+          session_handler
+          redirect_to new_user_registration_url
+        end
+      end
+    end
+
     protected
 
     def auth
@@ -73,8 +90,8 @@ module Users
       provider
     end
 
-    def auth_signup
-      params = {
+    def auth_params
+      {
         email: email,
         uid: auth.uid,
         provider: auth.provider,
@@ -82,7 +99,10 @@ module Users
         last_name: last_name,
         groups: groups,
       }
-      @user = User.from_omniauth(params)
+    end
+
+    def auth_signup
+      @user = User.from_omniauth(auth_params)
       if @user.persisted?
         sign_in_and_redirect @user, event: :authentication
       else
