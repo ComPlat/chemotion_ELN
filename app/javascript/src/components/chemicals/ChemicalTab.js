@@ -139,6 +139,12 @@ export default class ChemicalTab extends React.Component {
 
     if (prevState.chemical !== chemical) {
       this.updateDisplayWell();
+
+      const data = chemical?._chemical_data?.[0] || {};
+
+      if (data.expiration_date) {
+        this.showExpirationNotification(data);
+      }
     }
 
     if (saveInventory === true) {
@@ -819,6 +825,207 @@ export default class ChemicalTab extends React.Component {
       </OverlayTrigger>
     );
   }
+
+  // getExpirationStatus(expirationDate) {
+  //   if (!expirationDate) return null;
+
+  //   const [year, month, day] = expirationDate.split('-').map(Number);
+
+  //   if (!year || !month || !day) return null;
+
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   const expiry = new Date(year, month - 1, day);
+  //   expiry.setHours(0, 0, 0, 0);
+
+  //   const diffInMs = expiry - today;
+  //   const daysRemaining = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+  //   if (daysRemaining < 0) {
+  //     return {
+  //       status: 'expired',
+  //       daysRemaining,
+  //     };
+  //   }
+
+  //   if (daysRemaining <= 30) {
+  //     return {
+  //       status: 'expiring_soon',
+  //       daysRemaining,
+  //     };
+  //   }
+
+  //   return {
+  //     status: 'valid',
+  //     daysRemaining,
+  //   };
+  // }
+// ********
+//   getExpirationStatus(expirationDate) {
+//   if (!expirationDate) return null;
+
+//   const [day, month, year] = expirationDate.split('.').map(Number);
+
+//   if (!day || !month || !year) return null;
+
+//   const today = new Date();
+//   today.setHours(0, 0, 0, 0);
+
+//   const expiry = new Date(year, month - 1, day);
+//   expiry.setHours(0, 0, 0, 0);
+
+//   const diffInMs = expiry - today;
+//   const daysRemaining = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+//   if (daysRemaining < 0) {
+//     return {
+//       status: 'expired',
+//       daysRemaining,
+//     };
+//   }
+
+//   if (daysRemaining <= 30) {
+//     return {
+//       status: 'expiring_soon',
+//       daysRemaining,
+//     };
+//   }
+
+//   return {
+//     status: 'valid',
+//     daysRemaining,
+//   };
+// }
+
+// showExpirationNotification(data) {
+//   const expirationDate = data?.expiration_date;
+//   const expirationStatus = this.getExpirationStatus(expirationDate);
+
+//   if (!expirationStatus) return;
+
+//   const notificationUid = `chemical-expiration-${this.props.sample?.id}`;
+
+//   if (expirationStatus.status === 'expired') {
+//     this.context.notifications.add({
+//       title: 'Chemical expired',
+//       message: `This chemical expired on ${expirationDate}.`,
+//       level: 'error',
+//       position: 'tr',
+//       autoDismiss: 10,
+//       uid: notificationUid,
+//     });
+//   } else if (expirationStatus.status === 'expiring_soon') {
+//     this.context.notifications.add({
+//       title: 'Chemical expiration warning',
+//       message: `This chemical expires on ${expirationDate} in ${expirationStatus.daysRemaining} days.`,
+//       level: 'warning',
+//       position: 'tr',
+//       autoDismiss: 10,
+//       uid: notificationUid,
+//     });
+//   }
+// }
+
+  renderExpirationBanner(data) {
+    console.log('Expiration date:', data?.expiration_date);
+  const expirationStatus = this.getExpirationStatus(data?.expiration_date);
+
+  console.log('Expiration status:', expirationStatus);
+
+  if (!expirationStatus) return null;
+
+  if (expirationStatus.status === 'expired') {
+    return (
+      <div className="alert alert-danger mb-3">
+        <strong>Expired:</strong>{' '}
+        This chemical expired on {data.expiration_date}.
+      </div>
+    );
+  }
+
+  if (expirationStatus.status === 'expiring_soon') {
+    return (
+      <div className="alert alert-warning mb-3">
+        <strong>Expiration warning:</strong>{' '}
+        This chemical expires on {data.expiration_date}
+        {' '}({expirationStatus.daysRemaining} days remaining).
+      </div>
+    );
+  }
+
+  return null;
+ }
+ 
+
+
+getExpirationStatus(expirationDate) {
+  if (!expirationDate) return null;
+
+  const [day, month, year] = expirationDate.split('.').map(Number);
+
+  if (!day || !month || !year) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expiry = new Date(year, month - 1, day);
+  expiry.setHours(0, 0, 0, 0);
+
+  const diffInMs = expiry - today;
+  const daysRemaining = Math.ceil(
+    diffInMs / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysRemaining < 0) {
+    return {
+      status: 'expired',
+      daysRemaining,
+    };
+  }
+
+  if (daysRemaining <= 30) {
+    return {
+      status: 'expiring_soon',
+      daysRemaining,
+    };
+  }
+
+  return {
+    status: 'valid',
+    daysRemaining,
+  };
+}
+
+showExpirationNotification(data) {
+  const expirationDate = data?.expiration_date;
+  const expirationStatus = this.getExpirationStatus(expirationDate);
+
+  if (!expirationStatus) return;
+
+  const notificationUid = `chemical-expiration-${this.props.sample?.id}`;
+
+  if (expirationStatus.status === 'expired') {
+    this.context.notifications.add({
+      title: 'Chemical expired',
+      message: `This chemical expired on ${expirationDate}.`,
+      level: 'error',
+      position: 'tr',
+      autoDismiss: 10,
+      uid: notificationUid,
+    });
+  } else if (expirationStatus.status === 'expiring_soon') {
+    this.context.notifications.add({
+      title: 'Chemical expiration warning',
+      message: `This chemical expires on ${expirationDate} in ${expirationStatus.daysRemaining} days.`,
+      level: 'warning',
+      position: 'tr',
+      autoDismiss: 10,
+      uid: notificationUid,
+    });
+  }
+}
+
 
   copyButton(document) {
     const { chemical } = this.state;
@@ -1842,6 +2049,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <>
+        {this.renderExpirationBanner(data)}
         <Row className="mb-3">
           <Col>
             {this.chemicalStatus(data)}
