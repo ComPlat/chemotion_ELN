@@ -49,6 +49,22 @@ describe Entities::ContainerEntity do
           content: JSON.parse('{"ops": [{"insert": "analysis contents"}]}'),
         )
       end
+
+      it 'omits the MOF CIF marker on ordinary analyses' do
+        expect(grape_entity_as_hash[:extended_metadata]).not_to have_key(:mof_cif)
+      end
+    end
+
+    context 'with the analysis holding a MOF sample CIF' do
+      let(:container) do
+        create(:analysis_container).tap do |analysis|
+          analysis.update!(extended_metadata: analysis.extended_metadata.merge('mof_cif' => 'true'))
+        end
+      end
+
+      it 'returns the MOF CIF marker so it survives save and reload' do
+        expect(grape_entity_as_hash[:extended_metadata]).to include(mof_cif: 'true')
+      end
     end
   end
 end

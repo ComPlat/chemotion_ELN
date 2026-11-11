@@ -1,0 +1,11 @@
+# Base URL of the chemotion-converter-app that hosts the MOF endpoint.
+# MofService appends /mofid (no auth required). Include any /api/v1 prefix
+# in the base URL, but do not include /mofid itself.
+# Development default: a converter run locally with `flask run --port 5000`.
+# A shared test instance serves the endpoint under /api/v1, so its base URL
+# ends in /api/v1.
+development:
+  :mof_service_url: 'http://localhost:5000'
+
+production:
+  :mof_service_url: 'http://converter:4000/'

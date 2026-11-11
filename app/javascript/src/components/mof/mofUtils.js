@@ -1,0 +1,248 @@
+// Helpers for the (SUR)MOF configuration: turning a CIF-analysis result into the
+// structured sample_details.mof shape. Preserve the converter's full identifiers;
+// derive a new MOFid only when the user changes its structural inputs.
+
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import Container from 'src/models/Container';
+import Attachment from 'src/models/Attachment';
+import { chmoConversions } from 'src/components/OlsComponent';
+
+// The uploaded CIF is kept as an attachment of an X-ray diffraction analysis on
+// the sample, so it is saved, downloaded and exported like any analysis file.
+// The analysis is found by this extended_metadata marker (stored as a string in
+// hstore), not by its name, which users may edit.
+export const MOF_CIF_ANALYSIS_NAME = 'MOF structure (CIF)';
+export const MOF_CIF_MARKER = 'mof_cif';
+
+/**
+ * Resolve a fragment's building-block SMILES into display identifiers using the
+ * app's molecule service (the same call mixtures use to resolve components).
+ * @param {string} smiles
+ * @returns {Promise<Object>} fields to merge onto the fragment, or {} on failure
+ */
+export const resolveFragmentIdentifiers = async (smiles) => {
+  const smi = `${smiles ?? ''}`.trim();
+  if (!smi) return {};
+  try {
+    const molecule = await MoleculesFetcher.fetchBySmi(smi, null, null, 'ketcher');
+    if (!molecule || !molecule.id) return {};
+    return {
+      molecule_id: molecule.id,
+      iupac: molecule.iupac_name || '',
+      sum_formula: molecule.sum_formular || molecule.sum_formula || '',
+      inchikey: molecule.inchikey || '',
+      inchistring: molecule.inchistring || '',
+      cano_smiles: molecule.cano_smiles || '',
+      // no molfile: it is unused here and sample_details ships with every list row
+      svg_file: molecule.molecule_svg_file || '',
+    };
+  } catch (e) {
+    return {};
+  }
+};
+
+/**
+ * Resolve every fragment that has a SMILES, returning a new fragments array with
+ * IUPAC / InChI / canonical SMILES / molfile / SVG populated. Fragments without
+ * a SMILES (or that fail to resolve) are left unchanged.
+ * @param {Array<Object>} fragments
+ * @returns {Promise<Array<Object>>}
+ */
+export const resolveFragments = async (fragments = []) => Promise.all(
+  fragments.map(async (frag) => {
+    if (!frag || !`${frag.smiles ?? ''}`.trim()) return frag;
+    const patch = await resolveFragmentIdentifiers(frag.smiles);
+    return { ...frag, ...patch };
+  }),
+);
+
+/**
+ * Assemble the MOFid string from the structured mof fields.
+ * @param {Object} mof - sample_details.mof
+ * @returns {string} the MOFid, or '' when there is nothing to assemble
+ */
+export const buildMofid = (mof = {}) => {
+  const smiles = (mof.fragments || [])
+    .map((frag) => `${frag.smiles ?? ''}`.trim())
+    .filter(Boolean)
+    .join('.');
+  const suffix = [mof.format_id, mof.topology, mof.cat]
+    .map((part) => `${part ?? ''}`.trim())
+    .filter(Boolean)
+    .join('.');
+  return [smiles, suffix].filter(Boolean).join(' ');
+};
+
+// Metadata edits must not discard the structure name after ';'.
+export const patchMofDetails = (mof = {}, patch = {}) => {
+  const next = { ...mof, ...patch };
+  if (buildMofid(next) !== buildMofid(mof)) next.mofid = buildMofid(next);
+  return next;
+};
+
+// The MOF service may return string or array values (e.g. smiles_nodes can be a
+// list of building blocks). Coerce to a single string for regex/splitting.
+const asText = (value) => (Array.isArray(value) ? value.join(' ') : `${value ?? ''}`);
+
+// Normalize a SMILES value (string with '.'-separated blocks, or an array of
+// blocks) into a flat list of individual building-block SMILES.
+const toSmilesList = (value) => (Array.isArray(value) ? value : [value])
+  .flatMap((item) => `${item ?? ''}`.split('.'))
+  .map((smiles) => smiles.trim())
+  .filter(Boolean);
+
+const matchToken = (text, regex, fallback) => {
+  const found = asText(text).match(regex);
+  return found ? found[0] : fallback;
+};
+
+const normalizeCatenation = (result) => {
+  if (result.cat !== undefined && result.cat !== null && `${result.cat}` !== '') {
+    return /^\d+$/.test(`${result.cat}`) ? `cat${result.cat}` : `${result.cat}`;
+  }
+  return matchToken(result.mofid, /cat\d+/, '');
+};
+
+const fragmentsFromResult = (result) => {
+  const rows = [];
+  // ratios is aligned index-for-index with toSmilesList(smiles) (the converter
+  // splits smiles_nodes / smiles_linkers the same way). Unknown ratios stay null.
+  const push = (smiles, typeFunction, ratios) => {
+    toSmilesList(smiles).forEach((s, i) => rows.push({
+      type_function: typeFunction,
+      iupac: '',
+      smiles: s,
+      ratio: Array.isArray(ratios) && ratios[i] != null ? ratios[i] : null,
+      comment: '',
+    }));
+  };
+  if (result.smiles_nodes || result.smiles_linkers) {
+    push(result.smiles_nodes, 'node', result.node_ratios);
+    push(result.smiles_linkers, 'linker', result.linker_ratios);
+  } else {
+    push(result.smiles, '');
+  }
+  return rows;
+};
+
+/**
+ * Split a MOFkey on '.', anchored on its "MOFkey-vN" token. For
+ *   "Cu.QMKYBPDZANOJGF.MOFkey-v1.tbo.NO_REF"
+ * returns { formatKey: 'MOFkey-v1', topology: 'tbo', reference: 'NO_REF' }.
+ * @param {string} mofkey
+ * @returns {{ formatKey: string, topology: string, reference: string }}
+ */
+export const splitMofkey = (mofkey) => {
+  const parts = asText(mofkey).split('.').map((part) => part.trim());
+  const idx = parts.findIndex((part) => /^MOFkey-v\d+$/i.test(part));
+  if (idx === -1) return { formatKey: '', topology: '', reference: '' };
+  return {
+    formatKey: parts[idx] || '',
+    topology: parts[idx + 1] || '',
+    reference: parts[idx + 2] || '',
+  };
+};
+
+/**
+ * Map a raw MOF-service analysis result onto the structured sample_details.mof
+ * fields, retrieving Format ID / Format Key / Topology / Catenation from the CIF
+ * output. Format Key and Topology are split out of the MOFkey; Format ID and
+ * Catenation come from the MOFid. Full identifiers are kept as returned.
+ *
+ * @param {Object} result - MofFetcher.analyze response
+ * @returns {Object} structured mof details
+ */
+export const mofResultFromAnalysis = (result = {}) => {
+  const { formatKey, topology: topologyFromKey } = splitMofkey(result.mofkey);
+
+  const details = {
+    fragments: fragmentsFromResult(result),
+    format_id: matchToken(result.mofid, /MOFid-v\d+/, 'MOFid-v1'),
+    format_key: formatKey || 'MOFkey-v1',
+    topology: asText(result.topology) || topologyFromKey || matchToken(result.mofid, /(?<=MOFid-v\d+\.)[^.\s]+/, ''),
+    cat: normalizeCatenation(result),
+    // CCDC number is extracted from the CIF by the converter; SURMOF thin-film
+    // properties are user-entered.
+    ccdc_no: asText(result.ccdc_number),
+    substrate: '',
+    coating: '',
+    dimensions: '',
+    mofid: asText(result.mofid),
+    mofkey: asText(result.mofkey),
+    // keep the raw analysis fields (coerced to strings) for reference / display
+    smiles: asText(result.smiles),
+    smiles_nodes: asText(result.smiles_nodes),
+    smiles_linkers: asText(result.smiles_linkers),
+    filename: result.filename || null,
+  };
+  return details;
+};
+
+const isMofCifAnalysis = (container) => container.container_type === 'analysis'
+  && !container.is_deleted
+  && `${container.extended_metadata?.[MOF_CIF_MARKER] ?? ''}` === 'true';
+
+const findMofCifAnalysis = (sample) => sample.analysesContainers()
+  .flatMap((analyses) => analyses.children)
+  .find(isMofCifAnalysis);
+
+const datasetsOf = (analysis) => analysis.children
+  .filter((child) => child.container_type === 'dataset' && !child.is_deleted);
+
+// Drop the managed CIF only while it is unsaved. Saved CIFs are never deleted
+// here (the save path destroys deleted attachments), so earlier uploads stay in
+// the analysis as history, and files the user added there are left alone.
+const dropUnsavedCif = (analysis, filename) => {
+  if (!filename) return;
+  datasetsOf(analysis).forEach((dataset) => {
+    dataset.attachments = dataset.attachments
+      .filter((attachment) => !(attachment.is_new && attachment.filename === filename));
+  });
+};
+
+const removeAnalysisIfEmpty = (sample, analysis) => {
+  const empty = analysis.is_new && datasetsOf(analysis).every((dataset) => dataset.attachments.length === 0);
+  if (!empty) return;
+  sample.analysesContainers().forEach((analyses) => {
+    analyses.children = analyses.children.filter((child) => child !== analysis);
+  });
+};
+
+/**
+ * Keep the uploaded CIF on the sample, in the marked MOF analysis (created with
+ * a dataset on first use). An unsaved previous CIF is replaced; a saved one stays.
+ * @param {Sample} sample
+ * @param {File} file
+ * @param {string|null} previousFilename - filename of the CIF analyzed before
+ */
+export const attachMofCif = (sample, file, previousFilename = null) => {
+  let analysis = findMofCifAnalysis(sample);
+  if (!analysis) {
+    analysis = Container.buildAnalysis(chmoConversions.crystal_structure.value, MOF_CIF_ANALYSIS_NAME);
+    analysis.extended_metadata[MOF_CIF_MARKER] = 'true';
+    sample.addAnalysis(analysis);
+  }
+  dropUnsavedCif(analysis, previousFilename);
+
+  let [dataset] = datasetsOf(analysis);
+  if (!dataset) {
+    dataset = Container.buildEmpty();
+    dataset.container_type = 'dataset';
+    dataset.name = MOF_CIF_ANALYSIS_NAME;
+    analysis.children.push(dataset);
+  }
+  dataset.attachments.push(Attachment.fromFile(file));
+};
+
+/**
+ * Undo an unsaved CIF upload (Clear). A saved CIF stays in the analysis; the
+ * user can delete it in the Analyses tab.
+ * @param {Sample} sample
+ * @param {string|null} filename - filename of the analyzed CIF
+ */
+export const detachMofCif = (sample, filename) => {
+  const analysis = findMofCifAnalysis(sample);
+  if (!analysis) return;
+  dropUnsavedCif(analysis, filename);
+  removeAnalysisIfEmpty(sample, analysis);
+};
