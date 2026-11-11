@@ -129,8 +129,8 @@ export default class ReactQuill extends React.Component {
     }
 
     // Handle read-only changes in-place
-    if (nextProps.readOnly !== this.props.readOnly && nextProps.readOnly !== null) {
-      this.setEditorReadOnly(!nextProps.readOnly);
+    if (this.editor && nextProps.readOnly !== this.props.readOnly && nextProps.readOnly !== null) {
+      this.setEditorReadOnly(this.editor, nextProps.readOnly);
     }
 
     return Object.keys(this.props).some(propKey => (
