@@ -7,7 +7,7 @@ import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import LoginOptions from 'src/components/omniauthCredential/LoginOptions';
 import { LinksForDeviseForm } from 'src/components/navigation/NavNewSession';
 import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
-import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
+import { aviatorNavigationToApp, startRouteForRole } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 const SignUp = () => {
@@ -62,7 +62,7 @@ const SignUp = () => {
       userStore.setAuthToken(registrationResult.token);
       userStore.setRole(registrationResult.role);
       userStore.setDeviseErrorMessages('');
-      aviatorNavigationToApp('/mydb/collection/all');
+      aviatorNavigationToApp(startRouteForRole(registrationResult.role));
     } else if (registrationResult.status === 400) {
       setForm({ password: '', password_confirmation: '' });
       setErrors(registrationResult.error_messages);

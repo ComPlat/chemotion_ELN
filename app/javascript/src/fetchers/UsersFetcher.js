@@ -1,6 +1,5 @@
 /* eslint-disable arrow-parens */
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import DocumentHelper from 'src/utilities/DocumentHelper';
 
 class ResponseError extends Error {
   constructor(response) {
@@ -147,15 +146,12 @@ export default class UsersFetcher {
     return ApiClient.putJson('/api/v1/users/two_factor');
   }
 
+  // The CSRF token is sent by ChemotionApiClient as X-CSRF-Token header.
   static logoutUser() {
-    return ApiClient.deleteRequest('/users/sign_out', {
-      body: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
-      headers: {},
-    });
+    return ApiClient.deleteRequest('/users/sign_out', { headers: {} });
   }
 
   static submitAsForm(url, method, body) {
-    body.append('authenticity_token', DocumentHelper.getMetaContent('csrf-token'));
     const options = {
       body,
       headers: {},

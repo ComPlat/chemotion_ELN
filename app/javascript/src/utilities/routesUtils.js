@@ -330,6 +330,17 @@ const aviatorNavigationToApp = (url, silent = false) => {
   rootStore.userStore.setCurrentRoute(url);
 };
 
+// Start page after sign in, sign up or password reset. AppDispatcher picks the app
+// by role, so the URL has to match it - otherwise e.g. an admin sees AdminHome
+// under /mydb/collection/all.
+const startRouteForRole = (role) => {
+  switch (role) {
+    case 'Admin': return '/admin';
+    case 'Group': return '/command_n_control';
+    default: return '/mydb/collection/all';
+  }
+};
+
 // For route targets in apps/routes.js that just need to react to a URL
 // Aviator already matched (dispatch(), or a popstate-triggered re-dispatch) -
 // unlike aviatorNavigationToApp, this never calls Aviator.navigate(), so it
@@ -398,6 +409,7 @@ export {
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
   aviatorNavigationToApp,
+  startRouteForRole,
   syncCurrentRoute,
   aviatorNavigation,
   aviatorNavigationWithCollectionId,

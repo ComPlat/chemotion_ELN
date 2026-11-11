@@ -6,7 +6,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import { LinksForDeviseForm } from 'src/components/navigation/NavNewSession';
 import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
-import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
+import { aviatorNavigationToApp, startRouteForRole } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 const EditPassword = () => {
@@ -57,7 +57,7 @@ const EditPassword = () => {
           message,
           level: 'info',
         });
-        aviatorNavigationToApp('/mydb/collection/all');
+        aviatorNavigationToApp(startRouteForRole(role));
       } else {
         userStore.setDeviseErrorMessages(message);
         aviatorNavigationToApp('/sign_in');

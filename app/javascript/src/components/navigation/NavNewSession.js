@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
+import { aviatorNavigationToApp, startRouteForRole } from 'src/utilities/routesUtils';
 
 import uuid from 'uuid';
 import {
@@ -44,13 +44,7 @@ const applyLoginResult = (loginResult, userStore) => {
   userStore.setLoginStatus('');
   userStore.setDeviseErrorMessages('');
 
-  let route = '/mydb/collection/all';
-  if (loginResult.role === 'Group') {
-    route = '/command_n_control';
-  } else if (loginResult.role === 'Admin') {
-    route = '/admin';
-  }
-  aviatorNavigationToApp(route);
+  aviatorNavigationToApp(startRouteForRole(loginResult.role));
 };
 
 const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
