@@ -191,8 +191,12 @@ ImageAnnotationModalSVG.propTypes = {
   attachment: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     updatedAnnotation: PropTypes.string,
-  }).isRequired,
+  }),
   handleOnClose: PropTypes.func.isRequired,
   handleSave: PropTypes.func.isRequired,
   isShow: PropTypes.bool.isRequired,
+};
+
+ImageAnnotationModalSVG.defaultProps = {
+  attachment: null,
 };
