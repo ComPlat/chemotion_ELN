@@ -9,6 +9,16 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 
+// the editor keeps one closing line break of its own, which also carries the last line's
+// format (list, heading, indent); save strips it and keeps that format as lastLineFormat,
+// so add both back here
+const asEditorValue = (data) => {
+  const closingLineBreak = data?.lastLineFormat
+    ? { insert: '\n', attributes: data.lastLineFormat }
+    : { insert: '\n' };
+  return { ...data, ops: [...(data?.ops || []), closingLineBreak] };
+};
+
 function TemplateListItem({ name, selected, onSelect, onRemove, readOnly }) {
   return (
     <div
@@ -46,6 +56,7 @@ class TemplateEditPanel extends React.Component {
       name: props.template?.name ?? '',
       text: props.template?.data?.text ?? '',
       icon: props.template?.data?.icon ?? '',
+      editorValue: asEditorValue(props.template?.data),
     };
 
     this.reactQuillRef = React.createRef();
@@ -58,6 +69,7 @@ class TemplateEditPanel extends React.Component {
         name: template?.name ?? '',
         text: template?.data?.text ?? '',
         icon: template?.data?.icon ?? '',
+        editorValue: asEditorValue(template?.data),
       });
     }
   }
@@ -68,6 +80,7 @@ class TemplateEditPanel extends React.Component {
     const quill = this.reactQuillRef.current;
     const delta = quill.getContents();
     const deltaLength = delta.length();
+    const lastLineFormat = delta.ops[delta.ops.length - 1]?.attributes;
     const removeTrailingNewline = new Delta().retain(deltaLength - 1).delete(1);
     const { ops } = delta.compose(removeTrailingNewline);
 
@@ -81,13 +94,14 @@ class TemplateEditPanel extends React.Component {
         ops,
         text: text.trim() === '' ? null : text.trim(),
         icon: icon.trim() === '' ? null : icon.trim(),
+        ...(lastLineFormat && { lastLineFormat }),
       },
     });
   };
 
   render() {
     const { template, readOnly } = this.props;
-    const { name, text, icon } = this.state;
+    const { name, text, icon, editorValue } = this.state;
 
     const previewTemplate = {
       ...template,
@@ -161,7 +175,7 @@ class TemplateEditPanel extends React.Component {
               <Form.Label className="fw-medium text-muted small text-uppercase mb-1">Content</Form.Label>
               <QuillEditor
                 ref={this.reactQuillRef}
-                value={template.data}
+                value={editorValue}
                 onChange={() => {}}
                 disabled={readOnly}
               />
