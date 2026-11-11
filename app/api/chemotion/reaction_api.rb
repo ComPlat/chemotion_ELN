@@ -240,11 +240,15 @@ module Chemotion
         put do
           reaction = @reaction
           attributes = declared(params, include_missing: false)
-          # Environment updates are nested patches; omitted readings, values and units stay intact.
+          # Omitted readings and units stay intact; a supplied unit requires its value.
           if attributes.key?(:environment)
-            attributes[:environment] = (reaction.environment || {}).deep_merge(
-              attributes[:environment].deep_stringify_keys,
-            )
+            environment_patch = attributes[:environment].deep_stringify_keys
+            environment_patch.each do |field, reading|
+              next unless reading.key?('unit') && !reading.key?('value')
+
+              error!("Environment #{field.humanize.downcase} value is required when unit is supplied", 422)
+            end
+            attributes[:environment] = (reaction.environment || {}).deep_merge(environment_patch)
           end
           normalize_legacy_concentration_mode!(attributes)
           ActiveRecord::Base.transaction do

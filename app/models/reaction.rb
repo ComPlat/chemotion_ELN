@@ -363,7 +363,7 @@ class Reaction < ApplicationRecord
   def normalize_environment_values
     return unless environment.is_a?(Hash)
 
-    normalized = environment.deep_dup
+    normalized = self.class.column_defaults.fetch('environment').deep_dup.deep_merge(environment.deep_stringify_keys)
     ENVIRONMENT_FIELDS.each do |field|
       reading = normalized[field]
       next unless reading.is_a?(Hash) && reading.key?('value')

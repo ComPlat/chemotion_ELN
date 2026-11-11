@@ -104,10 +104,11 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
     [nil, {}].each do |previous|
       it "keeps the stored #{previous.inspect} as the previous and revertible value" do
         reaction = create(:reaction, environment: previous)
+        stored = reaction.reload.environment.deep_dup
         as_request { reaction.update!(environment: environment) }
 
         change = field_changes(reaction, :environment).last
-        expect(change.values_at(:old_value, :new_value, :revertible_value)).to eq [previous, environment, previous]
+        expect(change.values_at(:old_value, :new_value, :revertible_value)).to eq [stored, environment, stored]
       end
     end
 
@@ -116,7 +117,10 @@ RSpec.describe Versioning::Serializers::ReactionSerializer do
       as_request { reaction.update!(environment: {}) }
 
       expect(field_changes(reaction, :environment).last).to include(
-        old_value: environment, new_value: {}, current_value: {}, revertible_value: environment,
+        old_value: environment,
+        new_value: Reaction.column_defaults.fetch('environment'),
+        current_value: Reaction.column_defaults.fetch('environment'),
+        revertible_value: environment,
       )
     end
 

@@ -43,4 +43,12 @@ RSpec.describe 'Reaction environment imports' do # rubocop:disable RSpec/Describ
       expect(Reaction.count).to eq count
     end
   end
+
+  it 'fills missing readings and units on imported partial environments' do
+    reaction = import_environment('temperature' => { 'value' => '20' })
+
+    expect(reaction.reload.environment).to eq(
+      Reaction.column_defaults.fetch('environment').deep_merge('temperature' => { 'value' => '20' }),
+    )
+  end
 end

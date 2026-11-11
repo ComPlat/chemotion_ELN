@@ -19,10 +19,11 @@ RSpec.describe 'History revert round trips' do # rubocop:disable RSpec/DescribeC
   [nil, {}].each do |previous|
     it "reverts environmental conditions back to the stored #{previous.inspect}" do
       reaction = create(:reaction, environment: previous)
+      stored = reaction.reload.environment.deep_dup
       round_trip(reaction, Versioning::Serializers::ReactionSerializer, Versioning::Reverters::ReactionReverter,
                  'environment', environment: { 'temperature' => { 'value' => '22', 'unit' => '°C' } })
 
-      expect(reaction.environment).to eq previous
+      expect(reaction.environment).to eq stored
     end
   end
 

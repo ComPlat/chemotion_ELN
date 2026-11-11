@@ -138,9 +138,13 @@ const EnvironmentConditionsPanel = ({
       // Always convert from the original measurement until the value is edited.
       const source = previous?.value === value && previous?.unit === current
         ? previous.source : { value, unit: current };
+      const converted = convertTemperature(
+        Number(normalizeDecimalSeparator(source.value)), source.unit, nextUnit
+      );
+      if (!Number.isFinite(converted)) { return; }
+
       nextValue = nextUnit === source.unit ? source.value
-        : convertTemperature(normalizeDecimalSeparator(source.value), source.unit, nextUnit)
-          .toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 12 });
+        : converted.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 12 });
       temperatureConversion.current = { source, value: nextValue, unit: nextUnit };
     }
     updateField('temperature', { value: nextValue, unit: nextUnit });

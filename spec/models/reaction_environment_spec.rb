@@ -4,6 +4,8 @@ require 'rails_helper'
 
 RSpec.describe Reaction do
   describe 'environment values' do
+    let(:default_environment) { described_class.column_defaults.fetch('environment') }
+
     [
       ['21,5', '21.5'], [' −4,5 ', '-4.5'], ['.5', '.5'], ['5.', '5.'],
       [0, '0'], [22.5, '22.5'], [0.00000001, '0.00000001'], ['', ''], [nil, '']
@@ -50,12 +52,35 @@ RSpec.describe Reaction do
       reaction = build(:reaction, creator: build(:user), environment: environment)
       reaction.validate
 
-      expect(reaction.environment).to eq('air_pressure' => { 'value' => '14.7', 'unit' => 'mPa' })
+      expect(reaction.environment).to eq(
+        default_environment.deep_merge('air_pressure' => { 'value' => '14.7', 'unit' => 'mPa' }),
+      )
       expect(environment).to eq('air_pressure' => { 'value' => '14,7', 'unit' => 'mPa' })
     end
 
+    [{}, { 'temperature' => { 'value' => '20' } }].each do |environment|
+      it "fills missing readings and properties for #{environment.inspect}" do
+        original = default_environment.deep_dup
+        reaction = build(:reaction, creator: build(:user), environment: environment)
+
+        expect(reaction).to be_valid
+        expect(reaction.environment).to eq(original.deep_merge(environment))
+        expect(default_environment).to eq(original)
+      end
+    end
+
+    it 'normalizes partial readings without writing into nested column defaults' do
+      defaults = described_class.column_defaults.deep_dup
+      defaults.fetch('environment').each_value(&:freeze)
+      allow(described_class).to receive(:column_defaults).and_return(defaults)
+      reaction = build(:reaction, creator: build(:user), environment: { 'temperature' => { 'value' => '20' } })
+
+      expect(reaction).to be_valid
+      expect(reaction.environment['humidity']).to eq('value' => '', 'unit' => '%')
+    end
+
     context 'when updating a reaction' do
-      let(:environment) { { 'temperature' => { 'value' => '21.5', 'unit' => '°C' } } }
+      let(:environment) { default_environment.deep_merge('temperature' => { 'value' => '21.5', 'unit' => '°C' }) }
       let(:reaction) { create(:reaction, environment: environment) }
 
       it 'preserves a numeric reading when renaming the reaction' do

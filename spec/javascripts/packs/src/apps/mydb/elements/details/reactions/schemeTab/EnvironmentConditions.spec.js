@@ -306,6 +306,21 @@ describe('EnvironmentConditionsPanel', () => {
   });
 
   describe('temperature unit cycling', () => {
+    [['positive', ''], ['negative', '-']].forEach(([label, sign]) => {
+      it(`keeps a finite ${label} temperature unchanged when conversion overflows`, () => {
+        const value = `${sign}1${'0'.repeat(308)}`;
+        const onChange = sinon.spy();
+        const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit: '°C' } }), onChange);
+        expect(isEnvironmentNumber(value)).toBe(true);
+
+        wrapper.find('button').at(0).simulate('click');
+
+        expect(onChange.called).toBe(false);
+        expect(wrapper.find('input').at(TEMPERATURE).prop('value')).toBe(value);
+        expect(wrapper.find('button').at(0).text()).toBe('°C');
+      });
+    });
+
     [
       ['21,5', '70.7', '294.65'],
       ['-4,5', '23.9', '268.65'],
