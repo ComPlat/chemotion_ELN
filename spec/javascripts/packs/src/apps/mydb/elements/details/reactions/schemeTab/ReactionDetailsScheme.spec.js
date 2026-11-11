@@ -1423,14 +1423,24 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
 });
 
 describe('ReactionDetailsScheme vessel-size input', () => {
-  ['updateVesselSize', 'updateVesselSizeOnBlur'].forEach((handler) => {
+  ['updateVesselSize', 'updateVesselSizeOnBlur', 'updateVesselSizeOnPaste'].forEach((handler) => {
+    const isPaste = handler === 'updateVesselSizeOnPaste';
+    const inputEvent = (raw) => (isPaste ? {
+      target: { value: '', selectionStart: 0, selectionEnd: 0 },
+      clipboardData: { getData: () => raw },
+      preventDefault: sinon.spy(),
+    } : { target: { value: raw } });
+
     ['l', 'ml'].forEach((unit) => {
-      [
+      const grouped = [
         ['1,000.5', '1000.5'],
         ['1.000,5', '1000.5'],
         ['12,345,678.90', '12345678.90'],
         ['12.345.678,90', '12345678.90'],
         ['1,000.50000000000000001', '1000.50000000000000001'],
+      ];
+      [
+        ...(isPaste ? grouped : []),
         ['12,5', '12.5'],
         ['0', '0'],
         ['.5', '.5'],
@@ -1442,13 +1452,10 @@ describe('ReactionDetailsScheme vessel-size input', () => {
           const onInputChange = sinon.spy();
           const reaction = Reaction.buildEmpty(1);
           reaction.vessel_size = { unit };
-          const instance = new ReactionDetailsScheme({
-            reaction,
-            onInputChange,
-          });
+          const instance = new ReactionDetailsScheme({ reaction, onInputChange });
           const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
 
-          instance[handler]({ target: { value: raw } });
+          instance[handler](inputEvent(raw));
 
           expect(onInputChange.calledOnceWithExactly('vesselSizeAmount', normalized)).toBe(true);
           if (handler === 'updateVesselSizeOnBlur' && normalized === '') {
@@ -1463,7 +1470,9 @@ describe('ReactionDetailsScheme vessel-size input', () => {
         });
       });
 
-      ['1.2.5', '12.3.45', '1,,25', '12,5 ml', '500abc.2xyz', '1.013e5', '1,00.5', '-5', '−5'].forEach((raw) => {
+      const rejected = ['1.2.5', '12.3.45', '1,,25', '12,5 ml', '500abc.2xyz', '1.013e5', '1,00.5', '-5', '−5'];
+      if (!isPaste) { rejected.push('0.250,', '21.500,', ...grouped.map(([raw]) => raw)); }
+      rejected.forEach((raw) => {
         it(`${handler} rejects ${JSON.stringify(raw)} and keeps the previous vessel size in ${unit}`, () => {
           const onInputChange = sinon.spy();
           const reaction = Reaction.buildEmpty(1);
@@ -1471,7 +1480,7 @@ describe('ReactionDetailsScheme vessel-size input', () => {
           const instance = new ReactionDetailsScheme({ reaction, onInputChange });
           const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
 
-          instance[handler]({ target: { value: raw } });
+          instance[handler](inputEvent(raw));
 
           expect(onInputChange.called).toBe(false);
           expect(handleMaterialsChange.called).toBe(false);
@@ -1479,6 +1488,25 @@ describe('ReactionDetailsScheme vessel-size input', () => {
         });
       });
     });
+  });
+
+  it('keeps a typed 0.250 L vessel and gas amounts unchanged when a stray comma is added', () => {
+    const reaction = Reaction.buildEmpty(1);
+    reaction.vessel_size = { amount: '', unit: 'l' };
+    const onInputChange = sinon.spy((field, value) => { reaction.vessel_size.amount = value; });
+    const instance = new ReactionDetailsScheme({ reaction, onInputChange });
+    const handleMaterialsChange = sinon.stub(instance, 'handleMaterialsChange');
+    ['0', '0.', '0.2', '0.25', '0.250'].forEach((value) => instance.updateVesselSize({ target: { value } }));
+    onInputChange.resetHistory();
+    handleMaterialsChange.resetHistory();
+
+    instance.updateVesselSize({ target: { value: '0.250,' } });
+    instance.updateVesselSizeOnBlur({ target: { value: reaction.vessel_size.amount } });
+
+    expect(reaction.vessel_size.amount).toBe('0.250');
+    expect(handleMaterialsChange.calledOnceWithExactly({
+      type: 'VesselSizeChanged', vesselSizeInLiters: 0.25,
+    })).toBe(true);
   });
 });
 

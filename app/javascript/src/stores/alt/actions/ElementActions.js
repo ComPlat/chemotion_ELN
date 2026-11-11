@@ -532,29 +532,37 @@ class ElementActions {
   }
 
   createReaction(params) {
-    return (dispatch) => {
-      ReactionsFetcher.create(params)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        }).finally(() => {
-          LoadingActions.stop();
+    return (dispatch) => ReactionsFetcher.create(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        rootStore.notificationsStore.add({
+          title: 'Could not save reaction',
+          message: errorMessage.message || 'Please try again.',
+          level: 'error',
+          position: 'tr',
+          autoDismiss: 0,
         });
-    };
+      }).finally(() => {
+        LoadingActions.stop();
+      });
   }
 
   updateReaction(params, closeView = false) {
-    return (dispatch) => {
-      ReactionsFetcher.update(params)
-        .then((result) => {
-          dispatch({ element: result, closeView });
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        }).finally(() => {
-          LoadingActions.stop();
+    return (dispatch) => ReactionsFetcher.update(params)
+      .then((result) => {
+        dispatch({ element: result, closeView });
+      }).catch((errorMessage) => {
+        rootStore.notificationsStore.add({
+          title: 'Could not save reaction',
+          message: errorMessage.message || 'Please try again.',
+          level: 'error',
+          position: 'tr',
+          autoDismiss: 0,
         });
-    };
+      }).finally(() => {
+        LoadingActions.stop();
+      });
   }
 
   generateEmptyReaction(collection_id) {

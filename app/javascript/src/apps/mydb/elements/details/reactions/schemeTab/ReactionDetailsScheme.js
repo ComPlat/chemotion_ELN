@@ -11,7 +11,7 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
-import { normalizeNumberInput } from 'src/utilities/MathUtils';
+import { normalizeNumberInput, handleNumberInputPaste } from 'src/utilities/MathUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
@@ -2239,9 +2239,9 @@ export default class ReactionDetailsScheme extends React.Component {
     return unit === 'l' ? numericValue : numericValue * 0.001;
   }
 
-  updateVesselSize(e) {
+  updateVesselSize(e, options = {}) {
     const { onInputChange, reaction } = this.props;
-    const value = normalizeNumberInput(e.target.value);
+    const value = normalizeNumberInput(e.target.value, options);
     if (value === null) { return; }
 
     onInputChange('vesselSizeAmount', value);
@@ -2263,6 +2263,10 @@ export default class ReactionDetailsScheme extends React.Component {
         vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
       });
     }
+  }
+
+  updateVesselSizeOnPaste(event) {
+    handleNumberInputPaste(event, (value, options) => this.updateVesselSize({ target: { value } }, options));
   }
 
   changeVesselSizeUnit() {
@@ -2317,6 +2321,7 @@ export default class ReactionDetailsScheme extends React.Component {
             value={reaction.vessel_size?.amount ?? ''}
             disabled={reaction.can_update === false}
             onChange={(event) => this.updateVesselSize(event)}
+            onPaste={(event) => this.updateVesselSizeOnPaste(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
             className="flex-grow-1 Select-control"
           />

@@ -247,31 +247,33 @@ module Chemotion
             )
           end
           normalize_legacy_concentration_mode!(attributes)
-          update_element_labels(reaction, attributes[:user_labels], current_user.id)
-          attributes.delete(:user_labels)
-          materials = attributes.delete(:materials)
-          attributes.delete(:literatures)
-          attributes.delete(:id)
+          ActiveRecord::Base.transaction do
+            update_element_labels(reaction, attributes[:user_labels], current_user.id)
+            attributes.delete(:user_labels)
+            materials = attributes.delete(:materials)
+            attributes.delete(:literatures)
+            attributes.delete(:id)
 
-          update_datamodel(attributes[:container], element: reaction, creating: false)
-          attributes.delete(:container)
-          attributes.delete(:segments)
+            update_datamodel(attributes[:container], element: reaction, creating: false)
+            attributes.delete(:container)
+            attributes.delete(:segments)
 
-          reaction.update!(attributes)
-          reaction.touch
-          reaction_vessel_size = attributes[:vessel_size]
-          # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
-          reaction = Usecases::Reactions::UpdateMaterials.new(
-            reaction, materials,
-            current_user,
-            reaction_vessel_size
-          ).execute!
-          reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-          reaction.reload
-          recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
-          # save to profile
-          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
-          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+            reaction.update!(attributes)
+            reaction.touch
+            reaction_vessel_size = attributes[:vessel_size]
+            # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction, materials,
+              current_user,
+              reaction_vessel_size
+            ).execute!
+            reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
+            reaction.reload
+            recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
+            # save to profile
+            kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
+            recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+          end
 
           research_plans =
             ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)

@@ -50,8 +50,6 @@ const EnvironmentDefault = {
   air_pressure: { value: '', unit: 'mbar' }
 };
 
-export { convertTemperature };
-
 const MomentUnit = {
   'Week(s)': 'weeks',
   'Day(s)': 'days',

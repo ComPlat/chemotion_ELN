@@ -4,13 +4,21 @@ import {
   Button, Collapse, Form, InputGroup, Row, Col
 } from 'react-bootstrap';
 import { ENVIRONMENT_UNITS, PRESSURE_UNITS, isEnvironmentNumber } from 'src/utilities/EnvironmentConditions';
-import { normalizeNumberInput } from 'src/utilities/MathUtils';
+import { normalizeNumberInput, handleNumberInputPaste } from 'src/utilities/MathUtils';
 import { convertTemperature, convertGenericUnit } from 'src/utilities/MeasurementConversions';
 
 // Normalize stored decimal commas only for conversion; keep the original reading intact.
 const normalizeDecimalSeparator = (value) => `${value ?? ''}`.replace(',', '.');
 const UNSUPPORTED_UNIT_HINT = 'Unsupported unit; reading is read-only.';
 const REJECTED_INPUT_HINT = 'Input not accepted; previous value kept.';
+
+const temperatureFieldHint = ({ value, unit }) => {
+  const text = normalizeDecimalSeparator(value).trim();
+  if (!isEnvironmentNumber(text)) { return null; }
+
+  const minimum = { '°C': -273.15, '°F': -459.67, K: 0 }[unit || '°C'];
+  return Number(text) < minimum ? 'Below absolute zero (0 K)' : null;
+};
 
 const humidityFieldHint = (value) => {
   const text = `${value ?? ''}`.trim();
@@ -72,8 +80,11 @@ const EnvironmentConditionsPanel = ({
   };
 
   const renderFieldHint = (field) => {
+    let readingHint = null;
+    if (field === 'temperature') { readingHint = temperatureFieldHint(environment.temperature); }
+    if (field === 'humidity') { readingHint = humidityFieldHint(environment.humidity.value); }
     const hint = isUnitSupported(field)
-      ? inputHints[field] || (field === 'humidity' ? humidityFieldHint(environment.humidity.value) : null)
+      ? inputHints[field] || readingHint
       : UNSUPPORTED_UNIT_HINT;
     return hint ? <Form.Text className="text-muted">{hint}</Form.Text> : null;
   };
@@ -86,10 +97,10 @@ const EnvironmentConditionsPanel = ({
     });
   };
 
-  const changeValue = (field, raw) => {
+  const changeValue = (field, raw, options = {}) => {
     if (!isUnitSupported(field)) { return; }
 
-    const value = normalizeNumberInput(raw, { allowNegative: field === 'temperature' });
+    const value = normalizeNumberInput(raw, { ...options, allowNegative: field === 'temperature' });
     if (value === null) {
       setFieldInputHint(field, REJECTED_INPUT_HINT);
       return;
@@ -183,6 +194,7 @@ const EnvironmentConditionsPanel = ({
                   placeholder="value"
                   disabled={isDisabled}
                   onChange={(e) => changeValue('temperature', e.target.value)}
+                  onPaste={(e) => handleNumberInputPaste(e, (raw, options) => changeValue('temperature', raw, options))}
                   onBlur={() => clearIncompleteValue('temperature')}
                 />
                 <Button
@@ -209,6 +221,7 @@ const EnvironmentConditionsPanel = ({
                   placeholder="value"
                   disabled={isDisabled}
                   onChange={(e) => changeValue('humidity', e.target.value)}
+                  onPaste={(e) => handleNumberInputPaste(e, (raw, options) => changeValue('humidity', raw, options))}
                   onBlur={() => clearIncompleteValue('humidity')}
                 />
                 <InputGroup.Text>{environment.humidity.unit || '%'}</InputGroup.Text>
@@ -228,6 +241,9 @@ const EnvironmentConditionsPanel = ({
                   placeholder="value"
                   disabled={isDisabled}
                   onChange={(e) => changeValue('air_pressure', e.target.value)}
+                  onPaste={(e) => handleNumberInputPaste(e, (raw, options) => (
+                    changeValue('air_pressure', raw, options)
+                  ))}
                   onBlur={() => clearIncompleteValue('air_pressure')}
                 />
                 {isUnitSupported('air_pressure') ? (

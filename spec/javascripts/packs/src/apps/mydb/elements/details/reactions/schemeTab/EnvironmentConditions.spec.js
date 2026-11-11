@@ -149,7 +149,11 @@ describe('EnvironmentConditionsPanel', () => {
       ['1,013.25', '1.013,25'].forEach((value) => {
         const onChange = sinon.spy();
         const wrapper = renderPanel(buildEnvironment(), onChange);
-        changeInput(wrapper, AIR_PRESSURE, value);
+        wrapper.find('input').at(AIR_PRESSURE).simulate('paste', {
+          target: { value: '', selectionStart: 0, selectionEnd: 0 },
+          clipboardData: { getData: () => value },
+          preventDefault: sinon.spy(),
+        });
         expect(onChange.lastCall.args[0].air_pressure).toEqual({ value: '1013.25', unit: 'mbar' });
         wrapper.setProps({ environment: onChange.lastCall.args[0] });
         wrapper.find(PRESSURE_UNIT_BUTTON).simulate('click');
@@ -278,6 +282,27 @@ describe('EnvironmentConditionsPanel', () => {
       const wrapper = renderPanel(buildEnvironment({ humidity: { value: '80', unit: '%' } }));
       expect(wrapper.text()).not.toContain('Usually 0 to 100%');
     });
+  });
+
+  describe('temperature hint', () => {
+    [['-300', '°C'], ['-460', '°F'], ['-10', 'K'], ['-273,16', '°C']].forEach(([value, unit]) => {
+      it(`warns about ${value} ${unit} while still allowing edits`, () => {
+        const onChange = sinon.spy();
+        const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit } }), onChange);
+        expect(wrapper.text()).toContain('Below absolute zero (0 K)');
+        expect(wrapper.find('input').at(TEMPERATURE).prop('readOnly')).toBe(false);
+        changeInput(wrapper, TEMPERATURE, '-500');
+        expect(onChange.lastCall.args[0].temperature).toEqual({ value: '-500', unit });
+      });
+    });
+
+    [['-273.15', '°C'], ['-459.67', '°F'], ['0', 'K'], ['-10', '°C'], ['', 'K'], ['-', '°C']]
+      .forEach(([value, unit]) => {
+        it(`has no hint for ${JSON.stringify(value)} ${unit}`, () => {
+          const wrapper = renderPanel(buildEnvironment({ temperature: { value, unit } }));
+          expect(wrapper.text()).not.toContain('Below absolute zero');
+        });
+      });
   });
 
   describe('temperature unit cycling', () => {

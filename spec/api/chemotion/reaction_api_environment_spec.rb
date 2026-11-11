@@ -173,6 +173,50 @@ RSpec.describe Chemotion::ReactionAPI do
     let(:request_method) { :put }
     let(:request_path) { "/api/v1/reactions/#{reaction.id}" }
 
+    it 'rolls back labels, container and analyses when reaction validation fails' do
+      root = reaction.container
+      analysis = root.descendants.find_by!(container_type: 'analysis')
+      tag = reaction.tag
+      tag.update!(taggable_data: { 'user_labels' => [] })
+      container_params = {
+        id: root.id,
+        description: 'changed root',
+        children: [{
+          id: analysis.parent_id,
+          container_type: 'analyses',
+          children: [{
+            id: analysis.id,
+            container_type: 'analysis',
+            name: 'changed analysis',
+            description: 'changed description',
+            extended_metadata: { content: { ops: [{ insert: 'changed content' }] } },
+          }],
+        }],
+      }
+      original = {
+        labels: tag.taggable_data.deep_dup,
+        root: root.reload.attributes,
+        analysis: analysis.reload.attributes,
+        environment: reaction.environment.deep_dup,
+      }
+
+      put request_path, params: base_params.merge(
+        container: container_params,
+        user_labels: [123],
+        environment: { temperature: { value: 'hot', unit: '°C' } },
+      ), as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['error']).to include('must be a decimal number')
+      saved = {
+        labels: tag.reload.taggable_data,
+        root: root.reload.attributes,
+        analysis: analysis.reload.attributes,
+        environment: reaction.reload.environment,
+      }
+      expect(saved).to eq(original)
+    end
+
     context 'with recorded conditions' do
       let(:recorded_environment) do
         {

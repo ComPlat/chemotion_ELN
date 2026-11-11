@@ -1,7 +1,7 @@
 import expect from 'expect';
 import { describe, it } from 'mocha';
 
-import { normalizeNumberInput } from 'src/utilities/MathUtils';
+import { normalizeNumberInput, handleNumberInputPaste } from 'src/utilities/MathUtils';
 
 describe('normalizeNumberInput', () => {
   it('converts a decimal comma to a dot', () => {
@@ -22,7 +22,7 @@ describe('normalizeNumberInput', () => {
       ['12.345.678,90', '12345678.90'],
       ['1,013.25000000000000001', '1013.25000000000000001'],
     ].forEach(([raw, expected]) => {
-      expect(normalizeNumberInput(raw)).toBe(expected);
+      expect(normalizeNumberInput(raw, { allowGrouping: true })).toBe(expected);
     });
   });
 
@@ -44,12 +44,30 @@ describe('normalizeNumberInput', () => {
     expect(normalizeNumberInput('-4.5', { allowNegative: true })).toBe('-4.5');
     expect(normalizeNumberInput('−5', { allowNegative: true })).toBe('-5');
     expect(normalizeNumberInput(' −4,5 ', { allowNegative: true })).toBe('-4.5');
-    expect(normalizeNumberInput('−1.013,25', { allowNegative: true })).toBe('-1013.25');
+    expect(normalizeNumberInput('−1.013,25', { allowNegative: true, allowGrouping: true })).toBe('-1013.25');
     expect(normalizeNumberInput('-', { allowNegative: true })).toBe('-');
     expect(normalizeNumberInput('−.', { allowNegative: true })).toBe('-.');
   });
 
   it('rejects non-finite decimal readings', () => {
     expect(normalizeNumberInput('9'.repeat(400))).toBe(null);
+  });
+
+  it('refuses extra separators during typing instead of multiplying the reading', () => {
+    ['0.250,', '21.500,', '0,250.', '21,500.', '1.013,25'].forEach((raw) => {
+      expect(normalizeNumberInput(raw)).toBe(null);
+    });
+  });
+
+  it('inserts a paste at the selected text and explicitly enables grouping', () => {
+    let result;
+    let prevented = false;
+    handleNumberInputPaste({
+      target: { value: '-42', selectionStart: 1, selectionEnd: 3 },
+      clipboardData: { getData: () => '1.013,25' },
+      preventDefault: () => { prevented = true; },
+    }, (raw, options) => { result = normalizeNumberInput(raw, { ...options, allowNegative: true }); });
+    expect(prevented).toBe(true);
+    expect(result).toBe('-1013.25');
   });
 });

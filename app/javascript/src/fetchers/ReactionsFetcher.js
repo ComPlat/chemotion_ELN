@@ -63,6 +63,7 @@ export default class ReactionsFetcher {
     return Promise.all(tasks)
       .then(() => ApiClient.postJson('/api/v1/reactions', { body: reaction.serialize() }))
       .then((json) => {
+        this.ensureSaveSucceeded(json);
         const { id } = json.reaction;
         return GenericElsFetcher.uploadGenericFiles(reaction, id, 'Reaction')
           .then(() => this.updateAnnotationsInReaction(reaction))
@@ -80,7 +81,13 @@ export default class ReactionsFetcher {
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
       .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
+      .then((json) => this.ensureSaveSucceeded(json))
       .then((json) => this.reactionElement(json, reaction.id));
+  }
+
+  static ensureSaveSucceeded(json) {
+    if (json?.error) { throw new Error(json.error); }
+    return json;
   }
 
   static updateAnnotationsInReaction(reaction) {

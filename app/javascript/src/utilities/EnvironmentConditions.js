@@ -1,6 +1,6 @@
 import { getGenSI } from 'chem-generic-ui';
 
-export const PRESSURE_UNITS = getGenSI('pressure') || [];
+export const PRESSURE_UNITS = getGenSI('pressure');
 
 export const ENVIRONMENT_UNITS = {
   temperature: ['°C', '°F', 'K'],

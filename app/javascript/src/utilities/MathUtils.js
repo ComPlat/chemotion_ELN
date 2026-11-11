@@ -133,16 +133,17 @@ const formatDisplayValue = (val, precision) => {
  * @param {string} raw - The raw input value.
  * @param {Object} [options]
  * @param {boolean} [options.allowNegative=false] - Allow a leading minus sign.
+ * @param {boolean} [options.allowGrouping=false] - Interpret grouped separators on paste only.
  * @returns {string|null} - The normalized input, or null when the edit must be refused.
  */
-const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
+const normalizeNumberInput = (raw, { allowNegative = false, allowGrouping = false } = {}) => {
   let value = `${raw}`.trim().replace(/\u2212/g, '-');
   if (!allowNegative && value.startsWith('-')) { return null; }
 
   // With both separators present, require conventional three-digit grouping.
-  if (/^-?\d{1,3}(?:,\d{3})+\.\d*$/.test(value)) {
+  if (allowGrouping && /^-?\d{1,3}(?:,\d{3})+\.\d*$/.test(value)) {
     value = value.replace(/,/g, '');
-  } else if (/^-?\d{1,3}(?:\.\d{3})+,\d*$/.test(value)) {
+  } else if (allowGrouping && /^-?\d{1,3}(?:\.\d{3})+,\d*$/.test(value)) {
     value = value.replace(/\./g, '').replace(',', '.');
   } else {
     value = value.replace(',', '.');
@@ -153,6 +154,14 @@ const normalizeNumberInput = (raw, { allowNegative = false } = {}) => {
   return value;
 };
 
+// Apply pasted text at the selection, keeping grouping interpretation out of keystroke edits.
+const handleNumberInputPaste = (event, onChange) => {
+  const { value, selectionStart, selectionEnd } = event.target;
+  const pasted = event.clipboardData.getData('text');
+  event.preventDefault();
+  onChange(`${value.slice(0, selectionStart)}${pasted}${value.slice(selectionEnd)}`, { allowGrouping: true });
+};
+
 export {
   fixDigit,
   validDigit,
@@ -161,4 +170,5 @@ export {
   parseNumericString,
   formatDisplayValue,
   normalizeNumberInput,
+  handleNumberInputPaste,
 };
