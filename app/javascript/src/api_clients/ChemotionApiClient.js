@@ -3,7 +3,29 @@
 // import 'whatwg-fetch';
 
 // utility functions
-const buildHeaders = (headers) => {
+const CSRF_META_SELECTOR = 'meta[name="csrf-token"]';
+
+const isSameOrigin = (url) => {
+  try {
+    return new URL(url, window.location.href).origin === window.location.origin;
+  } catch (e) {
+    return false;
+  }
+};
+
+const csrfToken = () => document.querySelector(CSRF_META_SELECTOR)?.getAttribute('content');
+
+// Rails rotates the CSRF token on sign in/out, which would leave the token rendered
+// into the page stale. ApplicationController sends the current one with every response.
+const updateCsrfToken = (response) => {
+  if (typeof response?.headers?.get !== 'function') { return; }
+
+  const token = response.headers.get('X-CSRF-Token');
+  const meta = document.querySelector(CSRF_META_SELECTOR);
+  if (token && meta) { meta.setAttribute('content', token); }
+};
+
+const buildHeaders = (headers, apiEndpoint) => {
   const returnHeaders = new Headers();
   // for formData submission, content type header must not be set, so the browser can set it properly
   // see Warning at the end of section https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects#sending_files_using_a_formdata_object
@@ -18,6 +40,9 @@ const buildHeaders = (headers) => {
   }
   const authToken = localStorage.getItem('chemotion-auth-token');
   if (authToken) { returnHeaders.set('Authorization', authToken); }
+  // never hand the CSRF token to a foreign host
+  const token = isSameOrigin(apiEndpoint) && csrfToken();
+  if (token) { returnHeaders.set('X-CSRF-Token', token); }
   if (!returnHeaders.has('Accept')) { returnHeaders.set('Accept', 'application/json'); }
   if (!suppressContentType && !returnHeaders.has('Content-Type')) {
     returnHeaders.set('Content-Type', 'application/json');
@@ -53,13 +78,16 @@ const apiRequest = (apiEndpoint, options) => {
     handleResponseSuccess: (response) => (response.status === 204 ? null : response.json()),
     handleResponseError: (exception) => { console.log(exception); },
   };
-  const headers = buildHeaders(options?.headers);
+  const headers = buildHeaders(options?.headers, apiEndpoint);
 
   options = { ...globalDefaults, ...options, headers };
   const { handleResponseSuccess, handleResponseError } = options;
 
   return fetch(apiEndpoint, options)
-    .then(handleResponseSuccess)
+    .then((response) => {
+      if (isSameOrigin(apiEndpoint)) { updateCsrfToken(response); }
+      return handleResponseSuccess(response);
+    })
     .catch(handleResponseError);
 };
 

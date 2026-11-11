@@ -2,6 +2,10 @@
 
 module Users
   class PasswordsController < Devise::PasswordsController
+    # The frontend talks JSON only. Reject other formats before any mail is sent
+    # or any password is changed.
+    prepend_before_action :ensure_json_request, only: %i[create update]
+
     # POST /resource/password
     def create
       self.resource = resource_class.send_reset_password_instructions(resource_params)
@@ -12,25 +16,15 @@ module Users
           'You will receive an email with instructions on how to reset your password in a few minutes.',
         )
 
-        respond_to do |format|
-          format.html { super }
-          format.json do
-            render json: { message: message }, status: :ok
-          end
-        end
+        render json: { message: message }, status: :ok
       else
-        respond_to do |format|
-          format.html { super }
-          format.json do
-            render json: { message: resource.errors.messages }, status: :bad_request
-          end
-        end
+        render json: { message: resource.errors.messages }, status: :bad_request
       end
     end
 
     # PUT /resource/password
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     def update
       self.resource = resource_class.reset_password_by_token(resource_params)
 
@@ -53,28 +47,16 @@ module Users
             'Your password has been changed successfully.'
           end
 
-        respond_to do |format|
-          format.html { super }
-          format.json do
-            render json: {
-              message: warden_message(message_key, default_message),
-              token: token,
-              role: resource.type,
-            }, status: :ok
-          end
-        end
+        render json: {
+          message: warden_message(message_key, default_message),
+          token: token,
+          role: resource.type,
+        }, status: :ok
       else
-        set_minimum_password_length
-
-        respond_to do |format|
-          format.html { super }
-          format.json do
-            render json: { message: resource.errors.messages }, status: :bad_request
-          end
-        end
+        render json: { message: resource.errors.messages }, status: :bad_request
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/AbcSize, Metrics/PerceivedComplexity
 
     protected
 
