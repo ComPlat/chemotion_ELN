@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_10_05_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -150,6 +150,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "created_by"
+    t.jsonb "log_data"
     t.index ["name", "source"], name: "index_cellline_materials_on_name_and_source", unique: true
   end
 
@@ -168,6 +169,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.datetime "updated_at", precision: 6, null: false
     t.string "short_label"
     t.string "ancestry", default: "/", null: false, collation: "C"
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_cellline_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
@@ -2797,6 +2799,12 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   SQL
   create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_cellline_materials, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_cellline_materials BEFORE INSERT OR UPDATE ON public.cellline_materials FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_cellline_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_cellline_samples BEFORE INSERT OR UPDATE ON public.cellline_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
