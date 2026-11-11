@@ -34,4 +34,18 @@ RSpec.describe CelllineSample do
       expect(sample.container).not_to be_nil
     end
   end
+
+  describe 'attachments association' do
+    it 'has a polymorphic attachments association' do
+      attachment = create(:attachment, attachable: sample)
+      expect(sample.attachments).to include(attachment)
+    end
+
+    it 'orphans attachment when cellline_sample is destroyed' do
+      attachment = create(:attachment, attachable: sample)
+      sample.destroy
+      reloaded = Attachment.unscoped.find(attachment.id)
+      expect(reloaded.attachable_id).to be_nil
+    end
+  end
 end

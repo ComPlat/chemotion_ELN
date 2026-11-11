@@ -53,7 +53,7 @@ module Entities
     expose :type
     expose :changed
     expose :container, using: 'Entities::ContainerEntity'
-    expose :attachments, using: 'Entities::AttachmentEntity'
+    expose :attachments, unless: :displayed_in_list, using: 'Entities::AttachmentEntity'
     expose :ontologies
     expose :segments, using: 'Labimotion::SegmentEntity'
     expose :comments, using: 'Entities::CommentEntity'
