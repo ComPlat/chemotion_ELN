@@ -58,12 +58,50 @@ describe Chemotion::GroupAPI do
   describe 'GET /api/v1/groups' do
     let!(:own_group) { create(:group, admins: [user], users: [user], first_name: 'Own', last_name: 'Group') }
 
-    before { get '/api/v1/groups' }
+    # Lazy, so the groups created by let! in the nested contexts exist before the request.
+    let(:ids) do
+      get '/api/v1/groups'
+      parsed_json_response['currentGroups'].pluck('id')
+    end
 
     it "returns only the current user's groups" do
-      ids = parsed_json_response['currentGroups'].pluck('id')
       expect(ids).to include(own_group.id)
       expect(ids).not_to include(group.id)
+    end
+
+    context 'when the user also administrates a group without being a member' do
+      let!(:administrated_group) do
+        create(:group, admins: [user], users: [member], first_name: 'Admin', last_name: 'Only')
+      end
+
+      it 'returns the memberships and the administrated group' do
+        expect(ids).to contain_exactly(own_group.id, administrated_group.id)
+      end
+    end
+
+    context 'when the user is member and admin of the same group' do
+      it 'returns the group only once' do
+        expect(ids.count(own_group.id)).to eq(1)
+      end
+    end
+
+    context 'when the user only administrates groups' do
+      let(:user) { non_member_admin }
+      let!(:own_group) { create(:group, admins: [user], users: [member], first_name: 'Own', last_name: 'Group') }
+
+      it 'returns the administrated groups' do
+        expect(ids).to contain_exactly(own_group.id)
+      end
+    end
+
+    context 'when called by a system Admin' do
+      let(:user) { admin_user }
+      let!(:own_group) { create(:group, admins: [group_admin], users: [admin_user]) }
+
+      it 'returns the groups the admin is a member of' do
+        expect(ids).to contain_exactly(own_group.id)
+        expect(response).to have_http_status(:ok)
+      end
     end
   end
 

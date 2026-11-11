@@ -31,13 +31,17 @@ module Chemotion
         present new_group, with: Entities::GroupEntity, root: 'group' if new_group.save!
       end
 
-      desc 'fetch groups of current user'
+      desc 'fetch groups of current user (memberships and administrated groups)'
       get do
         data =
-          if current_user
-            current_user.groups.presence || current_user.administrated_accounts.where(type: 'Group').distinct
+          if current_user.is_a?(Person)
+            # Admin status and membership are stored separately, so an admin
+            # who left a group must still see (and be able to manage) it.
+            Group.where(id: current_user.groups.select(:id))
+                 .or(Group.where(id: current_user.administrated_accounts.where(type: 'Group').select(:id)))
           else
-            []
+            # Only Person defines administrated_accounts.
+            current_user.groups
           end
         present data, with: Entities::GroupEntity, root: 'currentGroups'
       end
