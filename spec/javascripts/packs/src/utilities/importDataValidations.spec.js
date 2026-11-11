@@ -201,6 +201,7 @@ describe('Import Data Validations', () => {
       expect(validateSolvent('Water')).toEqual({ valid: true, message: '' });
       expect(validateSolvent('Methanol')).toEqual({ valid: true, message: '' });
       expect(validateSolvent('Acetone')).toEqual({ valid: true, message: '' });
+      expect(validateSolvent('Triethylamine')).toEqual({ valid: true, message: '' });
     });
 
     it('should validate multiple solvents with slash separator', () => {

@@ -320,7 +320,7 @@ export const validateSolvent = (value) => {
     'Carbon tetrachloride', 'Chloroform', 'Cyclohexane', 'Dichloromethane',
     'Diethyl ether', 'Dimethyl formamide', 'Dimethyl sulfoxide', 'Dioxane',
     'Ethanol', 'Ethyl acetate', 'Heptane', 'Hexane', 'Isopropanol', 'Methanol',
-    'Pentane', 'Pyridine', 'Tetrahydrofuran', 'Toluene', 'Water', 'Other'
+    'Pentane', 'Pyridine', 'Tetrahydrofuran', 'Triethylamine', 'Toluene', 'Water', 'Other'
   ];
 
   // Based on the backend implementation, solvents should be slash-separated values
