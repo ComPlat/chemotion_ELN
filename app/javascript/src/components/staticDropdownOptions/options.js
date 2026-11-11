@@ -284,6 +284,13 @@ export const defaultMultiSolventsSmilesOptions = [{
     density: 0.889
   }
 }, {
+  label: 'Triethylamine',
+  value: {
+    external_label: 'Triethylamine',
+    smiles: 'CCN(CC)CC',
+    density: 0.726
+  }
+}, {
   label: 'Toluene',
   value: {
     external_label: 'Toluene',
