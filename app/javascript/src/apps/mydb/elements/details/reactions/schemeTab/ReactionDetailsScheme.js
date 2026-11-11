@@ -11,9 +11,11 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { normalizeNumberInput, handleNumberInputPaste } from 'src/utilities/MathUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
+import EnvironmentConditionsPanel from 'src/apps/mydb/elements/details/reactions/schemeTab/EnvironmentConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
@@ -63,7 +65,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     this.state = {
       lockEquivColumn,
-      displayYieldField: null,
+      displayYieldField: reaction.products.every((material) => !material.conversion_rate),
       reactionDescTemplate: textTemplate.toJS(),
     };
 
@@ -2232,24 +2234,16 @@ export default class ReactionDetailsScheme extends React.Component {
     return reaction;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  normalizeVesselSizeValue(raw) {
-    let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
-    const dotIndex = value.indexOf('.');
-    if (dotIndex !== -1) {
-      value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
-    }
-    return value;
-  }
-
   vesselSizeInLiters(normalizedValue, unit) {
     const numericValue = parseFloat(normalizedValue) || 0;
     return unit === 'l' ? numericValue : numericValue * 0.001;
   }
 
-  updateVesselSize(e) {
+  updateVesselSize(e, options = {}) {
     const { onInputChange, reaction } = this.props;
-    const value = this.normalizeVesselSizeValue(e.target.value);
+    const value = normalizeNumberInput(e.target.value, options);
+    if (value === null) { return; }
+
     onInputChange('vesselSizeAmount', value);
     this.handleMaterialsChange({
       type: 'VesselSizeChanged',
@@ -2259,7 +2253,9 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updateVesselSizeOnBlur(e) {
     const { onInputChange, reaction } = this.props;
-    const value = this.normalizeVesselSizeValue(e.target.value);
+    const value = normalizeNumberInput(e.target.value);
+    if (value === null) { return; }
+
     onInputChange('vesselSizeAmount', value);
     if (value !== '') {
       this.handleMaterialsChange({
@@ -2267,6 +2263,10 @@ export default class ReactionDetailsScheme extends React.Component {
         vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
       });
     }
+  }
+
+  updateVesselSizeOnPaste(event) {
+    handleNumberInputPaste(event, (value, options) => this.updateVesselSize({ target: { value } }, options));
   }
 
   changeVesselSizeUnit() {
@@ -2321,6 +2321,7 @@ export default class ReactionDetailsScheme extends React.Component {
             value={reaction.vessel_size?.amount ?? ''}
             disabled={reaction.can_update === false}
             onChange={(event) => this.updateVesselSize(event)}
+            onPaste={(event) => this.updateVesselSizeOnPaste(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
             className="flex-grow-1 Select-control"
           />
@@ -2592,15 +2593,17 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
 
-    if (displayYieldField === null) {
-      const allHaveNoConversion = reaction.products.every(
-        (material) => !(material.conversion_rate && material.conversion_rate !== 0)
-      );
-      this.switchYield(allHaveNoConversion);
-    }
-
     return (
       <>
+        <EnvironmentConditionsPanel
+          panelId={this.props.environmentConditionsPanelId}
+          open={this.props.environmentConditionsOpen}
+          environment={reaction.environment}
+          isDisabled={!permitOn(reaction)}
+          onChange={(environment) => {
+            onInputChange('environment', environment);
+          }}
+        />
         <div className="mt-2 border-top">
           <MaterialGroup
             reaction={reaction}
@@ -2752,5 +2755,11 @@ export default class ReactionDetailsScheme extends React.Component {
 ReactionDetailsScheme.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onInputChange: PropTypes.func.isRequired,
+  environmentConditionsPanelId: PropTypes.string,
+  environmentConditionsOpen: PropTypes.bool
+};
+
+ReactionDetailsScheme.defaultProps = {
+  environmentConditionsOpen: false
 };

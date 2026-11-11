@@ -13,13 +13,15 @@ import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import REACTION_CONCENTRATION_MODES from 'src/models/ReactionConcentrationModes';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { ENVIRONMENT_UNITS, isEnvironmentNumber, normalizeEnvironmentUnit } from 'src/utilities/EnvironmentConditions';
+import { convertTemperature } from 'src/utilities/MeasurementConversions';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
 
-const TemperatureUnit = ['°C', '°F', 'K'];
+const TemperatureUnit = ENVIRONMENT_UNITS.temperature;
 
 const TemperatureDefault = {
   valueUnit: '°C',
@@ -42,25 +44,10 @@ const parseNumericTemperatureText = (text) => {
 
 const isNumericTemperatureText = (text) => parseNumericTemperatureText(text) !== null;
 
-export const convertTemperature = (temperature, fromUnit, toUnit) => {
-  if (fromUnit === toUnit) {
-    return temperature;
-  }
-  const conversionTable = {
-    K: {
-      '°C': (t) => parseFloat(t) - 273.15,
-      '°F': (t) => (parseFloat(t) * 9 / 5) - 459.67
-    },
-    '°C': {
-      K: (t) => parseFloat(t) + 273.15,
-      '°F': (t) => (parseFloat(t) * 1.8) + 32
-    },
-    '°F': {
-      K: (t) => (parseFloat(t) + 459.67) * 5 / 9,
-      '°C': (t) => (parseFloat(t) - 32) / 1.8
-    }
-  };
-  return conversionTable[fromUnit][toUnit](temperature);
+const EnvironmentDefault = {
+  temperature: { value: '', unit: '°C' },
+  humidity: { value: '', unit: '%' },
+  air_pressure: { value: '', unit: 'mbar' }
 };
 
 const MomentUnit = {
@@ -145,6 +132,12 @@ export default class Reaction extends Element {
     Reaction.SOLVENTS,
     Reaction.PURIFICATION_SOLVENTS
   ];
+
+  constructor(args) {
+    const { _environment, ...attributes } = args || {};
+    // Route model snapshots (clone/buildCopy) through the normalizing setter before Element records the checksum.
+    super({ environment: _environment, ...attributes });
+  }
 
   static buildEmpty(collection_id) {
     const reaction = new Reaction({
@@ -256,6 +249,7 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
+      environment: this.environment,
       ph_operator: this.ph_operator || '=',
       ph_value: this.phValueForSerialize(),
       duration: this.duration,
@@ -435,6 +429,37 @@ export default class Reaction extends Element {
 
   set temperature(temperature) {
     this._temperature = temperature;
+  }
+
+  // Environmental conditions are stored as a single jsonb column shaped
+  // { temperature: { value, unit }, humidity: { value, unit }, air_pressure: { value, unit } }
+  // (like vessel_size). Assignment normalizes to the full default shape so a missing, empty
+  // ({}), or partial persisted hash (older records, or a raw API write of the unconstrained
+  // Hash param) can't crash the panel, which dereferences environment.temperature.value etc.
+  // without guarding the nested objects.
+  get environment() {
+    return this._environment;
+  }
+
+  set environment(environment) {
+    const env = environment || {};
+    this._environment = Object.fromEntries(Object.entries(EnvironmentDefault).map(([field, defaults]) => {
+      const condition = env[field];
+      const value = condition?.value;
+      const unit = condition?.unit;
+      const normalizedUnit = normalizeEnvironmentUnit(field, unit);
+
+      return [field, {
+        value: typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value)) ? `${value}` : '',
+        unit: normalizedUnit || defaults.unit,
+      }];
+    }));
+  }
+
+  // True when any environmental condition (temperature, humidity, air pressure)
+  // holds a numeric value. Drives the check mark next to the toggle button.
+  isEnvironmentSet() {
+    return Object.values(this.environment).some(({ value }) => isEnvironmentNumber(value));
   }
 
   get description_contents() {

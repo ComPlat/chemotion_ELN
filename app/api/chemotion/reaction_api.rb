@@ -4,6 +4,25 @@
 module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
+    ENVIRONMENT_OBJECT_COERCER = lambda do |value|
+      raise ArgumentError, 'must be an object' unless value.is_a?(Hash)
+
+      value
+    end
+
+    # Preserve numeric JSON values as plain decimals before Grape coerces them to strings.
+    ENVIRONMENT_VALUE_COERCER = lambda do |value|
+      case value
+      when Integer then value.to_s
+      when Numeric then BigDecimal(value.to_s).to_s('F')
+      else value
+      end
+    end
+
+    rescue_from ActiveRecord::RecordInvalid do |exception|
+      error!(exception.record.errors.full_messages.join(', '), 422)
+    end
+
     include Grape::Kaminari
     helpers CollectionHelpers
     helpers ContainerHelpers
@@ -13,6 +32,24 @@ module Chemotion
     helpers UserLabelHelpers
 
     helpers do
+      params :environment_params do
+        # Unsupported imported labels must round-trip unchanged; the UI renders them read-only.
+        optional :environment, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+          optional :temperature, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+          optional :humidity, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+          optional :air_pressure, type: Hash, coerce_with: ENVIRONMENT_OBJECT_COERCER do
+            optional :value, type: String, coerce_with: ENVIRONMENT_VALUE_COERCER
+            optional :unit, type: String, allow_blank: false
+          end
+        end
+      end
+
       def normalize_legacy_concentration_mode!(attributes)
         return attributes unless attributes.key?(:use_reaction_volume)
 
@@ -162,6 +199,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String
@@ -202,32 +240,44 @@ module Chemotion
         put do
           reaction = @reaction
           attributes = declared(params, include_missing: false)
+          # Omitted readings and units stay intact; a supplied unit requires its value.
+          if attributes.key?(:environment)
+            environment_patch = attributes[:environment].deep_stringify_keys
+            environment_patch.each do |field, reading|
+              next unless reading.key?('unit') && !reading.key?('value')
+
+              error!("Environment #{field.humanize.downcase} value is required when unit is supplied", 422)
+            end
+            attributes[:environment] = (reaction.environment || {}).deep_merge(environment_patch)
+          end
           normalize_legacy_concentration_mode!(attributes)
-          update_element_labels(reaction, attributes[:user_labels], current_user.id)
-          attributes.delete(:user_labels)
-          materials = attributes.delete(:materials)
-          attributes.delete(:literatures)
-          attributes.delete(:id)
+          ActiveRecord::Base.transaction do
+            update_element_labels(reaction, attributes[:user_labels], current_user.id)
+            attributes.delete(:user_labels)
+            materials = attributes.delete(:materials)
+            attributes.delete(:literatures)
+            attributes.delete(:id)
 
-          update_datamodel(attributes[:container], element: reaction, creating: false)
-          attributes.delete(:container)
-          attributes.delete(:segments)
+            update_datamodel(attributes[:container], element: reaction, creating: false)
+            attributes.delete(:container)
+            attributes.delete(:segments)
 
-          reaction.update!(attributes)
-          reaction.touch
-          reaction_vessel_size = attributes[:vessel_size]
-          # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
-          reaction = Usecases::Reactions::UpdateMaterials.new(
-            reaction, materials,
-            current_user,
-            reaction_vessel_size
-          ).execute!
-          reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-          reaction.reload
-          recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
-          # save to profile
-          kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
-          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+            reaction.update!(attributes)
+            reaction.touch
+            reaction_vessel_size = attributes[:vessel_size]
+            # Also drops variations keys of materials removed in this update (ReactionVariationMaterialKeys).
+            reaction = Usecases::Reactions::UpdateMaterials.new(
+              reaction, materials,
+              current_user,
+              reaction_vessel_size
+            ).execute!
+            reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
+            reaction.reload
+            recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
+            # save to profile
+            kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
+            recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+          end
 
           research_plans =
             ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
@@ -258,6 +308,7 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        use :environment_params
         optional :ph_operator, type: String
         optional :ph_value, type: Float
         optional :tlc_solvents, type: String

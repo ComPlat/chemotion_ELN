@@ -7,6 +7,9 @@ import { addMiddleware } from 'mobx-state-tree';
 
 describe('Component', () => {
   let component;
+  const sandbox = sinon.createSandbox();
+
+  afterEach(() => sandbox.restore());
 
   beforeEach(() => {
     const mockMolecule = { id: 101, molecular_weight: 18.010564684 };
@@ -125,7 +128,7 @@ describe('Component', () => {
       component.amount_mol = 2;
 
       // Mock store state for unlocked concentration
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockedComponents: [],
       });
 
@@ -141,7 +144,7 @@ describe('Component', () => {
       component.density = 1.5;
 
       // Mock store state for locked concentration
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockedComponents: [component.id],
       });
 
@@ -820,7 +823,7 @@ describe('Component', () => {
   describe('updateRatioFromReference', () => {
     beforeEach(() => {
       // Mock store state for unlocked concentration
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockedComponents: [],
       });
     });
@@ -894,7 +897,7 @@ describe('Component', () => {
       component.parent_id = 'sample_123';
 
       // Mock store state with proper structure
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockAmountColumnSolidsBySample: {
           sample_123: true,
         },
@@ -912,7 +915,7 @@ describe('Component', () => {
       component.purity = 0.9;
 
       // Mock store state
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockAmountColumnSolids: false,
       });
 
@@ -1022,7 +1025,7 @@ describe('Component', () => {
   describe('isComponentConcentrationLocked', () => {
     it('should return true when component is in locked components list', () => {
       component.id = 'comp_123';
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockedComponents: ['comp_123', 'comp_456']
       });
 
@@ -1033,7 +1036,7 @@ describe('Component', () => {
 
     it('should return false when component is not in locked components list', () => {
       component.id = 'comp_123';
-      ComponentStore.getState = () => ({
+      sandbox.stub(ComponentStore, 'getState').returns({
         lockedComponents: ['comp_456', 'comp_789']
       });
 
@@ -1044,7 +1047,7 @@ describe('Component', () => {
 
     it('should return false when store state is unavailable', () => {
       component.id = 'comp_123';
-      ComponentStore.getState = () => null;
+      sandbox.stub(ComponentStore, 'getState').returns(null);
 
       const result = component.isComponentConcentrationLocked();
 

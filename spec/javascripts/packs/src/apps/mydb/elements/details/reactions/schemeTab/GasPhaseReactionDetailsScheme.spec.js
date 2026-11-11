@@ -5,6 +5,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 // Note: do not import UnitsConversion helpers here to avoid tautological tests
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -489,14 +490,46 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       storeStub.restore();
     });
 
-    it('should strip non-numeric characters from vessel size input on change', () => {
+    it('rejects nonnumeric vessel edits without triggering reaction or material updates', () => {
       const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
 
-      wrapper.instance().updateVesselSize({ target: { value: '500abc.2xyz' } });
+      try {
+        wrapper.instance().updateVesselSize({ target: { value: '500abc.2xyz' } });
 
-      // onInputChange should be called with only the numeric portion
-      expect(onInputChangeSpy.calledOnce).toBe(true);
-      expect(onInputChangeSpy.getCall(0).args[1]).toBe('500.2');
+        expect(onInputChangeSpy.called).toBe(false);
+        expect(onReactionChangeSpy.called).toBe(false);
+        expect(reaction.vessel_size).toEqual({ amount: 10000, unit: 'ml' });
+      } finally {
+        wrapper.unmount();
+      }
+    });
+
+    ['updateVesselSize', 'updateVesselSizeOnBlur'].forEach((handler) => {
+      ['1,000.5', '1.000,5'].forEach((raw) => {
+        it(`${handler} stores ${raw} as 1000.5 ml and uses 1.0005 L for gas calculations`, () => {
+          const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+            catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+            reactionVesselSizeValue: 10,
+          });
+          const wrapper = createWrapper(reaction, onReactionChangeSpy, (type, value) => (
+            setReactionByType(reaction, type, value)
+          ));
+
+          try {
+            wrapper.instance()[handler]({ target: { value: raw } });
+
+            expect(reaction.serialize().vessel_size).toEqual({ amount: '1000.5', unit: 'ml' });
+            expect(reaction.findReactionVesselSizeCatalystMaterialValues().vesselSize).toBe(1.0005);
+            const updatedProduct = onReactionChangeSpy.lastCall.args[0].products[0];
+            // 10000 ppm at 298 K in a 1.0005 L vessel, calculated independently of the input helper.
+            const expectedMoles = (10000 * 1.0005) / (0.0821 * 298 * 1000000);
+            expect(updatedProduct.amount_mol).toBeCloseTo(expectedMoles, 12);
+          } finally {
+            wrapper.unmount();
+            storeStub.restore();
+          }
+        });
+      });
     });
 
     it('should fire VesselSizeChanged event on blur with correct vessel size in liters', () => {
