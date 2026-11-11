@@ -24,6 +24,8 @@ module Usecases
           raise Usecases::Attachments::Errors::NotPreviewable, "no image / PDF attachment: #{attachment.id}"
         end
 
+        attachment.track_read! # this path reads off disk, bypassing the Shrine read hook
+
         # a missing annotated file falls back to what is served without annotation
         path = (annotated_image_path(attachment) if annotated)
         path ||= attachment.type_image_tiff? ? converted_image_path(attachment) : attachment.attachment.url

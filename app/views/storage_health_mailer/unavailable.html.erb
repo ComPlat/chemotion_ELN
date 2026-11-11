@@ -1,0 +1,14 @@
+<p>One or more Chemotion file-storage tiers are unavailable:</p>
+
+<ul>
+  <% @problems.each do |problem| %>
+    <li><%= problem %></li>
+  <% end %>
+</ul>
+
+<p>
+  Archived files on an unavailable tier cannot be read until it is restored.
+  Please check that each tier's folder exists and is writable — for a cold tier,
+  confirm its <code>:cold</code> path in <code>config/shrine.yml</code> (and any
+  mount behind it) is present.
+</p>

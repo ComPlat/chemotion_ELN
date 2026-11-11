@@ -4,35 +4,38 @@
 #
 # Table name: attachments
 #
-#  id              :integer          not null, primary key
-#  aasm_state      :string
-#  attachable_type :string
-#  attachment_data :jsonb
-#  bucket          :string
-#  checksum        :string
-#  con_state       :integer
-#  content_type    :string
-#  created_by      :integer          not null
-#  created_by_type :string
-#  created_for     :integer
-#  deleted_at      :datetime
-#  edit_state      :integer          default("not_editing")
-#  filename        :string
-#  filesize        :bigint
-#  folder          :string
-#  identifier      :uuid
-#  key             :string(500)
-#  storage         :string(20)       default("tmp")
-#  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  attachable_id   :integer
+#  id               :integer          not null, primary key
+#  aasm_state       :string
+#  access_count     :integer          default(0), not null
+#  attachable_type  :string
+#  attachment_data  :jsonb
+#  bucket           :string
+#  checksum         :string
+#  con_state        :integer
+#  content_type     :string
+#  created_by       :integer          not null
+#  created_by_type  :string
+#  created_for      :integer
+#  deleted_at       :datetime
+#  edit_state       :integer          default("not_editing")
+#  filename         :string
+#  filesize         :bigint
+#  folder           :string
+#  identifier       :uuid
+#  key              :string(500)
+#  last_accessed_at :datetime
+#  storage          :string(20)       default("tmp")
+#  thumb            :boolean          default(FALSE)
+#  version          :string           default("/"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  attachable_id    :integer
 #
 # Indexes
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_shrine_file_id                     (((attachment_data ->> 'id'::text)))
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
@@ -45,6 +48,7 @@ class Attachment < ApplicationRecord
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+  include AttachmentStorageTiering
 
   enum edit_state: { not_editing: 0, editing: 1 }
 
@@ -133,6 +137,7 @@ class Attachment < ApplicationRecord
   def read_file
     return if attachment_attacher.file.blank?
 
+    # reads are tracked automatically (see TieredStorage#open)
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
   end
@@ -229,7 +234,7 @@ class Attachment < ApplicationRecord
     attachment && attachment['mime_type']
   end
 
-  def reload
+  def reload(*)
     super
 
     set_key
@@ -393,16 +398,19 @@ class Attachment < ApplicationRecord
     return if file_path.nil?
     return unless File.exist?(file_path)
 
-    File.open(file_path, binmode: true) do |io|
-      attachment_attacher.attach(io)
+    # uploading + building derivatives reads the file, but that isn't a user read
+    self.class.suppress_read_tracking do
+      File.open(file_path, binmode: true) do |io|
+        attachment_attacher.attach(io)
+      end
+      raise 'File to large' unless valid?
+
+      raise 'User quota exceeded' if user_quota_exceeded?
+
+      attachment_attacher.create_derivatives
+
+      update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
     end
-    raise 'File to large' unless valid?
-
-    raise 'User quota exceeded' if user_quota_exceeded?
-
-    attachment_attacher.create_derivatives
-
-    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
     # attach once: Shrine's after_commit `persist` saves the record again, which would re-run this callback
     self.file_path = nil
   end
