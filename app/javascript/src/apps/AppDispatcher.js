@@ -3,6 +3,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 // apps
+import About from 'src/apps/home/About';
 import AdminHome from 'src/apps/admin/AdminHome';
 import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
@@ -53,6 +54,7 @@ const backendOptions = {
 };
 
 const APPS_PATHS = [
+  '/about',
   '/admin',
   '/command_n_control',
   '/converter_admin',
@@ -75,6 +77,12 @@ const PUBLIC_PATHS = [
 const AppDispatcher = () => {
   const { userStore } = useContext(StoreContext);
   const { role, currentRoute } = userStore;
+
+  // The about page is public and the same for every role, so it must not be
+  // overridden by the role based rules below (e.g. the Guest fallback to Home).
+  if (currentRoute === '/about') {
+    return (<About />);
+  }
 
   let app = (<Home />);
 
