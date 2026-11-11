@@ -40,7 +40,7 @@ class API < Grape::API
     def detect_current_user_from_jwt
       return unless token_in_header?
 
-      decoded_token = JsonWebToken.decode(current_token)
+      decoded_token = JsonWebToken.decode(current_token, purpose: :login)
       user_id = decoded_token[:user_id]
 
       User.find(user_id)
@@ -136,6 +136,12 @@ class API < Grape::API
 
   before do
     authenticate! unless public_request?
+  end
+
+  # Invalid, expired or wrong-purpose tokens (OnlyOffice key, third party app link, ...)
+  # are an authorisation failure, not a server error.
+  rescue_from Errors::DecodeError, Errors::ExpiredSignature do
+    error!('401 Unauthorized', 401)
   end
 
   # desc: whitelisted tables and columns for advanced_search

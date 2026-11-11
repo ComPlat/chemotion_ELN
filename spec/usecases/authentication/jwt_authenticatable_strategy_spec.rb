@@ -22,6 +22,12 @@ RSpec.describe Usecases::Authentication::JwtAuthenticatableStrategy do
     end
   end
 
+  describe '#store?' do
+    it 'does not store the user in the session' do
+      expect(build_strategy('Bearer some-token').store?).to be false
+    end
+  end
+
   describe '#authenticate!' do
     let(:user) { create(:person) }
     let(:token) { Usecases::Authentication::BuildToken.by_user(user) }
@@ -65,7 +71,7 @@ RSpec.describe Usecases::Authentication::JwtAuthenticatableStrategy do
     end
 
     it 'fails with :invalid_token when the token is expired' do
-      expired_token = JsonWebToken.encode({ user_id: user.id }, 1.second.ago)
+      expired_token = JsonWebToken.encode({ user_id: user.id }, 1.second.ago, purpose: :login)
       strategy = build_strategy("Bearer #{expired_token}")
 
       strategy.authenticate!
@@ -73,6 +79,18 @@ RSpec.describe Usecases::Authentication::JwtAuthenticatableStrategy do
       expect(strategy).not_to be_successful
       expect(strategy.result).to eq(:failure)
       expect(strategy.message).to eq(:invalid_token)
+    end
+
+    %i[editor two_factor_auth third_party_app].each do |purpose|
+      it "fails with :invalid_token for a token issued for #{purpose}" do
+        other_token = JsonWebToken.encode({ user_id: user.id }, 1.day.from_now, purpose: purpose)
+        strategy = build_strategy("Bearer #{other_token}")
+
+        strategy.authenticate!
+
+        expect(strategy).not_to be_successful
+        expect(strategy.message).to eq(:invalid_token)
+      end
     end
 
     it 'fails with :invalid_token when the token cannot be decoded' do

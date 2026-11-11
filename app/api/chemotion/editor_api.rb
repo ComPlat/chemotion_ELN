@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/DurationArithmetic
-
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
+    EDITOR_TOKEN_EXPIRATION = 1.day
+
     helpers AttachmentHelpers
 
     namespace :editor do
@@ -42,11 +42,13 @@ module Chemotion
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.zone.now + 15.minutes).to_i,
           }
           @attachment.editing_start!
           file_extension = @attachment.editable_document? && @attachment.file_extension
-          token = JsonWebToken.encode(payload)
+          # The token is OnlyOffice's document key and authorises the download and the
+          # save callback. The save callback only arrives once the document is closed,
+          # so the token must outlive a whole editing session.
+          token = JsonWebToken.encode(payload, EDITOR_TOKEN_EXPIRATION.from_now, purpose: :editor)
           only_office_payload = {
             width: '100%',
             height: '950px',
@@ -108,5 +110,3 @@ module Chemotion
     end
   end
 end
-
-# rubocop:enable Rails/DurationArithmetic

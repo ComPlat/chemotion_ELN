@@ -18,7 +18,7 @@ module Usecases
           last_name: user.last_name,
         }
 
-        JsonWebToken.encode(payload)
+        JsonWebToken.encode(payload, purpose: :login)
       end
     end
   end

@@ -150,7 +150,7 @@ describe Chemotion::ThirdPartyAppAPI do
       parts.split('/').last
     end
 
-    let(:payload) { JsonWebToken.decode(token) }
+    let(:payload) { JsonWebToken.decode(token, purpose: :third_party_app) }
 
     context 'when user is allowed to read attachment' do
       context 'when attachment is directly linked and readable and 3pa exists' do
@@ -252,7 +252,8 @@ describe Chemotion::ThirdPartyAppAPI do
       { attID: params_token[:attID],
         userID: params_token[:userID],
         nameThirdPartyApp: params_token[:nameThirdPartyApp],
-        appID: third_party_app.id }
+        appID: third_party_app.id,
+        purpose: 'third_party_app' }
     end
 
     let(:third_party_app) { create(:third_party_app) }
