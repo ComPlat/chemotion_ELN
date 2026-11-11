@@ -25,6 +25,7 @@ module Entities
     expose :current_sign_in_at, if: ->(obj, _opts) { obj.respond_to? :current_sign_in_at }
     expose :locked_at, if: ->(obj, _opts) { obj.respond_to? :locked_at }
     expose :is_templates_moderator, documentation: { type: 'Boolean', desc: 'ketcherails template administrator' }
+    expose :affiliation_moderator, documentation: { type: 'Boolean', desc: 'affiliation suggestion moderator' }
     expose :molecule_editor, documentation: { type: 'Boolean', desc: 'molecule administrator' }
     expose :converter_admin, documentation: { type: 'Boolean', desc: 'converter administrator' }
     expose :global_text_template_editor, documentation: { type: 'Boolean', desc: 'global text template editor' }
