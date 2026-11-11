@@ -876,14 +876,14 @@ describe('ReactionVariationsUtils', () => {
     const rowOrderKey = 'user7-reaction42-reactionVariationsRowOrder';
     const rows = (ids) => ids.map((id) => ({ id, metadata: { notes: `row ${id}` } }));
     const ids = (variations) => variations.map((row) => row.id);
-    let userStoreStub;
-
     beforeEach(() => {
-      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+      unprotect(rootStore);
+      rootStore.userStore.currentUser = { id: 7 };
     });
 
     afterEach(() => {
-      userStoreStub.restore();
+      rootStore.userStore.currentUser = null;
+      protect(rootStore);
       localStorage.clear();
     });
 

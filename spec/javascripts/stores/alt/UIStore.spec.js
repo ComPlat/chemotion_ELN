@@ -1,13 +1,26 @@
 import expect from 'expect';
 import sinon from 'sinon';
+import { runInAction } from 'mobx';
+import { protect, unprotect } from 'mobx-state-tree';
+// Must be loaded before the alt stores: UIActions -> UIFetcher -> Sample -> RootStore -> ... -> Component
+// would otherwise reach Component (extends Sample) while Sample is still being loaded.
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { twoSampleState } from '../../fixture/elementStore';
 import alt from 'src/stores/alt/alt';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const ElementStore = alt.createStore({}, 'ElementStore');
+
+// UIStore reads the tab layout from rootStore.userStore.profile.
+// MST only allows changes through its own actions; unprotect lifts that,
+// runInAction keeps MobX strict mode from warning about the direct assignment.
+const setUserProfile = (profile) => {
+  unprotect(rootStore);
+  runInAction(() => { rootStore.userStore.profile = profile; });
+  protect(rootStore);
+};
 
 describe('UItStore', () => {
   beforeEach(() => {
@@ -110,13 +123,10 @@ describe('UItStore', () => {
   describe('with an adopted search result', () => {
     const collection = { id: 42 };
     let byIdsFetch;
-    let userStub;
 
     beforeEach(() => {
       byIdsFetch = sinon.stub(ElementActions.fetchBasedOnSearchResultIds, 'defer');
-      userStub = sinon.stub(UserStore, 'getState').returns({
-        profile: { data: { layout: { sample: 1 } } },
-      });
+      setUserProfile({ data: { layout: { sample: 1 } } });
       UIActions.selectCollectionWithoutUpdating(collection);
       UIActions.setSearchById({
         samples: {
@@ -127,7 +137,7 @@ describe('UItStore', () => {
 
     afterEach(() => {
       byIdsFetch.restore();
-      userStub.restore();
+      setUserProfile({});
       UIActions.clearSearchById();
       UIActions.setUserLabel(null);
       UIActions.setFromDate(null);
@@ -189,7 +199,6 @@ describe('UItStore', () => {
       mixtures: 'element',
     };
     let byIdsFetch;
-    let userStub;
 
     const sentFor = (key) => byIdsFetch.getCalls()
       .map((call) => call.args[0].selection.id_params)
@@ -199,7 +208,7 @@ describe('UItStore', () => {
       byIdsFetch = sinon.stub(ElementActions.fetchBasedOnSearchResultIds, 'defer');
       const layout = {};
       Object.keys(types).forEach((key, i) => { layout[key.slice(0, -1)] = i + 1; });
-      userStub = sinon.stub(UserStore, 'getState').returns({ profile: { data: { layout } } });
+      setUserProfile({ data: { layout } });
       UIActions.selectCollectionWithoutUpdating(collection);
       const result = {};
       Object.keys(types).forEach((key) => {
@@ -212,7 +221,7 @@ describe('UItStore', () => {
 
     afterEach(() => {
       byIdsFetch.restore();
-      userStub.restore();
+      setUserProfile({});
       UIActions.clearSearchById();
       UIActions.setUserLabel(null);
       UIActions.setProductOnly(false);
