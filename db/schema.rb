@@ -1194,10 +1194,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_04_200000) do
     t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
+    t.boolean "lock_reaction_volume", default: false, null: false
     t.string "reaction_type", default: "standard", null: false
     t.string "ph_operator", default: "=", null: false
     t.float "ph_value"
-    t.boolean "lock_reaction_volume", default: false, null: false
     t.string "concentration_mode", default: "solvents_only", null: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
@@ -2108,8 +2108,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_04_200000) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2227,7 +2227,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_10_04_200000) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
