@@ -1,7 +1,15 @@
 import React from 'react';
 import { Dropdown } from 'react-bootstrap';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import ScreensFetcher from 'src/fetchers/ScreensFetcher';
+import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
+import SequenceBasedMacromoleculeSamplesFetcher
+  from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -10,15 +18,51 @@ import Utils from 'src/utilities/Functions';
 import isUIComponentEnabled from 'src/utilities/UIComponentHelper';
 import {
   buildPrintCodeUrls,
+  fetchCollectionIds,
   getPrintableSelections,
+  resolvePrintableSelections,
 } from 'src/apps/mydb/elements/list/selectionActions/PrintCodeUtils';
 import 'whatwg-fetch';
+
+async function fetchScopeIds(type, uiState, elementState) {
+  const fetchPage = {
+    sample: (collectionId, params, state) => (
+      SamplesFetcher.fetchByCollectionId(collectionId, params, state.moleculeSort)
+    ),
+    reaction: (collectionId, params) => ReactionsFetcher.fetchByCollectionId(collectionId, params),
+    wellplate: (collectionId, params) => WellplatesFetcher.fetchByCollectionId(collectionId, params),
+    screen: (collectionId, params) => ScreensFetcher.fetchByCollectionId(collectionId, params),
+    device_description: (collectionId, params) => (
+      DeviceDescriptionFetcher.fetchByCollectionId(collectionId, params)
+    ),
+    sequence_based_macromolecule_sample: (collectionId, params) => (
+      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(collectionId, params)
+    ),
+  }[type];
+  const collectionId = uiState.currentCollection?.id;
+  if (!fetchPage || collectionId == null) return [];
+
+  const params = {
+    fromDate: uiState.fromDate,
+    toDate: uiState.toDate,
+    filterCreatedAt: uiState.filterCreatedAt,
+    userLabel: uiState.userLabel,
+    productOnly: uiState.productOnly,
+    perPage: 100,
+  };
+  return fetchCollectionIds(fetchPage, collectionId, params, elementState);
+}
 
 function selectionsEqual(first, second) {
   const types = new Set([...Object.keys(first), ...Object.keys(second)]);
   return [...types].every((type) => (
     first[type] === second[type]
-    || (first[type] && second[type] && first[type].equals(second[type]))
+    || (first[type] && second[type]
+      && first[type].checkedAll === second[type].checkedAll
+      && (first[type].checkedIds === second[type].checkedIds
+        || first[type].checkedIds?.equals(second[type].checkedIds))
+      && (first[type].uncheckedIds === second[type].uncheckedIds
+        || first[type].uncheckedIds?.equals(second[type].uncheckedIds)))
   ));
 }
 
@@ -86,17 +130,24 @@ export default class SelectionGenerateButton extends React.Component {
   }
 
   async downloadPrintCodesPDF(template) {
-    const { json, selectionsByType } = this.state;
+    const { json } = this.state;
     const config = json[template];
     if (!config) {
       console.error(`Print code configuration "${template}" was not found`);
       return;
     }
 
-    const requests = buildPrintCodeUrls(selectionsByType, config);
-    if (requests.length === 0) return;
-
     try {
+      const uiState = UIStore.getState();
+      const selectionsByType = await resolvePrintableSelections(
+        getPrintableSelections(uiState),
+        uiState,
+        ElementStore.getState(),
+        fetchScopeIds,
+      );
+      const requests = buildPrintCodeUrls(selectionsByType, config);
+      if (requests.length === 0) return;
+
       const fetchedPdfs = await Promise.all(
         requests.map((url) => PrintCodeFetcher.fetchMergedPrintCodes(url)),
       );
@@ -120,9 +171,9 @@ export default class SelectionGenerateButton extends React.Component {
     const {
       json, selectionsByType, enableComputedProps, enableReactionPredict, hasSampleExplorer
     } = this.state;
-    const selectedCount = Object.values(selectionsByType)
-      .reduce((count, checkedIds) => count + checkedIds.size, 0);
-    const disabledPrint = selectedCount === 0;
+    const hasPrintableSelection = Object.values(selectionsByType)
+      .some(({ checkedIds, checkedAll }) => checkedIds?.size > 0 || checkedAll);
+    const disabledPrint = !hasPrintableSelection;
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
