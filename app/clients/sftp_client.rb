@@ -176,6 +176,9 @@ class SFTPClient
       data = yield(sftp)
       return data unless data.nil?
     end
+  rescue Delayed::WorkerTimeout, SignalException
+    # a job timeout or a shutdown signal ends the job instead of being reported as an SFTP error
+    raise
   rescue Exception => e
     # for usage of caller, see Kernel#caller
     raise SFTPClientError.new(e, caller(2..2).first, args_of_caller)
