@@ -8,13 +8,25 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { PDFDocument } from 'pdf-lib';
 import Utils from 'src/utilities/Functions';
 import isUIComponentEnabled from 'src/utilities/UIComponentHelper';
+import {
+  buildPrintCodeUrls,
+  getPrintableSelections,
+} from 'src/apps/mydb/elements/list/selectionActions/PrintCodeUtils';
 import 'whatwg-fetch';
+
+function selectionsEqual(first, second) {
+  const types = new Set([...Object.keys(first), ...Object.keys(second)]);
+  return [...types].every((type) => (
+    first[type] === second[type]
+    || (first[type] && second[type] && first[type].equals(second[type]))
+  ));
+}
 
 export default class SelectionGenerateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checkedIds: UIStore.getState().sample.checkedIds,
+      selectionsByType: getPrintableSelections(UIStore.getState()),
       json: {},
       matrix: null,
       enableComputedProps: null,
@@ -52,10 +64,9 @@ export default class SelectionGenerateButton extends React.Component {
   }
 
   onUIStoreChange(state) {
-    if (state.sample.checkedIds !== this.state.checkedIds) {
-      this.setState({
-        checkedIds: state.sample.checkedIds
-      });
+    const selectionsByType = getPrintableSelections(state);
+    if (!selectionsEqual(selectionsByType, this.state.selectionsByType)) {
+      this.setState({ selectionsByType });
     }
     const hasSampleExplorer = isUIComponentEnabled('sampleExplorer', state);
     if (hasSampleExplorer !== this.state.hasSampleExplorer) {
@@ -74,37 +85,44 @@ export default class SelectionGenerateButton extends React.Component {
     }
   }
 
-  async downloadPrintCodesPDF(ids, template) {
-    const { json } = this.state;
-    const fetchedData = await PrintCodeFetcher.fetchPrintCodes(ids.length > 0 ? ids : null, template, json);
-
-    if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
-      console.error('No data received or data is not in expected format');
+  async downloadPrintCodesPDF(template) {
+    const { json, selectionsByType } = this.state;
+    const config = json[template];
+    if (!config) {
+      console.error(`Print code configuration "${template}" was not found`);
       return;
     }
 
-    const mergedPdf = await PDFDocument.create();
-    const pdfPromises = fetchedData.map(async (base64String) => {
-      const pdfBytes = Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
-      const pdf = await PDFDocument.load(pdfBytes);
-      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-      copiedPages.forEach((page) => mergedPdf.addPage(page));
-    });
+    const requests = buildPrintCodeUrls(selectionsByType, config);
+    if (requests.length === 0) return;
 
-    await Promise.all(pdfPromises);
-    const mergedPdfBytes = await mergedPdf.save();
-    const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
+    try {
+      const fetchedPdfs = await Promise.all(
+        requests.map((url) => PrintCodeFetcher.fetchMergedPrintCodes(url)),
+      );
+      const mergedPdf = await PDFDocument.create();
+      for (const pdfBytes of fetchedPdfs) {
+        const pdf = await PDFDocument.load(pdfBytes);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }
 
-    Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
+    } catch (err) {
+      console.error('Failed to generate print codes PDF', err);
+    }
   }
 
   render() {
     const {
-      json, checkedIds, enableComputedProps, enableReactionPredict, hasSampleExplorer
+      json, selectionsByType, enableComputedProps, enableReactionPredict, hasSampleExplorer
     } = this.state;
-    const ids = checkedIds.toArray();
-    const disabledPrint = !(ids.length > 0);
+    const selectedCount = Object.values(selectionsByType)
+      .reduce((count, checkedIds) => count + checkedIds.size, 0);
+    const disabledPrint = selectedCount === 0;
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
@@ -123,7 +141,7 @@ export default class SelectionGenerateButton extends React.Component {
               onClick={(event) => {
                 event.stopPropagation();
                 if (!disabledPrint) {
-                  this.downloadPrintCodesPDF(ids, e.name);
+                  this.downloadPrintCodesPDF(e.name);
                 }
               }}
             >
