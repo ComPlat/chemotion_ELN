@@ -3,8 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe JsonWebToken do
-  after { travel_back }
-
   let(:user_id) { 42 }
   # NOTE: this used to be a hard-coded token string signed with the committed
   # test secret_key_base from config/secrets.yml; the Rails 7.2 upgrade removed
@@ -47,7 +45,7 @@ RSpec.describe JsonWebToken do
       before { travel_to(token_generated_time) }
 
       it 'returns a hash' do
-        expect(decoded_token).to be_kind_of(Hash)
+        expect(decoded_token).to be_a(Hash)
       end
 
       it 'returns correct user_id' do
@@ -59,7 +57,7 @@ RSpec.describe JsonWebToken do
       end
 
       it 'returns correct expiration time' do
-        actual_time = Time.at(decoded_token[:exp])
+        actual_time = Time.zone.at(decoded_token[:exp])
         expect(actual_time).to eq(token_expiration_time)
       end
     end

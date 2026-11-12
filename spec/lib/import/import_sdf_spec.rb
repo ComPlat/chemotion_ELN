@@ -127,8 +127,9 @@ RSpec.describe Import::ImportSdf do
       order = []
       depths = []
 
-      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args, **kwargs|
-        origin = caller.find { |line| line.start_with?("#{Rails.root}/") }
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection)
+                                               .and_wrap_original do |orig, *args, **kwargs|
+        origin = caller.find { |line| line.start_with?(Rails.root.join.to_s) }
         if origin&.include?('release_connection_for_native_work')
           order << :release
           depths << ActiveRecord::Base.connection.open_transactions
@@ -435,12 +436,14 @@ RSpec.describe Import::ImportSdf do
       allow(PubchemLookupJob).to receive(:perform_later)
       order = []
 
-      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection).and_wrap_original do |orig, *args, **kwargs|
-        origin = caller.find { |line| line.start_with?("#{Rails.root}/") }
+      allow(ActiveRecord::Base.connection_pool).to receive(:release_connection)
+                                               .and_wrap_original do |orig, *args, **kwargs|
+        origin = caller.find { |line| line.start_with?(Rails.root.join.to_s) }
         order << :release if origin&.include?('release_connection_for_native_work')
         orig.call(*args, **kwargs)
       end
-      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles).and_wrap_original do |orig, *args, **kwargs|
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles)
+                                        .and_wrap_original do |orig, *args, **kwargs|
         order << :openbabel
         orig.call(*args, **kwargs)
       end

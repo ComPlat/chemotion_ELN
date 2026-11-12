@@ -1,5 +1,8 @@
+# frozen_string_literal: true
+
 class Storage
   attr_reader :attachment, :primary_store, :secondary_store
+
   class << self
     def new_store(attach)
       storage_klass(attach).new(attach)
@@ -11,7 +14,8 @@ class Storage
 
     def constantize(store)
       klass = store.camelize.constantize
-      raise( TypeError, "#{store} class is not a Storage class") unless klass < Storage
+      raise(TypeError, "#{store} class is not a Storage class") unless klass < Storage
+
       klass
     end
 
@@ -29,35 +33,42 @@ class Storage
     @attachment = attach
   end
 
+  # rubocop:disable Metrics/AbcSize
   def move_to_store(store = primary_store)
     dest_store = self.class.constantize(store).new(attachment)
     attachment.file_path = path
     attachment.thumb_data = read_thumb if attachment.thumb && attachment.filesize <= 50 * 1024 * 1024
     file_stored = dest_store.store_file
     thumb_stored = dest_store.store_thumb if attachment.thumb && attachment.filesize <= 50 * 1024 * 1024
-    #TODO checksum check
+    # TODO: checksum check
     file_removed = remove_file(true) if file_stored
-    thumb_removed = remove_thumb_file(true) if thumb_stored
+    remove_thumb_file(true) if thumb_stored
     attachment.storage = store
     file_removed
   end
+  # rubocop:enable Metrics/AbcSize
 
   def storage_sym
     self.class.name.underscore.to_sym
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def regenerate_thumbnail
-    return if (fn = attachment.filename).blank? || (fe = File.extname(fn)&.downcase).blank? || attachment.filesize > 50 * 1024 * 1024
+    if (fn = attachment.filename).blank? ||
+       (fe = File.extname(fn)&.downcase).blank? || attachment.filesize > 50 * 1024 * 1024
+      return
+    end
+
     # wa for issue with 'jpeg' extension
     fe = '.jpg' if fe == '.jpeg'
     tmp = Tempfile.new([fn, fe], encoding: 'ascii-8bit')
     tmp.write attachment.read_file
     tmp.rewind
     attachment.thumb_path = begin
-                              Usecases::Attachments::Thumbnail::ThumbnailGenerator.create(tmp.path)
-                            rescue
-                              nil
-                            end
+      Usecases::Attachments::Thumbnail::ThumbnailGenerator.create(tmp.path)
+    rescue StandardError
+      nil
+    end
     if attachment.thumb_path && File.exist?(attachment.thumb_path)
       attachment.thumb = true
       store_thumb
@@ -67,4 +78,5 @@ class Storage
     FileUtils.rm(attachment.thumb_path, force: true) if attachment.thumb_path
     attachment.thumb_path = nil
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end

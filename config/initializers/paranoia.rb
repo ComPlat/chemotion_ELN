@@ -8,11 +8,12 @@
 require 'paranoia'
 
 module Paranoia
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def really_destroy!(update_destroy_attributes: true)
     with_transaction_returning_status do
       run_callbacks(:real_destroy) do
         @_disable_counter_cache = paranoia_destroyed?
-        dependent_reflections = self.class.reflections.select do |name, reflection|
+        dependent_reflections = self.class.reflections.select do |_name, reflection|
           reflection.options[:dependent] == :destroy
         end
         if dependent_reflections.any?
@@ -20,7 +21,7 @@ module Paranoia
             association_data = send(name)
             # has_one association can return nil
             # .paranoid? will work for both instances and classes
-            next unless association_data && association_data.paranoid?
+            next unless association_data&.paranoid?
 
             if reflection.collection?
               # .each (paranoia 2.6), not .find_each: keeps the association's order (DISTINCT ON).
@@ -36,4 +37,5 @@ module Paranoia
       end
     end
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 end

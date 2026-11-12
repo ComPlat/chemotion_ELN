@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/WordArray
-
 # require 'coveralls'
 # Coveralls.wear!
 
@@ -48,7 +46,7 @@ Capybara.register_driver :selenium do |app|
   options.add_argument('--headless') unless ENV['USE_HEAD']
   options.add_argument('--no-sandbox')
 
-  capabilities = Selenium::WebDriver::Remote::Capabilities.chrome(
+  Selenium::WebDriver::Remote::Capabilities.chrome(
     loggingPrefs: {
       browser: 'ALL',
       client: 'ALL',
@@ -77,7 +75,8 @@ RSpec.configure do |config|
     if example.metadata[:type] == :feature && example.exception.present?
       metadata = example.metadata
       filename = "#{metadata[:full_description].parameterize}-#{metadata[:line_number]}-#{Time.now.to_f}.png"
-      save_screenshot(filename)
+      # intentional: screenshot of a failed feature spec, not a leftover debugging call
+      save_screenshot(filename) # rubocop:disable Lint/Debugger
     end
   end
 
@@ -215,7 +214,7 @@ RSpec.configure do |config|
       )
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_two_compounds.json'),
+        body: File.read("#{Rails.root}spec/fixtures/body_two_compounds.json"),
         headers: { 'Content-Type' => 'application/json' },
       )
 
@@ -237,7 +236,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
+        body: File.read("#{Rails.root}spec/fixtures/body_123456789_CAS.xml"),
         headers: { 'Content-Type' => 'application/xml' },
       )
 
@@ -249,7 +248,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
+        body: File.read("#{Rails.root}spec/fixtures/body_643785_LCSS.json"),
         headers: { 'Content-Type' => 'application/json' },
       )
   end
@@ -273,4 +272,3 @@ RSpec.configure do |config|
     repeat example, 3.times, verbose: true
   end
 end
-# rubocop:enable Style/WordArray

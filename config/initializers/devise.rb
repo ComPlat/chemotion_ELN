@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config| # rubocop:disable Metrics/BlockLength
@@ -245,7 +247,9 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
     # Rails 7). Can't defer to after_initialize: the OmniAuth providers must be
     # registered here in Devise.setup, before the middleware is built.
     auth_config = if conn.table_exists?('matrices')
-                    raw = conn.select_value("SELECT configs FROM matrices WHERE name = #{conn.quote('userProvider')} LIMIT 1")
+                    raw = conn.select_value(
+                      "SELECT configs FROM matrices WHERE name = #{conn.quote('userProvider')} LIMIT 1",
+                    )
                     raw.is_a?(String) ? JSON.parse(raw) : (raw || {})
                   else
                     {}
