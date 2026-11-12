@@ -32,7 +32,17 @@ jobs:
           ruby-version: '3.3.0'
 
       - name: install linting dependencies
-        run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+        # DIVERGES FROM UPSTREAM (fork decision, 2026-11-12): upstream installs the gems unpinned.
+        # The rubocop gems at the versions locked in Gemfile.lock, so CI lints with the same cops
+        # (and knows the same directives) as `bundle exec rubocop` locally. Unpinned, CI got the
+        # latest rubocop, whose new cops (NewCops: enable) flagged code the locked one accepts.
+        run: |
+          locked() { sed -n "s/^    $1 (\(.*\))$/\1/p" Gemfile.lock; }
+          gems=()
+          for g in rubocop rubocop-ast rubocop-rspec rubocop-rails rubocop-performance; do
+            gems+=("$g:$(locked "$g")")
+          done
+          gem install "${gems[@]}" pronto pronto-rubocop
 
       - name: run Pronto
         # DIVERGES FROM UPSTREAM (fork decision, 2026-09-21): upstream also passes
