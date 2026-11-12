@@ -22,9 +22,11 @@ const parseDraftBlock = (content) => {
   return null;
 };
 
-// Calculate available space on left and right sides of an atom/image
+// Calculate available space on left and right sides of an atom/image.
+// currentTextKey: Draft.js block key of the label being placed — skipped when scanning
+//   other text labels so a label is never treated as an obstacle to itself.
 // Returns { left: number, right: number } representing distance to nearest obstacle
-const calculateAvailableSpace = (atomLocation, imageWidth, currentImageIndex) => {
+const calculateAvailableSpace = (atomLocation, imageWidth, currentImageIndex, currentTextKey = null) => {
   const atomX = atomLocation[0];
   const atomY = atomLocation[1];
   const verticalThreshold = 2.0; // Only consider obstacles within this Y range
@@ -89,23 +91,54 @@ const calculateAvailableSpace = (atomLocation, imageWidth, currentImageIndex) =>
     }
   }
 
+  // Check other text labels as obstacles.
+  // findByKeyAndUpdateTextNodePosition mutates textList entries in place, so labels
+  // processed earlier in this placeTextOnAtoms pass already have their new positions.
+  for (const textNode of textList) {
+    if (!textNode?.data?.position) continue;
+    const block = parseDraftBlock(textNode.data?.content);
+    if (!block) continue;
+    if (currentTextKey && block.key === currentTextKey) continue; // skip self
+
+    const textStartX = textNode.data.position.x;
+    const textY = textNode.data.position.y;
+    if (Math.abs(textY - atomY) > verticalThreshold) continue;
+
+    const otherTextWidth = Math.max(1.0, (block.text || '').length * 0.15);
+    const textEndX = textStartX + otherTextWidth;
+    const textCenterX = (textStartX + textEndX) / 2;
+
+    if (textCenterX > atomX) {
+      // Other label is to the right — gap from current image's right edge to text start
+      const edgeDistance = textStartX - (atomX + imageWidth / 2);
+      rightSpace = Math.min(rightSpace, edgeDistance);
+    } else {
+      // Other label is to the left — gap from text end to current image's left edge
+      const edgeDistance = (atomX - imageWidth / 2) - textEndX;
+      leftSpace = Math.min(leftSpace, edgeDistance);
+    }
+  }
+
   return { left: leftSpace, right: rightSpace };
 };
 
 // Determine which side (left or right) has more space for text placement
 // Returns 'left' or 'right'
-const determineBestSide = (atomLocation, imageWidth, currentImageIndex, textWidth = 1.0) => {
-  const { left, right } = calculateAvailableSpace(atomLocation, imageWidth, currentImageIndex);
+const determineBestSide = (atomLocation, imageWidth, currentImageIndex, textWidth = 1.0, currentTextKey = null) => {
+  const { left, right } = calculateAvailableSpace(atomLocation, imageWidth, currentImageIndex, currentTextKey);
 
-  // Add a small bias towards right side (original behavior) when spaces are similar
-  const rightBias = 0.3;
-
-  // If right side has enough space (considering the bias), prefer right
-  if (right >= textWidth + rightBias || right >= left) {
+  // Right side has enough space for the text (with a small bias toward right)
+  if (right >= textWidth + 0.3) {
     return 'right';
   }
 
-  return 'left';
+  // Left side has enough space for the text
+  if (left >= textWidth) {
+    return 'left';
+  }
+
+  // Neither side has sufficient space — pick whichever has more room
+  return right >= left ? 'right' : 'left';
 };
 // for text component (smaller font for labels attached to shapes)
 // Convert KET 2.0 paragraphs array → Draft.js JSON string.
@@ -174,7 +207,6 @@ const forTextNodeHeader = (key, description) => {
     entityMap: {}
   });
 };
-
 
 // Build ordered list of atom aliases (matches PolymersList index 0,1,2...)
 // ketData: optional structure to use when latestData is null (e.g. during initial load)
@@ -332,8 +364,8 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
       const textContent = content.blocks[0].text || '';
       const estimatedTextWidth = Math.max(1.0, textContent.length * 0.15);
 
-      // Determine best side for text placement
-      const bestSide = determineBestSide(atom.location, imageWidth, split, estimatedTextWidth);
+      // Determine best side for text placement (pass key so its own label is not an obstacle)
+      const bestSide = determineBestSide(atom.location, imageWidth, split, estimatedTextWidth, textNodeKey);
 
       let positionX;
       if (bestSide === 'right') {

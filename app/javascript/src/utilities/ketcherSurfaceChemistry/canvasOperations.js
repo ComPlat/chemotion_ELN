@@ -1471,7 +1471,20 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     // mol body
     imageUsedCounterSetter(imageCount);
     const imageItem = await fetchSurfaceChemistryImageData(tempId);
-    imageItem.boundingBox = { ...imageItem.boundingBox, x: 1.525, y: -1.5250001907348631 };
+    // Place new shape adjacent to the rightmost existing image so it stays within the
+    // vertical threshold used by calculateAvailableSpace (2.0 KET units). Without this,
+    // the fixed default Y (≈ −1.525) is often many KET units away from existing shapes,
+    // causing the new obstacle to be ignored and existing labels to stay on the wrong side.
+    let pasteX = 1.525;
+    let pasteY = -1.5250001907348631;
+    if (imagesList.length > 0) {
+      const lastImg = imagesList[imagesList.length - 1];
+      if (lastImg?.boundingBox) {
+        pasteX = lastImg.boundingBox.x + (lastImg.boundingBox.width ?? 1) + 0.5;
+        pasteY = lastImg.boundingBox.y;
+      }
+    }
+    imageItem.boundingBox = { ...imageItem.boundingBox, x: pasteX, y: pasteY };
     latestData.root.nodes.push({ $ref: `mol${molCount}` });
     latestData.root.nodes.push(imageItem);
     latestData[`mol${molCount}`] = await addNewMol(tempId);
