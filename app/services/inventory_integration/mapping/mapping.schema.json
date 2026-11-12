@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "chemotion.inventory.mapping/v1",
+  "title": "Inventory mapping profile",
+  "type": "object",
+  "required": ["schema", "identity", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "chemotion.inventory.mapping/v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "format": { "enum": ["json", "csv", "xlsx"] },
+        "csv": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "separator": { "type": "string", "minLength": 1, "maxLength": 3 },
+            "encoding": { "enum": ["UTF-8", "ISO-8859-1", "Windows-1252"] },
+            "header_row": { "type": "integer", "minimum": 1 },
+            "decimal_mark": { "enum": [".", ","] },
+            "sheet": { "type": ["string", "integer"] }
+          }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_id"],
+      "properties": {
+        "external_id": { "$ref": "#/definitions/rule" },
+        "version": { "$ref": "#/definitions/rule" },
+        "changed_at": { "$ref": "#/definitions/rule" },
+        "deleted": { "$ref": "#/definitions/rule" }
+      }
+    },
+    "fields": { "type": "object", "additionalProperties": { "$ref": "#/definitions/rule" } },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "keep": { "type": "array", "items": { "$ref": "#/definitions/path" } } }
+    },
+    "writable": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "mode": { "enum": ["absolute", "delta"] } }
+      }
+    },
+    "reverse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["to"],
+        "properties": {
+          "to": { "$ref": "#/definitions/paths" },
+          "transform": { "$ref": "#/definitions/transforms" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "path": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "paths": {
+      "anyOf": [
+        { "$ref": "#/definitions/path" },
+        { "type": "array", "minItems": 1, "maxItems": 10, "items": { "$ref": "#/definitions/path" } }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/definitions/paths" },
+        "transform": { "$ref": "#/definitions/transforms" },
+        "map": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean", "null"] } },
+        "case_insensitive": { "type": "boolean" },
+        "on_unmapped": { "enum": ["error", "null", "keep"] },
+        "default": {},
+        "optional": { "type": "boolean" },
+        "personal": { "type": "boolean" }
+      }
+    },
+    "transforms": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "anyOf": [
+          {
+            "enum": [
+              "trim", "upcase", "downcase", "compact", "first_present",
+              "decimal_comma", "number", "integer", "cas", "unit_split"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["split"],
+            "properties": {
+              "split": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["separators"],
+                "properties": {
+                  "separators": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "type": "string", "minLength": 1, "maxLength": 5 }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["join"],
+            "properties": {
+              "join": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "separator": { "type": "string", "maxLength": 5 } }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["boolean"],
+            "properties": {
+              "boolean": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "true_values": { "type": "array", "items": { "type": "string" } } }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["present"],
+            "properties": {
+              "present": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": { "ignore": { "type": "array", "items": { "type": ["string", "number"] } } }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["date"],
+            "properties": {
+              "date": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["formats"],
+                "properties": {
+                  "formats": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+                  "time_zone": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["default"],
+            "properties": {
+              "default": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["value"],
+                "properties": { "value": {} }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

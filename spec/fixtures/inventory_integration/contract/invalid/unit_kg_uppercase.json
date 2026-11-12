@@ -1,0 +1,2 @@
+{ "contract": "chemotion.inventory/v1", "external_id": "x", "kind": "container", "version": "1",
+  "substance": { "name": "Salt" }, "quantity": { "remaining": { "value": 1, "unit": "KG" } } }

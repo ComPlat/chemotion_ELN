@@ -8,6 +8,8 @@
 #  celllinesample_detail_level                   :integer          default(0), not null
 #  devicedescription_detail_level                :integer          default(0), not null
 #  element_detail_level                          :integer          default(0), not null
+#  inventory_field_access                        :jsonb
+#  log_data                                      :jsonb
 #  permission_level                              :integer          default(0), not null
 #  reaction_detail_level                         :integer          default(0), not null
 #  researchplan_detail_level                     :integer          default(0), not null
@@ -52,6 +54,9 @@ class CollectionShare < ApplicationRecord
     manage_shares: 4,
     pass_ownership: 5,
   }.freeze
+
+  # Audits share changes, including inventory field access, with the responsible user.
+  has_logidze
 
   belongs_to :collection
   # +with_deleted+: User is acts_as_paranoid, and nothing purges collection_shares when an account

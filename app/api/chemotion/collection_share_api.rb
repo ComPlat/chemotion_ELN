@@ -16,6 +16,9 @@ module Chemotion
     rescue_from ActiveRecord::RecordInvalid, ActiveRecord::InvalidForeignKey do |error|
       error!(error.message, 422)
     end
+    rescue_from InventoryIntegration::ShareGuard::Refused do |error|
+      error!(error.message, 422)
+    end
 
     helpers do
       # The collection whose share list the current user may administrate: one they own, or one
@@ -156,7 +159,8 @@ module Chemotion
         targets.each do |target|
           user_ids.each do |user_id|
             share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
-            share.assign_attributes((share.new_record? ? new_share_defaults : {}).merge(attributes))
+            values = (share.new_record? ? new_share_defaults : {}).merge(attributes)
+            share.assign_attributes(inventory_attributes(target, values))
             share.save!
           end
           refresh_shared_flag!(target)
@@ -166,7 +170,28 @@ module Chemotion
       # +share+'s own permission/detail-level columns, for backfilling a newly-minted descendant
       # share (see write_shares!'s new_share_defaults) — everything except its identity/timestamps.
       def share_value_defaults(share)
-        share.attributes.symbolize_keys.except(*%i[id collection_id shared_with_id created_at updated_at])
+        share.attributes.symbolize_keys.except(*%i[id collection_id shared_with_id created_at updated_at log_data])
+      end
+
+      # Inventory field access is kept only on inventory collections, so a cascade leaves it off
+      # ordinary sub-collections.
+      def inventory_attributes(target, values)
+        return values if InventoryIntegration::ShareGuard.inventory?(target)
+
+        values.except(:inventory_field_access, 'inventory_field_access')
+      end
+
+      # Inventory checks for every target, before the write like {#validate_share_targets!}. The
+      # root must be an inventory collection when field access is given; descendants that are not
+      # simply do not get it. +descendant_access+ is the map the descendants will actually receive.
+      def validate_inventory_targets!(root, descendants, user_ids, field_access, descendant_access = field_access)
+        InventoryIntegration::ShareGuard.new(root, actor: current_user)
+                                        .check!(sharee_ids: user_ids, field_access: field_access)
+        descendants.each do |target|
+          access = InventoryIntegration::ShareGuard.inventory?(target) ? descendant_access : nil
+          InventoryIntegration::ShareGuard.new(target, actor: current_user).check!(sharee_ids: user_ids,
+                                                                                   field_access: access)
+        end
       end
     end
 
@@ -208,6 +233,7 @@ module Chemotion
         optional :screen_detail_level, type: Integer
         optional :sequencebasedmacromoleculesample_detail_level, type: Integer
         optional :wellplate_detail_level, type: Integer
+        optional :inventory_field_access, type: Hash, desc: 'Inventory collections only: field group => level'
         optional :apply_to_subcollections, type: Boolean, default: false,
                                            desc: 'Also apply this share to the descendant collections'
       end
@@ -222,6 +248,7 @@ module Chemotion
         cascade = cascade_requested?(params[:apply_to_subcollections], params[:permission_level])
         targets = cascade_targets(collection, cascade)
         validate_share_targets!(targets, params[:user_ids], params[:permission_level])
+        validate_inventory_targets!(targets.first, targets.drop(1), params[:user_ids], params[:inventory_field_access])
         # requires_new: true so the cascade rolls back to a savepoint even when nested in an outer
         # transaction (e.g. transactional test fixtures) — without it a mid-cascade failure would
         # leave the earlier writes behind.
@@ -246,6 +273,7 @@ module Chemotion
         optional :screen_detail_level, type: Integer
         optional :sequencebasedmacromoleculesample_detail_level, type: Integer
         optional :wellplate_detail_level, type: Integer
+        optional :inventory_field_access, type: Hash, desc: 'Inventory collections only: field group => level'
         optional :apply_to_subcollections, type: Boolean, default: false,
                                            desc: 'Also apply this edit to the descendant collections'
         optional :include_new_subcollections, type: Boolean, default: false,
@@ -279,6 +307,10 @@ module Chemotion
         include_new = params[:include_new_subcollections]
         descendants = cascade ? cascade_targets_for_edit(collection, share.shared_with_id, include_new) : []
         validate_share_targets!(descendants, [share.shared_with_id], effective_level)
+        # New descendant shares copy the root share's map (share_value_defaults), so check that one.
+        field_access = params[:inventory_field_access]
+        descendant_access = include_new ? field_access || share.inventory_field_access : field_access
+        validate_inventory_targets!(collection, descendants, [share.shared_with_id], field_access, descendant_access)
         # requires_new: true — see the note on the create endpoint (atomic under nested transactions).
         ActiveRecord::Base.transaction(requires_new: true) do
           share.update!(attributes)

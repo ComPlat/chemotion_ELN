@@ -99,14 +99,14 @@ class InitCronJobsJob < ApplicationJob
   # default schedules: job schedules can be set through env variables or get a weekly default
   ################################################################################################
 
-  # desc: get a default weekly cron_schedule for the job unless cron env variable is defined
+  # desc: the cron env variable wins, then the entry's :default_cron, then a random weekly schedule
   def cron_schedule_default
     env_var = ENV.fetch(job[:cron_variable], nil)
-    return "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}" if env_var.blank?
-
     return nil if env_var == 'disabled'
+    return to_cron(env_var) if env_var.present?
+    return to_cron(job[:default_cron]) if job[:default_cron].present?
 
-    to_cron(env_var)
+    "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
   end
 
   ################################################################################################
