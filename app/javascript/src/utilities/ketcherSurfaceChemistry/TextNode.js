@@ -108,23 +108,69 @@ const determineBestSide = (atomLocation, imageWidth, currentImageIndex, textWidt
   return 'left';
 };
 // for text component (smaller font for labels attached to shapes)
+// Convert KET 2.0 paragraphs array → Draft.js JSON string.
+// Handles bold, italic, superscript, subscript, font size from part attributes.
+const ket2ParagraphsToDraftContent = (paragraphs, key) => {
+  const blocks = (Array.isArray(paragraphs) ? paragraphs : []).map((para, i) => {
+    const parts = para.parts || [];
+    const text = parts.map((p) => p.text || '').join('');
+    const inlineStyleRanges = [];
+    let offset = 0;
+    for (const part of parts) {
+      const length = (part.text || '').length;
+      if (part.superscript) inlineStyleRanges.push({ style: 'SUPERSCRIPT', offset, length });
+      if (part.subscript) inlineStyleRanges.push({ style: 'SUBSCRIPT', offset, length });
+      if (part.bold) inlineStyleRanges.push({ style: 'BOLD', offset, length });
+      if (part.italic) inlineStyleRanges.push({ style: 'ITALIC', offset, length });
+      if (part.font?.size) inlineStyleRanges.push({ style: `fontsize-${part.font.size}`, offset, length });
+      offset += length;
+    }
+    return {
+      key: i === 0 ? key : `${key}_${i}`,
+      text,
+      type: 'unstyled',
+      depth: para.indent || 0,
+      inlineStyleRanges,
+      entityRanges: [],
+      data: {},
+    };
+  });
+  const safeBlocks = blocks.length
+    ? blocks
+    : [{ key, text: '', type: 'unstyled', depth: 0, inlineStyleRanges: [], entityRanges: [], data: {} }];
+  return JSON.stringify({ blocks: safeBlocks, entityMap: {} });
+};
+
+// Build Draft.js JSON content from a TextNode line description.
+// Handles three cases in priority order:
+//   1. KET 2.0 JSON  ({ paragraphs: [...] }) — from Ketcher >= 3.18 saves
+//   2. Draft.js JSON ({ blocks: [...] })       — from pre-fix ELN saves (pass-through)
+//   3. Plain text string                        — legacy molfiles predating KET 2.0
 const forTextNodeHeader = (key, description) => {
+  try {
+    const parsed = JSON.parse(description);
+    // Case 1: KET 2.0 paragraphs format
+    if (Array.isArray(parsed?.paragraphs)) {
+      return ket2ParagraphsToDraftContent(parsed.paragraphs, key);
+    }
+    // Case 2: already Draft.js — pass through (backward compat with pre-fix saves)
+    if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
+      return description;
+    }
+  } catch (_e) { /* plain text — fall through */ }
+  // Case 3: legacy plain text — wrap in a simple Draft.js block
   const text = description || '';
   const fontSize = KET_TAGS.textNodeFontSize;
   return JSON.stringify({
-    blocks: [
-      {
-        key,
-        text,
-        type: 'unstyled',
-        depth: 0,
-        inlineStyleRanges: text.length > 0
-          ? [{ style: `fontsize-${fontSize}`, offset: 0, length: text.length }]
-          : [],
-        entityRanges: [],
-        data: { fontSize },
-      }
-    ],
+    blocks: [{
+      key,
+      text,
+      type: 'unstyled',
+      depth: 0,
+      inlineStyleRanges: text.length > 0 ? [{ style: `fontsize-${fontSize}`, offset: 0, length: text.length }] : [],
+      entityRanges: [],
+      data: { fontSize },
+    }],
     entityMap: {}
   });
 };
@@ -169,13 +215,39 @@ const findAliasByTemplateId = (aliasesByIndex, templateId) => {
 // Resolve correct alias: prefer polymer index (canonical, handles duplicate templates),
 // then template id (for legacy/wrong-index files), then file alias.
 // ketData: optional structure for alias resolution when latestData is null (initial load)
+//
+// TextNode line formats (split by textIdentifier '#'):
+//   KET 2.0 (Ketcher >= 3.18): polymerIndex # alias # {"paragraphs":[...],"indent":0}
+//     — parts[1] matches t_N_N alias pattern
+//   Legacy Draft.js (pre-fix / Ketcher < 3.18): polymerIndex # draftKey # alias # {Draft.js JSON or plain text}
+//     — parts[1] is a Draft.js key (random alphanumeric, does NOT match t_N_N)
 const addTextNodes = async (textNodes, textNodeMeta, ketData) => {
   const aliasesByIndex = getAtomsWithAliasInOrder(ketData);
   return textNodes.map((item) => {
     const parts = item.split(KET_TAGS.textIdentifier);
-    if (parts.length < 4) return null;
-    const [polymerIndexStr, key, fileAlias, ...rest] = parts;
-    const description = rest.join(KET_TAGS.textIdentifier);
+    if (parts.length < 3) return null;
+
+    // Detect format by checking whether parts[1] is a t_N_N alias (new) or a Draft.js key (old)
+    const isKet2Format = ALIAS_PATTERNS.threeParts.test(parts[1]);
+
+    let polymerIndexStr, key, fileAlias, description;
+    if (isKet2Format) {
+      // New format: polymerIndex#alias#ket2json
+      const [pi, fa, ...rest] = parts;
+      polymerIndexStr = pi;
+      fileAlias = fa;
+      description = rest.join(KET_TAGS.textIdentifier);
+      key = fileAlias; // alias serves as the unique key in KET 2.0 format
+    } else {
+      // Legacy format: polymerIndex#draftKey#alias#content
+      if (parts.length < 4) return null;
+      const [pi, k, fa, ...rest] = parts;
+      polymerIndexStr = pi;
+      key = k;
+      fileAlias = fa;
+      description = rest.join(KET_TAGS.textIdentifier);
+    }
+
     if (!key) return null;
     const polymerIndex = parseInt(polymerIndexStr, 10);
     const templateId = getTemplateIdFromAlias(fileAlias);
@@ -189,9 +261,11 @@ const addTextNodes = async (textNodes, textNodeMeta, ketData) => {
     if (!alias) alias = fileAlias;
     if (alias) {
       textNodeStruct[alias] = key;
-      // Use the saved Draft.js content (which preserves inlineStyleRanges for SUBSCRIPT/SUPERSCRIPT etc.)
-      // when available; fall back to plain-text reconstruction only for older molfiles that predate TextNodeMeta.
-      const content = (textNodeMeta && textNodeMeta[key]) || forTextNodeHeader(key, description);
+      // KET 2.0: forTextNodeHeader detects paragraphs JSON and converts to Draft.js.
+      // Legacy: prefer TextNodeMeta (rich Draft.js JSON) over forTextNodeHeader plain-text fallback.
+      const content = isKet2Format
+        ? forTextNodeHeader(key, description)
+        : (textNodeMeta && textNodeMeta[key]) || forTextNodeHeader(key, description);
       const defaultX = 10.325000000000001;
       const defaultY = -11.325000000000001;
       return {

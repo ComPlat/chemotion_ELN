@@ -201,7 +201,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     canvasIframeRefSetter(iframeRef);
     return () => canvasIframeRefSetter(null);
   }, [iframeRef]);
-  const defaultEmptyMol = 'null\n  Ketcher  3272610132D 1   1.00000     0.00000     0\n\n'
+  const defaultEmptyMol = '\n  Ketcher  3272610132D 1   1.00000     0.00000     0\n\n'
     + '  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
   const initMol = molfile || defaultEmptyMol;
 

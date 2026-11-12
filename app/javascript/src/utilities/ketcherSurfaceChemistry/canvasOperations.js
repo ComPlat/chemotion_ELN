@@ -62,16 +62,84 @@ import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfac
 const ctabLinesOnly = (molfileString) => {
   if (!molfileString || typeof molfileString !== 'string') return [];
   const lines = molfileString.trim().split('\n');
+  if (lines[0] === 'null' || lines[0] === 'undefined') lines[0] = '';
   const endIdx = lines.findIndex((line) => line && /^M\s+END/.test(line));
   return endIdx >= 0 ? lines.slice(0, endIdx + 1) : lines;
 };
 
 // function when a canvas is saved using main "SAVE" button
 // ketData: optional pre-fetched KET JSON to avoid a second getKet() call during save
+const normalizeMolfileLines = (molfileString) => {
+  const lines = molfileString.split('\n');
+  if (lines[0] === 'null' || lines[0] === 'undefined') lines[0] = '';
+  return lines;
+};
+
+// Convert Draft.js JSON string → KET 2.0 paragraphs array.
+// Used when saving text nodes to the molfile TextNode section.
+// Fallback: returns [{parts:[{text:plain}]}] for plain-text or parse errors.
+const draftJsonToKet2Paragraphs = (content) => {
+  try {
+    const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+    if (!Array.isArray(parsed?.blocks) || !parsed.blocks.length) throw new Error();
+    return parsed.blocks.map((block) => {
+      const text = block.text || '';
+      const ranges = block.inlineStyleRanges || [];
+      if (!text) return { parts: [{ text: '' }], indent: block.depth || 0 };
+
+      const charStyles = Array.from({ length: text.length }, () => ({
+        bold: false, italic: false, superscript: false, subscript: false, fontSize: null
+      }));
+      ranges.forEach(({ style, offset: o, length: l }) => {
+        const end = Math.min(o + l, text.length);
+        for (let ci = o; ci < end; ci++) {
+          if (style === 'BOLD') charStyles[ci].bold = true;
+          else if (style === 'ITALIC') charStyles[ci].italic = true;
+          else if (style === 'SUPERSCRIPT') charStyles[ci].superscript = true;
+          else if (style === 'SUBSCRIPT') charStyles[ci].subscript = true;
+          else if (style.startsWith('fontsize-')) {
+            const sz = parseInt(style.slice(9), 10);
+            if (!Number.isNaN(sz)) charStyles[ci].fontSize = sz;
+          } else if (style.startsWith('CUSTOM_FONT_SIZE_')) {
+            const sz = Math.round(parseFloat(style.slice(17)));
+            if (!Number.isNaN(sz)) charStyles[ci].fontSize = sz;
+          }
+        }
+      });
+
+      const parts = [];
+      let i = 0;
+      while (i < text.length) {
+        const s = charStyles[i];
+        let j = i + 1;
+        while (j < text.length
+          && charStyles[j].bold === s.bold
+          && charStyles[j].italic === s.italic
+          && charStyles[j].superscript === s.superscript
+          && charStyles[j].subscript === s.subscript
+          && charStyles[j].fontSize === s.fontSize
+        ) { j++; }
+        const part = { text: text.slice(i, j) };
+        if (s.bold) part.bold = true;
+        if (s.italic) part.italic = true;
+        if (s.superscript) part.superscript = true;
+        if (s.subscript) part.subscript = true;
+        if (s.fontSize) part.font = { size: s.fontSize };
+        parts.push(part);
+        i = j;
+      }
+      return { parts: parts.length ? parts : [{ text: '' }], indent: block.depth || 0 };
+    });
+  } catch (_e) {
+    const plain = typeof content === 'string' ? content : '';
+    return [{ parts: [{ text: plain }], indent: 0 }];
+  }
+};
+
 const arrangePolymers = async (canvasData, editor, ketData = null) => {
   // Do not add PolymersList tag when no polymer images are present
   if (!imagesList || imagesList.length === 0) {
-    return canvasData.split('\n');
+    return normalizeMolfileLines(canvasData);
   }
   const data = ketData ?? JSON.parse(await editor.structureDef.editor.getKet());
 
@@ -92,12 +160,13 @@ const arrangePolymers = async (canvasData, editor, ketData = null) => {
   }
 
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
-  if (!processString) return canvasData.split('\n');
+  if (!processString) return normalizeMolfileLines(canvasData);
   const ctabLines = ctabLinesOnly(canvasData);
   return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 
 // helper function to arrange text nodes for formula
+// Format (KET 2.0): polymerIndex#alias#{"paragraphs":[...],"indent":0}
 // Use polymerIndex (0,1,2...) for the first number — matches PolymersList atom index, not raw atom index.
 const arrangeTextNodes = async (ket2Molfile) => {
   const assembleTextList = [];
@@ -120,14 +189,15 @@ const arrangeTextNodes = async (ket2Molfile) => {
           const block = parseDraftBlock(textItem.data?.content);
           if (!block) continue; // eslint-disable-line no-continue
           if (textNodeKey === block.key) {
+            // Convert Draft.js → KET 2.0 paragraphs for storage (single section, no TextNodeMeta needed)
+            const paragraphs = draftJsonToKet2Paragraphs(textItem.data.content);
+            const ket2Content = JSON.stringify({ paragraphs, indent: 0 });
             const line = [
               polymerIndex,
               textSeparator,
-              textNodeKey,
-              textSeparator,
               atom.alias,
               textSeparator,
-              textItem.data.content
+              ket2Content
             ].join('').trim();
             const y = textItem.data?.position?.y ?? 0;
             assembleTextList.push({ line, y });
@@ -1352,8 +1422,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor, ketFormatData); // reuse KET data, no second getKet()
-    ket2Lines = await arrangeTextNodes(ket2Lines); // text node
-    ket2Lines = arrangeTextNodeMeta(ket2Lines); // text node raw content metadata
+    ket2Lines = await arrangeTextNodes(ket2Lines); // text node (KET 2.0 paragraphs format, single section)
     if (imagesList.length > 0) {
       ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
     }
