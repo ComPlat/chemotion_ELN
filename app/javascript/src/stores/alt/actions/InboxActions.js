@@ -3,6 +3,8 @@ import InboxFetcher from 'src/fetchers/InboxFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 
+let inboxCountsRequest = 0;
+
 class InboxActions {
   deleteContainerLinkUnselected(params) {
     return (dispatch) => {
@@ -82,6 +84,19 @@ class InboxActions {
       InboxFetcher.fetchInbox(true)
         .then((result) => {
           dispatch(result.inbox);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  refreshInboxCounts() {
+    return (dispatch) => {
+      const requestId = ++inboxCountsRequest;
+      // This response includes the linked count and Unsorted files, without reloading device pages.
+      return InboxFetcher.fetchInboxUnsorted()
+        .then((result) => {
+          if (requestId === inboxCountsRequest) dispatch(result.inbox);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
