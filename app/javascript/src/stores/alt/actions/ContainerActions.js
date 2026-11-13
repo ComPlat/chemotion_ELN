@@ -7,10 +7,11 @@ import { rootStore } from 'src/stores/mobx/RootStore';
 
 class ContainerActions {
   updateContainerWithFiles(container) {
-    return async () => {
+    return async (dispatch) => {
       try {
         await AttachmentFetcher.uploadNewAttachmentsForContainer(container);
         const response = await ContainerFetcher.updateContainer(container);
+        dispatch(response.container);
 
         rootStore.notificationsStore.add({
           title: 'Analysis Updated.',

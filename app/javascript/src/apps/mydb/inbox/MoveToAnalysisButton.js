@@ -68,10 +68,10 @@ export default class MoveToAnalysisButton extends React.Component {
 
     switch (sourceType) {
       case DragDropItemTypes.DATA:
-        InboxActions.removeAttachmentFromList(attachment);
+        InboxActions.removeAttachmentFromList(attachment, true);
         break;
       case DragDropItemTypes.UNLINKED_DATA:
-        InboxActions.removeUnlinkedAttachmentFromList(attachment);
+        InboxActions.removeUnlinkedAttachmentFromList(attachment, true);
         break;
       default:
         return false;
