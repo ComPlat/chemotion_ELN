@@ -113,7 +113,7 @@ export default class GenericElDetails extends Component {
     genericEl.changed = true;
     this.setState({ genericEl }, () => {
       // ElementActions.opGenericAnalysis(el);
-      renderFlowModal(genericEl, false);
+      if (UIStore.getState().showGenericWorkflow) renderFlowModal(genericEl, false);
       if (typeof cb === 'function') cb();
     });
   }

@@ -420,7 +420,7 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    it 'imports all new molecules and schedules exactly one PubchemLookupJob for the whole batch' do
+    it 'imports all new molecules and schedules a bounded number of PubchemLookupJobs, not one per molecule' do
       # chemotion#552 was a NoMethodError inside Molecule#schedule_pubchem_lookup's own
       # per-molecule Delayed::Job query, triggered by a concurrently-running
       # worker draining that queue mid-import. schedule_pubchem_lookup no longer queries
@@ -445,10 +445,15 @@ describe Chemotion::SampleAPI do
       # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
       perform_enqueued_jobs
 
-      # create_samples also flushes its own started_at, but finds nothing created after it
-      # (all molecules were created during find_or_create_mol_by_batch), so that second flush
-      # no-ops. What #552 was about is the shape: one batched job, not one per molecule.
-      expect(PubchemLookupJob).to have_received(:perform_later).once
+      # Two enqueues, both batched and both covering the whole import by created_after: the
+      # first-batch kick that starts enrichment while the import is still running, and
+      # find_or_create_mol_by_batch's ensure flush. create_samples flushes a third time but
+      # finds nothing created after its own timestamp, so that one no-ops.
+      #
+      # What #552 was about is the *shape*: bounded, and independent of how many molecules the
+      # file contains — not one job per molecule. The fixture has 2 molecules, so asserting a
+      # count below that is what carries the regression guard.
+      expect(PubchemLookupJob).to have_received(:perform_later).twice
       expect(PubchemLookupJob).to have_received(:perform_later)
         .with(nil, created_after: be >= started_at).at_least(:once)
     end
@@ -480,8 +485,12 @@ describe Chemotion::SampleAPI do
     end
 
     context 'with molecule_sort' do
-      let(:molecules) { create_list(:molecule, 2) { |m, i| m.sum_formular = "C#{i}" } }
-      let(:samples) { create_list(:sample, 2, collections: [personal_collection]) { |s, i| s.molecule = molecules[i] } }
+      let(:molecules) do
+        [0, 1].map { |i| create(:molecule, force_attributes: { sum_formular: "C#{i}" }) }
+      end
+      let(:samples) do
+        molecules.map { |molecule| create(:sample, collections: [personal_collection], molecule: molecule) }
+      end
 
       it 'returns samples in the right order' do
         sample_ids = samples.map(&:id)
@@ -675,6 +684,28 @@ describe Chemotion::SampleAPI do
       it 'returns 401 unauthorized status code' do
         get "/api/v1/samples/#{sample.id}"
         expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when molfile contains non-ASCII characters' do
+      # .b writes raw bytes into the bytea column, matching how PG returns them (ASCII-8BIT)
+      let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read.b }
+      let(:sample) do
+        create(:sample, collections: [collection]).tap do |s|
+          s.update_column(:molfile, textnode_molfile)
+        end
+      end
+
+      before { get "/api/v1/samples/#{sample.id}" }
+
+      it 'returns the molfile with non-ASCII characters intact' do
+        molfile = JSON.parse(response.body)['sample']['molfile']
+        expect(molfile).to include('α-Al2O3')
+      end
+
+      it 'does not replace non-ASCII bytes with U+FFFD' do
+        molfile = JSON.parse(response.body)['sample']['molfile']
+        expect(molfile).not_to include("�")
       end
     end
   end

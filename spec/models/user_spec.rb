@@ -139,6 +139,14 @@ RSpec.describe User do
       expect(user.collections.find_by(label: 'All', is_locked: true)).not_to be_nil
     end
 
+    # The All collection backs the MyDB element paths, and config/routes.rb sends a Group session to
+    # the command-and-control view for /mydb, so a group can never use one.
+    it 'creates no All collection for a group' do
+      group = create(:group)
+
+      expect(group.collections.find_by(label: 'All')).to be_nil
+    end
+
     it 'reset email after soft deletion' do
       user_deleted.destroy!
       expect(User.with_deleted.find_by(email: 'user_deleted@eln.edu')).to be_nil

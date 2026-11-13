@@ -97,8 +97,8 @@ const setReactionByType = (reaction, type, value) => {
     case 'volume':
       reaction.volume = value;
       break;
-    case 'useReactionVolumeForConcentration':
-      reaction.use_reaction_volume = value;
+    case 'concentrationMode':
+      reaction.concentration_mode = value;
       break;
     case 'lockReactionVolume':
       reaction.lock_reaction_volume = value;

@@ -60,14 +60,17 @@ module Versioning
           boiling_point: {
             label: 'Boiling point',
             kind: :numrange,
-            revert: %i[boiling_point],
+            # The label the form shows for the range (as typed) is reverted with it.
+            revert: %i[boiling_point xref.boiling_point_label],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           melting_point: {
             label: 'Melting point',
             kind: :numrange,
-            revert: %i[melting_point],
+            revert: %i[melting_point xref.melting_point_label],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           purity: {
             label: 'Purity/Concentration',
@@ -128,13 +131,13 @@ module Versioning
       private
 
       # Each xref entry follows the same shape: it reads/writes a single key under
-      # the sample's jsonb `xref` column. flash_point is the only one that targets a
-      # nested path ('value'), so the formatter path is passed through verbatim.
+      # the sample's jsonb `xref` column. flash_point is the only one with its own
+      # display formatter ("<value> <unit>"); every entry reverts its whole key.
       def xref_field_definitions
         [
           xref_field('cas', 'CAS'),
           xref_field('inventory_label', 'Inventory label'),
-          xref_field('flash_point', 'Flash Point', 'value'),
+          xref_field('flash_point', 'Flash Point', flash_point_formatter),
           xref_field('form', 'Form'),
           xref_field('color', 'Color'),
           xref_field('solubility', 'Solubility'),
@@ -145,13 +148,26 @@ module Versioning
         ]
       end
 
-      def xref_field(key, label, *path)
+      def xref_field(key, label, formatter = jsonb_formatter(key))
         {
           name: "xref.#{key}",
           label: label,
           revert: [:"xref.#{key}"],
-          formatter: jsonb_formatter(key, *path),
+          formatter: formatter,
+          # The revert writes the whole xref sub-key, so revert to all of it, not just the displayed text.
+          revertible_value_formatter: jsonb_formatter(key),
         }
+      end
+
+      # Stored as {value, unit}; shown like the exports show it, e.g. "12 °C".
+      def flash_point_formatter
+        lambda do |key, value|
+          flash_point = jsonb_formatter('flash_point').call(key, value)
+          next flash_point unless flash_point.is_a?(Hash)
+          next if flash_point['value'].blank?
+
+          "#{flash_point['value']} #{flash_point['unit']}".strip
+        end
       end
 
       def molecule_names_lookup

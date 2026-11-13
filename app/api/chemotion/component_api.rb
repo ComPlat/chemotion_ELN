@@ -42,6 +42,7 @@ module Chemotion
             optional :amount_mol, type: Float, desc: 'Component moles'
             optional :amount_l, type: Float, desc: 'Component volume'
             optional :amount_g, type: Float, desc: 'Component mass'
+            optional :relative_molecular_weight, type: Float, desc: 'Relative molecular weight in g/mol'
             optional :density, type: Float, desc: 'Density in g/ml'
             optional :molarity_unit, type: String, desc: 'Molarity unit'
             optional :molarity_value, type: Float, desc: 'Molarity value'

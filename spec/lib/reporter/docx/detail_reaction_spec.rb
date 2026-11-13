@@ -407,6 +407,99 @@ describe 'Reporter::Docx::DetailReaction' do
         expect(report_two.content[:products][0][:mol]).to eq('0.00')
       end
     end
+
+    # Regression: mixture-component and product values arrive from stored JSON and can be
+    # numeric strings or non-numeric placeholders ('n.d.', redacted '***'). Un-coerced
+    # arithmetic on them crashed docx generation (ComPlat/chemotion_ELN#3170), and blindly
+    # coercing the product equivalent with to_f silently rendered a placeholder as a
+    # misleading '0%'. These lock in the coercion + honest placeholder rendering.
+    context 'when coercing untrusted numeric fields from stored JSON' do
+      def detail
+        Reporter::Docx::DetailReaction.new(
+          reaction: OpenStruct.new(weight_percentage: false),
+          mol_serials: [],
+          index: prev_index,
+          si_rxn_settings: all_si_rxn_settings,
+        )
+      end
+
+      def product_material(equivalent)
+        {
+          molecule: { molecular_weight: 100.0, iupac_name: 'p', sum_formular: 'H2O' },
+          molecule_name_hash: { label: 'p' },
+          name: 'P',
+          sample_type: 'micromolecule',
+          gas_type: nil,
+          metrics: 'mmmm',
+          real_amount_g: 1.0,
+          real_amount_ml: 0.0,
+          real_amount_mmol: 10.0,
+          amount_g: 1.0,
+          amount_ml: 0.0,
+          amount_mmol: 10.0,
+          density: 0.0,
+          decoupled: false,
+          sum_formula: 'H2O',
+          conversion_rate: nil,
+          weight_percentage: nil,
+          components: nil,
+          equivalent: equivalent,
+        }
+      end
+
+      def mixture_sample(rel_mol_weight:, amount_mol: '0.5', reference_changed: false)
+        OpenStruct.new(
+          sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+          sample_details: { 'reference_component_changed' => reference_changed },
+          components: [
+            { 'component_properties' => {
+              'reference' => true,
+              'relative_molecular_weight' => rel_mol_weight,
+              'amount_mol' => amount_mol,
+            } },
+          ],
+        )
+      end
+
+      describe '#material_hash product equivalent' do
+        it 'renders a numeric equivalent as a percentage' do
+          expect(detail.send(:material_hash, product_material(0.85), true)[:equiv]).to eq('85%')
+        end
+
+        it 'renders a non-numeric placeholder verbatim instead of a misleading 0%' do
+          expect(detail.send(:material_hash, product_material('n.d.'), true)[:equiv]).to eq('n.d.')
+        end
+
+        it 'renders a nil equivalent as 0%' do
+          expect(detail.send(:material_hash, product_material(nil), true)[:equiv]).to eq('0%')
+        end
+
+        it 'does not raise on a redacted placeholder equivalent' do
+          expect { detail.send(:material_hash, product_material('***'), true) }.not_to raise_error
+        end
+      end
+
+      describe '#calculate_mixture_amount_mol' do
+        it 'divides by a numeric-string relative_molecular_weight without raising' do
+          sample = mixture_sample(rel_mol_weight: '150.0')
+
+          expect { detail.send(:calculate_mixture_amount_mol, sample, 5.0) }.not_to raise_error
+          expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(5.0 / 150.0)
+        end
+
+        it 'falls back to amount_mol when relative_molecular_weight is blank' do
+          sample = mixture_sample(rel_mol_weight: '')
+
+          expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(0.5)
+        end
+
+        it 'falls back to amount_mol when the reference component changed, even with a positive MW' do
+          sample = mixture_sample(rel_mol_weight: '150.0', reference_changed: true)
+
+          expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(0.5)
+        end
+      end
+    end
   end
 end
 # rubocop:enable RSpec/BeforeAfterAll, RSpec/MultipleExpectations

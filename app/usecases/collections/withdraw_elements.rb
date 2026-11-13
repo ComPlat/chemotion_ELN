@@ -38,10 +38,12 @@ module Usecases
       #   of their collections, whether or not the record was destroyed), keyed by the model
       #   +param_key+ — the shape the endpoint needs to close the matching detail tabs.
       def perform!(source_collection:, ui_state:, options: {})
-        # The user's own collections, spanning the groups they belong to (a group member could
-        # already destroy group-collection elements, so withdrawal keeps that reach). Restricting
-        # group-owned withdrawal to group-admins is a deliberate future refinement, not done here.
-        @owned_collection_ids = Collection.where(user_id: [current_user.id, *current_user.group_ids]).pluck(:id)
+        # The user's own collections, and only those. This used to span the groups they belong to,
+        # on the grounds that a group member could already destroy group-collection elements — which
+        # was true only because +own_collections_for+ counted a group's collections as its members'.
+        # Ownership is personal now, and withdrawal is destructive, so it does not reach into a
+        # group's collections; a member who should act on one gets a share.
+        @owned_collection_ids = Collection.where(user_id: current_user.id).pluck(:id)
         @locked_sample_ids = []
         removed = Hash.new { |hash, key| hash[key] = [] }
 

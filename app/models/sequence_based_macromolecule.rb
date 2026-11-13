@@ -113,6 +113,16 @@ class SequenceBasedMacromolecule < ApplicationRecord
     self.sequence = self.class.normalize_sequence(sequence)
   end
 
+  # Whether a user other than +user+ has a sample of this SBMM. Usecases::Sbmm::Finder reuses
+  # one SBMM across users (by accession, or sequence plus modifications), so it is then a shared
+  # reference record that +user+ may not change for everyone.
+  #
+  # @param user [User]
+  # @return [Boolean]
+  def used_by_other_users?(user)
+    SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: id, except_user_id: user.id).positive?
+  end
+
   # returns the result in g/mol
   def calculated_molecular_weight
     Usecases::Sbmm::MolecularWeightCalculator.new(sequence).calculate

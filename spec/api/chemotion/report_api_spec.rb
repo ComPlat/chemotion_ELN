@@ -44,6 +44,43 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'GET /api/v1/reports/docx authorization' do
+      let!(:foreign_collection) { create(:collection, user_id: other.id) }
+      let!(:foreign_reaction) { create(:reaction, collections: [foreign_collection]) }
+
+      it 'rejects a reaction the user may not read (no share / not owned)' do
+        get '/api/v1/reports/docx', params: { id: foreign_reaction.id.to_s }
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'still serves a reaction the user owns' do
+        get '/api/v1/reports/docx', params: { id: r1.id.to_s }
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    describe 'POST /api/v1/reports authorization' do
+      let!(:foreign_collection) { create(:collection, user_id: other.id) }
+      let!(:foreign_reaction) { create(:reaction, collections: [foreign_collection]) }
+      let(:report_params) do
+        {
+          objTags: [{ id: foreign_reaction.id, type: 'reaction' }],
+          splSettings: [], rxnSettings: [], siRxnSettings: [], configs: [],
+          molSerials: [], prdAtts: [], imgFormat: 'png',
+          fileName: 'ELN', templateId: 'standard'
+        }
+      end
+
+      it 'rejects objTags the user may not read and creates no report' do
+        expect { post '/api/v1/reports', params: report_params, as: :json }
+          .not_to change(Report, :count)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     describe 'export_samples_from_selections as SDfiles' do
       let(:c) { create(:collection, user_id: user.id) }
       let(:molfiles) do
@@ -170,6 +207,25 @@ describe Chemotion::ReportAPI do
         expect(response.body).to include('SBMM SDF sample')
         expect(response.body).to include('>  <SHORT_LABEL>')
         expect(response.body).to include('SBMM-SDF-1')
+      end
+
+      it 'exports chemical columns as SDF when only chemicals columns are selected (report_api.rb chemicals guard)' do
+        chemical = create(:chemical, sample: samples[0], chemical_data: [{ 'status' => 'ordered' }])
+
+        chem_params = params.deep_dup
+        chem_params[:uiState][:sample][:checkedIds] = [chemical.sample_id]
+        chem_params[:columns][:sample] = []
+        chem_params[:columns][:chemicals] = ['status']
+
+        post(
+          '/api/v1/reports/export_samples_from_selections',
+          params: chem_params.to_json,
+          headers: { 'CONTENT-TYPE' => 'application/json' },
+        )
+
+        expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+        expect(response.body).to include('>  <STATUS>')
+        expect(response.body).to include('ordered')
       end
     end
 
@@ -325,6 +381,321 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'ReportHelpers list filters' do
+      let(:helpers) { Class.new { |inst| inst.extend(ReportHelpers) } }
+
+      it 'counts productOnly as a filter for samples only' do
+        expect([helpers.list_filtered?(:sample, { productOnly: true }),
+                helpers.list_filtered?(:reaction, { productOnly: true })]).to eq [true, false]
+      end
+
+      it 'counts a label or a date as a filter for every table' do
+        expect(%i[sample reaction wellplate].map { |t| helpers.list_filtered?(t, { fromDate: 1 }) }).to all(be true)
+      end
+
+      it 'leaves an unfiltered reaction list to the collection join' do
+        expect(helpers.list_scope(:reaction, {}, collection.id)).to be_nil
+      end
+    end
+
+    describe 'select-all export with list filters' do
+      let(:label) { UserLabel.create!(user_id: user.id, access_level: 0, title: 'Shelf A', color: '#aaa') }
+      let(:other_collection) { create(:collection, user_id: user.id) }
+      let(:sample_columns) { { sample: %w[name] } }
+      let(:none_selected) { { checkedIds: [], uncheckedIds: [], checkedAll: false } }
+
+      def add_label(element)
+        tag = element.reload.tag
+        tag.update!(taggable_data: (tag.taggable_data || {}).merge('user_labels' => [label.id]))
+      end
+
+      def export(ui_state, columns: sample_columns, export_type: 1)
+        params = {
+          exportType: export_type,
+          uiState: { sample: none_selected, reaction: none_selected, wellplate: none_selected,
+                     currentCollection: collection.id }.merge(ui_state),
+          columns: columns,
+        }
+        post '/api/v1/reports/export_samples_from_selections', params: params, as: :json
+      end
+
+      def sheet_names(sheet)
+        file = Tempfile.new(['export', '.xlsx'])
+        file.binmode
+        file.write(response.body)
+        file.flush
+        rows = Roo::Spreadsheet.open(file.path, extension: :xlsx).sheet(sheet).to_a
+        column = rows.first.index('sample name')
+        rows.drop(1).filter_map { |row| row[column] }
+      end
+
+      def select_all(unchecked = [])
+        { checkedIds: [], uncheckedIds: unchecked, checkedAll: true }
+      end
+
+      context 'with labelled and unlabelled samples' do
+        let!(:first) { create(:sample, name: 'first', collections: [collection]) }
+        let!(:second) { create(:sample, name: 'second', collections: [collection]) }
+
+        before do
+          create(:sample, name: 'plain', collections: [collection])
+          add_label(second)
+          add_label(first)
+        end
+
+        it 'exports the labelled samples minus the unchecked ones' do
+          export({ sample: select_all([second.id]), userLabel: label.id })
+
+          expect(sheet_names('sample')).to eq ['first']
+        end
+
+        it 'orders the rows by id' do
+          export({ sample: select_all, userLabel: label.id })
+
+          expect(sheet_names('sample')).to eq %w[first second]
+        end
+
+        it 'answers 204 when the filter matches nothing' do
+          export({ sample: select_all([first.id, second.id]), userLabel: label.id })
+
+          expect(response).to have_http_status(:no_content)
+        end
+
+        it 'answers 204 for an SDF export when the filter matches nothing' do
+          export({ sample: select_all([first.id, second.id]), userLabel: label.id }, export_type: 2)
+
+          expect(response).to have_http_status(:no_content)
+        end
+
+        it 'applies the filter to the analyses sheet' do
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(analyses: %w[name]))
+
+          expect(sheet_names('sample_analyses')).to eq %w[first second]
+        end
+
+        it 'applies the filter to the chemicals sheet' do
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(chemicals: %w[status]))
+
+          expect(sheet_names('sample_chemicals')).to eq %w[first second]
+        end
+
+        it 'applies the filter to the components sheet' do
+          Sample.find_each { |sample| create(:component, sample: sample) }
+          export({ sample: select_all, userLabel: label.id }, columns: sample_columns.merge(components: %w[name]))
+
+          expect(sheet_names('sample_components')).to eq %w[first second]
+        end
+
+        it 'exports the checked samples to the components sheet' do
+          Sample.find_each { |sample| create(:component, sample: sample) }
+          export({ sample: { checkedIds: [second.id], uncheckedIds: [], checkedAll: false } },
+                 columns: sample_columns.merge(components: %w[name]))
+
+          expect(sheet_names('sample_components')).to eq ['second']
+        end
+
+        it 'only accepts integer ids' do
+          export({ sample: { checkedIds: ['x'], uncheckedIds: [], checkedAll: false } })
+
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+
+      context 'with a collection the user cannot read' do
+        let(:foreign) { create(:collection, user_id: other.id) }
+
+        before { create(:sample, name: 'foreign', collections: [foreign]) }
+
+        it 'answers 401 for select-all, whether or not the filter matches' do
+          export({ sample: select_all, currentCollection: foreign.id })
+          expect(response).to have_http_status(:unauthorized)
+
+          export({ sample: select_all, userLabel: label.id, currentCollection: foreign.id })
+          expect(response).to have_http_status(:unauthorized)
+        end
+
+        it 'answers 401 for explicit ids' do
+          export({ sample: { checkedIds: [s1.id], uncheckedIds: [], checkedAll: false },
+                   currentCollection: foreign.id })
+
+          expect(response).to have_http_status(:unauthorized)
+        end
+
+        it 'answers 401 for a collection id that does not exist' do
+          export({ sample: select_all, currentCollection: 0 })
+
+          expect(response).to have_http_status(:unauthorized)
+        end
+      end
+
+      context 'with a date filter sent as unix seconds' do
+        before do
+          create(:sample, name: 'old', collections: [collection])
+            .update_columns(created_at: 10.days.ago, updated_at: 10.days.ago) # rubocop:disable Rails/SkipsModelValidations
+          create(:sample, name: 'new', collections: [collection])
+        end
+
+        it 'keeps the samples created inside the range, including the whole of the end day' do
+          export({ sample: select_all, fromDate: 2.days.ago.to_i, toDate: Time.zone.now.beginning_of_day.to_i,
+                   filterCreatedAt: true })
+
+          expect(sheet_names('sample')).to eq ['new']
+        end
+      end
+
+      context 'with reaction samples' do
+        let!(:reaction) { create(:reaction, collections: [collection]) }
+        let!(:solvent) { create(:sample, name: 'solvent', collections: [collection]) }
+        let!(:product) { create(:sample, name: 'product', collections: [collection]) }
+
+        before do
+          create(:sample, name: 'standalone', collections: [collection])
+          create(:reactions_solvent_sample, reaction: reaction, sample: solvent)
+          create(:reactions_product_sample, reaction: reaction, sample: product)
+        end
+
+        it 'leaves solvent-only samples out of an unfiltered select-all' do
+          export({ sample: select_all })
+
+          expect(sheet_names('sample')).to contain_exactly('product', 'standalone')
+        end
+
+        it 'exports only products with productOnly' do
+          export({ sample: select_all, productOnly: true })
+
+          expect(sheet_names('sample')).to eq ['product']
+        end
+      end
+
+      context 'with a reaction whose product sits in another collection' do
+        let!(:reaction) { create(:reaction, collections: [collection]) }
+
+        before do
+          add_label(reaction)
+          create(:reactions_solvent_sample, reaction: reaction,
+                                            sample: create(:sample, name: 'here', collections: [collection]))
+          elsewhere = create(:sample, name: 'elsewhere', collections: [other_collection])
+          create(:reactions_product_sample, reaction: reaction, sample: elsewhere)
+          # Saving the reaction sample files it into the reaction's collection too.
+          CollectionsSample.where(sample: elsewhere, collection: collection).delete_all
+        end
+
+        it 'leaves out samples outside the collection without a filter' do
+          export({ reaction: select_all })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+
+        it 'keeps the collection restriction when a label filter is set' do
+          export({ reaction: select_all, userLabel: label.id })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+
+        it 'ignores productOnly for reactions' do
+          export({ reaction: select_all, productOnly: true })
+
+          expect(sheet_names('reaction')).to eq ['here']
+        end
+      end
+
+      context 'with a labelled and an unlabelled reaction sharing a sample' do
+        before do
+          shared = create(:sample, name: 'shared', collections: [collection])
+          %w[labelled plain].each do |name|
+            reaction = create(:reaction, collections: [collection])
+            create(:reactions_solvent_sample, reaction: reaction, sample: shared)
+            create(:reactions_product_sample, reaction: reaction,
+                                              sample: create(:sample, name: name, collections: [collection]))
+            add_label(reaction) if name == 'labelled'
+          end
+        end
+
+        it 'exports the rows of the labelled reaction only' do
+          export({ reaction: select_all, userLabel: label.id })
+
+          expect(sheet_names('reaction')).to eq %w[shared labelled]
+        end
+      end
+
+      context 'with wellplates' do
+        let!(:labelled) { create(:wellplate, collections: [collection]) }
+
+        before do
+          add_label(labelled)
+          unlabelled = create(:wellplate, collections: [collection])
+          create(:well, wellplate: labelled, sample: create(:sample, name: 'in labelled', collections: [collection]))
+          create(:well, wellplate: unlabelled, sample: create(:sample, name: 'in plain', collections: [collection]))
+        end
+
+        it 'exports the samples of the labelled wellplates only' do
+          export({ wellplate: select_all, userLabel: label.id })
+
+          expect(sheet_names('wellplate')).to eq ['in labelled']
+        end
+      end
+
+      describe 'reaction SMILES' do
+        let(:molfile) { build(:molfile, type: 'test_2') }
+
+        def export_smiles(ui_state)
+          params = {
+            exportType: 0,
+            uiState: { sample: none_selected, reaction: none_selected, wellplate: none_selected,
+                       currentCollection: collection.id }.merge(ui_state),
+            columns: {},
+          }
+          post '/api/v1/reports/export_reactions_from_selections', params: params, as: :json
+        end
+
+        before do
+          2.times do |i|
+            reaction = create(:reaction, collections: [collection])
+            create(:reactions_product_sample, reaction: reaction,
+                                              sample: create(:sample, molfile: molfile, collections: [collection]))
+            add_label(reaction) if i.zero?
+          end
+        end
+
+        it 'exports only the labelled reactions' do
+          export_smiles({ reaction: select_all, userLabel: label.id })
+
+          expect(response.body.split("\r\n").size).to eq 1
+        end
+
+        it 'answers 204 when the filter matches nothing' do
+          export_smiles({ reaction: select_all, userLabel: label.id + 1 })
+
+          expect(response).to have_http_status(:no_content)
+        end
+      end
+    end
+
+    describe 'GET /api/v1/reports/excel_reaction and excel_wellplate' do
+      let(:wellplate) { create(:wellplate, collections: [collection]) }
+
+      it 'exports the samples of a reaction' do
+        get '/api/v1/reports/excel_reaction', params: { id: r1.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.header['Content-Type']).to eq excel_mime_type
+      end
+
+      it 'exports the samples of a wellplate' do
+        get '/api/v1/reports/excel_wellplate', params: { id: wellplate.id }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'rejects an id that is not an integer' do
+        %w[excel_reaction excel_wellplate].each do |route|
+          get "/api/v1/reports/#{route}", params: { id: "#{r1.id},#{r2.id}" }
+
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+    end
+
     describe 'POST /api/v1/reports/export_reactions_from_selections' do
       let!(:other_user) { create(:person) }
       let!(:collection_with_shares) do
@@ -420,6 +791,51 @@ describe Chemotion::ReportAPI do
                'CONTENT-TYPE' => 'application/json',
              })
         expect(response['Content-Type']).to eq('text/csv')
+      end
+
+      context 'with a purification solvent in the reaction' do
+        # the solvent and the purification solvent get their own structures,
+        # so that each role can be told apart in the exported smiles
+        let(:sample2) do
+          build(:sample, created_by: user.id, molfile: build(:molfile, type: :aromtic_2sub),
+                         collections: [collection])
+        end
+        let!(:purification_solvent) do
+          create(:sample, created_by: user.id, molfile: build(:molfile, type: :water), collections: [collection])
+        end
+        let(:purification_smiles) { purification_solvent.molecule.cano_smiles }
+
+        before do
+          create(:reactions_purification_solvent_sample, reaction: reaction, sample: purification_solvent)
+        end
+
+        it 'exports the reaction smiles without the purification solvent (SM>R>S>P)' do
+          post('/api/v1/reports/export_reactions_from_selections',
+               params: params.merge(exportType: 5).to_json,
+               headers: {
+                 'HTTP_ACCEPT' => 'text/plain, text/csv',
+                 'CONTENT-TYPE' => 'application/json',
+               })
+
+          expect(response).to have_http_status(:created)
+          expect(response.body).to eq(
+            "#{[smiles0, smiles1].join('.')}>#{smiles3}>#{smiles2}>#{smiles4}",
+          )
+        end
+
+        it 'leaves the purification solvent out of every role' do
+          smiles_by_role = result.fetch(reaction.id.to_s)
+
+          # reactant, solvent and purification solvent are three distinct structures
+          expect([smiles3, smiles2, purification_smiles].uniq.size).to eq(3)
+          expect(smiles_by_role).to eq(
+            '0' => [smiles0, smiles1],
+            '1' => [smiles3],
+            '2' => [smiles2],
+            '3' => [smiles4],
+          )
+          expect(smiles_by_role.values.flatten).not_to include(purification_smiles)
+        end
       end
 
       describe 'ReportHelpers' do
@@ -597,6 +1013,39 @@ describe Chemotion::ReportAPI do
         params[:template] = 'supporting_information'
         post '/api/v1/reports', params: params, as: :json
         expect(response.body).to include(filename)
+      end
+
+      context 'with the template selected in the UI' do
+        let(:report_template) { create(:report_template, report_type: 'supporting_information') }
+
+        it 'stores the report type of the selected template' do
+          post '/api/v1/reports', params: params.merge(templateId: report_template.id), as: :json
+          expect(Report.last).to have_attributes(
+            report_templates_id: report_template.id, template: 'supporting_information',
+          )
+        end
+
+        it 'lists the archive with the stored template id and its report type' do
+          report_template.update!(report_type: 'rxn_list_xlsx')
+          post '/api/v1/reports', params: params.merge(templateId: report_template.id), as: :json
+          get '/api/v1/archives/all'
+          archive = JSON.parse(response.body)['archives'].find { |a| a['id'] == Report.last.id }
+          expect(archive).to include('template' => report_template.id, 'report_type' => 'rxn_list_xlsx')
+        end
+      end
+
+      context 'with a cloned archive that has no stored template' do
+        it 'stores the report type sent as templateId' do
+          post '/api/v1/reports', params: params.merge(templateId: 'supporting_information'), as: :json
+          expect(Report.last).to have_attributes(report_templates_id: nil, template: 'supporting_information')
+        end
+      end
+
+      context 'with an unknown template id' do
+        it 'falls back to templateType' do
+          post '/api/v1/reports', params: params.merge(templateId: '0', templateType: 'spectrum'), as: :json
+          expect(Report.last).to have_attributes(report_templates_id: nil, template: 'spectrum')
+        end
       end
     end
 

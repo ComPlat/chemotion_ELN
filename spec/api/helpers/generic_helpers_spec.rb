@@ -8,12 +8,13 @@ RSpec.describe Labimotion::GenericHelpers, type: :helper do
   let(:id) { nil }
 
   describe '.create_uploads' do
-    subject { create_uploads(type, id, files, param_info, user_id) }
+    subject { create_uploads(type, id, files, param_info, user_id, element_type) }
 
     let(:type) { nil }
     let(:files) { nil }
     let(:param_info) { nil }
     let(:user_id) { nil }
+    let(:element_type) { nil }
     let(:research_plan) { create(:research_plan, :with_image_field) }
 
     context 'when any param is nil' do

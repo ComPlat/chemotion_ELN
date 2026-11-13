@@ -27,6 +27,7 @@ $topbar-height: 35px;
     @extend .d-flex;
     @extend .flex-column;
     @extend .flex-grow-1;
+    @extend .min-w-0;
     @extend .pb-4;
     @extend .align-items-stretch;
   }

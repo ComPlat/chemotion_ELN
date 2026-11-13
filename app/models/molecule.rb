@@ -428,6 +428,10 @@ class Molecule < ApplicationRecord
 
   def create_molecule_name_by_user(new_names, user_id)
     new_names.split(';').each do |new_name|
+      # Stripped so a whitespace-padded SDF/spreadsheet cell round-trips through a later
+      # `find_by(name: ...)` lookup (built from the same cell, also stripped) instead of silently
+      # missing it because the stored name still carries the padding.
+      new_name = new_name.strip
       next unless unique_molecule_name(new_name)
 
       molecule_names

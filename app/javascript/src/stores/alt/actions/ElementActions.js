@@ -19,7 +19,6 @@ import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
-import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
@@ -53,16 +52,6 @@ import { sampleAssociationLockNotification } from 'src/utilities/notificationMes
 
 import _ from 'lodash';
 
-const handleFetch = (dispatch, fetch) => {
-  return fetch()
-    .then((result) => {
-      dispatch(result)
-    })
-    .catch((errorMessage) => {
-      console.log(errorMessage)
-    })
-}
-
 class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
@@ -74,131 +63,9 @@ class ElementActions {
         });
     };
   }
-  // -- Devices --
-  fetchAllDevices() {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
-  }
-
-  fetchDeviceById(deviceId) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
-  }
-
-  createDevice() {
-    return null
-  }
-
-  changeActiveAccordionDevice(key) {
-    return (dispatch) => dispatch(key)
-  }
-
-  changeSelectedDeviceId(device) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
-  }
-
-  setSelectedDeviceId(deviceId) {
-    return (dispatch) => dispatch(deviceId)
-  }
-
   setRefreshCoefficient(id, coefficient, rId) {
     const obj = { sId: id, rId, coefficient };
     return (dispatch) => dispatch({ obj });
-  }
-
-  toggleDeviceType(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDevice(device) {
-    if (device.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
-    }
-  }
-
-  deleteDevice(device) {
-    if (!device.isNew) {
-      DeviceFetcher.delete(device)
-    }
-    return (dispatch) => dispatch(device)
-  }
-
-  addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({ sample, device, options })
-  }
-
-  addSampleWithAnalysisToDevice(sample, analysis, device) {
-    return (dispatch) => dispatch({ sample, analysis, device })
-  }
-
-  removeSampleFromDevice(sample, device) {
-    return (dispatch) => dispatch({ sample, device })
-  }
-
-  toggleTypeOfDeviceSample(device, sample, type) {
-    return (dispatch) => dispatch({ device, sample, type })
-  }
-
-  changeDeviceProp(device, prop, value) {
-    return (dispatch) => dispatch({ device, prop, value })
-  }
-
-  fetchDeviceAnalysisById(analysisId) {
-    return (dispatch) => {
-      DeviceFetcher.fetchAnalysisById(analysisId)
-        .then(analysis => {
-          DeviceFetcher.fetchById(analysis.deviceId)
-            .then(device => {
-              dispatch({ analysis, device })
-            })
-        })
-    }
-  }
-
-  openDeviceAnalysis(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDeviceAnalysis(analysis) {
-    if (analysis.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
-    }
-  }
-
-  createDeviceAnalysis(deviceId, analysisType) {
-    return (dispatch) => {
-      DeviceFetcher.fetchById(deviceId)
-        .then((device) => {
-          dispatch({ device, analysisType })
-        })
-    }
-  }
-
-  generateExperimentConfig(experiment) {
-    return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
-  }
-
-  duplicateAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
-  }
-
-  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
-    return (dispatch) => dispatch({ analysis, experiment, prop, value })
-  }
-
-  deleteAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
   }
 
   // -- Search --
@@ -436,26 +303,8 @@ class ElementActions {
   }
 
   handleSvgReactionChange(reaction) {
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter(s => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
     return () => {
-      const productsOnly = reaction.reaction_type === 'interaction';
-      const showYield = !productsOnly;
-      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions, productsOnly, showYield)
+      ReactionSvgFetcher.fetchByReaction(reaction)
         .then((result) => {
           reaction.reaction_svg_file = result.reaction_svg;
         }).catch((errorMessage) => {
@@ -874,6 +723,30 @@ class ElementActions {
     };
   }
 
+  resizeWellplate(wellplateId, width, height) {
+    return (dispatch) => {
+      WellplatesFetcher.resize(wellplateId, width, height)
+        .then((result) => {
+          if (!result.error) {
+            // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
+            // reconciled wellplate coming back from the server: eln_timestamp has
+            // second resolution, so the server's own value can be byte-identical
+            // to the one already on screen.
+            result.updated_at = new Date();
+            // The stamp lands after WellplatesFetcher baselined the checksum, and
+            // a Date drops out of the hash where the string did not - without
+            // this the freshly persisted wellplate reads as edited and locks the
+            // size control it just came out of.
+            result.updateChecksum();
+          }
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
+        });
+    };
+  }
+
   importWellplateSpreadsheet(wellplateId, attachmentId) {
     return (dispatch) => {
       WellplatesFetcher.importWellplateSpreadsheet(wellplateId, attachmentId)
@@ -1276,8 +1149,13 @@ class ElementActions {
       return MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
+          return result;
+        }).catch((error) => {
+          // The spinner is stopped by LoadingStore listening for this action's dispatch, which
+          // does not happen on failure — and the rejection has to reach handleSave, or the tab
+          // clears its dirty flag and the user believes a refused save succeeded.
+          LoadingActions.stop();
+          throw error;
         });
     };
   }

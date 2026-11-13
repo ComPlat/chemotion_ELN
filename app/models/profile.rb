@@ -54,6 +54,24 @@ class Profile < ApplicationRecord
     save!
   end
 
+  # Default element tab layout configured for this instance, string-keyed.
+  #
+  # +config/profile_default.yml+ is the single source of truth for the layout,
+  # so this is the only place the values are read. The returned hash is a deep
+  # copy: +Rails.configuration.profile_default.layout+ is built once at boot and
+  # shared by every request, and handing out a reference into it lets a caller
+  # corrupt process-wide state.
+  #
+  # @return [Hash{String => Integer}] empty when the configuration is absent or
+  #   could not be loaded
+  def self.default_layout
+    return {} unless Rails.configuration.respond_to?(:profile_default)
+
+    (Rails.configuration.profile_default&.layout&.dig(:layout) || {})
+      .deep_dup
+      .transform_keys(&:to_s)
+  end
+
   private
 
   def set_default
@@ -84,16 +102,10 @@ class Profile < ApplicationRecord
   def data_default_layout
     return if data['layout'].present?
 
-    data.merge!(layout: {
-                  'sample' => 1,
-                  'reaction' => 2,
-                  'wellplate' => 3,
-                  'screen' => 4,
-                  'research_plan' => 5,
-                  'cell_line' => -1000,
-                  'device_description' => -1100,
-                  'sequence_based_macromolecule_sample' => -1200,
-                  'vessel' => -1300,
-                })
+    defaults = self.class.default_layout
+    # Never persist a blank layout — that would leave the user with no tabs.
+    return if defaults.blank?
+
+    data['layout'] = defaults
   end
 end

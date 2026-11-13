@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Popover, ButtonGroup, Button, OverlayTrigger, Tooltip,
+  Popover, ButtonGroup, Button, CloseButton, OverlayTrigger, Tooltip,
   ButtonToolbar
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
@@ -126,10 +126,11 @@ export default function ReactionSchemeGraphic({
     );
   };
 
-  const popoverSettings = (
+  const popoverSettings = ({ close }) => (
     <Popover>
-      <Popover.Header>
+      <Popover.Header className="d-flex justify-content-between align-items-center">
         Graphic Settings
+        <CloseButton onClick={close} />
       </Popover.Header>
       {!isInteractionReaction && (
         <>
@@ -179,7 +180,6 @@ export default function ReactionSchemeGraphic({
           key={isInteractionReaction ? 'interaction' : 'standard'}
           popperConfig={popperConfigAboveToolbar}
           popoverSettings={popoverSettings}
-          onToggle={() => {}}
           wrapperClassName=""
         />
         {onRefresh && (

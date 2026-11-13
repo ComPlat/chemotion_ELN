@@ -120,6 +120,17 @@ module Chemotion
           samples = @collection.samples.by_ui_state(params[:sample])
           reactions = @collection.reactions.by_ui_state(params[:reaction])
 
+          # Every element in this report comes from the single resolved @collection, so its detail
+          # levels are computed once for the whole page instead of once per element (each instance
+          # fired 1-2 collection-membership queries). The report reflects the level granted on the
+          # collection it was run from: an owned collection (including the "All" view, which is an
+          # owned system collection) gives full access; a shared collection gives the share's level.
+          # An element also reachable at a higher level via another collection is rendered at this
+          # collection's level, the trade-off every list/index endpoint accepts (see
+          # ElementDetailLevelCalculator.for_collection). This can only lower detail, never leak,
+          # because the browsed collection's level never exceeds the element's best-available level.
+          detail_levels = ElementDetailLevelCalculator.for_collection(collection: @collection, user: current_user)
+
           if params[:loadType] == 'lists'
             sample_tags = selected_tags['sampleIds']
             reaction_tags = selected_tags['reactionIds']
@@ -127,7 +138,6 @@ module Chemotion
               if sample_tags && sample.id.in?(sample_tags)
                 { id: sample.id, in_browser_memory: true }
               else
-                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
@@ -135,7 +145,6 @@ module Chemotion
               if reaction_tags && reaction.id.in?(reaction_tags)
                 { id: reaction.id, in_browser_memory: true }
               else
-                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
                 Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
@@ -147,7 +156,6 @@ module Chemotion
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               serialized_element = Entities::SampleEntity.represent(
                 sample,
                 detail_levels: detail_levels,
@@ -156,7 +164,6 @@ module Chemotion
               serialized_element
             end
             result['reactions'] = reactions.map do |reaction|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
               serialized_element = Entities::ReactionEntity.represent(
                 reaction,
                 detail_levels: detail_levels,

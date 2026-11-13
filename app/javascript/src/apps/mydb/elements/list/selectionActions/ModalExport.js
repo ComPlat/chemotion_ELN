@@ -5,10 +5,13 @@ import AppModal from 'src/components/common/AppModal';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
-const filterUIState = (uiState) => {
+// Shared with ModalReactionExport, so both exports send the same selection and list filters.
+export const filterUIState = (uiState) => {
   const {
-    currentCollection, sample, reaction, wellplate
+    currentCollection, sample, reaction, wellplate,
+    userLabel, fromDate, toDate, filterCreatedAt, productOnly
   } = uiState;
   return {
     sample: {
@@ -27,6 +30,12 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
+    // "All pages" sends no ids, so the list filters have to travel with it.
+    userLabel,
+    fromDate: fromDate ? dateToUnixTimestamp(fromDate) : null,
+    toDate: toDate ? dateToUnixTimestamp(toDate) : null,
+    filterCreatedAt,
+    productOnly,
   };
 };
 
@@ -108,7 +117,10 @@ export default class ModalExport extends React.Component {
           { value: 'status', text: 'status', checked: false },
           { value: 'vendor', text: 'vendor', checked: false },
           { value: 'order_number', text: 'order number', checked: false },
-          { value: 'amount', text: 'amount', checked: false },
+          { value: 'product_number', text: 'product number', checked: false },
+          // The inventory tab's "Amount" holds a mass and a volume; both are exportable.
+          { value: 'amount', text: 'amount (mass)', checked: false },
+          { value: 'volume', text: 'amount (volume)', checked: false },
           { value: 'price', text: 'price', checked: false },
           { value: 'person', text: 'person', checked: false },
           { value: 'required_date', text: 'required date', checked: false },
@@ -277,10 +289,11 @@ export default class ModalExport extends React.Component {
   }
 
   buttonBar() {
-    const chemicalColumns = this.filteredColumns();
-    const hasNoSdfExportData = chemicalColumns.chemicals.length !== 0
-      || chemicalColumns.components.length !== 0;
-
+    const filteredColumns = this.filteredColumns();
+    // Component columns are not part of an SDF export: the backend only writes them for exportType 1
+    // (see export_samples_from_selections in report_api.rb), so a components-only selection would
+    // produce a file holding nothing but the forced base molfile.
+    const hasNoSdfExportData = filteredColumns.sample.length === 0 && filteredColumns.chemicals.length === 0;
     return (
       <Button
         variant="primary"

@@ -69,20 +69,33 @@ const formatReactionTypeOption = (option, { context }) => (
     : option.label
 );
 
-const productLink = (product, active) => (
-  <span>
-    {active && "Sample Analysis:"}
-    <span
-      aria-hidden="true"
-      className="pseudo-link"
-      onClick={() => aviatorNavigation('sample', product.id, true, true)}
-      title="Open sample window"
-    >
-      <i className="icon-sample mx-1" />
-      {product.title()}
+const productLink = (product, active) => {
+  const icon = <i className="icon-sample mx-1" />;
+
+  if (!active) {
+    return (
+      <span>
+        {icon}
+        {product.title()}
+      </span>
+    );
+  }
+
+  return (
+    <span>
+      Sample Analysis:
+      <span
+        aria-hidden="true"
+        className="pseudo-link"
+        onClick={() => aviatorNavigation('sample', product.id, true, true)}
+        title="Open sample window"
+      >
+        {icon}
+        {product.title()}
+      </span>
     </span>
-  </span>
-);
+  );
+};
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -417,7 +430,7 @@ export default class ReactionDetails extends Component {
       || type === 'phOperator'
       || type === 'phValue'
       || type === 'volume'
-      || type === 'useReactionVolumeForConcentration'
+      || type === 'concentrationMode'
       || type === 'lockReactionVolume'
       || type === 'weight_percentage'
       || type === 'reactionType'
@@ -559,8 +572,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
-
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
 
@@ -627,33 +638,7 @@ export default class ReactionDetails extends Component {
     }
 
     this.isUpdatingGraphic = true;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter((s) => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-    const productsOnly = reaction.isInteractionReaction();
-    const showYield = !productsOnly;
-
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
-      materialsSvgPaths,
-      temperature,
-      solvents,
-      reaction.duration,
-      reaction.conditions,
-      productsOnly,
-      showYield
-    ).then((result) => {
+    ReactionSvgFetcher.fetchByReaction(reaction).then((result) => {
       if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
         // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect
         reaction.reaction_svg_file = result.reaction_svg;
@@ -825,7 +810,7 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const referenceMaterial = reaction.referenceMaterial;
+    const { referenceMaterial } = reaction;
     if (!referenceMaterial || !referenceMaterial.amount_mol) {
       return;
     }

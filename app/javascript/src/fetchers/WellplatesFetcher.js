@@ -109,6 +109,27 @@ export default class WellplatesFetcher {
       });
   }
 
+  /**
+   * Resizes a persisted wellplate. The server reconciles the well rows and
+   * answers 422 when a well outside the new grid still holds data; ApiClient
+   * resolves the body either way, so that arrives as `json.error`.
+   */
+  static resize(wellplateId, width, height) {
+    return ApiClient.putJson(`/api/v1/wellplates/resize/${wellplateId}`, { body: { width, height } })
+      .then((json) => {
+        if (json.error) {
+          rootStore.notificationsStore.add({
+            title: 'Wellplate not resized',
+            message: json.error,
+            level: 'error',
+          });
+          return json;
+        }
+
+        return this.wellplateElement(json, wellplateId);
+      });
+  }
+
   static wellplateElement(json, id) {
     if (json.error) {
       return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!` });

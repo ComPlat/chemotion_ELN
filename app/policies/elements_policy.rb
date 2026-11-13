@@ -65,12 +65,21 @@ class ElementsPolicy
     record_ids_from_shared_collections.none?
   end
 
-  # A collection owned by one of the user's groups counts as their own, matching Collection#owned_by?,
-  # writable_by and the group-aware WithdrawElements/RemoveElements use cases. Without the group ids
-  # here, a group member acting on a group-owned collection would see every record fall through to
-  # "inaccessible", so remove_all?/destroy_all? would wrongly deny an action the backend permits.
+  # Ownership is personal, matching Collection#owned_by? and own_collections_for. A group's
+  # collections are not the member's: they must come through +scope_for_shared_records+ so the
+  # share's permission_level is actually consulted. Widening this to the user's groups short-circuits
+  # that — the records land in +scope_for_own_records+, are excluded from the shared scope, and
+  # update_all?/destroy_all? return true for a member holding only :read_elements.
   def own_user_ids
-    @own_user_ids ||= [user.id, *user.group_ids]
+    @own_user_ids ||= [user.id]
+  end
+
+  # The other half: who a share can be addressed to. A share held by one of the user's groups grants
+  # them access, which is the whole of what group membership does here — see
+  # CollectionShare.shared_with. Kept apart from +own_user_ids+ because the two mean different
+  # things; using one for both is what let membership stand in for ownership.
+  def shared_with_ids
+    @shared_with_ids ||= [user.id, *user.group_ids]
   end
 
   def scope_for_own_records
@@ -81,7 +90,7 @@ class ElementsPolicy
     records_scope
       .joins(collections: [:collection_shares])
       .where.not(collections: { user_id: own_user_ids }) # to prevent looking at circular shares
-      .where(collection_shares: { shared_with_id: own_user_ids })
+      .where(collection_shares: { shared_with_id: shared_with_ids })
       .distinct
   end
 

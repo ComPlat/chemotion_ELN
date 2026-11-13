@@ -394,6 +394,12 @@ RSpec.describe Chemotion::InputValidationUtils do
       end
     end
 
+    it 'accepts a vendor SDS URL, which runs past 100 characters' do
+      url = 'https://documents.thermofisher.com/directwebviewer/private/results.aspx?page=NewSearch' \
+            '&LANGUAGE=d__EN&SUBFORMAT=d__CLP1&SKU=ALFAA12345&PLANT=d__ALF'
+      expect(described_class.valid_url?(url)).to be true
+    end
+
     it 'rejects URLs that are too long' do
       long_url = "https://example.com/#{'a' * described_class::URL_MAX_LENGTH}"
       expect(described_class.valid_url?(long_url)).to be false

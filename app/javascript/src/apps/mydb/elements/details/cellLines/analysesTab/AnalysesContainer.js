@@ -22,7 +22,10 @@ class AnalysesContainer extends Component {
   constructor() {
     super();
     const { currentElement } = ElementStore.getState();
-    const hasComment = currentElement.container?.description && currentElement.container.description.trim() !== '';
+    const hasComment = Boolean(
+      currentElement.container?.description
+      && currentElement.container.description.trim() !== ''
+    );
     this.state = {
       mode: 'edit',
       commentBoxVisible: hasComment,

@@ -68,8 +68,8 @@ class AttachmentUploader < Shrine
 
   def self.create_tmp_file(file_basename, file_extension, file)
     tmp = Tempfile.new([file_basename, file_extension], encoding: 'ascii-8bit')
-    tmp.write file.read
-    tmp.rewind
+    file.open { |io| IO.copy_stream(io, tmp) } # closes the IO it opens on the stored file
+    tmp.flush
     tmp.path
   end
 

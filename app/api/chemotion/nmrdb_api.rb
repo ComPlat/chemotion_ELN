@@ -4,9 +4,9 @@ module Chemotion
 
     resource :simulation do
       resource :nmrdb do
-        desc "Return Nmrdb Simulation by molecule_id"
+        desc 'Return Nmrdb Simulation by molecule_id'
         params do
-          requires :molecule_id, type: Integer, desc: "Molecule id"
+          requires :molecule_id, type: Integer, desc: 'Molecule id'
         end
         get do
           molecule_id = params[:molecule_id]
@@ -16,32 +16,14 @@ module Chemotion
     end
 
     helpers do
+      # Reuses a soft-deleted simulation, as the unique index on (molecule_id, source) still covers it.
       def simulation(molecule_id)
-        simulation = NmrSimulation.find_by(molecule_id: molecule_id, source: "nmrdb")
-        return completed(simulation, molecule_id)
-      end
-
-      def completed(simulation, molecule_id)
-        if !simulation
-          return create_simulation(molecule_id)
-        elsif simulation.invalid_file
-          return update_simulation(simulation, molecule_id)
-        else
-          return simulation
-        end
-      end
-
-      def create_simulation(molecule_id)
         molecule = Molecule.find(molecule_id)
-        simulation = molecule.nmr_simulations.create(source: "nmrdb")
-        simulation.save && simulation
-      end
-
-      def update_simulation(simulation, molecule_id)
-        molecule = Molecule.find(molecule_id)
-        simulation.update(source: 'nmrdb') && simulation
+        simulation = NmrSimulation.with_deleted.find_or_initialize_by(molecule: molecule, source: 'nmrdb')
+        simulation.deleted_at = nil
+        simulation.save! if simulation.changed? || simulation.invalid_file
+        simulation
       end
     end
-
   end
 end

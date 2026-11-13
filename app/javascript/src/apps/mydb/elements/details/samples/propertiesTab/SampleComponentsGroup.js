@@ -159,19 +159,19 @@ class SampleComponentsGroup extends React.Component {
     };
 
     return (
-      <div>
+      <div className="sample-scheme-wrapper">
         <table width="100%" className="sample-scheme">
           <colgroup>
-            <col style={{ width: '4%' }} />
-            <col style={{ width: '7%' }} />
-            <col style={{ width: '2%' }} />
-            <col style={{ width: '17%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '6%' }} />
-            <col style={{ width: '2%' }} />
-            <col style={{ width: '14%' }} />
-            {enableComponentPurity && <col style={{ width: '4%' }} />}
+            <col className="col-drag" />
+            <col className="col-name" />
+            <col className="col-delete" />
+            <col className="col-stock-density" />
+            <col className="col-volume" />
+            <col className="col-amount" />
+            <col className="col-ratio" />
+            <col className="col-ref" />
+            <col className="col-total-conc" />
+            {enableComponentPurity && <col className="col-purity" />}
           </colgroup>
           <thead>
           <tr>

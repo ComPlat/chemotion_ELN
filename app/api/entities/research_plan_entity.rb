@@ -13,7 +13,7 @@ module Entities
       expose! :id
       expose! :is_restricted
       expose! :name
-      expose! :preview_attachment
+      expose! :preview_attachment,                           using: 'Entities::AttachmentEntity'
       expose! :type
       expose! :comment_count
       expose! :user_labels
@@ -32,6 +32,10 @@ module Entities
     expose_timestamps
 
     private
+
+    def can_copy
+      element_policy.try(:copy?) || false
+    end
 
     def attachment_count
       object.attachments.size
@@ -58,7 +62,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # ResearchPlan.includes_for_list_display) is counted in memory,
+      # avoiding an N+1 COUNT(*) query per research plan in the list endpoint.
+      object.comments.size
     end
   end
 end

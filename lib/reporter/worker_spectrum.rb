@@ -72,18 +72,13 @@ module Reporter
       atts
     end
 
-    def replace_att_objs(product_attrs) # rubocop:disable Metrics/CyclomaticComplexity
+    def replace_att_objs(product_attrs)
+      access = Usecases::Attachments::Access.new(@author)
       product_attrs&.map do |prd|
         att_objs = prd[:atts]&.map do |att|
           kind = att[:kind]
           att = Attachment.find(att[:id])
-          can_dwnld = if att
-                        element = att.container.root.containable
-                        policy = ElementPolicy.new(@author, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
-                      end
-          can_dwnld ? { obj: att, kind: kind } : nil
+          access.read?(att) ? { obj: att, kind: kind } : nil
         end
         prd[:atts] = att_objs
         prd

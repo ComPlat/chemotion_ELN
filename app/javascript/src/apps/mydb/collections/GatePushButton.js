@@ -5,6 +5,19 @@ import {
 } from 'react-bootstrap';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import GateFetcher from 'src/fetchers/GateFetcher';
+import { rootStore } from 'src/stores/mobx/RootStore';
+
+// TransferRepoJob sends its own notification when it finishes; this only confirms the queuing.
+const notifyTransferQueued = () => {
+  rootStore.notifications.add({
+    title: 'Transfer to chemotion-repository.net',
+    message: 'The transfer has been queued. You will be notified when it is completed.',
+    level: 'success',
+    position: 'tr',
+    autoDismiss: 5,
+    uid: 'gate_transfer_queued',
+  });
+};
 
 class GatePushButton extends React.Component {
   constructor(props) {
@@ -29,6 +42,7 @@ class GatePushButton extends React.Component {
     const { collectionId } = this.props;
     GateFetcher.transmittingByCollectionId(method, collectionId, this.buttonRef.current)
       .then((json) => {
+        if (json?.status === 'queued') notifyTransferQueued();
         this.setState(json);
       });
   }

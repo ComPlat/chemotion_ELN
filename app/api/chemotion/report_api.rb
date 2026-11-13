@@ -19,6 +19,45 @@ module Chemotion
       def time_now
         Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
+
+      # @param c_id [Integer] a collection id sent by the client
+      # @return [Integer] the id, once the user is known to own the collection or have it shared
+      # @raise [Grape exception] 401 if the collection is missing or not readable
+      def readable_collection_id!(c_id)
+        collection = Collection.accessible_for(current_user).find_by(id: c_id)
+        error!('401 Unauthorized', 401) unless collection
+        collection.id
+      end
+
+      # Resolves which template a new report uses. The UI sends +templateId+ either as the id of a
+      # stored report template or, for cloned archives, as a report type; +templateType+ is optional.
+      #
+      # @param template_id [String] the +templateId+ param
+      # @param template_type [String, nil] the +templateType+ param
+      # @return [Hash] +report_templates_id+ and the resolved +template+ report type
+      def report_template_attributes(template_id, template_type)
+        report_template = ReportTemplate.find_by(id: template_id) if /\A\d+\z/.match?(template_id)
+        type = report_template&.report_type
+        type ||= template_id if ReportTemplate::REPORT_TYPES.include?(template_id)
+        { report_templates_id: report_template&.id, template: type || template_type }
+      end
+
+      # Rejects the request unless the caller may read every element referenced in +objTags+.
+      # Without this a report is an IDOR: the generator does a bare +Model.find(id)+ with no
+      # ownership/collection check, so any authenticated user could pull any element's data.
+      # Only Sample/Reaction are accepted — the types {Reporter::Worker#extract} renders; any
+      # other type is rejected rather than silently ignored (the worker would raise on it anyway).
+      #
+      # @param obj_tags [Array<Hash>] the +objTags+ param ({ 'id' =>, 'type' => } entries)
+      # @raise [Grape exception] 401 if any referenced element is missing or not readable
+      def authorize_report_objects!(obj_tags)
+        types = { 'sample' => Sample, 'reaction' => Reaction }
+        Array(obj_tags).each do |tag|
+          tag = ActiveSupport::HashWithIndifferentAccess.new(tag)
+          record = types[tag[:type].to_s.downcase]&.find_by(id: tag[:id])
+          error!('401 Unauthorized', 401) unless record && ElementPolicy.new(current_user, record).read?
+        end
+      end
     end
 
     resource :reports do
@@ -27,6 +66,9 @@ module Chemotion
         requires :id
       end
       get :docx do
+        reaction = Reaction.find(params[:id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, reaction).read?
+
         params[:template] = 'single_reaction'
         docx, filename = Report.create_reaction_docx(current_user, user_ids, params)
         content_type MIME::Types.type_for(filename)[0].to_s
@@ -42,6 +84,7 @@ module Chemotion
         use :export_params
       end
       post :export_samples_from_selections do
+        c_id = readable_collection_id!(params[:uiState][:currentCollection])
         env['api.format'] = :binary
         t = time_now
         case params[:exportType]
@@ -51,18 +94,9 @@ module Chemotion
           export = Export::ExportSdf.new(time: t)
           force_molfile_selection
         end
-        c_id = params[:uiState][:currentCollection]
 
-        table_params = {
-          ui_state: params[:uiState],
-          c_id: c_id,
-        }
-
-        ui_state = table_params[:ui_state].select do |_, v|
-          v.is_a?(Hash) && v.key?('checkedIds') && v.key?('checkedAll')
-        end
-
-        return status 204 if ui_state.all? { |_, v| v['checkedIds'].to_a.empty? && !v['checkedAll'] }
+        table_params = { c_id: c_id, selections: export_selections(params[:uiState], c_id) }
+        return status 204 if table_params[:selections].empty?
 
         if params[:columns][:chemicals].blank?
           generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
@@ -77,7 +111,10 @@ module Chemotion
                                      :components)
         end
 
-        if params[:exportType] == 1 && params[:columns][:chemicals].present?
+        # No exportType guard here (unlike analyses/components above): chemicals columns are offered
+        # for both XLSX and SDF export (see ModalExport.js's hasNoSdfExportData), so an SDF export
+        # selecting only chemicals columns must still produce a sheet.
+        if params[:columns][:chemicals].present?
           generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:chemicals],
                                      :chemicals)
           generate_sheets_for_tables(%i[reaction wellplate], table_params, export)
@@ -109,23 +146,22 @@ module Chemotion
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         collection = Collection.accessible_for(current_user).find(params[:uiState][:currentCollection])
 
-        reaction_state = params[:uiState][:reaction]
-        unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
-          return status 204
-        end
+        selection = export_selection(:reaction, params[:uiState], collection.id)
+        return status 204 unless selection
 
-        results = reaction_smiles_hash(
-          collection.id,
-          (reaction_state[:checkedAll] && reaction_state[:uncheckedIds]) || reaction_state[:checkedIds],
-          reaction_state[:checkedAll],
-        ) || {}
+        ids = selection[:ids]
+        if selection[:checked_all]
+          scope = list_scope(:reaction, params[:uiState], collection.id) || collection.reactions
+          ids = scope.where.not(id: ids).order(:id).pluck(:id)
+          return status 204 if ids.empty?
+        end
+        results = reaction_smiles_hash(collection.id, ids) || {}
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
 
-      # not usesed anymore???
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
       get :excel_wellplate do
         env['api.format'] = :binary
@@ -137,7 +173,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_wellplate, current_user.id)
-        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)
@@ -146,10 +182,8 @@ module Chemotion
       end
 
       params do
-        requires :id, type: String
+        requires :id, type: Integer
       end
-
-      # not usesed anymore???
       get :excel_reaction do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
@@ -160,7 +194,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_reaction, current_user.id)
-        sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
+        sql_query = build_sql_reaction_sample(column_query, nil, params[:id])
         next unless sql_query
 
         result = db_exec_query(sql_query)
@@ -221,6 +255,8 @@ module Chemotion
       optional :fileDescription
     end
     post :reports do
+      authorize_report_objects!(params[:objTags])
+
       spl_settings = hashize(params[:splSettings])
       rxn_settings = hashize(params[:rxnSettings])
       si_rxn_settings = hashize(params[:siRxnSettings])
@@ -237,10 +273,8 @@ module Chemotion
         prd_atts: params[:prdAtts],
         objects: params[:objTags],
         img_format: params[:imgFormat],
-        template: params[:templateType],
-        report_templates_id: /\A\d+\z/.match(params[:templateId]).nil? ? nil : params[:templateId].to_i,
         author_id: current_user.id,
-      }
+      }.merge(report_template_attributes(params[:templateId], params[:templateType]))
 
       report = Report.create(attributes)
       current_user.reports << report

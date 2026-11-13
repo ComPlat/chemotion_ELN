@@ -103,12 +103,23 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
     setSelectedCategory('sample');
   }, [show, collection, allElements]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const layoutSegments = allElements.reduce((acc, { name }) => {
       acc[name] = filterTabLayout(layouts[name]);
       return acc;
     }, {});
-    collectionsStore.updateCollection(collection, layoutSegments);
+
+    // "All" has no per-collection layout: ElementDetailSortTab reads the profile default for it
+    // (refreshTabLayout nulls collectionTabs there) and its own editor skips the collection write
+    // for the same reason. Persisting a tabs_segment nothing reads would look like it took effect.
+    // Editing "All"'s tabs is editing the default layout, which is what the profile write below does.
+    if (!collectionsStore.isAllCollectionId(collection.id)) {
+      // Keep the profile defaults and the modal open on a rejected save — updateCollection reports
+      // the failure, and closing over it would leave the user told it failed while the global
+      // default had moved anyway.
+      const saved = await collectionsStore.updateCollection(collection, layoutSegments);
+      if (!saved) return;
+    }
 
     const userProfile = UserStore.getState().profile;
     // Store each type's default under its own `layout_detail_<name>` key so

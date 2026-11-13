@@ -54,10 +54,17 @@ const transformKeys = (fn, obj) => {
 // replaces hump
 const camelizeKeys = (obj) => transformKeys(camelCase, obj);
 const decamelizeKeys = (obj) => transformKeys(snakeCase, obj);
-const shallowCamelizeKeys = (obj) => Object.keys(obj).reduce((newObj, key) => {
-  newObj[camelCase(key)] = obj[key];
-  return newObj;
-}, {});
+// Mirrors transformKeys' tolerance of non-objects: a failed request resolves to
+// undefined (handleResponseError swallows the exception), and Object.keys would
+// then throw inside the fetcher's .then() as an unhandled rejection.
+const shallowCamelizeKeys = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj;
+
+  return Object.keys(obj).reduce((newObj, key) => {
+    newObj[camelCase(key)] = obj[key];
+    return newObj;
+  }, {});
+};
 const camelize = (str) => camelCase(str);
 const decamelize = (str) => snakeCase(str);
 
@@ -67,8 +74,19 @@ const classifyString = (str) => upperFirst(camelCase(str));
 const filteredSearchParams = (params) => new URLSearchParams(omitBy(params, isNil));
 
 const preparedCollectionParams = (id, params) => {
+  // Re-inject the pagination defaults the removed BaseFetcher.fetchByCollectionId used to
+  // supply, so callers passing {} (e.g. split-as-subsamples/subwellplates, vessel-template
+  // mutations) still get the configured page size instead of the endpoints' small defaults.
+  // Loaded at call-time (not a static import) to avoid a module-init import
+  // cycle: FetcherHelper is pulled in by every fetcher, and UIStore transitively
+  // imports those fetchers. Same pattern as VesselUtilities.js.
+  const UIStore = require('src/stores/alt/stores/UIStore').default;
+  const page = params?.page ?? 1;
+  const perPage = params?.perPage ?? params?.per_page ?? UIStore.getState().number_of_results;
   const collectionParams = {
     ...params,
+    page,
+    per_page: perPage,
     collection_id: id,
     from_date: (params?.fromDate ? dateToUnixTimestamp(params.fromDate) : null),
     to_date: (params?.toDate ? dateToUnixTimestamp(params.toDate) : null)

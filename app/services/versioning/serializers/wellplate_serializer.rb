@@ -24,11 +24,9 @@ module Versioning
           },
           width: {
             label: 'Width',
-            revert: %i[width],
           },
           height: {
             label: 'Height',
-            revert: %i[heigth],
           },
           readout_titles: {
             label: 'Readout Title',

@@ -227,6 +227,9 @@ module Chemotion
         # leave the earlier writes behind.
         ActiveRecord::Base.transaction(requires_new: true) { write_shares!(targets, params[:user_ids], attributes) }
 
+        CollectionShareNotifier.new(current_user)
+                               .notify!(params[:user_ids], "#{current_user.name} has shared a collection with you.")
+
         { status: 204 }
       end
 
@@ -283,6 +286,12 @@ module Chemotion
                         new_share_defaults: share_value_defaults(share))
         end
 
+        CollectionShareNotifier.new(current_user).notify!(
+          [share.shared_with_id],
+          "#{current_user.name} updated your access to a collection shared with you.",
+          silent: true,
+        )
+
         present share, with: Entities::CollectionShareEntity, root: :collection_share
       end
 
@@ -296,7 +305,8 @@ module Chemotion
         # A user may always reject the share addressed to them personally. `shared_with` would also
         # match a share held by one of their *groups*; revoking that would drop the collection for
         # every other member, so it is not theirs to reject — they leave the group instead.
-        unless CollectionShare.shared_directly_with(current_user).exists?(id: share.id)
+        self_reject = CollectionShare.shared_directly_with(current_user).exists?(id: share.id)
+        unless self_reject
           # Otherwise they must administrate the collection, and must not revoke a share that
           # outranks them.
           collection = find_administrable_collection(share.collection_id)
@@ -306,9 +316,16 @@ module Chemotion
         end
 
         collection = share.collection
+        shared_with_id = share.shared_with_id
         share.destroy!
 
         refresh_shared_flag!(collection)
+        # Self-rejecting is not worth notifying about — the rejecting user already knows.
+        unless self_reject
+          CollectionShareNotifier.new(current_user).notify!(
+            [shared_with_id], "#{current_user.name} removed your access to a shared collection.", silent: true
+          )
+        end
 
         status 204
         body false

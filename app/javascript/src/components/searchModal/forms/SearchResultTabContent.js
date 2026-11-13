@@ -8,6 +8,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import { copyToClipboard } from 'src/utilities/clipboard';
+import { byIdsModelParams } from 'src/utilities/searchRequestParams';
 
 const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
@@ -26,12 +28,10 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const model = key === 'cell_line' ? 'cell_lines' : key;
-
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: model,
+        ...byIdsModelParams(key),
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
@@ -141,9 +141,9 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     );
   };
 
-  const copyToClipboard = (element) => {
+  const handleCopyClick = (element) => {
     if (element.target.dataset.clipboardText) {
-      navigator.clipboard.writeText(element.target.dataset.clipboardText);
+      copyToClipboard(element.target.dataset.clipboardText);
     }
   };
 
@@ -196,8 +196,8 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
               role="button"
               tabIndex={0}
               className="search-result-tab-content-list"
-              onClick={copyToClipboard}
-              onKeyDown={(e) => e.key === 'Enter' && copyToClipboard(e)}
+              onClick={handleCopyClick}
+              onKeyDown={(e) => e.key === 'Enter' && handleCopyClick(e)}
             >
               {/* Sample grouping header */}
               {showSampleHeader && (

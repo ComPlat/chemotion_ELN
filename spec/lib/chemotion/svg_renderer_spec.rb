@@ -345,4 +345,98 @@ RSpec.describe Chemotion::SvgRenderer do
       expect(result).not_to be_nil
     end
   end
+
+  describe '.parse_polymers_line' do
+    it 'parses the current full format' do
+      expect(described_class.parse_polymers_line('0/95/1.00-1.00'))
+        .to eq([{ atom_index: 0, template_id: 95, height: 1.0, width: 1.0 }])
+    end
+
+    it 'parses the indices-only legacy format' do
+      result = described_class.parse_polymers_line('0 10 12')
+
+      expect(result.pluck(:atom_index)).to eq([0, 10, 12])
+    end
+
+    # ketcher-rails also wrote "<index><shapeLetter>" ("s" = Surface); 63 such samples exist.
+    # The letter distinguishes Surface from Bead, not a template id, so these keep the default
+    # template -- but the *index* must survive, or no shape is injected at all.
+    it 'parses the index+letter legacy format (sample 14956 shape)' do
+      expect(described_class.parse_polymers_line('0s'))
+        .to eq([{ atom_index: 0, template_id: 1, height: 2.0, width: 2.0 }])
+    end
+
+    it 'parses several index+letter tokens' do
+      result = described_class.parse_polymers_line('0s 7s')
+
+      expect(result.pluck(:atom_index)).to eq([0, 7])
+    end
+
+    it 'parses the transitional index+letter+size format (sample 388803 shape)' do
+      expect(described_class.parse_polymers_line('0s/1.00-2.00'))
+        .to eq([{ atom_index: 0, template_id: 1, height: 2.0, width: 2.0 }])
+    end
+
+    it 'drops tokens with no leading index' do
+      expect(described_class.parse_polymers_line('M END')).to eq([])
+    end
+
+    it 'returns an empty array for a blank line' do
+      expect(described_class.parse_polymers_line('')).to eq([])
+      expect(described_class.parse_polymers_line(nil)).to eq([])
+    end
+  end
+
+  describe '.parse_text_nodes' do
+    # .b simulates bytea → ASCII-8BIT read from PostgreSQL — this is the actual bug trigger
+    let(:textnode_molfile) { file_fixture('polymer_with_textnode.mol').read.b }
+
+    it 'preserves non-ASCII characters in TextNode labels' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).to include('α-Al2O3')
+    end
+
+    it 'does not replace non-ASCII bytes with empty string or U+FFFD' do
+      result = described_class.parse_text_nodes(textnode_molfile)
+      expect(result[0]).not_to include('?')
+      expect(result[0]).not_to include("\u{FFFD}")
+    end
+
+    it 'handles binary-encoded molfile bytes without raising' do
+      expect { described_class.parse_text_nodes(textnode_molfile) }.not_to raise_error
+    end
+
+    context 'when the TextNode label mixes valid UTF-8 sequences with a stray invalid byte' do
+      # \xB0 is a stray Latin-1 byte (invalid in UTF-8); forces valid_encoding? → false
+      # TextNode line format: INDEX#KEY#ID#CONTENT
+      let(:mixed_label_molfile) do
+        "M  END\n\n> <TextNode>\n0#k#i#10 wt.% \xCE\xB1-Al2O3 \xB0C\n\n> </TextNode>\n".b
+      end
+
+      it 'preserves valid UTF-8 sequences in the label' do
+        result = described_class.parse_text_nodes(mixed_label_molfile)
+        expect(result[0]).to include('α-Al2O3')
+      end
+    end
+
+    context 'when the molfile is UTF-8-labelled but contains an invalid byte sequence' do
+      # Simulates unescape_textnode_octal_in_molfile output:
+      # bytes.pack('C*').force_encoding('UTF-8') — no scrub, so stray bytes remain.
+      # parse_polymer_payload is the crash site (its gsub raises before reaching parse_text_nodes).
+      let(:bad_utf8_molfile) do
+        File.binread(file_fixture('polymer_with_textnode.mol'))
+            .sub('Al2O3'.b, "Al2O3\xB0".b)
+            .force_encoding('UTF-8')
+      end
+
+      it 'does not raise in parse_polymer_payload' do
+        expect { described_class.send(:parse_polymer_payload, bad_utf8_molfile) }.not_to raise_error
+      end
+
+      it 'preserves the valid UTF-8 characters in the TextNode label' do
+        result = described_class.send(:parse_polymer_payload, bad_utf8_molfile)
+        expect(result[:text_by_index][0]).to include('α-Al2O3')
+      end
+    end
+  end
 end

@@ -6,6 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import { getContainerImageData } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -85,41 +86,22 @@ export default class ContainerDatasets extends Component {
       }
     });
 
-    // Reassign preferred thumbnail if needed, then propagate once to parent
-    this.reassignPreferredThumbnailIfNeeded(container);
+    // Clear a stale preferred thumbnail, then propagate once to parent
+    this.clearStalePreferredThumbnail(container);
   };
 
-  reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs that actually have thumbnails
-    const allAttachments = analysisContainer?.children?.flatMap(
-      (child) => (child.attachments || [])
-    ) || [];
-    const savedAttachments = allAttachments.filter(
-      (att) => !att.is_deleted && !att.is_new && att.thumb === true
-    );
-    const validAttachmentIds = savedAttachments
-      .map((att) => Number(att.id))
-      .filter((id) => !Number.isNaN(id) && id > 0);
-
+  clearStalePreferredThumbnail = (analysisContainer) => {
     const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
-    const preferredIsValid = currentPreferred
-      && validAttachmentIds.includes(Number(currentPreferred));
-
-    if (!preferredIsValid) {
-      // Need to reassign
-      if (validAttachmentIds.length > 0) {
-        // Assign first available
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(validAttachmentIds[0]),
-        };
-      } else {
-        // No attachments available - clear preferred
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: null,
-        };
-      }
+    // Only a preference that is set can go stale. An unset one stays unset, so the header
+    // keeps following the default (see getAttachmentFromContainer: latest updated file) and
+    // picks up new uploads, instead of pinning whichever file comes first.
+    // Stale = no longer among the carousel candidates (same rule the header reads with).
+    if (currentPreferred && getContainerImageData(analysisContainer).preferredId === null) {
+      // Clear it rather than pick a substitute: the header falls back to the default.
+      analysisContainer.extended_metadata = {
+        ...analysisContainer.extended_metadata,
+        preferred_thumbnail: null,
+      };
     }
     // Propagate final state to parent once
     this.props.onChange(analysisContainer);

@@ -44,5 +44,11 @@ describe('CasValidation', () => {
       const result = validateCas(cas, false);
       expect(result).toEqual('smile');
     });
+
+    it('should validate a CAS number padded with surrounding whitespace', () => {
+      const cas = ' 637-87-6 ';
+      const result = validateCas(cas, true);
+      expect(result).toEqual('637-87-6');
+    });
   });
 });

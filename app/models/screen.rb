@@ -45,6 +45,7 @@ class Screen < ApplicationRecord
   scope :by_conditions, ->(query) { where('conditions ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_requirements, ->(query) { where('requirements ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_wellplate_ids, ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
+  scope :includes_for_list_display, -> { includes(:comments) }
 
   has_many :collections_screens, dependent: :destroy
   has_many :collections, through: :collections_screens

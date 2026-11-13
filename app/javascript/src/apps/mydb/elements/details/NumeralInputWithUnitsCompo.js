@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 import { formatDisplayValue } from 'src/utilities/MathUtils';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -260,16 +260,13 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 />
                 {prefixSwitch}
                 {showInfoTooltipRequiredVol && (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
-                    <Button
-                      variant="light"
-                      size={size}
-                      onClick={() => copyToClipboard(displayValue)}
-                      className="ms-1"
-                    >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
+                  <CopyButton
+                    text={displayValue}
+                    placement="bottom"
+                    variant="light"
+                    size={size}
+                    className="ms-1"
+                  />
                 )}
               </InputGroup>
             );

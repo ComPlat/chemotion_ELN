@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/BlockLength, Style/OneClassPerFile
+# Whole-file directives rather than per-method disable/enable pairs, deliberately: this repo's
+# pinned rubocop (1.78.0, see Gemfile.lock) predates the disable-next directive (added in
+# 1.90.0), so a newer rubocop run locally or in CI can flag narrow pairs with
+# Style/DirectiveScope and suggest disable-next syntax that the pinned version can't parse -
+# the same trade-off as app/models/concerns/attachment_jcamp_aasm.rb.
+# rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/MethodLength, Metrics/ModuleLength, Metrics/PerceivedComplexity
+# rubocop:disable Style/OneClassPerFile, Style/OptionalBooleanParameter
 
 require 'net/http'
 
@@ -29,7 +36,6 @@ module Chemotion
   module Jcamp
     # Gen module
     module Util
-      # rubocop:disable Metrics/ModuleLength
       def self.generate_tmp_file(content, ext = nil, binmode = false)
         # fname = ext == 'png' ? ['jcamp', '.png'] : ['jcamp']
         fname = ['jcamp']
@@ -49,7 +55,6 @@ module Chemotion
         entry.name.split('.')[-1]
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def self.extract_zip(rsp_io)
         arr_jcamp = []
         arr_img = []
@@ -95,8 +100,6 @@ module Chemotion
         end
         [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium]
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:enable Metrics/ModuleLength
     end
   end
 end
@@ -106,11 +109,9 @@ module Chemotion
   # process Jcamp files
   module Jcamp
     # Create module
-    # rubocop:disable Metrics/ModuleLength
     module Create
       include HTTParty
 
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter
       def self.build_body(
         file, molfile, is_regen = false, params = {}
       )
@@ -148,7 +149,6 @@ module Chemotion
           converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter
 
       def self.read_data_type_mapping
         file_path = Rails.configuration.path_spectra_data_type
@@ -160,7 +160,6 @@ module Chemotion
         ''
       end
 
-      # rubocop:disable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
       def self.stub_http(
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
@@ -188,7 +187,16 @@ module Chemotion
         else
           File.open(paths.first, 'rb') do |file|
             File.open(mol_path, 'rb') do |molfile|
-              body = build_body(file, molfile, is_regen, params)
+              # .compact matters here: HTTParty's multipart encoding sends a nil-valued
+              # field as an empty form part - wire-identical to an explicit "". chem-spectra-app
+              # relies on that distinction (peaks_str present-but-empty means "explicitly
+              # cleared" vs. absent means "not specified, e.g. a plain reprocess") via
+              # request.form.get('peaks_str', default=None). Without compacting nil keys out
+              # of the body first, every param we don't set (peaks_str included) still arrives
+              # as an empty field, so a plain reprocess/regenerate call - which never sets
+              # peaks_str at all - was indistinguishable from the user having cleared every
+              # peak, wiping the EDIT_PEAK table on every reprocess.
+              body = build_body(file, molfile, is_regen, params).compact
               response = HTTParty.post(
                 api_endpoint,
                 body: body,
@@ -200,9 +208,7 @@ module Chemotion
         end
         response
       end
-      # rubocop:enable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
 
-      # rubocop:disable Style/OptionalBooleanParameter
       def self.spectrum(
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
@@ -225,9 +231,7 @@ module Chemotion
         message = json_rsp['error'] || json_rsp['message'] if json_rsp.is_a?(Hash)
         raise StandardError, message.presence || 'Chemspectra response missing metadata header'
       end
-      # rubocop:enable Style/OptionalBooleanParameter
     end
-    # rubocop:enable Metrics/ModuleLength
   end
 end
 
@@ -512,5 +516,6 @@ module Chemotion
   end
 end
 
-# rubocop:enable Metrics/BlockLength
-# rubocop:enable Style/OneClassPerFile
+# rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ModuleLength, Metrics/PerceivedComplexity
+# rubocop:enable Style/OneClassPerFile, Style/OptionalBooleanParameter

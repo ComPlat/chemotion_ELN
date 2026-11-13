@@ -1,5 +1,6 @@
 import expect from 'expect';
 import sinon from 'sinon';
+import { cloneDeep } from 'lodash';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
@@ -8,6 +9,7 @@ import {
   setGroupColDefAttribute, setLeafColDefAttribute, getInitialLayout,
   getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
   getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
+  persistRowOrder, setRowOrder, areVariationsEqualIgnoringOrder, persistTableLayout,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import {
@@ -98,6 +100,31 @@ describe('ReactionVariationsUtils', () => {
     expect(Array.isArray(updatedVariations[0].metadata.analyses));
     expect(updatedVariations[0].metadata.analyses.length === 0);
     expect(updatedVariations[0].metadata.group).toEqual({ group: 1, subgroup: 1 });
+  });
+  it('backfills missing material entries for legacy rows while applying column selection', async () => {
+    const reaction = await setUpReaction();
+    const materials = getReactionMaterials(reaction);
+    const selectedColumns = getSelectedColumns(getReactionMaterialsIDs(materials));
+    const legacyVariations = cloneDeep(reaction.variations);
+
+    const reactantID = Object.keys(legacyVariations[0].reactants)[0];
+    delete legacyVariations[0].reactants[reactantID].concentration;
+
+    const updatedVariations = addMissingColumnsToVariations({
+      materials,
+      segments: {},
+      selectedColumns,
+      variations: legacyVariations,
+      reactionHasPolymers: reaction.hasPolymers(),
+      durationValue: null,
+      durationUnit: 'None',
+      temperatureValue: null,
+      temperatureUnit: 'None',
+      gasMode: false,
+      vesselVolume: null,
+    });
+
+    expect(updatedVariations[0].reactants[reactantID].concentration).toEqual({ value: null, unit: 'mol/l' });
   });
   it('removes obsolete materials from variations', async () => {
     const reaction = await setUpReaction();
@@ -194,6 +221,148 @@ describe('ReactionVariationsUtils', () => {
     expect(Object.values(row.products)[0].yield.value).toBeGreaterThan(
       Object.values(updatedRow.products)[0].yield.value
     );
+  });
+  it('updates other materials concentrations when concentration editing is enabled', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 2 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    const reactionVolume = updatedReactant.amount.value / updatedReactant.concentration.value;
+
+    Object.values(updatedRow.startingMaterials).forEach((material) => {
+      if (!['catalyst', 'feedstock'].includes(material.aux.gasType)) {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / reactionVolume);
+      }
+    });
+    Object.entries(updatedRow.reactants).forEach(([materialId, material]) => {
+      if (materialId !== reactantID && material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / reactionVolume);
+      }
+    });
+    expect(updatedRow.reactants[reactantID].concentration.value)
+      .toBe(updatedReactant.concentration.value);
+  });
+  it('does not recalculate other concentrations when the same concentration is entered again', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const firstUpdate = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      {
+        ...reactant,
+        concentration: { ...reactant.concentration, value: 2 }
+      },
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    const beforeSecondUpdate = cloneDeep(firstUpdate);
+    const secondUpdate = updateVariationsRow(
+      firstUpdate,
+      `reactants.${reactantID}`,
+      {
+        ...firstUpdate.reactants[reactantID],
+        concentration: { ...firstUpdate.reactants[reactantID].concentration, value: 2 }
+      },
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    expect(secondUpdate).toEqual(beforeSecondUpdate);
+  });
+  it('updates concentrations locally when concentration changes', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 2 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: {},
+        },
+      }
+    );
+
+    expect(updatedRow.reactants[reactantID].concentration.value).toBe(2);
+  });
+  it('keeps concentration updates local to the row when volume editing is unlocked', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 1.5 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: false,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: {},
+        },
+      }
+    );
+
+    expect(updatedRow.reactants[reactantID].concentration.value).toBe(1.5);
   });
   it('gets column names from variations table', async () => {
     const reaction = await setUpReaction();
@@ -700,6 +869,76 @@ describe('ReactionVariationsUtils', () => {
       expect(columnDefinitions[0].children[0].children[0].hide).toBe(true);
       expect(columnDefinitions[0].children[0].children[0].displayUnit).toBe('mol');
       expect(columnDefinitions[0].children[0].headerName).toBe('Water');
+    });
+  });
+
+  describe('row order', () => {
+    const rowOrderKey = 'user7-reaction42-reactionVariationsRowOrder';
+    const rows = (ids) => ids.map((id) => ({ id, metadata: { notes: `row ${id}` } }));
+    const ids = (variations) => variations.map((row) => row.id);
+    let userStoreStub;
+
+    beforeEach(() => {
+      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      userStoreStub.restore();
+      localStorage.clear();
+    });
+
+    describe('setRowOrder', () => {
+      it('sorts by id when no row order is stored', () => {
+        const variations = rows([6, 10, 1, 9, 7, 4, 2, 8, 3, 5]);
+        expect(ids(setRowOrder(42, variations))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      });
+
+      it('applies the stored row order and puts rows missing from it after, in id order', () => {
+        persistRowOrder(42, [3, 1, 2]);
+        expect(ids(setRowOrder(42, rows([2, 5, 1, 4, 3])))).toEqual([3, 1, 2, 4, 5]);
+      });
+
+      it('ignores stored ids that no longer exist', () => {
+        persistRowOrder(42, [9, 2, 1]);
+        expect(ids(setRowOrder(42, rows([1, 3, 2])))).toEqual([2, 1, 3]);
+      });
+
+      it('does not mutate its input', () => {
+        const variations = rows([3, 1, 2]);
+        setRowOrder(42, variations);
+        expect(ids(variations)).toEqual([3, 1, 2]);
+      });
+    });
+
+    describe('areVariationsEqualIgnoringOrder', () => {
+      it('is true for the same rows in a different order', () => {
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), rows([3, 1, 2]))).toBe(true);
+      });
+
+      it('is false when a row differs', () => {
+        const changed = rows([3, 1, 2]);
+        changed[0].metadata.notes = 'edited';
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), changed)).toBe(false);
+      });
+
+      it('is false when a row was added or removed', () => {
+        expect(areVariationsEqualIgnoringOrder(rows([1, 2, 3]), rows([1, 2]))).toBe(false);
+      });
+
+      it('treats a missing list as empty', () => {
+        expect(areVariationsEqualIgnoringOrder(undefined, [])).toBe(true);
+      });
+    });
+
+    describe('persistTableLayout', () => {
+      it('stores grid state and layout, but no row order', () => {
+        const gridState = { columnSizing: {} };
+        persistTableLayout(42, { state: gridState }, []);
+
+        expect(JSON.parse(localStorage.getItem('user7-reaction42-reactionVariationsGridState'))).toEqual(gridState);
+        expect(localStorage.getItem('user7-reaction42-reactionVariationsLayout')).not.toBeNull();
+        expect(localStorage.getItem(rowOrderKey)).toBeNull();
+      });
     });
   });
 });

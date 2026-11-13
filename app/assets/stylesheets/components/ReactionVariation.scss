@@ -1,0 +1,44 @@
+
+.ag-theme-reaction-variations {
+  /*
+  ag-grid's own horizontal scrollbar stays functionally in place - it still drives
+  ag-grid's internal scroll sync, and `TopHorizontalScrollbar` mirrors it - but its
+  native track/thumb is hidden so users only see the single proxy scrollbar rendered
+  above the grid.
+  */
+  .ag-body-horizontal-scroll-viewport {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  // Proxy scrollbar rendered above the grid, kept in sync with ag-grid's own one.
+  .ag-top-horizontal-scroll {
+    overflow-x: scroll;
+    overflow-y: hidden;
+
+    .ag-top-horizontal-scroll-spacer {
+      height: 1px;
+    }
+  }
+
+  .ag-header-group-cell::after,
+  .ag-header-cell:not(.ag-column-first)::after {
+    display: None;
+  }
+
+  .ag-header-group-cell:hover::after,
+  .ag-header-cell:hover:not(.ag-column-first)::after {
+      display: block !important;
+  }
+
+  .ag-body {
+    max-height: 300px;
+
+    .ag-body-viewport {
+      overflow-y: auto !important;
+    }
+  }
+}

@@ -101,9 +101,10 @@ class ElementDetailLevelCalculator
     detail_levels
   end
 
-  # taken from API#group_ids
+  # Personal ownership only, matching Collection#detail_levels_for_user. A group-owned collection
+  # grants a member nothing by membership; the share path below is what gives them a level.
   def user_ids
-    @user_ids ||= user.group_ids + [user.id]
+    @user_ids ||= [user.id]
   end
 
   def detail_level_for(key)

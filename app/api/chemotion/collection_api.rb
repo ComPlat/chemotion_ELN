@@ -10,6 +10,10 @@ module Chemotion
       error!(e.message, 403)
     end
 
+    rescue_from Usecases::Collections::Errors::CreateForbidden do |e|
+      error!(e.message, 403)
+    end
+
     resource :collections do
       get '/' do
         own_collections =
@@ -91,10 +95,22 @@ module Chemotion
       end
       put '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
-        error!('A locked collection cannot be modified', 403) if collection.is_locked?
         attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
 
-        collection.update(attributes)
+        # A locked collection is not fully immutable: LockedCollectionGuard fixes only
+        # LOCKED_IMMUTABLE_ATTRIBUTES, deliberately leaving tabs_segment editable so the tab layout of
+        # the "All"/repository/transferred collections can be configured like any other. Refusing the
+        # request outright would override that. Compared by value rather than by key, because the tabs
+        # editor always sends the (unchanged) label alongside the layout.
+        if collection.is_locked?
+          forbidden = attributes.any? do |attribute, value|
+            LockedCollectionGuard::LOCKED_IMMUTABLE_ATTRIBUTES.include?(attribute.to_s) &&
+              collection[attribute] != value
+          end
+          error!('A locked collection cannot be modified', 403) if forbidden
+        end
+
+        error!(collection.errors.full_messages.join(', '), 422) unless collection.update(attributes)
 
         present collection, with: Entities::OwnCollectionEntity, root: :collection
       end
@@ -171,21 +187,24 @@ module Chemotion
       end
 
       desc 'Get collection metadata'
+      params do
+        requires :id, type: Integer
+      end
       get '/:id/metadata' do
-        metadata = Metadata.where(collection_id: params[:id]).first
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+        metadata = Metadata.where(collection_id: collection.id).first
         metadata || error!('404 Not Found', 404)
       end
 
       desc 'Create/update collection metadata'
-      rescue_from ActiveRecord::RecordNotFound do
-        error!('401 Unauthorized', 401)
-      end
       params do
+        requires :collection_id, type: Integer
         requires :metadata, type: JSON
       end
       post :metadata do
-        metadata = Metadata.where(collection_id: params[:collection_id]).first
-        metadata ||= Metadata.new(collection_id: params[:collection_id])
+        collection = Collection.own_collections_for(current_user).find(params[:collection_id])
+        metadata = Metadata.where(collection_id: collection.id).first
+        metadata ||= Metadata.new(collection_id: collection.id)
         metadata.metadata = params[:metadata]
         metadata.save!
         metadata

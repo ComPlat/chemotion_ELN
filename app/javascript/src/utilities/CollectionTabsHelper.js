@@ -56,12 +56,7 @@ const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = nu
     layout = { properties: 1, analyses: 2 };
   }
   const layoutKeys = Object.keys(layout);
-  let segmentAvailableTabs = [];
-  if (element == 'device_description') {
-    segmentAvailableTabs = layoutKeys;
-  } else {
-    segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);
-  }
+  const segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);
   return getVisibilityList(layout, segmentAvailableTabs, addInventoryTab);
 };
 

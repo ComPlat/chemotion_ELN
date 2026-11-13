@@ -32,7 +32,10 @@ export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { researchPlan } = props;
-    const hasComment = researchPlan.container?.description && researchPlan.container.description.trim() !== '';
+    const hasComment = Boolean(
+      researchPlan.container?.description
+      && researchPlan.container.description.trim() !== ''
+    );
     this.state = {
       activeContainer: 0,
       commentBoxVisible: hasComment,

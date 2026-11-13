@@ -12,20 +12,38 @@ import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
 import Dropzone from 'src/components/common/Dropzone';
 import Utils from 'src/utilities/Functions';
-import ImageModal from 'src/components/common/ImageModal';
+import ImageModal, { fileIconClass } from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { isPreviewableAttachment } from 'src/utilities/imageHelper';
+
+// Attachments with a thumbnail stay in ImageModal, which keeps the thumbnail and hover preview
+// and only opens the modal for files GET image/:id can serve (images and PDFs), so a
+// thumbnailed .docx or video shows its thumbnail but doesn't open. A saved file with neither a
+// thumbnail nor a preview (e.g. a failed spectral-conversion .zip sibling) gets a static
+// file-type icon. Unsaved attachments carry no previewable flag, so they stay in ImageModal,
+// which previews them from the local blob without calling the server.
+const hasNoPreview = (attachment) => !attachment?.thumb && !isPreviewableAttachment(attachment);
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
-    <ImageModal
-      attachment={attachment}
-      popObject={{
-        title: attachment?.filename,
-      }}
-    />
+    {hasNoPreview(attachment) ? (
+      <div
+        className="preview-table h-100 w-100 d-flex align-items-center justify-content-center text-body-tertiary"
+        title={attachment?.filename}
+      >
+        <i className={`fa ${fileIconClass(attachment?.filename)} fa-2x`} aria-hidden="true" />
+      </div>
+    ) : (
+      <ImageModal
+        attachment={attachment}
+        popObject={{
+          title: attachment?.filename,
+        }}
+      />
+    )}
   </div>
 );
 

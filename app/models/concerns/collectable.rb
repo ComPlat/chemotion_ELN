@@ -10,7 +10,13 @@ module Collectable
                                 joins(:collections).where(collections: { user_id: user_ids }).references(:collections)
                               }
     scope :by_collection_id, ->(id) { joins(:collections).where(collections: { id: id }) }
-    scope :search_by, ->(search_by_method, arg) { public_send("search_by_#{search_by_method}", arg) }
+    # Structure searches (search_by_fingerprint_*) must go through the structure search with its detail level check.
+    scope :search_by, lambda { |search_by_method, arg|
+      method = "search_by_#{search_by_method}"
+      next none if search_by_method.to_s.start_with?('fingerprint') || !respond_to?(method)
+
+      public_send(method, arg)
+    }
     scope :by_user_label, ->(id) { joins(:tag).where("element_tags.taggable_data->'user_labels' @> '?'", id) }
 
     # TODO: Filters are not working properly

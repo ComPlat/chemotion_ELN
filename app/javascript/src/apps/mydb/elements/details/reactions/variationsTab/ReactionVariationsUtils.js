@@ -1,10 +1,11 @@
-import { set, cloneDeep } from 'lodash';
+import { set, cloneDeep, isEqual } from 'lodash';
 import { convertTemperature, convertDuration } from 'src/models/Reaction';
 import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
-  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
+  updateVariationsRowOnConcentrationMaterialChange,
+  getMaterialData, backfillMaterialDataEntries, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
@@ -27,8 +28,9 @@ const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
 const massUnits = ['g', 'mg', 'μg'];
 const volumeUnits = ['l', 'ml', 'μl'];
-const amountUnits = ['mol', 'mmol'];
-const concentrationUnits = ['ppm'];
+const amountUnits = ['mol', 'mmol', 'μmol'];
+const concentrationUnits = ['mol/l'];
+const gasConcentrationUnits = ['ppm'];
 const yieldUnits = ['%'];
 const materialTypes = {
   startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
@@ -107,7 +109,7 @@ function convertUnit(value, fromUnit, toUnit) {
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
+    const amountUnitPrefixes = { mol: 'n', mmol: 'm', μmol: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
 
@@ -125,7 +127,7 @@ const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
   return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
 };
 
-function getStandardUnits(entry) {
+function getStandardUnits(entry, gasType = 'off') {
   switch (entry) {
     case 'volume':
       return volumeUnits;
@@ -138,7 +140,7 @@ function getStandardUnits(entry) {
     case 'duration':
       return durationUnits;
     case 'concentration':
-      return concentrationUnits;
+      return gasType === 'gas' ? gasConcentrationUnits : concentrationUnits;
     case 'yield':
       return yieldUnits;
     default:
@@ -188,7 +190,9 @@ function getStandardValue(entry, material) {
       return convertUnit(value, getInternalUnit(unit), getStandardUnits('duration')[0]);
     }
     case 'concentration':
-      return material.gas_phase_data?.part_per_million ?? null;
+      return material.gas_type === 'gas'
+        ? (material.gas_phase_data?.part_per_million ?? null)
+        : (material.concn ?? null);
     case 'turnoverNumber':
       return material.gas_phase_data?.turnover_number ?? null;
     case 'turnoverFrequency':
@@ -228,6 +232,14 @@ function getCellDataType(entry, gasType = 'off') {
           return 'material';
       }
     case 'concentration':
+      switch (gasType) {
+        case 'feedstock':
+          return 'feedstock';
+        case 'gas':
+          return 'gas';
+        default:
+          return 'material';
+      }
     case 'turnoverNumber':
     case 'turnoverFrequency':
       return 'gas';
@@ -369,7 +381,7 @@ function copyVariationsRow(row, variations) {
   return copiedRow;
 }
 
-function updateVariationsRow(row, field, value, reactionHasPolymers) {
+function updateVariationsRow(row, field, value, reactionHasPolymers, options = {}) {
   /*
   Some attributes of a material need to be updated in response to changes in other attributes:
 
@@ -389,6 +401,21 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
   */
   let updatedRow = cloneDeep(row);
   set(updatedRow, field, value);
+
+  const { changedEntry, concentrationContext, onConcentrationContextUpdate } = options;
+
+  const concentrationUpdate = updateVariationsRowOnConcentrationMaterialChange(
+    updatedRow,
+    field,
+    changedEntry,
+    concentrationContext
+  );
+
+  updatedRow = concentrationUpdate.row;
+  if (concentrationUpdate.contextUpdate && typeof onConcentrationContextUpdate === 'function') {
+    onConcentrationContextUpdate(concentrationUpdate.contextUpdate);
+  }
+
   if (value.aux?.isReference) {
     updatedRow = updateVariationsRowOnReferenceMaterialChange(updatedRow, reactionHasPolymers);
   }
@@ -416,9 +443,12 @@ function addMissingColumnsToVariations({
   updatedVariations.forEach((row) => {
     Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
       columnGroupChildIDs.forEach((childID) => {
-        if (row[columnGroupID][childID]) { return; }
-
         if (Object.keys(materialTypes).includes(columnGroupID)) {
+          if (row[columnGroupID][childID]) {
+            row[columnGroupID][childID] = backfillMaterialDataEntries(row[columnGroupID][childID], columnGroupID);
+            return;
+          }
+
           const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
           row[columnGroupID][childID] = getMaterialData(
             material,
@@ -426,7 +456,13 @@ function addMissingColumnsToVariations({
             gasMode,
             vesselVolume
           );
+          return;
         }
+
+        if (row[columnGroupID][childID]) {
+          return;
+        }
+
         if (columnGroupID === 'properties') {
           row.properties[childID] = getPropertyData(
             childID,
@@ -746,23 +782,27 @@ function persistRowOrder(reactionId, rowOrder) {
   localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
 }
 
+// Row order is a per-browser view preference (see `setRowOrder`), not persisted with the reaction,
+// so a different order alone must not count as a change.
+function areVariationsEqualIgnoringOrder(variationsA = [], variationsB = []) {
+  const byId = (a, b) => a.id - b.id;
+  return isEqual([...variationsA].sort(byId), [...variationsB].sort(byId));
+}
+
 function setRowOrder(reactionId, reactionVariations) {
-  const rowOrder = getInitialRowOrder(reactionId);
-  let updatedReactionVariations = cloneDeep(reactionVariations);
+  const rowOrder = getInitialRowOrder(reactionId) ?? [];
+  const positions = new Map(rowOrder.map((id, index) => [id, index]));
+  const position = (row) => positions.get(row.id) ?? Infinity;
 
-  if (rowOrder) {
-    updatedReactionVariations = updatedReactionVariations.sort(
-      (a, b) => {
-        const indexA = rowOrder.indexOf(a.id);
-        const indexB = rowOrder.indexOf(b.id);
-        const posA = indexA === -1 ? Infinity : indexA;
-        const posB = indexB === -1 ? Infinity : indexB;
-        return posA - posB;
-      }
-    );
-  }
-
-  return updatedReactionVariations;
+  // Rows without a stored position (no manual order yet, or added since) follow in id order, i.e., creation order.
+  return cloneDeep(reactionVariations).sort((a, b) => {
+    const positionA = position(a);
+    const positionB = position(b);
+    if (positionA !== positionB) {
+      return positionA < positionB ? -1 : 1;
+    }
+    return a.id - b.id;
+  });
 }
 
 function traverseColDefs(colDef, callback, path = []) {
@@ -875,6 +915,7 @@ function setLayout(reactionId, columnDefinitions) {
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
+  // Row order is persisted on drag only (`handleRowDrag`); without a manual order, rows are shown in id order.
   const { state: gridState } = event;
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
   localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
@@ -961,6 +1002,7 @@ export {
   temperatureUnits,
   durationUnits,
   concentrationUnits,
+  gasConcentrationUnits,
   getStandardUnits,
   convertUnit,
   convertGenericUnit,
@@ -988,6 +1030,7 @@ export {
   getInitialRowOrder,
   persistRowOrder,
   setRowOrder,
+  areVariationsEqualIgnoringOrder,
   setLayout,
   persistTableLayout,
   getUserFacingEntryName,

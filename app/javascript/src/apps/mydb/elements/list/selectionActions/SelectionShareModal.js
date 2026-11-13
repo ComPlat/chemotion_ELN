@@ -79,7 +79,6 @@ function SelectionShareModal({
         permissions: permissionsParams,
         label: newCollectionLabel.trim(),
         parentId: parentCollection?.id ?? null,
-        currentUser,
       };
       collectionsStore.collectionShareForElements(params);
     } else if (shareType === 'create') {
@@ -90,7 +89,7 @@ function SelectionShareModal({
         apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
-      collectionsStore.addCollectionShare(params, currentUser, false);
+      collectionsStore.addCollectionShare(params);
     } else if (shareType === 'edit') {
       // edit permissions of collection share
       const params = {

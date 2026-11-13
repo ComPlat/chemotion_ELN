@@ -1,7 +1,8 @@
 /* eslint-disable no-undef */
 import React from 'react';
-import { Form } from 'react-bootstrap';
-import Enzyme, { shallow } from 'enzyme';
+import { Form, Overlay, Tooltip } from 'react-bootstrap';
+import Enzyme, { shallow, mount } from 'enzyme';
+import { act } from 'react-dom/test-utils';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
@@ -99,6 +100,46 @@ describe('NumericInputUnit component', () => {
     expect(convertedUnit).toBe('°F');
   });
 
+  it('accepts a comma as decimal separator and keeps it displayed', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '-2,5' } });
+    expect(spy.calledWith(-2.5, '°C')).toEqual(true);
+    expect(wrapper.find('[name="storage_temperature"]').prop('value')).toBe('-2,5');
+  });
+
+  it('converts a comma-typed temperature when toggling the unit', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '2,5' } });
+    wrapper.find('Button').simulate('click');
+    expect(spy.lastCall.args).toEqual(['36.5', '°F']);
+  });
+
+  it('converts a comma-typed amount when toggling the unit', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'chemical_amount_in_g', onInputChange: spy, unit: 'g', numericValue: '', label: 'Amount'
+    }));
+    wrapper.find('[name="chemical_amount_in_g"]').simulate('change', { target: { value: '1,5' } });
+    wrapper.find('Button').simulate('click');
+    expect(spy.lastCall.args).toEqual([1500, 'mg']);
+  });
+
+  it('rejects a second decimal separator', () => {
+    const spy = sinon.spy();
+    const wrapper = shallow(React.createElement(NumericInputUnit, {
+      field: 'storage_temperature', onInputChange: spy, unit: '°C', numericValue: '', label: 'Storage Temperature'
+    }));
+    wrapper.find('[name="storage_temperature"]').simulate('change', { target: { value: '2,5.1' } });
+    expect(spy.called).toEqual(false);
+    expect(wrapper.find('[name="storage_temperature"]').prop('value')).toBe('');
+  });
+
   it('toggles input should return the same value when the field is not "amount" or "flash_point"', () => {
     const wrapper = createWrapper('other field', ' ', 300, 'other_field', false);
     wrapper.find('Button').simulate('click');
@@ -106,5 +147,134 @@ describe('NumericInputUnit component', () => {
     expect(value).toBe(300);
     const unitField = wrapper.find('Button').children().text();
     expect(unitField).toBe(' ');
+  });
+
+  describe('inside a parent that feeds the value back', () => {
+    // Both real callers store the number from onInputChange and pass it back as numericValue.
+    const mountWithParent = ({ field, unit, value }) => {
+      const sent = [];
+      const Parent = () => {
+        const [state, setState] = React.useState({ value, unit });
+        return React.createElement(NumericInputUnit, {
+          field,
+          label: 'L',
+          unit: state.unit,
+          numericValue: state.value,
+          onInputChange: (newValue, newUnit) => {
+            sent.push([newValue, newUnit]);
+            setState({ value: newValue, unit: newUnit });
+          },
+        });
+      };
+      const wrapper = mount(React.createElement(Parent));
+      const input = () => wrapper.find('input');
+      const type = (...texts) => texts.forEach((text) => act(() => {
+        input().simulate('change', { target: { value: text } });
+      }));
+      const blur = () => act(() => { input().simulate('blur'); });
+      const toggle = () => act(() => { wrapper.find('button').simulate('click'); });
+      const shown = () => { wrapper.update(); return input().prop('value'); };
+      return {
+        wrapper, type, blur, toggle, shown, sent,
+      };
+    };
+
+    it('keeps a typed comma while the parent echoes the number back', () => {
+      const ui = mountWithParent({ field: 'storage_temperature', unit: '°C', value: '' });
+      ui.type('2', '2,', '2,5');
+      expect(ui.shown()).toBe('2,5');
+      expect(ui.sent[ui.sent.length - 1]).toEqual([2.5, '°C']);
+    });
+
+    it('converts a leading-separator temperature on toggle', () => {
+      const ui = mountWithParent({ field: 'storage_temperature', unit: '°C', value: '' });
+      ui.type('-', '-,', '-,5');
+      ui.toggle();
+      expect(ui.sent[ui.sent.length - 1]).toEqual(['31.1', '°F']);
+    });
+
+    it('converts a trailing-separator temperature on toggle', () => {
+      const ui = mountWithParent({ field: 'flash_point', unit: '°C', value: '' });
+      ui.type('2', '2,');
+      ui.toggle();
+      expect(ui.sent[ui.sent.length - 1]).toEqual(['35.6', '°F']);
+      expect(ui.shown()).toBe('35.6');
+    });
+
+    it('shows the stored number on blur', () => {
+      const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+      ui.type('1', '1,', '1,0', '1,00', '1,000');
+      ui.blur();
+      expect(ui.sent[ui.sent.length - 1]).toEqual([1, 'g']);
+      expect(ui.shown()).toBe('1');
+    });
+
+    it('keeps the typed separator when normalizing on blur', () => {
+      const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+      ui.type('2,50');
+      ui.blur();
+      expect(ui.shown()).toBe('2,5');
+      ui.type('-0.50');
+      ui.blur();
+      expect(ui.shown()).toBe('-0.5');
+    });
+
+    it('restores the stored value on blur when the text has no number', () => {
+      const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: 5 });
+      ui.type(',');
+      ui.blur();
+      expect(ui.shown()).toBe(5);
+      expect(ui.sent).toEqual([]);
+    });
+
+    describe('separator hint', () => {
+      let clock;
+      beforeEach(() => { clock = sinon.useFakeTimers(); });
+      afterEach(() => { clock.restore(); });
+
+      const hintShown = (ui) => { ui.wrapper.update(); return ui.wrapper.find(Overlay).prop('show'); };
+
+      it('says how a comma before three digits was read, then hides it', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ui.type('1,234');
+        expect(hintShown(ui)).toBe(false);
+        ui.blur();
+        expect(hintShown(ui)).toBe(true);
+        expect(ui.wrapper.find(Tooltip).text()).toBe('Read as 1.234 g');
+        expect(ui.shown()).toBe('1,234');
+        act(() => { clock.tick(3000); });
+        expect(hintShown(ui)).toBe(false);
+      });
+
+      it('hides the hint as soon as the user types again', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ui.type('1,234');
+        ui.blur();
+        ui.type('1,2345');
+        expect(hintShown(ui)).toBe(false);
+      });
+
+      it('gives no hint for other decimals', () => {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: '' });
+        ['2,5', '1,23', '1,2345', '1.234'].forEach((text) => {
+          ui.type(text);
+          ui.blur();
+          expect(hintShown(ui)).toBe(false);
+        });
+      });
+    });
+
+    it('renders a controlled empty input when no value is given', () => {
+      const errors = sinon.stub(console, 'error');
+      try {
+        const ui = mountWithParent({ field: 'chemical_amount_in_g', unit: 'g', value: undefined });
+        expect(ui.shown()).toBe('');
+        ui.type('3');
+        expect(ui.shown()).toBe('3');
+        expect(errors.args.flat().join(' ')).not.toMatch(/uncontrolled/);
+      } finally {
+        errors.restore();
+      }
+    });
   });
 });

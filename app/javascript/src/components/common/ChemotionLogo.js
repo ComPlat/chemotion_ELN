@@ -1,9 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
+// An instance can drop an alternate logo into public/logos; the server reports whether
+// one is there. Resolved once per page load and shared by every mount, because
+// ChemotionLogo renders in both navigation bars, the workshop FAB and the sidebar --
+// which remounts whenever it is collapsed or expanded.
+//
+// Deliberately not probed by requesting the (expectedly absent) file directly: a 404
+// does not throw, but the browser still logs the failed resource load to the console on
+// every stock instance. The endpoint always answers 200, so "no alternate" stays silent.
+let alternateSrcPromise = null;
+
+const fetchAlternateLogoSrc = () => {
+  alternateSrcPromise ||= fetch('/api/v1/public/logo/alternate')
+    .then((res) => (res.ok ? res.json() : { src: null }))
+    .then(({ src }) => src || null)
+    .catch(() => null);
+  return alternateSrcPromise;
+};
 
 const ChemotionLogo = ({ collapsed }) => {
+  const [alternateSrc, setAlternateSrc] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAlternateLogoSrc().then((src) => { if (!cancelled) { setAlternateSrc(src); } });
+    return () => { cancelled = true; };
+  }, []);
+
   const height = '52';
   const width = collapsed ? '52' : '87';
   const scaledSize = '34';
+
+  if (alternateSrc) {
+    return (
+      <img
+        src={alternateSrc}
+        alt="Chemotion Logo"
+        style={{ height: collapsed ? Number(scaledSize) : Number(height), width: 'auto', maxWidth: '100%' }}
+      />
+    );
+  }
 
   const styles = {
     blue: {

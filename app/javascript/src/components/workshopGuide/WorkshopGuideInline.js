@@ -8,7 +8,7 @@ export default function WorkshopGuideInline() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchWorkshopAvailability().then((ok) => { if (!cancelled) setAvailable(ok); });
+    fetchWorkshopAvailability().then(({ available: ok }) => { if (!cancelled) setAvailable(ok); });
     return () => { cancelled = true; };
   }, []);
 

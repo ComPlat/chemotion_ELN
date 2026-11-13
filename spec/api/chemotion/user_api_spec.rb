@@ -88,29 +88,91 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/list_editors' do
-    pending 'TODO: Add missing spec'
+    before do
+      create(:matrice, name: 'ketcherEditor', enabled: true)
+      create(:matrice, name: 'marvinjsEditor', enabled: false)
+      user.reload
+      get '/api/v1/users/list_editors'
+    end
+
+    it 'returns only the editors enabled for the current user' do
+      expect(parsed_json_response['matrices'].pluck('name')).to eq(['ketcherEditor'])
+    end
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do
-    pending 'TODO: Add missing spec'
+    before do
+      get '/api/v1/users/omniauth_providers'
+    end
+
+    it 'returns the omniauth providers configured for the app' do
+      expect(parsed_json_response['providers']).to eq(Devise.omniauth_configs.keys.map(&:to_s))
+    end
+
+    # Regression: this used to serialize the whole current_user object, leaking
+    # encrypted_otp_secret/otp_secret/otp_backup_codes to any authenticated user.
+    it "returns only the current user's linked providers" do
+      expect(parsed_json_response['current_user']).to eq('providers' => nil)
+    end
+
+    context 'when the user has linked providers' do
+      let(:user) { create(:person, providers: { 'github' => { 'uid' => '123' } }) }
+
+      it "returns the user's linked providers" do
+        expect(parsed_json_response['current_user']['providers']).to eq('github' => { 'uid' => '123' })
+      end
+    end
   end
 
   describe 'PUT /api/v1/users/update_counter' do
-    pending 'TODO: Add missing spec'
+    before do
+      put '/api/v1/users/update_counter', params: { type: 'samples', counter: 5 }, as: :json
+    end
+
+    it 'updates the given counter and preserves the others' do
+      expect(parsed_json_response['counters']).to eq('samples' => '5', 'reactions' => '0', 'wellplates' => '0')
+    end
   end
 
   describe 'GET /api/v1/users/scifinder' do
-    pending 'TODO: Add missing spec'
+    context 'when no credential exists for the current user' do
+      before { get '/api/v1/users/scifinder' }
+
+      it 'returns an empty credential' do
+        expect(parsed_json_response).to eq(
+          'id' => nil, 'access_token' => nil, 'refresh_token' => nil, 'expires_at' => nil, 'updated_at' => nil,
+        )
+      end
+    end
+
+    context 'when a credential exists for the current user' do
+      let!(:credential) do
+        ScifinderNCredential.create!(
+          created_by: user.id, access_token: 'tok', refresh_token: 'ref', expires_at: 1.day.from_now,
+        )
+      end
+
+      before { get '/api/v1/users/scifinder' }
+
+      it "returns the current user's credential" do
+        expect(parsed_json_response['id']).to eq(credential.id)
+        expect(parsed_json_response['access_token']).to eq('tok')
+      end
+    end
   end
 
   describe 'DELETE /api/v1/users/sign_out' do
-    pending 'TODO: Add missing spec'
+    it 'returns 204' do
+      delete '/api/v1/users/sign_out'
+      expect(response).to have_http_status(:no_content)
+    end
   end
 
   describe 'GET /api/v1/users/devices' do
-    let(:own_device) { create(:device) }
-    let(:group_device) { create(:device) }
-    let(:unrelated_device) { create(:device) }
+    # named against creation order, so the sort is not satisfied by id order
+    let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings, name: 'Alpha IR') }
+    let!(:unrelated_device) { create(:device).tap { |device| device.people << create(:person) } }
     let!(:group) { create(:group, admins: [user], users: [user]) }
 
     before do
@@ -123,6 +185,24 @@ describe Chemotion::UserAPI do
       ids = parsed_json_response['currentDevices'].pluck('id')
       expect(ids).to include(own_device.id, group_device.id)
       expect(ids).not_to include(unrelated_device.id)
+    end
+
+    it 'lists each device with its id, name and abbreviation', :aggregate_failures do
+      devices = parsed_json_response['currentDevices']
+      expect(devices.size).to eq(2)
+      expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
+    end
+
+    context 'when a device is linked to the user directly and through a group' do
+      before do
+        group_device.people << user
+        get '/api/v1/users/devices'
+      end
+
+      it 'lists it once, with the devices sorted by name' do
+        names = parsed_json_response['currentDevices'].pluck('name')
+        expect(names).to eq(['Alpha IR', 'Zeta NMR'])
+      end
     end
   end
 
@@ -165,10 +245,107 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/devices/novnc' do
-    pending 'TODO: Add missing spec'
+    let(:novnc_device) { create(:device, :novnc_settings) }
+    let(:unrelated_novnc_device) { create(:device, :novnc_settings) }
+    let(:device_without_target) { create(:device) }
+
+    before do
+      novnc_device.people << user
+      device_without_target.people << user
+      unrelated_novnc_device
+      get '/api/v1/devices/novnc'
+    end
+
+    it 'returns only accessible devices that have a novnc target' do
+      ids = parsed_json_response['devices'].pluck('id')
+      expect(ids).to contain_exactly(novnc_device.id)
+    end
   end
 
   describe 'GET /api/v1/devices/current_connection' do
-    pending 'TODO: Add missing spec'
+    let(:device) { create(:device) }
+    let(:store) { ActiveSupport::Cache::MemoryStore.new }
+    let(:other_user) { create(:person) }
+
+    before do
+      stub_const('NOVNC_CONNECTIONS', store)
+      # The endpoint caches its device-access check; keep it from leaking across examples and runs.
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    end
+
+    def poll(id: device.id, status: 'true')
+      get '/api/v1/devices/current_connection', params: { id: id, status: status }
+    end
+
+    context 'when the device belongs to the current user' do
+      before { device.people << user }
+
+      it 'returns 200 and reports the user as watching' do
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'reports the user as using when the display is focused' do
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'updates the entry of a user who polls again' do
+        poll
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'lists the other viewers of the device' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        poll
+        expect(parsed_json_response['result']).to contain_exactly("#{other_user.id},0", "#{user.id},1")
+      end
+
+      it 'drops viewers that stopped polling' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        travel(NOVNC_CONNECTION_TTL + 1.second) do
+          poll
+        end
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'replaces a malformed entry with the current viewer' do
+        store.write("device/#{device.id}", { other_user.id => [0, nil], 0 => 'x' })
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'answers an empty result when the store cannot be written' do
+        allow(store).to receive(:write).and_raise(Errno::ENOSPC)
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq([])
+      end
+
+      it 'returns 400 for an id with text after the number' do
+        poll(id: "#{device.id}abc")
+        expect(response).to have_http_status(:bad_request)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+
+      it 'returns 400 for a non-numeric id' do
+        poll(id: 'abc')
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
+    context 'when the current user has no relation to the device' do
+      before do
+        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      end
+
+      it 'returns 404 and leaves the store untouched' do
+        expect(response).to have_http_status(:not_found)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+    end
   end
 end

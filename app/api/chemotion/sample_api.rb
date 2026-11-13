@@ -62,8 +62,8 @@ module Chemotion
         end
 
         before do
-          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state])
+          @collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @samples = Sample.by_collection_id(@collection.id).by_ui_state(params[:ui_state])
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 
@@ -71,9 +71,14 @@ module Chemotion
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
 
+          # All samples come from the single accessible collection @collection; apply its per-class
+          # detail levels so a restrictive share does not leak fields (molfile, analyses, etc.).
+          detail_levels = ElementDetailLevelCalculator.for_collection(collection: @collection, user: current_user)
+
           {
             samples: Entities::SampleEntity.represent(
               @samples,
+              detail_levels: detail_levels,
               root: false,
             ),
             literatures: Entities::LiteratureEntity.represent(
@@ -121,11 +126,13 @@ module Chemotion
             params[:file] = { tempfile: tempfile, filename: 'validated_data.csv' }
             tempfile.binmode
             CSV.open(tempfile, 'wb') do |csv|
-              # Add headers - get keys from the first row
-              first_row = params[:data].first
-              error!('Invalid data format: rows must be objects', 400) unless first_row.is_a?(Hash)
+              error!('Invalid data format: rows must be objects', 400) unless params[:data].all?(Hash)
 
-              headers = first_row.keys
+              # Union of every row's keys, in first-seen order. Taking them from the first row alone
+              # silently dropped every column that row happened not to carry -- for the whole file,
+              # not just that row -- so a mapping whose first row had no structure or sample id
+              # produced a CSV the importer then rejected with "Column headers should have: ...".
+              headers = params[:data].flat_map(&:keys).uniq
               csv << headers
               # Add data rows
               params[:data].each { |row| csv << headers.map { |header| row[header] } }
@@ -207,10 +214,11 @@ module Chemotion
                            .where(id: (sample_scope.pluck :molecule_id))
                            .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                            .order(:sum_formular)
+                           .order(:id)
           reset_pagination_page(molecule_scope)
           paginate(molecule_scope).each do |molecule|
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
-            samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
+            samples_group = samples_group.sort { |x, y| [y.updated_at, y.id] <=> [x.updated_at, x.id] }
             samples_group.each do |sample|
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
@@ -220,7 +228,7 @@ module Chemotion
           sample_count = sample_scope.size
         else
           sample_count = reset_pagination_page(sample_scope)
-          sample_scope = sample_scope.order('samples.updated_at DESC')
+          sample_scope = sample_scope.order('samples.updated_at DESC, samples.id DESC')
           paginate(sample_scope).each do |sample|
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
@@ -343,7 +351,7 @@ module Chemotion
           attributes[:solvent] = params[:solvent]
           attributes.delete(:literatures)
 
-          update_datamodel(attributes[:container])
+          update_datamodel(attributes[:container], element: @sample, creating: false)
           attributes.delete(:container)
 
           update_element_labels(@sample, attributes[:user_labels], current_user.id)
@@ -555,7 +563,7 @@ module Chemotion
         collections << all_coll if all_coll.present?
         sample.collections = collections.uniq
 
-        sample.container = update_datamodel(params[:container])
+        sample.container = update_datamodel(params[:container], element: sample, creating: true)
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 

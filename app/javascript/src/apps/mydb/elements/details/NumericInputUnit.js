@@ -1,14 +1,22 @@
 /* eslint-disable react/require-default-props */
 /* eslint-disable no-shadow */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  InputGroup, Button, Form
+  InputGroup, Button, Form, Overlay, Tooltip
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
   convertTemperature,
   handleFloatNumbers,
 } from 'src/utilities/UnitsConversion';
+
+// Accepts a comma as decimal separator, as typed on a German-locale keyboard.
+const toNumber = (val) => (typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val);
+// Optional leading minus, digits, and at most one decimal point or comma.
+const TYPED_NUMBER = /^-?\d*[.,]?\d*$/;
+// "1,234" could be meant as a thousands separator, so say how it was read.
+const LOOKS_LIKE_THOUSANDS = /^-?\d+,\d{3}$/;
+const HINT_MS = 3000;
 
 export default function NumericInputUnit(props) {
   const {
@@ -20,13 +28,22 @@ export default function NumericInputUnit(props) {
     onInputChange
   } = props;
 
-  const [value, setValue] = useState(numericValue);
+  const [typedValue, setTypedValue] = useState(numericValue ?? '');
   const [currentUnit, setUnit] = useState(unit);
+  const [hint, setHint] = useState(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    setValue(numericValue);
+    // Keep the typed text (e.g. "2,5") while it still denotes the incoming number.
+    setTypedValue((prev) => (toNumber(prev) === numericValue ? prev : (numericValue ?? '')));
     setUnit(unit);
   }, [numericValue, unit]);
+
+  useEffect(() => {
+    if (!hint) return undefined;
+    const timer = setTimeout(() => setHint(null), HINT_MS);
+    return () => clearTimeout(timer);
+  }, [hint]);
 
   const weightConversion = (value, multiplier) => value * multiplier;
   const isValidNumber = (val) => (typeof val === 'string' || typeof val === 'number')
@@ -55,19 +72,20 @@ export default function NumericInputUnit(props) {
   };
 
   const toggleInput = () => {
-    let [convertedValue, convertedUnit] = [value, currentUnit];
+    let [convertedValue, convertedUnit] = [typedValue, currentUnit];
     switch (field) {
       case 'chemical_amount_in_g':
       case 'chemical_amount_in_l':
-        [convertedValue, convertedUnit] = convertValue(value, currentUnit);
+        [convertedValue, convertedUnit] = convertValue(toNumber(typedValue), currentUnit);
         break;
       case 'flash_point':
       case 'storage_temperature':
-        [convertedValue, convertedUnit] = convertTemperature(value, currentUnit);
+        // A string goes through as is: the helper parses the separator and keeps trailing text.
+        [convertedValue, convertedUnit] = convertTemperature(typedValue, currentUnit);
         break;
       default:
         // handle default case by doing no conversion
-        convertedValue = parseFloat(value);
+        convertedValue = toNumber(typedValue);
         break;
     }
     // Check for invalid values (null, undefined, NaN)
@@ -79,26 +97,39 @@ export default function NumericInputUnit(props) {
 
   const handleInputValueChange = (event) => {
     const newInput = event.target.value;
+    setHint(null);
     if (newInput.trim() === '') {
       onInputChange('', currentUnit);
-      setValue('');
+      setTypedValue('');
       return;
     }
 
-    // Allow optional leading minus, digits, and at most one decimal point
-    const isValidFormat = /^-?\d*\.?\d*$/.test(newInput);
-    if (!isValidFormat) {
+    if (!TYPED_NUMBER.test(newInput)) {
       return;
     }
 
-    setValue(newInput);
+    setTypedValue(newInput);
     // Only propagate when there's at least one digit and the value is parseable
     if (/\d/.test(newInput)) {
-      const parsedValue = parseFloat(newInput);
+      const parsedValue = toNumber(newInput);
       if (!Number.isNaN(parsedValue)) {
         onInputChange(parsedValue, currentUnit);
       }
     }
+  };
+
+  // Show the number that was stored, so "1,000" reads back as "1"; keep the typed separator.
+  const handleBlur = () => {
+    if (typeof typedValue !== 'string' || typedValue === '' || !TYPED_NUMBER.test(typedValue)) return;
+    const parsed = toNumber(typedValue);
+    if (Number.isNaN(parsed)) {
+      setTypedValue(numericValue ?? '');
+      return;
+    }
+    const normalized = String(parsed);
+    if (normalized.includes('e')) return;
+    if (LOOKS_LIKE_THOUSANDS.test(typedValue)) setHint(`Read as ${normalized} ${currentUnit}`);
+    setTypedValue(typedValue.includes(',') ? normalized.replace('.', ',') : normalized);
   };
 
   return (
@@ -110,8 +141,10 @@ export default function NumericInputUnit(props) {
         <Form.Control
           type="text"
           disabled={inputDisabled}
-          value={value}
+          value={typedValue}
           onChange={(event) => handleInputValueChange(event)}
+          onBlur={handleBlur}
+          ref={inputRef}
           name={field}
           label={label}
         />
@@ -123,6 +156,9 @@ export default function NumericInputUnit(props) {
           {currentUnit}
         </Button>
       </InputGroup>
+      <Overlay target={inputRef} show={!!hint} placement="bottom">
+        <Tooltip id={`${field}-separator-hint`}>{hint}</Tooltip>
+      </Overlay>
     </div>
   );
 }

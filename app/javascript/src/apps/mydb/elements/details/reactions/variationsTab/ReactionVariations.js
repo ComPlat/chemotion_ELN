@@ -14,19 +14,22 @@ import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
   removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
-  setLayout, persistTableLayout, cellDataTypes,
+  areVariationsEqualIgnoringOrder, setLayout, persistTableLayout, cellDataTypes,
   getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionAnalyses, updateAnalyses
+  getReactionAnalyses, updateAnalyses, AutofillVariationSamplesModal
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
-  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
+  getReactionMaterialsHashes, resolveReactionVolumeFromContext, getValidReactionVolume,
+  cellIsEditable, SAMPLE_LABELS_WITH_SUM
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
-  RemoveVariationsModal
+  RemoveVariationsModal,
+  TopHorizontalScrollbar
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
@@ -40,6 +43,19 @@ const initializeGridStore = (initialVariations = []) => ({
   asyncDataLoaded: false,
   gridVersion: 0,
 });
+
+const initializeReactionVolumeByRowId = (rows = [], reactionVolume = null) => {
+  const validReactionVolume = getValidReactionVolume(reactionVolume);
+  if (!validReactionVolume) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    rows
+      .filter((row) => row?.id !== undefined && row?.id !== null)
+      .map((row) => [row.id, validReactionVolume])
+  );
+};
 
 const ReactionVariations = ({ reaction, onReactionChange }) => {
   const reactionHasPolymers = reaction.hasPolymers();
@@ -55,14 +71,52 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+  const defaultReactionVolume = getValidReactionVolume(reaction.volume);
+  const reactionVolumeByRowIdRef = useRef(
+    initializeReactionVolumeByRowId(reaction.variations ?? [], defaultReactionVolume)
+  );
+  const [useReactionVolumeOverride, setUseReactionVolumeOverride] = useState(null);
+  const reactionConcentrationMode = reaction.concentration_mode
+    ?? (reaction.use_reaction_volume
+      ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      : Reaction.CONCENTRATION_MODES.SOLVENTS_ONLY);
+  const concentrationMode = useReactionVolumeOverride == null
+    ? reactionConcentrationMode
+    : (useReactionVolumeOverride
+      ? Reaction.CONCENTRATION_MODES.REACTION_VOLUME
+      : Reaction.CONCENTRATION_MODES.COMBINED);
+  const useReactionVolume = concentrationMode === Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+  const concentrationContext = useMemo(() => ({
+    concentrationMode,
+    useReactionVolume,
+    lockReactionVolume: reaction.lock_reaction_volume,
+    reactionVolumeByRowIdRef,
+  }), [concentrationMode, reaction.lock_reaction_volume, useReactionVolume]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUseReactionVolumeOverride(null);
+  }, [reactionConcentrationMode]);
 
   const gridRef = useRef(null);
+  const gridWrapperRef = useRef(null);
+  const [gridToken, setGridToken] = useState(0);
   const pendingReactionVariations = useRef(null);
+  // The variations as pruned for display on load; not propagated to the parent unless edited afterwards.
+  const loadedReactionVariations = useRef(null);
+  // The load-time pruning of removed segments only (material keys kept), which is handed to the parent.
+  const loadSegmentPrunedVariations = useRef(null);
   const previousReactionMaterialsHashes = useRef(reactionMaterialsHashes);
   const previousGasMode = useRef(gasMode);
   const previousAllReactionAnalyses = useRef(allReactionAnalyses);
 
   const [gridStore, setGridStore] = useState(() => initializeGridStore(reaction.variations ?? []));
+  /*
+  Samples awaiting the user's confirmation before being written into a variation row, handed
+  up by <AnalysesCellEditor>. Held here, outside the grid, because applying them bumps
+  gridVersion and thus re-mounts <AgGridReact> — anything the grid renders dies with it.
+  */
+  const [pendingAutofill, setPendingAutofill] = useState(null);
 
   const {
     reactionVariations,
@@ -75,7 +129,10 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // Fetch grid state on every re-mount.
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id, gridVersion]);
+  const initialGridState = useMemo(
+    () => getInitialGridState(reaction.id),
+    [reaction.id]
+  );
 
   useEffect(() => {
     /*
@@ -87,16 +144,23 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
    .
     A Save (rows we just wrote back, deep-equal) or an unrelated Scheme-tab edit (variations untouched) must NOT reset,
     otherwise the user's in-session column selection, layout, and pending edits are lost.
+    The comparison ignores row order: the server returns the rows in id order, while the display order
+    is a per-browser preference (see `setRowOrder`).
     Switching reactions is handled separately by the <Tab key={`variations_${reaction.id}`}>
     remount, which re-seeds the store via the useState initializer.
     */
-    if (asyncDataLoaded && isEqual(reactionVariations, reaction.variations ?? [])) {
+    if (asyncDataLoaded && areVariationsEqualIgnoringOrder(reactionVariations, reaction.variations ?? [])) {
       return undefined;
     }
 
     let isSubscribed = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGridStore(initializeGridStore(reaction.variations ?? []));
+    reactionVolumeByRowIdRef.current = initializeReactionVolumeByRowId(
+      reaction.variations ?? [],
+      defaultReactionVolume
+    );
+    setUseReactionVolumeOverride(null);
     pendingReactionVariations.current = null;
     previousReactionMaterialsHashes.current = reactionMaterialsHashes;
     previousGasMode.current = gasMode;
@@ -109,12 +173,31 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       }
 
       setGridStore((previousGridStore) => {
-        const updatedSelectedColumns = {
+        const columnsWithAvailableSegments = {
           ...previousGridStore.selectedColumns,
           segments: previousGridStore.selectedColumns.segments.filter(
             (segment) => Object.hasOwn(segments, segment)
           )
         };
+        /*
+        Variations can reference materials the reaction no longer has, e.g., a material removed in the "Scheme" tab
+        while this tab was unmounted. Such columns can't be displayed, so they are pruned here for display only:
+        the propagation effect below doesn't hand the material pruning to the parent (the backend drops those keys
+        whenever it saves the materials), so merely opening the tab doesn't mark the reaction as changed.
+        Removed segments are pruned for real: the backend keeps their keys.
+        */
+        const segmentPrunedVariations = removeObsoleteColumnsFromVariations(
+          previousGridStore.reactionVariations,
+          columnsWithAvailableSegments
+        );
+        loadSegmentPrunedVariations.current = areVariationsEqualIgnoringOrder(
+          segmentPrunedVariations,
+          previousGridStore.reactionVariations
+        ) ? null : segmentPrunedVariations;
+        const updatedSelectedColumns = removeObsoleteMaterialColumns(
+          reactionMaterials,
+          columnsWithAvailableSegments
+        );
         let updatedReactionVariations = removeObsoleteColumnsFromVariations(
           previousGridStore.reactionVariations,
           updatedSelectedColumns
@@ -128,6 +211,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
         updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
         updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+        loadedReactionVariations.current = updatedReactionVariations;
 
         return {
           ...previousGridStore,
@@ -146,7 +230,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       isSubscribed = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reaction]);
+  }, [defaultReactionVolume, reaction]);
 
   useEffect(() => {
     /*
@@ -155,7 +239,23 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     if (!asyncDataLoaded) {
       return;
     }
-    if (isEqual(reaction.variations, reactionVariations)) {
+    /*
+    An unsaved reaction (e.g., a copy) keeps its variations untouched: its materials are all new, so their columns
+    can't be shown yet, and the backend maps the variations to the saved materials on create.
+    */
+    if (reaction.isNew) {
+      return;
+    }
+    if (reactionVariations === loadedReactionVariations.current) {
+      const segmentPrunedVariations = loadSegmentPrunedVariations.current;
+      loadSegmentPrunedVariations.current = null;
+      if (segmentPrunedVariations) {
+        reaction.variations = segmentPrunedVariations;
+        onReactionChange(reaction);
+      }
+      return;
+    }
+    if (areVariationsEqualIgnoringOrder(reaction.variations, reactionVariations)) {
       return;
     }
 
@@ -190,6 +290,14 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         reactionVariations: [],
         gridVersion: previousGridStore.gridVersion + 1,
       }));
+      /*
+      An unsaved reaction isn't propagated by the effect above, but this reset must reach it: entries made for the
+      previous gas mode don't fit the new one.
+      */
+      if (reaction.isNew && (reaction.variations ?? []).length > 0) {
+        reaction.variations = [];
+        onReactionChange(reaction);
+      }
 
       previousGasMode.current = gasMode;
       previousReactionMaterialsHashes.current = reactionMaterialsHashes;
@@ -250,6 +358,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }, [
     asyncDataLoaded,
     gasMode,
+    onReactionChange,
+    reaction,
     reactionMaterials,
     reactionMaterialsHashes,
     vesselVolume,
@@ -319,16 +429,21 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }, []);
 
   const copyRow = useCallback((data) => {
-    setGridStore((previousGridStore) => {
-      const copiedRow = copyVariationsRow(data, previousGridStore.reactionVariations);
-      return {
-        ...previousGridStore,
-        reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
-      };
-    });
-  }, []);
+    const copiedRow = copyVariationsRow(data, reactionVariations);
+    const copiedRowReactionVolume = getValidReactionVolume(reactionVolumeByRowIdRef.current?.[data.id])
+      ?? defaultReactionVolume;
+    if (copiedRowReactionVolume) {
+      reactionVolumeByRowIdRef.current[copiedRow.id] = copiedRowReactionVolume;
+    }
+
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
+    }));
+  }, [defaultReactionVolume, reactionVariations]);
 
   const removeRow = useCallback((data) => {
+    delete reactionVolumeByRowIdRef.current[data.id];
     setGridStore((previousGridStore) => ({
       ...previousGridStore,
       reactionVariations: previousGridStore.reactionVariations.filter((row) => row.id !== data.id)
@@ -337,13 +452,52 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
+    const baseConcentrationContext = {
+      ...concentrationContext,
+      reactionVolumeByRowId: reactionVolumeByRowIdRef.current,
+    };
+    const shouldUseEditScopedVolume = colDef.entry === 'concentration'
+      && concentrationContext.lockReactionVolume
+      && !concentrationContext.useReactionVolume;
+
+    const editScopedReactionVolume = shouldUseEditScopedVolume
+      ? getValidReactionVolume(resolveReactionVolumeFromContext(baseConcentrationContext, oldRow))
+      : null;
+
+    const concentrationContextForEdit = editScopedReactionVolume
+      ? { ...baseConcentrationContext, editScopedReactionVolume }
+      : baseConcentrationContext;
+
+    const updatedRow = updateVariationsRow(
+      oldRow,
+      field,
+      newValue,
+      reactionHasPolymers,
+      {
+        changedEntry: colDef.entry,
+        concentrationContext: concentrationContextForEdit,
+        onConcentrationContextUpdate: (contextUpdate) => {
+          if (typeof contextUpdate?.useReactionVolume === 'boolean') {
+            setUseReactionVolumeOverride(contextUpdate.useReactionVolume);
+          }
+
+          const rowVolumePatch = contextUpdate?.reactionVolumeByRowIdPatch;
+          if (rowVolumePatch && typeof rowVolumePatch === 'object') {
+            reactionVolumeByRowIdRef.current = {
+              ...reactionVolumeByRowIdRef.current,
+              ...rowVolumePatch,
+            };
+          }
+        }
+      }
+    );
+
     const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
     pendingReactionVariations.current = updatedPendingReactionVariations.map(
       (row) => (row.id === oldRow.id ? updatedRow : row)
     );
     gridRef.current.api.applyTransaction({ update: [updatedRow] });
-  }, [reactionVariations, reactionHasPolymers]);
+  }, [concentrationContext, reactionVariations, reactionHasPolymers]);
 
   /*
   Defer setReactionVariations until all cell editing has stopped.
@@ -361,6 +515,158 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       pendingReactionVariations.current = null;
     }
   }, []);
+
+  /*
+  Resolve the material a `reaction_variation.json` sample identifier refers to.
+  Labels are tried in `SAMPLE_LABELS_WITH_SUM` order rather than material order, so an
+  identifier that is one material's `short_label` and another's `molecule_formula`
+  resolves to the former instead of to whichever material happens to come first.
+  */
+  const findAutofillVariationSampleFromAnalysis = useCallback(({ sampleIdentifier }) => {
+    const flatMaterials = Object.entries(reactionMaterials)
+      .flatMap(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })));
+
+    return SAMPLE_LABELS_WITH_SUM.reduce(
+      (found, labelKey) => found ?? flatMaterials.find(({ matItem }) => matItem[labelKey] === sampleIdentifier),
+      undefined
+    );
+  }, [reactionMaterials]);
+
+  /*
+  Autofill a variation row from an analysis dataset: locate the material matching the
+  sample identifier, make its column visible (selecting it first if needed), and write
+  the parsed value into the row. Runs as one functional store update so it composes with
+  concurrent column/row updates.
+  */
+  const handleAutofillVariationSampleFromAnalysis = useCallback(({
+    foundMat: { matType, matItem },
+    value,
+    unit,
+    variationRow
+  }) => {
+    setGridStore((previousGridStore) => {
+      const {
+        selectedColumns: previousSelectedColumns,
+        columnDefinitions: previousColumnDefinitions,
+        reactionVariations: previousReactionVariations,
+        reactionSegments: previousReactionSegments,
+      } = previousGridStore;
+
+      let updatedSelectedColumns = previousSelectedColumns;
+      let updatedReactionVariations = previousReactionVariations;
+      let updatedColumnDefinitions = previousColumnDefinitions;
+
+      if (!previousSelectedColumns[matType].some((x) => x === `${matItem.id}`)) {
+        updatedSelectedColumns = {
+          ...previousSelectedColumns,
+          [matType]: [...previousSelectedColumns[matType], `${matItem.id}`]
+        };
+        updatedReactionVariations = addMissingColumnsToVariations({
+          materials: reactionMaterials,
+          segments: previousReactionSegments,
+          selectedColumns: updatedSelectedColumns,
+          variations: previousReactionVariations,
+          reactionHasPolymers,
+          durationValue,
+          durationUnit,
+          temperatureValue,
+          temperatureUnit,
+          gasMode,
+          vesselVolume
+        });
+        updatedColumnDefinitions = columnDefinitionsReducer(
+          previousColumnDefinitions,
+          {
+            type: 'apply_column_selection',
+            materials: reactionMaterials,
+            segments: previousReactionSegments,
+            selectedColumns: updatedSelectedColumns,
+            gasMode
+          }
+        );
+      }
+
+      const targetRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
+      /*
+      Only entries that the grid itself would let a user edit are eligible: an entry
+      without a `valueParser` (e.g. `yield`) or one `cellIsEditable` rejects (a product's
+      `amount`, the reference material's `equivalent`) cannot be written, and silently
+      un-hiding its column while writing nothing is worse than skipping the value.
+      An absent unit is not a wildcard either - `equivalent`'s `units` is `[null]`, so an
+      unguarded `includes` would route any unitless value into the equivalent column.
+      */
+      const matchedColDef = unit == null ? undefined : updatedColumnDefinitions
+        .find((matGroup) => matGroup.groupId === matType)?.children
+        ?.find((matCd) => matCd.groupId === `${matItem.id}`)?.children
+        ?.find((child) => {
+          if (!cellDataTypes[child.cellDataType]?.valueParser) return false;
+          if (unit === '%' && child.entry === 'equivalent') return true;
+          return (child.units ?? []).includes(unit);
+        });
+      if (!targetRow || !matchedColDef) {
+        return previousGridStore;
+      }
+
+      const colDef = { ...matchedColDef, hide: false, displayUnit: unit };
+      if (!cellIsEditable({ data: targetRow, colDef })) {
+        return previousGridStore;
+      }
+
+      const { valueParser } = cellDataTypes[colDef.cellDataType];
+      const updatedRow = {
+        ...targetRow,
+        [matType]: {
+          ...targetRow[matType],
+          [`${matItem.id}`]: valueParser({
+            data: targetRow,
+            oldValue: targetRow[matType][`${matItem.id}`],
+            newValue: `${value}`,
+            colDef,
+            context: { reactionHasPolymers }
+          }),
+        },
+      };
+
+      updatedColumnDefinitions = updatedColumnDefinitions.map((matGroup) => {
+        if (matGroup.groupId !== matType) return matGroup;
+        return {
+          ...matGroup,
+          children: matGroup.children.map((matCd) => {
+            if (matCd.groupId !== `${matItem.id}`) return matCd;
+            return {
+              ...matCd,
+              children: matCd.children.map((child) => (child.colId === colDef.colId ? colDef : child)),
+            };
+          }),
+        };
+      });
+
+      /*
+      Return a new `reactionVariations` array instead of mutating the row in place: the
+      "propagate updates to parent" effect only fires on an identity change, and calling
+      `onReactionChange` from inside this updater would set state on <ReactionDetails>
+      during this component's render.
+      */
+      return {
+        ...previousGridStore,
+        reactionVariations: updatedReactionVariations.map(
+          (row) => (row.id === targetRow.id ? updatedRow : row)
+        ),
+        columnDefinitions: updatedColumnDefinitions,
+        selectedColumns: updatedSelectedColumns,
+        gridVersion: previousGridStore.gridVersion + 1,
+      };
+    });
+  }, [
+    reactionMaterials,
+    reactionHasPolymers,
+    durationValue,
+    durationUnit,
+    temperatureValue,
+    temperatureUnit,
+    gasMode,
+    vesselVolume,
+  ]);
 
   if (reaction.isNew) {
     return (
@@ -385,26 +691,37 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   };
 
   const addRow = () => {
+    const newRow = createVariationsRow(
+      {
+        materials: reactionMaterials,
+        segments: reactionSegments,
+        selectedColumns,
+        variations: reactionVariations,
+        reactionHasPolymers,
+        durationValue,
+        durationUnit,
+        temperatureValue,
+        temperatureUnit,
+        gasMode,
+        vesselVolume
+      }
+    );
+
+    if (defaultReactionVolume) {
+      reactionVolumeByRowIdRef.current[newRow.id] = defaultReactionVolume;
+    }
+
     setGridStore((previousGridStore) => ({
       ...previousGridStore,
-      reactionVariations: [
-        ...previousGridStore.reactionVariations,
-        createVariationsRow(
-          {
-            materials: reactionMaterials,
-            segments: previousGridStore.reactionSegments,
-            selectedColumns: previousGridStore.selectedColumns,
-            variations: previousGridStore.reactionVariations,
-            reactionHasPolymers,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit,
-            gasMode,
-            vesselVolume
-          }
-        )
-      ]
+      reactionVariations: [...previousGridStore.reactionVariations, newRow],
+    }));
+  };
+
+  const removeAllRows = () => {
+    reactionVolumeByRowIdRef.current = {};
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: []
     }));
   };
 
@@ -457,7 +774,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           {' '}
           rows.
         </Tooltip>
-          )}
+      )}
     >
       <Button size="sm" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
@@ -480,6 +797,27 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   if (!asyncDataLoaded) {
     return null;
   }
+  const gridOptions = {
+    alwaysShowHorizontalScroll: true,
+    alwaysShowVerticalScroll: true,
+  };
+
+  const context = {
+    reactionHasPolymers,
+    concentrationContext,
+    reactionShortLabel,
+    allReactionAnalyses,
+    copyRow,
+    removeRow,
+    setColumnDefinitions,
+    requestAutofillConfirmation: setPendingAutofill,
+    findAutofillVariationSampleFromAnalysis
+  };
+
+  const confirmAutofill = () => {
+    pendingAutofill.samples.forEach((sample) => handleAutofillVariationSampleFromAnalysis(sample));
+    setPendingAutofill(null);
+  };
 
   return (
     <div>
@@ -500,21 +838,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           onApply={applyColumnSelection}
         />
         <RemoveVariationsModal
-          onRemoveAll={() => setGridStore((previousGridStore) => ({
-            ...previousGridStore,
-            reactionVariations: []
-          }))}
+          onRemoveAll={removeAllRows}
         />
       </ButtonGroup>
-      <div className="ag-theme-alpine ag-theme-reaction-variations">
+      <div className="ag-theme-alpine ag-theme-reaction-variations" ref={gridWrapperRef}>
+        <TopHorizontalScrollbar gridWrapperRef={gridWrapperRef} gridToken={gridToken} />
         <AgGridReact
           // Re-mount grid on version change
           key={`${reaction.id}-schema-${gridVersion}`}
+          gridOptions={gridOptions}
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
           getRowId={(params) => params.data.id}
           rowDragManaged
+          rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
+          selectionColumnDef={{ pinned: 'left', width: 50 }}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
@@ -538,34 +877,34 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           suppressNoRowsOverlay
           suppressDragLeaveHidesColumns
           suppressColumnVirtualisation={typeof window !== 'undefined' && !!window.Cypress}
-          context={{
-            copyRow,
-            removeRow,
-            setColumnDefinitions,
-            reactionHasPolymers,
-            reactionShortLabel,
-            allReactionAnalyses
-          }}
+          context={context}
           /*
-          IMPORTANT: In conjunction with `onCellEditRequest`,
-          `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
-          rather than the grid mutating `reaction.variations` directly on user edits.
-          I.e., we take explicit control of state manipulation.
-          */
+           IMPORTANT: In conjunction with `onCellEditRequest`,
+           `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
+           rather than the grid mutating `reaction.variations` directly on user edits.
+           I.e., we take explicit control of state manipulation.
+           */
           readOnlyEdit
           onCellEditRequest={updateRow}
           onCellEditingStopped={handleCellEditingStopped}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
           /*
-          We need to persist manual row sort (i.e., user changes row order by dragging rows),
-          since ag-grid does not persist manual row sort as part of the grid state.
-          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
-          When the event fires, the grid has already mutated the row order, we just need to persist it.
-          */
+           We need to persist manual row sort (i.e., user changes row order by dragging rows),
+           since ag-grid does not persist manual row sort as part of the grid state.
+           In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
+           When the event fires, the grid has already mutated the row order, we just need to persist it.
+           */
           onRowDragEnd={(event) => handleRowDrag(event)}
+          // Signal to `TopHorizontalScrollbar` that ag-grid's DOM nodes have been (re-)created.
+          onGridReady={() => setGridToken((token) => token + 1)}
         />
       </div>
+      <AutofillVariationSamplesModal
+        autofill={pendingAutofill}
+        onConfirm={confirmAutofill}
+        onCancel={() => setPendingAutofill(null)}
+      />
     </div>
   );
 };

@@ -143,9 +143,15 @@ const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
   const values = Object.values(textNodeStruct);
   const list = [];
   for (let i = 0; i < updatedTextList.length; i++) {
-    const block = JSON.parse(updatedTextList[i].data.content).blocks[0];
-    if (values.indexOf(block.key) === -1) {
-      list.push(updatedTextList[i]);
+    const content = updatedTextList[i]?.data?.content;
+    if (!content) continue;
+    try {
+      const block = JSON.parse(content).blocks?.[0];
+      if (block && values.indexOf(block.key) === -1) {
+        list.push(updatedTextList[i]);
+      }
+    } catch {
+      // malformed content — skip
     }
   }
   return list;

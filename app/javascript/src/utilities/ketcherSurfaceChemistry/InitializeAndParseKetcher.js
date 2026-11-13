@@ -66,9 +66,10 @@ const loadKetcherData = async (data, options = {}) => {
     imagesListSetter([]);
   }
 
-  // Text nodes are managed in local state; getKet() never returns them after initial load.
-  // Always sync textList: set to found nodes, or clear if the canvas has none.
-  const textNodesFromData = nodes.filter((item) => item.type === 'text');
+  // Text nodes are managed in local state; getKet() may return text-like nodes without
+  // proper data.content (Ketcher internal format). Only sync textList when nodes are valid,
+  // otherwise preserve existing textList so newly created text nodes aren't discarded.
+  const textNodesFromData = nodes.filter((item) => item.type === 'text' && item.data?.content);
   if (textNodesFromData.length > 0) {
     textListSetter(textNodesFromData);
   } else if (!preserveImagesWhenEmpty) {

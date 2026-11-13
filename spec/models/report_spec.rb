@@ -73,6 +73,29 @@ RSpec.describe Report, type: :report do
       expect(file_name).to include('ELN_Reaction_')
     end
 
+    it 'renders bulleted and numbered lists from a product analysis' do
+      require 'zip'
+      allow(PubchemLookupJob).to receive(:perform_later)
+      product = create(:sample, collections: [collection])
+      create(:reactions_product_sample, reaction: reaction1, sample: product)
+      analysis = product.container.children[0].children[0]
+      analysis.extended_metadata['report'] = true
+      analysis.extended_metadata['content'] = {
+        'ops' => [
+          { 'insert' => 'first bullet' },
+          { 'insert' => "\n", 'attributes' => { 'list' => 'bullet' } },
+          { 'insert' => 'first step' },
+          { 'insert' => "\n", 'attributes' => { 'list' => 'ordered' } },
+        ],
+      }.to_json
+      analysis.save!
+      params = { template: 'single_reaction', id: reaction1.id }
+      docx, = described_class.create_reaction_docx(user, [user.id], params)
+
+      doc = Zip::File.open_buffer(StringIO.new(docx)).read('word/document.xml')
+      expect(doc).to include('<w:pStyle w:val="ListBullet"/>', '<w:pStyle w:val="ListNumber"/>')
+    end
+
     # Guards against the "Word found unreadable content" warning: every
     # relationship referenced by the document must be declared and its target
     # part present, every part extension must have a content type, no merge
@@ -137,16 +160,18 @@ RSpec.describe Report, type: :report do
       }
     end
 
+    before { allow(Reporter::WorkerSi).to receive(:new).and_call_original }
+
     context 'when no db template is requested' do # rubocop:disable RSpec/MultipleMemoizedHelpers
       before do
         user.reports << report
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
+      it 'generates the report with the worker for its stored type' do
+        expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
     end
 
@@ -157,10 +182,10 @@ RSpec.describe Report, type: :report do
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
+      it 'generates the report with the worker for its stored type' do
+        expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
     end
 
@@ -171,11 +196,48 @@ RSpec.describe Report, type: :report do
         report.create_docx
       end
 
-      it 'returns a Sablon object' do
-        att = report.attachments.first
-        expect(att.filename).to include(file_name)
-        expect(report.template).to include(template)
+      it 'generates the report with the worker for its stored type' do
+        expect(Reporter::WorkerSi).to have_received(:new).with(hash_including(std_rxn: false))
+        expect(report.attachments.first.filename).to include(file_name)
+        expect(report.template).to eq(template)
       end
+    end
+  end
+
+  describe '#create_docx worker selection' do
+    {
+      'standard' => [Reporter::Worker, {}],
+      'spectrum' => [Reporter::WorkerSpectrum, {}],
+      'supporting_information' => [Reporter::WorkerSi, { std_rxn: false }],
+      'supporting_information_std_rxn' => [Reporter::WorkerSi, { std_rxn: true }],
+      'rxn_list_xlsx' => [Reporter::WorkerRxnList, { ext: 'xlsx' }],
+      'rxn_list_csv' => [Reporter::WorkerRxnList, { ext: 'csv' }],
+      'rxn_list_html' => [Reporter::WorkerRxnList, { ext: 'html' }],
+    }.each do |type, (worker_class, args)|
+      it "processes the report with #{worker_class} for #{type}" do
+        worker = instance_double(worker_class, process: nil)
+        allow(worker_class).to receive(:new).and_return(worker)
+        report = described_class.create!(author_id: user.id, template: type)
+        report.create_docx
+        expect(worker_class).to have_received(:new).with(
+          report: report, template_path: described_class.template_path(type), **args,
+        )
+        expect(worker).to have_received(:process)
+      end
+    end
+  end
+
+  describe '#report_template' do
+    it 'returns the stored template referenced by report_templates_id' do
+      report_template = create(:report_template)
+      expect(create(:report, report_templates_id: report_template.id).report_template).to eq(report_template)
+    end
+  end
+
+  describe '#destroy' do
+    it 'succeeds for a report without a file name' do
+      report = create(:report, file_name: nil)
+      expect { report.destroy }.not_to raise_error
     end
   end
 

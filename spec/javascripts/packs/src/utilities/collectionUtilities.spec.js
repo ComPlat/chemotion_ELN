@@ -46,6 +46,11 @@ describe('collectionUtilities', () => {
           ],
         },
       ],
+      chemotion_repository_collection: {
+        id: 5,
+        label: 'chemotion-repository.net',
+        children: [{ id: 6, label: 'transferred', children: [] }],
+      },
     });
 
     it('groups owned collections under a "My Collections" label', () => {
@@ -73,6 +78,34 @@ describe('collectionUtilities', () => {
       expect(groups.map((g) => g.label)).toEqual(['My Collections', 'Shared by Alice']);
       // Only the collection the user may add elements into is offered.
       expect(groups[1].options.map((o) => o.id)).toEqual([3]);
+    });
+
+    it('omits the repository subtree unless it is asked for', () => {
+      const groups = collectionOptions(store(), true);
+
+      expect(groups.map((g) => g.label)).not.toContain('chemotion-repo');
+    });
+
+    it('offers the repository root and "transferred" when requested', () => {
+      const groups = collectionOptions(store(), false, true);
+
+      expect(groups.map((g) => g.label)).toEqual(['My Collections', 'chemotion-repo']);
+      expect(groups[1].options.map((o) => o.id)).toEqual([5, 6]);
+      expect(groups[1].options.map((o) => o.depth)).toEqual([0, 1]);
+    });
+
+    it('never offers the "All" collection, which is not in any tree', () => {
+      const groups = collectionOptions(store(), true, true);
+      const labels = groups.flatMap((g) => g.options.map((o) => o.label));
+
+      expect(labels).not.toContain('All');
+    });
+
+    it('skips the repository group when the user has no repository collection', () => {
+      const storeWithoutRepository = { ...store(), chemotion_repository_collection: null };
+      const groups = collectionOptions(storeWithoutRepository, false, true);
+
+      expect(groups).toHaveLength(1);
     });
   });
 

@@ -14,6 +14,7 @@ export default function DetailCard({
   titleTooltip,
   titleAppendix,
   headerToolbar,
+  headerBanner,
   footerToolbar,
   onClose,
   className,
@@ -31,7 +32,7 @@ export default function DetailCard({
       <Card.Header>
         <div className="d-flex align-items-center">
           <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap flex-grow-1">
-            <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center gap-1">
               <div className="d-flex align-items-center me-2">
                 {titleIcon && <span className="me-1">{titleIcon}</span>}
                 {titleTooltip ? (
@@ -53,6 +54,11 @@ export default function DetailCard({
           </div>
           <CloseButton onClick={handleClose} />
         </div>
+        {headerBanner && (
+          <div className="detail-card__header-banner mt-2">
+            {headerBanner}
+          </div>
+        )}
       </Card.Header>
       <div className="detail-card__scroll-container">
         <Card.Body>
@@ -75,6 +81,7 @@ DetailCard.propTypes = {
   titleTooltip: PropTypes.string,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
+  headerBanner: PropTypes.node,
   footerToolbar: PropTypes.node,
   onClose: PropTypes.func,
   className: PropTypes.string,
@@ -85,6 +92,7 @@ DetailCard.defaultProps = {
   titleTooltip: null,
   titleAppendix: null,
   headerToolbar: null,
+  headerBanner: null,
   footerToolbar: null,
   onClose: null,
   className: null,

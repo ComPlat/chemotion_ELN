@@ -24,6 +24,7 @@ module Chemotion
       end
       get do
         resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
+        screen_scope = screen_scope.includes_for_list_display
 
         from = params[:from_date]
         to = params[:to_date]
@@ -124,7 +125,7 @@ module Chemotion
         end
 
         put do
-          update_datamodel(params[:container])
+          update_datamodel(params[:container], element: Screen.find(params[:id]), creating: false)
           params.delete(:container)
           attributes = declared(params.except(:wellplate_ids, :segments, :user_labels), include_missing: false)
           screen = Screen.find(params[:id])
@@ -188,7 +189,7 @@ module Chemotion
 
         screen = Screen.create(attributes)
 
-        screen.container = update_datamodel(params[:container])
+        screen.container = update_datamodel(params[:container], element: screen, creating: true)
         update_element_labels(screen, params[:user_labels], current_user.id)
         screen.save!
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)

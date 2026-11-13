@@ -49,7 +49,7 @@ const makeList = (collections, tree = [], depth = 0) => {
   return tree;
 };
 
-const collectionOptions = (store, showSharedCollections) => {
+const collectionOptions = (store, showSharedCollections, includeRepository = false) => {
   // Label the owned collections as their own react-select group so it sits parallel to the shared
   // groups below, rather than as an unlabelled block of top-level options.
   const groups = [
@@ -72,6 +72,17 @@ const collectionOptions = (store, showSharedCollections) => {
         label: `Shared by ${owner.label}`,
         options: makeList(assignable),
       });
+    });
+  }
+
+  // Opt-in per call site: the repository root and the "transferred" node under it are valid targets
+  // for moving/assigning elements, but not for the other CollectionSelect consumers (picking a parent
+  // for a new shared collection, copying an element). "All" is never offered — every element is in it
+  // already, so assigning to it is a no-op and moving to it is a removal in disguise.
+  if (includeRepository && store.chemotion_repository_collection) {
+    groups.push({
+      label: 'chemotion-repo',
+      options: makeList([store.chemotion_repository_collection]),
     });
   }
 

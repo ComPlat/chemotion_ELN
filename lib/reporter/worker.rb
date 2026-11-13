@@ -74,8 +74,12 @@ module Reporter
     end
 
     def extract(objects) # rubocop:disable  Metrics/MethodLength
-      objects.map do |object|
+      objects.filter_map do |object|
         instance = object['type'].camelize.constantize.find(object['id'])
+        # Defense in depth: the report endpoints already authorize objTags, but a stored
+        # `objects` list must never render an element the author cannot read.
+        next unless ElementPolicy.new(@author, instance).read?
+
         entity_class =
           case instance
           when Sample

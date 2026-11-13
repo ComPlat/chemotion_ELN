@@ -38,6 +38,7 @@ module Usecases
       def perform!
         scope = @conditions[:model_name] == Literature ? basic_literature_scope : basic_scope
         elements_by_scope(scope)
+        @elements = @shared_methods.filter_by_list_filters(@elements)
         @shared_methods.serialization_by_elements_and_page(@elements, @conditions[:error])
       end
 
@@ -73,8 +74,7 @@ module Usecases
       end
 
       def query_with_condition
-        filtered_query = @conditions[:query].gsub(/\A\ AND \s*/, '')
-        @conditions[:value].present? ? [filtered_query] + @conditions[:value] : filtered_query
+        @conditions[:query].gsub(/\A\ AND \s*/, '')
       end
 
       def elements_by_scope(scope)
@@ -112,7 +112,9 @@ module Usecases
         @elements[:sample_ids] = @user_samples.by_wellplate_ids(@elements[:wellplate_ids]).uniq.pluck(:id)
         @elements[:reaction_ids] =
           @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
-        @elements[:research_plan_ids] = ResearchPlansWellplate.get_research_plans(@elements[:wellplate_ids]).uniq
+        @elements[:research_plan_ids] = ResearchPlanRelations.plan_ids_for_wellplates(
+          wellplate_ids: @elements[:wellplate_ids], collection_id: @collection_id,
+        )
       end
 
       def screen_relations_element_ids
@@ -128,12 +130,9 @@ module Usecases
       end
 
       def researchplan_relations_element_ids
-        sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(@elements[:research_plan_ids])
-        reaction_ids = ResearchPlan.reaction_ids_by_research_plan_ids(@elements[:research_plan_ids])
-                                   .order('reactions.created_at desc')
-        @elements[:sample_ids] = sample_ids.map(&:sample_id).uniq
-        @elements[:reaction_ids] = reaction_ids.map(&:reaction_id).uniq
-        @elements[:wellplate_ids] = ResearchPlansWellplate.get_wellplates(@elements[:research_plan_ids]).uniq
+        @elements.merge!(
+          ResearchPlanRelations.call(plan_ids: @elements[:research_plan_ids], collection_id: @collection_id),
+        )
         @elements[:screen_ids] = @user_screens.by_wellplate_ids(@elements[:wellplate_ids]).pluck(:id).uniq
         @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
       end

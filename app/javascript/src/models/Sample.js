@@ -579,7 +579,7 @@ export default class Sample extends Element {
     if (parts.length === 1) return parts[0];
 
     return (
-      <span className="d-flex gap-1 align-items-center">
+      <span className="d-inline-flex gap-1 align-items-center">
         {parts.map((part, i) => (
           <React.Fragment key={i}>
             {i > 0 && <span className="text-muted">|</span>}
@@ -888,10 +888,8 @@ export default class Sample extends Element {
    * Updates the sample's concentration (`concn`) based on its total amount in moles
    * and the reaction-level volume selected by `reaction.reactionVolumeForConcentration()`.
    *
-   * Volume selection is delegated to the reaction model and follows this priority:
-   * 1. Explicit reaction volume (`reaction.volume`) when `reaction.use_reaction_volume` is enabled
-   *    and the value is valid (> 0).
-   * 2. Otherwise, the combined reaction volume calculated from materials.
+   * Volume selection is delegated to the reaction model according to its
+   * `concentration_mode` setting.
    *
    * - For mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.
    * - For non-mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.
@@ -1786,14 +1784,13 @@ export default class Sample extends Element {
       return `svg_text/${this.labelText}`;
     }
 
-    if (this.sample_svg_file) {
-      if (this.sample_svg_file === '***') {
-        return '/images/wild_card/no_image_180.svg';
-      }
+    if (this.sample_svg_file && this.sample_svg_file !== '***') {
       return `/images/samples/${this.sample_svg_file}`;
     }
-    return this.molecule && this.molecule.molecule_svg_file
-      ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    if (this.molecule && this.molecule.molecule_svg_file) {
+      return `/images/molecules/${this.molecule.molecule_svg_file}`;
+    }
+    return this.sample_svg_file === '***' ? '/images/wild_card/no_image_180.svg' : '';
   }
   // todo: have a dedicated Material Sample subclass
 

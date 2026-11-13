@@ -124,7 +124,18 @@ const addTextNodes = async (textNodes) => textNodes.map((item) => {
   const description = rest.join(KET_TAGS.textIdentifier);
   if (alias && key) {
     textNodeStruct[alias] = key;
-    const content = forTextNodeHeader(key, description);
+    let content;
+    try {
+      const parsed = JSON.parse(description);
+      if (parsed?.blocks?.[0]) {
+        parsed.blocks[0].key = key;
+        content = JSON.stringify(parsed);
+      } else {
+        content = forTextNodeHeader(key, description);
+      }
+    } catch {
+      content = forTextNodeHeader(key, description);
+    }
     return {
       type: 'text',
       data: {
@@ -175,9 +186,12 @@ const isAliasConsistent = () => {
 const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
   for (let textIdx = 0; textIdx < textList.length; textIdx++) {
     const text = textList[textIdx];
-    const content = JSON.parse(text.data.content); // Parse content
-    if (content.blocks[0].key === textNodeKey) {
+    if (!text?.data?.content) continue;
+    let content;
+    try { content = JSON.parse(text.data.content); } catch { continue; }
+    if (content?.blocks?.[0]?.key === textNodeKey) {
       const split = atom.alias.split('_')[2];
+      if (!imagesList[split]?.boundingBox) return null;
       const imageWidth = imagesList[split].boundingBox.width;
 
       // Estimate text width based on content length (rough approximation)
@@ -255,8 +269,11 @@ const filterTextList = async (_aliasDifferences, data) => {
   }
 
   const retainedTextNodes = textList.filter((item) => {
-    const { key } = JSON.parse(item.data.content).blocks[0];
-    return activeKeys.has(key);
+    if (!item?.data?.content) return false;
+    try {
+      const { key } = JSON.parse(item.data.content).blocks[0];
+      return activeKeys.has(key);
+    } catch { return false; }
   });
 
   return [...removeTextFromData(data), ...retainedTextNodes];

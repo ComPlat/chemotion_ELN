@@ -150,7 +150,8 @@ module Chemotion
 
         before do
           collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(collection).by_ui_state(params[:ui_state])
+          @sbmm_samples = SequenceBasedMacromoleculeSample.includes_for_list_display
+                                                          .by_collection_id(collection).by_ui_state(params[:ui_state])
                                                           .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read_all?
         end

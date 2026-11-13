@@ -91,6 +91,79 @@ describe Chemotion::PermissionAPI do
       end
     end
 
+    # The top-secret flag must also be raised when the secret sample is not selected directly but
+    # is reachable through a selected reaction, wellplate, or screen. These exercise the joined
+    # EXISTS queries that replaced the per-element association walk (refs: #2783).
+    context 'when a top secret sample is reachable only through a selected container' do
+      let(:top_secret_sample) { create(:sample, is_top_secret: true, collections: [unshared_collection_of_user]) }
+
+      it 'detects it through a selected reaction' do
+        reaction = create(:reaction, collections: [unshared_collection_of_user])
+        reaction.products << top_secret_sample
+        post '/api/v1/permissions/status', params: {
+          currentCollection: { id: unshared_collection_of_user.id },
+          reaction: { checkedAll: false, checkedIds: [reaction.id], uncheckedIds: [] },
+        }
+
+        expect(parsed_json_response['is_top_secret']).to be true
+      end
+
+      it 'detects it through a selected screen (two association levels down)' do
+        wellplate = create(:wellplate, collections: [unshared_collection_of_user])
+        create(:well, wellplate: wellplate, sample: top_secret_sample)
+        screen = create(:screen, wellplates: [wellplate], collections: [unshared_collection_of_user])
+        post '/api/v1/permissions/status', params: {
+          currentCollection: { id: unshared_collection_of_user.id },
+          screen: { checkedAll: false, checkedIds: [screen.id], uncheckedIds: [] },
+        }
+
+        expect(parsed_json_response['is_top_secret']).to be true
+      end
+    end
+
+    # Regression guard: the top-secret check must issue a fixed number of queries no matter how many
+    # containers are selected. The old code walked `flat_map(&:samples)` one SELECT per reaction, so
+    # the count grew with the selection. On an own collection the sharing-policy block is skipped, so
+    # the query count isolates the top-secret check.
+    context 'when many containers are selected (N+1 guard)' do
+      # Count only the top-secret probe queries (they filter on samples.is_top_secret). The old code
+      # walked one SELECT per selected container, so this count grew with the selection; the joined
+      # EXISTS makes it exactly one, whatever the count.
+      def count_top_secret_probes(&block)
+        count = 0
+        counter = lambda do |_name, _start, _finish, _id, payload|
+          count += 1 if payload[:sql].include?('is_top_secret')
+        end
+        ActiveSupport::Notifications.subscribed(counter, 'sql.active_record', &block)
+        count
+      end
+
+      def post_status(element, records)
+        post '/api/v1/permissions/status', params: {
+          currentCollection: { id: unshared_collection_of_user.id },
+          element => { checkedAll: false, checkedIds: records.map(&:id), uncheckedIds: [] },
+        }
+      end
+
+      it 'probes for a top secret sample once through the reactions, whether 1 or 5 are selected' do
+        one = create_list(:reaction, 1, collections: [unshared_collection_of_user])
+        five = create_list(:reaction, 5, collections: [unshared_collection_of_user])
+
+        expect(count_top_secret_probes { post_status(:reaction, one) }).to eq(1)
+        expect(count_top_secret_probes { post_status(:reaction, five) }).to eq(1)
+      end
+
+      # The deepest path (screen -> wellplate -> well -> sample). The old code walked two nested
+      # flat_maps per screen; the single joined EXISTS must stay one query regardless of count.
+      it 'probes for a top secret sample once through the screens, whether 1 or 5 are selected' do
+        one = create_list(:screen, 1, collections: [unshared_collection_of_user])
+        five = create_list(:screen, 5, collections: [unshared_collection_of_user])
+
+        expect(count_top_secret_probes { post_status(:screen, one) }).to eq(1)
+        expect(count_top_secret_probes { post_status(:screen, five) }).to eq(1)
+      end
+    end
+
     context 'when requesting permission status for elements of a shared collection' do
       let(:sample) { create(:sample, collections: [shared_collection_of_other_user]) }
       let(:params) do

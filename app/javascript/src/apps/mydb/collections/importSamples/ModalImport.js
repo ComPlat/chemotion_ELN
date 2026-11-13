@@ -153,6 +153,23 @@ export default class ModalImport extends React.Component {
   }
 
   // Method to generate column definitions for AG Grid
+  // Maps each non-blank header to its position in the raw header row. First occurrence wins: a
+  // duplicated header can only carry one entry in mappedColumns, so a later duplicate must not
+  // silently take over the index.
+  static buildColumnIndices(headers) {
+    const columnIndices = {};
+    (headers || []).forEach((header, index) => {
+      if (header === null || header === undefined) { return; }
+      if (String(header).trim() === '') { return; }
+
+      const key = String(header);
+      if (!Object.prototype.hasOwnProperty.call(columnIndices, key)) {
+        columnIndices[key] = index;
+      }
+    });
+    return columnIndices;
+  }
+
   static generateColumnDefs(mappedColumns) {
     const columnDefs = Object.entries(mappedColumns)
       .filter(([, mappedCol]) => mappedCol !== 'do_not_import')
@@ -264,6 +281,7 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
       rowData: [],
       columnDefs: [],
       fileDelimiter: '\t',
@@ -307,7 +325,7 @@ export default class ModalImport extends React.Component {
       this.extractColumnNames(file);
     } else {
       ElementActions.importSamplesFromFile(params);
-      onHide();
+      this.resetImportState(() => onHide());
 
       const notification = {
         title: 'Uploading',
@@ -403,7 +421,7 @@ export default class ModalImport extends React.Component {
     };
 
     ElementActions.importSamplesFromFile(params);
-    onHide();
+    this.resetImportState(() => onHide());
 
     this.context.notifications.add({
       title: 'Uploading',
@@ -426,6 +444,25 @@ export default class ModalImport extends React.Component {
 
       if (!mappedColumns || Object.keys(mappedColumns).length === 0 || importingColumns.length === 0) {
         message = 'Please map at least one column to import';
+        this.setState({ isProcessing: false });
+        this.context.notifications.add({
+          title: 'Validation Error',
+          message,
+          level: 'error',
+        });
+        return;
+      }
+
+      // The importer needs one column it can identify a sample by: a structure, a CAS, an explicit
+      // decoupled flag, or a sample id naming an existing row. Checking it here fails in the
+      // mapping step, where the user can still fix it, instead of asynchronously in the job -- which
+      // reported it minutes later under an 'Import Samples Completed' heading.
+      const identifyingColumns = [
+        'molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'decoupled', 'cas', 'sample id'
+      ];
+      if (!importingColumns.some((value) => identifyingColumns.includes(value))) {
+        message = 'Map at least one column the importer can identify a sample by: '
+          + 'molfile, canonical smiles, CAS, decoupled, or sample id.';
         this.setState({ isProcessing: false });
         this.context.notifications.add({
           title: 'Validation Error',
@@ -486,10 +523,13 @@ export default class ModalImport extends React.Component {
   }
 
   requestCancelConfirmation(event, placement = 'top') {
-    const { showValidation } = this.state;
+    const { showColumnMapping, showValidation } = this.state;
     const { onHide } = this.props;
 
-    if (!showValidation) {
+    // Only the first step closes without asking: there is nothing to lose but a file selection. From
+    // the column-mapping step onward the user has work in progress, and closing discards it - so the
+    // mapping step gets the same abort confirmation the validation step already had.
+    if (!showColumnMapping && !showValidation) {
       onHide();
       return;
     }
@@ -511,9 +551,13 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  abortImport() {
-    const { onHide } = this.props;
-
+  // Everything the dialog accumulates while an import is set up. The modal instance outlives a single
+  // import, so anything left here is what the next one starts from: without this a finished import
+  // reopened showing the previous file, checkboxes, column mapping and validation state.
+  //
+  // targetCollectionId is deliberately not reset - it comes from the props/UI, not from the user's
+  // choices in this dialog.
+  resetImportState(afterReset) {
     this.setState({
       file: null,
       importAsChemical: false,
@@ -521,13 +565,24 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
+      excelData: null,
+      sdfData: null,
       rowData: [],
       columnDefs: [],
+      fileFormat: null,
+      isProcessing: false,
       mappedColumns: null,
       cancelOverlayTarget: null,
       validationIsValidated: false,
       validationIsDataValid: false,
-    }, () => onHide());
+    }, afterReset);
+  }
+
+  abortImport() {
+    const { onHide } = this.props;
+
+    this.resetImportState(() => onHide());
   }
 
   dismissCancelConfirmation() {
@@ -575,17 +630,14 @@ export default class ModalImport extends React.Component {
 
     try {
       const rowData = [];
-      const { columnNames } = this.state;
+      const { columnNames, excelColumnIndices } = this.state;
 
       if (!columnNames || columnNames.length === 0) {
         throw new Error('Column names not available for processing Excel data');
       }
 
-      // Map Excel columns to their indices for faster lookup
-      const columnIndices = {};
-      columnNames.forEach((colName, index) => {
-        columnIndices[colName] = index;
-      });
+      const columnIndices = excelColumnIndices
+        || ModalImport.buildColumnIndices(columnNames);
 
       // Process each row of data
       excelData.forEach((row, rowIndex) => {
@@ -752,6 +804,7 @@ export default class ModalImport extends React.Component {
         this.setState({
           showColumnMapping: true,
           columnNames,
+          excelColumnIndices: ModalImport.buildColumnIndices(headers),
           excelData: rows.slice(1) // Store data rows for later
         });
       } else {
@@ -972,7 +1025,17 @@ export default class ModalImport extends React.Component {
               <i className="fa fa-download me-1" />
               Download Template
             </Dropdown.Toggle>
-            <Dropdown.Menu>
+            {/*
+              Positioned fixed and rendered on mount so the menu is not clipped by the modal it sits
+              in - the same treatment the collection-tree dropdowns get. A 12-item list is taller than
+              the dialog, so it scrolls on its own rather than overflowing.
+            */}
+            <Dropdown.Menu
+              renderOnMount
+              popperConfig={{ strategy: 'fixed' }}
+              className="overflow-auto"
+              style={{ maxHeight: '60vh' }}
+            >
               <Dropdown.Header>Sample Templates</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_xlsx_template')}>
                 Sample - Empty XLSX Template
@@ -1112,8 +1175,8 @@ export default class ModalImport extends React.Component {
             destructiveActionLabel="Abort Import"
             hideAction={() => this.dismissCancelConfirmation()}
             hideActionLabel="Cancel"
-            primaryAction={() => this.confirmCancelValidation()}
-            primaryActionLabel="Return to Mapping"
+            primaryAction={showValidation ? () => this.confirmCancelValidation() : undefined}
+            primaryActionLabel={showValidation ? 'Return to Mapping' : undefined}
           />
         </AppModal>
       </>

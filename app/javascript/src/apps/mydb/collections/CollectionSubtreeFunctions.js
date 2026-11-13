@@ -41,7 +41,10 @@ const CollectionSubtreeFunctions = ({
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
   const [showRadarModal, setShowRadarModal] = useState(false);
 
-  if (collection === null || collection === undefined) return null;
+  // The shared-with-me tree's owner rows are synthetic grouping nodes with id 0 and no
+  // collection behind them (see CollectionSubtree.js's handleClick comment on the same
+  // sentinel) — none of these actions apply, so the kebab itself should not render.
+  if (collection === null || collection === undefined || !collection.id) return null;
 
   const collectionName = collection.label || 'Unknown Collection';
   // For own collections all actions are allowed; for shared-with-me the delegate's
@@ -51,11 +54,15 @@ const CollectionSubtreeFunctions = ({
     || (typeof collection.permission_level === 'number'
       && collection.permission_level >= level)
   );
-  // Import samples and metadata/RADAR actions share the same gate: not locked and
-  // (for shared-with-me) the delegate can add elements. Gated at AddElements to
-  // preserve the pre-branch capability for delegates who can add samples/reactions.
+  // Import samples: not locked and (for shared-with-me) the delegate can add elements.
   const hasAddElementsAccess = !collection.is_locked && hasPermission(PermissionConst.AddElements);
-  const canAddShare = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
+  // Not gated on is_locked: the repository root and "transferred" are locked against renaming,
+  // reparenting and deletion, but they are ordinary owned collections as far as sharing goes —
+  // the API refuses only a pass_ownership offer on them (CollectionShareAPI#prevent_invalid_ownership_offer!).
+  const canAddShare = hasPermission(PermissionConst.ManageShares);
+  // Editing a collection's own metadata and publishing it via RADAR act on the collection
+  // itself, not on its elements — no permission_level grants a sharee those, only ownership.
+  const canManageCollection = !sharedWithMe && !collection.is_locked;
 
   const editMetadata = () => {
     Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });
@@ -152,7 +159,7 @@ const CollectionSubtreeFunctions = ({
               )}
             </>
           )}
-          {hasAddElementsAccess && (
+          {canManageCollection && (
             <>
               <Dropdown.Divider />
               <Dropdown.Item onClick={handleEditMetadata}>

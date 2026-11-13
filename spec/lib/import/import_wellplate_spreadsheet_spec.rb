@@ -117,6 +117,23 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
       end
     end
 
+    context 'when the wellplate has no size yet' do
+      # WellPosition.from_dimension(0, 0) is empty, so without an explicit guard
+      # the position check would pass any sheet and then create wells at
+      # positions the (nonexistent) grid cannot hold.
+      let!(:wellplate) { create(:wellplate, width: 0, height: 0, attachments: [attachment]) }
+      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template_with_molarity.xlsx') }
+
+      it 'refuses the import' do
+        expect { import.process! }.to raise_error(StandardError, /Set the wellplate size before importing/)
+      end
+
+      it 'creates no wells' do
+        expect { import.process! }.to raise_error(StandardError)
+        expect(wellplate.reload.wells).to be_empty
+      end
+    end
+
     context 'when a well has no sample' do
       let!(:wellplate) { create(:wellplate, attachments: [attachment]) }
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template_with_molarity.xlsx') }

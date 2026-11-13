@@ -5,6 +5,7 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
+#  concentration_mode     :string           default("solvents_only"), not null
 #  conditions             :string
 #  created_by             :integer
 #  dangerous_products     :string           default([]), is an Array
@@ -12,6 +13,7 @@
 #  description            :text
 #  duration               :string
 #  gaseous                :boolean          default(FALSE)
+#  lock_reaction_volume   :boolean          default(FALSE), not null
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
@@ -106,6 +108,104 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe 'legacy concentration compatibility' do
+    it 'derives the legacy reader and stored flag from concentration_mode' do
+      reaction = build(:reaction, concentration_mode: 'reaction_volume')
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(true)
+      expect(reaction[:use_reaction_volume]).to be(true)
+    end
+
+    it 'keeps concentration_mode authoritative over a stale stored flag' do
+      reaction = build(:reaction, concentration_mode: 'combined')
+      reaction[:use_reaction_volume] = true
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(false)
+      expect(reaction[:use_reaction_volume]).to be(false)
+    end
+  end
+
+  describe '#temperature_display_with_unit' do
+    test_cases = [
+      {
+        description: 'numeric user text',
+        temperature: { 'userText' => '25.5678', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25.5678 °C',
+      },
+      {
+        description: 'a numeric range containing a negative value',
+        temperature: { 'userText' => '-10 ~ 5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-10 ~ 5 °C',
+      },
+      {
+        description: 'a range with an unspaced hyphen',
+        temperature: { 'userText' => '20-25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '20-25 °C',
+      },
+      {
+        description: 'a range with an unspaced tilde',
+        temperature: { 'userText' => '21~25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21~25 °C',
+      },
+      {
+        description: 'a range with an en dash',
+        temperature: { 'userText' => '21 – 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21 – 25 °C',
+      },
+      {
+        description: 'a range using to',
+        temperature: { 'userText' => '-78 to 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-78 to 25 °C',
+      },
+      {
+        description: 'a numeric value with a decimal comma',
+        temperature: { 'userText' => '25,5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25,5 °C',
+      },
+      {
+        description: 'a single generated data point',
+        temperature: { 'userText' => '', 'data' => [{ 'value' => 25 }], 'valueUnit' => '°C' },
+        expected: '25 °C',
+      },
+      {
+        description: 'a generated data range',
+        temperature: {
+          'userText' => '',
+          'data' => [{ 'value' => '21' }, { 'value' => '5' }],
+          'valueUnit' => '°C',
+        },
+        expected: '5 ~ 21 °C',
+      },
+      {
+        description: 'free text',
+        temperature: { 'userText' => 'reflux', 'data' => [], 'valueUnit' => '°C' },
+        expected: 'reflux',
+      },
+      {
+        description: 'an empty temperature',
+        temperature: { 'userText' => '', 'data' => [], 'valueUnit' => '°C' },
+        expected: '',
+      },
+      {
+        description: 'a nil temperature',
+        temperature: nil,
+        expected: '',
+      },
+    ]
+
+    test_cases.each do |test_case|
+      it "formats #{test_case[:description]}" do
+        reaction = described_class.new(temperature: test_case[:temperature])
+
+        expect(reaction.temperature_display_with_unit).to eq(test_case[:expected])
+      end
+    end
+  end
+
   describe '#variations' do
     let(:reaction) { create(:reaction) }
 
@@ -113,6 +213,15 @@ RSpec.describe Reaction, type: :model do
       reaction.update_columns(variations: nil) # rubocop:disable Rails/SkipsModelValidations
 
       expect(reaction.reload.variations).to eq([])
+    end
+
+    it 'returns the variations in id order, whatever order the jsonb keys come back in' do
+      variations = { 'c' => { 'id' => 1 }, 'a' => { 'id' => 2 }, 'b' => { 'id' => 3 } }
+      reaction.update_columns(variations: variations) # rubocop:disable Rails/SkipsModelValidations
+      reaction.reload
+
+      expect(reaction[:variations].values.pluck('id')).to eq([2, 3, 1])
+      expect(reaction.variations.pluck('id')).to eq([1, 2, 3])
     end
   end
 

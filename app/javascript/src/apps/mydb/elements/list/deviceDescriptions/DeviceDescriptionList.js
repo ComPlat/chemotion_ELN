@@ -15,7 +15,7 @@ function ListItemHeader({
   groupedByValue
 }) {
   const groupKey = getGroupKey(group[0]);
-  const groupType = group[0].device_type ? `- ${group[0].device_type}` : '';
+  const groupType = group[0].device_class ? `- ${group[0].device_class}` : '';
   const groupDeviceName = group[0].vendor_device_name ? group[0].vendor_device_name : group[0].name;
 
   let groupName = groupedByValue === 'short_label' ? group[0].short_label : groupKey;

@@ -13,7 +13,7 @@ import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
-import { inlineNotation } from 'src/utilities/SpectraHelper';
+import { inlineNotation, pickDefaultSelection } from 'src/utilities/SpectraHelper';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import {
   LcmsPageCache,
@@ -178,11 +178,8 @@ class ViewSpectra extends React.Component {
   onDSSelectChange(e) {
     const { value } = e;
     const { spcInfos, spcMetas } = this.state;
-    const sis = spcInfos.filter(x => x.idDt === value);
-    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
-    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
-    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
-    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
+    const { spcIdx, arrSpcIdx } = pickDefaultSelection(spcInfos, spcMetas, value);
+    SpectraActions.SelectIdx(spcIdx, arrSpcIdx);
   }
 
   getDSList() {
@@ -270,7 +267,9 @@ class ViewSpectra extends React.Component {
   }
 
   getSpcInfo(curveIdx = 0) {
-    const { spcInfos, spcIdx, arrSpcIdx } = this.state;
+    const {
+      spcInfos, spcIdx, arrSpcIdx, spcMetas,
+    } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
@@ -281,7 +280,10 @@ class ViewSpectra extends React.Component {
         info.label &&
         info.label.match(/_uvvis\.peak\.jdx$/i)
       ));
-      if (uvvisPeakFile && curveIdx === 0) {
+      const isLcmsSelection = spcMetas.some((spc) => (
+        arrSpcIdx.includes(spc.idx) && FN.isLCMsLayout(spc.jcamp?.layout)
+      ));
+      if (uvvisPeakFile && curveIdx === 0 && isLcmsSelection && arrSpcIdx.includes(uvvisPeakFile.idx)) {
         selectedIdx = uvvisPeakFile.idx;
       }
     }
@@ -767,7 +769,16 @@ class ViewSpectra extends React.Component {
         combineIds,
         combineCurveIdx,
         combineExtras,
-        () => resolve(),
+        (_combined, errorMessage) => {
+          if (errorMessage) {
+            this.context.notifications.add({
+              message: errorMessage.message || String(errorMessage),
+              level: 'error',
+              position: 'tc',
+            });
+          }
+          resolve();
+        },
       );
     });
   }
@@ -959,11 +970,17 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  // The editor's "Refresh Simulation" button calls this with the current curve's state
+  // ({ peaks, layout, shift, ... }) and no spectra_list, which saveOp requires. Wrap that state
+  // as the single payload, or the refresh is dropped and the simulation never runs.
   refreshOp(params) {
-    const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
+    const hasSpectraList = Array.isArray(params?.spectra_list) && params.spectra_list.length > 0;
+    const spectraList = hasSpectraList
+      ? this.getSavePayloads(params, { simulatenmr: true })
+      : [{ ...params, simulatenmr: true }];
     this.saveOp({
       ...params,
-      spectra_list: refreshPayloads,
+      spectra_list: spectraList,
     });
   }
 
@@ -1248,12 +1265,15 @@ class ViewSpectra extends React.Component {
     const treePopupContainer = createRef();
 
     return (
-      <div className="d-flex align-items-center gap-3 mb-3" ref={treePopupContainer}>
+      <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }} ref={treePopupContainer}>
         <Select
           options={dsOptions}
           value={dsOptions.find(({ value }) => value === si.idDt)}
           isClearable={false}
-          className="col-sm-2"
+          styles={{
+            container: (baseStyles) => ({ ...baseStyles, width: 200, minWidth: 90 }),
+            control: (baseStyles) => ({ ...baseStyles, minHeight: 32, height: 32 }),
+          }}
           onChange={(e) => this.onDSSelectChange(e)}
           size="sm"
         />
@@ -1265,7 +1285,7 @@ class ViewSpectra extends React.Component {
           maxTagCount={1}
           onChange={onSelectChange}
           getPopupContainer={() => treePopupContainer.current}
-          className="col-sm-3"
+          style={{ width: 'min(45vw, 500px)', minWidth: 0 }}
         />
       </div>
     );
@@ -1299,21 +1319,26 @@ class ViewSpectra extends React.Component {
 
     return (
       <AppModal
-        title={modalTitle}
+        title={<span className="fs-5">{modalTitle}</span>}
+        headerExtra={this.renderControls(idx)}
         scrollable
-        size="xxxl"
+        fullscreen
+        bodyClassName="p-0 h-100 overflow-hidden"
         show={showModal}
         animation
         onHide={this.closeOp}
         closeLabel="Close"
         showFooter
       >
-        {this.renderControls(idx)}
-        {
-          showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
-            ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
-            : this.renderEmpty()
-        }
+        <div className="spectra-editor-modal-body d-flex flex-column h-100 p-4">
+          <div className="spectra-editor-modal-body__editor flex-grow-1 overflow-hidden">
+            {
+              showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
+                ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
+                : this.renderEmpty()
+            }
+          </div>
+        </div>
       </AppModal>
     );
   }

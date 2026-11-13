@@ -10,7 +10,7 @@ module Usecases
       end
 
       def list(params)
-        scope = base_list_scope(params)
+        scope = base_list_scope(params).includes_for_list_display
         scope = with_time_filter(scope, params)
         scope = scope.in_sbmm_order
         order_by_sbmm_or_sequence(scope, params)

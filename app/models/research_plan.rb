@@ -28,7 +28,7 @@ class ResearchPlan < ApplicationRecord
   validates :creator, :name, presence: true
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
-  scope :includes_for_list_display, -> { includes(:attachments) }
+  scope :includes_for_list_display, -> { includes(:attachments, :comments) }
   scope :by_sample_ids, lambda { |ids|
     joins('CROSS JOIN jsonb_array_elements(body) AS element')
       .where("(element -> 'value'->> 'sample_id')::INT = ANY(array[?])", ids)
@@ -84,6 +84,10 @@ class ResearchPlan < ApplicationRecord
     image_atts[0] || attachments[0]
   end
 
+  def self.legacy_image_filename?(name)
+    name.is_a?(String) && name.match?(/\A[\w-]+(?:\.[\w-]+)+\z/)
+  end
+
   def create_root_container
     return unless container.nil?
 
@@ -104,14 +108,16 @@ class ResearchPlan < ApplicationRecord
     svg_files
   end
 
-  def update_body_attachments(original_identifier, copy_identifier)
-    attach = body&.detect { |x| x['value']['public_name'] == original_identifier }
-    if attach.present?
-      attach['id'] = SecureRandom.uuid
-      attach['value']['public_name'] = copy_identifier
+  def update_body_attachments(replacements)
+    body&.each do |field|
+      next unless field['type'] == 'image'
+      next unless (identifier = replacements[field.dig('value', 'public_name')])
+
+      field['id'] = SecureRandom.uuid
+      field['value']['public_name'] = identifier
     end
 
-    save!
+    save! if changed?
   end
 
   def set_short_label

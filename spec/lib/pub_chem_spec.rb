@@ -71,6 +71,90 @@ RSpec.describe 'PubChem' do
 
       expect(HTTParty).not_to have_received(:get)
     end
+
+    # PubChem answers an unknown cid with HTTP 200 and a Fault body, not a 404 -- so success?
+    # alone does not catch it, and the caller (Molecule#pubchem_lcss) used to store the Fault
+    # hash itself as if it were real GHS data.
+    it 'returns nil for a 200 response carrying a Fault body' do
+      fault_body = { Fault: { Code: 'PUGVIEW.NotFound', Message: 'No data found' } }.to_json
+      allow(HTTParty).to receive(:get).and_return(
+        instance_double(HTTParty::Response, success?: true, body: fault_body),
+      )
+
+      expect(PubChem.get_lcss_from_cid(962)).to be_nil
+    end
+  end
+
+  # The contract safe_response introduces: a Fault body on a 200, or any non-2xx, must reach the
+  # caller as nil rather than as a body it will parse as data.
+  describe '.safe_response gate on the raw-body methods' do
+    let(:fault_body) { { Fault: { Code: 'PUGREST.NotFound', Message: 'No CID found' } }.to_json }
+
+    def stub_get(success:, body:)
+      allow(HTTParty).to receive(:get).and_return(
+        instance_double(HTTParty::Response, success?: success, body: body, parsed_response: JSON.parse(body)),
+      )
+    end
+
+    def stub_post(success:, body:)
+      allow(HTTParty).to receive(:post).and_return(
+        instance_double(HTTParty::Response, success?: success, body: body, parsed_response: JSON.parse(body)),
+      )
+    end
+
+    it 'returns nil from get_molfile_by_inchikey for a 200 carrying a Fault' do
+      stub_get(success: true, body: fault_body)
+
+      expect(PubChem.get_molfile_by_inchikey('KEY')).to be_nil
+    end
+
+    it 'returns nil from get_xref_by_inchikey for a failed response' do
+      stub_get(success: false, body: fault_body)
+
+      expect(PubChem.get_xref_by_inchikey('KEY')).to be_nil
+    end
+
+    it 'returns nil from get_cids_from_inchikeys for a 200 carrying a Fault' do
+      stub_post(success: true, body: fault_body)
+
+      expect(PubChem.get_cids_from_inchikeys(%w[KEY])).to be_nil
+    end
+
+    it 'returns nil from get_record_from_molfile for a 200 carrying a Fault' do
+      stub_post(success: true, body: fault_body)
+
+      expect(PubChem.get_record_from_molfile('molfile')).to be_nil
+    end
+
+    # A molfile body is not JSON and not a Hash, so the Fault check must let it through
+    # untouched rather than treating an unparseable body as a failure.
+    it 'passes a plain SDF body through' do
+      allow(HTTParty).to receive(:get).and_return(
+        instance_double(HTTParty::Response, success?: true, body: 'SDF', parsed_response: 'SDF'),
+      )
+
+      expect(PubChem.get_molfile_by_inchikey('KEY')).to eq('SDF')
+    end
+  end
+
+  # Not found is PubChem's routine "no data" answer; logging one warn per molecule per sweep
+  # for it would bury the faults that do warrant attention.
+  describe '.fault_response? log level' do
+    it 'logs an expected not-found at info' do
+      allow(Rails.logger).to receive(:info)
+
+      PubChem.fault_response?({ 'Fault' => { 'Code' => 'PUGVIEW.NotFound', 'Message' => 'No data found' } })
+
+      expect(Rails.logger).to have_received(:info).with(/PUGVIEW.NotFound/)
+    end
+
+    it 'keeps warn for an unexpected fault code' do
+      allow(Rails.logger).to receive(:warn)
+
+      PubChem.fault_response?({ 'Fault' => { 'Code' => 'PUGREST.ServerBusy', 'Message' => 'Too busy' } })
+
+      expect(Rails.logger).to have_received(:warn).with(/PUGREST.ServerBusy/)
+    end
   end
 
   describe 'most_occurance' do

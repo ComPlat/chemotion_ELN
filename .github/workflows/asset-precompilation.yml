@@ -10,7 +10,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:main-v2.0.1-77-gb9bd119dd
+    container: complat/chemotion_eln_runner:latest
 
     services:
       postgres:
@@ -28,7 +28,15 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: setup nodejs
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          package-manager-cache: false
+
+      - run: corepack enable
 
       - name: configure repository
         run: |
@@ -43,10 +51,11 @@ jobs:
       - name: bundle install
         run: |
           bundle install
-          echo "SECRET_KEY_BASE=$(bundle exec rake secret)" > .env
+          echo "SECRET_KEY_BASE=$(openssl rand -hex 64)" > .env
+          echo "OTP_SECRET_KEY=$(openssl rand -hex 32)" >> .env
 
       - name: yarn install
-        run:  ./prepare-nodejs.sh && ./prepare-nodejspkg.sh
+        run: yarn install --frozen-lockfile
 
       # @todo user AR nulladapter (DISABLE_DATABASE_ENVIRONMENT_CHECK) instead of setting up a real db
       - name: prepare postgres

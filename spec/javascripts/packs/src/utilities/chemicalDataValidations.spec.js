@@ -607,6 +607,7 @@ describe('Chemical Data Validations', () => {
       expect(defaultChemicalSchemaValidation).toHaveProperty('amount');
       expect(defaultChemicalSchemaValidation).toHaveProperty('volume');
       expect(defaultChemicalSchemaValidation).toHaveProperty('storage_temperature');
+      expect(defaultChemicalSchemaValidation).toHaveProperty('product_number');
       expect(defaultChemicalSchemaValidation).toHaveProperty('safetyPhrases');
     });
   });

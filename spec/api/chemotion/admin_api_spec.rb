@@ -30,6 +30,22 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 
+  describe 'GET /api/v1/admin/jobs/queue_task' do
+    it 'queues a known task' do
+      allow(AdminJob).to receive(:perform_later)
+      get '/api/v1/admin/jobs/queue_task', params: { task: 'rerender_reactions' }
+      expect(response).to have_http_status(:no_content)
+      expect(AdminJob).to have_received(:perform_later).with('rerender_reactions')
+    end
+
+    it 'rejects an unknown task' do
+      allow(AdminJob).to receive(:perform_later)
+      get '/api/v1/admin/jobs/queue_task', params: { task: 'install_ketcher2' }
+      expect(response).to have_http_status(:bad_request)
+      expect(AdminJob).not_to have_received(:perform_later)
+    end
+  end
+
   describe 'GET /api/v1/admin/listLocalCollector/all' do
     before do
       get '/api/v1/admin/listLocalCollector/all'

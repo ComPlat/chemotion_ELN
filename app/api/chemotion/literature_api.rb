@@ -4,6 +4,10 @@
 
 module Chemotion
   class LiteratureAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Collection not found', 404)
+    end
+
     helpers CollectionHelpers
     helpers ParamsHelpers
 
@@ -157,7 +161,6 @@ module Chemotion
 
         after_validation do
           set_var(params[:id])
-          error!(404) unless @c
         end
 
         get do
@@ -205,7 +208,6 @@ module Chemotion
 
         after_validation do
           set_var(params[:id])
-          error!(404) unless @c
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
           @cat = 'detail'

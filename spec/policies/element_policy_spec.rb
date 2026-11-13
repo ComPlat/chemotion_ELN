@@ -20,6 +20,17 @@ describe ElementPolicy do
 
   let(:element_policy) { described_class.new(user, screen) }
 
+  context 'when the record has no collections' do
+    let(:element_policy) { described_class.new(user, create(:vessel_template)) }
+
+    %i[read? update? copy? share? destroy? read_dataset? read_structure?
+       read_full_detail? import? pass_ownership?].each do |permission|
+      it "denies #{permission} without raising" do
+        expect(element_policy.public_send(permission)).to be false
+      end
+    end
+  end
+
   describe '#read?' do
     context 'when the record is in an own collection' do
       before { own_collection_of_user.screens << screen }
@@ -74,6 +85,23 @@ describe ElementPolicy do
 
       it 'returns true' do
         expect(element_policy.update?).to be true
+      end
+    end
+
+    # Editing requires seeing the whole element: a sharee below the full detail level receives
+    # the redaction placeholders and would otherwise overwrite the owner's data with them.
+    context 'when shared with edit permission but a detail level below full' do
+      let(:low_detail_shared_collection) do
+        create(:collection, user: other_user, label: 'Low-detail share').tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user,
+                                    permission_level: 1, screen_detail_level: 0)
+        end
+      end
+
+      before { low_detail_shared_collection.screens << screen }
+
+      it 'returns false' do
+        expect(element_policy.update?).to be false
       end
     end
 
@@ -242,6 +270,109 @@ describe ElementPolicy do
     end
   end
 
+  describe '#read_structure?' do
+    let(:sample) { create(:sample) }
+    let(:element_policy) { described_class.new(user, sample) }
+
+    context 'when the record is in an own collection' do
+      before { own_collection_of_user.samples << sample }
+
+      it 'returns true' do
+        expect(element_policy.read_structure?).to be true
+      end
+    end
+
+    context 'when the record is in a collection shared to me with a sample detail level of 0' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 0)
+        end
+      end
+
+      before { shared_collection_of_other_user.samples << sample }
+
+      it 'returns false' do
+        expect(element_policy.read_structure?).to be false
+      end
+    end
+
+    context 'when the record is in a collection shared to me with a sample detail level of 1 or higher' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 1)
+        end
+      end
+
+      before { shared_collection_of_other_user.samples << sample }
+
+      it 'returns true' do
+        expect(element_policy.read_structure?).to be true
+      end
+    end
+
+    context 'when the record is neither in a collection of mine or shared to me' do
+      let(:owner) { other_user }
+
+      before { own_collection_of_other_user.samples << sample }
+
+      it 'returns false' do
+        expect(element_policy.read_structure?).to be false
+      end
+    end
+  end
+
+  describe '#read_full_detail?' do
+    let(:reaction) { create(:reaction) }
+    let(:element_policy) { described_class.new(user, reaction) }
+
+    context 'when the record is in an own collection' do
+      before { own_collection_of_user.reactions << reaction }
+
+      it 'returns true' do
+        expect(element_policy.read_full_detail?).to be true
+      end
+    end
+
+    context 'when the record is in a collection shared to me below full detail' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, reaction_detail_level: 9)
+        end
+      end
+
+      before { shared_collection_of_other_user.reactions << reaction }
+
+      it 'returns false' do
+        expect(element_policy.read_full_detail?).to be false
+      end
+    end
+
+    context 'when the record is in a collection shared to me with full detail' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user,
+                                    reaction_detail_level: Collection::OWNER_LEVEL)
+        end
+      end
+
+      before { shared_collection_of_other_user.reactions << reaction }
+
+      it 'returns true' do
+        expect(element_policy.read_full_detail?).to be true
+      end
+    end
+
+    context 'when the record is neither in a collection of mine or shared to me' do
+      let(:owner) { other_user }
+
+      before { own_collection_of_other_user.reactions << reaction }
+
+      it 'returns false' do
+        expect(element_policy.read_full_detail?).to be false
+      end
+    end
+  end
+
   describe '#pass_ownership?' do
     context 'when the record is in an own collection' do
       before { own_collection_of_user.screens << screen }
@@ -278,6 +409,54 @@ describe ElementPolicy do
 
       it 'returns false' do
         expect(element_policy.pass_ownership?).to be false
+      end
+    end
+  end
+
+  # Regression: the detail-level column was derived from the record class, and there is no
+  # sequencebasedmacromolecule_detail_level column, so any detail-level check on an SBMM raised
+  # PG::UndefinedColumn. An SBMM is collected through its samples and uses their detail level.
+  describe 'with a SequenceBasedMacromolecule' do
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:element_policy) { described_class.new(user, sbmm) }
+    let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
+
+    context 'when its sample is in a collection shared to me with edit permission and full detail' do
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [shared_collection_of_other_user])
+      end
+
+      it 'allows update and read_dataset' do
+        expect(element_policy.update?).to be true
+        expect(element_policy.read_dataset?).to be true
+      end
+    end
+
+    context 'when its sample is in a collection shared to me below full detail' do
+      before do
+        shared_collection_of_other_user.collection_shares.update_all( # rubocop:disable Rails/SkipsModelValidations
+          sequencebasedmacromoleculesample_detail_level: 2,
+        )
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [shared_collection_of_other_user])
+      end
+
+      it 'denies update and read_dataset' do
+        expect(element_policy.update?).to be false
+        expect(element_policy.read_dataset?).to be false
+      end
+    end
+
+    context 'when it is not shared with me at all' do
+      before do
+        create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user,
+                                                     collections: [own_collection_of_other_user])
+      end
+
+      it 'denies update and read_dataset without raising' do
+        expect(element_policy.update?).to be false
+        expect(element_policy.read_dataset?).to be false
       end
     end
   end

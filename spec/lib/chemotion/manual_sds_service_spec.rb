@@ -103,6 +103,26 @@ RSpec.describe Chemotion::ManualSdsService do
       it_behaves_like 'invalid JSON error', :vendor_info, 'invalid json', 'Invalid vendor info format'
       it_behaves_like 'invalid JSON error', :chemical_data, 'invalid json', 'chemical_data is invalid'
     end
+
+    context 'with vendor info that cannot name a file or a link' do
+      it_behaves_like 'invalid JSON error', :vendor_info, '["ABC123"]', 'Vendor info must be an object'
+      it_behaves_like 'invalid JSON error', :vendor_info, '{"productNumber": "../ABC123"}',
+                      'Vendor info product number is invalid'
+      it_behaves_like 'invalid JSON error', :vendor_info, '{"vendor": "x"}', 'Vendor info product number is invalid'
+      it_behaves_like 'invalid JSON error', :vendor_info,
+                      '{"productNumber": "ABC123", "sdsLink": "javascript:alert(1)"}', 'Invalid safety sheet link URL'
+      it_behaves_like 'invalid JSON error', :vendor_info,
+                      '{"productNumber": "ABC123", "productLink": "ftp://x.y/z"}', 'Invalid product link URL'
+    end
+
+    it 'accepts a vendor SDS link longer than 100 characters' do
+      link = 'https://www.fishersci.com/store/msds?partNumber=AC123456&productDescription=&language=EN&countryCode=US'
+      allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_return(nil)
+      vendor_info = { productNumber: 'AC123456', sdsLink: link }.to_json
+      service = described_class.new(valid_params.merge(vendor_info: vendor_info))
+
+      expect(service.create).to eq({ error: 'Error processing SDS: File hash could not be generated' })
+    end
   end
 
   # File processing tests
@@ -113,8 +133,7 @@ RSpec.describe Chemotion::ManualSdsService do
       before do
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -194,14 +213,12 @@ RSpec.describe Chemotion::ManualSdsService do
     # Stub file hash and write path to avoid filesystem operations
     allow(Chemotion::GenerateFileHashUtils).to receive_messages(
       generate_full_hash: 'a' * 32,
-      find_duplicate_file_by_hash: nil,
-      vendor_folder_exists?: true,
+      find_identical_sheet: nil,
     )
     allow(Chemotion::ChemicalsService).to receive_messages(
       generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
       write_file: true,
     )
-    allow(factory_service).to receive(:update_safety_sheet_path)
 
     # Execute and verify
     result = factory_service.create
@@ -252,8 +269,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Create a chemical first
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -286,8 +302,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Mock utilities to avoid file system operations
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -335,8 +350,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Set up mocks
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -362,8 +376,7 @@ RSpec.describe Chemotion::ManualSdsService do
         chemical.chemical_data = [{ 'safetySheetPath' => [] }]
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -393,8 +406,7 @@ RSpec.describe Chemotion::ManualSdsService do
         # Mock necessary methods to avoid file system operations
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -422,8 +434,7 @@ RSpec.describe Chemotion::ManualSdsService do
         service = described_class.new(build_params(setup_data))
         allow(Chemotion::GenerateFileHashUtils).to receive_messages(
           generate_full_hash: 'a' * 32,
-          find_duplicate_file_by_hash: nil,
-          vendor_folder_exists?: true,
+          find_identical_sheet: nil,
         )
         allow(Chemotion::ChemicalsService).to receive_messages(
           generate_safety_sheet_file_path: '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf',
@@ -437,6 +448,64 @@ RSpec.describe Chemotion::ManualSdsService do
         expect(chemical.sample_id).to eq(setup_data[:sample].id)
         expect(chemical.cas).to eq('123-45-6')
       end
+    end
+  end
+
+  describe 'refusing a duplicate upload' do
+    let(:dup_sample) { create(:sample) }
+    let(:held) { '/safety_sheets/testvendor/ABC123_aaaaaaaaaaaaaaaa.pdf' }
+    let(:upload) do
+      file = Tempfile.new(['dup', '.pdf'])
+      file.write('%PDF x')
+      file.flush
+      { tempfile: file }
+    end
+
+    before do
+      create(:chemical, sample: dup_sample,
+                        chemical_data: [{ 'safetySheetPath' => [{ 'ABC123_aaaaaaaaaaaaaaaa_link' => held }] }])
+      allow(Chemotion::GenerateFileHashUtils).to receive(:find_identical_sheet).and_return(held)
+    end
+
+    it 'refuses a file the sample already holds, naming it', :aggregate_failures do
+      result = described_class.create_manual_sds(
+        sample_id: dup_sample.id,
+        cas: '1-1-1',
+        vendor_info: { 'productNumber' => 'ABC123', 'vendor' => 'testvendor' }.to_json,
+        vendor_name: 'testvendor',
+        vendor_product: 'testvendorProductInfo',
+        attached_file: upload,
+      )
+
+      expect(result[:error]).to include('ABC123')
+      expect(result[:final]).to be true
+      expect(result[:status]).to eq(422)
+    end
+  end
+
+  describe 'refusing an upload at the sheet limit' do
+    let(:full) do
+      Array.new(Chemotion::ChemicalsService::MAX_SAVED_SDS) { |i| { "p#{i}_link" => "/safety_sheets/v/p#{i}.pdf" } }
+    end
+
+    it 'counts the sheets the record holds, whatever the request posts', :aggregate_failures do
+      allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash)
+      full_sample = create(:sample)
+      create(:chemical, sample: full_sample, chemical_data: [{ 'safetySheetPath' => full }])
+      result = described_class.create_manual_sds(valid_params.merge(sample_id: full_sample.id, chemical_data: nil))
+
+      expect(result).to include(final: true, status: 422)
+      expect(Chemotion::GenerateFileHashUtils).not_to have_received(:generate_full_hash)
+    end
+
+    it 'refuses before the file is processed', :aggregate_failures do
+      allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash)
+      data = { 'safetySheetPath' => full }.to_json
+      result = described_class.create_manual_sds(valid_params.merge(chemical_data: data))
+
+      expect(result).to include(final: true, status: 422)
+      expect(result[:error]).to include('before attaching another')
+      expect(Chemotion::GenerateFileHashUtils).not_to have_received(:generate_full_hash)
     end
   end
 end
