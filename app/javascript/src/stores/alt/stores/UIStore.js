@@ -1,10 +1,10 @@
 import { List, Set, fromJS } from 'immutable';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { allElnElements } from 'src/apps/generic/Utils';
 import { listFilterParams, byIdsModelParams } from 'src/utilities/searchRequestParams';
@@ -169,7 +169,6 @@ class UIStore {
     });
   }
 
-
   handleRerenderGenericWorkflow(params) {
     this.state.propGenericWorkflow = params;
     if (params.toggle) { this.state.showGenericWorkflow = !this.state.showGenericWorkflow; }
@@ -248,16 +247,16 @@ class UIStore {
         this.state[type].uncheckedIds = List();
       }
     } else if (range == 'current') {
-      let curPageIds = elements[type + "s"].elements.reduce(
-        function (a, b) { return a.concat(b); }, []
-      ).map((e) => { return e.id });
+      const curPageIds = elements[`${type  }s`].elements.reduce(
+        (a, b) => a.concat(b), []
+      ).map((e) => e.id);
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = List();
-      let checked = this.state[type].checkedIds
+      let checked = this.state[type].checkedIds;
       // Remove duplicates, conserve sorting
       if (checked.size > 0) {
-        let checkedMap = checked.reduce(function (mp, e) { mp[e] = 1; return mp }, {})
-        for (var i = 0; i < curPageIds.length; i++) {
+        const checkedMap = checked.reduce((mp, e) => { mp[e] = 1; return mp; }, {});
+        for (let i = 0; i < curPageIds.length; i++) {
           if (!checkedMap[curPageIds[i]]) {
             checked = checked.push(curPageIds[i]);
           }
@@ -267,7 +266,7 @@ class UIStore {
         this.state[type].checkedIds = List(curPageIds);
       }
     } else {
-      this.handleUncheckAllElements(params)
+      this.handleUncheckAllElements(params);
     }
   }
 
@@ -277,12 +276,12 @@ class UIStore {
   }
 
   handleToggleAdvancedSearch(show) {
-    if (show == null) show = !this.state.showAdvancedSearch
+    if (show == null) show = !this.state.showAdvancedSearch;
     this.state.showAdvancedSearch = show;
   }
 
   handleUncheckAllElements(params) {
-    let { type, range } = params;
+    const { type, range } = params;
 
     if (this.state[type]) {
       this.state[type].checkedAll = false;
@@ -305,7 +304,7 @@ class UIStore {
   }
 
   handleCheckElement(element) {
-    let type = element.type;
+    const { type } = element;
 
     if (this.state[type].checkedAll) {
       this.state[type].uncheckedIds =
@@ -320,7 +319,7 @@ class UIStore {
   }
 
   handleUncheckElement(element) {
-    let type = element.type;
+    const { type } = element;
 
     if (this.state[type].checkedAll) {
       this.state[type].uncheckedIds =
@@ -351,7 +350,7 @@ class UIStore {
   }
 
   handleSelectCollection(collection, hasChanged = false) {
-    const state = this.state;
+    const { state } = this;
     const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
 
     if (!hasChanged) {
@@ -371,7 +370,7 @@ class UIStore {
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
-      const { profile } = UserStore.getState();
+      const { profile } = rootStore.userStore;
 
       if (state.currentSearchSelection) {
         this.handleSelectCollectionForSearchSelection(collection);
@@ -512,7 +511,7 @@ class UIStore {
 
   // FIXME this method is also defined in ElementStore
   handleSetPagination(pagination) {
-    let { type, page } = pagination;
+    const { type, page } = pagination;
     this.state[type].page = page;
   }
 

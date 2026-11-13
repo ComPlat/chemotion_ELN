@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Badge } from 'react-bootstrap';
 
-import Aviator from 'aviator';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const statusMap = {
   not_computed: 'pending'
@@ -20,14 +20,7 @@ export default class ComputeTask extends React.Component {
 
   navigateSample() {
     const { task } = this.props;
-    const currentURI = Aviator.getCurrentURI();
-
-    const collectionMatch = currentURI.match(/\/collection\/(\d+)\//);
-    if (collectionMatch) {
-      const collectionId = collectionMatch[1];
-      const url = `/collection/${collectionId}/sample/${task.sampleId}`;
-      Aviator.navigate(url);
-    }
+    aviatorNavigation('sample', task.sampleIde);
   }
 
   checkState() {

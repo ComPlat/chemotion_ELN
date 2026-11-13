@@ -17,6 +17,11 @@ module Chemotion
     config.load_defaults 6.0
     config.autoloader = :classic # classic mode is required because of naming/configuration inconsistencies
 
+    # Rails 6.1 default, not enabled by load_defaults 6.0. Browsers then do not send the
+    # session (and remember-me) cookie with cross-site POST/PUT/DELETE requests.
+    # OAuth/OmniAuth callbacks are top-level GET redirects and still receive it.
+    config.action_dispatch.cookies_same_site_protection = :lax
+
     config.version = (File.exist?('VERSION') && YAML.load_file('VERSION')) || {
       'version' => 'v0', 'base_revision' => '0', 'current_revision' => '0'
     }

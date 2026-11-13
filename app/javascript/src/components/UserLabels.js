@@ -1,8 +1,7 @@
-/* eslint-disable camelcase */
+/* eslint-disable camelcase,  react/prop-types */
 import React, {
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -18,12 +17,10 @@ import ColorLabel from 'src/components/common/ColorLabel';
 import { Select } from 'src/components/common/Select';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
+import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
-function UserLabel({ title, color, access_level }) {
-  return (
+const UserLabel = ({ title, color, access_level }) => (
     <Badge
       bg="custom"
       style={{
@@ -34,7 +31,6 @@ function UserLabel({ title, color, access_level }) {
       {title}
     </Badge>
   );
-}
 
 UserLabel.propTypes = {
   title: PropTypes.string.isRequired,
@@ -92,25 +88,12 @@ function renderColorOptionLabel(option) {
   return <ColorLabel color={option.value} label={option.label} />;
 }
 
-function UserLabelModal({ showLabelModal, onHide }) {
-  const { notifications } = useContext(StoreContext);
-  const [labels, setLabels] = useState([]);
+const UserLabelModal = observer(({ showLabelModal, onHide }) => {
+  const { notifications, userStore } = useContext(StoreContext);
+  const labels = filterAvailableLabels(userStore.labels, userStore.currentUser);
+  //const [labels, setLabels] = useState([]);
   const [label, setLabel] = useState({});
   const [showDetails, setShowDetails] = useState(false);
-
-  const handleStoreChange = useCallback((state) => {
-    const { currentUser, labels: storeLabels } = state;
-    setLabels(filterAvailableLabels(storeLabels, currentUser));
-  }, []);
-
-  useEffect(() => {
-    UserStore.listen(handleStoreChange);
-    UserActions.fetchUserLabels();
-
-    return () => {
-      UserStore.unlisten(handleStoreChange);
-    };
-  }, [handleStoreChange]);
 
   const handleEditLabelClick = useCallback((nextLabel) => {
     setLabel(nextLabel);
@@ -172,12 +155,12 @@ function UserLabelModal({ showLabelModal, onHide }) {
       description: nextLabel.description,
       color: nextLabel.color,
     }).then(() => {
-      UserActions.fetchUserLabels();
+      userStore.fetchUserLabels();
       setShowDetails(false);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-  }, [label]);
+  }, [label, notifications, userStore]);
 
   const handleNewLabel = useCallback(() => {
     setLabel({});
@@ -329,28 +312,15 @@ function UserLabelModal({ showLabelModal, onHide }) {
       {modalBody}
     </AppModal>
   );
-}
+});
 
 UserLabelModal.propTypes = {
   showLabelModal: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
 };
-function EditUserLabels({ element, fnCb }) {
-  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
-  const [labelOptions, setLabelOptions] = useState(() => UserStore.getState().labels || []);
 
-  const handleStoreChange = useCallback((state) => {
-    setCurrentUser(state.currentUser || {});
-    setLabelOptions(state.labels || []);
-  }, []);
-
-  useEffect(() => {
-    UserStore.listen(handleStoreChange);
-
-    return () => {
-      UserStore.unlisten(handleStoreChange);
-    };
-  }, [handleStoreChange]);
+const EditUserLabels = ({ element, fnCb }) => {
+  const { currentUser, labels } = useContext(StoreContext).userStore;
 
   const handleSelectChange = useCallback((values) => {
     const ids = (values || []).map((currentLabel) => currentLabel.id);
@@ -359,11 +329,11 @@ function EditUserLabels({ element, fnCb }) {
   }, [element, fnCb]);
 
   const currentLabelIds = element.user_labels || [];
-  const selectedLabels = labelOptions.filter((currentLabel) => (
+  const selectedLabels = labels.filter((currentLabel) => (
     currentLabelIds.includes(currentLabel.id)
     && (currentLabel.access_level > 0 || currentLabel.user_id === currentUser.id)
   ));
-  const options = filterAvailableLabels(labelOptions, currentUser);
+  const options = filterAvailableLabels(labels, currentUser);
 
   return (
     <Form.Group>
@@ -380,31 +350,18 @@ function EditUserLabels({ element, fnCb }) {
       />
     </Form.Group>
   );
-}
+};
 
 EditUserLabels.propTypes = {
   element: editableElementShape.isRequired,
   fnCb: PropTypes.func.isRequired,
 };
-function ShowUserLabels({ element }) {
-  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
-  const [labelOptions, setLabelOptions] = useState(() => UserStore.getState().labels || []);
 
-  const handleStoreChange = useCallback((state) => {
-    setCurrentUser(state.currentUser || {});
-    setLabelOptions(state.labels || []);
-  }, []);
-
-  useEffect(() => {
-    UserStore.listen(handleStoreChange);
-
-    return () => {
-      UserStore.unlisten(handleStoreChange);
-    };
-  }, [handleStoreChange]);
+const ShowUserLabels = ({ element }) => {
+  const { currentUser, labels } = useContext(StoreContext).userStore;
 
   const currentLabelIds = element?.tag?.taggable_data?.user_labels || [];
-  const visibleLabels = labelOptions.filter((currentLabel) => (
+  const visibleLabels = labels.filter((currentLabel) => (
     currentLabelIds.includes(currentLabel.id)
     && (currentLabel.access_level > 0 || currentLabel.user_id === currentUser.id)
   ));
@@ -417,27 +374,14 @@ function ShowUserLabels({ element }) {
       access_level={currentLabel.access_level}
     />
   ));
-}
+};
 
 ShowUserLabels.propTypes = {
   element: taggedElementShape.isRequired,
 };
-function SearchUserLabels({ fnCb, userLabel, size }) {
-  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
-  const [labels, setLabels] = useState(() => UserStore.getState().labels || []);
 
-  const handleStoreChange = useCallback((state) => {
-    setCurrentUser(state.currentUser || {});
-    setLabels(state.labels || []);
-  }, []);
-
-  useEffect(() => {
-    UserStore.listen(handleStoreChange);
-
-    return () => {
-      UserStore.unlisten(handleStoreChange);
-    };
-  }, [handleStoreChange]);
+const SearchUserLabels = ({ fnCb, userLabel, size }) => {
+  const { currentUser, labels } = useContext(StoreContext).userStore;
 
   const handleSelectChange = useCallback((value) => {
     fnCb(value?.id ?? null);
@@ -460,7 +404,7 @@ function SearchUserLabels({ fnCb, userLabel, size }) {
       size={size}
     />
   );
-}
+};
 
 SearchUserLabels.propTypes = {
   fnCb: PropTypes.func.isRequired,

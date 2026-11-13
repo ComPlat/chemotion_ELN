@@ -1,4 +1,4 @@
-import { getElementSegments } from './ElementUtils';
+import { getElementSegments } from 'src/utilities/ElementUtils';
 import { List } from 'immutable';
 
 export const TAB_DISPLAY_NAMES = {
@@ -13,15 +13,24 @@ export const TAB_DISPLAY_NAMES = {
 };
 
 const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
-  if (typeof layout === 'undefined') {
-    // eslint-disable-next-line no-param-reassign
-    layout = { properties: 1, analyses: 2 };
-  }
-  const layoutKeys = Object.keys(layout);
+  const currentLayout = { ...(layout || { properties: 1, analyses: 2 }) };
+  const layoutKeys = Object.keys(currentLayout);
 
-  if (addInventoryTab && layout) {
-    // eslint-disable-next-line no-param-reassign
-    layout.inventory = layout.inventory || layoutKeys.length + 1;
+  if (addInventoryTab) {
+    if (!layoutKeys.includes('inventory')) {
+      layoutKeys.push('inventory');
+    }
+    // A previously-hidden tab is stored as a negative number, which is truthy —
+    // `currentLayout.inventory || ...` would keep it negative forever. Only reuse
+    // the existing value when it's already a positive (visible) order.
+    currentLayout.inventory = currentLayout.inventory > 0
+      ? currentLayout.inventory
+      : layoutKeys.length + 1;
+  } else {
+    // The addInventoryTab flag flips synchronously and is always current; a
+    // stored positive order for 'inventory' may still be stale (persistence
+    // to the collection/profile is async), so force it hidden regardless.
+    currentLayout.inventory = -Math.abs(currentLayout.inventory || 1);
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
@@ -29,7 +38,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   let hidden = [];
 
   enabled.forEach((key) => {
-    const order = layout[key];
+    const order = currentLayout[key];
     if (order < 0) { hidden[Math.abs(order)] = key; }
     if (order > 0) { visible[order] = key; }
   });
@@ -51,11 +60,8 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 };
 
 const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = null) => {
-  if (typeof layout === 'undefined') {
-    // eslint-disable-next-line no-param-reassign
-    layout = { properties: 1, analyses: 2 };
-  }
-  const layoutKeys = Object.keys(layout);
+  const currentLayout = { ...(layout || { properties: 1, analyses: 2 }) };
+  const layoutKeys = Object.keys(currentLayout);
   const segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);
   return getVisibilityList(layout, segmentAvailableTabs, addInventoryTab);
 };

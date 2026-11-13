@@ -1,71 +1,59 @@
 /* eslint-disable prefer-object-spread */
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { orderBy, sortBy } from 'lodash';
+import React, { useContext, useEffect, useState } from 'react';
+import { orderBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
-import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
 const FN_ID = 'GenericDatasets';
 
-export default class GenericDatasetsAdmin extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      elements: [],
-      klasses: [],
-      show: { tab: '', modal: '' },
-      revisions: [],
-      currentUser: {},
-    };
-    this.handleShowState = this.handleShowState.bind(this);
-    this.closeModal = this.closeModal.bind(this);
-    this.handleActivateKlass = this.handleActivateKlass.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.delRevision = this.delRevision.bind(this);
-    this.fetchRevisions = this.fetchRevisions.bind(this);
-    this.fetchElements = this.fetchElements.bind(this);
-  }
+const GenericDatasetsAdmin = () => {
+  const { userStore } = useContext(StoreContext);
+  const { currentUser, dsAdminKlasses } = userStore;
 
-  componentDidMount() {
+  const [show, setShow] = useState({ tab: '', modal: '' });
+  const [revisions, setRevisions] = useState([]);
+
+  useEffect(() => {
     LoadingActions.start();
-    Promise.all([
-      GenericElsFetcher.fetchElementKlasses(),
-      GenericDSsFetcher.listDatasetKlass(),
-      UsersFetcher.fetchCurrentUser()
-    ])
-      .then(([klassResult, elementsResult, userResult]) => {
-        if (klassResult.error || elementsResult?.error || userResult?.error) {
-          throw new Error(klassResult.error || elementsResult?.error || userResult?.error);
-        }
-        const klasses = sortBy(klassResult.klass || [], ['label']);
-        this.setState({
-          klasses,
-          elements: elementsResult.klass || [],
-          currentUser: userResult.user || {}
-        });
-      })
-      .catch((errorMessage) => {
-        notification({
-          title: 'Error Loading Data',
-          lvl: 'error',
-          msg: `Failed to load initial data. Please refresh the page. ${errorMessage}`,
-        });
-      })
-      .finally(() => {
-        LoadingActions.stop();
-      });
-  }
 
-  handleActivateKlass(e) {
+    if (!currentUser) {
+      userStore.fetchCurrentUser();
+    }
+
+    userStore.fetchGenericElKlasses();
+
+    if (dsAdminKlasses.length < 1) {
+      userStore.fetchAdminDatasetKlasses(true);
+    }
+    LoadingActions.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchSegmentKlasses = () => {
+    LoadingActions.start();
+    userStore.fetchDatasetKlasses(true);
+    LoadingActions.stop();
+  };
+
+  const getShowState = (att, val) => ({ ...show, [att]: val });
+
+  const handleShowState = (att, val, cb = () => {}) => {
+    setShow(getShowState(att, val));
+    cb;
+  };
+
+  const closeModal = (cb = () => {}) => {
+    handleShowState('modal', '', cb);
+  };
+
+  const handleActivateKlass = (e) => {
     const act = e.is_active ? 'De-activate' : 'Activate';
     GenericDSsFetcher.deActivateKlass({
       id: e.id,
@@ -85,55 +73,29 @@ export default class GenericDatasetsAdmin extends React.Component {
             lvl: 'info',
             msg: `${e.label} is ${act.toLowerCase()} now`,
           });
-          this.closeModal(this.fetchElements);
-          // this.fetchElements();
+          closeModal(fetchSegmentKlasses());
         }
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-  }
+  };
 
-  handleShowState(att, val, cb = () => {}) {
-    this.setState({ show: this.getShowState(att, val) }, cb);
-  }
-
-  async handleSubmit(_element, _release = 'draft') {
-    const [element, release] = [_element, _release];
+  const handleSubmit = async(element, release = 'draft') => {
     element.release = release;
     LoadingActions.start();
     const result = await submit(GenericDSsFetcher, { update: Constants.GENERIC_TYPES.DATASET, element, release });
     if (result.isSuccess) {
       notification(result);
-      this.fetchElements();
-      // eslint-disable-next-line react/no-unused-state
-      this.setState({ element: result.response }, () => LoadingActions.stop());
+      fetchSegmentKlasses();
+      LoadingActions.stop();
     } else {
       notification(result);
     }
     LoadingActions.stop();
-  }
+  };
 
-  getShowState(att, val) {
-    const { show } = this.state;
-    return { ...show, [att]: val };
-  }
-
-  fetchElements() {
-    LoadingActions.start();
-    GenericDSsFetcher.listDatasetKlass().then((result) => {
-      this.setState({ elements: result.klass });
-    }).finally(() => {
-      LoadingActions.stop();
-    });
-  }
-
-  closeModal(cb = () => {}) {
-    this.handleShowState('modal', '', cb);
-  }
-
-  fetchRevisions(_element) {
-    const element = _element;
+  const fetchRevisions = (element) => {
     if (element?.id) {
       GenericDSsFetcher.fetchKlassRevisions(element.id, 'DatasetKlass').then(
         (result) => {
@@ -143,14 +105,13 @@ export default class GenericDatasetsAdmin extends React.Component {
             { properties_release: curr },
             { uuid: 'current' }
           );
-          const revisions = [].concat(curr, result.revisions);
-          this.setState({ revisions });
+          setRevisions([].concat(curr, result.revisions));
         }
       );
     }
-  }
+  };
 
-  delRevision(params) {
+  const delRevision = (params) => {
     const { id, data, uuid } = params;
     GenericDSsFetcher.deleteKlassRevision({
       id,
@@ -164,7 +125,7 @@ export default class GenericDatasetsAdmin extends React.Component {
           msg: response.error,
         });
       } else {
-        this.fetchRevisions(data);
+        fetchRevisions(data);
         notification({
           title: `Revision [${uuid}] deleted successfully`,
           lvl: 'info',
@@ -172,62 +133,46 @@ export default class GenericDatasetsAdmin extends React.Component {
         });
       }
     });
-  }
+  };
 
-  renderGrid() {
-    const {
-      elements, revisions, currentUser, klasses
-    } = this.state;
-    const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
+  const renderGrid = () => {
+    const elements = orderBy(dsAdminKlasses, ['is_active', 'label'], ['desc', 'asc']);
     return (
       <Designer
         fnCopy={() => {}}
         fnCreate={() => {}}
-        fnSubmit={this.handleSubmit}
-        fnActive={this.handleActivateKlass}
+        fnSubmit={handleSubmit}
+        fnActive={handleActivateKlass}
         fnDerive={() => {}}
         fnUpdate={() => {}}
-        fnRefresh={this.fetchElements}
+        fnRefresh={fetchSegmentKlasses}
         preview={{
-          fnDelRevisions: this.delRevision,
-          fnRevisions: this.fetchRevisions,
+          fnDelRevisions:delRevision,
+          fnRevisions: fetchRevisions,
           revisions,
         }}
         genericType={Constants.GENERIC_TYPES.DATASET}
-        gridData={els}
-        klasses={klasses}
+        gridData={elements}
+        klasses={userStore.genericElementKlassesArray('datasetAdmin')}
         refSource={{ currentUser }}
       />
     );
+  };
+
+  if (currentUser && !currentUser.generic_admin?.datasets) {
+    return <Unauthorized userName={currentUser.name} text={FN_ID} />;
   }
 
-  render() {
-    const { currentUser } = this.state;
-    if (!currentUser.generic_admin?.datasets) {
-      return <Unauthorized userName={currentUser.name} text={FN_ID} />;
-    }
-
-    return (
-      <div className="vw-90 my-auto mx-auto">
-        <GenericMenu userName={currentUser.name} text={FN_ID} />
-        <div className="mt-3">
-          {this.renderGrid()}
-        </div>
-        <Notifications />
-        <LoadingModal />
+  return (
+    <div className="vw-90 my-auto mx-auto">
+      <GenericMenu userName={currentUser?.name} text={FN_ID} />
+      <div className="mt-3">
+        {renderGrid()}
       </div>
-    );
-  }
-}
+      <Notifications />
+      <LoadingModal />
+    </div>
+  );
+};
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById(`${FN_ID}Admin`);
-  if (domElement) {
-    ReactDOM.render(
-      <DndProvider backend={HTML5Backend}>
-        <GenericDatasetsAdmin />
-      </DndProvider>,
-      domElement
-    );
-  }
-});
+export default observer(GenericDatasetsAdmin);

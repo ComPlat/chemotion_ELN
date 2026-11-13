@@ -13,7 +13,7 @@ module Chemotion
       resource :third_party_apps, requirements: { token: %r{[^\/]+} } do
         route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+$/ do
           after_validation do
-            parse_payload(JsonWebToken.decode(params[:token]))
+            parse_payload(JsonWebToken.decode(params[:token], purpose: :third_party_app))
           end
           desc 'download file to 3rd party app'
           get '/' do

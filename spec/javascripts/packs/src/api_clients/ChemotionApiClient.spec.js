@@ -68,6 +68,66 @@ describe('ChemotionApiClient bodyless write requests', () => {
   });
 });
 
+describe('ChemotionApiClient CSRF token handling', () => {
+  let fetchStub;
+  let meta;
+
+  const sentCsrfHeader = () => fetchStub.firstCall.args[1].headers.get('X-CSRF-Token');
+
+  beforeEach(() => {
+    fetchStub = sinon.stub(global, 'fetch');
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'csrf-token');
+    meta.setAttribute('content', 'page-token');
+    document.head.appendChild(meta);
+  });
+
+  afterEach(() => {
+    fetchStub.restore();
+    meta.remove();
+  });
+
+  it('sends the token from the meta tag to the own origin', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({})));
+
+    await ApiClient.postJson('/users/sign_in');
+
+    expect(sentCsrfHeader()).toEqual('page-token');
+  });
+
+  it('does not send the token to a foreign host', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({})));
+
+    await ApiClient.getJson('https://example.org/some/api');
+
+    expect(sentCsrfHeader()).toBe(null);
+  });
+
+  it('replaces the meta token with the rotated one from the response', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({}), { headers: { 'X-CSRF-Token': 'rotated-token' } }));
+
+    await ApiClient.postJson('/users/sign_in');
+
+    expect(meta.getAttribute('content')).toEqual('rotated-token');
+  });
+
+  it('ignores a token header from a foreign host', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({}), { headers: { 'X-CSRF-Token': 'foreign-token' } }));
+
+    await ApiClient.getJson('https://example.org/some/api');
+
+    expect(meta.getAttribute('content')).toEqual('page-token');
+  });
+
+  it('keeps the meta token when the response carries none', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({})));
+
+    await ApiClient.getJson('/api/v1/anything');
+
+    expect(meta.getAttribute('content')).toEqual('page-token');
+  });
+});
+
 describe('ChemotionApiClient 204 No Content handling', () => {
   let fetchStub;
 

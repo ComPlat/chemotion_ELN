@@ -11,8 +11,8 @@ import { instrumentText } from 'src/utilities/ElementUtils';
 import {
   JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
 } from 'src/utilities/SpectraHelper';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
@@ -38,7 +38,7 @@ const headerBtnGroup = (props) => {
   };
   const spcInfos = BuildSpcInfos(generic, container);
   const { hasChemSpectra, hasNmriumWrapper } = UIStore.getState();
-  const toggleSpectraModal = (e) => {
+  const toggleSpectraModal = () => {
     SpectraActions.ToggleModal();
     SpectraActions.LoadSpectra.defer(spcInfos);
   };
@@ -51,7 +51,7 @@ const headerBtnGroup = (props) => {
     SpectraActions.ToggleModalNMRDisplayer();
     SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
   };
-  const { chmos } = UserStore.getState();
+  const { chmos } = rootStore.userStore;
   const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
   return (
@@ -178,7 +178,7 @@ const header = (container) => (
   </>
 );
 
-function HeaderDeleted(props) {
+const HeaderDeleted = (props) => {
   const { container, fnUndo, noAct } = props;
   return (
     <div className="d-flex w-100 mb-0 align-items-center">
@@ -199,7 +199,7 @@ function HeaderDeleted(props) {
       )}
     </div>
   );
-}
+};
 
 HeaderDeleted.propTypes = {
   container: PropTypes.object.isRequired,
@@ -209,7 +209,7 @@ HeaderDeleted.propTypes = {
 
 HeaderDeleted.defaultProps = { fnUndo: () => {}, noAct: false };
 
-function AiHeaderDeleted(props) {
+const AiHeaderDeleted = (props) => {
   const {
     container, idx, fnUndo, noAct
   } = props;
@@ -220,7 +220,7 @@ function AiHeaderDeleted(props) {
       </AccordionHeaderWithButtons>
     </Card.Header>
   );
-}
+};
 
 AiHeaderDeleted.propTypes = {
   container: PropTypes.object.isRequired,
@@ -230,14 +230,13 @@ AiHeaderDeleted.propTypes = {
 };
 AiHeaderDeleted.defaultProps = { fnUndo: () => {}, noAct: false };
 
-function AiHeader(props) {
+const AiHeader = (props) => {
   const {
     container,
     idx,
     generic,
     readOnly,
     fnChange,
-    handleSubmit,
   } = props;
 
   return (
@@ -263,7 +262,7 @@ function AiHeader(props) {
       </Accordion.Collapse>
     </>
   );
-}
+};
 
 AiHeader.propTypes = {
   container: PropTypes.object.isRequired,

@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import { selectCurrentUser, commentActivation } from 'src/utilities/CommentHelper';
+import { commentActivation } from 'src/utilities/CommentHelper';
 
-export default function CommentIcon(props) {
+const CommentIcon = (props) => {
+  const { currentUser } = useContext(StoreContext).userStore;
   const { commentCount } = props;
-  const currentUser = selectCurrentUser(UserStore.getState());
 
   if (MatrixCheck(currentUser.matrix, commentActivation)) {
     return (
@@ -27,7 +27,7 @@ export default function CommentIcon(props) {
     );
   }
   return null;
-}
+};
 
 CommentIcon.propTypes = {
   commentCount: PropTypes.number,
@@ -36,3 +36,5 @@ CommentIcon.propTypes = {
 CommentIcon.defaultProps = {
   commentCount: null,
 };
+
+export default CommentIcon;

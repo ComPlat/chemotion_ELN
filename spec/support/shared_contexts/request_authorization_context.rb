@@ -17,6 +17,6 @@ RSpec.shared_context 'request authorization context', shared_context: :metadata 
       last_name: user_for_request_specs.last_name
     }
   end
-  let(:authorization_token) { JsonWebToken.encode(user_for_request_specs_payload) }
+  let(:authorization_token) { JsonWebToken.encode(user_for_request_specs_payload, purpose: :login) }
   let(:authorization_header) { { Authorization: "Bearer #{authorization_token}" } }
 end

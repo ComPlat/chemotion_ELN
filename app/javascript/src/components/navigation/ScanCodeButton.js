@@ -3,7 +3,7 @@ import { Alert, Button, Form } from 'react-bootstrap';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import AppModal from 'src/components/common/AppModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import Aviator from 'aviator';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import CodeLogsFetcher from 'src/fetchers/CodeLogsFetcher';
 
 const SCAN_FORMATS = ['qr_code', 'code_128', 'ean_13', 'ean_8', 'data_matrix'];
@@ -27,15 +27,16 @@ const ScanCodeButton = () => {
     CodeLogsFetcher.fetchGenericCodeLogs(dataInput)
       .then((json) => {
         const { code_log: codeLog } = json;
+
         if (codeLog.source === 'container') {
           // open active analysis
           UIActions.selectTab({ tabKey: 1, type: codeLog.root_code.source });
           UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: codeLog.source_id });
-          Aviator.navigate(`/collection/all/${codeLog.root_code.source}/${codeLog.root_code.source_id}`);
+          aviatorNavigationWithCollectionId('all', codeLog.root_code.source, codeLog.root_code.source_id, true, true);
           close();
         } else {
           UIActions.selectTab({ tabKey: 0, type: codeLog.root_code.source });
-          Aviator.navigate(`/collection/all/${codeLog.source}/${codeLog.source_id}`);
+          aviatorNavigationWithCollectionId('all', codeLog.source, codeLog.source_id, true, true);
           close();
         }
       })

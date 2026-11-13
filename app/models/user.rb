@@ -67,7 +67,7 @@ class User < ApplicationRecord
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
 
-  devise :database_authenticatable, :registerable, :confirmable,
+  devise :registerable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable,
          :lockable, :omniauthable,
          :two_factor_authenticatable,

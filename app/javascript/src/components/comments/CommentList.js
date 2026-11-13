@@ -11,26 +11,24 @@ const CommentList = ({ section }) => {
 
   if (sectionComments.length === 0) { return null; }
 
-  const renderDate = (node) => {
-    return formatDate(node.data.created_at);
-  }
+  const renderDate = (node) => formatDate(node.data.created_at);
 
   const columnDefs = [
     {
-      headerName: "Date",
+      headerName: 'Date',
       minWidth: 200,
       maxWidth: 200,
       cellRenderer: renderDate,
     },
     {
-      headerName: "Comment",
-      field: "content",
+      headerName: 'Comment',
+      field: 'content',
       wrapText: true,
-      cellClass: ["lh-base", "p-2", "border-end"],
+      cellClass: ['lh-base', 'p-2', 'border-end'],
     },
     {
-      headerName: "From User",
-      field: "submitter",
+      headerName: 'From User',
+      field: 'submitter',
     },
   ];
 
@@ -41,8 +39,8 @@ const CommentList = ({ section }) => {
     sortable: false,
     resizable: false,
     suppressMovable: true,
-    cellClass: ["border-end", "px-2"],
-    headerClass: ["border-end", "px-2"]
+    cellClass: ['border-end', 'px-2'],
+    headerClass: ['border-end', 'px-2']
   };
 
   return (
@@ -57,7 +55,7 @@ const CommentList = ({ section }) => {
       />
     </div>
   );
-}
+};
 
 export default CommentList;
 

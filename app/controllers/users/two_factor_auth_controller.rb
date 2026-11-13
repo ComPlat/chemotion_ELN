@@ -38,7 +38,7 @@ module Users
       token = params[:jwt]
 
       begin
-        @payload = JsonWebToken.decode(token)
+        @payload = JsonWebToken.decode(token, purpose: :two_factor_auth)
         if @payload[:action] != 'activate_2fa'
           @header = I18n.t('two_factor_auth_controller.decode_jwt.error_header')
           @message = I18n.t('two_factor_auth_controller.decode_jwt.error_message_wrong_token')

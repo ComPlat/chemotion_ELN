@@ -17,7 +17,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
 import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
@@ -29,6 +29,7 @@ import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWit
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 export default class ResearchPlanDetailsContainers extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     const { researchPlan } = props;
@@ -142,9 +143,9 @@ export default class ResearchPlanDetailsContainers extends Component {
       e.stopPropagation();
       SpectraActions.ToggleModalNMRDisplayer();
       SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
-    }
+    };
 
-    const { chmos } = UserStore.getState();
+    const { chmos } = this.context.userStore || {};
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (
@@ -266,7 +267,9 @@ export default class ResearchPlanDetailsContainers extends Component {
 
     const containerHeaderDeleted = (container) => {
       const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
-      const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
+      const titleKind = kind
+        ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`)
+        : '';
 
       const status = container.extended_metadata.status && container.extended_metadata.status !== '';
       const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';

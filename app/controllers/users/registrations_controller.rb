@@ -2,6 +2,9 @@
 
 module Users
   class RegistrationsController < Devise::RegistrationsController
+    # The frontend talks JSON only. Reject other formats before anything is
+    # created, updated or destroyed.
+    prepend_before_action :ensure_json_request, only: %i[create update destroy]
     before_action :check_otp, only: %i[destroy update]
 
     def new
@@ -26,6 +29,39 @@ module Users
       else
         resource_not_saved_handler
       end
+    end
+
+    # PUT /resource
+    # We need to use a copy of the resource because we don't want to change
+    # the current user in place.
+
+    # rubocop:disable Metrics/AbcSize
+    def update
+      self.resource = resource_class.to_adapter.get!(send(:"current_#{resource_name}").to_key)
+      prev_unconfirmed_email = resource.unconfirmed_email if resource.respond_to?(:unconfirmed_email)
+
+      resource_updated = update_resource(resource, account_update_params)
+      yield resource if block_given?
+      if resource_updated
+        bypass_sign_in resource, scope: resource_name if sign_in_after_change_password?
+        message_key = prev_unconfirmed_email ? :update_needs_confirmation : :updated
+
+        render json: { message: warden_messages(message_key, 'Your account has been updated successfully.') },
+               status: :ok
+      else
+        render json: { message: resource.errors.messages }, status: :bad_request
+      end
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    # DELETE /resource
+    def destroy
+      resource.destroy
+      Devise.sign_out_all_scopes ? sign_out : sign_out(resource_name)
+
+      default_message = 'Bye! Your account has been successfully cancelled. We hope to see you again soon.'
+      render json: { message: warden_messages(:destroyed, default_message) },
+             status: Devise.responder.redirect_status
     end
 
     protected
@@ -57,21 +93,30 @@ module Users
 
     def resource_saved_handler
       if resource.active_for_authentication?
-        set_flash_message :notice, :signed_up if is_flashing_format?
         sign_up(resource_name, resource)
-        respond_with resource, location: after_sign_up_path_for(resource)
+
+        token = Usecases::Authentication::BuildToken.by_user(resource)
+        render json: { token: token, role: resource.type }, status: :ok
       else
-        set_flash_message :notice, :"signed_up_but_#{resource.inactive_message}" if is_flashing_format?
         expire_data_after_sign_in!
-        respond_with resource, location: after_inactive_sign_up_path_for(resource)
+
+        render json: { message: warden_messages(:signed_up_but_inactive, 'Your account is inactive') },
+               status: :accepted
       end
     end
 
     def resource_not_saved_handler
       clean_up_passwords resource
-      @validatable = devise_mapping.validatable?
-      @minimum_password_length = resource_class.password_length.min if @validatable
-      respond_with resource
+      render json: { error_messages: resource.errors.messages }, status: :bad_request
+    end
+
+    def warden_messages(key, default)
+      I18n.t(
+        warden.message || key,
+        scope: 'devise.registrations',
+        resource_name: resource_name,
+        default: default,
+      )
     end
 
     def assign_email

@@ -1,7 +1,6 @@
-import { keys, values } from 'mobx';
-import { flow, types } from 'mobx-state-tree';
+import { values } from 'mobx';
+import { flow, getRoot, types } from 'mobx-state-tree';
 import CalendarEntryFetcher from 'src/fetchers/CalendarEntryFetcher';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 let entriesRequestGeneration = 0;
@@ -72,7 +71,7 @@ export const CalendarStore = types
         const params = {
           start_time: self.start.toISOString(),
           end_time: self.end.toISOString(),
-          created_by: UserStore.getState().currentUser?.id,
+          created_by: getRoot(self).userStore.currentUser?.id,
           eventable_type: self.eventable_type,
           eventable_id: self.eventable_id,
           with_shared_collections: self.eventable_type ? true : self.show_shared_collection_entries
@@ -228,7 +227,7 @@ export const CalendarStore = types
       };
     },
     canEditEntry(entry) {
-      return !entry.created_by || entry.created_by === UserStore.getState().currentUser?.id;
+      return !entry.created_by || entry.created_by === getRoot(self).userStore.currentUser?.id;
     },
     setEditorValues(entry) {
       self.current_entry = entry;
@@ -320,7 +319,7 @@ export const CalendarStore = types
         element_short_label: entry.element_short_label,
         notified_users: entry.notified_users,
         notify_users: entry.notify_user_ids,
-      }
+      };
     },
     transformEntryForApi(entry) {
       return {

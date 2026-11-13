@@ -1,9 +1,9 @@
-import _ from 'lodash';
+import { cloneDeep, filter, uniq } from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
-import UserStore from '../stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 const rfValueFormat = (input) => {
@@ -128,7 +128,6 @@ const atomCountCInNMRDescription = (cNmrStr) => {
   return count;
 };
 
-
 const hNmrCount = (nmrStr) => {
   if (typeof (nmrStr) !== 'string') {
     return '';
@@ -179,7 +178,7 @@ const isEmwInMargin = (diff) => {
 const emwInStr = (emw, msStr) => {
   const peaks = msStr.split(/,|:|;|=/).map((s) => {
     const t = s.replace('found', '')
-      .replace(/[\(\[\{](.*?)[\)\]\}]/g, '')
+      .replace(/[([{](.*?)[)\]}]/g, '')
       .replace(/\s/g, '');
     return t.match(/[a-zA-Z]/) ? 0 : parseFloat(t);
   });
@@ -210,8 +209,8 @@ const SameEleTypId = (orig, next) => {
 };
 
 const markdownChemicalFormular = (text) => {
-  text = text.replace(/(C|H|O|N|S)(\d+)/g, '$1<sub>$2</sub>');
-  return text;
+  const replacedText = text.replace(/(C|H|O|N|S)(\d+)/g, '$1<sub>$2</sub>');
+  return replacedText;
 };
 
 const commonFormatPattern = [
@@ -393,7 +392,7 @@ const sampleAnalysesFormatPattern = {
 };
 
 const formatAnalysisContent = function autoFormatAnalysisContentByPattern(analysis) {
-  const content = _.cloneDeep(analysis.extended_metadata.content);
+  const content = cloneDeep(analysis.extended_metadata.content);
   let kind = analysis.extended_metadata.kind || '';
   kind = kind.split('|')[0] || kind;
   const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
@@ -434,23 +433,23 @@ const instrumentText = (analysis) => {
   }
   let ttlIns = [];
   if (analysis.children && analysis.children.length > 0) {
-    ttlIns = _.filter(analysis.children, o => o.extended_metadata &&
+    ttlIns = filter(analysis.children, o => o.extended_metadata &&
       o.extended_metadata.instrument && o.extended_metadata.instrument.trim().length > 0);
   }
   return ` Instrument: ${ttlIns.length}/${analysis.children.length}`;
 };
 
 const getElementSegments = (elementName, tabs) => {
-  let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-  let labels = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
+  const { segmentKlasses } = rootStore.userStore || [];
+  const { currentUser } = rootStore.userStore || {};
+  const labels = segmentKlasses.filter(s => s.element_klass.name === elementName).map(s => s.label);
   const defaultTabs = ['properties', 'analyses'];
-  const allTabs = _.uniq([...defaultTabs, ...tabs]);
+  const allTabs = uniq([...defaultTabs, ...tabs]);
   if (!MatrixCheck(currentUser.matrix, 'segment')) {
     return allTabs.filter((key) => !labels.includes(key));
   }
-  return _.uniq(allTabs.concat(labels));
-}
+  return uniq(allTabs.concat(labels));
+};
 
 /**
  * Check if a material/sample is a Sequence-Based Macromolecule Sample

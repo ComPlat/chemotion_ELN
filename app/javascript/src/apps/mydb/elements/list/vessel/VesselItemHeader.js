@@ -1,12 +1,9 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
-function VesselItemHeader({ groupItems }) {
-  const { currentCollection } = UIStore.getState();
+const VesselItemHeader = ({ groupItems }) => {
   const vessel = groupItems?.[0];
 
   const getGroupKey = useCallback(
@@ -20,16 +17,7 @@ function VesselItemHeader({ groupItems }) {
       return;
     }
 
-    const uri = `/collection/${currentCollection.id}/vessel_template/${templateId}`;
-    Aviator.navigate(uri, { silent: true });
-
-    elementShowOrNew({
-      type: 'vessel_template',
-      params: {
-        vesselTemplateID: templateId,
-        collectionID: currentCollection.id,
-      },
-    });
+    aviatorNavigation('vessel_template', templateId, true, true);
   };
 
   const groupKey = getGroupKey(vessel);
@@ -48,14 +36,14 @@ function VesselItemHeader({ groupItems }) {
         )}
       >
         <Button
-          onClick={() => navigateToTemplate(vessel?.vesselTemplateId)}
+          onClick={(e) => { e.stopPropagation(); navigateToTemplate(vessel?.vesselTemplateId); }}
         >
           Edit
         </Button>
       </OverlayTrigger>
     </div>
   );
-}
+};
 
 VesselItemHeader.propTypes = {
   groupItems: PropTypes.arrayOf(

@@ -17,7 +17,7 @@ module Mutations
         first_name: user.first_name,
         last_name: user.last_name
       }
-      token = JsonWebToken.encode(payload)
+      token = JsonWebToken.encode(payload, purpose: :login)
 
       { token: token }
     end

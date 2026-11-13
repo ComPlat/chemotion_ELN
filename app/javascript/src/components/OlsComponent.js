@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import TreeSelect from 'antd/lib/tree-select';
 import PropTypes from 'prop-types';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const filterTreeNode = (input, child) => String(child.props.search && child.props.search.toLowerCase())
   .indexOf(input && input.toLowerCase()) !== -1;
@@ -33,7 +33,7 @@ export default class OlsTreeSelect extends Component {
   }
 
   render() {
-    const { rxnos, chmos, bao } = UserStore.getState();
+    const { rxnos, chmos, bao } = rootStore.userStore;
     let treeData = [];
     const height = this.props.selectName === 'rxno' ? '35px' : null;
     switch (this.props.selectName) {
@@ -56,7 +56,7 @@ export default class OlsTreeSelect extends Component {
         name={this.props.selectName}
         showSearch
         className='w-100'
-        style={{height}}
+        style={{ height }}
         value={this.props.selectedValue}
         treeData={treeData}
         placeholder="Select..."
