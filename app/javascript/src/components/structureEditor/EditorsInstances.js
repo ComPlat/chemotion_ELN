@@ -6,6 +6,8 @@ import loadScripts from 'src/components/structureEditor/loadScripts';
 import { rootStore } from 'src/stores/mobx/RootStore';
 import UIFetcher from 'src/fetchers/UIFetcher';
 
+const DEFAULT_EDITOR_ID = 'ketcher';
+
 export const notifyError = (message) => {
   rootStore.notificationsStore.add({
     title: 'Structure Editor error',
@@ -92,7 +94,8 @@ export async function getEditorById(editorId, configs = {}, availableEditors = n
 }
 
 /**
- * Asynchronously creates a map of editor instances based on matrice configurations.
+ * Asynchronously creates a map of editor instances: the built-in Ketcher editor,
+ * followed by the licensed editors enabled through the matrice configurations.
  *
  * @param {Object} [_state={}] - Optional state object containing matriceConfigs.
  * @param {Array} [_state.matriceConfigs] - Array of matrice configuration objects.
@@ -102,10 +105,15 @@ export async function createEditors(_state = {}) {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors?.editors || {};
 
-  const editorPromises = matriceConfigs.map(({ configs }) => {
-    const id = configs.editor;
-    return getEditorById(id, configs, availableEditors);
-  });
+  // Ketcher is the built-in editor and is always offered.
+  const ketcherPromise = getEditorById(DEFAULT_EDITOR_ID, { editor: DEFAULT_EDITOR_ID }, availableEditors)
+    .catch((error) => {
+      console.error('Failed to initialize Ketcher editor:', error);
+      return null;
+    });
+  const editorPromises = [ketcherPromise, ...matriceConfigs
+    .filter(({ configs }) => configs?.editor && configs.editor !== DEFAULT_EDITOR_ID)
+    .map(({ configs }) => getEditorById(configs.editor, configs, availableEditors))];
 
   const resolvedEditors = await Promise.all(editorPromises);
 

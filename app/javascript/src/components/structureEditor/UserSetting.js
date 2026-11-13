@@ -7,6 +7,8 @@ import { Select } from 'src/components/common/Select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const DEFAULT_EDITOR = 'ketcher';
+// Ketcher is the built-in editor and is always offered.
+const KETCHER_OPTION = { value: DEFAULT_EDITOR, label: `ketcherEditor (${DEFAULT_EDITOR})` };
 
 function UserSetting() {
   const [editors, setEditors] = useState([]);
@@ -39,13 +41,14 @@ function UserSetting() {
     const seenLabels = new Set();
     const result = [];
 
-    const firstOption = { value: '', label: 'Select an option' };
-    if (!seenLabels.has(firstOption.label)) {
-      result.push(firstOption);
-      seenLabels.add(firstOption.label);
-    }
+    [{ value: '', label: 'Select an option' }, KETCHER_OPTION].forEach((option) => {
+      result.push(option);
+      seenLabels.add(option.label);
+    });
 
     editors.forEach((e) => {
+      if (e.configs.editor === DEFAULT_EDITOR) return;
+
       const label = `${e.label} (${e.configs.editor})`;
       if (!seenLabels.has(label)) {
         result.push({

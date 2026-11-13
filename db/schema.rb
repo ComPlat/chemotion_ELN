@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_04_200000) do
+ActiveRecord::Schema.define(version: 2026_11_13_100001) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -2055,7 +2055,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       	    select coalesce(sum(2^mx.id),0) from (
       		    select distinct m1.* from matrices m1, users u1
       				left join users_groups ug1 on ug1.user_id = u1.id
-      		      where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      		      where u.id = u1.id and m1.deleted_at is null and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       	      except
       		    select distinct m2.* from matrices m2, users u2
       				left join users_groups ug2 on ug2.user_id = u2.id
@@ -2067,7 +2067,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       		  	select coalesce(sum(2^mx.id),0) from (
       			   select distinct m1.* from matrices m1, users u1
       				 left join users_groups ug1 on ug1.user_id = u1.id
-      			     where u.id = u1.id and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
+      			     where u.id = u1.id and m1.deleted_at is null and ((m1.enabled = true) or ((u1.id = any(m1.include_ids)) or (u1.id = ug1.user_id and ug1.group_id = any(m1.include_ids))))
       			   except
       			   select distinct m2.* from matrices m2, users u2
       				 left join users_groups ug2 on ug2.user_id = u2.id
@@ -2090,11 +2090,11 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
       	end if;
 
       	if (TG_OP='UPDATE') then
-      	  if new.enabled <> old.enabled or new.deleted_at <> new.deleted_at then
+      	  if new.enabled is distinct from old.enabled or new.deleted_at is distinct from old.deleted_at then
             PERFORM generate_users_matrix(null);
-      	  elsif new.include_ids <> old.include_ids then
+      	  elsif new.include_ids is distinct from old.include_ids then
             PERFORM generate_users_matrix(new.include_ids || old.include_ids);
-          elsif new.exclude_ids <> old.exclude_ids then
+          elsif new.exclude_ids is distinct from old.exclude_ids then
             PERFORM generate_users_matrix(new.exclude_ids || old.exclude_ids);
       	  end if;
       	end if;

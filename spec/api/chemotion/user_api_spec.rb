@@ -89,14 +89,19 @@ describe Chemotion::UserAPI do
 
   describe 'GET /api/v1/users/list_editors' do
     before do
-      create(:matrice, name: 'ketcherEditor', enabled: true)
+      create(:matrice, name: 'chemdrawEditor', enabled: true)
       create(:matrice, name: 'marvinjsEditor', enabled: false)
+      create(:matrice, name: 'ketcherEditor', enabled: true)
       user.reload
       get '/api/v1/users/list_editors'
     end
 
-    it 'returns only the editors enabled for the current user' do
-      expect(parsed_json_response['matrices'].pluck('name')).to eq(['ketcherEditor'])
+    it 'returns only the licensed editors enabled for the current user' do
+      expect(parsed_json_response['matrices'].pluck('name')).to eq(['chemdrawEditor'])
+    end
+
+    it 'never lists ketcherEditor' do
+      expect(parsed_json_response['matrices'].pluck('name')).not_to include('ketcherEditor')
     end
   end
 
