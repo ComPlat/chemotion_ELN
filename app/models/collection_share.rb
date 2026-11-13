@@ -32,6 +32,8 @@
 #  fk_rails_...  (shared_with_id => users.id)
 #
 class CollectionShare < ApplicationRecord
+  has_logidze
+
   # Cumulative permission ladder, ordered by how destructive the capability is. A check is always
   # "a share exists with permission_level >= N", so every rung silently grants the ones below it.
   #
