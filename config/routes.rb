@@ -58,7 +58,7 @@ Rails.application.routes.draw do
     post 'two_factor_auth/verify'
   end
 
-  get 'editor',      to: 'pages#home'
+  get 'editor', to: 'pages#home'
 
   # route for the radar oauth callback
   namespace :oauth do
