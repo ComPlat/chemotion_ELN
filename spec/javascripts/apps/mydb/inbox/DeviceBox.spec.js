@@ -256,6 +256,82 @@ describe('Inbox device folder visibility during refresh', () => {
     sinon.assert.calledOnceWithExactly(deleteFiles, [1103]);
   });
 
+  [
+    ['HTTP 500 with JSON', () => Promise.resolve(new Response('{"error":"Delete failed"}', { status: 500 }))],
+    ['HTTP 500 with HTML', () => Promise.resolve(new Response('<html>Delete failed</html>', { status: 500 }))],
+    ['HTTP 401', () => Promise.resolve(new Response('{"error":"Unauthorized"}', { status: 401 }))],
+    ['a network failure', () => Promise.reject(new TypeError('Failed to fetch'))],
+  ].forEach(([failure, response]) => {
+    it(`keeps both selected datasets and page 2 when their DELETE requests fail with ${failure}`, async () => {
+      alt.dispatch(fetchContainerActionId, {
+        inbox: { id: 100, inbox_count: 38, children_count: 37, children: [dataset(102), dataset(103)] },
+        containerId: 100,
+        currentContainerPage: 2,
+      });
+      InboxActions.fetchInboxContainer.resetHistory();
+      const fetch = sinon.stub(global, 'fetch').callsFake(response);
+      const deleteFiles = sinon.stub(AttachmentFetcher, 'bulkDeleteAttachments');
+      sinon.stub(console, 'log');
+      wrapper.setState({ checkedDeviceIds: [102, 103], checkedIds: [1102, 1103] });
+      const count = InboxStore.getState().numberOfAttachments;
+
+      wrapper.instance().deleteCheckedDataset(wrapper.instance().props.device_box);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      sinon.assert.calledTwice(fetch);
+      expect(fetch.getCalls().map((call) => call.args[0])).toEqual([
+        '/api/v1/containers/102', '/api/v1/containers/103',
+      ]);
+      fetch.getCalls().forEach((call) => expect(call.args[1].method).toBe('DELETE'));
+      expect(wrapper.state('visible')).toBe(true);
+      expect(wrapper.find(Pagination).prop('currentDataSetPage')).toBe(2);
+      expect(wrapper.instance().props.device_box.children.map((child) => child.id)).toEqual([102, 103]);
+      expect(wrapper.instance().props.device_box.children_count).toBe(37);
+      expect(InboxStore.getState().numberOfAttachments).toBe(count);
+      sinon.assert.notCalled(InboxActions.fetchInboxContainer);
+      sinon.assert.notCalled(deleteFiles);
+    });
+  });
+
+  [false, true].forEach((bothSucceed) => {
+    const outcome = bothSucceed ? 'both datasets succeed' : 'one dataset fails';
+    it(`removes only confirmed deletes when ${outcome}`, async () => {
+      alt.dispatch(fetchContainerActionId, {
+        inbox: { id: 100, inbox_count: 38, children_count: 37, children: [dataset(102), dataset(103)] },
+        containerId: 100,
+        currentContainerPage: 2,
+      });
+      InboxActions.fetchInboxContainer.resetHistory();
+      const fetch = sinon.stub(global, 'fetch').callsFake((url) => Promise.resolve(
+        bothSucceed || url.endsWith('/102')
+          ? new Response(null, { status: 204 })
+          : new Response('{"error":"Delete failed"}', { status: 500 })
+      ));
+      const deleteFiles = sinon.stub(AttachmentFetcher, 'bulkDeleteAttachments');
+      sinon.stub(InboxFetcher, 'fetchInboxUnsorted').resolves({
+        inbox: { inbox_count: bothSucceed ? 36 : 37, unlinked_attachments: [] },
+      });
+      sinon.stub(console, 'log');
+      wrapper.setState({ checkedDeviceIds: [102, 103], checkedIds: [1102, 1103] });
+
+      wrapper.instance().deleteCheckedDataset(wrapper.instance().props.device_box);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      sinon.assert.calledTwice(fetch);
+      sinon.assert.notCalled(deleteFiles);
+      expect(wrapper.instance().props.device_box.children.map((child) => child.id))
+        .toEqual(bothSucceed ? [] : [103]);
+      expect(wrapper.instance().props.device_box.children_count).toBe(bothSucceed ? 35 : 36);
+      expect(wrapper.state('visible')).toBe(true);
+      if (bothSucceed) {
+        sinon.assert.calledOnceWithExactly(InboxActions.fetchInboxContainer, 100, 1);
+      } else {
+        sinon.assert.notCalled(InboxActions.fetchInboxContainer);
+        expect(wrapper.find(Pagination).prop('currentDataSetPage')).toBe(2);
+      }
+    });
+  });
+
   it('keeps a pending move excluded when deleting the last page loads page 1', async () => {
     const attachment = InboxStore.getState().inbox.children[0].children[0].attachments[0];
     const targetDataset = { attachments: [] };
