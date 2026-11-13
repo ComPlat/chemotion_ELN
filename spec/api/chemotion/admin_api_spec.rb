@@ -124,16 +124,60 @@ RSpec.describe Chemotion::AdminAPI do
   end
 
   describe 'POST /api/v1/admin/olsEnableDisable' do
+    let(:dir) { Pathname.new(Dir.mktmpdir) }
+    let!(:root) { OlsTerm.create!(owl_name: 'chmo', term_id: 'CHMO:1', label: 'root') }
+    let!(:middle) { OlsTerm.create!(owl_name: 'chmo', term_id: 'CHMO:2', label: 'middle', parent: root) }
+    let!(:same_id_elsewhere) { OlsTerm.create!(owl_name: 'rxno', term_id: 'CHMO:2', label: 'other') }
+
     before do
-      # Isolate the public-file writes; we only assert the HTTP contract here.
-      allow(OlsTerm).to receive(:write_public_file)
-      post '/api/v1/admin/olsEnableDisable/', params: { owl_name: 'chebi' }
+      OlsTerm.create!(owl_name: 'chmo', term_id: 'CHMO:3', label: 'leaf', parent: middle)
+      allow(OlsTerms::PublicFiles).to receive(:default_dir).and_return(dir)
+      post '/api/v1/admin/olsEnableDisable/', params: { owl_name: 'chmo', disableIds: ['CHMO:2 | middle'] }
     end
+
+    after { FileUtils.remove_entry(dir) }
 
     # The fetcher (AdminFetcher.olsTermDisableEnable) treats success as status 204;
     # this pins that contract so a status change can't silently break the admin UI.
     it 'returns 204 No Content on success' do
       expect(response).to have_http_status(:no_content)
+    end
+
+    it 'switches the term in the given ontology only' do
+      expect(middle.reload.is_enabled).to be false
+      expect(same_id_elsewhere.reload.is_enabled).to be true
+    end
+
+    it 'writes the full tree with the switched term disabled' do
+      tree = JSON.parse(dir.join('chmo.json').read)['ols_terms']
+      expect(tree.dig(0, 'children', 0)).to include('value' => 'CHMO:2 | middle', 'is_enabled' => false)
+    end
+
+    it 'writes the picker tree with the enabled leaf under its nearest enabled ancestor' do
+      tree = JSON.parse(dir.join('chmo.edited.json').read)['ols_terms']
+      expect(tree.first['title']).to eq OlsTerm::NODE_RECENTLY_SELECTED[:title]
+      expect(tree.dig(1, 'value')).to eq 'CHMO:1 | root'
+      expect(tree.dig(1, 'children').pluck('value')).to eq ['CHMO:3 | leaf']
+    end
+  end
+
+  describe 'POST /api/v1/admin/importOlsTerms' do
+    let(:file) { Rack::Test::UploadedFile.new(Tempfile.new(['chmo', '.owl']).path, 'application/rdf+xml') }
+
+    before do
+      allow(OlsTerm).to receive(:import_and_create_ols_from_file_path)
+      allow(OlsTerms::PublicFiles).to receive(:write)
+      allow(OlsTerm).to receive(:disable_branch_by)
+      post '/api/v1/admin/importOlsTerms/', params: { file: file }
+    end
+
+    it 'disables the BFO:0000002 branch of the imported ontology only' do
+      expect(OlsTerm).to have_received(:disable_branch_by).with(owl_name: a_string_starting_with('chmo'),
+                                                                term_id: 'BFO:0000002')
+    end
+
+    it 'rewrites the public files of the imported ontology' do
+      expect(OlsTerms::PublicFiles).to have_received(:write).with(a_string_starting_with('chmo'))
     end
   end
 

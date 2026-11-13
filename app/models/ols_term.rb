@@ -29,6 +29,16 @@ class OlsTerm < ApplicationRecord
     title: '-- Recently selected --', selectable: false, children: [], value: 'recently selected'
   }.freeze
 
+  # Short synonyms of the CHMO terms offered as quick picks in OlsComponent.js, set on
+  # import so that a term picked from the tree gets the same value as the quick pick.
+  # Recent CHMO releases list some of these abbreviations as related synonyms only.
+  CHMO_SYNONYMS = {
+    'CHMO:0000595' => '13C NMR',
+    'CHMO:0001009' => 'HPLC',
+    'CHMO:0000630' => 'IR',
+    'CHMO:0000156' => 'XRD',
+  }.freeze
+
   class << self
     # rubocop:disable Lint/PercentStringArray
     # NB: quoted "desc" to avoid conflict reserved word in SQL
@@ -64,30 +74,72 @@ class OlsTerm < ApplicationRecord
 
     SQL_BULK_INSERT_SANITIZE = "#{SQL_BULK_INSERT} #{INSERT_VALUE_QUESTION_MARKS}"
 
+    SQL_REBUILD_ANCESTRY = <<~SQL.squish
+      WITH RECURSIVE terms AS (
+        SELECT id, term_id, ancestry_term_id FROM ols_terms WHERE owl_name = :owl_name
+      ), tree AS (
+        SELECT t.id, t.term_id, '/'::text AS path
+        FROM terms t
+        WHERE NOT EXISTS (SELECT 1 FROM terms p WHERE p.term_id = t.ancestry_term_id)
+        UNION ALL
+        SELECT c.id, c.term_id, tree.path || tree.id || '/'
+        FROM terms c JOIN tree ON c.ancestry_term_id = tree.term_id
+      )
+      UPDATE ols_terms o SET ancestry = coalesce(tree.path, '/')
+      FROM terms LEFT JOIN tree ON tree.id = terms.id
+      WHERE o.id = terms.id AND o.ancestry IS DISTINCT FROM coalesce(tree.path, '/')
+    SQL
+
     def delete_owl_by_name(owl_name)
       delete_sql =  sanitize_sql([ SQL_BULK_DELETE, owl_name])
       ApplicationRecord.connection.exec_query(delete_sql)
     end
 
+    # Replaces the terms of +owl_name+ with the classes of an OWL file and applies the
+    # post-import defaults:
+    # - the BFO:0000002 (continuant) branch is disabled;
+    # - the upper-level terms BFO:0000001 (entity) and BFO:0000003 (occurrent) are disabled
+    #   on their own, so the term pickers start at their subclasses (e.g. process);
+    # - the CHMO quick-pick terms get their short synonyms ({CHMO_SYNONYMS}).
+    #
+    # @param owl_name [String] ontology name, e.g. +chmo+
+    # @param file_path [String] path to the OWL (RDF/XML) file
+    # @return [void]
+    def import_owl(owl_name, file_path)
+      delete_owl_by_name(owl_name)
+      import_and_create_ols_from_file_path(owl_name, file_path)
+      disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
+      disable_by_ids(where(owl_name: owl_name, term_id: %w[BFO:0000001 BFO:0000003]).pluck(:id))
+      return unless owl_name == 'chmo'
+
+      CHMO_SYNONYMS.each { |term_id, synonym| find_by(owl_name: owl_name, term_id: term_id)&.update!(synonym: synonym) }
+    end
+
     def import_and_create_ols_from_file_path(owl_name, file_path)
       xml_doc = Nokogiri::XML(File.open(file_path)).to_xml
       json_doc = Hash.from_xml(xml_doc).as_json
-      all_terms = json_doc['RDF']['Class']
+      all_terms = unique_term_nodes(Array.wrap(json_doc['RDF']['Class']))
       version_info = json_doc['RDF']['Ontology']
+      replacements = obsolete_replacements(all_terms)
       all_terms.each_slice(100) do |nodes|
-        create_from_owl_nodes(nodes, owl_name, version_info: version_info)
+        create_from_owl_nodes(nodes, owl_name, version_info: version_info, replacements: replacements)
       end
       rebuilt_ancestry_by_owl_name(owl_name)
     end
 
     # bulk insert from a slice of owl nodes
-    def create_from_owl_nodes(nodes, owl_name, version_info: {})
+    #
+    # @param replacements [Hash{String => String}] obsolete term id => replacing term id,
+    #   applied to parent links (see {#obsolete_replacements})
+    def create_from_owl_nodes(nodes, owl_name, version_info: {}, replacements: {})
       values = []
       created_at = Time.now
 
       # compile sanitized values
-      nodes.select{|node| node['id'].present? && node['deprecated'] != 'true' }.each do |node|
-        subClassTermId = extract_subclass_term_id_from_node(node)
+      nodes.each do |node|
+        next if (term_id = node_term_id(node)).nil? || node['deprecated'] == 'true' || node['label'].blank?
+
+        subClassTermId = replaced_term_id(extract_subclass_term_id_from_node(node), replacements)
 
         if (synonyms = node['hasExactSynonym'].presence)
           if synonyms.is_a?(String)
@@ -101,7 +153,7 @@ class OlsTerm < ApplicationRecord
         # to correspond in order to SQL_BULK_INSERT listed columns
         value = [
           owl_name,
-          node['id'],
+          term_id,
           subClassTermId,
           node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
           synonym,
@@ -117,27 +169,23 @@ class OlsTerm < ApplicationRecord
       ApplicationRecord.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
     end
 
+    # Sets every term's +ancestry+ to its full materialized_path2 path ("/root/…/parent/")
+    # from the +ancestry_term_id+ links, whatever the order the terms were imported in.
+    #
+    # A term whose parent is not in the ontology is a root. Each term has a single parent,
+    # so the recursion from the roots cannot loop; terms on a cycle are never reached and
+    # become roots as well.
+    #
+    # @param owl_name [String] ontology name, e.g. +chmo+
+    # @return [Integer] number of terms whose ancestry changed
     def rebuilt_ancestry_by_owl_name(owl_name)
-      build_direct_parent_ancestry(owl_name)
-      reprocess_count = 10
-      while reprocess_count.positive? do
-        count = 0
-        OlsTerm.where(owl_name: owl_name).find_each do |o|
-          next if (root = o.root) == o
-          next if root.root == root
-          new_a = root.ancestry + o.ancestry
-          o.update_columns(ancestry: new_a)
-          count += 1
-        end
-        break if count == 0
-        reprocess_count -= 1
-      end
+      connection.exec_update(sanitize_sql([SQL_REBUILD_ANCESTRY, { owl_name: owl_name }]))
     end
 
-    def disable_branch_by(args)
-      a = args.slice(:owl_name, :term_id)
-      node = find_by(**a)
+    def disable_branch_by(owl_name:, term_id:)
+      node = find_by(owl_name: owl_name, term_id: term_id)
       return unless node
+
       node_ids = [node.id] + node.descendants.pluck(:id)
       disable_by_ids(node_ids)
     end
@@ -156,23 +204,55 @@ class OlsTerm < ApplicationRecord
       ApplicationRecord.connection.exec_query(sanitized_sql)
     end
 
-    def write_public_file(owl_name, owl)
-      file_path = Rails.public_path.join('ontologies', "#{owl_name}.json")
-      File.write(file_path, owl.to_json)
-    end
     private
 
-    def build_direct_parent_ancestry(owl_name)
-      where(owl_name: owl_name).find_each do |o|
-        next if o.ancestry_term_id.nil?
-        ancestor = OlsTerm.find_by(owl_name: owl_name, term_id: o.ancestry_term_id)
-        next if ancestor.nil?
-        if ancestor.ancestry.nil?
-          new_a = ancestor.id.to_s
-        else
-          new_a = ancestor.ancestry + ancestor.id.to_s + '/'
-        end
-        o.update_columns(ancestry: new_a)
+    # The term id of an OWL class: the id encoded in its OBO class IRI
+    # (+http://purl.obolibrary.org/obo/BFO_0000002+ gives +BFO:0000002+), the same mapping
+    # {#extract_subclass_term_id_from_node} applies to parent links; for other IRIs, its
+    # +oboInOwl:id+. The IRI wins because it is the class identifier: classes imported from
+    # other ontologies (BFO, OBI, IAO, ...) often carry no +oboInOwl:id+, and an annotation
+    # can be wrong.
+    #
+    # @param node [Hash] an +owl:Class+ element parsed with +Hash.from_xml+
+    # @return [String, nil] +nil+ for a class without either
+    def node_term_id(node)
+      iri = node['rdf:about'].to_s
+      return iri.split('/').last.tr('_', ':') if iri.match?(%r{/obo/[A-Za-z]+_\w+\z})
+
+      node['id'].presence
+    end
+
+    # Maps each deprecated class that names its successor ("term replaced by",
+    # +IAO:0100001+) to that successor. Deprecated classes are not imported, so without
+    # this their subclasses would become roots.
+    #
+    # @param nodes [Array<Hash>] +owl:Class+ elements parsed with +Hash.from_xml+
+    # @return [Hash{String => String}] obsolete term id => replacing term id
+    def obsolete_replacements(nodes)
+      nodes.each_with_object({}) do |node, map|
+        next unless node['deprecated'] == 'true' && (term_id = node_term_id(node))
+
+        successor = node['IAO_0100001']
+        successor = successor['rdf:resource'] if successor.is_a?(Hash)
+        map[term_id] = successor.split('/').last.tr('_', ':') if successor.is_a?(String)
+      end
+    end
+
+    # Follows +replacements+ from +term_id+ to a term that is not replaced; stops on a loop.
+    def replaced_term_id(term_id, replacements)
+      seen = Set.new
+      term_id = replacements[term_id] while replacements.key?(term_id) && seen.add?(term_id)
+      term_id
+    end
+
+    # Keeps the first class of each term id, so an OWL file that declares an id twice
+    # still imports.
+    def unique_term_nodes(nodes)
+      nodes.group_by { |node| node_term_id(node) }.flat_map do |term_id, same|
+        next same if term_id.nil?
+
+        Rails.logger.warn("OLS import: #{term_id} declared #{same.size} times, keeping the first") if same.size > 1
+        same.first
       end
     end
 
