@@ -114,12 +114,12 @@ class InboxActions {
     };
   }
 
-  removeAttachmentFromList(attachment) {
-    return attachment;
+  removeAttachmentFromList(attachment, persisted = false) {
+    return { attachment, persisted };
   }
 
-  removeUnlinkedAttachmentFromList(attachment) {
-    return attachment;
+  removeUnlinkedAttachmentFromList(attachment, persisted = false) {
+    return { attachment, persisted };
   }
 
   removeDatasetFromList(dataset) {
