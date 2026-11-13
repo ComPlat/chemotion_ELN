@@ -21,6 +21,9 @@ class UpdateSafetySheetPaths < ActiveRecord::Migration[6.1]
   def reorganize_safety_sheets
     Rails.logger.info "Running Safety Sheets Reorganizer..."
 
+    # SafetySheetsReorganizer is a standalone top-level class at a namespaced path,
+    # excluded from Zeitwerk (see config/application.rb), so require it explicitly.
+    require Rails.root.join('lib/chemotion/safety_sheets_reorganizer').to_s
     SafetySheetsReorganizer.reorganize!
 
     Rails.logger.info "Safety sheets reorganization complete."

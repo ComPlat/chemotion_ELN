@@ -23,7 +23,7 @@ Rails.application.configure do
   config.action_controller.perform_caching = false
 
   # Raise exceptions instead of rendering exception templates.
-  config.action_dispatch.show_exceptions = false
+  config.action_dispatch.show_exceptions = :none
 
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
@@ -55,4 +55,9 @@ Rails.application.configure do
   # Stop the development & test logs from taking up to much space
   # https://stackoverflow.com/questions/7784057/ruby-on-rails-log-file-size-too-large/37499682#37499682
   config.logger = ActiveSupport::Logger.new(config.paths['log'].first, 1, 50.megabytes)
+
+  # ActiveJob test adapter for perform_enqueued_jobs / have_enqueued_job. application.rb
+  # sets :delayed_job globally, and Rails 7.2's TestHelper no longer forces :test. The ENV
+  # override lets the delayed_job initializer spec re-run its subprocess with the real adapter.
+  config.active_job.queue_adapter = ENV.fetch('TEST_QUEUE_ADAPTER', 'test').to_sym
 end

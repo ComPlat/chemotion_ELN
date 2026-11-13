@@ -34,17 +34,11 @@
 class ComputedProp < ApplicationRecord
   acts_as_paranoid
   belongs_to :molecule
-  belongs_to :user, foreign_key: :creator, class_name: 'User'
+  belongs_to :user, foreign_key: :creator, class_name: 'User', inverse_of: :computed_props
 
-  enum status: %w[
-    pending
-    started
-    success
-    failure
-    retry
-    revoked
-    completed
-  ]
+  enum :status,
+       { 'pending' => 0, 'started' => 1, 'success' => 2, 'failure' => 3, 'retry' => 4, 'revoked' => 5,
+         'completed' => 6 }
 
   def self.parse_single(line_arr, target_str)
     matches = parse_data(line_arr, target_str)
@@ -57,12 +51,13 @@ class ComputedProp < ApplicationRecord
   end
 
   def self.parse_data(line_arr, target_str)
-    line = line_arr.select { |l| l.include?(target_str) }.first
+    line = line_arr.find { |l| l.include?(target_str) }
     line.scan(/([^\w])(-?(\d+\.)?(\d+))/)
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def self.from_raw(compute_id, data)
-    return if data.nil? || data.empty?
+    return if data.blank?
 
     cp = ComputedProp.find(compute_id)
     return if cp.nil?
@@ -95,12 +90,13 @@ class ComputedProp < ApplicationRecord
       t1_osc: parse_single(data_arr, 'T1 oscillator strengths in length'),
       t1_dipole: parse_multiple(data_arr, 'T1 electric transition dipole moment in length').join(' '),
       delta_est: delta_est,
-      tadf_rate: tadf_rate(1, singlet_oscilator_strg, s1_energy, delta_est)
+      tadf_rate: tadf_rate(1, singlet_oscilator_strg, s1_energy, delta_est),
     }
 
     cp.status = 'completed'
     cp.save!
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def self.wavelength(excited_energy)
     1239.84193 / excited_energy
@@ -111,8 +107,8 @@ class ComputedProp < ApplicationRecord
     l = wavelength(s1_energy) # in nm
     # l = S1_exp(wavelength(S1)) # in nm
 
-    pre = 2.0 * Math::PI * 1.6e-19**2.0 / (8.85e-12 * 9.1e-31 * 3.0e8) # all SI
-    post = 1.0 / (1.0 + 3.0 * Math.exp(delta_est / k_bt))
-    pre * iterate_num**3.0 * singlet_oscilator_strg / (1e-18 * l**2.0) * post
+    pre = 2.0 * Math::PI * (1.6e-19**2.0) / (8.85e-12 * 9.1e-31 * 3.0e8) # all SI
+    post = 1.0 / (1.0 + (3.0 * Math.exp(delta_est / k_bt)))
+    pre * (iterate_num**3.0) * singlet_oscilator_strg / (1e-18 * (l**2.0)) * post
   end
 end

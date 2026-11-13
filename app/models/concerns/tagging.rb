@@ -11,6 +11,7 @@ module Tagging
     after_restore :update_tag
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def update_tag
     klass = self.class.name
     case klass
@@ -47,7 +48,8 @@ module Tagging
       element = 'vessel'
     end
 
-    element && send(element)&.update_tag!(args)
+    element && send(element)&.update_tag!(**args)
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 end
 # rubocop: enable Metrics/CyclomaticComplexity

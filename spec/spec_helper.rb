@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
-# rubocop:disable Style/WordArray
-
 # require 'coveralls'
 # Coveralls.wear!
+
+# factory_bot_rails is required below before rails_helper boots the app; factory_bot's
+# load-time `delegate` needs ActiveSupport::Inflector, whose autoload isn't registered
+# yet on Rails 7.2. Load it explicitly to avoid "uninitialized constant ...::Inflector".
+require 'active_support/inflector'
+
 require 'logger'
 require 'rspec/repeat'
 require 'webmock/rspec'
@@ -15,7 +19,7 @@ require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-bad_smiles = YAML.load_file('spec/fixtures/structures/bad_smiles.yml')
+bad_smiles = YAML.unsafe_load_file('spec/fixtures/structures/bad_smiles.yml')
 
 def stub_pubchem_request(status, body, end_point)
   stub_request(:get, end_point)
@@ -42,7 +46,7 @@ Capybara.register_driver :selenium do |app|
   options.add_argument('--headless') unless ENV['USE_HEAD']
   options.add_argument('--no-sandbox')
 
-  capabilities = Selenium::WebDriver::Remote::Capabilities.chrome(
+  Selenium::WebDriver::Remote::Capabilities.chrome(
     loggingPrefs: {
       browser: 'ALL',
       client: 'ALL',
@@ -71,7 +75,8 @@ RSpec.configure do |config|
     if example.metadata[:type] == :feature && example.exception.present?
       metadata = example.metadata
       filename = "#{metadata[:full_description].parameterize}-#{metadata[:line_number]}-#{Time.now.to_f}.png"
-      save_screenshot(filename)
+      # intentional: screenshot of a failed feature spec, not a leftover debugging call
+      save_screenshot(filename) # rubocop:disable Lint/Debugger
     end
   end
 
@@ -209,7 +214,7 @@ RSpec.configure do |config|
       )
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_two_compounds.json'),
+        body: File.read(Rails.root.join('spec/fixtures/body_two_compounds.json').to_s),
         headers: { 'Content-Type' => 'application/json' },
       )
 
@@ -231,7 +236,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
+        body: File.read(Rails.root.join('spec/fixtures/body_123456789_CAS.xml').to_s),
         headers: { 'Content-Type' => 'application/xml' },
       )
 
@@ -243,7 +248,7 @@ RSpec.configure do |config|
       .with(headers: { 'Content-Type' => 'text/json' })
       .to_return(
         status: 200,
-        body: File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
+        body: File.read(Rails.root.join('spec/fixtures/body_643785_LCSS.json').to_s),
         headers: { 'Content-Type' => 'application/json' },
       )
   end
@@ -267,4 +272,3 @@ RSpec.configure do |config|
     repeat example, 3.times, verbose: true
   end
 end
-# rubocop:enable Style/WordArray

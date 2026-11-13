@@ -21,7 +21,7 @@ class Message < ApplicationRecord
     channel_id = args[:channel_id]
     user_id = args.delete(:message_from)
     user_ids = args.delete(:message_to) || [user_id]
-    content =  args[:message_content].presence || Channel.build_message(args)
+    content =  args[:message_content].presence || Channel.build_message(**args)
     channel_id ||= content&.fetch('channel_id', false)
     return unless channel_id
 

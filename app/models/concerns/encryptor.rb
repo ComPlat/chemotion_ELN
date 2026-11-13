@@ -16,7 +16,7 @@ module Encryptor
   private
 
   def encryptor
-    key = Rails.application.secrets.secret_key_base[0..31]
+    key = Rails.application.secret_key_base[0..31]
     ActiveSupport::MessageEncryptor.new(key, cipher: 'aes-256-gcm')
   end
 end
