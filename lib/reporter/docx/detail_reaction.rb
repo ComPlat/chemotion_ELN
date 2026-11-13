@@ -1,5 +1,6 @@
 module Reporter
   module Docx
+    # rubocop:disable-next Metrics/ClassLength
     class DetailReaction < Detail
       include Reactable
 
@@ -14,15 +15,26 @@ module Reporter
       end
 
       def content
-        desc_content, clean_desc = description
-        obs_content, clean_obs = observation
+        text_content.merge(
+          material_content,
+          tlc_content,
+          analyses: analyses.presence,
+          literatures: literatures.presence,
+          not_last: id != last_id,
+          is_reaction: true,
+          gp_title_html: gp_title_html,
+          synthesis_title_html: synthesis_title_html,
+          synthesis_html: synthesis_html,
+          variations: variations,
+        )
+      end
 
-        # Show weight percentage column if any material actually provides a (positive) value
-        show_wp = (starting_materials + reactants).any? do |m|
-          m && m[:weight_percentage].present? && m[:weight_percentage].to_f.positive?
-        end
+      private
 
+      def material_content
         {
+          # flag for templates to show weight percentage column/header
+          show_weight_percentage: @obj.weight_percentage && weight_percentage_given?,
           title: title,
           short_label: short_label,
           collections: collection_label,
@@ -33,32 +45,40 @@ module Reporter
           reactants: reactants,
           products: products,
           solvents: displayed_solvents.presence,
+          steps: steps,
+        }
+      end
+
+      def text_content
+        desc_content, clean_desc = description
+        obs_content, clean_obs = observation
+        {
           description: desc_content,
-          description_check: content_check(clean_desc),
+          description_check: content_check(clean_desc) && !text_per_step?,
+          observation: obs_content,
+          observation_check: content_check(clean_obs),
+        }
+      end
+
+      def tlc_content
+        {
           purification: purification.presence,
           dangerous_products: dangerous_products.presence,
           tlc_rf: rf_value,
           tlc_solvent: tlc_solvents,
           tlc_description: tlc_description,
-          observation: obs_content,
-          observation_check: content_check(clean_obs),
-          analyses: analyses.presence,
-          literatures: literatures.presence,
-          not_last: id != last_id,
           show_tlc_rf: rf_value.to_f != 0,
           show_tlc_solvent: tlc_solvents.present?,
           tlc_control: tlc_control,
-          is_reaction: true,
-          gp_title_html: gp_title_html,
-          synthesis_title_html: synthesis_title_html,
-          synthesis_html: synthesis_html,
-          variations: variations,
-          # flag for templates to show weight percentage column/header
-          show_weight_percentage: @obj.weight_percentage && show_wp,
         }
       end
 
-      private
+      # Show weight percentage column if any material actually provides a (positive) value
+      def weight_percentage_given?
+        (starting_materials + reactants).any? do |m|
+          m && m[:weight_percentage].present? && m[:weight_percentage].to_f.positive?
+        end
+      end
 
       def variations
         obj.variations.map do |var|
@@ -138,6 +158,7 @@ module Reporter
         obj.products.each_with_index do |p, idx|
           delta = delta +
                   sample_molecule_name_delta(p, font_size, true, idx, @std_rxn, @template) +
+                  intermediate_delta(p, font_size) +
                   [{ 'attributes' => { 'font-size' => font_size },
                      'insert' => ' (' }] +
                   mol_serial_delta(p[:molecule][:id], font_size) +
@@ -151,34 +172,39 @@ module Reporter
       end
 
       def products_delta
-        delta = []
-        counter = 0
-        st = @si_rxn_settings
-        st_name = st[:Name]
-        st_formula = st[:Formula]
-        st_cas = st[:CAS]
-        st_smiles = st[:Smiles]
-        st_inchi = st[:InChI]
-        st_ea = st[:EA]
-        st_m_mass = st[:'Molecular Mass']
-        st_e_mass = st[:'Exact Mass']
-        obj.products.each do |p|
-          counter += 1
-          m = p[:molecule]
-          cas = (p[:xref] && p[:xref][:cas]) || '- '
-          mol_name = sample_molecule_name_delta(p)
-          delta += st_name ? name_delta(mol_name, counter, p) : []
-          delta += st_formula ? sum_formular_delta(m) : []
-          delta += st_cas ? cas_delta(cas) : []
-          delta += st_m_mass ? mol_mass_delta(m) : []
-          delta += st_e_mass ? eat_mass_delta(m) : []
-          delta += st_ea ? ea_delta(p) : []
-          delta += [{ 'insert' => "\n" }]
-          delta += st_smiles ? smiles_delta(m) + [{ 'insert' => "\n" }] : []
-          delta += st_inchi ? inchi_delta(m) + [{ 'insert' => "\n" }] : []
-          delta += [{ 'insert' => "\n" }]
-        end
-        delta
+        obj.products.each_with_index.flat_map { |product, index| product_delta(product, index + 1) }
+      end
+
+      def product_delta(product, counter)
+        newline = [{ 'insert' => "\n" }]
+        enabled_deltas(product_details(product, counter)) + newline +
+          enabled_deltas(product_ids(product[:molecule], newline)) + newline
+      end
+
+      def product_details(product, counter)
+        m = product[:molecule]
+        cas = (product[:xref] && product[:xref][:cas]) || '- '
+        mol_name = sample_molecule_name_delta(product) + intermediate_delta(product)
+        {
+          Name: -> { name_delta(mol_name, counter, product) },
+          Formula: -> { sum_formular_delta(m) },
+          CAS: -> { cas_delta(cas) },
+          'Molecular Mass': -> { mol_mass_delta(m) },
+          'Exact Mass': -> { eat_mass_delta(m) },
+          EA: -> { ea_delta(product) },
+        }
+      end
+
+      def product_ids(molecule, newline)
+        { Smiles: -> { smiles_delta(molecule) + newline }, InChI: -> { inchi_delta(molecule) + newline } }
+      end
+
+      def enabled_deltas(parts)
+        parts.flat_map { |setting, part| @si_rxn_settings[setting] ? part.call : [] }
+      end
+
+      def intermediate_delta(product, font_size = 12)
+        product[:carry_on] ? [{ 'attributes' => { 'font-size' => font_size }, 'insert' => ' (intermediate)' }] : []
       end
 
       def is_disable_all
@@ -726,6 +752,68 @@ module Reporter
         output
       end
 
+      def steps
+        live = Array(obj.reaction_steps).sort_by { |step| step[:position] }
+        unless multi_step_report?
+          return [{ title: nil, starting_materials: starting_materials, reactants: reactants,
+                    products: products, solvents: displayed_solvents.presence }]
+        end
+
+        live.each_with_index.map { |step, index| step_hash(step, index, index.positive? ? live[index - 1] : nil) }
+      end
+
+      def step_hash(step, index, previous) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        carried = previous ? in_step(obj.products, previous[:id]).select { |p| p[:carry_on] } : []
+        own_starting = in_step(obj.starting_materials, step[:id])
+        own_reactants = in_step(obj.reactants, step[:id])
+        ref = step_ref(carried + own_starting + own_reactants)
+        sbmm = index.zero? ? reactant_sbmm_samples.map { |s| sbmm_material_hash(s) } : []
+        {
+          title: "Step #{index + 1}",
+          starting_materials: carried.map { |p| carried_hash(p, ref) } + own_starting.map { |s| material_hash(s) },
+          reactants: own_reactants.map { |r| material_hash(r) } + sbmm,
+          products: in_step(obj.products, step[:id]).map { |p| material_hash(p, true) },
+          solvents: displayed_solvents(in_step(solvents, step[:id])).presence,
+          description: step_description(step, index),
+        }
+      end
+
+      def multi_step_report?
+        obj.reaction_type == 'multi_step' && Array(obj.reaction_steps).any?
+      end
+
+      def text_per_step?
+        multi_step_report? && @rxn_settings[:material]
+      end
+
+      def step_description(step, index)
+        return unless @rxn_settings[:description] && step[:description].present?
+
+        ops = rm_redundant_newline(step[:description].deep_stringify_keys['ops'])
+        return unless content_check('ops' => ops)
+
+        heading = { 'insert' => "Step #{index + 1}: ", 'attributes' => { 'bold' => true } }
+        description('ops' => [heading] + ops).first
+      end
+
+      def step_ref(candidates)
+        candidates.find { |material| material[:step_reference] } || candidates.first
+      end
+
+      def in_step(materials, step_id)
+        Array(materials).select { |material| material[:reaction_step_id] == step_id }
+      end
+
+      def carried_hash(product, ref)
+        ref_mmol = raw_mmol(ref) if ref
+        equivalent = ref_mmol.to_f.positive? ? raw_mmol(product).to_f / ref_mmol : nil
+        material_hash(product, true).merge(equiv: format_scientific(equivalent, digit))
+      end
+
+      def raw_mmol(material)
+        material[:real_amount_mmol].to_f.positive? ? material[:real_amount_mmol] : material[:amount_mmol]
+      end
+
       def purification
         puri = obj.purification
         return puri if puri == '***'
@@ -740,8 +828,8 @@ module Reporter
         dang.compact.join(', ')
       end
 
-      def description
-        delta_desc = obj.description.deep_stringify_keys['ops']
+      def description(delta = obj.description)
+        delta_desc = delta.deep_stringify_keys['ops']
         clean_desc = { 'ops' => rm_redundant_newline(delta_desc) }
         [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
@@ -754,9 +842,9 @@ module Reporter
         obj.solvent
       end
 
-      def displayed_solvents
-        if solvents.present?
-          solvents.map do |solvent|
+      def displayed_solvents(list = solvents) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        if list.present?
+          list.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.real_amount_value && s.real_amount_value != 0
                        " (#{valid_digit(s.real_amount_ml, digit)}ml)"
@@ -837,8 +925,15 @@ module Reporter
         return [] if ['gp'].include?(obj.role)
 
         delta_desc = obj.description.deep_stringify_keys['ops']
-        clean_desc = remove_redundant_space_break(delta_desc)
+        clean_desc = paragraph_per_step(remove_redundant_space_break(delta_desc))
         (@std_rxn ? [] : [{ 'insert' => "\n" }]) + clean_desc + (@std_rxn ? [] : [{ 'insert' => "\n" }])
+      end
+
+      def paragraph_per_step(ops)
+        ops.each_with_index.flat_map do |op, index|
+          step_heading = op.dig('attributes', 'bold') && op['insert'].to_s.match?(/\AStep \d+: \z/)
+          index.positive? && step_heading ? [{ 'insert' => "\n" }, op] : [op]
+        end
       end
 
       def observation_delta

@@ -266,5 +266,41 @@ describe Chemotion::ElementAPI do
       expect(returned['id']).to eq(shared_sample.id)
       expect(returned['molfile']).to eq('***')
     end
+
+    describe 'multi-step reaction description' do
+      let(:text) { ->(words) { { 'ops' => [{ 'insert' => "#{words}\n" }] } } }
+      let(:reaction) do
+        create(:reaction, reaction_type: 'multi_step', description: text.call('step one text'),
+                          collections: [own_collection])
+      end
+
+      before do
+        ReactionStep.create!(reaction: reaction, position: 1, description: text.call('step one text'))
+        ReactionStep.create!(reaction: reaction, position: 2, description: text.call('step two text'))
+      end
+
+      def inserts(description)
+        description['ops'].pluck('insert').join
+      end
+
+      it 'puts every step, with a heading, into the report preview' do
+        load_report(own_collection.id, reaction_ids: [reaction.id])
+
+        expect(inserts(parsed_json_response['reactions'].first['description']))
+          .to eq("Step 1: step one text\nStep 2: step two text\n")
+      end
+
+      it 'keeps only the reaction text for a restricted share' do
+        shared = create(:collection, user: other_user)
+        create(:collection_share, collection: shared, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  reaction_detail_level: 0)
+        reaction.collections << shared
+
+        load_report(shared.id, reaction_ids: [reaction.id])
+
+        expect(inserts(parsed_json_response['reactions'].first['description'])).to eq("step one text\n")
+      end
+    end
   end
 end

@@ -41,6 +41,7 @@ module Entities
       expose! :rinchi_web_key
       expose! :rxno
       expose! :reaction_type
+      expose! :reaction_steps,        anonymize_with: [],   unless: :displayed_in_list, using: 'Entities::ReactionStepEntity'
       expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list
@@ -60,6 +61,7 @@ module Entities
       expose! :lock_reaction_volume,  anonymize_with: false
       expose! :concentration_mode,    anonymize_with: -> { Reaction.column_defaults['concentration_mode'] }
       expose! :gaseous,               anonymize_with: false
+      expose! :scheme_hidden_parts,   anonymize_with: []
       expose! :weight_percentage,     anonymize_with: false
     end
     # rubocop:enable Metrics/BlockLength

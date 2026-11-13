@@ -482,6 +482,8 @@ module Export
 
       # loop over reactions and fetch reaction properties
       collection.reactions.each do |reaction|
+        fetch_many(reaction.reaction_steps, { 'reaction_id' => 'Reaction' })
+
         # fetch relations between reactions and samples
         # this is one table but several models (Single Table Inheritance)
         [
@@ -494,6 +496,7 @@ module Export
           fetch_many(instances, {
                        'reaction_id' => 'Reaction',
                        'sample_id' => 'Sample',
+                       'reaction_step_id' => 'ReactionStep',
                      })
         end
 
