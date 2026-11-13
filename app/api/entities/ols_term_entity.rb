@@ -1,6 +1,12 @@
 module Entities
   class OlsTermEntity < Grape::Entity
-    expose :term_id, :synonyms
+    expose :term_id do |obj|
+      obj['term_id']
+    end
+
+    expose :synonyms do |obj|
+      obj['synonyms']
+    end
     expose :search do |obj|
       if obj['owl_name'] == 'rxno' || obj['synonym'].nil?
         obj['term_id'] + ' | ' + obj['label']

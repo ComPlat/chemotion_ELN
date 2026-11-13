@@ -172,7 +172,7 @@ module Chemotion
             next if params[cat].blank?
 
             term_ids = params[cat].map { |t| t.split('|').first.strip }
-            ids = OlsTerm.where(term_id: term_ids).pluck(:id)
+            ids = OlsTerm.where(owl_name: params[:owl_name], term_id: term_ids).pluck(:id)
             OlsTerm.switch_by_ids(ids, cat == :enableIds)
           end
 
@@ -187,12 +187,10 @@ module Chemotion
             OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).select(
               <<~SQL.squish,
                 id, owl_name, term_id, label, synonym, synonyms, 'desc' as desc,
-                case when (ancestry is null) then null else
-                  (select array_to_string(array(
-                    select id from ols_terms sub join unnest(regexp_split_to_array(ols_terms.ancestry,'/')::int[])
+                coalesce('/' || nullif((select array_to_string(array(
+                    select id from ols_terms sub join unnest(string_to_array(trim(both '/' from ols_terms.ancestry), '/')::int[])
                     with ordinality t(id,ord) using(id) where is_enabled order by t.ord
-                  ),'/'))
-                end as ancestry
+                  ),'/')), '') || '/', '/') as ancestry
               SQL
             ).arrange_serializable(order: :label),
             serializable: true,
@@ -213,11 +211,13 @@ module Chemotion
           if /\.(owl?|xml)/i.match?(extname)
             owl_name = File.basename(params[:file][:filename], '.*')
             file_path = params[:file][:tempfile].path
-            OlsTerm.delete_owl_by_name(owl_name)
-            OlsTerm.import_and_create_ols_from_file_path(owl_name, file_path)
-            OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
+            OlsTerm.transaction do
+              OlsTerm.delete_owl_by_name(owl_name)
+              OlsTerm.import_and_create_ols_from_file_path(owl_name, file_path)
+              OlsTerm.disable_branch_by(owl_name: owl_name, term_id: 'BFO:0000002')
+            end
             # discrete settings
-            nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
+            nmr_13c = OlsTerm.find_by(owl_name: owl_name, term_id: 'CHMO:0000595') if owl_name == 'chmo'
             nmr_13c&.update!(synonym: '13C NMR')
 
             # write original owl

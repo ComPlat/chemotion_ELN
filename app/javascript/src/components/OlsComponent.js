@@ -2,13 +2,28 @@ import React, { Component } from 'react';
 import TreeSelect from 'antd/lib/tree-select';
 import PropTypes from 'prop-types';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { combineOntologyTrees, removeOntologyTreeId } from 'src/utilities/OntologyHelpers';
 
 const filterTreeNode = (input, child) => String(child.props.search && child.props.search.toLowerCase())
   .indexOf(input && input.toLowerCase()) !== -1;
 export default class OlsTreeSelect extends Component {
   constructor(props) {
     super(props);
+    this.state = UserStore.getState();
+    this.onUserStoreChange = this.onUserStoreChange.bind(this);
     this.OnSelectChange = this.OnSelectChange.bind(this);
+  }
+
+  componentDidMount() {
+    UserStore.listen(this.onUserStoreChange);
+  }
+
+  componentWillUnmount() {
+    UserStore.unlisten(this.onUserStoreChange);
+  }
+
+  onUserStoreChange(state) {
+    this.setState(state);
   }
 
   OnSelectChange(e) {
@@ -20,20 +35,11 @@ export default class OlsTreeSelect extends Component {
   }
 
   removeArtificalId(value) {
-    const uuidCheckRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
-    const parts = value.split('$');
-    if (parts.length === 1) { return value.trim(); }
-
-    if (!uuidCheckRegex.test(parts.slice(-1))) { return value.trim(); }
-
-    return parts
-      .slice(0, -1)
-      .join('$')
-      .trim();
+    return removeOntologyTreeId(value);
   }
 
   render() {
-    const { rxnos, chmos, bao } = UserStore.getState();
+    const { rxnos, chmos, bao } = this.state;
     let treeData = [];
     const height = this.props.selectName === 'rxno' ? '35px' : null;
     switch (this.props.selectName) {
@@ -41,7 +47,7 @@ export default class OlsTreeSelect extends Component {
         treeData = rxnos;
         break;
       case 'chmo':
-        treeData = chmos;
+        treeData = combineOntologyTrees(chmos, bao);
         break;
       case 'bao':
         treeData = bao;
@@ -56,7 +62,7 @@ export default class OlsTreeSelect extends Component {
         name={this.props.selectName}
         showSearch
         className='w-100'
-        style={{height}}
+        style={{ height }}
         value={this.props.selectedValue}
         treeData={treeData}
         placeholder="Select..."

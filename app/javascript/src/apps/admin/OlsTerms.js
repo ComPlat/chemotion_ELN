@@ -170,6 +170,7 @@ export default class OlsTerms extends React.Component {
             <DropdownButton variant='light' className='mb-3' id="dropdown-basic-button" title={this.state.selectName === '' ? 'Ols Terms' : this.state.selectName}>
               <Dropdown.Item key="rxno" onClick={() => this.handleSelectName('rxno')}>rxno</Dropdown.Item>
               <Dropdown.Item key="chmo" onClick={() => this.handleSelectName('chmo')}>chmo</Dropdown.Item>
+              <Dropdown.Item key="bao" onClick={() => this.handleSelectName('bao')}>bao</Dropdown.Item>
             </DropdownButton>
             <h3>{this.state.selectName}</h3>
             <Button

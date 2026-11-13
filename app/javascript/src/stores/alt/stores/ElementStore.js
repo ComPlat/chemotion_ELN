@@ -34,6 +34,7 @@ import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 
 const fetchOls = (elementType) => {
+  UserActions.fetchOlsBao();
   switch (elementType) {
     case 'reaction':
       UserActions.fetchOlsRxno();
