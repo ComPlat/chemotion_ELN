@@ -43,5 +43,22 @@ RSpec.describe Matrice do
       expect(matrice_enabled.id).to be < 31
       expect(described_class.where(name: matrice_disabled.name)).to be_empty
     end
+
+    it 'removes a matrice at id 31, whose bit would overflow users.matrix' do
+      described_class.reset_sequence
+      matrice_disabled.save!
+      matrice_disabled.update_column(:id, 31) # rubocop:disable Rails/SkipsModelValidations
+      matrice_enabled.save!
+      expect(described_class.where(name: matrice_disabled.name)).to be_empty
+      expect(matrice_enabled.id).to be <= 30
+    end
+
+    it 'keeps a matrice at id 30' do
+      described_class.reset_sequence
+      matrice_disabled.save!
+      matrice_disabled.update_column(:id, 30) # rubocop:disable Rails/SkipsModelValidations
+      create(:matrice, :disabled)
+      expect(described_class.find_by(name: matrice_disabled.name)&.id).to eq(30)
+    end
   end
 end

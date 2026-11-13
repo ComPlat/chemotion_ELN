@@ -64,9 +64,10 @@ class Matrice < ApplicationRecord
     Matrice.gen_matrices_json
   end
 
-  # Remove matrices with id > 31
+  # Remove matrices with id > 30: users.matrix is an int4 holding sum(2^id),
+  # so 2^31 already overflows it.
   # @note: this is a temporary solution to remove invalid matrices
   def clean_invalid_ids
-    self.class.where('id > 31').find_each(&:really_destroy!)
+    self.class.where('id > 30').find_each(&:really_destroy!)
   end
 end
