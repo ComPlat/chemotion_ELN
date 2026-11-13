@@ -3,15 +3,17 @@
 # rubocop: disable Style/MultilineIfModifier
 
 module Chemotion
+  # Validation errors are raised with an explicit +.new+: Grape::Exceptions::Validation takes
+  # keyword arguments, and since Ruby 3 +raise Klass, params: ...+ hands them over as one
+  # positional hash (ArgumentError "required keyword: params").
   class ProfileLayoutHash < Grape::Validations::Validators::Base
     def validate_param!(attr_name, params)
-      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-                                           message: 'has too many entries' if params[attr_name].keys.size > 100
+      raise Grape::Exceptions::Validation.new(params: [@scope.full_name(attr_name)],
+                                              message: 'has too many entries') if params[attr_name].keys.size > 100
       params[attr_name].each do |key, val|
-        raise(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-                                             message: 'has wrong structure') unless /\A[\w ()\-]+\Z/.match?(key.to_s)
-        raise(Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-                                             message: 'has wrong structure') unless /\d+/.match?(val.to_s)
+        next if /\A[\w ()\-]+\Z/.match?(key.to_s) && /\d+/.match?(val.to_s)
+
+        raise Grape::Exceptions::Validation.new(params: [@scope.full_name(attr_name)], message: 'has wrong structure')
       end
     end
   end
@@ -26,10 +28,10 @@ module Chemotion
       value = params[attr_name]
       return unless value.is_a?(Hash)
 
-      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-                                           message: 'has too many entries' if value.size > MAX_ENTRIES
-      raise Grape::Exceptions::Validation, params: [@scope.full_name(attr_name)],
-                                           message: 'is too large' if JSON(value).bytesize > MAX_BYTES
+      raise Grape::Exceptions::Validation.new(params: [@scope.full_name(attr_name)],
+                                              message: 'has too many entries') if value.size > MAX_ENTRIES
+      raise Grape::Exceptions::Validation.new(params: [@scope.full_name(attr_name)],
+                                              message: 'is too large') if JSON(value).bytesize > MAX_BYTES
     end
   end
 
