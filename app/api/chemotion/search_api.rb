@@ -499,6 +499,9 @@ module Chemotion
         scope
       end
 
+      # +pluck(:id)+, not +ids+: since Rails 7.1 +ids+ on a relation with +includes+ adds
+      # GROUP BY <primary key>, which PostgreSQL rejects next to the ORDER BY on the included
+      # table (order_by_molecule orders samples by molecules.sum_formular).
       def elements_by_scope(scope, collection_id = @c_id)
         elements = {}
         user_samples = Sample.by_collection_id(collection_id)
@@ -510,20 +513,20 @@ module Chemotion
 
         case scope&.first
         when Sample
-          elements[:sample_ids] = scope&.ids
+          elements[:sample_ids] = scope&.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
           elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Reaction
-          elements[:reaction_ids] = scope&.ids
+          elements[:reaction_ids] = scope&.pluck(:id)
           elements[:sample_ids] = user_samples.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
           elements[:wellplate_ids] = user_wellplates.by_sample_ids(elements[:sample_ids]).uniq.pluck(:id)
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id).uniq
           elements[:research_plan_ids] = user_research_plans.by_reaction_ids(elements[:reaction_ids]).pluck(:id).uniq
         when Wellplate
-          elements[:wellplate_ids] = scope&.ids
+          elements[:wellplate_ids] = scope&.pluck(:id)
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
@@ -532,21 +535,21 @@ module Chemotion
           )
           # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
-          elements[:screen_ids] = scope&.ids
+          elements[:screen_ids] = scope&.pluck(:id)
           elements[:wellplate_ids] = user_wellplates.by_screen_ids(elements[:screen_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:research_plan_ids] = user_research_plans.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when ResearchPlan
-          elements[:research_plan_ids] = scope&.ids
+          elements[:research_plan_ids] = scope&.pluck(:id)
           elements.merge!(
             Usecases::Search::ResearchPlanRelations.call(
               plan_ids: elements[:research_plan_ids], collection_id: collection_id,
             ),
           )
         when Labimotion::Element
-          elements[:element_ids] = scope&.ids
+          elements[:element_ids] = scope&.pluck(:id)
           sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
           elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
         when Usecases::Search::AllElementsSearch::Results
@@ -575,11 +578,11 @@ module Chemotion
 
           elements[:element_ids] = (scope&.element_ids).uniq
         when CelllineSample
-          elements[:cell_line_ids] = scope&.ids
+          elements[:cell_line_ids] = scope&.pluck(:id)
         when SequenceBasedMacromoleculeSample
-          elements[:sequence_based_macromolecule_sample_ids] = scope&.ids
+          elements[:sequence_based_macromolecule_sample_ids] = scope&.pluck(:id)
         when DeviceDescription
-          elements[:device_description_ids] = scope&.ids
+          elements[:device_description_ids] = scope&.pluck(:id)
         end
         Usecases::Search::ListFilter.apply(elements, list_filters)
       end

@@ -55,8 +55,10 @@ RSpec.describe ReactionVariationMaterialKeys do
       sbmm_sample = link_sbmm(reaction, create_sbmm_sample, 0)
 
       reconciled = reconcile(
-        startingMaterials: { own.id.to_s => entry(1), '999001' => entry(2) },
-        reactants: { "sbmm:#{sbmm_sample.id}" => entry(3) },
+        {
+          startingMaterials: { own.id.to_s => entry(1), '999001' => entry(2) },
+          reactants: { "sbmm:#{sbmm_sample.id}" => entry(3) },
+        },
       )
 
       expect(reconciled['startingMaterials']).to eq(own.id.to_s => entry(1))
@@ -68,7 +70,7 @@ RSpec.describe ReactionVariationMaterialKeys do
       removed = link(reaction, ReactionsStartingMaterialSample, create(:sample, molecule: molecule), 1)
       removed.destroy
 
-      reconciled = reconcile(startingMaterials: { own.id.to_s => entry(1), removed.id.to_s => entry(2) })
+      reconciled = reconcile({ startingMaterials: { own.id.to_s => entry(1), removed.id.to_s => entry(2) } })
 
       expect(reconciled['startingMaterials']).to eq(own.id.to_s => entry(1))
     end
@@ -137,7 +139,7 @@ RSpec.describe ReactionVariationMaterialKeys do
       end
 
       it 'is not applied without the origin reaction' do
-        expect(reconcile(startingMaterials: source_keys)['startingMaterials']).to eq({})
+        expect(reconcile({ startingMaterials: source_keys })['startingMaterials']).to eq({})
       end
     end
 

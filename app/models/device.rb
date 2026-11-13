@@ -123,7 +123,7 @@ class Device < ApplicationRecord
 
     return unless name_abbreviation.blank? || !name_abbreviation.length.between?(min_val, max_val)
 
-    errors.add(:name_abbreviation, :wrong_length, { min: min_val, max: max_val })
+    errors.add(:name_abbreviation, :wrong_length, min: min_val, max: max_val)
   end
 
   def mail_checker
