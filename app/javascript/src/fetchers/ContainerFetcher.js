@@ -10,7 +10,15 @@ export default class ContainerFetcher {
   }
 
   static deleteContainer(container) {
-    return ApiClient.deleteRequest(`/api/v1/containers/${container.id}`);
+    return ApiClient.deleteRequest(`/api/v1/containers/${container.id}`, {
+      handleResponseSuccess: (response) => {
+        if (!response.ok) {
+          throw new Error(`Container deletion failed (${response.status})`);
+        }
+        return response.status === 204 ? null : response.json();
+      },
+      handleResponseError: (error) => { throw error; },
+    });
   }
 
   static updateContainerContent(container) {
