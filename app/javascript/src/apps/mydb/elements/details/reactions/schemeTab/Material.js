@@ -1638,6 +1638,10 @@ class Material extends Component {
     ) : materialDisplayName;
 
     const serialCode = SampleCode(index, materialGroup);
+    const stepNumber = reaction.hasHiddenSteps()
+      ? reaction.reaction_steps.filter((step) => !step._destroy)
+        .findIndex((step) => step.id === material.reaction_step_id) + 1
+      : 0;
 
     const addToDesc = (e) => {
       e.stopPropagation();
@@ -1660,6 +1664,9 @@ class Material extends Component {
                 {materialName}
               </div>
             </OverlayTrigger>
+            {stepNumber > 0 && (
+              <span className="badge bg-light text-secondary border ms-2 text-nowrap">{`Step ${stepNumber}`}</span>
+            )}
           </div>
           {moleculeIupacName !== '' && (
             <div className="reaction-material__iupac-name">
