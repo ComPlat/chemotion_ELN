@@ -67,7 +67,7 @@ const formatReactionTypeOption = (option, { context }) => (
         {`Reaction type: ${option.label}`}
       </span>
     )
-    : option.label
+    : <span className={option.isDisabled ? 'text-muted' : undefined}>{option.label}</span>
 );
 
 const productLink = (product, active) => {
