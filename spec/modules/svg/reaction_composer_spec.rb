@@ -121,6 +121,16 @@ RSpec.describe SVG::ReactionComposer do
       expect(numbered.reactants).to eq(['step_label/1', ['step_one.svg'], 'added_later.svg'])
       expect(numbered.send(:numbered_step_lines)).to eq(['1. THF, Water', '2. UV'])
     end
+
+    it 'shows only the final product, not the ones of the steps in between' do
+      numbered = described_class.new(
+        { products: [['middle.svg', 0.8], ['final.svg', 0.5]] },
+        solvents: [], temperature: '', numbered_steps: true,
+        steps: [{ carried: [['middle.svg', 0.8]], products: [] }, { products: [['final.svg', 0.5]] }]
+      )
+
+      expect(numbered.products).to eq([['final.svg', 0.5]])
+    end
   end
 
   describe 'parts switched off on the arrow' do

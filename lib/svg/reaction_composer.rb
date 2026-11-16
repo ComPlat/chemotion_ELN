@@ -353,6 +353,8 @@ module SVG
     # Reactants and solvents with no step yet (added while Standard) are shown with step 1.
     def apply_numbered_steps
       @reactants = numbered_reactants
+      @products = Array(@steps.last[:products]).presence || @products
+      @num_products = @products.size
       @num_reactants = [@reactants.count { |path| !Array(path).first.to_s.start_with?('step_label/') }, 1].max
       @unassigned_solvents = @solvents - @steps.flat_map { |step| Array(step[:solvents]) }
       @conditions = numbered_step_lines.join("\n").presence
