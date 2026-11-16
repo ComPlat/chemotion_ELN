@@ -401,11 +401,24 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
   );
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setProcessedRows({});
+    // Restore persisted sub-rows; fall back to empty so the user can re-process
+    const restored = {};
+    (components || []).forEach((comp, idx) => {
+      const saved = comp.element_sub_rows;
+      if (Array.isArray(saved) && saved.length > 0) restored[idx] = saved;
+    });
+    setProcessedRows(restored);
     setActiveSubRows({});
     setCollapsedRows(new Set());
   }, [componentsKey]); // eslint-disable-line react-hooks/exhaustive-deps
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Write processedRows back into each component so Save persists them
+  useEffect(() => {
+    Object.entries(processedRows).forEach(([parentIndex, subRows]) => {
+      onFieldChange(parseInt(parentIndex, 10), 'element_sub_rows', subRows);
+    });
+  }, [processedRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A4 (revised): Parse the label into element-level sub-rows.
   // For each formula segment (split by "/"), decompose into constituent elements.

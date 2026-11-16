@@ -35,6 +35,7 @@ module Export
       'molecule_id' => ['comp."component_properties"->>\'molecule_id\'', '"molecule_id"', 10],
       'weight_ratio_exp' => ['comp."component_properties"->>\'weight_ratio_exp\'', '"weight_ratio_exp"', 10],
       'template_category' => ['comp."component_properties"->>\'template_category\'', '"template_category"', 10],
+      'element_sub_rows' => ['comp."component_properties"->>\'element_sub_rows\'', '"element_sub_rows"', 10],
 
     }.freeze
 

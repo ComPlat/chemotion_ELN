@@ -456,6 +456,7 @@ module Export
 
       result = build_composition_rows(hm_components)
       bold_style = sheet.styles.add_style(b: true)
+      italic_style = sheet.styles.add_style(i: true, fg_color: '3D5A80')
       result[:rows].each do |row|
         comp_values = [
           row[:source_alias],
@@ -468,6 +469,19 @@ module Export
           row[:molar_ratio_calc_percent],
         ]
         sheet.add_row(sample_values + comp_values, style: light_grey)
+        (row[:element_sub_rows] || []).each do |sr|
+          sub_values = [
+            "  └ #{sr['element']}",
+            sr['expWt'],
+            sr['atomicMass'],
+            sr['calcWt'],
+            sr['stoich'],
+            nil,
+            nil,
+            nil,
+          ]
+          sheet.add_row(sample_values + sub_values, style: italic_style)
+        end
       end
 
       totals_values = [
@@ -532,6 +546,12 @@ module Export
         total_molar_calc = (total_molar_calc + molar_ratio_calc_mm).round(10)
         total_molar_exp  = (total_molar_exp  + molar_ratio_exp_mm).round(10)
 
+        element_sub_rows = begin
+          JSON.parse(comp['element_sub_rows'].presence || '[]')
+        rescue StandardError
+          []
+        end
+
         rows_data << {
           source_alias: parsed[:source],
           molar_mass: molar_mass,
@@ -539,6 +559,7 @@ module Export
           weight_ratio_calc_processed: weight_ratio_calc_processed,
           molar_ratio_calc_mm: molar_ratio_calc_mm,
           molar_ratio_exp_mm: molar_ratio_exp_mm,
+          element_sub_rows: element_sub_rows,
         }
       end
 

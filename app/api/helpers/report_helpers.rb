@@ -1117,7 +1117,7 @@ module ReportHelpers
   def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
     # 'name' is required so the export can filter for HierarchicalMaterial components
-    composition_table_properties = %w[name source molar_mass molecule_id weight_ratio_exp template_category].freeze
+    composition_table_properties = %w[name source molar_mass molecule_id weight_ratio_exp template_category element_sub_rows].freeze
     attrs.each_key do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
         custom_column_query(table, col, selection, user_id, attrs)

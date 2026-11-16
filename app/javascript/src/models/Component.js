@@ -759,6 +759,7 @@ export default class Component extends Sample {
         source: this.source,
         molar_mass: this.molar_mass,
         weight_ratio_exp: this.weight_ratio_exp,
+        element_sub_rows: this.element_sub_rows ?? [],
       },
     };
   }

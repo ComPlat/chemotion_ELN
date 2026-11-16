@@ -61,6 +61,7 @@ module Chemotion
             optional :source, type: String, desc: 'source(textNode label) for Hierarchical Material'
             optional :molar_mass, type: Float, desc: 'Molar mass value for Hierarchical Material'
             optional :weight_ratio_exp, type: Float, desc: 'Weight ratio exp. for Hierarchical Material'
+            optional :element_sub_rows, type: Array, desc: 'Persisted element-level sub-row data for Hierarchical Material'
           end
         end
       end
