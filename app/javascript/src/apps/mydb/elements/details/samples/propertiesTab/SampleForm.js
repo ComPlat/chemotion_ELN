@@ -22,8 +22,10 @@ import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
+import uuid from 'uuid';
 import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
+import { deriveComponentsFromMolfile } from 'src/utilities/sampleHierarchicalCompositions';
 import { HIERARCHICAL_PROPERTY_OPTIONS } from 'src/utilities/hierarchicalPropertyConfig';
 import HierarchicalMaterialSection from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalMaterialSection';
 import HierarchicalCompositionTable from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalCompositionTable';
@@ -64,6 +66,11 @@ export default class SampleForm extends React.Component {
       components: flattenApiFormatComponents(props.sample.components),
     };
 
+    // Track the last components array reference we synced from. The sample is a
+    // mutable object, so prevProps.sample.components === this.props.sample.components
+    // is always true in componentDidUpdate — we cannot rely on that for change detection.
+    this._syncedComponents = props.sample?.components ?? null;
+
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.updateMolName = this.updateMolName.bind(this);
     this.updateStereoAbs = this.updateStereoAbs.bind(this);
@@ -93,14 +100,18 @@ export default class SampleForm extends React.Component {
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
 
-    // Sync component state when the sample object or its components array is
-    // replaced (e.g. after save returns a fresh Sample, or a child handler reassigns
-    // components). Parent already clones on setState (SampleDetails.handleSampleChanged),
-    // so reference equality is sufficient — no need for a per-render JSON diff.
+    // Sync components when the sample reference changes (new sample from sidebar selection)
+    // OR when sample.components was replaced with a new array on the same mutable sample
+    // object (e.g. after handleStructureEditorSave assigns sample.components = newComponents).
+    // The standard prevSample?.components !== nextSample?.components check is always false for
+    // mutable samples because both sides resolve to the same already-mutated field.
+    // _syncedComponents stores the array reference we last synced from, so we can detect
+    // when handleStructureEditorSave replaces it with a new array.
     const prevSample = prevProps.sample;
     const nextSample = this.props.sample;
-    if (prevSample !== nextSample
-      || (prevSample?.components || null) !== (nextSample?.components || null)) {
+    const nextComponents = nextSample?.components ?? null;
+    if (prevSample !== nextSample || nextComponents !== this._syncedComponents) {
+      this._syncedComponents = nextComponents;
       this.setState({ components: flattenApiFormatComponents(nextSample?.components || []) });
     }
 
@@ -157,16 +168,44 @@ export default class SampleForm extends React.Component {
 
   handleSampleTypeChanged(sampleType) {
     const { sample, handleSampleChanged } = this.props;
-
-    // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
-    this.setState({ selectedSampleType: sampleType });
 
-    // If switching to Mixture, create component(s) from the current sample
+    if (sampleType.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL) {
+      const latestComponents = sample.components ?? null;
+      if (latestComponents?.length > 0) {
+        // Components already in memory (SSC drawn this session or loaded from DB)
+        this._syncedComponents = latestComponents;
+        this.setState({
+          selectedSampleType: sampleType,
+          components: flattenApiFormatComponents(latestComponents),
+        });
+        handleSampleChanged(sample);
+      } else {
+        // No in-memory components: derive skeleton rows from TextNode data in the molfile
+        deriveComponentsFromMolfile(sample.molfile).then((derivedComponents) => {
+          if (derivedComponents.length > 0) {
+            const compInstances = derivedComponents.map(
+              (c, idx) => new Component({ id: uuid(), position: idx, molecule: { id: 0 }, ...c })
+            );
+            sample.components = compInstances;
+            this._syncedComponents = compInstances;
+            this.setState({
+              selectedSampleType: sampleType,
+              components: derivedComponents,
+            });
+          } else {
+            this.setState({ selectedSampleType: sampleType });
+          }
+          handleSampleChanged(sample);
+        });
+      }
+      return;
+    }
+
+    this.setState({ selectedSampleType: sampleType });
     if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
       this.createComponentsFromCurrentSample(sample);
     }
-
     handleSampleChanged(sample);
   }
 
@@ -1379,6 +1418,9 @@ export default class SampleForm extends React.Component {
       },
       () => {
         sample.components = nextComponents.map((comp) => new Component(comp));
+        // Keep _syncedComponents in sync so componentDidUpdate doesn't re-read and
+        // overwrite the state we just set with a re-flattened copy of the same data.
+        this._syncedComponents = sample.components;
         handleSampleChanged(sample);
       }
     );

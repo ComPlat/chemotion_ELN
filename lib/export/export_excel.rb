@@ -566,6 +566,20 @@ module Export
       end
 
       sorted = rows_with_percentages.sort_by { |r| r[:weight_ratio_calc_processed].to_f }
+
+      # Normalize parent-row mol ratios so the smallest compound = 1 — mirrors
+      # the JS normalization in buildHierarchicalMaterialRows.
+      positive_ratios = sorted.map { |r| r[:molar_ratio_calc_mm] }.select { |v| v.is_a?(Numeric) && v.positive? }
+      min_mol_ratio   = positive_ratios.min || 0
+      if min_mol_ratio.positive?
+        sorted = sorted.map do |r|
+          normalized = r[:molar_ratio_calc_mm].is_a?(Numeric) && r[:molar_ratio_calc_mm].positive? \
+            ? (r[:molar_ratio_calc_mm] / min_mol_ratio).round(3)
+            : 0
+          r.merge(molar_ratio_calc_mm: normalized)
+        end
+      end
+
       { rows: sorted, total_molar_calc: total_molar_calc.round(3), total_molar_exp: total_molar_exp.round(3) }
     end
     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

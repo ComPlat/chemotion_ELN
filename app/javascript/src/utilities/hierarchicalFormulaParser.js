@@ -66,6 +66,16 @@ export function extractWeightPrefix(source) {
 }
 
 /**
+ * Returns the effective weight to distribute to sub-rows when processing a parent row.
+ * Always uses the displayed weightRatioCalcProcessed value — the single source of truth —
+ * regardless of any % prefix embedded in the label text.
+ * Returns null when the value is 0 or missing (signals: no weight to distribute).
+ */
+export function computeEffectiveWt(rowData) {
+  return parseFloat(rowData?.weightRatioCalcProcessed) || null;
+}
+
+/**
  * Parse a chemical label into segments and their constituent elements.
  *
  * Processing steps (in order):

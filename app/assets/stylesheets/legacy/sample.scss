@@ -198,8 +198,8 @@
 
 // SampleForm composition table (hierarchical material) only - borderless, compact AG Grid
 .sample-form-composition-grid.ag-theme-alpine .ag-cell {
-  padding-top: 2px;
-  padding-bottom: 2px;
+  padding-top: 0;
+  padding-bottom: 0;
   padding-left: 6px;
   padding-right: 4px;
   border: none !important;
@@ -208,8 +208,7 @@
   align-items: center;
 }
 
-.sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell-value {
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper {
   border: none !important;
   border-width: 0 !important;
 }
@@ -217,6 +216,14 @@
 .sample-form-composition-grid.ag-theme-alpine .ag-cell.editable-cell .ag-cell-value {
   width: 100%;
   min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0 0.5rem;
+  cursor: text;
 }
 
 .sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper {
@@ -281,16 +288,32 @@
 }
 
 .sample-form-composition-grid.ag-theme-alpine .ag-cell.editable-cell {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
   background-color: transparent !important;
 }
 
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-cell-value,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'] .ag-cell-value,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'].ag-cell-inline-editing,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'].ag-cell-inline-editing,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-input-field-input,
-.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'] .ag-input-field-input {
-  background-color: #f2f2f2 !important;
+// Molar mass read-only state (processed parent rows / sub-rows) — disabled-input look
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass']:not(.editable-cell) {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass']:not(.editable-cell) .ag-cell-value {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  padding: 0 0.5rem;
+  cursor: default;
+}
+
+// Keep input field white while actively editing any user-entry cell
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'].editable-cell .ag-input-field-input,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-input-field-input {
+  background-color: #fff !important;
 }
 
 .sample-form-composition-grid.ag-theme-alpine .ag-popup,
@@ -438,21 +461,14 @@
   }
 }
 
-// Sub-rows (element breakdown after ▶ process) — dropdown panel feel
+// Sub-rows (element breakdown after ▶ process) — left border marks nesting; no fill color
 .sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row {
-  background-color: #f4f6fb !important;
   border-left: 3px solid #6c99d0 !important;
-  box-shadow: inset 0 1px 0 #dce5f5;
 }
 
 .sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row .ag-cell {
   color: #3d5a80;
   font-size: 0.82rem;
-}
-
-.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row:hover,
-.sample-form-composition-grid.ag-theme-alpine .ag-row.composition-sub-row.ag-row-hover {
-  background-color: #e8eef8 !important;
 }
 
 // Parent rows with expanded sub-rows get a slight indicator at the bottom

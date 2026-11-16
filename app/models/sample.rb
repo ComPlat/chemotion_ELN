@@ -108,6 +108,7 @@ class Sample < ApplicationRecord
   HIERARCHICAL_PROPERTY_KEYS = %i[
     height width length diameter storage_condition material
     cspi shape sieve_fraction layer_thickness liquid_medium stabilizer
+    dispersion
   ].freeze
 
   HIERARCHICAL_PROPERTY_KEYS.each do |key|

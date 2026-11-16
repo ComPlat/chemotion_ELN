@@ -5,6 +5,7 @@ import {
   parseFormulaToElements,
   extractWeightPrefix,
   getMaterialTypeSync,
+  computeEffectiveWt,
 } from 'src/utilities/hierarchicalFormulaParser';
 
 // eslint-disable-next-line import/no-unresolved
@@ -282,5 +283,42 @@ describe('getMaterialTypeSync', () => {
 
   it('null shapesJson → { type: "Unknown" }', () => {
     assert.strictEqual(getMaterialTypeSync(70, null).type, 'Unknown');
+  });
+});
+
+// ─── computeEffectiveWt ────────────────────────────────────────────────────
+// Bug: handleProcess was reading effectiveWt from the label text (extractWeightPrefix)
+// instead of the displayed parent value (weightRatioCalcProcessed). When Ketcher assigns
+// a different value than what's embedded in the label, sub-rows distribute from the wrong
+// source and their sum doesn't match the parent row.
+// Fix: always use weightRatioCalcProcessed as the single source of truth.
+
+describe('computeEffectiveWt', () => {
+  it('uses weightRatioCalcProcessed even when label has a different % prefix', () => {
+    // PARO bug: label says 3%, parent shows 5 (Ketcher value) → sub-rows must distribute from 5
+    const rowData = { sourceAlias: '3% RhGaO3', weightRatioCalcProcessed: 5 };
+    assert.strictEqual(computeEffectiveWt(rowData), 5);
+  });
+
+  it('uses weightRatioCalcProcessed after user edits parent cell to 20', () => {
+    // User had no-label row (auto 100), edited parent to 20 → reprocess must use 20 not 100
+    const rowData = { sourceAlias: 'RhGaO3', weightRatioCalcProcessed: 20 };
+    assert.strictEqual(computeEffectiveWt(rowData), 20);
+  });
+
+  it('uses weightRatioCalcProcessed = 100 for no-label row (auto-assigned remainder)', () => {
+    const rowData = { sourceAlias: 'RhGaO3', weightRatioCalcProcessed: 100 };
+    assert.strictEqual(computeEffectiveWt(rowData), 100);
+  });
+
+  it('returns null when weightRatioCalcProcessed is 0', () => {
+    const rowData = { sourceAlias: 'RhGaO3', weightRatioCalcProcessed: 0 };
+    assert.strictEqual(computeEffectiveWt(rowData), null);
+  });
+
+  it('label % is ignored — only weightRatioCalcProcessed matters', () => {
+    // Even if label says 90%, if the displayed value is 10, sub-rows distribute from 10
+    const rowData = { sourceAlias: '90% SiO2', weightRatioCalcProcessed: 10 };
+    assert.strictEqual(computeEffectiveWt(rowData), 10);
   });
 });

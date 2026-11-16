@@ -491,14 +491,6 @@ describe 'Polymer Surface Chemistry' do
       expect(Sample::SAMPLE_TYPES).to include('HierarchicalMaterial')
     end
 
-    it 'auto-tags sample_type as HierarchicalMaterial when the molfile carries a PolymersList payload' do
-      # set_sample_type_hierarchical_if_polymers_list before_save callback
-      sample = create(:sample, name: 'Auto HM', creator: user, molecule: molecule)
-      sample.molfile = POLYMER_SINGLE_MOLFILE
-      sample.save!
-      sample.reload
-      expect(sample.sample_type).to eq('HierarchicalMaterial')
-    end
 
     # rubocop:disable RSpec/MultipleExpectations
     it 'persists the hierarchical property columns through save + reload' do

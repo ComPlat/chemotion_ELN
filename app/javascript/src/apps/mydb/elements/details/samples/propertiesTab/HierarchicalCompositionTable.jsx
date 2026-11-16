@@ -4,12 +4,12 @@ import React, {
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
-import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
+import buildHierarchicalMaterialRows, { rescaleSegmentCalcWt } from 'src/utilities/sampleHierarchicalCompositions';
 import {
   parseFormulaLabel,
   parseFormulaToElements,
   getMaterialTypeSync,
-  extractWeightPrefix,
+  computeEffectiveWt,
 } from 'src/utilities/hierarchicalFormulaParser';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
@@ -35,7 +35,7 @@ const TypeCellRenderer = ({ data, onSetActive }) => {
     return (
       <div className="d-flex align-items-center justify-content-center h-100" title={tooltip}>
         <Form.Check
-          type="radio"
+          type="checkbox"
           checked={!!data.isActive}
           className="m-1"
           onChange={() => {}}
@@ -141,10 +141,10 @@ ComponentsCellRenderer.defaultProps = {
 
 // A2: Custom header for the "Exp. wt. ratio" column.
 // Shows a ⚠ icon when the sum deviates from 100; tooltip explains current value.
-function ExpWtRatioHeader({ displayName, showWarning, expWtRatioSum }) {
+function ExpWtRatioHeader({ displayName, showWarning, warningMessage }) {
   const tooltip = showWarning
-    ? `⚠ Sum is ${expWtRatioSum.toFixed(1)}% — all rows should total 100`
-    : 'Experimental weight ratio entered manually — all rows should sum to 100';
+    ? `⚠ ${warningMessage}`
+    : 'Experimental weight ratio — enter values on sub-rows or on the parent row';
   return (
     <div
       className="d-flex align-items-center gap-1 w-100"
@@ -162,13 +162,13 @@ function ExpWtRatioHeader({ displayName, showWarning, expWtRatioSum }) {
 ExpWtRatioHeader.propTypes = {
   displayName: PropTypes.string,
   showWarning: PropTypes.bool,
-  expWtRatioSum: PropTypes.number,
+  warningMessage: PropTypes.string,
 };
 
 ExpWtRatioHeader.defaultProps = {
   displayName: 'Exp. wt. ratio',
   showWarning: false,
-  expWtRatioSum: 0,
+  warningMessage: '',
 };
 
 const buildCompositionColumnDefs = (
@@ -179,8 +179,11 @@ const buildCompositionColumnDefs = (
   onSubRowStoichChange,
   onSubRowCalcWtChange,
   onSubRowExpWtChange,
+  onParentCalcWtChange,
+  showCalcWarning,
+  calcWarningMessage,
   showWarning,
-  expWtRatioSum,
+  warningMessage,
 ) => [
   {
     // Dedicated expand/collapse/process action column — keeps Components label clean
@@ -239,13 +242,14 @@ const buildCompositionColumnDefs = (
     },
   },
   {
-    // Mode B entry point: editing calcWt on a sub-row back-calculates stoich for the segment group
+    // Mode B entry point: editing calcWt back-calculates stoich for sub-rows; encodes override in source for parent rows
     headerName: 'Calc. wt.%',
     field: 'weightRatioCalcProcessed',
     minWidth: 110,
-    headerTooltip: 'For parent rows: weight ratio from the label prefix. For element rows: editable — updates stoich automatically (Mode B).',
-    editable: (p) => !!p.data?.isSubRow,
-    cellClass: (p) => [p.data?.isSubRow ? 'editable-cell border-end' : 'lh-base border-end'],
+    headerComponent: ExpWtRatioHeader,
+    headerComponentParams: { showWarning: showCalcWarning, warningMessage: calcWarningMessage },
+    editable: true,
+    cellClass: () => ['editable-cell border-end'],
     valueGetter: (p) => {
       if (p.data?.isSubRow) return p.data?.calcWt != null ? p.data.calcWt : '';
       return p.data?.weightRatioCalcProcessed ?? '';
@@ -255,6 +259,14 @@ const buildCompositionColumnDefs = (
         const val = parseFloat(params.newValue);
         if (Number.isFinite(val) && val > 0) {
           onSubRowCalcWtChange(params.data.parentIndex, params.data.segIdx, val);
+        }
+      } else {
+        const val = parseFloat(params.newValue);
+        if (Number.isFinite(val) && val >= 0) {
+          const rawSource = params.data.sourceAlias || '';
+          const stripped = rawSource.replace(/^\d+\.?\d*\s*(?:wt\.?%|%)\s*/i, '').trim();
+          const newSource = val > 0 ? `${val}% ${stripped}` : stripped;
+          onParentCalcWtChange(params.data.index, val, newSource);
         }
       }
       return false;
@@ -268,7 +280,7 @@ const buildCompositionColumnDefs = (
     cellClass: () => ['editable-cell border-end'],
     minWidth: 110,
     headerComponent: ExpWtRatioHeader,
-    headerComponentParams: { showWarning, expWtRatioSum },
+    headerComponentParams: { showWarning, warningMessage },
     valueSetter: (params) => {
       if (params.data?.isSubRow) {
         onSubRowExpWtChange(params.data.parentIndex, params.data.segIdx, params.newValue);
@@ -400,10 +412,9 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
   // Fetch atomic masses via the existing molecular-mass service.
   // calcWt for each element = segCalcWt × (stoich × atomicMass) / Σ(stoich_i × MM_i)
   const handleProcess = useCallback(async (rowData) => {
-    const parentWeight = extractWeightPrefix(rowData.sourceAlias);
     const segments = parseFormulaLabel(rowData.sourceAlias);
 
-    // Fetch segment-level compound masses to split parentWeight across "/" segments
+    // Fetch segment-level compound masses to split effectiveWt across "/" segments
     const segMasses = await Promise.all(
       segments.map((seg) => MoleculesFetcher.calculateMolecularMassFromSumFormula(seg.segment)
         .catch(() => null)),
@@ -417,11 +428,10 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
 
     const allSubRows = [];
 
-    // Fall back to the row's already-computed calc wt ratio when no weight
-    // prefix is embedded in the label (e.g. a plain "A" component).
-    const effectiveWt = parentWeight !== null
-      ? parentWeight
-      : (parseFloat(rowData.weightRatioCalcProcessed) || null);
+    // Always distribute sub-rows from the displayed parent calc wt% — the single source of truth.
+    // Label text % is ignored: the displayed value already reflects Ketcher assignment,
+    // calcWeightRatioWithoutWeight fallback, or any user edit to the parent cell.
+    const effectiveWt = computeEffectiveWt(rowData);
 
     for (let si = 0; si < segments.length; si += 1) {
       const seg = segments[si];
@@ -465,7 +475,7 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           stoich: count,
           atomicMass: atomicMass ?? null,
           calcWt,
-          expWt: '',
+          expWt: 0,
           segmentFormula: seg.segment,
           segmentCalcWt: segCalcWt,
           unknown: isUnknown || false,
@@ -517,40 +527,41 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
     if (effectiveMM > 0) onFieldChange(parentIndex, 'molar_mass', parseFloat(effectiveMM.toFixed(3)));
   }, [onFieldChange]);
 
-  // Mode B: user edits calcWt → back-calculate stoich for all elements in the segment.
+  // Mode B: user edits calcWt → rescale other elements in the segment so sum stays
+  // locked to segmentCalcWt, then back-calculate stoich for all elements in the segment.
   // stoich_i = (calcWt_i / MM_i) / min(calcWt_j / MM_j) — normalized so smallest = 1.
   // Also syncs the parent compound's molar_mass to Σ(stoich_i × MM_i).
   const handleSubRowCalcWtChange = useCallback((parentIndex, segIdx, newCalcWt) => {
     let effectiveMM = 0;
     setProcessedRows((prev) => {
-      const rows = [...(prev[parentIndex] || [])];
+      const rows = prev[parentIndex] || [];
       if (!rows[segIdx]) return prev;
-      rows[segIdx] = { ...rows[segIdx], calcWt: newCalcWt };
-      const { segmentFormula } = rows[segIdx];
 
-      const groupIndices = rows.reduce((acc, r, i) => {
+      // Rescale all elements in the segment so Σ calcWt = segmentCalcWt
+      const rescaled = rescaleSegmentCalcWt(rows, segIdx, newCalcWt);
+
+      const { segmentFormula } = rescaled[segIdx];
+      const groupIndices = rescaled.reduce((acc, r, i) => {
         if (r.segmentFormula === segmentFormula) acc.push(i);
         return acc;
       }, []);
 
+      // Back-calculate stoich from new calcWt values
       const mols = groupIndices.map((i) => {
-        const r = rows[i];
+        const r = rescaled[i];
         return r.atomicMass && r.atomicMass > 0 && r.calcWt > 0
           ? r.calcWt / r.atomicMass
           : 0;
       });
+      const minMol = Math.min(...mols.filter((m) => m > 0));
 
-      const validMols = mols.filter((m) => m > 0);
-      const minMol = validMols.length > 0 ? Math.min(...validMols) : 0;
-
-      const updated = [...rows];
-      if (minMol > 0) {
+      const updated = [...rescaled];
+      if (minMol > 0 && Number.isFinite(minMol)) {
         groupIndices.forEach((ri, gi) => {
           updated[ri] = { ...updated[ri], stoich: +(mols[gi] / minMol).toFixed(3) };
         });
       }
 
-      // Capture effective compound MM for the onFieldChange call below
       effectiveMM = updated.reduce((s, r) => s + (parseFloat(r.stoich) || 0) * (r.atomicMass || 0), 0);
       return { ...prev, [parentIndex]: updated };
     });
@@ -565,6 +576,26 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
       return { ...prev, [parentIndex]: rows };
     });
   }, []);
+
+  // Parent row Calc. wt.% edit: encode new weight in source and proportionally rescale sub-rows
+  const handleParentCalcWtChange = useCallback((parentIndex, newWt, newSource) => {
+    onFieldChange(parentIndex, 'source', newSource);
+    setProcessedRows((prev) => {
+      const rows = prev[parentIndex];
+      if (!rows || rows.length === 0) return prev;
+      const oldTotal = rows.reduce((s, r) => s + (parseFloat(r.calcWt) || 0), 0);
+      if (oldTotal <= 0) return prev;
+      const scale = newWt / oldTotal;
+      const scaled = rows.map((r) => ({
+        ...r,
+        calcWt: r.calcWt != null ? parseFloat((r.calcWt * scale).toFixed(3)) : r.calcWt,
+        segmentCalcWt: r.segmentCalcWt != null
+          ? parseFloat((r.segmentCalcWt * scale).toFixed(3))
+          : r.segmentCalcWt,
+      }));
+      return { ...prev, [parentIndex]: scaled };
+    });
+  }, [onFieldChange]);
 
   // Radio-select: one active sub-row per parent. Clicking again deselects.
   const handleSetActiveSubRow = useCallback((parentIndex, segIdx) => {
@@ -584,7 +615,10 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
     });
   }, []);
 
-  const { rowsData, totalExpWtRatio } = buildHierarchicalMaterialRows(components);
+  const { rowsData, totalExpWtRatio } = useMemo(
+    () => buildHierarchicalMaterialRows(components),
+    [components],
+  );
   const baseRows = Array.isArray(rowsData) ? rowsData : [];
 
   // A3: Attach both materialType (short) and materialSubType (full sub-tab label)
@@ -745,8 +779,42 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
     return groups.flat();
   }, [rowsWithType, processedRows, activeSubRows, collapsedRows]);
 
-  const expWtRatioSum = typeof totalExpWtRatio === 'number' ? totalExpWtRatio : 0;
-  const showWarning = expWtRatioSum > 0 && Math.abs(expWtRatioSum - 100) > 0.001;
+  // Calc. wt.% warning: parent rows don't sum to 100
+  const calcWtSum = parseFloat(
+    baseRows.reduce((s, row) => s + (parseFloat(row.weightRatioCalcProcessed) || 0), 0).toFixed(1),
+  );
+  const showCalcWarning = baseRows.length > 0 && Math.abs(calcWtSum - 100) > 0.001;
+  const calcWarningMessage = showCalcWarning
+    ? `Calc. wt.% sum = ${calcWtSum} (expected 100)`
+    : '';
+
+  // Warning 1: sub-row exp wt has been entered but doesn't sum to parent exp wt
+  let subRowWarning = false;
+  let subRowWarningMsg = '';
+  baseRows.forEach((row) => {
+    const subRows = processedRows[row.index];
+    if (!subRows || subRows.length === 0) return;
+    const anyFilled = subRows.some((sr) => parseFloat(sr.expWt) > 0);
+    if (!anyFilled) return; // user hasn't entered sub-row exp wt yet — don't warn
+    const subExpSum = parseFloat(
+      subRows.reduce((s, sr) => s + (parseFloat(sr.expWt) || 0), 0).toFixed(1),
+    );
+    const parentExpWt = parseFloat(row.weight_ratio_exp) || 0;
+    if (parentExpWt > 0 && Math.abs(subExpSum - parentExpWt) > 0.1) {
+      subRowWarning = true;
+      subRowWarningMsg = `Sub-row exp. wt. sum (${subExpSum}) ≠ parent (${parentExpWt.toFixed(1)})`;
+    }
+  });
+
+  // Warning 2: global sum of all parent exp wt should total 100
+  const globalExpWtSum = typeof totalExpWtRatio === 'number' ? totalExpWtRatio : 0;
+  const globalWarning = baseRows.length > 0 && Math.abs(globalExpWtSum - 100) > 0.001;
+  const globalWarningMsg = globalWarning
+    ? `Exp. wt. ratio sum = ${globalExpWtSum.toFixed(1)} (expected 100)`
+    : '';
+
+  const showWarning = subRowWarning || globalWarning;
+  const warningMessage = [subRowWarningMsg, globalWarningMsg].filter(Boolean).join(' · ');
 
   // Rebuild column defs when warning state changes so the header component updates
   const columnDefs = useMemo(
@@ -758,11 +826,14 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
       handleSubRowStoichChange,
       handleSubRowCalcWtChange,
       handleSubRowExpWtChange,
+      handleParentCalcWtChange,
+      showCalcWarning,
+      calcWarningMessage,
       showWarning,
-      expWtRatioSum,
+      warningMessage,
     ),
     // eslint-disable-next-line max-len
-    [onFieldChange, handleProcess, handleToggleCollapse, handleSetActiveSubRow, handleSubRowStoichChange, handleSubRowCalcWtChange, handleSubRowExpWtChange, showWarning, expWtRatioSum],
+    [onFieldChange, handleProcess, handleToggleCollapse, handleSetActiveSubRow, handleSubRowStoichChange, handleSubRowCalcWtChange, handleSubRowExpWtChange, handleParentCalcWtChange, showCalcWarning, calcWarningMessage, showWarning, warningMessage],
   );
 
   const fitColumnsToGrid = useCallback((params) => {
@@ -786,9 +857,14 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
     <>
       <h5 className="mt-3 d-flex align-items-center gap-2">
         Composition table:
+        {showCalcWarning && (
+          <span className="badge bg-warning text-dark">
+            {`⚠ ${calcWarningMessage}`}
+          </span>
+        )}
         {showWarning && (
           <span className="badge bg-warning text-dark">
-            {`⚠ Exp. wt. ratio sum = ${expWtRatioSum.toFixed(1)} (expected 100)`}
+            {`⚠ ${warningMessage}`}
           </span>
         )}
       </h5>
@@ -799,7 +875,7 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           rowData={gridRowData}
           getRowId={getRowId}
           getRowClass={getRowClass}
-          rowHeight={25}
+          rowHeight={32}
           domLayout="autoHeight"
           onGridReady={fitColumnsToGrid}
           onGridSizeChanged={fitColumnsToGrid}

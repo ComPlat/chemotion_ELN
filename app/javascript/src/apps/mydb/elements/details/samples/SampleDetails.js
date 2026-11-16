@@ -384,9 +384,9 @@ export default class SampleDetails extends React.Component {
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
 
-    // For HierarchicalMaterial: preserve user-entered molar_mass and weight_ratio_exp
-    // when Ketcher rebuilds components from text nodes (which resets these to 0).
-    if (sample.isHierarchicalMaterial() && components?.length > 0) {
+    // Always store SSC-derived components on the sample regardless of sample_type.
+    // Preserves user-entered molar_mass and weight_ratio_exp when Ketcher rebuilds.
+    if (components?.length > 0) {
       if (sample.components?.length > 0) {
         const existingComponents = sample.components;
         components.forEach((newComp) => {

@@ -1,6 +1,7 @@
 import { describe, it } from 'mocha';
 import assert from 'assert';
 import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
+import { rescaleSegmentCalcWt } from 'src/utilities/sampleHierarchicalCompositions';
 
 // Minimal component factory matching what buildHierarchicalMaterialRows expects
 const makeComponent = (source, weightRatioExp = 0, molarMass = 0) => ({
@@ -167,48 +168,59 @@ describe('buildHierarchicalMaterialRows', () => {
   });
 
   // ─── molarRatioCalcMM (col 4 for parent rows) ────────────────────────────
+  // Values are normalized: divided by the minimum across all parent rows so the
+  // smallest compound always displays as 1. Single-component systems → always 1.
 
-  describe('molarRatioCalcMM — calcWt / molarMass', () => {
-    it('90% SiO2 with MM=60 → 1.5', () => {
+  describe('molarRatioCalcMM — normalized mol ratio (smallest = 1)', () => {
+    it('single component normalizes to 1', () => {
       const components = [makeComponent('90% SiO2', 90, 60)];
       const { rowsData } = buildHierarchicalMaterialRows(components);
-      assert.ok(Math.abs(rowsData[0].molarRatioCalcMM - 1.5) < 0.001);
+      assert.ok(Math.abs(rowsData[0].molarRatioCalcMM - 1) < 0.001);
     });
 
-    it('10% RhGaO3 with MM=207 → ~0.048', () => {
+    it('single component with small wt% and large MM normalizes to 1', () => {
       const components = [makeComponent('10% RhGaO3', 10, 207)];
       const { rowsData } = buildHierarchicalMaterialRows(components);
-      const expected = 10 / 207;
-      assert.ok(
-        Math.abs(rowsData[0].molarRatioCalcMM - expected) < 0.001,
-        `expected ≈${expected.toFixed(4)} got ${rowsData[0].molarRatioCalcMM}`
-      );
+      assert.ok(Math.abs(rowsData[0].molarRatioCalcMM - 1) < 0.001);
     });
 
-    it('30% Al2O3 with MM=101.96 → ~0.294', () => {
-      const components = [makeComponent('30% Al2O3', 30, 101.96)];
+    it('two components: smaller mol ratio becomes 1, larger scales proportionally', () => {
+      // RhGaO3: 10/207 = 0.04831 → rounds to 0.048 (min) → 1
+      // SiO2:   90/60  = 1.5     → 1.5 / 0.048 = 31.25
+      const components = [
+        makeComponent('10% RhGaO3', 10, 207),
+        makeComponent('90% SiO2', 90, 60),
+      ];
       const { rowsData } = buildHierarchicalMaterialRows(components);
-      const expected = 30 / 101.96;
+      const rh = rowBySource(rowsData, 'RhGaO3');
+      const sio2 = rowBySource(rowsData, 'SiO2');
+      assert.ok(Math.abs(rh.molarRatioCalcMM - 1) < 0.001, `RhGaO3 should be 1, got ${rh.molarRatioCalcMM}`);
+      // Use rounded base: parseFloat((10/207).toFixed(3)) = 0.048
+      const minRounded = parseFloat((10 / 207).toFixed(3));
+      const expectedSiO2 = parseFloat((1.5 / minRounded).toFixed(3));
       assert.ok(
-        Math.abs(rowsData[0].molarRatioCalcMM - expected) < 0.001,
-        `expected ≈${expected.toFixed(4)} got ${rowsData[0].molarRatioCalcMM}`
+        Math.abs(sio2.molarRatioCalcMM - expectedSiO2) < 0.01,
+        `SiO2 expected ≈${expectedSiO2}, got ${sio2.molarRatioCalcMM}`
       );
     });
 
-    it('zero molar mass → molarRatioCalcMM = 0', () => {
+    it('zero molar mass → molarRatioCalcMM = 0 (no normalization applied)', () => {
       const components = [makeComponent('50% SiO2', 50, 0)];
       const { rowsData } = buildHierarchicalMaterialRows(components);
       assert.strictEqual(rowsData[0].molarRatioCalcMM, 0);
     });
 
-    it('molarRatioCalcMM rounded to 3 decimal places', () => {
-      // 10/207 = 0.04830917... → rounds to 0.048
-      const components = [makeComponent('10% RhGaO3', 10, 207)];
+    it('normalized value has ≤3 decimal places', () => {
+      const components = [
+        makeComponent('10% RhGaO3', 10, 207),
+        makeComponent('90% SiO2', 90, 60),
+      ];
       const { rowsData } = buildHierarchicalMaterialRows(components);
-      const val = rowsData[0].molarRatioCalcMM;
-      const str = val.toString();
-      const decimals = str.includes('.') ? str.split('.')[1].length : 0;
-      assert.ok(decimals <= 3, `expected ≤3 decimal places, got ${decimals}: ${val}`);
+      rowsData.forEach(row => {
+        const str = row.molarRatioCalcMM.toString();
+        const decimals = str.includes('.') ? str.split('.')[1].length : 0;
+        assert.ok(decimals <= 3, `expected ≤3 decimal places, got ${decimals}: ${row.molarRatioCalcMM}`);
+      });
     });
   });
 
@@ -301,15 +313,19 @@ describe('buildHierarchicalMaterialRows', () => {
       assert.strictEqual(sio2.weightRatioCalcProcessed, 90);
     });
 
-    it('SiO2 molarRatioCalcMM ≈ 90/60 = 1.5', () => {
-      const sio2 = rowBySource(rowsData, 'SiO2');
-      assert.ok(Math.abs(sio2.molarRatioCalcMM - 1.5) < 0.001);
+    it('RhGaO3 molarRatioCalcMM = 1 (smallest compound, normalized reference)', () => {
+      const rh = rowBySource(rowsData, 'RhGaO3');
+      assert.ok(Math.abs(rh.molarRatioCalcMM - 1) < 0.001);
     });
 
-    it('RhGaO3 molarRatioCalcMM ≈ 10/207', () => {
-      const rh = rowBySource(rowsData, 'RhGaO3');
-      const expected = 10 / 207;
-      assert.ok(Math.abs(rh.molarRatioCalcMM - expected) < 0.001);
+    it('SiO2 molarRatioCalcMM ≈ 31.25 (normalized via rounded min=0.048)', () => {
+      const sio2 = rowBySource(rowsData, 'SiO2');
+      // Production rounds each molarRatioCalcMM to 3dp before normalizing.
+      // RhGaO3 raw = 10/207 = 0.04831 → rounds to 0.048 (the min divisor).
+      // SiO2 normalized = 1.5 / 0.048 = 31.25.
+      const minRounded = parseFloat((10 / 207).toFixed(3));
+      const expected = parseFloat((1.5 / minRounded).toFixed(3));
+      assert.ok(Math.abs(sio2.molarRatioCalcMM - expected) < 0.001, `expected ${expected}, got ${sio2.molarRatioCalcMM}`);
     });
 
     it('RhGaO3 is first (sorted ascending by calc wt)', () => {
@@ -471,21 +487,18 @@ describe('buildHierarchicalMaterialRows', () => {
     });
   });
 
-  // ─── Col 4 parent-row molarRatioCalcMM after processing ──────────────────
+  // ─── Col 4 parent-row molarRatioCalcMM — normalized ─────────────────────
 
-  describe('col 4 parent-row value = calcWt / compMM', () => {
-    it('single component: matches molarRatioCalcMM in rowsData', () => {
-      // After processing, compMM (effectiveMM) overwrites user molar_mass for the col 4 value.
-      // The utility's molarRatioCalcMM uses molar_mass (before processing).
-      // Post-processing correction happens in the React component.
-      // Test that the utility correctly computes calcWt / molarMass here.
+  describe('col 4 parent-row value — normalized (smallest = 1)', () => {
+    it('single component: always 1 after normalization', () => {
       const components = [makeComponent('60% NiO', 60, 74.69)];
       const { rowsData } = buildHierarchicalMaterialRows(components);
-      const expected = 60 / 74.69;
-      assert.ok(Math.abs(rowsData[0].molarRatioCalcMM - expected) < 0.001);
+      assert.ok(Math.abs(rowsData[0].molarRatioCalcMM - 1) < 0.001);
     });
 
-    it('two components both have correct molarRatioCalcMM', () => {
+    it('two components: smaller raw mol ratio becomes 1, larger scales up', () => {
+      // NiO:  30/74.69  = 0.4017 (smaller → 1)
+      // SiO2: 70/60.08  = 1.1651 (larger  → 1.1651/0.4017 ≈ 2.9)
       const components = [
         makeComponent('30% NiO', 30, 74.69),
         makeComponent('70% SiO2', 70, 60.08),
@@ -493,8 +506,12 @@ describe('buildHierarchicalMaterialRows', () => {
       const { rowsData } = buildHierarchicalMaterialRows(components);
       const nio = rowBySource(rowsData, 'NiO');
       const sio2 = rowBySource(rowsData, 'SiO2');
-      assert.ok(Math.abs(nio.molarRatioCalcMM - 30 / 74.69) < 0.001);
-      assert.ok(Math.abs(sio2.molarRatioCalcMM - 70 / 60.08) < 0.001);
+      const minRaw = 30 / 74.69;
+      assert.ok(Math.abs(nio.molarRatioCalcMM - 1) < 0.001, `NiO should be 1, got ${nio.molarRatioCalcMM}`);
+      assert.ok(
+        Math.abs(sio2.molarRatioCalcMM - (70 / 60.08) / minRaw) < 0.01,
+        `SiO2 expected ≈${((70 / 60.08) / minRaw).toFixed(3)}, got ${sio2.molarRatioCalcMM}`
+      );
     });
   });
 
@@ -528,5 +545,66 @@ describe('buildHierarchicalMaterialRows', () => {
       const values = rowsData.map((r) => r.weightRatioCalcProcessed);
       assert.deepStrictEqual(values, [10, 40, 50]);
     });
+  });
+});
+
+// ─── rescaleSegmentCalcWt — Mode B invariant ───────────────────────────────
+describe('rescaleSegmentCalcWt', () => {
+  const seg = 'RhGaO3';
+  const makeSubRow = (calcWt) => ({ segmentFormula: seg, segmentCalcWt: 10, calcWt, atomicMass: 1 });
+
+  it('edited element gets exact new value', () => {
+    const rows = [makeSubRow(4), makeSubRow(3), makeSubRow(3)];
+    const result = rescaleSegmentCalcWt(rows, 0, 6);
+    assert.strictEqual(result[0].calcWt, 6);
+  });
+
+  it('other elements rescale proportionally so sum still equals segmentCalcWt', () => {
+    const rows = [makeSubRow(4), makeSubRow(3), makeSubRow(3)];
+    const result = rescaleSegmentCalcWt(rows, 0, 6);
+    const sum = result.reduce((s, r) => s + r.calcWt, 0);
+    assert.ok(Math.abs(sum - 10) < 0.01, `expected sum=10, got ${sum}`);
+  });
+
+  it('proportional split: Ga=3,O=3 → each halves when Rh goes from 4 to 6', () => {
+    const rows = [makeSubRow(4), makeSubRow(3), makeSubRow(3)];
+    const result = rescaleSegmentCalcWt(rows, 0, 6);
+    // remaining=4, otherSum=6, Ga→3×(4/6)=2, O→3×(4/6)=2
+    assert.ok(Math.abs(result[1].calcWt - 2) < 0.01, `Ga expected 2, got ${result[1].calcWt}`);
+    assert.ok(Math.abs(result[2].calcWt - 2) < 0.01, `O expected 2, got ${result[2].calcWt}`);
+  });
+
+  it('caps value at segmentCalcWt: setting one element to > total clamps it', () => {
+    const rows = [makeSubRow(4), makeSubRow(3), makeSubRow(3)];
+    const result = rescaleSegmentCalcWt(rows, 0, 15);
+    assert.strictEqual(result[0].calcWt, 10);
+    const sum = result.reduce((s, r) => s + r.calcWt, 0);
+    assert.ok(Math.abs(sum - 10) < 0.01, `expected sum=10, got ${sum}`);
+  });
+
+  it('equal split when other elements all have calcWt=0', () => {
+    const rows = [makeSubRow(10), makeSubRow(0), makeSubRow(0)];
+    const result = rescaleSegmentCalcWt(rows, 0, 4);
+    // remaining=6, otherSum=0 → split equally: 3 each
+    assert.ok(Math.abs(result[1].calcWt - 3) < 0.01, `expected 3, got ${result[1].calcWt}`);
+    assert.ok(Math.abs(result[2].calcWt - 3) < 0.01, `expected 3, got ${result[2].calcWt}`);
+  });
+
+  it('sum equals segmentCalcWt exactly even with rounding-prone values (C2)', () => {
+    // Without the last-element remainder fix, 6.6667+2.222+1.111=9.9997 (drift=0.0003)
+    const rows = [makeSubRow(7), makeSubRow(2), makeSubRow(1)];
+    const result = rescaleSegmentCalcWt(rows, 0, 6.6667);
+    const sum = parseFloat(result.reduce((s, r) => s + r.calcWt, 0).toFixed(10));
+    assert.ok(Math.abs(sum - 10) < 0.0001, `expected sum=10, got ${sum}`);
+  });
+
+  it('leaves rows from other segments untouched', () => {
+    const rows = [
+      { segmentFormula: 'RhGaO3', segmentCalcWt: 10, calcWt: 5, atomicMass: 1 },
+      { segmentFormula: 'RhGaO3', segmentCalcWt: 10, calcWt: 5, atomicMass: 1 },
+      { segmentFormula: 'SiO2',   segmentCalcWt: 90, calcWt: 90, atomicMass: 1 },
+    ];
+    const result = rescaleSegmentCalcWt(rows, 0, 7);
+    assert.strictEqual(result[2].calcWt, 90);
   });
 });
