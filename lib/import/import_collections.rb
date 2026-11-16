@@ -449,6 +449,9 @@ module Import
           'volume',
           'reaction_type',
           'scheme_hidden_parts',
+          'ph_operator',
+          'ph_value',
+          'lock_reaction_volume',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

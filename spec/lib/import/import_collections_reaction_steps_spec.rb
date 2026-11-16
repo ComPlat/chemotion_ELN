@@ -61,6 +61,13 @@ RSpec.describe Import::ImportCollections do
     expect(values.call(imported.reaction_steps)).to eq(values.call(reaction.reaction_steps.reload))
   end
 
+  it 'keeps the pH and reaction volume lock of the reaction' do
+    reaction.update_columns(ph_operator: '>', ph_value: 9.5, lock_reaction_volume: true) # rubocop:disable Rails/SkipsModelValidations
+
+    expect(imported.slice(:ph_operator, :ph_value, :lock_reaction_volume))
+      .to eq('ph_operator' => '>', 'ph_value' => 9.5, 'lock_reaction_volume' => true)
+  end
+
   it 'links each material to its imported step and keeps carry-on' do
     first, second = imported.reaction_steps
     links = imported.reactions_samples.map { |rs| [rs.type, rs.reaction_step_id, rs.carry_on, rs.step_reference] }
