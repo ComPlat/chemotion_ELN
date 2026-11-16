@@ -25,7 +25,8 @@ module Reporter
                              show_yield: show_yield,
                              supporting_information: si,
                              steps: steps_svg_paths,
-                             numbered_steps: obj.reaction_type == 'standard',
+                             numbered_steps: obj.reaction_type == 'standard' ||
+                                             obj.scheme_hidden_parts.include?('step_arrows'),
                              hide: obj.scheme_hidden_parts)
                         .compose_reaction_svg
                     end

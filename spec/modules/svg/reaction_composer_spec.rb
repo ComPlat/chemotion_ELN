@@ -133,6 +133,23 @@ RSpec.describe SVG::ReactionComposer do
     end
   end
 
+  describe 'space around a step arrow' do
+    let(:composer) { described_class.new({}, solvents: [], temperature: '') }
+
+    def gaps(step)
+      composer.global_view_box_array[2] = 100
+      arrow_svg = composer.send(:compose_step_arrow, step, 50).last
+      before = arrow_svg[/translate\((\d+)/, 1].to_i - 100
+      [before, composer.global_view_box_array[2] - 100 - before - composer.arrow_width]
+    end
+
+    it 'is tighter when the step shows no reactants' do
+      with_reactants = gaps(reactants: [['r.svg']])
+
+      expect(gaps(reactants: []).zip(with_reactants)).to all(satisfy { |empty, full| empty < full })
+    end
+  end
+
   describe 'parts switched off on the arrow' do
     let(:options) do
       { solvents: %w[THF], temperature: '80 °C', duration: '2 Hour(s)', conditions: 'UV' }

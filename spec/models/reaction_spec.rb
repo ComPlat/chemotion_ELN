@@ -282,6 +282,19 @@ RSpec.describe Reaction, type: :model do
       end
     end
 
+    context 'when a multi-step reaction has its step arrows switched off' do
+      let(:reaction) do
+        create(:reaction, reaction_type: 'multi_step', scheme_hidden_parts: ['step_arrows'],
+                          products: [product], reaction_svg_file: nil)
+      end
+
+      it 'draws one arrow with numbered steps' do
+        reaction
+
+        expect(SVG::ReactionComposer).to have_received(:new).with(anything, hash_including(numbered_steps: true))
+      end
+    end
+
     context 'when reaction_type is interaction' do
       let(:reaction) do
         create(:reaction, reaction_type: 'interaction', products: [product], reaction_svg_file: nil)

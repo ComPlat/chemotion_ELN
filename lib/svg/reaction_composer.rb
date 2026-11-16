@@ -777,7 +777,8 @@ module SVG
 
     def compose_step_arrow(step, y_center)
       apply_step_labels(step)
-      arrow_x_shift = (global_view_box_array[2] += 50)
+      gap = step[:reactants].present? ? 50 : 20
+      arrow_x_shift = (global_view_box_array[2] += gap)
       reactants_y = find_material_max_height(step[:reactants] || []) <= 140 ? y_center : y_center - 70
       reactants_svg = compose_material_group(
         step[:reactants] || [],
@@ -788,7 +789,7 @@ module SVG
         is_reactants: true,
       )
       arrow_svg = compose_arrow_and_reaction_labels(start_at: arrow_x_shift, arrow_y_shift: y_center)
-      global_view_box_array[2] += 40
+      global_view_box_array[2] += gap - 10
       [reactants_svg, arrow_svg]
     end
 

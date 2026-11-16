@@ -205,6 +205,24 @@ export default function ReactionSchemeGraphic({
         />
       </div>
       <ButtonToolbar className="Reaction-scheme-graphic__toolbar">
+        {reaction.isMultiStep() && (
+          <OverlayTrigger
+            placement="left"
+            overlay={<Tooltip id="one-arrow-scheme">One arrow for all steps</Tooltip>}
+            popperConfig={popperConfigAboveToolbar}
+          >
+            <div className="form-check form-switch d-flex align-items-center m-0 p-0">
+              <Form.Check.Input
+                type="checkbox"
+                role="switch"
+                id="scheme-one-arrow"
+                className="m-0"
+                checked={reaction.scheme_hidden_parts.includes('step_arrows')}
+                onChange={() => onToggleSchemePart('step_arrows')}
+              />
+            </div>
+          </OverlayTrigger>
+        )}
         <ConfigOverlayButton
           key={isInteractionReaction ? 'interaction' : 'standard'}
           popperConfig={popperConfigAboveToolbar}

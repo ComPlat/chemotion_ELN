@@ -288,7 +288,7 @@ export default class Reaction extends Element {
       productsOnly,
       showYield: !productsOnly,
       steps: this.stepsSvgPaths(),
-      numberedSteps: !productsOnly && this.hasHiddenSteps(),
+      numberedSteps: !productsOnly && (this.hasHiddenSteps() || this.scheme_hidden_parts.includes('step_arrows')),
       hide: this.scheme_hidden_parts,
     };
   }

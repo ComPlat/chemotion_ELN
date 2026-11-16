@@ -791,6 +791,14 @@ describe('Reaction hidden steps, edge cases', () => {
     };
   };
 
+  it('draws a multi-step reaction with one arrow when step arrows are switched off', async () => {
+    const { reaction } = await twoSteps();
+    expect(reaction.schemeSvgRequest().numberedSteps).toBe(false);
+
+    reaction.toggleSchemePart('step_arrows');
+    expect([reaction.reaction_type, reaction.schemeSvgRequest().numberedSteps]).toEqual(['multi_step', true]);
+  });
+
   it('keeps hidden steps out of an interaction reaction picture', async () => {
     const { reaction } = await twoSteps();
     reaction.leaveMultiStep();

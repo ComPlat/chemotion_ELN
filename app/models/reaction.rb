@@ -426,7 +426,7 @@ class Reaction < ApplicationRecord
       show_yield: !interaction?,
       is_report: is_report,
       steps: multi_step? || (standard? && reaction_steps.many?) ? scheme_steps_svg_paths : [],
-      numbered_steps: standard?,
+      numbered_steps: standard? || scheme_hidden_parts.include?('step_arrows'),
       hide: scheme_hidden_parts,
     }
     composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
