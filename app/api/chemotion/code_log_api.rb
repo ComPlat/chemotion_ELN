@@ -33,9 +33,6 @@ module Chemotion
             elsif s >= 8
               # TODO: use where instead of find_by ?
               CodeLog.where('value ~ ?', "\\A0#{code}").first
-            elsif s == 6
-              # TODO: use where instead of find_by ?
-              CodeLog.find_by(value_xs: code.to_i)
             end
 
           if code_log.nil?
@@ -123,15 +120,7 @@ module Chemotion
           content_type('application/pdf')
           header 'Content-Disposition', "attachment; filename*=UTF-8''analysis_codes_#{params[:size]}.pdf"
           env['api.format'] = :binary
-          # TODO: check container type/info instead
-          # case params[:type]
-          # when "nmr_analysis"
-          #   body AnalysisNmrPdf.new(elements).render
-          # when "analysis"
           body AnalysisPdf.new(element, analyses, params[:size]).render
-          # else
-          #   error!("Analysis with #{params[:type]} not defined", 500)
-          # end
         end
       end
     end

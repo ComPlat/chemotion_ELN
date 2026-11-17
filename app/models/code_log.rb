@@ -21,11 +21,6 @@ class CodeLog < ApplicationRecord
   acts_as_paranoid
   after_create :set_digit_value
 
-  def set_value_xs
-    self.value_xs = Chemotion::CodeCreator.create_code_xs
-    save!
-  end
-
   def value_sm
     value[1..10]
   end
