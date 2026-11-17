@@ -74,6 +74,16 @@ class ReactionMaterialComponentsGroup extends React.Component {
             </span>
           </label>
         </td>
+        {/* Mass */}
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={component.amount_g ?? null}
+            unit="g"
+            precision={6}
+            disabled
+            size="sm"
+          />
+        </td>
         {/* Amount */}
         <td>
           <NumeralInputWithUnitsCompo
@@ -180,6 +190,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
               <tr>
                 <th>Ref</th>
                 <th>Component</th>
+                <th>Mass</th>
                 <th>Amount</th>
                 <th>Rel. MW</th>
                 <th>Conc</th>

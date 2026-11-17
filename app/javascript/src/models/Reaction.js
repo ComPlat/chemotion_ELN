@@ -505,7 +505,7 @@ export default class Reaction extends Element {
   }
 
   get purification_solvents() {
-    return this._purification_solvents;
+    return this._purification_solvents || [];
   }
 
   set purification_solvents(samples) {

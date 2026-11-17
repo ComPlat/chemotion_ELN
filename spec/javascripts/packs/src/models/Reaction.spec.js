@@ -267,6 +267,25 @@ describe('Reaction', () => {
     });
   });
   describe('Reaction.buildCopy()', () => {
+    [
+      ['omitted', {}],
+      ['null', { purification_solvents: null }],
+      ['empty', { purification_solvents: [] }],
+    ].forEach(([state, fields]) => {
+      it(`copies and serializes a reaction with ${state} purification solvents`, () => {
+        const source = new Reaction({
+          starting_materials: [], reactants: [], solvents: [], products: [], segments: [], ...fields,
+        });
+
+        const copy = source.buildCopy({ collection_id: 'newCollectionId' });
+
+        expect(source.purification_solvents).toEqual([]);
+        expect(copy.purification_solvents).toEqual([]);
+        expect(source.serialize().materials.purification_solvents).toEqual([]);
+        expect(copy.serialize().materials.purification_solvents).toEqual([]);
+      });
+    });
+
     it('should copy starting materials with _real_amount_value set to null', () => {
       const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
       expect(copy.starting_materials[0]._real_amount_value).toBe(null);
