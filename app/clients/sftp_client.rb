@@ -5,18 +5,6 @@ class SFTPClient
     port password keys keys_only auth_methods timeout verbose key_data number_of_password_prompts
   ].freeze
 
-  def self.with_default_settings
-    @with_default_settings ||= new(
-      host: ENV.fetch('SFTP_HOST', nil),
-      user: ENV.fetch('SFTP_USER', nil),
-
-      port: ENV.fetch('SFTP_PORT', nil),
-      password: ENV.fetch('SFTP_PASSWORD', nil),
-      keys: ENV.fetch('SFTP_KEYS', nil),
-      auth_methods: ENV.fetch('SFTP_AUTH_METHODS', nil),
-    )
-  end
-
   attr_reader :host, :user, :session_options
 
   # Initialize the SFTP parameters with the given host, username and options

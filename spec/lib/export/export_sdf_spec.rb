@@ -55,4 +55,22 @@ describe Export::ExportSdf do
       expect(exporter.send(:validate_molfile, nil)).to eq('')
     end
   end
+
+  describe '#filter_with_permission_and_detail_level' do
+    let(:samples) { instance_double(ActiveRecord::Result, columns: %w[s_id is_shared molfile user_labels updated_at]) }
+    let(:sample) do
+      { 'is_shared' => 'f', 'molfile' => ctab, 'user_labels' => 'BUGREPRO-A', 'updated_at' => '2026-11-06 10:00' }
+    end
+
+    before do
+      exporter.instance_variable_set(:@samples, samples)
+      exporter.generate_headers(:sample, described_class::EXCLUDED_COLUMNS)
+    end
+
+    it 'writes the values of underscored columns under their display tags' do
+      sdf = exporter.send(:filter_with_permission_and_detail_level, sample)
+
+      expect(sdf).to include(">  <USER_LABELS>\nBUGREPRO-A\n", ">  <UPDATED_AT>\n2026-11-06 10:00\n")
+    end
+  end
 end

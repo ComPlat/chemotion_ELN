@@ -19,7 +19,6 @@ import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
-import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
@@ -53,16 +52,6 @@ import { sampleAssociationLockNotification } from 'src/utilities/notificationMes
 
 import _ from 'lodash';
 
-const handleFetch = (dispatch, fetch) => {
-  return fetch()
-    .then((result) => {
-      dispatch(result)
-    })
-    .catch((errorMessage) => {
-      console.log(errorMessage)
-    })
-}
-
 class ElementActions {
   exportElement(element, klass, exportFormat) {
     return (dispatch) => {
@@ -74,131 +63,9 @@ class ElementActions {
         });
     };
   }
-  // -- Devices --
-  fetchAllDevices() {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
-  }
-
-  fetchDeviceById(deviceId) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
-  }
-
-  createDevice() {
-    return null
-  }
-
-  changeActiveAccordionDevice(key) {
-    return (dispatch) => dispatch(key)
-  }
-
-  changeSelectedDeviceId(device) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
-  }
-
-  setSelectedDeviceId(deviceId) {
-    return (dispatch) => dispatch(deviceId)
-  }
-
   setRefreshCoefficient(id, coefficient, rId) {
     const obj = { sId: id, rId, coefficient };
     return (dispatch) => dispatch({ obj });
-  }
-
-  toggleDeviceType(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDevice(device) {
-    if (device.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
-    }
-  }
-
-  deleteDevice(device) {
-    if (!device.isNew) {
-      DeviceFetcher.delete(device)
-    }
-    return (dispatch) => dispatch(device)
-  }
-
-  addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({ sample, device, options })
-  }
-
-  addSampleWithAnalysisToDevice(sample, analysis, device) {
-    return (dispatch) => dispatch({ sample, analysis, device })
-  }
-
-  removeSampleFromDevice(sample, device) {
-    return (dispatch) => dispatch({ sample, device })
-  }
-
-  toggleTypeOfDeviceSample(device, sample, type) {
-    return (dispatch) => dispatch({ device, sample, type })
-  }
-
-  changeDeviceProp(device, prop, value) {
-    return (dispatch) => dispatch({ device, prop, value })
-  }
-
-  fetchDeviceAnalysisById(analysisId) {
-    return (dispatch) => {
-      DeviceFetcher.fetchAnalysisById(analysisId)
-        .then(analysis => {
-          DeviceFetcher.fetchById(analysis.deviceId)
-            .then(device => {
-              dispatch({ analysis, device })
-            })
-        })
-    }
-  }
-
-  openDeviceAnalysis(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDeviceAnalysis(analysis) {
-    if (analysis.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
-    }
-  }
-
-  createDeviceAnalysis(deviceId, analysisType) {
-    return (dispatch) => {
-      DeviceFetcher.fetchById(deviceId)
-        .then((device) => {
-          dispatch({ device, analysisType })
-        })
-    }
-  }
-
-  generateExperimentConfig(experiment) {
-    return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
-  }
-
-  duplicateAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
-  }
-
-  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
-    return (dispatch) => dispatch({ analysis, experiment, prop, value })
-  }
-
-  deleteAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
   }
 
   // -- Search --

@@ -3,6 +3,11 @@
 module Usecases
   module Search
     class ResearchPlanRelations
+      def self.plan_ids_for_wellplates(wellplate_ids:, collection_id:)
+        plan_ids = ResearchPlansWellplate.get_research_plans(wellplate_ids)
+        ResearchPlan.by_collection_id(collection_id).where(id: plan_ids).pluck(:id).uniq
+      end
+
       def self.call(plan_ids:, collection_id:)
         sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(plan_ids).map { |row| row.sample_id.to_i }
         reaction_ids = ResearchPlan.reaction_ids_by_research_plan_ids(plan_ids).map { |row| row.reaction_id.to_i }

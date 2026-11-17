@@ -169,9 +169,10 @@ describe Chemotion::UserAPI do
   end
 
   describe 'GET /api/v1/users/devices' do
-    let(:own_device) { create(:device) }
-    let(:group_device) { create(:device) }
-    let(:unrelated_device) { create(:device) }
+    # named against creation order, so the sort is not satisfied by id order
+    let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings, name: 'Alpha IR') }
+    let!(:unrelated_device) { create(:device).tap { |device| device.people << create(:person) } }
     let!(:group) { create(:group, admins: [user], users: [user]) }
 
     before do
@@ -184,6 +185,24 @@ describe Chemotion::UserAPI do
       ids = parsed_json_response['currentDevices'].pluck('id')
       expect(ids).to include(own_device.id, group_device.id)
       expect(ids).not_to include(unrelated_device.id)
+    end
+
+    it 'lists each device with its id, name and abbreviation', :aggregate_failures do
+      devices = parsed_json_response['currentDevices']
+      expect(devices.size).to eq(2)
+      expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
+    end
+
+    context 'when a device is linked to the user directly and through a group' do
+      before do
+        group_device.people << user
+        get '/api/v1/users/devices'
+      end
+
+      it 'lists it once, with the devices sorted by name' do
+        names = parsed_json_response['currentDevices'].pluck('name')
+        expect(names).to eq(['Alpha IR', 'Zeta NMR'])
+      end
     end
   end
 
@@ -245,19 +264,76 @@ describe Chemotion::UserAPI do
 
   describe 'GET /api/v1/devices/current_connection' do
     let(:device) { create(:device) }
-    let(:path) { NOVNC_DEVICES_DIR.join(device.id.to_s) }
+    let(:store) { ActiveSupport::Cache::MemoryStore.new }
+    let(:other_user) { create(:person) }
 
-    after { FileUtils.rm_f(path) }
+    before do
+      stub_const('NOVNC_CONNECTIONS', store)
+      # The endpoint caches its device-access check; keep it from leaking across examples and runs.
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    end
+
+    def poll(id: device.id, status: 'true')
+      get '/api/v1/devices/current_connection', params: { id: id, status: status }
+    end
 
     context 'when the device belongs to the current user' do
-      before do
-        device.people << user
-        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      before { device.people << user }
+
+      it 'returns 200 and reports the user as watching' do
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
       end
 
-      it 'returns 200 and appends the connection status to the device log' do
+      it 'reports the user as using when the display is focused' do
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'updates the entry of a user who polls again' do
+        poll
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'lists the other viewers of the device' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        poll
+        expect(parsed_json_response['result']).to contain_exactly("#{other_user.id},0", "#{user.id},1")
+      end
+
+      it 'drops viewers that stopped polling' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        travel(NOVNC_CONNECTION_TTL + 1.second) do
+          poll
+        end
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'replaces a malformed entry with the current viewer' do
+        store.write("device/#{device.id}", { other_user.id => [0, nil], 0 => 'x' })
+        poll
         expect(response).to have_http_status(:ok)
-        expect(File.read(path)).to include("#{user.id},1")
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'answers an empty result when the store cannot be written' do
+        allow(store).to receive(:write).and_raise(Errno::ENOSPC)
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq([])
+      end
+
+      it 'returns 400 for an id with text after the number' do
+        poll(id: "#{device.id}abc")
+        expect(response).to have_http_status(:bad_request)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+
+      it 'returns 400 for a non-numeric id' do
+        poll(id: 'abc')
+        expect(response).to have_http_status(:bad_request)
       end
     end
 
@@ -266,8 +342,9 @@ describe Chemotion::UserAPI do
         get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
       end
 
-      it 'returns 404' do
+      it 'returns 404 and leaves the store untouched' do
         expect(response).to have_http_status(:not_found)
+        expect(store.read("device/#{device.id}")).to be_nil
       end
     end
   end
