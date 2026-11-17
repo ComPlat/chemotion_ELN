@@ -943,6 +943,11 @@ export default class ReactionDetailsScheme extends React.Component {
   // Validates the given mass (in grams) against the sample's available mixture mass
   // and shows a standardized warning if it is exceeded.
   warnIfMixtureMassExceeded(sample, massG = sample.amount_g) {
+    // A product's total mass includes other components; its reference component determines yield.
+    if (sample.isMixture?.() && this.props.reaction.products?.some((product) => isSameMaterial(product, sample))) {
+      return;
+    }
+
     const exceedsMassLimit = sample.validateMixtureMass(massG);
     if (exceedsMassLimit) {
       this.showMixtureMassExceededWarning(sample);
@@ -1003,6 +1008,15 @@ export default class ReactionDetailsScheme extends React.Component {
       const massAnalyses = this.checkMassMolecule(referenceMaterial, sample);
       this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
       return sample;
+    }
+    if (sample.isMixture?.()) {
+      const theoreticalAmountMol = referenceMaterial.amount_mol * stoichiometryCoeff;
+      let equivalent = theoreticalAmountMol > 0 ? sample.amount_mol / theoreticalAmountMol : 0;
+      if (equivalent > 1) {
+        equivalent = 1;
+        this.triggerNotification(sample.decoupled);
+      }
+      return { ...sample, equivalent };
     }
     const numerator = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
     const maxAmount = numerator / (sample.purity || 1);

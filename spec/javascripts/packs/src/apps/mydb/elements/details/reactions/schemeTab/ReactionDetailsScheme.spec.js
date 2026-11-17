@@ -119,6 +119,84 @@ describe('ReactionDetailsScheme mixture amount input units', () => {
   });
 });
 
+describe('ReactionDetailsScheme mixture product yield validation', () => {
+  const build = (group = 'products') => {
+    const reaction = new Reaction({
+      id: 903, type: 'reaction',
+      reactants: [], products: [], solvents: [], purification_solvents: [],
+      starting_materials: [{
+        id: 'reference', reference: true, amountType: 'target',
+        target_amount_value: 0.01, target_amount_unit: 'mol',
+        molecule: { molecular_weight: 100 }, coefficient: 1, purity: 1,
+      }],
+      [group]: [{
+        id: 'mixture', sample_type: 'Mixture', amountType: 'real',
+        real_amount_value: 2, real_amount_unit: 'g', density: 1,
+        molecule: { molecular_weight: 200 }, coefficient: 1, purity: 1,
+        sample_details: { total_mixture_mass_g: 2 },
+      }],
+    });
+    const mixture = reaction[group][0];
+    mixture.belongTo = reaction;
+    mixture.initialComponents([200, 100].map((weight, index) => new Component({
+      id: `component-${index}`, position: index, reference: index === 0,
+      molecule: { molecular_weight: weight }, material_group: 'solid', purity: 1,
+      equivalent: index === 0 ? 1 : 48,
+      amount_mol: index === 0 ? 0.0004 : 0.0192,
+      relative_molecular_weight: index === 0 ? 5000 : 5000 / 48,
+    })));
+    const scheme = Object.create(ReactionDetailsScheme.prototype);
+    scheme.props = { reaction };
+    scheme.state = { lockEquivColumn: false };
+    scheme.context = { notifications: { add: sinon.spy() } };
+    return { reaction, mixture, scheme };
+  };
+
+  ['updatedReactionForAmountChange', 'updatedReactionForAmountUnitChange'].forEach((handler) => {
+    ['g', 'mol', 'l'].forEach((unit) => {
+      it(`accepts total product mass above the pure-product theoretical mass via ${handler}, unit=${unit}`, () => {
+        const { reaction, mixture, scheme } = build();
+
+        scheme[handler]({
+          sampleID: mixture.id, amount: { value: { g: 10, mol: 0.002, l: 0.01 }[unit], unit },
+        });
+
+        const product = reaction.products[0];
+        expect(product.amount_g).toBeCloseTo(10, 10);
+        expect(product.amount_mol).toBeCloseTo(0.002, 10);
+        expect(product.equivalent).toBeCloseTo(0.2, 10);
+        sinon.assert.notCalled(scheme.context.notifications.add);
+      });
+    });
+  });
+
+  [0.2, 1, 1.2].forEach((equivalent) => {
+    it(`validates a mixture product's reference component for yield=${equivalent * 100}%`, () => {
+      const { reaction, mixture, scheme } = build();
+
+      scheme.updatedReactionForEquivalentChange({ sampleID: mixture.id, equivalent });
+
+      expect(reaction.products[0].amount_g).toBeCloseTo(equivalent * 50, 10);
+      expect(reaction.products[0].equivalent).toBeCloseTo(Math.min(equivalent, 1), 10);
+      if (equivalent > 1) {
+        sinon.assert.calledOnce(scheme.context.notifications.add);
+        expect(scheme.context.notifications.add.firstCall.args[0].level).toBe('error');
+      } else {
+        sinon.assert.notCalled(scheme.context.notifications.add);
+      }
+    });
+  });
+
+  it('still warns when an input mixture exceeds its available mass', () => {
+    const { mixture, scheme } = build('reactants');
+
+    scheme.updatedReactionForAmountUnitChange({ sampleID: mixture.id, amount: { value: 10, unit: 'g' } });
+
+    sinon.assert.calledOnce(scheme.context.notifications.add);
+    expect(scheme.context.notifications.add.firstCall.args[0].title).toBe('Mass Exceeded');
+  });
+});
+
 describe('ReactionDetailsScheme mixture maximum amount fallback', () => {
   [undefined, null, 0, 400].forEach((relativeWeight) => {
     it(`calculates a finite maximum and detects excess mass with relative MW=${relativeWeight}`, () => {
