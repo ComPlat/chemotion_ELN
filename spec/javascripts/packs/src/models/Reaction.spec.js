@@ -1221,6 +1221,38 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.schemeSvgRequest', () => {
+    [false, true].forEach((hasReference) => {
+      [false, true].forEach((completeMixture) => {
+        it(`uses an unknown SVG yield with reference=${hasReference}, complete mixture=${completeMixture}`, () => {
+          const source = Reaction.buildEmpty(1);
+          source.starting_materials = hasReference ? [new Sample({ id: 1, reference: true })] : [];
+          source.products = [new Sample({
+            id: 2, sample_type: 'Mixture', amountType: 'real', real_amount_value: 10, real_amount_unit: 'g',
+            sample_svg_file: 'mixture.svg', equivalent: completeMixture ? 0.28 : 0,
+          })];
+          if (completeMixture) {
+            source.products[0].initialComponents([new Component({
+              id: 1, reference: true, relative_molecular_weight: 2789.5,
+            })]);
+          }
+
+          const request = source.schemeSvgRequest();
+
+          expect(request.materialsSvgPaths.products).toEqual([
+            ['/images/samples/mixture.svg', hasReference && completeMixture ? 0.28 : null],
+          ]);
+        });
+      });
+    });
+
+    it('preserves a measured zero yield in the SVG request', () => {
+      const source = Reaction.buildEmpty(1);
+      source.starting_materials = [new Sample({ id: 1, reference: true })];
+      source.products = [new Sample({ id: 2, sample_svg_file: 'product.svg', equivalent: 0 })];
+
+      expect(source.schemeSvgRequest().materialsSvgPaths.products).toEqual([['/images/samples/product.svg', 0]]);
+    });
+
     it('builds the complete SVG request for an interaction reaction', () => {
       const startingMaterial = reaction.starting_materials[0];
       const reactant = reaction.starting_materials[1];

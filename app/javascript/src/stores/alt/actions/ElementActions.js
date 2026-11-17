@@ -320,14 +320,20 @@ export class ElementActions {
   }
 
   createSampleForReaction(sample, reaction, materialGroup) {
-    return (dispatch) => {
-      SamplesFetcher.create(sample)
-        .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup, components: sample.components })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-          LoadingActions.stop();
-        });
+    return async (dispatch) => {
+      try {
+        const newSample = await SamplesFetcher.create(sample);
+        if (newSample.isMixture() && Array.isArray(sample.components)) {
+          const savedComponents = await ComponentsFetcher.saveOrUpdateComponents(newSample, sample.components);
+          if (!Array.isArray(savedComponents)) throw new Error('Could not save mixture components');
+          newSample.initialComponents(Component.refreshFromApi(savedComponents, sample.components));
+        }
+        // Adding a material clones it; initialize components first so the reaction keeps them on Create.
+        dispatch({ newSample, reaction, materialGroup });
+      } catch (errorMessage) {
+        console.log(errorMessage);
+        LoadingActions.stop();
+      }
     };
   }
 

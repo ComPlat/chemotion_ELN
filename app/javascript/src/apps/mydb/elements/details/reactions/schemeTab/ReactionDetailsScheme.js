@@ -527,7 +527,8 @@ export default class ReactionDetailsScheme extends React.Component {
         break;
       case 'coefficientChanged':
         onReactionChange(
-          this.updatedReactionForCoefficientChange(changeEvent)
+          this.updatedReactionForCoefficientChange(changeEvent),
+          { updateGraphic: true }
         );
         break;
       case 'amountTypeChanged':
@@ -1011,7 +1012,9 @@ export default class ReactionDetailsScheme extends React.Component {
     }
     if (sample.isMixture?.()) {
       const theoreticalAmountMol = referenceMaterial.amount_mol * stoichiometryCoeff;
-      let equivalent = theoreticalAmountMol > 0 ? sample.amount_mol / theoreticalAmountMol : 0;
+      const amountMol = sample.amount_mol;
+      let equivalent = theoreticalAmountMol > 0
+        ? (Number.isFinite(amountMol) ? amountMol / theoreticalAmountMol : null) : 0;
       if (equivalent > 1) {
         equivalent = 1;
         this.triggerNotification(sample.decoupled);
@@ -1741,7 +1744,8 @@ export default class ReactionDetailsScheme extends React.Component {
               if (updatedSample.isGas()) {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
                 sample.equivalent = equivalent > 1 ? 1 : equivalent;
-              } else if (!lockEquivColumn) {
+              } else {
+                // The equivalents lock controls reactant ratios; product yields remain derived from their amounts.
                 if (referenceMaterial.amount_mol > 0) {
                   sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
                 } else if (!sample.reference) {
@@ -1811,6 +1815,9 @@ export default class ReactionDetailsScheme extends React.Component {
             // Set equivalent to 0 when reference material has no values (amount_mol = 0)
             sample.equivalent = 0.0;
           }
+        } else if (materialGroup === 'products' && sample.isMixture?.()
+          && referenceMaterial.amount_mol > 0 && !Number.isFinite(sample.amount_mol)) {
+          sample.equivalent = null;
         } else if (materialGroup === 'products'
           && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))
           && sample.gas_type !== 'gas'

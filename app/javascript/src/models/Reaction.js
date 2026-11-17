@@ -226,12 +226,17 @@ export default class Reaction extends Element {
 
   schemeSvgRequest() {
     const productsOnly = this.isInteractionReaction();
+    const referenceMaterial = this.referenceMaterial;
 
     return {
       materialsSvgPaths: {
         starting_materials: this.starting_materials.map((material) => material.svgPath),
         reactants: this.reactantsWithSbmm.map((material) => material.svgPath),
-        products: this.products.map((material) => [material.svgPath, material.equivalent])
+        products: this.products.map((material) => {
+          const hasReference = material.gas_type === 'gas' ? this.findFeedstockMaterial() : referenceMaterial;
+          const hasAmount = !material.isMixture?.() || Number.isFinite(material.amount_mol);
+          return [material.svgPath, productsOnly || (hasReference && hasAmount) ? material.equivalent : null];
+        })
       },
       temperature: this.temperature_display_with_unit,
       solvents: this.solvents

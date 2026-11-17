@@ -14,6 +14,7 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
@@ -83,6 +84,60 @@ describe('ElementActions.updateSampleForReaction mixture equivalent', () => {
   });
 
   afterEach(() => { sandbox.restore(); });
+
+  it('saves new mixture components before inserting the sample into an unsaved reaction', async () => {
+    const { reaction, mixture } = build();
+    reaction.isNew = true;
+    reaction.starting_materials = [reaction.referenceMaterial];
+    mixture.isNew = true;
+    const persisted = new Sample({ ...mixture.serialize(), id: 764, is_new: false });
+    sandbox.stub(SamplesFetcher, 'create').resolves(persisted);
+    sandbox.stub(UserActions, 'fetchCurrentUser');
+    sandbox.stub(ElementActionDispatcher, 'handleSvgReactionChange');
+    let finishComponents;
+    ComponentsFetcher.saveOrUpdateComponents.callsFake(() => new Promise((resolve) => { finishComponents = resolve; }));
+    const store = { handleRefreshElements: sinon.spy(), changeCurrentElement: sinon.spy() };
+    const dispatch = sinon.spy((payload) => (
+      ElementStore.StoreModel.prototype.handleCreateSampleForReaction.call(store, payload)
+    ));
+
+    const save = new ElementActions().createSampleForReaction(mixture, reaction, 'products')(dispatch);
+    await Promise.resolve();
+
+    sinon.assert.notCalled(dispatch);
+    expect(reaction.products).toHaveLength(0);
+    const savedComponents = mixture.components.map((component, index) => ({
+      ...component.serializeComponent(), id: 501 + index,
+    }));
+    finishComponents(savedComponents);
+    await save;
+
+    sinon.assert.calledOnce(dispatch);
+    sinon.assert.calledOnce(ComponentsFetcher.saveOrUpdateComponents);
+    expect(reaction.products[0].components.map((component) => component.id)).toEqual([501, 502]);
+    expect(reaction.products[0].reference_component.id).toBe(501);
+    const payload = reaction.serialize().materials.products[0];
+    expect(payload.components.map((component) => component.id)).toEqual([501, 502]);
+    expect(payload.components[0].component_properties.amount_mol).toBeCloseTo(0.006, 12);
+  });
+
+  ['rejected', 'missing response'].forEach((failure) => {
+    it(`does not dispatch a newly created mixture when component saving has ${failure}`, async () => {
+      const { reaction, mixture } = build();
+      const persisted = new Sample({ ...mixture.serialize(), id: 764, is_new: false });
+      sandbox.stub(SamplesFetcher, 'create').resolves(persisted);
+      const stop = sandbox.stub(LoadingActions, 'stop');
+      sandbox.stub(console, 'log');
+      if (failure === 'rejected') ComponentsFetcher.saveOrUpdateComponents.rejects(new Error('Component save failed'));
+      else ComponentsFetcher.saveOrUpdateComponents.resolves(undefined);
+      const dispatch = sinon.spy();
+
+      await new ElementActions().createSampleForReaction(mixture, reaction, 'products')(dispatch);
+
+      sinon.assert.notCalled(dispatch);
+      sinon.assert.calledOnce(stop);
+    });
+  });
 
   ['products', 'reactants'].forEach((group) => {
     it(`retains a list-opened mixture's ${group} role after saving with the reaction tab closed`, async () => {

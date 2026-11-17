@@ -311,11 +311,16 @@ class Material extends Component {
     const refMaterial = reaction.getReferenceMaterial();
     let calculateYield;
     const isNumeric = (v) => {
+      if (v == null || v === '') return false;
       const n = Number(v);
       return Number.isFinite(n);
     };
     if (material.gas_type === 'gas') {
       calculateYield = this.recalculateYieldForGasProduct(material, reaction);
+    } else if (!refMaterial) {
+      calculateYield = undefined;
+    } else if (material.isMixture?.() && !Number.isFinite(material.amount_mol)) {
+      calculateYield = undefined;
     } else if (reaction.hasPolymers()) {
       if (isNumeric(material.equivalent)) {
         const eq = material.equivalent <= 1 ? material.equivalent : 1;
@@ -1258,7 +1263,7 @@ class Material extends Component {
               </div>
             )}
             <div className="reaction-material__density-data">
-              {material.has_density ? material.density : 'undefined'}
+              {material.has_density ? material.density : 'n.d'}
             </div>
             <div className="reaction-material__purity-data">
               {(material.purity === null || material.purity === undefined || material.purity === '')

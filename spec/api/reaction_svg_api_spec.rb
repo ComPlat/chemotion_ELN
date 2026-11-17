@@ -49,6 +49,24 @@ describe Chemotion::ReactionSvgAPI do
         expect(output_svg).to include((product_yield * 100).round(0).to_s + '%')
         expect(output_svg.strip).to eq standard_svg.strip
       end
+
+    end
+
+    describe 'POST /api/v1/reaction_svg unavailable yield labels' do
+      [[nil, 'n.d.'], [0, '0%']].each do |amount, label|
+        it "shows #{label} for yield #{amount.inspect}" do
+          path = '/../spec/fixtures/images/molecule.svg'
+          post '/api/v1/reaction_svg', params: {
+            materials_svg_paths: { starting_materials: [path], reactants: [], products: [[path, amount]] },
+            temperature: '', solvents: [],
+          }, as: :json
+
+          expect(response).to have_http_status(:created)
+          output_svg = JSON.parse(response.body)['reaction_svg']
+          expect(output_svg).to include(">#{label}</text>")
+          expect(output_svg).not_to include(amount.nil? ? '>0%</text>' : '>n.d.</text>')
+        end
+      end
     end
   end
 end

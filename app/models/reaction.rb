@@ -280,7 +280,18 @@ class Reaction < ApplicationRecord
   end
 
   def yield_amount(sample_id)
-    ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
+    material = reactions_product_samples.includes(sample: :components).find_by(sample_id: sample_id)
+    return unless material
+    return material.equivalent if material.gas_type == 'gas'
+    return unless reactions_samples.exists?(reference: true) || reactions_reactant_sbmm_samples.exists?(reference: true)
+
+    sample = material.sample
+    if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+      amount_type = sample.real_amount_value.nil? || sample.real_amount_value.zero? ? :target : :real
+      return if sample.amount_mmol(amount_type).nil?
+    end
+
+    material.equivalent
   end
 
   def solvents_in_svg

@@ -782,6 +782,38 @@ describe Chemotion::ReactionAPI do
         match = CollectionsReaction.where(collection_id: collection1.id, reaction_id: reaction_id).first
         expect(match).not_to be_nil
       end
+
+      it 'persists product mixture components on create' do
+        payload = params.deep_dup
+        payload['materials']['products'].first.merge!(
+          'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+          'real_amount_value' => 10,
+          'real_amount_unit' => 'g',
+          'sample_details' => { 'total_mixture_mass_g' => 10, 'reference_relative_molecular_weight' => 2789.5 },
+          'components' => [0.3017, 9.6983].map.with_index do |mass, index|
+            {
+              'id' => "temporary-component-#{index}", 'position' => index,
+              'component_properties' => {
+                'molecule_id' => sample1.molecule_id, 'material_group' => 'solid',
+                'amount_g' => mass, 'amount_mol' => mass / sample1.molecule.molecular_weight,
+                'reference' => index.zero?, 'purity' => 1,
+              },
+            }
+          end,
+        )
+
+        post '/api/v1/reactions', params: payload, as: :json
+
+        expect(response).to have_http_status(:created)
+        reaction = Reaction.find(parsed_json_response.dig('reaction', 'id'))
+        product = reaction.products.first
+        expect(product.components.count).to eq(2)
+        expect(product.components.order(:position).map { |component| component.component_properties['amount_g'] })
+          .to eq([0.3017, 9.6983])
+        get "/api/v1/components/#{product.id}"
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response.size).to eq(2)
+      end
     end
 
     context 'when creating new materials' do

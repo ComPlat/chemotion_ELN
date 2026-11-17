@@ -6,6 +6,36 @@ import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Materia
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import Reaction from 'src/models/Reaction';
 
+describe('Material unavailable product yield', () => {
+  [0, 0.28].forEach((equivalent) => {
+    it(`keeps yield unavailable without a reaction reference even when equivalent=${equivalent}`, () => {
+      const row = new Material({});
+      const reaction = { getReferenceMaterial: () => undefined, hasPolymers: () => false };
+      expect(row.calculateYield({ equivalent }, reaction)).toBeUndefined();
+    });
+  });
+
+  [null, undefined, '', 'n.d', NaN].forEach((equivalent) => {
+    it(`does not display a numeric yield for ${String(equivalent)}`, () => {
+      const row = new Material({});
+      const reaction = { getReferenceMaterial: () => ({}), hasPolymers: () => false };
+      expect(row.calculateYield({ equivalent }, reaction)).toBeUndefined();
+    });
+  });
+
+  it('still displays a measured zero yield', () => {
+    const row = new Material({});
+    const reaction = { getReferenceMaterial: () => ({}), hasPolymers: () => false };
+    expect(row.calculateYield({ equivalent: 0 }, reaction)).toBe('0%');
+  });
+
+  it('does not display a persisted yield when the mixture reference amount is unavailable', () => {
+    const row = new Material({});
+    const reaction = { getReferenceMaterial: () => ({}), hasPolymers: () => false };
+    expect(row.calculateYield({ isMixture: () => true, amount_mol: 'n.d', equivalent: 1 }, reaction)).toBeUndefined();
+  });
+});
+
 describe('Material pending amount edits on unmount', () => {
   let sandbox;
   let clock;

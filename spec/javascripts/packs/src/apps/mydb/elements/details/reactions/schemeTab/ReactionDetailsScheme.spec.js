@@ -195,6 +195,62 @@ describe('ReactionDetailsScheme mixture product yield validation', () => {
     sinon.assert.calledOnce(scheme.context.notifications.add);
     expect(scheme.context.notifications.add.firstCall.args[0].title).toBe('Mass Exceeded');
   });
+
+  ['updatedReactionForAmountChange', 'updatedReactionForAmountUnitChange'].forEach((handler) => {
+    ['Mixture', 'Micromolecule'].forEach((sampleType) => {
+      [1, 2].forEach((coefficient) => {
+        it(`refreshes ${sampleType} yield across lock changes via ${handler}, coefficient=${coefficient}`, () => {
+          const { reaction, mixture: product, scheme } = build();
+          product.sample_type = sampleType;
+          product.coefficient = coefficient;
+          const fullMass = sampleType === 'Mixture' ? 10 : 0.4;
+          [true, false].forEach((locked) => {
+            scheme.state.lockEquivColumn = locked;
+            [0.5, 2, 1.5].forEach((scale) => {
+              scheme[handler]({ sampleID: product.id, amount: { value: fullMass * scale, unit: 'g' } });
+
+              expect(reaction.products[0].equivalent).toBeCloseTo(0.2 * scale / coefficient, 10);
+              expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 10);
+            });
+          });
+          sinon.assert.notCalled(scheme.context.notifications.add);
+        });
+      });
+    });
+  });
+
+  ['missing', 'empty', 'unquantified'].forEach((state) => {
+    [false, true].forEach((locked) => {
+      it(`keeps yield unavailable with ${state} components and lock=${locked}`, () => {
+        const { reaction, mixture, scheme } = build();
+        scheme.state.lockEquivColumn = locked;
+        mixture.components = state === 'missing' ? undefined : [];
+        if (state === 'unquantified') {
+          mixture.initialComponents([200, 100].map((weight, index) => new Component({
+            id: `unquantified-${index}`, position: index, reference: index === 0, material_group: 'solid',
+            molecule: { molecular_weight: weight },
+          })));
+        }
+        [0.5, 9].forEach((mass) => {
+          scheme.updatedReactionForAmountUnitChange({ sampleID: mixture.id, amount: { value: mass, unit: 'g' } });
+          expect(reaction.products[0].equivalent).toBe(null);
+          const calculated = scheme.calculateEquivalentForProduct(reaction.products[0], reaction.referenceMaterial, 1);
+          expect(calculated.equivalent).toBe(null);
+        });
+        sinon.assert.notCalled(scheme.context.notifications.add);
+      });
+    });
+  });
+
+  it('requests an updated scheme graphic after changing a product coefficient', () => {
+    const { reaction, mixture, scheme } = build();
+    scheme.props.onReactionChange = sinon.spy();
+
+    scheme.handleMaterialsChange({ type: 'coefficientChanged', sampleID: mixture.id, coefficient: 2 });
+
+    expect(reaction.products[0].equivalent).toBeCloseTo(0.02, 10);
+    sinon.assert.calledWith(scheme.props.onReactionChange, reaction, { updateGraphic: true });
+  });
 });
 
 describe('ReactionDetailsScheme mixture maximum amount fallback', () => {

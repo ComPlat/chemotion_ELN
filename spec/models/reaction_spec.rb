@@ -68,6 +68,39 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe '#yield_amount for saved schemes' do
+    let(:reaction) { create(:reaction) }
+    let(:product) { create(:sample, real_amount_value: 5, real_amount_unit: 'g') }
+    let!(:material) { create(:reactions_product_sample, reaction: reaction, sample: product, equivalent: 0) }
+
+    it 'keeps yield unknown when the reaction has no reference material' do
+      expect(reaction.yield_amount(product.id)).to be_nil
+    end
+
+    context 'with a reference material' do
+      before { create(:reactions_starting_material_sample, reaction: reaction, reference: true) }
+
+      it 'keeps yield unknown for an incomplete mixture' do
+        product.update!(sample_type: Sample::SAMPLE_TYPE_MIXTURE)
+        expect(reaction.yield_amount(product.id)).to be_nil
+      end
+
+      it 'preserves a measured zero for a quantified product' do
+        material.update!(equivalent: 0)
+        expect(reaction.yield_amount(product.id)).to eq(0)
+      end
+
+      it 'preserves the yield of a quantified mixture' do
+        product.update!(sample_type: Sample::SAMPLE_TYPE_MIXTURE)
+        create(:component, sample: product, component_properties: {
+          'molecule_id' => product.molecule_id, 'reference' => true, 'relative_molecular_weight' => 2789.5,
+        })
+        material.update!(equivalent: 0.28)
+        expect(reaction.yield_amount(product.id)).to eq(0.28)
+      end
+    end
+  end
+
   describe 'after creation' do
     let(:reaction) { create(:reaction) }
 

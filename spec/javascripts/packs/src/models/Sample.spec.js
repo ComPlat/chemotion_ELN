@@ -16,6 +16,25 @@ describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
   const product = await SampleFactory.build('SampleFactory.water_100g');
 
+  describe('mixture amount snapshots', () => {
+    it('stores null for an unavailable amount instead of a display placeholder', () => {
+      const sample = new Sample({
+        sample_type: 'Mixture', amount_value: 0.5, amount_unit: 'g',
+      });
+      sample.setAmount({ value: 9, unit: 'g' });
+      expect(sample.sample_details.previous_amount_mol).toBe(null);
+      expect(sample.sample_details.previous_amount_g).toBe(0.5);
+    });
+
+    it('retains numeric reference-component amounts in snapshots', () => {
+      const sample = new Sample({ sample_type: 'Mixture', amount_value: 10, amount_unit: 'g' });
+      sample.initialComponents([new Component({ id: 1, reference: true, relative_molecular_weight: 5000 })]);
+      sample.setAmount({ value: 5, unit: 'g' });
+      expect(sample.sample_details.previous_amount_mol).toBeCloseTo(0.002, 10);
+      expect(sample.sample_details.previous_amount_g).toBe(10);
+    });
+  });
+
   describe('legacy mixture input units', () => {
     [
       ['mol', 'l'], ['l', 'mol'], ['mol', 'g'], ['g', 'l'], ['g', 'g'],

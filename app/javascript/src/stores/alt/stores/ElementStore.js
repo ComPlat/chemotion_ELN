@@ -529,19 +529,9 @@ class ElementStore {
   }
 
   handleCreateSampleForReaction({
-    newSample, reaction, materialGroup, components
+    newSample, reaction, materialGroup
   }) {
     UserActions.fetchCurrentUser();
-    if (newSample.isMixture()) {
-      ComponentsFetcher.saveOrUpdateComponents(newSample, components)
-        .then(async (savedComponents) => {
-          const refreshed = Component.refreshFromApi(savedComponents, components);
-          await newSample.initialComponents(refreshed);
-        })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    }
     reaction.addMaterial(newSample, materialGroup);
     this.handleRefreshElements('sample');
     ElementActions.handleSvgReactionChange(reaction);

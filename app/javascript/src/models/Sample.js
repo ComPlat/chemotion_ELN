@@ -1485,8 +1485,10 @@ export default class Sample extends Element {
     this.initializeSampleDetails?.();
 
     // Store previous moles and grams for later ratio-based calculations
-    this.sample_details.previous_amount_mol = this.amount_mol;
-    this.sample_details.previous_amount_g = this.amount_g;
+    const amountMol = this.amount_mol;
+    const amountG = this.amount_g;
+    this.sample_details.previous_amount_mol = Number.isFinite(amountMol) ? amountMol : null;
+    this.sample_details.previous_amount_g = Number.isFinite(amountG) ? amountG : null;
   }
 
   /**
