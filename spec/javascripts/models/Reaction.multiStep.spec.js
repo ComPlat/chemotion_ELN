@@ -15,6 +15,23 @@ describe('Reaction multi-step', () => {
     expect(reaction.products.every((m) => m.reaction_step_id === firstId)).toEqual(true);
   });
 
+  it('leaves the description of a one-step reaction unchanged on round trips', async () => {
+    const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    const roundTrip = (description) => {
+      reaction.description = description;
+      for (let trip = 0; trip < 2; trip += 1) {
+        reaction.reaction_type = 'multi_step';
+        reaction.enterMultiStep();
+        reaction.reaction_type = 'standard';
+        reaction.leaveMultiStep();
+      }
+      return reaction.description;
+    };
+
+    expect(roundTrip({ ops: [{ insert: 'stir\n' }] })).toEqual({ ops: [{ insert: 'stir\n' }] });
+    expect(roundTrip({ ops: [{ insert: 'Step 1: stir\n' }] })).toEqual({ ops: [{ insert: 'Step 1: stir\n' }] });
+  });
+
   it('copies the reaction values into step 1 on entering multi-step', async () => {
     const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
     reaction.duration = '34 Hour(s)';
@@ -673,6 +690,18 @@ describe('Reaction#hiddenStepTemperatures', () => {
       [1, '20', true], [2, '20 ~ 40', true], [2, '60', false],
     ]);
   });
+
+  it('shows every step in step 1\'s unit', () => {
+    const reaction = Reaction.buildEmpty();
+    reaction.reaction_steps = [
+      { id: 1, position: 1, temperature: { data: [], userText: '20', valueUnit: '°C' } },
+      { id: 2, position: 2, temperature: { data: [{ time: '00:30:00', value: '300' }], userText: '350', valueUnit: 'K' } },
+      { id: 3, position: 3, temperature: { data: [], userText: 'reflux', valueUnit: '°F' } },
+    ];
+    reaction.temperature = { data: [], userText: '20', valueUnit: '°C' };
+
+    expect(reaction.hiddenStepTemperatures().map(({ value }) => value)).toEqual(['20', '76.85', '26.85', 'reflux']);
+  });
 });
 
 describe('Reaction#serialize for multi-step', () => {
@@ -790,6 +819,36 @@ describe('Reaction hidden steps, edge cases', () => {
       reaction, start, later, carried, final,
     };
   };
+
+  it('gives step 1 Ref an Eq of 1 again after a later-step Ref was picked in Standard', async () => {
+    const { reaction, start, later } = await twoSteps();
+    reaction.reaction_type = 'standard';
+    reaction.leaveMultiStep();
+    start.reference = false;
+    start.equivalent = 1.6667;
+    later.reference = true;
+
+    reaction.reaction_type = 'multi_step';
+    reaction.enterMultiStep();
+
+    expect([start.reference, start.equivalent]).toEqual([true, 1]);
+  });
+
+  it('keeps a step duration when cycling through all its units', async () => {
+    const { reaction } = await twoSteps();
+    const [first, second] = reaction.reaction_steps;
+    expect(reaction.stepContext(first).durationDisplay.dispValue).toBe('');
+    second.duration = '30 Minute(s)';
+    const shown = [];
+    for (let click = 0; click < 5; click += 1) {
+      const view = reaction.stepContext(second);
+      view.durationDisplay = { nextUnit: true };
+      second.duration = view.duration;
+      shown.push(second.duration);
+    }
+
+    expect(shown).toEqual(['1800 Second(s)', '0 Week(s)', '0 Day(s)', '0.5 Hour(s)', '30 Minute(s)']);
+  });
 
   it('draws a multi-step reaction with one arrow when step arrows are switched off', async () => {
     const { reaction } = await twoSteps();

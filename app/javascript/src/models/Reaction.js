@@ -1146,15 +1146,25 @@ export default class Reaction extends Element {
     const toSeconds = (time) => String(time || '0').split(':').reduce((sum, part) => sum * 60 + Number(part || 0), 0);
     const toTime = (seconds) => [Math.floor(seconds / 3600), Math.floor((seconds % 3600) / 60), seconds % 60]
       .map((part) => String(part).padStart(2, '0')).join(':');
+    const targetUnit = steps[0]?.temperature?.valueUnit;
+    const inTargetUnit = (value, unit) => {
+      const number = String(value).trim().replace(',', '.');
+      if (!targetUnit || !unit || unit === targetUnit || !/^-?\d+(\.\d+)?$/.test(number)) return value;
+      return convertTemperature(number, unit, targetUnit).toFixed(2);
+    };
     return steps.flatMap((step, index) => {
       const known = origin?.isValid() && startOf(step).isValid();
       const offset = known ? Math.max(0, startOf(step).diff(origin, 'seconds')) : 0;
-      const { data = [], userText } = step.temperature || {};
+      const { data = [], userText, valueUnit } = step.temperature || {};
       const number = index + 1;
-      const typed = userText ? [{ step: number, time: toTime(offset), value: userText, typed: true }] : [];
+      const typed = userText
+        ? [{ step: number, time: toTime(offset), value: inTargetUnit(userText, valueUnit), typed: true }]
+        : [];
       return [
         ...typed,
-        ...data.map(({ time, value }) => ({ step: number, time: toTime(toSeconds(time) + offset), value })),
+        ...data.map(({ time, value }) => ({
+          step: number, time: toTime(toSeconds(time) + offset), value: inTargetUnit(value, valueUnit),
+        })),
       ];
     });
   }
@@ -1166,7 +1176,14 @@ export default class Reaction extends Element {
   stepContext(step) {
     const context = Object.create(this);
     context.stepId = step.id;
-    context._durationDisplay = undefined;
+    const ownStep = this.reaction_steps.find((entry) => entry.id === step.id) || step;
+    const savedMemo = ownStep.durationMemo;
+    let memo = savedMemo && `${savedMemo.dispValue} ${savedMemo.dispUnit}` === ownStep.duration ? savedMemo : undefined;
+    Object.defineProperty(context, '_durationDisplay', {
+      get: () => memo,
+      set: (value) => { memo = value; ownStep.durationMemo = value; },
+      configurable: true,
+    });
     Object.entries(STEP_FIELD_DEFAULTS).forEach(([field, fallback]) => {
       context[field] = step[field] ?? fallback();
     });
@@ -1202,7 +1219,8 @@ export default class Reaction extends Element {
       ...(hasText(own) ? own : []),
       ...steps.flatMap((step, index) => {
         const stepOps = opsOf(step.description);
-        return hasText(stepOps) ? [{ insert: `Step ${index + 1}: `, attributes: { bold: true } }, ...stepOps] : [];
+        if (!hasText(stepOps)) return [];
+        return steps.length > 1 ? [{ insert: `Step ${index + 1}: `, attributes: { bold: true } }, ...stepOps] : stepOps;
       }),
     ];
     return ops.length ? { ops } : emptyDescription();
@@ -1218,7 +1236,7 @@ export default class Reaction extends Element {
       const text = typeof op.insert === 'string' ? op.insert : null;
       const match = atLineStart && text && text.match(STEP_HEADING);
       const position = match ? Number(match[1]) : 0;
-      if (position > chunks.length - 1 && position <= stepCount) {
+      if (stepCount > 1 && position > chunks.length - 1 && position <= stepCount) {
         while (chunks.length <= position) chunks.push([]);
         const rest = text.slice(match[0].length);
         if (rest) chunks[position].push({ ...op, insert: rest });
@@ -1432,7 +1450,9 @@ export default class Reaction extends Element {
     if (this.weight_percentage) return;
     [...this.starting_materials, ...this.reactants].forEach((material) => {
       const reference = this.referenceFor(material);
-      if (reference && material !== reference && material.amount_mol && reference.amount_mol) {
+      if (material === reference) {
+        material.equivalent = 1;
+      } else if (reference && material.amount_mol && reference.amount_mol) {
         material.equivalent = material.amount_mol / reference.amount_mol;
       }
     });

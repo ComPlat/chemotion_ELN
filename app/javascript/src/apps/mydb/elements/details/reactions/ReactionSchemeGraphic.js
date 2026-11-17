@@ -8,6 +8,7 @@ import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import { permitOn } from 'src/components/common/uis';
 
 const SCHEME_PARTS = [
   ['reactants', 'Reactants'],
@@ -149,6 +150,7 @@ export default function ReactionSchemeGraphic({
               id={`scheme-part-${part}`}
               label={label}
               checked={!reaction.scheme_hidden_parts.includes(part)}
+              disabled={!permitOn(reaction)}
               onChange={() => onToggleSchemePart(part)}
             />
           ))}
@@ -217,6 +219,8 @@ export default function ReactionSchemeGraphic({
                 role="switch"
                 id="scheme-one-arrow"
                 className="m-0"
+                aria-label="One arrow for all steps"
+                disabled={!permitOn(reaction)}
                 checked={reaction.scheme_hidden_parts.includes('step_arrows')}
                 onChange={() => onToggleSchemePart('step_arrows')}
               />
