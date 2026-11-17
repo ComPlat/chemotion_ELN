@@ -144,6 +144,38 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     end
   end
 
+  context 'when a removed duplicate holds a reference flag another material of the reaction holds' do
+    let!(:first_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, reference: true) }
+    let!(:last_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, reference: false) }
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: create(:sample), reference: true)
+      migration.up
+    end
+
+    it 'does not make the kept link a second reference' do
+      expect(ReactionsSample.with_deleted.find(first_link.id).deleted_at).to be_present
+      expect(last_link.reload.reference).to be(false)
+    end
+  end
+
+  context 'when the other reaction made another material its reference after the link was moved' do
+    let!(:moved_link) do
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample, reference: true)
+    end
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample)
+      moved_link.update!(reaction_id: reaction.id)
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: create(:sample), reference: true)
+      migration.up
+    end
+
+    it 'gives the link back without its reference flag' do
+      expect(moved_link.reload).to have_attributes(reaction_id: other_reaction.id, reference: false)
+    end
+  end
+
   context 'when the reaction of a split link has variations' do
     let(:new_link) { ReactionsProductSample.create!(reaction: reaction, sample: sample) }
     let(:key) { sample.id.to_s }
@@ -354,6 +386,10 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     it 'soft deletes the link of the deleted reaction' do
       expect(ReactionsSample.with_deleted.find(dead_link.id)).to have_attributes(sample_id: sample.id)
         .and(have_attributes(deleted_at: be_present))
+    end
+
+    it "points the sample's element tag at the live reaction" do
+      expect(sample.reload.tag.taggable_data['reaction_id']).to eq(reaction.id)
     end
   end
 
