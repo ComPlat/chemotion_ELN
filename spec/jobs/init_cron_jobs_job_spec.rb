@@ -11,6 +11,15 @@ class DummyJob < ApplicationJob
 end
 
 RSpec.describe InitCronJobsJob do
+  # This spec writes real Delayed::Job cron rows, so it needs the :delayed_job adapter,
+  # not the suite's :test default (see config/environments/test.rb).
+  around do |example|
+    previous_adapter = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :delayed_job
+    example.run
+    ActiveJob::Base.queue_adapter = previous_adapter
+  end
+
   let(:cron_job_list) do
     [{ job_class: DummyJob, enabled: :default, cron_variable: 'DUMMY_CRON' }]
   end
@@ -33,12 +42,13 @@ RSpec.describe InitCronJobsJob do
     Delayed::Job.where(queue: 'dummy').delete_all
     described_class.perform_now(cron_job_list)
 
+    # Fugit reads the cron in the server's local time zone, run_at is stored in UTC: a slot early on
+    # Saturday (local) is still Friday in UTC. So the weekday is checked in local time, not in SQL.
+    upcoming = Delayed::Job.where('run_at > ? and run_at < ?', Time.zone.now, 1.week.from_now)
+                           .where(queue: 'dummy')
+                           .where.not(cron: nil)
     expect(
-      Delayed::Job.where('run_at > ? and run_at < ?', Time.zone.now, 1.week.from_now)
-                  .where('EXTRACT(ISODOW FROM run_at) IN (6, 7)')
-                  .where(queue: 'dummy')
-                  .where.not(cron: nil)
-                  .count,
+      upcoming.count { |dj| dj.run_at.localtime.saturday? || dj.run_at.localtime.sunday? },
     ).to(
       eq(1),
       "Did not found a dummy job with a random weekend schedule.\n " \

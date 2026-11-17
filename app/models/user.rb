@@ -64,6 +64,10 @@ class User < ApplicationRecord
   attr_writer :login
   attr_accessor :provider, :uid
 
+  # counters may receive a nil hash key via Labimotion's generic-element
+  # short-label logic (nameless element_klass); tolerate it like Rails 6.1.
+  attribute :counters, LenientHstoreType.new
+
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
 
@@ -398,10 +402,11 @@ class User < ApplicationRecord
   end
 
   def remove_from_matrices
-    Matrice.where('include_ids @> ARRAY[?]', [id]).find_each do |ma|
+    # ::integer[] cast: Rails 7.2 binds ARRAY[?] as a param Postgres reads as text[] (7.1 inlined it).
+    Matrice.where('include_ids @> ARRAY[?]::integer[]', [id]).find_each do |ma|
       ma.update_columns(include_ids: ma.include_ids -= [id])
     end
-    Matrice.where('exclude_ids @> ARRAY[?]', [id]).find_each do |ma|
+    Matrice.where('exclude_ids @> ARRAY[?]::integer[]', [id]).find_each do |ma|
       ma.update_columns(exclude_ids: ma.exclude_ids -= [id])
     end
   end
@@ -624,9 +629,6 @@ class Group < User
       user.update(allocated_space: allocated_space)
     end
   end
-end
-
-class DeviceDeprecated < User
 end
 
 # rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity
