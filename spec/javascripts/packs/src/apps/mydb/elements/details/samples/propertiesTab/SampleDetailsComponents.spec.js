@@ -116,6 +116,58 @@ describe('SampleDetailsComponents reaction product ratios', () => {
     materialGroup: editor.props.sample.components[1].material_group,
   });
 
+  describe('rejected product ratio edits', () => {
+    let notifications;
+    let dispose;
+
+    beforeEach(() => {
+      notifications = [];
+      dispose = addMiddleware(rootStore.notificationsStore, (call, next) => {
+        if (call.name === 'add') notifications.push(call.args[0]);
+        return next(call);
+      });
+    });
+    afterEach(() => { dispose(); });
+
+    ['target', 'real'].forEach((amountType) => {
+      ['ratio', 'liquid properties', 'volume'].forEach((missing) => {
+        it(`keeps ${amountType} data and shows one warning when redistribution fails because of ${missing}`, () => {
+          const { sample, editor } = build(['solid', 'liquid', 'liquid'], { amountType });
+          if (missing === 'ratio') sample.components[2].equivalent = 'n.d';
+          else if (missing === 'liquid properties') {
+            sample.components[2].density = 0;
+            sample.components[2].starting_molarity_value = 0;
+          } else sample.sample_details.total_mixture_volume_l = 0.02;
+          sample.updateChecksum();
+          const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+          editRatio(editor, 2);
+
+          expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+          expect(sample.isPendingToSave).toBe(false);
+          expect(notifications).toEqual([expect.objectContaining({
+            title: 'Component ratio not applied', level: 'warning',
+          })]);
+        });
+      });
+    });
+
+    it('applies the last missing ratio and a subsequent zero ratio without a warning', () => {
+      const { sample, editor } = build(['solid', 'liquid', 'solid']);
+      sample.components[1].equivalent = 'n.d';
+
+      [2, 0].forEach((ratio) => {
+        editRatio(editor, ratio);
+
+        expect(sample.components[1].equivalent).toBe(ratio);
+        expect(sample.components[1].amount_mol).toBeCloseTo(10 * ratio / (700 + ratio * 200), 12);
+        expect(sample.components.reduce((sum, component) => sum + component.amount_g, 0)).toBeCloseTo(10, 12);
+        expect(sample.amount_g).toBe(10);
+        expect(notifications).toEqual([]);
+      });
+    });
+  });
+
   describe('density and purity edits with unresolved product ratios', () => {
     let notifications;
     let dispose;

@@ -179,7 +179,7 @@ export default class SampleDetailsComponents extends React.Component {
         this.updateComponentName(changeEvent);
         break;
       case 'ratioChanged':
-        this.updateRatio(changeEvent);
+        validateVolume = this.updateRatio(changeEvent) !== false;
         break;
       case 'referenceChanged':
         this.updateSampleForReferenceChanged(changeEvent);
@@ -477,10 +477,22 @@ export default class SampleDetailsComponents extends React.Component {
       sample?.id
     );
 
-    sample.updateComponentRatio(currentComponent, newRatio, materialGroup, {
+    const applied = sample.updateComponentRatio(currentComponent, newRatio, materialGroup, {
       concentrationLocked: currentComponent.isComponentConcentrationLocked(),
       lockAmountColumnSolids,
     });
+    if (applied === false) {
+      rootStore.notificationsStore.add({
+        title: 'Component ratio not applied',
+        message: 'Could not recalculate the components at the current product mass. Check component properties, '
+          + 'ratios, and mixture volumes. Previous values were kept.',
+        uid: `mixture-product-ratio-edit-${sample.id}`,
+        level: 'warning',
+        position: 'tr',
+        autoDismiss: 5,
+      });
+    }
+    return applied;
   }
 
   /**

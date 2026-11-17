@@ -35,6 +35,37 @@ describe('Sample', async () => {
     });
   });
 
+  describe('fixed-mass product ratio rollback', () => {
+    ['target', 'real'].forEach((amountType) => {
+      ['ratio', 'liquid properties', 'volume'].forEach((missing) => {
+        it(`keeps ${amountType} data when a ratio edit cannot redistribute mass because of ${missing}`, () => {
+          const sample = new Sample({
+            id: 'ratio-product', sample_type: 'Mixture', amountType, amount_value: 10, amount_unit: 'g',
+            sample_details: { total_mixture_volume_l: 0 },
+          });
+          sample.initialComponents([100, 200, 300].map((weight, index) => new Component({
+            id: index + 1, position: index, reference: index === 0,
+            material_group: index === 2 ? 'liquid' : 'solid', equivalent: [1, 1, 2][index],
+            amount_mol: 10 * [1, 1, 2][index] / 900, density: index === 2 ? 0.8 : 0,
+            purity: 1, molecule: { molecular_weight: weight },
+          })));
+          sample.belongTo = new Reaction({ type: 'reaction', products: [sample] });
+          if (missing === 'ratio') sample.components[2].equivalent = 'n.d';
+          else if (missing === 'liquid properties') sample.components[2].density = 0;
+          else sample.sample_details.total_mixture_volume_l = 0.02;
+          sample.updateChecksum();
+          const before = JSON.parse(JSON.stringify(sample.serializeMaterial()));
+
+          const applied = sample.updateComponentRatio(sample.components[1], 2, 'solid');
+
+          expect(applied).toBe(false);
+          expect(JSON.parse(JSON.stringify(sample.serializeMaterial()))).toEqual(before);
+          expect(sample.isPendingToSave).toBe(false);
+        });
+      });
+    });
+  });
+
   describe('legacy mixture input units', () => {
     [
       ['mol', 'l'], ['l', 'mol'], ['mol', 'g'], ['g', 'l'], ['g', 'g'],

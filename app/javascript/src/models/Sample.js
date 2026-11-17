@@ -1044,8 +1044,7 @@ export default class Sample extends Element {
     if (!referenceComponent) return;
 
     if (this.hasFixedProductMass()) {
-      this.updateProductComponentRatio(component, ratio, { concentrationLocked });
-      return;
+      return this.updateProductComponentRatio(component, ratio, { concentrationLocked });
     }
 
     const hasUnallocatedMass = this.hasUnallocatedMixtureMass();
@@ -1076,10 +1075,14 @@ export default class Sample extends Element {
   /** Redistributes a product's fixed mass using its molar ratios rather than stored relative weights. */
   updateProductComponentRatio(component, ratio, { concentrationLocked = false } = {}) {
     const massG = Number(this.amount_g);
-    if (!Number.isFinite(massG) || massG < 0 || !Number.isFinite(ratio) || ratio < 0) return;
+    if (!Number.isFinite(massG) || massG < 0 || !Number.isFinite(ratio) || ratio < 0) return false;
 
+    const previousRatio = component.equivalent;
     component.equivalent = ratio;
-    this.redistributeProductMixtureMass({ component, concentrationLocked });
+    if (this.redistributeProductMixtureMass({ component, concentrationLocked })) return true;
+
+    component.equivalent = previousRatio;
+    return false;
   }
 
   /** Applies composition or volume edits only when the resulting amounts fit the current product mass. */
