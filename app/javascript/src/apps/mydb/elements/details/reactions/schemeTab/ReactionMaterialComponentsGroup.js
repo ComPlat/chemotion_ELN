@@ -79,6 +79,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
           <NumeralInputWithUnitsCompo
             value={component.amount_g ?? null}
             unit="g"
+            metricPrefixes={['m', 'n', 'u']}
             precision={6}
             disabled
             size="sm"

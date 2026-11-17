@@ -1122,12 +1122,7 @@ class Material extends Component {
   massField(material, metricPrefixes, reaction, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
 
-    const tooltip = (
-      <Tooltip id="molecular-weight-info">
-        {'molar mass: '}
-        {this.molarWeightValue(material, reaction)}
-      </Tooltip>
-    );
+    const tooltip = this.molarWeightTooltip(material, reaction, 'molecular-weight-info');
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -1256,14 +1251,14 @@ class Material extends Component {
             ) : (
               <div className="reaction-material__molar-mass-data">
                 <OverlayTrigger
-                  overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+                  overlay={this.molarWeightTooltip(material, reaction, 'molar-weight-details')}
                 >
                   <span>{this.molarWeightValue(material, reaction, true)}</span>
                 </OverlayTrigger>
               </div>
             )}
             <div className="reaction-material__density-data">
-              {material.has_density ? material.density : 'n.d'}
+              {material.has_density ? material.density : 'n.d.'}
             </div>
             <div className="reaction-material__purity-data">
               {(material.purity === null || material.purity === undefined || material.purity === '')
@@ -1325,7 +1320,6 @@ class Material extends Component {
   }
 
   molarWeightValue(sample, reaction, formatted = false) {
-    const isProduct = reaction.products.includes(sample);
     const isSbmm = isSbmmSample(sample);
 
     let molecularWeight;
@@ -1339,20 +1333,56 @@ class Material extends Component {
     }
 
     if (sample.isMixture?.() && sample.reference_relative_molecular_weight) {
-      molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
+      molecularWeight = sample.reference_relative_molecular_weight;
     }
-    let theoreticalMassPart = '';
-    if (isProduct && sample.maxAmount) {
-      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
-    }
-    // Define metricPrefix and currentPrecision
+    // Keep the column's four decimal places; use two in the tooltip.
     const metricPrefix = 'n';
-    const currentPrecision = 4;
+    const currentPrecision = formatted ? 4 : 2;
     const formattedValue = formatDisplayValue(
       metPreConv(molecularWeight, metricPrefix, metricPrefix),
       currentPrecision
     );
-    return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
+    return `${formattedValue} g/mol`;
+  }
+
+  molarWeightTooltip(sample, reaction, id) {
+    const isProduct = reaction.products.includes(sample);
+    let theoreticalMassRows = null;
+    if (isProduct && sample.isMixture?.()) {
+      const referenceMaterial = reaction.referenceMaterial;
+      const referenceAmountMol = referenceMaterial?.amount_mol;
+      const theoreticalAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol >= 0
+        ? referenceAmountMol * (sample.coefficient || 1) / (referenceMaterial.coefficient || 1) : null;
+
+      // Derive both masses from current inputs; maxAmount is overwritten by different calculation paths.
+      const massRows = [
+        ['Reference component', sample.reference_molecular_weight],
+        ['Mixture', sample.reference_relative_molecular_weight],
+      ].map(([label, weight]) => {
+        const massMg = Number.isFinite(theoreticalAmountMol) && theoreticalAmountMol >= 0
+          && Number.isFinite(weight) && weight > 0 ? theoreticalAmountMol * weight * 1000 : null;
+        const massLabel = Number.isFinite(massMg) ? `${formatDisplayValue(massMg, 1)} mg` : 'n.d.';
+        return <div key={label} className="ps-2">{label}: {massLabel}</div>;
+      });
+      theoreticalMassRows = (
+        <>
+          <div>Max. theoretical mass</div>
+          {massRows}
+        </>
+      );
+    } else if (isProduct && sample.maxAmount) {
+      theoreticalMassRows = (
+        <div>Max. theoretical mass: {Math.round(sample.maxAmount * 10000) / 10} mg</div>
+      );
+    }
+    return (
+      <Tooltip id={id}>
+        <div className="text-start">
+          <div>Molar mass: {this.molarWeightValue(sample, reaction)}</div>
+          {theoreticalMassRows}
+        </div>
+      </Tooltip>
+    );
   }
 
   toggleTarget(isTarget) {
