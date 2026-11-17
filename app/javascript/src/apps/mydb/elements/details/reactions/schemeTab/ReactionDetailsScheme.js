@@ -460,9 +460,8 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
-    const targetStepId = this.activeDropStepId ?? null;
-    const multiStep = reaction.isMultiStep();
-    if (multiStep && !reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
+    const targetStepId = reaction.dropStepIdFor(srcMat, tagGroup, this.activeDropStepId);
+    if (!reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
       this.context.notifications.add({
         title: 'Cannot move this product',
         message: 'The next step needs it as its starting material. Delete that step first.',
@@ -471,7 +470,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
-    if (multiStep) srcMat.reaction_step_id = targetStepId;
+    srcMat.reaction_step_id = targetStepId;
 
     // Translate UI group names to actual storage arrays for SBMM samples
     const actualSrcGroup = Reaction.storageGroupFor(srcMat, srcGroup);

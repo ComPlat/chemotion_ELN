@@ -820,6 +820,19 @@ describe('Reaction hidden steps, edge cases', () => {
     };
   };
 
+  it('in Standard, drops into Starting materials join step 1 and the carried product cannot leave Products', async () => {
+    const { reaction, later, carried } = await twoSteps();
+    reaction.reaction_type = 'standard';
+    reaction.leaveMultiStep();
+    const [first, second] = reaction.reaction_steps;
+    later.reaction_step_id = second.id;
+
+    expect(reaction.dropStepIdFor(later, 'starting_materials')).toEqual(first.id);
+    expect(reaction.dropStepIdFor(later, 'reactants')).toEqual(second.id);
+    expect(reaction.prepareCarriedMove(carried, 'reactants', reaction.dropStepIdFor(carried, 'reactants'))).toBe(false);
+    expect(reaction.prepareCarriedMove(carried, 'products', reaction.dropStepIdFor(carried, 'products'))).toBe(true);
+  });
+
   it('gives step 1 Ref an Eq of 1 again after a later-step Ref was picked in Standard', async () => {
     const { reaction, start, later } = await twoSteps();
     reaction.reaction_type = 'standard';

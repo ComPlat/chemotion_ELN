@@ -1371,6 +1371,13 @@ export default class Reaction extends Element {
     return this.carriedProductsIntoStep(liveSteps[index + 1].id).length === 1;
   }
 
+  // Standard shows starting materials only for step 1, so a drop there joins step 1; other drops keep their step.
+  dropStepIdFor(material, targetGroup, activeStepId) {
+    if (this.isMultiStep()) return activeStepId ?? null;
+    if (targetGroup === 'starting_materials') return this.reaction_steps.find((step) => !step._destroy)?.id ?? null;
+    return material.reaction_step_id ?? null;
+  }
+
   prepareCarriedMove(material, targetGroup, targetStepId) {
     const staysInStepProducts = targetGroup === 'products' && targetStepId === material.reaction_step_id;
     if (!material.carry_on || staysInStepProducts) return true;
