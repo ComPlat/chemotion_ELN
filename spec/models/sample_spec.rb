@@ -98,7 +98,6 @@ RSpec.describe Sample do
   describe 'deletion' do
     let(:sample) { create(:sample) }
     let(:starting_material_reaction) { create(:reaction) }
-    let(:product_reaction) { create(:reaction) }
     let(:wellplate)  { create(:wellplate) }
     let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
     let(:collection) { create(:collection) }
@@ -106,8 +105,6 @@ RSpec.describe Sample do
     before do
       # CollectionsSample.create!(sample: sample, collection: collection)
       ReactionsStartingMaterialSample.create!(sample: sample, reaction: starting_material_reaction)
-      ReactionsReactantSample.create!(sample: sample, reaction: starting_material_reaction)
-      ReactionsProductSample.create!(sample: sample, reaction: product_reaction)
       sample.destroy
       wellplate.reload
     end
@@ -347,6 +344,33 @@ RSpec.describe Sample do
 
     it 'associates the subsamples with its parent' do
       expect(sample.children.count).to eq(3)
+    end
+  end
+
+  describe '#create_subsample' do
+    let(:user) { create(:person) }
+    let(:collection) { create(:collection, user: user) }
+    let(:sample) { create(:sample, creator: user, collections: [collection]) }
+
+    it 'drops the inventory label and keeps the other xref entries' do
+      sample.update_columns(xref: { 'inventory_label' => 'INV-1', 'cas' => '50-00-0' }) # rubocop:disable Rails/SkipsModelValidations
+
+      subsample = sample.create_subsample(user, [collection.id])
+
+      expect(subsample.xref).to eq('inventory_label' => nil, 'cas' => '50-00-0')
+      expect(sample.reload.xref['inventory_label']).to eq('INV-1')
+    end
+
+    context 'when the sample has no xref (created before it defaulted to {})' do
+      before { sample.update_columns(xref: nil) } # rubocop:disable Rails/SkipsModelValidations
+
+      it 'creates the subsample' do
+        subsample = sample.create_subsample(user, [collection.id])
+
+        expect(subsample).to be_persisted
+        expect(subsample.parent).to eq(sample)
+        expect(subsample.xref).to eq('inventory_label' => nil)
+      end
     end
   end
 

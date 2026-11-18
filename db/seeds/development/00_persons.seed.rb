@@ -21,6 +21,7 @@ Person.find_each do |u|
     # position:
   )
   ca =  Collection.find_by(user: u, label: 'All', is_locked: true)
+  seeded_samples = []
   # Molecule.find_each do |molecule|
   Molecule.limit(100).each do |molecule|
     FileUtils.cp_r "public/images/molecules/#{molecule.molecule_svg_file}", 'public/images/samples/'
@@ -59,9 +60,12 @@ Person.find_each do |u|
     sample = Sample.new(attributes)
     sample.collections = [collection, ca]
     sample.save!
+    seeded_samples << sample
   end
 
-  samples = u.samples.includes(:molecule).limit(50)
+  # only use the samples created in this run, so that re-running the seed does not
+  # link samples that already belong to a reaction to another one
+  samples = seeded_samples.first(50)
   samples.each_slice(6) do |slice|
     break if slice.size < 5
     sample_1 = slice[0]
