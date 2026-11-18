@@ -1,6 +1,8 @@
 export const MAX_MOLFILE_SIZE = 5 * 1024 * 1024;
 
-const ATOM_LINE = /^\s*-?\d+\.?\d*\s+-?\d+\.?\d*\s+-?\d+\.?\d*\s+[A-Za-z*][A-Za-z0-9#']*/;
+// (?:\.\d*)? rather than \.?\d*: with no dot, \d+\d* can split a digit run many ways,
+// and a long run with no element symbol after it then takes seconds to reject.
+const ATOM_LINE = /^\s*-?\d+(?:\.\d*)?\s+-?\d+(?:\.\d*)?\s+-?\d+(?:\.\d*)?\s+[A-Za-z*][A-Za-z0-9#']*/;
 const COUNTS_LINE = /^[\s\d]{6}/;
 const END_LINE = /^M {2}END\s*$/;
 const V3000_COUNTS = /^M {2}V30 COUNTS (\d+) (\d+)/m;

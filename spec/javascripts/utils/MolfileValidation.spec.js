@@ -101,6 +101,11 @@ describe('MolfileValidation', () => {
       expect(molfileProblem(corrupt(4, '   -4.3500    1.8250    0.0000'))).toEqual('line 5 is not an atom line');
     });
 
+    it('rejects long digit runs with no element symbol without hanging', () => {
+      const run = '1'.repeat(400);
+      expect(molfileProblem(corrupt(4, `${run} ${run} ${run}`))).toEqual('line 5 is not an atom line');
+    });
+
     it('rejects a bond pointing at an atom that does not exist', () => {
       expect(molfileProblem(corrupt(12, ' 99  3  1  0     0  0'))).toMatch(/points at an atom that is not there/);
     });

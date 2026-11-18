@@ -42,6 +42,10 @@ describe('Sample Creation from molfile', () => {
 
     cy.get('#molfile-create-molecule').click();
     cy.wait('@createMoleculeFromMolfile');
+    // the sample keeps the molfile the user gave, not the matched molecule's
+    cy.contains('Molfile').siblings('textarea').invoke('val')
+      .should('include', '  Ketcher')
+      .and('not.include', 'DUMMY_MOLFILE');
     cy.clickDetailFooterButton('Create');
 
     cy.get('i.icon-sample').closest('button[role="tab"]').click();
