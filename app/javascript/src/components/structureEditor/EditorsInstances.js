@@ -105,15 +105,20 @@ export async function createEditors(_state = {}) {
   const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors?.editors || {};
 
-  // Ketcher is the built-in editor and is always offered.
-  const ketcherPromise = getEditorById(DEFAULT_EDITOR_ID, { editor: DEFAULT_EDITOR_ID }, availableEditors)
+  // An editor that cannot be initialized is left out; it must not take the others down with it.
+  const loadEditorSafely = (id, configs) => getEditorById(id, configs, availableEditors)
     .catch((error) => {
-      console.error('Failed to initialize Ketcher editor:', error);
+      console.error(`Failed to initialize ${id} editor:`, error);
       return null;
     });
-  const editorPromises = [ketcherPromise, ...matriceConfigs
-    .filter(({ configs }) => configs?.editor && configs.editor !== DEFAULT_EDITOR_ID)
-    .map(({ configs }) => getEditorById(configs.editor, configs, availableEditors))];
+
+  // Ketcher is the built-in editor and is always offered.
+  const editorPromises = [
+    loadEditorSafely(DEFAULT_EDITOR_ID, { editor: DEFAULT_EDITOR_ID }),
+    ...matriceConfigs
+      .filter(({ configs }) => configs?.editor && configs.editor !== DEFAULT_EDITOR_ID)
+      .map(({ configs }) => loadEditorSafely(configs.editor, configs)),
+  ];
 
   const resolvedEditors = await Promise.all(editorPromises);
 

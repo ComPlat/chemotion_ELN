@@ -5,6 +5,7 @@ import { describe, it, beforeEach, afterEach } from 'mocha';
 import 'src/stores/mobx/RootStore';
 import { createEditors } from 'src/components/structureEditor/EditorsInstances';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIFetcher from 'src/fetchers/UIFetcher';
 
 const availableEditors = {
   ketcher: { label: 'Ketcher' },
@@ -30,6 +31,14 @@ describe('createEditors', () => {
 
   it('offers Ketcher first, followed by the enabled licensed editors', async () => {
     const editors = await createEditors({ matriceConfigs: [matrice('chemdraw')] });
+    expect(Object.keys(editors)).toEqual(['ketcher', 'chemdraw']);
+  });
+
+  it('still offers Ketcher when an enabled licensed editor cannot be initialized', async () => {
+    // marvinjs is enabled but not configured: getEditorById falls back to UIFetcher and gets nothing.
+    sinon.stub(UIFetcher, 'initialize').resolves({ structureEditors: { editors: availableEditors } });
+    sinon.stub(console, 'error');
+    const editors = await createEditors({ matriceConfigs: [matrice('marvinjs'), matrice('chemdraw')] });
     expect(Object.keys(editors)).toEqual(['ketcher', 'chemdraw']);
   });
 
