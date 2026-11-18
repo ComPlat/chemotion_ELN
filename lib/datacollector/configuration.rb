@@ -154,24 +154,22 @@ module Datacollector
     # Get the SFTPClient options for the device
     #
     # @param device [Device] the device to get SFTP arguments for
-    # @return [Hash] the SFTP arguments
+    # @return [Hash] the SFTP arguments, empty if no password is found or the connection method is unknown
+    # @raise [Errors::DatacollectorError] if the key file of a keyfile device is not usable
+    #   (see {#key_path_for_device})
     def sftp_options_for_device
-      options = {}
       case device.datacollector_authentication
       when 'keyfile'
-        options[:keys] = key_path_for_device
-        options[:keys_only] = true
+        # an Array, as SFTPClient splits a String of keys on commas
+        { keys: [key_path_for_device], keys_only: true }
       when 'password'
-        options[:password] = password_for_device
+        password = password_for_device
+        log.info(__method__, 'No password found!') if password.blank?
+        password.present? ? { password: password } : {}
       else
         log.info(__method__, 'connection method is unknown!')
+        {}
       end
-
-      if options[:password].blank? && options[:keys].blank?
-        log.info(__method__, 'No valid host or no password or key file found!')
-        return {}
-      end
-      options
     end
 
     # Get the password for the device
@@ -184,13 +182,16 @@ module Datacollector
     # Get the key path for the device
     #
     # @return [String] the absolute path to the key
+    # @raise [Errors::DatacollectorError] if no key name or key directory is set, the key directory does not
+    #   exist, or the key file does not exist, cannot be read or is outside the key directory
     def key_path_for_device
-      key_dir = Pathname.new(config.keydir)
-      key_dir = Rails.root.join(key_dir) if key_dir.relative?
-      key_name = Pathname.new(device.datacollector_key_name)
-      key_name = key_dir.join(key_name) if key_name.relative?
-      # confirm key path is in the keydir
-      key_name.realpath.to_s.start_with?(key_dir.realpath.to_s) ? key_name.to_s : nil
+      key_name = device.datacollector_key_name
+      raise Errors::DatacollectorError, 'No key file name set!' if key_name.blank?
+
+      key_dir = key_dir_path
+      key_path = key_path_in(key_dir, key_name)
+      check_key_file(key_path, key_dir)
+      key_path.to_s
     end
 
     ##################################################################
@@ -209,6 +210,66 @@ module Datacollector
         device.datacollector_user,
         **sftp_options_for_device,
       )
+    end
+
+    private
+
+    # Resolved path of the configured key directory, a relative one being resolved against +Rails.root+
+    #
+    # @return [Pathname] the key directory, symlinks resolved
+    # @raise [Errors::DatacollectorError] if no key directory is configured, or it does not exist or cannot be read
+    def key_dir_path
+      raise Errors::DatacollectorError, 'No datacollector key directory (keydir) configured!' if config.keydir.blank?
+
+      key_dir = Pathname.new(config.keydir)
+      key_dir = Rails.root.join(key_dir) if key_dir.relative?
+      raise Errors::DatacollectorError, "Key directory #{key_dir} not found!" unless key_dir.directory?
+
+      key_dir.realpath
+    rescue ArgumentError
+      raise Errors::DatacollectorError, 'Invalid key directory (keydir)!'
+    rescue SystemCallError => e
+      raise Errors::DatacollectorError, "Key directory #{key_dir} not readable: #{e.message}"
+    end
+
+    # Path of a key file in the key directory, checked on the path alone before the file is looked at
+    #
+    # @param key_dir [Pathname] the resolved key directory
+    # @param key_name [String] the key file name, relative to the key directory or absolute
+    # @return [Pathname] the key path
+    # @raise [Errors::DatacollectorError] if the key name is not a valid path or not inside the key directory
+    def key_path_in(key_dir, key_name)
+      # Pathname#join keeps an absolute key name as is
+      key_path = key_dir.join(key_name).cleanpath
+      raise Errors::DatacollectorError, "Key file #{key_path} is outside #{key_dir}!" unless in_dir?(key_path, key_dir)
+
+      key_path
+    rescue ArgumentError
+      raise Errors::DatacollectorError, 'Invalid key file name!'
+    end
+
+    # Checks that the key file exists, can be read and, symlinks resolved, stays inside the key directory
+    #
+    # @param key_path [Pathname] the key path
+    # @param key_dir [Pathname] the resolved key directory
+    # @raise [Errors::DatacollectorError] if one of the checks fails
+    def check_key_file(key_path, key_dir)
+      raise Errors::DatacollectorError, "Key file #{key_path} not found!" unless key_path.stat.file?
+      raise Errors::DatacollectorError, "Key file #{key_path} not readable!" unless key_path.readable?
+      return if in_dir?(key_path.realpath, key_dir)
+
+      raise Errors::DatacollectorError, "Key file #{key_path} is outside #{key_dir}!"
+    rescue Errno::ENOENT
+      raise Errors::DatacollectorError, "Key file #{key_path} not found!"
+    rescue SystemCallError => e
+      raise Errors::DatacollectorError, "Key file #{key_path} not readable: #{e.message}"
+    end
+
+    # @param path [Pathname]
+    # @param dir [Pathname]
+    # @return [Boolean] whether +path+ is +dir+ or lies below it, comparing whole path components
+    def in_dir?(path, dir)
+      path.ascend.include?(dir)
     end
   end
 end
