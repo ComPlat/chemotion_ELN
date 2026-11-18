@@ -53,12 +53,36 @@ RSpec.describe Matrice do
       expect(matrice_enabled.id).to be <= 30
     end
 
-    it 'keeps a matrice at id 30' do
+    it 'gives a new matrice id 30 when the highest id is 29' do
       described_class.reset_sequence
       matrice_disabled.save!
-      matrice_disabled.update_column(:id, 30) # rubocop:disable Rails/SkipsModelValidations
-      create(:matrice, :disabled)
-      expect(described_class.find_by(name: matrice_disabled.name)&.id).to eq(30)
+      matrice_disabled.update_column(:id, 29) # rubocop:disable Rails/SkipsModelValidations
+      matrice_enabled.save!
+      expect(matrice_enabled.id).to eq(30)
+    end
+
+    context 'when the highest id is already 30' do
+      before do
+        described_class.reset_sequence
+        matrice_disabled.save!
+        matrice_disabled.update_column(:id, 30) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      it 'refuses a new matrice instead of giving it id 31' do
+        expect(matrice_enabled.save).to be(false)
+        expect(matrice_enabled.errors[:id]).to be_present
+        expect(described_class.find_by(name: matrice_enabled.name)).to be_nil
+      end
+
+      it 'keeps the matrice at id 30' do
+        matrice_enabled.save
+        expect(described_class.find_by(name: matrice_disabled.name)&.id).to eq(30)
+      end
+
+      it 'also refuses when the matrice at id 30 is soft-deleted' do
+        described_class.find(30).destroy
+        expect(matrice_enabled.save).to be(false)
+      end
     end
   end
 end

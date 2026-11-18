@@ -22,9 +22,12 @@
 class Matrice < ApplicationRecord
   include SequenceUtilities
 
+  # users.matrix is an int4 holding sum(2^id), so 2^31 already overflows it.
+  MAX_ID = 30
+
   acts_as_paranoid
   before_create :clean_invalid_ids
-  before_create :reset_sequence
+  before_create :assign_id_in_range
   after_create :gen_json
   after_destroy :gen_json
 
@@ -64,10 +67,22 @@ class Matrice < ApplicationRecord
     Matrice.gen_matrices_json
   end
 
-  # Remove matrices with id > 30: users.matrix is an int4 holding sum(2^id),
-  # so 2^31 already overflows it.
+  # Remove matrices with id > MAX_ID.
   # @note: this is a temporary solution to remove invalid matrices
   def clean_invalid_ids
-    self.class.where('id > 30').find_each(&:really_destroy!)
+    self.class.where('id > ?', MAX_ID).find_each(&:really_destroy!)
+  end
+
+  # Give the new matrice the id after the highest one, soft-deleted rows included, and
+  # refuse it when that is beyond MAX_ID: the insert trigger would overflow users.matrix.
+  # The sequence is moved along so that inserts relying on it stay in step.
+  def assign_id_in_range
+    self.id ||= self.class.last_id + 1
+    if id > MAX_ID
+      errors.add(:id, "#{id} is beyond the #{MAX_ID} available UI feature slots")
+      throw :abort
+    end
+
+    self.class.reset_sequence(id)
   end
 end
