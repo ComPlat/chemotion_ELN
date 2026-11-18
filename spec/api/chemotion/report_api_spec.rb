@@ -599,12 +599,12 @@ describe Chemotion::ReportAPI do
         end
       end
 
-      context 'with a labelled and an unlabelled reaction sharing a sample' do
+      context 'with a labelled and an unlabelled reaction using solvents of the same name' do
         before do
-          shared = create(:sample, name: 'shared', collections: [collection])
           %w[labelled plain].each do |name|
             reaction = create(:reaction, collections: [collection])
-            create(:reactions_solvent_sample, reaction: reaction, sample: shared)
+            create(:reactions_solvent_sample, reaction: reaction,
+                                              sample: create(:sample, name: 'shared', collections: [collection]))
             create(:reactions_product_sample, reaction: reaction,
                                               sample: create(:sample, name: name, collections: [collection]))
             add_label(reaction) if name == 'labelled'

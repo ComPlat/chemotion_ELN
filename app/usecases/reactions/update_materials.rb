@@ -428,7 +428,6 @@ module Usecases
             weight_percentage_reference: sample.weight_percentage_reference,
             weight_percentage: weight_percentage,
           )
-        # sample was moved to other materialgroup
         else
           ReactionsSample.create!(
             sample_id: modified_sample.id,

@@ -867,9 +867,10 @@ describe Chemotion::ReactionAPI do
 
       it 'does not use an origin reaction the user cannot read' do
         unreadable = create(:reaction, name: 'unreadable', collections: [create(:collection, user: other_user)])
-        ReactionsProductSample.create!(reaction: unreadable, sample: sample1, position: 0)
+        unreadable_product = create(:sample, name: 'unreadable product', collections: unreadable.collections)
+        ReactionsProductSample.create!(reaction: unreadable, sample: unreadable_product, position: 0)
         params['origin'] = { 'id' => unreadable.id, 'short_label' => unreadable.short_label }
-        params['variations'].first['products'] = { sample1.id.to_s => variation_entry(2) }
+        params['variations'].first['products'] = { unreadable_product.id.to_s => variation_entry(2) }
 
         create_copy
 
