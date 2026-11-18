@@ -138,6 +138,120 @@ describe Chemotion::DeviceDescriptionAPI do
       expect(device_description.reload.children.size).to be(1)
     end
 
+    context 'when the device description has a segment' do
+      let(:segment_properties) do
+        linked_sample = create(:sample)
+        segment_klass.properties_release.deep_dup.tap do |properties|
+          fields = properties['layers']['ontology_fields']['fields']
+          fields.first['value'] = 'entered value'
+          fields << { 'type' => 'drag_sample', 'field' => 'linked_sample', 'position' => 3,
+                      'value' => { 'el_id' => linked_sample.id, 'el_label' => linked_sample.short_label } }
+          fields << { 'type' => 'upload', 'field' => 'linked_upload', 'position' => 4,
+                      'value' => { 'files' => [{ 'aid' => 1, 'uid' => 'parent-file', 'filename' => 'a.txt' }] } }
+        end
+      end
+      let!(:segment) do
+        create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
+                         properties: segment_properties)
+      end
+
+      def field_value(segment, name)
+        segment.properties.dig('layers', 'ontology_fields', 'fields').find { |f| f['field'] == name }['value']
+      end
+
+      it 'copies the segment with its field values to the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segments = device_description.reload.children.first.segments
+        expect(split_segments.map(&:segment_klass_id)).to eq([segment_klass.id])
+        expect(split_segments.first.properties.dig('layers', 'ontology_fields', 'fields', 0, 'value'))
+          .to eq('entered value')
+        expect(device_description.segments.reload).to eq([segment])
+      end
+
+      it 'clears linked sample and upload fields on the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segment = device_description.reload.children.first.segments.first
+        expect(field_value(split_segment, 'linked_sample')).to eq({})
+        expect(field_value(split_segment, 'linked_upload')).to eq({})
+      end
+
+      it 'keeps linked sample and upload fields on the parent' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        expect(field_value(segment.reload, 'linked_sample')['el_id']).to be_present
+        expect(field_value(segment, 'linked_upload')['files'].size).to eq(1)
+      end
+    end
+
+    context 'when the device description has segments of several classes' do
+      let(:segment_klasses) do
+        [segment_klass,
+         create(:segment_klass, :with_ontology_properties_template, element_klass: element_klass, label: 'second')]
+      end
+
+      before do
+        segment_klasses.each do |klass|
+          create(:segment, segment_klass: klass, element: device_description, created_by: user.id,
+                           properties: klass.properties_release)
+        end
+      end
+
+      it 'copies one segment of each class to the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segments = device_description.reload.children.first.segments
+        expect(split_segments.map(&:segment_klass_id)).to match_array(segment_klasses.map(&:id))
+      end
+    end
+
+    context 'when the segment follows a release this instance cannot resolve' do
+      let(:imported_release) { segment_klass.properties_release.merge('uuid' => 'imported-release') }
+
+      before do
+        create(:segment, segment_klass: segment_klass, element: device_description, created_by: user.id,
+                         properties: segment_klass.properties_release.except('klass_uuid'),
+                         klass_uuid: 'imported-release', properties_release: imported_release)
+      end
+
+      it 'keeps that release on the split' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        split_segment = device_description.reload.children.first.segments.first
+        expect(split_segment.klass_uuid).to eq('imported-release')
+        expect(split_segment.properties_release['uuid']).to eq('imported-release')
+      end
+    end
+
+    context 'when copying a segment fails' do
+      let(:params) do
+        {
+          ui_state: {
+            currentCollectionId: collection.id,
+            device_description: {
+              all: false,
+              included_ids: [device_description.id, device_description2.id],
+              excluded_ids: [],
+            },
+          },
+        }
+      end
+
+      before do
+        create(:collections_device_description, device_description: device_description2, collection: collection)
+        create(:segment, segment_klass: segment_klass, element: device_description2, created_by: user.id,
+                         properties: nil)
+      end
+
+      it 'creates no split for any of the selected device descriptions' do
+        expect { post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json }
+          .to raise_error(NoMethodError)
+        expect(DeviceDescription.where(id: [device_description.id, device_description2.id])
+          .flat_map(&:children)).to be_empty
+      end
+    end
+
     context 'when the collection is a read-only share' do
       let(:read_only_collection) do
         create(:collection, user: create(:person)).tap do |c|
