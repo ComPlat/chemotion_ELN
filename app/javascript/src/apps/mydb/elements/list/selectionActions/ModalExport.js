@@ -118,7 +118,9 @@ export default class ModalExport extends React.Component {
           { value: 'vendor', text: 'vendor', checked: false },
           { value: 'order_number', text: 'order number', checked: false },
           { value: 'product_number', text: 'product number', checked: false },
-          { value: 'amount', text: 'amount', checked: false },
+          // The inventory tab's "Amount" holds a mass and a volume; both are exportable.
+          { value: 'amount', text: 'amount (mass)', checked: false },
+          { value: 'volume', text: 'amount (volume)', checked: false },
           { value: 'price', text: 'price', checked: false },
           { value: 'person', text: 'person', checked: false },
           { value: 'required_date', text: 'required date', checked: false },

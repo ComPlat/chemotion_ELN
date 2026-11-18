@@ -15,9 +15,7 @@ class AddShortLabelToResearchPlans < ActiveRecord::Migration[6.1]
       end
 
       if u.respond_to?(:counters)
-        u.counters ||= {}
-        u.counters['research_plans'] = plans.size.to_s
-        u.save!
+        u.update_column('counters', (u.counters || {}).merge('research_plans' => plans.size.to_s))
       end
     end
   end
@@ -27,8 +25,7 @@ class AddShortLabelToResearchPlans < ActiveRecord::Migration[6.1]
 
     User.find_each do |user|
       if user.respond_to?(:counters) && user.counters.is_a?(Hash)
-        user.counters.delete('research_plans')
-        user.save!
+        user.update_column('counters', user.counters.except('research_plans'))
       end
     end
   end

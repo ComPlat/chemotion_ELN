@@ -58,7 +58,7 @@ module Export
                     when 'density'
                       "#{sample['density']} g/mL"
                     else
-                      sample[column]
+                      sample[header_key(column)]
                     end
         column_data = format_field(column, raw_value)
         data.concat(column_data)

@@ -118,14 +118,17 @@ module Import
         import_collections if @gt == false
         import_samples
         import_residues
+        # before the reaction links: a sample split for a further link copies its parent's chemical and components
+        if @gt == false
+          import_chemicals
+          import_components
+        end
         import_reactions
         import_reaction_steps
         import_reactions_samples
         import_elements
 
         if @gt == false
-          import_chemicals
-          import_components
           import_wellplates
           import_wells
           import_research_plans
@@ -494,6 +497,11 @@ module Import
         ReactionsProductSample,
       ].each do |model|
         @data.fetch(model.name, {}).each do |uuid, fields|
+          reaction = @instances.fetch('Reaction').fetch(fields.fetch('reaction_id'))
+          sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          # a sample belongs to one reaction in one role: a further link gets a sample of its own
+          sample = sample_for_another_link(sample, reaction) if sample.reactions_samples.exists?
+
           # create the reactions_sample
           reactions_sample = model.create!(fields.slice(
             'reference',
@@ -509,8 +517,8 @@ module Import
             'carry_on',
             'step_reference',
           ).merge(
-            reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
-            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
+            reaction: reaction,
+            sample: sample,
             reaction_step_id: @instances.dig('ReactionStep', fields['reaction_step_id'])&.id,
           ))
 
@@ -518,6 +526,13 @@ module Import
           update_instances!(uuid, reactions_sample)
         end
       end
+    end
+
+    # A sample split from the given one, as the reaction editor creates it for a sample dropped
+    # onto a reaction.
+    def sample_for_another_link(sample, reaction)
+      @current_user ||= User.find(@current_user_id)
+      sample.create_subsample(@current_user, reaction.collections.pluck(:id), true, 'reaction')
     end
 
     def import_wellplates

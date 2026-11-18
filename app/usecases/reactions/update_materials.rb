@@ -442,7 +442,6 @@ module Usecases
             weight_percentage: weight_percentage,
             **step_link(sample, existing_association),
           )
-        # sample was moved to other materialgroup
         else
           ReactionsSample.create!(
             sample_id: modified_sample.id,

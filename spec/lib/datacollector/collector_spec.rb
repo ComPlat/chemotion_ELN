@@ -147,6 +147,85 @@ RSpec.describe Datacollector::Collector, type: :model do
         end.to change(Attachment, :count).by(data_count)
       end
     end
+
+    context 'when a device raises an unexpected error' do
+      let(:failing_device) { instance_double(Device, info: 'Device ID: 1, Name: failing') }
+      let(:working_device) { instance_double(Device, info: 'Device ID: 2, Name: working') }
+      let(:working_collector) { instance_double(described_class, execute: nil) }
+
+      before do
+        allow(described_class).to receive(:new).with(failing_device).and_raise(Errno::ENOENT, 'some file')
+        allow(described_class).to receive(:new).with(working_device).and_return(working_collector)
+        allow(Sentry).to receive(:capture_exception)
+      end
+
+      it 'reports the error and still collects from the next devices' do
+        described_class.bulk_execute([failing_device, working_device])
+
+        expect(Sentry).to have_received(:capture_exception)
+          .with(instance_of(Errno::ENOENT), extra: { device: failing_device.info })
+        expect(working_collector).to have_received(:execute)
+      end
+
+      it 'lets a job timeout end the run' do
+        allow(described_class).to receive(:new).with(failing_device).and_raise(Delayed::WorkerTimeout)
+
+        expect { described_class.bulk_execute([failing_device, working_device]) }
+          .to raise_error(Delayed::WorkerTimeout)
+        expect(working_collector).not_to have_received(:execute)
+      end
+
+      it 'treats a network timeout as the error of one device' do
+        allow(described_class).to receive(:new).with(failing_device).and_raise(Net::OpenTimeout)
+
+        described_class.bulk_execute([failing_device, working_device])
+
+        expect(working_collector).to have_received(:execute)
+      end
+    end
+  end
+
+  describe '.bulk_execute with allowed_methods' do
+    let(:local_device) do
+      instance_double(Device, info: 'Device ID: 1, Name: local', datacollector_method: 'filewatcherlocal')
+    end
+    let(:sftp_device) do
+      instance_double(Device, info: 'Device ID: 2, Name: sftp', datacollector_method: 'filewatchersftp')
+    end
+    let(:local_collector) { instance_double(described_class, execute: nil) }
+
+    before do
+      allow(described_class).to receive(:new).with(local_device).and_return(local_collector)
+      allow(described_class).to receive(:new).with(sftp_device)
+    end
+
+    it 'builds no collector for a device whose method is not allowed' do
+      described_class.bulk_execute([local_device, sftp_device], allowed_methods: %w[filewatcherlocal])
+
+      expect(described_class).not_to have_received(:new).with(sftp_device)
+      expect(local_collector).to have_received(:execute)
+    end
+  end
+
+  describe '#execute when the job times out while collecting a file' do
+    let(:device) do
+      instance_double(Device, info: 'Device ID: 1, Name: local', datacollector_user_level_selected: false)
+    end
+    let(:config) { instance_double(Datacollector::Configuration, collector_dir: '/collector', log: nil) }
+    let(:collector) { described_class.new(device) }
+    let(:files) { [instance_double(Datacollector::CollectorFile), instance_double(Datacollector::CollectorFile)] }
+
+    before do
+      allow(Datacollector::Configuration).to receive(:new!).with(device).and_return(config)
+      allow(collector).to receive_messages(new_files_or_folders: files, previous_failure?: false, ready?: true,
+                                           correspondence_by_file: nil)
+      allow(collector).to receive(:attach_file_or_folder).and_raise(Delayed::WorkerTimeout)
+    end
+
+    it 'ends the run instead of moving on to the next file' do
+      expect { collector.execute }.to raise_error(Delayed::WorkerTimeout)
+      expect(collector).to have_received(:attach_file_or_folder).once
+    end
   end
 
   describe 'when a file cannot be deleted' do
