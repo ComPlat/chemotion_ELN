@@ -9,6 +9,7 @@ describe 'Copy sample' do
       :user,
       first_name: 'User2',
       password: 'iamuser2',
+      password_confirmation: 'iamuser2',
       last_name: 'Complat',
       account_active: true,
       email: 'user2@complat.edu',

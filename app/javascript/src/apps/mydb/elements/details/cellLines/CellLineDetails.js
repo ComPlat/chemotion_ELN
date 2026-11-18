@@ -9,7 +9,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 
@@ -35,7 +34,7 @@ class CellLineDetails extends React.Component {
   }
 
   componentDidMount() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
     const { cellLineItem } = this.props;
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !cellLineItem?.is_new) {

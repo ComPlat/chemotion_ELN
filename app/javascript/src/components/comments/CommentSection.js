@@ -1,50 +1,37 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import CommentButton from 'src/components/comments/CommentButton';
 import CommentList from 'src/components/comments/CommentList';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
-import { selectCurrentUser, commentActivation } from 'src/utilities/CommentHelper';
+import { commentActivation } from 'src/utilities/CommentHelper';
 
-export default class CommentSection extends Component {
-  constructor(props) {
-    super(props);
-    const commentState = CommentStore.getState();
-    this.state = {
-      showCommentSection: commentState.showCommentSection,
-    };
-    this.onChange = this.onChange.bind(this);
+const CommentSection = ({ section, element }) => {
+  const { currentUser } = useContext(StoreContext).userStore;
+  const [showCommentSection, setShowCommentSection] = useState(
+    () => CommentStore.getState().showCommentSection
+  );
+
+  const onChange = useCallback((state) => {
+    setShowCommentSection(state.showCommentSection);
+  }, []);
+
+  useEffect(() => {
+    CommentStore.listen(onChange);
+    return () => CommentStore.unlisten(onChange);
+  }, [onChange]);
+
+  if (showCommentSection && MatrixCheck(currentUser.matrix, commentActivation)) {
+    return (
+      <div className="d-flex flex-column gap-2 align-items-start">
+        <CommentButton section={section} element={element} />
+        <CommentList section={section} />
+      </div>
+    );
   }
-
-  componentDidMount() {
-    CommentStore.listen(this.onChange);
-  }
-
-  componentWillUnmount() {
-    CommentStore.unlisten(this.onChange);
-  }
-
-  onChange(state) {
-    this.setState({ ...state });
-  }
-
-  render() {
-    const { section, element } = this.props;
-    const { showCommentSection } = this.state;
-    const currentUser = selectCurrentUser(UserStore.getState());
-
-    if (showCommentSection && MatrixCheck(currentUser.matrix, commentActivation)) {
-      return (
-        <div className="d-flex flex-column gap-2 align-items-start">
-          <CommentButton section={section} element={element} />
-          <CommentList section={section} />
-        </div>
-      );
-    }
-    return null;
-  }
-}
+  return null;
+};
 
 CommentSection.propTypes = {
   section: PropTypes.string,
@@ -54,3 +41,5 @@ CommentSection.propTypes = {
 CommentSection.defaultProps = {
   section: 'header',
 };
+
+export default CommentSection;

@@ -10,7 +10,7 @@ RSpec.shared_context 'api request jwt context', shared_context: :metadata do
     }
   end
   let(:jwt_token) do
-    JsonWebToken.encode(jwt_payload)
+    JsonWebToken.encode(jwt_payload, purpose: :login)
   end
   let(:jwt_request_header) do
     {'Authorization': "Bearer #{jwt_token}"}

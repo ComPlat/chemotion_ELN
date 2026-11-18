@@ -4,12 +4,12 @@ import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import WelcomeMessage from 'src/apps/home/WelcomeMessage';
 import WorkshopGuideInline from 'src/components/workshopGuide/WorkshopGuideInline';
 
-export default function Home() {
-  return (
+const Home = () => (
     <div>
       <BaseNavigation />
       <WelcomeMessage />
       <WorkshopGuideInline />
     </div>
   );
-}
+
+export default Home;

@@ -1,4 +1,4 @@
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 let latestVesselIds = [];
 
@@ -95,10 +95,10 @@ const getNextVesselIndex = (vessels, initials) => {
 };
 
 const generateNextShortLabel = (baseIndex = null) => {
-  const { currentUser } = UserStore.getState();
+  const { currentUser } = rootStore.userStore;
   if (!currentUser) return 'NEW VESSEL';
 
-  const initials = currentUser.initials;
+  const { initials } = currentUser;
 
   if (baseIndex !== null) {
     return `${initials}-V${baseIndex}`;

@@ -1,4 +1,3 @@
-import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import uniqueId from 'react-html-id';
@@ -9,18 +8,20 @@ import {
 } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ResearchPlanDetailsFieldTableColumnNameModal
   from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableColumnNameModal';
-import ResearchPlanDetailsFieldTableMeasurementExportModal
-  from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableMeasurementExportModal';
+// eslint-disable-next-line max-len
+import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableMeasurementExportModal';
 import ResearchPlanDetailsFieldTableSchemasModal
   from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+// eslint-disable-next-line max-len
 import { COLUMN_ID_SHORT_LABEL_REACTION, COLUMN_ID_SHORT_LABEL_SAMPLE } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
 
 export default class ResearchPlanDetailsFieldTable extends Component {
@@ -214,8 +215,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     onChange(field.value, field.id);
   }
 
-
-
   handleSchemasModalSubmit(schemaName) {
     const { field } = this.props;
     ResearchPlansFetcher.createTableSchema(schemaName, field.value).then(() => {
@@ -230,8 +229,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       }
     });
   }
-
-
 
   _handleMeasurementExportModalHide = () => {
     this.setState({
@@ -277,7 +274,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     params.api.applyColumnState(field.value.columnStates);
   };
 
-  onSaveGridColumnState(params) {
+  onSaveGridColumnState() {
     const { field, onChange } = this.props;
     const { gridApi } = this.state;
 
@@ -327,6 +324,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
     gridApi.applyTransaction({ remove: [rowData[rowClicked]] });
 
+    // eslint-disable-next-line no-unused-vars
     rowData = rowData.filter((value, index, arr) => index !== rowClicked);
     field.value.rows = rowData;
 
@@ -510,13 +508,11 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     );
   }
 
-
-
   openSampleByShortLabel(shortLabel) {
     SamplesFetcher.findByShortLabel(shortLabel)
       .then((result) => {
         if (result.sample_id && result.collection_id) {
-          Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
+          aviatorNavigationWithCollectionId(result.collection_id, 'sample', result.sample_id);
           ElementActions.fetchSampleById(result.sample_id);
         } else {
           console.debug('No valid data returned for short label', shortLabel, result);
@@ -531,7 +527,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     ReactionsFetcher.findByShortLabel(shortLabel)
       .then((result) => {
         if (result.reaction_id && result.collection_id) {
-          Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
+          aviatorNavigationWithCollectionId(result.collection_id, 'reaction', result.reaction_id);
           ElementActions.fetchReactionById(result.reaction_id);
         } else {
           console.debug('No valid data returned for short label', shortLabel, result);

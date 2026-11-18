@@ -1,19 +1,17 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import DeleteComment from 'src/components/common/DeleteComment';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import {
-  formatSection,
-  selectCurrentUser,
-} from 'src/utilities/CommentHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { formatSection } from 'src/utilities/CommentHelper';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
 const CommentTable = ({ element, comments, editComment, deleteComment, showSection }) => {
   const gridRef = useRef();
+  const { currentUser } = useContext(StoreContext).userStore;
 
   const markCommentResolved = (comment) => {
     const params = {
@@ -29,25 +27,18 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
       });
   };
 
-  const getRowId = useCallback((params) => {
-    return params.data.id;
-  }, []);
+  const getRowId = useCallback((params) => params.data.id, []);
 
   const disableEditComment = (comment) => comment.status === 'Resolved';
 
-  const commentByCurrentUser = (comment, currentUser) => currentUser.id === comment.created_by;
+  const commentByCurrentUser = (comment) => currentUser.id === comment.created_by;
 
-  const renderSection = (node) => {
-    return formatSection(node.data.section, element.type);
-  }
+  const renderSection = (node) => formatSection(node.data.section, element.type);
 
-  const renderDate = (node) => {
-    return (<span className="text-info">{formatDate(node.data.created_at)}</span>);
-  }
+  const renderDate = (node) => (<span className="text-info">{formatDate(node.data.created_at)}</span>);
 
   const renderActions = (node) => {
     const comment = node.data;
-    const currentUser = selectCurrentUser(UserStore.getState());
 
     return (
       <ButtonToolbar className="flex-nowrap my-2">
@@ -60,7 +51,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
           {comment.status === 'Resolved' ? 'Resolved' : 'Resolve'}
         </Button>
         {
-          commentByCurrentUser(comment, currentUser)
+          commentByCurrentUser(comment)
           && (
             <Button
               size="xsm"
@@ -73,7 +64,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
           )
         }
         {
-          commentByCurrentUser(comment, currentUser)
+          commentByCurrentUser(comment)
           && (
             <DeleteComment
               comment={comment}
@@ -83,32 +74,32 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
         }
       </ButtonToolbar>
     );
-  }
+  };
 
   let columnDefs = [
     {
-      headerName: "Date",
+      headerName: 'Date',
       minWidth: 200,
       maxWidth: 200,
       cellRenderer: renderDate,
     },
     {
-      headerName: "Comment",
-      field: "content",
+      headerName: 'Comment',
+      field: 'content',
       wrapText: true,
-      cellClass: ["lh-base", "p-2", "border-end"],
+      cellClass: ['lh-base', 'p-2', 'border-end'],
     },
     {
-      headerName: "From User",
-      field: "submitter",
+      headerName: 'From User',
+      field: 'submitter',
     },
     {
-      headerName: "Actions",
+      headerName: 'Actions',
       cellRenderer: renderActions,
     },
     {
-      headerName: "Resolved By",
-      field: "resolver_name",
+      headerName: 'Resolved By',
+      field: 'resolver_name',
     },
   ];
 
@@ -116,7 +107,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
     columnDefs = [
       ...columnDefs.slice(0, 0),
       {
-        headerName: "Column",
+        headerName: 'Column',
         minWidth: 100,
         maxWidth: 100,
         cellRenderer: renderSection,
@@ -132,8 +123,8 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
     sortable: false,
     resizable: false,
     suppressMovable: true,
-    cellClass: ["border-end", "px-2"],
-    headerClass: ["border-end", "px-2"]
+    cellClass: ['border-end', 'px-2'],
+    headerClass: ['border-end', 'px-2']
   };
 
   return (
@@ -150,7 +141,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
       />
     </div>
   );
-}
+};
 
 export default CommentTable;
 

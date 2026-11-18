@@ -1,81 +1,43 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import React, { useContext, useEffect, useState } from 'react';
 import { orderBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
 const FN_ID = 'GenericElements';
 
-export default class GenericElementsAdmin extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      elements: [],
-      element: {},
-      show: { tab: '', modal: '' },
-      revisions: [],
-      repoData: [],
-      currentUser: {},
-    };
-    this.fetchElements = this.fetchElements.bind(this);
-    this.handleShowState = this.handleShowState.bind(this);
-    this.closeModal = this.closeModal.bind(this);
-    this.handleCreateKlass = this.handleCreateKlass.bind(this);
-    this.handleUpdateKlass = this.handleUpdateKlass.bind(this);
-    this.handleActivateKlass = this.handleActivateKlass.bind(this);
-    this.handleDeleteKlass = this.handleDeleteKlass.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.delRevision = this.delRevision.bind(this);
-    this.fetchRevisions = this.fetchRevisions.bind(this);
-    this.handleUploadKlass = this.handleUploadKlass.bind(this);
-    this.handleDownloadKlass = this.handleDownloadKlass.bind(this);
-  }
+const GenericElementsAdmin = () => {
+  const { userStore } = useContext(StoreContext);
+  const { currentUser } = userStore;
+  const [revisions, setRevisions] = useState([]);
 
-  componentDidMount() {
+  useEffect(() => {
     LoadingActions.start();
-    Promise.all([GenericElsFetcher.fetchElementKlasses(), UsersFetcher.fetchCurrentUser()])
-      .then(([elementsResult, userResult]) => {
-        if (elementsResult?.error || userResult?.error) {
-          throw new Error(elementsResult?.error || userResult?.error);
-        }
-        this.setState((prevState) => {
-          const newState = {};
-          newState.elements = (elementsResult?.klass?.length > 0)
-            ? elementsResult.klass.filter((k) => k.is_generic)
-            : [];
-          if (userResult?.user) {
-            newState.currentUser = userResult.user;
-          }
-          return { ...prevState, ...newState };
-        });
-      })
-      .catch((errorMessage) => {
-        notification({
-          title: 'Error Loading Data',
-          lvl: 'error',
-          msg: `Failed to load initial data. Please refresh the page. ${errorMessage}`,
-        });
-      })
-      .finally(() => {
-        LoadingActions.stop();
-      });
-  }
 
-  handleShowState(att, val, cb = () => {}) {
-    this.setState({ show: this.getShowState(att, val) }, cb);
-  }
+    if (!currentUser) {
+      userStore.fetchCurrentUser();
+    }
 
-  handleCreateKlass(_response) {
-    const { element, notify } = _response;
+    userStore.fetchGenericElKlasses();
+    LoadingActions.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchElementKlasses = () => {
+    LoadingActions.start();
+    userStore.fetchGenericElKlasses();
+    LoadingActions.stop();
+  };
+
+  const handleCreateKlass = (response) => {
+    const { element, notify } = response;
     if (!notify.isSuccess) {
       notification(notify);
       return;
@@ -96,7 +58,7 @@ export default class GenericElementsAdmin extends React.Component {
             lvl: 'info',
             msg: 'Created successfully',
           });
-          this.fetchElements();
+          fetchElementKlasses();
         }
       })
       .catch((errorMessage) => {
@@ -105,31 +67,30 @@ export default class GenericElementsAdmin extends React.Component {
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  handleUpdateKlass(_response) {
-    const { element, notify } = _response;
+  const handleUpdateKlass = (response) => {
+    const { element, notify } = response;
     if (!notify.isSuccess) {
       notification(notify);
       return;
     }
-    const inputs = element;
     LoadingActions.start();
-    GenericElsFetcher.updateElementKlass(inputs)
+    GenericElsFetcher.updateElementKlass(element)
       .then((result) => {
         if (result.error) {
           notification({
-            title: `Element [${inputs.name}]`,
+            title: `Element [${element.name}]`,
             lvl: 'error',
             msg: result.error,
           });
         } else {
           notification({
-            title: `Element [${inputs.name}]`,
+            title: `Element [${element.name}]`,
             lvl: 'info',
             msg: 'Updated successfully',
           });
-          this.fetchElements();
+          fetchElementKlasses();
         }
       })
       .catch((errorMessage) => {
@@ -138,9 +99,9 @@ export default class GenericElementsAdmin extends React.Component {
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  handleActivateKlass(e) {
+  const handleActivateKlass = (e) => {
     const act = e.is_active ? 'De-activate' : 'Activate';
     LoadingActions.start();
     GenericElsFetcher.deActivateKlass({
@@ -161,15 +122,15 @@ export default class GenericElementsAdmin extends React.Component {
             lvl: 'info',
             msg: `Element is ${act.toLowerCase()} now`,
           });
-          this.fetchElements();
+          fetchElementKlasses();
         }
       })
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  handleDeleteKlass(element) {
+  const handleDeleteKlass = (element) => {
     if (element.is_active) {
       notification({
         title: 'Delete failed',
@@ -198,39 +159,25 @@ export default class GenericElementsAdmin extends React.Component {
               lvl: 'info',
               msg: 'Deleted successfully',
             });
-            this.fetchElements();
+            fetchElementKlasses();
           }
         })
         .finally(() => {
           LoadingActions.stop();
         });
     }
-  }
+  };
 
-  getShowState(att, val) {
-    const { show } = this.state;
-    return { ...show, [att]: val };
-  }
-
-  closeModal(cb = () => {}) {
-    this.handleShowState('modal', '', cb);
-  }
-
-  // eslint-disable-next-line class-methods-use-this, react/sort-comp
-  handleDownloadKlass(e) {
+  const handleDownloadKlass = (e) => {
     LoadingActions.start();
     GenericKlassFetcher.downloadKlass(e.id, 'ElementKlass')
-      // eslint-disable-next-line no-unused-vars
-      .then((result) => {
-        LoadingActions.stop();
-      })
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  handleUploadKlass(_response) {
-    const { element, notify } = _response;
+  const handleUploadKlass = (response) => {
+    const { element, notify } = response;
     if (!notify.isSuccess) {
       notification(notify);
       return;
@@ -239,7 +186,7 @@ export default class GenericElementsAdmin extends React.Component {
     GenericElsFetcher.uploadKlass(element)
       .then((result) => {
         if (result?.status === 'success') {
-          this.fetchElements();
+          fetchElementKlasses();
         }
         notification({
           title: 'Upload Element',
@@ -253,10 +200,10 @@ export default class GenericElementsAdmin extends React.Component {
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  fetchRevisions(_element) {
-    const element = _element;
+  const fetchRevisions = (element) => {
+    console.log(element);
     if (element?.id) {
       GenericElsFetcher.fetchKlassRevisions(element.id, 'ElementKlass').then(
         (result) => {
@@ -268,14 +215,13 @@ export default class GenericElementsAdmin extends React.Component {
             { properties_release: curr },
             { uuid: 'current' }
           );
-          const revisions = [].concat(curr, result.revisions);
-          this.setState({ revisions });
+          setRevisions([].concat(curr, result.revisions));
         }
       );
     }
-  }
+  };
 
-  delRevision(params) {
+  const delRevision = (params) => {
     const { id, data, uuid } = params;
     LoadingActions.start();
     GenericElsFetcher.deleteKlassRevision({
@@ -291,7 +237,7 @@ export default class GenericElementsAdmin extends React.Component {
             msg: response.error,
           });
         } else {
-          this.fetchRevisions(data);
+          fetchRevisions(data);
           notification({
             title: `Revision [${uuid}] deleted successfully`,
             lvl: 'info',
@@ -302,30 +248,9 @@ export default class GenericElementsAdmin extends React.Component {
       .finally(() => {
         LoadingActions.stop();
       });
-  }
+  };
 
-  fetchElements() {
-    LoadingActions.start();
-    GenericElsFetcher.fetchElementKlasses()
-      .then((result) => {
-        if (
-          typeof result !== 'undefined' &&
-          typeof result.klass !== 'undefined' &&
-          result?.klass?.length > 0
-        ) {
-          this.setState(
-            { elements: result.klass.filter((k) => k.is_generic) },
-            () => LoadingActions.stop()
-          );
-        }
-      })
-      .finally(() => {
-        LoadingActions.stop();
-      });
-  }
-
-  async handleSubmit(_element, _release = "draft") {
-    const [element, release] = [_element, _release];
+  const handleSubmit = async (element, release = 'draft') => {
     element.release = release;
     LoadingActions.start();
     const result = await submit(GenericElsFetcher, {
@@ -335,71 +260,57 @@ export default class GenericElementsAdmin extends React.Component {
     });
     if (result.isSuccess) {
       notification(result);
-      this.fetchElements();
-      this.setState({ element: result.response }, () => LoadingActions.stop());
+      fetchElementKlasses();
+      LoadingActions.stop();
     } else {
       notification(result);
     }
     LoadingActions.stop();
-  }
+  };
 
-  renderGrid() {
-    const { elements = [], revisions, currentUser } = this.state;
-    const els = orderBy(
-      elements,
+  const renderGrid = () => {
+    const elements = orderBy(
+      userStore.genericElementKlassesArray(''),
       ['is_active', 'name', 'klass_prefix'],
       ['desc', 'asc', 'asc']
     );
     return (
       <Designer
-        fnCopy={this.handleCreateKlass}
-        fnCreate={this.handleCreateKlass}
-        fnSubmit={this.handleSubmit}
-        fnActive={this.handleActivateKlass}
-        fnDelete={this.handleDeleteKlass}
-        fnUpdate={this.handleUpdateKlass}
-        fnUpload={this.handleUploadKlass}
-        fnDownload={this.handleDownloadKlass}
-        fnRefresh={this.fetchElements}
+        fnCopy={handleCreateKlass}
+        fnCreate={handleCreateKlass}
+        fnSubmit={handleSubmit}
+        fnActive={handleActivateKlass}
+        fnDelete={handleDeleteKlass}
+        fnUpdate={handleUpdateKlass}
+        fnUpload={handleUploadKlass}
+        fnDownload={handleDownloadKlass}
+        fnRefresh={fetchElementKlasses}
         preview={{
-          fnDelRevisions: this.delRevision,
-          fnRevisions: this.fetchRevisions,
+          fnDelRevisions: delRevision,
+          fnRevisions: fetchRevisions,
           revisions,
         }}
         genericType={Constants.GENERIC_TYPES.ELEMENT}
-        gridData={els || []}
+        gridData={elements || []}
         refSource={{ currentUser }}
       />
     );
+  };
+
+  if (currentUser && !currentUser.generic_admin?.elements) {
+    return <Unauthorized userName={currentUser?.name} text={FN_ID} />;
   }
 
-  render() {
-    const { currentUser } = this.state;
-    if (!currentUser.generic_admin?.elements) {
-      return <Unauthorized userName={currentUser.name} text={FN_ID} />;
-    }
-
-    return (
-      <div className="vw-90 my-auto mx-auto">
-        <GenericMenu userName={currentUser.name} text={FN_ID} />
-        <div className="mt-3">
-          {this.renderGrid()}
-        </div>
-        <Notifications />
-        <LoadingModal />
+  return (
+    <div className="vw-90 my-auto mx-auto">
+      <GenericMenu userName={currentUser?.name} text={FN_ID} />
+      <div className="mt-3">
+        {renderGrid()}
       </div>
-    );
-  }
-}
+      <Notifications />
+      <LoadingModal />
+    </div>
+  );
+};
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById(`${FN_ID}Admin`);
-  if (domElement) {
-    ReactDOM.render(
-      <DndProvider backend={HTML5Backend}>
-        <GenericElementsAdmin />
-      </DndProvider>,
-      domElement
-    );
-  }
-});
+export default observer(GenericElementsAdmin);

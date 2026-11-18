@@ -3,13 +3,7 @@ class PagesController < ApplicationController
 
   def home; end
 
-  def about; end
-
   def docx; end
-
-  def welcome
-    flash.clear
-  end
 
   def editor; end
 
@@ -25,6 +19,7 @@ class PagesController < ApplicationController
       # redirect the user to close the popup window
       render "oauth/token_registration_success"
     rescue StandardError
+      Rails.logger.error("SciFinder-n token registration failed: #{e.class}: #{e.message}")
       redirect_to '/500.html'
     end
   end

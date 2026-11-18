@@ -1,3 +1,4 @@
+/* eslint-disable radix */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -22,7 +23,7 @@ import ScreenWellplates from 'src/apps/mydb/elements/details/screens/ScreenWellp
 import ResearchplanFlowDisplay from 'src/apps/mydb/elements/details/screens/ResearchplanFlowDisplay';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -35,15 +36,17 @@ import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
 
 export default class ScreenDetails extends Component {
-  constructor(props) {
-    super(props);
+  static contextType = StoreContext;
+  constructor(props, context) {
+    super(props, context);
     const { screen } = props;
+    const { currentUser } = context.userStore || {};
     this.state = {
       screen,
       activeTab: UIStore.getState().screen.activeTab,
       visible: List(),
       expandedResearchPlanId: null,
-      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      currentUser
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
@@ -306,17 +309,13 @@ export default class ScreenDetails extends Component {
   }
 
   switchToResearchPlanTab() {
-    if (this.state.activeTab == 'researchPlans') { return; }
+    if (this.state.activeTab === 'researchPlans') { return; }
     // call the pre-existing method to act as if a user had clicked on the research plans tab
     this.handleSelect('researchPlans');
   }
 
   expandResearchPlan(researchPlanId) {
     this.setState({ expandedResearchPlanId: researchPlanId });
-  }
-
-  scrollToResearchPlan(researchPlanId) {
-
   }
 
   render() {
@@ -389,7 +388,6 @@ export default class ScreenDetails extends Component {
           const researchPlanId = parseInt(node.id);
           this.switchToResearchPlanTab();
           this.expandResearchPlan(researchPlanId);
-          this.scrollToResearchPlan(researchPlanId);
         }
       },
       editor: {

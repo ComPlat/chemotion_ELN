@@ -1,38 +1,41 @@
 import React, { useEffect, useContext } from 'react';
-import { ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, Stack, Accordion, Form, ButtonGroup } from 'react-bootstrap';
+import {
+  ToggleButtonGroup, ToggleButton, Tooltip, OverlayTrigger, Stack, Accordion, Form, ButtonGroup
+} from 'react-bootstrap';
 import {
   togglePanel, handleClear, showErrorMessage, panelVariables,
   AccordeonHeaderButtonForSearchForm, SearchButtonToolbar
-} from './SearchModalFunctions';
+} from 'src/components/searchModal/forms/SearchModalFunctions';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import AdvancedSearchRow from './AdvancedSearchRow';
+import AdvancedSearchRow from 'src/components/searchModal/forms/AdvancedSearchRow';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
-import DetailSearch from './DetailSearch';
-import SearchResult from './SearchResult';
+import DetailSearch from 'src/components/searchModal/forms/DetailSearch';
+import SearchResult from 'src/components/searchModal/forms/SearchResult';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const TextSearch = () => {
+  const { searchStore, userStore } = useContext(StoreContext);
   const elnElements = allElnElementsForSearch;
-  const genericElements = UserStore.getState().genericEls || [];
-  const searchStore = useContext(StoreContext).search;
+  const genericElements = userStore.genericEls || [];
   const panelVars = panelVariables(searchStore);
   const accordionItemClass = searchStore.searchResultsCount > 0 ? ' with-result' : '';
-  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' + accordionItemClass : '';
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0
+    ? `active${accordionItemClass}`
+    : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active with-result' : '';
 
   useEffect(() => {
-    let advancedValues = searchStore.advancedSearchValues;
+    const advancedValues = searchStore.advancedSearchValues;
     const length = advancedValues.length - 1;
     const lastInputRow = searchStore.advancedSearchValues[length];
-    
+
     const checkSelectedElements =
       (lastInputRow.field && lastInputRow.value && lastInputRow.link) ||
-      (length == 0 && lastInputRow.field && lastInputRow.value);
-    
+      (length === 0 && lastInputRow.field && lastInputRow.value);
+
     if (checkSelectedElements) {
-      let searchValues = {
+      const searchValues = {
         link: 'OR', match: 'ILIKE',
         table: advancedValues[0].table,
         element_id: advancedValues[0].element_id,
@@ -41,43 +44,42 @@ const TextSearch = () => {
       };
       searchStore.addAdvancedSearchValue(length + 1, searchValues);
     }
-  }, [searchStore.advancedSearchValues]);
+  }, [searchStore.advancedSearchValues, searchStore]);
 
   const handleChangeElement = (element) => {
     const table = elnElements.includes(element) ? element : 'elements';
-    const genericElement = (!elnElements.includes(element) && genericElements.find(el => el.name + 's' === element)) || {};
+    const genericElement = (!elnElements.includes(element)
+      && genericElements.find(el => `${el.name}s` === element)) || {};
 
     searchStore.changeSearchElement({
-      table: table,
+      table,
       element_id: (genericElement.id || 0),
       element_table: element
     });
-    let searchValues = { ...searchStore.advancedSearchValues[0] };
+    const searchValues = { ...searchStore.advancedSearchValues[0] };
     searchValues.table = table;
     searchValues.element_id = (genericElement.id || 0);
     searchStore.addAdvancedSearchValue(0, searchValues);
-  }
+  };
 
   const handleNumericMatchChange = (e) => {
     searchStore.changeNumericMatchValue(e.target.value);
-  }
+  };
 
   const SelectSearchTable = () => {
-    const layout = UserStore.getState().profile.data.layout;
+    const { layout } = userStore.profile.data;
 
-    const buttons = Object.entries(layout).filter((value) => {
-      return value[1] > 0
-    })
+    const buttons = Object.entries(layout).filter((value) => value[1] > 0)
       .sort((a, b) => a[1] - b[1])
       .map((value) => {
         const genericElement = (genericElements && genericElements.find(el => el.name === value[0])) || {};
-        if (genericElement.id === undefined && !elnElements.includes(`${value[0]}s`)) { return }
+        if (genericElement.id === undefined && !elnElements.includes(`${value[0]}s`)) { return; }
 
         let iconClass = `icon-${value[0]}`;
         if (!elnElements.includes(`${value[0]}s`)) {
           iconClass = `${genericElement.icon_name} icon_generic_nav`;
         }
-        let tooltip = (
+        const tooltip = (
           <Tooltip id="_tooltip_history" className="left_tooltip">
             {value[0].charAt(0).toUpperCase() + value[0].slice(1).replace(/_/g, ' ')}
           </Tooltip>
@@ -110,15 +112,14 @@ const TextSearch = () => {
         {buttons}
       </ToggleButtonGroup>
     );
-  }
+  };
 
-  const SwitchToAdvancedOrDetailSearch = () => {
-    return (
+  const SwitchToAdvancedOrDetailSearch = () => (
       <ButtonGroup>
         <ButtonGroupToggleButton
           size="sm"
           className="advanced-detail-button-group"
-          active={searchStore.searchType == 'advanced'}
+          active={searchStore.searchType === 'advanced'}
           onClick={() => searchStore.changeSearchType('advanced')}
         >
           Advanced
@@ -126,23 +127,22 @@ const TextSearch = () => {
         <ButtonGroupToggleButton
           size="sm"
           className="advanced-detail-button-group"
-          active={searchStore.searchType == 'detail'}
+          active={searchStore.searchType === 'detail'}
           onClick={() => searchStore.changeSearchType('detail')}
         >
           Detail
         </ButtonGroupToggleButton>
       </ButtonGroup>
     );
-  }
 
   const renderDynamicRow = () => {
     let dynamicRow = (<span />);
 
     if (searchStore.advancedSearchValues.length > 1) {
-      let addedSelections = searchStore.advancedSearchValues.filter((val, idx) => idx > 0);
+      const addedSelections = searchStore.advancedSearchValues.filter((val, idx) => idx > 0);
 
       dynamicRow = addedSelections.map((_, idx) => {
-        let id = idx + 1;
+        const id = idx + 1;
         return (
           <AdvancedSearchRow idx={id} key={`selection_${id}`} />
         );
@@ -166,15 +166,15 @@ const TextSearch = () => {
         <Accordion.Collapse eventKey={0}>
           <div className="accordion-body">
             <Stack direction="horizontal" className="advanced-search-content-header" gap={2}>
-              <SelectSearchTable />
-              <SwitchToAdvancedOrDetailSearch />
+              {SelectSearchTable()}
+              {SwitchToAdvancedOrDetailSearch()}
             </Stack>
             <div className="advanced-search-content-scrollable-body">
               {showErrorMessage(searchStore)}
               {
-                searchStore.searchType == 'advanced' ? (
+                searchStore.searchType === 'advanced' ? (
                   <>
-                    <AdvancedSearchRow idx={0} key={"selection_0"} />
+                    <AdvancedSearchRow idx={0} key={'selection_0'} />
                     {renderDynamicRow()}
                   </>
                 ) : (
@@ -187,7 +187,7 @@ const TextSearch = () => {
             <Form className="d-flex align-items-center gap-5">
               <SearchButtonToolbar store={searchStore} />
               {
-                searchStore.searchType == 'detail' && (
+                searchStore.searchType === 'detail' && (
                   <Form.Group className="d-flex align-items-baseline gap-4">
                     <span>Change search operator for numeric Fields:</span>
                     <Form.Check
@@ -231,6 +231,6 @@ const TextSearch = () => {
       </Accordion.Item>
     </Accordion>
   );
-}
+};
 
 export default observer(TextSearch);

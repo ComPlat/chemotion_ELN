@@ -9,11 +9,10 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Utils from 'src/utilities/Functions';
 
 import MoveToAnalysis from 'src/apps/mydb/inbox/MoveToAnalysis';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import { selectCurrentUser } from 'src/utilities/CommentHelper';
 
 const dataSource = {
   beginDrag(props) {
@@ -31,6 +30,8 @@ const handleAttachmentDownload = (attachment) => Utils.downloadFile({
 });
 
 class AttachmentContainer extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const inboxState = InboxStore.getState();
@@ -134,7 +135,7 @@ class AttachmentContainer extends Component {
         <i
           className="fa fa-trash-o"
           onClick={() => this.toggleTooltip()}
-          role="button"
+          role="presentation"
         />
       </OverlayTrigger>
     );
@@ -156,7 +157,7 @@ class AttachmentContainer extends Component {
       </Tooltip>
     );
 
-    const currentUser = selectCurrentUser(UserStore.getState());
+    const { currentUser } = this.context.userStore;
     const showMoveToAnalysis = currentUser.profile?.data.inbox_manual;
 
     return connectDragSource(
@@ -167,6 +168,7 @@ class AttachmentContainer extends Component {
           <i
             className="fa fa-download mt-1"
             onClick={() => handleAttachmentDownload(attachment)}
+            role="presentation"
           />
           {largerInbox && showMoveToAnalysis && (
             <MoveToAnalysis

@@ -11,7 +11,7 @@ class WelcomeMessage extends Component {
 
   async componentDidMount() {
     try {
-      const res = await fetch(`welcome-message.md?${Date.now()}`); // Prevent caching
+      const res = await fetch(`/welcome-message.md?${Date.now()}`); // Prevent caching
       if (!res.ok) return null;
 
       const post = await res.text();

@@ -5,11 +5,24 @@ import { act } from 'react-dom/test-utils';
 import expect from 'expect';
 import sinon from 'sinon';
 import { cloneDeep } from 'lodash';
+import { runInAction } from 'mobx';
+import { protect, unprotect } from 'mobx-state-tree';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 
 configure({ adapter: new Adapter() });
+
+// MST only allows changes through its own actions; unprotect lifts that,
+// runInAction keeps MobX strict mode from warning about the direct assignment.
+function setUserStore({ currentUser, segmentKlasses }) {
+  unprotect(rootStore);
+  runInAction(() => {
+    rootStore.userStore.currentUser = currentUser;
+    rootStore.userStore.segmentKlasses = segmentKlasses;
+  });
+  protect(rootStore);
+}
 
 // A sample id that none of the reaction's materials has.
 const STALE_SAMPLE_ID = '999001';
@@ -35,17 +48,16 @@ async function mountReactionVariations(reaction, onReactionChange) {
 }
 
 describe('ReactionVariations', () => {
-  let userStoreStub;
   let wrapper;
 
   beforeEach(() => {
-    userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 }, segmentKlasses: [] });
+    setUserStore({ currentUser: { id: 7 }, segmentKlasses: [] });
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
-    userStoreStub.restore();
+    setUserStore({ currentUser: null, segmentKlasses: [] });
     localStorage.clear();
   });
 

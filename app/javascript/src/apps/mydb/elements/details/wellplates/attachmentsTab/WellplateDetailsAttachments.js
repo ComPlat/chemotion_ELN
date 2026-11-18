@@ -25,7 +25,6 @@ import {
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 const templateInfo = (
   <Popover id="popver-template-info" title="Template info">
@@ -251,14 +250,17 @@ export class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection
     } = this.state;
+
     const {
       onUndoDelete, attachments, wellplate, readOnly, onEdit, onDelete, onDrop
     } = this.props;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
 
     let combinedAttachments = filteredAttachments;
     if (this.context.attachmentNotificationStore) {
-      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Wellplate', wellplate);
+      combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(
+        filteredAttachments, 'Wellplate', wellplate
+      );
     }
 
     const showToolbar = !readOnly || attachments.length > 0;
@@ -362,7 +364,7 @@ export class WellplateDetailsAttachments extends Component {
               </div>
             ))}
             {!readOnly && (
-              <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+              <Alert variant="warning" show={this.context.userStore.isUserQuotaExceeded(filteredAttachments)}>
                 Uploading attachments will fail; User quota
                 {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
                 will be exceeded.

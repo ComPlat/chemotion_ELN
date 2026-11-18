@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Nav, Navbar } from 'react-bootstrap';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 const contentComponents = {
   GenericElements: 'Generic Elements Designer',
@@ -8,7 +9,7 @@ const contentComponents = {
   GenericDatasets: 'Generic Datasets Designer',
 };
 
-export function FunctionLocation({ name }) {
+export const FunctionLocation = ({ name }) => {
   const text = contentComponents[name];
   return (
     <span className="float-end">
@@ -16,7 +17,7 @@ export function FunctionLocation({ name }) {
       <span className="fw-bold">{text}</span>
     </span>
   );
-}
+};
 
 FunctionLocation.propTypes = { name: PropTypes.string.isRequired };
 
@@ -25,7 +26,7 @@ const createMenu = (text, type) => {
   return (
     <Nav.Link
       key={type}
-      href={href}
+      onClick={() => aviatorNavigationToApp(href)}
       active={text === type}
       className={`custom-nav-link ${text === type ? 'fw-bold' : ''}`}
     >
@@ -34,10 +35,9 @@ const createMenu = (text, type) => {
   );
 };
 
-export function GenericMenu({ userName, text }) {
-  return (
+export const GenericMenu = ({ userName, text }) => (
     <Navbar className="bg-gray-200 px-4">
-      <Navbar.Brand href="/">
+      <Navbar.Brand href="#" onClick={(e) => { e.preventDefault(); aviatorNavigationToApp('/mydb/collection/all'); }}>
         Back to MyDB
       </Navbar.Brand>
       <Nav>
@@ -48,13 +48,11 @@ export function GenericMenu({ userName, text }) {
       </Navbar.Collapse>
     </Navbar>
   );
-}
 
 GenericMenu.propTypes = { userName: PropTypes.string, text: PropTypes.string.isRequired };
 GenericMenu.defaultProps = { userName: 'unknown' };
 
-export function Unauthorized({ userName, text }) {
-  return (
+export const Unauthorized = ({ userName, text }) => (
     <div style={{ width: '90vw', margin: 'auto' }}>
       <GenericMenu userName={userName} text={text} />
       <hr />
@@ -63,7 +61,6 @@ export function Unauthorized({ userName, text }) {
       </div>
     </div>
   );
-}
 
 Unauthorized.propTypes = { userName: PropTypes.string, text: PropTypes.string.isRequired };
 Unauthorized.defaultProps = { userName: 'unknown' };

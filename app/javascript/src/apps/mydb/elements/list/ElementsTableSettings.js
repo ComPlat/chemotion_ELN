@@ -1,174 +1,98 @@
-import React from 'react';
+import React, {
+  useCallback, useContext, useEffect, useRef, useState,
+} from 'react';
+import PropTypes from 'prop-types';
+import { List } from 'immutable';
 import { CloseButton, Popover, Form } from 'react-bootstrap';
+import { observer } from 'mobx-react';
+import { reaction } from 'mobx';
 
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 
-import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
-function TabItem({ item }) {
-  const { genericEls = [] } = UserStore.getState();
-  const genericElement = genericEls.find((el) => el.name === item);
+const ElementsTableSettings = ({ visible: visibleProp, hidden: hiddenProp }) => {
+  const { userStore } = useContext(StoreContext);
+  const [visible, setVisible] = useState(visibleProp);
+  const [hidden, setHidden] = useState(hiddenProp);
+  const [prevVisibleProp, setPrevVisibleProp] = useState(visibleProp);
+  const [prevHiddenProp, setPrevHiddenProp] = useState(hiddenProp);
+  const [showSampleExternalLabel, setShowSampleExternalLabel] = useState(false);
+  const [showSampleShortLabel, setShowSampleShortLabel] = useState(false);
+  const [showSampleName, setShowSampleName] = useState(false);
+  const [tableSchemePreviews, setTableSchemePreviews] = useState(
+    () => UIStore.getState().showPreviews
+  );
 
-  let icon, label;
-  if (genericElement) {
-    icon = genericElement.icon_name;
-    label = genericElement.label;
-  } else {
-    icon = `icon-${item}`;
-    label = capitalizeWords(item);
+  const saveLabelTimeoutRef = useRef(null);
+  const labelsRef = useRef({ showSampleExternalLabel, showSampleShortLabel, showSampleName });
+
+  useEffect(() => {
+    labelsRef.current = { showSampleExternalLabel, showSampleShortLabel, showSampleName };
+  });
+
+  if (visibleProp !== prevVisibleProp || hiddenProp !== prevHiddenProp) {
+    setPrevVisibleProp(visibleProp);
+    setPrevHiddenProp(hiddenProp);
+    setVisible(visibleProp);
+    setHidden(hiddenProp);
   }
 
-  return (
-    <div className="d-flex gap-2 align-items-center">
-      <i className={icon} />
-      {label}
-    </div>
-  )
-};
+  const saveLabels = useCallback(() => {
+    saveLabelTimeoutRef.current = null;
+    userStore.updateUserProfileValues({
+      ...userStore.profile,
+      show_external_name: labelsRef.current.showSampleExternalLabel,
+      show_sample_short_label: labelsRef.current.showSampleShortLabel,
+      show_sample_name: labelsRef.current.showSampleName,
+    });
+  }, [userStore]);
 
-export default class ElementsTableSettings extends React.Component {
-  constructor(props) {
-    super(props);
+  const scheduleSaveLabels = useCallback(() => {
+    clearTimeout(saveLabelTimeoutRef.current);
+    saveLabelTimeoutRef.current = setTimeout(saveLabels, 300);
+  }, [saveLabels]);
 
-    this.state = {
-      visible: props.visible,
-      hidden: props.hidden,
-      currentType: '',
-      showSampleExternalLabel: false,
-      showSampleShortLabel: false,
-      showSampleName: false,
-      tableSchemePreviews: true
-    }
-
-    this.onTabLayoutClose = this.onTabLayoutClose.bind(this);
-    this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
-    this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
-    this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
-    this.handleToggleScheme = this.handleToggleScheme.bind(this);
-    this.onChangeUser = this.onChangeUser.bind(this);
-    this.onChangeUI = this.onChangeUI.bind(this);
-    this._saveLabelTimeout = null;
-  }
-
-  componentDidMount() {
-    UserStore.listen(this.onChangeUser);
-    this.onChangeUser(UserStore.getState());
-    UIStore.listen(this.onChangeUI);
-    this.onChangeUI(UIStore.getState());
-  }
-
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChangeUser);
-    UIStore.unlisten(this.onChangeUI);
-    if (this._saveLabelTimeout) {
-      clearTimeout(this._saveLabelTimeout);
-      this._saveLabelTimeout = null;
-      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-      UserActions.updateUserProfile({
-        show_external_name: showSampleExternalLabel,
-        show_sample_short_label: showSampleShortLabel,
-        show_sample_name: showSampleName,
-      });
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (
-      prevProps.visible !== this.props.visible
-      || prevProps.hidden !== this.props.hidden
-    ) {
-      this.setState({
-        visible: this.props.visible,
-        hidden: this.props.hidden,
-      });
-    }
-  }
-
-  onChangeUI(state) {
-    const tableSchemePreviews = state.showPreviews;
-
-    if (this.state.tableSchemePreviews != tableSchemePreviews) {
-      this.setState({ tableSchemePreviews });
-    }
-  }
-
-  onChangeUser(state) {
-    let { currentType } = this.state;
-    if (state && state.profile && !this._saveLabelTimeout) {
-      this.setState({
-        showSampleExternalLabel: !!state.profile.show_external_name,
-        showSampleName: !!state.profile.show_sample_name,
-        showSampleShortLabel: !!state.profile.show_sample_short_label
-      });
-    }
-    if (state && (currentType !== state.currentType)) {
-      this.setState({ currentType: state.currentType });
-    }
-  }
-
-  onTabLayoutClose() {
-    clearTimeout(this._saveLabelTimeout);
-    this._saveLabelTimeout = null;
-
-    this.updateLayout();
-
-    if (this.state.currentType === 'sample' || this.state.currentType === 'reaction') {
-      const { showPreviews } = UIStore.getState();
-      const curPreviews = this.state.tableSchemePreviews;
-      if (curPreviews !== showPreviews) {
-        UIActions.toggleShowPreviews(curPreviews);
+  useEffect(() => {
+    const syncLabelsFromProfile = (profile) => {
+      if (profile && !saveLabelTimeoutRef.current) {
+        setShowSampleExternalLabel(!!profile.show_external_name);
+        setShowSampleName(!!profile.show_sample_name);
+        setShowSampleShortLabel(!!profile.show_sample_short_label);
       }
-    }
-  }
+    };
 
-  handleToggleScheme() {
-    const { tableSchemePreviews } = this.state;
-    this.setState({ tableSchemePreviews: !tableSchemePreviews });
-  }
+    syncLabelsFromProfile(userStore.profile);
 
-  scheduleSaveLabels() {
-    clearTimeout(this._saveLabelTimeout);
-    this._saveLabelTimeout = setTimeout(() => {
-      this._saveLabelTimeout = null;
-      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-      UserActions.updateUserProfile({
-        show_external_name: showSampleExternalLabel,
-        show_sample_short_label: showSampleShortLabel,
-        show_sample_name: showSampleName,
-      });
-    }, 300);
-  }
-
-  handleToggleSampleExt() {
-    this.setState(
-      ({ showSampleExternalLabel }) => ({ showSampleExternalLabel: !showSampleExternalLabel }),
-      this.scheduleSaveLabels
+    const disposeReaction = reaction(
+      () => userStore.profile,
+      (profile) => syncLabelsFromProfile(profile),
     );
-  }
 
-  handleToggleSampleShortLabel() {
-    this.setState(
-      ({ showSampleShortLabel }) => ({ showSampleShortLabel: !showSampleShortLabel }),
-      this.scheduleSaveLabels
-    );
-  }
+    return () => {
+      disposeReaction();
+      if (saveLabelTimeoutRef.current) {
+        clearTimeout(saveLabelTimeoutRef.current);
+        saveLabels();
+      }
+    };
+  }, [userStore, saveLabels]);
 
-  handleToggleSampleName() {
-    this.setState(
-      ({ showSampleName }) => ({ showSampleName: !showSampleName }),
-      this.scheduleSaveLabels
-    );
-  }
+  useEffect(() => {
+    const onChangeUI = (state) => {
+      setTableSchemePreviews((prev) => (prev !== state.showPreviews ? state.showPreviews : prev));
+    };
+    UIStore.listen(onChangeUI);
+    return () => UIStore.unlisten(onChangeUI);
+  }, []);
 
-  updateLayout() {
-    const { visible, hidden, showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-    const userProfile = UserStore.getState().profile;
+  const updateLayout = useCallback(() => {
+    const userProfile = userStore.profile;
     if (!userProfile) return;
 
     const layout = {};
@@ -176,95 +100,148 @@ export default class ElementsTableSettings extends React.Component {
       layout[value] = (index + 1);
     });
     hidden.forEach((value, index) => {
-      layout[value] = (- index - 1);
+      layout[value] = (-index - 1);
     });
 
-    UserActions.updateUserProfile({
+    userStore.updateUserProfileValues({
       ...userProfile,
       data: { ...(userProfile.data || {}), layout },
       show_external_name: showSampleExternalLabel,
       show_sample_short_label: showSampleShortLabel,
       show_sample_name: showSampleName,
     });
-  }
+  }, [visible, hidden, showSampleExternalLabel, showSampleShortLabel, showSampleName, userStore]);
 
-  render() {
-    const {
-      visible,
-      hidden,
-      currentType,
-      tableSchemePreviews,
-      showSampleExternalLabel,
-      showSampleShortLabel,
-      showSampleName,
-    } = this.state;
+  const { currentType } = userStore;
 
-    const showSettings = (currentType === 'sample' || currentType === 'reaction');
-    const isSample = currentType === 'sample';
-    const otherLabelChecked = showSampleExternalLabel || showSampleName;
-    const shortLabelDisabled = !otherLabelChecked;
-    const shortLabelChecked = shortLabelDisabled ? true : showSampleShortLabel;
-    const popoverSettings = ({ close }) => (
-      <Popover className="d-flex popover-multi">
-        {showSettings && (
-          <div className="popover-multi-item">
-            <Popover.Header>Settings</Popover.Header>
-            <Popover.Body>
-              <Form>
-                <Form.Check
-                  type="checkbox"
-                  onChange={this.handleToggleScheme}
-                  checked={tableSchemePreviews}
-                  label="Show schemes images"
-                />
-                {isSample && (
-                  <>
-                    <Form.Check
-                      type="checkbox"
-                      onChange={this.handleToggleSampleExt}
-                      checked={showSampleExternalLabel}
-                      label="Show sample external label"
-                    />
-                    <Form.Check
-                      type="checkbox"
-                      onChange={this.handleToggleSampleShortLabel}
-                      checked={shortLabelChecked}
-                      disabled={shortLabelDisabled}
-                      label="Show sample short label"
-                    />
-                    <Form.Check
-                      type="checkbox"
-                      onChange={this.handleToggleSampleName}
-                      checked={showSampleName}
-                      label="Show sample name"
-                    />
-                  </>
-                )}
-              </Form>
-            </Popover.Body>
-          </div>
-        )}
-        <div className="popover-multi-item">
-          <Popover.Header className="d-flex justify-content-between align-items-center">
-            Tab Layout
-            <CloseButton onClick={close} />
-          </Popover.Header>
-          <Popover.Body>
-            <TabLayoutEditor
-              visible={visible}
-              hidden={hidden}
-              getItemComponent={TabItem}
-              onLayoutChange={(visible, hidden) => {
-                this.setState({ visible, hidden });
-              }}
-            />
-          </Popover.Body>
-        </div>
-      </Popover>
-    );
+  const getTabItem = useCallback(({ item }) => {
+    const genericEls = userStore.genericEls || [];
+    const genericElement = genericEls.find((el) => el.name === item);
+
+    let icon;
+    let label;
+    if (genericElement) {
+      ({ icon_name: icon, label } = genericElement);
+    } else {
+      icon = `icon-${item}`;
+      label = capitalizeWords(item);
+    }
 
     return (
-      <ConfigOverlayButton popoverSettings={popoverSettings} onClose={this.onTabLayoutClose} />
+      <div className="d-flex gap-2 align-items-center">
+        <i className={icon} />
+        {label}
+      </div>
     );
-  }
-}
+  }, [userStore]);
+
+  const onTabLayoutClose = useCallback(() => {
+    clearTimeout(saveLabelTimeoutRef.current);
+    saveLabelTimeoutRef.current = null;
+
+    updateLayout();
+
+    if (currentType === 'sample' || currentType === 'reaction') {
+      const { showPreviews } = UIStore.getState();
+      if (tableSchemePreviews !== showPreviews) {
+        UIActions.toggleShowPreviews(tableSchemePreviews);
+      }
+    }
+  }, [currentType, tableSchemePreviews, updateLayout]);
+
+  const handleToggleScheme = () => {
+    setTableSchemePreviews((prev) => !prev);
+  };
+
+  const handleToggleSampleExt = () => {
+    setShowSampleExternalLabel((prev) => !prev);
+    scheduleSaveLabels();
+  };
+
+  const handleToggleSampleShortLabel = () => {
+    setShowSampleShortLabel((prev) => !prev);
+    scheduleSaveLabels();
+  };
+
+  const handleToggleSampleName = () => {
+    setShowSampleName((prev) => !prev);
+    scheduleSaveLabels();
+  };
+
+  const showSettings = (currentType === 'sample' || currentType === 'reaction');
+  const isSample = currentType === 'sample';
+  const otherLabelChecked = showSampleExternalLabel || showSampleName;
+  const shortLabelDisabled = !otherLabelChecked;
+  const shortLabelChecked = shortLabelDisabled ? true : showSampleShortLabel;
+
+  const popoverSettings = ({ close }) => (
+    <Popover className="d-flex popover-multi">
+      {showSettings && (
+        <div className="popover-multi-item">
+          <Popover.Header>Settings</Popover.Header>
+          <Popover.Body>
+            <Form>
+              <Form.Check
+                type="checkbox"
+                onChange={handleToggleScheme}
+                checked={tableSchemePreviews}
+                label="Show schemes images"
+              />
+              {isSample && (
+                <>
+                  <Form.Check
+                    type="checkbox"
+                    onChange={handleToggleSampleExt}
+                    checked={showSampleExternalLabel}
+                    label="Show sample external label"
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    onChange={handleToggleSampleShortLabel}
+                    checked={shortLabelChecked}
+                    disabled={shortLabelDisabled}
+                    label="Show sample short label"
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    onChange={handleToggleSampleName}
+                    checked={showSampleName}
+                    label="Show sample name"
+                  />
+                </>
+              )}
+            </Form>
+          </Popover.Body>
+        </div>
+      )}
+      <div className="popover-multi-item">
+        <Popover.Header className="d-flex justify-content-between align-items-center">
+          Tab Layout
+          <CloseButton onClick={close} />
+        </Popover.Header>
+        <Popover.Body>
+          <TabLayoutEditor
+            visible={visible}
+            hidden={hidden}
+            getItemComponent={getTabItem}
+            onLayoutChange={(nextVisible, nextHidden) => {
+              setVisible(nextVisible);
+              setHidden(nextHidden);
+            }}
+          />
+        </Popover.Body>
+      </div>
+    </Popover>
+  );
+
+  return (
+    <ConfigOverlayButton popoverSettings={popoverSettings} onClose={onTabLayoutClose} />
+  );
+};
+
+ElementsTableSettings.propTypes = {
+  visible: PropTypes.instanceOf(List).isRequired,
+  hidden: PropTypes.instanceOf(List).isRequired,
+};
+
+export default observer(ElementsTableSettings);
