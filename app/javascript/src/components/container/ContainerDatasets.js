@@ -6,7 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
-import { isPreviewableAttachment } from 'src/utilities/imageHelper';
+import { getContainerImageData } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -86,48 +86,22 @@ export default class ContainerDatasets extends Component {
       }
     });
 
-    // Reassign preferred thumbnail if needed, then propagate once to parent
-    this.reassignPreferredThumbnailIfNeeded(container);
+    // Clear a stale preferred thumbnail, then propagate once to parent
+    this.clearStalePreferredThumbnail(container);
   };
 
-  reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs the preview modal can show: the same rule as
-    // the carousel candidates in getContainerImageData, or the stored preference is ignored
-    const allAttachments = analysisContainer?.children?.flatMap(
-      (child) => (child.attachments || [])
-    ) || [];
-    const savedAttachments = allAttachments.filter(
-      (att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att)
-    );
-    const validAttachmentIds = savedAttachments
-      .map((att) => Number(att.id))
-      .filter((id) => !Number.isNaN(id) && id > 0);
-
+  clearStalePreferredThumbnail = (analysisContainer) => {
     const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
-    const preferredIsValid = currentPreferred
-      && validAttachmentIds.includes(Number(currentPreferred));
-
-    if (!preferredIsValid) {
-      // Need to reassign
-      // Auto-assign only a file with a thumbnail, so the header has an image to show. Without
-      // one (e.g. a PDF whose thumbnail wasn't generated), leave it unset: the header keeps its
-      // default attachment and the modal opens on the first candidate. A PDF chosen by hand
-      // still counts as valid above.
-      const thumbnailed = savedAttachments.find(
-        (att) => att.thumb && validAttachmentIds.includes(Number(att.id))
-      );
-      if (thumbnailed) {
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: String(Number(thumbnailed.id)),
-        };
-      } else {
-        // Nothing with a thumbnail - clear preferred
-        analysisContainer.extended_metadata = {
-          ...analysisContainer.extended_metadata,
-          preferred_thumbnail: null,
-        };
-      }
+    // Only a preference that is set can go stale. An unset one stays unset, so the header
+    // keeps following the default (see getAttachmentFromContainer: latest updated file) and
+    // picks up new uploads, instead of pinning whichever file comes first.
+    // Stale = no longer among the carousel candidates (same rule the header reads with).
+    if (currentPreferred && getContainerImageData(analysisContainer).preferredId === null) {
+      // Clear it rather than pick a substitute: the header falls back to the default.
+      analysisContainer.extended_metadata = {
+        ...analysisContainer.extended_metadata,
+        preferred_thumbnail: null,
+      };
     }
     // Propagate final state to parent once
     this.props.onChange(analysisContainer);

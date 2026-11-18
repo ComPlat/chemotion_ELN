@@ -104,7 +104,6 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       currentSearchByID: null,
-      showDeviceManagement: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
@@ -142,8 +141,6 @@ class UIStore {
       handleClearSearchById: UIActions.clearSearchById,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
-      handleShowDeviceManagement: UIActions.showDeviceManagement,
-      handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleSetFilterCreatedAt: UIActions.setFilterCreatedAt,
       handleSetUserLabel: UIActions.setUserLabel,
       handleSetFromDate: UIActions.setFromDate,
@@ -180,14 +177,6 @@ class UIStore {
 
   handleShowGenericWorkflowModal(show) {
     this.state.showGenericWorkflow = show;
-  }
-
-  handleShowDeviceManagement() {
-    this.state.showDeviceManagement = true
-  }
-
-  handleCloseDeviceManagement() {
-    this.state.showDeviceManagement = false
   }
 
   handleSelectTab(params = {}) {

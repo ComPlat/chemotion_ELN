@@ -72,6 +72,7 @@ module Export
     end
 
     def generate_headers(table, excluded_columns = [], selected_columns = [])
+      @header_keys = {}
       @row_headers = @samples.columns - excluded_columns
       # Ensure required fields are in row_headers before creating @headers
       @row_headers << 'sample uuid' unless @row_headers.include?('sample uuid')
@@ -138,18 +139,23 @@ module Export
       nil
     end
 
+    # Display headers spell underscores as spaces while the result set stays keyed by the raw
+    # SQL alias, so record the display-to-alias mapping that #header_key reads back.
     def format_headers(headers)
-      headers.map! do |header|
-        header = header.tr('_', ' ')
-        if header.scan('molarity value').first == 'molarity value'
-          'molarity'
-        elsif header == 'molarity unit'
-          nil
-        else
-          header
-        end
+      formatted = headers.filter_map do |header|
+        display = header.tr('_', ' ')
+        display = 'molarity' if display.scan('molarity value').first == 'molarity value'
+        next if display == 'molarity unit'
+
+        @header_keys[display] = header
+        display
       end
-      headers.compact
+      headers.replace(formatted)
+    end
+
+    # Result-set key for a display header. Cf. #format_headers.
+    def header_key(header)
+      (@header_keys || {}).fetch(header, header)
     end
 
     def generate_headers_sample

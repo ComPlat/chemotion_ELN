@@ -65,6 +65,35 @@ describe Chemotion::SearchAPI do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:linked_wellplates) { [wellplate, other_wellplate] }
   end
 
+  shared_context 'with a wellplate linked to plans in different collections' do
+    let(:params) do
+      super().deep_merge(
+        selection: {
+          advanced_params: [
+            { link: '', match: 'ILIKE', table: 'wellplates', element_id: 0,
+              field: { column: 'name', table: 'wellplates' }, value: wellplate.name },
+          ],
+        },
+      )
+    end
+    let(:other_owner) { create(:person) }
+    let(:other_collection) { create(:collection, user: other_owner) }
+
+    before do
+      create(:research_plan, creator: other_owner, collections: [other_collection], wellplates: [wellplate])
+    end
+  end
+
+  shared_examples 'collection-scoped plans linked to wellplates' do
+    it 'returns only linked plans in the searched collection' do
+      do_request
+
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response.dig('research_plans', 'ids')).to eq [research_plan.id]
+      expect(parsed_json_response.dig('research_plans', 'elements').pluck('id')).to eq [research_plan.id]
+    end
+  end
+
   %w[advanced all].each do |endpoint|
     describe "POST /api/v1/search/#{endpoint} for research plans" do
       let(:url) { "/api/v1/search/#{endpoint}" }
@@ -120,6 +149,34 @@ describe Chemotion::SearchAPI do # rubocop:disable RSpec/MultipleMemoizedHelpers
         end
 
         it_behaves_like 'collection research plan results'
+      end
+
+      context 'when searching a linked wellplate' do
+        include_context 'with a wellplate linked to plans in different collections'
+
+        it_behaves_like 'collection-scoped plans linked to wellplates'
+      end
+
+      context 'when searching a linked wellplate with another collection owned by the user' do
+        include_context 'with a wellplate linked to plans in different collections'
+
+        let(:other_owner) { user }
+
+        it_behaves_like 'collection-scoped plans linked to wellplates'
+      end
+
+      context 'when searching a linked wellplate in a shared collection' do
+        include_context 'with a wellplate linked to plans in different collections'
+
+        let(:owner) { create(:person) }
+        let(:other_owner) { owner }
+
+        before do
+          create(:collection_share, collection: collection, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+
+        it_behaves_like 'collection-scoped plans linked to wellplates'
       end
     end
   end

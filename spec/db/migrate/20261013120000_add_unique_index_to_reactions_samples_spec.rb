@@ -79,23 +79,122 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     end
 
     context 'when the other reaction is deleted' do
-      let(:new_link) { own_link }
-
       before do
         other_reaction.destroy
         migration.up
       end
 
-      it 'keeps the sample with the earlier link, with its latest values' do
+      it 'keeps the link updated last, with its latest values' do
         expect(live_links(sample)).to contain_exactly(moved_link)
         expect(moved_link.reload).to have_attributes(reaction_id: reaction.id, equivalent: 2, position: 0)
       end
 
-      it 'keeps both links of the reaction' do
-        expect(ReactionsSample.where(reaction: reaction)).to contain_exactly(moved_link, own_link)
+      it 'lists the material once in the reaction' do
+        expect(ReactionsSample.where(reaction: reaction)).to contain_exactly(moved_link)
+        expect(ReactionsSample.with_deleted.find(own_link.id).deleted_at).to be_present
       end
+    end
+  end
 
-      it_behaves_like 'a link given a new sample'
+  context 'when every link of a reaction to the sample was moved there' do
+    let(:third_reaction) { create(:reaction, created_at: 3.days.ago) }
+    let!(:first_moved_link) { ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample) }
+    let!(:last_moved_link) { ReactionsStartingMaterialSample.create!(reaction: third_reaction, sample: sample) }
+
+    before do
+      first_moved_link.update!(reaction_id: reaction.id)
+      first_moved_link.update_columns(updated_at: 2.hours.ago) # rubocop:disable Rails/SkipsModelValidations
+      last_moved_link.update!(reaction_id: reaction.id)
+      last_moved_link.update_columns(updated_at: 1.hour.ago) # rubocop:disable Rails/SkipsModelValidations
+      migration.up
+    end
+
+    it 'keeps the link updated last in the reaction' do
+      expect(ReactionsSample.where(reaction: reaction)).to contain_exactly(last_moved_link)
+    end
+
+    it 'gives the other link back to its reaction' do
+      expect(first_moved_link.reload).to have_attributes(reaction_id: other_reaction.id, sample_id: sample.id)
+    end
+
+    it 'gives the kept link a new sample, the sample staying with the earlier reaction' do
+      expect(last_moved_link.reload.sample).to have_attributes(parent: sample)
+    end
+  end
+
+  context 'when a reaction links a sample twice in the same role' do
+    let!(:first_link) do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, reference: true, equivalent: 1)
+    end
+    let!(:last_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, equivalent: 2) }
+
+    before { migration.up }
+
+    it 'keeps the link updated last' do
+      expect(live_links(sample)).to contain_exactly(last_link)
+      expect(last_link.reload).to have_attributes(equivalent: 2, sample_id: sample.id)
+    end
+
+    it 'soft deletes the other link' do
+      expect(ReactionsSample.with_deleted.find(first_link.id).deleted_at).to be_present
+    end
+
+    it 'moves the reference flag to the kept link' do
+      expect(last_link.reload.reference).to be(true)
+    end
+  end
+
+  context 'when a removed duplicate holds a reference flag another material of the reaction holds' do
+    let!(:first_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, reference: true) }
+    let!(:last_link) { ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample, reference: false) }
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: create(:sample), reference: true)
+      migration.up
+    end
+
+    it 'does not make the kept link a second reference' do
+      expect(ReactionsSample.with_deleted.find(first_link.id).deleted_at).to be_present
+      expect(last_link.reload.reference).to be(false)
+    end
+  end
+
+  context 'when the other reaction made another material its reference after the link was moved' do
+    let!(:moved_link) do
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: sample, reference: true)
+    end
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample)
+      moved_link.update!(reaction_id: reaction.id)
+      ReactionsStartingMaterialSample.create!(reaction: other_reaction, sample: create(:sample), reference: true)
+      migration.up
+    end
+
+    it 'gives the link back without its reference flag' do
+      expect(moved_link.reload).to have_attributes(reaction_id: other_reaction.id, reference: false)
+    end
+  end
+
+  context 'when the reaction of a split link has variations' do
+    let(:new_link) { ReactionsProductSample.create!(reaction: reaction, sample: sample) }
+    let(:key) { sample.id.to_s }
+    let(:variations) do
+      { 'v1' => { 'uuid' => 'v1', 'startingMaterials' => { key => { 'amount' => 1 } },
+                  'products' => { key => { 'yield' => 50 } } } }
+    end
+
+    before do
+      ReactionsStartingMaterialSample.create!(reaction: reaction, sample: sample)
+      new_link
+      reaction.update_columns(variations: variations) # rubocop:disable Rails/SkipsModelValidations
+      migration.up
+    end
+
+    it "renames the sample's key in the group of the split link only" do
+      stored = reaction.reload[:variations]['v1']
+      expect(stored['products']).to eq(new_link.reload.sample_id.to_s => { 'yield' => 50 })
+      expect(stored['startingMaterials']).to eq(key => { 'amount' => 1 })
     end
   end
 
@@ -287,6 +386,10 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
     it 'soft deletes the link of the deleted reaction' do
       expect(ReactionsSample.with_deleted.find(dead_link.id)).to have_attributes(sample_id: sample.id)
         .and(have_attributes(deleted_at: be_present))
+    end
+
+    it "points the sample's element tag at the live reaction" do
+      expect(sample.reload.tag.taggable_data['reaction_id']).to eq(reaction.id)
     end
   end
 

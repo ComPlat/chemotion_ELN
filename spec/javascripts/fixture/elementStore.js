@@ -19,11 +19,6 @@ const emptyElementState = {
     ids: [],
     totalElements: 0
   },
-  devices: {
-    devices: [],
-    activeAccordionDevice: 0,
-    selectedDeviceId: -1
-  },
   research_plans: {
     elements: [],
     ids: [],

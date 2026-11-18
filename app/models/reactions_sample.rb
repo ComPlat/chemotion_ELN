@@ -52,7 +52,7 @@ class ReactionsSample < ApplicationRecord
   private
 
   def set_default
-    1 if coefficient.nil? || coefficient&.zero?
+    self.coefficient = 1 if coefficient.nil? || coefficient.zero?
   end
 end
 

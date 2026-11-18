@@ -458,7 +458,7 @@ module Chemotion
                       user: current_user,
                     ).search_by_substring
                   else
-                    Usecases::Search::AllElementsSearch::Results.new(Sample.none)
+                    Usecases::Search::AllElementsSearch::Results.new(Sample.none, collection_id: c_id)
                   end
                 when 'structure'
                   sample_structure_search
@@ -527,7 +527,9 @@ module Chemotion
           elements[:screen_ids] = user_screens.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
-          elements[:research_plan_ids] = ResearchPlansWellplate.get_research_plans(elements[:wellplate_ids]).uniq
+          elements[:research_plan_ids] = Usecases::Search::ResearchPlanRelations.plan_ids_for_wellplates(
+            wellplate_ids: elements[:wellplate_ids], collection_id: collection_id,
+          )
           # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
           elements[:screen_ids] = scope&.ids

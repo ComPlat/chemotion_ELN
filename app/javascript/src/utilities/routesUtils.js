@@ -183,25 +183,6 @@ const screenShowOrNew = (e) => {
   }
 };
 
-const devicesAnalysisCreate = (e) => {
-  const { deviceId, analysisType } = e.params;
-  ElementActions.createDeviceAnalysis(deviceId, analysisType);
-};
-
-const devicesAnalysisShow = (e) => {
-  const { analysisId } = e.params;
-  ElementActions.fetchDeviceAnalysisById(analysisId);
-};
-
-const deviceShow = (e) => {
-  const { deviceId } = e.params;
-  ElementActions.fetchDeviceById(deviceId);
-};
-
-const deviceShowDeviceManagement = () => {
-  UIActions.showDeviceManagement();
-};
-
 const researchPlanShowOrNew = (e) => {
   const { research_planID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
@@ -389,10 +370,6 @@ export {
   wellplateShowOrNew,
   wellplateShowSample,
   screenShowOrNew,
-  devicesAnalysisCreate,
-  devicesAnalysisShow,
-  deviceShow,
-  deviceShowDeviceManagement,
   researchPlanShowOrNew,
   metadataShowOrNew,
   deviceDescriptionShowOrNew,
