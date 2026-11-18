@@ -131,6 +131,153 @@ describe Chemotion::CalendarEntryAPI do
         ].sort
       end
     end
+
+    context 'when another user shares a collection containing sample and reaction entries' do
+      let(:collection_shared_to_user) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user)
+        end
+      end
+      let(:shared_sample) { create(:sample, creator: other_user, collections: [collection_shared_to_user]) }
+      let(:shared_reaction) { create(:reaction, collections: [collection_shared_to_user]) }
+      let(:shared_sample_entry) do
+        create(:calendar_entry,
+               eventable: shared_sample,
+               creator: other_user,
+               start_time: time + 30.minutes,
+               end_time: time + 1.hour)
+      end
+      let(:shared_reaction_entry) do
+        create(:calendar_entry,
+               eventable: shared_reaction,
+               creator: other_user,
+               start_time: time + 30.minutes,
+               end_time: time + 1.hour)
+      end
+
+      before do
+        shared_sample_entry
+        shared_reaction_entry
+      end
+
+      it 'returns sample and reaction entries when with_shared_collections: true' do
+        get '/api/v1/calendar_entries',
+            params: { start_time: time, end_time: time + 1.hour, with_shared_collections: true }
+
+        returned_ids = parsed_json_response['entries'].pluck('id')
+        expect(returned_ids).to include(shared_sample_entry.id, shared_reaction_entry.id)
+      end
+
+      it 'does not return entries from the shared collection when with_shared_collections: false' do
+        get '/api/v1/calendar_entries',
+            params: { start_time: time, end_time: time + 1.hour, with_shared_collections: false }
+
+        returned_ids = parsed_json_response['entries'].pluck('id')
+        expect(returned_ids).not_to include(shared_sample_entry.id, shared_reaction_entry.id)
+      end
+
+      it 'returns entries for the sample when accessing the element-specific calendar via shared collection' do
+        get '/api/v1/calendar_entries',
+            params: {
+              start_time: time,
+              end_time: time + 1.hour,
+              eventable_id: shared_sample.id,
+              eventable_type: 'Sample',
+              with_shared_collections: true,
+            }
+
+        expect(parsed_json_response['entries'].pluck('id')).to include(shared_sample_entry.id)
+      end
+    end
+
+    context 'when an element belongs to multiple shared collections' do
+      let(:collection_one) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user)
+        end
+      end
+      let(:collection_two) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user)
+        end
+      end
+      let(:sample_in_both) do
+        create(:sample, creator: other_user, collections: [collection_one, collection_two])
+      end
+      let(:params) do
+        { start_time: time, end_time: time + 1.hour, with_shared_collections: true }
+      end
+      let(:entry_for_sample) do
+        create(:calendar_entry,
+               eventable: sample_in_both,
+               creator: other_user,
+               start_time: time + 30.minutes,
+               end_time: time + 1.hour)
+      end
+
+      before { entry_for_sample }
+
+      it 'returns the entry exactly once without duplicates' do
+        get '/api/v1/calendar_entries', params: params
+
+        returned_ids = parsed_json_response['entries'].pluck('id')
+        expect(returned_ids.count(entry_for_sample.id)).to eq 1
+      end
+    end
+
+    context 'when a shared collection contains a device description entry' do
+      let(:collection_shared_to_user) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user)
+        end
+      end
+      let(:shared_device_description) do
+        create(:device_description, created_by: other_user.id).tap do |dd|
+          dd.collections_device_descriptions.create(collection_id: collection_shared_to_user.id)
+        end
+      end
+      let(:shared_device_description_entry) do
+        create(:calendar_entry,
+               eventable: shared_device_description,
+               creator: other_user,
+               start_time: time + 30.minutes,
+               end_time: time + 1.hour)
+      end
+
+      before { shared_device_description_entry }
+
+      it 'returns the device description entry when with_shared_collections: true' do
+        get '/api/v1/calendar_entries',
+            params: { start_time: time, end_time: time + 1.hour, with_shared_collections: true }
+
+        expect(parsed_json_response['entries'].pluck('id')).to include(shared_device_description_entry.id)
+      end
+
+      it 'returns entries when accessing the element-specific calendar for the shared device description' do
+        get '/api/v1/calendar_entries',
+            params: {
+              start_time: time,
+              end_time: time + 1.hour,
+              eventable_id: shared_device_description.id,
+              eventable_type: 'DeviceDescription',
+              with_shared_collections: true,
+            }
+
+        expect(parsed_json_response['entries'].pluck('id')).to include(shared_device_description_entry.id)
+      end
+    end
+
+    context 'with no entries in the requested time range' do
+      let(:params) do
+        { start_time: time + 5.hours, end_time: time + 6.hours, with_shared_collections: true }
+      end
+
+      it 'returns an empty entries array' do
+        get '/api/v1/calendar_entries', params: params
+
+        expect(parsed_json_response['entries']).to be_empty
+      end
+    end
   end
 
   describe 'POST /api/v1/calendar_entries' do

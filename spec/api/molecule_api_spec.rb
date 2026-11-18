@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'cgi'
 
 # rubocop:disable RSpec/NestedGroups
 describe Chemotion::MoleculeAPI do
@@ -11,6 +12,155 @@ describe Chemotion::MoleculeAPI do
       allow_any_instance_of(WardenAuthentication).to(
         receive(:current_user).and_return(user),
       )
+    end
+
+    describe 'POST /api/v1/molecules — inline PubChem enrichment' do
+      let(:molfile) { build(:molfile, type: :cubane) }
+
+      def post_molecule
+        post '/api/v1/molecules', params: { molfile: molfile, decoupled: false }
+      end
+
+      it 'enriches the molecule before responding, so the name is there immediately' do
+        # molecule_info_and_outcome_from_inchikey, not molecule_info_from_inchikey: the latter
+        # delegates *to* it, so stubbing it is inert and the example would pass on the WebMock
+        # fixture alone, catching no regression in the outcome plumbing.
+        allow(Chemotion::PubchemService).to receive(:molecule_info_and_outcome_from_inchikey)
+          .and_return([{ cid: 962, iupac_name: 'cubane', names: %w[cubane] }, :ok])
+
+        post_molecule
+
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['iupac_name']).to eq('cubane')
+        expect(body['names']).to eq(%w[cubane])
+      end
+
+      it 'bounds the lookup so a slow PubChem cannot hold the request open' do
+        allow(PubChem).to receive(:fetch_record_from_inchikey).and_call_original
+
+        post_molecule
+
+        expect(PubChem).to have_received(:fetch_record_from_inchikey)
+          .with(anything, timeout: Chemotion::MoleculeAPI::SYNC_ENRICH_TIMEOUT)
+      end
+
+      # A timeout must degrade to exactly what the deferral already does: nothing written, and
+      # the PubchemLookupJob queued by after_create_commit left to do the work.
+      #
+      # :unavailable, which is what a timeout actually produces — not :not_found. The
+      # distinction matters to the last assertion: :not_found *does* write pubchem_checked_at,
+      # so stubbing it here would have made the example claim to test the timeout path while
+      # exercising the miss path, and would have let a regression that remembered transient
+      # failures pass unnoticed.
+      it 'writes nothing when the lookup times out', :aggregate_failures do
+        allow(PubChem).to receive(:fetch_record_from_inchikey).and_return([nil, :unavailable])
+
+        # A molecule create always makes its own sum_formular MoleculeName; what must not
+        # appear is an iupac_name row, which only enrichment writes.
+        expect { post_molecule }
+          .not_to change { MoleculeName.where(description: 'iupac_name').count }.from(0)
+
+        expect(response).to have_http_status(:created)
+        molecule = Molecule.find(JSON.parse(response.body)['id'])
+        expect(molecule.iupac_name).to be_nil
+        expect(molecule.names).to eq([])
+        expect(molecule.tag.taggable_data['pubchem_cid']).to be_nil
+        # The molecule must stay enrichable: we never got an answer, so there is nothing to
+        # remember, and the queued job has to be free to try again.
+        expect(molecule.tag.taggable_data['pubchem_checked_at']).to be_nil
+      end
+
+      it 'does not query PubChem for a decoupled (dummy) molecule' do
+        allow(PubChem).to receive(:fetch_record_from_inchikey)
+
+        post '/api/v1/molecules', params: { molfile: molfile, decoupled: true }
+
+        expect(PubChem).not_to have_received(:fetch_record_from_inchikey)
+      end
+
+      # PubChem holds no record for in-house compounds, so nothing is ever written and
+      # pubchem_check stays false. Without the previously_new_record? gate every later save of
+      # the same structure would fire another inline lookup, outside the rate-limit guard.
+      it 'does not re-query PubChem for a structure it already looked up and did not find' do
+        allow(PubChem).to receive(:fetch_record_from_inchikey).and_return([nil, :not_found])
+        post_molecule
+        expect(PubChem).to have_received(:fetch_record_from_inchikey).once
+
+        post_molecule
+
+        expect(PubChem).to have_received(:fetch_record_from_inchikey).once
+      end
+
+      it 'does not re-query PubChem for a molecule that already has a cid' do
+        allow(Chemotion::PubchemService).to receive(:molecule_info_and_outcome_from_inchikey)
+          .and_return([{ cid: 962, iupac_name: 'cubane', names: %w[cubane] }, :ok])
+        post_molecule
+        allow(PubChem).to receive(:fetch_record_from_inchikey)
+
+        post_molecule
+
+        expect(PubChem).not_to have_received(:fetch_record_from_inchikey)
+      end
+
+      # The endpoints pass defer_pubchem_lookup: true and schedule explicitly afterwards. Left
+      # to Molecule's after_create_commit, the job is enqueued at commit — before the inline
+      # attempt runs — so a worker can reserve it and ask PubChem the same question
+      # concurrently.
+      context 'when scheduling the follow-up job' do
+        it 'schedules exactly one, not one from the callback and one from the endpoint' do
+          allow(PubchemLookupJob).to receive(:perform_later)
+
+          post_molecule
+
+          expect(PubchemLookupJob).to have_received(:perform_later).once
+        end
+
+        # The job is still wanted after a successful inline lookup: enrich_from_pubchem never
+        # fetches LCSS, so the GHS half is what remains for it to do.
+        it 'schedules even when the inline enrichment succeeded' do
+          allow(Chemotion::PubchemService).to receive(:molecule_info_and_outcome_from_inchikey)
+            .and_return([{ cid: 962, iupac_name: 'cubane', names: %w[cubane] }, :ok])
+          allow(PubchemLookupJob).to receive(:perform_later)
+
+          post_molecule
+
+          expect(PubchemLookupJob).to have_received(:perform_later).once
+        end
+
+        # A found molecule has been through this once already, when it was created.
+        it 'does not schedule for a molecule that already existed' do
+          post_molecule
+          allow(PubchemLookupJob).to receive(:perform_later)
+
+          post_molecule
+
+          expect(PubchemLookupJob).not_to have_received(:perform_later)
+        end
+
+        # The ordering that motivates scheduling here rather than from the callback: by the
+        # time the job is enqueued, the inline attempt has already written the cid, so
+        # PubchemLookupJob#enrich_and_fetch_lcss deterministically skips the enrich half
+        # instead of skipping it only if the worker happens to start late enough.
+        it 'schedules only after the inline enrichment has written the cid' do
+          cid_at_enqueue = nil
+          allow(PubchemLookupJob).to receive(:perform_later) do |ids|
+            cid_at_enqueue = Molecule.find(ids.first).tag.taggable_data['pubchem_cid']
+          end
+
+          post_molecule
+
+          expect(cid_at_enqueue).to be_present
+        end
+
+        it 'does not schedule for a decoupled (dummy) molecule' do
+          allow(PubchemLookupJob).to receive(:perform_later)
+
+          post '/api/v1/molecules', params: { molfile: molfile, decoupled: true }
+
+          expect(PubchemLookupJob).not_to have_received(:perform_later)
+        end
+      end
     end
 
     describe 'POST /api/v1/molecules' do
@@ -25,7 +175,7 @@ describe Chemotion::MoleculeAPI do
 
       it 'is able to find or create a molecule by molfile' do
         allow(PubChem).to receive_messages(
-          get_record_from_inchikey: nil,
+          fetch_record_from_inchikey: [nil, :not_found],
           get_molfile_by_smiles: nil,
         )
         molecule_ids = molfiles.map do |molfile|
@@ -83,6 +233,108 @@ describe Chemotion::MoleculeAPI do
         mns = JSON.parse(response.body)['molecules'].map { |m| m['label'] }
         expect(mns).to include(m.sum_formular)
       end
+
+      context 'with Unicode characters in new_name' do
+        it 'creates a molecule name with en dash (alloy notation)' do
+          get "/api/v1/molecules/names?id=#{m.id}&new_name=#{CGI.escape('Cu–Ni')}"
+          expect(response).to have_http_status(:ok)
+          labels = JSON.parse(response.body)['molecules'].pluck('label')
+          expect(labels).to include('Cu–Ni')
+        end
+
+        it 'creates a molecule name with middle dot (adduct notation)' do
+          get "/api/v1/molecules/names?id=#{m.id}&new_name=#{CGI.escape('CuSO4·5H2O')}"
+          expect(response).to have_http_status(:ok)
+          labels = JSON.parse(response.body)['molecules'].pluck('label')
+          expect(labels).to include('CuSO4·5H2O')
+        end
+      end
+    end
+
+    describe 'Post /api/v1/molecules/save_name' do
+      let(:m) { create(:molecule) }
+
+      before { allow(user).to receive(:molecule_editor).and_return(true) }
+
+      it 'saves a molecule name with en dash' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'Cu–Ni', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        expect(JSON.parse(response.body)['name']).to eq('Cu–Ni')
+      end
+
+      it 'saves a molecule name with middle dot' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'CuSO4·5H2O', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        expect(JSON.parse(response.body)['name']).to eq('CuSO4·5H2O')
+      end
+
+      it 'rejects a name containing a bidi override character' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'safe‮name', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['name']).to be_nil
+      end
+
+      it 'rejects a name containing a zero-width space' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'Cu​Ni', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['name']).to be_nil
+      end
+    end
+
+    describe 'POST /api/v1/molecules/sf' do
+      let(:params) { { str: 'C', search: 'substances', ctype: 'x-mdl-molfile' } }
+
+      before { allow(Chemotion::ScifinderNService).to receive(:provider_search).and_return({}) }
+
+      context 'without a stored SciFinder-n credential' do
+        it 'returns an error without contacting SciFinder-n' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(JSON.parse(response.body)['errors'].first).to include('token missing or expired')
+          expect(Chemotion::ScifinderNService).not_to have_received(:provider_search)
+        end
+      end
+
+      context 'when the token cannot be issued' do
+        before do
+          ScifinderNCredential.create!(
+            access_token: 'access', refresh_token: 'refresh', expires_at: 1.minute.ago, created_by: user.id,
+          )
+          allow(Chemotion::ScifinderNService).to receive(:provider_access).and_raise(StandardError)
+        end
+
+        it 'returns an error without contacting SciFinder-n' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(JSON.parse(response.body)['errors'].first).to include('token missing or expired')
+          expect(Chemotion::ScifinderNService).not_to have_received(:provider_search)
+        end
+      end
+
+      context 'with a valid token' do
+        before do
+          ScifinderNCredential.create!(
+            access_token: 'access', refresh_token: 'refresh', expires_at: 1.hour.from_now, created_by: user.id,
+          )
+        end
+
+        it 'searches SciFinder-n with the access token' do
+          post '/api/v1/molecules/sf', params: params
+
+          expect(Chemotion::ScifinderNService).to have_received(:provider_search)
+            .with('substances', 'C', 'x-mdl-molfile', 'access')
+        end
+      end
     end
 
     describe 'Post /api/v1/molecules/smiles' do
@@ -96,7 +348,7 @@ describe Chemotion::MoleculeAPI do
 
       before do
         allow(PubChem).to receive_messages(
-          get_record_from_inchikey: nil,
+          fetch_record_from_inchikey: [nil, :not_found],
           get_molfile_by_smiles: nil,
         )
       end
@@ -120,6 +372,68 @@ describe Chemotion::MoleculeAPI do
           # should have created a new molecule
           expect(response_body).to include('id' => satisfy { |id| id != wrong_molecule_id })
         end
+      end
+    end
+
+    describe 'POST /api/v1/molecules — PolymersList SVG generation' do
+      let(:polymer_molfile) do
+        <<~MOL
+          null
+            Ketcher  6232611422D 1   1.00000     0.00000     0
+
+            1  0  0  0  0  0  0  0  0  0999 V2000
+              2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+          M  END
+
+          > <PolymersList>
+          0/95/1.00-1.00
+          $$$$
+        MOL
+      end
+      let(:plain_molfile) { build(:molfile, type: :cubane) }
+      # A plain SVG with no epam-ketcher-ssc marker — used with polymer_molfile
+      let(:fake_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="3"/></svg>' }
+      # An SVG that triggers the Ketcher-EPAM path (svg.include?('epam-ketcher-ssc'))
+      let(:epam_svg) { '<svg xmlns="http://www.w3.org/2000/svg" data-source="epam-ketcher-ssc"><circle/></svg>' }
+      let(:polymer_svg) do
+        '<svg xmlns="http://www.w3.org/2000/svg">' \
+          '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10" height="10"/></svg>'
+      end
+
+      before do
+        allow(PubChem).to receive_messages(
+          fetch_record_from_inchikey: [nil, :not_found],
+          get_molfile_by_smiles: nil,
+        )
+        allow(Molecule).to receive_messages(
+          svg_reprocess: polymer_svg,
+          find_or_create_by_molfile: create(:molecule),
+          find_or_create_dummy: create(:molecule),
+        )
+        svg_processor = instance_double(
+          SVG::Processor,
+          structure_svg: { svg_file_name: "TMPFILE#{SecureRandom.hex(32)}.svg" },
+        )
+        allow(SVG::Processor).to receive(:new).and_return(svg_processor)
+        allow(KetcherService::SVGProcessor).to receive(:clean_and_trim_svg).and_return(epam_svg)
+      end
+
+      it 'ignores frontend svg_file and calls svg_reprocess when molfile has PolymersList' do
+        post '/api/v1/molecules', params: { molfile: polymer_molfile, svg_file: fake_svg }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).to have_received(:svg_reprocess).with(nil, polymer_molfile, hash_including(service: 'indigo'))
+      end
+
+      it 'uses svg_reprocess even when no frontend svg_file sent with PolymersList molfile' do
+        post '/api/v1/molecules', params: { molfile: polymer_molfile }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).to have_received(:svg_reprocess)
+      end
+
+      it 'does NOT call svg_reprocess when frontend svg contains epam-ketcher-ssc marker' do
+        post '/api/v1/molecules', params: { molfile: plain_molfile, svg_file: epam_svg }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).not_to have_received(:svg_reprocess)
       end
     end
   end

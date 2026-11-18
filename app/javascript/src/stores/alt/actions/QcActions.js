@@ -9,14 +9,15 @@ class QcActions {
   loadInfers({ sample }) {
     const sId = sample.id;
     const atts = sample.attachments();
-    const ids = atts.map(att => (
+    const ids = atts.map((att) => (
       att.aasm_state === 'json' && att.filename.includes('.infer.json')
         ? att.id : null
-    )).filter(r => r != null);
+    )).filter((r) => r != null);
+    if (ids.length < 1) { return {}; }
 
     return (dispatch) => {
       AttachmentFetcher.fetchFiles(ids)
-        .then(result => dispatch({ result, sId }))
+        .then((result) => dispatch({ result, sId }))
         .catch(err => console.log(err)); // eslint-disable-line
     };
   }

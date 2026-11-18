@@ -5,7 +5,7 @@ import { Form } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-export default function ElementCheckbox({ element }) {
+const ElementCheckbox = ({ element }) => {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,8 @@ export default function ElementCheckbox({ element }) {
 
     UIStore.listen(handleUiStoreChange);
     return () => UIStore.unlisten(handleUiStoreChange);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element.id, element.type]);
 
   const toggleCheckbox = () => {
     if (checked) {
@@ -47,3 +48,5 @@ ElementCheckbox.propTypes = {
     type: PropTypes.string.isRequired,
   }).isRequired,
 };
+
+export default ElementCheckbox;

@@ -176,6 +176,12 @@ describe Export::ExportChemicals do
         result = described_class.construct_column_name('opening_date', 6, columns_index)
         expect(result).to eq(['opening date', { 'safety_sheet_link' => [], 'product_link' => [] }])
       end
+
+      it 'constructs column name (product_number)' do
+        columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
+        result = described_class.construct_column_name('product_number', 7, columns_index)
+        expect(result).to eq(['product number', { 'safety_sheet_link' => [], 'product_link' => [] }])
+      end
     end
 
     describe '.format_chemical_results' do
@@ -208,6 +214,11 @@ describe Export::ExportChemicals do
         expected_gathered_selections = [selection, expected_chemical_selections]
 
         expect(described_class.build_chemical_column_query(selection, sel)).to eq(expected_gathered_selections)
+      end
+
+      it 'builds the product number column query' do
+        result = described_class.build_chemical_column_query('SELECT 1', { chemicals: %w[product_number] })
+        expect(result.last).to eq(['c."chemical_data"->0->\'product_number\' as "product_number"'])
       end
     end
   end

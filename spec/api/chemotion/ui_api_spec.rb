@@ -41,5 +41,19 @@ describe Chemotion::UiAPI do
         expect(rsp['has_chem_spectra']).to be(true)
       end
     end
+
+    describe 'ui_components config' do
+      before do
+        allow(Rails.configuration).to receive(:ui_components).and_return(
+          ActiveSupport::OrderedOptions.new.merge(weighing_tasks: false),
+        )
+        get '/api/v1/ui/initialize'
+      end
+
+      it 'returns the ui_components map' do
+        rsp = JSON.parse(response.body)
+        expect(rsp['ui_components']).to eq('weighing_tasks' => false)
+      end
+    end
   end
 end

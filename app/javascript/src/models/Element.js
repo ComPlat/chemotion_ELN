@@ -13,8 +13,26 @@ export default class Element {
     this.updateChecksum();
   }
 
+  // Best-effort UI hint only, not a security boundary: it only recognizes the
+  // legacy '***' string placeholder, so it silently misses fields anonymized
+  // to a Hash/Array shape (see ApplicationEntity#expose_fields_with_anonymization!)
+  // — those can't be told apart from a genuinely empty/default value client-side
+  // anyway. The actual gate against writing back an anonymized value is
+  // ElementPolicy#update?, which requires full detail level for ANY write to
+  // this element's own fields. That guarantee does NOT extend to nested elements
+  // of a different type: detail levels are per type and independent, so a
+  // reaction shared at detail level 10 can still carry samples anonymized at
+  // sample_detail_level 1. See the scope note on ElementPolicy#update?.
   isMethodDisabled(m) {
     return this[m] == '***'
+  }
+
+  // Editability derived from the backend `can_update` permission flag. The flag may be
+  // undefined when the backend omits it (e.g. list payloads); undefined/true means editable,
+  // only an explicit false makes the element read-only. Centralized here so call sites read
+  // intent (`element.isReadOnly`) instead of re-deriving `can_update === false` everywhere.
+  get isReadOnly() {
+    return this.can_update === false;
   }
 
   static buildID() {
@@ -90,6 +108,9 @@ export default class Element {
     }
     _.merge(params, extraParams);
     let paramsWithoutNullEntries = _.omitBy(params, _.isNull);
+    // Same best-effort caveat as isMethodDisabled above: only strips the legacy
+    // '***' string placeholder, not Hash/Array-shaped anonymized fields. Not a
+    // security boundary — see ElementPolicy#update? for the real one.
     let cleanParams = _.omitBy(paramsWithoutNullEntries, (x) => { return x == '***'})
     return cleanParams;
   }

@@ -13,7 +13,7 @@ module Import
     def created_collection_labels
       return [] unless @instances.key?('Collection')
 
-      @instances['Collection'].values.map(&:label).compact.sort
+      @instances['Collection'].values.filter_map(&:label).sort
     end
 
     # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
@@ -86,7 +86,15 @@ module Import
             # write data to tmp dir with the same path
             path = File.join(@tmp_dir, entry_name)
             FileUtils.mkdir_p(File.dirname(path))
-            entry.extract(path) { |src, dest| IO.copy_stream(src, dest) }
+            # Zip::Entry#extract's block is an exists? gate, not a copy step (see rubyzip's
+            # Entry#create_file: `yield(self, dest_path)`, block truthy => overwrite) — it is not
+            # given IO objects, so the previous `IO.copy_stream(src, dest)` here would have raised
+            # TypeError had it ever actually run. In practice it never did: Zip::EntrySet is
+            # Hash-backed, so two same-named entries (e.g. two samples sharing a molecule, each
+            # exported via fetch_image('molecules', ...)) collapse to one on read and this
+            # exists-already branch is unreachable. Kept as an explicit always-overwrite for the
+            # same reason the original line existed, without the wrong argument assumption.
+            entry.extract(path) { true }
           end
         end
       end
@@ -103,18 +111,23 @@ module Import
     end
 
     def import
+      started_at = Time.current
+      @defer_pubchem_lookup = true
       ActiveRecord::Base.transaction do
         gate_collection if @gt == true
         import_collections if @gt == false
         import_samples
         import_residues
+        # before the reaction links: a sample split for a further link copies its parent's chemical and components
+        if @gt == false
+          import_chemicals
+          import_components
+        end
         import_reactions
         import_reactions_samples
         import_elements
 
         if @gt == false
-          import_chemicals
-          import_components
           import_wellplates
           import_wells
           import_research_plans
@@ -132,6 +145,8 @@ module Import
         import_literals
       end
       reprocess_reaction_svgs
+    ensure
+      Molecule.schedule_pubchem_lookup_since(started_at)
     end
 
     def import!
@@ -200,7 +215,7 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
-      labels = created_collection_labels
+      created_collection_labels
     end
 
     def gate_collection
@@ -279,15 +294,27 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
+        # A non-empty "> <PolymersList>" block means keep the full molfile and let
+        # Molecule.svg_reprocess run, so polymers render via SvgRenderer.
+        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile)
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
-        molecule ||= Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        if molfile.present?
+          # CTAB-only for the Molecule lookup/store: molfile may still carry a (possibly-empty)
+          # "> <PolymersList>"/"> <TextNode>" tag here (has_polymer_content? above decided this row
+          # is NOT a polymer), and SvgRenderer must never see it or it re-triggers Indigo-first
+          # rendering with polymer-specific options for an ordinary molecule. The Sample's own
+          # molfile column is unaffected -- it is sliced from `fields` directly, further below.
+          molecule ||= Molecule.find_or_create_by_molfile(
+            Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile), defer_pubchem_lookup: @defer_pubchem_lookup
+          )
+        end
 
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
-        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        if cano_smiles.present?
+          molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles, defer_pubchem_lookup: @defer_pubchem_lookup)
+        end
         # Create dummy only for decoupled samples with no structure data
         molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
 
@@ -390,7 +417,11 @@ module Import
 
     def import_reactions
       sort_data(@data.fetch('Reaction', {})).each do |uuid, fields|
-        # create the sample
+        if !fields.key?('concentration_mode') && fields.key?('use_reaction_volume')
+          fields = fields.merge(
+            'concentration_mode' => fields['use_reaction_volume'] ? 'reaction_volume' : 'solvents_only',
+          )
+        end
         reaction = Reaction.create!(fields.slice(
           'name',
           'description',
@@ -416,6 +447,8 @@ module Import
           'vessel_size',
           'gaseous',
           'weight_percentage',
+          'concentration_mode',
+          'volume',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -447,6 +480,11 @@ module Import
         ReactionsProductSample,
       ].each do |model|
         @data.fetch(model.name, {}).each do |uuid, fields|
+          reaction = @instances.fetch('Reaction').fetch(fields.fetch('reaction_id'))
+          sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          # a sample belongs to one reaction in one role: a further link gets a sample of its own
+          sample = sample_for_another_link(sample, reaction) if sample.reactions_samples.exists?
+
           # create the reactions_sample
           reactions_sample = model.create!(fields.slice(
             'reference',
@@ -459,15 +497,19 @@ module Import
             'conversion_rate',
             'weight_percentage_reference',
             'weight_percentage',
-          ).merge(
-            reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
-            sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
-          ))
+          ).merge(reaction: reaction, sample: sample))
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)
         end
       end
+    end
+
+    # A sample split from the given one, as the reaction editor creates it for a sample dropped
+    # onto a reaction.
+    def sample_for_another_link(sample, reaction)
+      @current_user ||= User.find(@current_user_id)
+      sample.create_subsample(@current_user, reaction.collections.pluck(:id), true, 'reaction')
     end
 
     def import_wellplates
@@ -559,6 +601,9 @@ module Import
 
     def import_research_plans
       sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
+        fields['body'] = remap_research_plan_body_links(fields['body'], fields['name'])
+        materialize_researchplan_ketcher_images(fields['body'])
+
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -817,6 +862,96 @@ module Import
       end
     end
 
+    # research plan bodies can embed links to other elements (type 'sample'/'reaction' fields holding a
+    # 'sample_id'/'reaction_id'), rewritten to the exported uuid by Export::ExportCollections. Resolve
+    # them to the newly created instance's id, mirroring the id remapping already done for other
+    # associations (reactions_samples, wells, ...) via @instances. Must run after import_samples and
+    # import_reactions have populated @instances. A link that can't be resolved (unknown uuid, or a raw
+    # id left over from a zip exported before this remapping existed) is dropped rather than kept as-is
+    # — otherwise it could coincidentally match an unrelated record on the importing system.
+    def remap_research_plan_body_links(body, research_plan_name)
+      return body if body.blank?
+
+      body.reject { |field| unresolved_body_link?(field, research_plan_name) }
+    end
+
+    def unresolved_body_link?(field, research_plan_name)
+      case field['type']
+      when 'sample'
+        drop_unless_remapped?(field, 'sample_id', 'Sample', research_plan_name)
+      when 'reaction'
+        drop_unless_remapped?(field, 'reaction_id', 'Reaction', research_plan_name)
+      else
+        false
+      end
+    end
+
+    def drop_unless_remapped?(field, key, type, research_plan_name)
+      old_ref = field.dig('value', key)
+      # An unfilled placeholder (see ResearchPlan.js#addSampleField) carries no stale reference to
+      # clean up — keep it as is, rather than treating it as unresolved and dropping it. Only ever
+      # hit for zips exported before Export::ExportCollections handled this case itself.
+      return false if old_ref.blank?
+
+      new_instance = @instances.dig(type, old_ref)
+      if new_instance.nil?
+        # Every zip exported before Export::ExportCollections started remapping these links carries
+        # a raw source-system id here that can never resolve against @instances — log it the same
+        # way as an unassociated attachment (see #log_unassociated_attachment), so the user can see
+        # what was silently removed and re-link it by hand, rather than it just vanishing.
+        log_dropped_element_link(research_plan_name, type, old_ref)
+        return true
+      end
+
+      field['value'][key] = new_instance.id
+      false
+    end
+
+    def log_dropped_element_link(research_plan_name, type, old_ref)
+      log_content = <<~LOG
+
+        Research Plan: #{research_plan_name}
+        #{type} reference: #{old_ref}
+        Error: link could not be resolved against the imported data and was removed from the research plan
+        ----------------------------------------
+
+      LOG
+
+      @logger.error(log_content)
+    end
+
+    # A research plan's 'ketcher' body field references its preview svg by bare filename, resolved by
+    # the frontend as /images/research_plans/<svg_file> (not via the Attachment model). The export side
+    # bundles that file into the zip under images/research_plans/ (see extract's zip-entry handling,
+    # which lands it under @tmp_dir), but nothing previously copied it into the importing system's own
+    # public/images/research_plans/ — so every ketcher preview, hand-drawn or synthesized, rendered as
+    # a broken image after import. Must run before @tmp_dir is cleaned up (see #cleanup).
+    def materialize_researchplan_ketcher_images(body)
+      return if body.blank?
+
+      body.each do |field|
+        materialize_ketcher_svg(field.dig('value', 'svg_file')) if field['type'] == 'ketcher'
+      end
+    end
+
+    def materialize_ketcher_svg(svg_file)
+      return if svg_file.blank?
+
+      # Guard against a crafted zip smuggling a path (e.g. '../../secrets') through svg_file: only a
+      # bare filename identical to its own basename is accepted.
+      filename = File.basename(svg_file.to_s)
+      return if filename != svg_file || filename.match?(%r{\.\.|/|\\})
+
+      target_path = Rails.public_path.join('images', 'research_plans', filename)
+      return if File.file?(target_path)
+
+      source_path = Pathname.new(@tmp_dir).join('images', 'research_plans', filename)
+      return unless File.file?(source_path)
+
+      FileUtils.mkdir_p(target_path.dirname)
+      FileUtils.cp(source_path, target_path)
+    end
+
     def log_unassociated_attachment(research_plan_name, field)
       log_content = <<~LOG
 
@@ -834,59 +969,7 @@ module Import
     # Mirrors logic in Import::ImportSamples#get_data_from_molfile.
     # @return [Molecule, nil] the molecule or nil if cleaned molfile is blank
     def find_or_create_molecule_for_polymer_molfile(raw_molfile)
-      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-      return nil if cleaned.blank?
-
-      molfile_for_babel = cleaned.dup
-      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
-      inchikey = babel_info[:inchikey]
-
-      molecule = if inchikey.present?
-                   Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
-                 else
-                   find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-                 end
-      return molecule unless molecule.present?
-
-      reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
-      if reprocessed_svg.present?
-        molecule.attach_svg(reprocessed_svg)
-        molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
-        molecule.save
-      end
-      molecule
-    end
-
-    # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
-    def clean_molfile_for_inchikey(raw_molfile)
-      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-    end
-
-    # Keep only the CTAB (up to and including M END). Strip SDF blocks that can break Open Babel.
-    def sanitize_molfile_for_import(molfile)
-      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
-    end
-
-    # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic inchikey.
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-      synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
-      formula = babel_info[:formula].to_s.presence || ''
-      molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
-      if molecule
-        molecule.molfile = raw_molfile
-        molecule.save!
-      else
-        molecule = Molecule.new(
-          inchikey: synthetic_inchikey,
-          is_partial: true,
-          sum_formular: formula,
-          molfile: raw_molfile
-        )
-        molecule.save!
-      end
-      molecule
+      Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup, unescape_octal: false).molecule
     end
 
     # Sort records by created_at timestamp

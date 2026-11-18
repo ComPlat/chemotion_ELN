@@ -11,7 +11,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -40,7 +40,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
-  const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
+  const [visibleTabs, setVisibleTabs] = useState(List());
   const tabContents = [];
 
   useEffect(() => {

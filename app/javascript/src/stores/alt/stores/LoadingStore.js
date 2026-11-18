@@ -35,6 +35,7 @@ class LoadingStore {
           ElementActions.createWellplate,
           ElementActions.updateWellplate,
           ElementActions.importWellplateSpreadsheet,
+          ElementActions.resizeWellplate,
           ElementActions.createDeviceDescription,
           ElementActions.updateDeviceDescription,
           ElementActions.createVessel,

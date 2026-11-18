@@ -1,4 +1,4 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import HistoryVersion from 'src/models/HistoryVersion';
 
 export default class VersionsFetcher {
@@ -11,30 +11,19 @@ export default class VersionsFetcher {
       per_page: perPage || 10,
     });
 
-    return fetch(url.href, {
-      credentials: 'same-origin'
-    }).then((response) => (
-      response.json().then((json) => ({
-        elements: json.versions.map((v) => (new HistoryVersion(v))),
-        totalElements: parseInt(response.headers.get('X-Total'), 10),
-        page: parseInt(response.headers.get('X-Page'), 10),
-        pages: parseInt(response.headers.get('X-Total-Pages'), 10),
-        perPage: parseInt(response.headers.get('X-Per-Page'), 10)
-      }))
-    )).catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(url.href, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.versions.map((v) => (new HistoryVersion(v))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static revert(json) {
-    return fetch('/api/v1/versions/revert', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        changes: json
-      })
-    });
+    return ApiClient.postJson('/api/v1/versions/revert', { body: { changes: json } });
   }
 }

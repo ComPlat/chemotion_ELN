@@ -3,6 +3,7 @@ import { FN } from '@complat/react-spectra-editor';
 
 import alt from 'src/stores/alt/alt';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import { pickDefaultSelection } from 'src/utilities/SpectraHelper';
 
 const defaultPred = {
   outline: {},
@@ -49,6 +50,12 @@ class SpectraStore {
     try {
       const raw = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(file))].map(ch => ch.charCodeAt(0))));
       const jcamp = FN.ExtractJcamp(raw);
+      const lcmsMzPageMatch = raw.match(/^##\$CSLCMSMZPAGE\s*=\s*"?([0-9.+\-Ee]+)"?/mi);
+      const lcmsMzPage = lcmsMzPageMatch ? Number(lcmsMzPageMatch[1]) : null;
+      if (Number.isFinite(lcmsMzPage) && !Number.isFinite(jcamp?.lcms_mz_page)) {
+        jcamp.lcms_mz_page = lcmsMzPage;
+        jcamp.lcmsMzPage = lcmsMzPage;
+      }
       if (!jcamp.spectra) return null;
       spectrum = Object.assign({}, spectrum, { jcamp });
     } catch (err) {
@@ -95,23 +102,18 @@ class SpectraStore {
     spcMetas.sort((a, b) => {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
-    let newArrSpcIdx = [];
-    if (spcMetas.length >= 1) {
-      const spcInfoWithLabel = sortedSpcInfo.find(
-        info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
-      );
-      if (spcInfoWithLabel) {
-        newArrSpcIdx = [spcInfoWithLabel.idx];
-      } else {
-        newArrSpcIdx = spcMetas.map(spc => spc.idx);
-      }
-    }
-    
+    const firstInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0]?.idx);
+    const { spcIdx: nextSpcIdx, arrSpcIdx: newArrSpcIdx } = pickDefaultSelection(
+      sortedSpcInfo,
+      spcMetas,
+      firstInfo?.idDt,
+    );
+
     this.setState({
       spcInfos: sortedSpcInfo,
       spcMetas,
       fetched: true,
-      spcIdx: (spcMetas[0].idx || 0),
+      spcIdx: nextSpcIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
     });
@@ -123,7 +125,11 @@ class SpectraStore {
     if (!fsm) return;
     const fetchedIdx = fsm.idx;
     const prevIdx = spcInfo.idx;
-    const fsi = Object.assign({}, spcInfo, { idx: fetchedIdx }); //  shortcut
+    const fetchedState = fetchedFiles.files[0]?.aasm_state;
+    const fsi = Object.assign({}, spcInfo, { // shortcut
+      idx: fetchedIdx,
+      aasmState: fetchedState || spcInfo.aasmState,
+    });
     const { spcInfos, spcMetas, arrSpcIdx } = this;
     const newSpcInfos = spcInfos.map(si => (
       si.idx === prevIdx ? fsi : si

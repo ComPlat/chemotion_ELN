@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import AppModal from 'src/components/common/AppModal';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';

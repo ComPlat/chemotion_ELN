@@ -8,7 +8,7 @@ import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
-function ElementItem({ element, renderItem }) {
+const ElementItem = ({ element, renderItem }) => {
   const [isSelected, setElementSelected] = useState(ElementStore.isCurrentElement(element));
 
   useEffect(() => {
@@ -18,7 +18,8 @@ function ElementItem({ element, renderItem }) {
 
     ElementStore.listen(updateIsSelected);
     return () => ElementStore.unlisten(updateIsSelected);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element.id, element.type]);
 
   return (
     <div

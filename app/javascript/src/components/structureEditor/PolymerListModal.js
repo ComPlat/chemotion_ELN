@@ -1,11 +1,10 @@
 /* eslint-disable max-len */
 import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
-import SVG from 'react-inlinesvg';
-import AppModal from 'src/components/common/AppModal';
 import {
   Accordion, Button, ButtonGroup, Card, Form, Spinner
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 
 const PolymerShapes = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <!-- Square with border -->
@@ -22,9 +21,9 @@ const SpecialCharacterPickerIcon = `
 </svg>
 `;
 
-function PolymerListModal({
+const PolymerListModal = ({
   loading, onShapeSelection, title, onCloseClick
-}) {
+}) => {
   const [shapesList, setShapeList] = useState([]); // Initialize the state as an empty array
   const [category, setCategory] = useState(() => localStorage.getItem('polymerCategory') || 'basic');
   const [loadingData, setLoadingData] = useState(false); // Initialize the state as an empty array
@@ -58,88 +57,127 @@ function PolymerListModal({
     localStorage.setItem('polymerCategory', categoryAlias);
   };
 
+  // Keep the panel permanently mounted (never return null). This ensures <img>
+  // elements are created at page-load time — before the Ketcher canvas has any
+  // content — so no new image loading occurs when the user opens the panel later.
+  // Toggling `display` is zero-cost: no DOM creation, no network requests, no reflow.
   return (
-    <AppModal
-      title={title}
-      size="lg"
-      show={loading}
-      onHide={onCloseClick}
-      showFooter={false}
+    <div
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff',
+        border: '1px solid #ccc',
+        borderRadius: 8,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+        zIndex: 10000,
+        minWidth: 480,
+        maxWidth: 600,
+        maxHeight: '80vh',
+        display: loading ? 'flex' : 'none',
+        flexDirection: 'column',
+      }}
     >
-      <Form.Group className="w-100 d-flex justify-content-end align-items-center mb-3">
-        <ButtonGroup className="w-100" aria-label="Category switch">
-          {shapesList && Object.keys(shapesList).map((categoryItem) => {
-            const isActive = category === categoryItem;
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 16px', borderBottom: '1px solid #eee',
+      }}>
+        <strong>{title}</strong>
+        <button
+          type="button"
+          onClick={onCloseClick}
+          style={{
+            background: 'none', border: 'none', fontSize: 18,
+            cursor: 'pointer', lineHeight: 1,
+          }}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
 
-            return (
-              <Button
-                key={categoryItem}
-                variant="light"
-                active={isActive}
-                className="flex-fill text-capitalize"
-                onClick={() => onCategoryChange(categoryItem)}
-              >
-                {categoryItem}
-              </Button>
-            );
-          })}
-        </ButtonGroup>
-      </Form.Group>
+      <div style={{ padding: '12px 16px', overflowY: 'auto', flex: 1 }}>
+        <Form.Group className="w-100 d-flex justify-content-end align-items-center mb-3">
+          <ButtonGroup className="w-100" aria-label="Category switch">
+            {shapesList && Object.keys(shapesList).map((categoryItem) => {
+              const isActive = category === categoryItem;
+              return (
+                <Button
+                  key={categoryItem}
+                  variant="light"
+                  active={isActive}
+                  className="flex-fill text-capitalize"
+                  onClick={() => onCategoryChange(categoryItem)}
+                >
+                  {categoryItem}
+                </Button>
+              );
+            })}
+          </ButtonGroup>
+        </Form.Group>
 
-      <Accordion>
-        {loadingData ? (
-          <div className="d-flex justify-content-center align-items-center" style={{ height: '180px' }}>
-            <Spinner animation="border" role="status" variant="#167782" style={{ color: '#167782' }}>
-              <span className="visually-hidden">Loading...</span>
-            </Spinner>
-          </div>
-        ) : shapesList && shapesList[category]?.map((tab) => (
-          <Card key={tab.id}>
-            <Card.Header>
-              <Accordion.Item eventKey={String(tab.id)}>
-                <Accordion.Header>{tab.label}</Accordion.Header>
-              </Accordion.Item>
-            </Card.Header>
-            <Accordion.Collapse eventKey={String(tab.id)}>
-              <Card.Body>
-                <Accordion>
-                  {tab.subTabs.map((subTab) => (
-                    <Card key={subTab.id}>
-                      <Card.Header>
-                        <Accordion.Item eventKey={subTab.id}>
-                          <Accordion.Header>{subTab.label}</Accordion.Header>
-                        </Accordion.Item>
-                      </Card.Header>
-                      <Accordion.Collapse eventKey={subTab.id}>
-                        <Card.Body>
-                          {subTab?.shapes?.map((shape) => (
-                            <Button
-                              key={shape.template_id}
-                              variant="normal"
-                              onClick={async () => {
-                                if (shape.template_id) {
-                                  onShapeSelection(shape.template_id, true);
-                                }
-                              }}
-                            >
-                              <div className="flex flex-col items-center gap-2">
-                                <SVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} title={shape.label || 'shape'} />
-                              </div>
-                            </Button>
-                          ))}
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    </Card>
-                  ))}
-                </Accordion>
-              </Card.Body>
-            </Accordion.Collapse>
-          </Card>
-        ))}
-      </Accordion>
-    </AppModal>
+        <Accordion>
+          {loadingData ? (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '180px' }}>
+              <Spinner animation="border" role="status" style={{ color: '#167782' }}>
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+            </div>
+          ) : shapesList && shapesList[category]?.map((tab) => (
+            <Card key={tab.id}>
+              <Card.Header>
+                <Accordion.Item eventKey={String(tab.id)}>
+                  <Accordion.Header>{tab.label}</Accordion.Header>
+                </Accordion.Item>
+              </Card.Header>
+              <Accordion.Collapse eventKey={String(tab.id)}>
+                <Card.Body>
+                  <Accordion>
+                    {tab.subTabs.map((subTab) => (
+                      <Card key={subTab.id}>
+                        <Card.Header>
+                          <Accordion.Item eventKey={subTab.id}>
+                            <Accordion.Header>{subTab.label}</Accordion.Header>
+                          </Accordion.Item>
+                        </Card.Header>
+                        <Accordion.Collapse eventKey={subTab.id}>
+                          <Card.Body>
+                            {subTab?.shapes?.map((shape) => (
+                              <Button
+                                key={shape.template_id}
+                                variant="normal"
+                                onClick={async () => {
+                                  if (shape.template_id) {
+                                    onShapeSelection(shape.template_id, true);
+                                  }
+                                }}
+                              >
+                                <div className="flex flex-col items-center gap-2">
+                                  <img
+                                    src={`/polymerShapes/${category}/${shape.iconName}.svg`}
+                                    alt={shape.label || 'shape'}
+                                    title={shape.label || 'shape'}
+                                    style={{ width: 40, height: 40, objectFit: 'contain' }}
+                                  />
+                                </div>
+                              </Button>
+                            ))}
+                          </Card.Body>
+                        </Accordion.Collapse>
+                      </Card>
+                    ))}
+                  </Accordion>
+                </Card.Body>
+              </Accordion.Collapse>
+            </Card>
+          ))}
+        </Accordion>
+      </div>
+    </div>
   );
-}
+};
 
 const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
@@ -197,7 +235,7 @@ const specialCharButton = (iframeDocument) => {
   }
 };
 
-function SpecialCharModal({
+const SpecialCharModal = ({
   loading,
   title,
   onCloseClick,
@@ -205,7 +243,7 @@ function SpecialCharModal({
   restSelection,
   onDashedSelection,
   onRestSelections
-}) {
+}) => {
   const specialCharacters = [
     '!', '@', '#', '$',
     '/', '?', '∆', '★'
@@ -257,7 +295,7 @@ function SpecialCharModal({
       </div>
     </AppModal>
   );
-}
+};
 
 SpecialCharModal.propTypes = {
   loading: PropTypes.bool,

@@ -65,7 +65,8 @@ module Chemotion
                 value: measurement.value.to_f,
                 unit: measurement.unit,
                 source_type: measurement.source_type.underscore,
-                source_id: measurement.source_id
+                source_id: measurement.source_id,
+                metadata: measurement.metadata || {},
               }
             end
           }
@@ -98,6 +99,7 @@ module Chemotion
             requires :unit, type: String
             requires :uuid, type: String
             requires :value, type: Float
+            optional :metadata, type: Hash
           end
           requires :source_type, type: String
           requires :source_id, type: Integer

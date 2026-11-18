@@ -29,7 +29,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.0'
+          ruby-version: '3.3'
 
       - name: install linting dependencies
         run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
@@ -146,6 +146,7 @@ jobs:
           cp -f shrine.yml.example shrine.yml
           cp -f storage.yml.example storage.yml
           cp -f radar.yml.example radar.yml
+          cp -f converter.yml.example converter.yml
           touch klasses.json
           bundle config set without ''
 

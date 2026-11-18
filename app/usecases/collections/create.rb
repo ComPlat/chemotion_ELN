@@ -19,20 +19,34 @@ module Usecases
           position = current_user.collections.where(ancestry: '/').count + 1
         end
 
+        # is_locked is deliberately forced false: locked collections (the "All", repository and
+        # transferred roots) are system-generated only, and this is the sole user-facing create
+        # path. Hard-coding it here keeps a user from ever minting a locked collection even if the
+        # flag later leaks into the endpoint params.
         current_user.collections.create!(
           parent: parent,
           position: position,
           label: label,
           inventory: inventory,
+          is_locked: false,
         )
       end
 
       private
 
+      # A locked collection is a system container ("All", the repository root, "transferred"): its
+      # contents are system-managed, and {UpdateTree} refuses to move anything out of one *at any
+      # depth*, so a collection created anywhere inside would be stuck there for good. Hence the
+      # whole path is checked, not just the immediate parent.
+      #
+      # @raise [Errors::CreateForbidden] if the requested parent is, or sits inside, a locked collection
       def find_parent(parent_id)
-        return unless parent_id
+        parent = current_user.collections.find(parent_id) # NOTE: own collections only
+        if parent.path.any?(&:is_locked?)
+          raise Errors::CreateForbidden, 'Cannot create a collection inside a locked collection'
+        end
 
-        current_user.collections.find(parent_id) if parent_id.present? # NOTE: own collections only
+        parent
       end
 
       # TODO: how are inventories access controlled?

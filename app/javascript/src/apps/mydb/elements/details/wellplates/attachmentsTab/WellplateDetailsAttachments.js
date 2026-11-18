@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
-  Button, ButtonGroup, OverlayTrigger, Popover, Alert
+  Button, OverlayTrigger, Popover, Alert, Tooltip
 } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
@@ -91,11 +91,11 @@ export class WellplateDetailsAttachments extends Component {
     }
   }
 
-  handleTemplateDownload() { // eslint-disable-line class-methods-use-this
+  handleTemplateDownload() {
     const { wellplate } = this.props;
     Utils.downloadFile({
       contents: `/api/v1/wellplates/template/${wellplate.id}`,
-      name: 'wellplate_import_template.xlsx'
+      name: 'wellplate_import_template.xlsx',
     });
   }
 
@@ -147,6 +147,7 @@ export class WellplateDetailsAttachments extends Component {
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
+      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {
@@ -203,25 +204,45 @@ export class WellplateDetailsAttachments extends Component {
   }
 
   renderTemplateDownload() {
+    const { wellplate } = this.props;
+    // The template is built server-side from the stored wells, so a wellplate that is not saved
+    // yet has nothing to build it from. A saved one always matches the screen: its only input,
+    // the well positions, changes solely through a resize, which is persisted immediately.
+    const disabled = wellplate.isNew;
+    const templateButton = (
+      <Button
+        variant="light"
+        disabled={disabled}
+        onClick={() => this.handleTemplateDownload()}
+      >
+        <i className="fa fa-download" aria-hidden="true" />
+        &nbsp;
+        Download Import Template xlsx
+      </Button>
+    );
+    const disabledTooltip = (
+      <Tooltip id="template_download_tooltip">
+        Please save the wellplate before downloading the import template
+      </Tooltip>
+    );
+
     return (
-      <div>
-        <ButtonGroup className="mb-1">
-          <Button
-            variant="primary"
-            onClick={() => this.handleTemplateDownload()}
-          >
-            <i className="fa fa-download" aria-hidden="true" />
-            &nbsp;
-            Download Import Template xlsx
-          </Button>
-          <OverlayTrigger placement="bottom" overlay={templateInfo}>
-            <Button
-              variant="info"
-            >
-              <i className="fa fa-info" aria-hidden="true" />
-            </Button>
+      <div className="d-flex align-items-center gap-1 mb-1">
+        {disabled ? (
+          <OverlayTrigger placement="bottom" overlay={disabledTooltip}>
+            {/* The disabled button takes no mouse events or focus, so a focusable wrapper
+                hosts the explanation for mouse and keyboard users alike. */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <span className="d-inline-block" tabIndex={0} style={{ cursor: 'not-allowed' }}>
+              {templateButton}
+            </span>
           </OverlayTrigger>
-        </ButtonGroup>
+        ) : templateButton}
+        <OverlayTrigger placement="bottom" overlay={templateInfo}>
+          <Button variant="light">
+            <i className="fa fa-info" aria-hidden="true" />
+          </Button>
+        </OverlayTrigger>
       </div>
     );
   }
@@ -230,7 +251,9 @@ export class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection
     } = this.state;
-    const { onUndoDelete, attachments, wellplate } = this.props;
+    const {
+      onUndoDelete, attachments, wellplate, readOnly, onEdit, onDelete, onDrop
+    } = this.props;
     const { currentUser } = UserStore.getState();
 
     let combinedAttachments = filteredAttachments;
@@ -238,30 +261,36 @@ export class WellplateDetailsAttachments extends Component {
       combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Wellplate', wellplate);
     }
 
+    const showToolbar = !readOnly || attachments.length > 0;
+
     return (
       <div className="attachment-main-container">
-        {this.renderTemplateDownload()}
+        {!readOnly && this.renderTemplateDownload()}
         {this.renderImageEditModal()}
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="flex-grow-1 align-self-center">
-            {customDropzone(this.props.onDrop)}
+        {showToolbar && (
+          <div className="d-flex justify-content-between align-items-center">
+            {!readOnly && (
+              <div className="flex-grow-1 align-self-center">
+                {customDropzone(onDrop)}
+              </div>
+            )}
+            <div className="ms-3 align-self-center">
+              {
+                attachments.length > 0
+                && sortingAndFilteringUI(
+                  sortDirection,
+                  this.handleSortChange,
+                  this.toggleSortDirection,
+                  this.handleFilterChange,
+                  true
+                )
+              }
+            </div>
           </div>
-          <div className="ms-3 align-self-center">
-            {
-              attachments.length > 0
-              && sortingAndFilteringUI(
-                sortDirection,
-                this.handleSortChange,
-                this.toggleSortDirection,
-                this.handleFilterChange,
-                true
-              )
-            }
-          </div>
-        </div>
+        )}
         {combinedAttachments.length === 0 ? (
-          <div className="no-attachments-text">
-            There are currently no attachments.
+          <div className="d-flex align-items-center justify-content-between my-2">
+            <span>There are currently no attachments.</span>
           </div>
         ) : (
           <>
@@ -291,46 +320,54 @@ export class WellplateDetailsAttachments extends Component {
                 </div>
                 <div className="attachment-row-actions d-flex align-items-center gap-1">
                   {attachment.is_deleted ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="attachment-button-size"
-                      onClick={() => onUndoDelete(attachment)}
-                    >
-                      <i className="fa fa-undo" aria-hidden="true" />
-                    </Button>
+                    !readOnly && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="attachment-button-size"
+                        onClick={() => onUndoDelete(attachment)}
+                      >
+                        <i className="fa fa-undo" aria-hidden="true" />
+                      </Button>
+                    )
                   ) : (
                     <>
                       {downloadButton(attachment)}
                       <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                      <EditButton attachment={attachment} onChange={this.props.onEdit} />
-                      {annotateButton(attachment, () => {
-                        this.setState({
-                          imageEditModalShown: true,
-                          chosenAttachment: attachment,
-                        });
-                      })}
-                      {importButton(
-                        attachment,
-                        this.state.showImportConfirm,
-                        this.props.wellplate.changed,
-                        this.showImportConfirm,
-                        this.hideImportConfirm,
-                        this.confirmAttachmentImport
+                      {!readOnly && (
+                        <>
+                          <EditButton attachment={attachment} onChange={onEdit} />
+                          {annotateButton(attachment, () => {
+                            this.setState({
+                              imageEditModalShown: true,
+                              chosenAttachment: attachment,
+                            });
+                          })}
+                          {importButton(
+                            attachment,
+                            this.state.showImportConfirm,
+                            wellplate.changed,
+                            this.showImportConfirm,
+                            this.hideImportConfirm,
+                            this.confirmAttachmentImport
+                          )}
+                          &nbsp;
+                          {removeButton(attachment, onDelete, false)}
+                        </>
                       )}
-                      &nbsp;
-                      {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
                     </>
                   )}
                 </div>
                 {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
               </div>
             ))}
-            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota
-              {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
-              will be exceeded.
-            </Alert>
+            {!readOnly && (
+              <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+                Uploading attachments will fail; User quota
+                {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
+                will be exceeded.
+              </Alert>
+            )}
           </>
         )}
       </div>
@@ -345,6 +382,7 @@ WellplateDetailsAttachments.propTypes = {
       PropTypes.number
     ]).isRequired,
     changed: PropTypes.bool,
+    isNew: PropTypes.bool,
     attachments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([

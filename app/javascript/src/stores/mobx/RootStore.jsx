@@ -12,6 +12,7 @@ import { DeviceDescriptionsStore } from 'src/stores/mobx/DeviceDescriptionsStore
 import { VesselDetailsStore } from 'src/stores/mobx/VesselDetailsStore';
 import { SequenceBasedMacromoleculeSamplesStore } from 'src/stores/mobx/SequenceBasedMacromoleculeSamplesStore';
 import { CollectionsStore } from 'src/stores/mobx/CollectionsStore';
+import { NotificationsStore } from 'src/stores/mobx/NotificationsStore';
 
 export const RootStore = types
   .model({
@@ -27,6 +28,7 @@ export const RootStore = types
     deviceDescriptionsStore: types.optional(DeviceDescriptionsStore, {}),
     sequenceBasedMacromoleculeSamplesStore: types.optional(SequenceBasedMacromoleculeSamplesStore, {}),
     collectionsStore: types.optional(CollectionsStore, {}),
+    notificationsStore: types.optional(NotificationsStore, {}),
   })
   .views((self) => ({
     get measurements() { return self.measurementsStore; },
@@ -38,8 +40,10 @@ export const RootStore = types
     get deviceMetadata() { return self.deviceMetadataStore; },
     get attachmentNotifications() { return self.attachmentNotificationStore; },
     get calendar() { return self.calendarStore; },
-    get deviceDescriptions() { return self.deviceDescriptionsStore },
-    get sequenceBasedMacromoleculeSamples() { return self.sequenceBasedMacromoleculeSamplesStore },
-    get collections() { return self.collectionsStore },
+    get deviceDescriptions() { return self.deviceDescriptionsStore; },
+    get sequenceBasedMacromoleculeSamples() { return self.sequenceBasedMacromoleculeSamplesStore; },
+    get collections() { return self.collectionsStore; },
+    get notifications() { return self.notificationsStore; },
   }));
-export const StoreContext = React.createContext(RootStore.create({}));
+export const rootStore = RootStore.create({});
+export const StoreContext = React.createContext(rootStore);

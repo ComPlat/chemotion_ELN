@@ -24,7 +24,7 @@ module Entities
       Array(fields).each do |field|
         expose(field, options) do |represented_object, _options|
           if detail_levels[represented_object.class] < anonymize_below
-            anonymize_with
+            anonymization_placeholder(anonymize_with)
           elsif respond_to?(field, true) # Entity has a method with the same name
             send(field)
           elsif represented_object.respond_to?(field)
@@ -72,6 +72,32 @@ module Entities
       options[:current_user]
     end
 
+    # Value handed to a sharee below a field's anonymization threshold.
+    #
+    # +anonymize_with+ may be a callable, which is resolved here rather than in the entity class
+    # body. Deriving a placeholder from a model's +column_defaults+ loads that model's schema, and
+    # doing that at class-definition time would make eager loading (production boot,
+    # +assets:precompile+, any RAILS_ENV=production rake task) require an already-migrated
+    # database. Resolving lazily keeps the schema read on the first request instead; ActiveRecord
+    # memoizes +column_defaults+, so later calls are free.
+    #
+    # A mutable placeholder is deep-duped because the literal is captured once, per field, in the
+    # expose closure — without this, one response mutating it in place would leak that mutation
+    # into every other anonymized instance of the field for the lifetime of the process. Frozen
+    # scalars are handed out as-is: that covers the '***' default (frozen_string_literal), nil and
+    # booleans, i.e. the large majority of anonymized fields on a list response, so the common path
+    # allocates nothing. Containers are duped even when frozen, because +freeze+ is shallow — this
+    # is exactly the shape +column_defaults+ returns, an immutable outer Hash over mutable values.
+    #
+    # @param anonymize_with [Object, #call] the configured placeholder, or a callable returning it
+    # @return [Object] the placeholder itself when deeply immutable, otherwise a deep copy of it
+    def anonymization_placeholder(anonymize_with)
+      placeholder = anonymize_with.respond_to?(:call) ? anonymize_with.call : anonymize_with
+      return placeholder if placeholder.frozen? && !placeholder.is_a?(Enumerable)
+
+      placeholder.deep_dup
+    end
+
     def detail_levels
       maximal_default_levels = Hash.new(10) # every requested detail level will be returned as 10
       minimal_default_levels = Hash.new(0) # every requested detail level will be returned as 0
@@ -82,8 +108,16 @@ module Entities
       minimal_default_levels.merge(options[:detail_levels])
     end
 
+    def element_policy
+      options[:policy]
+    end
+
+    def can_update
+      element_policy.try(:update?) || false
+    end
+
     def can_copy
-      options[:policy].try(:copy?) || false
+      element_policy.try(:copy?) || false
     end
 
     class MissingCurrentUserError < StandardError

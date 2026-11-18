@@ -1,10 +1,6 @@
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('ChemicalFetcher methods', () => {
   let fetchStub;
 
@@ -33,9 +29,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.fetchChemical(sampleId, 'sample');
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}`, {
-        credentials: 'same-origin',
-      });
       expect(result.id).toEqual(expectedResponse.id);
       expect(result.cas).toEqual(expectedResponse.cas);
       expect(result.chemical_data).toEqual(expectedResponse.chemical_data);
@@ -61,16 +54,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.create(inputData);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/create', {
-        credentials: 'same-origin',
-        method: 'post',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inputData)
-      });
-
       expect(result).toEqual(expectedResponse);
     });
 
@@ -97,15 +80,6 @@ describe('ChemicalFetcher methods', () => {
         // Restore original method
         createStub.restore();
         sinon.assert.calledOnce(fetchStub);
-        sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/create', {
-          credentials: 'same-origin',
-          method: 'post',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(inputData)
-        });
         expect(error.message).toEqual('Fetch error');
       }
     });
@@ -132,15 +106,6 @@ describe('ChemicalFetcher methods', () => {
 
       const { type, ...expectedBody } = params;
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals', {
-        credentials: 'same-origin',
-        method: 'put',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(expectedBody)
-      });
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -168,16 +133,6 @@ describe('ChemicalFetcher methods', () => {
       const resultObject = JSON.parse(result); // Parse the received response as JSON
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/fetch_safetysheet'
-        + `/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}`
-        + `&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
-        credentials: 'same-origin',
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
       expect(resultObject).toEqual(expectedResponse);
     });
   });
@@ -197,15 +152,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.saveSafetySheets(inputData);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/save_safety_datasheet', {
-        credentials: 'same-origin',
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inputData)
-      });
-
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -235,12 +181,6 @@ describe('ChemicalFetcher methods', () => {
 
       // Assert that fetch was called once with the correct parameters
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/save_manual_sds', {
-        credentials: 'same-origin',
-        method: 'post',
-        body: inputParams
-      });
-
       expect(result).toEqual(expectedResponse);
     });
 
@@ -257,72 +197,111 @@ describe('ChemicalFetcher methods', () => {
     });
   });
 
-  describe('safety phrases', () => {
-    const queryParams = {
-      vendor: 'Merck',
-      id: 19
-    };
-    it('should fetch safety phrases', async () => {
+  describe('extractFromSds', () => {
+    const sheetPath = '/safety_sheets/merck/392693_c4f307a89d9fd8c2.pdf';
+
+    it('should read phrases and properties out of a saved sheet', async () => {
       const expectedResponse = {
-        h_statements: {
-          H226: ' Flammable liquid and vapour',
-          H314: ' Causes severe skin burns and eye damage',
-          H317: ' May cause an allergic skin reaction',
-          H330: ' Fatal if inhaled',
-          H335: ' May cause respiratory irritation',
-          H341: ' Suspected of causing genetic defects',
-          H350: ' May cause cancer',
-          H370: ' Causes damage to organs'
+        safetyPhrases: {
+          h_statements: { H225: ' Highly flammable liquid and vapour.' },
+          p_statements: {},
+          pictograms: []
         },
-        p_statements: {
-          P201: ' Obtain special instructions before use.',
-          P210: ' Keep away from heat, hot surfaces, sparks,'
-                  + 'open flames and other ignition sources. No smoking. [As modified by IV ATP]',
-          P280: ' Wear protective gloves/protective clothing/eye protection/face protection. [As modified by IV ATP]'
-        },
-        pictograms: [
-          'GHS02',
-          'GHS05',
-          'GHS06',
-          'GHS08'
-        ]
+        properties: { flash_point: '4 °C' },
+        diagnostics: { notes: [], errors: [] }
       };
 
       fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
 
-      const result = await ChemicalFetcher.safetyPhrases(queryParams);
+      const result = await ChemicalFetcher.extractFromSds(sheetPath);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/safety_phrases/${queryParams.id}`
-           + `?vendor=${queryParams.vendor}`, {
-        credentials: 'same-origin',
-        method: 'GET'
-      });
       expect(result).toEqual(expectedResponse);
     });
+
+    it('sends the path as one encoded query parameter', async () => {
+      fetchStub.resolves(new Response('{}'));
+
+      await ChemicalFetcher.extractFromSds('/safety_sheets/merck/a&b=c_0000000000000000.pdf');
+
+      const url = new URL(fetchStub.firstCall.args[0], 'http://localhost');
+      expect(url.pathname).toEqual('/api/v1/chemicals/extract_sds');
+      expect([...url.searchParams.keys()]).toEqual(['path']);
+      expect(url.searchParams.get('path')).toEqual('/safety_sheets/merck/a&b=c_0000000000000000.pdf');
+    });
+
+    it('rejects with the reason the server gave for a failed request', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({ error: 'path is missing' }), { status: 400 }));
+
+      await expect(ChemicalFetcher.extractFromSds('')).rejects.toThrow('path is missing');
+    });
+
+    it('rejects when the request does not reach the server', async () => {
+      fetchStub.rejects(new TypeError('Failed to fetch'));
+
+      await expect(ChemicalFetcher.extractFromSds(sheetPath)).rejects.toThrow('Failed to fetch');
+    });
+  });
+});
+
+describe('ChemicalFetcher.saveSafetySheets error reporting', () => {
+  afterEach(() => { sinon.restore(); });
+
+  it('lets the reason the server gave reach the caller', () => {
+    sinon.stub(global, 'fetch').resolves({
+      ok: false,
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      json: () => Promise.resolve({ error: 'It is the same document as AC172380250.', final: true }),
+    });
+
+    return ChemicalFetcher.saveSafetySheets({ sample_id: 1 }).then(
+      () => { throw new Error('expected a rejection'); },
+      (error) => {
+        expect(error.message).toEqual('It is the same document as AC172380250.');
+        expect(error.final).toBe(true);
+      }
+    );
   });
 
-  describe('chemicalProperties', () => {
-    const productLink = 'https://www.sigmaaldrich.com/US/en/product/sial/252549';
-    it('should fetch chemical properties', async () => {
-      const expectedResponse = {
-        grade: 'ACS reagent',
-        quality_level: '200',
-        vapor_density: '1.03 (vs air)',
-        vapor_pressure: '52 mmHg ( 37 °C)52 mmHg ( 37 °C)',
-        form: 'liquid'
-      };
+  it('marks an ordinary failure as not final', () => {
+    sinon.stub(global, 'fetch').resolves({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve({ error: 'Could not retrieve the SDS from the vendor' }),
+    });
 
-      fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
+    return ChemicalFetcher.saveSafetySheets({ sample_id: 1 }).then(
+      () => { throw new Error('expected a rejection'); },
+      (error) => { expect(error.final).toBe(false); }
+    );
+  });
 
-      const result = await ChemicalFetcher.chemicalProperties(productLink);
+  describe('fetchVendorSheet', () => {
+    const link = 'https://www.sigmaaldrich.com/DE/en/sds/sigald/179124';
+    const pdf = () => new Response('%PDF', { headers: { 'Content-Type': 'application/pdf' } });
+    let fetchStub;
 
-      sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/chemical_properties?link=${productLink}`, {
-        credentials: 'same-origin',
-        method: 'GET'
-      });
-      expect(result).toEqual(expectedResponse);
+    beforeEach(() => { fetchStub = sinon.stub(global, 'fetch'); });
+    afterEach(() => { fetchStub.restore(); });
+
+    it('wraps the vendor PDF as a named file', async () => {
+      fetchStub.resolves(pdf());
+      const file = await ChemicalFetcher.fetchVendorSheet(link, '179124.pdf');
+      sinon.assert.calledWith(fetchStub, link);
+      expect(file.name).toEqual('179124.pdf');
+      expect(file.type).toEqual('application/pdf');
+    });
+
+    it('rejects a failed response with its status', async () => {
+      fetchStub.resolves(new Response('', { status: 403 }));
+      await expect(ChemicalFetcher.fetchVendorSheet(link, 'x.pdf')).rejects.toThrow('the vendor answered 403');
+    });
+
+    it('rejects a page that is not a PDF', async () => {
+      fetchStub.resolves(new Response('<html>', { headers: { 'Content-Type': 'text/html' } }));
+      await expect(ChemicalFetcher.fetchVendorSheet(link, 'x.pdf')).rejects.toThrow('the vendor did not return a PDF');
     });
   });
 });

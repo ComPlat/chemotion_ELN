@@ -3,12 +3,15 @@ import PropTypes from 'prop-types';
 import AppModal from 'src/components/common/AppModal';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { SYSTEM_LABELS } from 'src/stores/mobx/CollectionsStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 function ModalExportCollection({ onHide }) {
   const collectionsStore = useContext(StoreContext).collections;
   const lockedCollections = collectionsStore.locked_collection;
   const ownCollections = collectionsStore.own_collections;
+  // The real shared collections live under the per-owner root nodes of the shared-with-me tree.
+  const sharedCollections = collectionsStore.shared_with_me_collections.flatMap((owner) => owner.children || []);
   const allCollections = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const [checkedCollections, setCheckedCollections] = useState({});
@@ -59,7 +62,7 @@ function ModalExportCollection({ onHide }) {
     const nodes = collections.map((collection) => {
       const nodeKey = `${collection.id}-${collection.label}`;
 
-      if (collection.is_locked && !['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)) {
+      if (collection.is_locked && !SYSTEM_LABELS.includes(collection.label)) {
         return (
           <li key={nodeKey}>
             <h6>{collection.label}</h6>
@@ -138,6 +141,7 @@ function ModalExportCollection({ onHide }) {
       <div className="export-collections-modal">
         {renderCollections('Global Collections', lockedCollections)}
         {renderCollections('My Collections', ownCollections)}
+        {renderCollections('Shared with me', sharedCollections)}
       </div>
       {renderCheckAll()}
     </AppModal>

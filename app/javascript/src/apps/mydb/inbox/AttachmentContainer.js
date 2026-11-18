@@ -132,7 +132,7 @@ class AttachmentContainer extends Component {
         )}
       >
         <i
-          className="fa fa-trash-o mt-1"
+          className="fa fa-trash-o"
           onClick={() => this.toggleTooltip()}
           role="button"
         />

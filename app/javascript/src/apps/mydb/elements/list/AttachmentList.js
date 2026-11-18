@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 import React, {
-  useState, useEffect, useMemo, useCallback
+  useState, useEffect, useMemo, useCallback, useContext
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
@@ -9,22 +10,40 @@ import { values, last } from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import Utils from 'src/utilities/Functions';
-import ImageModal from 'src/components/common/ImageModal';
+import ImageModal, { fileIconClass } from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import { isPreviewableAttachment } from 'src/utilities/imageHelper';
+
+// Attachments with a thumbnail stay in ImageModal, which keeps the thumbnail and hover preview
+// and only opens the modal for files GET image/:id can serve (images and PDFs), so a
+// thumbnailed .docx or video shows its thumbnail but doesn't open. A saved file with neither a
+// thumbnail nor a preview (e.g. a failed spectral-conversion .zip sibling) gets a static
+// file-type icon. Unsaved attachments carry no previewable flag, so they stay in ImageModal,
+// which previews them from the local blob without calling the server.
+const hasNoPreview = (attachment) => !attachment?.thumb && !isPreviewableAttachment(attachment);
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
-    <ImageModal
-      attachment={attachment}
-      popObject={{
-        title: attachment?.filename,
-      }}
-    />
+    {hasNoPreview(attachment) ? (
+      <div
+        className="preview-table h-100 w-100 d-flex align-items-center justify-content-center text-body-tertiary"
+        title={attachment?.filename}
+      >
+        <i className={`fa ${fileIconClass(attachment?.filename)} fa-2x`} aria-hidden="true" />
+      </div>
+    ) : (
+      <ImageModal
+        attachment={attachment}
+        popObject={{
+          title: attachment?.filename,
+        }}
+      />
+    )}
   </div>
 );
 
@@ -155,16 +174,19 @@ export const annotateButton = (attachment, onClick) => (
  *  - disabled: boolean
  *  - onChange: function
  */
-export function EditButton({ attachment, disabled, onChange }) {
+export const EditButton = ({ attachment, disabled, onChange }) => {
+  const { notifications } = useContext(StoreContext);
   const { docserver } = UIStore.getState() || {};
-  const extensionsObj = docserver?.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
   const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
 
   const extsList = useMemo(
-    () => values(extensionsObj).join(','),
-    [extensionsObj]
+    () => {
+      const { docserver: ds } = UIStore.getState() || {};
+      return values(ds?.extensions || {}).join(',');
+    },
+    []
   );
 
   const editorTooltip = useCallback(
@@ -236,11 +258,11 @@ export function EditButton({ attachment, disabled, onChange }) {
           newAttachment.updated_at = new Date();
           onChange(newAttachment);
         } else {
-          NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
+          notifications.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
           onChange(newAttachment);
         }
       });
-  }, [attachment, editDisable]);
+  }, [attachment, editDisable, onChange]);
 
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(extsList)}>
@@ -398,7 +420,7 @@ const filterOptions = (contentType, options) => {
 
 const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdown.Item>];
 
-export function ThirdPartyAppButton({ attachment, options = [] }) {
+export const ThirdPartyAppButton = ({ attachment, options = [] }) => {
   const [menuItems, setMenuItems] = useState([]);
   const contentType = mime.contentType(attachment.content_type)
     ? attachment.content_type : mime.lookup(attachment.filename);

@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import { Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import AttachmentContainer from 'src/apps/mydb/inbox/AttachmentContainer';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -25,7 +27,7 @@ class DatasetContainer extends Component {
     this.state = {
       visible: false,
       deletingTooltip: false,
-    }
+    };
     this.onChange = this.onChange.bind(this);
   }
 
@@ -42,8 +44,8 @@ class DatasetContainer extends Component {
   }
 
   attachmentCount() {
-    return (this.props.dataset && this.props.dataset.attachments &&
-      this.props.dataset.attachments.length) || 0;
+    return (this.props.dataset && this.props.dataset.attachments
+      && this.props.dataset.attachments.length) || 0;
   }
 
   deleteDataset() {
@@ -66,11 +68,13 @@ class DatasetContainer extends Component {
   }
 
   toggleTooltip() {
-    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
 
   render() {
-    const { connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds } = this.props;
+    const {
+      connectDragSource, sourceType, dataset, largerInbox, isSelected, onDatasetSelect, checkedIds
+    } = this.props;
     const { inboxSize } = InboxStore.getState();
 
     if (sourceType !== DragDropItemTypes.DATASET) {
@@ -78,7 +82,7 @@ class DatasetContainer extends Component {
     }
 
     const { visible, deletingTooltip } = this.state;
-    const attachments = dataset.attachments.map(attachment => (
+    const attachments = dataset.attachments.map((attachment) => (
       <AttachmentContainer
         key={`attach_${attachment.id}`}
         sourceType={DragDropItemTypes.DATA}
@@ -120,7 +124,7 @@ class DatasetContainer extends Component {
         )}
       >
         <i
-          className="fa fa-trash-o"
+          className="fa fa-trash-o ms-1"
           onClick={() => this.deleteDataset()}
           role="button"
         />
@@ -145,12 +149,9 @@ class DatasetContainer extends Component {
             onClick={() => this.setState({ visible: !this.state.visible })}
             aria-expanded={visible}
           >
-            <i
-              className={`fa fa-folder${visible ? '-open' : ''} text-dark`}
-            >
-              <span className="text-primary fa fa-arrows ms-1" />
-            </i>
-            <span className="ms-1 text-dark">{dataset.name}</span>
+            <i className={`fa fa-folder${visible ? '-open' : ''} text-dark ms-1`} />
+            <i className="text-primary fa fa-arrows mx-1" />
+            <span className="text-dark">{dataset.name}</span>
           </Button>
 
           {
@@ -163,15 +164,14 @@ class DatasetContainer extends Component {
           }
         </ButtonToolbar>
         {visible
-          && <div>{attachments}</div>
-        }
+          && <div>{attachments}</div>}
       </div>,
       { dropEffect: 'move' }
     );
   }
 }
 
-export default DragSource(props => props.sourceType, dataSource, collectSource)(DatasetContainer);
+export default DragSource((props) => props.sourceType, dataSource, collectSource)(DatasetContainer);
 
 DatasetContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,

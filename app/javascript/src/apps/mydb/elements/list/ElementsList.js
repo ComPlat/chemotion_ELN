@@ -1,4 +1,6 @@
-import Immutable from 'immutable';
+import { List, Set } from 'immutable';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import React from 'react';
 import {
   Tabs, Tab, Tooltip, OverlayTrigger, Button
@@ -31,8 +33,8 @@ function getVisibleAndHiddenFromLayout(layout) {
   });
 
   return {
-    visible: Immutable.List(visible).sortBy((t) => layout[t]),
-    hidden: Immutable.List(hidden).sortBy((t) => -1 * layout[t]),
+    visible: List(visible).sortBy((t) => layout[t]),
+    hidden: List(hidden).sortBy((t) => -1 * layout[t]),
   };
 }
 
@@ -43,8 +45,8 @@ export default class ElementsList extends React.Component {
     super(props);
     this.state = {
       totalElements: {},
-      visible: Immutable.List(),
-      hidden: Immutable.List(),
+      visible: List(),
+      hidden: List(),
       genericEls: [],
       currentTab: 0,
       totalCheckedElements: {},
@@ -85,8 +87,8 @@ export default class ElementsList extends React.Component {
   }
 
   onChangeUser(state) {
-    let visible = Immutable.List();
-    let hidden = Immutable.List();
+    let visible = List();
+    let hidden = List();
     let { currentType, currentTab } = state;
 
     if (state?.profile?.data?.layout) {
@@ -125,8 +127,8 @@ export default class ElementsList extends React.Component {
     elNames.forEach((type) => {
       const elementUI = state[type] || {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
       };
       const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll
@@ -141,6 +143,30 @@ export default class ElementsList extends React.Component {
         totalCheckedElements: newTotalCheckedElements,
         currentCollection: state.currentCollection
       });
+    }
+    if (currentCollection !== state.currentCollection) {
+      this.prefetchShareInfo(state.currentCollection);
+    }
+  }
+
+  // The header's share icon shows UserInfosTooltip/SharedToMeInfosTooltip on hover, which
+  // otherwise fetch their share list lazily on first mount and resize once it arrives. That
+  // resize can shift the icon out from under the pointer, triggering a hide/show/hide flicker
+  // (mouseleave -> hide -> layout settles back -> mouseenter -> show -> resize -> repeat).
+  // Fetching as soon as the collection is known to be shared means the tooltip's first render
+  // already has the real content, so it never resizes while visible.
+  prefetchShareInfo(collection) {
+    const collectionsStore = this.context?.collections;
+    if (!collectionsStore || collection?.id == null) return;
+
+    if (collection.shared) {
+      if (collectionsStore.sharedWithUsers(collection.id) === undefined) {
+        collectionsStore.getSharedWithUsers(collection.id);
+      }
+    } else if (collectionsStore.isSharedCollection?.(collection.id)) {
+      if (collectionsStore.mySharesFor(collection.id) === undefined) {
+        collectionsStore.getMySharesFor(collection.id);
+      }
     }
   }
 
@@ -176,7 +202,7 @@ export default class ElementsList extends React.Component {
 
     const hasSearchApplied = !!UIStore.getState().currentSearchByID;
 
-    const constEls = Immutable.Set(allElnElements);
+    const constEls = Set(allElnElements);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
       let ttl = (
@@ -228,9 +254,30 @@ export default class ElementsList extends React.Component {
 
     return (
       <div className="elements-list h-100 d-flex flex-column" style={{ minWidth: '400px' }}>
-        <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
-          <h1 className="m-0 text-capitalize">
-            {currentCollection?.label || ''}
+        <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2 min-w-0">
+          <h1 className="m-0 text-capitalize d-flex align-items-center gap-2 min-w-0">
+            <span className="text-truncate flex-grow-1 min-w-0">{currentCollection?.label || ''}</span>
+            {/* Own vs shared-with-me are mutually exclusive: if the current user owns
+                the collection (`shared` is set when they've shared it with others), don't
+                also render the shared-with-me indicator even if the store reports it. */}
+            {currentCollection?.shared ? (
+              <OverlayTrigger placement="auto" overlay={<UserInfosTooltip collectionId={currentCollection.id} />}>
+                <i className="fa fa-share-alt fs-5" aria-label="Shared collection" />
+              </OverlayTrigger>
+            ) : (currentCollection?.id != null
+              && this.context?.collections?.isSharedCollection?.(currentCollection.id) && (
+              <OverlayTrigger
+                placement="auto"
+                overlay={(
+                  <SharedToMeInfosTooltip
+                    collectionId={currentCollection.id}
+                    owner={currentCollection.owner}
+                  />
+                )}
+              >
+                <i className="fa fa-share-alt fs-5" aria-label="Shared to me collection" />
+              </OverlayTrigger>
+            ))}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
           </h1>
           <div className="d-flex align-items-center gap-3">

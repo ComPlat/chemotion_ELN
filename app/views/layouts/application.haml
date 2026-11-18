@@ -4,6 +4,8 @@
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
     %title #{ENV['APPLICATION_TITLE'].presence || 'Chemotion'}
     = stylesheet_link_tag 'application', media: 'all'
+    - info_support_links_json = InfoSupportLink.enabled.ordered.map { |l| { id: l.id, label: l.label, url: l.url } }.to_json
+    = javascript_tag "window.__INFO_SUPPORT_LINKS__ = #{raw json_escape(info_support_links_json)};", nonce: content_security_policy_nonce
     = javascript_pack_tag 'application', nonce: content_security_policy_nonce
     = csrf_meta_tags
   %body

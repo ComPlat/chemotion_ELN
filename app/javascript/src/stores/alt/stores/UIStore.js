@@ -6,6 +6,8 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import { allElnElements } from 'src/apps/generic/Utils';
+import { listFilterParams, byIdsModelParams } from 'src/utilities/searchRequestParams';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -102,7 +104,6 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       currentSearchByID: null,
-      showDeviceManagement: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
@@ -140,8 +141,6 @@ class UIStore {
       handleClearSearchById: UIActions.clearSearchById,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
-      handleShowDeviceManagement: UIActions.showDeviceManagement,
-      handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleSetFilterCreatedAt: UIActions.setFilterCreatedAt,
       handleSetUserLabel: UIActions.setUserLabel,
       handleSetFromDate: UIActions.setFromDate,
@@ -178,14 +177,6 @@ class UIStore {
 
   handleShowGenericWorkflowModal(show) {
     this.state.showGenericWorkflow = show;
-  }
-
-  handleShowDeviceManagement() {
-    this.state.showDeviceManagement = true
-  }
-
-  handleCloseDeviceManagement() {
-    this.state.showDeviceManagement = false
   }
 
   handleSelectTab(params = {}) {
@@ -382,6 +373,11 @@ class UIStore {
       const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
       const { profile } = UserStore.getState();
 
+      if (state.currentSearchSelection) {
+        this.handleSelectCollectionForSearchSelection(collection);
+        return;
+      }
+
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
 
@@ -441,13 +437,8 @@ class UIStore {
             );
           }
 
-          const elements = [
-            'sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel',
-            'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
-          ];
-
           Object.keys(layout)
-            .filter(l => !elements.includes(l))
+            .filter((l) => !allElnElements.includes(l))
             .forEach((key) => {
               if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
                 const page = state[key] ? state[key].page : 1;
@@ -463,39 +454,45 @@ class UIStore {
     }
   }
 
+  // A running search stays in charge of the list, so re-run it against the
+  // current filters instead of falling back to the plain collection listing.
+  handleSelectCollectionForSearchSelection(collection) {
+    const { state } = this;
+    const { moleculeSort } = ElementStore.getState();
+    const selection = { ...state.currentSearchSelection, page_size: state.number_of_results };
+    this.state.currentSearchSelection = selection;
+
+    // The result set shrinks or grows with the filter, so the old page number no longer applies.
+    [...allElnElements, ...(state.klasses || [])].forEach((type) => {
+      if (state[type]) state[type].page = 1;
+    });
+
+    ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
+      selection,
+      collectionId: collection.id,
+      page: 1,
+      moleculeSort,
+      listFilters: listFilterParams(state),
+    });
+  }
+
   handleSelectCollectionForSearchById(layout, collection) {
-    const state = this.state;
+    const { state } = this;
     const searchResult = { ...state.currentSearchByID };
-    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
     const { moleculeSort } = ElementStore.getState();
     const per_page = state.number_of_results;
+    const filterParams = listFilterParams(state);
+    const with_filter = Object.keys(filterParams).length >= 1;
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return }
-        let filterParams = {};
-        const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-        let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
-
-        if (fromDate || toDate || productOnly || userLabel) {
-          filterParams = {
-            filter_created_at: filterCreatedAt,
-            from_date: fromDate,
-            to_date: toDate,
-            user_label: userLabel,
-            product_only: productOnly,
-          }
-        }
-
-        const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
-
         const selection = {
           elementType: 'by_ids',
           id_params: {
-            model_name: modelName,
+            ...byIdsModelParams(key.slice(0, -1)),
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
-            with_filter: with_filter,
+            with_filter,
           },
           list_filter_params: filterParams,
           search_by_method: 'search_by_ids',
@@ -523,8 +520,10 @@ class UIStore {
     this.state.currentSearchSelection = selection;
   }
 
+  // An adopted result replaces any quick search. Cf. AutoCompleteInput#selectSuggestion.
   handleSetSearchById(selection) {
     this.state.currentSearchByID = selection;
+    this.state.currentSearchSelection = null;
   }
 
   handleSelectCollectionWithoutUpdating(collection) {

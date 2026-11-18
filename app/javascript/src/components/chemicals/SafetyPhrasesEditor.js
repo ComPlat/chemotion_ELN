@@ -1,13 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect, useMemo, useState, useCallback, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { Select } from 'src/components/common/Select';
+import CopyButton from 'src/components/common/CopyButton';
 import {
   loadHazardPhrases,
   loadPrecautionaryPhrases,
   loadPictograms,
 } from 'src/utilities/chemicalDataValidations';
+import {
+  formatPhrase, formatPhraseSections, safetyPhraseSections, SECTION_TITLES,
+} from 'src/utilities/sdsClipboardFormat';
 
 const trim = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -39,17 +45,62 @@ const buildOptions = (dictionary, excluded, formatLabel) => (
     .map(([code, v]) => ({ value: code, text: trim(v), label: formatLabel(code, v) }))
 );
 
-function PhraseListItem({ code, text, onDelete }) {
+// Header copy controls are inline link buttons so the heading keeps its height.
+const HEADER_COPY_CLASS = 'p-0 ms-2 border-0 align-baseline lh-1 text-muted';
+
+// Copies one section, heading included; disabled while the section is empty.
+const SectionCopyButton = ({ title, items, idPrefix }) => {
+  const { text, html } = formatPhraseSections([{ title, items }]);
+  const label = `Copy ${title.toLowerCase()}`;
+  return (
+    <CopyButton
+      text={text}
+      html={html}
+      disabled={!text}
+      variant="link"
+      size="sm"
+      className={HEADER_COPY_CLASS}
+      tooltip={label}
+      tooltipId={`${idPrefix}-copy-tooltip`}
+      ariaLabel={label}
+    />
+  );
+};
+
+SectionCopyButton.propTypes = {
+  title: PropTypes.string.isRequired,
+  idPrefix: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(PropTypes.shape({ code: PropTypes.string, text: PropTypes.string })).isRequired,
+};
+
+// The row's copy control stays in the tab order and only fades in on hover or focus.
+const PhraseListItem = ({ code, text, onDelete }) => {
+  const [revealed, setRevealed] = useState(false);
+  const { text: plain, html } = formatPhrase(code, text);
   return (
     <li
       className="list-group-item d-flex align-items-center gap-2 py-1"
       data-component="SafetyPhraseRow"
       data-code={code}
+      onMouseEnter={() => setRevealed(true)}
+      onMouseLeave={() => setRevealed(false)}
+      onFocus={() => setRevealed(true)}
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setRevealed(false); }}
     >
       <div className="me-auto text-break">
         <strong>{`${code}:`}</strong>
         {` ${text}`}
       </div>
+      <CopyButton
+        text={plain}
+        html={html}
+        variant="light"
+        size="xsm"
+        className={revealed ? 'opacity-100' : 'opacity-0'}
+        tooltip={`Copy ${code}`}
+        tooltipId={`copy-${code}-tooltip`}
+        ariaLabel={`Copy ${code}`}
+      />
       <Button
         size="xsm"
         variant="danger"
@@ -62,7 +113,7 @@ function PhraseListItem({ code, text, onDelete }) {
       </Button>
     </li>
   );
-}
+};
 
 PhraseListItem.propTypes = {
   code: PropTypes.string.isRequired,
@@ -82,12 +133,62 @@ const optionShape = PropTypes.shape({
   text: PropTypes.string,
 });
 
-function PhraseSection({
-  title, idPrefix, options, items, emptyText, onAdd, disabled,
-}) {
+// Folds the way the safety tab's own sections do, and starts closed while it holds
+// nothing so an untouched sample shows three headings rather than three empty forms.
+const CollapsibleSection = ({
+  title, count, className, dataComponent, actions, children,
+}) => {
+  const [open, setOpen] = useState(count > 0);
+  const wasEmpty = useRef(count === 0);
+
+  // Fetching phrases fills a section from outside; it should not stay shut on its answer.
+  useEffect(() => {
+    if (wasEmpty.current && count > 0) setOpen(true);
+    wasEmpty.current = count === 0;
+  }, [count]);
+
   return (
-    <div className="mb-4" data-component={idPrefix}>
-      <h6 className="text-primary mb-2">{title}</h6>
+    <div className={className} data-component={dataComponent}>
+      <h6 className="text-primary mb-2">
+        <Button
+          variant="link"
+          size="sm"
+          className="p-0 text-decoration-none text-reset align-baseline"
+          aria-expanded={open}
+          onClick={() => setOpen((wasOpen) => !wasOpen)}
+        >
+          <i className={`fa fa-caret-${open ? 'down' : 'right'} me-2`} />
+          {title}
+        </Button>
+        <span className="text-muted small fw-normal ms-2">{count === 0 ? 'none added yet' : count}</span>
+        {actions}
+      </h6>
+      <div hidden={!open}>{children}</div>
+    </div>
+  );
+};
+
+CollapsibleSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  count: PropTypes.number.isRequired,
+  className: PropTypes.string,
+  dataComponent: PropTypes.string.isRequired,
+  actions: PropTypes.node,
+  children: PropTypes.node.isRequired,
+};
+
+CollapsibleSection.defaultProps = { className: 'mb-4', actions: null };
+
+const PhraseSection = ({
+  title, idPrefix, options, items, onAdd, disabled,
+}) => {
+  return (
+    <CollapsibleSection
+      title={title}
+      count={items.length}
+      dataComponent={idPrefix}
+      actions={<SectionCopyButton title={title} items={items} idPrefix={idPrefix} />}
+    >
       <Select
         inputId={`${idPrefix}-select`}
         classNamePrefix={`${idPrefix}-select`}
@@ -99,9 +200,7 @@ function PhraseSection({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">{emptyText}</p>
-      ) : (
+      {items.length > 0 && (
         <ol className="list-group list-group-numbered mt-2" data-component={`${idPrefix}-list`}>
           {items.map((item) => (
             <PhraseListItem
@@ -113,7 +212,7 @@ function PhraseSection({
           ))}
         </ol>
       )}
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -122,14 +221,13 @@ PhraseSection.propTypes = {
   idPrefix: PropTypes.string.isRequired,
   options: PropTypes.arrayOf(optionShape).isRequired,
   items: PropTypes.arrayOf(itemShape).isRequired,
-  emptyText: PropTypes.string.isRequired,
   onAdd: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
 };
 
 PhraseSection.defaultProps = { disabled: false };
 
-function PictogramCard({ code, name, onDelete }) {
+const PictogramCard = ({ code, name, onDelete }) => {
   return (
     <div
       className="d-flex flex-column align-items-center border rounded p-2 position-relative bg-body-secondary"
@@ -166,12 +264,17 @@ PictogramCard.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
-function PictogramSection({
+const PictogramSection = ({
   options, items, onAdd, disabled,
-}) {
+}) => {
   return (
-    <div className="mb-2" data-component="safety-pictograms">
-      <h6 className="text-primary mb-2">Pictograms</h6>
+    <CollapsibleSection
+      title={SECTION_TITLES.pictograms}
+      count={items.length}
+      className="mb-2"
+      dataComponent="safety-pictograms"
+      actions={<SectionCopyButton title={SECTION_TITLES.pictograms} items={items} idPrefix="safety-pictograms" />}
+    >
       <Select
         inputId="safety-pictograms-select"
         classNamePrefix="safety-pictograms-select"
@@ -183,9 +286,7 @@ function PictogramSection({
         onChange={onAdd}
         noOptionsMessage={() => 'No matching items'}
       />
-      {items.length === 0 ? (
-        <p className="text-muted small fst-italic ms-1 mt-1 mb-0">No pictograms added yet.</p>
-      ) : (
+      {items.length > 0 && (
         <div
           className="d-flex flex-wrap gap-2 mt-2"
           data-component="safety-pictograms-list"
@@ -200,7 +301,7 @@ function PictogramSection({
           ))}
         </div>
       )}
-    </div>
+    </CollapsibleSection>
   );
 }
 
@@ -217,7 +318,7 @@ PictogramSection.propTypes = {
 
 PictogramSection.defaultProps = { disabled: false };
 
-function SafetyPhrasesEditor({ value, onChange }) {
+const SafetyPhrasesEditor = ({ value, onChange }) => {
   const [hazardDict, setHazardDict] = useState({});
   const [precautionaryDict, setPrecautionaryDict] = useState({});
   const [pictogramDict, setPictogramDict] = useState({});
@@ -244,43 +345,43 @@ function SafetyPhrasesEditor({ value, onChange }) {
   // capture a fresh handler closure even when an unrelated section changes.
   const data = useMemo(() => normalizeSafetyPhrases(value), [value]);
 
-  const emit = (next) => {
+  const emit = useCallback((next) => {
     if (typeof onChange === 'function') onChange(next);
-  };
+  }, [onChange]);
 
-  const handleAddH = (option) => {
+  const handleAddH = useCallback((option) => {
     if (!option || !option.value) return;
     const text = option.text || trim(hazardDict[option.value]);
     emit({ ...data, h_statements: { ...data.h_statements, [option.value]: formatStatementValue(text) } });
-  };
+  }, [data, emit, hazardDict]);
 
-  const handleRemoveH = (code) => {
+  const handleRemoveH = useCallback((code) => {
     const next = { ...data.h_statements };
     delete next[code];
     emit({ ...data, h_statements: next });
-  };
+  }, [data, emit]);
 
-  const handleAddP = (option) => {
+  const handleAddP = useCallback((option) => {
     if (!option || !option.value) return;
     const text = option.text || trim(precautionaryDict[option.value]);
     emit({ ...data, p_statements: { ...data.p_statements, [option.value]: formatStatementValue(text) } });
-  };
+  }, [data, emit, precautionaryDict]);
 
-  const handleRemoveP = (code) => {
+  const handleRemoveP = useCallback((code) => {
     const next = { ...data.p_statements };
     delete next[code];
     emit({ ...data, p_statements: next });
-  };
+  }, [data, emit]);
 
-  const handleAddPictogram = (option) => {
+  const handleAddPictogram = useCallback((option) => {
     const code = trim(option && option.value);
     if (!code || !VALID_PICTOGRAM_CODE_RE.test(code) || data.pictograms.includes(code)) return;
     emit({ ...data, pictograms: [...data.pictograms, code] });
-  };
+  }, [data, emit]);
 
-  const handleRemovePictogram = (code) => {
+  const handleRemovePictogram = useCallback((code) => {
     emit({ ...data, pictograms: data.pictograms.filter((c) => c !== code) });
-  };
+  }, [data, emit]);
 
   // Use `data` (not data.h_statements) as the key dep so that onDelete closures
   // are always fresh — avoids stale-closure cascade-delete bug when an unrelated
@@ -291,7 +392,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: trim(text) || trim(hazardDict[code]),
       onDelete: () => handleRemoveH(code),
     }))
-  ), [data, hazardDict]);
+  ), [data, hazardDict, handleRemoveH]);
 
   const precautionaryItems = useMemo(() => (
     Object.entries(data.p_statements).map(([code, text]) => ({
@@ -299,7 +400,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: trim(text) || trim(precautionaryDict[code]),
       onDelete: () => handleRemoveP(code),
     }))
-  ), [data, precautionaryDict]);
+  ), [data, precautionaryDict, handleRemoveP]);
 
   const pictogramItems = useMemo(() => (
     data.pictograms.map((code) => ({
@@ -307,7 +408,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: prettyPictogramName(pictogramDict[code]) || code,
       onDelete: () => handleRemovePictogram(code),
     }))
-  ), [data, pictogramDict]);
+  ), [data, pictogramDict, handleRemovePictogram]);
 
   const hazardOptions = useMemo(() => (
     buildOptions(hazardDict, new Set(Object.keys(data.h_statements)), (code, text) => `${code}: ${trim(text)}`)
@@ -323,25 +424,23 @@ function SafetyPhrasesEditor({ value, onChange }) {
 
   return (
     <div
-      className="border rounded p-3 mt-3 w-100 bg-body"
+      className="border rounded p-3 mt-1 w-100 bg-body"
       data-component="SafetyPhrasesEditor"
       style={{ maxHeight: '500px', overflow: 'auto' }}
     >
       <PhraseSection
-        title="Hazard Statements"
+        title={SECTION_TITLES.h}
         idPrefix="safety-h-phrases"
         options={hazardOptions}
         items={hazardItems}
-        emptyText="No hazard statements added yet."
         onAdd={handleAddH}
         disabled={loading}
       />
       <PhraseSection
-        title="Precautionary Statements"
+        title={SECTION_TITLES.p}
         idPrefix="safety-p-phrases"
         options={precautionaryOptions}
         items={precautionaryItems}
-        emptyText="No precautionary statements added yet."
         onAdd={handleAddP}
         disabled={loading}
       />
@@ -365,6 +464,44 @@ SafetyPhrasesEditor.propTypes = {
 };
 
 SafetyPhrasesEditor.defaultProps = {
+  value: null,
+};
+
+// Copies every non-empty section; sits beside the section heading that holds the editor.
+export const SafetyPhrasesCopyButton = ({ value }) => {
+  const [pictogramDict, setPictogramDict] = useState({});
+
+  useEffect(() => {
+    let mounted = true;
+    loadPictograms().then((dict) => { if (mounted) setPictogramDict(dict || {}); });
+    return () => { mounted = false; };
+  }, []);
+
+  const { text, html } = useMemo(
+    () => formatPhraseSections(safetyPhraseSections(normalizeSafetyPhrases(value), pictogramDict)),
+    [value, pictogramDict],
+  );
+
+  return (
+    <CopyButton
+      text={text}
+      html={html}
+      disabled={!text}
+      variant="link"
+      size="sm"
+      className={HEADER_COPY_CLASS}
+      tooltip="Copy all safety phrases and pictograms"
+      tooltipId="safety-phrases-copy-all-tooltip"
+      ariaLabel="Copy all safety phrases and pictograms"
+    />
+  );
+};
+
+SafetyPhrasesCopyButton.propTypes = {
+  value: SafetyPhrasesEditor.propTypes.value,
+};
+
+SafetyPhrasesCopyButton.defaultProps = {
   value: null,
 };
 

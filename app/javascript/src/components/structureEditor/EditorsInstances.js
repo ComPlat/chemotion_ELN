@@ -3,16 +3,15 @@ import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIFetcher from 'src/fetchers/UIFetcher';
 
 export const notifyError = (message) => {
-  NotificationActions.add({
+  rootStore.notificationsStore.add({
     title: 'Structure Editor error',
     message,
     level: 'error',
     position: 'tc',
-    dismissible: 'button',
     autoDismiss: 10,
   });
 };

@@ -5,7 +5,8 @@ FactoryBot.define do
     collection { build(:collection) }
     shared_with { build(:person) }
 
-    permission_level { 10 }
+    # the highest real rung — the factory grants every capability by default
+    permission_level { CollectionShare.permission_level(:pass_ownership) }
     celllinesample_detail_level { 10 }
     devicedescription_detail_level { 10 }
     element_detail_level { 10 }

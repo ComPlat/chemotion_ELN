@@ -2,29 +2,10 @@
 
 module Versioning
   module Reverters
+    # chemical_data is reverted to the stored value the history sends, like any other column.
     class ChemicalReverter < BaseReverter
       def self.scope
         Chemical
-      end
-
-      def field_definitions
-        {
-          chemical_data: handle_json,
-        }.with_indifferent_access
-      end
-
-      private
-
-      def handle_json
-        lambda do |value|
-          return [{}] if value.blank?
-
-          begin
-            value.split("\n").map { |data| JSON.parse(data.gsub('=>', ':').gsub('nil', 'null')) }
-          rescue JSON::ParserError
-            [{}]
-          end
-        end
       end
     end
   end

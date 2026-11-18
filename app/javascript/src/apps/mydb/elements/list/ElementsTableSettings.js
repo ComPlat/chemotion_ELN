@@ -1,5 +1,5 @@
 import React from 'react';
-import { Popover, Form } from 'react-bootstrap';
+import { CloseButton, Popover, Form } from 'react-bootstrap';
 
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
@@ -46,7 +46,7 @@ export default class ElementsTableSettings extends React.Component {
       tableSchemePreviews: true
     }
 
-    this.onToggleTabLayoutContainer = this.onToggleTabLayoutContainer.bind(this);
+    this.onTabLayoutClose = this.onTabLayoutClose.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
     this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
     this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
@@ -112,19 +112,17 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  onToggleTabLayoutContainer(show) {
-    if (!show) {
-      clearTimeout(this._saveLabelTimeout);
-      this._saveLabelTimeout = null;
+  onTabLayoutClose() {
+    clearTimeout(this._saveLabelTimeout);
+    this._saveLabelTimeout = null;
 
-      this.updateLayout();
+    this.updateLayout();
 
-      if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
-        const show_previews = UIStore.getState().showPreviews;
-        const cur_previews = this.state.tableSchemePreviews;
-        if (cur_previews != show_previews) {
-          UIActions.toggleShowPreviews(cur_previews);
-        }
+    if (this.state.currentType === 'sample' || this.state.currentType === 'reaction') {
+      const { showPreviews } = UIStore.getState();
+      const curPreviews = this.state.tableSchemePreviews;
+      if (curPreviews !== showPreviews) {
+        UIActions.toggleShowPreviews(curPreviews);
       }
     }
   }
@@ -206,7 +204,7 @@ export default class ElementsTableSettings extends React.Component {
     const otherLabelChecked = showSampleExternalLabel || showSampleName;
     const shortLabelDisabled = !otherLabelChecked;
     const shortLabelChecked = shortLabelDisabled ? true : showSampleShortLabel;
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover className="d-flex popover-multi">
         {showSettings && (
           <div className="popover-multi-item">
@@ -225,7 +223,7 @@ export default class ElementsTableSettings extends React.Component {
                       type="checkbox"
                       onChange={this.handleToggleSampleExt}
                       checked={showSampleExternalLabel}
-                      label="Show sample external name on title"
+                      label="Show sample external label"
                     />
                     <Form.Check
                       type="checkbox"
@@ -247,8 +245,9 @@ export default class ElementsTableSettings extends React.Component {
           </div>
         )}
         <div className="popover-multi-item">
-          <Popover.Header>
+          <Popover.Header className="d-flex justify-content-between align-items-center">
             Tab Layout
+            <CloseButton onClick={close} />
           </Popover.Header>
           <Popover.Body>
             <TabLayoutEditor
@@ -265,7 +264,7 @@ export default class ElementsTableSettings extends React.Component {
     );
 
     return (
-      <ConfigOverlayButton popoverSettings={popoverSettings} onToggle={this.onToggleTabLayoutContainer} />
+      <ConfigOverlayButton popoverSettings={popoverSettings} onClose={this.onTabLayoutClose} />
     );
   }
 }

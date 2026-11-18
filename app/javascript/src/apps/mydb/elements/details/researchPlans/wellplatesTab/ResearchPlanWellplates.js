@@ -7,6 +7,8 @@ import EmbeddedWellplate from 'src/apps/mydb/elements/details/researchPlans/well
 
 const target = {
   drop(props, monitor) {
+    if (props.readOnly) { return; }
+
     const { dropWellplate } = props;
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
@@ -15,6 +17,8 @@ const target = {
     }
   },
   canDrop(props, monitor) {
+    if (props.readOnly) { return false; }
+
     const itemType = monitor.getItemType();
     return (itemType === 'wellplate');
   }
@@ -28,30 +32,45 @@ const collect = (connect, monitor) => ({
 
 class ResearchPlanWellplates extends Component {
   renderDropZone() {
-    const { isOver, connectDropTarget } = this.props;
+    const { isOver, connectDropTarget, readOnly } = this.props;
+    if (readOnly) { return null; }
+
     let className = 'mb-3 dnd-zone';
     if (isOver) { className += ' dnd-zone-over'; }
     return connectDropTarget(<div className={className}>Drop Wellplate here to add.</div>);
   }
 
   render() {
-    const { wellplates, deleteWellplate, importWellplate, researchPlan } = this.props;
+    const {
+      wellplates, deleteWellplate, importWellplate, researchPlan, readOnly
+    } = this.props;
+    const hasWellplates = wellplates && wellplates.length > 0;
+
     return (
       <div>
         {this.renderDropZone()}
 
-        <Accordion className="border rounded overflow-hidden">
-          {wellplates && wellplates.map((wellplate, wellplateIndex) => (
-            <EmbeddedWellplate
-              key={`${wellplate.short_label}-${wellplate.id}`}
-              researchPlan={researchPlan}
-              wellplate={wellplate}
-              wellplateIndex={wellplateIndex}
-              deleteWellplate={deleteWellplate}
-              importWellplate={importWellplate}
-            />
-          ))}
-        </Accordion>
+        {readOnly && !hasWellplates && (
+          <div className="m-4">
+            <span>There are currently no Wellplates.</span>
+          </div>
+        )}
+
+        {hasWellplates && (
+          <Accordion className="border rounded overflow-hidden">
+            {wellplates.map((wellplate, wellplateIndex) => (
+              <EmbeddedWellplate
+                key={`${wellplate.short_label}-${wellplate.id}`}
+                researchPlan={researchPlan}
+                wellplate={wellplate}
+                wellplateIndex={wellplateIndex}
+                deleteWellplate={deleteWellplate}
+                importWellplate={importWellplate}
+                readOnly={readOnly}
+              />
+            ))}
+          </Accordion>
+        )}
       </div>
     );
   }
@@ -65,7 +84,12 @@ ResearchPlanWellplates.propTypes = { /* eslint-disable react/no-unused-prop-type
   deleteWellplate: PropTypes.func.isRequired,
   importWellplate: PropTypes.func.isRequired,
   dropWellplate: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired
 }; /* eslint-enable */
+
+ResearchPlanWellplates.defaultProps = {
+  readOnly: false,
+};

@@ -19,6 +19,7 @@ module Chemotion
           collector_config.dig(:mailcollector, :aliases, -1) || collector_config.dig(:mailcollector, :mail_address)
         )
         docserver = Rails.configuration.editors&.docserver
+        ui_components_config = Rails.configuration.try(:ui_components)
 
         {
           has_chem_spectra: has_chem_spectra,
@@ -41,6 +42,7 @@ module Chemotion
           version: Chemotion::Application.config.version,
           docserver: { available: (docserver && docserver[:enable]) || false,
                        extensions: docserver && docserver[:ext] },
+          ui_components: ui_components_config.to_h,
         }
       end
     end

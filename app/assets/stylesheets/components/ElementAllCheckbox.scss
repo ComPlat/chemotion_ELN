@@ -18,7 +18,8 @@
   }
   .chemotion-select {
     &__indicator.chemotion-select__dropdown-indicator {
-      height: 18.4px; // simulate line height of select element (size sm)
+      font-size: var(--bs-btn-font-size, #{$btn-font-size-sm});
+      height: var(--bs-btn-line-height, #{$btn-line-height});
     }
     &__menu {
       @extend .d-flex;
@@ -28,9 +29,6 @@
     }
     &__option:hover {
       background-color: $input-focus-border-color;
-    }
-    &__control {
-      padding: $form-select-padding-y-sm $form-select-padding-x-sm;
     }
   }
 }

@@ -5,9 +5,6 @@ import {
   shallow,
   mount,
 } from 'enzyme';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';

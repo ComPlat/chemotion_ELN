@@ -12,6 +12,7 @@ import LoadingModal from 'src/components/common/LoadingModal';
 import ProgressModal from 'src/components/common/ProgressModal';
 import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
+import WorkshopGuideDrawer from 'src/components/workshopGuide/WorkshopGuideDrawer';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
@@ -96,6 +97,7 @@ class App extends Component {
         <InboxModal />
         <SampleTaskInbox />
         <Calendar />
+        <WorkshopGuideDrawer />
       </>
     );
   }

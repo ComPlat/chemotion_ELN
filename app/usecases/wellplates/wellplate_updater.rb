@@ -13,11 +13,12 @@ module Usecases
       # well data must contain complete data for ALL wells of a wellplate
       # otherwise all samples that are in the wellplate but not in well_data are deleted!
       #
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/BlockLength
       def update_wells(well_data:)
         collections = wellplate.collections
         current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
         included_sample_ids = []
+        molarity_updates = {}
 
         well_data.each do |well|
           sample = well[:sample]
@@ -30,6 +31,8 @@ module Usecases
               sample_id = subsample.id
             end
             included_sample_ids << sample_id
+            molarity_value = sample[:molarity_value].to_f
+            molarity_updates[sample_id] = molarity_value if sample_id && molarity_value.positive?
           end
 
           well_attributes = {
@@ -45,14 +48,24 @@ module Usecases
           if well[:is_new]
             wellplate.wells.create(well_attributes)
           else
-            Well.find(well[:id]).update(well_attributes)
+            # Scoped to this wellplate, and tolerant of a well that is no longer
+            # on it. A concurrent resize soft-deletes the wells outside the new
+            # grid, and an unscoped Well.find would then raise RecordNotFound
+            # and roll back the whole save, losing every other edit in it. The
+            # scope also keeps a payload from reaching a well that belongs to a
+            # different wellplate.
+            wellplate.wells.find_by(id: well[:id])&.update(well_attributes)
           end
+        end
+
+        Sample.where(id: molarity_updates.keys).find_each do |db_sample|
+          db_sample.update!(molarity_value: molarity_updates[db_sample.id], density: 0)
         end
 
         deleted_sample_ids = current_sample_ids - included_sample_ids
         Sample.where(id: deleted_sample_ids).destroy_all
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/BlockLength
     end
   end
 end

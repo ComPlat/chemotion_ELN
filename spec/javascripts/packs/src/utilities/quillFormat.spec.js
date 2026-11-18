@@ -1,7 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import { stripImages } from 'src/utilities/quillFormat';
 import expect from 'expect';
-import { describe, it } from 'mocha';
 
 describe('quillFormat.stripImages', () => {
   it('drops object-form image inserts from a delta object', () => {

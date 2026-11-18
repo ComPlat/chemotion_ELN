@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form,
@@ -7,7 +7,7 @@ import {
   Tooltip
 } from 'react-bootstrap';
 import { metPreConv } from 'src/utilities/metricPrefix';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 /**
  * FieldValueSelector Component
@@ -35,7 +35,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element} The rendered component
  */
-function FieldValueSelector({
+const FieldValueSelector = ({
   fieldOptions,
   value,
   onFieldChange,
@@ -45,7 +45,8 @@ function FieldValueSelector({
   disabled,
   weightPercentageReference,
   className,
-}) {
+}) => {
+  const { notifications } = useContext(StoreContext);
   const [selectedField, setSelectedField] = useState(onFirstRenderField || fieldOptions[0]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [internalValue, setInternalValue] = useState(value);
@@ -124,7 +125,7 @@ function FieldValueSelector({
     if (selectedField === 'weight percentage') {
       const isValid = validRange(initialValidValue);
       if (!isValid && normalizedValue !== '') {
-        NotificationActions.add({
+        notifications.add({
           title: 'Invalid value',
           message: 'Please enter a number between 0 and 1.',
           level: 'error',
@@ -255,7 +256,7 @@ function FieldValueSelector({
       )}
     </div>
   );
-}
+};
 
 FieldValueSelector.propTypes = {
   fieldOptions: PropTypes.arrayOf(PropTypes.string).isRequired,

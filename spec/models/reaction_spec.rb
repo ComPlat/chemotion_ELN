@@ -5,6 +5,7 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
+#  concentration_mode     :string           default("solvents_only"), not null
 #  conditions             :string
 #  created_by             :integer
 #  dangerous_products     :string           default([]), is an Array
@@ -12,13 +13,17 @@
 #  description            :text
 #  duration               :string
 #  gaseous                :boolean          default(FALSE)
+#  lock_reaction_volume   :boolean          default(FALSE), not null
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
+#  ph_operator            :string           default("="), not null
+#  ph_value               :float
 #  plain_text_description :text
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
 #  reaction_svg_file      :string
+#  reaction_type          :string           default("standard"), not null
 #  rf_value               :string
 #  rinchi_long_key        :text
 #  rinchi_short_key       :string
@@ -77,6 +82,221 @@ RSpec.describe Reaction, type: :model do
   describe 'taggable' do
     it_behaves_like 'taggable_element_before_and_after_create'
     it_behaves_like 'taggable_element_before_and_after_collection_update'
+  end
+
+  describe 'reaction_type' do
+    it 'defaults to standard when blank' do
+      reaction = build(:reaction, reaction_type: nil, creator: build(:user))
+
+      reaction.validate
+
+      expect(reaction.reaction_type).to eq('standard')
+    end
+
+    it 'persists standard as the default reaction type' do
+      reaction = create(:reaction)
+
+      expect(reaction.reload.reaction_type).to eq('standard')
+      expect(reaction).to be_standard
+    end
+
+    it 'supports interaction reactions' do
+      reaction = create(:reaction, reaction_type: 'interaction')
+
+      expect(reaction).to be_interaction
+      expect(reaction).not_to be_standard
+    end
+  end
+
+  describe 'legacy concentration compatibility' do
+    it 'derives the legacy reader and stored flag from concentration_mode' do
+      reaction = build(:reaction, concentration_mode: 'reaction_volume')
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(true)
+      expect(reaction[:use_reaction_volume]).to be(true)
+    end
+
+    it 'keeps concentration_mode authoritative over a stale stored flag' do
+      reaction = build(:reaction, concentration_mode: 'combined')
+      reaction[:use_reaction_volume] = true
+
+      reaction.validate
+
+      expect(reaction.use_reaction_volume).to be(false)
+      expect(reaction[:use_reaction_volume]).to be(false)
+    end
+  end
+
+  describe '#temperature_display_with_unit' do
+    test_cases = [
+      {
+        description: 'numeric user text',
+        temperature: { 'userText' => '25.5678', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25.5678 °C',
+      },
+      {
+        description: 'a numeric range containing a negative value',
+        temperature: { 'userText' => '-10 ~ 5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-10 ~ 5 °C',
+      },
+      {
+        description: 'a range with an unspaced hyphen',
+        temperature: { 'userText' => '20-25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '20-25 °C',
+      },
+      {
+        description: 'a range with an unspaced tilde',
+        temperature: { 'userText' => '21~25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21~25 °C',
+      },
+      {
+        description: 'a range with an en dash',
+        temperature: { 'userText' => '21 – 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '21 – 25 °C',
+      },
+      {
+        description: 'a range using to',
+        temperature: { 'userText' => '-78 to 25', 'data' => [], 'valueUnit' => '°C' },
+        expected: '-78 to 25 °C',
+      },
+      {
+        description: 'a numeric value with a decimal comma',
+        temperature: { 'userText' => '25,5', 'data' => [], 'valueUnit' => '°C' },
+        expected: '25,5 °C',
+      },
+      {
+        description: 'a single generated data point',
+        temperature: { 'userText' => '', 'data' => [{ 'value' => 25 }], 'valueUnit' => '°C' },
+        expected: '25 °C',
+      },
+      {
+        description: 'a generated data range',
+        temperature: {
+          'userText' => '',
+          'data' => [{ 'value' => '21' }, { 'value' => '5' }],
+          'valueUnit' => '°C',
+        },
+        expected: '5 ~ 21 °C',
+      },
+      {
+        description: 'free text',
+        temperature: { 'userText' => 'reflux', 'data' => [], 'valueUnit' => '°C' },
+        expected: 'reflux',
+      },
+      {
+        description: 'an empty temperature',
+        temperature: { 'userText' => '', 'data' => [], 'valueUnit' => '°C' },
+        expected: '',
+      },
+      {
+        description: 'a nil temperature',
+        temperature: nil,
+        expected: '',
+      },
+    ]
+
+    test_cases.each do |test_case|
+      it "formats #{test_case[:description]}" do
+        reaction = described_class.new(temperature: test_case[:temperature])
+
+        expect(reaction.temperature_display_with_unit).to eq(test_case[:expected])
+      end
+    end
+  end
+
+  describe '#variations' do
+    let(:reaction) { create(:reaction) }
+
+    it 'returns an empty array when the variations column is nil' do
+      reaction.update_columns(variations: nil) # rubocop:disable Rails/SkipsModelValidations
+
+      expect(reaction.reload.variations).to eq([])
+    end
+
+    it 'returns the variations in id order, whatever order the jsonb keys come back in' do
+      variations = { 'c' => { 'id' => 1 }, 'a' => { 'id' => 2 }, 'b' => { 'id' => 3 } }
+      reaction.update_columns(variations: variations) # rubocop:disable Rails/SkipsModelValidations
+      reaction.reload
+
+      expect(reaction[:variations].values.pluck('id')).to eq([2, 3, 1])
+      expect(reaction.variations.pluck('id')).to eq([1, 2, 3])
+    end
+  end
+
+  describe '#assign_attachment_to_variation' do
+    let(:reaction) { create(:reaction) }
+
+    context 'when the variations column is nil' do
+      before { reaction.update_columns(variations: nil) } # rubocop:disable Rails/SkipsModelValidations
+
+      it 'does not raise' do
+        expect { reaction.assign_attachment_to_variation('1', 123) }.not_to raise_error
+      end
+    end
+
+    context 'when the variation id matches an existing variation' do
+      before do
+        reaction.update!(
+          variations: {
+            'uuid-1' => { 'id' => '1', 'metadata' => { 'analyses' => [], 'notes' => '' } },
+          },
+        )
+      end
+
+      it 'adds the analysis id to that variation only once' do
+        reaction.assign_attachment_to_variation('1', 42)
+        reaction.assign_attachment_to_variation('1', 42)
+
+        variation = reaction.reload.variations.find { |v| v['id'] == '1' }
+        expect(variation['metadata']['analyses']).to eq([42])
+      end
+    end
+  end
+
+  describe '#update_svg_file!' do
+    let(:composer_instance) do
+      instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: 'composed.svg')
+    end
+    let(:product) { create(:sample) }
+
+    before do
+      allow(SVG::ReactionComposer).to receive(:new).and_return(composer_instance)
+      allow(SVG::ProductsComposer).to receive(:new).and_return(composer_instance)
+    end
+
+    context 'when reaction_type is standard' do
+      let(:reaction) do
+        create(:reaction, reaction_type: 'standard', products: [product], reaction_svg_file: nil)
+      end
+
+      it 'composes the scheme with SVG::ReactionComposer and shows yields' do
+        reaction
+
+        expect(SVG::ProductsComposer).not_to have_received(:new)
+        expect(SVG::ReactionComposer).to have_received(:new).with(
+          hash_including(:starting_materials, :reactants, :products),
+          hash_including(show_yield: true),
+        )
+      end
+    end
+
+    context 'when reaction_type is interaction' do
+      let(:reaction) do
+        create(:reaction, reaction_type: 'interaction', products: [product], reaction_svg_file: nil)
+      end
+
+      it 'composes the scheme with SVG::ProductsComposer and hides yields' do
+        reaction
+
+        expect(SVG::ReactionComposer).not_to have_received(:new)
+        expect(SVG::ProductsComposer).to have_received(:new).with(
+          hash_including(:starting_materials, :reactants, :products),
+          hash_including(show_yield: false),
+        )
+      end
+    end
   end
 
   describe 'deletion' do

@@ -3,6 +3,8 @@
 module Usecases
   module Collections
     class AddElements
+      include ElementClassResolution
+
       attr_reader :current_user, :collection
 
       def initialize(current_user)
@@ -10,17 +12,33 @@ module Usecases
         @collection = nil
       end
 
-      def perform!(collection_id:, ui_state:)
+      def perform!(collection_id:, ui_state:, origin_collection_id: nil)
         find_collection(collection_id)
+        enforce_same_owner_origin!(origin_collection_id)
         check_access_to_elements(ui_state)
         add_elements_to_collection(ui_state)
+      end
+
+      # When a sharee moves/assigns an element *out of* a collection they do not own, the target must
+      # be owned by the same user as that origin — they may rearrange the owner's element among the
+      # owner's collections (with add_elements), but never pull it into their own or another owner's
+      # space. Own or unknown origin ⇒ no constraint.
+      def enforce_same_owner_origin!(origin_collection_id)
+        return if origin_collection_id.blank?
+
+        origin = Collection.find_by(id: origin_collection_id)
+        return if origin.nil? || origin.owned_by?(current_user)
+        return if @collection.user_id == origin.user_id
+
+        raise Errors::InsufficientPermissionError,
+              "Elements from a shared collection can only be moved within the same owner's collections"
       end
 
       def find_collection(collection_id)
         @collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
         @collection ||= Collection.shared_with_minimum_permission_level(
           current_user,
-          CollectionShare.permission_level(:import_elements),
+          CollectionShare.permission_level(:add_elements),
         ).find_by(id: collection_id)
 
         return unless @collection.nil?
@@ -30,8 +48,7 @@ module Usecases
 
       def check_access_to_elements(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class =
-            API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find_by(name: class_string).elements
+          element_class = element_scope_for(class_string)
           next unless element_class
 
           scope = element_class.by_ui_state(ui_selections)
@@ -48,24 +65,16 @@ module Usecases
 
       def add_elements_to_collection(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class = API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find(name: class_string).elements
+          element_class = element_scope_for(class_string)
+          next unless element_class
+
           element_ids = element_class.by_ui_state(ui_selections).ids
 
           if element_class == DeviceDescription
             element_ids = Usecases::DeviceDescriptions::ByUIState.new(element_ids).with_joined_ids
           end
 
-          join_table = API::ELEMENT_CLASS[class_string].collections_element_class || Labimotion::CollectionsElement
-
-          join_table.create_in_collection(element_ids, collection.id)
-        end
-      end
-
-      def elements_scope(element_class, element_ids)
-        if element_class.in?(API::ELEMENT_CLASS.values)
-          element_class.where(id: element_ids)
-        else # Labimotion::ElementKlass
-          element_class.elements
+          join_table_for(class_string).create_in_collection(element_ids, collection.id)
         end
       end
     end

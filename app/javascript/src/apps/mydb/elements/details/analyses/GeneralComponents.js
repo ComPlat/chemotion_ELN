@@ -1,10 +1,13 @@
 import React, { useCallback, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
-function ToggleSwitch({ isChecked, setIsChecked, label }) {
+const ToggleSwitch = ({
+  isChecked, setIsChecked, label, disabled = false
+}) => {
   const handleChange = useCallback(() => {
     setIsChecked(!isChecked);
-  });
+  }, [isChecked, setIsChecked]);
 
   return (
     <Form>
@@ -13,35 +16,33 @@ function ToggleSwitch({ isChecked, setIsChecked, label }) {
         id="custom-switch"
         label={label}
         checked={isChecked}
+        disabled={disabled}
         onChange={handleChange}
       />
     </Form>
   );
-}
+};
 
-function FileTree({ treeData }) {
-  return (
-    <ul style={{ overflow: 'auto' }}>
-      {treeData.map((node, idx) => (
-        <TreeNode key={idx} node={node} />
-      ))}
-    </ul>
-  );
-}
+ToggleSwitch.propTypes = {
+  isChecked: PropTypes.bool.isRequired,
+  setIsChecked: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired,
+  disabled: PropTypes.bool,
+};
 
-function TreeNode({ node }) {
-  if (node.marked) {
-    return null;
-  }
+const TreeNode = ({ node }) => {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = node.isDirectory;
 
-  const handleClick = useCallback(() => setExpanded(!expanded));
+  const handleClick = useCallback(() => setExpanded((prev) => !prev), []);
   const onDragStart = useCallback((e) => {
-    e.dataTransfer.setData('text/plain', node.fullPath);
-    // optionally, set a drag image or effect
+    e.dataTransfer.setData('text/plain', node.key);
     e.dataTransfer.effectAllowed = 'move';
-  });
+  }, [node.key]);
+
+  if (node.marked) {
+    return null;
+  }
 
   return (
     <li>
@@ -54,7 +55,7 @@ function TreeNode({ node }) {
         {hasChildren
           ? (expanded ? <i className="fa fa-folder-open me-1" /> : <i className="fa fa-folder me-1" />)
           : <i className="fa fa-file me-1" />}
-        {node.name}
+        {node.label}
       </div>
       {hasChildren && expanded && (
         <ul style={{ marginLeft: '1rem' }}>
@@ -65,26 +66,35 @@ function TreeNode({ node }) {
       )}
     </li>
   );
-}
+};
 
-function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
+const FileTree = ({ treeData }) => (
+  <ul className="analyses-upload__file-tree">
+    {treeData.map((node, idx) => (
+      <TreeNode key={idx} node={node} />
+    ))}
+  </ul>
+);
+
+const DatasetDropZone = ({ droppedPaths, setDroppedPaths }) => {
   const onDragOver = useCallback((e) => {
-    e.preventDefault(); // allow drop
+    e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-  });
+  }, []);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
     const path = e.dataTransfer.getData('text/plain');
-    const newDroppedPaths = droppedPaths.filter((p) => !p.startsWith(path));
+    // Drop the path itself and anything inside it, but not siblings sharing a name prefix.
+    const newDroppedPaths = droppedPaths.filter((p) => p !== path && !p.startsWith(`${path}/`));
     if (path) {
       setDroppedPaths([...newDroppedPaths, path]);
     }
-  });
+  }, [droppedPaths, setDroppedPaths]);
 
   const removePath = useCallback((pathToRemove) => {
     setDroppedPaths(droppedPaths.filter((p) => p !== pathToRemove));
-  });
+  }, [droppedPaths, setDroppedPaths]);
 
   return (
     <div
@@ -111,7 +121,7 @@ function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
       </ul>
     </div>
   );
-}
+};
 
 export {
   ToggleSwitch,

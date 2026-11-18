@@ -18,8 +18,8 @@ const clickDownloadReport = (e, archiveId, template) => {
 };
 
 const reportStatusBtn = (archive) => {
-  const { downloadable, id, template } = archive;
-  const onClickDownloadReport = (e) => clickDownloadReport(e, id, template);
+  const { downloadable, id, report_type: reportType } = archive;
+  const onClickDownloadReport = (e) => clickDownloadReport(e, id, reportType);
   const downloadTP = <Tooltip id="download-docx">Download</Tooltip>;
   const processTP = (
     <Tooltip id="wait-processing">
@@ -150,7 +150,7 @@ const rxlHtmlLabel = () => (
 );
 
 const templateLable = (archive) => {
-  switch (archive.template.value) {
+  switch (archive.report_type) {
     case 'standard':
       return null;
     case 'spectrum':

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Dropdown, DropdownButton, Button } from 'react-bootstrap';
 import Tree from 'antd/lib/tree';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';

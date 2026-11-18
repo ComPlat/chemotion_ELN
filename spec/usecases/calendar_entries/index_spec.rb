@@ -109,9 +109,12 @@ RSpec.describe Usecases::CalendarEntries::Index do
           user2_sample1_calendar_entry_in_range.id,
         ].sort
         expect(described_class.new(user: user2, params: params).perform!.pluck(:id).sort).to eq [
+          user1_sample1_calendar_entry_in_range.id,
           user2_sample1_calendar_entry_in_range.id,
         ].sort
         expect(described_class.new(user: user3, params: params).perform!.pluck(:id).sort).to eq [
+          user1_sample1_calendar_entry_in_range.id,
+          user2_sample1_calendar_entry_in_range.id,
           user3_sample2_calendar_entry_in_range.id,
         ].sort
       end

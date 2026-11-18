@@ -15,7 +15,8 @@ class TextTemplateStore {
       deviceDescription: Map(),
       reactionDescription: Map(),
       predefinedTemplateNames: OrderedSet(),
-      fetchedPredefinedTemplates: Map()
+      fetchedPredefinedTemplates: Map(),
+      personalTemplates: []
     };
 
     this.bindListeners({
@@ -23,6 +24,7 @@ class TextTemplateStore {
       handleFetchPredefinedTemplateNames: TextTemplateActions.fetchPredefinedTemplateNames,
       handleUpdateTextTemplates: TextTemplateActions.updateTextTemplates,
       handleFetchTemplateByNames: TextTemplateActions.fetchPredefinedTemplateByNames,
+      handleFetchPersonalTemplates: TextTemplateActions.fetchPersonalTemplates,
     });
   }
 
@@ -43,6 +45,10 @@ class TextTemplateStore {
   handleFetchPredefinedTemplateNames(names) {
     const { predefinedTemplateNames } = this.state;
     this.state.predefinedTemplateNames = predefinedTemplateNames.concat(OrderedSet(names));
+  }
+
+  handleFetchPersonalTemplates(templates) {
+    this.state.personalTemplates = templates;
   }
 
   handleFetchTemplateByNames(templates) {

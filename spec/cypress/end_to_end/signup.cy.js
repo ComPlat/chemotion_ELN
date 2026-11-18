@@ -9,30 +9,30 @@ describe('Signup Page', () => {
   });
 
   it('rejects signup without password', () => {
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains("Password can't be blank");
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains("Password can't be blank");
   });
 
   it('rejects signup with invalid password', () => {
     cy.get('#user_password').type('pswd');
     cy.get('#user_password_confirmation').type('pswd');
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains('Password is too short');
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains('Password is too short');
   });
 
   it('rejects signup with invalid password confirmation', () => {
     cy.get('#user_password').type('password');
     cy.get('#user_password_confirmation').type('passwort');
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains("Password confirmation doesn't match Password");
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains("Password confirmation doesn't match Password");
   });
 
   it('rejects signup with invalid name abbreviation', () => {
     cy.get('#user_name_abbreviation').clear();
     cy.get('#user_name_abbreviation').type('f');
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains('Name abbreviation has to be 2 to 3 characters long');
-    cy.get('#error_explanation').contains("Name abbreviation can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not.");
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains('Name abbreviation has to be 2 to 3 characters long');
+    cy.contains("Name abbreviation can be alphanumeric, middle '_' and '-' are allowed, but leading digit, or trailing '-' and '_' are not.");
   });
 
   it('rejects signup with existing name abbreviation', () => {
@@ -41,22 +41,23 @@ describe('Signup Page', () => {
     cy.get('#user_password_confirmation').type('password');
     cy.get('#user_name_abbreviation').clear();
     cy.get('#user_name_abbreviation').type('UC');
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains('Name abbreviation is already in use');
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains('Name abbreviation is already in use');
   });
 
   it('rejects signup with existing email', () => {
     cy.createDefaultUser('complat.user@eln.edu', 'UC');
     cy.get('#user_email').clear();
     cy.get('#user_email').type('complat.user@eln.edu');
-    cy.get('.btn').contains('Sign up').click();
-    cy.get('#error_explanation').contains('Email has already been taken');
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.contains('Email has already been taken');
   });
 
   it('allows sign up with valid data', () => {
     cy.get('#user_password').type('password');
     cy.get('#user_password_confirmation').type('password');
-    cy.get('.btn').contains('Sign up').click();
+    cy.get('input[type="submit"][value="Sign up"]').click();
+    cy.url().should('include', 'mydb');
   });
 });
 

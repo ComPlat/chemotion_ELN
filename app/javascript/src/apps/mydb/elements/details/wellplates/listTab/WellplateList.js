@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import { AgGridReact } from 'ag-grid-react';
 
-const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
+const WellplateList = ({ wells, readoutTitles, handleWellsChange, readOnly }) => {
   const gridRef = useRef();
   const [wellsList, setWellsList] = useState(wells);
 
@@ -38,16 +38,46 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
 
     return sample.molecule_formula;
   }
+  
+  const renderMolarity = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    const value = sample?.molarity_value;
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const formatted = parseFloat(value.toFixed(4));
+
+    return (
+      <div className="d-flex align-items-center">
+        <span className="flex-grow-1">{formatted}</span>
+        <span className="btn btn-light btn-sm px-2 d-flex align-items-center align-self-stretch rounded-0 border-0 border-start">
+          M
+        </span>
+      </div>
+    );
+  };
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    if (readOnly) { return null; }
     const { field, cellRendererParams } = colDef;
     if (!oldRow.sample) { return null }
 
     const wellIndex = wellsList.indexOf(oldRow);
-    wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    
+    if (field === 'molarity_value') {
+      wellsList[wellIndex].sample.molarity_value = newValue;
+    } else {
+      wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    }
+    
     setWellsList(wellsList);
     handleWellsChange(wellsList);
-  }, [wellsList, readoutTitles]);
+  }, [wellsList, readoutTitles, readOnly, handleWellsChange]);
+
+  const canEditCell = (params) => !readOnly && !!params.data.sample;
 
   const columnDefs = [
     {
@@ -91,6 +121,23 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       wrapText: true,
       cellClass: ["lh-base", "py-2", "border-end"],
     },
+    {
+      headerName: 'Molarity (M)',
+      field: 'molarity_value',
+      editable: canEditCell,
+      valueGetter: (params) => {
+        if (params.data?.sample) {
+          return params.data.sample.molarity_value;
+        }
+      },
+      valueParser: (params) => {
+        const val = parseFloat(params.newValue);
+        return Number.isNaN(val) || val < 0.0 ? undefined : val;
+      },
+      cellRenderer: renderMolarity,
+      wrapText: true,
+      cellClass: ["editable-cell", "border-end", "px-2"],
+    }
   ];
 
   readoutTitles && readoutTitles.map((title, index) => {
@@ -98,10 +145,10 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       {
         headerName: `${title} Value`,
         field: "value",
-        editable: (params) => params.data.sample,
+        editable: canEditCell,
         valueGetter: (params) => {
           if (params.data?.readouts) {
-            return params.data.readouts[index].value;
+            return params.data.readouts[index]?.value;
           }
         },
         valueSetter: (params) => {
@@ -119,10 +166,10 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       {
         headerName: `${title} Unit`,
         field: "unit",
-        editable: (params) => params.data.sample,
+        editable: canEditCell,
         valueGetter: (params) => {
           if (params.data?.readouts) {
-            return params.data.readouts[index].unit;
+            return params.data.readouts[index]?.unit;
           }
         },
         valueSetter: (params) => {
@@ -165,7 +212,7 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         autoSizeStrategy={{ type: 'fitGridWidth' }}
         readOnlyEdit
         onCellEditRequest={updateRow}
-        singleClickEdit={true}
+        singleClickEdit={!readOnly}
         stopEditingWhenCellsLoseFocus={true}
       />
     </div>
@@ -177,5 +224,10 @@ export default WellplateList;
 WellplateList.propTypes = {
   wells: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
   readoutTitles: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
-  handleWellsChange: PropTypes.func.isRequired
+  handleWellsChange: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+WellplateList.defaultProps = {
+  readOnly: false,
 };

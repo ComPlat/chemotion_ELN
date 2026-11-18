@@ -2,10 +2,6 @@
 import ChemicalFactory from 'factories/ChemicalFactory';
 import Chemical from 'src/models/Chemical';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
-
 describe('Chemical model', () => {
   describe('use factory to simulate creating chemical instance', () => {
     it('Create Chemical with expected data objects', () => {

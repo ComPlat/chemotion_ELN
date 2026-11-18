@@ -13,20 +13,17 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        case params[:attachable_type]
-        when 'ResearchPlan'
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(
-            current_user,
-            ResearchPlan.find_by(id: params[:attachable_id]),
-          ).update?
+        # Accepts the element types Attachment#root_element resolves directly, each checked with
+        # ElementPolicy#update?; other types (including 'Container') are rejected.
+        attachable_type = params[:attachable_type]
+        if Attachment::ELEMENT_ATTACHABLE_TYPES.include?(attachable_type)
+          @attachable = attachable_type.constantize.find_by(id: params[:attachable_id])
         end
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachable).update?
       end
 
       desc 'Update attachable records'
       post 'update_attachments_attachable' do
-        attachable_type = params[:attachable_type]
-        attachable_id = params[:attachable_id]
-
         if params.fetch(:files, []).any?
           params[:files].each_with_index do |file, index|
             next unless (tempfile = file[:tempfile])
@@ -39,8 +36,7 @@ module Chemotion
               created_by: current_user.id,
               created_for: current_user.id,
               content_type: file[:type],
-              attachable_type: attachable_type,
-              attachable_id: attachable_id,
+              attachable: @attachable,
             )
 
             begin
@@ -53,9 +49,14 @@ module Chemotion
             end
           end
         end
+        # The frontend's delete path for attachments of these elements: the rows are unlinked (left
+        # to their uploader), not moved to the Unsorted inbox. Only attachments of the record
+        # authorized above, and only those the user may change (Usecases::Attachments::Access#write?,
+        # e.g. own uploads on an SBMM another user has a sample of).
         if params[:del_files].any?
-          Attachment.where(id: params[:del_files].map!(&:to_i), attachable_type: attachable_type)
-                    .update_all(attachable_id: nil)
+          access = Usecases::Attachments::Access.new(current_user)
+          writable = Attachment.where(id: params[:del_files], attachable: @attachable).select { |a| access.write?(a) }
+          Attachment.where(id: writable.map(&:id)).update_all(attachable_id: nil)
         end
         true
       end

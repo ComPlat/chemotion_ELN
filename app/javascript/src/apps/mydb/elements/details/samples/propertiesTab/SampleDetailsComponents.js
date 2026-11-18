@@ -647,7 +647,9 @@ export default class SampleDetailsComponents extends React.Component {
    * @returns {JSX.Element} The modal component
    */
   renderModal() {
-    const { showModal } = this.state;
+    const { showModal, droppedMaterial } = this.state;
+    const { srcMat, tagMat } = droppedMaterial || {};
+    const sameMolecule = Sample.haveSameMolecule(srcMat, tagMat);
 
     return (
       <AppModal
@@ -661,6 +663,19 @@ export default class SampleDetailsComponents extends React.Component {
         )}
       >
         <p>Do you want to merge or move this component?</p>
+        {sameMolecule ? (
+          <p className="text-warning">
+            <strong>Warning:</strong> These components share the same molecule.
+            Merging will remove the source component and reset the target&apos;s
+            amounts (mol, mass, volume, molarity, concentration) to zero.
+          </p>
+        ) : (
+          <p className="text-warning">
+            <strong>Warning:</strong> Merging will replace both components with a
+            new combined component. All amounts (mol, mass, volume, molarity,
+            concentration) will be reset to zero.
+          </p>
+        )}
       </AppModal>
     );
   }

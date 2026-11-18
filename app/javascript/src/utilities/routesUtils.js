@@ -9,6 +9,7 @@ import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
+import { listFilterParams } from 'src/utilities/searchRequestParams';
 
 const collectionShow = (e) => {
   UserActions.fetchCurrentUser();
@@ -27,6 +28,7 @@ const collectionShow = (e) => {
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
+        listFilters: listFilterParams(uiState),
       });
     } else {
       if (currentSearchByID) {
@@ -69,11 +71,12 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  const id = e.params.cell_lineID || e.params.cellLineID;
-  if (id === 'new') {
+  const cellLineId = e.params.cell_lineID || e.params.cellLineID;
+
+  if (cellLineId === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
   } else {
-    ElementActions.tryFetchCellLineElById.defer(id);
+    ElementActions.tryFetchCellLineElById.defer(cellLineId);
   }
 };
 
@@ -178,25 +181,6 @@ const screenShowOrNew = (e) => {
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
-};
-
-const devicesAnalysisCreate = (e) => {
-  const { deviceId, analysisType } = e.params;
-  ElementActions.createDeviceAnalysis(deviceId, analysisType);
-};
-
-const devicesAnalysisShow = (e) => {
-  const { analysisId } = e.params;
-  ElementActions.fetchDeviceAnalysisById(analysisId);
-};
-
-const deviceShow = (e) => {
-  const { deviceId } = e.params;
-  ElementActions.fetchDeviceById(deviceId);
-};
-
-const deviceShowDeviceManagement = () => {
-  UIActions.showDeviceManagement();
 };
 
 const researchPlanShowOrNew = (e) => {
@@ -386,10 +370,6 @@ export {
   wellplateShowOrNew,
   wellplateShowSample,
   screenShowOrNew,
-  devicesAnalysisCreate,
-  devicesAnalysisShow,
-  deviceShow,
-  deviceShowDeviceManagement,
   researchPlanShowOrNew,
   metadataShowOrNew,
   deviceDescriptionShowOrNew,

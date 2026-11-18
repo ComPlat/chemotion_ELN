@@ -4,6 +4,20 @@ import {
   Button
 } from 'react-bootstrap';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
+import GateFetcher from 'src/fetchers/GateFetcher';
+import { rootStore } from 'src/stores/mobx/RootStore';
+
+// TransferRepoJob sends its own notification when it finishes; this only confirms the queuing.
+const notifyTransferQueued = () => {
+  rootStore.notifications.add({
+    title: 'Transfer to chemotion-repository.net',
+    message: 'The transfer has been queued. You will be notified when it is completed.',
+    level: 'success',
+    position: 'tr',
+    autoDismiss: 5,
+    uid: 'gate_transfer_queued',
+  });
+};
 
 class GatePushButton extends React.Component {
   constructor(props) {
@@ -26,44 +40,11 @@ class GatePushButton extends React.Component {
     this.hideOverlay();
 
     const { collectionId } = this.props;
-    const resp = await fetch(`/api/v1/gate/transmitting/${collectionId}`, {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method,
-    });
-    const data = await resp.json();
-
-    const response = {
-      status: resp.status,
-      ok: resp.ok,
-      error: data && data.error,
-      target: data && data.target,
-    };
-
-    const newState = {
-      overlayTarget: method === 'GET' ? this.buttonRef.current : null,
-      status: 'redirect',
-      target: response.target
-    };
-
-    if (response.status === 404) {
-      newState.message = 'The access token is not set. Retrieve one now on chemotion.net?';
-    } else if (response.status === 401) {
-      if (response.error && response.error.match(/expired/)) {
-        newState.message = 'The access token has expired. Renew it now on chemotion.net?';
-      } else {
-        newState.message = `The access token is misconfigured ('${response.error}'). Renew it now on chemotion.net?`;
-      }
-    } else if (!response.ok) {
-      newState.status = 'unavailable';
-    } else {
-      newState.status = 'confirm';
-    }
-
-    this.setState(newState);
+    GateFetcher.transmittingByCollectionId(method, collectionId, this.buttonRef.current)
+      .then((json) => {
+        if (json?.status === 'queued') notifyTransferQueued();
+        this.setState(json);
+      });
   }
 
   confirmationOverlayProps() {

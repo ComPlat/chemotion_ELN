@@ -1,66 +1,30 @@
-import 'whatwg-fetch';
-import { camelizeKeys } from 'humps';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { camelizeKeys } from 'src/utilities/FetcherHelper';
 
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 
 export default class UIFetcher {
   static initialize() {
-    const promise = fetch('/api/v1/ui/initialize', {
-      credentials: 'same-origin',
-    }).then(response => response.json())
-      .then(json => camelizeKeys(json))
-      .catch(err => console.log(err)); // eslint-disable-line
-
-    return promise;
+    return ApiClient.getJson('/api/v1/ui/initialize')
+      .then((json) => camelizeKeys(json));
   }
 
   static deleteElementsByUIState(params) {
-    return fetch('/api/v1/ui_state/', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then(response => response.json())
-      .then((json) => {
-        return json;
-      })
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.deleteRequest('/api/v1/ui_state', { body: JSON.stringify(params) });
   }
 
   static loadReport(params, loadType) {
-    const tParams = Object.assign({}, params, { loadType });
-
-    return fetch('/api/v1/ui_state/load_report', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(tParams),
-    }).then(response => response.json())
+    const body = { ...params, loadType };
+    return ApiClient.postJson('/api/v1/ui_state/load_report', { body })
       .then((json) => {
-        const samples = json.samples.map(s => new Sample(s));
-        const reactions = json.reactions.map(r => new Reaction(r));
+        const samples = json.samples.map((s) => new Sample(s));
+        const reactions = json.reactions.map((r) => new Reaction(r));
         return { samples, reactions };
-      })
-      .catch((errorMessage) => { console.log(errorMessage); });
+      });
   }
 
   static fetchNMRDisplayerHost() {
-    return fetch('/api/v1/chemspectra/nmrium_wrapper/host_name', {
-      credentials: 'same-origin',
-      method: 'GET',
-    }).then((response) => {
-      return response.json();
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.getJson('/api/v1/chemspectra/nmrium_wrapper/host_name');
   }
 }

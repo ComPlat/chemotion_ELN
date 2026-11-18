@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import React, { useContext, useEffect, useCallback } from 'react';
 import { ButtonToolbar } from 'react-bootstrap';
 
 import Attachment from 'src/models/Attachment';
@@ -24,7 +25,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function AttachmentForm({ readonly }) {
+const AttachmentForm = ({ readonly }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
   const { thirdPartyApps } = UIStore.getState() || [];
@@ -61,7 +62,7 @@ function AttachmentForm({ readonly }) {
     deviceDescriptionsStore.setFilteredAttachments(filteredAttachments);
   };
 
-  const createAttachmentPreviewImage = () => {
+  const createAttachmentPreviewImage = useCallback(() => {
     const attachments = deviceDescription.attachments.map((attachment) => {
       if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
 
@@ -71,7 +72,7 @@ function AttachmentForm({ readonly }) {
       return attachment;
     });
     deviceDescriptionsStore.setFilteredAttachments(attachments);
-  };
+  }, [deviceDescription.attachments, deviceDescriptionsStore]);
 
   const handleSortChange = (e) => {
     deviceDescriptionsStore.setAttachmentSortBy(e.target.value);
@@ -80,13 +81,14 @@ function AttachmentForm({ readonly }) {
 
   useEffect(() => {
     createAttachmentPreviewImage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (deviceDescription.updated) {
       createAttachmentPreviewImage();
     }
-  }, [deviceDescription.attachments]);
+  }, [deviceDescription.attachments, deviceDescription.updated, createAttachmentPreviewImage]);
 
   const toggleSortDirection = () => {
     const sortDirection = deviceDescriptionsStore.attachment_sort_direction === 'asc' ? 'desc' : 'asc';
@@ -131,11 +133,13 @@ function AttachmentForm({ readonly }) {
   };
 
   const showImportConfirm = (attachmentId) => {
+    // eslint-disable-next-line react-hooks/immutability
     deviceDescriptionsStore.attachment_show_import_confirm[attachmentId] = true;
     deviceDescriptionsStore.setShowImportConfirm(deviceDescriptionsStore.attachment_show_import_confirm);
   };
 
   const hideImportConfirm = (attachmentId) => {
+    // eslint-disable-next-line react-hooks/immutability
     deviceDescriptionsStore.attachment_show_import_confirm[attachmentId] = false;
     deviceDescriptionsStore.setShowImportConfirm(deviceDescriptionsStore.attachment_show_import_confirm);
   };
@@ -265,6 +269,6 @@ function AttachmentForm({ readonly }) {
       }
     </div>
   );
-}
+};
 
 export default observer(AttachmentForm);

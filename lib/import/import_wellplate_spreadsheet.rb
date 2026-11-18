@@ -4,7 +4,7 @@ require 'roo'
 
 module Import
   class ImportWellplateSpreadsheet
-    attr_reader :xlsx, :sheet, :error_messages, :wellplate
+    attr_reader :xlsx, :sheet, :error_messages, :wellplate, :molarity_discarded
 
     def initialize(wellplate_id:, attachment_id:)
       @wellplate = Wellplate.find(wellplate_id)
@@ -13,10 +13,11 @@ module Import
 
       @rows = []
       @error_messages = []
+      @molarity_discarded = false
       @letters = [*'A'..'Z']
       @position_index = 0
       @sample_index = 1
-      @column_of_first_readout = 4
+      @column_of_first_readout = 5
     end
 
     def process!
@@ -48,7 +49,7 @@ module Import
     end
 
     def check_headers
-      ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit']
+      ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', 'Molarity', '.+_Value', '.+_Unit']
         .each_with_index do |column_header, column_index|
           next if (@header[column_index] =~ /^#{column_header}/i).present?
 
@@ -84,6 +85,14 @@ module Import
     end
 
     def check_wells
+      # WellPosition.from_dimension(0, 0) is an empty list, so on an unsized
+      # plate the loop below would validate nothing and let any sheet through.
+      # import_data would then create wells at positions no grid can hold.
+      if @wellplate.width.to_i.zero? || @wellplate.height.to_i.zero?
+        error_messages << 'Set the wellplate size before importing data.'
+        fail!
+      end
+
       expected_positions = WellPosition.from_dimension(@wellplate.width, @wellplate.height)
       wells = xlsx.column(1).drop(1)
 
@@ -102,6 +111,16 @@ module Import
         well = Well.find_or_create_by!(wellplate_id: @wellplate.id, position_x: position.x, position_y: position.y)
 
         well.update!(readouts: build_readouts_from_row_data(row))
+        # Only override molarity/density when a real molarity was supplied;
+        # a blank or 0 cell must not wipe an existing sample's density.
+        molarity_value = row[4].to_f
+        next unless molarity_value.positive?
+
+        if well.sample
+          well.sample.update!(molarity_value: molarity_value, density: 0)
+        else
+          @molarity_discarded = true
+        end
       end
 
       @wellplate.update!(readout_titles: value_prefixes)

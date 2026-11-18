@@ -1,211 +1,108 @@
-import Quagga from 'quagga';
-import React from 'react';
-import {
-  Alert, Button, Form
-} from 'react-bootstrap';
-import QrReader from 'react-qr-reader';
+import React, { useState, useRef } from 'react';
+import { Alert, Button, Form } from 'react-bootstrap';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import AppModal from 'src/components/common/AppModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import 'whatwg-fetch';
+import Aviator from 'aviator';
+import CodeLogsFetcher from 'src/fetchers/CodeLogsFetcher';
 
-export default class ScanCodeButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showModal: false,
-      showQrReader: false,
-      scanError: null,
-      scanInfo: null,
-    };
+const SCAN_FORMATS = ['qr_code', 'code_128', 'ean_13', 'ean_8', 'data_matrix'];
 
-    this.open = this.open.bind(this);
-    this.close = this.close.bind(this);
-    this.startBarcodeScan = this.startBarcodeScan.bind(this);
-    this.startQrCodeScan = this.startQrCodeScan.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-    this.handleScan = this.handleScan.bind(this);
-  }
+const ScanCodeButton = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanError, setScanError] = useState(null);
+  const codeInput = useRef(null);
 
-  open() {
-    this.setState({ showModal: true });
-  }
+  const close = () => {
+    setShowModal(false);
+    setShowScanner(false);
+    setScanError(null);
+  };
 
-  close() {
-    this.setState({ showModal: false, showQrReader: false, scanError: null });
-  }
+  const handleScan = (code) => {
+    const dataInput = codeInput.current?.value || code;
+    if (!dataInput) return;
 
-  initializeBarcodeScan() {
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#barcode-scanner'),
-      },
-      decoder: {
-        readers: ["code_128_reader"],
-      }
-    }, function(err) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      console.log("Initialization finished. Ready to start");
-      Quagga.start();
-    });
-  }
-
-  startBarcodeScan() {
-    this.initializeBarcodeScan();
-
-    Quagga.onDetected((data) => {
-      const barcode = data.codeResult.code;
-      this.handleScan(barcode, true);
-      Quagga.stop();
-    });
-
-    this.setState({ showQrReader: false });
-  }
-
-  startQrCodeScan() {
-    this.setState({ showQrReader: true });
-  }
-
-  checkJSONResponse(json) {
-    if (json.error) {
-      var error = new Error(json.error);
-      error.response = json;
-      throw error;
-    } else {
-      return json;
-    }
-  }
-
-  handleScan(data, stopQuagga = false) {
-    let codeInput = this.codeInput.value;
-    let code_log = {};
-    if (codeInput) {
-      data = codeInput;
-    }
-
-    if (!data) {
-      return;
-    }
-
-    stopQuagga && Quagga.stop();
-    fetch(`/api/v1/code_logs/generic?code=${data}`, {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json())
-      .then(this.checkJSONResponse)
+    CodeLogsFetcher.fetchGenericCodeLogs(dataInput)
       .then((json) => {
-        code_log = json.code_log;
-        if (code_log.source === 'container') {
+        const { code_log: codeLog } = json;
+        if (codeLog.source === 'container') {
           // open active analysis
-          UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
-          UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: code_log.source_id });
-          Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`);
-          this.close();
+          UIActions.selectTab({ tabKey: 1, type: codeLog.root_code.source });
+          UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: codeLog.source_id });
+          Aviator.navigate(`/collection/all/${codeLog.root_code.source}/${codeLog.root_code.source_id}`);
+          close();
         } else {
-          UIActions.selectTab({ tabKey: 0, type: code_log.root_code.source });
-          Aviator.navigate(`/collection/all/${code_log.source}/${code_log.source_id}`);
-          this.close();
+          UIActions.selectTab({ tabKey: 0, type: codeLog.root_code.source });
+          Aviator.navigate(`/collection/all/${codeLog.source}/${codeLog.source_id}`);
+          close();
         }
       })
       .catch((errorMessage) => {
-        console.log(errorMessage.message);
-        this.setState({ scanError: errorMessage.message });
+        setScanError(errorMessage.message);
       });
-  }
+  };
 
-  handleKeyPress(e) {
+  const handleScanResult = (results) => {
+    if (results?.length > 0) {
+      handleScan(results[0].rawValue);
+    }
+  };
+
+  const handleKeyPress = (e) => {
     const code = e.keyCode || e.which;
     if (code === 13) {
       e.preventDefault();
-      this.scanInput.click();
+      handleScan();
     }
-  }
+  };
 
-  handleError(err) {
-    console.error(err);
-  }
+  return (
+    <>
+      <Button
+        id="search-code-split-button"
+        variant="topbar"
+        onClick={() => setShowModal(true)}
+      >
+        <i className="fa fa-barcode" />
+        <i className="fa fa-search ms-n2" />
+      </Button>
 
-  scanModal() {
-    const { showModal, showQrReader } = this.state;
-    return (
       <AppModal
         show={showModal}
-        onHide={this.close}
+        onHide={close}
         title="Scan barcode or QR code"
-        primaryActionLabel="Start QR code scan"
-        onPrimaryAction={this.startQrCodeScan}
-        extendedFooter={(
-          <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
-        )}
+        primaryActionLabel="Start scanning"
+        onPrimaryAction={() => setShowScanner(true)}
       >
         <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
-          <Form.Group>
+          <Form.Group className="mb-2">
             <Form.Control
               autoFocus
               type="text"
-              ref={(m) => { this.codeInput = m; }}
-              onKeyPress={this.handleKeyPress}
+              placeholder="Or enter code manually..."
+              ref={codeInput}
+              onKeyDown={handleKeyPress}
             />
           </Form.Group>
-          <input
-            type="button"
-            style={{ display: 'none' }}
-            ref={(scanInput) => { this.scanInput = scanInput; }}
-            onClick={() => this.handleScan()}
-          />
 
-          {showQrReader
-            ? (
-              <QrReader
-                previewStyle={{ width: 550 }}
-                onScan={this.handleScan}
-                onError={this.handleError}
-              />
-            )
-            : (
-              <div id="barcode-scanner" />
-            )}
+          {showScanner && (
+            <Scanner
+              onScan={handleScanResult}
+              onError={(err) => console.error(err)}
+              formats={SCAN_FORMATS}
+              styles={{ container: { width: 550 } }}
+            />
+          )}
         </div>
-        <br />
-        {this.scanAlert()}
+
+        {scanError && (
+          <Alert variant="danger" className="mt-2">{scanError}</Alert>
+        )}
       </AppModal>
-    );
-  }
+    </>
+  );
+};
 
-  scanAlert() {
-    if (this.state.scanError) {
-      return (
-        <div>
-          {this.state.scanInfo &&
-            <Alert variant="info">{this.state.scanInfo}</Alert>
-          }
-          <Alert variant="danger">
-            {this.state.scanError}
-          </Alert>
-        </div>
-      );
-    }
-    return null;
-  }
-
-  render() {
-    return (
-      <>
-        <Button
-          id="search-code-split-button"
-          variant="topbar"
-          onClick={this.open}
-        >
-          <i className="fa fa-barcode" />
-          <i className="fa fa-search ms-n2" />
-        </Button>
-
-        {this.scanModal()}
-      </>
-    );
-  }
-}
+export default ScanCodeButton;

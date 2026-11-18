@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
 import 'moment-precise-range-plugin';
 import { permitOn } from 'src/components/common/uis';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -41,11 +41,61 @@ export default class ReactionDetailsDuration extends Component {
   }
 
   render() {
-    const { reaction } = this.props;
+    const {
+      reaction,
+      onInputChange,
+      isInteractionReaction,
+      inlineInteractionField,
+    } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
+
+    if (isInteractionReaction) {
+      // Interaction reactions use a single incubation-time input instead of
+      // the start/stop/duration workflow used for standard reactions.
+      const interactionField = (
+        <Form.Group>
+          <Form.Label>Time (incubation)</Form.Label>
+          <InputGroup>
+            <Form.Control
+              disabled={!permitOn(reaction) || reaction.gaseous}
+              type="text"
+              value={reaction.durationDisplay.dispValue || ''}
+              ref={this.refDuration}
+              placeholder="Input duration..."
+              onChange={(event) => this.handleDurationChange(event)}
+            />
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
+            >
+              <Button
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                variant="primary"
+                onClick={() => this.changeDurationUnit()}
+              >
+                {reaction.durationUnit}
+              </Button>
+            </OverlayTrigger>
+          </InputGroup>
+        </Form.Group>
+      );
+
+      if (inlineInteractionField) {
+        return interactionField;
+      }
+
+      return (
+        <Row className="mb-3">
+          <Col md={3} sm={6}>
+            {interactionField}
+          </Col>
+        </Row>
+      );
+    }
+
     return (
-      <Row className='mb-3'>
+      <Row className="mb-3">
         <Col md={3} sm={6}>
           <Form.Group>
             <Form.Label>Start</Form.Label>
@@ -55,11 +105,15 @@ export default class ReactionDetailsDuration extends Component {
                 value={reaction.timestamp_start || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_start') || reaction.gaseous}
                 placeholder={timePlaceholder}
-                onChange={event => this.props.onInputChange('timestampStart', event)}
+                onChange={event => onInputChange('timestampStart', event)}
               />
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStart')}>
-                  <i className="fa fa-clock-o" aria-hidden="true" />
-                </Button>
+              <Button
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                variant="light"
+                onClick={() => this.setCurrentTime('timestampStart')}
+              >
+                <i className="fa fa-clock-o" aria-hidden="true" />
+              </Button>
             </InputGroup>
           </Form.Group>
         </Col>
@@ -72,7 +126,7 @@ export default class ReactionDetailsDuration extends Component {
                 value={reaction.timestamp_stop || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_stop') || reaction.gaseous}
                 placeholder={timePlaceholder}
-                onChange={event => this.props.onInputChange('timestampStop', event)}
+                onChange={event => onInputChange('timestampStop', event)}
               />
               <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStop')}>
                 <i className="fa fa-clock-o" aria-hidden="true" />
@@ -85,18 +139,13 @@ export default class ReactionDetailsDuration extends Component {
             <Form.Label>Duration</Form.Label>
             <InputGroup>
               <Form.Control type="text" value={durationCalc || ''} disabled placeholder="Duration" />
-              <OverlayTrigger
+              <CopyButton
+                text={durationCalc || ' '}
                 placement="bottom"
-                overlay={<Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>}
-              >
-                <Button
-                  disabled={!permitOn(reaction) || reaction.gaseous}
-                  variant="light"
-                  onClick={() => copyToClipboard(durationCalc || ' ')}
-                >
-                  <i className="fa fa-clipboard" aria-hidden="true" />
-                </Button>
-              </OverlayTrigger>
+                variant="light"
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                tooltipId="copy_duration_to_clipboard"
+              />
               <OverlayTrigger
                 placement="bottom"
                 overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
@@ -132,10 +181,14 @@ export default class ReactionDetailsDuration extends Component {
 
 ReactionDetailsDuration.propTypes = {
   reaction: PropTypes.object,
-  onInputChange: PropTypes.func
+  onInputChange: PropTypes.func,
+  isInteractionReaction: PropTypes.bool,
+  inlineInteractionField: PropTypes.bool,
 };
 
 ReactionDetailsDuration.defaultProps = {
   reaction: {},
-  onInputChange: () => {}
+  onInputChange: () => {},
+  isInteractionReaction: false,
+  inlineInteractionField: false,
 };

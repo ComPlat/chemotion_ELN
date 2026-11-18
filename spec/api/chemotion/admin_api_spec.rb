@@ -30,6 +30,22 @@ RSpec.describe Chemotion::AdminAPI do
     end
   end
 
+  describe 'GET /api/v1/admin/jobs/queue_task' do
+    it 'queues a known task' do
+      allow(AdminJob).to receive(:perform_later)
+      get '/api/v1/admin/jobs/queue_task', params: { task: 'rerender_reactions' }
+      expect(response).to have_http_status(:no_content)
+      expect(AdminJob).to have_received(:perform_later).with('rerender_reactions')
+    end
+
+    it 'rejects an unknown task' do
+      allow(AdminJob).to receive(:perform_later)
+      get '/api/v1/admin/jobs/queue_task', params: { task: 'install_ketcher2' }
+      expect(response).to have_http_status(:bad_request)
+      expect(AdminJob).not_to have_received(:perform_later)
+    end
+  end
+
   describe 'GET /api/v1/admin/listLocalCollector/all' do
     before do
       get '/api/v1/admin/listLocalCollector/all'
@@ -104,6 +120,80 @@ RSpec.describe Chemotion::AdminAPI do
       it 'returns a response with an array of people' do
         expect(parsed_json_response['users']).to include(person_obj)
       end
+    end
+  end
+
+  describe 'POST /api/v1/admin/olsEnableDisable' do
+    before do
+      # Isolate the public-file writes; we only assert the HTTP contract here.
+      allow(OlsTerm).to receive(:write_public_file)
+      post '/api/v1/admin/olsEnableDisable/', params: { owl_name: 'chebi' }
+    end
+
+    # The fetcher (AdminFetcher.olsTermDisableEnable) treats success as status 204;
+    # this pins that contract so a status change can't silently break the admin UI.
+    it 'returns 204 No Content on success' do
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe 'PUT /api/v1/admin/group_device/update/:id (action: NodeAdm)' do
+    let!(:group_admin) { create(:person) }
+    let!(:second_admin) { create(:person) }
+    let!(:member) { create(:person) }
+    let!(:group) { create(:group, admins: [group_admin], users: [group_admin, member]) }
+
+    def execute_request(admin_id:, set_admin:)
+      put "/api/v1/admin/group_device/update/#{group.id}", params: {
+        action: 'NodeAdm', rootType: 'Group', actionType: 'Adm',
+        admin_id: admin_id, set_admin: set_admin
+      }
+    end
+
+    it 'promotes a person to group admin' do
+      execute_request(admin_id: member.id, set_admin: true)
+      expect(group.reload.admins.pluck(:id)).to include(member.id)
+    end
+
+    it 'demotes a co-admin' do
+      UsersAdmin.create!(user_id: group.id, admin_id: second_admin.id)
+
+      execute_request(admin_id: second_admin.id, set_admin: false)
+
+      expect(group.reload.admins.pluck(:id)).not_to include(second_admin.id)
+      expect(group.reload.admins.pluck(:id)).to include(group_admin.id)
+    end
+
+    # Regression: this action predates GroupAPI's last_admin? guard (#3398) and had no
+    # protection of its own, so a System Admin could demote a group's sole admin here.
+    it 'refuses to demote the sole admin with 422' do
+      execute_request(admin_id: group_admin.id, set_admin: false)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(group.reload.admins.pluck(:id)).to include(group_admin.id)
+    end
+  end
+
+  describe 'PUT /api/v1/admin/group_device/update/:id (action: NodeDel)' do
+    let!(:group_admin) { create(:person) }
+    let!(:member) { create(:person) }
+    let!(:group) { create(:group, admins: [group_admin, member], users: [group_admin, member]) }
+
+    def execute_request(rm_users:)
+      put "/api/v1/admin/group_device/update/#{group.id}", params: {
+        action: 'NodeDel', rootType: 'Group', actionType: 'Person', rm_users: rm_users
+      }
+    end
+
+    # Regression: this action used to also strip the target's admin relationship as a
+    # side effect of removing membership, contradicting the invariant that group-admin
+    # and group-member are independent (an admin who is also a member must keep their
+    # admin role after being removed as a member here).
+    it 'removes the membership but leaves the admin relationship intact' do
+      execute_request(rm_users: [member.id])
+
+      expect(group.reload.users.pluck(:id)).not_to include(member.id)
+      expect(group.reload.admins.pluck(:id)).to include(member.id)
     end
   end
 end

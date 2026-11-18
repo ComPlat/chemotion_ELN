@@ -78,6 +78,25 @@ describe SequenceBasedMacromolecule do
     end
   end
 
+  describe '#used_by_other_users?' do
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:user) { create(:person) }
+    let(:other_user) { create(:person) }
+
+    it 'is false while only the given user has samples of it' do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user)
+
+      expect(sbmm.used_by_other_users?(user)).to be false
+    end
+
+    it 'is true once another user has a sample of it' do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user)
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: other_user)
+
+      expect(sbmm.used_by_other_users?(user)).to be true
+    end
+  end
+
   describe '#assign_attributes' do
     it 'recursively assigns attributes to PTM/PSM' do
       sbmm = create(:modified_uniprot_sbmm)

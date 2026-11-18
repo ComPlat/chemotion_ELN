@@ -1,60 +1,37 @@
-import 'whatwg-fetch';
-import { ThirdPartyAppServices } from 'src/endpoints/ApiServices';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
-const { TPA_ENDPOINT } = ThirdPartyAppServices;
+const TPA_ENDPOINT = '/api/v1/third_party_apps';
 const TPA_ENDPOINT_ADMIN = `${TPA_ENDPOINT}/admin`;
 
 export default class ThirdPartyAppFetcher {
   static fetchThirdPartyApps(id = null) {
     const url = id ? `${TPA_ENDPOINT}/${id}` : TPA_ENDPOINT;
-    return fetch(url, {
-      credentials: 'same-origin'
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(url);
   }
 
-  static createOrUpdateThirdPartyApp(id, name, url, file_types) {
+  static createOrUpdateThirdPartyApp(id, name, url, fileTypes) {
     const idPath = id ? `/${id}` : '';
-    return fetch(`${TPA_ENDPOINT_ADMIN}${idPath}`, {
-      credentials: 'same-origin',
-      method: id ? 'PUT' : 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name, url, file_types })
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const path = `${TPA_ENDPOINT_ADMIN}${idPath}`;
+    // eslint-disable-next-line camelcase
+    const body = { name, url, file_types: fileTypes };
+
+    if (id) { return ApiClient.putJson(path, { body }); }
+    return ApiClient.postJson(path, { body });
   }
 
   static deleteThirdPartyApp(id) {
-    return fetch(`${TPA_ENDPOINT_ADMIN}/${id}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.deleteRequest(`${TPA_ENDPOINT_ADMIN}/${id}`);
   }
 
   static fetchAttachmentToken(attID, appID) {
     const queryParams = new URLSearchParams({ attID, appID }).toString();
     const url = `${TPA_ENDPOINT}/token?${queryParams}`;
-    return fetch(url, {
-      credentials: 'same-origin'
-    }).then((response) => response.json())
-
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(url);
   }
 
   static getHandlerUrl(attID, type) {
     const queryParams = new URLSearchParams({ attID, type }).toString();
     const url = `${TPA_ENDPOINT}/url?${queryParams}`;
-    return fetch(url, {
-      credentials: 'same-origin'
-    }).then((response) => response.json())
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(url);
   }
 }

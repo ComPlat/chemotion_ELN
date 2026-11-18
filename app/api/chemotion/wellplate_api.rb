@@ -10,6 +10,24 @@ module Chemotion
     helpers ProfileHelpers
     helpers UserLabelHelpers
 
+    rescue_from Usecases::Wellplates::Errors::ResizeNotAllowedError,
+                Usecases::Wellplates::Errors::InvalidDimensionsError do |error|
+      error!(error.message, 422)
+    end
+
+    # Wellplate.find in the before blocks below would otherwise surface as a 500.
+    # Scoped to the wellplate itself on purpose: a RecordNotFound raised deeper in
+    # (User.find in Update, Well.find in WellplateUpdater, the collection lookup in
+    # Create) is a genuine fault, so it is deliberately not answered here. Re-raising
+    # takes it out of Grape's error middleware and leaves it to Rails, which keeps it
+    # visible to error reporting rather than reporting a tidy 404 as if the wellplate
+    # were simply missing.
+    rescue_from ActiveRecord::RecordNotFound do |error|
+      raise error unless error.model == 'Wellplate'
+
+      error!('Resource not found', 404)
+    end
+
     resource :wellplates do
       namespace :bulk do
         desc 'Bulk create wellplates'
@@ -50,7 +68,7 @@ module Chemotion
         end
       end
 
-      desc 'Return serialized wellplates'
+      desc "Return serialized wellplates. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -63,17 +81,8 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id]).wellplates
-                  rescue ActiveRecord::RecordNotFound
-                    Wellplate.none
-                  end
-                else
-                  # All collection of current_user
-                  Wellplate.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('wellplates.created_at DESC')
+        resolved_collection, scope = collection_scope_for(params[:collection_id], Wellplate, :wellplates)
+        scope = scope.order('wellplates.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -89,11 +98,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         wellplates = paginate(scope).map do |wellplate|
           Entities::WellplateEntity.represent(
             wellplate,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 
@@ -105,18 +118,18 @@ module Chemotion
         requires :id, type: Integer, desc: 'Wellplate id'
       end
       route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).read?
-        end
-
         get do
           wellplate = Wellplate.find(params[:id])
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+          policy = ElementPolicy.new(current_user, wellplate)
+          error!('401 Unauthorized', 401) unless policy.read?
 
           {
-            wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
+            wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels, policy: policy),
             attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
           }
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
       end
 
@@ -143,15 +156,20 @@ module Chemotion
         optional :user_labels, type: Array
         optional :readout_titles, type: Array
         requires :container, type: Hash
+        # width/height are deliberately absent: the grid is resized only through
+        # PUT /api/v1/wellplates/resize/:id, which reconciles the well rows and
+        # refuses to drop wells that hold data. Accepting them here would let a
+        # stale tab silently revert someone else's resize.
         optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
-          update_datamodel(params[:container])
+          update_datamodel(params[:container], element: Wellplate.find(params[:id]), creating: false)
           params.delete(:container)
 
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false),
@@ -166,7 +184,9 @@ module Chemotion
             with: Entities::WellplateEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
             root: :wellplate,
+            policy: @element_policy,
           )
+          present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
         end
       end
 
@@ -178,8 +198,8 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
-        optional :height, type: Integer, default: 8, values: 1..100
-        optional :width, type: Integer, default: 12, values: 1..100
+        optional :height, type: Integer, default: 8, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+        optional :width, type: Integer, default: 12, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
         optional :segments, type: Array, desc: 'Segments'
         optional :user_labels, type: Array
       end
@@ -187,7 +207,7 @@ module Chemotion
         container = params[:container]
         params.delete(:container)
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user).execute!
-        wellplate.container = update_datamodel(container)
+        wellplate.container = update_datamodel(container, element: wellplate, creating: true)
 
         wellplate.save!
         update_element_labels(wellplate, params[:user_labels], current_user.id)
@@ -201,7 +221,9 @@ module Chemotion
           with: Entities::WellplateEntity,
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
           root: :wellplate,
+          policy: ElementPolicy.new(current_user, wellplate),
         )
+        present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
       end
 
       namespace :subwellplates do
@@ -209,12 +231,20 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: 'Selected wellplates from the UI'
         end
+
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
-          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate],
-                                                                                           CollectionsWellplate, col_id)
-          Wellplate.where(id: wellplate_ids).each do |wellplate|
+          wellplate_ids = Wellplate.for_user(current_user.id)
+                                   .for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
+          wellplates = Wellplate.where(id: wellplate_ids)
+          # Splitting adds a new subwellplate to the target collection, so authorize that collection
+          # directly rather than via ElementsPolicy#share_all? (which takes MAX(permission_level)
+          # across every collection a wellplate belongs to, wrongly allowing a split into a read-only
+          # currentCollectionId when the wellplate is also shared/owned elsewhere with :add_elements).
+          error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
+
+          wellplates.each do |wellplate|
             wellplate.create_subwellplate current_user, col_id, true
           end
 
@@ -231,8 +261,8 @@ module Chemotion
         end
         route_param :wellplate_id do
           before do
-            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
-                                                                     Wellplate.find(params[:wellplate_id])).update?
+            @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id]))
+            error!('401 Unauthorized', 401) unless @element_policy.update?
           end
 
           put do
@@ -248,12 +278,49 @@ module Chemotion
                   wellplate,
                   detail_levels: ElementDetailLevelCalculator.new(user: current_user,
                                                                   element: wellplate).detail_levels,
+                  policy: @element_policy,
                 ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
+                molarity_discarded: import.molarity_discarded,
               }
             rescue StandardError => e
               error!(e, 500)
             end
+          end
+        end
+      end
+
+      namespace :resize do
+        desc 'Change the grid dimensions of a wellplate'
+        # Declared inside this namespace on purpose: the params block preceding
+        # the PUT route_param above is namespace-scoped and would otherwise
+        # impose `requires :container` on this route too.
+        params do
+          requires :id, type: Integer, desc: 'Wellplate id'
+          requires :width, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+          requires :height, type: Integer, values: 0..Usecases::Wellplates::Dimensions::MAX_DIMENSION
+        end
+        route_param :id do
+          before do
+            @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:id]))
+            error!('401 Unauthorized', 401) unless @element_policy.update?
+          end
+
+          put do
+            wellplate = Usecases::Wellplates::Resize.new(
+              wellplate: Wellplate.find(params[:id]),
+              width: params[:width],
+              height: params[:height],
+            ).execute!
+
+            present(
+              wellplate,
+              with: Entities::WellplateEntity,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+              root: :wellplate,
+              policy: @element_policy,
+            )
+            present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
           end
         end
       end

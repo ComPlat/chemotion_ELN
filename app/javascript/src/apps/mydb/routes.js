@@ -88,22 +88,6 @@ const routes = {
     },
     '/:sequence_based_macromolecule_sampleID': 'showOrNew'
   },
-  '/devicesAnalysis': {
-    target: {
-      create: routesUtils.devicesAnalysisCreate,
-      show: routesUtils.devicesAnalysisShow
-    },
-    '/new/:deviceId/:analysisType': 'create',
-    '/:analysisId': 'show',
-  },
-  '/device': {
-    target: {
-      show: routesUtils.deviceShow,
-      showDeviceManagement: routesUtils.deviceShowDeviceManagement,
-    },
-    '/management': 'showDeviceManagement',
-    '/:deviceId': 'show',
-  },
   '/research_plan': {
     target: {
       showOrNew: routesUtils.researchPlanShowOrNew

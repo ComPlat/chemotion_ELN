@@ -1,10 +1,12 @@
 .selection-actions {
   container-name: selection-actions;
   container-type: inline-size;
+  flex-wrap: wrap;
 }
 
 .selection-action-text-label {
   display: none;
+  white-space: nowrap;
 }
 
 @container selection-actions (width > 43rem) {

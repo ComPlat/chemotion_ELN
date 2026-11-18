@@ -27,23 +27,22 @@ export default class DelayedJobs extends Component {
   }
 
   handleRestartFetch(id) {
-    AdminFetcher.restartJob({ id })
+    AdminFetcher.restartJob(id)
       .then(() => this.handleFetchJob());
   }
 
   renderShowBtn(job) {
-    if (true) {
-      return (
-        <OverlayTrigger placement="top" overlay={tipRestartJob}>
-          <Button
-            size="sm"
-            variant="success"
-            onClick={() => this.handleRestartFetch(job.id)}
-          >
-            <i className="fa fa-play" aria-hidden="true" />
-          </Button>
-        </OverlayTrigger>);
-    }
+    return (
+      <OverlayTrigger placement="top" overlay={tipRestartJob}>
+        <Button
+          size="sm"
+          variant="success"
+          onClick={() => this.handleRestartFetch(job.id)}
+        >
+          <i className="fa fa-play" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    );
   }
 
   render() {

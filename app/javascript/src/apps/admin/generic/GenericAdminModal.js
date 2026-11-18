@@ -20,12 +20,13 @@ export default class GenericAdminModal extends Component {
         key={`_auth_designer_button_${ALL_TYPES[i]}`}
         size="sm"
         variant={p ? 'warning' : 'light'}
-        className='me-2'
-        onClick={() =>
-          this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
-        }
+        className="me-2"
+        onClick={() => this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)}
       >
-        {p ? 'Revoke' : 'Grant'} Generic {ALL_TYPES[i]}
+        {p ? 'Revoke' : 'Grant'}
+        {' '}
+        Generic
+        {ALL_TYPES[i]}
       </Button>
     ));
   }
@@ -33,8 +34,12 @@ export default class GenericAdminModal extends Component {
   renderDescription(_params) {
     const params = _params || [];
     return params.map((p, i) => (
-      <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-3 my-2 align-items-center'>
-        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic
+      <li key={`_description_${ALL_TYPES[i]}`} className=" fs-6 ms-3 my-2 align-items-center">
+        Currently
+        {' '}
+        {p ? '' : 'NOT'}
+        {' '}
+        acting as the Designer of the Generic
         {ALL_TYPES[i]}
       </li>
     ));
@@ -43,7 +48,7 @@ export default class GenericAdminModal extends Component {
   handleAuthAdmin(user, type, value) {
     const { fnCb } = this.props;
     const params = {
-      user_id: user.id,
+      userId: user.id,
       auth_generic_admin: {},
     };
     params.auth_generic_admin[type] = !value;

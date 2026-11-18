@@ -22,7 +22,7 @@ describe 'Collection management' do
       new_collection.set(collection_name)
 
       # find update button to save changes
-      find_by_id('save-collections-button').click
+      click_button('Save')
 
       expect(page).to have_content(collection_name)
       page.refresh
@@ -47,7 +47,7 @@ describe 'Collection management' do
       expect(page).to have_content(collection_name)
 
       find_by_id("delete-collection-button_#{collection.id}").click
-      find_by_id('save-collections-button').click
+      click_button('Save')
 
       # except after deletion
       expect(page).not_to have_content(collection_name)
@@ -74,7 +74,7 @@ describe 'Collection management' do
       label_input.click
       label_input.set(new_collection_name)
 
-      find_by_id('save-collections-button').click
+      click_button('Save')
       find_by_id('collection-management-button').click
 
       collection_entry = find_by_id("tree-id-#{new_collection_name}")

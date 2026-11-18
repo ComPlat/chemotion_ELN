@@ -4,34 +4,7 @@ import { Form } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
-
-function filterUIState(uiState) {
-  const {
-    currentCollection,
-    sample,
-    reaction,
-    wellplate,
-  } = uiState;
-
-  return {
-    sample: {
-      checkedIds: sample.checkedIds.toArray(),
-      uncheckedIds: sample.uncheckedIds.toArray(),
-      checkedAll: sample.checkedAll,
-    },
-    reaction: {
-      checkedIds: reaction.checkedIds.toArray(),
-      uncheckedIds: reaction.uncheckedIds.toArray(),
-      checkedAll: reaction.checkedAll,
-    },
-    wellplate: {
-      checkedIds: wellplate.checkedIds.toArray(),
-      uncheckedIds: wellplate.uncheckedIds.toArray(),
-      checkedAll: wellplate.checkedAll,
-    },
-    currentCollection: currentCollection.id,
-  };
-}
+import { filterUIState } from 'src/apps/mydb/elements/list/selectionActions/ModalExport';
 
 function exportSelections(uiState, exportType) {
   ReportsFetcher.createDownloadFile({

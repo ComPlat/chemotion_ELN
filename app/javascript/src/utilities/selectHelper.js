@@ -18,6 +18,7 @@ const selectUserOptionFormater = ({ data = {}, withType = false, currentUserId =
     value: user.id,
     name: user.name,
     initials: user.initials,
+    type: user.type,
     label: buildLabel(user, withType),
   }));
 };

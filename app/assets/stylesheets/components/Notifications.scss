@@ -1,0 +1,59 @@
+.notification {
+  @extend .m-0;
+  @extend .p-0;
+}
+
+.notification div[role="status"] {
+  @extend .p-0;
+  @extend .m-0;
+  @extend .d-block;
+
+  // Allow this flex item to shrink, and if the text is still too long, allow the browser to break the text anywhere necessary.
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// The title carries a sender name and a timestamp, which can be just as long as the message.
+.notification-headline strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notification-headline {
+  @extend .d-flex;
+  @extend .align-items-start;
+  @extend .w-100;
+  @extend .p-2;
+  &.info {
+    background-color: var(--bs-info-border-subtle);
+  }
+  &.error {
+    background-color: var(--bs-danger-border-subtle);
+  }
+  &.success {
+    background-color: var(--bs-success-border-subtle);
+  }
+  &.warning {
+    background-color: var(--bs-warning-border-subtle);
+  }
+}
+
+.notification-headline button:hover {
+  @extend .surface-base;
+}
+
+.notification-body {
+  @extend .p-3;
+  // Long unbreakable tokens (e.g. an import-log URL made only of underscores and
+  // digits) have no soft break opportunity, so force them to wrap rather than
+  // overflow the toast's maxWidth. overflow-wrap is inherited, so it reaches the
+  // message text.
+  overflow-wrap: anywhere;
+
+  // The message sits in a flex row as div[role="status"]; a flex item defaults to
+  // min-width: auto and refuses to shrink below its widest content, pushing past
+  // the 420px cap. min-width: 0 lets it shrink so the text wraps inside the toast.
+  .d-flex > div[role="status"] {
+    min-width: 0;
+  }
+}

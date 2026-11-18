@@ -43,6 +43,18 @@ require 'rails_helper'
 RSpec.describe Attachment do
   let(:attachment) { create(:attachment) }
 
+  describe '#previewable?' do
+    it 'is true for images and PDFs' do
+      expect(create(:attachment, :with_png_image)).to be_previewable
+      expect(create(:attachment, :with_pdf)).to be_previewable
+    end
+
+    it 'is false for other files, even with a thumbnail' do
+      attachment.update_column(:thumb, true) # rubocop:disable Rails/SkipsModelValidations
+      expect(attachment).not_to be_previewable
+    end
+  end
+
   describe '#extname' do
     it 'returns filename extension' do
       expect(attachment.extname).to eq('.txt')
@@ -52,6 +64,41 @@ RSpec.describe Attachment do
   describe '#read_file' do
     it 'returns content of file' do
       expect(attachment.read_file).to eq("Hello world\n")
+    end
+  end
+
+  describe '#attach_file' do
+    let(:attachment) { create(:attachment, file_path: nil, file_data: nil) }
+
+    it 'closes the upload IO after storing the file' do
+      attachment.file_path = Rails.root.join('spec/fixtures/upload.txt')
+      upload_io = nil
+      allow(attachment.attachment_attacher).to receive(:attach).and_wrap_original do |attach, io|
+        upload_io = io
+        attach.call(io)
+      end
+
+      attachment.save!
+
+      expect(upload_io).to be_closed
+      expect(attachment.read_file).to eq("Hello world\n")
+    ensure
+      upload_io&.close
+    end
+
+    it 'closes the upload IO when storing the file raises' do
+      attachment.file_path = Rails.root.join('spec/fixtures/upload.txt')
+      upload_io = nil
+      allow(attachment.attachment_attacher).to receive(:attach) do |io|
+        upload_io = io
+        raise IOError, 'Upload failed'
+      end
+
+      expect { attachment.save! }.to raise_error(IOError, 'Upload failed')
+
+      expect(upload_io).to be_closed
+    ensure
+      upload_io&.close
     end
   end
 
@@ -75,6 +122,31 @@ RSpec.describe Attachment do
     it 'returns the absolute path of file' do
       expected_path = Rails.root.join("uploads/test/1/#{attachment.identifier}").to_s
       expect(attachment.abs_path).to eq(expected_path)
+    end
+  end
+
+  describe 'ELEMENT_ATTACHABLE_TYPES' do
+    # AttachableAPI authorizes these through ElementPolicy, which needs a collected element.
+    it 'lists only element classes with collections' do
+      described_class::ELEMENT_ATTACHABLE_TYPES.each do |type|
+        expect(type.safe_constantize.reflect_on_association(:collections)).to be_present, type
+      end
+    end
+  end
+
+  describe '#root_element' do
+    it 'is the attachable itself for a directly linked element' do
+      research_plan = create(:research_plan)
+      expect(described_class.new(attachable: research_plan).root_element).to eq(research_plan)
+    end
+
+    it 'is the element a container belongs to' do
+      sample = create(:sample)
+      expect(described_class.new(attachable: create(:container, containable: sample)).root_element).to eq(sample)
+    end
+
+    it 'is nil for an unsorted inbox attachment' do
+      expect(described_class.new(attachable_type: 'Container').root_element).to be_nil
     end
   end
 
@@ -292,6 +364,44 @@ RSpec.describe Attachment do
       it 'generates a checksum of the file content' do
         expect(attachment.checksum).to be_present
       end
+
+      # Shrine's after_commit `persist` saves the record a second time, which must not
+      # attach the file again.
+      context 'when the file is attached' do
+        let(:store) { Shrine.storages[:store] }
+        let(:uploaded_ids) { [] }
+
+        before do
+          allow(store).to receive(:upload).and_wrap_original do |upload, io, id, **options|
+            uploaded_ids << id
+            upload.call(io, id, **options)
+          end
+        end
+
+        it 'stores the original file once' do
+          att = create(:attachment, :with_image)
+          expect(uploaded_ids.count(att.attachment.id)).to eq 1
+        end
+
+        it 'builds the derivatives once' do
+          expect_any_instance_of(AttachmentUploader::Attacher) # rubocop:disable RSpec/AnyInstance
+            .to receive(:create_derivatives).once.and_call_original
+          expect(create(:attachment, :with_image).read_thumbnail).not_to be_nil
+        end
+
+        it 'clears file_path' do
+          expect(create(:attachment, :with_image).file_path).to be_nil
+        end
+
+        it 'leaves no open handle on the stored file' do
+          GC.disable
+          att = create(:attachment, :with_image)
+          stored = store.path(att.attachment.id).to_s
+          expect(ObjectSpace.each_object(File).count { |f| !f.closed? && f.path == stored }).to eq 0
+        ensure
+          GC.enable
+        end
+      end
     end
 
     it 'determines the content type of the file' do
@@ -444,6 +554,47 @@ RSpec.describe Attachment do
         end
       end
 
+      context 'when aasm_state is backup' do
+        it 'returns nil' do
+          attachment.aasm_state = :backup
+
+          expect(attachment.require_peaks_generation?).to be_nil
+        end
+      end
+
+      context 'when aasm_state is done' do
+        it 'returns nil' do
+          attachment.aasm_state = :done
+
+          expect(attachment.require_peaks_generation?).to be_nil
+        end
+      end
+
+      # Since #3494 generate_att can resolve a *reused* row that is already in :backup or
+      # :done. No AASM event fires for it in the dispatch block, so the trailing save!
+      # re-enters this callback with that state intact. Without the early return a peak row
+      # reaches generate_img_only, whose set_force_peaked is illegal from both states - and
+      # whose rescue calls set_failure, which is illegal from them too, so the rescue itself
+      # raises and takes the save (and the enclosing transaction) down with it.
+      %i[backup done].each do |reused_state|
+        context "when a .peak. row is reused in the #{reused_state} state" do
+          before do
+            attachment.filename = 'whatever.peak.jdx'
+            attachment.aasm_state = reused_state
+          end
+
+          it 'does not generate an image' do
+            expect(attachment).not_to receive(:generate_img_only)
+
+            attachment.require_peaks_generation?
+          end
+
+          it 'does not raise an illegal AASM transition' do
+            expect { attachment.require_peaks_generation? }.not_to raise_error
+          end
+        end
+      end
+
       context 'when filename has no spectra file extension' do
         it 'returns nil' do
           expect(attachment.require_peaks_generation?).to be_nil
@@ -582,6 +733,278 @@ RSpec.describe Attachment do
 
         it 'sets the new attachment\'s aasm_state to edited' do
           expect(new_attachment.edited?).to be true
+        end
+      end
+
+      context 'when the dataset already holds a matching .edit.jdx attachment in the same lineage' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:existing_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the existing attachment instead of minting a duplicate row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns the existing attachment, updated in place' do
+          expect(new_attachment.id).to eq existing_edit.id
+        end
+
+        it "replaces the reused row's stored content, not just its identity" do
+          tempfile.write('new-jcamp-content')
+          tempfile.flush
+          original_checksum = existing_edit.checksum
+
+          expect(new_attachment.checksum).not_to eq(original_checksum)
+          expect(new_attachment.read_file).to eq('new-jcamp-content')
+        end
+
+        it 'uploads the new content exactly once, not once per internal save' do
+          # existing_edit (let!) is already created and uploaded by this point, so this
+          # only sees calls made during generate_att itself: the initial att.save! should
+          # upload once; the AASM state-transition save and the final save (for att.thumb)
+          # must not re-run the full attach/create_derivatives/update_column pipeline.
+          expect_any_instance_of(AttachmentUploader::Attacher).to receive(:attach).once.and_call_original # rubocop:disable RSpec/AnyInstance
+
+          new_attachment
+        end
+      end
+
+      it 'leaves the reuse guard cleared, so later saves still generate peaks' do
+        # reattaching_derivative suppresses require_peaks_generation? for the one save it
+        # guards. It is a plain attr_accessor, so if generate_att leaves it set, every
+        # later save on the same object skips that callback too - including the final
+        # save! that a freshly derived jcamp relies on to leave :queueing and get its peak
+        # table. A curve stuck in :queueing is filtered out of the viewer, which reads as
+        # "the spectrum will not open".
+        expect(new_attachment.reattaching_derivative).to be_falsey
+      end
+
+      context 'when self is already the canonical row being re-edited (edited -> edited)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the edited state' do
+          expect(new_attachment.edited?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row being re-peaked (peaked -> peaked)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.peak.jdx', aasm_state: 'peaked') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'peak', false, 'jdx') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the peaked state' do
+          expect(new_attachment.peaked?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row for a re-generated csv (csv -> csv)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.edit.csv', aasm_state: 'csv') }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', false, 'csv') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the csv state' do
+          expect(new_attachment.csv?).to be true
+        end
+      end
+
+      context 'when self is already the canonical row for a re-generated nmrium (nmrium -> nmrium)' do
+        let!(:attachment) { create(:attachment, filename: 'spectra_file.nmrium', aasm_state: 'nmrium') }
+        let(:new_attachment) { attachment.generate_att(tempfile, '', false, 'nmrium') }
+
+        it 'reuses self in place instead of creating a new row' do
+          expect { new_attachment }.not_to change(described_class, :count)
+          expect(new_attachment.id).to eq attachment.id
+        end
+
+        it 'leaves the row in the nmrium state' do
+          expect(new_attachment.nmrium?).to be true
+        end
+      end
+
+      context 'when the same lineage holds duplicate rows for the target filename (pre-fix corruption)' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:older_duplicate) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: attachment
+          )
+        end
+        let!(:newer_duplicate) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the most recently created duplicate, matching what the frontend last showed' do
+          expect(new_attachment.id).to eq newer_duplicate.id
+          expect(new_attachment.id).not_to eq older_duplicate.id
+        end
+      end
+
+      context 'when the matching attachment in the same lineage has not been processed yet' do
+        let(:analysis_container) { create(:container, container_type: 'analysis') }
+        let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:attachment) { create(:attachment, :with_spectra_file, attachable: dataset_container) }
+        let!(:queueing_edit) do
+          # Created edited (a state require_peaks_generation? always short-circuits on, via
+          # peaked?/edited?) and only afterwards flipped to queueing via update_column, which
+          # bypasses callbacks entirely - unlike passing aasm_state: 'queueing' straight to
+          # create, which risks require_peaks_generation? itself firing mid-setup in this
+          # analysis/dataset hierarchy (belong_to_analysis? true) and kicking off real
+          # chem-spectra processing for this fixture, independent of generate_att below.
+          att = create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: dataset_container,
+                         aasm_state: 'edited', parent: attachment
+          )
+          att.update_column(:aasm_state, 'queueing') # rubocop:disable Rails/SkipsModelValidations
+          att
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not process the stale pre-save content instead of the new one' do
+          expect(Chemotion::Jcamp::CreateImg).not_to receive(:spectrum_img_gene)
+          expect(new_attachment.id).to eq queueing_edit.id
+        end
+      end
+
+      context 'when a reused row is currently parented under a different lineage member' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:peak_node) do
+          create(
+            :attachment, filename: 'spectra_file.peak.jdx', attachable: attachment.attachable,
+                         aasm_state: 'peaked', parent: attachment
+          )
+        end
+        let!(:edit_node) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: peak_node
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the row and re-parents it onto self' do
+          expect(new_attachment.id).to eq edit_node.id
+          edit_node.reload
+
+          expect(edit_node.parent_id).to eq attachment.id
+        end
+
+        it 'makes the reused row discoverable via children_of(self) again' do
+          new_attachment
+
+          expect(described_class.children_of(attachment.id).pluck(:id)).to include(edit_node.id)
+        end
+      end
+
+      context 'when the resolved match is an ancestor of self, not a descendant' do
+        # An nmrium upload whose edited jcamp child derives, on a re-edit that also produces
+        # an nmrium output, a filename identical to the root's own ('<base>.nmrium') - the
+        # lineage lookup then resolves att to that ancestor, not a descendant of self.
+        let!(:nmrium_root) { create(:attachment, filename: 'spectra_file.nmrium', aasm_state: 'nmrium') }
+        let!(:attachment) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: nmrium_root.attachable,
+                         aasm_state: 'edited', parent: nmrium_root
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, '', false, 'nmrium') }
+
+        it 'reuses the ancestor without raising or reparenting it onto its own descendant' do
+          expect { new_attachment }.not_to raise_error
+          expect(new_attachment.id).to eq nmrium_root.id
+          expect(new_attachment.parent_id).to be_nil
+        end
+      end
+
+      context 'when a differently-sourced attachment in the same dataset would derive the same filename' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:unrelated_source) do
+          create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+        end
+        let!(:unrelated_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'edited', parent: unrelated_source
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it "does not overwrite the unrelated lineage's attachment" do
+          expect(new_attachment.id).not_to eq unrelated_edit.id
+        end
+
+        it 'creates its own attachment instead' do
+          expect { new_attachment }.to change(described_class, :count).by(1)
+        end
+      end
+
+      context 'when the matching attachment in the same lineage is stuck in a failure state' do
+        let(:attachment) { create(:attachment, :with_spectra_file) }
+        let!(:failed_edit) do
+          create(
+            :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                         aasm_state: 'failure', parent: attachment
+          )
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'reuses the row without raising an invalid transition error' do
+          expect { new_attachment }.not_to raise_error
+          expect(new_attachment.id).to eq failed_edit.id
+        end
+
+        it 'recovers the row to edited instead of leaving it stuck in failure' do
+          expect(new_attachment.edited?).to be true
+        end
+      end
+
+      context 'when attachable is not a Container' do
+        let!(:attachment) { create(:attachment, :attached_to_research_plan, :with_spectra_file) }
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not create or reuse any attachment' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns nil' do
+          expect(new_attachment).to be_nil
+        end
+      end
+
+      context 'when attachable_id is nil despite attachable_type being Container' do
+        let!(:attachment) do
+          create(:attachment, :with_spectra_file, attachable_id: nil, attachable_type: 'Container')
+        end
+        let(:new_attachment) { attachment.generate_att(tempfile, 'edit', true, 'jdx') }
+
+        it 'does not create or reuse any attachment' do
+          expect { new_attachment }.not_to change(described_class, :count)
+        end
+
+        it 'returns nil' do
+          expect(new_attachment).to be_nil
         end
       end
 
@@ -801,6 +1224,315 @@ RSpec.describe Attachment do
 
   describe '#create_process' do
     pending 'not yet implemented'
+  end
+
+  describe '#read_processed_data' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file_lcms.jdx', aasm_state: 'idle') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'reuses the same curve row on a later regenerate instead of minting a duplicate' do
+      tmp1 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+      attachment.send(:read_processed_data, [tmp1], [nil], 'NMR', false)
+
+      expect do
+        attachment.set_regenerating
+        attachment.save!
+        tmp2 = make_tmp_jcamp('spectra_file_lcms_uvvis.dx')
+        attachment.send(:read_processed_data, [tmp2], [nil], 'NMR', true)
+      end.not_to change(described_class, :count)
+    end
+
+    # When a curve's stem resolves to the upload's own name, the lookup must not pick self:
+    # renaming self and handing it to generate_att would overwrite the raw upload's file.
+    it 'derives a new row instead of reusing the upload itself' do
+      tmp = make_tmp_jcamp('spectra_file_lcms.dx')
+      upload_blob = attachment.read_file
+
+      expect do
+        attachment.send(:read_processed_data, [tmp], [nil], 'NMR', false)
+      end.to change(described_class, :count).by(1)
+
+      derived = described_class.where(filename: 'spectra_file_lcms.jdx').where.not(id: attachment.id)
+      expect(derived.map(&:parent_id)).to eq([attachment.id])
+      expect(attachment.read_file).to eq(upload_blob)
+    end
+  end
+
+  describe '#read_bagit_data' do
+    # Unlike create_process's plain (non-bagit) branch, read_bagit_data never
+    # transitioned self out of :queueing/:regenerating - so a bagit archive's own
+    # attachment (e.g. "740.zip") got permanently stuck there after every upload or
+    # Reprocess. :regenerating in particular isn't excluded by
+    # SpectraHelper.js#extractJcampFiles's isApp check, so the stuck .zip (a jcamp-like
+    # extension) got fed to the spectra editor as if it were a JCAMP file instead of
+    # being filtered out, producing garbage (NaN frequency, blank graph) even though
+    # the actual curve attachments it generated were entirely correct.
+    let(:attachment) { create(:attachment, filename: '740.zip', aasm_state: 'regenerating') }
+
+    def make_tmp_jcamp(name)
+      Tempfile.new(name).tap do |t|
+        t.write('##TITLE=x')
+        t.rewind
+        t.define_singleton_method(:original_filename) { name }
+      end
+    end
+
+    it 'transitions self to :done instead of leaving it stuck in :regenerating' do
+      tmp1 = make_tmp_jcamp('740.1_bagit.dx')
+      tmp2 = make_tmp_jcamp('740.2_bagit.dx')
+
+      attachment.send(:read_bagit_data, [tmp1, tmp2], [nil, nil], [nil, nil], 'NMR', true, {})
+
+      expect(attachment.aasm_state).to eq('done')
+    end
+  end
+
+  describe '#set_regenerating' do
+    # A peaked row is a derived curve (or an LCMS jcamp forced to peaked on upload).
+    # Regenerating it on its own would race its root's reprocess, so the event must not
+    # allow it; regenerate_spectrum skips such rows instead of raising.
+    let(:attachment) { create(:attachment, filename: '740.1_bagit.jdx', aasm_state: 'peaked') }
+
+    it 'does not allow a peaked curve to be regenerated independently' do
+      expect(attachment.may_set_regenerating?).to be false
+    end
+  end
+
+  describe '#generate_att concurrency (S9 advisory lock)', :js do
+    # js: true switches DatabaseCleaner to :truncation (see spec/support/database_cleaner.rb)
+    # instead of the suite's default :transaction strategy - a second, independent DB
+    # connection needs to actually see this example's data, which an uncommitted
+    # transaction on the main connection would hide from it.
+    let(:attachment) { create(:attachment, :with_spectra_file) }
+
+    it 'takes a Postgres advisory lock keyed by (attachable_id, meta_filename) for the ' \
+       "transaction's lifetime, so a concurrent generate_att for the same target serializes " \
+       'instead of racing' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        holder_conn.begin_transaction
+        holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+        other_conn = ActiveRecord::Base.connection_pool.checkout
+        begin
+          available = other_conn.select_value(
+            "SELECT pg_try_advisory_xact_lock(hashtext(#{other_conn.quote(lock_key)}))",
+          )
+          expect(available).to be(false)
+        ensure
+          ActiveRecord::Base.connection_pool.checkin(other_conn)
+        end
+      ensure
+        holder_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(holder_conn)
+      end
+
+      fresh_conn = ActiveRecord::Base.connection_pool.checkout
+      begin
+        fresh_conn.begin_transaction
+        available_after_release = fresh_conn.select_value(
+          "SELECT pg_try_advisory_xact_lock(hashtext(#{fresh_conn.quote(lock_key)}))",
+        )
+        expect(available_after_release).to be(true)
+      ensure
+        fresh_conn.rollback_transaction
+        ActiveRecord::Base.connection_pool.checkin(fresh_conn)
+      end
+    end
+
+    it 'blocks generate_att itself on that same key, rather than just an independently computed one' do
+      meta_filename = Chemotion::Jcamp::Gen.filename(attachment.filename_parts, 'edit', 'jdx')
+      lock_key = "Attachment#generate_att:#{attachment.attachable_id}:#{meta_filename}"
+      tmp = Tempfile.new('jcamp').tap do |f|
+        f.write('##TITLE=x')
+        f.rewind
+      end
+
+      holder_conn = ActiveRecord::Base.connection_pool.checkout
+      holder_conn.begin_transaction
+      holder_conn.execute("SELECT pg_advisory_xact_lock(hashtext(#{holder_conn.quote(lock_key)}))")
+
+      thread = Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do
+          attachment.generate_att(tmp, 'edit', true, 'jdx')
+        end
+      end
+
+      # Poll instead of a fixed sleep: give generate_att up to 2s to reach the blocking
+      # DB call and go to sleep waiting on it - that status change happening at all, this
+      # early, is the proof it actually took the lock we're holding, not some other path.
+      blocked = false
+      10.times do
+        blocked = thread.status == 'sleep'
+        break if blocked
+
+        sleep 0.2
+      end
+      expect(blocked).to be(true)
+
+      holder_conn.rollback_transaction
+      ActiveRecord::Base.connection_pool.checkin(holder_conn)
+
+      thread.join(5)
+      expect(thread.status).to be(false)
+      expect(thread.value).to be_a(described_class)
+    end
+  end
+
+  describe '#edit_process' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let(:tmp_jcamp) do
+      Tempfile.new('jcamp').tap do |f|
+        f.write('##TITLE=test')
+        f.rewind
+      end
+    end
+
+    before do
+      # spc_type 'NMR' (neither MS nor CYCLIC VOLTAMMETRY) keeps update_prediction on its
+      # local-only write_infer_to_file path, avoiding any external chem-spectra HTTP call.
+      allow(attachment).to receive(:generate_spectrum_data)
+        .and_return([tmp_jcamp, nil, nil, nil, nil, nil, 'NMR', false])
+    end
+
+    context 'when self is re-edited in place (generate_att reuses self as jcamp_att)' do
+      it 'does not leave self claiming backup in memory' do
+        attachment.send(:edit_process, false, {})
+
+        expect(attachment.aasm_state).to eq('edited')
+      end
+    end
+  end
+
+  describe '#delete_related_edit_peak' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_edit) do
+      create(
+        :attachment, filename: 'spectra_file.edit.jdx', attachable: attachment.attachable,
+                     aasm_state: 'edited', parent: unrelated_source
+      )
+    end
+
+    it "does not delete an unrelated lineage's row that happens to share the same filename stem" do
+      attachment.send(:delete_related_edit_peak, attachment)
+
+      expect(described_class.exists?(unrelated_edit.id)).to be true
+    end
+  end
+
+  describe '#delete_related_imgs' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_img) do
+      create(
+        :attachment, filename: 'spectra_file.edit.png', attachable: attachment.attachable,
+                     aasm_state: 'image', parent: unrelated_source
+      )
+    end
+    let(:kept_img) do
+      create(:attachment, filename: 'spectra_file.edit.png', attachable: attachment.attachable, aasm_state: 'image')
+    end
+
+    it "does not delete an unrelated lineage's image that happens to share the same filename stem" do
+      attachment.send(:delete_related_imgs, kept_img)
+
+      expect(described_class.exists?(unrelated_img.id)).to be true
+    end
+  end
+
+  describe '#delete_related_csv' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_csv) do
+      create(
+        :attachment, filename: 'spectra_file.edit.csv', attachable: attachment.attachable,
+                     aasm_state: 'csv', parent: unrelated_source
+      )
+    end
+    let(:kept_csv) do
+      create(:attachment, filename: 'spectra_file.edit.csv', attachable: attachment.attachable, aasm_state: 'csv')
+    end
+
+    it "does not delete an unrelated lineage's csv that happens to share the same filename stem" do
+      attachment.send(:delete_related_csv, kept_csv)
+
+      expect(described_class.exists?(unrelated_csv.id)).to be true
+    end
+  end
+
+  describe '#delete_related_edited_jcamp' do
+    # An NMRium save "740.nmrium" derives "740.edit.jdx". It replaces the dataset's other edits of
+    # the "740" spectrum - the same name, or a dotted one such as "740.1H.edit.jdx", since the save
+    # is named after the first dot-token only - but must not take every curve of a multi-curve
+    # archive with it just because they share the "740" stem.
+    let(:nmrium) { create(:attachment, filename: '740.nmrium', aasm_state: 'nmrium') }
+    let(:derived) do
+      create(:attachment, filename: '740.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
+    end
+    let!(:superseded) do
+      create(:attachment, filename: '740.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
+    end
+    let!(:other_curve) do
+      create(:attachment, filename: '740.2_bagit.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
+    end
+    let!(:dotted_edit) do
+      create(:attachment, filename: '740.1H.edit.jdx', attachable: nmrium.attachable, aasm_state: 'edited')
+    end
+
+    before { nmrium.send(:delete_related_edited_jcamp, derived) }
+
+    it 'deletes the older edited jcamp of the same name' do
+      expect(described_class.exists?(superseded.id)).to be false
+    end
+
+    it 'deletes an edited jcamp of the same spectrum under a dotted name' do
+      expect(described_class.exists?(dotted_edit.id)).to be false
+    end
+
+    it "keeps another curve's edited jcamp that only shares the stem" do
+      expect(described_class.exists?(other_curve.id)).to be true
+    end
+  end
+
+  describe '#delete_related_nmrium' do
+    let(:attachment) { create(:attachment, filename: 'spectra_file.edit.jdx', aasm_state: 'edited') }
+    let!(:unrelated_source) do
+      create(:attachment, filename: 'other_curve.jdx', attachable: attachment.attachable, aasm_state: 'peaked')
+    end
+    let!(:unrelated_nmrium) do
+      create(
+        :attachment, filename: 'spectra_file.edit.nmrium', attachable: attachment.attachable,
+                     aasm_state: 'nmrium', parent: unrelated_source
+      )
+    end
+    let(:kept_nmrium) do
+      create(
+        :attachment, filename: 'spectra_file.edit.nmrium', attachable: attachment.attachable, aasm_state: 'nmrium'
+      )
+    end
+
+    it "does not delete an unrelated lineage's nmrium file that happens to share the same filename stem" do
+      attachment.send(:delete_related_nmrium, kept_nmrium)
+
+      expect(described_class.exists?(unrelated_nmrium.id)).to be true
+    end
   end
 
   describe '#upload_file' do

@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 import Sample from 'src/models/Sample';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 // Constants
 const MW_PRECISION = 2;
@@ -36,12 +36,12 @@ export default class Component extends Sample {
    * The value is formatted to a fixed number of decimal places defined by `MW_PRECISION`.
    * If the molecular weight is missing or not a finite number, an empty string is returned.
    *
-   * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
+   * @returns {string} The formatted molecular weight text (e.g., "180.16 g/mol") or an empty string.
    */
   get molecularWeightText() {
     const mw = this.molecule?.molecular_weight;
     return (typeof mw === 'number' && Number.isFinite(mw))
-      ? ` (${mw.toFixed(MW_PRECISION)} g/mol)`
+      ? `${mw.toFixed(MW_PRECISION)} g/mol`
       : '';
   }
 
@@ -317,7 +317,7 @@ export default class Component extends Sample {
         const concn_mmol = (this.concn * 1000).toFixed(2);
         const stock_mmol = (this.starting_molarity_value * 1000).toFixed(2);
 
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           title: 'Concentration Exceeds Stock',
           message: `Total concentration (${concn_mmol} mmol/l) exceeds stock concentration (${stock_mmol} mmol/l).`,
           level: 'warning',
@@ -337,6 +337,18 @@ export default class Component extends Sample {
     this.molarity_value = 0;
     this.equivalent = 1.0;
     this.purity = 1.0;
+  }
+
+  /**
+   * Resets all amount and concentration fields to zero.
+   * Used when a same-molecule merge collapses a duplicate component into this one.
+   */
+  resetAmounts() {
+    this.amount_mol = 0;
+    this.amount_g = 0;
+    this.amount_l = 0;
+    this.molarity_value = 0;
+    this.concn = 0;
   }
 
   /**
@@ -632,7 +644,7 @@ export default class Component extends Sample {
     } else {
       this.purity = 1;
 
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: `Your input makes the purity ${purity.toFixed(2)}. Purity value should be > 0 and <= 1.`,
         level: 'error'
       });
@@ -769,5 +781,19 @@ export default class Component extends Sample {
     }
 
     return comp;
+  }
+
+  /**
+   * Deserialize the components returned by the save/update API so newly inserted
+   * rows pick up their real DB ids. Falls back to the local components when the
+   * response is unexpectedly empty.
+   * @param {Array} savedComponents - API response from saveOrUpdateComponents
+   * @param {Array} fallback - local components to use when the response is empty
+   * @returns {Array<Component>}
+   */
+  static refreshFromApi(savedComponents, fallback) {
+    return Array.isArray(savedComponents) && savedComponents.length > 0
+      ? savedComponents.map(Component.deserializeData)
+      : fallback;
   }
 }

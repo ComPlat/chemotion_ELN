@@ -69,7 +69,6 @@ const emptyState = {
   currentSearchSelection: null,
   currentSearchByID: null,
   showCollectionManagement: false,
-  showDeviceManagement: false,
   showModal: false,
   modalParams: {},
   hasChemSpectra: false,

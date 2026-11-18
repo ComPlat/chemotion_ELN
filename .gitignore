@@ -35,6 +35,7 @@
 .dockerenv
 /.devcontainer/Dockerfile*
 /.devcontainer/docker-compose.dev*
+/.devcontainer/.env.development
 /docker-compose.services.yml
 
 /config/matrices.json
@@ -47,9 +48,11 @@
 /config/profile_default.yml
 /config/compute_props.yml
 /config/converter.yml
+/config/sds_text_service.yml
 /config/ketcher_service.yml
 /config/structure_editors.yml
 /config/indigo_service.yml
+/config/ui_components.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -102,6 +105,15 @@
 
 /public/editors/*
 !/public/editors/.keep
+
+/public/workshop/*
+!/public/workshop/.keep
+
+# NMRium wrapper build, installed by the nmrium-assets compose service. The
+# .keep also guarantees the bind-mount target exists, so docker does not create
+# it root-owned.
+/public/nmrium/*
+!/public/nmrium/.keep
 /public/favicon.ico
 
 # written by Labimotion gem
@@ -170,6 +182,8 @@
 
 # Temp files
 /spec/tmp/*
+/spec/cypress/screenshots
+/spec/cypress/downloads
 
 # Temp rake task file
 .rake_tasks~

@@ -5,9 +5,6 @@ require 'rails_helper'
 describe Chemotion::UserAPI do
   include_context 'api request authorization context'
 
-  let(:other_user) { create(:person) }
-  let(:alternative_user) { create(:person) }
-
   describe 'GET /api/v1/users/name' do
     let(:query_param) { "name=#{name_param}&type=Group,Person" }
 
@@ -53,7 +50,7 @@ describe Chemotion::UserAPI do
   describe 'GET /api/v1/users/current' do
     context 'when authorization runs via session' do
       let(:expected_response) do
-        Entities::UserEntity.represent(user, root: :user).to_json
+        Entities::UserEntity.represent(user, root: :user, with_tokens: true).to_json
       end
 
       before do
@@ -69,7 +66,7 @@ describe Chemotion::UserAPI do
       include_context 'api request jwt context'
 
       let(:expected_response) do
-        Entities::UserEntity.represent(jwt_user.reload, root: :user).to_json
+        Entities::UserEntity.represent(jwt_user.reload, root: :user, with_tokens: true).to_json
       end
 
       before do
@@ -90,189 +87,265 @@ describe Chemotion::UserAPI do
     end
   end
 
-  describe 'GET /api/v1/users/list_labels' do
-    context 'when user labels present' do
-      before do
-        UserLabel.create!(user_id: user.id, access_level: 0, title: 'Label 1', color: 'Color 1')
-        UserLabel.create!(user_id: other_user.id, access_level: 1, title: 'Label 2', color: 'Color 2')
-        UserLabel.create!(user_id: other_user.id, access_level: 0, title: 'Label 3', color: 'Color 3')
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns a list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(2)
-      end
-    end
-
-    context 'when user labels missing' do
-      before do
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns an empty list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(0)
-      end
-    end
-  end
-
   describe 'GET /api/v1/users/list_editors' do
-    pending 'TODO: Add missing spec'
+    before do
+      create(:matrice, name: 'ketcherEditor', enabled: true)
+      create(:matrice, name: 'marvinjsEditor', enabled: false)
+      user.reload
+      get '/api/v1/users/list_editors'
+    end
+
+    it 'returns only the editors enabled for the current user' do
+      expect(parsed_json_response['matrices'].pluck('name')).to eq(['ketcherEditor'])
+    end
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do
-    pending 'TODO: Add missing spec'
-  end
+    before do
+      get '/api/v1/users/omniauth_providers'
+    end
 
-  describe 'PUT /api/v1/users/save_label' do
-    pending 'TODO: Add missing spec'
+    it 'returns the omniauth providers configured for the app' do
+      expect(parsed_json_response['providers']).to eq(Devise.omniauth_configs.keys.map(&:to_s))
+    end
+
+    # Regression: this used to serialize the whole current_user object, leaking
+    # encrypted_otp_secret/otp_secret/otp_backup_codes to any authenticated user.
+    it "returns only the current user's linked providers" do
+      expect(parsed_json_response['current_user']).to eq('providers' => nil)
+    end
+
+    context 'when the user has linked providers' do
+      let(:user) { create(:person, providers: { 'github' => { 'uid' => '123' } }) }
+
+      it "returns the user's linked providers" do
+        expect(parsed_json_response['current_user']['providers']).to eq('github' => { 'uid' => '123' })
+      end
+    end
   end
 
   describe 'PUT /api/v1/users/update_counter' do
-    pending 'TODO: Add missing spec'
+    before do
+      put '/api/v1/users/update_counter', params: { type: 'samples', counter: 5 }, as: :json
+    end
+
+    it 'updates the given counter and preserves the others' do
+      expect(parsed_json_response['counters']).to eq('samples' => '5', 'reactions' => '0', 'wellplates' => '0')
+    end
   end
 
   describe 'GET /api/v1/users/scifinder' do
-    pending 'TODO: Add missing spec'
+    context 'when no credential exists for the current user' do
+      before { get '/api/v1/users/scifinder' }
+
+      it 'returns an empty credential' do
+        expect(parsed_json_response).to eq(
+          'id' => nil, 'access_token' => nil, 'refresh_token' => nil, 'expires_at' => nil, 'updated_at' => nil,
+        )
+      end
+    end
+
+    context 'when a credential exists for the current user' do
+      let!(:credential) do
+        ScifinderNCredential.create!(
+          created_by: user.id, access_token: 'tok', refresh_token: 'ref', expires_at: 1.day.from_now,
+        )
+      end
+
+      before { get '/api/v1/users/scifinder' }
+
+      it "returns the current user's credential" do
+        expect(parsed_json_response['id']).to eq(credential.id)
+        expect(parsed_json_response['access_token']).to eq('tok')
+      end
+    end
   end
 
   describe 'DELETE /api/v1/users/sign_out' do
-    pending 'TODO: Add missing spec'
+    it 'returns 204' do
+      delete '/api/v1/users/sign_out'
+      expect(response).to have_http_status(:no_content)
+    end
   end
 
-  describe 'POST /api/v1/groups/create' do
-    let(:params) do
-      {
-        'group_param' => {
-          'first_name' => 'My', 'last_name' => 'Fanclub',
-          'email' => 'jane.s@fan.club',
-          'name_abbreviation' => 'JFC', 'users' => [other_user.id]
-        },
-      }
-    end
+  describe 'GET /api/v1/users/devices' do
+    # named against creation order, so the sort is not satisfied by id order
+    let(:own_device) { create(:device, :novnc_settings, name: 'Zeta NMR', novnc_password: 'vnc-password') }
+    let(:group_device) { create(:device, :novnc_settings, name: 'Alpha IR') }
+    let!(:unrelated_device) { create(:device).tap { |device| device.people << create(:person) } }
+    let!(:group) { create(:group, admins: [user], users: [user]) }
 
     before do
-      post '/api/v1/groups/create', params: params
+      own_device.people << user
+      group_device.groups << group
+      get '/api/v1/users/devices'
     end
 
-    it 'Creates a group of persons' do
-      expect(
-        Group.where(
-          last_name: 'Fanclub',
-          first_name: 'My', name_abbreviation: 'JFC'
-        ),
-      ).not_to be_empty
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').users.pluck(:id),
-      ).to contain_exactly(user.id, other_user.id)
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').admins,
-      ).not_to be_empty
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').admins.first,
-      ).to eq user
-      expect(
-        user.administrated_accounts.where(name_abbreviation: 'JFC'),
-      ).not_to be_empty
+    it "returns the user's own devices and their groups' devices" do
+      ids = parsed_json_response['currentDevices'].pluck('id')
+      expect(ids).to include(own_device.id, group_device.id)
+      expect(ids).not_to include(unrelated_device.id)
+    end
+
+    it 'lists each device with its id, name and abbreviation', :aggregate_failures do
+      devices = parsed_json_response['currentDevices']
+      expect(devices.size).to eq(2)
+      expect(devices.map(&:keys)).to all(contain_exactly('id', 'name', 'name_abbreviation'))
+    end
+
+    context 'when a device is linked to the user directly and through a group' do
+      before do
+        group_device.people << user
+        get '/api/v1/users/devices'
+      end
+
+      it 'lists it once, with the devices sorted by name' do
+        names = parsed_json_response['currentDevices'].pluck('name')
+        expect(names).to eq(['Alpha IR', 'Zeta NMR'])
+      end
     end
   end
 
-  describe 'GET /api/v1/groups/qrycurrent' do
-    pending 'TODO: Add missing spec'
-  end
+  describe 'GET /api/v1/devices/{device_id}/metadata' do
+    let(:device) { create(:device) }
+    let!(:device_metadata) { create(:device_metadata, device: device) }
 
-  describe 'GET /api/v1/groups/queryCurrentDevices' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'GET /api/v1/groups/deviceMetadata/{device_id}' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'PUT /api/v1/groups/upd/{id}' do
-    let(:execute_put_request) { put "/api/v1/groups/upd/#{group.id}", params: params, as: :json }
-
-    context 'when update group as a group admin' do
-      let(:group) do
-        create(:group, admins: [user], users: [user, other_user], first_name: 'Doe', last_name: 'Group Test')
+    context 'when the device belongs to the current user' do
+      before do
+        device.people << user
+        get "/api/v1/devices/#{device.id}/metadata"
       end
-      let(:params) do
-        {
-          rm_users: [user.id, other_user.id],
-          add_users: [alternative_user.id],
-        }
+
+      it 'returns the device metadata' do
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['device_metadata']['id']).to eq(device_metadata.id)
       end
+    end
+
+    context 'when the device belongs to one of the current user\'s groups' do
+      let!(:group) { create(:group, admins: [user], users: [user]) }
 
       before do
-        execute_put_request
-        group.reload
+        device.groups << group
+        get "/api/v1/devices/#{device.id}/metadata"
       end
 
-      it 'updates a group of persons' do
-        expect(group.users.pluck(:id)).to contain_exactly(alternative_user.id)
-      end
-
-      it 'returns an updated group' do
-        expect(parsed_json_response['group']['users'].first['id']).to eq(alternative_user.id)
+      it 'returns the device metadata' do
+        expect(response).to have_http_status(:ok)
       end
     end
 
-    context 'when destroy a group as a group admin' do
-      let(:group) do
-        create(:group, admins: [user], first_name: 'Doe', last_name: 'Group Test')
-      end
-      let(:params) { { destroy_group: true } }
+    context 'when the current user has no relation to the device' do
+      before { get "/api/v1/devices/#{device.id}/metadata" }
 
-      before do
-        execute_put_request
-      end
-
-      it 'deletes a group of persons' do
-        expect(Group.where(id: [group.id])).to be_empty
-        expect(Group.count).to eq(0)
-      end
-
-      it 'returns the id of destroyed group' do
-        expect(parsed_json_response['destroyed_id']).to eq(group.id)
-      end
-    end
-
-    context 'when try to update a group as a non group admin' do
-      let(:group) do
-        create(:group, admins: [other_user], users: [other_user, alternative_user],
-                       first_name: 'Doe', last_name: 'Group Test')
-      end
-      let(:params) do
-        {
-          rm_users: [other_user.id, alternative_user.id],
-          add_users: [user.id],
-        }
-      end
-
-      before do
-        execute_put_request
-      end
-
-      it 'does not update a group of persons' do
-        expect(
-          Group.find(group.id).users.pluck(:id),
-        ).to contain_exactly(other_user.id, alternative_user.id)
-      end
-
-      it 'returns with unauthorized status' do
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it 'returns with unauthorized message' do
-        expect(parsed_json_response['error']).to eq('401 Unauthorized')
+      it 'returns 404' do
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
 
   describe 'GET /api/v1/devices/novnc' do
-    pending 'TODO: Add missing spec'
+    let(:novnc_device) { create(:device, :novnc_settings) }
+    let(:unrelated_novnc_device) { create(:device, :novnc_settings) }
+    let(:device_without_target) { create(:device) }
+
+    before do
+      novnc_device.people << user
+      device_without_target.people << user
+      unrelated_novnc_device
+      get '/api/v1/devices/novnc'
+    end
+
+    it 'returns only accessible devices that have a novnc target' do
+      ids = parsed_json_response['devices'].pluck('id')
+      expect(ids).to contain_exactly(novnc_device.id)
+    end
   end
 
   describe 'GET /api/v1/devices/current_connection' do
-    pending 'TODO: Add missing spec'
+    let(:device) { create(:device) }
+    let(:store) { ActiveSupport::Cache::MemoryStore.new }
+    let(:other_user) { create(:person) }
+
+    before do
+      stub_const('NOVNC_CONNECTIONS', store)
+      # The endpoint caches its device-access check; keep it from leaking across examples and runs.
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    end
+
+    def poll(id: device.id, status: 'true')
+      get '/api/v1/devices/current_connection', params: { id: id, status: status }
+    end
+
+    context 'when the device belongs to the current user' do
+      before { device.people << user }
+
+      it 'returns 200 and reports the user as watching' do
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'reports the user as using when the display is focused' do
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'updates the entry of a user who polls again' do
+        poll
+        poll(status: 'false')
+        expect(parsed_json_response['result']).to eq(["#{user.id},0"])
+      end
+
+      it 'lists the other viewers of the device' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        poll
+        expect(parsed_json_response['result']).to contain_exactly("#{other_user.id},0", "#{user.id},1")
+      end
+
+      it 'drops viewers that stopped polling' do
+        store.write("device/#{device.id}", { other_user.id => [0, Time.current.to_i] })
+        travel(NOVNC_CONNECTION_TTL + 1.second) do
+          poll
+        end
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'replaces a malformed entry with the current viewer' do
+        store.write("device/#{device.id}", { other_user.id => [0, nil], 0 => 'x' })
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq(["#{user.id},1"])
+      end
+
+      it 'answers an empty result when the store cannot be written' do
+        allow(store).to receive(:write).and_raise(Errno::ENOSPC)
+        poll
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['result']).to eq([])
+      end
+
+      it 'returns 400 for an id with text after the number' do
+        poll(id: "#{device.id}abc")
+        expect(response).to have_http_status(:bad_request)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+
+      it 'returns 400 for a non-numeric id' do
+        poll(id: 'abc')
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
+    context 'when the current user has no relation to the device' do
+      before do
+        get '/api/v1/devices/current_connection', params: { id: device.id, status: 'true' }
+      end
+
+      it 'returns 404 and leaves the store untouched' do
+        expect(response).to have_http_status(:not_found)
+        expect(store.read("device/#{device.id}")).to be_nil
+      end
+    end
   end
 end

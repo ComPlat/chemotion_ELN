@@ -127,6 +127,7 @@ class GenericAttachments extends Component {
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments?.map((attachment) => {
+      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {
@@ -164,6 +165,7 @@ class GenericAttachments extends Component {
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
+    if (!chosenAttachment) return null;
     return (
       <ImageAnnotationModalSVG
         attachment={chosenAttachment}

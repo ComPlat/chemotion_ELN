@@ -60,14 +60,17 @@ module Versioning
           boiling_point: {
             label: 'Boiling point',
             kind: :numrange,
-            revert: %i[boiling_point],
+            # The label the form shows for the range (as typed) is reverted with it.
+            revert: %i[boiling_point xref.boiling_point_label],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           melting_point: {
             label: 'Melting point',
             kind: :numrange,
-            revert: %i[melting_point],
+            revert: %i[melting_point xref.melting_point_label],
             formatter: non_formatter,
+            revertible_value_formatter: non_formatter, # SampleReverter parses the stored range text
           },
           purity: {
             label: 'Purity/Concentration',
@@ -103,50 +106,7 @@ module Versioning
             formatter: metrics_formatter,
             revertible_value_formatter: default_formatter,
           },
-          xref: [
-            {
-              name: 'xref.cas',
-              label: 'CAS',
-              revert: %i[xref.cas],
-              formatter: jsonb_formatter('cas'),
-            },
-            {
-              name: 'xref.inventory_label',
-              label: 'Inventory label',
-              revert: %i[xref.inventory_label],
-              formatter: jsonb_formatter('inventory_label'),
-            },
-            {
-              name: 'xref.flash_point',
-              label: 'Flash Point',
-              revert: %i[xref.flash_point],
-              formatter: jsonb_formatter('flash_point', 'value'),
-            },
-            {
-              name: 'xref.form',
-              label: 'Form',
-              revert: %i[xref.form],
-              formatter: jsonb_formatter('form'),
-            },
-            {
-              name: 'xref.color',
-              label: 'Color',
-              revert: %i[xref.color],
-              formatter: jsonb_formatter('color'),
-            },
-            {
-              name: 'xref.solubility',
-              label: 'Solubility',
-              revert: %i[xref.solubility],
-              formatter: jsonb_formatter('solubility'),
-            },
-            {
-              name: 'xref.refractive_index',
-              label: 'Refractive Index',
-              revert: %i[xref.refractive_index],
-              formatter: jsonb_formatter('refractive_index'),
-            },
-          ],
+          xref: xref_field_definitions,
           solvent: {
             label: 'Solvent',
             kind: :solvent,
@@ -169,6 +129,46 @@ module Versioning
       end
 
       private
+
+      # Each xref entry follows the same shape: it reads/writes a single key under
+      # the sample's jsonb `xref` column. flash_point is the only one with its own
+      # display formatter ("<value> <unit>"); every entry reverts its whole key.
+      def xref_field_definitions
+        [
+          xref_field('cas', 'CAS'),
+          xref_field('inventory_label', 'Inventory label'),
+          xref_field('flash_point', 'Flash Point', flash_point_formatter),
+          xref_field('form', 'Form'),
+          xref_field('color', 'Color'),
+          xref_field('solubility', 'Solubility'),
+          xref_field('refractive_index', 'Refractive Index'),
+          xref_field('moisture', 'Moisture'),
+          xref_field('particle_size', 'Particle size'),
+          xref_field('physical_state', 'Physical state'),
+        ]
+      end
+
+      def xref_field(key, label, formatter = jsonb_formatter(key))
+        {
+          name: "xref.#{key}",
+          label: label,
+          revert: [:"xref.#{key}"],
+          formatter: formatter,
+          # The revert writes the whole xref sub-key, so revert to all of it, not just the displayed text.
+          revertible_value_formatter: jsonb_formatter(key),
+        }
+      end
+
+      # Stored as {value, unit}; shown like the exports show it, e.g. "12 °C".
+      def flash_point_formatter
+        lambda do |key, value|
+          flash_point = jsonb_formatter('flash_point').call(key, value)
+          next flash_point unless flash_point.is_a?(Hash)
+          next if flash_point['value'].blank?
+
+          "#{flash_point['value']} #{flash_point['unit']}".strip
+        end
+      end
 
       def molecule_names_lookup
         @molecule_names_lookup ||= begin

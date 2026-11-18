@@ -1,4 +1,3 @@
-import { describe, it } from 'mocha';
 import assert from 'assert';
 
 import {
@@ -11,6 +10,7 @@ import {
   calculateMolesFromMoleculeWeight,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   calculateFeedstockMoles,
   updateFeedstockMoles,
   calculateTON,
@@ -47,6 +47,23 @@ describe('Testing React Utility Functions', () => {
     const [converted, unit] = convertTemperature(300, TEMPERATURE_UNITS.KELVIN);
     assert.strictEqual(converted, '26.85');
     assert.strictEqual(unit, TEMPERATURE_UNITS.CELSIUS);
+  });
+
+  it('converts a temperature with a leading separator', () => {
+    assert.deepEqual(convertTemperature('-.5', TEMPERATURE_UNITS.CELSIUS), ['31.1', TEMPERATURE_UNITS.FAHRENHEIT]);
+    assert.deepEqual(convertTemperature(',5', TEMPERATURE_UNITS.CELSIUS), ['32.9', TEMPERATURE_UNITS.FAHRENHEIT]);
+  });
+
+  it('converts a temperature with a trailing or comma separator', () => {
+    assert.deepEqual(convertTemperature('2.', TEMPERATURE_UNITS.CELSIUS), ['35.6', TEMPERATURE_UNITS.FAHRENHEIT]);
+    assert.deepEqual(convertTemperature('2,5', TEMPERATURE_UNITS.CELSIUS), ['36.5', TEMPERATURE_UNITS.FAHRENHEIT]);
+  });
+
+  it('keeps the text after a temperature value', () => {
+    assert.deepEqual(
+      convertTemperature('25 approx', TEMPERATURE_UNITS.CELSIUS),
+      ['77 approx', TEMPERATURE_UNITS.FAHRENHEIT]
+    );
   });
 
   it('should convert temperature to Kelvin correctly', () => {
@@ -88,6 +105,20 @@ describe('Testing React Utility Functions', () => {
 
   it('should calculate gas moles correctly', () => {
     assert.strictEqual(calculateGasMoles(10, 1000, 300), 0.00040600893219650826);
+  });
+
+  it('should calculate gas concentration from ppm correctly', () => {
+    // Formula at 25 °C: concentration (mol/L) = ppm * 4.1e-8
+    assert.ok(Math.abs(calculateGasConcentrationFromPpm(10000) - 4.1e-4) < 1e-12);
+    assert.ok(Math.abs(calculateGasConcentrationFromPpm(1) - 4.1e-8) < 1e-16);
+  });
+
+  it('should return 0 for invalid ppm inputs in gas concentration calculation', () => {
+    assert.strictEqual(calculateGasConcentrationFromPpm(0), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(-100), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(null), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(undefined), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(NaN), 0);
   });
 
   it('should calculate feedstock moles correctly', () => {

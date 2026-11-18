@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import {
   Row, Form, Button, Alert, Card, Col
 } from 'react-bootstrap';
-import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
+import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 import { OtpInput } from 'src/components/common/OtpInput';
 import PropTypes from 'prop-types';
 
@@ -74,7 +74,7 @@ function AccountSettings({ currentUser }) {
   const [isWrongOtp, setIsWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState(currentUser.unconfirmed_email);
-  const [form, setForm] = formValueHandler({
+  const [form, setForm] = useFormValues({
     email: currentUser.email || '',
     password: '',
     password_confirmation: '',

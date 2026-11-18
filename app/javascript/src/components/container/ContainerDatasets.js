@@ -6,6 +6,7 @@ import ContainerDatasetModal from 'src/components/container/ContainerDatasetModa
 import ContainerDatasetField from 'src/components/container/ContainerDatasetField';
 import Container from 'src/models/Container';
 import AttachmentDropzone from 'src/components/container/AttachmentDropzone';
+import { getContainerImageData } from 'src/utilities/imageHelper';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
@@ -84,6 +85,26 @@ export default class ContainerDatasets extends Component {
         container.children[datasetId] = datasetContainer;
       }
     });
+
+    // Clear a stale preferred thumbnail, then propagate once to parent
+    this.clearStalePreferredThumbnail(container);
+  };
+
+  clearStalePreferredThumbnail = (analysisContainer) => {
+    const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
+    // Only a preference that is set can go stale. An unset one stays unset, so the header
+    // keeps following the default (see getAttachmentFromContainer: latest updated file) and
+    // picks up new uploads, instead of pinning whichever file comes first.
+    // Stale = no longer among the carousel candidates (same rule the header reads with).
+    if (currentPreferred && getContainerImageData(analysisContainer).preferredId === null) {
+      // Clear it rather than pick a substitute: the header falls back to the default.
+      analysisContainer.extended_metadata = {
+        ...analysisContainer.extended_metadata,
+        preferred_thumbnail: null,
+      };
+    }
+    // Propagate final state to parent once
+    this.props.onChange(analysisContainer);
   };
 
   handleModalHide() {
@@ -110,7 +131,7 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
-  updateContainerState(updatedContainer, shouldClose = false) {
+  updateContainerState(updatedContainer, shouldClose = false, variations = null) {
     const { rootContainer } = this.props;
     const { modal, container: currentContainer } = this.state;
 
@@ -148,27 +169,27 @@ export default class ContainerDatasets extends Component {
       const container = analysesContainer.find((a) => a.id === currentContainer.id);
       if (!container) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
       const selectedIndex = modal?.selectedIndex;
       // Safety check: verify dataset index is valid
       if (selectedIndex === null || selectedIndex === undefined) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       if (!container.children || !Array.isArray(container.children)) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       const dataset = container.children[selectedIndex];
       if (!dataset) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
@@ -185,7 +206,7 @@ export default class ContainerDatasets extends Component {
         }
       });
     }
-    this.props.onChange(updatedRoot);
+    this.props.onChange(updatedRoot, variations);
   }
 
   render() {
@@ -233,7 +254,9 @@ export default class ContainerDatasets extends Component {
               disabled={disabled}
               element={element}
               rootContainer={rootContainer}
-              updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
+              updateContainerState={
+                (cont, shouldClose, variations) => this.updateContainerState(cont, shouldClose, variations)
+              }
               isContainerNew={container?.is_new}
             />
           )}

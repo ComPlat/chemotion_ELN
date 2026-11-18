@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, Dropdown
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
@@ -11,11 +11,12 @@ import { parse as parseSdf } from 'sdf-parser';
 import AppModal from 'src/components/common/AppModal';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
 import ValidationComponent from 'src/apps/mydb/collections/ValidationComponent';
 
 export default class ModalImport extends React.Component {
+  static contextType = StoreContext;
   static extractDataFromText(file, delimiter, mappedColumns) {
     if (!file) {
       console.warn('No text file provided for extraction');
@@ -152,6 +153,23 @@ export default class ModalImport extends React.Component {
   }
 
   // Method to generate column definitions for AG Grid
+  // Maps each non-blank header to its position in the raw header row. First occurrence wins: a
+  // duplicated header can only carry one entry in mappedColumns, so a later duplicate must not
+  // silently take over the index.
+  static buildColumnIndices(headers) {
+    const columnIndices = {};
+    (headers || []).forEach((header, index) => {
+      if (header === null || header === undefined) { return; }
+      if (String(header).trim() === '') { return; }
+
+      const key = String(header);
+      if (!Object.prototype.hasOwnProperty.call(columnIndices, key)) {
+        columnIndices[key] = index;
+      }
+    });
+    return columnIndices;
+  }
+
   static generateColumnDefs(mappedColumns) {
     const columnDefs = Object.entries(mappedColumns)
       .filter(([, mappedCol]) => mappedCol !== 'do_not_import')
@@ -226,11 +244,10 @@ export default class ModalImport extends React.Component {
     const template = templates[type];
 
     if (!template) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Template Error',
         message: `Template "${type}" not found. Please contact support.`,
         level: 'error',
-        dismissible: true,
       });
       return;
     }
@@ -250,11 +267,12 @@ export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.validationComponentRef = React.createRef();
+    this.handleValidation = this.handleValidation.bind(this);
     this.handleValidationStateChange = this.handleValidationStateChange.bind(this);
 
     // Resolve the target collection ID once
     const uiState = UIStore.getState();
-    const targetCollectionId = props.collectionId || uiState.currentCollection.id;
+    const targetCollectionId = props.collectionId ?? uiState.currentCollection?.id;
 
     this.state = {
       file: null,
@@ -263,6 +281,7 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
       rowData: [],
       columnDefs: [],
       fileDelimiter: '\t',
@@ -306,18 +325,17 @@ export default class ModalImport extends React.Component {
       this.extractColumnNames(file);
     } else {
       ElementActions.importSamplesFromFile(params);
-      onHide();
+      this.resetImportState(() => onHide());
 
       const notification = {
         title: 'Uploading',
         message: 'The file is being processed. Please wait...',
         level: 'warning',
-        dismissible: false,
         uid: 'import_samples_upload',
         position: 'bl'
       };
 
-      NotificationActions.add(notification);
+      this.context.notifications.add(notification);
     }
   }
 
@@ -336,14 +354,13 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  static handleValidation(invalidRows) {
+  handleValidation(invalidRows) {
     if (invalidRows.length > 0) {
       // if some rows have validation errors, show notification but keep the modal open
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Validation Error',
         message: `Found ${invalidRows.length} invalid rows. Please correct them before importing.`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
@@ -404,13 +421,12 @@ export default class ModalImport extends React.Component {
     };
 
     ElementActions.importSamplesFromFile(params);
-    onHide();
+    this.resetImportState(() => onHide());
 
-    NotificationActions.add({
+    this.context.notifications.add({
       title: 'Uploading',
       message: 'The validated data is being processed. Please wait...',
       level: 'warning',
-      dismissible: false,
       uid: 'import_samples_upload',
       position: 'bl'
     });
@@ -429,11 +445,29 @@ export default class ModalImport extends React.Component {
       if (!mappedColumns || Object.keys(mappedColumns).length === 0 || importingColumns.length === 0) {
         message = 'Please map at least one column to import';
         this.setState({ isProcessing: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Validation Error',
           message,
           level: 'error',
-          dismissible: true,
+        });
+        return;
+      }
+
+      // The importer needs one column it can identify a sample by: a structure, a CAS, an explicit
+      // decoupled flag, or a sample id naming an existing row. Checking it here fails in the
+      // mapping step, where the user can still fix it, instead of asynchronously in the job -- which
+      // reported it minutes later under an 'Import Samples Completed' heading.
+      const identifyingColumns = [
+        'molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'decoupled', 'cas', 'sample id'
+      ];
+      if (!importingColumns.some((value) => identifyingColumns.includes(value))) {
+        message = 'Map at least one column the importer can identify a sample by: '
+          + 'molfile, canonical smiles, CAS, decoupled, or sample id.';
+        this.setState({ isProcessing: false });
+        this.context.notifications.add({
+          title: 'Validation Error',
+          message,
+          level: 'error',
         });
         return;
       }
@@ -444,11 +478,10 @@ export default class ModalImport extends React.Component {
         const duplicateMsg = `Duplicate mapped columns found: ${duplicateKeys.join(', ')}. `
           + 'Please ensure each field is mapped only once.';
         this.setState({ isProcessing: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Duplicate Mappings',
           message: duplicateMsg,
           level: 'error',
-          dismissible: true,
         });
         return;
       }
@@ -481,20 +514,22 @@ export default class ModalImport extends React.Component {
     } catch (error) {
       console.error('Data extraction error:', error);
       this.setState({ isProcessing: false });
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: message || `Failed to extract data from file for validation: ${error.message}`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
 
   requestCancelConfirmation(event, placement = 'top') {
-    const { showValidation } = this.state;
+    const { showColumnMapping, showValidation } = this.state;
     const { onHide } = this.props;
 
-    if (!showValidation) {
+    // Only the first step closes without asking: there is nothing to lose but a file selection. From
+    // the column-mapping step onward the user has work in progress, and closing discards it - so the
+    // mapping step gets the same abort confirmation the validation step already had.
+    if (!showColumnMapping && !showValidation) {
       onHide();
       return;
     }
@@ -516,9 +551,13 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  abortImport() {
-    const { onHide } = this.props;
-
+  // Everything the dialog accumulates while an import is set up. The modal instance outlives a single
+  // import, so anything left here is what the next one starts from: without this a finished import
+  // reopened showing the previous file, checkboxes, column mapping and validation state.
+  //
+  // targetCollectionId is deliberately not reset - it comes from the props/UI, not from the user's
+  // choices in this dialog.
+  resetImportState(afterReset) {
     this.setState({
       file: null,
       importAsChemical: false,
@@ -526,13 +565,24 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
+      excelData: null,
+      sdfData: null,
       rowData: [],
       columnDefs: [],
+      fileFormat: null,
+      isProcessing: false,
       mappedColumns: null,
       cancelOverlayTarget: null,
       validationIsValidated: false,
       validationIsDataValid: false,
-    }, () => onHide());
+    }, afterReset);
+  }
+
+  abortImport() {
+    const { onHide } = this.props;
+
+    this.resetImportState(() => onHide());
   }
 
   dismissCancelConfirmation() {
@@ -580,17 +630,14 @@ export default class ModalImport extends React.Component {
 
     try {
       const rowData = [];
-      const { columnNames } = this.state;
+      const { columnNames, excelColumnIndices } = this.state;
 
       if (!columnNames || columnNames.length === 0) {
         throw new Error('Column names not available for processing Excel data');
       }
 
-      // Map Excel columns to their indices for faster lookup
-      const columnIndices = {};
-      columnNames.forEach((colName, index) => {
-        columnIndices[colName] = index;
-      });
+      const columnIndices = excelColumnIndices
+        || ModalImport.buildColumnIndices(columnNames);
 
       // Process each row of data
       excelData.forEach((row, rowIndex) => {
@@ -757,17 +804,17 @@ export default class ModalImport extends React.Component {
         this.setState({
           showColumnMapping: true,
           columnNames,
+          excelColumnIndices: ModalImport.buildColumnIndices(headers),
           excelData: rows.slice(1) // Store data rows for later
         });
       } else {
         throw new Error('Excel file appears to be empty');
       }
     } catch (error) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: `Failed to parse Excel file: ${error.message}`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
@@ -825,11 +872,10 @@ export default class ModalImport extends React.Component {
         const sdfData = molecules.filter((molecule) => molecule && typeof molecule === 'object');
 
         if (sdfData.length === 0) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error',
             message: 'No valid molecule data could be extracted from the SDF file',
             level: 'error',
-            dismissible: true,
           });
         }
 
@@ -840,22 +886,20 @@ export default class ModalImport extends React.Component {
         });
       } catch (error) {
         console.error('SDF parsing error:', error);
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error',
           message: `Failed to parse SDF file: ${error.message}`,
           level: 'error',
-          dismissible: true,
         });
       }
     };
 
     reader.onerror = (error) => {
       console.error('FileReader error for SDF file:', error);
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: 'Failed to read SDF file',
         level: 'error',
-        dismissible: true,
       });
     };
 
@@ -872,11 +916,10 @@ export default class ModalImport extends React.Component {
 
         // Check for binary content
         if (ModalImport.containsBinaryContent(fileContent)) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Unsupported File Format',
             message: 'This appears to be a binary file. Please use an Excel, CSV, TSV, or SDF file.',
             level: 'error',
-            dismissible: true,
           });
           return;
         }
@@ -904,21 +947,19 @@ export default class ModalImport extends React.Component {
           throw new Error('File appears to be empty');
         }
       } catch (error) {
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error',
           message: `Failed to parse file: ${error.message}. Please ensure it is a valid format.`,
           level: 'error',
-          dismissible: true,
         });
       }
     };
 
     reader.onerror = () => {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: 'Failed to read the file. Please try again or use a different file.',
         level: 'error',
-        dismissible: true,
       });
     };
 
@@ -940,7 +981,12 @@ export default class ModalImport extends React.Component {
           <Dropzone
             onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
             style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-            accept=".csv,.tsv,.txt,.xlsx,.xls,.sdf"
+            accept={{
+              'text/csv': ['.csv', '.tsv', '.txt'],
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+              'application/vnd.ms-excel': ['.xls'],
+              'chemical/x-mdl-sdfile': ['.sdf'],
+            }}
           >
             <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
               Drop File, or Click to Select. (Supported formats: CSV, TSV, Excel, SDF)
@@ -979,7 +1025,17 @@ export default class ModalImport extends React.Component {
               <i className="fa fa-download me-1" />
               Download Template
             </Dropdown.Toggle>
-            <Dropdown.Menu>
+            {/*
+              Positioned fixed and rendered on mount so the menu is not clipped by the modal it sits
+              in - the same treatment the collection-tree dropdowns get. A 12-item list is taller than
+              the dialog, so it scrolls on its own rather than overflowing.
+            */}
+            <Dropdown.Menu
+              renderOnMount
+              popperConfig={{ strategy: 'fixed' }}
+              className="overflow-auto"
+              style={{ maxHeight: '60vh' }}
+            >
               <Dropdown.Header>Sample Templates</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_xlsx_template')}>
                 Sample - Empty XLSX Template
@@ -1107,7 +1163,7 @@ export default class ModalImport extends React.Component {
               rowData={rowData || []}
               onRowDataChange={(data) => this.setState({ rowData: data })}
               columnDefs={columnDefs || []}
-              onValidate={(invalidRows) => ModalImport.handleValidation(invalidRows)}
+              onValidate={(invalidRows) => this.handleValidation(invalidRows)}
               onValidationStateChange={this.handleValidationStateChange}
             />
           )}
@@ -1119,8 +1175,8 @@ export default class ModalImport extends React.Component {
             destructiveActionLabel="Abort Import"
             hideAction={() => this.dismissCancelConfirmation()}
             hideActionLabel="Cancel"
-            primaryAction={() => this.confirmCancelValidation()}
-            primaryActionLabel="Return to Mapping"
+            primaryAction={showValidation ? () => this.confirmCancelValidation() : undefined}
+            primaryActionLabel={showValidation ? 'Return to Mapping' : undefined}
           />
         </AppModal>
       </>

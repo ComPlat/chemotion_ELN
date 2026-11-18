@@ -8,6 +8,8 @@ import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const target = {
   drop(props, monitor) {
+    if (props.readOnly) { return; }
+
     const { dropWellplate } = props;
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
@@ -16,6 +18,8 @@ const target = {
     }
   },
   canDrop(props, monitor) {
+    if (props.readOnly) { return false; }
+
     const itemType = monitor.getItemType();
     return (itemType === 'wellplate');
   }
@@ -30,7 +34,11 @@ const collect = (connect, monitor) => ({
 class ScreenWellplates extends Component {
   // eslint-disable-next-line class-methods-use-this
   renderDropZone() {
-    const { isOver, canDrop, connectDropTarget } = this.props;
+    const {
+      isOver, canDrop, connectDropTarget, readOnly
+    } = this.props;
+    if (readOnly) { return null; }
+
     const borderColor = isOver && canDrop ? 'dnd-zone-over' : '';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
@@ -40,8 +48,8 @@ class ScreenWellplates extends Component {
   }
 
   render() {
-    const { wellplates, deleteWellplate } = this.props;
-  
+    const { wellplates, deleteWellplate, readOnly } = this.props;
+
     return (
       <div>
         {this.renderDropZone()}
@@ -68,13 +76,15 @@ class ScreenWellplates extends Component {
               />
             </Col>
             <Col>
-              <Button
-                variant="danger"
-                className="float-end mt-3"
-                onClick={() => deleteWellplate(wellplate)}
-              >
-                <i className="fa fa-trash-o" />
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="danger"
+                  className="float-end mt-3"
+                  onClick={() => deleteWellplate(wellplate)}
+                >
+                  <i className="fa fa-trash-o" />
+                </Button>
+              )}
             </Col>
           </Row>
         ))}
@@ -89,7 +99,12 @@ ScreenWellplates.propTypes = {
   wellplates: PropTypes.arrayOf(PropTypes.object).isRequired,
   deleteWellplate: PropTypes.func.isRequired,
   dropWellplate: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired
+};
+
+ScreenWellplates.defaultProps = {
+  readOnly: false,
 };

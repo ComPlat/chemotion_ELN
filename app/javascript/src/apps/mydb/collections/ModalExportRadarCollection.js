@@ -24,10 +24,18 @@ export default class ModalExportRadarCollection extends React.Component {
     this.handlePublish = this.handlePublish.bind(this);
   }
 
-  componentDidMount() {
+  resolveCollectionId() {
+    const { collectionId } = this.props;
+    if (collectionId != null) return collectionId;
     const { currentCollection } = UIStore.getState();
+    return currentCollection?.id;
+  }
 
-    MetadataFetcher.fetch(currentCollection.id)
+  componentDidMount() {
+    const id = this.resolveCollectionId();
+    if (id == null) return;
+
+    MetadataFetcher.fetch(id)
       .then((result) => {
         this.setState({ metadata: result.metadata });
       }).catch((errorMessage) => {
@@ -47,8 +55,8 @@ export default class ModalExportRadarCollection extends React.Component {
 
   handlePublish() {
     const { onHide } = this.props;
-    const { currentCollection } = UIStore.getState();
-    const archiveUrl = `/oauth/radar/archive?collection_id=${currentCollection.id}`;
+    const id = this.resolveCollectionId();
+    const archiveUrl = `/oauth/radar/archive?collection_id=${id}`;
 
     window.open(archiveUrl, '_blank', 'noopener,noreferrer');
     onHide();
@@ -336,5 +344,10 @@ export default class ModalExportRadarCollection extends React.Component {
 
 ModalExportRadarCollection.propTypes = {
   onHide: PropTypes.func.isRequired,
-  editAction: PropTypes.func.isRequired
+  editAction: PropTypes.func.isRequired,
+  collectionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+};
+
+ModalExportRadarCollection.defaultProps = {
+  collectionId: null,
 };

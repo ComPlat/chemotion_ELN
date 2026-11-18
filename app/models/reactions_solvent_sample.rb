@@ -23,6 +23,7 @@
 #
 # Indexes
 #
+#  index_reactions_samples_on_live_sample_id  (sample_id) UNIQUE WHERE (deleted_at IS NULL)
 #  index_reactions_samples_on_reaction_id     (reaction_id)
 #  index_reactions_samples_on_sample_id       (sample_id)
 #  index_reactions_samples_on_sample_id_type  (sample_id,type)

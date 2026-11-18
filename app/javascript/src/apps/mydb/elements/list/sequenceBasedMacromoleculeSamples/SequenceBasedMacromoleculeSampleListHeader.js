@@ -32,6 +32,7 @@ function SequenceBasedMacromoleculeSampleListHeader() {
       clearable={false}
       onChange={(e) => handleGroupSelect(e)}
       size="sm"
+      variant="secondary"
     />
   );
 }

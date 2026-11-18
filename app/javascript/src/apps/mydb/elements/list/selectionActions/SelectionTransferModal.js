@@ -12,6 +12,7 @@ function SelectionTransferModal({
   action,
   onHide,
   withShared,
+  withRepository,
 }) {
   const collectionsStore = useContext(StoreContext).collections;
   const [selectedCollection, setSelectedCollection] = useState('');
@@ -53,6 +54,7 @@ function SelectionTransferModal({
           <CollectionSelect
             value={selectedCollection}
             withShared={withShared}
+            withRepository={withRepository}
             onChange={setSelectedCollection}
           />
         </Form.Group>
@@ -77,8 +79,10 @@ SelectionTransferModal.propTypes = {
   action: PropTypes.string.isRequired,
   onHide: PropTypes.func.isRequired,
   withShared: PropTypes.bool,
+  withRepository: PropTypes.bool,
 };
 
 SelectionTransferModal.defaultProps = {
   withShared: false,
+  withRepository: false,
 };

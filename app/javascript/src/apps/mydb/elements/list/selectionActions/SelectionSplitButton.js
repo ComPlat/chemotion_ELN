@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Dropdown } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -159,12 +160,17 @@ export default class SelectionSplitButton extends React.Component {
       });
     }
 
+    const { collectionWritable } = this.props;
+
     const isDisabled = this.isAllCollection()
-      || Object.values(selectedElements).every((v) => !v);
+      || Object.values(selectedElements).every((v) => !v)
+      // Splitting adds a new sub-element to the current collection (:add_elements), so it must be
+      // disabled unless that collection is writable (read-only shared collections included).
+      || !collectionWritable;
 
     return (
       <Dropdown id="split-dropdown">
-        <Dropdown.Toggle 
+        <Dropdown.Toggle
           variant="light"
           size="sm"
           disabled={isDisabled}
@@ -222,3 +228,13 @@ export default class SelectionSplitButton extends React.Component {
     );
   }
 }
+
+SelectionSplitButton.propTypes = {
+  // Whether the *current* collection is writable by the user (:add_elements or higher). Derived by
+  // SelectionActions from currentCollection.permission_level, not from record-level sharing_allowed.
+  collectionWritable: PropTypes.bool,
+};
+
+SelectionSplitButton.defaultProps = {
+  collectionWritable: false,
+};

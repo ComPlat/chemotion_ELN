@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Import::ImportJson
+class Import::ImportJson # rubocop:disable Metrics/ClassLength,Style/ClassAndModuleChildren
   attr_accessor :data,  :force_uuid
   attr_reader :user_id, :collection_id, :collection, :all_collection, :user,
               :new_data, :log, :new_attachments
@@ -140,6 +140,9 @@ class Import::ImportJson
           { collection_id: all_collection.id }
         ]
       )
+      if !attribs.key?('concentration_mode') && attribs.key?('use_reaction_volume')
+        attribs['concentration_mode'] = attribs['use_reaction_volume'] ? 'reaction_volume' : 'solvents_only'
+      end
       create_element(el['uuid'], attribs, Reaction, 'reaction', el['literatures'])
     end
   end

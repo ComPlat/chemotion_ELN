@@ -14,7 +14,7 @@ import AppModal from 'src/components/common/AppModal';
 import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -49,7 +49,6 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { EditUserLabels } from 'src/components/UserLabels';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
@@ -67,7 +66,7 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
@@ -77,9 +76,9 @@ const MWPrecision = 6;
 // persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
 let _pendingChemicalCreate = null;
 
-const decoupleCheck = (sample) => {
+const decoupleCheck = (sample, notifications) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
-    NotificationActions.add({
+    notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
     LoadingActions.stop();
@@ -90,11 +89,11 @@ const decoupleCheck = (sample) => {
   return true;
 };
 
-const rangeCheck = (field, sample) => {
+const rangeCheck = (field, sample, notifications) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
     && Number.parseFloat(sample[`${field}_upperbound`]) < Number.parseFloat(sample[`${field}_lowerbound`])) {
-    NotificationActions.add({
+    notifications.add({
       title: `Error on ${field.replace(/(^\w{1})|(_{1}\w{1})/g, (match) => match.toUpperCase())}`,
       message: 'range lower bound must be less than or equal to range upper',
       level: 'error',
@@ -111,10 +110,15 @@ const sampleTitle = (sample) => {
   return inventoryLabel || sample.title();
 };
 
+// Split around the collection badge so the header reads in the same order as the list row
+// (SampleGroupItem): reaction, collection, analyses.
+const sampleTitleAppendixLeading = (sample) => (
+  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} size="sm" variant="secondary" />
+);
+
 const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-    <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
@@ -154,7 +158,7 @@ export default class SampleDetails extends React.Component {
       quickCreator: false,
       showInchikey: false,
       pageMessage: null,
-      visible: Immutable.List(),
+      visible: List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
@@ -216,7 +220,16 @@ export default class SampleDetails extends React.Component {
       const snapshot = _pendingChemicalCreate;
       _pendingChemicalCreate = null;
       ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
-        .then(() => {
+        .then((result) => {
+          if (result?.error) {
+            this.context.notifications.add({
+              title: 'Inventory data not saved',
+              message: `The server refused the inventory data of the new sample (${result.error}).`,
+              level: 'error',
+              position: 'tc',
+            });
+            return;
+          }
           // Re-fetch chemical so ChemicalTab renders the newly-created record
           // without requiring a page refresh.
           this.chemicalTabRef.current?.fetchChemical(sample);
@@ -300,7 +313,7 @@ export default class SampleDetails extends React.Component {
     MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
         if (!result || result == null) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error on Sample creation',
             message: `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
             level: 'error',
@@ -364,7 +377,7 @@ export default class SampleDetails extends React.Component {
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error on Sample creation',
         message: `Cannot create molecule! Error: [${errorMessage}]`,
         level: 'error',
@@ -380,17 +393,6 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
-
-      // Handle temporary SVG file from structure editor
-      if (result.temp_svg) {
-        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
-        // This ensures the combined molecule SVG is always displayed
-        if (sample.isMixture()) {
-          sample.sample_svg_file = null;
-        } else {
-          sample.sample_svg_file = result.temp_svg;
-        }
-      }
 
       this.setState({
         sample,
@@ -432,9 +434,9 @@ export default class SampleDetails extends React.Component {
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
-    if (!decoupleCheck(sample)) return;
-    if (!rangeCheck('boiling_point', sample)) return;
-    if (!rangeCheck('melting_point', sample)) return;
+    if (!decoupleCheck(sample, this.context.notifications)) return;
+    if (!rangeCheck('boiling_point', sample, this.context.notifications)) return;
+    if (!rangeCheck('melting_point', sample, this.context.notifications)) return;
 
     // Prepare mixture samples for saving using Sample.js method
     sample.prepareMixtureForSave();
@@ -948,6 +950,10 @@ export default class SampleDetails extends React.Component {
       rfsovents,
       supplier,
       private_notes,
+      color,
+      moisture,
+      particle_size,
+      physical_state,
       ...customKeys
     } = cloneDeep(xref || {});
     const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
@@ -1025,14 +1031,12 @@ export default class SampleDetails extends React.Component {
               allowCreateWhileLoading
               formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
             />
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button
-                variant="light"
-                onClick={() => copyToClipboard(cas)}
-              >
-                <i className="fa fa-clipboard" />
-              </Button>
-            </OverlayTrigger>
+            <CopyButton
+              text={cas}
+              placement="bottom"
+              variant="light"
+              tooltipId="copy_cas"
+            />
           </div>
         </InputGroup>
         {!validCas && errorMessage}
@@ -1081,10 +1085,25 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+    return (
+      <>
+        {decoupleCb}
+        {inventorySample}
+      </>
+    );
+  }
+
+  // Full-width banner content for the panel header (structure/redirect alerts).
+  // Kept out of sampleHeader()'s icon-button toolbar row: an Alert is a tall,
+  // multi-line block, and rendering it as a flex item alongside small icon
+  // buttons (see DetailCard.js's headerToolbar row) stretched the whole header
+  // row to the alert's height and squeezed the alert's own width down to
+  // whatever was left over next to the buttons.
+  sampleHeaderBanner() {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px' }}>
           <strong>Structure Alert</strong>
           <Button
             size="sm"
@@ -1109,7 +1128,7 @@ export default class SampleDetails extends React.Component {
 
     // warning message for redirection
     const redirectWarningBlock = this.state.showRedirectWarning ? (
-      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+      <Alert variant="warning" className={`d-flex flex-column gap-2 mb-0 p-2${messageBlock ? ' mt-2' : ''}`}>
         <div>
           <strong>Notice:</strong>
           <p className="mb-1">
@@ -1133,10 +1152,10 @@ export default class SampleDetails extends React.Component {
       </Alert>
     ) : null;
 
+    if (!messageBlock && !redirectWarningBlock) return null;
+
     return (
       <>
-        {decoupleCb}
-        {inventorySample}
         {messageBlock}
         {redirectWarningBlock}
       </>
@@ -1204,26 +1223,13 @@ export default class SampleDetails extends React.Component {
           disabled
           readOnly
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(
-              (this.state.showInchikey
-                ? sample.molecule_inchikey
-                : this.state.inchiString)
-              || ' '
-            )}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={(this.state.showInchikey ? sample.molecule_inchikey : this.state.inchiString) || ' '}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_inchi"
+        />
       </InputGroup>
-    );
-  }
-
-  clipboardTooltip() {
-    return (
-      <Tooltip id="assign_button">copy to clipboard</Tooltip>
     );
   }
 
@@ -1249,14 +1255,12 @@ export default class SampleDetails extends React.Component {
             }
           }}
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(sample.molecule_cano_smiles || '')}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={sample.molecule_cano_smiles || ''}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_smiles"
+        />
         <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
           <Button
             variant="light"
@@ -1283,14 +1287,12 @@ export default class SampleDetails extends React.Component {
           disabled
           readOnly
         />
-        <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-          <Button
-            variant="light"
-            onClick={() => copyToClipboard(sample.molfile || '')}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+        <CopyButton
+          text={sample.molfile || ''}
+          placement="bottom"
+          variant="light"
+          tooltipId="copy_molfile"
+        />
         <Button
           variant="light"
           onClick={this.handleMolfileShow}
@@ -1397,6 +1399,19 @@ export default class SampleDetails extends React.Component {
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    // Same component set (layout/order edit): sync list order and keep editor molfile/SVG.
+    if (sample.hasComponents()) {
+      const existingSmiles = (sample.components || [])
+        .map((c) => c.molecule_cano_smiles)
+        .filter(Boolean)
+        .join('.');
+      if (Sample.sameSmilesSet(existingSmiles, sample.molecule_cano_smiles)) {
+        sample.syncComponentOrderToSmiles(mixtureSmiles);
+        this.setState({ sample });
+        return;
+      }
+    }
 
     this.setState({ loadingMolecule: true });
 
@@ -1577,9 +1592,11 @@ export default class SampleDetails extends React.Component {
         element={sample}
         isPendingToSave={pendingToSave}
         headerToolbar={this.sampleHeader(sample)}
+        headerBanner={this.sampleHeaderBanner()}
         footerToolbar={this.sampleFooter()}
         title={sampleTitle(sample)}
         titleTooltip={formatTimeStampsOfElement(sample || {})}
+        titleAppendixLeading={sampleTitleAppendixLeading(sample)}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrChemical()}
         saveDisabled={saveDisabled}

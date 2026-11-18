@@ -38,20 +38,25 @@ export default class SelectionDeleteModal extends React.Component {
       <AppModal
         show
         onHide={onHide}
-        title="Delete from all Collections?"
-        primaryActionLabel="Delete"
+        title="Remove from all Collections?"
+        primaryActionLabel="Remove"
         onPrimaryAction={this.handleClick}
       >
         <Form>
+          <p>
+            Removes the selection from all of your collections. An element that is not present in
+            anyone else&apos;s collection is then permanently deleted; one still shared into another
+            user&apos;s collection is only removed from your view.
+          </p>
           <Form.Group className="mb-3">
             <Form.Check
               type="checkbox"
               onChange={this.handleCheck}
               checked={deleteSubsamples}
-              label="Also delete reaction associated samples&nbsp;"
+              label="Also remove reaction associated samples&nbsp;"
             />
             <Form.Text>
-              If left unchecked, only the solvent and reactant samples of the selected reactions will be deleted
+              If left unchecked, only the solvent and reactant samples of the selected reactions will be removed
             </Form.Text>
           </Form.Group>
         </Form>

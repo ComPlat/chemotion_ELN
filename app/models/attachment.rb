@@ -36,6 +36,7 @@
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
+# rubocop: disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -74,6 +75,19 @@ class Attachment < ApplicationRecord
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
 
+  # Element types an attachment can be linked to directly through attachable, rather than via a
+  # container. #root_element resolves these to the element itself, and AttachableAPI accepts
+  # exactly these as attachable_type - keep the two from drifting apart by using this list.
+  ELEMENT_ATTACHABLE_TYPES = %w[
+    Sample Reaction ResearchPlan Wellplate Screen CelllineSample DeviceDescription
+    SequenceBasedMacromolecule SequenceBasedMacromoleculeSample
+  ].freeze
+
+  # Generic element (labimotion) attachment types. 'Labimotion::Element' points at the element;
+  # the *Props types are uploads into a layer field and point at the element, segment or dataset
+  # holding it (see Labimotion::Prop). #root_element resolves each to its element.
+  LABIMOTION_ATTACHABLE_TYPES = %w[Labimotion::Element ElementProps SegmentProps DatasetProps].freeze
+
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
   # rubocop:disable Rails/InverseOf
@@ -95,6 +109,16 @@ class Attachment < ApplicationRecord
   scope :where_template, lambda {
     where(attachable_type: 'Template')
   }
+
+  VARIATION_SUFFIX_REGEXP = /-v(\d+)(?=[.-]|$)/i.freeze
+
+  def self.variation_id_from(filename)
+    filename.to_s[VARIATION_SUFFIX_REGEXP, 1]
+  end
+
+  def self.strip_variation_suffix(filename)
+    filename.to_s.sub(VARIATION_SUFFIX_REGEXP, '')
+  end
 
   def set_default_created_by_type
     self.created_by_type ||= 'User'
@@ -132,14 +156,33 @@ class Attachment < ApplicationRecord
   #  "Attachment.new.root_element" #=> "nil"
   def root_element
     case attachable_type
-    when 'Sample', 'Reaction', 'ResearchPlan', 'Wellplate', 'Screen', 'CelllineSample', 'DeviceDescription',
-         'SequenceBasedMacromolecule', 'SequenceBasedMacromoleculeSample' # *Model::ELEMENTS
+    when *ELEMENT_ATTACHABLE_TYPES
       attachable
     when 'Container'
       attachable&.root_element
+    when *LABIMOTION_ATTACHABLE_TYPES
+      labimotion_root_element
     else
       recipient
     end
+  end
+
+  # Whether #root_element is derived from (attachable_type, attachable_id) alone, so it is the same
+  # for every attachment on that attachable; false for the created_for fallback.
+  def root_element_from_attachable?
+    attachable_id.present? &&
+      (attachable_type.in?(ELEMENT_ATTACHABLE_TYPES) || attachable_type.in?(LABIMOTION_ATTACHABLE_TYPES) ||
+       attachable_type == 'Container')
+  end
+
+  # Other attachments on the same attachable (this one included). Empty when there is no
+  # attachable_id: unattached files of different users share no attachable.
+  #
+  # @return [ActiveRecord::Relation<Attachment>]
+  def same_attachable
+    return Attachment.none if attachable_id.nil?
+
+    Attachment.where(attachable_type: attachable_type, attachable_id: attachable_id)
   end
 
   def for_research_plan?
@@ -190,6 +233,7 @@ class Attachment < ApplicationRecord
     super
 
     set_key
+    self
   end
 
   def set_key; end
@@ -213,7 +257,13 @@ class Attachment < ApplicationRecord
 
   # to allow reading of PDF files within research plan analyses tab
   def type_pdf?
-    attachment['mime_type'].to_s == 'application/pdf'
+    attachment.present? && attachment['mime_type'].to_s == 'application/pdf'
+  end
+
+  # Whether GET /attachments/image/:id (Usecases::Attachments::LoadImage) can serve this file.
+  # Exposed to the client as +previewable+ so the rule lives in one place.
+  def previewable?
+    type_image? || type_pdf?
   end
 
   # @return [String] the path to the combined image file on disk
@@ -266,31 +316,53 @@ class Attachment < ApplicationRecord
   def resolve_unique_match
     return [nil, nil] unless inbox_auto_enabled?
 
-    samples = InboxSearchElements.call(
-      search_string: filename,
-      current_user: recipient,
-      element: :sample,
-    )
+    unique_match_among(matching_samples, matching_reactions)
+  end
 
-    variation = filename[/-v(\d+)(?=[.-]|$)/i, 1]
+  private
+
+  def labimotion_root_element
+    case attachable_type
+    when 'Labimotion::Element' then attachable
+    when 'ElementProps' then Labimotion::Element.find_by(id: attachable_id)
+    when 'SegmentProps' then Labimotion::Segment.find_by(id: attachable_id)&.element
+    when 'DatasetProps' then labimotion_dataset_root_element
+    end
+  end
+
+  # A generic dataset belongs to an analysis container.
+  def labimotion_dataset_root_element
+    Labimotion::Dataset.find_by(id: attachable_id)&.element&.root_element
+  end
+
+  def matching_samples
+    InboxSearchElements.call(search_string: filename, current_user: recipient, element: :sample)
+  end
+
+  def matching_reactions
     search_string = filename.sub(/-v\d+.*$/i, '')
+    InboxSearchElements.call(search_string: search_string, current_user: recipient, element: :reaction)
+  end
 
-    reactions = InboxSearchElements.call(
-      search_string: search_string,
-      current_user: recipient,
-      element: :reaction,
-    )
-
+  def unique_match_among(samples, reactions)
+    variation = self.class.variation_id_from(filename)
     return [reactions.first, variation] if samples.empty? && reactions.one?
     return [samples.first, nil]         if reactions.empty? && samples.one?
 
-    product_samples = samples.select { |s| s.reactions_samples.any? { |rs| rs.type == 'ReactionsProductSample' } }
-    return [product_samples.first, nil] if reactions.empty? && product_samples.one?
+    product_sample = unique_product_sample_among(samples)
+    return [product_sample, nil] if reactions.empty? && product_sample
 
     [nil, nil]
   end
 
-  private
+  def unique_product_sample_among(samples)
+    product_samples = samples.select { |s| product_sample?(s) }
+    product_samples.first if product_samples.one?
+  end
+
+  def product_sample?(sample)
+    sample.reactions_samples.any? { |rs| rs.type == 'ReactionsProductSample' }
+  end
 
   def generate_key
     self.key = SecureRandom.uuid unless key
@@ -321,7 +393,9 @@ class Attachment < ApplicationRecord
     return if file_path.nil?
     return unless File.exist?(file_path)
 
-    attachment_attacher.attach(File.open(file_path, binmode: true))
+    File.open(file_path, binmode: true) do |io|
+      attachment_attacher.attach(io)
+    end
     raise 'File to large' unless valid?
 
     raise 'User quota exceeded' if user_quota_exceeded?
@@ -329,6 +403,8 @@ class Attachment < ApplicationRecord
     attachment_attacher.create_derivatives
 
     update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+    # attach once: Shrine's after_commit `persist` saves the record again, which would re-run this callback
+    self.file_path = nil
   end
 
   def check_file_size
@@ -350,3 +426,5 @@ class Attachment < ApplicationRecord
     data.fetch('inbox_auto', true)
   end
 end
+
+# rubocop: enable Metrics/ClassLength

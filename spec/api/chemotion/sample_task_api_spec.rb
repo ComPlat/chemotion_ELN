@@ -3,6 +3,10 @@
 describe Chemotion::SampleTaskAPI do
   include_context 'api request authorization context'
 
+  # The endpoint is gated behind the :weighing_tasks UI component flag; enable it
+  # explicitly so these specs are independent of config/ui_components.yml.
+  before { allow(UiComponents).to receive(:enabled?).with(:weighing_tasks).and_return(true) }
+
   let(:other_user) { create(:person) }
   let(:sample) do
     create(
@@ -161,6 +165,16 @@ describe Chemotion::SampleTaskAPI do
 
         expect(parsed_json_response).to include('error' => 'Task could not be deleted')
       end
+    end
+  end
+
+  describe 'when the weighing_tasks UI component is disabled' do
+    before { allow(UiComponents).to receive(:enabled?).with(:weighing_tasks).and_return(false) }
+
+    it 'returns a 404' do
+      get '/api/v1/sample_tasks', params: { status: :open }
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

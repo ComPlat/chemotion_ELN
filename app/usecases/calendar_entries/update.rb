@@ -16,20 +16,28 @@ module Usecases
         entry = user.calendar_entries.find(params[:id])
         return unless entry
 
-        entry.update!(params.except(:id, :notify_user_ids))
-
-        # notify_user_ids is an attr_accessor
-        if params[:notify_user_ids]&.any?
-          # immediately save notified users to see them in the calendar
-          params[:notify_user_ids].each do |user_id|
-            entry.calendar_entry_notifications.create(user_id: user_id, status: :updated)
-          end
-
-          # send emails and create notifications to selected users
-          SendCalendarEntryNotificationJob.perform_later(entry.id, params[:notify_user_ids], :updated)
+        ActiveRecord::Base.transaction do
+          entry.update!(params.except(:id, :notify_user_ids))
+          reconcile_notifications(entry) if params.key?(:notify_user_ids)
         end
 
         entry
+      end
+
+      private
+
+      def reconcile_notifications(entry)
+        new_ids = (params[:notify_user_ids] || []).map(&:to_i).uniq
+        existing_ids = entry.calendar_entry_notifications.pluck(:user_id)
+
+        to_remove = existing_ids - new_ids
+        entry.calendar_entry_notifications.where(user_id: to_remove).destroy_all if to_remove.any?
+
+        to_add = new_ids - existing_ids
+        return unless to_add.any?
+
+        to_add.each { |uid| entry.calendar_entry_notifications.create!(user_id: uid, status: :updated) }
+        SendCalendarEntryNotificationJob.perform_later(entry.id, to_add, :updated)
       end
     end
   end

@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -155,7 +154,11 @@ const AnalysisHeader = ({ container, readonly }) => {
       return c;
     }),
   };
-  const attachment = getAttachmentFromContainer(container);
+  const onPreferredThumbnailChange = (preferredId) => {
+    // eslint-disable-next-line no-param-reassign, react/prop-types
+    container.extended_metadata = { ...container.extended_metadata, preferred_thumbnail: preferredId };
+    sbmmStore.changeAnalysisContainerContent(container);
+  };
 
   const orderClass = sbmmStore.analysis_mode == 'order' ? 'order pe-2' : '';
   const deleted = container?.is_deleted || false;
@@ -164,13 +167,16 @@ const AnalysisHeader = ({ container, readonly }) => {
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${orderClass}`}>
       <div className="preview border d-flex align-items-center">
         {deleted
-          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
-          : <ImageModal
-            attachment={attachment}
-            popObject={{
-              title: container.name,
-            }}
-          />
+          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" />
+          : (
+            <ImageModal
+              container={container}
+              popObject={{
+                title: container.name,
+              }}
+              onPreferredThumbnailChange={onPreferredThumbnailChange}
+            />
+          )
         }
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>

@@ -19,12 +19,12 @@ const ConflictModal = () => {
     });
   }
 
-  const useExistingSBMMAndSaveSample = () => {
+  const handleExistingSBMMAndSaveSample = () => {
     sbmmStore.closeConflictModal();
     sbmmStore.useExistingSbmmAndSaveSample(sbmmSample, sbmmStore.conflictSbmms[1]);
   }
 
-  const useExistingSBMMSaveSampleAndSendInfoToAdmin = () => {
+  const handleExistingSBMMSaveSampleAndSendInfoToAdmin = () => {
     const existingSbmm = sbmmStore.conflictSbmms[1];
     const modifiedSbmm = sbmmStore.conflictSbmms[0];
     sbmmStore.closeConflictModal();
@@ -39,11 +39,11 @@ const ConflictModal = () => {
   const booleanValueOrText = (key, value) => {
     let newValue = value;
 
-    if (key == 'parent') {
+    if (key === 'parent') {
       newValue = value?.id;
     }
 
-    if (key == 'sequence') {
+    if (key === 'sequence') {
       newValue = value.match(/.{1,10}/g).join(' ')
     }
 
@@ -65,7 +65,7 @@ const ConflictModal = () => {
 
     rows.push(
       <tr>
-        <td colspan="34"><h5>{headline}</h5></td>
+        <td colSpan="34"><h5>{headline}</h5></td>
       </tr>
     );
     Object.keys(cleanedKeys).map((modificationKey) => {
@@ -154,11 +154,11 @@ const ConflictModal = () => {
                           If the existing SBMM and its samples should be changed, please contact your system admin.
                           Your Sample will be saved with the existing SBMM.
                         </div>
-                        
+
                         <Button
                           variant="warning"
                           className="mt-2"
-                          onClick={() => useExistingSBMMSaveSampleAndSendInfoToAdmin()}
+                          onClick={() => handleExistingSBMMSaveSampleAndSendInfoToAdmin()}
                         >
                           Contact your system admin
                         </Button>
@@ -173,7 +173,7 @@ const ConflictModal = () => {
                         <Button
                           variant="warning"
                           className="mt-2"
-                          onClick={() => useExistingSBMMAndSaveSample()}
+                          onClick={() => handleExistingSBMMAndSaveSample()}
                         >
                           Use this SBMM
                         </Button>

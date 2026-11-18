@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 import { formatDisplayValue } from 'src/utilities/MathUtils';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -152,7 +152,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
   render() {
     const {
       size, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className,
-      overlayMessage, active, isError
+      overlayMessage, active, isError, disableUnitButtonPadding
     } = this.props;
     const {
       showString, value, metricPrefix, currentPrecision, valueString, block
@@ -187,7 +187,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           variant={hasErrorState ? 'danger' : 'light'}
           active={isActiveUnit}
           size={size}
-          className="px-1"
+          className={disableUnitButtonPadding ? '' : 'px-1'}
         >
           {mp + unit}
         </Button>
@@ -245,9 +245,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           )}
           {(() => {
             const inputGroup = (
-              <InputGroup
-                className="d-flex flex-nowrap align-items-center w-100"
-              >
+              <InputGroup className="w-100">
                 <Form.Control
                   type="text"
                   disabled={inputDisabled}
@@ -262,16 +260,13 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 />
                 {prefixSwitch}
                 {showInfoTooltipRequiredVol && (
-                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
-                    <Button
-                      variant="light"
-                      size={size}
-                      onClick={() => copyToClipboard(displayValue)}
-                      className="ms-1"
-                    >
-                      <i className="fa fa-clipboard" />
-                    </Button>
-                  </OverlayTrigger>
+                  <CopyButton
+                    text={displayValue}
+                    placement="bottom"
+                    variant="light"
+                    size={size}
+                    className="ms-1"
+                  />
                 )}
               </InputGroup>
             );
@@ -332,6 +327,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   overlayMessage: PropTypes.string,
   active: PropTypes.bool,
   isError: PropTypes.bool,
+  disableUnitButtonPadding: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -347,4 +343,5 @@ NumeralInputWithUnitsCompo.defaultProps = {
   overlayMessage: null,
   active: false,
   isError: false,
+  disableUnitButtonPadding: false,
 };

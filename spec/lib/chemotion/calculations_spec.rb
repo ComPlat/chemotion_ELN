@@ -305,5 +305,17 @@ describe 'Chemotion::Calculations' do
 
       expect(result).to eq(target)
     end
+
+    # A detail-level-redacted numeric field reaches the report renderer as '***'. It must be
+    # returned verbatim rather than raising ArgumentError on BigDecimal() (which crashed the
+    # DOCX generation with a 500, even for legitimate low-detail-level sharees).
+    it 'passes the redaction placeholder through without raising' do
+      expect { Chemotion::Calculations.valid_digit('***', 3) }.not_to raise_error
+      expect(Chemotion::Calculations.valid_digit('***', 3)).to eq('***')
+    end
+
+    it 'still treats nil as zero' do
+      expect(Chemotion::Calculations.valid_digit(nil, 2)).to eq('0.0')
+    end
   end
 end

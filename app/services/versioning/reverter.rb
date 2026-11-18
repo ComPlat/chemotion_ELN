@@ -14,25 +14,21 @@ module Versioning
       new(changes: changes).call
     end
 
+    # One transaction for the whole request: it is applied completely or not at all, including side effects such
+    # as the container hierarchy rows a restore inserts.
     def call
-      errors = []
+      ActiveRecord::Base.transaction do
+        changes.each do |change|
+          classname = change['klass_name']
+          raise StandardError, "Unknown reverter type: #{classname}" unless ALLOWED_REVERTERS.include?(classname)
 
-      changes.each do |change|
-        classname = change['klass_name']
-        unless ALLOWED_REVERTERS.include?(classname)
-          errors << "Unknown reverter type: #{classname}"
-          next
-        end
-
-        begin
-          reverter_class = "Versioning::Reverters::#{classname}Reverter".safe_constantize
-          reverter_class.call(change)
-        rescue StandardError => e
-          errors << "Error processing #{classname}: #{e.message}"
+          begin
+            "Versioning::Reverters::#{classname}Reverter".safe_constantize.call(change)
+          rescue StandardError => e
+            raise StandardError, "Error processing #{classname}: #{e.message}"
+          end
         end
       end
-
-      raise StandardError, errors.join(', ') if errors.any?
     end
   end
 end

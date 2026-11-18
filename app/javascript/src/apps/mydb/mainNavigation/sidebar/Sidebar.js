@@ -20,7 +20,7 @@ export default function Sidebar() {
   return (
     <div className={classnames('sidebar', { 'sidebar--collapsed': isCollapsed })}>
       <div className="sidebar-content">
-        <div className="flex-grow-1 h-0 pb-4">
+        <div className="flex-grow-1 min-w-0 h-0 pb-4">
           <CollectionTree isCollapsed={isCollapsed} />
         </div>
         <div className={classnames(

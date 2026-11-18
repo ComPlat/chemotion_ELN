@@ -22,8 +22,9 @@
 #
 # Indexes
 #
-#  index_collection_shares_on_collection_id   (collection_id)
-#  index_collection_shares_on_shared_with_id  (shared_with_id)
+#  index_collection_shares_on_collection_id                     (collection_id)
+#  index_collection_shares_on_collection_id_and_shared_with_id  (collection_id,shared_with_id) UNIQUE
+#  index_collection_shares_on_shared_with_id                    (shared_with_id)
 #
 # Foreign Keys
 #
@@ -31,20 +32,45 @@
 #  fk_rails_...  (shared_with_id => users.id)
 #
 class CollectionShare < ApplicationRecord
-  # most permission levels are directed at the elements, except pass ownership, this refers to the collection itself
+  # Cumulative permission ladder, ordered by how destructive the capability is. A check is always
+  # "a share exists with permission_level >= N", so every rung silently grants the ones below it.
+  #
+  # 0 read_elements   read the collection and its elements
+  # 1 edit_elements   + edit element content (audited via logidze)
+  # 2 add_elements    + create new elements, add/import existing ones, propagate elements onward
+  # 3 remove_elements + unlink any element from this collection (NOT destroy the element record —
+  #                     destroying is owner-only, see ElementPolicy#destroy?)
+  # 4 manage_shares   + CRUD on this collection's collection_shares rows (delegated ACL admin)
+  # 5 pass_ownership  + transfer ownership of the collection (no endpoint yet)
+  #
+  # The frontend mirrors this in app/javascript/src/utilities/PermissionConst.js — keep in sync.
   PERMISSION_LEVELS = {
     read_elements: 0,
-    write_elements: 1,
-    share_collection: 2,
-    delete_elements: 3,
-    import_elements: 4,
-    pass_ownership: 6,
+    edit_elements: 1,
+    add_elements: 2,
+    remove_elements: 3,
+    manage_shares: 4,
+    pass_ownership: 5,
   }.freeze
-  belongs_to :collection
-  belongs_to :shared_with, class_name: 'User'
 
-  scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: [user.id, *user.group_ids] }) }
+  belongs_to :collection
+  # +with_deleted+: User is acts_as_paranoid, and nothing purges collection_shares when an account
+  # is soft-deleted — the row survives and keeps collections.shared true, so the UI still offers
+  # the share. Without this the association resolves to nil and every reader of the share (the
+  # sidebar hover, the manage-shares modal, the element-list prefetch) 500s on it.
+  belongs_to :shared_with, -> { with_deleted }, class_name: 'User', inverse_of: false
+
+  # Shares on the user's *own* collections. Personal, like Collection#owned_by?: a share a group
+  # made is the group's to enumerate or revoke, not each member's.
+  scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: user.id }) }
+
+  # Every share that grants +user+ access, including the ones held by their groups. Use for
+  # *authorization* — never to decide what a user may destroy: a group's share is not theirs.
   scope :shared_with, ->(user) { where(shared_with_id: [user.id, *user.group_ids]) }
+
+  # Only the share addressed to +user+ personally. Use when the user acts *on the share itself*
+  # (rejecting it). A user who wants to drop group-derived access leaves the group instead.
+  scope :shared_directly_with, ->(user) { where(shared_with_id: user.id) }
   scope(
     :with_minimum_permission_level,
     ->(permission_level) { where(collection_shares: { permission_level: permission_level.. }) },
@@ -54,7 +80,10 @@ class CollectionShare < ApplicationRecord
     ->(detail_level_field, detail_level) { where("#{detail_level_field} >= ?", detail_level) },
   )
 
+  # @param key [Symbol] one of {PERMISSION_LEVELS}' keys
+  # @return [Integer] the level for +key+
+  # @raise [KeyError] if +key+ is not a known permission level
   def self.permission_level(key)
-    PERMISSION_LEVELS[key] || -1
+    PERMISSION_LEVELS.fetch(key)
   end
 end

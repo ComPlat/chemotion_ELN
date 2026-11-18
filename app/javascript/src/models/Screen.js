@@ -4,6 +4,10 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 export default class Screen extends Element {
+  constructor(args) {
+    super(args);
+  }
+
   static buildEmpty(collectionID) {
     const descriptionDefault = {
       ops: [{ insert: '' }]
@@ -23,6 +27,7 @@ export default class Screen extends Element {
       research_plans: [],
       container: Container.init(),
       segments: [],
+      can_update: true,
       component_graph_data: {
         nodes: [],
         edges: []
@@ -36,7 +41,7 @@ export default class Screen extends Element {
     };
 
     return new Screen({
-      collection_id: collectionID,
+      collection_id: collection_id,
       type: 'screen',
       name: 'New Screen with Wellplates',
       collaborator: '',
@@ -49,6 +54,7 @@ export default class Screen extends Element {
       user_labels: [],
       container: Container.init(),
       segments: [],
+      can_update: true,
       component_graph_data: {
         nodes: [],
         edges: []

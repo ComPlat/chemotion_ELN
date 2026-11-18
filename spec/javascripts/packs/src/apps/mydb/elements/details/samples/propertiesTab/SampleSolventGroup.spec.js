@@ -7,10 +7,6 @@ import { SampleSolventGroup, SolventDetails }
   from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleSolventGroup';
 import SampleFactory from 'factories/SampleFactory';
 
-import {
-  describe, it
-} from 'mocha';
-
 configure({ adapter: new Adapter() });
 
 describe('SampleSolventGroup', () => {

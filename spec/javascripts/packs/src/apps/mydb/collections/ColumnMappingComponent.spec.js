@@ -1,16 +1,10 @@
-// filepath: /home/chemotion-dev/app/spec/javascripts/packs/src/components/contextActions/ColumnMappingComponent.spec.js
 import React from 'react';
 import { Button, Form, Card } from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach
-} from 'mocha';
-// Use relative path for Jest compatibility
-import ColumnMappingComponent from
-  'src/apps/mydb/collections/ColumnMappingComponent';
+import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
 
 configure({ adapter: new Adapter() });
 

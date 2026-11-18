@@ -63,9 +63,11 @@ const ResearchplanFlowDisplay = (props) => {
       >
         <Background />
         <Controls showInteractive={false}>
-          <ControlButton onClick={() => toggleModal(true)}>
-            <div>Edit</div>
-          </ControlButton>
+          {!props.readOnly && (
+            <ControlButton onClick={() => toggleModal(true)}>
+              <div>Edit</div>
+            </ControlButton>
+          )}
         </Controls>
       </ReactFlow>
       <ResearchplanFlowEditorWithProvider

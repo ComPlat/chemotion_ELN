@@ -19,7 +19,7 @@ module Chemotion
         fast_input = Matrice.fast_input
         cas_api_key = (fast_input[:feature_enabled] && fast_input[:cas_api_key].presence) || ''
 
-        return fetch_from_pubchem(cas_number) unless cas_api_key
+        return fetch_from_pubchem(cas_number) if cas_api_key.blank?
 
         begin
           result = fetch_from_cas(cas_number, cas_api_key)

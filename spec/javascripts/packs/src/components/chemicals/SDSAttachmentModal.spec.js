@@ -1,4 +1,4 @@
-import SDSAttachmentModal from '../../../../../../app/javascript/src/components/chemicals/SDSAttachmentModal';
+import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
 import AppModal from 'src/components/common/AppModal';
 
 const React = require('react');
@@ -7,7 +7,6 @@ const { configure, shallow } = require('enzyme');
 const Adapter = require('@wojtekmaj/enzyme-adapter-react-17');
 const expect = require('expect');
 const sinon = require('sinon');
-const { describe, it, beforeEach } = require('mocha');
 
 configure({ adapter: new Adapter() });
 

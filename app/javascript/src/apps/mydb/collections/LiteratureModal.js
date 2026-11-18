@@ -5,11 +5,9 @@ import {
   Table,
   Button,
   Row,
-  Col,
-  OverlayTrigger,
-  Tooltip
+  Col
 } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 import { uniqBy } from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import {
@@ -22,8 +20,8 @@ import {
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import CopyButton from 'src/components/common/CopyButton';
 import ElementIcon from 'src/components/common/ElementIcon';
 
 const Cite = require('citation-js');
@@ -127,12 +125,13 @@ CitationTable.propTypes = {
 };
 
 export default class LiteratureModal extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
       sampleRefs: [],
       reactionRefs: [],
-      selectedRefs: new Immutable.Map(),
+      selectedRefs: Map(),
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],
@@ -150,6 +149,7 @@ export default class LiteratureModal extends Component {
     const { sample, reaction } = UIStore.getState();
     const currentCollection = { id: collectionId };
 
+    this.context.notifications.removeByUid('literature');
     LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
       this.setState(prevState => ({
         ...prevState,
@@ -158,6 +158,17 @@ export default class LiteratureModal extends Component {
         sample: { ...sample },
         reaction: { ...reaction },
       }));
+    }).catch((error) => {
+      // Without this the modal opened empty and said nothing: the rejection was unhandled and
+      // setState never ran.
+      this.context.notifications.add({
+        title: 'Reference Report',
+        message: error.message || 'Could not load the references for this collection',
+        level: 'error',
+        autoDismiss: 5,
+        position: 'tr',
+        uid: 'literature',
+      });
     });
     UIStore.listen(this.handleUIStoreChange);
   }
@@ -228,7 +239,7 @@ export default class LiteratureModal extends Component {
 
   fetchDOIMetadata() {
     const { doi } = this.state.literature;
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json.data && json.data.length > 0) {
         const citation = new Cite(json.data[0]);
@@ -252,12 +263,11 @@ export default class LiteratureModal extends Component {
         title: 'Add References for selected Elements',
         message: `unable to fetch metadata for this doi: ${doi}`,
         level: 'error',
-        dismissible: 'button',
         autoDismiss: 5,
         position: 'tr',
         uid: 'literature'
       };
-      NotificationActions.add(notification);
+      this.context.notifications.add(notification);
     });
   }
 
@@ -265,24 +275,14 @@ export default class LiteratureModal extends Component {
     return (
       <div className="d-flex flex-grow-1 align-items-baseline justify-content-between">
         {title}
-        <OverlayTrigger
+        <CopyButton
+          text={clipboardText}
           placement="bottom"
-          overlay={
-            <Tooltip id="assign_button">copy to clipboard</Tooltip>
-          }
-        >
-          <Button
-            size="sm"
-            active
-            className="me-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              copyToClipboard(clipboardText);
-            }}
-          >
-            <i className="fa fa-clipboard" />
-          </Button>
-        </OverlayTrigger>
+          tooltipId={`copy-${title.replace(/\s+/g, '-')}`}
+          size="sm"
+          className="me-2"
+          active
+        />
       </div>
     );
   }

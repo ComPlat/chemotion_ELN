@@ -129,7 +129,7 @@ export default class ResearchPlanDetailsField extends Component {
         </Col>
       );
 
-      if (field.type === 'richtext') {
+      if (field.type === 'richtext' && copyableFields) {
         copyToMetadataButton = (
           <ButtonGroup>
             <Dropdown as={ButtonGroup}>

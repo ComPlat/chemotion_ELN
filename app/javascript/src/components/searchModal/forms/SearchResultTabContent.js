@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useContext, useEffect } from 'react';
 import {
   Tab, Pagination, OverlayTrigger, Tooltip, Badge
@@ -7,8 +8,10 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import { copyToClipboard } from 'src/utilities/clipboard';
+import { byIdsModelParams } from 'src/utilities/searchRequestParams';
 
-function SearchResultTabContent({ list, tabResult, openDetail }) {
+const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
   const currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
   const currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
@@ -18,26 +21,17 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     if (currentPage === undefined) {
       searchStore.changeTabCurrentPage(list.key, 1, list.index);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handlePaginationSelect = (index, ids, key) => {
-    searchStore.changeTabCurrentPage(key, index, list.index);
-
-    const search_result = searchStore.tabSearchResultValues.find((val) => val.id == `${key}s-${index}`);
-    if (search_result === undefined) {
-      searchByIds(index, ids, key);
-    }
-  };
 
   const searchByIds = (index, ids, key) => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: key,
+        ...byIdsModelParams(key),
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
@@ -56,21 +50,35 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     });
   };
 
-  const pagination = (tabResult, key) => {
-    if (tabResult.pages === 1) { return; }
-    if (tabResult.total_elements == 0) { return; }
+  const handlePaginationSelect = (index, ids, key) => {
+    searchStore.changeTabCurrentPage(key, index, list.index);
+
+    const search_result = searchStore.tabSearchResultValues.find((val) => val.id === `${key}s-${index}`);
+    if (search_result === undefined) {
+      searchByIds(index, ids, key);
+    }
+  };
+
+  const pagination = (tabRes, key) => {
+    if (tabRes.pages === 1) { return; }
+    if (tabRes.total_elements === 0) { return; }
 
     const splittedIds = [];
     const items = [];
-    for (let i = 0; i < tabResult.ids.length; i += tabResult.per_page) {
-      splittedIds.push(tabResult.ids.slice(i, i + tabResult.per_page));
+    for (let i = 0; i < tabRes.ids.length; i += tabRes.per_page) {
+      splittedIds.push(tabRes.ids.slice(i, i + tabRes.per_page));
     }
 
     const minPage = Math.max(currentPageNumber - 2, 1);
-    const maxPage = Math.min(minPage + 4, tabResult.pages);
+    const maxPage = Math.min(minPage + 4, tabRes.pages);
     items.push(<Pagination.First key="First" onClick={() => handlePaginationSelect(1, splittedIds[0], key)} />);
     if (currentPageNumber > 1) {
-      items.push(<Pagination.Prev key="Prev" onClick={() => handlePaginationSelect(currentPageNumber - 1, splittedIds[currentPageNumber - 1], key)} />);
+      items.push(
+        <Pagination.Prev
+          key="Prev"
+          onClick={() => handlePaginationSelect(currentPageNumber - 1, splittedIds[currentPageNumber - 1], key)}
+        />
+      );
     }
     if (minPage > 1) {
       items.push(<Pagination.Ellipsis key="Ell1" />);
@@ -86,12 +94,22 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
         </Pagination.Item>
       );
     }
-    if (tabResult.pages > maxPage) {
+    if (tabRes.pages > maxPage) {
       items.push(<Pagination.Ellipsis key="Ell2" />);
     }
-    if (currentPageNumber < tabResult.pages) {
-      items.push(<Pagination.Next key="Next" onClick={() => handlePaginationSelect(currentPageNumber + 1, splittedIds[currentPageNumber], key)} />);
-      items.push(<Pagination.Last key="Last" onClick={() => handlePaginationSelect(tabResult.pages, splittedIds[tabResult.pages - 1], key)} />);
+    if (currentPageNumber < tabRes.pages) {
+      items.push(
+        <Pagination.Next
+          key="Next"
+          onClick={() => handlePaginationSelect(currentPageNumber + 1, splittedIds[currentPageNumber], key)}
+        />
+      );
+      items.push(
+        <Pagination.Last
+          key="Last"
+          onClick={() => handlePaginationSelect(tabRes.pages, splittedIds[tabRes.pages - 1], key)}
+        />
+      );
     }
 
     return (
@@ -104,7 +122,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
   const svgPreview = (object) => {
     if (!['sample', 'reaction'].includes(object.type)) { return null; }
 
-    const title = object.type == 'sample' ? object.molecule_iupac_name : object.short_label;
+    const title = object.type === 'sample' ? object.molecule_iupac_name : object.short_label;
     return (
       <SvgWithPopover
         hasPop
@@ -123,9 +141,9 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     );
   };
 
-  const copyToClipboard = (element) => {
+  const handleCopyClick = (element) => {
     if (element.target.dataset.clipboardText) {
-      navigator.clipboard.writeText(element.target.dataset.clipboardText);
+      copyToClipboard(element.target.dataset.clipboardText);
     }
   };
 
@@ -135,13 +153,13 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
     if (['screen', 'research_plan'].includes(object.type) || object.short_label === undefined) {
       names = [object.name];
-    } else if (object.type == 'sample') {
+    } else if (object.type === 'sample') {
       const infos = [];
       if (object.external_label) { infos.push(object.external_label); }
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
-    } else if (object.type == 'cell_line') {
+    } else if (object.type === 'cell_line') {
       names = [object.short_label, object.itemName];
     } else {
       names = [object.short_label, object.name];
@@ -150,7 +168,12 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
-        <span onClick={() => openDetail(object)}>
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={() => openDetail(object)}
+          onKeyDown={(e) => e.key === 'Enter' && openDetail(object)}
+        >
           {names}
         </span>
       </OverlayTrigger>
@@ -170,8 +193,11 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
           <div className="search-result-group-header-content">
             <div
               key={`${object.short_name}-${i}`}
+              role="button"
+              tabIndex={0}
               className="search-result-tab-content-list"
-              onClick={copyToClipboard}
+              onClick={handleCopyClick}
+              onKeyDown={(e) => e.key === 'Enter' && handleCopyClick(e)}
             >
               {/* Sample grouping header */}
               {showSampleHeader && (
@@ -271,29 +297,31 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
-    const resultsByPage = searchStore.tabSearchResultValues.find((val) => val.id == `${list.key}s-${currentPageNumber}`);
-    const tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
+    const resultsByPage = searchStore.tabSearchResultValues
+      .find((val) => val.id === `${list.key}s-${currentPageNumber}`);
+    const tabResultByPage = resultsByPage !== undefined ? resultsByPage.results : { elements: [] };
 
     if (tabResultByPage.elements.length > 0) {
       contentList = tabResultByPage.elements.map((object, i, elements) => {
+        let item;
         if (['sample', 'reaction'].includes(object.type)) {
-          return sampleAndReactionList(object, i, elements);
-        } if (object.type === 'sequence_based_macromolecule_sample') {
-          return sbmmList(object, i, elements);
-        } if (object.type === 'cell_line') {
-          return cellLineList(object, i, elements);
-        }
-        return (
-          <div className="search-result-group">
-            <div key={`${list.key}-${i}`} className="search-result-tab-content-list-name">
-              <div key={object.type}>
-                {shortLabelWithMoreInfos(object)}
+          item = sampleAndReactionList(object, i, elements);
+        } else if (object.type === 'sequence_based_macromolecule_sample') {
+          item = sbmmList(object, i, elements);
+        } else if (object.type === 'cell_line') {
+          item = cellLineList(object, i, elements);
+        } else {
+          item = (
+            <div className="search-result-group">
+              <div className="search-result-tab-content-list-name">
+                <div>{shortLabelWithMoreInfos(object)}</div>
               </div>
             </div>
-          </div>
-        );
+          );
+        }
+        return <React.Fragment key={object.id}>{item}</React.Fragment>;
       });
-    } else if (tabResult.total_elements != 0) {
+    } else if (tabResult.total_elements !== 0) {
       contentList = <div className="tab-spinner"><i className="fa fa-spinner fa-pulse fa-3x fa-fw" /></div>;
     }
     return contentList;

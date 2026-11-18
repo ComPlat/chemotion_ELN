@@ -16,6 +16,9 @@ class Versioning::Reverters::SampleReverter < Versioning::Reverters::BaseReverte
 
   def range
     lambda do |range_string|
+      # NULL (as older rows store "not set") or Postgres's empty range
+      return if range_string.blank? || range_string == 'empty'
+
       lower, upper = range_string[1...-1].split(',')
       Range.new(
         (lower.presence || -Float::INFINITY).to_f,

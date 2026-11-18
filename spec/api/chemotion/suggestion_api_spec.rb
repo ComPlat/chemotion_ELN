@@ -210,6 +210,29 @@ describe Chemotion::SuggestionAPI do
         expect(parsed_json_response['suggestions'].first['search_by_method']).to eq 'molecule_name'
       end
     end
+
+    # set_var resolves the detail levels. It used to consult only the user's *direct* share, so a
+    # collection reaching them through a group fell back to sample_detail_level 0 and every
+    # `dl_s.positive?` suggestion was skipped.
+    context 'when the collection is shared through one of the users groups' do
+      let(:other_user) { create(:person) }
+      let(:group) { create(:group, users: [user]) }
+      let(:collection) { create(:collection, user: other_user) }
+      let(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
+      let(:molecule_name) { create(:molecule_name, molecule: sample.molecule) }
+      let(:query) { 'Awesome' }
+
+      before do
+        create(:collection_share, collection: collection, shared_with: group, sample_detail_level: 10)
+        sample.molecule_name_id = molecule_name.id
+        sample.save
+        get '/api/v1/suggestions/samples', params: params
+      end
+
+      it 'still finds the suggestion' do
+        expect(parsed_json_response['suggestions'].length).to be 1
+      end
+    end
   end
 
   describe 'GET /api/v1/suggestions/sequence_based_macromolecule_samples' do
@@ -279,6 +302,124 @@ describe Chemotion::SuggestionAPI do
         expect(parsed_json_response['suggestions'].length).to be 2
         search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
         expect(search_by_methods).to include('device_description_name', 'device_description_vendor_device_name')
+      end
+    end
+  end
+
+  # rubocop:disable-next RSpec/MultipleMemoizedHelpers
+  describe 'GET /api/v1/suggestions/:element_type with quotes in the query and scoping' do
+    include_context 'api request authorization context'
+
+    let(:other_collection) { create(:collection, user: user) }
+    let(:suggestion_names) { parsed_json_response['suggestions'].pluck('name') }
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:sbmm_sample_in_collection) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                   name: "O'Brien in collection")
+    end
+    let(:sbmm_sample_elsewhere) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: user,
+                                                   name: "O'Brien elsewhere")
+    end
+    let(:device_description_in_collection) do
+      create(:device_description, name: "O'Brien in collection", general_tags: ["o'brien-tag"], creator: user)
+    end
+    let(:device_description_elsewhere) do
+      create(:device_description, name: "O'Brien elsewhere", general_tags: ["o'brien-gone"], creator: user)
+    end
+    let(:deleted_device_description) do
+      create(:device_description, name: "O'Brien deleted", general_tags: ["o'brien-deleted"], creator: user)
+    end
+    let(:query) { "o'brien" }
+
+    before do
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample_in_collection, collection: collection,
+      )
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample_elsewhere, collection: other_collection,
+      )
+      CollectionsDeviceDescription.create!(device_description: device_description_in_collection,
+                                           collection: collection)
+      CollectionsDeviceDescription.create!(device_description: device_description_elsewhere,
+                                           collection: other_collection)
+      CollectionsDeviceDescription.create!(device_description: deleted_device_description, collection: collection)
+      deleted_device_description.destroy
+    end
+
+    %w[all sequence_based_macromolecule_samples device_descriptions].each do |element_type|
+      it "handles a quote in the query for #{element_type}" do
+        get "/api/v1/suggestions/#{element_type}", params: params
+
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    it 'only suggests sbmm samples of the requested collection' do
+      get '/api/v1/suggestions/sequence_based_macromolecule_samples', params: params
+
+      expect(suggestion_names).to include("O'Brien in collection")
+      expect(suggestion_names).not_to include("O'Brien elsewhere")
+    end
+
+    it 'only suggests non-deleted device descriptions of the requested collection' do
+      get '/api/v1/suggestions/device_descriptions', params: params
+
+      expect(suggestion_names).to include("O'Brien in collection", "o'brien-tag")
+      expect(suggestion_names).not_to include(
+        "O'Brien elsewhere", "o'brien-gone", "O'Brien deleted", "o'brien-deleted"
+      )
+    end
+
+    it 'treats LIKE wildcards in the query literally' do
+      get '/api/v1/suggestions/device_descriptions', params: params.merge(query: '%')
+
+      expect(suggestion_names).to be_empty
+    end
+  end
+
+  # rubocop:disable-next RSpec/MultipleMemoizedHelpers
+  describe 'GET /api/v1/suggestions/:element_type in a shared collection' do
+    include_context 'api request authorization context'
+
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let(:detail_level) { 0 }
+    let(:suggestion_names) { parsed_json_response['suggestions'].pluck('name') }
+    let(:sbmm_sample) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: create(:uniprot_sbmm),
+                                                   user: owner, name: 'shared sbmm sample')
+    end
+    let(:device_description) { create(:device_description, name: 'shared device description', creator: owner) }
+
+    before do
+      create(:collection_share, collection: shared_collection, shared_with: user,
+                                sequencebasedmacromoleculesample_detail_level: detail_level,
+                                devicedescription_detail_level: detail_level)
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sbmm_sample, collection: shared_collection,
+      )
+      CollectionsDeviceDescription.create!(device_description: device_description, collection: shared_collection)
+      get "/api/v1/suggestions/#{element_type}", params: { collection_id: shared_collection.id, query: 'shared' }
+    end
+
+    %w[all sequence_based_macromolecule_samples device_descriptions].each do |type|
+      context "with detail level 0 for #{type}" do
+        let(:element_type) { type }
+
+        it 'suggests no sbmm samples or device descriptions' do
+          expect(response).to have_http_status(:success)
+          expect(suggestion_names).not_to include('shared sbmm sample', 'shared device description')
+        end
+      end
+    end
+
+    context 'with a higher detail level' do
+      let(:detail_level) { 10 }
+      let(:element_type) { 'all' }
+
+      it 'suggests sbmm samples and device descriptions' do
+        expect(suggestion_names).to include('shared sbmm sample', 'shared device description')
       end
     end
   end

@@ -1,46 +1,35 @@
-import 'whatwg-fetch';
-import { camelizeKeys } from 'humps';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { camelizeKeys } from 'src/utilities/FetcherHelper';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class ComputeTaskFetcher {
   static fetchAll() {
-    return fetch('/api/v1/compute_tasks/all', {
-      method: 'GET',
-      credentials: 'same-origin',
-    }).then(res => res.json()).then(json => (
-      camelizeKeys(json.compute_tasks || [])
-    )).catch(err => console.log(err));
+    return ApiClient.getJson('/api/v1/compute_tasks/all')
+      .then((json) => camelizeKeys(json.compute_tasks || []));
   }
 
   static checkState(taskId) {
-    return fetch(`/api/v1/compute_tasks/${taskId}/check`, {
-      method: 'GET',
-      credentials: 'same-origin',
-    }).then(res => res.json()).then((json) => {
-      LoadingActions.stop.defer();
-      return camelizeKeys(json.check);
-    }).catch(err => console.log(err));
+    return ApiClient.getJson(`/api/v1/compute_tasks/${taskId}/check`)
+      .then((json) => {
+        LoadingActions.stop.defer();
+        return camelizeKeys(json.check);
+      });
   }
 
   static revokeTask(taskId) {
-    return fetch(`/api/v1/compute_tasks/${taskId}/revoke`, {
-      method: 'GET',
-      credentials: 'same-origin',
-    }).then(res => res.json()).then((json) => {
-      LoadingActions.stop.defer();
-      return camelizeKeys(json.revoke);
-    }).catch(err => console.log(err));
+    return ApiClient.getJson(`/api/v1/compute_tasks/${taskId}/revoke`)
+      .then((json) => {
+        LoadingActions.stop.defer();
+        return camelizeKeys(json.revoke);
+      });
   }
 
   static deleteTask(taskId) {
-    return fetch(`/api/v1/compute_tasks/${taskId}`, {
-      method: 'DELETE',
-      credentials: 'same-origin',
-    }).then(res => res.json()).then((json) => {
-      LoadingActions.stop.defer();
-      return camelizeKeys(json);
-    }).catch(err => console.log(err));
+    return ApiClient.deleteRequest(`/api/v1/compute_tasks/${taskId}`)
+      .then((json) => {
+        LoadingActions.stop.defer();
+        return camelizeKeys(json);
+      });
   }
 }
-

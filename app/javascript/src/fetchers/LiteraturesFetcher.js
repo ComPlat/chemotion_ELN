@@ -1,41 +1,29 @@
-import 'whatwg-fetch';
-import Immutable from 'immutable';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { List, Map } from 'immutable';
 import Literature from 'src/models/Literature';
 
 export default class LiteraturesFetcher {
   static fetchElementReferences(element) {
     if (!element || element.isNew) {
-      return Promise.resolve(Immutable.List());
+      return Promise.resolve(List());
     }
     const { type, id } = element;
-    return fetch(`/api/v1/literatures?element_type=${type}&element_id=${id}`, {
-      credentials: 'same-origin'
-    }).then((response) => response.json())
+    return ApiClient.getJson(`/api/v1/literatures?element_type=${type}&element_id=${id}`)
       .then((json) => json.literatures)
       .then((literatures) => literatures.map((literature) => new Literature(literature)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()));
   }
 
   static postElementReference(params) {
     const { element, literature } = params;
     const { type, id } = element;
     if (!element || element.isNew) {
-      return Promise.resolve(Immutable.List());
+      return Promise.resolve(List());
     }
-    return fetch('/api/v1/literatures', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ element_type: type, element_id: id, ref: literature })
-    }).then((response) => response.json())
+    return ApiClient.postJson('/api/v1/literatures', { body: { element_type: type, element_id: id, ref: literature } })
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
-      .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()));
   }
 
   static deleteElementReference(params) {
@@ -49,76 +37,54 @@ export default class LiteraturesFetcher {
       element_id: id
     });
 
-    const requestParams = {
-      credentials: 'same-origin',
-      method: 'delete',
-      headers: {
-        Accept: 'application/json',
-      },
-    };
-
-    return fetch(`/api/v1/literatures?${urlParams}`, requestParams)
-      .then((response) => (response.status === 200 ? {} : response.json()))
-      .then((json) => { if (json.error) { throw json; } })
-      .catch((errorMessage) => { throw errorMessage; });
+    return ApiClient.deleteRequest(`/api/v1/literatures?${urlParams}`)
+      .then((json) => { if (json.error) { throw json; } });
   }
 
   static updateReferenceType(params) {
-    return fetch('/api/v1/literatures', {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json())
+    return ApiClient.putJson('/api/v1/literatures', { body: params })
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
-      .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()));
   }
 
   static fetchDOIMetadata(doi) {
-    return fetch(`/api/v1/literatures/doi/metadata?doi=${encodeURIComponent(doi)}`, {
-      credentials: 'same-origin',
-    }).then((response) => response.json())
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(`/api/v1/literatures/doi/metadata?doi=${encodeURIComponent(doi)}`);
   }
 
   static fetchReferencesByCollection(params) {
-    return fetch(`/api/v1/literatures/collection?id=${params.id}`, {
-      credentials: 'same-origin',
-    }).then((response) => response.json())
+    // The default handlers skip the status check and swallow rejections, so a failed request
+    // resolves `undefined` and the destructuring below throws a TypeError that nobody catches —
+    // which is how a 404 here used to surface as "Cannot destructure property 'collectionRefs'".
+    // Both are overridden so the caller sees a rejected promise it can report on.
+    return ApiClient.getJson(`/api/v1/literatures/collection?id=${params.id}`, {
+      handleResponseSuccess: (response) => {
+        if (!response.ok) {
+          throw new Error(`Could not load the references for this collection (${response.status})`);
+        }
+        return response.json();
+      },
+      handleResponseError: (error) => { throw error; },
+    })
       .then((json) => {
         const {
-          collectionRefs,
-          sampleRefs,
-          reactionRefs,
-          researchPlanRefs,
-        } = json;
+          collectionRefs = [],
+          sampleRefs = [],
+          reactionRefs = [],
+          researchPlanRefs = [],
+        } = json || {};
         return {
-          collectionRefs: Immutable.List(collectionRefs.map((lit) => new Literature(lit))),
-          sampleRefs: Immutable.List(sampleRefs.map((lit) => new Literature(lit))),
-          reactionRefs: Immutable.List(reactionRefs.map((lit) => new Literature(lit))),
-          researchPlanRefs: Immutable.List(researchPlanRefs.map((lit) => new Literature(lit))),
+          collectionRefs: List(collectionRefs.map((lit) => new Literature(lit))),
+          sampleRefs: List(sampleRefs.map((lit) => new Literature(lit))),
+          reactionRefs: List(reactionRefs.map((lit) => new Literature(lit))),
+          researchPlanRefs: List(researchPlanRefs.map((lit) => new Literature(lit))),
         };
-      })
-      .catch((errorMessage) => { console.log(errorMessage); });
+      });
   }
 
-  static postReferencesByUIState(params, method = 'post') {
-    return fetch('/api/v1/literatures/ui_state', {
-      credentials: 'same-origin',
-      method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json())
+  static postReferencesByUIState(params) {
+    return ApiClient.postJson('/api/v1/literatures/ui_state', { body: params })
       .then((json) => json.selectedRefs.map((lit) => new Literature(lit)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()));
   }
 }

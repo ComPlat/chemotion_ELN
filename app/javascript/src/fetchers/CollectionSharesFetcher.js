@@ -1,56 +1,44 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class CollectionSharesFetcher {
   static getCollectionSharedWithUsers(collectionId) {
-    return fetch(`/api/v1/collection_shares.json?collection_id=${collectionId}`,
-      { ...this._httpOptions() })
-      .then(response => response.json())
-      .then((json) => {
-        return json.collection_shares;
-      })
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.getJson(`/api/v1/collection_shares.json?collection_id=${collectionId}`)
+      .then((json) => json.collection_shares);
+  }
+
+  // The current user's own contributing shares on a collection (their direct share + their groups'),
+  // for the shared-to-me provenance popover.
+  static getMyCollectionShares(collectionId) {
+    return ApiClient.getJson(`/api/v1/collection_shares/for_me.json?collection_id=${collectionId}`)
+      .then((json) => json.collection_shares);
   }
 
   static addCollectionShare(params) {
-    return fetch('/api/v1/collection_shares',
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(params)
-      }
-    )
-      .then(response => response.json())
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.postJson('/api/v1/collection_shares', { body: params });
+  }
+
+  // Accept a pending pass-ownership offer: transfers the collection (and its subtree) to the
+  // current user. Returns the now-owned collection.
+  static takeOwnership(collectionId) {
+    return ApiClient.postJson(`/api/v1/collection_shares/take_ownership/${collectionId}`, { body: {} })
+      .then((json) => json.collection);
   }
 
   static updateCollectionShare(collectionShareId, params) {
-    return fetch(`/api/v1/collection_shares/${collectionShareId}`,
-      {
-        ...this._httpOptions('PUT'),
-        body: JSON.stringify(params)
-      }
-    ).then((response) => response.json())
-      .then((json) => {
-        return json.collection_share
-      })
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.putJson(`/api/v1/collection_shares/${collectionShareId}`, { body: params })
+      .then((json) => json.collection_share);
   }
 
-  static deleteCollectionShare(collectionId) {
-    return fetch(
-      `/api/v1/collection_shares/${collectionId}`,
-      { ...this._httpOptions('DELETE') }
-    ).then(response => response)
-      .catch(errorMessage => console.log(errorMessage));
-  }
-
-  static _httpOptions(method = 'GET') {
-    return {
-      credentials: 'same-origin',
-      method: method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    };
+  /**
+   * Deletes a collection share. The endpoint replies 204 No Content, so success
+   * is read from the HTTP status.
+   *
+   * @param {number} collectionShareId - id of the collection share to delete
+   * @returns {Promise<boolean>} true on success (see ChemotionApiClient.apiRequest)
+   */
+  static deleteCollectionShare(collectionShareId) {
+    return ApiClient.deleteRequest(`/api/v1/collection_shares/${collectionShareId}`, {
+      handleResponseSuccess: (response) => response.ok,
+    });
   }
 }

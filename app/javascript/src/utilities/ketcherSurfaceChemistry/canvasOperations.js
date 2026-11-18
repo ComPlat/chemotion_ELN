@@ -13,7 +13,7 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import { fetchKetcherData, sanitizeRgLabelAtoms } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
   handleAddAtom,
@@ -28,6 +28,7 @@ import {
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
+  imagesListSetter,
   mols,
   textList,
   textListSetter,
@@ -63,13 +64,32 @@ const arrangePolymers = async (canvasData, editor) => {
   // find index for alias
   // on matching create a string to be attached with polymers sections
   const data = JSON.parse(await editor.structureDef.editor.getKet());
-  const atomsWithAlias = mols
-    .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
 
-  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
-  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
-  const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
+  // Collect polymer atoms with their global atom index (cumulative across all mols).
+  // Per-molecule (local) indices would collide when multiple single-atom polymer mols
+  // each have their R# at local index 0, causing all templates to load as the last one.
+  const atomsWithAlias = [];
+  let globalAtomOffset = 0;
+  for (const molName of mols) {
+    const atoms = data[molName]?.atoms ?? [];
+    for (let i = 0; i < atoms.length; i++) {
+      if (ALIAS_PATTERNS.threeParts.test(atoms[i].alias)) {
+        atomsWithAlias.push({ alias: atoms[i].alias, atomIndex: globalAtomOffset + i });
+      }
+    }
+    globalAtomOffset += atoms.length;
+  }
+  const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
+  const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
+  const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
+  // Same guard as reAttachPolymerList (PolymersTemplates.js): an image on the canvas is not
+  // enough. When no atom resolves to a polymer template — no three-part alias, or a falsy
+  // templateId — templateAliasesPrepare returns ''. Appending the tag anyway writes an empty
+  // "> <PolymersList>" block that every backend reader then has to special-case as "not a
+  // polymer", and it persists in samples.molfile through collection export/import.
+  if (!processString.length) {
+    return canvasData.split('\n');
+  }
   return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
 };
 
@@ -96,7 +116,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
               textSeparator,
               atom.alias,
               textSeparator,
-              block.text
+              textItem.data.content
             ].join('').trim();
             const y = textItem.data?.position?.y ?? 0;
             assembleTextList.push({ line, y });
@@ -194,6 +214,22 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   };
 };
 
+const createTextNode = (textContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  try {
+    const incoming = JSON.parse(textContent);
+    if (incoming?.blocks?.[0]?.text?.trim()) {
+      const defaultPos = [
+        { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
+        { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+        { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z },
+      ];
+      return { type: 'text', data: { content: textContent, position: defaultPosition, pos: defaultPos } };
+    }
+  } catch { /* not JSON — fall through */ }
+  return createTextNodeFromContent(textContent, defaultPosition);
+};
+
 // function to add text nodes to canvas/struct
 const onAddText = async (editor, selectedImageForTextNode) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
@@ -237,9 +273,10 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       return false;
     }
 
-    if (!textContent || !textContent.trim()) {
-      return false;
-    }
+    const plainText = (() => {
+      try { const p = JSON.parse(textContent); return p?.blocks?.[0]?.text || ''; } catch { return textContent; }
+    })();
+    if (!plainText?.trim()) return false;
 
     // Fetch latest data first to ensure we have current state
     await fetchKetcherData(editor);
@@ -265,17 +302,28 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         });
 
         if (existingNodeIndex !== -1) {
-          // Update the existing text node content
           const existingNode = updatedTextList[existingNodeIndex];
-          const existingContent = JSON.parse(existingNode.data.content);
-          existingContent.blocks[0].text = textContent.trim();
-          existingNode.data.content = JSON.stringify(existingContent);
+          try {
+            const incoming = JSON.parse(textContent);
+            if (incoming?.blocks) {
+              incoming.blocks[0].key = existingKey;
+              existingNode.data.content = JSON.stringify(incoming);
+            } else {
+              const existingContent = JSON.parse(existingNode.data.content);
+              existingContent.blocks[0].text = textContent.trim();
+              existingNode.data.content = JSON.stringify(existingContent);
+            }
+          } catch {
+            const existingContent = JSON.parse(existingNode.data.content);
+            existingContent.blocks[0].text = textContent.trim();
+            existingNode.data.content = JSON.stringify(existingContent);
+          }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);
         } else {
           // Existing node not found, create new one
-          newTextNode = createTextNodeFromContent(textContent);
+          newTextNode = createTextNode(textContent);
           if (!newTextNode) {
             return false;
           }
@@ -285,7 +333,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         }
       } else {
         // No existing text found, create new one
-        newTextNode = createTextNodeFromContent(textContent);
+        newTextNode = createTextNode(textContent);
         if (!newTextNode) {
           return false;
         }
@@ -295,7 +343,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       }
     } else {
       // Create new text node from content
-      newTextNode = createTextNodeFromContent(textContent);
+      newTextNode = createTextNode(textContent);
       if (!newTextNode) {
         return false;
       }
@@ -430,7 +478,7 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 const prepareSvg = async (editor) => {
   try {
-    const struct = await replaceAliasWithRG({ ...latestData });
+    const struct = sanitizeRgLabelAtoms(await replaceAliasWithRG(JSON.parse(JSON.stringify(latestData))));
     const generateImageParams = { outputFormat: 'svg' };
     const parser = new DOMParser();
     const data = JSON.stringify(struct);
@@ -655,18 +703,13 @@ const getSvgFromCanvas = async (iframeRef) => {
   }
 };
 
-const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
+const applyCanvasDataToEditor = async (editor, dataCopy) => {
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
   }
-
   const serialized = JSON.stringify(dataCopy);
-  if (recenter) {
-    await editor.structureDef.editor.setMolecule(serialized);
-    return;
-  }
-  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
+  await editor.structureDef.editor.setMolecule(serialized, { preserveCanvasPosition: true });
 };
 
 /* istanbul ignore next */
@@ -690,11 +733,12 @@ const saveMoveCanvas = async (
   }
 
   if (isMoveRequired) {
-    await applyCanvasDataToEditor(editor, dataCopy, recenter);
+    await applyCanvasDataToEditor(editor, dataCopy);
 
     // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
+    // Ketcher might not have processed the text node yet when we fetch back.
+    // Only keep text nodes that have valid data.content (not Ketcher internal format nodes).
+    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text' && n.data?.content) || [];
     const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
 
     if (isFetchRequired) {
@@ -709,7 +753,7 @@ const saveMoveCanvas = async (
     return;
   }
 
-  await applyCanvasDataToEditor(editor, dataCopy, recenter);
+  await applyCanvasDataToEditor(editor, dataCopy);
 
   if (isFetchRequired) {
     await fetchKetcherData(editor);
@@ -739,6 +783,13 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
+
+  // Snapshot mol list before fetchKetcherData calls. If getKet() returns stale/empty
+  // data (e.g. Ketcher is mid-render), placeAtomOnImage produces no $ref nodes. The
+  // guard below detects this and aborts rather than overwriting the canvas with an
+  // image-only KET that Ketcher cannot render.
+  const molsSnapshot = [...mols];
+
   // first fetch to save values
   await fetchKetcherData(editor);
 
@@ -755,6 +806,21 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   } else {
     imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   }
+
+  // Guard: if getKet() returned stale data, placeAtomOnImage produces no $ref
+  // entries despite mols and images existing. The canvas is already correct —
+  // abort rather than overwriting it with an image-only KET Ketcher cannot render.
+  const hasMolRefs = imageNodes.some((n) => n.$ref);
+  if (!hasMolRefs && molsSnapshot.length > 0 && imageListCopy.length > 0) {
+    ImagesToBeUpdatedSetter(true);
+    reloadCanvasSetter(false);
+    deletedAtomsSetter([]);
+    imageListCopyContainerSetter([]);
+    textListCopyContainerSetter([]);
+    await runImageLayering();
+    return;
+  }
+
   latestData.root.nodes = imageNodes;
 
   // Always reposition text nodes to follow atom positions
@@ -763,7 +829,7 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
     const textNodes = await placeTextOnAtoms();
     latestData.root.nodes = textNodes;
   }
-  await applyCanvasDataToEditor(editor, latestData, recenter);
+  await applyCanvasDataToEditor(editor, latestData);
   await fetchKetcherData(editor);
 
   // clear required
@@ -1006,6 +1072,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     latestData.root.nodes.push({ $ref: `mol${molCount}` });
     latestData.root.nodes.push(imageItem);
     latestData[`mol${molCount}`] = await addNewMol(tempId);
+    // Sync imagesList immediately so placeAtomOnImage can find this image by index.
+    // fetchKetcherData uses preserveImagesWhenEmpty=true, so if Ketcher omits image
+    // nodes from getKet() the stateManager list would stay at the pre-add length,
+    // causing placeAtomOnImage to silently fail for the new atom (async-forEach swallows
+    // the throw) and the image to be absent from the rebuilt node list.
+    imagesListSetter([...imagesList, imageItem]);
   } else if (imageCount - 1 !== imageNodeCounter) {
     // header
     // atom
@@ -1018,9 +1090,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     }
   }
 
-  saveMoveCanvas(editor, latestData, true, true, false);
+  await saveMoveCanvas(editor, latestData, true, true, false);
 
   await buttonClickForRectangleSelection(iframeRef);
+  // Re-run layering after the rectangle-select click re-renders the canvas
+  ImagesToBeUpdatedSetter(true);
+  await runImageLayering(iframeRef);
   FILOStackSetter([]);
   allAtomsSetter([]);
 };

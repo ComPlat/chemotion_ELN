@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/BlockLength
+# Whole-file directives rather than per-method disable/enable pairs, deliberately: this repo's
+# pinned rubocop (1.78.0, see Gemfile.lock) predates the disable-next directive (added in
+# 1.90.0), so a newer rubocop run locally or in CI can flag narrow pairs with
+# Style/DirectiveScope and suggest disable-next syntax that the pinned version can't parse -
+# the same trade-off as app/models/concerns/attachment_jcamp_aasm.rb.
+# rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:disable Metrics/MethodLength, Metrics/ModuleLength, Metrics/PerceivedComplexity
+# rubocop:disable Style/OneClassPerFile, Style/OptionalBooleanParameter
 
 require 'net/http'
 
@@ -53,21 +60,34 @@ module Chemotion
         arr_img = []
         arr_csv = []
         arr_nmrium = []
+        png_exts = %w[png]
+        jcamp_exts = %w[dx jdx jcamp mzml raw cdf zip]
+        csv_exts = %w[csv]
+        nmrium_exts = %w[nmrium]
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
+            entry_name = entry&.name.to_s
             data = entry.get_input_stream.read.force_encoding('UTF-8')
-            if %w[png].include?(ext)
+            if png_exts.include?(ext)
               tmp_img = generate_tmp_file(data, ext)
+              tmp_img.instance_variable_set(:@original_filename, entry_name)
+              tmp_img.define_singleton_method(:original_filename) { @original_filename }
               arr_img.push(tmp_img)
-            elsif %w[dx jdx jcamp mzml raw cdf zip].include?(ext.downcase)
+            elsif jcamp_exts.include?(ext.downcase)
               tmp_jcamp = generate_tmp_file(data, ext)
+              tmp_jcamp.instance_variable_set(:@original_filename, entry_name)
+              tmp_jcamp.define_singleton_method(:original_filename) { @original_filename }
               arr_jcamp.push(tmp_jcamp)
-            elsif %w[csv].include?(ext)
+            elsif csv_exts.include?(ext)
               tmp_csv = generate_tmp_file(data, ext)
+              tmp_csv.instance_variable_set(:@original_filename, entry_name)
+              tmp_csv.define_singleton_method(:original_filename) { @original_filename }
               arr_csv.push(tmp_csv)
-            elsif %w[nmrium].include?(ext)
+            elsif nmrium_exts.include?(ext)
               tmp_nmrium = generate_tmp_file(data, ext)
+              tmp_nmrium.instance_variable_set(:@original_filename, entry_name)
+              tmp_nmrium.define_singleton_method(:original_filename) { @original_filename }
               arr_nmrium.push(tmp_nmrium)
             end
           end
@@ -110,7 +130,7 @@ module Chemotion
           peaks_str: params[:peaks_str],
           integration: params[:integration],
           multiplicity: params[:multiplicity],
-          fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
+          fname: params[:fname] || params[:file]&.try(:[], :filename),
           wave_length: params[:wave_length],
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
@@ -119,6 +139,14 @@ module Chemotion
           axes_units: params[:axes_units],
           detector: params[:detector],
           dsc_meta_data: params[:dsc_meta_data],
+          lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength],
+          lcms_mz_page: params[:lcms_mz_page],
+          lcms_mz_page_data: params[:lcms_mz_page_data],
+          lcms_peaks_str: params[:lcms_peaks_str],
+          lcms_integrals_str: params[:lcms_integrals_str],
+          lcms_polarity: params[:lcms_polarity],
+          lcms_trigger: params[:lcms_trigger],
+          converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
 
@@ -133,52 +161,75 @@ module Chemotion
       end
 
       def self.stub_http(
-        file_path, mol_path, is_regen = false, params = {}
+        file_path_or_paths, mol_path, is_regen = false, params = {}
       )
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_jcamp_n_img"
-
-        File.open(file_path, 'rb') do |file|
-          File.open(mol_path, 'rb') do |molfile|
-            body = build_body(file, molfile, is_regen, params)
-            response = HTTParty.post(
-              api_endpoint,
-              body: body,
-              multipart: true,
-              timeout: 120
-            )
+        paths = Array(file_path_or_paths)
+        if paths.length > 1
+          files_to_read = paths.map { |p| File.open(p, 'rb') }
+          begin
+            File.open(mol_path, 'rb') do |molfile|
+              # Conserve le flux standard (file) + ajoute files[] pour l'image combinée
+              body = build_body(files_to_read.first, molfile, is_regen, params).compact
+              body[:files] = files_to_read
+              response = HTTParty.post(
+                api_endpoint,
+                body: body,
+                multipart: true,
+                timeout: 120,
+              )
+            end
+          ensure
+            files_to_read.each(&:close)
+          end
+        else
+          File.open(paths.first, 'rb') do |file|
+            File.open(mol_path, 'rb') do |molfile|
+              # .compact matters here: HTTParty's multipart encoding sends a nil-valued
+              # field as an empty form part - wire-identical to an explicit "". chem-spectra-app
+              # relies on that distinction (peaks_str present-but-empty means "explicitly
+              # cleared" vs. absent means "not specified, e.g. a plain reprocess") via
+              # request.form.get('peaks_str', default=None). Without compacting nil keys out
+              # of the body first, every param we don't set (peaks_str included) still arrives
+              # as an empty field, so a plain reprocess/regenerate call - which never sets
+              # peaks_str at all - was indistinguishable from the user having cleared every
+              # peak, wiping the EDIT_PEAK table on every reprocess.
+              body = build_body(file, molfile, is_regen, params).compact
+              response = HTTParty.post(
+                api_endpoint,
+                body: body,
+                multipart: true,
+                timeout: 120,
+              )
+            end
           end
         end
         response
       end
 
       def self.spectrum(
-        file_path, mol_path, is_regen = false, params = {}
+        file_path_or_paths, mol_path, is_regen = false, params = {}
       )
-        rsp = stub_http(file_path, mol_path, is_regen, params)
-        begin
-          json_rsp = JSON.parse(rsp.to_s)
-        rescue
-          #cannot parse response from json, return as normal
+        rsp = stub_http(file_path_or_paths, mol_path, is_regen, params)
+        extra_info_json = rsp.headers['x-extra-info-json']
+        if extra_info_json.present?
           rsp_io = StringIO.new(rsp.body.to_s)
-          spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-          invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+          extra_info = JSON.parse(extra_info_json)
           extracted_array = Util.extract_zip(rsp_io)
-          extracted_array << spc_type
-          extracted_array << invalid_molfile
-        else
-          if json_rsp['invalid_molfile'] == true
-            [json_rsp, nil, nil]
-          else
-            rsp_io = StringIO.new(rsp.body.to_s)
-            spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-            invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
-            extracted_array = Util.extract_zip(rsp_io)
-            extracted_array << spc_type
-            extracted_array << invalid_molfile
-          end
+          extracted_array << extra_info['spc_type']
+          extracted_array << extra_info['invalid_molfile']
+          return extracted_array
         end
+        begin
+          json_rsp = JSON.parse(rsp.body.to_s)
+        rescue JSON::ParserError
+          raise StandardError, 'Chemspectra response missing metadata header'
+        end
+
+        message = json_rsp['error'] || json_rsp['message'] if json_rsp.is_a?(Hash)
+        raise StandardError, message.presence || 'Chemspectra response missing metadata header'
       end
     end
   end
@@ -201,7 +252,8 @@ module Chemotion
           response = HTTParty.post(
             api_endpoint,
             body: {
-              file: f
+              file: f,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
@@ -234,6 +286,7 @@ module Chemotion
               jcamp_idx: curve_idx,
               list_file_names: list_file_names,
               extras: extras,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
@@ -272,7 +325,8 @@ module Chemotion
             layout: layout,
             peaks: peaks,
             shift: shift,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -305,7 +359,8 @@ module Chemotion
         def self.build_body(molfile, spectrum)
           {
             molfile: molfile,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -340,7 +395,8 @@ module Chemotion
         def self.build_body(molfile, spectrum)
           {
             molfile: molfile,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -386,6 +442,7 @@ module Chemotion
           file: file,
           molfile: molfile.size > 10 ? molfile : false,
           simulatenmr: true,
+          converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
 
@@ -437,7 +494,8 @@ module Chemotion
           response = HTTParty.post(
             api_endpoint,
             body: {
-              file: f
+              file: f,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
@@ -458,4 +516,6 @@ module Chemotion
   end
 end
 
-# rubocop:enable Metrics/BlockLength
+# rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ModuleLength, Metrics/PerceivedComplexity
+# rubocop:enable Style/OneClassPerFile, Style/OptionalBooleanParameter

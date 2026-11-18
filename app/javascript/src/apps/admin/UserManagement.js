@@ -52,7 +52,7 @@ const loadUserByName = (input) => {
 };
 
 const handleResetPassword = (id, random, handleShowAlert) => {
-  AdminFetcher.resetUserPassword({ user_id: id, random })
+  AdminFetcher.resetUserPassword({ userId: id, random })
     .then((result) => {
       if (result && result.rp) {
         let message = '';
@@ -124,6 +124,16 @@ const moleculeModeratorEnableTooltip = (
 const moleculeModeratorDisableTooltip = (
   <Tooltip id="assign_button">
     Disable editing the representation of the global molecules for this user (currently enabled)
+  </Tooltip>
+);
+const globalTextTemplateEditorEnableTooltip = (
+  <Tooltip id="global_text_template_editor_enable_tooltip">
+    Enable editing global text templates for this user (currently disabled)
+  </Tooltip>
+);
+const globalTextTemplateEditorDisableTooltip = (
+  <Tooltip id="global_text_template_editor_disable_tooltip">
+    Disable editing global text templates for this user (currently enabled)
   </Tooltip>
 );
 const accountActiveTooltip = (
@@ -335,19 +345,24 @@ export default class UserManagement extends React.Component {
 
   handleConverterAdmin(id, isConverterAdmin) {
     const message = `Converter-profiles editing has been ${isConverterAdmin === true ? 'dis' : 'en'}abled for user ${id}`;
-    this.updateProfile({ user_id: id, converter_admin: !isConverterAdmin }, message);
+    this.updateProfile({ userId: id, converter_admin: !isConverterAdmin }, message);
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
     const message = `Ketcher-template editing has been ${isTemplatesModerator === true ? 'en' : 'dis'}abled for user ${id}`;
-    this.updateProfile({ user_id: id, is_templates_moderator: !isTemplatesModerator }, message);
+    this.updateProfile({ userId: id, is_templates_moderator: !isTemplatesModerator }, message);
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
     const message = isMoleculesEditor === true
       ? 'Disable editing the representation of the global molecules for this user'
       : 'Enable editing the representation of the global molecules for this user';
-    this.updateProfile({ user_id: id, molecule_editor: !isMoleculesEditor }, message);
+    this.updateProfile({ userId: id, molecule_editor: !isMoleculesEditor }, message);
+  }
+
+  handleGlobalTextTemplateEditor(id, isGlobalTextTemplateEditor) {
+    const message = `Global text template editing has been ${isGlobalTextTemplateEditor === true ? 'dis' : 'en'}abled for user ${id}`;
+    this.updateProfile({ userId: id, global_text_template_editor: !isGlobalTextTemplateEditor }, message);
   }
 
   handleActiveInActiveAccount(id, isActive) {
@@ -1476,6 +1491,16 @@ export default class UserManagement extends React.Component {
               <i className="icon-sample" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={(g.global_text_template_editor === null || g.global_text_template_editor === false) ? globalTextTemplateEditorEnableTooltip : globalTextTemplateEditorDisableTooltip}>
+            <Button
+              size="sm"
+              variant={(g.global_text_template_editor === null || g.global_text_template_editor === false) ? 'light' : 'success'}
+              onClick={() => this.handleGlobalTextTemplateEditor(g.id, g.global_text_template_editor)}
+              className="me-1"
+            >
+              <i className="fa fa-file-text" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
@@ -1543,7 +1568,6 @@ export default class UserManagement extends React.Component {
               size="md"
               className="me-1"
               onClick={() => this.handleNewUserShow()}
-              data-cy="create-user"
             >
               New User
               <i className="fa fa-plus ms-1" />
@@ -1552,7 +1576,6 @@ export default class UserManagement extends React.Component {
               variant="primary"
               size="md"
               onClick={() => this.handleRestoreAccountShow()}
-              data-cy="restore-user"
               className="me-1"
             >
               Restore Account

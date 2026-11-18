@@ -3,9 +3,8 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip
+  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip, Collapse
 } from 'react-bootstrap';
-import JSZip from 'jszip';
 import {
   addNewAnalyses,
   createAnalsesForSingelFiles,
@@ -13,39 +12,18 @@ import {
   createDataset
 } from 'src/apps/mydb/elements/details/analyses/utils';
 import {
-  ZipFileContainer, FileContainer, traverseDirectory, VirtualFolderNode
+  ZipFileContainer, FileContainer, traverseDirectory, handleZipFile, makeRootNamesUnique
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
 import AppModal from 'src/components/common/AppModal';
+import ChevronIcon from 'src/components/common/ChevronIcon';
+import ConfirmModal from 'src/components/common/ConfirmModal';
 import OlsTreeSelect from 'src/components/OlsComponent';
 
-async function handleZipFile(zipFile) {
-  const zip = await JSZip.loadAsync(zipFile);
-  const rootFileName = zipFile.name.replace(/\.zip$/, '');
+const isZipFile = (name) => /\.zip$/i.test(name);
 
-  const files = new VirtualFolderNode(rootFileName, '');
-
-  const readFilePromises = Object.entries(zip.files).map(async ([, entry]) => {
-    if (entry.dir) return; // skip directories
-
-    const segments = `${rootFileName}/${entry.name}`.split('/');
-    const fileName = segments.pop(); // "file.txt"
-    const path = segments;
-
-    const blob = await entry.async('blob');
-
-    // Convert blob to File for API consistency
-    const file = new File([blob], fileName, { type: blob.type });
-
-    files.addFile({ path, file });
-  });
-  await Promise.all(readFilePromises);
-
-  return files.clean();
-}
-
-function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
+const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {
   const dropRef = useRef(null);
   useEffect(() => {
     const dropArea = dropRef.current;
@@ -56,7 +34,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
       for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          if (!flatFileList && unzip && item.isFile && item.name.endsWith('.zip')) {
+          if (!flatFileList && unzip && item.isFile && isZipFile(item.name)) {
             filePromises.push(new Promise((resolve) => {
               item.file((file) => {
                 resolve(handleZipFile(file));
@@ -74,7 +52,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
           const flatFiles = await Promise.all(filteredFiles.map((f) => f.getFile()));
           handleChange(flatFiles);
         } else {
-          handleChange(filteredFiles);
+          handleChange(makeRootNamesUnique(filteredFiles));
         }
       });
     }
@@ -111,21 +89,19 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
         multiple
         onChange={async (event) => {
           const files = Array.from(event.target.files);
-          if (!flatFileList && unzip && files.length === 1 && files[0].name.endsWith('.zip')) {
-            const container = await handleZipFile(files[0]);
-            handleChange([container]);
+          // eslint-disable-next-line no-param-reassign,no-return-assign
+          files.forEach((x) => x.isFile = true);
+          if (flatFileList) {
+            const flatFiles = await Promise.all(files.map((x) => new FileContainer(x).getFile()));
+            handleChange(flatFiles);
             return;
           }
 
-          // eslint-disable-next-line no-param-reassign,no-return-assign
-          files.forEach((x) => x.isFile = true);
-          const preparedFiles = files.map((x) => new FileContainer(x));
-          if (flatFileList) {
-            const flatFiles = await Promise.all(preparedFiles.map((f) => f.getFile()));
-            handleChange(flatFiles);
-          } else {
-            handleChange(preparedFiles);
-          }
+          // Unpack every picked archive, as a drop does, so its folders can be expanded.
+          const preparedFiles = await Promise.all(files.map((x) => (
+            unzip && isZipFile(x.name) ? handleZipFile(x) : new FileContainer(x)
+          )));
+          handleChange(makeRootNamesUnique(preparedFiles));
         }}
         style={{ display: 'none' }}
       />
@@ -134,7 +110,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
       </div>
     </label>
   );
-}
+};
 
 FolderDropzone.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
@@ -143,12 +119,8 @@ FolderDropzone.propTypes = {
   flatFileList: PropTypes.bool,
 };
 
-FolderDropzone.defaultProps = {
-  unzip: true,
-  flatFileList: false,
-};
 
-function FileListDisplay({ files }) {
+const FileListDisplay = ({ files }) => {
   if (!files.length) return <p className="text-muted">No files selected.</p>;
   return (
     <ListGroup style={{
@@ -157,14 +129,14 @@ function FileListDisplay({ files }) {
     }}
     >
       {files.map((file) => (
-        <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
+        <ListGroup.Item key={file.key} className="d-flex justify-content-between align-items-center">
 
-          <div style={{ overflow: 'auto' }} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
-            <strong>{file.name}</strong>
+          <div style={{ overflow: 'auto' }} key={`DIVV__${file.key}`} className="flex-grow-1 me-3">
+            <strong>{file.label}</strong>
             <div
               className="text-muted small"
             >
-              {file.fullPath || file.webkitRelativePath || file.name}
+              {file.key}
             </div>
           </div>
           <Badge bg="secondary">
@@ -176,30 +148,25 @@ function FileListDisplay({ files }) {
       ))}
     </ListGroup>
   );
-}
+};
 
 FileListDisplay.propTypes = {
   files: PropTypes.arrayOf(FileContainer).isRequired,
 };
 
-function UploadButton({
+const UploadButton = ({
   files, handleClose, element, setElement, ontology = ''
-}) {
-  if (!files.length) {
-    return null;
-  }
-
+}) => {
   const singleFileHandle = useCallback(async () => {
     const file = await new ZipFileContainer(files).getFile();
     createAnalsesForSingelFiles(element, [file], file.name, ontology);
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
 
   const multiFileHandle = useCallback(async () => {
     const pList = [];
-    // eslint-disable-next-line react/prop-types
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
         createAnalsesForSingelFiles(element, [file], file.name, ontology);
@@ -210,7 +177,7 @@ function UploadButton({
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
 
   const multiFileOneAnaHandle = useCallback(async () => {
     const pList = [];
@@ -230,7 +197,11 @@ function UploadButton({
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
+
+  if (!files.length) {
+    return null;
+  }
 
   return (
     <>
@@ -276,7 +247,7 @@ UploadButton.defaultProps = {
   ontology: '',
 };
 
-function UploadField({ disabled = false, element, setElement }) {
+const UploadField = ({ disabled = false, element, setElement }) => {
   const wrappedSetElement = (newElement) => {
     const newElementValue = typeof newElement === 'function' ? newElement(element) : newElement;
     setElement(newElementValue);
@@ -285,18 +256,34 @@ function UploadField({ disabled = false, element, setElement }) {
   const [show, setShow] = useState(false);
   const [ontology, setOntology] = useState('');
   const [isAdvanced, setIsAdvanced] = useState(false);
+  const [showAdvancedHelp, setShowAdvancedHelp] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
+  // Advanced-mode analyses live here, not inside AdvancedAnalysesList, so toggling
+  // Advanced mode off (which unmounts that component) does not destroy the user's
+  // configured analyses and datasets.
+  const [analContainerList, setAnalContainer] = useState([]);
+  // A file selection held back while the user confirms discarding the analyses above.
+  const [pendingSelection, setPendingSelection] = useState(null);
   const handleClose = useCallback(() => {
     setListedFiles([]);
+    setAnalContainer([]);
+    setPendingSelection(null);
+    setIsAdvanced(false);
+    setShowAdvancedHelp(false);
     setShow(false);
   }, []);
   const handleShow = useCallback(() => setShow(true), []);
 
-  const handleChange = useCallback((items) => {
+  // A new selection replaces `listedFiles`, so any advanced-mode analyses built from the
+  // previous selection now hold dataset paths that no longer resolve - executing them
+  // would walk into an unrelated (or missing) file container. They have to go.
+  const applySelection = useCallback((items) => {
+    setAnalContainer([]);
+
     if (items.length === 1) {
       if (items[0].isFile) {
         createAnalsesForSingelFiles(element, [items[0].file], items[0].name, ontology);
-        setShow(false);
+        handleClose();
         setElement(element, () => {
         });
 
@@ -309,34 +296,69 @@ function UploadField({ disabled = false, element, setElement }) {
     }
 
     setListedFiles(items);
-  }, [ontology]);
+  }, [element, ontology, handleClose, setElement]);
+
+  // Discarding configured analyses is not something to do behind the user's back, so a
+  // non-empty list parks the new selection until they confirm.
+  const handleChange = useCallback((items) => {
+    if (analContainerList.length > 0) {
+      setPendingSelection(items);
+      return;
+    }
+
+    applySelection(items);
+  }, [analContainerList, applySelection]);
+
+  const handleDiscardConfirmation = useCallback((confirmed) => {
+    if (confirmed && pendingSelection) {
+      applySelection(pendingSelection);
+    }
+
+    setPendingSelection(null);
+  }, [pendingSelection, applySelection]);
 
   const handlesSetOntology = useCallback((ev) => {
     let kind = (ev || '');
     kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
     setOntology(kind);
-  });
+  }, []);
+
+  const [, setConsumedPaths] = useState([]);
+  const handleSetConsumedPaths = useCallback((paths) => {
+    FileContainer.markAllByPaths(listedFiles, paths);
+    setConsumedPaths(paths);
+  }, [listedFiles]);
+
+  const isAdvancedView = isAdvanced && listedFiles.length > 0;
 
   const content = () => {
-    const [, setConsumedPaths] = useState([]);
-
-    const handleSetConsumedPaths = useCallback((paths) => {
-      FileContainer.markAllByPaths(listedFiles, paths);
-      setConsumedPaths(paths);
-    });
-    if (isAdvanced && listedFiles.length > 0) {
+    if (isAdvancedView) {
       return (
         <Container>
-          <Row>
+          <Row className="mb-2">
             <Col>
-              <p>
-                Add and name new analyses with as many datasets as needed.
-                Drag and drop files or folders from the file list on the left-hand side into the datasets.
-                Folder can be expanded to see their contents, and files can be selected individually.
-                Multiple files and/or folders in a dataset will be zipped together.
-                A single file in a dataset is uploaded as it is.
-                Do not forget to press Execute to apply your settings.
-              </p>
+              <Button
+                variant="link"
+                className="p-0"
+                aria-expanded={showAdvancedHelp}
+                aria-controls="advanced-mode-help"
+                onClick={() => setShowAdvancedHelp((prev) => !prev)}
+              >
+                <ChevronIcon direction={showAdvancedHelp ? 'down' : 'right'} className="me-1" />
+                How does advanced mode work?
+              </Button>
+              <Collapse in={showAdvancedHelp}>
+                <div id="advanced-mode-help">
+                  <p className="mt-2">
+                    Add and name new analyses with as many datasets as needed.
+                    Drag and drop files or folders from the file list on the left-hand side into the datasets.
+                    Folders can be expanded to see their contents, and files can be selected individually.
+                    Multiple files and/or folders in a dataset will be zipped together.
+                    A single file in a dataset is uploaded as it is.
+                    Do not forget to press Execute to apply your settings.
+                  </p>
+                </div>
+              </Collapse>
             </Col>
           </Row>
           <Row className="justify-content-md-center">
@@ -347,6 +369,8 @@ function UploadField({ disabled = false, element, setElement }) {
               <AdvancedAnalysesList
                 handleClose={handleClose}
                 listedFiles={listedFiles}
+                analContainerList={analContainerList}
+                setAnalContainer={setAnalContainer}
                 setConsumedPaths={handleSetConsumedPaths}
                 setElement={wrappedSetElement}
               />
@@ -357,16 +381,6 @@ function UploadField({ disabled = false, element, setElement }) {
     }
     return (
       <Container>
-        <Row className="justify-content-end mb-2">
-          <Col xs="auto">
-            <ToggleSwitch
-              disabled={listedFiles.length === 0}
-              isChecked={isAdvanced}
-              setIsChecked={setIsAdvanced}
-              label="Advanced mode"
-            />
-          </Col>
-        </Row>
         <Row>
           <Col>
             <p>
@@ -430,23 +444,43 @@ function UploadField({ disabled = false, element, setElement }) {
         size="xl"
         show={show}
         onHide={handleClose}
+        className={`analyses-upload-modal${isAdvancedView ? ' analyses-upload-modal--advanced' : ''}`}
+        centered={false}
         title="Create Analyses from files or folders"
+        extendedFooter={(
+          <ToggleSwitch
+            disabled={listedFiles.length === 0}
+            isChecked={isAdvanced}
+            setIsChecked={setIsAdvanced}
+            label="Advanced mode"
+          />
+        )}
       >
         {content()}
       </AppModal>
+
+      <ConfirmModal
+        showModal={pendingSelection !== null}
+        onClick={handleDiscardConfirmation}
+        title="Discard the analyses you configured?"
+        content={(
+          <p>
+            {`You have ${analContainerList.length} `}
+            {analContainerList.length === 1 ? 'analysis' : 'analyses'}
+            {' set up in advanced mode. They reference the files you selected before, so'}
+            {' choosing a new selection discards them. This cannot be undone.'}
+          </p>
+        )}
+      />
     </>
   );
-}
+};
 
 UploadField.propTypes = {
   disabled: PropTypes.bool,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.object.isRequired,
   setElement: PropTypes.func.isRequired,
-};
-
-UploadField.defaultProps = {
-  disabled: false,
 };
 
 export {

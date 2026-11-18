@@ -1,7 +1,17 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CollectionAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
       error!('Collection not found', 404)
+    end
+
+    rescue_from Usecases::Collections::Errors::UpdateForbidden do |e|
+      error!(e.message, 403)
+    end
+
+    rescue_from Usecases::Collections::Errors::CreateForbidden do |e|
+      error!(e.message, 403)
     end
 
     resource :collections do
@@ -87,7 +97,20 @@ module Chemotion
         collection = Collection.own_collections_for(current_user).find(params[:id])
         attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
 
-        collection.update(attributes)
+        # A locked collection is not fully immutable: LockedCollectionGuard fixes only
+        # LOCKED_IMMUTABLE_ATTRIBUTES, deliberately leaving tabs_segment editable so the tab layout of
+        # the "All"/repository/transferred collections can be configured like any other. Refusing the
+        # request outright would override that. Compared by value rather than by key, because the tabs
+        # editor always sends the (unchanged) label alongside the layout.
+        if collection.is_locked?
+          forbidden = attributes.any? do |attribute, value|
+            LockedCollectionGuard::LOCKED_IMMUTABLE_ATTRIBUTES.include?(attribute.to_s) &&
+              collection[attribute] != value
+          end
+          error!('A locked collection cannot be modified', 403) if forbidden
+        end
+
+        error!(collection.errors.full_messages.join(', '), 422) unless collection.update(attributes)
 
         present collection, with: Entities::OwnCollectionEntity, root: :collection
       end
@@ -98,6 +121,7 @@ module Chemotion
       end
       delete '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
+        error!('A locked collection cannot be deleted', 403) if collection.is_locked?
 
         collection.destroy
 
@@ -114,10 +138,18 @@ module Chemotion
       end
       post '/export' do
         collection_ids = params[:collection_ids].uniq
-        all_collection_ids = Collection.own_collections_for(current_user).pluck(:id)
-
         error!('Select the collections you want to export.', 403) if collection_ids.empty?
-        error!('401 Unauthorized', 401) if all_collection_ids & collection_ids != collection_ids
+
+        # Own collections may always be exported. A sharee may export a collection shared to them
+        # only when they hold FULL detail access on it (every element detail level at max): the
+        # export path serializes full element content and ignores detail levels, so admitting a
+        # partial-detail share would leak data the share deliberately withheld. Both lookups are
+        # scoped to the requested ids — this only needs to know the requested set is authorised.
+        owned_ids = Collection.own_collections_for(current_user).where(id: collection_ids).pluck(:id)
+        shared_ids = Collection.full_detail_access_ids(current_user, collection_ids - owned_ids)
+        allowed_ids = owned_ids + shared_ids
+
+        error!('401 Unauthorized', 401) if (collection_ids - allowed_ids).any?
 
         ExportCollectionsJob.perform_later(collection_ids, 'zip', false, current_user.id)
 
@@ -152,6 +184,30 @@ module Chemotion
           ImportCollectionsJob.perform_now(attachment, current_user.id)
           { status: 204 }
         end
+      end
+
+      desc 'Get collection metadata'
+      params do
+        requires :id, type: Integer
+      end
+      get '/:id/metadata' do
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+        metadata = Metadata.where(collection_id: collection.id).first
+        metadata || error!('404 Not Found', 404)
+      end
+
+      desc 'Create/update collection metadata'
+      params do
+        requires :collection_id, type: Integer
+        requires :metadata, type: JSON
+      end
+      post :metadata do
+        collection = Collection.own_collections_for(current_user).find(params[:collection_id])
+        metadata = Metadata.where(collection_id: collection.id).first
+        metadata ||= Metadata.new(collection_id: collection.id)
+        metadata.metadata = params[:metadata]
+        metadata.save!
+        metadata
       end
     end
   end

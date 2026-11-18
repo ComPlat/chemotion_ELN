@@ -41,6 +41,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   handleFieldChange(key, value) {
+    if (this.props.readOnly) { return; }
+
     const { researchPlanMetadata } = this.state;
 
     this.setState({
@@ -52,6 +54,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   saveResearchPlanMetadata() {
+    if (this.props.readOnly) { return; }
+
     const { researchPlan } = this.props;
     const { researchPlanMetadata } = this.state;
 
@@ -82,6 +86,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   updateResearchPlanMetadataDataCiteState(value) {
+    if (this.props.readOnly) { return; }
+
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata.data_cite_state = value;
@@ -108,6 +114,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   addResearchPlanMetadataArrayItem(type) {
+    if (this.props.readOnly) { return; }
+
     this.setState(state => {
       const newItem = this.newItemByType(type);
 
@@ -124,6 +132,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   removeResearchPlanMetadataArrayItem(type, index) {
+    if (this.props.readOnly) { return; }
+
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       const newCollection = [...researchPlanMetadata[type]];
@@ -138,6 +148,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   updateResearchPlanMetadataArrayItem(type, index, fieldname, value) {
+    if (this.props.readOnly) { return; }
+
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata[type][index][fieldname] = value;
@@ -146,6 +158,8 @@ export default class ResearchPlanMetadata extends Component {
   }
 
   updateResearchPlanMetadataGeoLocation(index, fieldname, value) {
+    if (this.props.readOnly) { return; }
+
     this.setState(state => {
       const researchPlanMetadata = state.researchPlanMetadata;
       researchPlanMetadata.geo_location[index]['geoLocationPoint'][fieldname] = value;
@@ -155,8 +169,10 @@ export default class ResearchPlanMetadata extends Component {
 
   render() {
     const { researchPlanMetadata } = this.state;
+    const { readOnly } = this.props;
     return (
       <div className="px-1 py-2">
+        <fieldset disabled={readOnly}>
         <Form>
           <Form.Group className="mb-2" controlId="title">
             <Form.Label>Title</Form.Label>
@@ -494,11 +510,14 @@ export default class ResearchPlanMetadata extends Component {
           ))}
 
           <div className="d-flex align-items-center mt-5 mb-0">
-          <Button className="ms-auto" variant="success" size="md" onClick={() => this.saveResearchPlanMetadata()}>
-            Save Metadata
-          </Button>
+          {!readOnly && (
+            <Button className="ms-auto" variant="success" size="md" onClick={() => this.saveResearchPlanMetadata()}>
+              Save Metadata
+            </Button>
+          )}
           </div>
         </Form>
+        </fieldset>
       </div>
     );
   }
@@ -506,5 +525,10 @@ export default class ResearchPlanMetadata extends Component {
 
 ResearchPlanMetadata.propTypes = {
   researchPlan: PropTypes.object.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+ResearchPlanMetadata.defaultProps = {
+  readOnly: false,
 };
 

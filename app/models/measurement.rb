@@ -5,16 +5,17 @@
 # Table name: measurements
 #
 #  id          :bigint           not null, primary key
-#  description :string           not null
-#  value       :decimal(, )      not null
-#  unit        :string           not null
 #  deleted_at  :datetime
-#  well_id     :bigint
-#  sample_id   :bigint           not null
+#  description :string           not null
+#  metadata    :jsonb
+#  source_type :string
+#  unit        :string           not null
+#  value       :decimal(, )      not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  source_type :string
+#  sample_id   :bigint           not null
 #  source_id   :bigint
+#  well_id     :bigint
 #
 # Indexes
 #
@@ -31,13 +32,16 @@ class Measurement < ApplicationRecord
   belongs_to :sample, optional: false
   belongs_to :source, polymorphic: true
 
-  before_save :strip_whitespaces
+  # The columns are NOT NULL, but an empty string is valid (e.g. MTT results have no unit).
+  validates :description, :unit, exclusion: { in: [nil], message: :blank }
+  validates :value, presence: true
+
+  before_validation :strip_whitespaces
 
   private
 
   def strip_whitespaces
-    self.description.strip!
-    self.unit.strip!
-    self.source_type.strip! # should not be needed but it's still user input...
+    self.description = description&.strip
+    self.unit = unit&.strip
   end
 end

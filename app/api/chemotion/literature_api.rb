@@ -4,6 +4,10 @@
 
 module Chemotion
   class LiteratureAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Collection not found', 404)
+    end
+
     helpers CollectionHelpers
     helpers ParamsHelpers
 
@@ -11,7 +15,7 @@ module Chemotion
       def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
         return Literature.none if id.blank?
 
-        Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
+        Literature.by_element_attributes_and_cat(id, type, cat).with_user_info.order('literals.id ASC')
       end
     end
 
@@ -157,7 +161,6 @@ module Chemotion
 
         after_validation do
           set_var(params[:id])
-          error!(404) unless @c
         end
 
         get do
@@ -205,7 +208,6 @@ module Chemotion
 
         after_validation do
           set_var(params[:id])
-          error!(404) unless @c
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
           @cat = 'detail'

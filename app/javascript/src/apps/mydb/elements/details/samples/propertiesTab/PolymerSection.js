@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
-import NotificationActions from 'src/stores/alt/actions/NotificationActions'
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { Select } from 'src/components/common/Select';
 
 export default class PolymerSection extends React.Component {
+  static contextType = StoreContext;
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
     residue.custom_info[name] = e.value;
@@ -18,7 +19,7 @@ export default class PolymerSection extends React.Component {
         sample.external_loading = e.value;
 
       let errorMessage;
-      if (e.value == 0.0)
+      if (e.value == 0.0 && !e.showString)
         errorMessage = 'Loading can not be 0. Please define a value.'
 
       let mw_defined = sample.molecule.molecular_weight;
@@ -30,7 +31,7 @@ export default class PolymerSection extends React.Component {
       }
 
       if (errorMessage)
-        NotificationActions.add({
+        this.context.notifications.add({
           message: errorMessage,
           level: 'error'
         });
@@ -84,10 +85,19 @@ export default class PolymerSection extends React.Component {
     this.props.handleSampleChanged(sample);
   }
 
+  static isReactionMaterial(sample, residue) {
+    const flag = residue.custom_info?.reaction_product;
+    return Boolean(sample.reaction_product || flag === true || flag === 'true'
+      || sample.tag?.taggable_data?.reaction_id);
+  }
+
   customInfoRadio(label, value, residue, sample) {
     const relComposition = sample.elemental_compositions
       .find((item) => item.composition_type === value);
     const relLoading = relComposition?.loading;
+    // a reaction material can always opt into the mass-difference calculation,
+    // which the reaction scheme then fills on the next amount change
+    const massDiffAllowed = value === 'mass_diff' && PolymerSection.isReactionMaterial(sample, residue);
 
     return (
       <Form.Check
@@ -97,7 +107,7 @@ export default class PolymerSection extends React.Component {
         checked={residue.custom_info.loading_type === value}
         name="loading_type"
         value={value}
-        disabled={value !== 'external' && !relLoading}
+        disabled={value !== 'external' && !(value === 'found' && relComposition) && !relLoading && !massDiffAllowed}
         label={label}
       />
     );
@@ -196,11 +206,9 @@ export default class PolymerSection extends React.Component {
               sample={sample}
             />
           </Col>
-          {!sample.reaction_product && (
-            <Col xs={4}>
-              {this.polymerLoading(sample, residue)}
-            </Col>
-          )}
+          <Col xs={4}>
+            {this.polymerLoading(sample, residue)}
+          </Col>
         </Row>
       </div>
     );

@@ -14,6 +14,7 @@ module Entities
       :mol_serials,
       :objects,
       :reaction_settings,
+      :report_type,
       :sample_settings,
       :si_reaction_settings,
       :template,
@@ -34,8 +35,8 @@ module Entities
 
     def downloaded
       @downloaded ||= object.reports_users
-                            .find_by(user_id: current_user_id)
-                            .downloaded_at.present?
+                            .find { |ru| ru.user_id == current_user_id }
+                            &.downloaded_at.present?
     end
 
     def unread
@@ -44,6 +45,12 @@ module Entities
 
     def template
       object.report_templates_id || object.template
+    end
+
+    # The report type the file was generated with (e.g. +rxn_list_xlsx+), unlike +template+,
+    # which is the stored template's id when one was selected.
+    def report_type
+      object.template
     end
   end
 end

@@ -41,7 +41,7 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 };
 
 // helper to combine and prepare alias into a polymer list
-const templateAliasesPrepare = async (aliasesList) => {
+const templateAliasesPrepare = async (aliasesList, atomIndexList = []) => {
   let counter = 0;
   const polymersCombination = [];
   for (let i = 0; i < aliasesList.length; i++) {
@@ -50,10 +50,15 @@ const templateAliasesPrepare = async (aliasesList) => {
       const imagePlace = parseInt(aliasesList[i].split('_')[2]);
       const { height, width } = imagesList[imagePlace].boundingBox;
       if (templateId) {
-        let idx = aliasesList[counter].split("_")[2]
+        // Use the actual KET atom position when provided by the caller; fall back to the
+        // alias image counter so existing call-sites without atom position info still work.
+        const actualIndex = atomIndexList.length > counter
+          ? atomIndexList[counter]
+          : parseInt(aliasesList[i].split('_')[2], 10);
+        let idx = String(actualIndex);
         idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
         idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;
-        polymersCombination.push(idx)
+        polymersCombination.push(idx);
         counter++;
       }
     }

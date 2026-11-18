@@ -23,7 +23,7 @@ module Chemotion
 
       desc 'Return current_user'
       get 'current' do
-        present current_user, with: Entities::UserEntity, root: 'user'
+        present current_user, with: Entities::UserEntity, root: 'user', with_tokens: true
       end
 
       resource :two_factor do
@@ -50,12 +50,6 @@ module Chemotion
         end
       end
 
-      desc 'list user labels'
-      get 'list_labels' do
-        labels = UserLabel.my_labels(current_user)
-        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
-      end
-
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
@@ -75,37 +69,16 @@ module Chemotion
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
-          { providers: Devise.omniauth_configs.keys, current_user: current_user }
+          # Only the linked-provider ids are used by the frontend (OmniauthCredential.js); serializing
+          # the full current_user leaked encrypted_otp_secret/otp_secret/otp_backup_codes.
+          { providers: Devise.omniauth_configs.keys, current_user: { providers: current_user.providers } }
         end
       end
 
-      namespace :save_label do
-        desc 'create or update user labels'
-        params do
-          optional :id, type: Integer
-          optional :title, type: String
-          optional :description, type: String
-          optional :color, type: String
-          optional :access_level, type: Integer
-        end
-        put do
-          attr = {
-            id: params[:id],
-            user_id: current_user.id,
-            access_level: params[:access_level] || 0,
-            title: params[:title],
-            description: params[:description],
-            color: params[:color],
-          }
-          label = nil
-          if params[:id].present?
-            label = UserLabel.find(params[:id])
-            label.update!(attr)
-          else
-            label = UserLabel.create!(attr)
-          end
-          present label, with: Entities::UserLabelEntity
-        end
+      desc "fetch current user's own devices and those of their groups"
+      get 'devices' do
+        data = Device.by_user_ids([current_user.id, *current_user.group_ids]).distinct.order(:name)
+        present data, with: Entities::DeviceSimpleEntity, root: 'currentDevices'
       end
 
       namespace :update_counter do
@@ -149,117 +122,69 @@ module Chemotion
       delete 'sign_out' do
         status 204
       end
-    end
 
-    resource :groups do
-      rescue_from ActiveRecord::RecordInvalid do |error|
-        message = error.record.errors.messages.map do |attr, msg|
-          format('%<attr>s %<msg>s', attr: attr, msg: msg.first)
+      namespace :auth_token do
+        desc 'Generate Token'
+        params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          optional :expires_in_days,
+                   type: Integer,
+                   default: 30,
+                   values: 1..600,
+                   desc: 'Token expiration in days (1–600)'
+          optional :name, type: String, desc: 'Name of the item'
         end
-        error!(message.join(', '), 404)
+        post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: params[:otp_attempt].present?,
+                     }, 422)
+            end
+          else
+            error!('2FA is needed', 401)
+          end
+          item_name = params[:name].to_s.strip
+          item_name = "Token #{Time.current.strftime('%Y%m%d_%H:%M:%S')}" if item_name.empty?
+          token = current_user.api_tokens.create!(
+            expires_at: params[:expires_in_days].days.from_now,
+            name: item_name,
+          )
+
+          { token: token.plain_token }
+        end
       end
 
-      namespace :create do
-        desc 'create a group of persons'
+      namespace :revoke_auth_token do
+        desc 'Revoke user Auth Token'
         params do
-          requires :group_param, type: Hash do
-            requires :first_name, type: String
-            requires :last_name, type: String
-            optional :email, type: String, regexp: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
-            requires :name_abbreviation, type: String
-            optional :users, type: [Integer]
-          end
-        end
-
-        after_validation do
-          users = params[:group_param][:users] || []
-          @group_params = declared(params, include_missing: false).deep_symbolize_keys[:group_param]
-          @group_params[:email] ||= format('%i@eln.edu', Time.now.getutc.to_i)
-          @group_params[:password] = Devise.friendly_token.first(8)
-          @group_params[:password_confirmation] = @group_params[:password]
-          @group_params[:users] = User.where(id: [current_user.id] + users)
-          @group_params[:admins] = User.where(id: current_user.id)
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          requires :id, type: Integer, desc: 'Token ID'
         end
 
         post do
-          new_group = Group.new(@group_params)
-          present new_group, with: Entities::GroupEntity, root: 'group' if new_group.save!
-        end
-      end
-
-      namespace :qrycurrent do
-        desc 'fetch groups of current user'
-        get do
-          data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').distinct
-          present data, with: Entities::GroupEntity, root: 'currentGroups'
-        end
-      end
-
-      namespace :queryCurrentDevices do
-        desc 'fetch devices of current user'
-        get do
-          data = [current_user.devices + current_user.groups.map(&:devices)].flatten.uniq
-          present data, with: Entities::DeviceEntity, root: 'currentDevices'
-        end
-      end
-
-      namespace :deviceMetadata do
-        desc 'Get deviceMetadata by device id'
-        params do
-          requires :device_id, type: Integer, desc: 'device id'
-        end
-        route_param :device_id do
-          get do
-            device_metadata = DeviceMetadata.find_by(device_id: params[:device_id])
-            present device_metadata,
-                    with: Entities::DeviceMetadataEntity,
-                    root: 'device_metadata'
-          end
-        end
-      end
-
-      namespace :upd do
-        desc 'update a group of persons'
-        params do
-          requires :id, type: Integer
-          optional :rm_users, type: [Integer], desc: 'remove users from group', default: []
-          optional :add_users, type: [Integer], desc: 'add users to group', default: []
-          optional :add_admin, type: [Integer], desc: 'add admin to group', default: []
-          optional :rm_admin, type: [Integer], desc: 'remove admin from group', default: []
-          optional :destroy_group, type: Boolean, default: false
-        end
-
-        after_validation do
-          @group = Group.find_by(id: params[:id])
-          @as_admin = @group.administrated_by?(current_user)
-          @rm_current_user_id = !@as_admin && params[:rm_users].delete(current_user.id)
-          error!('401 Unauthorized', 401) unless @group.administrated_by?(current_user) || @rm_current_user_id
-        end
-
-        put ':id' do
-          if @rm_current_user_id
-            @group.users.delete(User.where(id: @rm_current_user_id))
-            User.gen_matrix([@rm_current_user_id])
-            present @group, with: Entities::GroupEntity, root: 'group'
-          elsif params[:destroy_group]
-            @group.destroy! && { destroyed_id: params[:id] }
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: params[:otp_attempt].present?,
+                     }, 422)
+            end
           else
-            # add new admins
-            params[:add_admin].delete(@group.admins.pluck(:id)) # ensure that admins are not added twice
-            @group.admins << User.where(id: params[:add_admin])
-            # remove admins
-            # ensure that current_user is not removed from admins when being last admin
-            params[:rm_admin].delete(current_user.id) if Group.last.admins.count == 1
-            @group.users_admins.where(admin_id: params[:rm_admin]).destroy_all
-            # add new users
-            params[:add_users].delete(@group.users.pluck(:id))
-            @group.users << Person.where(id: params[:add_users])
-            # remove users
-            @group.users.delete(User.where(id: params[:rm_users]))
-            User.gen_matrix(params[:rm_users]) if params[:rm_users].length.positive?
-
-            present @group, with: Entities::GroupEntity, root: 'group'
+            error!('2FA is needed', 401)
           end
+          token = current_user.api_tokens.find_by(id: params[:id])
+          error!('Token not found', 404) unless token
+          error!('Token already revoked', 409) if token.revoked_at
+
+          token.revoke!
         end
       end
     end
@@ -280,8 +205,8 @@ module Chemotion
 
       desc 'Get current connection status for a device'
       params do
-        requires :id, type: String, regexp: /\d+/
-        optional :status, type: String
+        requires :id, type: Integer, desc: 'device id'
+        optional :status, type: Boolean, default: false, desc: 'true when the viewer is only watching'
       end
 
       get 'current_connection' do
@@ -294,18 +219,35 @@ module Chemotion
 
         error!('Device not found', 404) unless device
 
-        path = NOVNC_DEVICES_DIR.join(params[:id])
-        status = params[:status] == 'true' ? 1 : 0
+        # Record this viewer and drop those that stopped polling. An unreadable or malformed
+        # entry counts as empty and is overwritten. Concurrent polls may lose one entry for a
+        # cycle; it is restored on that viewer's next poll.
+        now = Time.current.to_i
+        key = "device/#{device.id}"
+        stored = NOVNC_CONNECTIONS.read(key)
+        connections = (stored.is_a?(Hash) ? stored : {}).select do |_user_id, entry|
+          entry.is_a?(Array) && entry.last.is_a?(Integer) && now - entry.last < NOVNC_CONNECTION_TTL
+        end
+        connections[current_user.id] = [params[:status] ? 1 : 0, now]
+        NOVNC_CONNECTIONS.write(key, connections, expires_in: NOVNC_CONNECTION_TTL)
 
-        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
-        cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
-
-        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
-
-        { result: result }
-      rescue SystemCallError => e
+        { result: connections.map { |user_id, (state, _)| "#{user_id},#{state}" } }
+      rescue SystemCallError, IOError => e
         Rails.logger.error("current_connection: #{e.class} – #{e.message}")
-        error!('Internal server error', 500)
+        { result: [] }
+      end
+
+      desc 'Get deviceMetadata for a device accessible to the current user'
+      params do
+        requires :device_id, type: Integer, desc: 'device id'
+      end
+      route_param :device_id do
+        get 'metadata' do
+          device = Device.by_user_ids(user_ids).find_by(id: params[:device_id])
+          error!('404 Device not found', 404) unless device
+
+          present device.device_metadata, with: Entities::DeviceMetadataEntity, root: 'device_metadata'
+        end
       end
     end
   end

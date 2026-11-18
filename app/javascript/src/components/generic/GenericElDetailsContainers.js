@@ -19,8 +19,10 @@ export default class GenericElDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { genericEl } = props;
-    const hasComment = genericEl.container?.description
-      && genericEl.container.description.trim() !== '';
+    const hasComment = Boolean(
+      genericEl.container?.description
+      && genericEl.container.description.trim() !== ''
+    );
     this.state = {
       activeContainer: null,
       commentBoxVisible: hasComment,

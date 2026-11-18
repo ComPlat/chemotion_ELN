@@ -8,6 +8,7 @@ class PermissionStore {
       sharing_allowed: false,
       deletion_allowed: false,
       remove_allowed: false,
+      update_allowed: false,
     };
 
     this.bindListeners({
@@ -21,6 +22,7 @@ class PermissionStore {
     if (result.sharing_allowed !=null) {this.state.sharing_allowed = result.sharing_allowed}
     if (result.deletion_allowed !=null) {this.state.deletion_allowed = result.deletion_allowed}
     if (result.remove_allowed !=null) {this.state.remove_allowed = result.remove_allowed}
+    if (result.update_allowed !=null) {this.state.update_allowed = result.update_allowed}
   }
 }
 

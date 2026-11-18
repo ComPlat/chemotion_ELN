@@ -32,7 +32,7 @@ TopSecretIcon.propTypes = {
 
 function XvialIcon({ label }) {
   return (label || '').match(/^X\d+.*/) ? (
-    <i className="icon-xvial px-1 fs-5" />
+    <i className="icon-xvial px-1 fs-7" />
   ) : null;
 }
 

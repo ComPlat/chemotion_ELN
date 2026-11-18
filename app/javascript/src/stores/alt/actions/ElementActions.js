@@ -5,7 +5,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
@@ -15,10 +15,10 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
-import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
@@ -28,6 +28,7 @@ import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBased
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
+import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import CellLine from 'src/models/cellLine/CellLine';
@@ -36,6 +37,7 @@ import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Report from 'src/models/Report';
+import Explorer from 'src/models/Explorer';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
@@ -46,18 +48,9 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
-
-const handleFetch = (dispatch, fetch) => {
-  return fetch()
-    .then((result) => {
-      dispatch(result)
-    })
-    .catch((errorMessage) => {
-      console.log(errorMessage)
-    })
-}
 
 class ElementActions {
   exportElement(element, klass, exportFormat) {
@@ -70,165 +63,39 @@ class ElementActions {
         });
     };
   }
-  // -- Devices --
-  fetchAllDevices() {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
-  }
-
-  fetchDeviceById(deviceId) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
-  }
-
-  createDevice() {
-    return null
-  }
-
-  changeActiveAccordionDevice(key) {
-    return (dispatch) => dispatch(key)
-  }
-
-  changeSelectedDeviceId(device) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
-  }
-
-  setSelectedDeviceId(deviceId) {
-    return (dispatch) => dispatch(deviceId)
-  }
-
   setRefreshCoefficient(id, coefficient, rId) {
     const obj = { sId: id, rId, coefficient };
     return (dispatch) => dispatch({ obj });
   }
 
-  toggleDeviceType(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDevice(device) {
-    if (device.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
-    }
-  }
-
-  deleteDevice(device) {
-    if (!device.isNew) {
-      DeviceFetcher.delete(device)
-    }
-    return (dispatch) => dispatch(device)
-  }
-
-  addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({ sample, device, options })
-  }
-
-  addSampleWithAnalysisToDevice(sample, analysis, device) {
-    return (dispatch) => dispatch({ sample, analysis, device })
-  }
-
-  removeSampleFromDevice(sample, device) {
-    return (dispatch) => dispatch({ sample, device })
-  }
-
-  toggleTypeOfDeviceSample(device, sample, type) {
-    return (dispatch) => dispatch({ device, sample, type })
-  }
-
-  changeDeviceProp(device, prop, value) {
-    return (dispatch) => dispatch({ device, prop, value })
-  }
-
-  fetchDeviceAnalysisById(analysisId) {
-    return (dispatch) => {
-      DeviceFetcher.fetchAnalysisById(analysisId)
-        .then(analysis => {
-          DeviceFetcher.fetchById(analysis.deviceId)
-            .then(device => {
-              dispatch({ analysis, device })
-            })
-        })
-    }
-  }
-
-  openDeviceAnalysis(device, type) {
-    return (dispatch) => dispatch({ device, type })
-  }
-
-  saveDeviceAnalysis(analysis) {
-    if (analysis.isNew) {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
-    } else {
-      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
-    }
-  }
-
-  createDeviceAnalysis(deviceId, analysisType) {
-    return (dispatch) => {
-      DeviceFetcher.fetchById(deviceId)
-        .then((device) => {
-          dispatch({ device, analysisType })
-        })
-    }
-  }
-
-  generateExperimentConfig(experiment) {
-    return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
-  }
-
-  duplicateAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
-  }
-
-  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
-    return (dispatch) => dispatch({ analysis, experiment, prop, value })
-  }
-
-  deleteAnalysisExperiment(analysis, experiment) {
-    return (dispatch) =>
-      DeviceFetcher.fetchById(analysis.deviceId)
-        .then((device) => {
-          dispatch({ device, analysis, experiment })
-        })
-  }
-
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
   fetchBasedOnSearchResultIds(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchResultIds(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -268,7 +135,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.create(params)
         .then((result) => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -276,7 +147,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.update(params)
         .then((result) => { dispatch({ element: result, closeView }); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -428,24 +303,8 @@ class ElementActions {
   }
 
   handleSvgReactionChange(reaction) {
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter(s => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
     return () => {
-      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      ReactionSvgFetcher.fetchByReaction(reaction)
         .then((result) => {
           reaction.reaction_svg_file = result.reaction_svg;
         }).catch((errorMessage) => {
@@ -468,9 +327,11 @@ class ElementActions {
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
       try {
-        // Save components first if it's a mixture
+        // Save components first if it's a mixture and capture the API response so
+        // newly inserted rows pick up their real DB ids on subsequent saves.
+        let savedComponents = null;
         if (sample.isMixture() && sample.components) {
-          await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
+          savedComponents = await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
         }
 
         // Update sample
@@ -478,7 +339,8 @@ class ElementActions {
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
-          newSample.initialComponents(sample.components);
+          const refreshed = Component.refreshFromApi(savedComponents, sample.components);
+          newSample.initialComponents(refreshed);
         }
 
         // Update the material in the reaction and dispatch
@@ -534,6 +396,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -597,21 +461,6 @@ class ElementActions {
   importSamplesFromFile(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFile(params)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  importSamplesFromFileDecline() {
-    return null;
-  }
-
-  importSamplesFromFileConfirm(params) {
-    return (dispatch) => {
-      SamplesFetcher.importSamplesFromFileConfirm(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -686,10 +535,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.create(params)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };
@@ -699,10 +548,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };
@@ -820,6 +669,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -842,6 +693,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -866,6 +719,30 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+        });
+    };
+  }
+
+  resizeWellplate(wellplateId, width, height) {
+    return (dispatch) => {
+      WellplatesFetcher.resize(wellplateId, width, height)
+        .then((result) => {
+          if (!result.error) {
+            // Stamp updated_at so WellplateDetails#componentDidUpdate adopts the
+            // reconciled wellplate coming back from the server: eln_timestamp has
+            // second resolution, so the server's own value can be byte-identical
+            // to the one already on screen.
+            result.updated_at = new Date();
+            // The stamp lands after WellplatesFetcher baselined the checksum, and
+            // a Date drops out of the hash where the string did not - without
+            // this the freshly persisted wellplate reads as edited and locks the
+            // size control it just came out of.
+            result.updateChecksum();
+          }
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
         });
     };
   }
@@ -918,6 +795,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -929,6 +808,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -953,6 +834,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -964,6 +847,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -983,6 +868,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1025,6 +912,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1040,6 +929,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1103,6 +994,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1115,6 +1008,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1158,6 +1053,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1170,6 +1067,8 @@ class ElementActions {
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1194,6 +1093,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1209,6 +1110,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1246,8 +1149,13 @@ class ElementActions {
       return MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
+          return result;
+        }).catch((error) => {
+          // The spinner is stopped by LoadingStore listening for this action's dispatch, which
+          // does not happen on failure — and the rejection has to reach handleSave, or the tab
+          // clears its dirty flag and the user believes a refused save succeeded.
+          LoadingActions.stop();
+          throw error;
         });
     };
   }
@@ -1271,6 +1179,11 @@ class ElementActions {
 
   showLiteratureDetail() {
     return LiteratureMap.buildEmpty();
+  }
+
+  // -- Explorer --
+  showExplorerDetails() {
+    return Explorer.buildEmpty();
   }
 
   // -- Prediction --
@@ -1309,8 +1222,42 @@ class ElementActions {
   deleteElementsByUIState(params) {
     return (dispatch) => {
       UIFetcher.deleteElementsByUIState(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => {
+          if (result && result.locked_sample_ids && result.locked_sample_ids.length > 0) {
+            rootStore.notificationsStore.add(
+              sampleAssociationLockNotification(result.locked_sample_ids.length)
+            );
+          }
+          dispatch(result);
+        })
         .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  bulkUpdateUserLabels(params) {
+    return (dispatch) => {
+      UserLabelsFetcher.bulkUpdate(params)
+        .then(() => {
+          rootStore.notificationsStore.add({
+            title: 'Bulk edit user labels',
+            message: 'Labels updated for the selection.',
+            level: 'success',
+            position: 'tr',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+          dispatch();
+        })
+        .catch(() => {
+          rootStore.notificationsStore.add({
+            title: 'Bulk edit user labels',
+            message: 'Could not update labels for the selection.',
+            level: 'error',
+            position: 'tr',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+        });
     };
   }
 

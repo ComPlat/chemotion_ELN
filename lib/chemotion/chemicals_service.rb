@@ -1,129 +1,481 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class ChemicalsService
-    MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
-      'qualitätsniveau' => 'quality level',
-      'form' => 'form',
-      'schmelzpunkt' => 'melting point',
-      'siedepunkt' => 'boiling point',
-      'dichte' => 'density',
-      'dampfdichte' => 'vapor density',
-      'dampfdruck' => 'vapor pressure',
-      'brechungsindex' => 'refractive_index',
-      'farbe' => 'color',
-      'löslichkeit' => 'solubility',
-      'flammpunkt' => 'flash_point',
-      'ph-wert' => 'ph',
-      'grad' => 'grade',
-      'optische aktivität' => 'optical_activity',
-      'funktionelle gruppe' => 'functional_group',
-    }.freeze
+    # Sheets per sample. Cf. MAX_SAVED_SDS in ChemicalTab.js, which refuses first; this is
+    # the backstop for any client that does not.
+    MAX_SAVED_SDS = 5
 
-    PROPERTY_ABBREVIATIONS = {
-      'mp' => 'melting_point',
-      'bp' => 'boiling_point',
-    }.freeze
+    # A catalogue number becomes the first part of a file name, so only these characters.
+    SHEET_PRODUCT_NUMBER_RE = /\A[A-Za-z0-9][A-Za-z0-9\-_.]{0,63}\z/.freeze
+    # Sigma's SDS URL takes a two-letter language code in its path.
+    MERCK_LANGUAGE_RE = /\A[a-z]{2}\z/i.freeze
 
-    SAFETY_SHEETS_DIR = 'public/safety_sheets'
+    SDS_VENDOR = 'Sigma-Aldrich'
+    THERMO_VENDOR = 'Thermofisher'
+    # Stands in for the vendor name when the search covered all of them.
+    ALL_VENDORS = 'any vendor'
+    FISHER_VENDORS = ['Thermo Fisher Scientific', 'Fisher Chemical'].freeze
+    # Fisher partitions this endpoint by catalogue availability, so the country code is pinned
+    # to the one the part numbers below were verified against.
+    FISHER_SDS_URL = 'https://www.fishersci.com/store/msds?partNumber=%<part_number>s' \
+                     '&productDescription=&language=EN&countryCode=US'
+    # Alfa-lineage sheets come from DirectWebViewer, which unlike the Fisher catalogue
+    # serves the requested language.
+    THERMO_SDS_URL = 'https://documents.thermofisher.com/directwebviewer/private/results.aspx' \
+                     '?page=NewSearch&LANGUAGE=d__%<language>s&SUBFORMAT=d__CLP1' \
+                     '&SKU=%<sku>s&PLANT=d__ALF'
+    THERMO_LANGUAGES = { 'en' => 'EN', 'de' => 'DE', 'fr' => 'FR' }.freeze
 
+    # PubChem lists 30 to 50 vendors per compound, most of them building-block houses
+    # a European lab will not order from. Only these are surfaced; the rest stay one
+    # click away on PubChem itself.
+    CURATED_VENDORS = ['abcr GmbH', 'TCI (Tokyo Chemical Industry)', 'LGC Standards',
+                       'Glentham Life Sciences Ltd.', 'Fluorochem', 'CymitQuimica'].freeze
+    PUBCHEM_VENDOR_URL = 'https://pubchem.ncbi.nlm.nih.gov/compound/%<cid>s#section=Chemical-Vendors'
+    # Sigma brand keys as they appear in catalogue URLs, most-preferred catalogue line first.
+    MERCK_BRAND_PRIORITY = %w[sigald sial aldrich sigma supelco vetec saj usp cerillian].freeze
+    MERCK_PRODUCT_URL_RE = %r{sigmaaldrich\.com/catalog/product/([a-z0-9]+)/([a-z0-9\-_.]+)}i.freeze
+    ALLOWED_DOMAINS = %w[sigmaaldrich.com fishersci.com thermofisher.com].freeze
+
+    # Sending only a User-Agent + `Accept: */*`
+    # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
+    # as automated, so `__NEXT_DATA__` returns Nil. The header set below
+    # mirrors a real Chrome document navigation to avoid bot screening.
+    #
+    # Accept-Encoding is intentionally NOT set: Net::HTTP only transparently
+    # decompresses gzip when it adds the header itself. Advertising it manually
+    # (especially brotli) yields an undecoded body that Nokogiri can't parse.
     def self.request_options
       { headers: {
-          'Access-Control-Request-Method' => 'GET',
-          'Accept' => '*/*',
-          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0',
-          'Accept-Encoding': 'gzip, deflate, br',
-          Connection: 'keep-alive',
+          'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language' => 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
+                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'sec-ch-ua' => '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile' => '?0',
+          'sec-ch-ua-platform' => '"Linux"',
+          'Sec-Fetch-Dest' => 'document',
+          'Sec-Fetch-Mode' => 'navigate',
+          'Sec-Fetch-Site' => 'none',
+          'Sec-Fetch-User' => '?1',
+          'Upgrade-Insecure-Requests' => '1',
+          'Connection' => 'keep-alive',
         },
         timeout: 15,
-        follow_redirects: true }
+        follow_redirects: false }
     end
 
-    def self.merck_request(name)
-      string = name.gsub(/\s/, '-')
-      merck_res = HTTParty.get("https://www.sigmaaldrich.com/US/en/search/#{string}?focus=products
-                                &page=1&perpage=30&sort=relevance&term=#{string}&type=product", request_options)
-      Nokogiri::HTML.parse(merck_res.body).xpath("//*[contains(@class, 'MuiTableBody-root')]").children[0].children[2]
-                    .children[0].attributes['href'].value
+    # Validate that a URL is safe to request (SSRF protection).
+    # Redirects are disabled in request_options so whitelisted URLs cannot
+    # redirect to untrusted hosts.
+    # Returns a URI reconstructed from parsed components so callers receive a
+    # taint-free string even when the input originated from user data.
+    def self.validate_url_for_request!(url)
+      raise StandardError, 'URL cannot be nil or empty' if url.blank?
+
+      parsed_uri = URI.parse(url)
+      raise StandardError, 'Invalid URL scheme' unless %w[https].include?(parsed_uri.scheme)
+      raise StandardError, 'URL host cannot be empty' if parsed_uri.host.blank?
+      raise StandardError, "Domain #{parsed_uri.host} is not allowed" unless allowed_host?(parsed_uri.host)
+
+      # Return the URI rebuilt from parsed components to break the taint flow.
+      parsed_uri.to_s
+    rescue URI::InvalidURIError
+      raise StandardError, 'Invalid URL format'
     end
 
-    def self.merck(name, language)
-      product_number_string = merck_request(name)
-      product_number = product_number_string[15, product_number_string.length].split('/')[1]
+    # Returns true when +host+ matches an entry in ALLOWED_DOMAINS exactly or
+    # as a subdomain (e.g. "www.sigmaaldrich.com" matches "sigmaaldrich.com").
+    def self.allowed_host?(host)
+      normalized = host.to_s.downcase
+      ALLOWED_DOMAINS.any? do |allowed|
+        normalized == allowed || normalized.end_with?(".#{allowed}")
+      end
+    end
+
+    private_class_method :validate_url_for_request!,
+                         :allowed_host?
+
+    def self.merck(name, language, wanted_number = nil)
+      brand, product_number = merck_product_from_pubchem(name, wanted_number)
+      raise StandardError, 'No Sigma-Aldrich catalogue entry found' unless brand
+
       validate_product_number!(product_number)
-      url_string = product_number_string[15, product_number_string.length]
-      merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
-      { 'merck_link' => merck_link, 'merck_product_number' => product_number,
-        'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
+      merck_product_entry(brand, product_number, language)
     rescue StandardError
-      'Could not find safety data sheet from Merck'
+      no_sheet_found(SDS_VENDOR)
     end
 
-    # Validate product number to avoid URLs or query strings being treated as product IDs
-    # Only allow letters, digits, hyphen and underscore. Reject any other characters.
-    def self.validate_product_number!(product_number)
-      if product_number.nil? || product_number.to_s.strip.empty?
-        raise StandardError, 'Could not find safety data sheet from Merck'
+    def self.merck_product_entry(brand, product_number, language)
+      path = "#{brand}/#{product_number}"
+      language = language.to_s.match?(MERCK_LANGUAGE_RE) ? language.to_s.downcase : 'en'
+      { 'merck_link' => "https://www.sigmaaldrich.com/DE/#{language}/sds/#{path}",
+        'merck_product_number' => product_number,
+        'merck_product_link' => "https://www.sigmaaldrich.com/DE/de/product/#{path}",
+        'save_modes' => vendor_save_modes(SDS_VENDOR) }
+    end
+
+    # Form-encoded params arrive with the sheet list rebuilt as an index-keyed Hash, so
+    # both shapes count.
+    def self.sds_limit_reached?(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return false unless first.is_a?(Hash)
+
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      sheets.is_a?(Enumerable) && sheets.count >= MAX_SAVED_SDS
+    end
+
+    # True when this sample already holds the very same file. Two samples may share one
+    # sheet on disk; one sample holding it twice is the case worth refusing.
+    # The same PDF is published under several catalogue numbers, so naming the one already
+    # held is the difference between a refusal that makes sense and one that looks wrong.
+    def self.duplicate_sheet_message(file_path)
+      held = File.basename(file_path.to_s).sub(/_(?:web_)?[a-f0-9]{16}\.pdf\z/, '')
+      return 'This sample already holds this safety data sheet.' if held.blank?
+
+      "This sample already holds this sheet. It is the same document as #{held}."
+    end
+
+    # Error hashes carry their HTTP status; final tells the client no other route will do better.
+    def self.sds_limit_error(action)
+      { error: "A sample can hold at most #{MAX_SAVED_SDS} safety data sheets. Delete one before #{action} another.",
+        final: true, status: 422 }
+    end
+
+    def self.duplicate_sheet_error(file_path)
+      { error: duplicate_sheet_message(file_path), final: true, status: 422 }
+    end
+
+    # Fetches the sheet a search row points at and records it on the sample.
+    # @return [Chemical, Hash] the chemical, or an error hash as built above
+    def self.save_vendor_sheet(sample_id:, cas:, chemical_data:, product_info:)
+      return sds_limit_error('saving') if sds_limit_reached?(chemical_data)
+
+      invalid = product_info_error(product_info)
+      return { error: invalid, status: 400 } if invalid
+
+      vendor = product_info['vendor'].downcase
+      # Always fetches: only the bytes say whether this sheet is one already held.
+      file_path = create_sds_file(product_info['sdsLink'], product_info['productNumber'], vendor)
+      return file_path.merge(status: 400) if file_path.is_a?(Hash) && file_path[:error]
+      return { error: 'Could not retrieve the SDS from the vendor', status: 400 } unless file_path.is_a?(String)
+      return duplicate_sheet_error(file_path) if sheet_already_saved?(chemical_data, file_path)
+
+      find_or_create_chemical_with_safety_data(sample_id: sample_id, cas: cas, chemical_data: chemical_data,
+                                               file_path: file_path, product_number: product_info['productNumber'],
+                                               vendor: vendor)
+    end
+
+    # The row the client points at is its own copy of a search result, so every field the
+    # fetch and the file name depend on is checked before either is attempted.
+    # @return [String, nil] the reason it cannot be used
+    def self.product_info_error(product_info)
+      return 'Vendor product info is missing' unless product_info.is_a?(Hash)
+      return 'Vendor name is missing' if product_info['vendor'].blank?
+      return 'Vendor name is invalid' unless InputValidationUtils.valid_vendor_name?(product_info['vendor'].to_s)
+      return 'Safety sheet link is missing' if product_info['sdsLink'].blank?
+
+      'Product number is invalid' unless valid_sheet_product_number?(product_info['productNumber'])
+    end
+
+    def self.valid_sheet_product_number?(product_number)
+      product_number.is_a?(String) && product_number.match?(SHEET_PRODUCT_NUMBER_RE)
+    end
+
+    def self.sheet_already_saved?(chemical_data, file_path)
+      file_path.is_a?(String) && saved_sheet_paths(chemical_data).include?(file_path)
+    end
+
+    def self.saved_sheet_paths(chemical_data)
+      first = chemical_data.is_a?(Array) ? chemical_data[0] : nil
+      return [] unless first.is_a?(Hash)
+
+      sheets = first['safetySheetPath'] || first[:safetySheetPath]
+      return [] unless sheets.is_a?(Enumerable)
+
+      sheets.flat_map { |sheet| sheet.respond_to?(:values) ? sheet.values : [] }
+    end
+
+    # Every route that can reach a sheet, preferred one first: Sigma refuses the server but
+    # serves a cross-origin browser read, Fisher the reverse. Empty means no save is offered.
+    def self.vendor_save_modes(vendor)
+      return %w[browser server] if vendor.casecmp?(SDS_VENDOR)
+      return %w[server browser] if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+
+      []
+    end
+
+    # One wording for every vendor that has nothing to offer, named as the UI names it.
+    def self.no_sheet_found(vendor)
+      "No safety data sheet found from #{vendor}"
+    end
+
+    # Sigma's own search rejects automated clients, so the catalogue entry comes from
+    # PubChem's Chemical Vendors list. Returns [brand, product_number] or nil.
+    def self.merck_product_from_pubchem(name, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      return nil unless cid
+
+      candidates = merck_candidates(PubChem.get_vendor_sources_from_cid(cid))
+      wanted = normalize_product_number(product_number)
+      candidates = candidates.select { |_, number| normalize_product_number(number) == wanted } if wanted.present?
+
+      candidates.min_by { |c| merck_rank(*c) }
+    end
+
+    def self.merck_candidates(sources)
+      sources.filter_map do |source|
+        next unless source[:SourceName].to_s.casecmp?(SDS_VENDOR)
+
+        match = MERCK_PRODUCT_URL_RE.match(source[:SourceRecordURL].to_s)
+        [match[1].downcase, match[2].downcase] if match
+      end
+    end
+
+    def self.merck_rank(brand, number)
+      [MERCK_BRAND_PRIORITY.index(brand) || MERCK_BRAND_PRIORITY.size, number]
+    end
+
+    def self.grouped_vendor_sources(sources, language)
+      sources.group_by { |source| source[:SourceName].to_s }
+             .filter_map { |vendor, group| vendor_group(vendor, group, language) }
+             .sort_by { |group| [vendor_rank(group), -group['count']] }
+    end
+
+    # Splits the curated vendors into the ones we can fetch a sheet from and the ones that
+    # only have a catalogue page, and points at PubChem for the full list.
+    # An empty result carries the same sentence a single-vendor search returns, so the UI
+    # renders one shape either way.
+    def self.vendor_overview(name, language, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      return empty_overview unless cid
+
+      groups = grouped_vendor_sources(PubChem.get_vendor_sources_from_cid(cid), language)
+      shown = filter_by_product_number(curated_groups(groups), product_number)
+      sds, catalogue = shown.partition { |group| group['sds_supported'] }
+      overview = { 'sds_vendors' => sds, 'catalogue_vendors' => catalogue, 'vendor_count' => groups.size,
+                   'pubchem_url' => format(PUBCHEM_VENDOR_URL, cid: cid) }
+      overview['message'] = no_sheet_found(ALL_VENDORS) if shown.empty?
+      overview
+    end
+
+    def self.empty_overview
+      { 'sds_vendors' => [], 'catalogue_vendors' => [], 'vendor_count' => 0,
+        'message' => no_sheet_found(ALL_VENDORS) }
+    end
+
+    # Narrows the listing to the catalogue number the user already knows, so one row comes
+    # back instead of every product the vendor sells. Vendors left with nothing drop out.
+    def self.filter_by_product_number(groups, product_number)
+      wanted = normalize_product_number(product_number)
+      return groups if wanted.blank?
+
+      groups.filter_map do |group|
+        products = group['products'].select { |product| product_number_match?(product, wanted) }
+        next if products.empty?
+
+        group.merge('products' => products, 'count' => products.size)
+      end
+    end
+
+    def self.normalize_product_number(value)
+      value.to_s.strip.downcase.delete('-_. ')
+    end
+
+    # Fisher prefixes its catalogue codes (AC..., ALFAA...), so an edge match counts.
+    def self.product_number_match?(product, wanted)
+      numbers = product.keys.grep(/_product_number\z/).map { |key| product[key] }
+      (numbers << product['label']).compact.any? do |value|
+        candidate = normalize_product_number(value)
+        candidate == wanted || candidate.start_with?(wanted) || candidate.end_with?(wanted)
+      end
+    end
+
+    def self.curated_groups(groups)
+      groups.select do |group|
+        group['sds_supported'] || CURATED_VENDORS.any? { |name| group['vendor'].casecmp?(name) }
+      end
+    end
+
+    # Sigma-Aldrich leads as the ELN's primary vendor, then the other vendors whose SDS
+    # can be fetched, then catalogue-only ones.
+    def self.vendor_rank(group)
+      return 0 if group['vendor'].casecmp?(SDS_VENDOR)
+
+      group['sds_supported'] ? 1 : 2
+    end
+
+    def self.vendor_group(vendor, sources, language)
+      return nil if vendor.empty?
+
+      products, sds_supported = vendor_products(vendor, sources, language)
+      return nil if products.empty?
+
+      { 'vendor' => vendor, 'count' => products.size, 'sds_supported' => sds_supported,
+        'save_modes' => sds_supported ? vendor_save_modes(vendor) : [], 'products' => products }
+    end
+
+    def self.vendor_products(vendor, sources, language)
+      return [merck_products(sources, language), true] if vendor.casecmp?(SDS_VENDOR)
+
+      if FISHER_VENDORS.any? { |name| vendor.casecmp?(name) }
+        fisher = fisher_products(sources, language)
+        return [fisher, true] if fisher.any? { |product| product['fisher_link'] }
       end
 
-      allowed_pattern = /\A[A-Za-z0-9\-_]+\z/
+      [other_vendor_products(sources), false]
+    end
+
+    # Returns [part_number, sds_url]. A Fisher Chemical RegistryID is a catalogue number
+    # already; Thermo codes are all-numeric (Acros, US catalogue only) or dotted (Alfa).
+    def self.fisher_sds(source, language)
+      registry = source[:RegistryID].to_s
+      if registry.present? && !registry.start_with?('GID_') && registry.match?(/\A[A-Za-z0-9]+\z/)
+        return [registry, format(FISHER_SDS_URL, part_number: registry)]
+      end
+
+      code = url_last_segment(source[:SourceRecordURL].to_s).to_s
+      return ["AC#{code}", format(FISHER_SDS_URL, part_number: "AC#{code}")] if code.match?(/\A\d+\z/)
+
+      alfa_sds(code, language)
+    end
+
+    # Only a letter-prefixed dotted code resolves; the dotted suffix is a pack size.
+    def self.alfa_sds(code, language)
+      base = code[/\A([A-Za-z][A-Za-z0-9]*)\./, 1]
+      return nil unless base
+
+      sku = "ALFAA#{base.upcase}"
+      [sku, format(THERMO_SDS_URL, language: THERMO_LANGUAGES.fetch(language, 'EN'), sku: sku)]
+    end
+
+    def self.fisher_products(sources, language)
+      sources.filter_map { |source| fisher_product(source, language) }
+             .uniq { |product| product['fisher_product_number'] || product['product_link'] }
+    end
+
+    def self.fisher_product(source, language)
+      url = source[:SourceRecordURL].to_s
+      part_number, sds_url = fisher_sds(source, language)
+      return { 'label' => vendor_product_label(source, url), 'product_link' => url } if part_number.blank?
+
+      product = { 'fisher_link' => sds_url, 'fisher_product_number' => part_number,
+                  'save_modes' => vendor_save_modes(FISHER_VENDORS.first) }
+      product['fisher_product_link'] = url if url.present?
+      product
+    end
+
+    def self.url_last_segment(url)
+      return nil if url.blank?
+
+      URI.parse(url).path.to_s.split('/').reject(&:empty?).last
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    def self.merck_products(sources, language)
+      merck_candidates(sources).uniq.sort_by { |c| merck_rank(*c) }
+                               .map { |brand, number| merck_product_entry(brand, number, language) }
+    end
+
+    def self.other_vendor_products(sources)
+      sources.filter_map do |source|
+        url = source[:SourceRecordURL].to_s
+        next if url.empty?
+
+        { 'label' => vendor_product_label(source, url), 'product_link' => url }
+      end
+    end
+
+    # RegistryID is the vendor's catalogue number unless PubChem assigned an internal GID.
+    def self.vendor_product_label(source, url)
+      registry = source[:RegistryID].to_s
+      return registry unless registry.empty? || registry.start_with?('GID_')
+
+      url_last_segment(url) || url
+    end
+
+    # Validate product number: allow letters, digits, hyphen, underscore, dot.
+    def self.validate_product_number!(product_number)
+      raise StandardError, no_sheet_found(SDS_VENDOR) if product_number.to_s.strip.empty?
+
+      allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
       return if product_number.to_s.match?(allowed_pattern)
 
-      raise StandardError, 'Could not find safety data sheet from Merck'
+      raise StandardError, no_sheet_found(SDS_VENDOR)
     end
 
-    def self.alfa_product(alfa_req)
-      response = Nokogiri::HTML.parse(alfa_req.body)
-      if response.title && response.title != 'Alfa Aesar'
-        product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
-        product_number[0].value
-      else
-        str = 'search-result-number'
-        response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
-      end
-    end
+    # Cf. .merck: the vendor's own search is unreachable from the server, so the catalogue
+    # entry is resolved through PubChem and the SDS URL built from it.
+    def self.thermofisher(name, language, product_number = nil)
+      cid = PubChem.get_cid_from_identifier(name)
+      raise StandardError, 'No PubChem CID for this name' unless cid
 
-    def self.alfa(name, language)
-      chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      alfa_req = HTTParty.get("https://www.alfa.com/en/search/?q=#{name}", request_options)
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
-      { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
-        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
+      wanted = normalize_product_number(product_number)
+      product = fisher_products(fisher_candidates(PubChem.get_vendor_sources_from_cid(cid)), language)
+                .select { |candidate| candidate['fisher_link'] }
+                .find { |candidate| wanted.blank? || product_number_match?(candidate, wanted) }
+      raise StandardError, 'No Thermofisher catalogue entry found' unless product
+
+      product
     rescue StandardError
-      'Could not find safety data sheet from Thermofisher'
+      no_sheet_found(THERMO_VENDOR)
     end
 
-    def self.write_file(file_path, file = nil, link = nil)
-      full_file_path = "public#{file_path}"
-
-      # Ensure parent directory exists
-      FileUtils.mkdir_p(File.dirname(full_file_path))
-
-      if file.is_a?(Hash) && file['tempfile']
-        File.binwrite(full_file_path, file['tempfile'].read)
-      elsif file.respond_to?(:read)
-        File.binwrite(full_file_path, file.read)
-      else
-        request_pdf_file(link, full_file_path)
+    def self.fisher_candidates(sources)
+      sources.select do |source|
+        FISHER_VENDORS.any? { |vendor| source[:SourceName].to_s.casecmp?(vendor) }
       end
-    rescue HTTParty::RedirectionTooDeep => e
-      "Redirection limit exceeded: #{e}"
-    rescue Timeout::Error => e
-      "Request timed out: #{e}"
+    end
+
+    # Vendor and product number arrive from the client, so the path is rebuilt from its two
+    # segments and refused unless it stays inside the safety sheets folder.
+    # @param relative_path [String] "/safety_sheets/<vendor>/<file>"
+    # @return [Pathname]
+    def self.safety_sheet_disk_path(relative_path)
+      vendor_dir, file_name = relative_path.to_s.delete_prefix('/safety_sheets/').split('/', 2)
+      unless safe_path_segment?(vendor_dir) && safe_path_segment?(file_name)
+        raise ArgumentError, "Not a safety sheet path: #{relative_path}"
+      end
+
+      root = GenerateFileHashUtils.safety_sheets_root
+      path = root.join(File.basename(vendor_dir), File.basename(file_name)).cleanpath
+      raise ArgumentError, "Not a safety sheet path: #{relative_path}" unless path.dirname.dirname == root
+
+      path
+    end
+
+    def self.safe_path_segment?(segment)
+      segment.present? && !segment.match?(%r{[/\\\0]}) && !segment.start_with?('.')
+    end
+
+    # @param file [Hash, IO] a Grape upload hash (symbol or string keys) or anything readable
+    def self.write_file(file_path, file)
+      full_file_path = safety_sheet_disk_path(file_path)
+      FileUtils.mkdir_p(full_file_path.dirname)
+
+      upload = file.is_a?(Hash) ? (file[:tempfile] || file['tempfile']) : file
+      raise ArgumentError, 'Nothing to write' unless upload.respond_to?(:read)
+
+      upload.rewind if upload.respond_to?(:rewind)
+      File.binwrite(full_file_path, upload.read)
     end
 
     def self.create_sds_file(link, product_number, vendor_name)
       Tempfile.create(['sds', '.pdf'], Rails.root.join('tmp')) do |tmp_file|
         result = request_pdf_file(link, tmp_file.path)
-        return result unless result
+        # Only true means bytes landed; an error Hash is truthy and would hash the empty tempfile.
+        return result unless result == true
+
+        identical = GenerateFileHashUtils.find_identical_sheet(tmp_file.path)
+        return identical if identical.present?
 
         file_hash = GenerateFileHashUtils.generate_full_hash(tmp_file.path)
-        existing_file_path = GenerateFileHashUtils.find_duplicate_file_by_hash(vendor_name, product_number, file_hash)
-        return existing_file_path if existing_file_path.present? && existing_file_path.is_a?(String)
-
-        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15], true)
-        write_file(file_name.to_s, tmp_file, link)
-        return file_name if File.exist?("public/#{file_name}")
+        file_name = generate_safety_sheet_file_path(vendor_name, product_number, file_hash[0..15])
+        write_file(file_name, tmp_file)
+        return file_name if File.exist?(safety_sheet_disk_path(file_name))
 
         { error: 'could not save safety data sheet' }
       end
@@ -131,91 +483,102 @@ module Chemotion
       { error: e.message }
     end
 
-    def self.request_pdf_file(link, file_path)
+    # Every redirect hop is re-validated, so a whitelisted host cannot forward us off-allowlist.
+    def self.fetch_allowed_url(url, limit: 3)
+      safe_url = validate_url_for_request!(url)
       options = request_options.dup
-      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(link, options)
-      if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
-        File.binwrite(file_path, req_safety_sheet)
-        sleep 1
-        true
-      else
-        Rails.logger.warn("Non-PDF content received from #{link}")
-        false
+      origin = URI.parse(safe_url)
+      options[:headers]['Origin'] = "#{origin.scheme}://#{origin.host}"
+      response = HTTParty.get(safe_url, options)
+      location = response.headers['Location']
+      return response if location.blank? || !limit.positive?
+      return response unless response.code.to_i.between?(300, 399)
+
+      fetch_allowed_url(URI.join(safe_url, location).to_s, limit: limit - 1)
+    end
+
+    # The bytes decide, not the header: Fisher labels the same sheet application/pdf,
+    # application/octet-stream or text/html depending on load, and a header that lies
+    # either way is what made a reachable sheet look unreachable.
+    def self.request_pdf_file(link, file_path)
+      response = fetch_allowed_url(link)
+      body = response.body.to_s
+      unless body.start_with?('%PDF')
+        Rails.logger.warn("Non-PDF content from #{link} (#{response.headers['Content-Type']})")
+        return false
       end
+
+      File.binwrite(file_path, body)
+      true
     rescue StandardError => e
       Rails.logger.error("HTTP error downloading PDF: #{e.message}")
       { error: e.message }
     end
 
-    def self.find_existing_file_by_vendor_product_number_signature(vendor, product_number)
-      vendor_product_files = GenerateFileHashUtils.find_safety_sheets_by_product_number(vendor, product_number)
-      return nil if vendor_product_files.empty?
-
-      # Look for files matching the URL signature pattern
-      pattern = "#{SAFETY_SHEETS_DIR}/#{vendor}/#{product_number}_web_*.pdf"
-      existing_files = Dir.glob(pattern)
-      ## returning the first match is not best practice, for now it is ok as safety sheets which are fetched
-      ## using internal fetch_safetysheet API for merck are unique, so existing_files should always contain one file
-      return "/safety_sheets/#{vendor}/#{File.basename(existing_files.first)}" if existing_files.any?
-
-      nil
-    end
-
-    def self.health_section(product_number)
-      alfa_req = HTTParty.get("https://www.alfa.com/en/catalog/#{product_number}/", request_options)
-      Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'health')]")
-                    .children[1].children[1].children[1]
-    end
-
-    def self.construct_h_statements(h_phrases, vendor = nil)
+    def self.construct_h_statements(h_phrases)
       h_statements = {}
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+      h_phrases_hash = load_hazard_phrases_hash
+      h_array = normalize_phrases_to_array(h_phrases, 'H')
 
-      # Normalize input to an array of hazard codes (e.g. ["H301", "H314"])
-      h_array = if h_phrases.is_a?(String)
-                  h_phrases.scan(/H\d{1,3}[A-Za-z0-9]*/)
-                elsif h_phrases.is_a?(Array)
-                  h_phrases
-                else
-                  []
-                end
-
-      h_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = h_phrases_hash[code])
-          h_statements[code] = " #{value}"
-        end
+      h_array.each do |code|
+        process_statement(code, h_phrases_hash, h_statements)
       end
 
       h_statements
     end
 
+    def self.process_statement(code, phrases_hash, statements)
+      code = code.to_s.strip
+      return if code.empty?
+
+      if (value = phrases_hash[code])
+        # Exact match (single code or a combined code such as "P305+P351+P338"):
+        # store it as one statement.
+        statements[code] = " #{value}"
+      elsif code.include?('+')
+        # Combined code with no combined entry in the lookup table: fall back to its
+        # individual parts so the available statements are still surfaced.
+        code.split('+').each do |part|
+          statements[part] = " #{phrases_hash[part]}" if phrases_hash[part]
+        end
+      end
+    end
+
+    # Split a phrase string into the codes used as lookup keys.
+    #
+    # A single code is an optional "EU" prefix (for supplemental EUH### statements),
+    # the H/P letter, 1-3 digits, and optional sub-category letters (e.g. EUH071,
+    # H360FD, H350i). Codes joined by "+" (e.g. "P305 + P351 + P338") are kept
+    # together as one token so they resolve to the combined statement rather than
+    # being split into separate phrases; inner whitespace is stripped to match the
+    # JSON keys (e.g. "P305+P351+P338").
+    def self.normalize_phrases_to_array(phrases, prefix)
+      return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?) if phrases.is_a?(Array)
+
+      return [] unless phrases.is_a?(String)
+
+      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
+      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
+    end
+
+    def self.load_hazard_phrases_hash
+      JSON.parse(File.read('./public/json/hazardPhrases.json'))
+    end
+
     def self.construct_p_statements(p_phrases)
       p_statements = {}
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+      p_phrases_hash = load_precautionary_phrases_hash
+      p_array = normalize_phrases_to_array(p_phrases, 'P')
 
-      # Normalize input to an array of precautionary codes (e.g. ["P102", "P301"])
-      p_array = if p_phrases.is_a?(String)
-                  p_phrases.scan(/P\d{1,3}[A-Za-z0-9]*/)
-                elsif p_phrases.is_a?(Array)
-                  p_phrases
-                else
-                  []
-                end
-
-      p_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = p_phrases_hash[code])
-          p_statements[code] = " #{value}"
-        end
+      p_array.each do |code|
+        process_statement(code, p_phrases_hash, p_statements)
       end
 
       p_statements
+    end
+
+    def self.load_precautionary_phrases_hash
+      JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
     end
 
     def self.construct_pictograms(pictograms)
@@ -232,183 +595,20 @@ module Chemotion
       pictogram_array.filter_map { |e| pictograms_hash.key?(e) ? e : nil }
     end
 
-    def self.safety_phrases_thermofischer(product_number)
-      health_section = health_section(product_number)
-      h_phrases = health_section.children[5].text.gsub(/\t|\n|Hazard Statements:/, '').split(/[+-]/)
-      p_phrases = health_section.children[11].text.gsub(/\t|\n|Precautionary Statements:/, '').split(/[+-]/)
-      pictograms = health_section.css('img').map do |e|
-        e.attributes['src'].value.gsub('/static//images/pictogram/', '')
-      end
-      { 'h_statements' => construct_h_statements(h_phrases),
-        'p_statements' => construct_p_statements(p_phrases),
-        'pictograms' => construct_pictograms(pictograms) }
-    rescue StandardError
-      'Could not find H and P phrases'
-    end
+    private_class_method :process_statement, :normalize_phrases_to_array, :load_hazard_phrases_hash,
+                         :load_precautionary_phrases_hash
 
-    def self.safety_section(product_link)
-      merck_req = HTTParty.get(product_link, request_options)
-      search_string = 'MuiTypography-root MuiLink-root MuiLink-underlineNone MuiTypography-colorPrimary'
-      Nokogiri::HTML.parse(merck_req.body)
-                    .xpath("//*[contains(@class, '#{search_string}')]")
-    end
-
-    def self.extract_h_text_from_array(safety_array)
-      safety_array.find { |t| t =~ /H\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('hazard') } || ''
-    end
-
-    def self.extract_p_text_from_array(safety_array)
-      p_code_regex = /P\d{1,3}/
-      safety_array.find { |t| t =~ p_code_regex } ||
-        safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
-    end
-
-    def self.extract_pictograms_from_array(safety_array)
-      pictogram_text = safety_array.find { |t| t =~ /pictogram|GHS|ghs|,/i } || ''
-      pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
-    end
-
-    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
-
-    def self.safety_phrases_merck(product_link)
-      safety_section = safety_section(product_link)
-      safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
-
-      h_text = extract_h_text_from_array(safety_array)
-      p_text = extract_p_text_from_array(safety_array)
-      pictograms = extract_pictograms_from_array(safety_array)
-
-      { 'h_statements' => construct_h_statements(h_text),
-        'p_statements' => construct_p_statements(p_text),
-        'pictograms' => construct_pictograms(pictograms) }
-    rescue StandardError
-      'Could not find H and P phrases'
-    end
-
-    def self.chem_properties_alfa(properties)
-      chemical_properties = {}
-      properties.each_with_index do |property, index|
-        property_name = property.tr(' ', '_').downcase
-        chemical_properties[property_name] = properties[index + 1] unless index.odd?
-      end
-      chemical_properties
-    end
-
-    def self.chemical_properties_alfa(product_link)
-      alfa_req = HTTParty.get(product_link, request_options)
-      properties = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'product')]").search('div.col-md-12')
-                                 .search('div.col-md-3').text.delete("\t").split("\n\n")
-      chem_properties_alfa(properties)
-    rescue StandardError
-      'Could not find additional chemical properties'
-    end
-
-    def self.clean_property_name(property_name)
-      return nil if property_name.blank?
-
-      property_name = property_name.downcase.strip
-      return PROPERTY_ABBREVIATIONS[property_name] if PROPERTY_ABBREVIATIONS[property_name]
-
-      handle_property_with_parentheses(property_name)
-    end
-
-    def self.handle_property_with_parentheses(property_name)
-      return MAP_GERMAN_TO_ENGLISH_PROPERTIES[property_name] || property_name unless property_name.include?('(')
-
-      main_term = extract_main_term(property_name)
-      return PROPERTY_ABBREVIATIONS[main_term] if PROPERTY_ABBREVIATIONS[main_term]
-
-      german_term = extract_german_term(property_name)
-      MAP_GERMAN_TO_ENGLISH_PROPERTIES[german_term] || property_name
-    end
-
-    def self.extract_main_term(property_name)
-      property_name.split('(').first.strip
-    end
-
-    def self.extract_german_term(property_name)
-      property_name.match(/\((.*?)\)/).try(:[], 1).to_s.downcase
-    end
-
-    def self.chem_properties_merck(chem_properties_names, chem_properties_values)
-      chemical_properties = {}
-      chem_properties_values.pop
-      chem_properties_names.map.with_index do |string, index|
-        property_name = clean_property_name(string)
-        cleaned_value = CGI.unescapeHTML(chem_properties_values[index]) if chem_properties_values[index]
-        cleaned_value = Nokogiri::HTML.fragment(cleaned_value).text.strip if cleaned_value
-        chemical_properties[property_name] = cleaned_value if property_name
-      end
-      chemical_properties
-    end
-
-    def self.chemical_properties_merck(product_link)
-      merck_req = HTTParty.get(product_link, request_options)
-      json_data = Nokogiri::HTML.parse(merck_req.body).at_xpath("//script[@type='application/ld+json']")&.children&.text
-      properties = JSON.parse(json_data)['additionalProperty'] if json_data
-      chem_properties_names = properties.pluck('name')
-      chem_properties_values = properties.map { |property| property['value'].join(', ') }
-      chem_properties_values.compact_blank!
-      chem_properties_merck(chem_properties_names, chem_properties_values)
-    rescue StandardError
-      'Could not find additional chemical properties'
-    end
-
-    # Generate or extract vendor key for safetySheetPath based on file path
-    # Handles both raw filenames and existing versioned file paths
-    # @param file_path [String] Path to the SDS file
-    # @param product_number [String, nil] Optional product number to match versioned filenames
-    # @return [String] Vendor key for safetySheetPath
-    def self.extract_vendor_key_from_path(file_path, product_number = nil)
-      return nil unless file_path && product_number.present?
-
-      file_name = File.basename(file_path, '.pdf')
-
-      match = file_name.match(/#{@vendor_name}_#{product_number}_(?:web_)?([a-f0-9]{16})/)
-      version_num = match && match[1]
-
-      if version_num
-        "#{@vendor_name.downcase}_v#{version_num}_link"
-      else
-        "#{@vendor_name.downcase}_link"
-      end
-    end
-
-    # Generate safety sheet file path (unique by vendor/product and hash initials)
-    # Adds "_web_" marker when file originates from vendor API (url_signature = true)
-    # @param vendor_name [String] vendor folder name (e.g. 'merck')
-    # @param product_number [String] vendor product number (e.g. '270709')
-    # @param file_hash_initials [String] first 16 chars (or similar) of file hash for uniqueness
-    # @param url_signature [Boolean] whether to include the "_web_" segment (API-fetched)
+    # Where a sheet lands: the vendor folder, the catalogue number, and enough of the
+    # content hash that two different sheets for one product cannot collide.
     # @return [String] relative path starting with /safety_sheets/
-    # rubocop:disable Style/OptionalBooleanParameter
-    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials, url_signature = false)
-      base_file_name = "#{vendor_name}/#{product_number}"
-      if url_signature
-        "/safety_sheets/#{base_file_name}_web_#{file_hash_initials}.pdf"
-      else
-        "/safety_sheets/#{base_file_name}_#{file_hash_initials}.pdf"
-      end
-    end
-    # rubocop:enable Style/OptionalBooleanParameter
-
-    # Check if chemical record already contains this vendor and product combination
-    # @param chemical [Chemical] Chemical record to check
-    # @param vendor_name [String] Vendor name
-    # @param product_number [String] Product number
-    # @return [Boolean] true if vendor+product exists in chemical
-    def self.chemical_has_vendor_product?(chemical, vendor_name, product_number)
-      return false unless chemical&.chemical_data.is_a?(Array) && chemical.chemical_data[0]
-
-      # Check if vendor product key exists
-      vendor_product_key = "#{vendor_name.downcase}ProductInfo"
-      vendor_info = chemical.chemical_data[0][vendor_product_key]
-
-      vendor_info.present? && vendor_info['productNumber'] == product_number
+    def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials)
+      path = "/safety_sheets/#{vendor_name}/#{product_number}_#{file_hash_initials}.pdf"
+      safety_sheet_disk_path(path)
+      path
     end
 
-    def self.update_chemical_data(chemical_data, file_path, product_number, vendor)
-      hash_initials = file_path[%r{/safety_sheets/#{vendor}/#{product_number}_(?:web_)?([a-f0-9]{16})\.pdf$}, 1]
+    def self.update_chemical_data(chemical_data, file_path, product_number)
+      hash_initials = file_path[/([a-f0-9]{16})\.pdf\z/, 1]
       if file_path.present? && file_path.is_a?(String) && hash_initials.present?
         safety_sheet_key = "#{product_number}_#{hash_initials}_link"
         chemical_data[0]['safetySheetPath'] ||= []
@@ -422,28 +622,18 @@ module Chemotion
       chemical_data
     end
 
-    def self.find_existing_or_create_safety_sheet(link, vendor, product_number)
-      existing_file_path = find_existing_file_by_vendor_product_number_signature(
-        vendor,
-        product_number,
-      )
-      existing_file_path || create_sds_file(link, product_number, vendor)
-    end
-
     # Finds existing chemical or creates new one with updated safety data
     # @param sample_id [Integer] Sample identifier
     # @param cas [String] CAS number for chemical identification
     # @param chemical_data [Array<Hash>] Chemical data array
     # @param file_path [String] Path to safety data sheet file
     # @param product_number [String] Vendor product number
-    # @param vendor [String] Vendor name
     # @return [Chemical] Created or updated chemical record
     def self.find_or_create_chemical_with_safety_data(**args)
       updated_chemical_data = update_chemical_data(
         args[:chemical_data],
         args[:file_path],
         args[:product_number],
-        args[:vendor],
       )
       chemical = Chemical.find_by(sample_id: args[:sample_id])
 
@@ -495,4 +685,5 @@ module Chemotion
       { error: e.message }
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

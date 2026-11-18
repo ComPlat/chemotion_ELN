@@ -14,7 +14,7 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
   // Validation constraints (match server-side InputValidationUtils)
   const MAX_VENDOR_LEN = 20; // vendor: 2..20
   const MAX_PRODUCT_NUMBER_LEN = 25; // product: 2..25
-  const MAX_URL_LEN = 100;
+  const MAX_URL_LEN = 2048;
   const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
   // Allowed characters (lowercase enforced via sanitize)

@@ -22,14 +22,17 @@ module Entities
       expose! :user_labels
     end
 
+    # rubocop:disable Metrics/BlockLength
     with_options(anonymize_below: 10) do
       expose! :code_log,              anonymize_with: nil,                              using: 'Entities::CodeLogEntity'
       expose! :conditions,                                  unless: :displayed_in_list
+      expose! :ph_operator,                                 unless: :displayed_in_list
+      expose! :ph_value,                                    unless: :displayed_in_list
       expose! :container,             anonymize_with: nil,                              using: 'Entities::ContainerEntity'
       expose! :dangerous_products,    anonymize_with: [],   unless: :displayed_in_list
       expose! :duration,                                    unless: :displayed_in_list
       expose! :name
-      expose! :origin
+      expose! :origin,                anonymize_with: nil
       expose! :purification,          anonymize_with: [],   unless: :displayed_in_list
       expose! :reaction_svg_file
       expose! :rf_value,                                    unless: :displayed_in_list
@@ -37,31 +40,33 @@ module Entities
       expose! :rinchi_short_key
       expose! :rinchi_web_key
       expose! :rxno
+      expose! :reaction_type
       expose! :segments,              anonymize_with: [],                               using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
       expose! :tag,                   anonymize_with: nil,                              using: 'Entities::ElementTagEntity'
-      expose! :temperature,                                 unless: :displayed_in_list
+      expose! :temperature,           anonymize_with: -> { Reaction.column_defaults['temperature'] }, unless: :displayed_in_list
       expose! :timestamp_start,                             unless: :displayed_in_list
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
-      expose! :vessel_size
+      expose! :vessel_size,           anonymize_with: -> { Reaction.column_defaults['vessel_size'] }
       expose! :volume
-      expose! :use_reaction_volume
-      expose! :gaseous
-      expose! :weight_percentage
+      # Boolean columns: '***' is truthy, so the string default would make every reaction below
+      # detail level 10 render as a gas-phase reaction with a locked/derived volume.
+      expose! :use_reaction_volume,   anonymize_with: false
+      expose! :lock_reaction_volume,  anonymize_with: false
+      expose! :concentration_mode,    anonymize_with: -> { Reaction.column_defaults['concentration_mode'] }
+      expose! :gaseous,               anonymize_with: false
+      expose! :weight_percentage,     anonymize_with: false
     end
+    # rubocop:enable Metrics/BlockLength
 
     expose_timestamps
 
     private
-
-    def can_update
-      options[:policy].try(:update?) || false
-    end
 
     def code_log
       displayed_in_list? ? nil : object.code_log
@@ -108,7 +113,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # Reaction.includes_for_list_display) is counted in memory, avoiding an
+      # N+1 COUNT(*) query per reaction in the list endpoint.
+      object.comments.size
     end
 
     def variations

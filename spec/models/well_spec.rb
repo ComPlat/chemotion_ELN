@@ -40,7 +40,35 @@ RSpec.describe Well do
     end
   end
 
+  describe '#content? with a numeric zero readout' do
+    # A spreadsheet import stores raw cell values, so a 0 in a _Value column is
+    # a real readout. ActiveSupport counts 0 as present; the client must agree.
+    it 'counts a zero value as content' do
+      well = wellplate.wells.create!(position_x: 1, position_y: 1, readouts: [{ 'value' => 0, 'unit' => '' }])
+      expect(well.content?).to be true
+    end
+  end
+
   describe '.alphanumeric_position()' do
+    context 'when the row is not positive' do
+      # ('A'..'ZZ').to_a[-1] is "ZZ", so a drifted well used to be reported as
+      # blocking a cell that does not exist.
+      it 'returns n/a for row 0 rather than wrapping to ZZ' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 3, position_y: 0)
+                 .alphanumeric_position).to eq('n/a')
+      end
+
+      it 'returns n/a for a negative row' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 3, position_y: -1)
+                 .alphanumeric_position).to eq('n/a')
+      end
+
+      it 'sorts such a well as n/a too' do
+        expect(create(:well, wellplate_id: wellplate.id, position_x: 0, position_y: 1)
+                 .sortable_alphanumeric_position).to eq('n/a')
+      end
+    end
+
     context 'when position is [nil,nil]' do
       let(:well) { create(:well, wellplate_id: wellplate.id, position_x: nil, position_y: nil) }
 
@@ -81,6 +109,59 @@ RSpec.describe Well do
       it 'returns the string AD30' do
         expect(well.sortable_alphanumeric_position).to eq('AD30')
       end
+    end
+  end
+
+  describe '#content?' do
+    # A well straight from the column defaults: no sample, the default label and
+    # the default blank readout. Both label and readouts are non-null columns,
+    # so this is the case that must NOT read as occupied - otherwise a wellplate
+    # could never be shrunk.
+    let(:untouched) { wellplate.wells.create!(position_x: 1, position_y: 1) }
+
+    it 'is false for an untouched well' do
+      expect(untouched.content?).to be false
+    end
+
+    it 'is true when a sample is placed' do
+      untouched.update!(sample: create(:sample, collections: [collection]))
+      expect(untouched.content?).to be true
+    end
+
+    it 'is false when the sample was soft-deleted but the id still dangles' do
+      sample = create(:sample, collections: [collection])
+      untouched.update!(sample: sample)
+      sample.destroy
+
+      expect(untouched.reload.content?).to be false
+    end
+
+    it 'is false for the default label' do
+      untouched.update!(label: described_class::DEFAULT_LABEL)
+      expect(untouched.content?).to be false
+    end
+
+    it 'is false for readouts that are present but blank' do
+      untouched.update!(readouts: [{ 'value' => '', 'unit' => '' }])
+      expect(untouched.content?).to be false
+    end
+
+    {
+      'a readout value' => { readouts: [{ 'value' => '42', 'unit' => '' }] },
+      'a readout unit' => { readouts: [{ 'value' => '', 'unit' => 'nM' }] },
+      'a user label' => { label: 'my label' },
+      'a colour code' => { color_code: '#aabbcc' },
+      'an additive' => { additive: 'DMSO' },
+    }.each do |description, attributes|
+      it "is true for #{description}" do
+        untouched.update!(attributes)
+        expect(untouched.content?).to be true
+      end
+    end
+
+    it 'is true for symbol-keyed readouts built in memory' do
+      well = wellplate.wells.new(position_x: 1, position_y: 1, readouts: [{ value: '42', unit: 'nM' }])
+      expect(well.content?).to be true
     end
   end
 

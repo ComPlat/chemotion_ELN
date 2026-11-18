@@ -107,6 +107,14 @@ describe Chemotion::CollectionAPI do
         expect(response.status).to eq 201
         expect(parsed_json_response['collection']['ancestry']).to eq '/'
       end
+
+      it 'never creates a locked collection, even when is_locked is passed' do
+        params = { parent_id: nil, label: 'Some collection', is_locked: true }
+        post '/api/v1/collections', params: params
+
+        expect(response.status).to eq 201
+        expect(parsed_json_response['collection']['is_locked']).to be(false)
+      end
     end
 
     context 'when adding a new child collection' do
@@ -209,18 +217,112 @@ describe Chemotion::CollectionAPI do
       expect(updated_collection_B).to include('id' => collection_B.id, 'label' => 'Collection B', 'ancestry' => '/', 'position' => 3)
         expect(updated_collection_BB).to include('id' => collection_BB.id, 'label' => 'Collection BB', 'ancestry' => "/#{collection_B.id}/", 'position' => 1)
     end
+
+    it 'refuses to relabel or reposition a locked collection' do
+      locked_collection = create(:collection, label: 'All', user: user, position: 1, is_locked: true)
+
+      put '/api/v1/collections/bulk_update_own_collections',
+          params: { collections: [{ id: locked_collection.id, label: 'Hijacked' }] }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(locked_collection.reload).to have_attributes(label: 'All', is_locked: true)
+    end
+  end
+
+  describe 'PUT /api/v1/collections/:id' do
+    context 'when the collection is unlocked' do
+      let(:own_collection) { create(:collection, user: user, label: 'Old label') }
+
+      it 'updates the label' do
+        put "/api/v1/collections/#{own_collection.id}", params: { label: 'New label' }
+
+        expect(response).to have_http_status(:ok)
+        expect(own_collection.reload.label).to eq 'New label'
+      end
+    end
+
+    context 'when the collection is locked' do
+      let(:locked_collection) { create(:collection, user: user, label: 'All', is_locked: true) }
+
+      it 'returns 403 and does not change the collection' do
+        put "/api/v1/collections/#{locked_collection.id}", params: { label: 'Renamed' }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload.label).to eq 'All'
+      end
+
+      # LockedCollectionGuard fixes label/position/ancestry/is_locked and deliberately leaves
+      # tabs_segment editable, so the tab layout of a system collection is configurable like any
+      # other. Refusing every update to a locked collection would take that away.
+      it 'accepts a tab-layout update' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      # The tab editor always sends the label alongside the layout, so an unchanged label must not
+      # be mistaken for a rename attempt.
+      it 'accepts a tab-layout update that repeats the unchanged label' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'All', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      it 'refuses a rename bundled with a tab-layout update, saving neither' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'Renamed', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload).to have_attributes(label: 'All', tabs_segment: {})
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/collections/:id' do
+    context 'when the collection is unlocked' do
+      let(:own_collection) { create(:collection, user: user) }
+
+      it 'deletes the collection' do
+        own_collection
+        expect { delete "/api/v1/collections/#{own_collection.id}" }.to change(Collection, :count).by(-1)
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when the collection is locked' do
+      let(:locked_collection) { create(:collection, user: user, label: 'All', is_locked: true) }
+
+      it 'returns 403 and keeps the collection' do
+        locked_collection
+        expect { delete "/api/v1/collections/#{locked_collection.id}" }.not_to change(Collection, :count)
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload).to be_present
+      end
+    end
   end
 
   describe 'POST /api/v1/collections/export' do
     before do
       collection
       collection_with_shares
+      collection_shared_with_user
       other_users_collection
     end
 
     context 'when exporting collections' do
       it 'exports the collections' do
         params = { collection_ids: [collection.id, collection_with_shares.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(parsed_json_response['status']).to eq 204
+      end
+
+      it 'exports a collection shared with the user' do
+        params = { collection_ids: [collection_shared_with_user.id] }
         post '/api/v1/collections/export', params: params
 
         expect(parsed_json_response['status']).to eq 204
@@ -238,6 +340,68 @@ describe Chemotion::CollectionAPI do
         post '/api/v1/collections/export', params: params
 
         expect(response.status).to eq 401
+      end
+
+      # The export path serializes full element content ignoring detail levels, so a sharee below
+      # full detail on any element type must not be able to export it and read withheld data.
+      it 'does not export a collection shared below full detail access' do
+        partially_shared = create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements),
+                                    sample_detail_level: 0)
+        end
+        post '/api/v1/collections/export', params: { collection_ids: [partially_shared.id] }
+
+        expect(response.status).to eq 401
+      end
+    end
+  end
+
+  describe 'GET /api/v1/collections/:id/metadata' do
+    # the :metadata factory always assigns its own fresh collection in a before_create callback,
+    # so the target collection has to be attached afterwards rather than passed in as an attribute
+    context 'when the collection is owned by the user' do
+      let!(:metadata) { create(:metadata).tap { |m| m.update!(collection_id: collection.id) } }
+
+      it 'returns the metadata' do
+        get "/api/v1/collections/#{collection.id}/metadata"
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['id']).to eq metadata.id
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      before { create(:metadata).tap { |m| m.update!(collection_id: collection_shared_with_user.id) } }
+
+      it 'does not leak the owner collection metadata to the sharee' do
+        get "/api/v1/collections/#{collection_shared_with_user.id}/metadata"
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+  end
+
+  describe 'POST /api/v1/collections/metadata' do
+    let(:metadata_params) { { collection_id: collection.id, metadata: { title: 'Updated title' } } }
+
+    context 'when the collection is owned by the user' do
+      it 'creates the metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :created
+        expect(Metadata.find_by(collection_id: collection.id).metadata['title']).to eq 'Updated title'
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      let(:metadata_params) { { collection_id: collection_shared_with_user.id, metadata: { title: 'Hijacked' } } }
+
+      it 'rejects the write instead of letting a sharee edit the owner collection metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :not_found
+        expect(Metadata.find_by(collection_id: collection_shared_with_user.id)).to be_nil
       end
     end
   end

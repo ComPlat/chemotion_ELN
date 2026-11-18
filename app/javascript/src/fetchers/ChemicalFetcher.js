@@ -1,119 +1,89 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Chemical from 'src/models/Chemical';
 
 export default class ChemicalFetcher {
   // Fetch chemical by either sample_id or sequence_based_macromolecule_sample_id, depending on type
   static fetchChemical(id, type) {
     const paramName = type === 'SBMM' ? 'sequence_based_macromolecule_sample_id' : 'sample_id';
-    return fetch(`/api/v1/chemicals?${paramName}=${id}`, {
-      credentials: 'same-origin',
-    }).then((response) => response.json())
-      .then((json) => new Chemical(json))
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(`/api/v1/chemicals?${paramName}=${id}`)
+      .then((json) => new Chemical(json));
   }
 
   static create(data) {
-    const { type, ...params } = data;
-    return fetch('/api/v1/chemicals/create', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const { ...params } = data;
+    return ApiClient.postJson('/api/v1/chemicals/create', { body: params });
   }
 
   static update(params) {
-    const { type, ...bodyParams } = params;
-    return fetch('/api/v1/chemicals', {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(bodyParams)
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const { ...bodyParams } = params;
+    return ApiClient.putJson('/api/v1/chemicals', { body: bodyParams });
   }
 
   static fetchSafetySheets(queryParams) {
-    return fetch(`/api/v1/chemicals/fetch_safetysheet/${queryParams.id}`
-       + `?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}`
-        + `&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => {
-      if (response.ok) {
-        return response.text();
-      }
-      return null;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-      return null;
+    const searchTerm = {
+      'data[vendor]': queryParams.vendor,
+      'data[option]': queryParams.queryOption,
+      'data[language]': queryParams.language,
+      'data[searchStr]': queryParams.string
+    };
+    if (queryParams.productNumber) {
+      searchTerm['data[productNumber]'] = queryParams.productNumber;
+    }
+    const path = `/api/v1/chemicals/fetch_safetysheet/${queryParams.id}?${new URLSearchParams(searchTerm)}`;
+
+    return ApiClient.getJson(path, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.text(); }
+        return null;
+      },
     });
   }
 
   static saveSafetySheets(params) {
-    return fetch('/api/v1/chemicals/save_safety_datasheet', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
+    return ApiClient.postJson('/api/v1/chemicals/save_safety_datasheet', {
+      body: params,
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.json(); }
+        return response.json().then((errorData) => {
+          const error = new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          // A refusal the other save route would meet as well; trying it only wastes a fetch.
+          error.final = !!errorData.final;
+          throw error;
+        });
       },
-      body: JSON.stringify(params)
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      return response.json().then((errorData) => {
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      });
-    }).catch((errorMessage) => {
-      console.error(errorMessage);
-      throw errorMessage;
+      // The client's default handler logs and resolves undefined, which turned every
+      // reason the server gave into a bare "could not retrieve" on the way out.
+      handleResponseError: (error) => { throw error; },
     });
   }
 
-  static saveManualAttachedSafetySheet(params) {
-    return fetch('/api/v1/chemicals/save_manual_sds', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: params
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static safetyPhrases(queryParams) {
-    return fetch(`/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
-      credentials: 'same-origin',
-      method: 'GET'
-    }).then((response) => {
-      if (response.status === 204) {
-        return response.status;
-      }
-      return response.json();
-    }).catch((errorMessage) => { console.log(errorMessage); });
-  }
-
-  static chemicalProperties(productLink) {
-    return fetch(`/api/v1/chemicals/chemical_properties?link=${productLink}`, {
-      credentials: 'same-origin',
-      method: 'GET'
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+  // Reads a sheet straight from the vendor, for vendors that refuse the server but allow CORS.
+  static fetchVendorSheet(sdsLink, fileName) {
+    return fetch(sdsLink)
+      .then((response) => {
+        if (!response.ok) throw new Error(`the vendor answered ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => {
+        if (blob.type && !blob.type.includes('pdf')) throw new Error('the vendor did not return a PDF');
+        return new File([blob], fileName, { type: 'application/pdf' });
       });
+  }
+
+  static saveManualAttachedSafetySheet(params) {
+    return ApiClient.postFormData('/api/v1/chemicals/save_manual_sds', { body: params });
+  }
+
+  // Rejects on a failed request so the caller can tell it from a sheet that yielded nothing.
+  static extractFromSds(sheetPath) {
+    return ApiClient.getJson(`/api/v1/chemicals/extract_sds?${new URLSearchParams({ path: sheetPath })}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) return response.json();
+        return response.json().catch(() => ({})).then((errorData) => {
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        });
+      },
+      handleResponseError: (error) => { throw error; },
+    });
   }
 }

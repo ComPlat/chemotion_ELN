@@ -14,13 +14,14 @@ import cs from 'classnames';
 const baseClassName = 'chemotion-select';
 
 // Custom Input component that keeps the input visible for editing selected values
-const EditableInput = (props) => (
-  <components.Input {...props} isHidden={false} />
-);
+function EditableInput(props) {
+  return <components.Input {...props} isHidden={false} />;
+}
 
 function buildWrappedComponent(name, BaseComponent) {
   const component = forwardRef(({
     size,
+    variant,
     minWidth,
     maxHeight,
     className,
@@ -47,6 +48,14 @@ function buildWrappedComponent(name, BaseComponent) {
           position: 'fixed',
           zIndex: 9000,
         },
+      }),
+      // react-select's own input styling sets `visibility: hidden` on the input
+      // wrapper whenever isDisabled is true, regardless of the isHidden prop that
+      // EditableInput below controls — without this override, a disabled select in
+      // isInputEditable mode shows no text at all, since the container hides it.
+      // Scoped to state.isDisabled specifically, matching that one case.
+      ...(isInputEditable && {
+        input: (base, state) => (state.isDisabled ? { visibility: 'visible' } : {}),
       })
     };
 
@@ -55,8 +64,9 @@ function buildWrappedComponent(name, BaseComponent) {
       ...Object.entries(styleDefaults).reduce(
         (acc, [key, defaults]) => {
           acc[key] = (base, state) => ({
-            ...(styles[key] ? styles[key](base, state) : base),
-            ...defaults,
+            ...base,
+            ...(typeof defaults === 'function' ? defaults(base, state) : defaults),
+            ...(styles[key] ? styles[key](base, state) : {}),
           });
           return acc;
         },
@@ -75,12 +85,13 @@ function buildWrappedComponent(name, BaseComponent) {
         {...props}
         className={cs(
           baseClassName,
+          `select-${variant}`,
           className,
           { [`form-select-${size}`]: !!size }
         )}
         classNamePrefix={baseClassName}
         ref={ref}
-        menuPortalTarget={document.body}
+        menuPortalTarget={usePortal ? document.body : undefined}
         menuPlacement="auto"
         menuPosition="fixed"
         unstyled
@@ -94,6 +105,7 @@ function buildWrappedComponent(name, BaseComponent) {
   component.propTypes = {
     ...BaseComponent.propTypes,
     size: PropTypes.string,
+    variant: PropTypes.string,
     minWidth: PropTypes.string,
     maxHeight: PropTypes.string,
     isInputEditable: PropTypes.bool,
@@ -101,6 +113,7 @@ function buildWrappedComponent(name, BaseComponent) {
   component.defaultProps = {
     ...BaseComponent.defaultProps,
     size: null,
+    variant: 'light',
     minWidth: null,
     maxHeight: null,
     isInputEditable: false,

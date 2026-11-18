@@ -30,7 +30,12 @@ RSpec.describe ElementsPolicy do
     create(:collection_share, collection: user_2_collection, shared_with: user_1, permission_level: permission_level)
   end
   let(:collection_shared_to_user_2) do
-    create(:collection_share, collection: user_3_collection, shared_with: user_2, permission_level: 2)
+    create(
+      :collection_share,
+      collection: user_3_collection,
+      shared_with: user_2,
+      permission_level: CollectionShare.permission_level(:add_elements),
+    )
   end
 
   before do
@@ -94,6 +99,82 @@ RSpec.describe ElementsPolicy do
         expect(policy.allowed?(4)).to be true
         expect(policy.allowed?(5)).to be false
       end
+    end
+  end
+
+  describe '#destroy_all?' do
+    it 'returns true when every record is in an own collection' do
+      policy = described_class.new(user_1, Sample.where(id: [sample_1, sample_2, sample_3]))
+
+      expect(policy.destroy_all?).to be true
+    end
+
+    # Destroying element records is owner-only, at every rung — including the top one.
+    context 'when the records are shared, even at the highest permission level' do
+      let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
+
+      it 'returns false' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.destroy_all?).to be false
+      end
+    end
+  end
+
+  describe '#remove_all?' do
+    it 'returns true when every record is in an own collection' do
+      policy = described_class.new(user_1, Sample.where(id: [sample_1, sample_2, sample_3]))
+
+      expect(policy.remove_all?).to be true
+    end
+
+    context 'when the shared records are at :remove_elements' do
+      let(:permission_level) { CollectionShare.permission_level(:remove_elements) }
+
+      it 'returns true' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.remove_all?).to be true
+      end
+    end
+
+    context 'when the shared records are below :remove_elements' do
+      let(:permission_level) { CollectionShare.permission_level(:add_elements) }
+
+      it 'returns false' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.remove_all?).to be false
+      end
+    end
+  end
+
+  # Membership is not ownership (Collection#owned_by?): a group's collection reaches its members
+  # through a share, so the share's permission_level decides. Counting it as own would skip that
+  # check entirely — the records land in the own scope, are excluded from the shared scope, and
+  # every bulk permission returns true regardless of the level granted.
+  describe 'a group-owned collection' do
+    let(:group) { create(:group, users: [user_1]) }
+    let(:group_collection) { create(:collection, user: group) }
+    let(:group_sample) { create(:sample, creator: user_1, collections: [group_collection]) }
+    let(:policy) { described_class.new(user_1, Sample.where(id: [group_sample.id])) }
+
+    before { group_sample }
+
+    it 'is not the member\'s own for #remove_all?' do
+      expect(policy.remove_all?).to be false
+    end
+
+    it 'is not the member\'s own for #destroy_all?' do
+      expect(policy.destroy_all?).to be false
+    end
+
+    it 'grants what the share to the group grants, and no more' do
+      create(:collection_share, collection: group_collection, shared_with: group,
+                                permission_level: CollectionShare.permission_level(:read_elements))
+
+      expect(policy.remove_all?).to be false
+      expect(policy.read_all?).to be true
     end
   end
 end

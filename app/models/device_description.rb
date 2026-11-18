@@ -87,6 +87,7 @@ class DeviceDescription < ApplicationRecord
   include AnalysisCodes
   include Taggable
   include Labimotion::Segmentable
+  include Labimotion::LinkedProperties
 
   has_logidze
   acts_as_paranoid
@@ -123,52 +124,40 @@ class DeviceDescription < ApplicationRecord
     name short_label vendor_device_name vendor_device_id serial_number vendor_company_name general_tags ontologies
   ], using: { trigram: { threshold: 0.0001 } }
 
-  scope :includes_for_list_display, -> { includes(:tag) }
+  scope :includes_for_list_display, -> { includes(:tag, :comments) }
 
   after_create :set_short_label
 
+  SEARCH_TEXT_FIELDS = %w[
+    name short_label vendor_device_name vendor_device_id serial_number vendor_company_name
+  ].freeze
+
   def self.search_text_filter(term, field)
     Arel.sql(
-      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+      sanitize_sql_array(
+        ["COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE ?), '{}')", term],
+      ),
     )
   end
 
-  def self.search_array_filter(term, table, field)
-    Arel.sql(
-      'COALESCE(' \
-      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
-      ')',
-    )
-  end
-
-  def self.search_jsonb_label_filter(term, table, field)
-    Arel.sql(
-      'COALESCE(' \
-      "(SELECT array_agg(DISTINCT elem->'data'->>'label') FROM #{table} s " \
-      "CROSS JOIN jsonb_array_elements(s.#{field}) elem WHERE elem->'data'->>'label' ILIKE '#{term}'), '{}'" \
-      ')',
-    )
-  end
-
+  # Aggregates the matching values of the current relation (e.g. scoped to a collection) into one jsonb object.
   def self.by_search_fields(query)
     term = "%#{sanitize_sql_like(query)}%"
 
-    json_expr = Arel.sql(
-      'jsonb_build_object(' \
-      "'device_description_name', #{search_text_filter(term, 'device_descriptions.name')}, " \
-      "'device_description_short_label', #{search_text_filter(term, 'device_descriptions.short_label')}, " \
-      "'device_description_vendor_device_name', #{search_text_filter(term,
-                                                                     'device_descriptions.vendor_device_name')}, " \
-      "'device_description_vendor_device_id', #{search_text_filter(term, 'device_descriptions.vendor_device_id')}, " \
-      "'device_description_serial_number', #{search_text_filter(term, 'device_descriptions.serial_number')}, " \
-      "'device_description_vendor_company_name', #{search_text_filter(term,
-                                                                      'device_descriptions.vendor_company_name')}, " \
-      "'device_description_general_tags', #{search_array_filter(term, 'device_descriptions', 'general_tags')}, " \
-      "'device_description_ontologies', #{search_jsonb_label_filter(term, 'device_descriptions', 'ontologies')} " \
-      ')',
-    )
+    fields = SEARCH_TEXT_FIELDS.map do |field|
+      "'device_description_#{field}', #{search_text_filter(term, "device_descriptions.#{field}")}"
+    end
+    fields << "'device_description_general_tags', #{search_text_filter(term, 'dd_general_tag')}"
+    fields << "'device_description_ontologies', #{search_text_filter(term, "dd_ontology->'data'->>'label'")}"
 
-    select(json_expr.as('result')).take.result
+    select(Arel.sql("jsonb_build_object(#{fields.join(', ')})").as('result'))
+      .joins('LEFT JOIN LATERAL unnest(device_descriptions.general_tags) dd_general_tag ON TRUE')
+      .joins(
+        'LEFT JOIN LATERAL jsonb_array_elements(' \
+        "CASE jsonb_typeof(device_descriptions.ontologies) WHEN 'array' " \
+        "THEN device_descriptions.ontologies ELSE '[]'::jsonb END) dd_ontology ON TRUE",
+      )
+      .take.result
   end
 
   def searchable_general_tags
@@ -207,21 +196,37 @@ class DeviceDescription < ApplicationRecord
   end
 
   def create_sub_device_description(user, collection_ids)
-    device_description = dup
-    segments = device_description.segments
+    transaction do
+      device_description = dup
+      segments = segments_for_split
 
-    device_description.is_split = true
-    device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
-    device_description.parent = self
-    device_description.created_by = user.id
-    device_description.container = Container.create_root_container
-    device_description.attachments = []
-    device_description.segments = []
-    device_description.collections << all_collections(user, collection_ids)
-    device_description.save!
+      device_description.is_split = true
+      device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
+      device_description.parent = self
+      device_description.created_by = user.id
+      device_description.container = Container.create_root_container
+      device_description.attachments = []
+      device_description.segments = []
+      device_description.collections << all_collections(user, collection_ids)
+      device_description.save!
 
-    device_description.save_segments(segments: segments, current_user_id: user.id) if segments
+      device_description.save_segments(segments: segments, current_user_id: user.id) if segments.any?
 
-    device_description.reload
+      device_description.reload
+    end
+  end
+
+  private
+
+  # Linked fields (samples, elements, uploads, sample tables) are cleared, as in Labimotion::Element#split,
+  # so the split's segments do not point to records owned by the parent.
+  def segments_for_split
+    segments.map do |segment|
+      { 'segment_klass_id' => segment.segment_klass_id,
+        'klass_uuid' => segment.klass_uuid,
+        'properties' => detach_properties(segment.properties.deep_dup),
+        'properties_release' => segment.properties_release,
+        'metadata' => segment.metadata }
+    end
   end
 end

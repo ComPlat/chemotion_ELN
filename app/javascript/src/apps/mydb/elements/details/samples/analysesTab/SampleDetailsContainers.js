@@ -26,7 +26,10 @@ export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { sample } = props;
-    const hasComment = sample.container?.description && sample.container.description.trim() !== '';
+    const hasComment = Boolean(
+      sample.container?.description
+      && sample.container.description.trim() !== ''
+    );
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
@@ -43,6 +46,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleAdd = this.handleAdd.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
+    this.updateContainerPreferredThumbnail = this.updateContainerPreferredThumbnail.bind(this);
     this.handleToggleMode = this.handleToggleMode.bind(this);
   }
 
@@ -155,6 +159,17 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
+  // Persist the chosen preferred preview image for an analysis container. Shared across all
+  // viewers: writes extended_metadata and flags the sample changed via the existing path.
+  updateContainerPreferredThumbnail(container, preferredId) {
+    // eslint-disable-next-line no-param-reassign
+    container.extended_metadata = {
+      ...container.extended_metadata,
+      preferred_thumbnail: preferredId,
+    };
+    this.handleChange();
+  }
+
   handleToggleMode(mode) {
     this.setState({ mode });
   }
@@ -194,6 +209,7 @@ export default class SampleDetailsContainers extends Component {
             handleCommentTextChange={this.handleCommentTextChange}
             commentBoxVisible={commentBoxVisible}
             toggleCommentBox={this.toggleCommentBox}
+            updateContainerPreferredThumbnail={this.updateContainerPreferredThumbnail}
           />
           <ViewSpectra
             sample={sample}

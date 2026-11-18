@@ -17,7 +17,7 @@ import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import {
   getMetricMol,
@@ -124,6 +124,7 @@ const matTagCollect = (connect, monitor) => ({
  * @extends React.Component
  */
 class SampleComponent extends Component {
+  static contextType = StoreContext;
   /**
    * Creates an instance of SampleComponent.
    * @param {Object} props - Component props
@@ -264,7 +265,7 @@ class SampleComponent extends Component {
 
     if (e.value < 0 || e.value > 1) {
       e.value = 1;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
       });
@@ -584,24 +585,27 @@ class SampleComponent extends Component {
     const isConcentrationLocked = lockedComponents.includes(material.id);
 
     return (
-      <td style={{ verticalAlign: 'top', display: 'flex', alignItems: 'center' }}>
-        {this.renderLockButton(
-          material,
-          isConcentrationLocked,
-          () => this.handleConcentrationLockToggle(material, isConcentrationLocked)
-        )}
+      <td className="total-conc-cell">
+        <div className="total-conc-input">
+          {this.renderLockButton(
+            material,
+            isConcentrationLocked,
+            () => this.handleConcentrationLockToggle(material, isConcentrationLocked)
+          )}
 
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.concn}
-          unit="mol/l"
-          metricPrefix={metricMolConc}
-          metricPrefixes={metricPrefixesMolConc}
-          precision={4}
-          disabled={!permitOn(sample) || isConcentrationLocked}
-          onChange={(e) => this.handleAmountChange(e, material.concn, 'targetConc', isConcentrationLocked)}
-          onMetricsChange={this.handleMetricsChange}
-        />
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            className="flex-grow-1"
+            value={material.concn}
+            unit="mol/l"
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
+            precision={4}
+            disabled={!permitOn(sample) || isConcentrationLocked}
+            onChange={(e) => this.handleAmountChange(e, material.concn, 'targetConc', isConcentrationLocked)}
+            onMetricsChange={this.handleMetricsChange}
+          />
+        </div>
       </td>
     );
   }

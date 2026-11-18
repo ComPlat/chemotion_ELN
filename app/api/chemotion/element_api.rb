@@ -57,52 +57,43 @@ module Chemotion
         collection_id = params.fetch(:currentCollection, {}).fetch(:id, 0)
         if collection_id.zero? # no or malformed collection id was given
           @collection = Collection.get_all_collection_for_user(current_user)
-        elsif (@collection = current_user.collections.find_by(id: collection_id))
+        elsif (@collection = Collection.own_collections_for(current_user).find_by(id: collection_id))
           # empty block body to keep rubocop happy
-        elsif (collection_share = CollectionShare.find_by(collection_id: collection_id, shared_with_id: user_ids))
-          permission_level = case request.request_method
-                             when 'POST' then -1
-                             when 'DELETE' then 2
-                             else 5
-                             end
-          error!('403 Forbidden', 403) unless collection_share.permission_level >= permission_level
-          @collection = collection_share.collection
+        elsif (collection = Collection.accessible_for(current_user).find_by(id: collection_id))
+          # We only reach here when the user is not an owner. DELETE in this namespace withdraws the
+          # selection from the user's *own* collections and destroys only records left orphaned
+          # (Usecases::Collections::WithdrawElements); a pure sharee has no own-collection membership
+          # to withdraw here, so a shared-collection view still 403s — they use Remove-from-current
+          # (Usecases::Collections::RemoveElements) instead. The only other route here, POST
+          # load_report, just reads.
+          error!('403 Forbidden', 403) if request.delete?
+
+          # A user can hold several shares on one collection — their own plus one per group — and they
+          # may disagree. The effective level is their maximum, so the outcome no longer depends on
+          # which share row the database happened to return first.
+          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
+          error!('403 Forbidden', 403) unless
+            effective_level >= CollectionShare.permission_level(:read_elements)
+
+          @collection = collection
         end
         error!('404 Record Not Found', 404) unless @collection
       end
 
-      desc 'delete element from ui state selection.'
+      desc 'Withdraw the ui-state selection from all of the user\'s collections (destroying orphans)'
       delete do
-        deleted = { 'sample' => [] }
-        API::ELEMENTS.each do |element|
-          next unless params[element]
-          next unless params[element][:checkedAll] || params[element][:checkedIds].present?
+        usecase = Usecases::Collections::WithdrawElements.new(current_user)
+        removed = usecase.perform!(
+          source_collection: @collection,
+          ui_state: params,
+          options: params[:options] || {},
+        )
 
-          element_model = API::ELEMENT_CLASS[element].model_name
-          deleted[element_model.param_key] =
-            @collection.send(element_model.route_key).by_ui_state(params[element]).destroy_all.map(&:id)
-        end
-
-        # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
-
-        sql_join = 'inner join reactions_samples on reactions_samples.sample_id = samples.id'
-        unless params[:options][:deleteSubsamples]
-          sql_join += " and reactions_samples.type in ('ReactionsSolventSample','ReactionsReactantSample')"
-        end
-        deleted['sample'] += Sample.joins(sql_join).joins(:collections)
-                                   .where(
-                                     collections: { id: @collection.id },
-                                     reactions_samples: { reaction_id: deleted['reaction'] },
-                                   )
-                                   .destroy_all.map(&:id)
-        Labimotion::ElementKlass.find_each do |klass|
-          klass_name = params[klass.name]
-          next unless klass_name.present? && (klass_name[:checkedAll] || klass_name[:checkedIds].present?)
-
-          deleted[klass.name] = @collection.send(:elements).by_ui_state(params[klass.name]).destroy_all.map(&:id)
-        end
-
-        { selecteds: params[:selecteds].reject { |sel| deleted.fetch(sel['type'], []).include?(sel['id']) } }
+        result = { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
+        # Samples kept back because they belong to a reaction or wellplate still in
+        # the user's collections: report them so the UI can explain why nothing was deleted.
+        result[:locked_sample_ids] = usecase.locked_sample_ids if usecase.locked_sample_ids.present?
+        result
       end
 
       namespace :load_report do
@@ -129,6 +120,17 @@ module Chemotion
           samples = @collection.samples.by_ui_state(params[:sample])
           reactions = @collection.reactions.by_ui_state(params[:reaction])
 
+          # Every element in this report comes from the single resolved @collection, so its detail
+          # levels are computed once for the whole page instead of once per element (each instance
+          # fired 1-2 collection-membership queries). The report reflects the level granted on the
+          # collection it was run from: an owned collection (including the "All" view, which is an
+          # owned system collection) gives full access; a shared collection gives the share's level.
+          # An element also reachable at a higher level via another collection is rendered at this
+          # collection's level, the trade-off every list/index endpoint accepts (see
+          # ElementDetailLevelCalculator.for_collection). This can only lower detail, never leak,
+          # because the browsed collection's level never exceeds the element's best-available level.
+          detail_levels = ElementDetailLevelCalculator.for_collection(collection: @collection, user: current_user)
+
           if params[:loadType] == 'lists'
             sample_tags = selected_tags['sampleIds']
             reaction_tags = selected_tags['reactionIds']
@@ -136,7 +138,6 @@ module Chemotion
               if sample_tags && sample.id.in?(sample_tags)
                 { id: sample.id, in_browser_memory: true }
               else
-                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
@@ -144,17 +145,17 @@ module Chemotion
               if reaction_tags && reaction.id.in?(reaction_tags)
                 { id: reaction.id, in_browser_memory: true }
               else
-                detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
                 Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
               end
             end
           else
-            samples = samples.includes(:container, :elemental_compositions, :molecule, :residues, :segments, :tag)
+            samples = samples.includes(
+              :container, :elemental_compositions, :molecule, :reactions_samples, :residues, :segments, :tag
+            )
             reactions = reactions.includes(
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )
             result['samples'] = samples.map do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               serialized_element = Entities::SampleEntity.represent(
                 sample,
                 detail_levels: detail_levels,
@@ -163,7 +164,6 @@ module Chemotion
               serialized_element
             end
             result['reactions'] = reactions.map do |reaction|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels
               serialized_element = Entities::ReactionEntity.represent(
                 reaction,
                 detail_levels: detail_levels,

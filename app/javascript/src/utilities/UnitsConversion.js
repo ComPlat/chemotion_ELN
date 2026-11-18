@@ -40,10 +40,11 @@ const convertTemperature = (valueToFormat, currentUnit) => {
 
   const decimalPlaces = 4;
   if (typeof valueToFormat === 'string' && valueToFormat !== '') {
-    const regex = /(-?\d+\.\d+|-?\d+)(.*)/;
+    // Accepts "2.5", "2,5", ".5" and "2." as the leading number.
+    const regex = /(-?(?:\d+[.,]?\d*|[.,]\d+))(.*)/;
     const match = valueToFormat.match(regex);
     if (match) {
-      formattedValue = match[1];
+      formattedValue = Number(match[1].replace(',', '.'));
       restOfString = ` ${match[2].trim()}` || '';
     }
   }
@@ -129,6 +130,16 @@ const calculateGasMoles = (volume, ppm, temperatureInKelvin) => {
   return (
     (ppm * volume) / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR)
   );
+};
+
+// At 25 °C and 1 atm, derived from the ideal gas law:
+//   concentration (mmol/L) = ppm * 4.1 * 10^-5
+//   concentration (mol/L)  = ppm * 4.1 * 10^-8
+const PPM_TO_MOL_PER_L_AT_25C = 4.1e-8;
+
+const calculateGasConcentrationFromPpm = (ppm) => {
+  if (!Number.isFinite(ppm) || ppm <= 0) return 0;
+  return ppm * PPM_TO_MOL_PER_L_AT_25C;
 };
 
 const calculateVolumeForFeedstockOrGas = (
@@ -266,6 +277,7 @@ export {
   calculateMolesFromMoleculeWeight,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   calculateFeedstockMoles,
   updateFeedstockMoles,
   calculateTON,

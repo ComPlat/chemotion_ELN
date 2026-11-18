@@ -150,7 +150,8 @@ module Chemotion
 
         before do
           collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(collection).by_ui_state(params[:ui_state])
+          @sbmm_samples = SequenceBasedMacromoleculeSample.includes_for_list_display
+                                                          .by_collection_id(collection).by_ui_state(params[:ui_state])
                                                           .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read_all?
         end
@@ -186,7 +187,14 @@ module Chemotion
                                               CollectionsSequenceBasedMacromoleculeSample,
                                               collection_id,
                                             )
-          SequenceBasedMacromoleculeSample.where(id: sbmm_sample_ids).find_each do |sbmm_sample|
+          sbmm_samples = SequenceBasedMacromoleculeSample.where(id: sbmm_sample_ids)
+          # Splitting adds a new subsample to the target collection, so authorize that collection
+          # directly rather than via ElementsPolicy#share_all? (which takes MAX(permission_level)
+          # across every collection a sample belongs to, wrongly allowing a split into a read-only
+          # currentCollectionId when the sample is also shared/owned elsewhere with :add_elements).
+          error!('401 Unauthorized', 401) unless writable_collection_for(collection_id)
+
+          sbmm_samples.find_each do |sbmm_sample|
             sbmm_sample.create_sub_sequence_based_macromolecule_sample(current_user, collection_id)
           end
 

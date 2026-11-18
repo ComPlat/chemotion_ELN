@@ -193,6 +193,50 @@ RSpec.describe Usecases::Components::Create do
       end
     end
 
+    context 'when adding multiple components that share the same molecule' do
+      let(:sample_type) { Sample::SAMPLE_TYPE_MIXTURE }
+      let(:total_mixture_mass) { 100.0 }
+      let(:components_params) do
+        [
+          {
+            id: 'new_1',
+            name: 'Toluene A',
+            position: 1,
+            component_properties: {
+              molecule_id: molecule_1.id,
+              amount_mol: 0.1,
+              amount_g: 50.0,
+            },
+          },
+          {
+            id: 'new_2',
+            name: 'Toluene B',
+            position: 2,
+            component_properties: {
+              molecule_id: molecule_1.id,
+              amount_mol: 0.2,
+              amount_g: 30.0,
+            },
+          },
+        ]
+      end
+
+      before do
+        sample_details_double = instance_double(Hash)
+        allow(sample_details_double).to receive(:dig).with('total_mixture_mass_g').and_return(total_mixture_mass)
+        allow(sample).to receive(:sample_details).and_return(sample_details_double)
+      end
+
+      it 'persists each component as its own row' do
+        expect { use_case.execute! }
+          .to change(Component, :count).by(2)
+
+        components = Component.where(sample_id: sample.id).order(:position)
+        expect(components.map(&:name)).to eq(['Toluene A', 'Toluene B'])
+        expect(components.map { |c| c.component_properties['molecule_id'] }).to eq([molecule_1.id, molecule_1.id])
+      end
+    end
+
     context 'when updating existing components' do
       let(:sample_type) { Sample::SAMPLE_TYPE_MIXTURE }
       let(:total_mixture_mass) { 200.0 }
@@ -278,7 +322,7 @@ RSpec.describe Usecases::Components::Create do
         allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
-      it 'modifies component_properties hash in place' do
+      it 'calculates relative_molecular_weight on the normalized components' do
         components_params = [
           {
             id: 'new_1',
@@ -291,13 +335,58 @@ RSpec.describe Usecases::Components::Create do
           },
         ]
 
-        # The calculation should modify the hash in place
-        expect(components_params.first[:component_properties][:relative_molecular_weight]).to be_nil
-
         use_case = described_class.new(sample, components_params)
         use_case.send(:calculate_relative_molecular_weights)
 
-        expect(components_params.first[:component_properties][:relative_molecular_weight]).to eq(500.0)
+        internal = use_case.instance_variable_get(:@components)
+        expect(internal.first[:component_properties][:relative_molecular_weight]).to eq(500.0)
+      end
+
+      # Regression: the reaction material-update path reaches this usecase without Grape
+      # coercion, so relative_molecular_weight can arrive as a string. `String > 0` used to
+      # raise ArgumentError and crash the save (ComPlat/chemotion_ELN#3170, write path).
+      it 'preserves and normalizes an existing numeric-string relative_molecular_weight to a Float' do
+        components_params = [
+          {
+            id: 'new_1',
+            name: 'Test Component',
+            position: 1,
+            component_properties: {
+              molecule_id: molecule_1.id,
+              amount_mol: 0.3,
+              relative_molecular_weight: '250.0',
+            },
+          },
+        ]
+
+        use_case = described_class.new(sample, components_params)
+
+        expect { use_case.send(:calculate_relative_molecular_weights) }.not_to raise_error
+
+        internal = use_case.instance_variable_get(:@components)
+        expect(internal.first[:component_properties][:relative_molecular_weight]).to be(250.0)
+      end
+
+      it 'recalculates when relative_molecular_weight is a blank string, without raising' do
+        components_params = [
+          {
+            id: 'new_1',
+            name: 'Test Component',
+            position: 1,
+            component_properties: {
+              molecule_id: molecule_1.id,
+              amount_mol: 0.3,
+              relative_molecular_weight: '',
+            },
+          },
+        ]
+
+        use_case = described_class.new(sample, components_params)
+
+        expect { use_case.send(:calculate_relative_molecular_weights) }.not_to raise_error
+
+        internal = use_case.instance_variable_get(:@components)
+        expect(internal.first[:component_properties][:relative_molecular_weight]).to eq(500.0)
       end
     end
   end

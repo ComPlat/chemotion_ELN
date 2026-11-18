@@ -11,7 +11,7 @@ describe MoleculeStructureCuration do
 
     # rubocop:disable RSpec/MultipleExpectations
     it 'curates molecule and sample entries' do
-      allow(PubChem).to receive(:get_record_from_inchikey).and_return(nil)
+      allow(PubChem).to receive(:fetch_record_from_inchikey).and_return([nil, :not_found])
       molecule_ids = sample_map.keys
       molecule_count = molecule_ids.size
       sample_ids = sample_map.values.flatten.map(&:id)

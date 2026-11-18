@@ -5,3 +5,36 @@
   @extend .mb-2;
   @extend .overflow-hidden;
 }
+
+.sample-name--mixture {
+  @extend .fix-font-size;
+}
+
+.sample-name__heading {
+  font-size: inherit;
+}
+
+.sample-name__components-list {
+  margin-bottom: 0;
+}
+
+.sample-name__component {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+
+  &:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.sample-name__component-name {
+  word-break: break-word;
+  margin-bottom: 0.25rem;
+}
+
+.sample-name__component-mw {
+  font-size: 0.9em;
+}

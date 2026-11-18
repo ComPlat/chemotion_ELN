@@ -178,7 +178,9 @@ class Sample < ApplicationRecord
                                      joins(:reactions_samples).where(reactions_samples: { reaction_id: ids })
                                    }
   scope :by_literature_ids,        ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
-  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
+  scope :includes_for_list_display, lambda {
+    includes(:molecule_name, :tag, :comments, :reactions_samples, molecule: %i[tag computed_props])
+  }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, lambda {
@@ -203,8 +205,7 @@ class Sample < ApplicationRecord
 
   scope :search_by_fingerprint_sub, lambda { |molfile, as_array = false|
     if Chemotion::Application.config.pg_cartridge == 'rdkit'
-      where("samples.id in (select id from rdkit.mols
-        where m operator(@>) qmol_from_ctab(encode('#{molfile}', 'escape')::cstring) )")
+      where('samples.id IN (SELECT id FROM rdkit.mols WHERE m operator(@>) qmol_from_ctab(?::cstring))', molfile)
     else
       fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
       smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
@@ -222,6 +223,7 @@ class Sample < ApplicationRecord
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
   before_save :find_or_create_fingerprint
+  before_save :regen_polymer_svg_if_stale
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
@@ -252,8 +254,6 @@ class Sample < ApplicationRecord
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
 
-  has_many :devices_samples
-  has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
@@ -417,9 +417,9 @@ class Sample < ApplicationRecord
   # rubocop:disable Metrics/PerceivedComplexity
   # rubocop:disable Style/MethodDefParentheses
   # rubocop:disable Style/OptionalBooleanParameter
-  def create_subsample user, collection_ids, copy_ea = false, type = nil
+  def create_subsample user, collection_ids, copy_ea = false, type = nil, copy_components: true
     subsample = dup
-    subsample.xref['inventory_label'] = nil
+    subsample.xref = (xref || {}).merge('inventory_label' => nil)
     subsample.skip_inventory_label_update = true
     subsample.name = name if name.present?
     subsample.external_label = external_label if external_label.present?
@@ -452,7 +452,10 @@ class Sample < ApplicationRecord
     subsample.container = Container.create_root_container
     subsample.save!
 
-    create_components_for_mixture_subsample(subsample)
+    # Callers that reconcile the subsample's components from a client payload
+    # (e.g. the reaction editor) pass copy_components: false so we don't insert
+    # parent-copied rows that the payload would then duplicate.
+    create_components_for_mixture_subsample(subsample) if copy_components
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
 
     subsample
@@ -484,7 +487,9 @@ class Sample < ApplicationRecord
 
     return if molecule.present?
 
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    # render_svg: false — only the inchikey/is_partial/version are read here, and the molecule
+    # this resolves to renders its own SVG through Chemotion::SvgRenderer.
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
 
@@ -492,7 +497,11 @@ class Sample < ApplicationRecord
     self.molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
-    self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+    # **, not a positional hash: find_or_create_by_molfile takes babel_info as keyword rest, so
+    # a bare hash relies on Ruby 2.7's hash-to-keywords conversion and raises ArgumentError on
+    # 3.0+. This is a before_save on every sample whose molfile changed, so it is the call site
+    # of this shape that would hurt most on an upgrade.
+    self.molecule = Molecule.find_or_create_by_molfile(molfile, **babel_info)
   end
 
   def find_or_create_fingerprint
@@ -502,11 +511,13 @@ class Sample < ApplicationRecord
   end
 
   def get_svg_path
-    if sample_svg_file.present?
-      "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
-      "/images/molecules/#{molecule.molecule_svg_file}"
-    end
+    return "/images/samples/#{sample_svg_file}" if sample_svg_file.present?
+
+    # Polymer samples must not fall back to the backbone molecule SVG (wrong structure).
+    # SVG is generated on save via regen_polymer_svg_if_stale (before_save callback).
+    return if molecule&.is_partial && molfile.present?
+
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file.present?
   end
 
   # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
@@ -826,6 +837,43 @@ class Sample < ApplicationRecord
     return unless svg_file_name
 
     Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  # Called on the write path (before_save) — never on reads or read replicas.
+  #
+  # Gated to skip polymer_svg_needs_regen?'s disk read on saves that couldn't plausibly
+  # have made the cached SVG stale: a real Ketcher edit always dirties molfile (Ketcher's
+  # own serializer stamps a live timestamp into the molfile header on every save), so this
+  # still fires on every genuine structure edit. What it no longer does is re-read an
+  # already-fine polymer sample's cached SVG from disk on saves that only touch unrelated
+  # attributes (name, amount, location, ...).
+  def regen_polymer_svg_if_stale
+    return unless molecule_id_changed? || molfile_changed? || sample_svg_file.blank?
+    return unless polymer_svg_needs_regen?
+
+    svg = Molecule.svg_reprocess(nil, molfile)
+    return if svg.blank?
+
+    # attach_svg interprets strings containing '/' as file paths (File.basename).
+    # SVG XML content always contains '/' in tags, so pass via a named temp file
+    # using the TMPFILE prefix that attach_svg's temp-file branch recognises.
+    tmp_name = "TMPFILE#{SecureRandom.hex(32)}.svg"
+    File.write(full_svg_path(tmp_name), svg)
+    attach_svg(tmp_name)
+  end
+
+  # Returns true when a polymer sample has no cached SVG or the cached SVG lacks
+  # injected polymer shapes (created before shape injection was implemented).
+  def polymer_svg_needs_regen?
+    return false unless molecule&.is_partial && molfile.present?
+
+    # No SVG yet — must generate one.
+    return true if sample_svg_file.blank?
+
+    svg_path = full_svg_path(sample_svg_file)
+    return false unless svg_path && File.exist?(svg_path.to_s)
+
+    File.read(svg_path.to_s).exclude?('<image')
   end
 
   def update_gas_material
