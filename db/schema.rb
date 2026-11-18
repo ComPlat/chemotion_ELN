@@ -2089,6 +2089,11 @@ ActiveRecord::Schema.define(version: 2026_11_13_100001) do
           PERFORM generate_users_matrix(null);
       	end if;
 
+      	if (TG_OP='DELETE') then
+          PERFORM generate_users_matrix(null);
+          return old;
+      	end if;
+
       	if (TG_OP='UPDATE') then
       	  if new.enabled is distinct from old.enabled or new.deleted_at is distinct from old.deleted_at then
             PERFORM generate_users_matrix(null);
@@ -2802,7 +2807,7 @@ ActiveRecord::Schema.define(version: 2026_11_13_100001) do
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
   create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR DELETE OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
   SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')

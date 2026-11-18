@@ -85,4 +85,38 @@ RSpec.describe Matrice do
       end
     end
   end
+
+  describe 'users matrix' do
+    let!(:user) { create(:person) }
+    let!(:feature) { create(:matrice, :enabled) }
+
+    def feature_bit
+      user.reload.matrix[feature.id]
+    end
+
+    it 'has the bit of an enabled feature set' do
+      expect(feature_bit).to eq(1)
+    end
+
+    it 'clears the bit when the feature is disabled' do
+      feature.update!(enabled: false)
+      expect(feature_bit).to eq(0)
+    end
+
+    it 'clears the bit when the feature is soft-deleted' do
+      feature.destroy
+      expect(feature_bit).to eq(0)
+    end
+
+    it 'sets the bit again when the feature is restored' do
+      feature.destroy
+      described_class.with_deleted.find(feature.id).restore
+      expect(feature_bit).to eq(1)
+    end
+
+    it 'clears the bit when the feature is hard-deleted' do
+      feature.really_destroy!
+      expect(feature_bit).to eq(0)
+    end
+  end
 end

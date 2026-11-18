@@ -6,6 +6,11 @@ begin
     PERFORM generate_users_matrix(null);
 	end if;
 
+	if (TG_OP='DELETE') then
+    PERFORM generate_users_matrix(null);
+    return old;
+	end if;
+
 	if (TG_OP='UPDATE') then
 	  if new.enabled is distinct from old.enabled or new.deleted_at is distinct from old.deleted_at then
       PERFORM generate_users_matrix(null);
