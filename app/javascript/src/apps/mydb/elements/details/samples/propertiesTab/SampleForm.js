@@ -171,6 +171,14 @@ export default class SampleForm extends React.Component {
     sample.updateSampleType(sampleType.value);
 
     if (sampleType.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL) {
+      // Fix D2: when SSC molfile set contains_residues=true before type switch, the residue
+      // polymer_type defaults to 'polystyrene' (isHierarchicalMaterial() was false at that point).
+      // Reset it now that the type is correct.
+      if (sample.contains_residues) {
+        sample.residues?.forEach((r) => {
+          if (r.custom_info) r.custom_info.polymer_type = 'self_defined';
+        });
+      }
       const latestComponents = sample.components ?? null;
       if (latestComponents?.length > 0) {
         // Components already in memory (SSC drawn this session or loaded from DB)

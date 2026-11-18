@@ -106,6 +106,11 @@ function SampleName({ sample }) {
 
   // Handle polymer/residue case
   if (contains_residues) {
+    // HierarchicalMaterial: skip polymer name label entirely — show molecule name only
+    if (isHierarchicalMaterial) {
+      return <div>{moleculeName}</div>;
+    }
+
     const polymerName = getPolymerName(polymer_type, decoupled, isHierarchicalMaterial);
     clipText = (decoupled && polymer_type === 'self_defined')
       ? molecule_formula
@@ -115,7 +120,7 @@ function SampleName({ sample }) {
       <div>
         <p className="mb-2 fix-font-size">
           {polymerName}
-          {!isHierarchicalMaterial && <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />}
+          <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
         </p>
         {moleculeName}
       </div>

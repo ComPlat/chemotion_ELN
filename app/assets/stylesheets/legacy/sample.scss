@@ -310,6 +310,28 @@
   cursor: default;
 }
 
+// Computed read-only columns — grey box to distinguish from editable white-box fields
+.sample-form-composition-grid.ag-theme-alpine {
+  .ag-cell[col-id='calcMolPercent'],
+  .ag-cell[col-id='expMolRatio'],
+  .ag-cell[col-id='expMolPercent'],
+  .ag-row:not(.composition-sub-row) .ag-cell[col-id='molarRatioCalcMM'] {
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+
+    .ag-cell-value {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 0.25rem;
+      padding: 0 0.5rem;
+      cursor: default;
+    }
+  }
+}
+
 // Keep input field white while actively editing any user-entry cell
 .sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='molar_mass'].editable-cell .ag-input-field-input,
 .sample-form-composition-grid.ag-theme-alpine .ag-cell[col-id='weight_ratio_exp'] .ag-input-field-input {

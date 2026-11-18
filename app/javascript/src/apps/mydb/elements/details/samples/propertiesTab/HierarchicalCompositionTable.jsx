@@ -453,7 +453,7 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
       // Portion of effectiveWt allocated to this "/" segment
       const segCalcWt = effectiveWt !== null && segMass != null && totalSegMass > 0
         ? effectiveWt * segMass / totalSegMass
-        : effectiveWt;
+        : null; // unknown segment mass → don't distribute effectiveWt to avoid inflated totals
 
       const elemCounts = parseFormulaToElements(seg.segment);
 
@@ -494,6 +494,17 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           unknown: isUnknown || false,
         });
       });
+    }
+
+    // Clamp sub-row calcWt sum to exactly effectiveWt (guards fp drift and "/" segment fallbacks)
+    if (effectiveWt != null) {
+      const knownSum = allSubRows.reduce((s, sr) => s + (sr.calcWt ?? 0), 0);
+      if (knownSum > 0 && Math.abs(knownSum - effectiveWt) > 0.001) {
+        const scale = effectiveWt / knownSum;
+        allSubRows.forEach((sr) => {
+          if (sr.calcWt != null) sr.calcWt = parseFloat((sr.calcWt * scale).toFixed(3)); // eslint-disable-line no-param-reassign
+        });
+      }
     }
 
     // Sync molar_mass to Σ(stoich × atomicMass) — more accurate than the compound-level
@@ -597,16 +608,34 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
       const rows = prev[parentIndex];
       if (!rows || rows.length === 0) return prev;
       const oldTotal = rows.reduce((s, r) => s + (parseFloat(r.calcWt) || 0), 0);
-      if (oldTotal <= 0) return prev;
-      const scale = newWt / oldTotal;
-      const scaled = rows.map((r) => ({
-        ...r,
-        calcWt: r.calcWt != null ? parseFloat((r.calcWt * scale).toFixed(3)) : r.calcWt,
-        segmentCalcWt: r.segmentCalcWt != null
-          ? parseFloat((r.segmentCalcWt * scale).toFixed(3))
-          : r.segmentCalcWt,
-      }));
-      return { ...prev, [parentIndex]: scaled };
+
+      if (oldTotal > 0) {
+        const scale = newWt / oldTotal;
+        return {
+          ...prev,
+          [parentIndex]: rows.map((r) => ({
+            ...r,
+            calcWt: r.calcWt != null ? parseFloat((r.calcWt * scale).toFixed(3)) : r.calcWt,
+            segmentCalcWt: r.segmentCalcWt != null
+              ? parseFloat((r.segmentCalcWt * scale).toFixed(3))
+              : r.segmentCalcWt,
+          })),
+        };
+      }
+
+      // All-null calcWt (no wt.% label): distribute by stoich × atomicMass weight fraction
+      const mmTotal = rows.reduce((s, r) => s + (parseFloat(r.stoich) || 0) * (r.atomicMass || 0), 0);
+      if (mmTotal <= 0) return prev;
+      return {
+        ...prev,
+        [parentIndex]: rows.map((r) => ({
+          ...r,
+          calcWt: r.atomicMass > 0
+            ? parseFloat(((parseFloat(r.stoich) || 0) * r.atomicMass / mmTotal * newWt).toFixed(3))
+            : null,
+          segmentCalcWt: newWt,
+        })),
+      };
     });
   }, [onFieldChange]);
 
@@ -658,22 +687,19 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
   // Two-pass: first accumulate global mol totals, then build the row array with mol% attached.
   const gridRowData = useMemo(() => {
     // Pass 1 — global mol totals.
-    // totalCompoundCalcMol: Σ(calc_wt/effectiveMM) — denominator for Calc. mol%.
-    //   For expanded rows, effectiveMM = Σ(stoich_i × MM_i) from sub-rows (accurate even when
-    //   the molar_mass field lags behind stoich edits). For unexpanded, uses molar_mass field.
-    // totalExpMol: element-level for expanded rows, compound-level for unexpanded rows.
+    // totalCompoundCalcMol: Σ(calcWt_elem/MM_elem) — denominator for Calc. mol%.
+    //   Expanded rows: element-level Σ(calcWt/atomicMass) per spec.
+    //   Unexpanded rows: compound-level calcWt/MM.
+    // totalExpMol: element-level for expanded rows, compound-level for unexpanded.
     let totalCompoundCalcMol = 0;
     let totalExpMol = 0;
     rowsWithType.forEach((row) => {
       const mm = parseFloat(row.molar_mass) || 0;
       const subRows = processedRows[row.index];
       if (subRows) {
-        const effectiveMM = subRows.reduce(
-          (s, sr) => s + (parseFloat(sr.stoich) || 0) * (sr.atomicMass || 0), 0,
-        );
-        const compMM = effectiveMM > 0 ? effectiveMM : mm;
-        if (compMM > 0) totalCompoundCalcMol += (parseFloat(row.weightRatioCalcProcessed) || 0) / compMM;
+        // Element-level denominator: Σ(calcWt_elem / MM_elem) per spec
         subRows.forEach((sr) => {
+          if (sr.atomicMass > 0 && sr.calcWt != null) totalCompoundCalcMol += sr.calcWt / sr.atomicMass;
           if (sr.atomicMass > 0) totalExpMol += (parseFloat(sr.expWt) || 0) / sr.atomicMass;
         });
       } else if (mm > 0) {
@@ -683,7 +709,6 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
     });
 
     // Pass 2 — build flat result array, attaching calcMolPercent / expMolRatio / expMolPercent.
-    // Calc. mol% uses compound-level denominator distributed by stoich fraction for sub-rows.
     const result = [];
     rowsWithType.forEach((row) => {
       const subRows = processedRows[row.index];
@@ -699,20 +724,19 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
 
       if (subRows) {
         const isCollapsed = collapsedRows.has(row.index);
-        const stoichSum = subRows.reduce((s, sr) => s + (parseFloat(sr.stoich) || 0), 0);
 
-        // Use stoich-derived compound MM so calc mol% is correct after stoich edits
+        // Use stoich-derived compound MM for molar_mass sync and mol ratio
         const effectiveMM = subRows.reduce(
           (s, sr) => s + (parseFloat(sr.stoich) || 0) * (sr.atomicMass || 0), 0,
         );
         const compMM = effectiveMM > 0 ? effectiveMM : mm;
-        const compoundCalcMol = compMM > 0 ? (parseFloat(row.weightRatioCalcProcessed) || 0) / compMM : 0;
-        // Keep full-precision intermediate — rounding before sub-row multiplication compounds error
-        const compoundCalcMolPctRaw = totalCompoundCalcMol > 0
-          ? compoundCalcMol / totalCompoundCalcMol * 100
-          : 0;
-        const parentCalcMolPct = compoundCalcMolPctRaw > 0
-          ? parseFloat(compoundCalcMolPctRaw.toFixed(4))
+
+        // Calc. mol%: element-level denominator per spec — Σ(calcWt_elem / MM_elem)
+        const compoundCalcMolSum = subRows.reduce(
+          (s, sr) => s + (sr.atomicMass > 0 && sr.calcWt != null ? sr.calcWt / sr.atomicMass : 0), 0,
+        );
+        const parentCalcMolPct = totalCompoundCalcMol > 0 && compoundCalcMolSum > 0
+          ? parseFloat((compoundCalcMolSum / totalCompoundCalcMol * 100).toFixed(4))
           : '-';
 
         let parentExpMol = 0;
@@ -727,7 +751,7 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           isProcessed: true,
           isCollapsed,
           isSingleElement: totalElements <= 1,
-          molarRatioCalcMM: compMM > 0 ? parseFloat(((parseFloat(row.weightRatioCalcProcessed) || 0) / compMM).toFixed(4)) : '-',
+          molarRatioCalcMM: parseFloat(subRows.reduce((s, sr) => s + (parseFloat(sr.stoich) || 0), 0).toFixed(3)),
           calcMolPercent: parentCalcMolPct,
           expMolRatio: parseFloat(parentExpMol.toFixed(4)),
           expMolPercent: totalExpMol > 0 ? parseFloat((parentExpMol / totalExpMol * 100).toFixed(4)) : '-',
@@ -738,10 +762,9 @@ export default function HierarchicalCompositionTable({ components, onFieldChange
           subRows.forEach((sr, segIdx) => {
             const stoich = parseFloat(sr.stoich) || 0;
             const elExpMol = sr.atomicMass > 0 ? (parseFloat(sr.expWt) || 0) / sr.atomicMass : 0;
-            // Sub-row Calc. mol% = parent compound mol% × stoich / stoichSum
-            // Use full-precision raw value to avoid compounding rounding from intermediate
-            const subCalcMolPct = stoichSum > 0 && compoundCalcMolPctRaw > 0
-              ? parseFloat((compoundCalcMolPctRaw * stoich / stoichSum).toFixed(4))
+            const elCalcMol = sr.atomicMass > 0 && sr.calcWt != null ? sr.calcWt / sr.atomicMass : 0;
+            const subCalcMolPct = totalCompoundCalcMol > 0 && elCalcMol > 0
+              ? parseFloat((elCalcMol / totalCompoundCalcMol * 100).toFixed(4))
               : '-';
             result.push({
               isSubRow: true,

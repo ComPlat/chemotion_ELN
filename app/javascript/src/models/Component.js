@@ -679,8 +679,8 @@ export default class Component extends Sample {
     if (source && source.length) {
       if (source.indexOf('%') !== -1) {
         const parts = source.trim();
-        const match = parts?.match(/^\d+/);
-        weightRatioContent = match ? Number(match[0]) : 0;
+        const match = parts?.match(/^(\d+\.?\d*)/);
+        weightRatioContent = match ? parseFloat(match[1]) : 0;
         compContent = source?.trim() || 'asdf';
       } else {
         const parts = source.split('-');

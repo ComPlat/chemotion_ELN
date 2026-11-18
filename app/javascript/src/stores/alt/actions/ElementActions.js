@@ -463,7 +463,7 @@ class ElementActions {
         // Save components first if it's a mixture and capture the API response so
         // newly inserted rows pick up their real DB ids on subsequent saves.
         let savedComponents = null;
-        if (sample.isMixture() && sample.components) {
+        if ((sample.isMixture() || sample.isHierarchicalMaterial()) && sample.components) {
           savedComponents = await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
         }
 
@@ -471,7 +471,7 @@ class ElementActions {
         const newSample = await SamplesFetcher.update(sample);
 
         // Initialize components on newSample before updating material in reaction
-        if (sample.isMixture() && sample.components) {
+        if ((sample.isMixture() || sample.isHierarchicalMaterial()) && sample.components) {
           const refreshed = Component.refreshFromApi(savedComponents, sample.components);
           newSample.initialComponents(refreshed);
         }
@@ -486,8 +486,7 @@ class ElementActions {
           closeView,
         });
       } catch (errorMessage) {
-        console.log(errorMessage);
-        // Ensure loading stops even on error
+        console.error('updateSampleForReaction failed:', errorMessage);
         LoadingActions.stop();
       }
     };

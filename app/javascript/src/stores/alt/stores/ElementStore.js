@@ -762,7 +762,7 @@ class ElementStore {
           }
         })
         .catch((errorMessage) => {
-          console.log(errorMessage);
+          console.error('saveOrUpdateComponents failed (handleCreateSample):', errorMessage);
         });
     }
     UserActions.fetchCurrentUser();
@@ -784,7 +784,7 @@ class ElementStore {
           await newSample.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
-          console.log(errorMessage);
+          console.error('saveOrUpdateComponents failed (handleCreateSampleForReaction):', errorMessage);
         });
     }
     reaction.addMaterial(newSample, materialGroup);
@@ -835,7 +835,7 @@ class ElementStore {
           }
         })
         .catch((errorMessage) => {
-          console.log(errorMessage);
+          console.error('saveOrUpdateComponents failed (handleUpdateLinkedElement):', errorMessage);
         });
     }
     if (closeView) {
