@@ -12,7 +12,8 @@ describe('EditableTable', () => {
 
   it('reads times as h:mm or h:mm:ss with any number of hours, and keeps decimals', () => {
     expect(normalizeTime('1:30')).toEqual('01:30:00');
-    expect(normalizeTime('120:00:00')).toEqual('120:00:00');
+    expect(normalizeTime('99:59:59')).toEqual('99:59:59');
+    expect(normalizeTime('120:00:00')).toBeNull();
     expect(normalizeTime('00:10:00')).toEqual('00:10:00');
     expect(normalizeTime('1:75')).toBeNull();
     expect(normalizeTime('')).toBeNull();

@@ -255,6 +255,22 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe '#scheme_steps_svg_paths' do
+    it 'draws step 1 SBMM reactants on the first arrow only' do
+      user = create(:person)
+      reaction = create(:reaction, reaction_type: 'multi_step')
+      reaction.reaction_steps.create!(position: 1)
+      reaction.reaction_steps.create!(position: 2)
+      protein = create(:uniprot_sbmm)
+      sbmm = SequenceBasedMacromoleculeSample.create!(name: 'Enzyme', short_label: 'E-1', user: user,
+                                                      sequence_based_macromolecule: protein)
+      ReactionsReactantSbmmSample.create!(reaction: reaction, sequence_based_macromolecule_sample: sbmm, position: 0)
+
+      first, second = reaction.reload.send(:scheme_steps_svg_paths)
+      expect([first[:reactants], second[:reactants]]).to eq([[[sbmm.svg_text_path]], []])
+    end
+  end
+
   describe '#update_svg_file!' do
     let(:composer_instance) do
       instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: 'composed.svg')

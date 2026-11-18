@@ -4,7 +4,7 @@ import {
   Button, Form, InputGroup, Table
 } from 'react-bootstrap';
 
-const TIME_PATTERN = /^(\d+):([0-5]?\d)(?::([0-5]?\d))?$/;
+const TIME_PATTERN = /^(\d{1,2}):([0-5]?\d)(?::([0-5]?\d))?$/;
 const VALUE_PATTERN = /^-?\d+(?:[.,]\d+)?$/;
 
 export const normalizeTime = (text) => {

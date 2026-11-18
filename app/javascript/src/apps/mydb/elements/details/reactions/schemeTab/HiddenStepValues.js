@@ -8,7 +8,7 @@ const HiddenStepValues = ({ reaction, label, value }) => {
 
   const steps = reaction.stepsView();
   const popover = (
-    <Popover id={`hidden-step-values-${label}`}>
+    <Popover id={`hidden-step-values-${label.replace(/\s+/g, '-')}`}>
       <Popover.Header>{`${label} per step`}</Popover.Header>
       <Popover.Body>
         {steps.map((step, index) => <div key={step.id}>{`Step ${index + 1}: ${value(step) || '—'}`}</div>)}
@@ -19,7 +19,9 @@ const HiddenStepValues = ({ reaction, label, value }) => {
   return (
     <span onClick={(event) => event.preventDefault()} role="presentation">
       <OverlayTrigger trigger="click" rootClose placement="top" overlay={popover}>
-        <i className="fa fa-info-circle ms-1" role="button" tabIndex={0} aria-label={`${label} per step`} />
+        <button type="button" className="btn btn-link text-reset p-0 ms-1 align-baseline lh-1" aria-label={`${label} per step`}>
+          <i className="fa fa-info-circle" />
+        </button>
       </OverlayTrigger>
     </span>
   );

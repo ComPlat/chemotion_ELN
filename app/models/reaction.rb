@@ -454,7 +454,7 @@ class Reaction < ApplicationRecord
       carried, products = step_rows.call('ReactionsProductSample').partition(&:carry_on)
       {
         starting_materials: build_svg_paths(step_rows.call('ReactionsStartingMaterialSample'), :starting_materials),
-        reactants: build_svg_paths(step_rows.call('ReactionsReactantSample'), :reactants),
+        reactants: step_reactant_svg_paths(step_rows.call('ReactionsReactantSample'), index),
         carried: build_svg_paths(carried, :products),
         products: build_svg_paths(products, :products),
         temperature: step_temperature_with_unit(step),
@@ -463,6 +463,11 @@ class Reaction < ApplicationRecord
         solvents: step_solvent_names(step_rows.call('ReactionsSolventSample'), index),
       }
     end
+  end
+
+  def step_reactant_svg_paths(rows, index)
+    paths = build_svg_paths(rows, :reactants)
+    index.zero? ? paths + reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] } : paths
   end
 
   def rows_by_step_and_type

@@ -871,6 +871,16 @@ describe('Reaction hidden steps, edge cases', () => {
     expect([reaction.reaction_type, reaction.schemeSvgRequest().numberedSteps]).toEqual(['multi_step', true]);
   });
 
+  it('draws step 1 SBMM reactants on the first arrow only', async () => {
+    const { reaction } = await twoSteps();
+    reaction.reactant_sbmm_samples = [{ id: 'sbmm-1', name: 'Enzyme' }];
+    const [sbmm] = reaction.reactant_sbmm_samples;
+
+    const [first, second] = reaction.stepsSvgPaths();
+    expect(first.reactants).toContainEqual([sbmm.svgPath]);
+    expect(second.reactants).not.toContainEqual([sbmm.svgPath]);
+  });
+
   it('keeps hidden steps out of an interaction reaction picture', async () => {
     const { reaction } = await twoSteps();
     reaction.leaveMultiStep();

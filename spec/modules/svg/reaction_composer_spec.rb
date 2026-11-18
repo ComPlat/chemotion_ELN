@@ -133,6 +133,45 @@ RSpec.describe SVG::ReactionComposer do
     end
   end
 
+  describe 'height of a scheme with one arrow per step' do
+    def height(first_conditions, second_conditions)
+      composer = described_class.new(
+        {}, solvents: [], temperature: '', conditions: first_conditions,
+            steps: [{ reactants: [['a.svg']], conditions: first_conditions },
+                    { reactants: [['b.svg']], conditions: second_conditions }]
+      )
+      composer.compose_reaction_svg
+      composer.global_view_box_array[3]
+    end
+
+    it 'keeps the numbered lines of a standard reaction with hidden steps' do
+      numbered = described_class.new(
+        {}, solvents: [], temperature: '', numbered_steps: true,
+            steps: [{ reactants: [['a.svg']], conditions: 'reflux' }, { reactants: [['b.svg']], conditions: 'cool' }]
+      )
+      numbered.compose_reaction_svg
+
+      expect(numbered.conditions).to eq("1. reflux\n2. cool")
+    end
+
+    it 'fits the busiest step, not only the first one' do
+      lines = (1..6).map { |i| "line #{i}" }.join("\n")
+
+      expect(height('', lines)).to eq(height(lines, ''))
+    end
+  end
+
+  describe 'empty steps' do
+    let(:composer) { described_class.new({}, solvents: [], temperature: '') }
+
+    it 'hides an untouched step but keeps a step that only has conditions' do
+      untouched = { reactants: [], products: [], temperature: '', duration: '', conditions: '', solvents: [] }
+
+      expect([untouched, untouched.merge(temperature: 'r.t.'), untouched.merge(conditions: 'workup')]
+        .map { |step| composer.send(:step_empty?, step) }).to eq([true, false, false])
+    end
+  end
+
   describe 'space around a step arrow' do
     let(:composer) { described_class.new({}, solvents: [], temperature: '') }
 

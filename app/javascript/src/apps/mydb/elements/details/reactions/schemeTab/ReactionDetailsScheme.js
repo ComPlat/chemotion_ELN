@@ -464,7 +464,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!reaction.prepareCarriedMove(srcMat, tagGroup, targetStepId)) {
       this.context.notifications.add({
         title: 'Cannot move this product',
-        message: 'The next step needs it as its starting material. Delete that step first.',
+        message: `The next step needs it as its starting material. ${reaction.carriedLockHint()}`,
         level: 'warning'
       });
       return;

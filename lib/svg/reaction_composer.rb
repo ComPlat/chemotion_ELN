@@ -498,10 +498,24 @@ module SVG
       find_solvent_max_height + find_cond_max_height
     end
 
+    # Each arrow carries its own step's lines, so the scheme must fit the busiest step, not only the first one.
+    def busiest_step_height
+      return 0 if @steps.blank? || @numbered
+
+      saved = [@conditions, @solvents]
+      heights = @steps.map do |step|
+        @conditions = step[:conditions].presence
+        @solvents = Array(step[:solvents]).compact_blank
+        count_height_solv_conditions
+      end
+      @conditions, @solvents = saved
+      heights.max
+    end
+
     def set_global_view_box_height
       material_max = find_material_max_height(starting_materials + products)
       @reactant_max = find_material_max_height(reactants)
-      @max_of_solv_conditions = count_height_solv_conditions()
+      @max_of_solv_conditions = [count_height_solv_conditions, busiest_step_height].max
       global_view_box_array[3] = [@reactant_max * 2.5 , @max_of_solv_conditions, material_max, global_view_box_array[3]].max + 2 * YIELD_YOFFSET + 15
     end
 
@@ -766,7 +780,8 @@ module SVG
 
     # A step with nothing in it would otherwise draw an arrow pointing at empty space.
     def step_empty?(step)
-      %i[starting_materials reactants carried products].all? { |key| step[key].blank? }
+      %i[starting_materials reactants carried products temperature duration conditions solvents]
+        .all? { |key| Array(step[key]).compact_blank.empty? }
     end
 
     def compose_step_input(step, index, y_center)

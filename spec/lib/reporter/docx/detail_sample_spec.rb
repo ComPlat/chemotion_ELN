@@ -46,6 +46,17 @@ describe 'Reporter::Docx::DetailSample' do
       expect(instance.send(:init_item)).to eq([{ 'insert' => "step two\n" }])
     end
 
+    it 'uses the reaction text once the reaction is back to Standard' do
+      reaction = create(:reaction, reaction_type: 'standard',
+                                   description: { 'ops' => [{ 'insert' => "edited in standard\n" }] })
+      second = ReactionStep.create!(reaction: reaction, position: 2,
+                                    description: { 'ops' => [{ 'insert' => "step two\n" }] })
+      ReactionsProductSample.create!(reaction: reaction, sample: sample, reaction_step: second)
+      sample.reload
+
+      expect(instance.send(:init_item)).to eq([{ 'insert' => "edited in standard\n" }])
+    end
+
     it 'skips the text when it is hidden by a low detail level' do
       hidden = Reporter::Docx::DetailSample.new(sample: OpenStruct.new(reaction_description: '***'), # rubocop:disable Style/OpenStructUse
                                                 spl_settings: all_spl_settings)

@@ -1331,9 +1331,12 @@ export default class Reaction extends Element {
       .filter((p) => p.reaction_step_id === stepId && !!p.carry_on === carried)
       .map((p) => [p.svgPath, p.equivalent]);
 
-    return this.stepsView().map((step) => ({
+    return this.stepsView().map((step, index) => ({
       starting_materials: this.materialsForStep('starting_materials', step.id).map((m) => [m.svgPath]),
-      reactants: this.materialsForStep('reactants', step.id).map((m) => [m.svgPath]),
+      reactants: [
+        ...this.materialsForStep('reactants', step.id),
+        ...(index === 0 ? this.reactant_sbmm_samples : []),
+      ].map((m) => [m.svgPath]),
       carried: stepProducts(step.id, true),
       products: stepProducts(step.id, false),
       temperature: stepTemperature(step.temperature),
@@ -1376,6 +1379,10 @@ export default class Reaction extends Element {
     if (this.isMultiStep()) return activeStepId ?? null;
     if (targetGroup === 'starting_materials') return this.reaction_steps.find((step) => !step._destroy)?.id ?? null;
     return material.reaction_step_id ?? null;
+  }
+
+  carriedLockHint() {
+    return this.isMultiStep() ? 'Delete that step first.' : 'Switch to Multi-step and delete that step first.';
   }
 
   prepareCarriedMove(material, targetGroup, targetStepId) {

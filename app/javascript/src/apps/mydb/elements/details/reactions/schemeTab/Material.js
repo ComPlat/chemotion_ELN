@@ -1321,7 +1321,7 @@ class Material extends Component {
             <div
               className="reaction-material__delete-data"
               title={reaction.isCarryOnLocked(material)
-                ? 'The next step needs this starting material. Delete that step first.'
+                ? `The next step needs this starting material. ${reaction.carriedLockHint()}`
                 : undefined}
             >
               <DeleteButton
