@@ -99,6 +99,25 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
     end
   end
 
+  context 'when someone else changed a moved starting material after the move' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    let(:other_user) { create(:person) }
+    let(:sample) { old_sample(target_amount_value: 10) }
+    let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample, equivalent: 1) }
+
+    before do
+      link_to(copy, old_sample(target_amount_value: 5), klass: ReactionsStartingMaterialSample, reference: true)
+      move(link, to: copy)
+      # saving the sample also writes versions of the moved link (its equivalent) and of the copy (its scheme)
+      as_request(other_user, moved_at + 1.hour) { Sample.find(sample.id).update!(target_amount_value: 7) }
+      migration.up
+    end
+
+    it 'keeps that change on the original sample' do
+      expect(sample.reload.target_amount_value).to eq(7)
+      expect(link.reload.reaction_id).to eq(original.id)
+    end
+  end
+
   context 'when the copy has variations stored by variation uuid' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:sample) { old_sample }
     let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample, equivalent: 1) }
@@ -148,6 +167,27 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
     it 'returns both, the second not blocked by the first' do
       expect(links.map { |link| link.reload.reaction_id }).to eq([original.id, original.id])
       expect(links_of(copy).count).to eq(2)
+    end
+  end
+
+  context 'when the original reaction got the material again and a second copy took that one' do
+    let(:second_copy) { create(:reaction, name: 'Reaction', creator: user, collections: [copy_collection]) }
+    let!(:link) { link_to(original, solvent) }
+
+    before do
+      move(link, to: copy)
+      readded = travel_to(moved_at + 1.hour) do
+        sample = create(:sample, creator: user, collections: [collection], molecule: solvent.molecule)
+        ReactionsPurificationSolventSample.create!(reaction: original, sample: sample, position: 0)
+      end
+      move(readded, to: second_copy, at: moved_at + 2.hours)
+      migration.up
+    end
+
+    it 'returns only the material it got again, though the first link comes first' do
+      expect(links_of(original).count).to eq(1)
+      expect(link.reload.reaction_id).to eq(copy.id)
+      expect(links_of(second_copy).count).to eq(1)
     end
   end
 
@@ -373,6 +413,40 @@ RSpec.describe 'migration 20261020120000: ReturnMaterialsMovedByReactionSaves' d
 
     it 'leaves it unchanged' do
       expect(link.reload.reaction_id).to eq(copy.id)
+    end
+  end
+
+  context "when the copy's save rewrote the original's equivalent before taking the link" do
+    let(:sample) { old_sample }
+    let!(:link) { link_to(original, sample, klass: ReactionsStartingMaterialSample, equivalent: 1) }
+
+    before do
+      # the sample's after_save recomputes the equivalents of the reaction still holding it
+      as_request(user, moved_at) do
+        copy.update!(updated_at: Time.current)
+        sample.update!(target_amount_value: 3)
+        link.update!(equivalent: 0.3)
+        link.update!(reaction_id: copy.id)
+      end
+      migration.up
+    end
+
+    it 'returns the link with the equivalent it had before that save' do
+      expect(link.reload).to have_attributes(reaction_id: original.id, equivalent: 1)
+    end
+  end
+
+  context 'when the sample left the collections of the original reaction' do
+    let!(:link) { link_to(original, solvent) }
+
+    before do
+      move(link, to: copy)
+      CollectionsSample.find_by(sample: solvent, collection: collection).destroy
+      migration.up
+    end
+
+    it 'puts it back into them' do
+      expect(CollectionsSample.find_by(sample: solvent, collection: collection)).to be_present
     end
   end
 
