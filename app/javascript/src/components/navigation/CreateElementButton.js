@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Form, Dropdown
+  Button, Form, Dropdown, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { allElnElements, allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
@@ -20,6 +20,7 @@ const CreateElementDropdownToggle = React.forwardRef(({ onClick, disabled }, ref
     className="create-element-button"
     ref={ref}
     disabled={disabled}
+    style={disabled ? { pointerEvents: 'none' } : undefined}
     onClick={(e) => {
       e.preventDefault();
       onClick(e);
@@ -84,6 +85,7 @@ export default class CreateElementButton extends React.Component {
     super(props);
     this.state = {
       isDisabled: true,
+      collectionRequired: true,
       samples: [],
       collectionId: null,
       layout: UserStore.getState().profile?.data?.layout || {},
@@ -129,7 +131,7 @@ export default class CreateElementButton extends React.Component {
 
   onUIStoreChange({ currentCollection }) {
     if (!currentCollection) {
-      this.setState({ isDisabled: true });
+      this.setState({ isDisabled: true, collectionRequired: true });
       return;
     }
 
@@ -145,7 +147,10 @@ export default class CreateElementButton extends React.Component {
       ? (collection_share_id && permission_level < PermissionConst.AddElements)
       : (label === 'All' && is_locked);
 
-    this.setState({ isDisabled: newIsDisabled });
+    this.setState({
+      isDisabled: newIsDisabled,
+      collectionRequired: !!(newIsDisabled && label === 'All' && is_locked),
+    });
   }
 
   createWellplateFromSamples() {
@@ -220,7 +225,7 @@ export default class CreateElementButton extends React.Component {
   }
 
   render() {
-    const { isDisabled, layout } = this.state;
+    const { isDisabled, collectionRequired, layout } = this.state;
     const itemTables = [];
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
@@ -249,10 +254,24 @@ export default class CreateElementButton extends React.Component {
         drop="up"
         align="end"
       >
-        <Dropdown.Toggle
-          as={CreateElementDropdownToggle}
-          disabled={isDisabled}
-        />
+        <OverlayTrigger
+          placement="top"
+          show={collectionRequired ? undefined : false}
+          overlay={(
+            <Tooltip id="create-element-collection-tooltip">
+              Select or create a collection under “My Collections” to create elements.
+            </Tooltip>
+          )}
+        >
+          {/* Disabled buttons cannot receive hover or focus, so expose the tooltip through the wrapper. */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+          <span className="d-inline-block" tabIndex={collectionRequired ? 0 : undefined}>
+            <Dropdown.Toggle
+              as={CreateElementDropdownToggle}
+              disabled={isDisabled}
+            />
+          </span>
+        </OverlayTrigger>
         <Dropdown.Menu className="shadow">
           {this.createWellplateModal()}
           {itemTables}
