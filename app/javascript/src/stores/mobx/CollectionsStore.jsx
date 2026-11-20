@@ -45,6 +45,7 @@ export const Collection = types.model({
   shared: types.maybeNull(types.boolean),
   shared_via_group: types.optional(types.boolean, false),
   tabs_segment: types.optional(types.frozen({}), {}),
+  list_layout: types.optional(types.frozen({}), {}),
 }).actions(self => ({
   addChild(collection) {
     if (self.id === 0 || self.isParentOf(collection)) {
@@ -231,14 +232,16 @@ export const CollectionsStore = types
       self.setOwnCollectionTree()
       return true
     }),
-    updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+    updateCollection: flow(function* updateCollection(collection, tabs_segment, list_layout) {
       // PUT /collections/:id is scoped to own_collections_for, so a tab-layout save against a
       // collection shared *to* this user has always 404'd. The element-detail tab editors reach
       // this through UIStore's currentCollection, which can be one — skip the doomed request
       // instead of reporting a failure for a save the user never asked for.
       if (self.isSharedCollection(collection.id)) return null
 
-      const params = { label: collection.label, tabs_segment: tabs_segment }
+      const params = tabs_segment === undefined
+        ? { list_layout }
+        : { label: collection.label, tabs_segment, list_layout }
       let collectionItem
       try {
         collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
@@ -268,7 +271,7 @@ export const CollectionsStore = types
         self.changeTabsSegmentInTree([self.chemotion_repository_collection], collectionItem)
       }
       self.setOwnCollectionTree()
-      return self.own_collections
+      return collectionItem
     }),
     deleteCollection: flow(function* deleteCollection(collectionId) {
       const all_collections = yield CollectionsFetcher.deleteCollection(collectionId)
@@ -664,6 +667,7 @@ export const CollectionsStore = types
       return collections.some((c) => {
         if (c.id === node.id) {
           c.tabs_segment = node.tabs_segment;
+          c.list_layout = node.list_layout;
           return true;
         }
         return c.children.length >= 1 && self.changeTabsSegmentInTree(c.children, node);
