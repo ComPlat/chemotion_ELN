@@ -1,5 +1,26 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.4]
+> (2026-11-20)
+
+## Upgrade notes
+
+* v3.1.3 was tagged but not published as images: upgrading from v3.1.2 also brings the v3.1.3 changes and its one migration ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375)).
+
+## Fixes
+
+* Creating elements while the *All* collection is selected works again ([#3612](https://github.com/ComPlat/chemotion_ELN/pull/3612)).
+* Devices: missing name or abbreviation gives validation errors ([#3634](https://github.com/ComPlat/chemotion_ELN/pull/3634)); a failed admin update keeps the device's people and groups ([#3651](https://github.com/ComPlat/chemotion_ELN/pull/3651)).
+* Private Note search looks in your own notes ([#3688](https://github.com/ComPlat/chemotion_ELN/pull/3688)).
+* Docx reports: lists in rich-text analyses ([#3638](https://github.com/ComPlat/chemotion_ELN/pull/3638)) and gas-phase schemes with a blank ppm ([#3515](https://github.com/ComPlat/chemotion_ELN/pull/3515)) no longer fail.
+* XLSX export includes the CAS number of samples from shared and synced collections ([#3460](https://github.com/ComPlat/chemotion_ELN/pull/3460)).
+* Wellplate import template download is disabled until the wellplate is saved ([#3560](https://github.com/ComPlat/chemotion_ELN/pull/3560)).
+* Sign-in no longer fails intermittently when several users load their profile at once ([#3573](https://github.com/ComPlat/chemotion_ELN/pull/3573)).
+* An unexpected CAS metadata answer disables SciFinder-n instead of stopping the start ([#3674](https://github.com/ComPlat/chemotion_ELN/pull/3674)).
+* SMTP: HELO domain and timeouts configurable, environment values typed ([#3474](https://github.com/ComPlat/chemotion_ELN/pull/3474)).
+* Multipart form parts in a legacy single-byte charset are converted to UTF-8.
+* Workshop guide toggle stays below open dialogs ([#3631](https://github.com/ComPlat/chemotion_ELN/pull/3631)).
+
 # [v3.1.3]
 > (2026-08-11)
 
