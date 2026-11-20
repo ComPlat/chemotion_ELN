@@ -67,6 +67,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import CopyButton from 'src/components/common/CopyButton';
+import { molfileProblem, MAX_MOLFILE_SIZE } from 'src/utilities/MolfileValidation';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
@@ -87,6 +88,19 @@ const decoupleCheck = (sample, notifications) => {
   if (sample.decoupled && sample.sum_formula?.trim() === '') { sample.sum_formula = 'undefined structure'; }
   if (!sample.decoupled) { sample.sum_formula = ''; }
   return true;
+};
+
+// The structure editor and the molfile box both store a new structure here, so a
+// sample keeps the molfile the user gave it whichever way the molfile came in.
+const applyMolecule = (sample, molfile, result) => {
+  if (!result?.id) { throw new Error(result?.error || 'No molecule returned!'); }
+  sample.molfile = molfile;
+  sample.molecule = result;
+  sample.molecule_id = result.id;
+  if (result.inchikey === 'DUMMY' || result.inchikey === 'DECOUPLED') { sample.decoupled = true; }
+  // after decoupled: a new default residue takes its polymer type from it
+  sample.contains_residues = molfile?.indexOf(' R# ') > -1;
+  sample.formulaChanged = true;
 };
 
 const rangeCheck = (field, sample, notifications) => {
@@ -153,6 +167,8 @@ export default class SampleDetails extends React.Component {
       smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
         || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
       smilesInput: '',
+      // null until the user types or loads a molfile; the stored molfile shows until then
+      molfileInput: null,
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
       quickCreator: false,
@@ -179,6 +195,10 @@ export default class SampleDetails extends React.Component {
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
+    this.handleMoleculeByMolfile = this.handleMoleculeByMolfile.bind(this);
+    this.handleMolfileUpload = this.handleMolfileUpload.bind(this);
+    this.handleMolfileInput = this.handleMolfileInput.bind(this);
+    this.molfileFileInput = React.createRef();
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -263,6 +283,8 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample,
       smileReadonly,
+      molfile: sample.molfile || '',
+      molfileInput: null,
       loadingMolecule: false,
       isCasLoading: false,
       casInputValue: currentCas,
@@ -339,6 +361,79 @@ export default class SampleDetails extends React.Component {
       }).finally(() => LoadingActions.stop());
   }
 
+  handleMolfileUpload(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    // cleared so re-picking the same file fires change again
+    input.value = '';
+    if (!file) { return; }
+    if (file.size > MAX_MOLFILE_SIZE) {
+      this.notify('Molfile too large', `${file.name} is larger than 5 MB`);
+      return;
+    }
+    file.text()
+      .then((text) => this.handleMolfileInput(text, file.name))
+      .catch(() => this.notify('Error reading file', `Could not read ${file.name}`));
+  }
+
+  handleMolfileInput(text, source) {
+    if (text.length > MAX_MOLFILE_SIZE) {
+      this.notify('Molfile too large', 'That is more than 5 MB of text');
+      return;
+    }
+    const records = text.split(/^\$\$\$\$\s*$/m).filter((record) => record.trim() !== '');
+    this.setState({ molfileInput: records[0] ?? text });
+    if (records.length > 1) {
+      this.notify(
+        'Multiple structures',
+        `${source} holds ${records.length} structures. Only the first was loaded.`,
+        'warning'
+      );
+    }
+  }
+
+  notify(title, message, level = 'error') {
+    this.context.notifications.add({
+      title, message, level, position: 'tc'
+    });
+  }
+
+  handleMoleculeByMolfile() {
+    const { sample, molfileInput, loadingMolecule } = this.state;
+    if (loadingMolecule || molfileInput === null || molfileProblem(molfileInput)) { return; }
+    const molfile = molfileInput;
+    const wasDecoupled = sample.decoupled;
+    this.setState({ loadingMolecule: true });
+    // sent with the sample's decoupled flag, as the structure editor does
+    MoleculesFetcher.fetchByMolfile(molfile, undefined, undefined, sample.decoupled)
+      .then((result) => {
+        applyMolecule(sample, molfile, result);
+        this.setState({
+          sample,
+          molfile,
+          molfileInput: null,
+          inchiString: result.inchistring,
+          smileReadonly: true,
+          showMolfileModal: false,
+          pageMessage: result.ob_log,
+          loadingMolecule: false
+        });
+        if (sample.decoupled && !wasDecoupled) {
+          this.notify(
+            'Structure not recognized',
+            'The molfile was kept, but no molecule could be made from it, so the sample is now decoupled.',
+            'warning'
+          );
+        }
+        // a molfile with several fragments becomes mixture components, as in the structure editor
+        this.splitSmiles('ketcher');
+      })
+      .catch((error) => {
+        this.notify('Error on Sample creation', `Cannot create molecule from the molfile: ${error?.message || error}`);
+        this.setState({ loadingMolecule: false });
+      });
+  }
+
   handleInventorySample(e) {
     const { sample, visible } = this.state;
     sample.inventory_sample = e.target.checked;
@@ -387,15 +482,11 @@ export default class SampleDetails extends React.Component {
     };
 
     const fetchSuccess = (result) => {
-      if (!result || result == null) {
-        throw new Error('No molecule returned!');
-      }
-      sample.molecule = result;
-      sample.molecule_id = result.id;
-      if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+      applyMolecule(sample, molfile, result);
 
       this.setState({
         sample,
+        molfile: sample.molfile || '',
         smileReadonly: true,
         pageMessage: result.ob_log,
         loadingMolecule: false
@@ -903,7 +994,7 @@ export default class SampleDetails extends React.Component {
           <Accordion.Body>
             {this.moleculeInchi(sample)}
             {this.moleculeCanoSmiles(sample)}
-            {this.moleculeMolfile(sample)}
+            {this.moleculeMolfile()}
           </Accordion.Body>
         </Accordion.Item>
       </Accordion>
@@ -1241,12 +1332,13 @@ export default class SampleDetails extends React.Component {
 
   moleculeCanoSmiles(sample) {
     const { smileReadonly, smilesInput } = this.state;
+    const shownSmiles = (smileReadonly ? sample.molecule_cano_smiles : smilesInput) || '';
     return (
       <InputGroup className="mb-3">
         <InputGroup.Text>Canonical Smiles</InputGroup.Text>
         <Form.Control
           type="text"
-          value={smileReadonly ? sample.molecule_cano_smiles || '' : smilesInput}
+          value={shownSmiles}
           disabled={smileReadonly}
           readOnly={smileReadonly}
           onChange={(e) => {
@@ -1276,22 +1368,44 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  moleculeMolfile(sample) {
+  // The sample's stored molfile shows until the user types or loads a new one,
+  // so a decoupled sample still shows the molfile it has.
+  molfileDraft() {
+    const { smileReadonly, molfile, molfileInput } = this.state;
+    const editing = !smileReadonly && molfileInput !== null;
+    const problem = editing ? molfileProblem(molfileInput) : null;
+    return {
+      editing,
+      problem,
+      shownMolfile: (editing ? molfileInput : molfile) || '',
+      invalid: Boolean(problem) && molfileInput.trim() !== '',
+    };
+  }
+
+  moleculeMolfile() {
+    const { smileReadonly, loadingMolecule } = this.state;
+    const {
+      editing, problem, shownMolfile, invalid
+    } = this.molfileDraft();
     return (
-      <InputGroup className="mb-3">
+      <InputGroup className="mb-3" hasValidation>
         <InputGroup.Text>Molfile</InputGroup.Text>
         <Form.Control
           as="textarea"
           rows={5}
-          value={this.state.molfile}
-          disabled
-          readOnly
+          placeholder={smileReadonly ? '' : 'Paste a molfile here and save to create the structure'}
+          value={shownMolfile}
+          disabled={smileReadonly}
+          readOnly={smileReadonly}
+          isInvalid={invalid}
+          onChange={(e) => this.handleMolfileInput(e.target.value, 'What you pasted')}
         />
         <CopyButton
-          text={sample.molfile || ''}
+          text={shownMolfile}
           placement="bottom"
           variant="light"
           tooltipId="copy_molfile"
+          disabled={!shownMolfile}
         />
         <Button
           variant="light"
@@ -1299,6 +1413,39 @@ export default class SampleDetails extends React.Component {
         >
           <i className="fa fa-file-text" />
         </Button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="molfile_upload_button">load a .mol / .sdf file</Tooltip>}
+        >
+          <Button
+            variant="light"
+            id="molfile-upload"
+            disabled={smileReadonly}
+            onClick={() => this.molfileFileInput.current?.click()}
+          >
+            <i className="fa fa-upload" />
+          </Button>
+        </OverlayTrigger>
+        <Form.Control
+          type="file"
+          ref={this.molfileFileInput}
+          className="d-none"
+          accept=".mol,.molfile,.sdf"
+          onChange={this.handleMolfileUpload}
+        />
+        <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
+          <Button
+            variant="light"
+            id="molfile-create-molecule"
+            disabled={smileReadonly || loadingMolecule || !editing || Boolean(problem)}
+            onClick={this.handleMoleculeByMolfile}
+          >
+            <i className="fa fa-save" />
+          </Button>
+        </OverlayTrigger>
+        <Form.Control.Feedback type="invalid">
+          {`This is not a usable molfile: ${problem}.`}
+        </Form.Control.Feedback>
       </InputGroup>
     );
   }
@@ -1440,7 +1587,7 @@ export default class SampleDetails extends React.Component {
       .then((result) => {
         sample.molecule = result;
         sample.molecule_id = result.id;
-        if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+        if (result.inchikey === 'DUMMY' || result.inchikey === 'DECOUPLED') { sample.decoupled = true; }
         this.setState({
           sample, pageMessage: result.ob_log
         });
@@ -1476,7 +1623,10 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
-    const { molfile, showMolfileModal } = this.state;
+    const { showMolfileModal, smileReadonly, loadingMolecule } = this.state;
+    const {
+      editing, problem, shownMolfile, invalid
+    } = this.molfileDraft();
 
     return (
       <AppModal
@@ -1486,15 +1636,24 @@ export default class SampleDetails extends React.Component {
         onHide={this.handleMolfileClose}
         closeLabel="Close"
         showFooter
+        primaryActionLabel={smileReadonly ? undefined : 'Save'}
+        onPrimaryAction={smileReadonly ? undefined : this.handleMoleculeByMolfile}
+        primaryActionDisabled={loadingMolecule || !editing || Boolean(problem)}
       >
         <Form.Group controlId="molfileInputModal">
           <Form.Control
             as="textarea"
-            rows={30}
-            readOnly
-            disabled
-            value={molfile}
+            rows={18}
+            placeholder={smileReadonly ? '' : 'Paste a molfile here and save to create the structure'}
+            readOnly={smileReadonly}
+            disabled={smileReadonly}
+            value={shownMolfile}
+            isInvalid={invalid}
+            onChange={(e) => this.handleMolfileInput(e.target.value, 'What you pasted')}
           />
+          <Form.Control.Feedback type="invalid">
+            {`This is not a usable molfile: ${problem}.`}
+          </Form.Control.Feedback>
         </Form.Group>
       </AppModal>
     );
