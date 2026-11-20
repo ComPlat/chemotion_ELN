@@ -14,6 +14,7 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import { formatDate, convertCalendarNotificationToLocal } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
@@ -206,6 +207,17 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
             n.content.eventable_id
           );
           break;
+        case 'ElementActions.fetchSampleById': {
+          // Sent by ExtractSdsJob when it writes new safety data. Refetched only
+          // while that sample is the open element, since the fetch makes it the
+          // current element and would otherwise navigate the user away.
+          const notifiedSampleId = parseInt(n.content.sample_id, 10);
+          const { currentElement } = ElementStore.getState();
+          if (currentElement?.type === 'sample' && currentElement.id === notifiedSampleId) {
+            ElementActions.fetchSampleById(notifiedSampleId);
+          }
+          break;
+        }
         case 'RefreshSampleList':
           refreshOpenCollectionSamples();
           break;
