@@ -92,10 +92,13 @@ module Chemotion
         requires :id, type: Integer
         optional :label, type: String
         optional :tabs_segment, type: Hash
+        optional :list_layout, type: Hash
       end
       put '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
-        attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
+        attributes = {
+          label: params[:label], tabs_segment: params[:tabs_segment], list_layout: params[:list_layout]
+        }.compact
 
         # A locked collection is not fully immutable: LockedCollectionGuard fixes only
         # LOCKED_IMMUTABLE_ATTRIBUTES, deliberately leaving tabs_segment editable so the tab layout of

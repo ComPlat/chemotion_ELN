@@ -239,6 +239,23 @@ describe Chemotion::CollectionAPI do
         expect(response).to have_http_status(:ok)
         expect(own_collection.reload.label).to eq 'New label'
       end
+
+      it 'saves the list layout and returns it' do
+        put "/api/v1/collections/#{own_collection.id}",
+            params: { list_layout: { sample: 1, reaction: -1 } }, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(own_collection.reload.list_layout).to eq('sample' => 1, 'reaction' => -1)
+        expect(parsed_json_response.dig('collection', 'list_layout')).to eq('sample' => 1, 'reaction' => -1)
+      end
+
+      it 'keeps the list layout when only the tab segments change' do
+        own_collection.update!(list_layout: { 'sample' => 1 })
+        put "/api/v1/collections/#{own_collection.id}",
+            params: { tabs_segment: { sample: { analyses: 1 } } }, as: :json
+
+        expect(own_collection.reload.list_layout).to eq('sample' => 1)
+      end
     end
 
     context 'when the collection is locked' do
