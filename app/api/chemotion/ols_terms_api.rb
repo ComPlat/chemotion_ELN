@@ -15,14 +15,21 @@ module Chemotion
           'ontologies',
           "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}",
         )
-        unless File.exist?(file)
+        result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
+        empty_tree = result&.fetch('ols_terms', [])&.all? do |node|
+          node['title'] == OlsTerm::NODE_RECENTLY_SELECTED[:title]
+        end
+        # An empty export made before import must not mask the bundled vocabulary.
+        # Imported vocabularies can intentionally have every term disabled.
+        if result.nil? || (empty_tree && !OlsTerm.exists?(owl_name: params[:name]))
           file = Rails.public_path.join(
             'ontologies_default',
             "#{params[:name]}#{params[:edited] ? '.default.edited.json' : '.default.json'}",
           )
+          result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
         end
-        result = JSON.parse(File.read(file, encoding: 'bom|utf-8')) if File.exist?(file)
-        if params[:edited]
+        result ||= { 'ols_terms' => [] }
+        if params[:edited] && result['ols_terms'].present?
           recent_term_ids = current_user.profile&.data&.fetch(params[:name], nil)
           result['ols_terms'][0]['children'] = recent_term_ids if recent_term_ids.present?
         end

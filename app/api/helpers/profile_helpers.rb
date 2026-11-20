@@ -2,7 +2,7 @@ module ProfileHelpers
     extend Grape::API::Helpers
     def recent_ols_term_update(name, ols_values, max=10)
       return if ols_values&.length == 0
-      return unless %w[chmo rxno].include?(name)
+      return unless %w[chmo rxno bao].include?(name)
       ols_values.each do |ols_value|
         next if ols_value.nil?
         ols_value =~ /(\w+\:?\d+) \| ([^()]*)(\((.*)\))?/
@@ -16,15 +16,18 @@ module ProfileHelpers
           'value' => ' ' + ols_value
         }
         next unless term['term_id']
+        # Analysis callers use the shared CHMO selector for both ontologies.
+        ontology_name = name == 'chmo' && term['term_id'].start_with?('BAO:') ? 'bao' : name
+        term['owl_name'] = ontology_name
         profile = current_user.profile
         data = profile.data || {}
-        list = data[name]
+        list = data[ontology_name]
         if list.present?
-          return if (list.find{ |t|  t['term_id'] == term['term_id'] })
+          next if (list.find{ |t|  t['term_id'] == term['term_id'] })
           list.unshift(term)
-          data[name.to_sym] = list.first(max)
+          data[ontology_name] = list.first(max)
         else
-          data[name.to_sym] =  [term]
+          data[ontology_name] =  [term]
         end
         current_user.profile.update!(**{ data: data })
       end

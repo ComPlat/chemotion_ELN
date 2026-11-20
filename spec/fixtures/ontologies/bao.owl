@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:obo="http://purl.obolibrary.org/obo/"
+         xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#">
+  <owl:Ontology rdf:about="http://www.bioassayontology.org/bao/bao_complete.owl">
+    <owl:versionInfo>test fixture</owl:versionInfo>
+  </owl:Ontology>
+  <owl:Class rdf:about="http://www.bioassayontology.org/bao#BAO_0002753">
+    <rdfs:label>assay method component</rdfs:label>
+    <obo:IAO_0000115>A method component of an assay.</obo:IAO_0000115>
+    <oboInOwl:hasExactSynonym>method component</oboInOwl:hasExactSynonym>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.bioassayontology.org/bao#BAO_0000001">
+    <rdfs:label>bioassay</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.bioassayontology.org/bao#BAO_0002753"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.bioassayontology.org/bao#BAO_0000002">
+    <rdfs:label>test assay</rdfs:label>
+    <rdfs:subClassOf>
+      <owl:Restriction><owl:someValuesFrom rdf:resource="http://www.bioassayontology.org/bao#BAO_0002753"/></owl:Restriction>
+    </rdfs:subClassOf>
+    <rdfs:subClassOf rdf:resource="http://www.bioassayontology.org/bao#BAO_0000001"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.bioassayontology.org/bao#BAO_9999999">
+    <rdfs:label>obsolete assay</rdfs:label>
+    <owl:deprecated>true</owl:deprecated>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.bioassayontology.org/bao#BAO_9999998"/>
+</rdf:RDF>

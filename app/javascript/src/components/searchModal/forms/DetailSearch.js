@@ -12,6 +12,7 @@ import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { deviceDescriptionSelectOptions } from 'src/apps/mydb/elements/details/deviceDescriptions/SelectOptions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { combineOntologyTrees, removeOntologyTreeId } from 'src/utilities/OntologyHelpers';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -26,7 +27,7 @@ const DetailSearch = () => {
   fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(selection.table)
     ? SelectFieldData[selection.table]
     : fieldOptions;
-  const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
+  const { rxnos, chmos, bao, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
   const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
   const currentCollection = UIStore.getState().currentCollection;
   const tabSegment = currentCollection?.tabs_segment;
@@ -469,7 +470,7 @@ const DetailSearch = () => {
   };
 
   const rxnoChmosInput = (option, type, selectedValue, column) => {
-    let options = type == 'chmos' ? chmos : rxnos;
+    let options = type == 'chmos' ? combineOntologyTrees(chmos, bao) : rxnos;
     return (
       <Form.Group key={`${option.column}-${option.label}-${type}`}>
         {labelWithInfo(option)}
@@ -481,7 +482,7 @@ const DetailSearch = () => {
           placeholder="Select type"
           dropdownStyle={{ maxHeight: '250px', zIndex: '800000' }}
           allowClear
-          onChange={handleFieldChanged(option, column, type)}
+          onChange={(value) => handleFieldChanged(option, column, type)(removeOntologyTreeId(value || ''))}
           filterTreeNode={filterTreeNode}
         />
       </Form.Group>

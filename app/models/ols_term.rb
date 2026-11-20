@@ -72,7 +72,7 @@ class OlsTerm < ApplicationRecord
     def import_and_create_ols_from_file_path(owl_name, file_path)
       xml_doc = Nokogiri::XML(File.open(file_path)).to_xml
       json_doc = Hash.from_xml(xml_doc).as_json
-      all_terms = json_doc['RDF']['Class']
+      all_terms = Array.wrap(json_doc['RDF']['Class'])
       version_info = json_doc['RDF']['Ontology']
       all_terms.each_slice(100) do |nodes|
         create_from_owl_nodes(nodes, owl_name, version_info: version_info)
@@ -86,9 +86,13 @@ class OlsTerm < ApplicationRecord
       created_at = Time.now
 
       # compile sanitized values
-      nodes.select{|node| node['id'].present? && node['deprecated'] != 'true' }.each do |node|
+      nodes.each do |node|
+        term_id = node['id'].presence || term_id_from_iri(node['rdf:about'])
+        next if term_id.blank? || node['label'].blank? || node['deprecated'] == 'true'
+
         subClassTermId = extract_subclass_term_id_from_node(node)
 
+        synonym = synonyms = nil
         if (synonyms = node['hasExactSynonym'].presence)
           if synonyms.is_a?(String)
             synonym = synonyms
@@ -101,7 +105,7 @@ class OlsTerm < ApplicationRecord
         # to correspond in order to SQL_BULK_INSERT listed columns
         value = [
           owl_name,
-          node['id'],
+          term_id,
           subClassTermId,
           node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
           synonym,
@@ -177,18 +181,18 @@ class OlsTerm < ApplicationRecord
     end
 
     def extract_subclass_term_id_from_node(node)
-      return nil unless node['subClassOf'].present?
-      if (node['subClassOf'].length > 1)
-        subClass = node['subClassOf'][0]["rdf:resource"]
-      else
-        subClass = node['subClassOf']["rdf:resource"]
-      end
+      parents = Array.wrap(node['subClassOf'])
+      subClass = parents.find { |parent| parent['rdf:resource'].present? }&.fetch('rdf:resource')
 
       ## special case: RXNO:0000024
       if subClass.nil? && (sc = node.dig('equivalentClass', 'Class', 'intersectionOf', 'Description', 'rdf:about'))
         subClass = sc
       end
-      subClass.split('/').last.gsub('_',':') unless subClass.nil?
+      term_id_from_iri(subClass)
+    end
+
+    def term_id_from_iri(iri)
+      iri.to_s.split(/[\/#]/).last&.tr('_', ':')
     end
   end
 end

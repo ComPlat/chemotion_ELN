@@ -285,7 +285,7 @@ ContainerComponent.propTypes = {
 
 ContainerComponent.defaultProps = {
   ontologyName: 'chmo',
-  analysisMethodTitle: 'Type (Chemical Methods Ontology)',
+  analysisMethodTitle: 'Type (Chemical Methods / BioAssay Ontology)',
   templateType: '',
   readOnly: false,
   disabled: false,
