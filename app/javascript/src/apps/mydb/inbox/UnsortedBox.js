@@ -158,8 +158,6 @@ export default class UnsortedBox extends React.Component {
 
     if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
       InboxActions.prevClick();
-    } else {
-      InboxActions.fetchInboxUnsorted();
     }
     checkedIds.length = 0;
     this.toggleTooltip();

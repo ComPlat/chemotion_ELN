@@ -3,6 +3,7 @@ import alt from 'src/stores/alt/alt';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import ContainerActions from 'src/stores/alt/actions/ContainerActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -36,6 +37,7 @@ class InboxStore {
       handleShowInboxModal: InboxActions.showInboxModal,
       handleFetchInbox: InboxActions.fetchInbox,
       handleFetchInboxCount: InboxActions.fetchInboxCount,
+      handleRefreshInboxCounts: InboxActions.refreshInboxCounts,
       handleFetchInboxContainer: InboxActions.fetchInboxContainer,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
       handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
@@ -65,6 +67,7 @@ class InboxStore {
         ElementActions.createScreen,
         ElementActions.updateScreen,
       ],
+      handleUpdateContainer: ContainerActions.updateContainerWithFiles,
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
       handleDeleteElement: ElementActions.deleteElementsByUIState,
@@ -92,13 +95,13 @@ class InboxStore {
   }
 
   handleFetchInbox(payload) {
-    const { itemsPerPage, currentDeviceBoxPage } = this.state;
+    const { itemsPerPage, currentContainerPage } = this.state;
     this.state.inbox = payload.inbox;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
-    this.state.activeDeviceBoxId = payload.activeDeviceBoxId ? payload.activeDeviceBoxId : null;
+    this.state.activeDeviceBoxId = payload.activeDeviceBoxId ?? null;
 
-    if (this.state.activeDeviceBoxId) {
-      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, currentDeviceBoxPage);
+    if (this.state.activeDeviceBoxId > 0) {
+      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, currentContainerPage);
     }
 
     this.sync();
@@ -106,14 +109,20 @@ class InboxStore {
   }
 
   handleFetchInboxUnsorted(payload) {
+    this.handleRefreshInboxCounts(payload);
+    this.setState({ currentUnsortedBoxPage: 1 });
+  }
+
+  handleRefreshInboxCounts(payload) {
     this.setState((prevState) => ({
       inbox: {
         ...prevState.inbox,
         unlinked_attachments: payload.unlinked_attachments,
         inbox_count: payload.inbox_count,
       },
-      currentUnsortedBoxPage: 1,
     }));
+    this.sync();
+    this.countAttachments();
   }
 
   handleChangeInboxFilter(filter) {
@@ -134,7 +143,12 @@ class InboxStore {
   }
 
   handleFetchInboxCount(result) {
-    this.state.numberOfAttachments = result.inbox_count;
+    const { inbox, cache } = this.state;
+    if (Array.isArray(inbox.unlinked_attachments)) {
+      const pendingUnlinked = cache.filter((attachment) => attachment.attachable_id == null).length;
+      inbox.inbox_count = result.inbox_count - inbox.unlinked_attachments.length - pendingUnlinked;
+    }
+    this.state.numberOfAttachments = result.inbox_count - cache.length;
   }
 
   handleFetchInboxContainer(payload) {
@@ -153,7 +167,8 @@ class InboxStore {
     this.setState((prevState) => ({
       inbox: {
         ...prevState.inbox,
-        inbox_count: payload.inbox.inbox_count,
+        // Container responses include their unlinked attachments in inbox_count.
+        inbox_count: payload.inbox.inbox_count - (payload.inbox.unlinked_attachments || []).length,
         children: updatedChildren,
       },
       currentContainerPage: payload.currentContainerPage,
@@ -164,19 +179,23 @@ class InboxStore {
     this.countAttachments();
   }
 
-  handleRemoveAttachmentFromList(attachment) {
+  handleRemoveAttachmentFromList({ attachment, persisted }) {
     const { inbox } = this.state;
 
     inbox.children.forEach((deviceBox) => {
       deviceBox.children.forEach((dataset) => {
-        const index = dataset.attachments.indexOf(attachment);
+        const index = dataset.attachments.findIndex((item) => item.id === attachment.id);
         if (index !== -1) {
           dataset.attachments.splice(index, 1);
-          this.state.cache.push(attachment);
+          if (persisted) {
+            inbox.inbox_count -= 1;
+          } else {
+            this.state.cache.push(attachment);
+          }
         }
       });
     });
-    this.setState(inbox);
+    this.setState({ inbox });
     this.countAttachments();
   }
 
@@ -196,33 +215,33 @@ class InboxStore {
     }));
   };
 
-  handleRemoveUnlinkedAttachmentFromList(attachment) {
+  handleRemoveUnlinkedAttachmentFromList({ attachment, persisted }) {
     const { inbox } = this.state;
 
-    const index = inbox.unlinked_attachments.indexOf(attachment);
+    const index = inbox.unlinked_attachments.findIndex((item) => item.id === attachment.id);
     if (index !== -1) {
       inbox.unlinked_attachments.splice(index, 1);
-      this.state.cache.push(attachment);
+      if (!persisted) {
+        this.state.cache.push(attachment);
+      }
     }
 
-    this.setState(inbox);
+    this.setState({ inbox });
     this.countAttachments();
   }
 
   handleRemoveDatasetFromList(dataset) {
-    let inbox = this.state.inbox;
+    const { inbox, cache } = this.state;
 
-    inbox.children.forEach(device_box => {
-      var index = device_box.children.indexOf(dataset)
-      if (index != -1) {
-        device_box.children[index].attachments.forEach(attachment => {
-          this.state.cache.push(attachment)
-        })
-        device_box.children[index].attachments = []
+    inbox.children.forEach((deviceBox) => {
+      const index = deviceBox.children.findIndex((item) => item.id === dataset.id);
+      if (index !== -1) {
+        cache.push(...deviceBox.children[index].attachments);
+        deviceBox.children[index].attachments = [];
       }
-    })
+    });
 
-    this.setState(inbox)
+    this.setState({ inbox });
     this.countAttachments();
   }
 
@@ -242,16 +261,18 @@ class InboxStore {
       });
       this.countAttachments();
     } else {
-      const { activeDeviceBoxId, currentContainerPage } = this.state;
-
-      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
+      this.removeDeletedAttachments([payload.result.id]);
+      InboxActions.refreshInboxCounts();
     }
   }
 
   handleBulkDeleteAttachment(payload) {
+    const deletedAttachments = payload?.result?.deleted_attachments;
+    if (!Array.isArray(deletedAttachments)) return;
+
+    const deletedIds = deletedAttachments.map((attachment) => attachment.id);
     if (payload?.fromUnsorted) {
       const { inbox } = this.state;
-      const deletedIds = payload?.attachmentIdsToDelete || [];
 
       const updatedAttachments = inbox.unlinked_attachments.filter(
         (attachment) => !deletedIds.includes(attachment.id)
@@ -265,9 +286,8 @@ class InboxStore {
       });
       this.countAttachments();
     } else {
-      const { activeDeviceBoxId, currentContainerPage } = this.state;
-
-      InboxActions.fetchInboxContainer(activeDeviceBoxId, currentContainerPage);
+      this.removeDeletedAttachments(deletedIds);
+      InboxActions.refreshInboxCounts();
     }
   }
 
@@ -277,7 +297,7 @@ class InboxStore {
   }
 
   handleDeleteContainer(result) {
-    const { inbox, activeDeviceBoxId, currentContainerPage } = this.state;
+    const { inbox, activeDeviceBoxId } = this.state;
 
     const parentIndex = inbox.children.findIndex((inboxItem) => inboxItem.id === result.id);
 
@@ -290,6 +310,9 @@ class InboxStore {
         if (parent.children && parent.children.length > 0) {
           const newParent = { ...parent };
           newParent.children = parent.children.filter((child) => child.id !== result.id);
+          if (Number.isFinite(parent.children_count)) {
+            newParent.children_count -= parent.children.length - newParent.children.length;
+          }
           return newParent;
         }
         return parent;
@@ -298,6 +321,36 @@ class InboxStore {
       const updatedInbox = { ...inbox, children: updatedChildren };
       this.setState({ inbox: updatedInbox });
     }
+
+    if (activeDeviceBoxId === result.id) {
+      this.setState({ activeDeviceBoxId: null });
+    }
+    if (parentIndex >= 0) {
+      const { currentPage, itemsPerPage, activeDeviceBoxId: selectedDeviceBoxId } = this.state;
+      InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId: selectedDeviceBoxId });
+    } else {
+      InboxActions.refreshInboxCounts();
+    }
+  }
+
+  removeDeletedAttachments(attachmentIds) {
+    if (attachmentIds.length === 0) return;
+
+    const { inbox } = this.state;
+    const deletedIds = new Set(attachmentIds);
+    let removedCount = 0;
+    (inbox.children || []).forEach((deviceBox) => {
+      (deviceBox.children || []).forEach((dataset) => {
+        dataset.attachments = (dataset.attachments || []).filter((attachment) => {
+          if (!deletedIds.has(attachment.id)) return true;
+          removedCount += 1;
+          return false;
+        });
+      });
+    });
+    inbox.inbox_count -= removedCount;
+    this.setState({ inbox });
+    this.countAttachments();
   }
 
   handleBackToInbox(attachment) {
@@ -332,15 +385,20 @@ class InboxStore {
   }
 
   handleUpdateCreateElementDict({ element, closeView }) {
-    this.handleUpdateCreateElement(element);
+    this.handleUpdateContainer(element?.container);
+  }
+
+  handleUpdateContainer(container) {
+    if (!Array.isArray(container?.children)) return;
+
+    this.updateCache(this.getAttachments(container.children, []));
+    const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
+    InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
   }
 
   handleUpdateCreateElement(element) {
     if (element && element.isEdited && element.container) {
-      const all_attachments = this.getAttachments(element.container.children, [])
-      this.updateCache(all_attachments);
-      const { currentPage, itemsPerPage } = this.state;
-      InboxActions.fetchInbox({ currentPage, itemsPerPage });
+      this.handleUpdateContainer(element.container);
     }
   }
 
@@ -377,21 +435,25 @@ class InboxStore {
   }
 
   sync() {
-    let inbox = this.state.inbox
+    const { inbox, cache } = this.state;
 
-    inbox.children.forEach(device_box => {
-      device_box.children.forEach(dataset => {
-        dataset.attachments = _.differenceBy(dataset.attachments, this.state.cache, 'id')
-      })
-    })
-    inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, this.state.cache, 'id')
+    (inbox.children || []).forEach((deviceBox) => {
+      (deviceBox.children || []).forEach((dataset) => {
+        dataset.attachments = _.differenceBy(dataset.attachments, cache, 'id');
+      });
+    });
+    inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, cache, 'id');
 
-    this.setState(inbox)
+    this.setState({ inbox });
   }
 
   countAttachments() {
-    const { inbox } = this.state;
-    this.state.numberOfAttachments = inbox.inbox_count + inbox.unlinked_attachments.length;
+    const { inbox, cache } = this.state;
+    // The server's linked count still includes files assigned in an unsaved analysis,
+    // including files from inbox pages that are no longer loaded. Unsorted files
+    // have already been removed from unlinked_attachments by sync/removal.
+    const pendingLinkedCount = cache.filter((attachment) => attachment.attachable_id != null).length;
+    this.state.numberOfAttachments = inbox.inbox_count - pendingLinkedCount + inbox.unlinked_attachments.length;
   }
 
   handleCheckedAll(params) {

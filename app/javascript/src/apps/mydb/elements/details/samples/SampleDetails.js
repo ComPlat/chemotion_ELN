@@ -425,7 +425,6 @@ export default class SampleDetails extends React.Component {
 
   handleSubmit(closeView = false) {
     const { currentCollection } = UIStore.getState();
-    LoadingActions.start.defer();
     const { sample, validCas } = this.state;
     if (this.matchSelectedCollection(currentCollection) && sample.inventory_label !== undefined) {
       sample.collection_id = currentCollection.id;
@@ -438,6 +437,7 @@ export default class SampleDetails extends React.Component {
     if (!rangeCheck('boiling_point', sample, this.context.notifications)) return;
     if (!rangeCheck('melting_point', sample, this.context.notifications)) return;
 
+    LoadingActions.start();
     // Prepare mixture samples for saving using Sample.js method
     sample.prepareMixtureForSave();
 
@@ -460,10 +460,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.updateSample(new Sample(sample), closeView);
     }
 
-    if (sample.is_new || closeView) {
+    if (sample.is_new) {
       DetailActions.close(sample, true);
     }
-    sample.updateChecksum();
     this.setState({ validCas: true, trackMolfile: sample.molfile });
   }
 
@@ -560,7 +559,7 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  saveSampleOrChemical() {
+  saveSampleOrChemical(closeView = false) {
     const { sample, isChemicalEdited } = this.state;
     const needChemicalSave = isChemicalEdited && !sample.isNew;
     const needChemicalCreate = isChemicalEdited && sample.isNew;
@@ -575,11 +574,13 @@ export default class SampleDetails extends React.Component {
 
       // When chemical also needs saving on an existing sample, don't close on
       // the sample save so ChemicalTab stays mounted to receive saveInventoryAction.
-      this.handleSubmit(needChemicalSave ? false : undefined);
+      this.handleSubmit(needChemicalSave ? false : closeView);
     }
 
     if (needChemicalSave) {
-      this.setState({ saveInventoryAction: true });
+      this.setState({ saveInventoryAction: true, closeAfterInventorySave: closeView });
+    } else if (closeView && !sample.isPendingToSave) {
+      DetailActions.close(sample, true);
     }
   }
 
@@ -1599,6 +1600,7 @@ export default class SampleDetails extends React.Component {
         titleAppendixLeading={sampleTitleAppendixLeading(sample)}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrChemical()}
+        onSaveClose={() => this.saveSampleOrChemical(true)}
         saveDisabled={saveDisabled}
         showPrintCode
         showCalendar

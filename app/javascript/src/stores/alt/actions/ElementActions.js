@@ -361,16 +361,20 @@ class ElementActions {
   }
 
   updateSample(params, closeView = false) {
-    return (dispatch) => {
-      SamplesFetcher.update(params)
-        .then((result) => {
-          dispatch({ element: result, closeView, components: params.components })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-          // Ensure loading stops even on error
-          LoadingActions.stop();
+    return (dispatch) => SamplesFetcher.update(params)
+      .then((result) => {
+        dispatch({ element: result, closeView, components: params.components });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+        rootStore.notificationsStore.add({
+          title: 'Sample update failed.',
+          message: 'Your changes have been kept. Please try saving again.',
+          level: 'error',
+          position: 'tc',
         });
-    };
+        // Ensure loading stops even on error
+        LoadingActions.stop();
+      });
   }
 
   generateEmptySample(collection_id) {
