@@ -15,6 +15,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import { listFilterParams } from 'src/utilities/searchRequestParams';
@@ -54,7 +55,7 @@ const SearchResult = ({ handleClear }) => {
     if (!profile?.data) return [];
 
     const visible = [];
-    Object.entries(profile.data.layout).filter((value) => value[1] > 0)
+    Object.entries(listLayoutFor(currentCollection, profile.data.layout)).filter((value) => value[1] > 0)
       .sort((a, b) => a[1] - b[1])
       .forEach((value, i) => {
         const tab = results.find((val) => val.id.indexOf(value[0]) !== -1);
@@ -64,7 +65,7 @@ const SearchResult = ({ handleClear }) => {
         }
       });
     return visible;
-  }, [results]);
+  }, [results, currentCollection]);
 
   useEffect(() => {
     if (visibleTabs.length === 0) return;

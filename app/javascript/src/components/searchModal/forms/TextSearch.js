@@ -6,6 +6,8 @@ import {
 } from './SearchModalFunctions';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import DetailSearch from './DetailSearch';
@@ -63,7 +65,7 @@ const TextSearch = () => {
   }
 
   const SelectSearchTable = () => {
-    const layout = UserStore.getState().profile.data.layout;
+    const layout = listLayoutFor(UIStore.getState().currentCollection, UserStore.getState().profile.data.layout);
 
     const buttons = Object.entries(layout).filter((value) => {
       return value[1] > 0

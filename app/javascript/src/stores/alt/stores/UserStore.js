@@ -85,10 +85,7 @@ class UserStore {
     }
   }
 
-  handleSelectTab(tab) {
-    const { layout } = this.state.profile.data;
-    const type = Object.keys(layout).filter((e) => layout[e] === tab + 1)[0];
-
+  handleSelectTab({ tab, type }) {
     this.state.currentTab = tab;
     this.state.currentType = type;
   }

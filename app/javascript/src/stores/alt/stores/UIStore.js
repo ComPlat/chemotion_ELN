@@ -8,6 +8,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { allElnElements } from 'src/apps/generic/Utils';
 import { listFilterParams, byIdsModelParams } from 'src/utilities/searchRequestParams';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -379,7 +380,7 @@ class UIStore {
       }
 
       if (profile && profile.data && profile.data.layout) {
-        const { layout } = profile.data;
+        const layout = listLayoutFor(collection, profile.data.layout);
 
         if (state.currentSearchByID) {
           this.handleSelectCollectionForSearchById(layout, collection);

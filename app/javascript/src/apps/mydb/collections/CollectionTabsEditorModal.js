@@ -6,8 +6,12 @@ import AppModal from 'src/components/common/AppModal';
 import CollectionTabLayoutEditor from 'src/apps/mydb/collections/CollectionTabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout, TAB_DISPLAY_NAMES } from 'src/utilities/CollectionTabsHelper';
+import { parseLayout, listLayoutFor, getVisibleAndHiddenFromLayout } from 'src/utilities/ListLayoutHelper';
 import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -55,18 +59,8 @@ function emptyLayoutsFor(elements) {
   }, {});
 }
 
-function parseTabsSegment(tabsSegment) {
-  if (typeof tabsSegment !== 'string') return tabsSegment || {};
-  try {
-    return JSON.parse(tabsSegment) || {};
-  } catch (e) {
-    // Malformed/legacy data must not break the whole editor; fall back to defaults.
-    return {};
-  }
-}
-
 function layoutsForCollection(collection, allElements, profileData) {
-  const tabsSegment = parseTabsSegment(collection.tabs_segment);
+  const tabsSegment = parseLayout(collection.tabs_segment);
 
   return allElements.reduce((acc, { name }) => {
     // Read the per-type profile default with the same `layout_detail_<name>` key
@@ -94,12 +88,17 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
   const allElements = useMemo(() => buildElementList(), []);
   const [layouts, setLayouts] = useState(() => emptyLayoutsFor(allElements));
   const [selectedCategory, setSelectedCategory] = useState('sample');
+  const [elementTabs, setElementTabs] = useState({ visible: List(), hidden: List() });
+  const [initialElementTabs, setInitialElementTabs] = useState(elementTabs);
 
   useEffect(() => {
     if (!show || !collection) return;
     const { profile } = UserStore.getState();
     const profileData = (profile && profile.data) || {};
     setLayouts(layoutsForCollection(collection, allElements, profileData));
+    const tabs = getVisibleAndHiddenFromLayout(listLayoutFor(collection, profileData.layout));
+    setElementTabs(tabs);
+    setInitialElementTabs(tabs);
     setSelectedCategory('sample');
   }, [show, collection, allElements]);
 
@@ -108,17 +107,26 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
       acc[name] = filterTabLayout(layouts[name]);
       return acc;
     }, {});
+    const elementTabsChanged = !elementTabs.visible.equals(initialElementTabs.visible)
+      || !elementTabs.hidden.equals(initialElementTabs.hidden);
+    const listLayout = elementTabsChanged ? filterTabLayout(elementTabs) : undefined;
+    const isAllCollection = collectionsStore.isAllCollectionId(collection.id);
 
     // "All" has no per-collection layout: ElementDetailSortTab reads the profile default for it
     // (refreshTabLayout nulls collectionTabs there) and its own editor skips the collection write
     // for the same reason. Persisting a tabs_segment nothing reads would look like it took effect.
     // Editing "All"'s tabs is editing the default layout, which is what the profile write below does.
-    if (!collectionsStore.isAllCollectionId(collection.id)) {
+    if (!isAllCollection) {
       // Keep the profile defaults and the modal open on a rejected save — updateCollection reports
       // the failure, and closing over it would leave the user told it failed while the global
       // default had moved anyway.
-      const saved = await collectionsStore.updateCollection(collection, layoutSegments);
+      const saved = await collectionsStore.updateCollection(collection, layoutSegments, listLayout);
       if (!saved) return;
+      const { currentCollection } = UIStore.getState();
+      if (elementTabsChanged && currentCollection?.id === collection.id) {
+        UIActions.selectCollectionWithoutUpdating({ ...currentCollection, list_layout: saved.list_layout });
+        ElementActions.refreshElementsAfterCollectionChanges(collection.id);
+      }
     }
 
     const userProfile = UserStore.getState().profile;
@@ -127,6 +135,7 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
     allElements.forEach(({ name }) => {
       set(userProfile, `data.layout_detail_${name}`, layoutSegments[name]);
     });
+    if (isAllCollection && listLayout) set(userProfile, 'data.layout', listLayout);
     UserActions.updateUserProfile(userProfile);
 
     onHide();
@@ -147,29 +156,27 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
     >
       <div className="d-flex h-100">
         <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
-          <div className="d-flex flex-column">
-            {allElements.map((element) => {
-              const { name, label } = element;
-              const isActive = selectedCategory === name;
-              const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active' : ''}`;
+          <p className="text-muted small mb-2">
+            Element tabs shown in this collection&apos;s list. Click a name to edit its detail tabs.
+          </p>
+          <CollectionTabLayoutEditor
+            visible={elementTabs.visible}
+            hidden={elementTabs.hidden}
+            onLayoutChange={(visible, hidden) => setElementTabs({ visible, hidden })}
+            getItemComponent={({ item }) => {
+              const element = allElements.find(({ name }) => name === item);
               return (
                 <button
-                  key={name}
                   type="button"
-                  className={btnClass}
-                  style={{
-                    border: '1px solid var(--bs-border-color)',
-                    borderRadius: '0.375rem',
-                    backgroundColor: isActive ? undefined : 'white',
-                  }}
-                  onClick={() => setSelectedCategory(name)}
+                  className={`border-0 bg-transparent text-start text-body p-0 ${selectedCategory === item ? 'fw-bold' : ''}`}
+                  onClick={() => setSelectedCategory(item)}
                 >
-                  <ElementIcon element={element} className="me-1" />
-                  {label}
+                  {element && <ElementIcon element={element} className="me-1" />}
+                  {element ? element.label : capitalizeWords(item)}
                 </button>
               );
-            })}
-          </div>
+            }}
+          />
         </div>
 
         <div className="flex-grow-1 p-4" style={{ overflowY: 'auto' }}>

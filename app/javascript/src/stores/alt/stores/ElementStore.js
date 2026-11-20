@@ -32,6 +32,7 @@ import GenericEl from 'src/models/GenericEl';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 
 const fetchOls = (elementType) => {
   switch (elementType) {
@@ -372,7 +373,7 @@ class ElementStore {
     } else {
       const { profile } = UserStore.getState();
       if (profile && profile.data && profile.data.layout) {
-        const { layout } = profile.data;
+        const layout = listLayoutFor(currentCollection, profile.data.layout);
 
         if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
         if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }

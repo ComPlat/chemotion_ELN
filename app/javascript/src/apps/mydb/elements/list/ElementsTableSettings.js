@@ -6,10 +6,12 @@ import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function TabItem({ item }) {
   const { genericEls = [] } = UserStore.getState();
@@ -33,6 +35,8 @@ function TabItem({ item }) {
 };
 
 export default class ElementsTableSettings extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
 
@@ -179,9 +183,24 @@ export default class ElementsTableSettings extends React.Component {
       layout[value] = (- index - 1);
     });
 
+    const { currentCollection } = UIStore.getState();
+    const { collections } = this.context;
+    const collectionId = currentCollection?.id;
+    const savesToCollection = collections.isOwnCollection(collectionId)
+      && !collections.isAllCollectionId(collectionId);
+    const tabsChanged = !visible.equals(this.props.visible) || !hidden.equals(this.props.hidden);
+
+    if (savesToCollection && tabsChanged) {
+      collections.updateCollection(currentCollection, undefined, layout).then((saved) => {
+        if (!saved || UIStore.getState().currentCollection?.id !== collectionId) return;
+        UIActions.selectCollectionWithoutUpdating({ ...currentCollection, list_layout: saved.list_layout });
+        ElementActions.refreshElementsAfterCollectionChanges(collectionId);
+      });
+    }
+
     UserActions.updateUserProfile({
       ...userProfile,
-      data: { ...(userProfile.data || {}), layout },
+      data: savesToCollection ? userProfile.data : { ...(userProfile.data || {}), layout },
       show_external_name: showSampleExternalLabel,
       show_sample_short_label: showSampleShortLabel,
       show_sample_name: showSampleName,

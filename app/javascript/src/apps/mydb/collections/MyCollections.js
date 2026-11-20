@@ -54,7 +54,9 @@ const MyCollections = () => {
   // The system rows are live store nodes; fetchCollections() clears the locked bucket (see
   // setOwnCollections), which would leave a node captured in React state detached from the tree.
   // Both modals only ever read these three fields, so hand them a plain snapshot instead.
-  const systemNodeSnapshot = (node) => ({ id: node.id, label: node.label, tabs_segment: node.tabs_segment });
+  const systemNodeSnapshot = (node) => ({
+    id: node.id, label: node.label, tabs_segment: node.tabs_segment, list_layout: node.list_layout,
+  });
 
   // Every other collection shares a bounded set of elements; "All" holds everything the user owns,
   // so sharing it is a different order of decision and is confirmed before the share modal opens.
