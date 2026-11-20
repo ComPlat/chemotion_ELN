@@ -27,6 +27,16 @@
 #
 # - see .dockerenv.example for environment variables usage
 #
+# RESOURCES:
+# Each service is pinned to a default CPU/memory tier (low/medium/high, defined
+# as x-common-deploy-* anchors below). These use the flat `cpus`/`mem_limit`/
+# `mem_reservation` keys rather than `deploy.resources`, since the latter's
+# `reservations` (and, depending on Compose version, `limits`) are Swarm-mode
+# semantics that a plain `docker compose up` dev stack doesn't get for free.
+# Every tier x resource combination (cpu limit, memory limit, memory
+# reservation = 9 vars) can be overridden per-value via .dockerenv — see
+# .dockerenv.example for the full list and current defaults.
+#
 
 x-common-volumes: &common-volumes
   - homedir:/home/ubuntu
@@ -42,10 +52,26 @@ x-common-build: &common-build
 x-common-image:
   - &chemotion_eln_dev ${DOCKER_DEV_IMAGE:-chemotion_eln_dev}
 
+x-common-deploy-high: &common-deploy-high
+  cpus: '${RESOURCES_HIGH_CPU_LIMIT:-4.0}'
+  mem_limit: ${RESOURCES_HIGH_MEM_LIMIT:-8G}
+  mem_reservation: ${RESOURCES_HIGH_MEM_RESERVATION:-1G}
+
+x-common-deploy-medium: &common-deploy-medium
+  cpus: '${RESOURCES_MEDIUM_CPU_LIMIT:-2.0}'
+  mem_limit: ${RESOURCES_MEDIUM_MEM_LIMIT:-4G}
+  mem_reservation: ${RESOURCES_MEDIUM_MEM_RESERVATION:-512M}
+
+x-common-deploy-low: &common-deploy-low
+  cpus: '${RESOURCES_LOW_CPU_LIMIT:-1.0}'
+  mem_limit: ${RESOURCES_LOW_MEM_LIMIT:-2G}
+  mem_reservation: ${RESOURCES_LOW_MEM_RESERVATION:-256M}
+
 services:
   setup:
     build: *common-build
     image: *chemotion_eln_dev
+    <<: *common-deploy-medium
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +87,7 @@ services:
 
   postgres:
     image: ${DOCKER_PG_IMAGE:-complat/dev:postgres16-rdkit}
+    <<: *common-deploy-high
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     expose: # expose port to app container
@@ -79,6 +106,7 @@ services:
 
   app:
     image: *chemotion_eln_dev
+    <<: *common-deploy-high
     depends_on:
       setup:
         condition: service_completed_successfully
@@ -110,6 +138,7 @@ services:
 
   webpacker:
     image: *chemotion_eln_dev
+    <<: *common-deploy-medium
     # Gate only on setup (which installs gems + node packages and prepares the
     # DB). app and webpacker then start in parallel instead of webpacker waiting
     # on app — node_modules/manifest are ready before either runtime boots.
@@ -142,6 +171,7 @@ services:
       setup:
         condition: service_completed_successfully
     image: *chemotion_eln_dev
+    <<: *common-deploy-low
     env_file:
       - .env.development
       - path: .env
