@@ -1,5 +1,64 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.4]
+> (2026-11-20)
+
+> Patch release of the v3.1 line: fixes to collections, devices, search, reports, export and mail, back-ported from main.
+
+## Upgrade notes
+
+* v3.1.3 was tagged, but no release images were published for it. v3.1.4 is the next release after v3.1.2: upgrading from v3.1.2 brings the changes listed under v3.1.3 as well.
+* From v3.1.2, one migration runs: deleted devices release their email and abbreviation, so both can be used again ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375)).
+
+## Fixes
+
+### Collections
+
+* Creating a reaction, screen, research plan, wellplate or device description while the *All* collection is selected works again ([#3612](https://github.com/ComPlat/chemotion_ELN/pull/3612)).
+
+### Devices
+
+* Saving a device without name or abbreviation returns validation errors instead of failing ([#3634](https://github.com/ComPlat/chemotion_ELN/pull/3634)).
+* Admin device editing: a failed update leaves the device's people and groups unchanged, people and groups are kept unless the request sends them, and *Clear data collector* / *Clear noVNC settings* no longer remove them ([#3651](https://github.com/ComPlat/chemotion_ELN/pull/3651)).
+
+### Search
+
+* Private Note search looks in your own notes ([#3688](https://github.com/ComPlat/chemotion_ELN/pull/3688)).
+
+### Reports and export
+
+* Docx reports with a bulleted or numbered list in a rich-text analysis are generated again ([#3638](https://github.com/ComPlat/chemotion_ELN/pull/3638)).
+* Docx export of a gas-phase reaction scheme with a blank ppm value no longer fails ([#3515](https://github.com/ComPlat/chemotion_ELN/pull/3515)).
+* XLSX export includes the CAS number of samples from shared and synced collections ([#3460](https://github.com/ComPlat/chemotion_ELN/pull/3460)).
+
+### Wellplates
+
+* The import template download is disabled until a new wellplate is saved, instead of downloading an unreadable file ([#3560](https://github.com/ComPlat/chemotion_ELN/pull/3560)).
+
+### Sign-in and profile
+
+* Intermittent errors on sign-in, when several users loaded their profile at the same time, are fixed ([#3573](https://github.com/ComPlat/chemotion_ELN/pull/3573)).
+
+### SciFinder-n
+
+* An unexpected answer from the CAS metadata endpoint disables SciFinder-n instead of stopping the ELN from starting ([#3674](https://github.com/ComPlat/chemotion_ELN/pull/3674)).
+
+### Mail
+
+* SMTP settings: a HELO domain and timeouts can be set, and values from the environment are cast to the right types, so changing a user's email no longer fails on a slow authenticated relay ([#3474](https://github.com/ComPlat/chemotion_ELN/pull/3474)).
+
+### Uploads and requests
+
+* Multipart form parts that declare a legacy single-byte charset (ISO-8859-1, Windows-1252), such as file names, are converted to UTF-8.
+
+### Workshop guide
+
+* The guide toggle stays below open dialogs and shrinks while one is open ([#3631](https://github.com/ComPlat/chemotion_ELN/pull/3631)).
+
+## Maintenance
+
+* CI: the lint job uses the latest Ruby 3.3 patch release; back-ported specs adapted to v3.x.
+
 # [v3.1.3]
 > (2026-08-11)
 
