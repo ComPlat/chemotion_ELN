@@ -20,6 +20,28 @@ module Chemotion
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
       end
 
+      desc 'Where attachments live, and how much sits on each tier'
+      get 'storage_tiers' do
+        sizes = Attachment.group(Arel.sql("attachment_data->>'storage'"))
+                          .pluck(Arel.sql("attachment_data->>'storage'"),
+                                 Arel.sql('count(*)'),
+                                 Arel.sql("sum((attachment_data->'metadata'->>'size')::bigint)"))
+                          .to_h { |key, count, bytes| [key, { count: count, bytes: bytes.to_i }] }
+
+        tiers = Shrine.storages.except(:cache).map do |key, storage|
+          usage = sizes[key.to_s] || { count: 0, bytes: 0 }
+          {
+            tier: key,
+            kind: key == :store ? 'hot' : 'cold',
+            path: storage.respond_to?(:directory) ? storage.directory.to_s : nil,
+            files: usage[:count],
+            mb: (usage[:bytes] / 1024.0 / 1024).round(1),
+          }
+        end
+
+        { tiers: tiers, problems: StorageHealth.problems(verify_files: true) }
+      end
+
       namespace :usersDefault do
         get do
           default = User.default_disk_space / 1024 / 1024

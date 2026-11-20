@@ -9,6 +9,10 @@ export default class AdminFetcher {
     return ApiClient.getJson('/api/v1/admin/disk');
   }
 
+  static fetchStorageTiers() {
+    return ApiClient.getJson('/api/v1/admin/storage_tiers');
+  }
+
   static getAllocatedUserSpace() {
     return ApiClient.getJson('/api/v1/admin/usersDefault');
   }
