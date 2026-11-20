@@ -3,41 +3,24 @@
 # [v4.0.2]
 > (2026-11-20)
 
-> Patch release of v4.0.1: a repair of reaction-sample links, a fix for upgrades from v3.x, and fixes to devices, data collection and text templates.
-
 ## Upgrade notes
 
-* Upgrading from v3.x no longer stops in `db:migrate` at `AddShortLabelToResearchPlans` when a stored user fails a user validation, such as the email domain check. Instances already past this migration are unaffected ([#3723](https://github.com/ComPlat/chemotion_ELN/pull/3723)).
-* The migration `AddUniqueIndexToReactionsSamples` repairs reaction-sample links, then adds a unique index so that a sample belongs to at most one reaction, in one role. A link taken over from another reaction goes back to it; a material listed twice in a reaction is kept once; and a sample still linked to several reactions stays with the earliest one, while every other reaction gets a new split of it, as the reaction editor does when a sample is dropped onto a reaction ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
-* The `install_ketcher2` admin task and the `bin/chem-*.sh` Ketcher installer scripts are removed; release images install Ketcher themselves ([#3707](https://github.com/ComPlat/chemotion_ELN/pull/3707)).
+* Upgrades from v3.x no longer stop at `AddShortLabelToResearchPlans` when a stored user fails validation ([#3723](https://github.com/ComPlat/chemotion_ELN/pull/3723)).
+* `AddUniqueIndexToReactionsSamples` repairs reaction-sample links and makes a sample belong to at most one reaction: a sample shared by several reactions stays with the earliest, the others get a new split of it ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
+* The `install_ketcher2` admin task and `bin/chem-*.sh` scripts are removed ([#3707](https://github.com/ComPlat/chemotion_ELN/pull/3707)).
 
 ## Fixes
 
-### Reactions
-
-* Saving a reaction no longer takes over the material link of another reaction that uses the same sample; links already affected are repaired by the migration above ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
-
-### Samples
-
-* Triethylamine is available in the solvent list ([#3710](https://github.com/ComPlat/chemotion_ELN/pull/3710)).
-
-### Devices and data collection
-
-* Splitting a device description copies its segment values instead of leaving the split's segment forms empty ([#3644](https://github.com/ComPlat/chemotion_ELN/pull/3644)).
-* The data collector keeps collecting from the other devices when one device fails, for example on a missing SFTP key file, and logs the reason ([#3704](https://github.com/ComPlat/chemotion_ELN/pull/3704)).
-
-### Text templates
-
-* A blank last line of a text template is kept when the template is saved ([#3546](https://github.com/ComPlat/chemotion_ELN/pull/3546)).
-
-### Uploads and requests
-
-* Multipart form parts that declare a legacy single-byte charset (ISO-8859-1, Windows-1252), such as file names, are converted to UTF-8.
+* Saving a reaction no longer takes over another reaction's link to the same sample ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
+* Triethylamine added to the solvent list ([#3710](https://github.com/ComPlat/chemotion_ELN/pull/3710)).
+* Splitting a device description copies its segment values ([#3644](https://github.com/ComPlat/chemotion_ELN/pull/3644)).
+* The data collector keeps going when one device fails, and logs why ([#3704](https://github.com/ComPlat/chemotion_ELN/pull/3704)).
+* A blank last line of a text template is kept on save ([#3546](https://github.com/ComPlat/chemotion_ELN/pull/3546)).
+* Multipart form parts in a legacy single-byte charset are converted to UTF-8.
 
 ## Maintenance
 
-* Residues: a loading check that never took effect is removed, along with an unused helper ([#3671](https://github.com/ComPlat/chemotion_ELN/pull/3671)).
-* CI: the lint job uses the latest Ruby 3.3 patch release ([#3721](https://github.com/ComPlat/chemotion_ELN/pull/3721)).
+* Unused residue loading check removed ([#3671](https://github.com/ComPlat/chemotion_ELN/pull/3671)); CI lint on the latest Ruby 3.3 ([#3721](https://github.com/ComPlat/chemotion_ELN/pull/3721)).
 
 # [v4.0.1]
 > (2026-11-09)
