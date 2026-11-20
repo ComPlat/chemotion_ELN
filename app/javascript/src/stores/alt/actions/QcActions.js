@@ -8,7 +8,7 @@ class QcActions {
 
   loadInfers({ sample }) {
     const sId = sample.id;
-    const atts = sample.attachments();
+    const atts = sample.containerAttachments();
     const ids = atts.map((att) => (
       att.aasm_state === 'json' && att.filename.includes('.infer.json')
         ? att.id : null

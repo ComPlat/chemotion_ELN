@@ -69,6 +69,10 @@ export default class Sample extends Element {
   //   return false;
   // }
 
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   constructor(args) {
     let argsNew = args;
     argsNew = prepareRangeBound(argsNew, 'boiling_point');
@@ -260,6 +264,7 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      attachments: [],
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -2011,7 +2016,7 @@ export default class Sample extends Element {
     )[0].children.push(analysis);
   }
 
-  attachments() {
+  containerAttachments() {
     let target = [];
     this.datasetContainers().forEach((dt) => {
       const atts = dt.attachments;

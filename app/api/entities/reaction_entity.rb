@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Layout/ExtraSpacing, Layout/LineLength
+# rubocop:disable Layout/ExtraSpacing, Layout/LineLength, Metrics/BlockLength
 module Entities
   class ReactionEntity < ApplicationEntity
     with_options(anonymize_below: 0) do
@@ -61,6 +61,7 @@ module Entities
       expose! :concentration_mode,    anonymize_with: -> { Reaction.column_defaults['concentration_mode'] }
       expose! :gaseous,               anonymize_with: false
       expose! :weight_percentage,     anonymize_with: false
+      expose! :attachments,           anonymize_with: [],  unless: :displayed_in_list,   using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Metrics/BlockLength
 
@@ -124,4 +125,4 @@ module Entities
     end
   end
 end
-# rubocop:enable Layout/ExtraSpacing, Layout/LineLength
+# rubocop:enable Layout/ExtraSpacing, Layout/LineLength, Metrics/BlockLength

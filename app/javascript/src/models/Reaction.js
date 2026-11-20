@@ -123,6 +123,10 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 };
 
 export default class Reaction extends Element {
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   // reaction material types
   static STARTING_MATERIALS = 'starting_materials';
 
@@ -188,7 +192,8 @@ export default class Reaction extends Element {
       reaction_type: 'standard',
       lock_reaction_volume: false,
       gaseous: false,
-      weight_percentage: false
+      weight_percentage: false,
+      attachments: []
     });
     reaction.short_label = this.buildReactionShortLabel();
     reaction.rxno = '';

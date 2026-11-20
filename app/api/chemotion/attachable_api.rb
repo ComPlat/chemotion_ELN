@@ -13,12 +13,14 @@ module Chemotion
         optional :del_files, type: [Integer], desc: 'del file id', default: []
       end
       after_validation do
-        # Accepts the element types Attachment#root_element resolves directly, each checked with
-        # ElementPolicy#update?; other types (including 'Container') are rejected.
+        # Accepts only the element types Attachment#root_element resolves directly; other types
+        # (including 'Container') are rejected with 400.
+        # safe_type is a value from the whitelist constant, not raw user input, so constantize is safe.
         attachable_type = params[:attachable_type]
-        if Attachment::ELEMENT_ATTACHABLE_TYPES.include?(attachable_type)
-          @attachable = attachable_type.constantize.find_by(id: params[:attachable_id])
-        end
+        safe_type = Attachment::ELEMENT_ATTACHABLE_TYPES.find { |t| t == attachable_type }
+        error!('400 Bad Request: unknown attachable_type', 400) unless safe_type
+
+        @attachable = safe_type.constantize.find_by(id: params[:attachable_id])
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachable).update?
       end
 

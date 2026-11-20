@@ -58,7 +58,7 @@ class ResearchPlan < ApplicationRecord
   has_one :research_plan_metadata, dependent: :destroy
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
-  has_many :attachments, as: :attachable
+  has_many :attachments, as: :attachable, dependent: :nullify
   has_many :comments, as: :commentable, dependent: :destroy
 
   has_many :research_plans_wellplates, dependent: :destroy

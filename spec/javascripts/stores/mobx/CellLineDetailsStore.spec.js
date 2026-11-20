@@ -48,6 +48,40 @@ describe('CellLineDetailsStore', async () => {
     });
   });
   describe('.convertCellLineToModel', async () => {
+    describe('when cell line has attachments', async () => {
+      it('initializes attachments from the model', async () => {
+        const store = CellLineDetailsStore.create({});
+        const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+        cellLineSample.attachments = [{ id: 1, filename: 'report.pdf' }];
+        store.convertCellLineToModel(cellLineSample);
+        const storeSample = store.cellLines(cellLineSample.id);
+        expect(storeSample.attachments).toEqual([{ id: 1, filename: 'report.pdf' }]);
+      });
+    });
+    describe('when cell line has no attachments', async () => {
+      it('initializes attachments as empty array', async () => {
+        const store = CellLineDetailsStore.create({});
+        const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+        store.convertCellLineToModel(cellLineSample);
+        const storeSample = store.cellLines(cellLineSample.id);
+        expect(storeSample.attachments).toEqual([]);
+      });
+    });
+    describe('when cell line id already exists in store', async () => {
+      it('does not overwrite store attachments (preserves in-progress edits)', async () => {
+        const store = CellLineDetailsStore.create({});
+        const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+        cellLineSample.attachments = [];
+        store.convertCellLineToModel(cellLineSample);
+        store.changeAttachments(cellLineSample.id, [{ id: null, filename: 'dropped.pdf', is_new: true }]);
+
+        store.convertCellLineToModel({ ...cellLineSample, attachments: [] });
+
+        const storeSample = store.cellLines(cellLineSample.id);
+        expect(storeSample.attachments).toHaveLength(1);
+        expect(storeSample.attachments[0].filename).toBe('dropped.pdf');
+      });
+    });
     describe('when object not available', async () => {
       it('creates a valid entry in the store', async () => {
         const store = CellLineDetailsStore.create({});
@@ -79,6 +113,68 @@ describe('CellLineDetailsStore', async () => {
       });
     });
   });
+  describe('.syncAttachmentsAfterSave', async () => {
+    it('replaces attachments with the server-returned list without marking changed', async () => {
+      const store = CellLineDetailsStore.create({});
+      const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+      cellLineSample.attachments = [{ id: null, filename: 'upload.pdf', is_new: true }];
+      store.convertCellLineToModel(cellLineSample);
+
+      store.syncAttachmentsAfterSave(cellLineSample.id, [{ id: 42, filename: 'upload.pdf', is_new: false }]);
+
+      const storeSample = store.cellLines(cellLineSample.id);
+      expect(storeSample.attachments).toHaveLength(1);
+      expect(storeSample.attachments[0].id).toBe(42);
+      expect(storeSample.attachments[0].is_new).toBe(false);
+      expect(storeSample.changed).toBe(false);
+    });
+
+    it('clears is_deleted attachments after save', async () => {
+      const store = CellLineDetailsStore.create({});
+      const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+      cellLineSample.attachments = [{ id: 5, filename: 'old.pdf', is_deleted: true }];
+      store.convertCellLineToModel(cellLineSample);
+
+      store.syncAttachmentsAfterSave(cellLineSample.id, []);
+
+      const storeSample = store.cellLines(cellLineSample.id);
+      expect(storeSample.attachments).toHaveLength(0);
+    });
+
+    it('does nothing if id is not in store', async () => {
+      const store = CellLineDetailsStore.create({});
+      expect(() => store.syncAttachmentsAfterSave('nonexistent', [])).not.toThrow();
+    });
+  });
+
+  describe('.changeAttachments', async () => {
+    it('updates attachments and marks item as changed', async () => {
+      const store = CellLineDetailsStore.create({});
+      const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+      store.convertCellLineToModel(cellLineSample);
+      const storeSample = store.cellLines(cellLineSample.id);
+
+      const newAttachments = [{ id: 1, filename: 'report.pdf' }, { id: 2, filename: 'data.xlsx' }];
+      store.changeAttachments(storeSample.id, newAttachments);
+
+      expect(storeSample.attachments).toEqual(newAttachments);
+      expect(storeSample.changed).toBe(true);
+    });
+
+    it('replaces existing attachments', async () => {
+      const store = CellLineDetailsStore.create({});
+      const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');
+      cellLineSample.attachments = [{ id: 1, filename: 'old.pdf' }];
+      store.convertCellLineToModel(cellLineSample);
+      const storeSample = store.cellLines(cellLineSample.id);
+
+      store.changeAttachments(storeSample.id, [{ id: 2, filename: 'new.pdf' }]);
+
+      expect(storeSample.attachments).toHaveLength(1);
+      expect(storeSample.attachments[0].filename).toBe('new.pdf');
+    });
+  });
+
   describe('.changeAmount', async () => {
     const store = CellLineDetailsStore.create({});
     const cellLineSample = await CellLineFactory.build('CellLineFactory.heLa');

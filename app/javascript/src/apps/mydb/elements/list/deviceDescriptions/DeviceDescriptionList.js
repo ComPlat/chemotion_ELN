@@ -67,7 +67,7 @@ function DeviceDescriptionList({
   const groupedByValue = deviceDescriptionsStore.list_grouped_by;
 
   const getGroupKey = useCallback((element) => {
-    const identifierKey = (key) => (key === undefined || key.length === 0 ? '[empty]' : key);
+    const identifierKey = (key) => (key == null || key.length === 0 ? '[empty]' : key);
 
     switch (groupedByValue) {
       case 'ontology': {
