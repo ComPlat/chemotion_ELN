@@ -17,8 +17,11 @@ RSpec.describe Usecases::Search::ConditionsForAdvancedSearch do
     end
 
     it 'matches no private notes when no user is supplied' do
-      conditions = described_class.new(params: params, detail_levels: { sample_detail_level: 10 }).filter!
-      results = Sample.joins(conditions[:joins].join(' ')).where(conditions[:query])
+      detail_levels = { sample_detail_level: 10, reaction_detail_level: 10 }
+      conditions = described_class.new(params: params, detail_levels: detail_levels).filter!
+      # as in SearchAPI: on v3.x the searched value comes back as bind values next to the query
+      query = conditions[:value].present? ? [conditions[:query]] + conditions[:value] : conditions[:query]
+      results = Sample.joins(conditions[:joins].join(' ')).where(query)
 
       expect(results).to be_empty
     end
