@@ -15,7 +15,7 @@
 * Docx reports: lists in rich-text analyses ([#3638](https://github.com/ComPlat/chemotion_ELN/pull/3638)) and gas-phase schemes with a blank ppm ([#3515](https://github.com/ComPlat/chemotion_ELN/pull/3515)) no longer fail.
 * XLSX export includes the CAS number of samples from shared and synced collections ([#3460](https://github.com/ComPlat/chemotion_ELN/pull/3460)).
 * Wellplate import template download is disabled until the wellplate is saved ([#3560](https://github.com/ComPlat/chemotion_ELN/pull/3560)).
-* Intermittent errors on sign-in when several users load their profile at once ([#3573](https://github.com/ComPlat/chemotion_ELN/pull/3573)).
+* Sign-in no longer fails intermittently when several users load their profile at once ([#3573](https://github.com/ComPlat/chemotion_ELN/pull/3573)).
 * An unexpected CAS metadata answer disables SciFinder-n instead of stopping the start ([#3674](https://github.com/ComPlat/chemotion_ELN/pull/3674)).
 * SMTP: HELO domain and timeouts configurable, environment values typed ([#3474](https://github.com/ComPlat/chemotion_ELN/pull/3474)).
 * Multipart form parts in a legacy single-byte charset are converted to UTF-8.
