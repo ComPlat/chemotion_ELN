@@ -302,7 +302,7 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:mixture_sample) do
         s = create(:sample, name: 'Mixture',
                             sample_type: Sample::SAMPLE_TYPE_MIXTURE,
-                            container: create(:container))
+                            container: create(:container), collections: [collection])
         create(:component, sample: s, name: 'Comp A', position: 0,
                            component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
         create(:component, sample: s, name: 'Comp B', position: 1,
@@ -349,7 +349,7 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:mixture_sample) do
         s = create(:sample, name: 'Mixture',
                             sample_type: Sample::SAMPLE_TYPE_MIXTURE,
-                            container: create(:container))
+                            container: create(:container), collections: [collection])
         create(:component, sample: s, name: 'Comp A', position: 0,
                            component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
         create(:component, sample: s, name: 'Comp B', position: 1,
@@ -587,6 +587,272 @@ describe Usecases::Reactions::UpdateMaterials do
       expect(updated_sample.target_amount_value).to eq(50.0)
       expect(updated_sample.real_amount_value).to eq(50.0)
       expect(updated_sample.target_amount_unit).to eq(wp_reference_sample.target_amount_unit)
+    end
+  end
+
+  # A reaction copy made by an older client sent the original's purification solvents as
+  # persisted samples; saving the copy then moved them away from the original.
+  describe 'when the payload carries a sample that another reaction uses' do
+    let(:other_collection) { create(:collection, label: 'Other', user: user) }
+    let(:original) { create(:reaction, name: 'Reaction', collections: [collection]) }
+    let(:copy) { create(:reaction, name: 'Reaction', collections: [other_collection]) }
+    let(:solvent) do
+      create(:sample, name: 'solvent', target_amount_value: 10, target_amount_unit: 'ml',
+                      container: create(:container), collections: [collection])
+    end
+    # an older client sends the original sample's own root container, analyses included
+    # (indifferent access, as Grape params are: UpdateDatamodel reads it with symbol keys)
+    let(:material) do
+      {
+        'id' => solvent.id,
+        'name' => 'solvent',
+        'target_amount_unit' => 'ml',
+        'target_amount_value' => 3,
+        'is_new' => false,
+        'molfile' => molfile,
+        'container' => { 'id' => solvent.container.id, 'is_new' => false, 'containable_type' => 'root',
+                         'children' => [] }.with_indifferent_access,
+      }
+    end
+
+    before do
+      allow(SVG::ReactionComposer).to receive(:new).and_return(
+        instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
+      )
+    end
+
+    context 'when it is a purification solvent of the original' do
+      let!(:original_container) { solvent.container }
+
+      before do
+        ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'leaves the original reaction its sample' do
+        expect(original.reload.purification_solvents).to contain_exactly(solvent)
+        expect(solvent.reload.target_amount_value).to eq(10)
+      end
+
+      it 'leaves the original sample its container' do
+        expect(original_container.reload.containable).to eq(solvent)
+        expect(copy.reload.purification_solvents.first.container).not_to eq(original_container)
+      end
+
+      it 'gives the copy a new sample, as the current client copies it' do
+        copied = copy.reload.purification_solvents
+        expect(copied.size).to eq(1)
+        expect(copied.first).not_to eq(solvent)
+        expect(copied.first.parent).to be_nil
+      end
+
+      it 'puts the new sample in the copy collection, with the copied amount' do
+        copied = copy.reload.purification_solvents.first
+        expect(copied.target_amount_value).to eq(3)
+        expect(copied.collections).to include(other_collection)
+      end
+    end
+
+    context 'when it is a subsample of a stock sample' do
+      let(:stock) { create(:sample, name: 'stock', container: create(:container), collections: [collection]) }
+      let(:solvent) do
+        create(:sample, name: 'solvent', target_amount_value: 10, target_amount_unit: 'ml', parent: stock,
+                        container: create(:container), collections: [collection])
+      end
+
+      before do
+        ReactionsStartingMaterialSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'starting_materials' => [material.merge('parent_id' => stock.id)] },
+                            user, vessel_size).execute!
+      end
+
+      it 'gives the copy a subsample of the same stock, not of the original material' do
+        copied = copy.reload.starting_materials.first
+        expect(copied).not_to eq(solvent)
+        expect(copied.parent).to eq(stock)
+      end
+    end
+
+    context 'when it is a product of the original' do
+      let!(:original_container) { solvent.container }
+
+      before do
+        ReactionsProductSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(copy, { 'products' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'gives the copy a new sample and leaves the original its product' do
+        expect(original.reload.products).to contain_exactly(solvent)
+        product = copy.reload.products.first
+        expect(product).not_to eq(solvent)
+        expect(product.parent).to be_nil
+      end
+
+      it 'leaves the original product its container' do
+        expect(original_container.reload.containable).to eq(solvent)
+      end
+    end
+
+    context 'when it is an SBMM reactant of the original' do
+      let(:stock_sbmm) do
+        SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-UM-1',
+                                                 sequence_based_macromolecule: create(:uniprot_sbmm), user: user,
+                                                 collections: [collection])
+      end
+      let(:sbmm) { stock_sbmm.create_sub_sequence_based_macromolecule_sample(user, [collection.id]) }
+
+      before do
+        ReactionsReactantSbmmSample.create!(reaction: original, sequence_based_macromolecule_sample: sbmm, position: 0)
+        # the client always sends the units (NOT NULL columns)
+        units = {
+          'concentration_unit' => 'ng/L', 'molarity_unit' => 'mol/L', 'activity_per_volume_unit' => 'U/L',
+          'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
+          'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
+        }
+        # as an older client sends it: no parent_id (the reaction entity didn't expose it)
+        payload = { 'reactant_sbmm_samples' => [{
+          'id' => sbmm.id, 'is_new' => false, 'name' => 'SBMM copy', 'position' => 0
+        }.merge(units)] }
+        described_class.new(copy, payload, user, vessel_size).execute!
+      end
+
+      it 'leaves the original its SBMM sample, linked once' do
+        expect(ReactionsReactantSbmmSample.where(sequence_based_macromolecule_sample_id: sbmm.id)
+                                          .pluck(:reaction_id)).to eq([original.id])
+      end
+
+      it 'gives the copy a new split of the same stock' do
+        copied = ReactionsReactantSbmmSample.find_by(reaction_id: copy.id).sequence_based_macromolecule_sample
+        expect(copied).not_to eq(sbmm)
+        expect(copied.parent).to eq(stock_sbmm)
+      end
+    end
+
+    context 'when the sample is also linked to this reaction' do
+      before do
+        ReactionsPurificationSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        ReactionsPurificationSolventSample.create!(reaction: copy, sample: solvent, position: 0)
+        described_class.new(copy, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'keeps and updates the linked sample' do
+        expect(copy.reload.purification_solvents).to contain_exactly(solvent)
+        expect(original.reload.purification_solvents).to contain_exactly(solvent)
+        expect(solvent.reload.target_amount_value).to eq(3)
+      end
+    end
+
+    context 'when a sample moves between material groups of the same reaction' do
+      before do
+        ReactionsSolventSample.create!(reaction: original, sample: solvent, position: 0)
+        described_class.new(original, { 'purification_solvents' => [material] }, user, vessel_size).execute!
+      end
+
+      it 'moves its row to the new group' do
+        rows = ReactionsSample.where(sample_id: solvent.id)
+        expect(rows.pluck(:reaction_id, :type)).to eq([[original.id, 'ReactionsPurificationSolventSample']])
+      end
+    end
+  end
+
+  describe 'when a removed material is still linked by another reaction' do
+    let(:original) { create(:reaction, name: 'Reaction', collections: [collection]) }
+    let(:copy) { create(:reaction, name: 'Reaction', collections: [collection]) }
+    let(:solvent) { create(:sample, name: 'solvent', container: create(:container), collections: [collection]) }
+    let(:stock_sbmm) do
+      SequenceBasedMacromoleculeSample.create!(name: 'SBMM stock', short_label: 'SBMM-RM-1',
+                                               sequence_based_macromolecule: create(:uniprot_sbmm), user: user,
+                                               collections: [collection])
+    end
+    let(:sbmm) { stock_sbmm.create_sub_sequence_based_macromolecule_sample(user, [collection.id]) }
+
+    before do
+      allow(SVG::ReactionComposer).to receive(:new).and_return(
+        instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
+      )
+      [original, copy].each do |linked|
+        ReactionsPurificationSolventSample.create!(reaction: linked, sample: solvent, position: 0)
+        ReactionsReactantSbmmSample.create!(reaction: linked, sequence_based_macromolecule_sample: sbmm, position: 0)
+      end
+      described_class.new(copy, { 'purification_solvents' => [], 'reactant_sbmm_samples' => [] },
+                          user, vessel_size).execute!
+    end
+
+    it "keeps the sample and the other reaction's link" do
+      expect(Sample.find_by(id: solvent.id)).to be_present
+      expect(ReactionsSample.where(sample_id: solvent.id).pluck(:reaction_id)).to eq([original.id])
+    end
+
+    it "keeps the SBMM sample and the other reaction's link" do
+      expect(SequenceBasedMacromoleculeSample.find_by(id: sbmm.id)).to be_present
+      expect(ReactionsReactantSbmmSample.where(sequence_based_macromolecule_sample_id: sbmm.id)
+                                        .pluck(:reaction_id)).to eq([original.id])
+    end
+  end
+
+  describe 'when the payload names materials the user may not access' do
+    let(:stranger) { create(:person) }
+    let(:stranger_collection) { create(:collection, label: 'Private', user: stranger) }
+    let(:private_sample) do
+      create(:sample, name: 'private', target_amount_value: 10, target_amount_unit: 'mg',
+                      container: create(:container), collections: [stranger_collection])
+    end
+    let(:private_stock_sbmm) do
+      SequenceBasedMacromoleculeSample.create!(name: 'private SBMM', short_label: 'SBMM-PR-1',
+                                               sequence_based_macromolecule: create(:uniprot_sbmm), user: stranger,
+                                               collections: [stranger_collection])
+    end
+    let(:units) do
+      {
+        'concentration_unit' => 'ng/L', 'molarity_unit' => 'mol/L', 'activity_per_volume_unit' => 'U/L',
+        'activity_per_mass_unit' => 'U/g', 'volume_as_used_unit' => 'L', 'amount_as_used_mol_unit' => 'mol',
+        'amount_as_used_mass_unit' => 'g', 'activity_unit' => 'U', 'concentration_rt_unit' => 'mol/L'
+      }
+    end
+    let(:sbmm_payload) do
+      { 'id' => SecureRandom.uuid, 'is_new' => true, 'parent_id' => private_stock_sbmm.id, 'name' => 'SBMM',
+        'position' => 0 }.merge(units)
+    end
+
+    before do
+      allow(SVG::ReactionComposer).to receive(:new).and_return(
+        instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
+      )
+    end
+
+    it 'does not update or link a persisted sample of no reaction that the user may not update' do
+      payload = { 'starting_materials' => [{ 'id' => private_sample.id, 'is_new' => false, 'name' => 'mine',
+                                             'target_amount_value' => 1, 'target_amount_unit' => 'mg',
+                                             'molfile' => molfile }] }
+      described_class.new(reaction, payload, user, vessel_size).execute!
+      expect(private_sample.reload.target_amount_value).to eq(10)
+      expect(reaction.reload.starting_materials).not_to include(private_sample)
+    end
+
+    it 'makes a new sample from the payload instead of a subsample of a parent the user may not read' do
+      payload = { 'reactants' => [{ 'is_new' => true, 'parent_id' => private_sample.id, 'name' => 'reactant',
+                                    'target_amount_value' => 1, 'target_amount_unit' => 'mg', 'molfile' => molfile,
+                                    'container' => root_container }] }
+      described_class.new(reaction, payload, user, vessel_size).execute!
+      expect(reaction.reload.reactants.first.parent).to be_nil
+      expect(private_sample.reload.children).to be_empty
+    end
+
+    it 'refuses an SBMM split of a stock the user may not read' do
+      expect do
+        described_class.new(reaction, { 'reactant_sbmm_samples' => [sbmm_payload] }, user, vessel_size).execute!
+      end.to raise_error(ActiveRecord::RecordNotFound)
+      expect(private_stock_sbmm.reload.children).to be_empty
+    end
+
+    it "splits the stock of the origin reaction's SBMM for a copy, even if the user may not read the stock" do
+      origin = create(:reaction, name: 'Shared', collections: [collection])
+      shared_split = private_stock_sbmm.create_sub_sequence_based_macromolecule_sample(stranger, [collection.id])
+      ReactionsReactantSbmmSample.create!(reaction: origin, sequence_based_macromolecule_sample: shared_split,
+                                          position: 0)
+      reaction.update!(origin: { 'id' => origin.id }) # v3.x: the copy's origin, read by UpdateMaterials
+      described_class.new(reaction, { 'reactant_sbmm_samples' => [sbmm_payload] }, user, vessel_size).execute!
+      expect(reaction.reload.reactant_sbmm_samples.first.parent).to eq(private_stock_sbmm)
     end
   end
 end
