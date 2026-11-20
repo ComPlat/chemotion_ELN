@@ -75,9 +75,8 @@ RSpec.describe Report, type: :report do
 
     it 'renders bulleted and numbered lists from a product analysis' do
       require 'zip'
-      allow(PubchemLookupJob).to receive(:perform_later)
-      product = create(:sample, collections: [collection])
-      create(:reactions_product_sample, reaction: reaction1, sample: product)
+      product = create(:sample, collections: [c1])
+      create(:reactions_product_sample, reaction: r1, sample: product)
       analysis = product.container.children[0].children[0]
       analysis.extended_metadata['report'] = true
       analysis.extended_metadata['content'] = {
@@ -89,7 +88,7 @@ RSpec.describe Report, type: :report do
         ],
       }.to_json
       analysis.save!
-      params = { template: 'single_reaction', id: reaction1.id }
+      params = { template: 'single_reaction', id: r1.id }
       docx, = described_class.create_reaction_docx(user, [user.id], params)
 
       doc = Zip::File.open_buffer(StringIO.new(docx)).read('word/document.xml')
