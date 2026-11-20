@@ -147,6 +147,26 @@ module Chemotion
 
           { status: true }
         end
+
+        desc 'Combine spectra for comparison containers'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer
+          requires :container_id, type: Integer
+          optional :edited_data_spectra, type: Array
+          optional :extras, type: String
+        end
+        post 'combine_spectra_comparison' do
+          pm = to_rails_snake_case(params)
+          content_type('application/json')
+          Usecases::Containers::ComparisonCombineSpectra.execute!(pm, current_user: current_user)
+        rescue Usecases::Containers::ComparisonCombineSpectra::ContainerNotFound
+          error!({ error: 'Container not found' }, 404)
+        rescue StandardError => e
+          Rails.logger.error "Error in combine_spectra_comparison: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error!({ error: 'Server Error', message: e.message }, 500)
+        end
       end
 
       resource :spectra_layouts do
