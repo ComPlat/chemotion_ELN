@@ -74,7 +74,7 @@ module Export
         data = validate_molfile(molfile)
         return nil unless data.presence
 
-        if sample['molfile_version'] =~ /^(V2000).*T9/
+        if sample['molfile_version'] =~ /^(V[23]000).*T9/
           data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, Regexp.last_match(1))
         end
         data = data.rstrip

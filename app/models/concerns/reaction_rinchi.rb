@@ -30,7 +30,7 @@ module ReactionRinchi
     mole_molfile_or_no = ->(x) {
       mf = x.molecule_molfile || no_structure
       version = x.molecule&.molfile_version
-      if version =~ /^(V2000).*T9/
+      if version =~ /^(V[23]000).*T9/
         mf = Chemotion::OpenBabelService.mofile_clear_coord_bonds(mf, $1)
       end
       mf

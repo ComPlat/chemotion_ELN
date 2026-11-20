@@ -439,4 +439,44 @@ RSpec.describe Chemotion::SvgRenderer do
       end
     end
   end
+
+  describe '.service_chain' do
+    it 'routes V3000 to Indigo first regardless of explicit service' do
+      expect(described_class.service_chain(nil, false, is_v3000: true)).to eq(%i[indigo ketcher open_babel])
+      expect(described_class.service_chain('ketcher', false, is_v3000: true)).to eq(%i[ketcher open_babel])
+    end
+
+    it 'routes V2000 non-polymer to Ketcher first' do
+      expect(described_class.service_chain(nil, false, is_v3000: false)).to eq(%i[ketcher open_babel])
+    end
+
+    it 'routes polymer to Indigo first' do
+      expect(described_class.service_chain(nil, true, is_v3000: false)).to eq(%i[indigo ketcher open_babel])
+    end
+
+    it 'respects explicit indigo service' do
+      expect(described_class.service_chain('indigo', false, is_v3000: false)).to eq(%i[indigo ketcher open_babel])
+    end
+
+    it 'respects explicit open_babel service' do
+      expect(described_class.service_chain('open_babel', false, is_v3000: false)).to eq(%i[open_babel])
+    end
+  end
+
+  describe '.molfile_v3000?' do
+    it 'returns true for V3000 molfile' do
+      mol = "header\n\n\n  0  0  0     0  0            999 V3000\nM  V30 BEGIN CTAB\n"
+      expect(described_class.molfile_v3000?(mol)).to be true
+    end
+
+    it 'returns true when M  V30 BEGIN is present' do
+      mol = "header\n\nM  V30 BEGIN CTAB\n"
+      expect(described_class.molfile_v3000?(mol)).to be true
+    end
+
+    it 'returns false for V2000 molfile' do
+      mol = "header\n\n\n  6  6  0  0  0  0  0  0  0  0999 V2000\n"
+      expect(described_class.molfile_v3000?(mol)).to be false
+    end
+  end
 end

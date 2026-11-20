@@ -953,9 +953,12 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
-// Check if V2000 molfile is empty (0 atoms)
 const isMolfileEmpty = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return true;
+  // V3000: M  V30 COUNTS atomCount bondCount ...
+  const v3match = molfile.match(/^M  V30 COUNTS\s+(\d+)\s+/m);
+  if (v3match) return parseInt(v3match[1], 10) === 0;
+  // V2000: counts line ends with V2000
   const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
   return match ? parseInt(match[1], 10) === 0 : true;
 };
@@ -996,23 +999,18 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     let canvasDataMol = null;
     let shouldSvg = true;
     try {
-      canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+      canvasDataMol = await editor.structureDef.editor.getMolfile('v3000');
       if (isMolfileEmpty(canvasDataMol)) {
-        console.log('onFinalCanvasSave: V2000 empty, trying V3000');
         try {
-          canvasDataMol = await editor.structureDef.editor.getMolfile();
-          console.log('onFinalCanvasSave: V3000 success', canvasDataMol?.slice(0, 80));
-        } catch (e) {
-          console.log('onFinalCanvasSave: V3000 failed, trying default', e);
+          canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+        } catch (e2) {
           canvasDataMol = await editor.structureDef.editor.getMolfile('');
         }
         shouldSvg = false;
       }
     } catch (e) {
-      console.log('onFinalCanvasSave: V2000 failed, trying V3000/default', e);
-      canvasDataMol = await editor.structureDef.editor.getMolfile('V3000').catch(
+      canvasDataMol = await editor.structureDef.editor.getMolfile('V2000').catch(
         (err) => {
-          console.log('onFinalCanvasSave: V3000 failed, trying default', err);
           return editor.structureDef.editor.getMolfile('');
         }
       );
@@ -1046,7 +1044,6 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       shouldSvg,
     };
   } catch (e) {
-    console.log('onFinalCanvasSave: Error generating SVG', e);
     return {
       ket2Molfile: '',
       svgElement: { svg: null, message: e?.message },

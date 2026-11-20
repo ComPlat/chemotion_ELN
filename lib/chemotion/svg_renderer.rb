@@ -28,12 +28,19 @@ module Chemotion
       has_polymer = has_polymer_list?(polymer_data)
       # Use cleaned_struct only for rendering (Indigo/Ketcher/OpenBabel may not handle > <PolymersList>). The full struct is passed to finalize_svg for injection.
       render_struct = polymer_data[:cleaned_struct]
-      chain = service_chain(service, has_polymer)
+      is_v3000 = molfile_v3000?(struct)
+      chain = service_chain(service, has_polymer, is_v3000: is_v3000)
       indigo_options = has_polymer ? { scale_factor: 90, label_font_size: 5 } : {}
 
       chain.each do |name|
         rendered_svg = if name == :indigo
-                         indigo_service(render_struct, indigo_options)
+                         svg = indigo_service(render_struct, indigo_options)
+                         if svg.blank? && is_v3000 && !IndigoService.disabled?
+                           # Retry with V2000 — Ketcher's fallback silently drops stereogroups.
+                           v2000 = IndigoService.new(render_struct).convert_to_v2000
+                           svg = indigo_service(v2000, indigo_options) if v2000.present?
+                         end
+                         svg
                        else
                          send(:"#{name}_service", render_struct)
                        end
@@ -54,7 +61,7 @@ module Chemotion
     #
     # @param has_polymer [Boolean] from {.render_svg_from_molfile}'s has_polymer_list? check --
     #   NOT raw tag presence, which Ketcher also emits (empty) for ordinary structures.
-    def self.service_chain(service, has_polymer)
+    def self.service_chain(service, has_polymer, is_v3000: false)
       case service.to_s.presence&.downcase
       when 'indigo'
         %i[indigo ketcher open_babel]
@@ -63,9 +70,16 @@ module Chemotion
       when 'open_babel'
         %i[open_babel]
       else
-        # Default: real PolymersList payload present -> Indigo first; else Ketcher first
-        has_polymer ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
+        # V3000 → Indigo first (Ketcher internally converts V3000→V2000, losing stereogroups)
+        # Real PolymersList payload → Indigo first
+        # Default → Ketcher first
+        (is_v3000 || has_polymer) ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
       end
+    end
+
+    def self.molfile_v3000?(struct)
+      s = struct.to_s
+      s.include?('V3000') || s.include?('M  V30 BEGIN')
     end
 
     # True when molfile contains the PolymersList tag (e.g. "> <PolymersList>").
@@ -768,7 +782,9 @@ module Chemotion
 
     def self.parse_atom_positions(molfile)
       lines = molfile.to_s.lines
-      # Avoid regex on full line (CodeQL: polynomial backtracking). Find V2000 line then parse counts.
+      return parse_atom_positions_v3000(lines) if molfile_v3000?(molfile)
+
+      # V2000: avoid regex on full line (CodeQL: polynomial backtracking).
       counts_idx = lines.find_index { |line| line.include?('V2000') }
       return {} unless counts_idx
 
@@ -791,6 +807,35 @@ module Chemotion
         next if x.nil? || y.nil?
 
         atoms[idx] = [x, y]
+      end
+      atoms
+    end
+
+    def self.parse_atom_positions_v3000(lines)
+      atoms = {}
+      idx = 0
+      in_atom_block = false
+      lines.each do |line|
+        s = line.strip
+        if s == 'M  V30 BEGIN ATOM'
+          in_atom_block = true
+          next
+        end
+        if s == 'M  V30 END ATOM'
+          in_atom_block = false
+          next
+        end
+        next unless in_atom_block
+        # Format: M  V30 <index> <symbol> <x> <y> <z> [aamap ...]
+        parts = s.split(/\s+/)
+        next unless parts.length >= 7 && parts[0] == 'M' && parts[1] == 'V30'
+
+        x = Float(parts[4], exception: false)
+        y = Float(parts[5], exception: false)
+        next if x.nil? || y.nil?
+
+        atoms[idx] = [x, y]
+        idx += 1
       end
       atoms
     end

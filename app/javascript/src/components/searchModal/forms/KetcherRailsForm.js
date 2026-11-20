@@ -117,7 +117,7 @@ const KetcherRailsform = () => {
 
   const handleSearch = async () => {
     const structure = editor.structureDef;
-    handleStructureEditorSave(await structure.editor.getMolfile());
+    handleStructureEditorSave(await structure.editor.getMolfile('v3000'));
   };
 
   const handleClear = () => {

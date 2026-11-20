@@ -228,44 +228,35 @@ module Chemotion
         end
       end
 
-      desc 'Return molecule by Molfile'
+      desc 'Look up or create a molecule from a molfile, returning its attributes and a rendered SVG'
       params do
-        requires :molfile, type: String, desc: 'Molecule molfile'
-        optional :svg_file, type: String, desc: 'Molecule svg file'
-        optional :editor, type: String, desc: 'SVGProcessor'
-        optional :decoupled, type: Boolean, desc: 'Is decoupled sample?', default: false
+        requires :molfile, type: String, desc: 'MDL molfile (V2000 or V3000)'
+        optional :svg_file, type: String, desc: 'Pre-rendered SVG from the editor; used only when editor is EPAM Ketcher'
+        optional :editor, type: String, desc: 'Editor identifier'
+        optional :decoupled, type: Boolean, desc: 'When true, returns a dummy molecule instead of looking up by structure', default: false
       end
       post do
-        svg = params[:svg_file]
         molfile = params[:molfile]
-        decoupled = params[:decoupled]
-        molecule = if decoupled
+        client_svg = params[:svg_file]
+        molecule = if params[:decoupled]
                      Molecule.find_or_create_dummy
                    else
                      Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: true)
                    end
         molecule = Molecule.find_or_create_dummy if molecule.blank?
-        # See the note on the smiles endpoint.
         enrich_and_schedule_pubchem(molecule)
-        ob = molecule&.ob_log
+
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
+        svg_process = if client_svg.present? && client_svg.include?('epam-ketcher-ssc')
+                        cleaned = KetcherService::SVGProcessor.clean_and_trim_svg(client_svg) || client_svg
+                        SVG::Processor.new.structure_svg('ketcher_epam', cleaned, svg_digest, true)
+                      else
+                        svg = Molecule.svg_reprocess(nil, molfile)
+                        return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 
-        if svg.present? && svg.include?('epam-ketcher-ssc')
-          svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
-          svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
-        else
-          # Molfile has an actual PolymersList payload -> use Indigo first; else Ketcher first; fallback to OpenBabel.
-          # NB: has_polymer_content? (not has_polymers_list_tag?) -- Ketcher also emits an empty
-          # "> <PolymersList>" tag for ordinary, non-polymer structures, which must not be forced
-          # through Indigo with polymer-specific rendering options.
-          svg_service = Chemotion::MolfilePolymerSupport.has_polymer_content?(molfile) ? 'indigo' : 'ketcher'
-          svg = Molecule.svg_reprocess(nil, molfile, service: svg_service)
-          return error!('Failed to generate SVG from molfile', 422) if svg.blank?
-
-          svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
-        end
-        molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
-        Entities::MoleculeEntity.represent(molecule, temp_svg: svg_process[:svg_file_name], ob_log: ob)
+                        SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
+                      end
+        Entities::MoleculeEntity.represent(molecule, temp_svg: svg_process[:svg_file_name], ob_log: molecule&.ob_log)
       end
 
       desc 'return CAS of the molecule'

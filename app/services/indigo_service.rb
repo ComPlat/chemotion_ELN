@@ -19,9 +19,9 @@ require 'base64'
 #
 class IndigoService
   ARIAL_COMPATIBLE_FONT = begin
-    path = Rails.root.join('app/assets/fonts/LiberationSans-Regular.ttf')
+    path = Rails.root.join('app/assets/fonts/arial.ttf')
     encoded = Base64.strict_encode64(File.binread(path))
-    [{ name: 'Liberation Sans', data: encoded }].to_json
+    [{ name: 'Arial', data: encoded }].to_json
   rescue StandardError
     nil
   end
@@ -122,6 +122,26 @@ class IndigoService
     false
   end
 
+  # Converts the stored molfile to V2000 via Indigo's convert endpoint.
+  # Runs the same preprocessing (pixel-scale rescale, 2D layout) as render_structure
+  # so the convert endpoint receives clean coordinates.
+  # Returns the V2000 molfile string, or nil on failure.
+  def convert_to_v2000
+    struct = remove_consecutive_newlines_in_bonds(@struct)
+    struct = rescale_pixel_coords(struct) if pixel_scale_coords?(struct)
+    struct = request_2d_layout(struct) if needs_2d_layout?(struct)
+
+    response = make_request('POST', "#{@service_url}v2/indigo/convert", {
+      headers: { 'Content-Type': 'application/json' },
+      body: { struct: struct, output_format: 'chemical/x-mdl-molfile' }.to_json,
+    })
+    return nil unless response&.success? && response.body.present?
+
+    JSON.parse(response.body)['struct'].presence
+  rescue JSON::ParserError
+    nil
+  end
+
   private
 
   # Removes consecutive newlines in the bonds section of the molfile.
@@ -162,23 +182,31 @@ class IndigoService
     }
   end
 
-  # Returns true when V2000 XY coords are in pixel-scale (Ketcher legacy files
-  # where bond lengths are ~32px instead of ~1 Å). These need in-place rescaling,
-  # not a full re-layout, so the original orientation is preserved.
+  # Returns true when atom coords are in pixel-scale (Ketcher legacy files
+  # where bond lengths are ~32px instead of ~1 Å). Handles V2000 and V3000.
   def pixel_scale_coords?(molfile_string)
     return false if molfile_string.blank?
-    return false unless molfile_string.include?('V2000')
+    return false unless molfile_string.include?('V2000') || molfile_string.include?('V3000')
 
-    coords = extract_v2000_coords(molfile_string)
+    coords = extract_atom_coords(molfile_string)
     return false if coords.empty?
 
     coords.map { |x, y, _| [x.abs, y.abs].max }.max > 50
   end
 
-  # Rescales V2000 atom coords from pixel-scale (Ketcher legacy ~32px/bond) to
+  # Rescales atom coords from pixel-scale (Ketcher legacy ~32px/bond) to
   # standard Å-scale (~1 Å/bond), centred at the origin, preserving orientation.
+  # Handles both V2000 (fixed-width columns) and V3000 (space-separated fields).
   KETCHER_PIXEL_BOND_LENGTH = 32.0
   def rescale_pixel_coords(molfile_string)
+    if molfile_string.include?('V3000')
+      rescale_pixel_coords_v3000(molfile_string)
+    else
+      rescale_pixel_coords_v2000(molfile_string)
+    end
+  end
+
+  def rescale_pixel_coords_v2000(molfile_string)
     counts_match = molfile_string.match(/^\s*(\d+)\s+\d+\s+.*V2000/)
     return molfile_string unless counts_match
 
@@ -206,6 +234,44 @@ class IndigoService
     molfile_string[0...atom_block_start] + scaled_lines.join + rest
   end
 
+  def rescale_pixel_coords_v3000(molfile_string)
+    atom_lines_with_idx = []
+    in_atom_block = false
+    molfile_string.each_line.with_index do |line, idx|
+      if line.include?('BEGIN ATOM')
+        in_atom_block = true
+        next
+      end
+      break if in_atom_block && line.include?('END ATOM')
+      next unless in_atom_block && line.start_with?('M  V30 ')
+
+      parts = line.split
+      next unless parts.length >= 7
+
+      atom_lines_with_idx << [idx, parts]
+    end
+    return molfile_string if atom_lines_with_idx.empty?
+
+    all_x = atom_lines_with_idx.map { |_, p| p[4].to_f }
+    all_y = atom_lines_with_idx.map { |_, p| p[5].to_f }
+    cx = (all_x.min + all_x.max) / 2.0
+    cy = (all_y.min + all_y.max) / 2.0
+    scale = 1.0 / KETCHER_PIXEL_BOND_LENGTH
+
+    scaled_by_line_idx = atom_lines_with_idx.to_h do |idx, parts|
+      x = format('%.4f', (parts[4].to_f - cx) * scale)
+      y = format('%.4f', (parts[5].to_f - cy) * scale)
+      new_parts = parts.dup
+      new_parts[4] = x
+      new_parts[5] = y
+      [idx, new_parts.join(' ') + "\n"]
+    end
+
+    molfile_string.each_line.with_index.map do |line, idx|
+      scaled_by_line_idx[idx] || line
+    end.join
+  end
+
   # Returns true when the molfile has coordinates Indigo cannot render correctly as-is:
   #   - non-zero Z (3D structure, e.g. WATER from QM geometry)
   #   - stacked atoms sharing XY coords (R-group templates, e.g. multiple_R.mol)
@@ -231,11 +297,19 @@ class IndigoService
     false
   end
 
-  # Returns true if any bond in the V2000 bond table spans more than 2 Å.
+  # Returns true if any bond spans more than 2 Å. Handles V2000 and V3000.
   # Non-bonded atoms can be close in 3D projections, so we check bonded pairs.
   def any_long_bond?(molfile_string, coords)
-    return false unless molfile_string.include?('V2000')
+    if molfile_string.include?('V3000')
+      any_long_bond_v3000?(molfile_string, coords)
+    elsif molfile_string.include?('V2000')
+      any_long_bond_v2000?(molfile_string, coords)
+    else
+      false
+    end
+  end
 
+  def any_long_bond_v2000?(molfile_string, coords)
     counts_match = molfile_string.match(/^\s*(\d+)\s+(\d+)\s+.*V2000/)
     return false unless counts_match
 
@@ -255,8 +329,32 @@ class IndigoService
       a2 = parts[1].to_i - 1
       next false unless a1 >= 0 && a2 >= 0 && a1 < coords.size && a2 < coords.size
 
-      x1, y1 = coords[a1][0], coords[a1][1]
-      x2, y2 = coords[a2][0], coords[a2][1]
+      x1, y1 = coords[a1]
+      x2, y2 = coords[a2]
+      (x2 - x1)**2 + (y2 - y1)**2 > 4.0
+    end
+  end
+
+  def any_long_bond_v3000?(molfile_string, coords)
+    in_bond_block = false
+    molfile_string.each_line.any? do |line|
+      if line.include?('BEGIN BOND')
+        in_bond_block = true
+        next false
+      end
+      break false if in_bond_block && line.include?('END BOND')
+      next false unless in_bond_block && line.start_with?('M  V30 ')
+
+      # M  V30 <idx> <bond_type> <atom1> <atom2> [optional...]
+      parts = line.split
+      next false unless parts.length >= 6
+
+      a1 = parts[4].to_i - 1
+      a2 = parts[5].to_i - 1
+      next false unless a1 >= 0 && a2 >= 0 && a1 < coords.size && a2 < coords.size
+
+      x1, y1 = coords[a1]
+      x2, y2 = coords[a2]
       (x2 - x1)**2 + (y2 - y1)**2 > 4.0
     end
   end
