@@ -21,7 +21,6 @@ export default class DeviceBox extends React.Component {
       checkedDeviceIds: inboxState.checkedDeviceIds,
       checkedIds: inboxState.checkedIds,
       deletingTooltip: false,
-      currentDeviceBoxPage: inboxState.currentDeviceBoxPage,
       dataItemsPerPage: inboxState.dataItemsPerPage,
     };
 
@@ -33,7 +32,7 @@ export default class DeviceBox extends React.Component {
 
   componentDidMount() {
     const { device_box, deviceBoxVisible } = this.props;
-    const { currentDeviceBoxPage } = this.state;
+    const currentDeviceBoxPage = device_box.datasetPage || 1;
     if (deviceBoxVisible) {
       if (Array.isArray(device_box.children) && !device_box.children.length) {
         LoadingActions.start();
@@ -45,8 +44,7 @@ export default class DeviceBox extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { deviceBoxVisible, device_box } = this.props;
-    const { currentDeviceBoxPage } = this.state;
+    const { deviceBoxVisible } = this.props;
 
     if (deviceBoxVisible !== prevProps.deviceBoxVisible) {
       this.setState({ visible: deviceBoxVisible });
@@ -58,7 +56,8 @@ export default class DeviceBox extends React.Component {
   }
 
   handleDeviceBoxClick(deviceBox) {
-    const { visible, currentDeviceBoxPage } = this.state;
+    const { visible } = this.state;
+    const currentDeviceBoxPage = deviceBox.datasetPage || 1;
 
     if (!visible) {
       if (Array.isArray(deviceBox.children) && !deviceBox.children.length) {
@@ -125,9 +124,8 @@ export default class DeviceBox extends React.Component {
   }
 
   handlePrevClick = (deviceBox) => {
-    const { currentDeviceBoxPage } = this.state;
+    const currentDeviceBoxPage = deviceBox.datasetPage || 1;
     const updatedPage = currentDeviceBoxPage - 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
     const params = {
       checkedDeviceIds: [],
       checkedIds: [],
@@ -138,9 +136,8 @@ export default class DeviceBox extends React.Component {
   };
 
   handleNextClick = (deviceBox) => {
-    const { currentDeviceBoxPage } = this.state;
+    const currentDeviceBoxPage = deviceBox.datasetPage || 1;
     const updatedPage = currentDeviceBoxPage + 1;
-    this.setState({ currentDeviceBoxPage: updatedPage });
     const params = {
       checkedDeviceIds: [],
       checkedIds: [],
@@ -175,10 +172,7 @@ export default class DeviceBox extends React.Component {
   }
 
   deleteCheckedDataset(device_box) {
-    const { checkedDeviceIds, currentDeviceBoxPage, checkedIds } = this.state;
-
-    const currentItemsCount = device_box.children.length;
-    const itemsDeleted = checkedDeviceIds.length;
+    const { checkedDeviceIds, checkedIds } = this.state;
 
     const attachmentIdsToDelete = [];
 
@@ -191,6 +185,8 @@ export default class DeviceBox extends React.Component {
 
     checkedIds.forEach((checkedId) => {
       device_box.children.forEach((dataset) => {
+        // Deleting a dataset already deletes its attachments on the server.
+        if (checkedDeviceIds.includes(dataset.id)) return;
         const attachmentToDelete = dataset.attachments.find((attachment) => attachment.id === checkedId);
         if (attachmentToDelete) {
           attachmentIdsToDelete.push(checkedId);
@@ -208,10 +204,6 @@ export default class DeviceBox extends React.Component {
     };
     InboxActions.checkedDeviceIds(params);
 
-    if (currentDeviceBoxPage > 1 && itemsDeleted === currentItemsCount) {
-      this.handlePrevClick(device_box);
-    }
-
     this.toggleTooltip();
   }
 
@@ -222,8 +214,9 @@ export default class DeviceBox extends React.Component {
   render() {
     const { device_box, largerInbox } = this.props;
     const {
-      visible, checkedDeviceAll, checkedDeviceIds, checkedIds, currentDeviceBoxPage, dataItemsPerPage, deletingTooltip
+      visible, checkedDeviceAll, checkedDeviceIds, checkedIds, dataItemsPerPage, deletingTooltip
     } = this.state;
+    const currentDeviceBoxPage = device_box.datasetPage || 1;
     const cache = InboxStore.getState().cache;
 
 

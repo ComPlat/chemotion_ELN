@@ -92,13 +92,29 @@ class InboxStore {
   }
 
   handleFetchInbox(payload) {
-    const { itemsPerPage, currentDeviceBoxPage } = this.state;
-    this.state.inbox = payload.inbox;
+    const {
+      itemsPerPage, currentContainerPage, activeDeviceBoxId: previousDeviceBoxId,
+      inbox: previousInbox, dataItemsPerPage,
+    } = this.state;
+    const { inbox, activeDeviceBoxId = previousDeviceBoxId } = payload;
+    this.state.inbox = inbox;
     this.state.totalPages = Math.ceil(this.state.inbox.count / itemsPerPage);
-    this.state.activeDeviceBoxId = payload.activeDeviceBoxId ? payload.activeDeviceBoxId : null;
+    // Background refreshes omit the selection; keep the current folder if it is still on this page.
+    const deviceBoxExists = inbox.children.some((deviceBox) => deviceBox.id === activeDeviceBoxId);
+    this.state.activeDeviceBoxId = activeDeviceBoxId === -1 || deviceBoxExists ? activeDeviceBoxId : null;
 
-    if (this.state.activeDeviceBoxId) {
-      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, currentDeviceBoxPage);
+    if (this.state.activeDeviceBoxId > 0) {
+      const deviceBox = inbox.children.find((box) => box.id === activeDeviceBoxId);
+      const lastPage = Math.max(1, Math.ceil(deviceBox.children_count / dataItemsPerPage));
+      const containerPage = Math.min(activeDeviceBoxId === previousDeviceBoxId ? currentContainerPage : 1, lastPage);
+      const previousBox = (previousInbox.children || []).find((box) => box.id === activeDeviceBoxId);
+      if (previousBox?.datasetPage === containerPage) {
+        // Keep the displayed page until its refreshed contents arrive.
+        deviceBox.children = previousBox.children;
+        deviceBox.datasetPage = previousBox.datasetPage;
+      }
+      this.state.currentContainerPage = containerPage;
+      InboxActions.fetchInboxContainer(this.state.activeDeviceBoxId, containerPage);
     }
 
     this.sync();
@@ -138,13 +154,19 @@ class InboxStore {
   }
 
   handleFetchInboxContainer(payload) {
-    const { inbox } = this.state;
+    const { inbox, dataItemsPerPage } = this.state;
+    const lastPage = Math.max(1, Math.ceil(payload.inbox.children_count / dataItemsPerPage));
+    if (payload.currentContainerPage > lastPage) {
+      InboxActions.fetchInboxContainer(payload.containerId, lastPage);
+      return;
+    }
     const updatedChildren = inbox.children.map((child) => {
       if (child.id === payload.inbox.id) {
         return {
           ...child,
           children_count: payload.inbox.children_count,
           children: payload.inbox.children,
+          datasetPage: payload.currentContainerPage,
         };
       }
       return child;
@@ -290,6 +312,14 @@ class InboxStore {
         if (parent.children && parent.children.length > 0) {
           const newParent = { ...parent };
           newParent.children = parent.children.filter((child) => child.id !== result.id);
+          const removed = parent.children.length - newParent.children.length;
+          if (removed > 0 && Number.isFinite(parent.children_count)) {
+            newParent.children_count -= removed;
+            const lastPage = Math.max(1, Math.ceil(newParent.children_count / this.state.dataItemsPerPage));
+            if (parent.datasetPage > lastPage) {
+              InboxActions.fetchInboxContainer(parent.id, lastPage);
+            }
+          }
           return newParent;
         }
         return parent;
