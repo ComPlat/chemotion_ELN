@@ -51,12 +51,14 @@ class ElementalComposition < ApplicationRecord
       product_yield = Chemotion::Calculations.get_yield self.data, ea_sm.data, ea_exp.data
       return if product_yield == 0.0
 
-      new_amount = sm_data.sample.amount_mmol * product_yield
+      new_amount = sm_data.sample.amount_mmol&.*(product_yield)
       amount = if self.sample.real_amount_value.nil? || self.sample.real_amount_value.zero?
         self.sample.amount_mg
       else
         self.sample.amount_mg :real
       end
+      return if new_amount.nil? || amount.nil? || amount.zero?
+
       self.loading = new_amount / amount * 1000.0
     else
       return unless mf = sample.molecule_sum_formular

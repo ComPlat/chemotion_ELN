@@ -91,7 +91,6 @@ class Material extends Component {
 
     this.state = {
       showComponents: false,
-      mixtureComponents: [],
       mixtureComponentsLoading: false,
       fieldToShow: 'molar mass',
     };
@@ -142,6 +141,11 @@ class Material extends Component {
         this.restoreAccordionState(material);
       }
     }
+  }
+
+  componentWillUnmount() {
+    // Removing a focused input does not fire blur, so commit pending edits here.
+    this.debounceHandleAmountUnitChange.flush();
   }
 
   handleMaterialClick(sample) {
@@ -307,11 +311,16 @@ class Material extends Component {
     const refMaterial = reaction.getReferenceMaterial();
     let calculateYield;
     const isNumeric = (v) => {
+      if (v == null || v === '') return false;
       const n = Number(v);
       return Number.isFinite(n);
     };
     if (material.gas_type === 'gas') {
       calculateYield = this.recalculateYieldForGasProduct(material, reaction);
+    } else if (!refMaterial) {
+      calculateYield = undefined;
+    } else if (material.isMixture?.() && !Number.isFinite(material.amount_mol)) {
+      calculateYield = undefined;
     } else if (reaction.hasPolymers()) {
       if (isNumeric(material.equivalent)) {
         const eq = material.equivalent <= 1 ? material.equivalent : 1;
@@ -617,21 +626,10 @@ class Material extends Component {
    */
   handleComponentReferenceChange = (changeEvent) => {
     if (changeEvent.type === 'componentReferenceChanged') {
-      const { mixtureComponents } = this.state;
       const { onChange, material, materialGroup } = this.props;
 
-      // Update the reference directly on the ComponentModel instances
-      mixtureComponents.forEach((comp) => {
-        const isReference = comp.id === changeEvent.componentId;
-        if (comp.reference !== isReference) {
-          comp.reference = isReference;
-        }
-      });
-
-      // Trigger re-render with updated components
-      this.setState({ mixtureComponents: [...mixtureComponents] });
-
-      // Propagate the change up to notify the reaction that it has changed
+      // The components may be shared with the reaction. Let its handler capture the mass
+      // under the old reference before changing the selection in this row.
       if (onChange) {
         onChange({
           ...changeEvent,
@@ -790,8 +788,8 @@ class Material extends Component {
   /**
    * Fetches mixture components for a given material if it's a mixture.
    * This method handles three scenarios:
-   * 1. If material is not a mixture, clears the components state
-   * 2. If material has existing components in memory, deserializes and uses them
+   * 1. If material is not a mixture, clears the loading state
+   * 2. If material has existing components in memory, renders them directly from the material
    * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
    *
    * @param {Sample} material - The material sample to check for mixture components
@@ -799,22 +797,14 @@ class Material extends Component {
    */
   fetchMixtureComponentsIfNeeded(material) {
     if (!material || !(material.isMixture && material.isMixture())) {
-      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+      this.setState({ mixtureComponentsLoading: false });
       return;
     }
 
     const existingComponents = Array.isArray(material.components) ? material.components : [];
 
     if (existingComponents.length > 0) {
-      // Use existing components, deserializing if needed
-      const componentsList = existingComponents.map((comp) => (
-        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
-      ));
-
-      this.setState({
-        mixtureComponents: componentsList,
-        mixtureComponentsLoading: false,
-      });
+      this.setState({ mixtureComponentsLoading: false });
     } else if (typeof material.id === 'number') {
       // Fetch components for saved material
       this.setState({ mixtureComponentsLoading: true });
@@ -824,21 +814,15 @@ class Material extends Component {
           const componentsList = components.map(ComponentModel.deserializeData);
           // Initialize components on the material object so they persist
           material.initialComponents(componentsList);
-          this.setState({
-            mixtureComponents: componentsList,
-            mixtureComponentsLoading: false,
-          });
+          this.setState({ mixtureComponentsLoading: false });
         })
         .catch((error) => {
           console.error('Error fetching components:', error);
           this.setState({ mixtureComponentsLoading: false });
         });
     } else {
-      // No components and no ID, clear state
-      this.setState({
-        mixtureComponents: [],
-        mixtureComponentsLoading: false,
-      });
+      // No components and no ID, clear loading state
+      this.setState({ mixtureComponentsLoading: false });
     }
   }
 
@@ -1138,12 +1122,7 @@ class Material extends Component {
   massField(material, metricPrefixes, reaction, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
 
-    const tooltip = (
-      <Tooltip id="molecular-weight-info">
-        {'molar mass: '}
-        {this.molarWeightValue(material, reaction)}
-      </Tooltip>
-    );
+    const tooltip = this.molarWeightTooltip(material, reaction, 'molecular-weight-info');
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -1167,6 +1146,7 @@ class Material extends Component {
               || material.gas_type === 'gas'
             }
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g, material.amountType)}
+            onBlur={() => this.debounceHandleAmountUnitChange.flush()}
             onMetricsChange={this.handleMetricsChange}
             active={material.amount_unit === 'g'}
             isError={material.error_mass}
@@ -1223,14 +1203,13 @@ class Material extends Component {
 
     const { showComponents, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();
-    // Always get fresh components from material, syncing with state
+    // Component data belongs to the material; the row only keeps UI state.
     const existingComponents = Array.isArray(material.components) ? material.components : [];
-    const currentComponents = existingComponents.map((comp) => (
+    const mixtureComponents = existingComponents.map((comp) => (
       comp instanceof ComponentModel
         ? comp
         : ComponentModel.deserializeData(comp)
     ));
-    const mixtureComponents = currentComponents;
     const hasComponents = mixtureComponents && mixtureComponents.length > 0;
 
     const materialRow = (
@@ -1272,14 +1251,14 @@ class Material extends Component {
             ) : (
               <div className="reaction-material__molar-mass-data">
                 <OverlayTrigger
-                  overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+                  overlay={this.molarWeightTooltip(material, reaction, 'molar-weight-details')}
                 >
                   <span>{this.molarWeightValue(material, reaction, true)}</span>
                 </OverlayTrigger>
               </div>
             )}
             <div className="reaction-material__density-data">
-              {material.has_density ? material.density : 'undefined'}
+              {material.has_density ? material.density : 'n.d.'}
             </div>
             <div className="reaction-material__purity-data">
               {(material.purity === null || material.purity === undefined || material.purity === '')
@@ -1341,7 +1320,6 @@ class Material extends Component {
   }
 
   molarWeightValue(sample, reaction, formatted = false) {
-    const isProduct = reaction.products.includes(sample);
     const isSbmm = isSbmmSample(sample);
 
     let molecularWeight;
@@ -1355,20 +1333,56 @@ class Material extends Component {
     }
 
     if (sample.isMixture?.() && sample.reference_relative_molecular_weight) {
-      molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
+      molecularWeight = sample.reference_relative_molecular_weight;
     }
-    let theoreticalMassPart = '';
-    if (isProduct && sample.maxAmount) {
-      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
-    }
-    // Define metricPrefix and currentPrecision
+    // Keep the column's four decimal places; use two in the tooltip.
     const metricPrefix = 'n';
-    const currentPrecision = 4;
+    const currentPrecision = formatted ? 4 : 2;
     const formattedValue = formatDisplayValue(
       metPreConv(molecularWeight, metricPrefix, metricPrefix),
       currentPrecision
     );
-    return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
+    return `${formattedValue} g/mol`;
+  }
+
+  molarWeightTooltip(sample, reaction, id) {
+    const isProduct = reaction.products.includes(sample);
+    let theoreticalMassRows = null;
+    if (isProduct && sample.isMixture?.()) {
+      const referenceMaterial = reaction.referenceMaterial;
+      const referenceAmountMol = referenceMaterial?.amount_mol;
+      const theoreticalAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol >= 0
+        ? referenceAmountMol * (sample.coefficient || 1) / (referenceMaterial.coefficient || 1) : null;
+
+      // Derive both masses from current inputs; maxAmount is overwritten by different calculation paths.
+      const massRows = [
+        ['Reference component', sample.reference_molecular_weight],
+        ['Mixture', sample.reference_relative_molecular_weight],
+      ].map(([label, weight]) => {
+        const massMg = Number.isFinite(theoreticalAmountMol) && theoreticalAmountMol >= 0
+          && Number.isFinite(weight) && weight > 0 ? theoreticalAmountMol * weight * 1000 : null;
+        const massLabel = Number.isFinite(massMg) ? `${formatDisplayValue(massMg, 1)} mg` : 'n.d.';
+        return <div key={label} className="ps-2">{label}: {massLabel}</div>;
+      });
+      theoreticalMassRows = (
+        <>
+          <div>Max. theoretical mass</div>
+          {massRows}
+        </>
+      );
+    } else if (isProduct && sample.maxAmount) {
+      theoreticalMassRows = (
+        <div>Max. theoretical mass: {Math.round(sample.maxAmount * 10000) / 10} mg</div>
+      );
+    }
+    return (
+      <Tooltip id={id}>
+        <div className="text-start">
+          <div>Molar mass: {this.molarWeightValue(sample, reaction)}</div>
+          {theoreticalMassRows}
+        </div>
+      </Tooltip>
+    );
   }
 
   toggleTarget(isTarget) {

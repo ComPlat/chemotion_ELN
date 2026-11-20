@@ -4,7 +4,9 @@ require 'spec_helper'
 
 RSpec.describe Reactable, type: :module do
   let(:reactable) { Class.new { include Reactable }.new }
-  let(:sample_with_target_amount) { create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol') }
+  let(:sample_with_target_amount) do
+    create(:sample, real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'mol')
+  end
   let(:sample_with_real_amount) do
     create(:sample, real_amount_value: 15, real_amount_unit: 'mol', target_amount_value: 10, target_amount_unit: 'g')
   end
@@ -21,6 +23,279 @@ RSpec.describe Reactable, type: :module do
              'part_per_million' => 1_000_00,
              'turnover_frequency' => { 'unit' => 'TON/h', 'value' => nil },
            })
+  end
+
+  describe '#update_equivalent' do
+    %w[target real].each do |amount_type|
+      it "preserves a density-less litre mixture's #{amount_type} equivalent across repeated sample saves" do
+        reference = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+        create(:reactions_starting_material_sample, reaction: reaction, sample: reference, reference: true, equivalent: 1)
+        mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, density: 0, molarity_value: 0,
+                                  target_amount_value: nil, real_amount_value: nil,
+                                  "#{amount_type}_amount_value" => 0.01, "#{amount_type}_amount_unit" => 'l')
+        mixture.components.create!(
+          position: 0,
+          component_properties: { molecule_id: mixture.molecule_id, reference: true, relative_molecular_weight: 500 },
+        )
+        association = create(:reactions_reactant_sample, reaction: reaction, sample: mixture, equivalent: 0.75)
+
+        2.times do |index|
+          mixture.update!(name: "Unknown-density mixture save #{index}")
+          expect(mixture.reload.public_send("#{amount_type}_amount_value")).to eq(0.01)
+          expect(association.reload.equivalent).to eq(0.75)
+        end
+
+        mixture.update!(density: 1)
+        expect(association.reload.equivalent).to eq(0.5)
+      end
+
+      it "preserves a dependent yield when its #{amount_type} mixture reference has litres but no density" do
+        mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, density: 0, molarity_value: 0,
+                                  target_amount_value: nil, real_amount_value: nil,
+                                  "#{amount_type}_amount_value" => 0.01, "#{amount_type}_amount_unit" => 'l')
+        mixture.components.create!(
+          position: 0,
+          component_properties: { molecule_id: mixture.molecule_id, reference: true, relative_molecular_weight: 500 },
+        )
+        create(:reactions_starting_material_sample, reaction: reaction, sample: mixture, reference: true, equivalent: 1)
+        product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
+        association = create(:reactions_product_sample, reaction: reaction, sample: product, equivalent: 0.25)
+
+        mixture.update!(name: 'Saved unknown-density reference')
+        expect(association.reload.equivalent).to eq(0.25)
+
+        product.update!(name: 'Saved dependent product')
+        expect(association.reload.equivalent).to eq(0.25)
+
+        mixture.update!(density: 1)
+        expect(association.reload.equivalent).to eq(0.5)
+      end
+    end
+
+    it 'preserves a litre mixture product yield on save and resumes after density is supplied' do
+      reference = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+      create(:reactions_starting_material_sample, reaction: reaction, sample: reference, reference: true, equivalent: 1)
+      mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE, density: 0, molarity_value: 0,
+                                real_amount_value: 0.01, real_amount_unit: 'l')
+      mixture.components.create!(
+        position: 0,
+        component_properties: { molecule_id: mixture.molecule_id, reference: true, relative_molecular_weight: 500 },
+      )
+      association = create(:reactions_product_sample, reaction: reaction, sample: mixture, equivalent: 0.75)
+
+      2.times do |index|
+        mixture.update!(name: "Unknown-density product save #{index}")
+        expect(association.reload.equivalent).to eq(0.75)
+      end
+
+      mixture.update!(density: 1)
+      expect(association.reload.equivalent).to eq(0.5)
+    end
+
+    it 'preserves mixture equivalents without an explicit component reference and resumes after selection' do
+      reference = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+      create(:reactions_starting_material_sample, reaction: reaction, sample: reference, reference: true, equivalent: 1)
+      mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'g')
+      component = mixture.components.create!(
+        position: 0,
+        component_properties: { molecule_id: mixture.molecule_id, reference: false, relative_molecular_weight: 500 },
+      )
+      association = create(:reactions_reactant_sample, reaction: reaction, sample: mixture, equivalent: 0.75)
+
+      mixture.update!(name: 'Saved without a reference component')
+      expect(association.reload.equivalent).to eq(0.75)
+
+      component.update!(component_properties: component.component_properties.merge('reference' => true))
+      mixture.update!(name: 'Saved after selecting a reference component')
+      expect(association.reload.equivalent).to eq(0.5)
+    end
+
+    context 'with a quantified mixture reference' do
+      let(:mixture) do
+        create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                        real_amount_value: nil, target_amount_value: 10, target_amount_unit: 'g')
+      end
+
+      before do
+        mixture.components.create!(
+          position: 0,
+          component_properties: {
+            molecule_id: mixture.molecule_id, reference: true,
+            relative_molecular_weight: 500, amount_mol: 0.02
+          },
+        )
+        create(:reactions_starting_material_sample, reaction: reaction, sample: mixture, reference: true, equivalent: 1)
+      end
+
+      it 'refreshes an ordinary reactant equivalent when its sample is saved separately' do
+        dependent = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+        association = create(:reactions_reactant_sample, reaction: reaction, sample: dependent, equivalent: 99)
+        dependent.update!(target_amount_value: 0.06)
+        expect(association.reload.equivalent).to be_within(1e-12).of(3)
+      end
+
+      it 'refreshes a product yield with its coefficient when its sample is saved separately' do
+        product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
+        association = create(:reactions_product_sample, reaction: reaction, sample: product,
+                                                        coefficient: 2, equivalent: 0.1)
+        product.update!(real_amount_value: 0.02)
+        expect(association.reload.equivalent).to be_within(1e-12).of(0.5)
+        product.update!(real_amount_value: 0.08)
+        expect(association.reload.equivalent).to eq(1)
+      end
+
+      it 'calculates a mixture material from its own reference relative MW' do
+        dependent = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                    real_amount_value: nil, target_amount_value: 5, target_amount_unit: 'g')
+        dependent.components.create!(
+          position: 0,
+          component_properties: {
+            molecule_id: dependent.molecule_id, reference: true,
+            relative_molecular_weight: 250
+          },
+        )
+        association = create(:reactions_reactant_sample, reaction: reaction, sample: dependent, equivalent: 99)
+        association.update_equivalent
+        expect(association.reload.equivalent).to eq(1)
+      end
+    end
+
+    legacy_component_options = [false, true]
+    %w[target real].each do |amount_type|
+      legacy_component_options.each do |legacy_components|
+        it "preserves product yield on sample save with an unquantified #{amount_type} mixture reference, " \
+           "legacy components=#{legacy_components}", :aggregate_failures do
+          mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                    real_amount_value: nil, target_amount_value: nil,
+                                    "#{amount_type}_amount_value" => 10,
+                                    "#{amount_type}_amount_unit" => 'g')
+          if legacy_components
+            mixture.components.create!(
+              position: 0,
+              component_properties: { molecule_id: mixture.molecule_id, reference: true },
+            )
+          end
+          create(:reactions_starting_material_sample, reaction: reaction, sample: mixture,
+                                                      reference: true, equivalent: 1)
+          product = create(:sample, real_amount_value: 0.01, real_amount_unit: 'mol')
+          association = create(:reactions_product_sample, reaction: reaction, sample: product,
+                                                          coefficient: 2, equivalent: 0.25)
+          expect(mixture.amount_mmol(amount_type)).to be_nil
+
+          expect { product.update!(real_amount_value: 0.02) }.not_to raise_error
+
+          expect(product.reload.real_amount_value).to eq(0.02)
+          expect(association.reload.equivalent).to eq(0.25)
+        end
+      end
+    end
+
+    it 'saves a mol-entered mixture product with unknown mass and keeps its molar yield', :aggregate_failures do
+      reference = create(:sample, real_amount_value: nil, target_amount_value: 0.04, target_amount_unit: 'mol')
+      create(:reactions_starting_material_sample, reaction: reaction, sample: reference, reference: true, equivalent: 1)
+      mixture = create(:sample, sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                                real_amount_value: 0.02, real_amount_unit: 'mol')
+      association = create(:reactions_product_sample, reaction: reaction, sample: mixture, equivalent: 0.5)
+
+      mixture.update!(real_amount_value: 0.01)
+
+      expect(mixture.reload.real_amount_value).to eq(0.01)
+      expect(mixture.real_amount_unit).to eq('mol')
+      expect(mixture.amount_g(:real)).to be_nil
+      expect(mixture.amount_mmol(:real)).to eq(10)
+      expect(association.reload.equivalent).to eq(0.25)
+    end
+
+    it 'preserves the client-calculated equivalent when the reference is a mixture' do
+      mixture = create(
+        :sample,
+        sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+        real_amount_value: 1000.124,
+        real_amount_unit: 'g',
+      )
+      dependent = create(:sample, real_amount_value: 0.816, real_amount_unit: 'g')
+      create(
+        :reactions_starting_material_sample,
+        reaction: reaction,
+        sample: mixture,
+        reference: true,
+        equivalent: 1.0,
+      )
+      association = create(
+        :reactions_reactant_sample,
+        reaction: reaction,
+        sample: dependent,
+        equivalent: 1.7728,
+      )
+
+      association.update_equivalent
+
+      expect(association.reload.equivalent).to eq(1.7728)
+    end
+
+    context 'when the reference is a mixture' do
+      let(:mixture_reference) do
+        create(
+          :sample,
+          sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+          real_amount_value: nil,
+          target_amount_value: 1,
+          target_amount_unit: 'mol',
+        )
+      end
+
+      before do
+        create(
+          :reactions_starting_material_sample,
+          reaction: reaction,
+          sample: mixture_reference,
+          reference: true,
+          equivalent: 1.0,
+        )
+      end
+
+      it 'refreshes the gas-product equivalent from gas-phase data' do
+        association = create(
+          :reactions_product_sample,
+          reaction: reaction,
+          sample: sample_with_real_amount,
+          gas_type: 'gas',
+          equivalent: 0.1,
+          gas_phase_data: { 'ppm' => 100, 'temperature' => { 'unit' => '°C', 'value' => 20 } },
+        )
+        allow(association).to receive(:calculate_equivalent_for_gas_material)
+          .with(sample_with_real_amount.purity || 1, 293.15, 100).and_return(4.5)
+
+        association.update_equivalent
+
+        expect(association.reload.equivalent).to eq(4.5)
+      end
+
+      [Sample::SAMPLE_TYPE_MIXTURE, Sample::SAMPLE_TYPE_MICROMOLECULE].each do |sample_type|
+        it "refreshes the weight-percentage-reference yield for a #{sample_type} product" do
+          product = create(
+            :sample,
+            sample_type: sample_type,
+            real_amount_value: 5,
+            real_amount_unit: 'mol',
+            target_amount_value: 10,
+            target_amount_unit: 'mol',
+          )
+          association = create(
+            :reactions_product_sample,
+            reaction: reaction,
+            sample: product,
+            weight_percentage_reference: true,
+            equivalent: 0.1,
+          )
+
+          association.update_equivalent
+
+          expect(association.reload.equivalent).to eq(0.5)
+        end
+      end
+    end
   end
 
   describe '#test methods for gas phase reaction samples' do

@@ -548,7 +548,9 @@ module SVG
           x_shift = group_width + 10 - vb[0]
           y_shift = (y_center - vb[3] / 2).round
           yield_svg = ''
-          yield_svg += compose_yield_svg(yield_amount, (vb[2] / 2).round, ((@max_height_for_products + vb[3]) / 2).round) if yield_amount
+          if m.is_a?(Array) && m.size > 1 && yield_amount != false
+            yield_svg = compose_yield_svg(yield_amount, (vb[2] / 2).round, ((@max_height_for_products + vb[3]) / 2).round)
+          end
           group_width += vb[2] + 10
           svg['width'] = "#{vb[2]}px;"
           svg['height'] = "#{vb[3]}px;"
@@ -577,10 +579,10 @@ module SVG
     end
 
     def compose_yield_svg(amount, x = 0, y = @max_height_for_products)
-      yield_amount = amount && !amount.to_f.nan? && !amount.to_f.infinite? ? (amount * 100).try(:round, 0) : 0
+      yield_label = amount.is_a?(Numeric) && amount.finite? ? "#{(amount * 100).round(0)}%" : 'n.d.'
       <<~XML
         <svg font-family="sans-serif">
-          <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f + YIELD_YOFFSET}" x="#{x}">#{yield_amount}%</text>
+          <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f + YIELD_YOFFSET}" x="#{x}">#{yield_label}</text>
         </svg>
       XML
     end

@@ -2,9 +2,147 @@ import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
+import Component from 'src/models/Component';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
   from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
+
+describe('Reaction.updateMaterial concentration after sample-editor save', () => {
+  const massG = 0.006 * 182.22 + 0.012 * 94.11;
+  const sampleData = (id, value, unit, extra = {}) => ({
+    id,
+    amountType: 'target',
+    target_amount_value: value,
+    target_amount_unit: unit,
+    molecule: { molecular_weight: 100 },
+    purity: 1,
+    density: 0,
+    molarity_value: 0,
+    gas_type: 'off',
+    coefficient: 1,
+    ...extra,
+  });
+  const savedMixture = (referenceIndex, unit = 'g') => {
+    const mixture = new Sample(sampleData('mixture', unit === 'mol' ? [0.006, 0.012][referenceIndex] : massG, unit, {
+      sample_type: 'Mixture', sample_details: { reference_component_changed: false },
+    }));
+    mixture.initialComponents([
+      new Component({
+        id: 'benzophenone', position: 0, reference: referenceIndex === 0,
+        amount_mol: 0.006, relative_molecular_weight: massG / 0.006,
+        molecule: { molecular_weight: 182.22 }, material_group: 'solid', purity: 1,
+      }),
+      new Component({
+        id: 'phenol', position: 1, reference: referenceIndex === 1,
+        amount_mol: 0.012, relative_molecular_weight: massG / 0.012,
+        molecule: { molecular_weight: 94.11 }, material_group: 'solid', purity: 1,
+      }),
+    ]);
+    mixture.getLockReactionEquivColumn = () => true;
+    return mixture;
+  };
+  const build = (materialGroup = 'starting_materials', unit = 'g') => {
+    const reaction = new Reaction({
+      starting_materials: [sampleData('reference', 0.01, 'mol', { reference: true, equivalent: 1 })],
+      reactants: [sampleData('other', 0.02, 'mol', { equivalent: 2 })],
+      products: [],
+      solvents: [sampleData('solvent', 0.01, 'l', { density: 1 })],
+    });
+    reaction[materialGroup].push(savedMixture(0, unit));
+    reaction.updateAllConcentrations();
+    return reaction;
+  };
+
+  ['starting_materials', 'reactants'].forEach((materialGroup) => {
+    ['g', 'mol'].forEach((unit) => {
+      it(`refreshes both component switches for a saved ${unit} mixture in ${materialGroup}`, () => {
+        const reaction = build(materialGroup, unit);
+        const other = reaction.sampleById('other');
+        other.concn = 3;
+        other.preserveConcentration = true;
+        expect(reaction.sampleById('mixture').concn).toBeCloseTo(0.6, 12);
+
+        const phenol = savedMixture(1, unit);
+        // The API response has the sample's zero stock concentration, not the reaction concentration.
+        expect(phenol.concn).toBe(0);
+        phenol.preserveConcentration = true;
+        reaction.updateMaterial(phenol);
+
+        const updated = reaction.sampleById('mixture');
+        expect(updated.reference_component.id).toBe('phenol');
+        expect(updated.concn).toBeCloseTo(1.2, 12);
+        expect(updated.preserveConcentration).toBe(false);
+        expect(updated.amount_mol).toBeCloseTo(0.012, 12);
+        expect(updated.equivalent).toBeCloseTo(1.2, 12);
+        expect(updated.amount_g).toBeCloseTo(massG, 12);
+        expect(updated.amount_unit).toBe(unit);
+
+        reaction.updateMaterial(savedMixture(0, unit));
+
+        expect(reaction.sampleById('mixture').concn).toBeCloseTo(0.6, 12);
+        expect(reaction.sampleById('mixture').amount_mol).toBeCloseTo(0.006, 12);
+        expect(reaction.sampleById('mixture').equivalent).toBeCloseTo(0.6, 12);
+        expect(reaction.sampleById('mixture').amount_g).toBeCloseTo(massG, 12);
+        expect(reaction.referenceMaterial.amount_mol).toBeCloseTo(0.01, 12);
+        expect(reaction.solventVolume).toBeCloseTo(0.01, 12);
+        expect(other.amount_mol).toBeCloseTo(0.02, 12);
+        expect(other.concn).toBe(3);
+        expect(other.preserveConcentration).toBe(true);
+      });
+    });
+  });
+
+  it('uses the selected explicit reaction volume', () => {
+    const reaction = build();
+    reaction.concentration_mode = Reaction.CONCENTRATION_MODES.REACTION_VOLUME;
+    reaction.volume = 0.02;
+
+    reaction.updateMaterial(savedMixture(1));
+
+    expect(reaction.sampleById('mixture').concn).toBeCloseTo(0.6, 12);
+    expect(reaction.volume).toBe(0.02);
+    expect(reaction.solventVolume).toBeCloseTo(0.01, 12);
+  });
+
+  it('shows an unavailable concentration when there is no reaction volume', () => {
+    const reaction = build();
+    reaction.solvents = [];
+
+    reaction.updateMaterial(savedMixture(1));
+
+    expect(reaction.sampleById('mixture').concn).toBe(null);
+  });
+
+  it('keeps a typed ordinary-material concentration when switching away from its sample tab', () => {
+    const reaction = build();
+    reaction.type = 'reaction';
+    const material = reaction.sampleById('other');
+    material.concn = 7;
+    material.preserveConcentration = true;
+    const tab = new Sample(material);
+    tab.type = 'sample';
+    tab.tag = { taggable_data: { reaction_id: reaction.id } };
+    const store = Object.create(ElementStore.StoreModel.prototype);
+    store.state = { selecteds: [reaction, tab], refreshCoefficient: [] };
+
+    store.synchronizeElements(tab);
+
+    expect(reaction.sampleById('other').concn).toBe(7);
+    expect(reaction.sampleById('other').preserveConcentration).toBe(true);
+  });
+
+  it('derives an ordinary saved sample concentration from the reaction rather than its stock molarity', () => {
+    const reaction = build();
+    const saved = new Sample(sampleData('other', 0.03, 'mol', { molarity_value: 5 }));
+
+    reaction.updateMaterial(saved);
+
+    expect(reaction.sampleById('other').concn).toBeCloseTo(3, 12);
+    expect(reaction.sampleById('other').molarity_value).toBe(5);
+  });
+});
 
 function randFloat(min, max, precision) {
   return Number.parseFloat((Math.random() * (max - min) + min).toFixed(precision));
@@ -129,6 +267,25 @@ describe('Reaction', () => {
     });
   });
   describe('Reaction.buildCopy()', () => {
+    [
+      ['omitted', {}],
+      ['null', { purification_solvents: null }],
+      ['empty', { purification_solvents: [] }],
+    ].forEach(([state, fields]) => {
+      it(`copies and serializes a reaction with ${state} purification solvents`, () => {
+        const source = new Reaction({
+          starting_materials: [], reactants: [], solvents: [], products: [], segments: [], ...fields,
+        });
+
+        const copy = source.buildCopy({ collection_id: 'newCollectionId' });
+
+        expect(source.purification_solvents).toEqual([]);
+        expect(copy.purification_solvents).toEqual([]);
+        expect(source.serialize().materials.purification_solvents).toEqual([]);
+        expect(copy.serialize().materials.purification_solvents).toEqual([]);
+      });
+    });
+
     it('should copy starting materials with _real_amount_value set to null', () => {
       const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
       expect(copy.starting_materials[0]._real_amount_value).toBe(null);
@@ -1064,6 +1221,38 @@ describe('Reaction', () => {
   });
 
   describe('Reaction.schemeSvgRequest', () => {
+    [false, true].forEach((hasReference) => {
+      [false, true].forEach((completeMixture) => {
+        it(`uses an unknown SVG yield with reference=${hasReference}, complete mixture=${completeMixture}`, () => {
+          const source = Reaction.buildEmpty(1);
+          source.starting_materials = hasReference ? [new Sample({ id: 1, reference: true })] : [];
+          source.products = [new Sample({
+            id: 2, sample_type: 'Mixture', amountType: 'real', real_amount_value: 10, real_amount_unit: 'g',
+            sample_svg_file: 'mixture.svg', equivalent: completeMixture ? 0.28 : 0,
+          })];
+          if (completeMixture) {
+            source.products[0].initialComponents([new Component({
+              id: 1, reference: true, relative_molecular_weight: 2789.5,
+            })]);
+          }
+
+          const request = source.schemeSvgRequest();
+
+          expect(request.materialsSvgPaths.products).toEqual([
+            ['/images/samples/mixture.svg', hasReference && completeMixture ? 0.28 : null],
+          ]);
+        });
+      });
+    });
+
+    it('preserves a measured zero yield in the SVG request', () => {
+      const source = Reaction.buildEmpty(1);
+      source.starting_materials = [new Sample({ id: 1, reference: true })];
+      source.products = [new Sample({ id: 2, sample_svg_file: 'product.svg', equivalent: 0 })];
+
+      expect(source.schemeSvgRequest().materialsSvgPaths.products).toEqual([['/images/samples/product.svg', 0]]);
+    });
+
     it('builds the complete SVG request for an interaction reaction', () => {
       const startingMaterial = reaction.starting_materials[0];
       const reactant = reaction.starting_materials[1];

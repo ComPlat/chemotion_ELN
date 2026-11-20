@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Reactable module
-module Reactable
+module Reactable # rubocop:disable Metrics/ModuleLength
   extend ActiveSupport::Concern
 
   IDEAL_GAS_CONSTANT = 0.0821
@@ -26,7 +26,7 @@ module Reactable
     PER_HOUR: 'TON/h',
   }.freeze
 
-  def update_equivalent
+  def update_equivalent # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
        !reference && !weight_percentage_reference
       ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
@@ -42,8 +42,22 @@ module Reactable
     end
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
-    return if ref_record.nil? ||
-              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+    return if ref_record.nil?
+
+    # Gas equivalents use gas-phase data, not the reference sample's molar amount.
+    if gas_type == 'gas'
+      return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
+
+      temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
+      return update!(equivalent: calculate_equivalent_for_gas_material(
+        sample.purity || 1,
+        temperature_in_kelvin,
+        gas_phase_data['ppm'],
+      ))
+    end
+
+    mixture_stoichiometry = sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE ||
+                            ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
 
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
@@ -73,38 +87,29 @@ module Reactable
                      end
       else
         amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-        ref_amount =  if condition
-                        ref_record.sample.amount_mmol(:target) *
-                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
-                      else
-                        ref_record.sample.amount_mmol(:real) *
-                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
-                      end
+        ref_amount = condition ? ref_record.sample.amount_mmol(:target) : ref_record.sample.amount_mmol(:real)
+        return if mixture_stoichiometry && ref_amount.nil?
+
+        ref_amount = ref_amount * (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
       end
     else
       amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
       ref_amount = condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
     end
-    if gas_type == 'gas'
-      return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
+    # Unknown legacy mixture weights cannot be replaced by the combined structure's MW.
+    return if mixture_stoichiometry && (amount.nil? || ref_amount.nil?)
 
-      temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
-      update!(equivalent: calculate_equivalent_for_gas_material(
-        sample.purity || 1,
-        temperature_in_kelvin,
-        gas_phase_data['ppm'],
-      ))
-    else
-      # compute equivalent safely (avoid calling `zero?` on nil)
-      equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
-                           0
-                         else
-                           amount / ref_amount
-                         end
+    # compute equivalent safely (avoid calling `zero?` on nil)
+    equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
+                         0
+                       else
+                         amount / ref_amount
+                       end
 
-      # Persist equivalent using update! so model validations run
-      update!(equivalent: equivalent_value)
-    end
+    equivalent_value = [equivalent_value, 1.0].min if mixture_stoichiometry && is_a?(ReactionsProductSample)
+
+    # Persist equivalent using update! so model validations run
+    update!(equivalent: equivalent_value)
   end
 
   def detect_amount_type

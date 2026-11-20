@@ -19,7 +19,7 @@ export default class ReactionsFetcher {
     return ApiClient.getJson(`/api/v1/reactions?${preparedCollectionParams(id, updatedParams)}`, {
       handleResponseSuccess: (response) => response.json()
         .then((json) => ({
-          elements: json.reactions.map((reaction) => (new Reaction(reaction))),
+          elements: json.reactions.map((reaction) => new Reaction(reaction).recordPersistedMaterials()),
           totalElements: parseInt(response.headers.get('X-Total'), 10),
           page: parseInt(response.headers.get('X-Page'), 10),
           pages: parseInt(response.headers.get('X-Total-Pages'), 10),
@@ -45,9 +45,9 @@ export default class ReactionsFetcher {
     return { sort_column: sortColumn, sort_direction: direction };
   }
 
-  static fetchById(id) {
+  static fetchById(id, options = {}) {
     return ApiClient.getJson(`/api/v1/reactions/${id}`)
-      .then((json) => this.reactionElement(json, id));
+      .then((json) => this.reactionElement(json, id, options));
   }
 
   static findByShortLabel(shortLabel) {
@@ -70,7 +70,8 @@ export default class ReactionsFetcher {
       });
   }
 
-  static update(reaction) {
+  // Callers must pass IDs of open removed mixture drafts whose samples should survive this save.
+  static update(reaction, preserveRemovedSampleIds = []) {
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
       ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
@@ -79,8 +80,14 @@ export default class ReactionsFetcher {
 
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
-      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
+      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, {
+        body: this.reactionSavePayload(reaction, preserveRemovedSampleIds),
+      }))
       .then((json) => this.reactionElement(json, reaction.id));
+  }
+
+  static reactionSavePayload(reaction, preserveRemovedSampleIds = []) {
+    return { ...reaction.serialize(), preserve_removed_sample_ids: [...preserveRemovedSampleIds] };
   }
 
   static updateAnnotationsInReaction(reaction) {
@@ -91,25 +98,39 @@ export default class ReactionsFetcher {
     return Promise.all(tasks);
   }
 
-  static reactionElement(json, id) {
+  static updateMaterialEquivalent(reactionId, sampleId, equivalent) {
+    return ApiClient.putJson(`/api/v1/reactions/${reactionId}/materials/${sampleId}/equivalent`, {
+      body: { equivalent },
+      handleResponseSuccess: (response) => {
+        if (!response.ok) { throw new Error(`Saving material equivalent failed: HTTP ${response.status}`); }
+        return response.json();
+      },
+      handleResponseError: (error) => { throw error; },
+    });
+  }
+
+  static reactionElement(json, id, { updateStores = true } = {}) {
     if (json.error) {
       return new Reaction({ id: `${id}:error:Reaction ${id} is not accessible!` });
     }
 
     const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
 
-    const reaction = new Reaction(json.reaction);
-    const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
-    if (vesselSize) {
-      GasPhaseReactionActions.setReactionVesselSize(vesselSize);
-    }
-    if (catalystMoles) {
-      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
-    }
-    const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
-    if (weightPercentageReference) {
-      WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    const reaction = new Reaction(json.reaction).recordPersistedMaterials();
+    Object.defineProperty(reaction, '_mixtureMaterialIdMap', { value: json.material_id_map || {} });
+    if (updateStores) {
+      const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+      if (vesselSize) {
+        GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+      }
+      if (catalystMoles) {
+        GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+      }
+      const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+      if (weightPercentageReference) {
+        WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+      }
     }
     if (json.literatures && json.literatures.length > 0) {
       const tliteratures = json.literatures.map((literature) => new Literature(literature));

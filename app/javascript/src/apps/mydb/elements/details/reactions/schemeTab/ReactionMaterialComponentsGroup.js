@@ -74,6 +74,17 @@ class ReactionMaterialComponentsGroup extends React.Component {
             </span>
           </label>
         </td>
+        {/* Mass */}
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={component.amount_g ?? null}
+            unit="g"
+            metricPrefixes={['m', 'n', 'u']}
+            precision={6}
+            disabled
+            size="sm"
+          />
+        </td>
         {/* Amount */}
         <td>
           <NumeralInputWithUnitsCompo
@@ -100,7 +111,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
         {/* Total Conc */}
         <td>
           <NumeralInputWithUnitsCompo
-            value={component.concn || 0}
+            value={component.concn ?? null}
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
@@ -180,6 +191,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
               <tr>
                 <th>Ref</th>
                 <th>Component</th>
+                <th>Mass</th>
                 <th>Amount</th>
                 <th>Rel. MW</th>
                 <th>Conc</th>

@@ -86,6 +86,23 @@ RSpec.describe ElementalComposition, type: :model do
 
         expect(updated_loading).to eq(target)
       end
+
+      [[:amount_mmol, nil], [:amount_mg, nil], [:amount_mg, 0]].each do |method, value|
+        it "keeps the loading when #{method} is #{value.inspect}" do
+          allow(Chemotion::Calculations).to receive(:get_yield).and_return(0.5)
+          amount_sample = if method == :amount_mmol
+            @sample.reactions_product_samples.load.first.reaction
+                   .reactions_starting_material_samples.load.first.sample
+          else
+            @sample
+          end
+          allow(amount_sample).to receive(method).and_return(value)
+          original_loading = @el_comp_found.loading
+
+          expect { @el_comp_found.set_loading(@sample) }.not_to raise_error
+          expect(@el_comp_found.loading).to eq(original_loading)
+        end
+      end
     end
   end
 end

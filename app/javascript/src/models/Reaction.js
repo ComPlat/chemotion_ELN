@@ -226,12 +226,17 @@ export default class Reaction extends Element {
 
   schemeSvgRequest() {
     const productsOnly = this.isInteractionReaction();
+    const referenceMaterial = this.referenceMaterial;
 
     return {
       materialsSvgPaths: {
         starting_materials: this.starting_materials.map((material) => material.svgPath),
         reactants: this.reactantsWithSbmm.map((material) => material.svgPath),
-        products: this.products.map((material) => [material.svgPath, material.equivalent])
+        products: this.products.map((material) => {
+          const hasReference = material.gas_type === 'gas' ? this.findFeedstockMaterial() : referenceMaterial;
+          const hasAmount = !material.isMixture?.() || Number.isFinite(material.amount_mol);
+          return [material.svgPath, productsOnly || (hasReference && hasAmount) ? material.equivalent : null];
+        })
       },
       temperature: this.temperature_display_with_unit,
       solvents: this.solvents
@@ -505,7 +510,7 @@ export default class Reaction extends Element {
   }
 
   get purification_solvents() {
-    return this._purification_solvents;
+    return this._purification_solvents || [];
   }
 
   set purification_solvents(samples) {
@@ -544,6 +549,14 @@ export default class Reaction extends Element {
       ...this.purification_solvents || [],
       ...this.products || [],
     ];
+  }
+
+  /** Snapshot only API-persisted associations; adding a material locally must not extend this set. */
+  recordPersistedMaterials() {
+    Object.defineProperty(this, '_persistedMaterialIds', {
+      value: new Set(this.samples.map((sample) => sample.id)), writable: true, configurable: true,
+    });
+    return this;
   }
 
   // do not run any check based on ID on allReactionMaterials, as some sample materials may have the same ID as the SBMM samples
@@ -1129,7 +1142,7 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material, refreshCoefficient) {
-    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    const cats = ['starting_materials', 'reactants', 'solvents', 'products', 'purification_solvents'];
     let i = 0;
     let group;
 
@@ -1155,8 +1168,12 @@ export default class Reaction extends Element {
             ));
           }
 
-          mat.updateChecksum();
           group[index] = mat;
+          // Saved mixtures carry stock concentration and need reaction concentration.
+          // Ordinary materials can carry a concentration typed in the reaction.
+          if (mat.isMixture()) mat.preserveConcentration = false;
+          mat.updateConcentrationFromSolvent(this);
+          mat.updateChecksum();
           break;
         }
       }
@@ -1169,10 +1186,10 @@ export default class Reaction extends Element {
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
     const refMat = this.referenceMaterial;
-    const referenceAmountMol = refMat.amount_mol;
+    const referenceAmountMol = refMat?.amount_mol;
 
     if (refMat && referenceAmountMol) {
-      ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
+      ['_starting_materials', '_reactants', '_solvents', '_products', '_purification_solvents'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
@@ -1186,6 +1203,7 @@ export default class Reaction extends Element {
             if (g === '_products' && m.gas_type !== 'gas') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
               m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
+              if (m.isMixture()) m.equivalent = Math.min(m.equivalent, 1);
             } else {
               m.equivalent = amountMol / referenceAmountMol;
             }
