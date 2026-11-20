@@ -1,3 +1,4 @@
+import React from 'react';
 import expect from 'expect';
 import sinon from 'sinon';
 import { configure, shallow } from 'enzyme';
@@ -166,6 +167,28 @@ describe('SampleForm new property inputs', () => {
       const wrapper = shallow(instance.physicalStateInput(sample));
       findSelect(wrapper).props().onChange(null);
       expect(instance.handleFieldChanged.calledWith('xref_physical_state', null)).toEqual(true);
+    });
+  });
+
+  describe('Decoupled checkbox', () => {
+    const findDecoupled = (wrapper) => wrapper.findWhere((n) => n.prop('label') === 'Decoupled');
+    const renderForm = (s) => shallow(
+      <SampleForm
+        sample={s}
+        handleSampleChanged={() => {}}
+        showStructureEditor={() => {}}
+        customizableField={() => {}}
+        decoupleMolecule={() => {}}
+      />
+    );
+
+    it('is offered whenever the sample can be updated', () => {
+      expect(findDecoupled(renderForm(sample)).length).toEqual(1);
+    });
+
+    it('is not offered for a read-only sample', () => {
+      sample.can_update = false;
+      expect(findDecoupled(renderForm(sample)).length).toEqual(0);
     });
   });
 });

@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Chemotion
   class PredictionAPI < Grape::API
     before do
-      return 401 unless current_user.matrix_check_by_name("reactionPrediction")
+      error!('401 Unauthorized', 401) unless current_user.matrix_check_by_name('reactionPrediction')
     end
 
     resource :prediction do

@@ -1296,9 +1296,7 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const {
-      enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged
-    } = this.props;
+    const { sample = {}, customizableField, handleSampleChanged } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -1319,11 +1317,7 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
                 <Col>{this.stereoAbsInput()}</Col>
                 <Col>{this.stereoRelInput()}</Col>
-                {
-                  enableSampleDecoupled && (
-                    <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
-                  )
-                }
+                <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
               </Row>
 
               <Row className="align-items-end mb-4">
@@ -1491,7 +1485,6 @@ SampleForm.propTypes = {
   handleSampleChanged: PropTypes.func.isRequired,
   showStructureEditor: PropTypes.func.isRequired,
   customizableField: PropTypes.func.isRequired,
-  enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
   onDecoupleChanged: PropTypes.func,
   setComponentDeletionLoading: PropTypes.func,
@@ -1499,7 +1492,6 @@ SampleForm.propTypes = {
 };
 
 SampleForm.defaultProps = {
-  enableSampleDecoupled: false,
   onDecoupleChanged: null,
   setComponentDeletionLoading: () => {},
   setMoleculeLoading: () => {},

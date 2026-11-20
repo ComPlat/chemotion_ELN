@@ -172,7 +172,6 @@ export default class SampleDetails extends React.Component {
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
-    this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -921,7 +920,6 @@ export default class SampleDetails extends React.Component {
           handleSampleChanged={this.handleSampleChanged}
           showStructureEditor={this.showStructureEditor}
           customizableField={this.customizableField}
-          enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
           onDecoupleChanged={this.decoupleChanged}
           setComponentDeletionLoading={this.setComponentDeletionLoading}
@@ -1074,7 +1072,7 @@ export default class SampleDetails extends React.Component {
       />
     );
 
-    const decoupleCb = sample.can_update && this.enableSampleDecoupled ? (
+    const decoupleCb = sample.can_update ? (
       <Form.Check
         type="checkbox"
         id="sample-header-decouple"
