@@ -1,0 +1,11 @@
+- if action_name == 'suggestion_submitted'
+  = "User #{@user.name} (#{@user.email}) submitted a new affiliation suggestion. Log in to the admin panel to approve or reject it."
+- elsif action_name == 'suggestion_approved'
+  = 'Your affiliation suggestion has been approved and is now visible in your affiliations.'
+- else
+  = 'Your affiliation suggestion was not approved. Contact your ELN administrator if you have questions.'
+
+= "Organization:  #{@suggestion.organization.presence || '—'}"
+= "Department:    #{@suggestion.department.presence || '—'}"
+= "Working Group: #{@suggestion.group.presence || '—'}"
+= "Country:       #{@suggestion.country.presence || '—'}"

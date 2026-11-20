@@ -4,7 +4,7 @@
 .form-group.mb-3
   = f.label "Country", class: 'form-label'
   = f.text_field :country, autofocus: true, class: 'form-control',
-      id: 'country-select'
+      id: 'country-select', placeholder: 'Start typing and pick a country'
 .form-group.mb-3
   = f.label "Organization", class: "required form-label"
   = f.text_field :organization, autofocus: true, class: 'form-control',
