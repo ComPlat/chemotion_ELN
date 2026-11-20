@@ -1,5 +1,27 @@
 # Chemotion_ELN Changelog
 
+# [v4.0.2]
+> (2026-11-20)
+
+## Upgrade notes
+
+* Upgrades from v3.x no longer stop at `AddShortLabelToResearchPlans` when a stored user fails validation ([#3723](https://github.com/ComPlat/chemotion_ELN/pull/3723)).
+* `AddUniqueIndexToReactionsSamples` repairs reaction-sample links and makes a sample belong to at most one reaction: a sample shared by several reactions stays with the earliest, the others get a new split of it ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
+* The `install_ketcher2` admin task and `bin/chem-*.sh` scripts are removed ([#3707](https://github.com/ComPlat/chemotion_ELN/pull/3707)).
+
+## Fixes
+
+* Saving a reaction no longer takes over another reaction's link to the same sample ([#3646](https://github.com/ComPlat/chemotion_ELN/pull/3646)).
+* Triethylamine added to the solvent list ([#3710](https://github.com/ComPlat/chemotion_ELN/pull/3710)).
+* Splitting a device description copies its segment values ([#3644](https://github.com/ComPlat/chemotion_ELN/pull/3644)).
+* The data collector keeps going when one device fails, and logs why ([#3704](https://github.com/ComPlat/chemotion_ELN/pull/3704)).
+* A blank last line of a text template is kept on save ([#3546](https://github.com/ComPlat/chemotion_ELN/pull/3546)).
+* Multipart form parts in a legacy single-byte charset are converted to UTF-8.
+
+## Maintenance
+
+* Unused residue loading check removed ([#3671](https://github.com/ComPlat/chemotion_ELN/pull/3671)); CI lint on the latest Ruby 3.3 ([#3721](https://github.com/ComPlat/chemotion_ELN/pull/3721)).
+
 # [v4.0.1]
 > (2026-11-09)
 
