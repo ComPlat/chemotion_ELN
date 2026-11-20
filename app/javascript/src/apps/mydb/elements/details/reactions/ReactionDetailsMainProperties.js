@@ -28,7 +28,7 @@ export default class ReactionDetailsMainProperties extends Component {
 
   updateTemperature(newData) {
     const { reaction: { temperature }, onInputChange } = this.props;
-    onInputChange('temperatureData', { ...temperature, data: newData });
+    onInputChange('temperatureData', { ...temperature, data: newData, userText: '' });
   }
 
   toggleTemperatureChart() {
@@ -49,27 +49,24 @@ export default class ReactionDetailsMainProperties extends Component {
     const {
       reaction,
       onInputChange,
-      leadingField,
-      leadingFieldColSize,
       temperatureColSize,
       showSchemeFields,
       phField,
       vesselSizeField,
       durationField,
       reactionVolumeField,
+      stepTemperatures,
     } = this.props;
     const { temperature } = reaction;
+    const chartTemperature = stepTemperatures
+      ? { ...temperature, data: stepTemperatures.filter((row) => !row.typed) }
+      : temperature;
     const { showTemperatureChart } = this.state;
     const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
 
     return (
       <>
         <Row className={rowClassName}>
-          {leadingField && (
-            <Col sm={leadingFieldColSize}>
-              {leadingField}
-            </Col>
-          )}
           <Col sm={temperatureColSize}>
             <Form.Group>
               <Form.Label>Temperature</Form.Label>
@@ -105,26 +102,21 @@ export default class ReactionDetailsMainProperties extends Component {
               </InputGroup>
             </Form.Group>
           </Col>
-          {showSchemeFields && (
-            <>
-              <Col sm={3}>
-                {phField}
+          {showSchemeFields && [phField, durationField || vesselSizeField, reactionVolumeField]
+            .filter(Boolean)
+            .map((field, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <Col sm={temperatureColSize} key={index}>
+                {field}
               </Col>
-              <Col sm={3}>
-                {durationField || vesselSizeField}
-              </Col>
-              <Col sm={3}>
-                {reactionVolumeField}
-              </Col>
-            </>
-          )}
+            ))}
         </Row>
 
         {showTemperatureChart && (
           <Row className="mb-2">
             <Col>
               <LineChartContainer
-                data={temperature}
+                data={chartTemperature}
                 xAxis="Time (h)"
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
@@ -133,6 +125,7 @@ export default class ReactionDetailsMainProperties extends Component {
               <EditableTable
                 temperature={temperature}
                 updateTemperature={this.updateTemperature}
+                otherStepRows={(stepTemperatures || []).filter((row) => row.step > 1 || row.typed)}
               />
             </Col>
           </Row>
@@ -146,25 +139,23 @@ ReactionDetailsMainProperties.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   onInputChange: PropTypes.func,
-  leadingField: PropTypes.node,
-  leadingFieldColSize: PropTypes.number,
   temperatureColSize: PropTypes.number,
   showSchemeFields: PropTypes.bool,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
   durationField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
+  stepTemperatures: PropTypes.arrayOf(PropTypes.shape({ time: PropTypes.string, value: PropTypes.string })),
 };
 
 ReactionDetailsMainProperties.defaultProps = {
   reaction: {},
   onInputChange: () => {},
-  leadingField: null,
-  leadingFieldColSize: 9,
   temperatureColSize: 3,
   showSchemeFields: false,
   phField: null,
   vesselSizeField: null,
   durationField: null,
   reactionVolumeField: null,
+  stepTemperatures: null,
 };

@@ -67,6 +67,7 @@ describe Entities::ReactionEntity do
           concentration_mode: reaction.concentration_mode,
           user_labels: [],
           weight_percentage: reaction.weight_percentage,
+          reaction_steps: [],
         )
       end
 
@@ -233,6 +234,7 @@ describe Entities::ReactionEntity do
           :timestamp_stop,
           :tlc_description,
           :tlc_solvents,
+          :reaction_steps,
         )
       end
 

@@ -16,6 +16,10 @@ module Entities
 
     private
 
+    def description
+      is_restricted ? object.description : object.steps_description(labels: true)
+    end
+
     def literatures
       Entities::LiteratureEntity.represent(
         Literature.by_element_attributes_and_cat(object.id, 'Reaction', 'detail').with_user_info,

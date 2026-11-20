@@ -8,6 +8,18 @@
   &__svg-container {
     position: relative;
     min-height: 300px;
+
+    .svg-file-zoom-pan > svg {
+      min-height: 300px;
+    }
+  }
+
+  &__svg-container--tall {
+    min-height: 440px;
+
+    .svg-file-zoom-pan > svg {
+      min-height: 440px;
+    }
   }
 
   &__loader-overlay {

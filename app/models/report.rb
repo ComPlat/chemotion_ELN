@@ -84,7 +84,7 @@ class Report < ApplicationRecord
       current_user: current_user,
       detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
     ).serializable_hash
-    content = Reporter::Docx::Document.new(objs: [serialized_reaction]).convert
+    content = Reporter::Docx::Document.new(objs: [serialized_reaction], rxn_settings: all_rxn_settings).convert
     tpl_path = template_path(params[:template])
     Sablon.template(tpl_path)
           .render_to_string(merge(current_user,

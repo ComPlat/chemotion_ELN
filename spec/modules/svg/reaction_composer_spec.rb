@@ -61,6 +61,15 @@ RSpec.describe SVG::ReactionComposer do
         expect(duration_svg).not_to include('Hour')
       end
     end
+
+    context 'with a temperature containing < and &' do
+      let(:duration) { '' }
+      let(:temperature) { '<0 & reflux' }
+
+      it 'keeps the svg valid' do
+        expect(duration_svg).to include('&lt;0 &amp; reflux')
+      end
+    end
   end
 
   describe 'composing the SVG' do
@@ -73,6 +82,134 @@ RSpec.describe SVG::ReactionComposer do
 
     it 'saves the svg' do
       expect(composer.compose_reaction_svg_and_save && File.exist?(file_path)).to eq(true)
+    end
+  end
+
+  describe 'numbered steps of a standard reaction with hidden steps' do
+    it 'does not count the step labels as reactants when sizing the text' do
+      numbered = described_class.new(
+        { reactants: %w[a.svg b.svg] },
+        solvents: [], temperature: '', numbered_steps: true,
+        steps: [{ reactants: [['a.svg']] }, { reactants: [['b.svg']] }]
+      )
+
+      expect(numbered.num_reactants).to eq(2)
+    end
+
+    it 'spaces the lines under the arrow by the text size so they never overlap' do
+      busy = described_class.new(
+        { reactants: Array.new(30) { |i| "r#{i}.svg" } },
+        solvents: [], temperature: '', conditions: "first line\nsecond line",
+      )
+      ys = busy.send(:conditions_it).scan(/y="(\d+)"/).flatten.map(&:to_i)
+
+      expect(ys[1] - ys[0]).to be >= busy.word_size
+    end
+
+    it 'shows reactants and solvents that have no step yet with step 1' do
+      numbered = described_class.new(
+        { reactants: %w[step_one.svg added_later.svg] },
+        solvents: %w[THF Water],
+        temperature: '',
+        numbered_steps: true,
+        steps: [
+          { reactants: [['step_one.svg']], solvents: ['THF'] },
+          { reactants: [], solvents: [], conditions: 'UV' },
+        ],
+      )
+
+      expect(numbered.reactants).to eq(['step_label/1', ['step_one.svg'], 'added_later.svg'])
+      expect(numbered.send(:numbered_step_lines)).to eq(['1. THF, Water', '2. UV'])
+    end
+
+    it 'shows only the final product, not the ones of the steps in between' do
+      numbered = described_class.new(
+        { products: [['middle.svg', 0.8], ['final.svg', 0.5]] },
+        solvents: [], temperature: '', numbered_steps: true,
+        steps: [{ carried: [['middle.svg', 0.8]], products: [] }, { products: [['final.svg', 0.5]] }]
+      )
+
+      expect(numbered.products).to eq([['final.svg', 0.5]])
+    end
+  end
+
+  describe 'height of a scheme with one arrow per step' do
+    def height(first_conditions, second_conditions)
+      composer = described_class.new(
+        {}, solvents: [], temperature: '', conditions: first_conditions,
+            steps: [{ reactants: [['a.svg']], conditions: first_conditions },
+                    { reactants: [['b.svg']], conditions: second_conditions }]
+      )
+      composer.compose_reaction_svg
+      composer.global_view_box_array[3]
+    end
+
+    it 'keeps the numbered lines of a standard reaction with hidden steps' do
+      numbered = described_class.new(
+        {}, solvents: [], temperature: '', numbered_steps: true,
+            steps: [{ reactants: [['a.svg']], conditions: 'reflux' }, { reactants: [['b.svg']], conditions: 'cool' }]
+      )
+      numbered.compose_reaction_svg
+
+      expect(numbered.conditions).to eq("1. reflux\n2. cool")
+    end
+
+    it 'fits the busiest step, not only the first one' do
+      lines = (1..6).map { |i| "line #{i}" }.join("\n")
+
+      expect(height('', lines)).to eq(height(lines, ''))
+    end
+  end
+
+  describe 'empty steps' do
+    let(:composer) { described_class.new({}, solvents: [], temperature: '') }
+
+    it 'hides an untouched step but keeps a step that only has conditions' do
+      untouched = { reactants: [], products: [], temperature: '', duration: '', conditions: '', solvents: [] }
+
+      expect([untouched, untouched.merge(temperature: 'r.t.'), untouched.merge(conditions: 'workup')]
+        .map { |step| composer.send(:step_empty?, step) }).to eq([true, false, false])
+    end
+  end
+
+  describe 'space around a step arrow' do
+    let(:composer) { described_class.new({}, solvents: [], temperature: '') }
+
+    def gaps(step)
+      composer.global_view_box_array[2] = 100
+      arrow_svg = composer.send(:compose_step_arrow, step, 50).last
+      before = arrow_svg[/translate\((\d+)/, 1].to_i - 100
+      [before, composer.global_view_box_array[2] - 100 - before - composer.arrow_width]
+    end
+
+    it 'is tighter when the step shows no reactants' do
+      with_reactants = gaps(reactants: [['r.svg']])
+
+      expect(gaps(reactants: []).zip(with_reactants)).to all(satisfy { |empty, full| empty < full })
+    end
+  end
+
+  describe 'parts switched off on the arrow' do
+    let(:options) do
+      { solvents: %w[THF], temperature: '80 °C', duration: '2 Hour(s)', conditions: 'UV' }
+    end
+
+    it 'leaves out the hidden parts of a plain reaction' do
+      plain = described_class.new({ starting_materials: %w[s.svg], reactants: %w[r.svg] },
+                                  **options, hide: %w[reactants temperature solvents])
+
+      expect([plain.reactants, plain.solvents, plain.temperature, plain.duration, plain.conditions])
+        .to eq([[], [], nil, nil, 'UV'])
+    end
+
+    it 'leaves out the hidden parts of every numbered step' do
+      numbered = described_class.new(
+        { reactants: %w[a.svg] }, **options, numbered_steps: true, hide: %w[reactants solvents],
+                                             steps: [{ reactants: [['a.svg']], solvents: ['THF'], conditions: 'UV' }]
+      )
+
+      expect(numbered.reactants).to eq([])
+      expect(numbered.send(:numbered_step_lines)).to eq(['1. UV'])
     end
   end
 end

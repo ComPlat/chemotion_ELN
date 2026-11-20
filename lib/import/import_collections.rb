@@ -124,6 +124,7 @@ module Import
           import_components
         end
         import_reactions
+        import_reaction_steps
         import_reactions_samples
         import_elements
 
@@ -449,6 +450,11 @@ module Import
           'weight_percentage',
           'concentration_mode',
           'volume',
+          'reaction_type',
+          'scheme_hidden_parts',
+          'ph_operator',
+          'ph_value',
+          'lock_reaction_volume',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -468,6 +474,17 @@ module Import
 
         # save the instance again
         reaction.save!
+      end
+    end
+
+    def import_reaction_steps
+      @data.fetch('ReactionStep', {}).each do |uuid, fields|
+        step = ReactionStep.create!(
+          fields.slice(*ReactionStep.column_names).except('id', 'reaction_id', 'deleted_at').merge(
+            reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
+          ),
+        )
+        update_instances!(uuid, step)
       end
     end
 
@@ -497,7 +514,13 @@ module Import
             'conversion_rate',
             'weight_percentage_reference',
             'weight_percentage',
-          ).merge(reaction: reaction, sample: sample))
+            'carry_on',
+            'step_reference',
+          ).merge(
+            reaction: reaction,
+            sample: sample,
+            reaction_step_id: @instances.dig('ReactionStep', fields['reaction_step_id'])&.id,
+          ))
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)

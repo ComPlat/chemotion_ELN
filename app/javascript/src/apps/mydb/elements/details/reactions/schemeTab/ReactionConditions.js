@@ -31,6 +31,7 @@ export default function ReactionConditions({
   conditions: conditionsProp,
   isDisabled,
   onChange,
+  hint,
 }) {
   const [conditions, setConditions] = useState(textToLines(conditionsProp));
   const debounceTimerRef = useRef(null);
@@ -110,6 +111,7 @@ export default function ReactionConditions({
               size="xsm"
             />
             <span>Conditions</span>
+            {hint}
             <Select
               isDisabled={isDisabled}
               name="default_conditions"
@@ -154,4 +156,9 @@ ReactionConditions.propTypes = {
   conditions: PropTypes.string.isRequired,
   isDisabled: PropTypes.bool.isRequired,
   onChange: PropTypes.func.isRequired,
+  hint: PropTypes.node,
+};
+
+ReactionConditions.defaultProps = {
+  hint: null,
 };

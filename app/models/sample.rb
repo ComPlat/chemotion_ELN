@@ -467,7 +467,9 @@ class Sample < ApplicationRecord
   # rubocop:enable Style/MethodDefParentheses
   # rubocop:enable Style/OptionalBooleanParameter
   def reaction_description
-    reactions.first.try(:description)
+    row = reactions_samples.first
+    step_text = row&.reaction_step&.description if row&.reaction&.multi_step?
+    step_text.presence || reactions.first.try(:description)
   end
 
   def auto_set_molfile_to_molecules_molfile

@@ -46,6 +46,7 @@ export default class ReactionDetailsDuration extends Component {
       onInputChange,
       isInteractionReaction,
       inlineInteractionField,
+      label,
     } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
@@ -55,7 +56,7 @@ export default class ReactionDetailsDuration extends Component {
       // the start/stop/duration workflow used for standard reactions.
       const interactionField = (
         <Form.Group>
-          <Form.Label>Time (incubation)</Form.Label>
+          <Form.Label>{label}</Form.Label>
           <InputGroup>
             <Form.Control
               disabled={!permitOn(reaction) || reaction.gaseous}
@@ -184,6 +185,7 @@ ReactionDetailsDuration.propTypes = {
   onInputChange: PropTypes.func,
   isInteractionReaction: PropTypes.bool,
   inlineInteractionField: PropTypes.bool,
+  label: PropTypes.string,
 };
 
 ReactionDetailsDuration.defaultProps = {
@@ -191,4 +193,5 @@ ReactionDetailsDuration.defaultProps = {
   onInputChange: () => {},
   isInteractionReaction: false,
   inlineInteractionField: false,
+  label: 'Time (incubation)',
 };

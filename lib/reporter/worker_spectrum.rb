@@ -50,7 +50,7 @@ module Reporter
       target_object[:iupac_name] = object.dig(:molecule, :iupac_name)
       target_object[:sum_formular] = object.dig(:molecule, :sum_formular)
       target_object[:molId] = object.dig(:molecule, :id)
-      target_object[:showedName] = object[:showed_name]
+      target_object[:showedName] = Reporter::Helper.product_name(object)
       target_object[:atts] = extract_attributes(object)
       target_object
     end
