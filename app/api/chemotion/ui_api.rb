@@ -13,6 +13,7 @@ module Chemotion
         m_config = Rails.root.join('config/matrices.json')
         sfn_config = Rails.configuration.try(:sfn_config).try(:provider)
         converter_config = Rails.configuration.try(:converter)
+        mof_enabled = MofService.enabled?
         radar_config = Rails.configuration.try(:radar).try(:url)
         collector_config = Rails.configuration.try(:datacollectors)
         collector_address = collector_config.present? && (
@@ -34,6 +35,7 @@ module Chemotion
             converter_timeout: converter_config.try(:timeout),
             converter_ext: converter_config.try(:ext),
           },
+          has_mof: mof_enabled,
           has_radar: radar_config.present?,
           molecule_viewer: Matrice.molecule_viewer,
           collector_address: collector_address.presence,

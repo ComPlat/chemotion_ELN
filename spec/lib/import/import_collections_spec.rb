@@ -197,6 +197,13 @@ RSpec.describe 'ImportCollection' do
         expect(collection).to be_present
         expect(collection.samples.map(&:components).flatten.length).to eq(2)
       end
+
+      it 'keeps the sample_details of an imported sample' do
+        importer.execute
+
+        sample = Collection.find_by(label: 'collection_with_components').samples.first
+        expect(sample.sample_details).to include('reference_molecular_weight' => 78.11184)
+      end
     end
 
     context 'with zip file including two cell line samples, material already existing' do
@@ -362,6 +369,43 @@ RSpec.describe 'ImportCollection' do
       expect(Import::PolymerMoleculeResolver).to have_received(:call)
         .with(polymer_molfile, defer_pubchem_lookup: true, unescape_octal: false)
       expect(molecule).to eq(resolved_molecule)
+    end
+  end
+
+  describe '#localize_sample_details' do
+    let(:import_id) { 'collection_samples' }
+    let(:importer) { Import::ImportCollections.new(nil, user.id) }
+    let(:details) do
+      { 'mof' => { 'mofid' => 'x', 'fragments' => [
+        { 'smiles' => '[Cu][Cu]', 'ratio' => 3, 'molecule_id' => 999_999, 'svg_file' => 'other-instance.svg' },
+      ] } }
+    end
+
+    it 're-resolves the building block molecule on this instance' do
+      molecule = create(:molecule)
+      allow(Molecule).to receive(:find_or_create_by_cano_smiles).and_return(molecule)
+
+      fragment = importer.send(:localize_sample_details, details)['mof']['fragments'].first
+
+      expect(fragment).to eq(
+        'smiles' => '[Cu][Cu]', 'ratio' => 3, 'molecule_id' => molecule.id, 'svg_file' => molecule.molecule_svg_file,
+      )
+      expect(Molecule).to have_received(:find_or_create_by_cano_smiles).with('[Cu][Cu]', defer_pubchem_lookup: nil)
+    end
+
+    it 'drops the foreign references when the molecule cannot be resolved' do
+      allow(Molecule).to receive(:find_or_create_by_cano_smiles).and_raise(StandardError, 'bad smiles')
+
+      fragment = importer.send(:localize_sample_details, details)['mof']['fragments'].first
+
+      expect(fragment).to eq('smiles' => '[Cu][Cu]', 'ratio' => 3)
+    end
+
+    it 'leaves sample_details without MOF building blocks unchanged' do
+      mixture = { 'reference_molecular_weight' => 78.11184 }
+
+      expect(importer.send(:localize_sample_details, mixture)).to eq(mixture)
+      expect(importer.send(:localize_sample_details, nil)).to be_nil
     end
   end
 

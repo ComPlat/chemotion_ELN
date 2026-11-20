@@ -33,6 +33,8 @@ module Entities
         metadata[:index] = object.extended_metadata['index']
         metadata[:instrument] = object.extended_metadata['instrument']
         metadata[:preferred_thumbnail] = object.extended_metadata['preferred_thumbnail']
+        # marks the analysis that holds a MOF sample's uploaded CIF (see mofUtils.js)
+        metadata[:mof_cif] = object.extended_metadata['mof_cif'] if object.extended_metadata['mof_cif'].present?
         if object.extended_metadata['content'].present?
           metadata[:content] =
             JSON.parse(object.extended_metadata['content'])

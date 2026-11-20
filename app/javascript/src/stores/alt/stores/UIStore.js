@@ -106,6 +106,7 @@ class UIStore {
       currentSearchByID: null,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
+      hasMof: false,
       matrices: {},
       thirdPartyApps: [],
       version: {},

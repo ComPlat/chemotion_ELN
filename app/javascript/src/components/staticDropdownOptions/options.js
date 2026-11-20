@@ -697,6 +697,7 @@ export const colorOptions = [
 export const SampleTypesOptions = [
   { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
+  { label: 'MOF (Metal-Organic Framework)', value: 'MOF' },
 ];
 
 export const BiosafetyLevelOptions = [
