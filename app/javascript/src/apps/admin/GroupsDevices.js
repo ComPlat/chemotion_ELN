@@ -293,7 +293,7 @@ export default class GroupsDevices extends React.Component {
           </Card.Title>
         </Card.Header>
         <Card.Body>
-          <Table responsive condensed hover>
+          <Table responsive size="sm" hover>
             <thead>
               <tr className='bg-gray-200 '>
                 <th className="py-3">#</th>

@@ -24,7 +24,7 @@ function ElementReactionLabels({ element, size, variant }) {
 }
 
 ElementReactionLabels.propTypes = {
-  ...ElementNoAccessTrigger.propTypes,
+  element: ElementNoAccessTrigger.propTypes.element,
   size: PropTypes.string,
   variant: PropTypes.string,
 };

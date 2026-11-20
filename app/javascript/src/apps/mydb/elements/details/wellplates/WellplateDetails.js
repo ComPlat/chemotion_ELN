@@ -351,8 +351,6 @@ export default class WellplateDetails extends Component {
             fnCb={this.handleWellplateChanged}
           />
           <PrivateNoteElement element={wellplate} disabled={wellplate.isReadOnly} />
-          {' '}
-          {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>
       ),
       analyses: (
