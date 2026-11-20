@@ -45,7 +45,10 @@ export default class ComponentsFetcher {
    * @returns {Promise<Object>} A promise resolving to the updated components response
    */
   static saveOrUpdateComponents(sample, components) {
-    const serializedComponents = components?.length
+    // null/undefined means components were never loaded — no-op to avoid wiping persisted data.
+    if (components == null) return Promise.resolve([]);
+
+    const serializedComponents = components.length
       ? components.map((component) => (
         typeof component.serializeComponent === 'function'
           ? component.serializeComponent()

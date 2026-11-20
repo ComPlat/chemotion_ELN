@@ -269,7 +269,11 @@ export default class StructureEditorModal extends React.Component {
       if (!this._isMounted) return;
       const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
       const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
-      const components = componentsList ? postComponents(componentsList) : [];
+      // undefined → null guard in handleUpdateLinkedElement treats this as no-op (components
+      // were never modified). [] → postComponents([]) = [] is preserved for the case where
+      // the user explicitly removed all text nodes. Callers of handleStructureSave options
+      // must guard against [] before writing to sample.components (see handleStructureEditorSave).
+      const components = componentsList == null ? undefined : postComponents(componentsList);
       this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, null, { components, textNodesFormula });
       if (shouldSvg) onSVGStructureError(svgFailedMessage);
     } catch (error) {

@@ -825,18 +825,23 @@ class ElementStore {
 
   handleUpdateLinkedElement({ element, closeView, components }) {
     if (element instanceof Sample && (element.isMixture() || element.isHierarchicalMaterial())) {
-      element.initialComponents(components || []);
-      ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then((savedComponents) => {
-          const refreshed = Component.refreshFromApi(savedComponents, components);
-          element.initialComponents(refreshed);
-          if (!closeView) {
-            this.changeCurrentElement(element);
-          }
-        })
-        .catch((errorMessage) => {
-          console.error('saveOrUpdateComponents failed (handleUpdateLinkedElement):', errorMessage);
-        });
+      // null/undefined = components were never loaded on this client; treat as no-op so we
+      // don't accidentally wipe persisted components. An explicit [] means the user cleared
+      // all rows and that deletion is intentional.
+      if (components != null) {
+        element.initialComponents(components);
+        ComponentsFetcher.saveOrUpdateComponents(element, components)
+          .then((savedComponents) => {
+            const refreshed = Component.refreshFromApi(savedComponents, components);
+            element.initialComponents(refreshed);
+            if (!closeView) {
+              this.changeCurrentElement(element);
+            }
+          })
+          .catch((errorMessage) => {
+            console.error('saveOrUpdateComponents failed (handleUpdateLinkedElement):', errorMessage);
+          });
+      }
     }
     if (closeView) {
       this.deleteCurrentElement(element);

@@ -643,6 +643,28 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  saveSampleOrChemicalAndClose() {
+    const { sample, isChemicalEdited } = this.state;
+    const needChemicalSave = isChemicalEdited && !sample.isNew;
+    const needChemicalCreate = isChemicalEdited && sample.isNew;
+
+    if (sample.isPendingToSave) {
+      if (needChemicalCreate) {
+        // Snapshot before handleSubmit(true) closes this instance. The fresh
+        // SampleDetails mounted for the new sample reads _pendingChemicalCreate
+        // in componentDidMount and applies it there.
+        _pendingChemicalCreate = this.chemicalTabRef.current?.getChemicalSnapshot() ?? null;
+      }
+      // For chemical save on existing sample: keep sample open so ChemicalTab can
+      // receive saveInventoryAction, then close via closeAfterInventorySave.
+      this.handleSubmit(needChemicalSave ? false : true);
+    }
+
+    if (needChemicalSave) {
+      this.setState({ saveInventoryAction: true, closeAfterInventorySave: true });
+    }
+  }
+
   handleInventorySaveComplete = (didSave) => {
     const { sample, closeAfterInventorySave } = this.state;
 
@@ -1666,6 +1688,7 @@ export default class SampleDetails extends React.Component {
         titleAppendixLeading={sampleTitleAppendixLeading(sample)}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrChemical()}
+        onSaveClose={() => this.saveSampleOrChemicalAndClose()}
         saveDisabled={saveDisabled}
         showPrintCode
         showCalendar
