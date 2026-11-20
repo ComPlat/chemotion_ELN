@@ -14,6 +14,7 @@ import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdown
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
+import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ToggleButton from 'src/components/common/ToggleButton';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
@@ -43,7 +44,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled, onConcentrationModeChange
+  switchYield, dndEnabled, onConcentrationModeChange, onInitiateMerge, onUnmerge,
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -73,6 +74,7 @@ const MaterialGroup = ({
       isOver={isOver}
       canDrop={canDrop}
       isDragging={isDragging}
+      onUnmerge={onUnmerge}
     />
   );
 
@@ -98,8 +100,43 @@ const MaterialGroup = ({
     }
   };
 
+  const MERGEABLE_GROUPS = ['products', 'reactants'];
+
   const onReorder = (item, index) => {
-    dropMaterial(item.material, item.materialGroup, materials.at(index), materialGroup);
+    const target = materials.at(index);
+
+    if (
+      MERGEABLE_GROUPS.includes(materialGroup)
+      && item.materialGroup === materialGroup
+      && target
+      && item.material.id !== target.id
+      && !isSbmmSample(item.material)
+      && !isSbmmSample(target)
+    ) {
+      if (item.material.is_legacy) {
+        notifications.add({
+          message: 'This sample has already been merged.',
+          level: 'warning',
+          position: 'tr',
+        });
+        return;
+      }
+      if (item.material.is_new || target.is_new) {
+        notifications.add({
+          message: 'Save the reaction before merging materials.',
+          level: 'warning',
+          position: 'tr',
+        });
+        return;
+      }
+      // Show modal instead of pendingMerge confirmation row
+      if (onInitiateMerge) {
+        onInitiateMerge(item.material, target, materialGroup);
+      }
+      return;
+    }
+
+    dropMaterial(item.material, item.materialGroup, target, materialGroup);
   };
 
   if (materialGroup === 'solvents'
@@ -721,6 +758,8 @@ MaterialGroup.propTypes = {
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
   onConcentrationModeChange: PropTypes.func,
+  onInitiateMerge: PropTypes.func,
+  onUnmerge: PropTypes.func,
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -764,6 +803,8 @@ MaterialGroup.defaultProps = {
   headIndex: 0,
   dndEnabled: true,
   onConcentrationModeChange: null,
+  onInitiateMerge: null,
+  onUnmerge: null,
 };
 
 GeneralMaterialGroup.defaultProps = {
