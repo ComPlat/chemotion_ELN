@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from 'react-bootstrap';
 
-export default function ConfirmationOverlay({
+const ConfirmationOverlay = ({
   overlayTarget,
   placement,
   warningText,
@@ -17,11 +17,19 @@ export default function ConfirmationOverlay({
   hideActionLabel,
   primaryAction,
   primaryActionLabel,
-}) {
-  const overlayIdRef = useRef(`confirmation-overlay-${Math.random().toString(36).slice(2)}`);
+  stopMouseDownPropagation,
+}) => {
+  // Lazy initializer so the random id is generated once on mount, not on every render.
+  const [overlayId] = useState(() => `confirmation-overlay-${Math.random().toString(36).slice(2)}`);
   const hasDestructiveAction = destructiveAction && destructiveActionLabel;
   const hasHideAction = hideAction && hideActionLabel;
   const hasPrimaryAction = primaryAction && primaryActionLabel;
+  // Guards a button inside a row/tree whose own onMouseDown would otherwise fire first
+  // (e.g. row selection or drag start) - unrelated to the focus/blur race this overlay
+  // already avoids by being driven off explicit `overlayTarget` state.
+  const mouseDownProps = stopMouseDownPropagation
+    ? { onMouseDown: (event) => event.stopPropagation() }
+    : {};
 
   return (
     <Overlay
@@ -31,7 +39,7 @@ export default function ConfirmationOverlay({
       rootClose
       onHide={hideAction || undefined}
     >
-      <Tooltip id={overlayIdRef.current}>
+      <Tooltip id={overlayId}>
         <div className="p2">
           {warningText}
           <ButtonToolbar className="justify-content-end mt-2">
@@ -40,6 +48,7 @@ export default function ConfirmationOverlay({
                 variant="danger"
                 size="xsm"
                 onClick={destructiveAction}
+                {...mouseDownProps}
               >
                 {destructiveActionLabel}
               </Button>
@@ -49,6 +58,7 @@ export default function ConfirmationOverlay({
                 variant="ghost"
                 size="xsm"
                 onClick={hideAction}
+                {...mouseDownProps}
               >
                 {hideActionLabel}
               </Button>
@@ -58,6 +68,7 @@ export default function ConfirmationOverlay({
                 variant="primary"
                 size="xsm"
                 onClick={primaryAction}
+                {...mouseDownProps}
               >
                 {primaryActionLabel}
               </Button>
@@ -67,7 +78,7 @@ export default function ConfirmationOverlay({
       </Tooltip>
     </Overlay>
   );
-}
+};
 
 ConfirmationOverlay.propTypes = {
   overlayTarget: PropTypes.oneOfType([
@@ -82,6 +93,7 @@ ConfirmationOverlay.propTypes = {
   hideActionLabel: PropTypes.string,
   primaryAction: PropTypes.func,
   primaryActionLabel: PropTypes.string,
+  stopMouseDownPropagation: PropTypes.bool,
 };
 
 ConfirmationOverlay.defaultProps = {
@@ -93,4 +105,7 @@ ConfirmationOverlay.defaultProps = {
   hideActionLabel: undefined,
   primaryAction: undefined,
   primaryActionLabel: undefined,
+  stopMouseDownPropagation: false,
 };
+
+export default ConfirmationOverlay;
