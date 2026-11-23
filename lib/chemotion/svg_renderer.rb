@@ -46,7 +46,8 @@ module Chemotion
                        end
         if rendered_svg.present?
           # Pass full struct (with PolymersList) to finalize_svg so inject_polymer_shapes can run; polymer_data was parsed from this full struct.
-          return finalize_svg(rendered_svg, struct, polymer_data)
+          finalized = finalize_svg(rendered_svg, struct, polymer_data)
+          return inject_service_title(finalized, name)
         end
       end
 
@@ -181,6 +182,32 @@ module Chemotion
     rescue StandardError => e
       Rails.logger.error("KetcherService exception: #{e.message}")
       nil
+    end
+
+    # Injects a <title> element into the SVG root so hovering shows which service rendered it.
+    # OpenBabel already includes its own title; only Indigo and Ketcher need one added.
+    SERVICE_TITLES = {
+      indigo: 'Indigo depiction',
+      ketcher: 'Ketcher depiction',
+    }.freeze
+
+    def self.inject_service_title(svg, service_name)
+      return svg if svg.blank?
+
+      label = SERVICE_TITLES[service_name]
+      return svg unless label
+
+      doc = Nokogiri::XML(svg)
+      root = doc.xpath('//*[local-name()="svg"]').first
+      return svg unless root
+
+      root.children.select { |n| n.element? && n.name.casecmp('title').zero? }.each(&:remove)
+      title = Nokogiri::XML::Node.new('title', doc)
+      title.content = label
+      root.prepend_child(title)
+      doc.to_xml
+    rescue StandardError
+      svg
     end
 
     # Attempts to render SVG using OpenBabelService

@@ -545,4 +545,96 @@ RSpec.describe Chemotion::OpenBabelService do
       expect(info[:molfile_version]).to start_with('V3000')
     end
   end
+
+  # Specs using the realistic 12-atom enhanced-stereo fixture (enhanced-stereo.mol):
+  # C7 chain with 5 stereocenters, all three COLLECTION types (STEABS, STEREL1, STERAC1).
+  # This exercises the full pipeline on a structure closer to real Ketcher V3000 output.
+  describe 'enhanced stereochemistry V3000 (12-atom fixture)' do
+    let(:enhanced_stereo_mol) do
+      <<~MOL
+        Enhanced stereochemistry example
+          Codex             2D
+        ABS OR AND
+          0  0  0     0  0            999 V3000
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 12 11 0 0 1
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0 0 0 0
+        M  V30 2 C 1.3 0.75 0 0
+        M  V30 3 C 2.6 0 0 0
+        M  V30 4 C 3.9 0.75 0 0
+        M  V30 5 C 5.2 0 0 0
+        M  V30 6 C 6.5 0.75 0 0
+        M  V30 7 C 7.8 0 0 0
+        M  V30 8 O 1.3 2.25 0 0
+        M  V30 9 O 2.6 -1.5 0 0
+        M  V30 10 O 3.9 2.25 0 0
+        M  V30 11 O 5.2 -1.5 0 0
+        M  V30 12 F 6.5 2.25 0 0
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 1 1 2
+        M  V30 2 1 2 3
+        M  V30 3 1 3 4
+        M  V30 4 1 4 5
+        M  V30 5 1 5 6
+        M  V30 6 1 6 7
+        M  V30 7 1 2 8 CFG=1
+        M  V30 8 1 3 9 CFG=1
+        M  V30 9 1 4 10 CFG=3
+        M  V30 10 1 5 11 CFG=1
+        M  V30 11 1 6 12 CFG=3
+        M  V30 END BOND
+        M  V30 BEGIN COLLECTION
+        M  V30 MDLV30/STEABS ATOMS=(1 2)
+        M  V30 MDLV30/STEREL1 ATOMS=(2 3 4)
+        M  V30 MDLV30/STERAC1 ATOMS=(2 5 6)
+        M  V30 END COLLECTION
+        M  V30 END CTAB
+        M  END
+      MOL
+    end
+
+    it 'molfile_version detects V3000' do
+      expect(described_class.molfile_version(enhanced_stereo_mol)).to eq('V3000')
+    end
+
+    it 'molfile_has_R returns false (no R-group atoms)' do
+      expect(described_class.molfile_has_R(enhanced_stereo_mol)).to be(false)
+    end
+
+    it 'molfile_strip_collection_blocks removes all three collection types' do
+      result = described_class.send(:molfile_strip_collection_blocks, enhanced_stereo_mol)
+
+      expect(result).not_to include('BEGIN COLLECTION')
+      expect(result).not_to include('END COLLECTION')
+      expect(result).not_to include('MDLV30/STEABS')
+      expect(result).not_to include('MDLV30/STEREL1')
+      expect(result).not_to include('MDLV30/STERAC1')
+    end
+
+    it 'molfile_strip_collection_blocks keeps all 12 atoms and 11 bonds intact' do
+      result = described_class.send(:molfile_strip_collection_blocks, enhanced_stereo_mol)
+
+      expect(result).to include('M  V30 COUNTS 12 11')
+      expect(result).to include('BEGIN ATOM')
+      expect(result).to include('END ATOM')
+      expect(result).to include('BEGIN BOND')
+      expect(result).to include('END BOND')
+      expect(result).to include('M  END')
+    end
+
+    it 'molecule_info_from_molfile resolves a valid inchikey' do
+      info = described_class.molecule_info_from_molfile(enhanced_stereo_mol, render_svg: false)
+
+      expect(info[:inchikey]).to be_present
+      expect(info[:molfile_version]).to start_with('V3000')
+    end
+
+    it 'molecule_info_from_molfile produces no COLLECTION block warnings' do
+      info = described_class.molecule_info_from_molfile(enhanced_stereo_mol, render_svg: false)
+
+      expect(info.dig(:ob_log, :warning)).not_to include(match(/COLLECTION/i))
+    end
+  end
 end
