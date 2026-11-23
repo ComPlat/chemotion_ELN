@@ -435,6 +435,11 @@ export default class SampleForm extends React.Component {
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+            styles={{
+              container: (base) => ({ ...base, minWidth: 0 }),
+              menu: (base) => ({ ...base, width: '100%', maxWidth: '100%' }),
+              option: (base) => ({ ...base, overflowWrap: 'anywhere' }),
+            }}
             className={`flex-grow-1${molNameInvalid ? ' is-invalid' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
