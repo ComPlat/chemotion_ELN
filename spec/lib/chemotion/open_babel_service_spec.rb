@@ -282,4 +282,267 @@ RSpec.describe Chemotion::OpenBabelService do
         .with('a', render_svg: true, bound_native_work: false)
     end
   end
+
+  describe 'V3000 InChIKey parity' do
+    # Benzene in V2000 format
+    let(:benzene_v2000) do
+      <<~MOL
+        benzene
+          Ketcher 11202611232D
+
+          6  6  0     0  0            999 V2000
+            1.3350    0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.3350   -0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000   -1.5400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -1.3350   -0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -1.3350    0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    1.5400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+          2  3  2  0     0  0
+          3  4  1  0     0  0
+          4  5  2  0     0  0
+          5  6  1  0     0  0
+          6  1  2  0     0  0
+        M  END
+      MOL
+    end
+
+    # Same benzene in V3000 format
+    let(:benzene_v3000) do
+      <<~MOL
+        benzene
+          Ketcher 11202611232D
+
+          0  0  0     0  0            999 V3000
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 6 6 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 1.3350 0.7700 0.0000 0
+        M  V30 2 C 1.3350 -0.7700 0.0000 0
+        M  V30 3 C 0.0000 -1.5400 0.0000 0
+        M  V30 4 C -1.3350 -0.7700 0.0000 0
+        M  V30 5 C -1.3350 0.7700 0.0000 0
+        M  V30 6 C 0.0000 1.5400 0.0000 0
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 1 1 2
+        M  V30 2 2 2 3
+        M  V30 3 1 3 4
+        M  V30 4 2 4 5
+        M  V30 5 1 5 6
+        M  V30 6 2 6 1
+        M  V30 END BOND
+        M  V30 END CTAB
+        M  END
+      MOL
+    end
+
+    # Aspirin in V2000 — a real multi-ring structure
+    let(:aspirin_v2000) do
+      <<~MOL
+        aspirin
+          Ketcher 11202611232D
+
+         13 13  0     0  0            999 V2000
+            1.3350    0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.3350   -0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000   -1.5400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -1.3350   -0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -1.3350    0.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    1.5400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -2.6700    1.5400    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+           -2.6700    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -4.0050    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+           -4.0050    1.5400    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+            2.6700   -1.5400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            2.6700   -3.0800    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+            4.0050   -0.7700    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+          2  3  2  0     0  0
+          3  4  1  0     0  0
+          4  5  2  0     0  0
+          5  6  1  0     0  0
+          6  1  2  0     0  0
+          5  7  1  0     0  0
+          7  8  1  0     0  0
+          8  9  1  0     0  0
+          9 10  2  0     0  0
+          2 11  1  0     0  0
+         11 12  2  0     0  0
+         11 13  1  0     0  0
+        M  END
+      MOL
+    end
+
+    # Same aspirin in V3000
+    let(:aspirin_v3000) do
+      <<~MOL
+        aspirin
+          Ketcher 11202611232D
+
+          0  0  0     0  0            999 V3000
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 13 13 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 1.3350 0.7700 0.0000 0
+        M  V30 2 C 1.3350 -0.7700 0.0000 0
+        M  V30 3 C 0.0000 -1.5400 0.0000 0
+        M  V30 4 C -1.3350 -0.7700 0.0000 0
+        M  V30 5 C -1.3350 0.7700 0.0000 0
+        M  V30 6 C 0.0000 1.5400 0.0000 0
+        M  V30 7 O -2.6700 1.5400 0.0000 0
+        M  V30 8 C -2.6700 0.0000 0.0000 0
+        M  V30 9 C -4.0050 0.0000 0.0000 0
+        M  V30 10 O -4.0050 1.5400 0.0000 0
+        M  V30 11 C 2.6700 -1.5400 0.0000 0
+        M  V30 12 O 2.6700 -3.0800 0.0000 0
+        M  V30 13 O 4.0050 -0.7700 0.0000 0
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 1 1 2
+        M  V30 2 2 2 3
+        M  V30 3 1 3 4
+        M  V30 4 2 4 5
+        M  V30 5 1 5 6
+        M  V30 6 2 6 1
+        M  V30 7 1 5 7
+        M  V30 8 1 7 8
+        M  V30 9 1 8 9
+        M  V30 10 2 9 10
+        M  V30 11 1 2 11
+        M  V30 12 2 11 12
+        M  V30 13 1 11 13
+        M  V30 END BOND
+        M  V30 END CTAB
+        M  END
+      MOL
+    end
+
+    it 'produces the same InChIKey for benzene V2000 and V3000' do
+      key_v2000 = described_class.inchikey_from_molfile(benzene_v2000)
+      key_v3000 = described_class.inchikey_from_molfile(benzene_v3000)
+
+      expect(key_v2000).to be_present
+      expect(key_v3000).to be_present
+      expect(key_v3000).to eq(key_v2000)
+    end
+
+    it 'produces the same InChIKey for aspirin V2000 and V3000' do
+      key_v2000 = described_class.inchikey_from_molfile(aspirin_v2000)
+      key_v3000 = described_class.inchikey_from_molfile(aspirin_v3000)
+
+      expect(key_v2000).to be_present
+      expect(key_v3000).to be_present
+      expect(key_v3000).to eq(key_v2000)
+    end
+
+    it 'produces a present InChIKey for a real V3000 fixture (naphthalene)' do
+      v3000_molfile = file_fixture('mof_v3000_1.mol').read
+      key = described_class.inchikey_from_molfile(v3000_molfile)
+      expect(key).to be_present
+      expect(key).to match(/\A[A-Z]{14}-[A-Z]{10}-[A-Z]\z/)
+    end
+
+    it 'molecule_info_from_molfile returns matching formula and inchikey for V3000 benzene' do
+      info_v2000 = described_class.molecule_info_from_molfile(benzene_v2000, render_svg: false)
+      info_v3000 = described_class.molecule_info_from_molfile(benzene_v3000, render_svg: false)
+
+      expect(info_v3000[:inchikey]).to eq(info_v2000[:inchikey])
+      expect(info_v3000[:formula]).to eq(info_v2000[:formula])
+      expect(info_v3000[:molfile_version]).to start_with('V3000')
+    end
+  end
+
+  describe '.molfile_strip_collection_blocks' do
+    let(:v3000_with_collection) do
+      <<~MOL
+        Enhanced stereochemistry example
+          Codex             2D
+        ABS OR AND
+          0  0  0     0  0            999 V3000
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 6 5 0 0 1
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0 0 0 0
+        M  V30 2 C 1.3 0.75 0 0
+        M  V30 3 C 2.6 0 0 0
+        M  V30 4 O 1.3 2.25 0 0
+        M  V30 5 O 2.6 -1.5 0 0
+        M  V30 6 F 3.9 0.75 0 0
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 1 1 2
+        M  V30 2 1 2 3
+        M  V30 3 1 2 4 CFG=1
+        M  V30 4 1 3 5 CFG=1
+        M  V30 5 1 3 6 CFG=3
+        M  V30 END BOND
+        M  V30 BEGIN COLLECTION
+        M  V30 MDLV30/STEABS ATOMS=(1 2)
+        M  V30 MDLV30/STEREL1 ATOMS=(2 3 4)
+        M  V30 MDLV30/STERAC1 ATOMS=(2 5 6)
+        M  V30 END COLLECTION
+        M  V30 END CTAB
+        M  END
+      MOL
+    end
+
+    let(:v3000_without_collection) do
+      <<~MOL
+        Benzene
+          Codex             2D
+
+          0  0  0     0  0            999 V3000
+        M  V30 BEGIN CTAB
+        M  V30 COUNTS 6 6 0 0 0
+        M  V30 BEGIN ATOM
+        M  V30 1 C 0 0 0 0
+        M  V30 2 C 1.3 0.75 0 0
+        M  V30 3 C 2.6 0 0 0
+        M  V30 4 C 3.9 0.75 0 0
+        M  V30 5 C 5.2 0 0 0
+        M  V30 6 C 6.5 0.75 0 0
+        M  V30 END ATOM
+        M  V30 BEGIN BOND
+        M  V30 1 2 1 2
+        M  V30 2 1 2 3
+        M  V30 3 2 3 4
+        M  V30 4 1 4 5
+        M  V30 5 2 5 6
+        M  V30 6 1 6 1
+        M  V30 END BOND
+        M  V30 END CTAB
+        M  END
+      MOL
+    end
+
+    it 'returns nil when no COLLECTION block is present' do
+      result = described_class.send(:molfile_strip_collection_blocks, v3000_without_collection)
+      expect(result).to be_nil
+    end
+
+    it 'removes the BEGIN COLLECTION … END COLLECTION section' do
+      result = described_class.send(:molfile_strip_collection_blocks, v3000_with_collection)
+      expect(result).not_to include('BEGIN COLLECTION')
+      expect(result).not_to include('END COLLECTION')
+      expect(result).not_to include('MDLV30/STEABS')
+      expect(result).not_to include('MDLV30/STEREL1')
+      expect(result).not_to include('MDLV30/STERAC1')
+    end
+
+    it 'preserves the atom and bond blocks after stripping' do
+      result = described_class.send(:molfile_strip_collection_blocks, v3000_with_collection)
+      expect(result).to include('BEGIN ATOM')
+      expect(result).to include('END ATOM')
+      expect(result).to include('BEGIN BOND')
+      expect(result).to include('END BOND')
+      expect(result).to include('M  END')
+    end
+
+    it 'molecule_info_from_molfile processes V3000 with COLLECTION blocks without error' do
+      info = described_class.molecule_info_from_molfile(v3000_with_collection, render_svg: false)
+      expect(info[:inchikey]).to be_present
+      expect(info[:molfile_version]).to start_with('V3000')
+    end
+  end
 end

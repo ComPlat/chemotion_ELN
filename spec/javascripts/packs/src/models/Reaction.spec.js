@@ -1101,4 +1101,32 @@ describe('Reaction', () => {
       });
     });
   });
+
+  describe('refreshEquivalent', () => {
+    it('does not throw when no reference material exists (referenceMaterial is undefined)', async () => {
+      const r = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      // Clear reference flags on all materials so referenceMaterial returns undefined
+      r.starting_materials.forEach((m) => { m.reference = false; });
+      r.reactants.forEach((m) => { m.reference = false; });
+      r.products.forEach((m) => { m.reference = false; });
+
+      const anyMaterial = r.starting_materials[0];
+      expect(() => r.refreshEquivalent(anyMaterial)).not.toThrow();
+    });
+
+    it('recalculates product equivalents when a reference material is set', async () => {
+      const r = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const refMat = r.starting_materials[0];
+      refMat.reference = true;
+      refMat._amount_mol = 2;
+      r.starting_materials.slice(1).forEach((m) => { m.reference = false; });
+
+      const product = r.products[0];
+      product._amount_mol = 1;
+
+      r.refreshEquivalent(refMat);
+
+      expect(r.products[0].equivalent).toBeCloseTo(0.5, 5);
+    });
+  });
 });

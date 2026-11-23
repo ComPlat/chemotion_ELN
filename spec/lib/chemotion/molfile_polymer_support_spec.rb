@@ -15,6 +15,29 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
     CTAB
   end
 
+  # Minimal V3000 CTAB: 2 atoms (R# + C), 1 bond, no stereogroups.
+  # The PolymersList/TextNode blocks follow M  END exactly as Ketcher writes them.
+  let(:ctab_v3000) do
+    <<~CTAB
+
+        Ketcher 11232611002D 1   1.00000     0.00000     0
+
+        0  0  0  0  0  0  0  0  0  0  0 V3000
+      M  V30 BEGIN CTAB
+      M  V30 COUNTS 2 1 0 0 0
+      M  V30 BEGIN ATOM
+      M  V30 1 R# 0.0000 0.0000 0 0 RGROUPS=(1 1)
+      M  V30 2 C 1.5000 0.0000 0 0
+      M  V30 END ATOM
+      M  V30 BEGIN BOND
+      M  V30 1 1 1 2
+      M  V30 END BOND
+      M  V30 END CTAB
+      M  END
+
+    CTAB
+  end
+
   describe '.polymers_list_payload' do
     it 'returns the payload of a populated block' do
       molfile = "#{ctab}> <PolymersList>\n0/95/1.00-1.00\n$$$$\n"
@@ -178,6 +201,58 @@ RSpec.describe Chemotion::MolfilePolymerSupport do
       molfile = "#{legacy_ctab_head}> <PolymersList>\n0\nM END\n\n$$$$\n"
 
       expect(described_class.polymers_list_payload(molfile)).to eq('0')
+    end
+  end
+
+  describe 'V3000 CTAB compatibility' do
+    it 'detects polymer content in a V3000 molfile' do
+      molfile = "#{ctab_v3000}> <PolymersList>\n0/95/1.00-1.00\n$$$$\n"
+
+      expect(described_class.has_polymer_content?(molfile)).to be(true)
+      expect(described_class.polymers_list_payload(molfile)).to eq('0/95/1.00-1.00')
+    end
+
+    it 'reports no polymer content for an empty PolymersList in a V3000 molfile' do
+      molfile = "#{ctab_v3000}> <PolymersList>\n$$$$\n"
+
+      expect(described_class.has_polymer_content?(molfile)).to be(false)
+    end
+
+    it 'keep_only_ctab preserves the full V3000 CTAB (stops at M  END, not M  V30 END CTAB)' do
+      # M  V30 END CTAB must NOT be treated as the CTAB terminator — only M  END is.
+      ctab_only = described_class.keep_only_ctab(ctab_v3000)
+
+      expect(ctab_only).to include('M  V30 BEGIN CTAB')
+      expect(ctab_only).to include('M  V30 END CTAB')
+      expect(ctab_only).to include('M  END')
+      expect(ctab_only).not_to include('> <PolymersList>')
+    end
+
+    it 'clean_molfile_for_inchikey strips data blocks and returns a valid V3000 CTAB' do
+      molfile = "#{ctab_v3000}> <PolymersList>\n0/95/1.00-1.00\n> <TextNode>\n0#ff0000#k#label\n> </TextNode>\n$$$$\n"
+
+      cleaned = described_class.clean_molfile_for_inchikey(molfile)
+
+      expect(cleaned).to include('M  V30 BEGIN CTAB')
+      expect(cleaned).to include('M  V30 END CTAB')
+      expect(cleaned).to include('M  END')
+      expect(cleaned).not_to include('PolymersList')
+      expect(cleaned).not_to include('TextNode')
+    end
+
+    it 'normalize_for_open_babel appends a trailing newline to a V3000 molfile' do
+      without_newline = ctab_v3000.rstrip
+
+      result = described_class.normalize_for_open_babel(without_newline)
+
+      expect(result).to end_with("\n")
+      expect(result).to include('M  V30 BEGIN CTAB')
+    end
+
+    it 'has_polymer_or_textnode_blocks? is true for a V3000 molfile with a TextNode block' do
+      molfile = "#{ctab_v3000}> <PolymersList>\n> <TextNode>\n0#ff0000#k#label\n> </TextNode>\n$$$$\n"
+
+      expect(described_class.has_polymer_or_textnode_blocks?(molfile)).to be(true)
     end
   end
 end

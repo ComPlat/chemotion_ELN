@@ -509,7 +509,8 @@ export default class Sample extends Element {
       sum_formula: this.sum_formula,
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
-      sample_type: this.sample_type,
+      sample_type: [SAMPLE_TYPE_MICROMOLECULE, SAMPLE_TYPE_MIXTURE].includes(this.sample_type)
+        ? this.sample_type : SAMPLE_TYPE_MICROMOLECULE,
       sample_details: this.sample_details,
       literatures: this.literatures,
     });
