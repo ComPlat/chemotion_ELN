@@ -218,6 +218,7 @@ export default class ElementsTableSettings extends React.Component {
       showSampleName,
     } = this.state;
 
+    const isAllCollection = this.context.collections.isAllCollectionId(UIStore.getState().currentCollection?.id);
     const showSettings = (currentType === 'sample' || currentType === 'reaction');
     const isSample = currentType === 'sample';
     const otherLabelChecked = showSampleExternalLabel || showSampleName;
@@ -269,6 +270,9 @@ export default class ElementsTableSettings extends React.Component {
             <CloseButton onClick={close} />
           </Popover.Header>
           <Popover.Body>
+            {isAllCollection && (
+              <p className="text-muted small mb-2">Default for collections without their own layout.</p>
+            )}
             <TabLayoutEditor
               visible={visible}
               hidden={hidden}

@@ -159,6 +159,9 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
           <p className="text-muted small mb-2">
             Element tabs shown in this collection&apos;s list. Click a name to edit its detail tabs.
           </p>
+          {collectionsStore.isAllCollectionId(collection.id) && (
+            <p className="text-muted small mb-2">Default for collections without their own layout.</p>
+          )}
           <CollectionTabLayoutEditor
             visible={elementTabs.visible}
             hidden={elementTabs.hidden}
