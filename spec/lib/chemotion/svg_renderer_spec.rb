@@ -441,25 +441,21 @@ RSpec.describe Chemotion::SvgRenderer do
   end
 
   describe '.service_chain' do
-    it 'routes V3000 to Indigo first regardless of explicit service' do
-      expect(described_class.service_chain(nil, false, is_v3000: true)).to eq(%i[indigo ketcher open_babel])
-      expect(described_class.service_chain('ketcher', false, is_v3000: true)).to eq(%i[ketcher open_babel])
+    it 'uses Indigo first for all structures by default (V2000, V3000, polymer, plain)' do
+      expect(described_class.service_chain(nil, false)).to eq(%i[indigo ketcher open_babel])
+      expect(described_class.service_chain(nil, true)).to eq(%i[indigo ketcher open_babel])
     end
 
-    it 'routes V2000 non-polymer to Ketcher first' do
-      expect(described_class.service_chain(nil, false, is_v3000: false)).to eq(%i[ketcher open_babel])
+    it 'respects explicit ketcher service override' do
+      expect(described_class.service_chain('ketcher', false)).to eq(%i[ketcher open_babel])
     end
 
-    it 'routes polymer to Indigo first' do
-      expect(described_class.service_chain(nil, true, is_v3000: false)).to eq(%i[indigo ketcher open_babel])
+    it 'respects explicit indigo service override' do
+      expect(described_class.service_chain('indigo', false)).to eq(%i[indigo ketcher open_babel])
     end
 
-    it 'respects explicit indigo service' do
-      expect(described_class.service_chain('indigo', false, is_v3000: false)).to eq(%i[indigo ketcher open_babel])
-    end
-
-    it 'respects explicit open_babel service' do
-      expect(described_class.service_chain('open_babel', false, is_v3000: false)).to eq(%i[open_babel])
+    it 'respects explicit open_babel service override' do
+      expect(described_class.service_chain('open_babel', false)).to eq(%i[open_babel])
     end
   end
 

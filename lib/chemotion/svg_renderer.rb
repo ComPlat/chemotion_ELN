@@ -29,7 +29,7 @@ module Chemotion
       # Use cleaned_struct only for rendering (Indigo/Ketcher/OpenBabel may not handle > <PolymersList>). The full struct is passed to finalize_svg for injection.
       render_struct = polymer_data[:cleaned_struct]
       is_v3000 = molfile_v3000?(struct)
-      chain = service_chain(service, has_polymer, is_v3000: is_v3000)
+      chain = service_chain(service, has_polymer)
       indigo_options = has_polymer ? { scale_factor: 90, label_font_size: 5 } : {}
 
       chain.each do |name|
@@ -57,12 +57,11 @@ module Chemotion
     end
 
     # Returns the ordered list of service names to try (e.g. %i[indigo ketcher open_babel]).
-    # When service is nil: if the molfile has an actual PolymersList payload use Indigo first,
-    # else Ketcher first; then fallback to OpenBabel.
+    # Indigo is always tried first; Ketcher and OpenBabel are fallbacks.
+    # Explicit :ketcher or :open_babel service overrides bypass Indigo.
     #
-    # @param has_polymer [Boolean] from {.render_svg_from_molfile}'s has_polymer_list? check --
-    #   NOT raw tag presence, which Ketcher also emits (empty) for ordinary structures.
-    def self.service_chain(service, has_polymer, is_v3000: false)
+    # @param has_polymer [Boolean] unused in routing but kept for caller compatibility
+    def self.service_chain(service, has_polymer = false)
       case service.to_s.presence&.downcase
       when 'indigo'
         %i[indigo ketcher open_babel]
@@ -71,10 +70,9 @@ module Chemotion
       when 'open_babel'
         %i[open_babel]
       else
-        # V3000 → Indigo first (Ketcher internally converts V3000→V2000, losing stereogroups)
-        # Real PolymersList payload → Indigo first
-        # Default → Ketcher first
-        (is_v3000 || has_polymer) ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
+        # Indigo is the primary renderer for all structures.
+        # Ketcher and OpenBabel remain as fallbacks.
+        %i[indigo ketcher open_babel]
       end
     end
 
