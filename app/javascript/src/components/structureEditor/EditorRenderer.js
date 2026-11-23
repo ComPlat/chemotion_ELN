@@ -3,6 +3,7 @@ import React from 'react';
 import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
+import SurfaceChemistryEditor from 'src/components/structureEditor/SurfaceChemistryEditor';
 import PropTypes from 'prop-types';
 
 function EditorRenderer({
@@ -24,6 +25,16 @@ function EditorRenderer({
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
+          fnCb={fnCb}
+        />
+      );
+    case 'surfaceChemistry':
+      return (
+        <SurfaceChemistryEditor
+          editor={editor}
+          molfile={molfile}
+          iH={iframeHeight}
+          iS={iframeStyle}
           fnCb={fnCb}
         />
       );

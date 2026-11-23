@@ -12,6 +12,18 @@ const EditorAttrs = {
       getSVGFuncName: 'getSVG',
     }
   },
+  surfaceChemistry:
+  {
+    structure:
+    {
+      path: 'surfaceEditor',
+      setMolfileInFrame: false,
+      setMfFuncName: 'setMolecule',
+      getMfFuncName: 'getMolfile',
+      getMfWithCallback: false,
+      getSVGFuncName: 'getSVG',
+    }
+  },
   chemdraw:
   {
     structure:

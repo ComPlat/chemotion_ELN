@@ -5,3 +5,6 @@ shared:
       :label: 'Ketcher'
       :extSrc: '/editors/ketcher/standalone/index.html'
 
+    :surfaceChemistry:
+      :label: 'Surface Chemistry'
+      :extSrc: '/editors/surfaceChemistry/standalone/index.html'

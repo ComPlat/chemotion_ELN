@@ -98,6 +98,18 @@ describe Chemotion::UserAPI do
     it 'returns only the editors enabled for the current user' do
       expect(parsed_json_response['matrices'].pluck('name')).to eq(['ketcherEditor'])
     end
+
+    context 'with the surface chemistry editor' do
+      before do
+        create(:matrice, name: 'surfaceChemistryEditor', enabled: true, configs: { editor: 'surfaceChemistry' })
+        user.reload
+        get '/api/v1/users/list_editors'
+      end
+
+      it 'lists it next to ketcher when enabled' do
+        expect(parsed_json_response['matrices'].pluck('name')).to eq(%w[ketcherEditor surfaceChemistryEditor])
+      end
+    end
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do

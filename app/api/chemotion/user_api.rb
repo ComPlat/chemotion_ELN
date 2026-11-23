@@ -53,7 +53,7 @@ module Chemotion
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
-        %w[chemdrawEditor marvinjsEditor ketcherEditor].each do |str|
+        %w[chemdrawEditor marvinjsEditor ketcherEditor surfaceChemistryEditor].each do |str|
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
         matrices = Matrice.where(name: editors)
