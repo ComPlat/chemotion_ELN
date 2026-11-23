@@ -1,4 +1,18 @@
 .collection-tab-layout-editor {
+  &-button {
+    border-radius: 0.375rem;
+
+    &, &:hover {
+      border: 1px solid var(--bs-border-color);
+      background-color: white;
+    }
+
+    .fa-ellipsis-v { opacity: 0.5; font-size: 0.9rem; }
+    &:hover .fa-ellipsis-v { opacity: 0.7; }
+    .btn { opacity: 0.6; }
+    .btn:hover { opacity: 1; }
+  }
+
   &-list {
     @extend .rounded-2;
     @extend .px-2;
@@ -53,4 +67,8 @@
       }
     }
   }
+}
+
+.app-modal.collection-tabs-editor-modal .modal-body {
+  padding-bottom: 0 !important;
 }

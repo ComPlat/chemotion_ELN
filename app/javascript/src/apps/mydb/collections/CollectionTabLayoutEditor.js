@@ -6,7 +6,7 @@ import { List } from 'immutable';
 import uuid from 'uuid';
 
 function Item({
-  scope, payload, index, isVisible, children, handlePositionChange, handleToggleVisibility
+  scope, payload, index, isVisible, isSelected, variant, children, handlePositionChange, handleToggleVisibility
 }) {
   const ref = useRef(null);
   const [{ isDragging }, drag] = useDrag({
@@ -41,7 +41,13 @@ function Item({
     },
   });
 
+  const isButton = variant === 'button';
   const className = (() => {
+    if (isButton) {
+      const selected = isSelected ? ' surface-active' : '';
+      const dragging = isDragging ? ' opacity-50' : '';
+      return `btn text-start py-2 mb-2 collection-tab-layout-editor-button${selected}${dragging}`;
+    }
     let nameString = 'collection-tab-layout-editor-list-item';
     if (isDragging) {
       nameString += ' active';
@@ -49,17 +55,19 @@ function Item({
     return nameString;
   })();
 
+  const Row = isButton ? 'div' : ListGroup.Item;
+
   drag(drop(ref));
   return (
-    <ListGroup.Item ref={ref} className={className}>
+    <Row ref={ref} className={className}>
       <div className="d-flex align-items-center justify-content-between">
         <div className="d-flex align-items-center flex-grow-1">
           <i className="fa fa-ellipsis-v text-muted me-2" style={{ cursor: 'grab' }} />
-          <div>{children}</div>
+          <div className="flex-grow-1">{children}</div>
         </div>
         <button
           type="button"
-          className="btn btn-sm p-1 ms-2"
+          className={`btn btn-sm ${isButton ? 'py-0 px-1' : 'p-1'} ms-2`}
           onClick={() => handleToggleVisibility(payload, index, isVisible)}
           title={isVisible ? 'Hide item' : 'Show item'}
           aria-label={isVisible ? 'Hide item' : 'Show item'}
@@ -68,7 +76,7 @@ function Item({
           <i className={isVisible ? 'fa fa-eye' : 'fa fa-eye-slash'} />
         </button>
       </div>
-    </ListGroup.Item>
+    </Row>
   );
 }
 
@@ -77,9 +85,16 @@ Item.propTypes = {
   payload: PropTypes.any.isRequired,
   index: PropTypes.number.isRequired,
   isVisible: PropTypes.bool.isRequired,
+  isSelected: PropTypes.bool,
+  variant: PropTypes.oneOf(['tab', 'button']),
   children: PropTypes.node.isRequired,
   handlePositionChange: PropTypes.func.isRequired,
   handleToggleVisibility: PropTypes.func.isRequired,
+};
+
+Item.defaultProps = {
+  isSelected: false,
+  variant: 'tab',
 };
 
 export default function CollectionTabLayoutEditor({
@@ -88,6 +103,8 @@ export default function CollectionTabLayoutEditor({
   getItemKey,
   getItemComponent,
   onLayoutChange,
+  selectedItem,
+  variant,
 }) {
   const visibleRef = useRef(null);
   const hiddenRef = useRef(null);
@@ -211,13 +228,18 @@ export default function CollectionTabLayoutEditor({
           ref={ref}
         >
           <h6 className="fw-bold mb-3">{title}</h6>
-          <ListGroup className="my-1 collection-tab-layout-editor-list" variant="flush">
+          <ListGroup
+            className={variant === 'button' ? 'my-1' : 'my-1 collection-tab-layout-editor-list'}
+            variant="flush"
+          >
             {collection.map((item, index) => (
               <Item
                 scope={scope}
                 key={getItemKey(item)}
                 payload={item}
                 isVisible={isVisible}
+                isSelected={item === selectedItem}
+                variant={variant}
                 index={index}
                 handlePositionChange={handlePositionChange}
                 handleToggleVisibility={handleToggleVisibility}
@@ -241,9 +263,13 @@ CollectionTabLayoutEditor.propTypes = {
   onLayoutChange: PropTypes.func.isRequired,
   getItemKey: PropTypes.func,
   getItemComponent: PropTypes.func,
+  selectedItem: PropTypes.string,
+  variant: PropTypes.oneOf(['tab', 'button']),
 }
 
 CollectionTabLayoutEditor.defaultProps = {
   getItemKey: (item) => item,
   getItemComponent: ({ item }) => item,
+  selectedItem: null,
+  variant: 'tab',
 };

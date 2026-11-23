@@ -148,14 +148,14 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
       size="lg"
       show={show}
       onHide={onHide}
-      contentClassName="vh-90"
-      bodyClassName="p-0 h-100 overflow-hidden"
+      className="collection-tabs-editor-modal"
+      bodyClassName="p-0"
       title={collection.label}
       primaryActionLabel="Save changes"
       onPrimaryAction={handleSave}
     >
-      <div className="d-flex h-100">
-        <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
+      <div className="d-flex vh-70">
+        <div className="bg-light border-end border-light p-3 col-5 overflow-auto">
           <p className="text-muted small mb-2">
             Element tabs shown in this collection&apos;s list. Click a name to edit its detail tabs.
           </p>
@@ -166,12 +166,14 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
             visible={elementTabs.visible}
             hidden={elementTabs.hidden}
             onLayoutChange={(visible, hidden) => setElementTabs({ visible, hidden })}
+            selectedItem={selectedCategory}
+            variant="button"
             getItemComponent={({ item }) => {
               const element = allElements.find(({ name }) => name === item);
               return (
                 <button
                   type="button"
-                  className={`border-0 bg-transparent text-start text-body p-0 ${selectedCategory === item ? 'fw-bold' : ''}`}
+                  className="border-0 bg-transparent text-start text-body p-0 w-100"
                   onClick={() => setSelectedCategory(item)}
                 >
                   {element && <ElementIcon element={element} className="me-1" />}
