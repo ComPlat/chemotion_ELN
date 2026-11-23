@@ -6,6 +6,11 @@ class ElementPolicy
     'SequenceBasedMacromolecule' => 'sequencebasedmacromoleculesample',
   }.freeze
 
+  # Element types that collection_shares carries no detail-level column for. Their entities expose
+  # every field to any reader, so a share grants them at full detail: a detail-level check passes
+  # whenever the record is shared with the user at all.
+  WITHOUT_DETAIL_LEVEL = %w[Vessel].freeze
+
   attr_reader :user, :record
 
   def initialize(user, record)
@@ -142,6 +147,8 @@ class ElementPolicy
   end
 
   def record_shared_with_minimum_detail_level?(detail_level)
+    return record_shared_with_at_least?(:read_elements) if WITHOUT_DETAIL_LEVEL.include?(record.class.name)
+
     record
       .collections
       .shared_with_minimum_detail_level(user, detail_level_field, detail_level)

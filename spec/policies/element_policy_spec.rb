@@ -460,4 +460,43 @@ describe ElementPolicy do
       end
     end
   end
+
+  # collection_shares has no vessel_detail_level column; a vessel is shared at full detail.
+  describe 'with a Vessel' do
+    let(:vessel) { create(:vessel, creator: other_user) }
+    let(:element_policy) { described_class.new(user, vessel) }
+
+    context 'when it is in a collection shared to me with edit permission' do
+      let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
+
+      before { vessel.collections << shared_collection_of_other_user }
+
+      it 'allows update and read_dataset' do
+        expect(element_policy.update?).to be true
+        expect(element_policy.read_dataset?).to be true
+      end
+    end
+
+    context 'when it is in a collection shared to me read-only' do
+      let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+
+      before { vessel.collections << shared_collection_of_other_user }
+
+      it 'allows read and read_dataset but denies update' do
+        expect(element_policy.read?).to be true
+        expect(element_policy.read_dataset?).to be true
+        expect(element_policy.update?).to be false
+      end
+    end
+
+    context 'when it is not shared with me at all' do
+      before { vessel.collections << own_collection_of_other_user }
+
+      it 'denies read, update and read_dataset without raising' do
+        expect(element_policy.read?).to be false
+        expect(element_policy.update?).to be false
+        expect(element_policy.read_dataset?).to be false
+      end
+    end
+  end
 end
