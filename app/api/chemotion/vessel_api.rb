@@ -66,14 +66,11 @@ module Chemotion
       get ':id' do
         return present Vessel.new, with: Entities::VesselInstanceEntity if params[:id] == 'new'
 
-        begin
-          vessel = Vessel.find(params[:id])
-        rescue ActiveRecord::RecordNotFound
-          error!('404 Not Found', 404)
-        rescue StandardError => e
-          error!(e, 400)
-        end
-        return present vessel, with: Entities::VesselInstanceEntity
+        vessel = Vessel.find_by(id: params[:id])
+        error!('404 Not Found', 404) unless vessel
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, vessel).read?
+
+        present vessel, with: Entities::VesselInstanceEntity
       end
 
       desc 'Create a new Vessel Template'
@@ -271,6 +268,7 @@ module Chemotion
       put ':id' do
         vessel = Vessel.find_by(id: params[:id])
         error!('Vessel instance not found', 404) unless vessel
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, vessel).update?
 
         vessel_params = params.slice(:name, :description, :bar_code, :qr_code, :weight_amount, :weight_unit).compact
         vessel.update!(vessel_params)
