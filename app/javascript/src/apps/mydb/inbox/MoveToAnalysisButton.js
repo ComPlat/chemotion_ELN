@@ -84,8 +84,12 @@ export default class MoveToAnalysisButton extends React.Component {
     const { elementType } = this.props;
     if (elementType === 'sample') {
       InboxFetcher.assignToSampleAnalysis(elementId, attachmentId)
-        .then(() => {
-          this.removeAttachment();
+        .then((result) => {
+          if (result?.container) {
+            this.removeAttachment();
+          } else {
+            this.setState({ loading: false });
+          }
         }).catch((errorMessage) => {
           this.setState({ loading: false });
           console.log(errorMessage);
@@ -93,8 +97,12 @@ export default class MoveToAnalysisButton extends React.Component {
     }
     if (elementType === 'reaction') {
       InboxFetcher.assignToReactionAnalysis(elementId, attachmentId, variation)
-        .then(() => {
-          this.removeAttachment();
+        .then((result) => {
+          if (result?.container) {
+            this.removeAttachment();
+          } else {
+            this.setState({ loading: false });
+          }
         }).catch((errorMessage) => {
           this.setState({ loading: false });
           console.log(errorMessage);
