@@ -20,7 +20,7 @@ class InboxSearchElements
   # Strip the extension and a trailing `_<digits>` counter in front of it,
   # e.g. `SVS-1265_2.jpg` -> `SVS-1265`.
   def normalize(str)
-    str.chomp(File.extname(str)).sub(/_\d*\z/, '')
+    str.chomp(File.extname(str)).sub(/_[A-Za-z0-9]*\z/, '')
   end
 
   def records
