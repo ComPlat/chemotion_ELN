@@ -953,7 +953,7 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
-const isMolfileEmpty = (molfile) => {
+export const isMolfileEmpty = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return true;
   // V3000: M  V30 COUNTS atomCount bondCount ...
   const v3match = molfile.match(/^M  V30 COUNTS\s+(\d+)\s+/m);

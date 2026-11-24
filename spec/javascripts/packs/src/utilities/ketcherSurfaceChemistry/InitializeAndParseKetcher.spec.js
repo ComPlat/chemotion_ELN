@@ -396,6 +396,16 @@ describe('InitializeAndParseKetcher — addTextNodes', () => {
     assert.ok(content.blocks[0].key, 'a key should be generated');
   });
 
+  it('derives the same key for the same alias on repeated loads (no random)', async () => {
+    const json = JSON.stringify({ paragraphs: [{ parts: [{ text: 'label' }], indent: 0 }], indent: 0 });
+    const line = `0#t_5_0#${json}`;
+    const [nodeA] = await addTextNodes([line]);
+    const [nodeB] = await addTextNodes([line]);
+    const keyA = JSON.parse(nodeA.data.content).blocks[0].key;
+    const keyB = JSON.parse(nodeB.data.content).blocks[0].key;
+    assert.strictEqual(keyA, keyB, 'same alias must always produce the same key');
+  });
+
   it('sets textNodeStruct[alias] for old format', async () => {
     const json = JSON.stringify({ paragraphs: [{ parts: [{ text: 'A-2o4' }], indent: 0 }], indent: 0 });
     const line = `0#t_93_0#${json}`;

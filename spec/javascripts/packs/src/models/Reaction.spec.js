@@ -1118,11 +1118,14 @@ describe('Reaction', () => {
       const r = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
       const refMat = r.starting_materials[0];
       refMat.reference = true;
-      refMat._amount_mol = 2;
+      refMat.coefficient = 1;
       r.starting_materials.slice(1).forEach((m) => { m.reference = false; });
 
       const product = r.products[0];
-      product._amount_mol = 1;
+      product.coefficient = 1;
+      // Set product to half the mass of ref (100 g) so amount_mol ratio = 0.5
+      product.amount_value = 50;
+      product.amount_unit = 'g';
 
       r.refreshEquivalent(refMat);
 

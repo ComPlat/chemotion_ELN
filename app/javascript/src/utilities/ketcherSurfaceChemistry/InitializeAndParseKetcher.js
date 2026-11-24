@@ -508,7 +508,9 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       return;
     }
 
-    let fileContent = stripAutoEnhancedStereo(JSON.parse(ketFile.struct));
+    const isV3000Source = typeof initMol === 'string' && /^M {2}V30 COUNTS/m.test(initMol);
+    const parsedKet = JSON.parse(ketFile.struct);
+    let fileContent = isV3000Source ? parsedKet : stripAutoEnhancedStereo(parsedKet);
     let polymerTagToUse = polymerTagFromPasted;
 
     if (isPaste && (storedPolymersListLine || polymerTagFromPasted)) {
@@ -583,4 +585,5 @@ export {
   sanitizeRgLabelAtoms,
   sanitizeQueryAtomsForIndigo,
   getStandardMolfileForIndigo,
+  stripAutoEnhancedStereo,
 };

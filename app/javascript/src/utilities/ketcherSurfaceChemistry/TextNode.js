@@ -116,10 +116,17 @@ const forTextNodeHeader = (key, description) => {
   });
 };
 
-const generateNodeKey = () => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+// Derives a stable 5-char lowercase key from an alias string (e.g. "t_1_0").
+// Same alias always produces the same key so old-format text nodes are consistent
+// across sessions before their first save promotes them to 4-part format.
+const keyFromAlias = (alias) => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  let h = 5381;
+  for (let i = 0; i < alias.length; i++) {
+    h = (((h << 5) + h) + alias.charCodeAt(i)) >>> 0;
+  }
   let k = '';
-  for (let i = 0; i < 6; i++) k += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 5; i++) { k += letters[h % 26]; h = Math.floor(h / 26); }
   return k;
 };
 
@@ -143,11 +150,11 @@ const addTextNodes = async (textNodes) => textNodes.map((item) => {
     alias = a;
     description = rest.join(KET_TAGS.textIdentifier);
   } else if (parts.length === 3) {
-    // Old format has no key — generate one
+    // Old format has no key — derive one deterministically from the alias
     const [, a, d] = parts;
     alias = a;
     description = d;
-    key = generateNodeKey();
+    key = keyFromAlias(a || '');
   } else {
     return null;
   }

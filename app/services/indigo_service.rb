@@ -45,6 +45,7 @@ class IndigoService
     unit = 'px'
     @options = {
       'render-coloring' => false,
+      'render-stereo-style' => 'ext',
       # font
       'render-font-size' => label_font_size,
       'render-font-size-sub' => sub_font_size,
@@ -59,7 +60,7 @@ class IndigoService
       'render-font-size-sub-unit' => unit,
       'render-hash-spacing' => 1.5,
       # others
-      'render-margins' => '0,0',
+      'render-margins' => '8,8',
     }.tap { |o| o['render-fonts'] = ARIAL_COMPATIBLE_FONT if ARIAL_COMPATIBLE_FONT }
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
