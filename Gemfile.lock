@@ -53,6 +53,7 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    Ascii85 (2.0.2)
     aasm (5.5.1)
       concurrent-ruby (~> 1.0)
     actioncable (6.1.7.10)
@@ -122,6 +123,7 @@ GEM
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     aes_key_wrap (1.1.0)
+    afm (0.2.2)
     ancestry (4.3.3)
       activerecord (>= 5.2.6)
     annotaterb (4.15.0)
@@ -317,6 +319,7 @@ GEM
       haml (>= 4.0.6)
       railties (>= 5.1)
     hashdiff (1.2.0)
+    hashery (2.2.2)
     hashie (5.0.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
@@ -370,8 +373,9 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.3.4)
+    labimotion (2.4.0.rc11)
       caxlsx (~> 4.0)
+      pdf-reader (~> 2.11)
       rails (>= 6.1, < 8.0)
       roo (~> 2.10)
     language_server-protocol (3.17.0.5)
@@ -492,6 +496,11 @@ GEM
     pastel (0.8.0)
       tty-color (~> 0.5)
     pdf-core (0.10.0)
+    pdf-reader (2.16.0)
+      Ascii85 (>= 1.0, < 3.0, != 2.0.0)
+      afm (>= 0.2.1, < 2)
+      hashery (~> 2.0)
+      ttfunk
     pg (1.5.9)
     pg_search (2.3.6)
       activerecord (>= 5.2)
@@ -875,7 +884,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.3.4)
+  labimotion (= 2.4.0.rc11)
   launchy
   listen
   logidze
