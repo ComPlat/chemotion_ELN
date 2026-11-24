@@ -89,8 +89,8 @@ class UserActions {
     return null;
   }
 
-  selectTab(tab) {
-    return tab;
+  selectTab(tab, type) {
+    return { tab, type };
   }
 
   updateUserProfile(params) {

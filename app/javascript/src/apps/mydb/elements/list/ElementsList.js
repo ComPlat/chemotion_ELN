@@ -20,23 +20,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { allElnElements } from 'src/apps/generic/Utils';
 import { capitalizeWords } from 'src/utilities/textHelper';
-
-function getVisibleAndHiddenFromLayout(layout) {
-  const visible = [];
-  const hidden = [];
-  Object.keys(layout).forEach((key) => {
-    if (layout[key] < 0) {
-      hidden.push(key);
-    } else {
-      visible.push(key);
-    }
-  });
-
-  return {
-    visible: List(visible).sortBy((t) => layout[t]),
-    hidden: List(hidden).sortBy((t) => -1 * layout[t]),
-  };
-}
+import { listLayoutFor, getVisibleAndHiddenFromLayout } from 'src/utilities/ListLayoutHelper';
 
 export default class ElementsList extends React.Component {
   static contextType = StoreContext;
@@ -92,12 +76,16 @@ export default class ElementsList extends React.Component {
     let { currentType, currentTab } = state;
 
     if (state?.profile?.data?.layout) {
-      const profileConfig = getVisibleAndHiddenFromLayout(state.profile.data.layout);
+      const layout = listLayoutFor(UIStore.getState().currentCollection, state.profile.data.layout);
+      const profileConfig = getVisibleAndHiddenFromLayout(layout);
       visible = profileConfig.visible;
       hidden = profileConfig.hidden;
 
       currentTab = visible.findIndex((e) => e === currentType);
       if (currentType === '') { currentType = visible.get(0); }
+      if (currentTab < 0 && currentType && visible.size > 0) {
+        UserActions.selectTab.defer(0, visible.get(0));
+      }
     }
 
     if (currentTab < 0) currentTab = 0;
@@ -146,6 +134,7 @@ export default class ElementsList extends React.Component {
     }
     if (currentCollection !== state.currentCollection) {
       this.prefetchShareInfo(state.currentCollection);
+      this.onChangeUser(UserStore.getState());
     }
   }
 
@@ -179,12 +168,12 @@ export default class ElementsList extends React.Component {
   }
 
   handleTabSelect(tab) {
-    UserActions.selectTab(tab);
+    const { visible } = this.state;
+    const type = visible.get(tab);
+    UserActions.selectTab(tab, type);
 
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
-    const { visible } = this.state;
-    const type = visible.get(tab);
 
     if (!uiState[type] || !uiState[type].page) { return; }
 

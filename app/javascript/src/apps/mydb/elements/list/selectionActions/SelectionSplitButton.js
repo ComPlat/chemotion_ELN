@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Dropdown } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
@@ -143,10 +144,10 @@ export default class SelectionSplitButton extends React.Component {
 
   render() {
     const {
-      layout, genericEls, showGenericEls, selectedElements
+      layout, genericEls, showGenericEls, selectedElements, currentCollection
     } = this.state;
 
-    const sortedLayout = Object.entries(layout)
+    const sortedLayout = Object.entries(listLayoutFor(currentCollection, layout))
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 

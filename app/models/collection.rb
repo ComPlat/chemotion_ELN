@@ -11,6 +11,7 @@
 #  deleted_at   :datetime
 #  is_locked    :boolean          default(FALSE)
 #  label        :text             not null
+#  list_layout  :jsonb
 #  position     :integer
 #  shared       :boolean          default(FALSE), not null
 #  tabs_segment :jsonb

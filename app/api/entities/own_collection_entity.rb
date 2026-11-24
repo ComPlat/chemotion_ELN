@@ -9,6 +9,7 @@ module Entities
     expose! :position
     expose! :label
     expose! :tabs_segment
+    expose! :list_layout
     expose! :inventory_id
     expose! :inventory_name
     expose! :inventory_prefix

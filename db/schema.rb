@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_10_13_120000) do
+ActiveRecord::Schema.define(version: 2026_11_20_100000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -232,6 +232,7 @@ ActiveRecord::Schema.define(version: 2026_10_13_120000) do
     t.jsonb "tabs_segment", default: {}
     t.bigint "inventory_id"
     t.boolean "shared", default: false, null: false
+    t.jsonb "list_layout", default: {}
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"

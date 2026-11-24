@@ -8,6 +8,7 @@ import { allElnElements, allElnElmentsWithLabel, allGenericElements } from 'src/
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { listLayoutFor } from 'src/utilities/ListLayoutHelper';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
@@ -222,7 +223,7 @@ export default class CreateElementButton extends React.Component {
   render() {
     const { isDisabled, layout } = this.state;
     const itemTables = [];
-    const sortedLayout = Object.entries(layout)
+    const sortedLayout = Object.entries(listLayoutFor(UIStore.getState().currentCollection, layout))
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
