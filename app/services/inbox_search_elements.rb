@@ -17,16 +17,10 @@ class InboxSearchElements
 
   private
 
+  # Strip the extension and a trailing `_<digits>` counter in front of it,
+  # e.g. `SVS-1265_2.jpg` -> `SVS-1265`.
   def normalize(str)
-    str.chomp(File.extname(str))
-  end
-
-  def normalize_for_exact_name(str)
-    str = str.dup
-    str.chomp!(' EA')
-    str.sub!(/-?[a-zA-Z]$/, '')
-    str.sub!(/^[a-zA-Z0-9]+-/, '')
-    str
+    str.chomp(File.extname(str)).sub(/_[A-Za-z0-9]*\z/, '')
   end
 
   def records
@@ -44,15 +38,13 @@ class InboxSearchElements
       @current_user, CollectionShare.permission_level(:edit_elements)
     ).ids
 
-    exact = Sample.by_exact_name(normalize_for_exact_name(@search_string))
-                  .joins(:collections_samples)
-                  .where(collections_samples: { collection_id: collection_ids })
-
-    short = Sample.by_short_label(@search_string)
-                  .joins(:collections_samples)
-                  .where(collections_samples: { collection_id: collection_ids })
-
-    exact.or(short).includes(:reactions).distinct
+    Sample.by_name(@search_string)
+          .or(Sample.by_external_label(@search_string))
+          .or(Sample.by_short_label(@search_string))
+          .joins(:collections_samples)
+          .where(collections_samples: { collection_id: collection_ids })
+          .includes(:reactions)
+          .distinct
   end
 
   def reactions

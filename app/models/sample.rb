@@ -141,11 +141,6 @@ class Sample < ApplicationRecord
     joins(:molecule_name)
       .where('molecule_names.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
-  scope :by_exact_name, lambda { |query|
-                          sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])?$"
-                          where('lower(samples.name) ~* lower(?) or lower(samples.external_label) ~* lower(?)',
-                                sanitized_query, sanitized_query)
-                        }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_molecule_sum_formular, lambda { |query|

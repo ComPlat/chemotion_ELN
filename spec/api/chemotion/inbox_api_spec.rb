@@ -66,6 +66,35 @@ describe Chemotion::InboxAPI do
         end
       end
 
+      describe 'get samples by a filename with a trailing counter before the extension' do
+        let(:search_string) { 'JB-R23-A_2.pdf' }
+
+        before { get "/api/v1/inbox/samples?search_string=#{search_string}" }
+
+        it 'ignores the counter' do
+          names = JSON.parse(response.body)['samples'].pluck('name')
+          expect(names).to eq(['JB-R23-A'])
+        end
+      end
+
+      describe 'get samples by a prefixed filename' do
+        let(:search_string) { 'SVS-1265.jpg' }
+        let!(:sample_prefixed) do
+          create(:sample, name: 'SVS-1265-B', creator: user, collections: [collection])
+        end
+
+        before do
+          create(:sample, name: 'unrelated', external_label: '1265', creator: user, collections: [collection])
+          create(:sample, name: 'ARZ-1265', creator: user, collections: [collection])
+          get "/api/v1/inbox/samples?search_string=#{search_string}"
+        end
+
+        it 'does not match samples that only share the number' do
+          ids = JSON.parse(response.body)['samples'].pluck('id')
+          expect(ids).to eq([sample_prefixed.id])
+        end
+      end
+
       describe 'get samples by sample short label' do
         let(:search_string) { "#{user.name_abbreviation}-1.pdf" }
 
