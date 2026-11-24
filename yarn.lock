@@ -5268,15 +5268,15 @@ cheerio@^1.0.0-rc.3:
     undici "^7.19.0"
     whatwg-mimetype "^4.0.0"
 
-chem-generic-ui@2.4.0-beta.2:
-  version "2.4.0-beta.2"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.4.0-beta.2.tgz#e6fe06170024b75acf3d9735000fb3c3cb1eba67"
-  integrity sha512-lHARAjES5CQUjHRV626gJHTxaY/Dulg9dXr8HQ+Z/k8EI0Cx61AMbiX2k+P7ibuEC7vrRwMDxUWESkdkHpJWNg==
+chem-generic-ui@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.3.2.tgz#a0c8082371ecc6b6882766512e77b1db23d46453"
+  integrity sha512-18yZAyEFjuZvuaNnAjAWluj7h80Ewg9MwtNJQXH5Dwv04tFbS59sjwE0/MLdbjPEWIL89c0cR8Obf6v8gD7S9Q==
   dependencies:
     ajv "^8.18.0"
     copy-to-clipboard "^3.3.3"
     diff "^8.0.2"
-    generic-ui-core "^2.5.0-rc1"
+    generic-ui-core "2.5.2"
     html-to-image "^1.11.11"
     humps "^2.0.1"
     jsondiffpatch "^0.7.3"
@@ -8245,7 +8245,7 @@ generator-function@^2.0.0:
   resolved "https://registry.yarnpkg.com/generator-function/-/generator-function-2.0.1.tgz#0e75dd410d1243687a0ba2e951b94eedb8f737a2"
   integrity sha512-SFdFmIJi+ybC0vjlHN0ZGVGHc3lgE0DxPAT0djjVg+kjOnSqclqmj0KQ7ykTOLP6YxoqOvuAODGdcHJn+43q3g==
 
-generic-ui-core@^2.5.0-rc1:
+generic-ui-core@2.5.2:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-2.5.2.tgz#961fec86ae0d84414f47f1f1f7759d0fd33bdc4c"
   integrity sha512-x+9AJ9Zi0AsV+Y20yiDryhIpGDpDFpkJnMDMkAh+vq+ACH1Xpd2DCScSXz+8rHrCWnmuy/VflEIS6tCMJs/93w==
