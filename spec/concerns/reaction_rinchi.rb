@@ -80,3 +80,33 @@ shared_examples_for 'Inverted_stereochemistry' do
     expect(reaction.rinchi_web_key).to eq(correct[3].chomp)
   end
 end
+
+shared_examples_for 'V3000 T9 bond clearing' do
+  let(:v3000_molecule) do
+    create(:molecule, force_attributes: { molfile_version: 'V3000 T9' })
+  end
+
+  let(:sp_rct_v3000) do
+    sample = create(:sample)
+    sample.update_columns(molecule_id: v3000_molecule.id) # rubocop:disable Rails/SkipsModelValidations
+    sample
+  end
+
+  let(:reaction) do
+    create(
+      :reaction, starting_materials: [sp_rct_v3000], solvents: [],
+                 reactants: [], products: []
+    )
+  end
+
+  it 'calls mofile_clear_coord_bonds for a V3000 T9 starting material' do
+    allow(Chemotion::OpenBabelService).to receive(:mofile_clear_coord_bonds) do |mf, _version|
+      mf
+    end
+
+    reaction.retrieve_molfiles
+
+    expect(Chemotion::OpenBabelService).to have_received(:mofile_clear_coord_bonds)
+      .with(v3000_molecule.molfile, 'V3000').at_least(:once)
+  end
+end

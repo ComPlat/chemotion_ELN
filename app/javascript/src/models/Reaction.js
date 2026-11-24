@@ -1169,9 +1169,10 @@ export default class Reaction extends Element {
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
     const refMat = this.referenceMaterial;
+    if (!refMat) return;
     const referenceAmountMol = refMat.amount_mol;
 
-    if (refMat && referenceAmountMol) {
+    if (referenceAmountMol) {
       ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {

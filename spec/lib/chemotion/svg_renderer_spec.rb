@@ -439,4 +439,40 @@ RSpec.describe Chemotion::SvgRenderer do
       end
     end
   end
+
+  describe '.service_chain' do
+    it 'uses Indigo first for all structures by default (V2000, V3000, polymer, plain)' do
+      expect(described_class.service_chain(nil, false)).to eq(%i[indigo ketcher open_babel])
+      expect(described_class.service_chain(nil, true)).to eq(%i[indigo ketcher open_babel])
+    end
+
+    it 'respects explicit ketcher service override' do
+      expect(described_class.service_chain('ketcher', false)).to eq(%i[ketcher open_babel])
+    end
+
+    it 'respects explicit indigo service override' do
+      expect(described_class.service_chain('indigo', false)).to eq(%i[indigo ketcher open_babel])
+    end
+
+    it 'respects explicit open_babel service override' do
+      expect(described_class.service_chain('open_babel', false)).to eq(%i[open_babel])
+    end
+  end
+
+  describe '.molfile_v3000?' do
+    it 'returns true for V3000 molfile' do
+      mol = "header\n\n\n  0  0  0     0  0            999 V3000\nM  V30 BEGIN CTAB\n"
+      expect(described_class.molfile_v3000?(mol)).to be true
+    end
+
+    it 'returns true when M  V30 BEGIN is present' do
+      mol = "header\n\nM  V30 BEGIN CTAB\n"
+      expect(described_class.molfile_v3000?(mol)).to be true
+    end
+
+    it 'returns false for V2000 molfile' do
+      mol = "header\n\n\n  6  6  0  0  0  0  0  0  0  0999 V2000\n"
+      expect(described_class.molfile_v3000?(mol)).to be false
+    end
+  end
 end

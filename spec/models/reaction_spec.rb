@@ -350,6 +350,7 @@ RSpec.describe Reaction, type: :model do
     it_behaves_like 'Esterification'
     # it_behaves_like '1_reactant_-_no_structure'
     it_behaves_like 'Inverted_stereochemistry'
+    it_behaves_like 'V3000 T9 bond clearing'
   end
 
   describe 'create private note' do

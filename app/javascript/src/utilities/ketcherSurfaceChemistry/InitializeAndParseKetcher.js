@@ -265,13 +265,33 @@ const sanitizeRgLabelAtoms = (ketJson) => {
 };
 
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
+// Also normalises the header to exactly 3 lines before the counts line.
+// Ketcher writes: line 1 = program info, line 2 = blank, line 3 = counts.
+// MDL V2000 requires: line 1 = name, line 2 = program, line 3 = comment, line 4 = counts.
+// Indigo reads line 3 as the "comment" then tries to parse the first atom line as counts;
+// that atom line starts with three spaces → readIntFix(3) "invalid number representation".
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
   const normalized = molfile.replace(/\r\n/g, '\n');
   const lines = normalized.split('\n');
   const endIndex = lines.findIndex((line) => /^M\s+END/.test(line));
   if (endIndex === -1) return molfile;
-  return lines.slice(0, endIndex + 1).join('\n');
+  const ctabLines = lines.slice(0, endIndex + 1);
+  const countsIdx = ctabLines.findIndex((line) => /V[23]000/.test(line));
+  if (countsIdx !== -1 && countsIdx < 3) {
+    ctabLines.splice(countsIdx, 0, ...Array(3 - countsIdx).fill(''));
+  }
+  return ctabLines.join('\n');
+};
+
+// Defensive sanitization for the V2000 CTAB body. Called after getStandardMolfileForIndigo
+// normalises the header. Currently handles one edge case:
+//   Bond lines: field 5 (positions 12-14) is "not used" and Ketcher sometimes writes "   "
+//   instead of "  0". Bond lines are identified by their first 12 chars being only digits/spaces.
+const sanitizeQueryAtomsForIndigo = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return molfile;
+  return molfile
+    .replace(/^([\d ]{12}) {3}/gm, '$1  0');
 };
 
 // Build a synthetic PolymersList (indexed format) from V2000 atom alias blocks for files that
@@ -456,7 +476,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       return;
     }
 
-    const molfileForIndigo = getStandardMolfileForIndigo(initMol);
+    const molfileForIndigo = sanitizeQueryAtomsForIndigo(getStandardMolfileForIndigo(initMol));
     const formatError = (err) => {
       if (err?.message != null) return err.message;
       if (err && typeof err?.toString === 'function') return err.toString();
@@ -473,7 +493,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
     };
     const conversionErrors = [];
 
-    let ketFile = await editor._structureDef.editor.indigo.convert(molfileForIndigo).catch((err) => {
+    const ketFile = await editor._structureDef.editor.indigo.convert(molfileForIndigo).catch((err) => {
       conversionErrors.push(`Ketcher/Indigo ${formatError(err)}`);
       return null;
     });
@@ -488,7 +508,9 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       return;
     }
 
-    let fileContent = stripAutoEnhancedStereo(JSON.parse(ketFile.struct));
+    const isV3000Source = typeof initMol === 'string' && /^M {2}V30 COUNTS/m.test(initMol);
+    const parsedKet = JSON.parse(ketFile.struct);
+    let fileContent = isV3000Source ? parsedKet : stripAutoEnhancedStereo(parsedKet);
     let polymerTagToUse = polymerTagFromPasted;
 
     if (isPaste && (storedPolymersListLine || polymerTagFromPasted)) {
@@ -561,4 +583,7 @@ export {
   prepareKetcherData,
   loadTemplates,
   sanitizeRgLabelAtoms,
+  sanitizeQueryAtomsForIndigo,
+  getStandardMolfileForIndigo,
+  stripAutoEnhancedStereo,
 };

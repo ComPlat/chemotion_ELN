@@ -1101,4 +1101,35 @@ describe('Reaction', () => {
       });
     });
   });
+
+  describe('refreshEquivalent', () => {
+    it('does not throw when no reference material exists (referenceMaterial is undefined)', async () => {
+      const r = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      // Clear reference flags on all materials so referenceMaterial returns undefined
+      r.starting_materials.forEach((m) => { m.reference = false; });
+      r.reactants.forEach((m) => { m.reference = false; });
+      r.products.forEach((m) => { m.reference = false; });
+
+      const anyMaterial = r.starting_materials[0];
+      expect(() => r.refreshEquivalent(anyMaterial)).not.toThrow();
+    });
+
+    it('recalculates product equivalents when a reference material is set', async () => {
+      const r = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      const refMat = r.starting_materials[0];
+      refMat.reference = true;
+      refMat.coefficient = 1;
+      r.starting_materials.slice(1).forEach((m) => { m.reference = false; });
+
+      const product = r.products[0];
+      product.coefficient = 1;
+      // Set product to half the mass of ref (100 g) so amount_mol ratio = 0.5
+      product.amount_value = 50;
+      product.amount_unit = 'g';
+
+      r.refreshEquivalent(refMat);
+
+      expect(r.products[0].equivalent).toBeCloseTo(0.5, 5);
+    });
+  });
 });

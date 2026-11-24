@@ -28,18 +28,26 @@ module Chemotion
       has_polymer = has_polymer_list?(polymer_data)
       # Use cleaned_struct only for rendering (Indigo/Ketcher/OpenBabel may not handle > <PolymersList>). The full struct is passed to finalize_svg for injection.
       render_struct = polymer_data[:cleaned_struct]
+      is_v3000 = molfile_v3000?(struct)
       chain = service_chain(service, has_polymer)
       indigo_options = has_polymer ? { scale_factor: 90, label_font_size: 5 } : {}
 
       chain.each do |name|
         rendered_svg = if name == :indigo
-                         indigo_service(render_struct, indigo_options)
+                         svg = indigo_service(render_struct, indigo_options)
+                         if svg.blank? && is_v3000 && !IndigoService.disabled?
+                           # Retry with V2000 — Ketcher's fallback silently drops stereogroups.
+                           v2000 = IndigoService.new(render_struct).convert_to_v2000
+                           svg = indigo_service(v2000, indigo_options) if v2000.present?
+                         end
+                         svg
                        else
                          send(:"#{name}_service", render_struct)
                        end
         if rendered_svg.present?
           # Pass full struct (with PolymersList) to finalize_svg so inject_polymer_shapes can run; polymer_data was parsed from this full struct.
-          return finalize_svg(rendered_svg, struct, polymer_data)
+          finalized = finalize_svg(rendered_svg, struct, polymer_data)
+          return inject_service_title(finalized, name)
         end
       end
 
@@ -49,12 +57,11 @@ module Chemotion
     end
 
     # Returns the ordered list of service names to try (e.g. %i[indigo ketcher open_babel]).
-    # When service is nil: if the molfile has an actual PolymersList payload use Indigo first,
-    # else Ketcher first; then fallback to OpenBabel.
+    # Indigo is always tried first; Ketcher and OpenBabel are fallbacks.
+    # Explicit :ketcher or :open_babel service overrides bypass Indigo.
     #
-    # @param has_polymer [Boolean] from {.render_svg_from_molfile}'s has_polymer_list? check --
-    #   NOT raw tag presence, which Ketcher also emits (empty) for ordinary structures.
-    def self.service_chain(service, has_polymer)
+    # @param has_polymer [Boolean] unused in routing but kept for caller compatibility
+    def self.service_chain(service, has_polymer = false)
       case service.to_s.presence&.downcase
       when 'indigo'
         %i[indigo ketcher open_babel]
@@ -63,9 +70,15 @@ module Chemotion
       when 'open_babel'
         %i[open_babel]
       else
-        # Default: real PolymersList payload present -> Indigo first; else Ketcher first
-        has_polymer ? %i[indigo ketcher open_babel] : %i[ketcher open_babel]
+        # Indigo is the primary renderer for all structures.
+        # Ketcher and OpenBabel remain as fallbacks.
+        %i[indigo ketcher open_babel]
       end
+    end
+
+    def self.molfile_v3000?(struct)
+      s = struct.to_s
+      s.include?('V3000') || s.include?('M  V30 BEGIN')
     end
 
     # True when molfile contains the PolymersList tag (e.g. "> <PolymersList>").
@@ -167,6 +180,32 @@ module Chemotion
     rescue StandardError => e
       Rails.logger.error("KetcherService exception: #{e.message}")
       nil
+    end
+
+    # Injects a <title> element into the SVG root so hovering shows which service rendered it.
+    # OpenBabel already includes its own title; only Indigo and Ketcher need one added.
+    SERVICE_TITLES = {
+      indigo: 'Indigo depiction',
+      ketcher: 'Ketcher depiction',
+    }.freeze
+
+    def self.inject_service_title(svg, service_name)
+      return svg if svg.blank?
+
+      label = SERVICE_TITLES[service_name]
+      return svg unless label
+
+      doc = Nokogiri::XML(svg)
+      root = doc.xpath('//*[local-name()="svg"]').first
+      return svg unless root
+
+      root.children.select { |n| n.element? && n.name.casecmp('title').zero? }.each(&:remove)
+      title = Nokogiri::XML::Node.new('title', doc)
+      title.content = label
+      root.prepend_child(title)
+      doc.to_xml
+    rescue StandardError
+      svg
     end
 
     # Attempts to render SVG using OpenBabelService
@@ -768,7 +807,9 @@ module Chemotion
 
     def self.parse_atom_positions(molfile)
       lines = molfile.to_s.lines
-      # Avoid regex on full line (CodeQL: polynomial backtracking). Find V2000 line then parse counts.
+      return parse_atom_positions_v3000(lines) if molfile_v3000?(molfile)
+
+      # V2000: avoid regex on full line (CodeQL: polynomial backtracking).
       counts_idx = lines.find_index { |line| line.include?('V2000') }
       return {} unless counts_idx
 
@@ -791,6 +832,35 @@ module Chemotion
         next if x.nil? || y.nil?
 
         atoms[idx] = [x, y]
+      end
+      atoms
+    end
+
+    def self.parse_atom_positions_v3000(lines)
+      atoms = {}
+      idx = 0
+      in_atom_block = false
+      lines.each do |line|
+        s = line.strip
+        if s == 'M  V30 BEGIN ATOM'
+          in_atom_block = true
+          next
+        end
+        if s == 'M  V30 END ATOM'
+          in_atom_block = false
+          next
+        end
+        next unless in_atom_block
+        # Format: M  V30 <index> <symbol> <x> <y> <z> [aamap ...]
+        parts = s.split(/\s+/)
+        next unless parts.length >= 7 && parts[0] == 'M' && parts[1] == 'V30'
+
+        x = Float(parts[4], exception: false)
+        y = Float(parts[5], exception: false)
+        next if x.nil? || y.nil?
+
+        atoms[idx] = [x, y]
+        idx += 1
       end
       atoms
     end

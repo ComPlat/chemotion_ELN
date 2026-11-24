@@ -398,6 +398,16 @@ M  END
     (filtered_ctab_arr + mf[1..-1]).join
   end
 
+  # Strips V3000 COLLECTION blocks (stereogroup metadata) that OpenBabel does not implement.
+  # Returns the molfile with all BEGIN COLLECTION … END COLLECTION sections removed, or nil if
+  # no such block was present (so the caller can skip the rewrite).
+  def self.molfile_strip_collection_blocks(molfile)
+    return nil unless molfile.include?('BEGIN COLLECTION')
+
+    stripped = molfile.gsub(/^M  V30 BEGIN COLLECTION\r?\n.*?^M  V30 END COLLECTION\r?\n/m, '')
+    stripped == molfile ? nil : stripped
+  end
+
   def self.molfile_version(molfile)
     return 'nil' unless molfile.present?
     mf = molfile.lines[0..4]
@@ -536,6 +546,11 @@ M  END
     version = molfile_version(structure)
     is_partial = molfile_has_R(structure, version)
     molfile = is_partial ? molfile_skip_R(structure, version) : structure
+
+    if version.start_with?('V3000')
+      stripped = molfile_strip_collection_blocks(molfile)
+      molfile = stripped if stripped
+    end
 
     cleared = mofile_clear_coord_bonds(molfile, version)
     version += ' T9' if cleared

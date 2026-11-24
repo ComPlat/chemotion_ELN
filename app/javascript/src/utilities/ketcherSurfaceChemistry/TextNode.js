@@ -116,40 +116,78 @@ const forTextNodeHeader = (key, description) => {
   });
 };
 
+// Derives a stable 5-char lowercase key from an alias string (e.g. "t_1_0").
+// Same alias always produces the same key so old-format text nodes are consistent
+// across sessions before their first save promotes them to 4-part format.
+const keyFromAlias = (alias) => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  let h = 5381;
+  for (let i = 0; i < alias.length; i++) {
+    h = (((h << 5) + h) + alias.charCodeAt(i)) >>> 0;
+  }
+  let k = '';
+  for (let i = 0; i < 5; i++) { k += letters[h % 26]; h = Math.floor(h / 26); }
+  return k;
+};
+
+// Extract plain text from old-format paragraphs JSON: {"paragraphs":[{"parts":[{"text":"..."}]}]}
+const extractTextFromParagraphs = (parsed) => (parsed.paragraphs || [])
+  .flatMap((p) => p.parts || [])
+  .map((pt) => pt.text || '')
+  .join('');
+
 // generating images for ket2 format from molfile polymers list
+// Supports two formats:
+//   New (4+ parts): index#key#alias#content
+//   Old (3 parts):  index#alias#{"paragraphs":[{"parts":[{"text":"..."}]},...]}
 const addTextNodes = async (textNodes) => textNodes.map((item) => {
   const parts = item.split(KET_TAGS.textIdentifier);
-  if (parts.length < 4) return null;
-  const [, key, alias, ...rest] = parts;
-  const description = rest.join(KET_TAGS.textIdentifier);
-  if (alias && key) {
-    textNodeStruct[alias] = key;
-    let content;
-    try {
-      const parsed = JSON.parse(description);
-      if (parsed?.blocks?.[0]) {
-        parsed.blocks[0].key = key;
-        content = JSON.stringify(parsed);
-      } else {
-        content = forTextNodeHeader(key, description);
-      }
-    } catch {
+
+  let key, alias, description;
+  if (parts.length >= 4) {
+    const [, k, a, ...rest] = parts;
+    key = k;
+    alias = a;
+    description = rest.join(KET_TAGS.textIdentifier);
+  } else if (parts.length === 3) {
+    // Old format has no key — derive one deterministically from the alias
+    const [, a, d] = parts;
+    alias = a;
+    description = d;
+    key = keyFromAlias(a || '');
+  } else {
+    return null;
+  }
+
+  if (!alias) return null;
+
+  textNodeStruct[alias] = key;
+  let content;
+  try {
+    const parsed = JSON.parse(description);
+    if (parsed?.blocks?.[0]) {
+      parsed.blocks[0].key = key;
+      content = JSON.stringify(parsed);
+    } else if (parsed?.paragraphs) {
+      content = forTextNodeHeader(key, extractTextFromParagraphs(parsed));
+    } else {
       content = forTextNodeHeader(key, description);
     }
-    return {
-      type: 'text',
-      data: {
-        content,
-        position: {
-          x: 10.325000000000001,
-          y: -11.325000000000001,
-          z: 0
-        },
-        pos: []
-      }
-    };
+  } catch {
+    content = forTextNodeHeader(key, description);
   }
-  return null;
+  return {
+    type: 'text',
+    data: {
+      content,
+      position: {
+        x: 10.325000000000001,
+        y: -11.325000000000001,
+        z: 0
+      },
+      pos: []
+    }
+  };
 });
 
 // helper function to test alias list consistency 0,1,2,3,4...
