@@ -61,7 +61,7 @@ jobs:
 
       # ---- Restore-only on PRs & pushes ----
       - name: Restore dependency cache (from main)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
@@ -80,7 +80,7 @@ jobs:
       # ---- Save cache only on main branch pushes ----
       - name: Save dependency cache (update main cache)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}

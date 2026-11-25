@@ -127,7 +127,7 @@ jobs:
           echo "dir=$DIR" >> $GITHUB_OUTPUT
 
       - name: Restore dependency cache (from main)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
@@ -180,7 +180,7 @@ jobs:
             libicu-dev libmagic-dev librsvg2-bin ghostscript locales postgresql-client
 
       - name: restore Ruby toolchain cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /asdf/installs/ruby
           key: asdf-ruby-${{ hashFiles('.tool-versions') }}
