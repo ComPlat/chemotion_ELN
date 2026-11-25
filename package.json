@@ -40,7 +40,7 @@
     "dnd-multi-backend": "^9.0.0",
     "es6-promise-debounce": "^1.0.1",
     "html2pdf.js": "^0.14.0",
-    "immutable": "^5.1.5",
+    "immutable": "^5.2.1",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.15.2",
     "jsdom": "^22.1.0",
