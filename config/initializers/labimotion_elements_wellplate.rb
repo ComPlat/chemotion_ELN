@@ -17,8 +17,7 @@
 #   Labimotion::ElementsWellplate#wellplate association is not an ActiveRecord::Base subclass.
 #
 # which is what the 5 examples in spec/api/chemotion/wellplate_api_generic_element_spec.rb
-# hit. The one-line fix belongs in the gem (`class_name: '::Wellplate'`); a report is
-# ready in the planning repo (korrespondenz/2026-09-03-labimotion-wellplate-bug.md).
+# hit. The one-line fix belongs in the gem (`class_name: '::Wellplate'`).
 # Remove this file once a labimotion release carries that fix.
 #
 # Why `optional: true`: re-declaring a belongs_to replaces the reflection but does NOT

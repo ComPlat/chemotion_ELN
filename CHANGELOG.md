@@ -1,5 +1,16 @@
 # Chemotion_ELN Changelog
 
+# [Unreleased]
+
+## Upgrade notes
+
+* The application runs on Rails 7.2.3.2 and Ruby 3.2.11 ([#3576](https://github.com/ComPlat/chemotion_ELN/pull/3576)). Rebuild native gems (openbabel, inchi, rinchi, semacode, nokogiri, rmagick) for Ruby 3.2.
+  * All users are signed out once after the upgrade. Pending password-reset and account-unlock links stop working; request new ones.
+  * `config/secrets.yml` is no longer read. In production, set `SECRET_KEY_BASE` and `ONLY_OFFICE_SECRET_KEY_BASE` in the environment; reuse the existing `secret_key_base` from `config/secrets.yml`.
+  * The cache format changes: clear the Rails cache when deploying.
+  * Set up new instances with `db:create db:migrate`, not `db:schema:load`.
+  * Attachment previews are generated for images and PDF files only; office, video and 3D files and pcx, dng, tga and ai images no longer get a thumbnail.
+
 # [v4.0.2]
 > (2026-11-20)
 

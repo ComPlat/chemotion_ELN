@@ -1,5 +1,4 @@
-# Safety-Net (Querschnitt Q) — Security scanning in CI.
-# Closes the gap "no Brakeman / bundler-audit / npm audit" (see DEV_UPGRADING.md).
+# Security scanning in CI: Brakeman, bundler-audit, ruby-audit and yarn audit.
 #
 # NOTE: all scans run REPORT-ONLY for now (`continue-on-error: true`) so existing
 # findings can be baselined first. Once the backlog is triaged, flip the relevant
@@ -19,6 +18,9 @@ on:
     # Weekly — catches newly published CVEs even without a code change.
     - cron: '17 4 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   brakeman:
     name: Brakeman (Rails SAST)
@@ -28,7 +30,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.0'
+          ruby-version: '3.3'
       - run: gem install brakeman
       - name: run Brakeman
         run: brakeman --quiet --no-pager --format plain
@@ -42,7 +44,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.0'
+          ruby-version: '3.3'
       - run: gem install bundler-audit
       - name: audit Gemfile.lock against the advisory DB
         run: bundle-audit check --update
@@ -54,11 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # Deliberately the app's ACTUAL runtime so EOL/CVEs of the shipped Ruby are
-      # flagged, not the 3.3 lint runtime. Keep in step with .tool-versions.
+      # The app's actual runtime, read from .tool-versions, so EOL/CVEs of the shipped
+      # Ruby are flagged, not the 3.3 lint runtime.
       - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2.11'
       - run: gem install ruby_audit
       - name: audit the Ruby runtime
         run: ruby-audit check

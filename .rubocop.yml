@@ -6,7 +6,7 @@ plugins:
 AllCops:
   NewCops: enable
   DisplayCopNames: true
-  TargetRubyVersion: 2.7.7
+  TargetRubyVersion: 3.2
   Exclude:
     - 'bin/*'
     - 'db/**/*'
