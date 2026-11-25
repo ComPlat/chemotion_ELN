@@ -7,5 +7,8 @@ if File.exist? Rails.root.join('config', 'scifinder_n.yml')
     config.sfn_config = ActiveSupport::OrderedOptions.new
     config.sfn_config.provider = sfn_config[:provider]
   end
-  Chemotion::ScifinderNService.provider_builder
+  # the service is autoloaded: build the provider once the application is initialized
+  Rails.application.config.after_initialize do
+    Chemotion::ScifinderNService.provider_builder
+  end
 end

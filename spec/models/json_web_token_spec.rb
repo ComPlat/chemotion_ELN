@@ -3,6 +3,8 @@
 require 'rails_helper'
 
 RSpec.describe JsonWebToken do
+  after { travel_back }
+
   let(:user_id) { 42 }
   # NOTE: this used to be a hard-coded token string signed with the committed
   # test secret_key_base from config/secrets.yml; the Rails 7.2 upgrade removed

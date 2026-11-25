@@ -39,7 +39,7 @@ module Usecases
           end
 
           def render(file, ext)
-            destination = File.join(Dir.mktmpdir, "#{SecureRandom.hex(8)}.thumb.jpg")
+            destination = File.join(Dir.tmpdir, "#{SecureRandom.hex(8)}.thumb.jpg")
 
             pipeline = ImageProcessing::MiniMagick.source(file).convert('jpg')
             pipeline = pipeline.loader(page: 0, density: PDF_RENDER_DPI) if PDF_FORMATS.include?(ext)

@@ -114,11 +114,10 @@ module Oauth
         return render status: :forbidden
       end
 
+      # allow_other_host: datasetUrl is an external host (Rails 7 raise_on_open_redirects).
       unless collection.metadata.metadata['datasetUrl'].nil?
         return redirect_to collection.metadata.metadata['datasetUrl'], allow_other_host: true
       end
-
-      # allow_other_host: datasetUrl is an external host (Rails 7 raise_on_open_redirects).
 
       render
     end
