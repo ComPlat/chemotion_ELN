@@ -69,7 +69,7 @@ jobs:
           echo "dir=$DIR" >> $GITHUB_OUTPUT
 
       - name: Restore dependency cache (from main)
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
@@ -103,7 +103,7 @@ jobs:
 
       - name: Save dependency cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/update-cypress'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
