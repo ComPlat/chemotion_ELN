@@ -38,7 +38,7 @@ jobs:
 
       - name: Setup Nodejs
         id: setup_node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .tool-versions
           cache: '' # disable default caching since yarn is missing there

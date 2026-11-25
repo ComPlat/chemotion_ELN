@@ -35,7 +35,7 @@ jobs:
 
       - name: Setup Nodejs
         id: setup_node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version-file: .tool-versions
           #node-version: ${{ matrix.node-version }}
