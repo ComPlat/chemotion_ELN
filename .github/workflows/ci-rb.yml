@@ -32,7 +32,6 @@ jobs:
           ruby-version: '3.3'
 
       - name: install linting dependencies
-        # DIVERGES FROM UPSTREAM (fork decision, 2026-11-12): upstream installs the gems unpinned.
         # The rubocop gems at the versions locked in Gemfile.lock, so CI lints with the same cops
         # (and knows the same directives) as `bundle exec rubocop` locally. Unpinned, CI got the
         # latest rubocop, whose new cops (NewCops: enable) flagged code the locked one accepts.
@@ -45,14 +44,9 @@ jobs:
           gem install "${gems[@]}" pronto pronto-rubocop
 
       - name: run Pronto
-        # DIVERGES FROM UPSTREAM (fork decision, 2026-09-21): upstream also passes
-        # `github_status`. We do not. That formatter posts a red commit status for
-        # any advisory warning, and pronto lints the lines a PR touches — on an
-        # upgrade or an upstream sync that is mostly code we did not write and must
-        # not change (dinge#2: all 15 findings were ComPlat's own). A red mark
-        # nobody may act on trains people to ignore red marks. The findings still
-        # arrive as review comments on the diff, which is where they are useful.
-        # On the next sync: keep our line, or re-decide — do not merge blindly.
+        # Findings are posted as review comments only, without the `github_status`
+        # formatter: that one posts a red commit status for any advisory warning on the
+        # lines a PR touches, which on large upgrades is mostly code the PR does not own.
         run: pronto run -f github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
@@ -169,7 +163,7 @@ jobs:
 
       # The shared runner image (complat/chemotion_eln_runner:latest) ships Ruby 2.7.8
       # only, so asdf finds no Ruby for .tool-versions and `bundle install` dies with
-      # exit 126 before a single spec runs (seen on megorei#37/#38, 2026-08-25). Until
+      # exit 126 before a single spec runs. Until
       # ComPlat publishes an image with the current Ruby, build it here. The build deps
       # are needed even on a cache hit: psych, openssl and ffi compile against them.
       # The list mirrors the self-hosted runner's, which is proven to build this
