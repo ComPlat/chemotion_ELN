@@ -1,6 +1,6 @@
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import RetroFetcher from 'src/fetchers/RetroFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from '../alt';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -14,7 +14,7 @@ const failPrediction = (dispatch, error) => {
 };
 
 const noReactionsFound = () => {
-  NotificationActions.add.defer({
+  rootStore.notificationsStore.add({
     message: 'No further expansion possible',
     level: 'info'
   });
@@ -83,7 +83,7 @@ class RetroActions {
           MoleculesFetcher.fetchBySmi(smiles)
             .then((result) => {
               if (!result || result == null) {
-                NotificationActions.add({
+                rootStore.notificationsStore.add({
                   title: 'Error on Sample creation',
                   message: `Cannot create molecule with entered Smiles/CAS! [${smiles}]`,
                   level: 'error',
@@ -102,7 +102,7 @@ class RetroActions {
                   });
                 SamplesFetcher.create(newSample)
             .then((created) => {
-              NotificationActions.add({
+              rootStore.notificationsStore.add({
                 message: `Sample ${created.short_label} saved to "${currentCollection.label}"`,
                 level: 'success'
               });
@@ -110,7 +110,7 @@ class RetroActions {
             })
             .catch((error) => {
               console.error('Error saving sample', error);
-              NotificationActions.add({ message: 'Saving the sample failed', level: 'error' });
+              rootStore.notificationsStore.add({ message: 'Saving the sample failed', level: 'error' });
             });
               }
             }).catch((error) => {
@@ -136,7 +136,7 @@ class RetroActions {
         MoleculesFetcher.fetchBySmi(smiles)
           .then((result) => {
             if (!result || result === null) {
-              NotificationActions.add({
+              rootStore.notificationsStore.add({
                 title: 'Error on Sample creation',
                 message: `Cannot create molecule with entered Smiles/CAS! [${smiles}]`,
                 level: 'error',
@@ -160,7 +160,7 @@ class RetroActions {
                             sample_type : sample_type
                             }
                       });
-                  NotificationActions.add({
+                  rootStore.notificationsStore.add({
                         title: 'Sample created for reaction',
                         message: `Sample [${smiles}] created for reaction`,
                         level: 'success'

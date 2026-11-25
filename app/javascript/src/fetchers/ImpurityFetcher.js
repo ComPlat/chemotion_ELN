@@ -1,6 +1,6 @@
 
 import 'whatwg-fetch';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 export default class ImpurityFetcher {
 
@@ -17,12 +17,12 @@ export default class ImpurityFetcher {
       return response.json();
     }).then((json) => {
       if (json.error) {
-        NotificationActions.add.defer({
+        rootStore.notificationsStore.add({
           message: json.error,
           level: 'error'
         });
       } else {
-        NotificationActions.add.defer({
+        rootStore.notificationsStore.add({
           message: 'Task Submitted!',
           level: 'success'
         });

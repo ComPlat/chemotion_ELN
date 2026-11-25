@@ -9,8 +9,7 @@ import {
 import {
   PredictionLegend, PredictionFlowContext, forwardNodeTypes
 } from 'src/apps/mydb/elements/details/predictions/PredictionNodes';
-import { StoreContext } from 'src/stores/mobx/RootStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext, rootStore } from 'src/stores/mobx/RootStore';
 import ForwardStore from 'src/stores/alt/stores/ForwardStore';
 import ForwardActions from 'src/stores/alt/actions/ForwardActions';
 
@@ -82,7 +81,7 @@ class ForwardContainer extends Component {
     const { reactant, reagent, solvent } = ForwardStore.getState();
     const smilesOf = (sample) => sample?.molecule?.cano_smiles || '';
     if (!smilesOf(reactant)) {
-      NotificationActions.add.defer({ message: 'Drop a reactant first', level: 'error' });
+      rootStore.notificationsStore.add({ message: 'Drop a reactant first', level: 'error' });
       return;
     }
 
@@ -105,7 +104,7 @@ class ForwardContainer extends Component {
   handleMoleculeSave = () => {
     const selectedNode = this.getSelectedNode();
     if (selectedNode.type !== 'outcome') {
-      NotificationActions.add.defer({ message: 'Select a predicted product', level: 'error' });
+      rootStore.notificationsStore.add({ message: 'Select a predicted product', level: 'error' });
       return;
     }
     ensureMlCollection(this.context?.collections)

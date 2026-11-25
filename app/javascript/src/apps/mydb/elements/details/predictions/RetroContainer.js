@@ -11,9 +11,8 @@ import {
   PredictionLegend, PredictionFlowContext, retroNodeTypes
 } from 'src/apps/mydb/elements/details/predictions/PredictionNodes';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { StoreContext, rootStore } from 'src/stores/mobx/RootStore';
 import Reaction from 'src/models/Reaction';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import RetroActions from 'src/stores/alt/actions/RetroActions';
 import RetroStore from 'src/stores/alt/stores/RetroStore';
 
@@ -92,7 +91,7 @@ class RetroContainer extends Component {
   handleMoleculeSave = () => {
     const selectedNode = this.getSelectedNode();
     if (!selectedNode.data?.smiles || selectedNode.type === 'reaction') {
-      NotificationActions.add.defer({ message: 'Select a Molecule Node', level: 'error' });
+      rootStore.notificationsStore.add({ message: 'Select a Molecule Node', level: 'error' });
       return;
     }
     ensureMlCollection(this.context?.collections)
@@ -104,7 +103,7 @@ class RetroContainer extends Component {
     const selectedNode = this.getSelectedNode();
 
     if (selectedNode.type !== 'reaction') {
-      NotificationActions.add.defer({
+      rootStore.notificationsStore.add({
         message: 'Select a Reaction Node',
         level: 'error'
       });
@@ -177,7 +176,7 @@ class RetroContainer extends Component {
 
   expandNode = (node) => {
     if (node?.type !== 'custom') {
-      NotificationActions.add.defer({
+      rootStore.notificationsStore.add({
         message: 'Select a Molecule Node',
         level: 'error'
       });

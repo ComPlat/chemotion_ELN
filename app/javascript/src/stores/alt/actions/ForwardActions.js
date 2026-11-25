@@ -3,7 +3,7 @@ import ForwardFetcher from 'src/fetchers/ForwardFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import PngFetcher from 'src/fetchers/PngFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 
@@ -96,7 +96,7 @@ class ForwardActions {
     MoleculesFetcher.fetchBySmi(selectedNode.data.smiles)
       .then((result) => {
         if (!result || result == null) {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Error on Sample creation',
             message: `Cannot create molecule with entered Smiles/CAS! [${selectedNode.data.smiles}]`,
             level: 'error',
@@ -115,7 +115,7 @@ class ForwardActions {
           });
           SamplesFetcher.create(newSample)
             .then((created) => {
-              NotificationActions.add({
+              rootStore.notificationsStore.add({
                 message: `Sample ${created.short_label} saved to "${currentCollection.label}"`,
                 level: 'success'
               });
@@ -123,7 +123,7 @@ class ForwardActions {
             })
             .catch((error) => {
               console.error('Error saving sample', error);
-              NotificationActions.add({ message: 'Saving the sample failed', level: 'error' });
+              rootStore.notificationsStore.add({ message: 'Saving the sample failed', level: 'error' });
             });
 
         }

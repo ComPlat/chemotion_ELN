@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MlCollectionFetcher from 'src/fetchers/MlCollectionFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 /**
  * Presentational primitives shared by the Forward / Retro / Impurity
@@ -55,12 +55,12 @@ export const ensureMlCollection = (collectionsStore) => MlCollectionFetcher.ensu
     }
     if (collection.created) {
       collectionsStore?.fetchCollections();
-      NotificationActions.add({ message: `Created collection "${collection.label}"`, level: 'info' });
+      rootStore.notificationsStore.add({ message: `Created collection "${collection.label}"`, level: 'info' });
     }
     return collection;
   })
   .catch((error) => {
-    NotificationActions.add({ message: error.message, level: 'error' });
+    rootStore.notificationsStore.add({ message: error.message, level: 'error' });
     throw error;
   });
 
