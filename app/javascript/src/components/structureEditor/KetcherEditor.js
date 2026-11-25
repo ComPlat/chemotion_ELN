@@ -64,6 +64,7 @@ import {
   canvasIframeRefSetter,
   textNodeStruct,
   textList,
+  isCommonTemplateLoading,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -206,6 +207,9 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     },
     [EventNames.ADD_ATOM]: async () => {
+      // Skip while a common template is loading — it doesn't move existing atoms, so
+      // images don't need repositioning, and triggering onAddAtom would cause a canvas flash.
+      if (isCommonTemplateLoading) return;
       if (editor && editor.structureDef) {
         await onAddAtom(editor);
       }
@@ -555,9 +559,15 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         window.editor = editor;
         if (editor && editor.structureDef) {
-          // Store cleanup function in ref for later use
-          eventCleanupRef.current = onEditorContentChange(editor);
+          // Load molecule BEFORE registering the change listener.
+          // If onEditorContentChange is registered first, the ADD_ATOM events that
+          // prepareKetcherData's setMolecule emits will hit the live handler and
+          // cascade into onAddAtom → saveMoveCanvas → setMolecule (flash 1) →
+          // onTemplateMove → setMolecule (flash 2), making the editor "go crazy" on open.
           await prepareKetcherData(editor, initMol);
+          const modalBody = iframeRef.current?.closest('.modal-body');
+          if (modalBody) modalBody.scrollTop = 0;
+          eventCleanupRef.current = onEditorContentChange(editor);
         }
       }
     } catch (err) {
@@ -637,7 +647,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   }));
 
   return (
-    <div>
+    <div style={{ height: iH }}>
       <PolymerListModal
         loading={showShapes}
         onShapeSelection={onShapeSelection}
@@ -697,9 +707,8 @@ const KetcherEditor = forwardRef((props, ref) => {
         id={editor?.id}
         src={editor?.extSrc}
         title={editor?.label}
-        height={iH}
         width="100%"
-        style={iS}
+        style={{ ...iS, height: iH }}
       />
     </div>
   );

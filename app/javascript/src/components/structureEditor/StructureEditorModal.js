@@ -4,11 +4,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Form
-} from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
-import { Select } from 'src/components/common/Select';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
@@ -20,25 +16,52 @@ import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 import Component from 'src/models/Component';
 import uuid from 'uuid';
 
-function EditorList(props) {
-  const { options, fnChange, value } = props;
+function EditorSelector({ value, options, onChange }) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const current = options.find((o) => o.value === value);
+
+  React.useEffect(() => {
+    if (!isOpen) return () => {};
+    const onClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [isOpen]);
+
   return (
-    <Form.Group className="col-sm-6 d-flex gap-2 align-items-center">
-      <Form.Label className="col-form-label">Editor</Form.Label>
-      <Select
-        className="flex-grow-1"
-        name="editorSelection"
-        options={options}
-        onChange={fnChange}
-        value={options?.find((opt) => opt?.value === value)}
-      />
-    </Form.Group>
+    <div ref={ref} className="col-sm-6 editor-selector">
+      <button
+        type="button"
+        className="editor-selector__trigger"
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        <i className="fa fa-pencil-square-o editor-selector__icon" />
+        <span className="editor-selector__label">{current?.label || 'Editor'}</span>
+        <i className={`fa fa-chevron-${isOpen ? 'up' : 'down'} editor-selector__caret`} />
+      </button>
+      {isOpen && (
+        <div className="editor-selector__menu">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`editor-selector__item${opt.value === value ? ' editor-selector__item--active' : ''}`}
+              onClick={() => { onChange(opt); setIsOpen(false); }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-EditorList.propTypes = {
+EditorSelector.propTypes = {
   value: PropTypes.string.isRequired,
-  fnChange: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
@@ -59,10 +82,10 @@ WarningBox.propTypes = {
 function EditorControls({ editorId, editorOptions, onEditorChange }) {
   return (
     editorId && (
-      <div className="row mb-3">
-        <EditorList
+      <div className="row mb-2">
+        <EditorSelector
           value={editorId}
-          fnChange={onEditorChange}
+          onChange={onEditorChange}
           options={editorOptions}
         />
         {editorId === 'ketcher' && (
@@ -148,7 +171,10 @@ export default class StructureEditorModal extends React.Component {
   }
 
   handleEditorSelection(e) {
-    this.setState((prevState) => ({ ...prevState, editor: this.editors[e.value] }));
+    const selected = this.editors[e.value];
+    if (selected) {
+      this.setState((prevState) => ({ ...prevState, editor: selected }));
+    }
   }
 
   handleCancelBtn() {
@@ -308,19 +334,20 @@ export default class StructureEditorModal extends React.Component {
 
   renderEditor() {
     const { editor, showWarning, molfile } = this.state;
-    const iframeHeight = showWarning ? '0px' : '630px';
-    const iframeStyle = showWarning ? { border: 'none' } : {};
+    if (showWarning || !editor || !this.editors[editor?.id]) return null;
 
-    return !showWarning && editor && this.editors[editor?.id] && (
-      <EditorRenderer
-        type={editor?.id}
-        editor={this.editors[editor?.id]}
-        molfile={molfile}
-        iframeHeight={iframeHeight}
-        iframeStyle={iframeStyle}
-        fnCb={this.updateEditor}
-        forwardedRef={this.ketcherRef}
-      />
+    return (
+      <div style={{ height: 'calc(95vh - 196px)', overflow: 'hidden' }}>
+        <EditorRenderer
+          type={editor?.id}
+          editor={this.editors[editor?.id]}
+          molfile={molfile}
+          iframeHeight="calc(95vh - 196px)"
+          iframeStyle={{}}
+          fnCb={this.updateEditor}
+          forwardedRef={this.ketcherRef}
+        />
+      </div>
     );
   }
 
@@ -351,6 +378,7 @@ export default class StructureEditorModal extends React.Component {
         showFooter
         show={showModal}
         dialogClassName={!showWarning ? 'modal-xxxl' : undefined}
+        className={!showWarning ? 'structure-editor-modal' : undefined}
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}
         closeLabel={cancelBtnText}
@@ -358,6 +386,7 @@ export default class StructureEditorModal extends React.Component {
         onPrimaryAction={primaryActionHandler || undefined}
         primaryActionDisabled={saving}
         extendedFooter={modalFooter}
+        enforceFocus={false}
       >
         {!showWarning && (
           <EditorControls

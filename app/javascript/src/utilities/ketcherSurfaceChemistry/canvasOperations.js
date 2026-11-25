@@ -766,8 +766,10 @@ const centerPositionCanvas = async (editor) => {
     const clone = editor._structureDef.editor.editor.struct().clone();
     await editor._structureDef.editor.editor.renderAndRecoordinateStruct(clone);
     await fetchKetcherData(editor);
-    // syncImagesOnly: true ensures images follow the re-centered atom positions
-    saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
+
+    // Must be awaited — renderAndRecoordinateStruct strips images from KET data, so
+    // saveMoveCanvas needs to finish restoring them before the final fetchKetcherData reads the canvas.
+    await saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
     await fetchKetcherData(editor);
   } catch (err) {
     await fetchKetcherData(editor);

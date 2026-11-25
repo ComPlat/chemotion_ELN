@@ -1,3 +1,25 @@
 .modal-xxxl {
   --bs-modal-width: 90vw;
 }
+
+// Structure editor modal.
+// Cap modal-content so it never exceeds 95vh; hide any residual overflow.
+// width: 100% ensures the outer .modal fills the viewport so margin: auto on
+// .modal-dialog has space to center it (without this, --bs-modal-width: 90vw
+// leaks to the outer container and kills the centering).
+// Controls never scroll because modal-body has overflow: hidden — no flex
+// column is needed. The editor height is set via an explicit calc() on both
+// the wrapper div and iframeHeight so there is no percentage-resolution chain.
+.structure-editor-modal {
+  width: 100% !important;
+  overflow: hidden !important;
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .modal-body {
+    overflow: hidden;
+    padding: 8px 12px 0;
+  }
+}
