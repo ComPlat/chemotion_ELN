@@ -25,9 +25,9 @@ jobs:
 #        node-version: [22.20.0]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: main
           path: tmp/main

@@ -23,7 +23,7 @@ jobs:
       PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - run: |
           git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
 
@@ -92,7 +92,7 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Nodejs
         id: setup_node
@@ -105,7 +105,7 @@ jobs:
 
       - run: corepack enable
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: main
           path: tmp/main
