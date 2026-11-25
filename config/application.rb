@@ -175,8 +175,11 @@ module Chemotion
     config.otp_secret_encryption_key = ENV.fetch('OTP_SECRET_KEY')
 
     # OnlyOffice document-server JWT secret, from ENV (off the deprecated
-    # Rails.application.secrets). Dev/test: set this ENV when using OnlyOffice locally.
-    config.only_office_secret_key_base = ENV.fetch('ONLY_OFFICE_SECRET_KEY_BASE', nil)
+    # Rails.application.secrets). Development and test fall back to a fixed value, as
+    # secrets.yml did; production must set ONLY_OFFICE_SECRET_KEY_BASE.
+    config.only_office_secret_key_base = ENV.fetch('ONLY_OFFICE_SECRET_KEY_BASE') do
+      Rails.env.production? ? nil : 'only-office-development-secret'
+    end
 
     # Specifically allow some classes to be serialized by Psych
     # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017
