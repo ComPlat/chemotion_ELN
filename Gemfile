@@ -29,7 +29,7 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 gem 'ed25519'
 
 gem 'faker', require: false
-gem 'faraday'
+gem 'faraday', '< 2.9' # 2.9+ needs Ruby >= 3.0; keep the lock installable on the 2.7.8 runtime
 gem 'faraday-follow_redirects'
 gem 'faraday-multipart'
 gem 'font-awesome-rails'
@@ -87,6 +87,7 @@ gem 'pg'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
+gem 'public_suffix', '< 7'
 gem 'puma', '< 6.0.0'
 gem 'pundit'
 
@@ -142,7 +143,7 @@ end
 group :vscode do
   gem 'debase'
   gem 'ruby-debug-ide'
-  gem 'solargraph'
+  gem 'solargraph', '< 0.53' # 0.53+ pulls rbs that needs Ruby >= 3.x
 end
 
 group :development, :test do
