@@ -1,0 +1,51 @@
+<h2>Chemical Expiration Notification</h2>
+
+<p>Hello <%= @user.name.presence || @user.email %>,</p>
+
+<% chemical_name = @chemical.chemical_data&.first&.dig('sample_name') %>
+<% short_label = @chemical.sample&.short_label %>
+
+<% if @days_remaining > 0 %>
+  <p>
+    The chemical <strong><%= chemical_name.presence || 'Unknown' %></strong>
+    will expire in
+    <strong><%= @days_remaining %> days</strong>.
+  </p>
+<% elsif @days_remaining == 0 %>
+  <p>
+    The chemical <strong><%= chemical_name.presence || 'Unknown' %></strong>
+    <strong>expires today</strong>.
+  </p>
+<% else %>
+  <p>
+    The chemical <strong><%= chemical_name.presence || 'Unknown' %></strong>
+    <strong>expired <%= @days_remaining.abs %> days ago</strong>.
+  </p>
+<% end %>
+
+<ul>
+  <li>
+    <strong>Chemical:</strong>
+    <%= chemical_name.presence || 'N/A' %>
+  </li>
+  <li>
+    <strong>Short label:</strong>
+    <%= short_label.presence || 'N/A' %>
+  </li>
+  <li>
+    <strong>Chemical ID:</strong>
+    <%= @chemical.id %>
+  </li>
+  <li>
+    <strong>CAS:</strong>
+    <%= @chemical.cas.presence || 'N/A' %>
+  </li>
+  <li>
+    <strong>Expiration date:</strong>
+    <%= @chemical.chemical_data&.first&.dig('expiration_date') || 'N/A' %>
+  </li>
+</ul>
+
+<p>
+  Please check the chemical in Chemotion ELN and take the necessary action.
+</p>
