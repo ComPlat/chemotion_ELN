@@ -481,8 +481,9 @@ describe Chemotion::ReactionAPI do
       Collection.create!(label: 'Collection #1', user: user)
     end
     let(:sample1) do
+      # a split's parent must be readable: in the user's collection, as a sample dropped from the list is
       create(
-        :sample, name: 'Sample 1', container: create(:container)
+        :sample, name: 'Sample 1', container: create(:container), collections: [collection1]
       )
     end
     let(:molfile_1) { sample1.molecule.molfile }
