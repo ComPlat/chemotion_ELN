@@ -90,7 +90,11 @@ const CommonTemplatesList = memo(() => {
   useEffect(() => {
     let cancelled = false;
     TemplateFetcher.commonTemplates().then((templates) => {
-      if (!cancelled) setTemplateList(templates);
+      // Templates JSON has no id and names are not unique, so derive a stable key
+      // from the position in the full list (survives search/"New" filtering).
+      if (!cancelled) {
+        setTemplateList((templates || []).map((t, i) => ({ ...t, key: t.id ?? `template-${i}` })));
+      }
     });
     return () => { cancelled = true; };
   }, []);
@@ -107,9 +111,11 @@ const CommonTemplatesList = memo(() => {
       const strip = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normalizedQuery = normalize(query);
       const strippedQuery = strip(query);
+      // `notes` holds alternative names (e.g. "DMSO", "Ala"), so search matches them as well.
+      const matches = (text) => !!text
+        && (normalize(text).includes(normalizedQuery) || strip(text).includes(strippedQuery));
       let results = templateList?.filter((item) => {
-        const matchesQuery = normalize(item.name).includes(normalizedQuery)
-          || strip(item.name).includes(strippedQuery);
+        const matchesQuery = matches(item.name) || matches(item.notes);
         const matchesNew = !newOnly || isNew(item);
         return matchesQuery && matchesNew;
       });
@@ -146,21 +152,6 @@ const CommonTemplatesList = memo(() => {
     if (showModal && bodyRef.current) bodyRef.current.scrollTop = 0;
   }, [showModal]);
 
-  // Infinite scroll: when the sentinel div scrolls into view, reveal the next batch.
-  useEffect(() => {
-    if (!sentinelRef.current) return () => {};
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredOptions.length));
-        }
-      },
-      { threshold: 0.1 }
-    );
-    observer.observe(sentinelRef.current);
-    return () => observer.disconnect();
-  }, [filteredOptions.length, showModal]);
-
   const newCount = templateList.filter(isNew).length;
 
   const openPanel = () => {
@@ -178,6 +169,25 @@ const CommonTemplatesList = memo(() => {
 
   const visibleItems = filteredOptions.slice(0, visibleCount);
   const hasMore = visibleCount < filteredOptions.length;
+
+  // Infinite scroll: when the sentinel div scrolls into view, reveal the next batch.
+  // Depends on hasMore so the observer re-attaches whenever the sentinel remounts
+  // (search/filter updates run unbatched in React 17 and can unmount it for one render),
+  // and on visibleCount so a sentinel still in view after a batch triggers the next one.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!showModal || !hasMore || !sentinel) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredOptions.length));
+        }
+      },
+      { root: bodyRef.current, threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [showModal, hasMore, visibleCount, filteredOptions.length]);
 
   // The floating panel is rendered via a portal on document.body so it is completely
   // outside the Bootstrap Modal's DOM tree and any ancestor transform/stacking contexts.
@@ -245,7 +255,7 @@ const CommonTemplatesList = memo(() => {
         <div className="common-templates-panel__grid">
           {visibleItems.map((item) => (
             <TemplateCard
-              key={item?.id || item?.name || item?.molfile}
+              key={item.key}
               item={item}
               onSelect={onSelectItem}
             />
