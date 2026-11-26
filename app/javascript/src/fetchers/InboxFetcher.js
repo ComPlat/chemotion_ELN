@@ -41,7 +41,7 @@ export default class InboxFetcher {
     return ApiClient.getJson(`/api/v1/inbox/reactions?search_string=${searchString}`);
   }
 
-  static assignToSampleAnalysis(attachmentId, sampleId) {
+  static assignToSampleAnalysis(sampleId, attachmentId) {
     return ApiClient.postJson(`/api/v1/inbox/samples/${sampleId}`, { body: { attachment_id: attachmentId } });
   }
 
