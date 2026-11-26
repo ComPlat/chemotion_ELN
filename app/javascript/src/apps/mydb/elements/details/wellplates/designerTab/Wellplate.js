@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import WellContainer from 'src/apps/mydb/elements/details/wellplates/designerTab/WellContainer';
 import WellDetails from 'src/apps/mydb/elements/details/wellplates/designerTab/WellDetails';
+import HeaderDropTarget from 'src/apps/mydb/elements/details/wellplates/designerTab/HeaderDropTarget';
+import fillWells from 'src/apps/mydb/elements/details/wellplates/designerTab/fillWells';
 import WellplateModel from 'src/models/Wellplate';
 
 const HorizontalHeaderField = ({ label }) => {
@@ -42,6 +44,12 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
     handleWellsChange(wells);
   }
 
+  const fillLine = (sample, axis, index) => {
+    if (readOnly) { return; }
+
+    handleWellsChange(fillWells(wellplate.wells, sample, axis, index));
+  };
+
   const hideDetails = () => {
     setSelectedWell(null);
   }
@@ -69,13 +77,22 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
     const columnLabels = []
     for (let columnIndex = 0; columnIndex <= wellplate.width; columnIndex += 1) {
       let label = WellplateModel.columnLabel(columnIndex);
-      columnLabels.push(<HorizontalHeaderField key={`${label}-header`} label={label} />)
+      const header = <HorizontalHeaderField key={`${label}-header`} label={label} />;
+      columnLabels.push(columnIndex === 0 ? header : (
+        <HeaderDropTarget key={`${label}-header`} axis="x" index={columnIndex} onFill={fillLine} readOnly={readOnly}>
+          {header}
+        </HeaderDropTarget>
+      ))
     }
     rows.push(columnLabels)
 
     // generate remaining rows with leading header field
     for (let rowIndex = 1; rowIndex <= wellplate.height; rowIndex += 1) {
-      const row = [<VerticalHeaderField key={`${rowIndex}-vertical-header`} label={WellplateModel.rowLabel(rowIndex)} />]
+      const row = [
+        <HeaderDropTarget key={`${rowIndex}-vertical-header`} axis="y" index={rowIndex} onFill={fillLine} readOnly={readOnly}>
+          <VerticalHeaderField label={WellplateModel.rowLabel(rowIndex)} />
+        </HeaderDropTarget>
+      ]
       rows.push(row)
     }
 
