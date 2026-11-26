@@ -151,41 +151,30 @@ describe('Reaction', () => {
       expect(copy.products[0].equivalent).toBe(null);
     });
 
-    it('re-keys the variations to the copied materials, by position, also for the same molecule', () => {
-      // Two starting materials of the same molecule whose id order differs from their position order.
+    it('keeps the variations\' material changes with the copied materials, by position', () => {
+      // Positional diffs need no re-keying: entry i belongs to material i of the copy as of the original.
       reaction.starting_materials[0].id = 100;
       reaction.starting_materials[1].id = 50;
-      reaction.variations = [{
-        id: 1,
-        uuid: 'row-1',
-        startingMaterials: { 100: { mass: 1 }, 50: { mass: 2 } },
-        reactants: {},
-        products: {},
-        solvents: { 'sbmm:7': { mass: 3 } },
-      }];
-
-      const copy = reaction.buildCopy({ collection_id: 'col1' });
-      const [first, second] = copy.starting_materials;
-
-      expect(copy.variations[0].startingMaterials).toEqual({ [first.id]: { mass: 1 }, [second.id]: { mass: 2 } });
-      expect(copy.variations[0].solvents).toEqual({ 'sbmm:7': { mass: 3 } });
-      expect(reaction.variations[0].startingMaterials).toEqual({ 100: { mass: 1 }, 50: { mass: 2 } });
-    });
-
-    it('re-keys SBMM reactant variations to the copy\'s own split', () => {
       reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
         id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
       })];
       reaction.variations = [{
-        id: 1, uuid: 'row-1', startingMaterials: {}, reactants: { 'sbmm:106': { mass: 4 } }, products: {}, solvents: {},
+        id: 'row-1',
+        idx: 1,
+        data: {
+          id: 'row-1-reaction',
+          _starting_materials: [{ _amount_value: 1 }, { _amount_value: 2 }],
+          _reactant_sbmm_samples: [{ _amount_value: 4 }],
+        },
       }];
 
       const copy = reaction.buildCopy({ collection_id: 'col1' });
-      const [copiedSbmm] = copy.reactant_sbmm_samples;
 
-      expect(copiedSbmm.id).not.toBe(106);
-      expect(copy.variations[0].reactants).toEqual({ [`sbmm:${copiedSbmm.id}`]: { mass: 4 } });
-      expect(reaction.variations[0].reactants).toEqual({ 'sbmm:106': { mass: 4 } });
+      expect(copy.starting_materials.map((m) => m.id)).not.toContain(100);
+      expect(copy.reactant_sbmm_samples[0].id).not.toBe(106);
+      expect(copy.variations[0].data._starting_materials).toEqual([{ _amount_value: 1 }, { _amount_value: 2 }]);
+      expect(copy.variations[0].data._reactant_sbmm_samples).toEqual([{ _amount_value: 4 }]);
+      expect(reaction.variations[0].data._starting_materials).toEqual([{ _amount_value: 1 }, { _amount_value: 2 }]);
     });
 
     it('preserves product amounts when keepAmounts=true', () => {
