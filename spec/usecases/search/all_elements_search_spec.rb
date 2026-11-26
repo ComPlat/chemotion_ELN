@@ -32,7 +32,8 @@
 #     end
 # 
 #     def search(term)
-#       described_class.new(term: term, collection_id: collection.id, user: user).search_by_substring
+#       scope = Usecases::Search::CollectionScope.new(user: user, collections: [collection])
+#       described_class.new(term: term, scope: scope, user: user).search_by_substring
 #     end
 # 
 #     before do

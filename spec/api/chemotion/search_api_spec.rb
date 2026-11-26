@@ -1606,6 +1606,46 @@ describe Chemotion::SearchAPI do
     end
   end
 
+  describe 'POST /api/v1/search/structure in a collection shared without sample data' do
+    let(:url) { '/api/v1/search/structure' }
+    let(:owner) { create(:person) }
+    let(:shared_collection) { create(:collection, user: owner) }
+    let(:sample_level) { 0 }
+    let(:params) do
+      {
+        selection: {
+          elementType: :structure,
+          molfile: sample_e.molfile,
+          search_type: 'sub',
+          search_by_method: :structure,
+          structure_search: true,
+        },
+        collection_id: shared_collection.id,
+        page: 1,
+        per_page: 15,
+      }
+    end
+
+    before do
+      sample_e.collections << shared_collection
+      create(:collection_share, collection: shared_collection, shared_with: user, sample_detail_level: sample_level)
+      do_request
+    end
+
+    it 'finds no samples' do
+      expect(response).to have_http_status(:created)
+      expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+    end
+
+    context 'when the share shows sample data' do
+      let(:sample_level) { 1 }
+
+      it 'finds the sample' do
+        expect(parsed_json_response.dig('samples', 'ids')).to include(sample_e.id)
+      end
+    end
+  end
+
   describe 'POST /api/v1/search/by_ids' do
     let(:url) { '/api/v1/search/by_ids' }
     let(:id_params) do

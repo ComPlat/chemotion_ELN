@@ -3,48 +3,53 @@
 module Usecases
   module Search
     class AllElementsSearch
-      def initialize(term:, collection_id:, user:)
+      # @param scope [CollectionScope] the collections the search runs over
+      def initialize(term:, scope:, user:)
         @term = term
-        @collection_id = collection_id
+        @scope = scope
         @user = user
         @pg_elements =
           %w[sample reaction screen wellplate sequence_based_macromolecule_sample device_description cell_line]
       end
 
       def search_by_substring
-        Results.new(PgSearch.multisearch(@term), collection_id: @collection_id)
-               .by_collection_id(@collection_id, @user, @pg_elements)
+        return Results.new(PgSearch::Document.none, scope: @scope) if @scope.empty?
+
+        Results.new(PgSearch.multisearch(@term), scope: @scope)
+               .in_scope(@user, @pg_elements)
       end
 
       class Results
         attr_reader :results
 
-        def initialize(results, collection_id:)
-          raise ArgumentError, 'collection_id must be present' if collection_id.blank?
+        # @param scope [CollectionScope] the collections the search runs over
+        def initialize(results, scope:)
+          raise ArgumentError, 'scope must be present' if scope.nil?
 
           @results = results
-          @collection_id = collection_id
+          @scope = scope
         end
 
         def first
-          Results.new(@results.first, collection_id: @collection_id)
+          Results.new(@results.first, scope: @scope)
         end
 
         delegate :empty?, to: :@results
 
-        def by_collection_id(collection_id, user, pg_elements)
+        # Keeps the documents of records held in a collection of the scope.
+        def in_scope(user, pg_elements)
           types = (prof = user&.profile&.data) ? prof.fetch('layout', {}).keys & pg_elements : pg_elements
           types.push('element')
 
           query = types.map do |type|
             "(#{searchable_type_for_query(type)} AND searchable_id IN (" \
               "SELECT #{type_id(type)} FROM #{collections_by_type(type)} " \
-              'WHERE collection_id = :collection_id AND deleted_at IS NULL))'
+              'WHERE collection_id IN (:collection_ids) AND deleted_at IS NULL))'
           end
-          query.concat(material_collection_queries(types, collection_id))
+          query.concat(material_collection_queries(types))
 
-          @results = @results.where(query.join(' OR '), collection_id: collection_id)
-          Results.new(@results, collection_id: collection_id)
+          @results = @results.where(query.join(' OR '), collection_ids: @scope.ids)
+          Results.new(@results, scope: @scope)
         end
 
         def searchable_type_for_query(type)
@@ -95,9 +100,9 @@ module Usecases
 
           if sbmm_ids.present?
             sbmm_sample_ids_by_sbmm =
-              SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
-                                              .where(sequence_based_macromolecule_id: sbmm_ids, deleted_at: nil)
-                                              .pluck(:id)
+              @scope.relation_for(SequenceBasedMacromoleculeSample)
+                    .where(sequence_based_macromolecule_id: sbmm_ids, deleted_at: nil)
+                    .pluck(:id)
           end
           (sbmm_sample_ids + sbmm_sample_ids_by_sbmm).uniq
         end
@@ -112,8 +117,8 @@ module Usecases
           sample_ids_by_material = []
 
           if cell_line_material_ids.present?
-            sample_ids_by_material = CelllineSample.by_collection_id(@collection_id)
-                                                   .where(cellline_material_id: cell_line_material_ids).pluck(:id)
+            sample_ids_by_material = @scope.relation_for(CelllineSample)
+                                           .where(cellline_material_id: cell_line_material_ids).pluck(:id)
           end
           (cell_line_sample_ids + sample_ids_by_material).uniq
         end
@@ -124,15 +129,15 @@ module Usecases
 
         private
 
-        def material_collection_queries(types, collection_id)
+        def material_collection_queries(types)
           queries = []
           if types.include?('sequence_based_macromolecule_sample')
-            ids = SequenceBasedMacromoleculeSample.by_collection_id(collection_id)
-                                                  .select(:sequence_based_macromolecule_id)
+            ids = @scope.relation_for(SequenceBasedMacromoleculeSample)
+                        .select(:sequence_based_macromolecule_id)
             queries << "(searchable_type = 'SequenceBasedMacromolecule' AND searchable_id IN (#{ids.to_sql}))"
           end
           if types.include?('cell_line')
-            ids = CelllineSample.by_collection_id(collection_id).select(:cellline_material_id)
+            ids = @scope.relation_for(CelllineSample).select(:cellline_material_id)
             queries << "(searchable_type = 'CelllineMaterial' AND searchable_id IN (#{ids.to_sql}))"
           end
           queries

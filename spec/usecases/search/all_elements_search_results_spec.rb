@@ -4,8 +4,10 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Search::AllElementsSearch do
   subject(:results) do
-    described_class.new(term: 'Expansionneedle', collection_id: collection.id, user: nil).search_by_substring
+    described_class.new(term: 'Expansionneedle', scope: scope, user: nil).search_by_substring
   end
+
+  let(:scope) { Usecases::Search::CollectionScope.new(user: user, collections: [collection]) }
 
   let(:user) { create(:person) }
   let(:collection) { create(:collection, user: user) }
@@ -13,18 +15,18 @@ RSpec.describe Usecases::Search::AllElementsSearch do
   let(:other_collection) { create(:collection, user: other_owner) }
 
   describe 'required collection context' do
-    it 'rejects a missing collection id' do
-      expect { described_class::Results.new(PgSearch::Document.none) }.to raise_error(ArgumentError, /collection_id/)
+    it 'rejects a missing scope' do
+      expect { described_class::Results.new(PgSearch::Document.none) }.to raise_error(ArgumentError, /scope/)
     end
 
-    it 'rejects an explicit nil collection id' do
+    it 'rejects an explicit nil scope' do
       expect do
-        described_class::Results.new(PgSearch::Document.none, collection_id: nil)
-      end.to raise_error(ArgumentError, /collection_id/)
+        described_class::Results.new(PgSearch::Document.none, scope: nil)
+      end.to raise_error(ArgumentError, /scope/)
     end
 
-    it 'supports empty results with a collection id' do
-      empty_results = described_class::Results.new(PgSearch::Document.none, collection_id: collection.id)
+    it 'supports empty results with a scope' do
+      empty_results = described_class::Results.new(PgSearch::Document.none, scope: scope)
 
       expect(empty_results).to be_empty
       expect(empty_results.sequence_based_macromolecule_sample_ids).to be_empty
@@ -90,7 +92,7 @@ RSpec.describe Usecases::Search::AllElementsSearch do
       matching_sample
       user.profile.update!(data: { 'layout' => { 'sample' => 1 } })
 
-      search = described_class.new(term: 'Expansionneedle', collection_id: collection.id, user: user)
+      search = described_class.new(term: 'Expansionneedle', scope: scope, user: user)
       expect(search.search_by_substring.results).to be_empty
     end
   end
@@ -122,7 +124,7 @@ RSpec.describe Usecases::Search::AllElementsSearch do
       matching_sample
       user.profile.update!(data: { 'layout' => { 'sample' => 1 } })
 
-      search = described_class.new(term: 'Expansionneedle', collection_id: collection.id, user: user)
+      search = described_class.new(term: 'Expansionneedle', scope: scope, user: user)
       expect(search.search_by_substring.results).to be_empty
     end
   end

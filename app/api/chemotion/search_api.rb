@@ -4,7 +4,7 @@
 
 # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
 
-# rubocop:disable Naming/VariableName, Naming/MethodParameterName
+# rubocop:disable Naming/VariableName
 
 module Chemotion
   class SearchAPI < Grape::API
@@ -14,6 +14,8 @@ module Chemotion
     SAMPLE_TEXT_SEARCHES = %w[
       iupac_name inchistring inchikey cano_smiles sample_name sample_short_label molecule_name substring
     ].freeze
+    # Text searches on sample labels, which are visible at every sample detail level.
+    SAMPLE_LABEL_SEARCHES = %w[sum_formula sample_external_label].freeze
     REACTION_TEXT_SEARCHES = %w[reaction_name reaction_short_label reaction_status reaction_rinchi_string].freeze
     SBMM_SAMPLE_TEXT_SEARCHES = %w[
       sbmm_sample_name sbmm_sample_short_label sbmm_sample_organism sbmm_sample_taxon_id sbmm_sample_strain
@@ -109,32 +111,57 @@ module Chemotion
         params[:selection][:advanced_params]
       end
 
-      # Runs the text search +search_by_method+ on +scope+ (one element type in the current collection) if the
-      # method exists for that type and the collection's detail levels allow it, as in {#search_elements}.
+      # Resolves the collection scope of a search request: the collection named by +collection_id+,
+      # with the detail levels the current user holds on it.
+      def set_search_scope
+        collection = Collection.accessible_for(current_user).find(params[:collection_id])
+        @scope = Usecases::Search::CollectionScope.new(user: current_user, collections: [collection])
+      end
+
+      # The detail level, and its minimum, that the text search +method+ needs on +klass+, or nil
+      # when +method+ cannot search +klass+. An empty hash means no level is needed.
       #
-      # @param scope [ActiveRecord::Relation] the element type's records in the current collection
-      # @return [ActiveRecord::Relation] the matching records, or none when the search is not allowed
-      def search_by_detail_level(scope)
-        method = search_by_method.to_s
-        sample_data = SAMPLE_TEXT_SEARCHES.include?(method) && (@dl_s || 0).positive?
-        allowed =
-          case scope.klass.name
-          when 'Sample'
-            sample_data || (%w[sum_formula sample_external_label].include?(method) && (@dl_s || 0) > -1)
-          when 'Reaction'
-            sample_data || REACTION_TEXT_SEARCHES.include?(method)
-          when 'Wellplate'
-            sample_data || method == 'wellplate_name'
-          when 'Screen'
-            %w[screen_name conditions requirements substring].include?(method)
-          when 'SequenceBasedMacromoleculeSample'
-            (SBMM_SAMPLE_TEXT_SEARCHES + ['substring']).include?(method) && (@dl_sbmms || 0).positive?
-          when 'DeviceDescription'
-            (DEVICE_DESCRIPTION_TEXT_SEARCHES + ['substring']).include?(method) && (@dl_dd || 0).positive?
-          else
-            false
+      # @param klass [Class] the element type searched
+      # @param method [String] search_by_method
+      # @return [Hash{Symbol => Object}, nil] +level+ and +min+, {} or nil
+      def text_search_requirement(klass, method)
+        sample_data = { level: :sample_detail_level, min: 1 } if SAMPLE_TEXT_SEARCHES.include?(method)
+        sample_labels = { level: :sample_detail_level, min: 0 } if SAMPLE_LABEL_SEARCHES.include?(method)
+        case klass.name
+        when 'Sample'
+          sample_data || sample_labels
+        when 'Reaction'
+          REACTION_TEXT_SEARCHES.include?(method) ? {} : sample_data
+        when 'Wellplate'
+          method == 'wellplate_name' ? {} : sample_data
+        when 'Screen'
+          {} if %w[screen_name conditions requirements substring].include?(method)
+        when 'SequenceBasedMacromoleculeSample'
+          if (SBMM_SAMPLE_TEXT_SEARCHES + ['substring']).include?(method)
+            { level: :sequencebasedmacromoleculesample_detail_level, min: 1 }
           end
-        allowed ? scope.search_by(method, params[:selection][:name]) : scope.none
+        when 'DeviceDescription'
+          if (DEVICE_DESCRIPTION_TEXT_SEARCHES + ['substring']).include?(method)
+            { level: :devicedescription_detail_level, min: 1 }
+          end
+        end
+      end
+
+      # Runs the text search +search_by_method+ on +klass+ in the collections of the scope whose detail
+      # levels allow it, as in {#search_elements}.
+      #
+      # @param klass [Class] the element type searched
+      # @param joins [Symbol, nil] association to join before searching
+      # @return [ActiveRecord::Relation] the matching records, or none when the search is not allowed
+      def search_by_detail_level(klass, joins: nil)
+        method = search_by_method.to_s
+        requirement = text_search_requirement(klass, method)
+        return klass.none unless requirement
+
+        scope = requirement.empty? ? @scope : @scope.at_least(requirement[:level], requirement[:min])
+        relation = scope.relation_for(klass)
+        relation = relation.joins(joins) if joins
+        relation.search_by(method, params[:selection][:name])
       end
 
       def id_params
@@ -150,9 +177,7 @@ module Chemotion
       end
 
       # TODO: move to Sample (DRY Usecases::Search::StructureSearch::basic_scope)
-      def sample_structure_search(c_id = @c_id, not_permitted = @dl_s && @dl_s < 1)
-        return Sample.none if not_permitted
-
+      def sample_structure_search
         molfile = Fingerprint.standardized_molfile(params[:selection][:molfile])
         threshold = params[:selection][:tanimoto_threshold]
 
@@ -160,11 +185,16 @@ module Chemotion
         scope =
           case params[:selection][:search_type]
           when 'similar'
-            Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile, threshold)
+            samples_with_data.search_by_fingerprint_sim(molfile, threshold)
           when 'sub'
-            Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
+            samples_with_data.search_by_fingerprint_sub(molfile)
           end
         order_by_molecule(scope)
+      end
+
+      # Samples of the scope in collections that show sample data (sample detail level above 0).
+      def samples_with_data
+        @scope.at_least(:sample_detail_level, 1).relation_for(Sample)
       end
 
       def order_by_molecule(scope)
@@ -174,17 +204,17 @@ module Chemotion
              .order('molecules.sum_formular')
       end
 
-      def advanced_search(c_id = @c_id, dl = @dl)
+      def advanced_search
         conditions = Usecases::Search::ConditionsForAdvancedSearch.new(
-          detail_levels: dl,
+          detail_levels: @scope.detail_levels,
           params: params[:selection][:advanced_params],
           user: current_user,
         ).filter!
         return Sample.none if conditions[:error].present? || conditions[:model_name].blank?
 
-        scope = conditions[:model_name].by_collection_id(c_id.to_i)
-                                       .where(conditions[:query])
-                                       .joins(conditions[:joins].join(' '))
+        scope = @scope.relation_for(conditions[:model_name])
+                      .where(conditions[:query])
+                      .joins(conditions[:joins].join(' '))
         scope = order_by_molecule(scope) if conditions[:model_name] == Sample
         if %w[ResearchPlan Wellplate].include?(conditions[:model_name].to_s)
           scope = scope.group("#{conditions[:model_name].table_name}.id")
@@ -259,10 +289,10 @@ module Chemotion
         sequence_based_macromolecule_sample_ids = elements.fetch(:sequence_based_macromolecule_sample_ids, [])
         device_description_ids = elements.fetch(:device_description_ids, [])
 
-        # Every element on the page comes from the single resolved collection @c, so its per-class
-        # detail levels apply to all of them. Without this the entities render fail-open (full access),
+        # Every element on the page comes from the collections of the scope, so their per-class detail
+        # levels apply to all of them. Without this the entities render fail-open (full access),
         # leaking fields a restrictive collection share is meant to hide (e.g. reaction analyses).
-        detail_levels = ElementDetailLevelCalculator.for_collection(collection: @c, user: current_user)
+        detail_levels = @scope.class_detail_levels
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -404,87 +434,61 @@ module Chemotion
       # rubocop:enable Style/OptionalBooleanParameter
 
       # Generate search query
-      def search_elements(c_id = @c_id, dl = @dl)
+      def search_elements
         search_method = search_by_method
         molecule_sort = params[:molecule_sort]
         arg = params[:selection][:name]
         return if (search_method !~ /advanced|structure/) && !arg.presence
 
-        dl_s = dl[:sample_detail_level] || 0
+        with_sample_data = @scope.at_least(:sample_detail_level, 1)
         scope = case search_method
                 when 'polymer_type'
-                  if dl_s.positive?
-                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
-                          .by_residues_custom_info('polymer_type', arg)
-                  else
-                    Sample.none
-                  end
+                  with_sample_data.relation_for(Sample).order('samples.updated_at DESC')
+                                  .by_residues_custom_info('polymer_type', arg)
                 when 'sum_formula', 'sample_external_label'
-                  if dl_s > -1
-                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
-                          .search_by(search_method, arg)
-                  else
-                    Sample.none
-                  end
+                  @scope.at_least(:sample_detail_level, 0).relation_for(Sample).order('samples.updated_at DESC')
+                        .search_by(search_method, arg)
                 when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
                      'sample_name', 'sample_short_label', 'molecule_name'
-                  if dl_s.positive?
-                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
-                          .search_by(search_method, arg)
-                  else
-                    Sample.none
-                  end
+                  with_sample_data.relation_for(Sample).order('samples.updated_at DESC')
+                                  .search_by(search_method, arg)
                 when 'cas'
-                  if dl_s.positive?
-                    Sample.by_collection_id(c_id).order('samples.updated_at DESC')
-                          .by_sample_xref_cas(arg)
-                  else
-                    Sample.none
-                  end
+                  with_sample_data.relation_for(Sample).order('samples.updated_at DESC')
+                                  .by_sample_xref_cas(arg)
                 when 'reaction_name', 'reaction_short_label', 'reaction_status', 'reaction_rinchi_string'
-                  Reaction.by_collection_id(c_id).search_by(search_method, arg)
+                  @scope.relation_for(Reaction).search_by(search_method, arg)
                 when 'wellplate_name'
-                  Wellplate.by_collection_id(c_id).search_by(search_method, arg)
+                  @scope.relation_for(Wellplate).search_by(search_method, arg)
                 when 'screen_name'
-                  Screen.by_collection_id(c_id).search_by(search_method, arg)
+                  @scope.relation_for(Screen).search_by(search_method, arg)
                 when 'substring'
                   # NB we'll have to split the content of the pg_search_document into
                   # MW + external_label (dl_s = 0) and the other info only available
                   # from dl_s > 0. For now one can use the suggested search instead.
-                  if dl_s.positive?
-                    Usecases::Search::AllElementsSearch.new(
-                      term: params[:selection][:name],
-                      collection_id: c_id,
-                      user: current_user,
-                    ).search_by_substring
-                  else
-                    Usecases::Search::AllElementsSearch::Results.new(Sample.none, collection_id: c_id)
-                  end
+                  Usecases::Search::AllElementsSearch.new(
+                    term: params[:selection][:name],
+                    scope: with_sample_data,
+                    user: current_user,
+                  ).search_by_substring
                 when 'structure'
                   sample_structure_search
                 when 'advanced'
-                  advanced_search(c_id)
+                  advanced_search
                 when 'cell_line_material_name'
-                  CelllineSample.by_material_name(arg, c_id)
+                  @scope.relation_for(CelllineSample).material_name_like(arg)
                 when 'cell_line_sample_name'
-                  CelllineSample.by_sample_name(arg, c_id)
+                  @scope.relation_for(CelllineSample).name_like(arg)
                 when *SBMM_SAMPLE_TEXT_SEARCHES
-                  if (dl[:sequencebasedmacromoleculesample_detail_level] || 0).positive?
-                    SequenceBasedMacromoleculeSample.by_collection_id(c_id)
-                                                    .joins(:sequence_based_macromolecule)
-                                                    .order('sequence_based_macromolecule_samples.updated_at DESC')
-                                                    .search_by(search_method, arg)
-                  else
-                    SequenceBasedMacromoleculeSample.none
-                  end
+                  @scope.at_least(:sequencebasedmacromoleculesample_detail_level, 1)
+                        .relation_for(SequenceBasedMacromoleculeSample)
+                        .joins(:sequence_based_macromolecule)
+                        .order('sequence_based_macromolecule_samples.updated_at DESC')
+                        .search_by(search_method, arg)
                 when *DEVICE_DESCRIPTION_TEXT_SEARCHES
-                  if (dl[:devicedescription_detail_level] || 0).positive?
-                    DeviceDescription.by_collection_id(c_id)
-                                     .order('device_descriptions.updated_at DESC')
-                                     .search_by(search_method, arg)
-                  else
-                    DeviceDescription.none
-                  end
+                  @scope.at_least(:devicedescription_detail_level, 1)
+                        .relation_for(DeviceDescription)
+                        .order('device_descriptions.updated_at DESC')
+                        .search_by(search_method, arg)
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -494,7 +498,7 @@ module Chemotion
                .order('molecules.sum_formular')
         elsif search_by_method.start_with?('element_short_label_')
           klass = Labimotion::ElementKlass.find_by(name: search_by_method.sub('element_short_label_', ''))
-          return Labimotion::Element.by_collection_id(c_id).by_klass_id_short_label(klass.id, arg)
+          return @scope.relation_for(Labimotion::Element).by_klass_id_short_label(klass.id, arg)
         end
         scope
       end
@@ -502,14 +506,14 @@ module Chemotion
       # +pluck(:id)+, not +ids+: since Rails 7.1 +ids+ on a relation with +includes+ adds
       # GROUP BY <primary key>, which PostgreSQL rejects next to the ORDER BY on the included
       # table (order_by_molecule orders samples by molecules.sum_formular).
-      def elements_by_scope(scope, collection_id = @c_id)
+      def elements_by_scope(scope)
         elements = {}
-        user_samples = Sample.by_collection_id(collection_id)
-        user_reactions = Reaction.by_collection_id(collection_id)
-        user_wellplates = Wellplate.by_collection_id(collection_id)
-        user_screens = Screen.by_collection_id(collection_id)
-        user_research_plans = ResearchPlan.by_collection_id(collection_id)
-        user_elements = Labimotion::Element.by_collection_id(collection_id)
+        user_samples = @scope.relation_for(Sample)
+        user_reactions = @scope.relation_for(Reaction)
+        user_wellplates = @scope.relation_for(Wellplate)
+        user_screens = @scope.relation_for(Screen)
+        user_research_plans = @scope.relation_for(ResearchPlan)
+        user_elements = @scope.relation_for(Labimotion::Element)
 
         case scope&.first
         when Sample
@@ -531,7 +535,7 @@ module Chemotion
           elements[:sample_ids] = user_samples.by_wellplate_ids(elements[:wellplate_ids]).uniq.pluck(:id)
           elements[:reaction_ids] = user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
           elements[:research_plan_ids] = Usecases::Search::ResearchPlanRelations.plan_ids_for_wellplates(
-            wellplate_ids: elements[:wellplate_ids], collection_id: collection_id,
+            wellplate_ids: elements[:wellplate_ids], scope: @scope,
           )
           # elements[:element_ids] = user_elements.by_sample_ids(elements[:sample_ids]).pluck(:id).uniq
         when Screen
@@ -545,13 +549,13 @@ module Chemotion
           elements[:research_plan_ids] = scope&.pluck(:id)
           elements.merge!(
             Usecases::Search::ResearchPlanRelations.call(
-              plan_ids: elements[:research_plan_ids], collection_id: collection_id,
+              plan_ids: elements[:research_plan_ids], scope: @scope,
             ),
           )
         when Labimotion::Element
           elements[:element_ids] = scope&.pluck(:id)
           sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
-          elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
+          elements[:sample_ids] = user_samples.where(id: sids).uniq.pluck(:id)
         when Usecases::Search::AllElementsSearch::Results
           # TODO: check this samples_ids + molecules_ids ???? There are no Molecules in pg_search_documents
           elements[:sample_ids] = scope&.samples_ids
@@ -596,18 +600,17 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
           query = @params[:selection][:name]
-          collection_id = @params[:collection_id]
           cell_lines =
             case search_by_method
             when 'cell_line_material_name'
-              CelllineSample.by_material_name(query, collection_id)
+              @scope.relation_for(CelllineSample).material_name_like(query)
             when 'cell_line_sample_name'
-              CelllineSample.by_sample_name(query, collection_id)
+              @scope.relation_for(CelllineSample).name_like(query)
             end
 
           return unless cell_lines
@@ -629,11 +632,11 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
-          scope = search_elements(@c_id, @dl)
+          scope = search_elements
           return unless scope
 
           elements_ids = elements_by_scope(scope)
@@ -652,15 +655,14 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
           Usecases::Search::StructureSearch.new(
-            collection_id: @c_id,
+            scope: @scope,
             params: params,
             user: current_user,
-            detail_levels: @dl,
           ).perform!
         end
       end
@@ -672,7 +674,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
@@ -684,13 +686,13 @@ module Chemotion
 
           conditions =
             Usecases::Search::ConditionsForAdvancedSearch.new(
-              detail_levels: @dl,
+              detail_levels: @scope.detail_levels,
               params: params[:selection][:advanced_params],
               user: current_user,
             ).filter!
 
           results = Usecases::Search::AdvancedSearch.new(
-            collection_id: @c_id,
+            scope: @scope,
             params: params,
             user: current_user,
             conditions: conditions,
@@ -708,12 +710,12 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
           Usecases::Search::ByIds.new(
-            collection_id: @c_id,
+            scope: @scope,
             params: params,
             user: current_user,
           ).perform!
@@ -727,7 +729,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
@@ -736,13 +738,9 @@ module Chemotion
             when 'structure'
               sample_structure_search
             when 'cas'
-              if (@dl_s || 0).positive?
-                Sample.by_collection_id(@c_id).by_sample_xref_cas(params[:selection][:name])
-              else
-                Sample.none
-              end
+              samples_with_data.by_sample_xref_cas(params[:selection][:name])
             else
-              search_by_detail_level(Sample.by_collection_id(@c_id))
+              search_by_detail_level(Sample)
             end
 
           serialization_by_elements_and_page(
@@ -759,7 +757,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
@@ -774,9 +772,9 @@ module Chemotion
                 ReactionsStartingMaterialSample.get_reactions(samples_ids) +
                 ReactionsReactantSample.get_reactions(samples_ids)
               ).compact.uniq
-              Reaction.by_collection_id(@c_id).where(id: reaction_ids)
+              @scope.relation_for(Reaction).where(id: reaction_ids)
             else
-              search_by_detail_level(Reaction.by_collection_id(@c_id))
+              search_by_detail_level(Reaction)
             end
 
           serialization_by_elements_and_page(
@@ -793,7 +791,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
@@ -801,9 +799,9 @@ module Chemotion
             case search_by_method
             when 'structure'
               associated_samples = sample_structure_search
-              Wellplate.by_collection_id(@c_id).by_sample_ids(associated_samples.pluck(:id))
+              @scope.relation_for(Wellplate).by_sample_ids(associated_samples.pluck(:id))
             else
-              search_by_detail_level(Wellplate.by_collection_id(@c_id))
+              search_by_detail_level(Wellplate)
             end
 
           serialization_by_elements_and_page(
@@ -820,7 +818,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
@@ -829,9 +827,9 @@ module Chemotion
             when 'structure'
               associated_samples = sample_structure_search
               well_ids = Wellplate.by_sample_ids(associated_samples.pluck(:id))
-              Screen.by_collection_id(@c_id).by_wellplate_ids(well_ids)
+              @scope.relation_for(Screen).by_wellplate_ids(well_ids)
             else
-              search_by_detail_level(Screen.by_collection_id(@c_id))
+              search_by_detail_level(Screen)
             end
 
           serialization_by_elements_and_page(
@@ -848,13 +846,11 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
-          sbmm_samples = search_by_detail_level(
-            SequenceBasedMacromoleculeSample.by_collection_id(@c_id).joins(:sequence_based_macromolecule),
-          )
+          sbmm_samples = search_by_detail_level(SequenceBasedMacromoleculeSample, joins: :sequence_based_macromolecule)
 
           serialization_by_elements_and_page(
             elements_by_scope(sbmm_samples),
@@ -870,11 +866,11 @@ module Chemotion
         end
 
         after_validation do
-          set_var
+          set_search_scope
         end
 
         post do
-          device_descriptions = search_by_detail_level(DeviceDescription.by_collection_id(@c_id))
+          device_descriptions = search_by_detail_level(DeviceDescription)
 
           serialization_by_elements_and_page(
             elements_by_scope(device_descriptions),
@@ -886,7 +882,7 @@ module Chemotion
   end
 end
 
-# rubocop:enable Naming/VariableName, Naming/MethodParameterName
+# rubocop:enable Naming/VariableName
 
 # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Lint/SafeNavigationChain, Style/RedundantParentheses
 

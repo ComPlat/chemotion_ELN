@@ -43,17 +43,12 @@ class CelllineSample < ApplicationRecord
 
   after_create :create_root_container
 
-  scope :by_sample_name, lambda { |query, collection_id|
-                           joins(:collections).where(collections: { id: collection_id })
-                                              .where('name ILIKE ?', "%#{sanitize_sql_like(query)}%")
-                         }
-
-  scope :by_material_name, lambda { |query, collection_id|
-    joins(:cellline_material)
-      .joins(:collections)
-      .where('collections.id=?', collection_id)
-      .where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
+  scope :name_like, ->(query) { where('cellline_samples.name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
+  scope :material_name_like, lambda { |query|
+    joins(:cellline_material).where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
+  scope :by_sample_name, ->(query, collection_id) { by_collection_id(collection_id).name_like(query) }
+  scope :by_material_name, ->(query, collection_id) { by_collection_id(collection_id).material_name_like(query) }
 
   multisearchable against: %i[name]
 
