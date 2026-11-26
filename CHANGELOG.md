@@ -1,5 +1,25 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.5]
+> (2026-11-26)
+
+## Upgrade notes
+
+* Fixes OpenID Connect login on the v3.1.4 image: the bundled gems are pinned to versions that install on the image's Ruby ([#3743](https://github.com/ComPlat/chemotion_ELN/pull/3743)).
+* Legacy device and device-analysis API routes removed, and the global `SFTP_*` settings no longer read; device data collection keeps each device's own SFTP settings ([#3699](https://github.com/ComPlat/chemotion_ELN/pull/3699)).
+* The `install_ketcher2` admin task and `bin/chem-*.sh` scripts are removed ([#3707](https://github.com/ComPlat/chemotion_ELN/pull/3707)).
+
+## Fixes
+
+* Triethylamine added to the solvent list ([#3710](https://github.com/ComPlat/chemotion_ELN/pull/3710)).
+* Splitting a device description copies its segment values ([#3644](https://github.com/ComPlat/chemotion_ELN/pull/3644)).
+* The data collector keeps going when one device fails, and logs why ([#3704](https://github.com/ComPlat/chemotion_ELN/pull/3704)).
+
+## Maintenance
+
+* Remote-display connection counters are kept in a cache store instead of per-device log files ([#3697](https://github.com/ComPlat/chemotion_ELN/pull/3697)); the *My Groups & Devices* list loads the user's devices in one query ([#3699](https://github.com/ComPlat/chemotion_ELN/pull/3699)).
+* Unused residue loading check removed ([#3671](https://github.com/ComPlat/chemotion_ELN/pull/3671)).
+
 # [v3.1.4]
 > (2026-11-20)
 
