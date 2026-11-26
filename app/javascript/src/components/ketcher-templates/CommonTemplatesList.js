@@ -1,7 +1,8 @@
 import React, {
-  memo, useCallback, useEffect, useRef, useState
+  memo, useEffect, useMemo, useRef, useState
 } from 'react';
 import { createPortal } from 'react-dom';
+import PropTypes from 'prop-types';
 import {
   OverlayTrigger,
   Tooltip,
@@ -47,7 +48,6 @@ async function loadTemplateIntoKetcher(molfile) {
   }
 }
 
-
 const TemplateCard = memo(({ item, onSelect }) => (
   <button
     type="button"
@@ -62,6 +62,13 @@ const TemplateCard = memo(({ item, onSelect }) => (
   </button>
 ));
 TemplateCard.displayName = 'TemplateCard';
+TemplateCard.propTypes = {
+  item: PropTypes.shape({
+    name: PropTypes.string,
+    molfile: PropTypes.string,
+  }).isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
 
 const PAGE_SIZE = 15;
 // Update this date whenever a new batch of templates is added.
@@ -82,7 +89,6 @@ const CommonTemplatesList = memo(() => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [panelStyle, setPanelStyle] = useState({});
   const [showNewOnly, setShowNewOnly] = useState(false);
-  const buttonRef = useRef(null);
   const sentinelRef = useRef(null);
   const bodyRef = useRef(null);
   const toolTip = 'Select a template to load it into the editor.';
@@ -105,8 +111,9 @@ const CommonTemplatesList = memo(() => {
     loadTemplateIntoKetcher(item?.molfile);
   };
 
-  const handleSearch = useCallback(
-    debounce((query, newOnly) => {
+  // useMemo (not useCallback) so the debounced function is recreated only when the list changes.
+  const handleSearch = useMemo(
+    () => debounce((query, newOnly) => {
       const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       const strip = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
       const normalizedQuery = normalize(query);
@@ -169,6 +176,9 @@ const CommonTemplatesList = memo(() => {
 
   const visibleItems = filteredOptions.slice(0, visibleCount);
   const hasMore = visibleCount < filteredOptions.length;
+  const newBadgeClassName = `common-templates-panel__new-badge${
+    showNewOnly ? ' common-templates-panel__new-badge--active' : ''
+  }`;
 
   // Infinite scroll: when the sentinel div scrolls into view, reveal the next batch.
   // Depends on hasMore so the observer re-attaches whenever the sentinel remounts
@@ -236,11 +246,15 @@ const CommonTemplatesList = memo(() => {
           {newCount > 0 && (
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="new-templates-tip" className="common-templates-tooltip">Recently added templates — click to filter</Tooltip>}
+              overlay={(
+                <Tooltip id="new-templates-tip" className="common-templates-tooltip">
+                  Recently added templates — click to filter
+                </Tooltip>
+              )}
             >
               <button
                 type="button"
-                className={`common-templates-panel__new-badge${showNewOnly ? ' common-templates-panel__new-badge--active' : ''}`}
+                className={newBadgeClassName}
                 onClick={() => setShowNewOnly((v) => !v)}
               >
                 <i className="fa fa-clock-o" />
@@ -275,7 +289,6 @@ const CommonTemplatesList = memo(() => {
     <div className="col-sm-6 d-flex align-items-center">
       <OverlayTrigger overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
         <button
-          ref={buttonRef}
           type="button"
           className="common-templates-trigger"
           onClick={openPanel}
