@@ -49,19 +49,18 @@ module Usecases
 
       # TODO: DRY : see search_api.rb helper method sample_structure_search
       def basic_scope
-        not_permitted = @dl_s && @dl_s < 1
-        return Sample.none if not_permitted
-
         molfile = Fingerprint.standardized_molfile(@params[:selection][:molfile])
         threshold = @params[:selection][:tanimoto_threshold]
         generate_svg_by_molfile(molfile)
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
+        # Structures are sample data: only search collections that show it (sample detail level above 0).
+        samples = @scope.at_least(:sample_detail_level, 1).relation_for(Sample)
         scope =
           if @params[:selection][:search_type] == 'similar'
-            @scope.relation_for(Sample).search_by_fingerprint_sim(molfile, threshold)
+            samples.search_by_fingerprint_sim(molfile, threshold)
           else
-            @scope.relation_for(Sample).search_by_fingerprint_sub(molfile)
+            samples.search_by_fingerprint_sub(molfile)
           end
         scope = @shared_methods.order_by_molecule(scope)
         scope.pluck(:id)
