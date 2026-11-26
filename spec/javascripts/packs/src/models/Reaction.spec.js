@@ -1,7 +1,7 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
-import Reaction from 'src/models/Reaction';
+import Reaction, { convertTonPerTime } from 'src/models/Reaction';
 import REACTION_CONCENTRATION_MODES, { isReactionConcentrationMode }
   from 'src/models/ReactionConcentrationModes';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
@@ -151,41 +151,30 @@ describe('Reaction', () => {
       expect(copy.products[0].equivalent).toBe(null);
     });
 
-    it('re-keys the variations to the copied materials, by position, also for the same molecule', () => {
-      // Two starting materials of the same molecule whose id order differs from their position order.
+    it('keeps the variations\' material changes with the copied materials, by position', () => {
+      // Positional diffs need no re-keying: entry i belongs to material i of the copy as of the original.
       reaction.starting_materials[0].id = 100;
       reaction.starting_materials[1].id = 50;
-      reaction.variations = [{
-        id: 1,
-        uuid: 'row-1',
-        startingMaterials: { 100: { mass: 1 }, 50: { mass: 2 } },
-        reactants: {},
-        products: {},
-        solvents: { 'sbmm:7': { mass: 3 } },
-      }];
-
-      const copy = reaction.buildCopy({ collection_id: 'col1' });
-      const [first, second] = copy.starting_materials;
-
-      expect(copy.variations[0].startingMaterials).toEqual({ [first.id]: { mass: 1 }, [second.id]: { mass: 2 } });
-      expect(copy.variations[0].solvents).toEqual({ 'sbmm:7': { mass: 3 } });
-      expect(reaction.variations[0].startingMaterials).toEqual({ 100: { mass: 1 }, 50: { mass: 2 } });
-    });
-
-    it('re-keys SBMM reactant variations to the copy\'s own split', () => {
       reaction.reactant_sbmm_samples = [new SequenceBasedMacromoleculeSample({
         id: 106, is_new: false, parent_id: 900, short_label: 'SBMM-1', sequence_based_macromolecule: {},
       })];
       reaction.variations = [{
-        id: 1, uuid: 'row-1', startingMaterials: {}, reactants: { 'sbmm:106': { mass: 4 } }, products: {}, solvents: {},
+        id: 'row-1',
+        idx: 1,
+        data: {
+          id: 'row-1-reaction',
+          _starting_materials: [{ _amount_value: 1 }, { _amount_value: 2 }],
+          _reactant_sbmm_samples: [{ _amount_value: 4 }],
+        },
       }];
 
       const copy = reaction.buildCopy({ collection_id: 'col1' });
-      const [copiedSbmm] = copy.reactant_sbmm_samples;
 
-      expect(copiedSbmm.id).not.toBe(106);
-      expect(copy.variations[0].reactants).toEqual({ [`sbmm:${copiedSbmm.id}`]: { mass: 4 } });
-      expect(reaction.variations[0].reactants).toEqual({ 'sbmm:106': { mass: 4 } });
+      expect(copy.starting_materials.map((m) => m.id)).not.toContain(100);
+      expect(copy.reactant_sbmm_samples[0].id).not.toBe(106);
+      expect(copy.variations[0].data._starting_materials).toEqual([{ _amount_value: 1 }, { _amount_value: 2 }]);
+      expect(copy.variations[0].data._reactant_sbmm_samples).toEqual([{ _amount_value: 4 }]);
+      expect(reaction.variations[0].data._starting_materials).toEqual([{ _amount_value: 1 }, { _amount_value: 2 }]);
     });
 
     it('preserves product amounts when keepAmounts=true', () => {
@@ -234,6 +223,53 @@ describe('Reaction', () => {
       const copy = reaction.buildCopy({ collection_id: 'col1' });
       expect(copy.purification_solvents[0]._real_amount_value).toBe(null);
     });
+
+    describe('with variations', () => {
+      const original = () => ({
+        id: 'row',
+        idx: 3,
+        group: [2, 1],
+        analyses: [11],
+        notes: 'first run',
+        data: { id: 'row-reaction', _starting_materials: [null, { _equivalent: 0.3 }] },
+        legacy_data: { startingMaterials: {} },
+      });
+
+      it('copies their values, number, group and note', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied).toMatchObject({ idx: 3, group: [2, 1], notes: 'first run' });
+        expect(copied.data._starting_materials).toEqual([null, { _equivalent: 0.3 }]);
+      });
+
+      it('gives them identities of their own', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied.id).not.toBe('row');
+        expect(copied.data.id).not.toBe('row-reaction');
+      });
+
+      it('leaves the links to the original analyses and the legacy body behind', () => {
+        reaction.variations = [original()];
+        const [copied] = reaction.buildCopy({ collection_id: 'col1' }).variations;
+
+        expect(copied.analyses).toEqual([]);
+        expect(copied).not.toHaveProperty('legacy_data');
+      });
+
+      it('does not share them with the original', () => {
+        reaction.variations = [original()];
+        const copy = reaction.buildCopy({ collection_id: 'col1' });
+
+        copy.variations[0].data._starting_materials[1]._equivalent = 0.9;
+        copy.variations.push({ id: 'new' });
+
+        expect(reaction.variations).toHaveLength(1);
+        expect(reaction.variations[0].data._starting_materials[1]._equivalent).toBe(0.3);
+      });
+    });
   });
 
   describe('Reaction.CONCENTRATION_MODES', () => {
@@ -242,6 +278,19 @@ describe('Reaction', () => {
       expect(Object.isFrozen(Reaction.CONCENTRATION_MODES)).toBe(true);
       expect(isReactionConcentrationMode(REACTION_CONCENTRATION_MODES.COMBINED)).toBe(true);
       expect(isReactionConcentrationMode('invalid')).toBe(false);
+    });
+  });
+
+  describe('convertTonPerTime', () => {
+    it('converts a turnover frequency as the rate it is', () => {
+      expect(convertTonPerTime(2, 'TON/m', 'TON/h')).toBe(120);
+      expect(convertTonPerTime(120, 'TON/h', 'TON/m')).toBe(2);
+      expect(convertTonPerTime(1, 'TON/s', 'TON/h')).toBe(3600);
+      expect(convertTonPerTime(5, 'TON/h', 'TON/h')).toBe(5);
+    });
+
+    it('leaves a value in an unknown unit as it is', () => {
+      expect(convertTonPerTime(5, 'TON/d', 'TON/h')).toBe(5);
     });
   });
 
@@ -1099,6 +1148,103 @@ describe('Reaction', () => {
         productsOnly: true,
         showYield: false,
       });
+    });
+  });
+
+  /*
+  Variations store their material changes by position in each group, so changing the reaction's own
+  material lists has to move those entries along with the materials they belong to.
+  */
+  describe('material changes in a reaction with variations', () => {
+    let first;
+    let second;
+
+    const variationData = () => reaction.variations[0].data;
+
+    beforeEach(() => {
+      [first, second] = reaction.starting_materials;
+      reaction.variations = [{
+        id: 'row', idx: 1, group: [1, 0], analyses: [], notes: '',
+        data: {
+          id: 'row-reaction',
+          _starting_materials: [{ _equivalent: 0.1 }, { _equivalent: 0.2 }],
+        },
+      }];
+    });
+
+    it('drops the entry of a deleted material and moves the others up', () => {
+      reaction.deleteMaterial(first, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.2 }]);
+    });
+
+    it('leaves the slot of an added material empty and moves the others down', () => {
+      reaction.addMaterialAt(material, null, first, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([null, { _equivalent: 0.1 }, { _equivalent: 0.2 }]);
+    });
+
+    it('covers a material appended at the end', () => {
+      reaction.addMaterial(material, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }, { _equivalent: 0.2 }, null]);
+    });
+
+    it('moves the entries along when materials are reordered', () => {
+      reaction.moveMaterial(second, 'starting_materials', first, 'starting_materials');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual([second.id, first.id]);
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.2 }, { _equivalent: 0.1 }]);
+    });
+
+    it('takes the entry along when a material moves to another group', () => {
+      reaction.moveMaterial(second, 'starting_materials', null, 'reactants');
+
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }]);
+      expect(variationData()._reactants).toEqual([{ _equivalent: 0.2 }]);
+    });
+
+    it('keeps materials only the variation has behind the reaction\'s own', () => {
+      const extra = { id: 'variation-only', _equivalent: 3 };
+      variationData()._starting_materials.push(extra);
+
+      reaction.addMaterial(material, 'starting_materials');
+
+      expect(variationData()._starting_materials).toEqual([
+        { _equivalent: 0.1 }, { _equivalent: 0.2 }, null, extra,
+      ]);
+    });
+
+    it('leaves a group to the parent once none of its entries are left', () => {
+      variationData()._starting_materials = [null, { _equivalent: 0.2 }];
+
+      reaction.deleteMaterial(second, 'starting_materials');
+
+      expect(variationData()).not.toHaveProperty('_starting_materials');
+    });
+
+    // Materials only a variation has are listed in the reaction's scheme tab too, but are not the
+    // reaction's: the list used to come out as [A, A, B] for [A, B] when one of them was deleted.
+    it('leaves the materials alone when asked to delete, move or swap one it does not have', () => {
+      const foreign = { ...material, id: 'variation-only' };
+      const idsBefore = reaction.starting_materials.map((m) => m.id);
+
+      reaction.deleteMaterial(foreign, 'starting_materials');
+      reaction.swapMaterial(foreign, first, 'starting_materials');
+      reaction.moveMaterial(foreign, 'starting_materials', null, 'reactants');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual(idsBefore);
+      expect(reaction.reactants).toEqual([]);
+      expect(variationData()._starting_materials).toEqual([{ _equivalent: 0.1 }, { _equivalent: 0.2 }]);
+    });
+
+    it('does nothing to a reaction without variations', () => {
+      reaction.variations = [];
+
+      reaction.deleteMaterial(first, 'starting_materials');
+
+      expect(reaction.starting_materials.map((m) => m.id)).toEqual([second.id]);
+      expect(reaction.variations).toEqual([]);
     });
   });
 });

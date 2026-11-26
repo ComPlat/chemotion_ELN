@@ -10,6 +10,7 @@
   * The cache format changes: clear the Rails cache when deploying.
   * Set up new instances with `db:create db:migrate`, not `db:schema:load`.
   * Attachment previews are generated for images and PDF files only; office, video and 3D files and pcx, dng, tga and ai images no longer get a thumbnail.
+* Reaction variations store what they change about a material by the material's position instead of by sample id. `rake reactions:repair_variation_keys` is removed: the migration to the new format skips keys of materials the reaction no longer has, so there is nothing left to repair.
 
 # [v4.0.2]
 > (2026-11-20)

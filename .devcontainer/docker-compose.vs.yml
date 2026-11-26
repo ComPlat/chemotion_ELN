@@ -6,7 +6,11 @@ x-common-volumes: &common-volumes
 x-common-build: &common-build
   context: '.'
   dockerfile: 'Dockerfile.chemotion-dev'
-  target: chemotion_dev_base
+  # No explicit `target:` here — the JetBrains/VS Code dev-container tooling
+  # builds a feature-extended Dockerfile in which the original stage names do
+  # not exist, so a pinned target fails with "target stage could not be found"
+  # (IJPL-182853). The last stage (chemotion_eln_dev) is a no-op over the base
+  # when uid/gid are "skip", so building the default (last) stage is equivalent.
   args:
     uid: skip
     gid: skip

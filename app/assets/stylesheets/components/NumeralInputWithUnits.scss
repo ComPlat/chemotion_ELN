@@ -4,3 +4,10 @@
     @extend .ps-1;
   }
 }
+
+// A field showing the range of a reaction's variations (VariationRangeInput): read-only, so that its
+// tooltip works, but looking like the disabled field it stands in for.
+.variation-range-input[readonly] {
+  background-color: $input-disabled-bg;
+  border-color: $input-disabled-border-color;
+}

@@ -106,4 +106,4 @@ const SegmentTabs = (element, onChange) => {
   return result;
 };
 
-export { SegmentTabs, addSegmentTabs };
+export { SegmentTabs, addSegmentTabs, onNaviClick };

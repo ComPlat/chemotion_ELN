@@ -199,6 +199,90 @@ describe 'Reporter::Docx::DetailReaction' do
     end
   end
 
+  describe '#capitalize_first_letter' do
+    it 'capitalizes the first letter, after anything that is not a letter' do
+      expect(target.send(:capitalize_first_letter, '(2s)-butanol')).to eq('(2S)-butanol')
+      expect(target.send(:capitalize_first_letter, 'ethanol')).to eq('Ethanol')
+    end
+
+    # Used to raise NoMethodError on nil >= 0, failing the whole report.
+    it 'returns a name without a letter as it is' do
+      expect(target.send(:capitalize_first_letter, '123')).to eq('123')
+      expect(target.send(:capitalize_first_letter, '  ')).to eq('  ')
+      expect(target.send(:capitalize_first_letter, '')).to eq('')
+    end
+  end
+
+  # A variation stores only what it changes about the reaction, so the report has to resolve the
+  # two: see db/schemas/reaction_variations.schema.json. The attribute names below carry the leading
+  # underscore the client's models put on everything they wrap in an accessor, which is what ends up
+  # in the diff.
+  describe '.content variations' do
+    let(:variation) { target.content[:variations].first }
+
+    before do
+      reaction.update!(
+        temperature: { 'valueUnit' => '°C', 'userText' => '20', 'data' => [] },
+        duration: '2 Hour(s)',
+        variations: [
+          {
+            'id' => SecureRandom.uuid,
+            'idx' => 0,
+            'group' => [1, 0],
+            'analyses' => [],
+            'notes' => 'ran it colder',
+            'data' => {
+              'id' => SecureRandom.uuid,
+              '_temperature' => { 'userText' => '-78' },
+              # sample1 has a real amount, which is the one the client edits.
+              '_starting_materials' => [
+                { '_real_amount_value' => 0.042, '_real_amount_unit' => 'g' },
+              ],
+            },
+          },
+        ],
+      )
+    end
+
+    it 'falls back to the reaction for what the variation does not change' do
+      expect(variation['duration']).to eq('2 Hour(s)')
+    end
+
+    it 'merges a partial change into the value it overrides' do
+      # Only the text is overridden, so the unit is still the reaction's.
+      expect(variation['temperature']).to eq('-78 °C')
+    end
+
+    it 'returns the group and the notes of the variation' do
+      expect(variation['group']).to eq('1.0')
+      expect(variation['notes']).to eq('ran it colder')
+    end
+
+    # The values the material has in the variation - the reaction's with the variation's changes on
+    # top - the way the Variations tab shows them, not just what the variation changed.
+    it 'lists a changed material with the amounts it has in the variation' do
+      # sample1's metrics show its mass in g.
+      expect(variation['startingMaterials'].first).to include('mass: 0.0420 g;')
+      expect(variation['startingMaterials'].first).to include('amount:', 'volume:')
+    end
+
+    it 'lists an unchanged material with the reaction\'s own amounts' do
+      expect(variation['products'].first).to include('mass:', 'volume:', 'amount:', 'yield: 88')
+    end
+
+    it 'lists a material only the variation has' do
+      extra = create(:sample, name: 'Extra', collections: [collection], target_amount_value: 0.5,
+                              target_amount_unit: 'g')
+      # The reaction's one starting material is sample1; the entry after it is the variation's own.
+      data = reaction.variations.first['data']
+      data['_starting_materials'] << { 'id' => extra.id, 'name' => 'Extra', '_target_amount_value' => 0.25,
+                                       '_target_amount_unit' => 'g', '_metrics' => 'mmmm' }
+      reaction.update_columns(variations: reaction.variations) # rubocop:disable Rails/SkipsModelValidations
+
+      expect(variation['startingMaterials'].last).to include('mass: 250', 'mg')
+    end
+  end
+
   describe 'private methods' do
     it 'has correct data' do
       expect(target.send(:title)).to eq(tit)

@@ -18,9 +18,9 @@
 #    passes to the kept one unless another material of the reaction holds it.
 # 3. A sample that still has several live links stays with the link of the earliest created
 #    reaction (the earlier link, if that reaction links it in two roles). Every other link gets a
-#    new sample, split from it as the reaction editor does when a sample is dropped onto a reaction,
-#    and the reaction's variations follow it. A link of a deleted reaction, or of a deleted sample,
-#    is soft deleted instead.
+#    new sample, split from it as the reaction editor does when a sample is dropped onto a reaction.
+#    The reaction's variations need no change: they address materials by position, which the link
+#    keeps. A link of a deleted reaction, or of a deleted sample, is soft deleted instead.
 class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1] # rubocop:disable Metrics/ClassLength
   INDEX_NAME = 'index_reactions_samples_on_live_sample_id'
   # the index of an earlier version of this migration
@@ -33,13 +33,6 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1] # rubocop:
   # logidze keeps the full value of a jsonb column only in the first version; later versions
   # hold a nested diff of the changed keys, with 'deleted' for a removed object
   JSONB_COLUMNS = %w[gas_phase_data].freeze
-  # link type => the reaction variations group keyed by the link's sample id (purification solvents have none)
-  VARIATIONS_GROUPS = {
-    'ReactionsStartingMaterialSample' => 'startingMaterials',
-    'ReactionsReactantSample' => 'reactants',
-    'ReactionsProductSample' => 'products',
-    'ReactionsSolventSample' => 'solvents',
-  }.freeze
   # flags a reaction holds on one material only
   REFERENCE_COLUMNS = %w[reference weight_percentage_reference].freeze
 
@@ -305,35 +298,7 @@ class AddUniqueIndexToReactionsSamples < ActiveRecord::Migration[6.1] # rubocop:
       UPDATE reactions_samples SET sample_id = #{connection.quote(new_sample.id)}, updated_at = now()
       WHERE id = #{connection.quote(link_id)}
     SQL
-    rekey_variations(reaction.id, link.type, sample.id, new_sample.id)
     refresh_tags([sample.id, new_sample.id])
-  end
-
-  # Renames the sample's key in the variations group of the link's role, so the reaction's variations
-  # keep their values for the material. Works on the stored column: the model reads it reshaped.
-  def rekey_variations(reaction_id, type, sample_id, new_sample_id)
-    group = VARIATIONS_GROUPS[type]
-    return if group.nil?
-
-    raw = select_value("SELECT variations FROM reactions WHERE id = #{connection.quote(reaction_id)}")
-    return if raw.blank?
-
-    stored = parse_json(raw)
-    rename = ->(variation) { rekey_variation(variation, group, sample_id.to_s, new_sample_id.to_s) }
-    rekeyed = stored.is_a?(Hash) ? stored.transform_values(&rename) : Array(stored).map(&rename)
-    return if rekeyed == stored
-
-    execute(<<~SQL.squish)
-      UPDATE reactions SET variations = #{connection.quote(rekeyed.to_json)}::jsonb
-      WHERE id = #{connection.quote(reaction_id)}
-    SQL
-  end
-
-  def rekey_variation(variation, group, old_key, new_key)
-    materials = variation.is_a?(Hash) ? variation[group] : nil
-    return variation unless materials.is_a?(Hash) && materials.key?(old_key) && !materials.key?(new_key)
-
-    variation.merge(group => materials.transform_keys { |key| key == old_key ? new_key : key })
   end
 
   # The owner of a new sample: the reaction's creator, else the sample's, else the owner of one of the
