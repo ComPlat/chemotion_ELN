@@ -4,11 +4,13 @@
 module Usecases
   module Search
     class SharedMethods
-      attr_reader :params, :user
+      attr_reader :params, :user, :scope
 
-      def initialize(user:, params: {})
+      # @param scope [CollectionScope] the collections the search runs over
+      def initialize(user:, scope:, params: {})
         @params = params
         @user = user
+        @scope = scope
         @result = {}
       end
 
@@ -126,15 +128,11 @@ module Usecases
         end
       end
 
-      # Per-class detail levels for the single collection this search is scoped to. Without them the
+      # Per-class detail levels of the collections this search is scoped to. Without them the
       # entities render fail-open (full access), leaking fields a restrictive collection share hides.
       # Samples deliberately use the per-element calculator instead (see #serialize_sample).
       def collection_detail_levels
-        @collection_detail_levels ||=
-          ElementDetailLevelCalculator.for_collection(
-            collection: Collection.accessible_for(@user).find(@params[:collection_id]),
-            user: @user,
-          )
+        @scope.class_detail_levels
       end
     end
   end

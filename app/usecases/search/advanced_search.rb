@@ -4,14 +4,15 @@ module Usecases
   module Search
     class AdvancedSearch
       require_relative 'shared_methods'
-      attr_reader :collection_id, :params, :conditions, :user
+      attr_reader :scope, :params, :conditions, :user
 
-      def initialize(collection_id:, user:, params: {}, conditions: [])
+      # @param scope [CollectionScope] the collections the search runs over
+      def initialize(scope:, user:, params: {}, conditions: [])
         @params = params
-        @collection_id = collection_id
+        @scope = scope
         @conditions = conditions
         @user = user
-        @shared_methods = SharedMethods.new(params: @params, user: @user)
+        @shared_methods = SharedMethods.new(params: @params, user: @user, scope: @scope)
 
         @elements = {
           sample_ids: [],
@@ -24,15 +25,15 @@ module Usecases
           device_description_ids: [],
           cell_line_ids: [],
         }
-        @user_samples = Sample.by_collection_id(@collection_id)
-        @user_reactions = Reaction.by_collection_id(@collection_id)
-        @user_wellplates = Wellplate.by_collection_id(@collection_id)
-        @user_screens = Screen.by_collection_id(@collection_id)
-        @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
-        @user_elements = Labimotion::Element.by_collection_id(@collection_id)
-        @user_sequence_based_macromolecule_samples = SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
-        @user_device_descriptions = DeviceDescription.by_collection_id(@collection_id)
-        @user_cell_lines = CelllineSample.by_collection_id(@collection_id)
+        @user_samples = @scope.relation_for(Sample)
+        @user_reactions = @scope.relation_for(Reaction)
+        @user_wellplates = @scope.relation_for(Wellplate)
+        @user_screens = @scope.relation_for(Screen)
+        @user_research_plans = @scope.relation_for(ResearchPlan)
+        @user_elements = @scope.relation_for(Labimotion::Element)
+        @user_sequence_based_macromolecule_samples = @scope.relation_for(SequenceBasedMacromoleculeSample)
+        @user_device_descriptions = @scope.relation_for(DeviceDescription)
+        @user_cell_lines = @scope.relation_for(CelllineSample)
       end
 
       def perform!
@@ -51,9 +52,9 @@ module Usecases
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
         is_sbmm_sample_model = @conditions[:model_name] == SequenceBasedMacromoleculeSample
 
-        scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
-                                        .where(query_with_condition)
-                                        .joins(@conditions[:joins].join(' '))
+        scope = @scope.relation_for(@conditions[:model_name])
+                      .where(query_with_condition)
+                      .joins(@conditions[:joins].join(' '))
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope = scope.group('samples.id, molecules.sum_formular') if @conditions[:model_name] == Sample
@@ -113,7 +114,7 @@ module Usecases
         @elements[:reaction_ids] =
           @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
         @elements[:research_plan_ids] = ResearchPlanRelations.plan_ids_for_wellplates(
-          wellplate_ids: @elements[:wellplate_ids], collection_id: @collection_id,
+          wellplate_ids: @elements[:wellplate_ids], scope: @scope,
         )
       end
 
@@ -131,7 +132,7 @@ module Usecases
 
       def researchplan_relations_element_ids
         @elements.merge!(
-          ResearchPlanRelations.call(plan_ids: @elements[:research_plan_ids], collection_id: @collection_id),
+          ResearchPlanRelations.call(plan_ids: @elements[:research_plan_ids], scope: @scope),
         )
         @elements[:screen_ids] = @user_screens.by_wellplate_ids(@elements[:wellplate_ids]).pluck(:id).uniq
         @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq

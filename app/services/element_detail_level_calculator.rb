@@ -51,6 +51,15 @@ class ElementDetailLevelCalculator
     class_hash_for(collection.detail_levels_for_user(user))
   end
 
+  # Class-keyed form of an already-resolved key hash, such as {Collection#detail_levels_for_user}
+  # returns. For callers that resolve the levels themselves (e.g. Usecases::Search::CollectionScope).
+  #
+  # @param key_hash [Hash{Symbol => Integer}] keyed by Collection::DETAIL_LEVEL_KEYS
+  # @return [Hash{Class => Integer}]
+  def self.for_detail_levels(key_hash)
+    class_hash_for(key_hash)
+  end
+
   # Class-keyed detail levels for a page drawn only from collections the user owns (the
   # "no collection_id" / merged view) — always full access, with zero queries.
   #

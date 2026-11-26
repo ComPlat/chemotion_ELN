@@ -4,14 +4,14 @@ module Usecases
   module Search
     class StructureSearch
       require_relative 'shared_methods'
-      attr_reader :collection_id, :params, :user, :detail_levels
+      attr_reader :scope, :params, :user
 
-      def initialize(collection_id:, user:, params: {}, detail_levels: {})
+      # @param scope [CollectionScope] the collections the search runs over
+      def initialize(scope:, user:, params: {})
         @params = params
-        @collection_id = collection_id
+        @scope = scope
         @user = user
-        @detail_levels = detail_levels
-        @shared_methods = SharedMethods.new(params: @params, user: @user)
+        @shared_methods = SharedMethods.new(params: @params, user: @user, scope: @scope)
 
         @elements = {
           sample_ids: [],
@@ -21,12 +21,12 @@ module Usecases
           research_plan_ids: [],
           element_ids: [],
         }
-        @user_samples = Sample.by_collection_id(@collection_id)
-        @user_reactions = Reaction.by_collection_id(@collection_id)
-        @user_wellplates = Wellplate.by_collection_id(@collection_id)
-        @user_screens = Screen.by_collection_id(@collection_id)
-        @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
-        @user_elements = Labimotion::Element.by_collection_id(@collection_id)
+        @user_samples = @scope.relation_for(Sample)
+        @user_reactions = @scope.relation_for(Reaction)
+        @user_wellplates = @scope.relation_for(Wellplate)
+        @user_screens = @scope.relation_for(Screen)
+        @user_research_plans = @scope.relation_for(ResearchPlan)
+        @user_elements = @scope.relation_for(Labimotion::Element)
         @structure_svg = ''
       end
 
@@ -59,9 +59,9 @@ module Usecases
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         scope =
           if @params[:selection][:search_type] == 'similar'
-            Sample.by_collection_id(@collection_id).search_by_fingerprint_sim(molfile, threshold)
+            @scope.relation_for(Sample).search_by_fingerprint_sim(molfile, threshold)
           else
-            Sample.by_collection_id(@collection_id).search_by_fingerprint_sub(molfile)
+            @scope.relation_for(Sample).search_by_fingerprint_sub(molfile)
           end
         scope = @shared_methods.order_by_molecule(scope)
         scope.pluck(:id)

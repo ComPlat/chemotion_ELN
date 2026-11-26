@@ -4,15 +4,16 @@ module Usecases
   module Search
     class ByIds
       require_relative 'shared_methods'
-      attr_reader :collection_id, :params, :user
+      attr_reader :scope, :params, :user
 
-      def initialize(collection_id:, user:, params: {})
+      # @param scope [CollectionScope] the collections the search runs over
+      def initialize(scope:, user:, params: {})
         @params = params
         @filter_params = @params[:selection][:list_filter_params]
         @id_params = @params[:selection][:id_params]
-        @collection_id = collection_id
+        @scope = scope
         @user = user
-        @shared_methods = SharedMethods.new(params: @params, user: @user)
+        @shared_methods = SharedMethods.new(params: @params, user: @user, scope: @scope)
 
         @model_name = model_name(@id_params)
         @total_elements = @id_params[:total_elements]
@@ -55,9 +56,9 @@ module Usecases
 
       def search_by_ids_for_sample(ids)
         scope =
-          @model_name.includes_for_list_display
-                     .by_collection_id(@collection_id.to_i)
-                     .where(id: ids)
+          @scope.relation_for(@model_name)
+                .includes_for_list_display
+                .where(id: ids)
         order_by_samples_filter(scope, ids)
       end
 
@@ -74,8 +75,7 @@ module Usecases
 
       def search_by_ids(ids)
         scope =
-          @model_name.by_collection_id(@collection_id.to_i)
-                     .where(id: ids)
+          @scope.relation_for(@model_name).where(id: ids)
         scope = scope.page(@params[:page]).per(@params[:page_size]) if ids.size > @params[:page_size].to_i
         scope
       end
@@ -152,14 +152,10 @@ module Usecases
         serialized_scope.push(serialized)
       end
 
-      # Per-class detail levels for the single collection this search is scoped to. Without them the
+      # Per-class detail levels of the collections this search is scoped to. Without them the
       # entities render fail-open (full access), leaking fields a restrictive collection share hides.
       def collection_detail_levels
-        @collection_detail_levels ||=
-          ElementDetailLevelCalculator.for_collection(
-            collection: Collection.accessible_for(@user).find(@collection_id),
-            user: @user,
-          )
+        @scope.class_detail_levels
       end
     end
   end
