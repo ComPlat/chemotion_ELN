@@ -28,7 +28,7 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
 
   it 'is an entry of its own' do
     reaction = create(:reaction)
-    as_request { reaction.update!(variations: [variation_row(first_id, 0, '_duration' => '2 h')]) }
+    as_request { reaction.update!(variations: [variation_row(first_id, 0, { '_duration' => '2 h' })]) }
 
     expect(entries(reaction).last[:name]).to eq(['Variations'])
   end
@@ -64,7 +64,7 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
   end
 
   it 'reverts to the stored list, not to the table' do
-    first = variation_row(first_id, 0, '_duration' => '1 h')
+    first = variation_row(first_id, 0, { '_duration' => '1 h' })
     reaction = create(:reaction, variations: [first])
     as_request { reaction.update!(variations: [first.deep_merge('data' => { '_duration' => '2 h' })]) }
 
@@ -82,7 +82,7 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
     reaction = create(:reaction)
     legacy = variation_row(first_id, 0, {}, legacy_data: { 'startingMaterials' => {} }, notes: 'old')
     reaction.update_columns(variations: [legacy]) # rubocop:disable Rails/SkipsModelValidations
-    as_request { reaction.update!(variations: [variation_row(first_id, 0, '_duration' => '2 h')]) }
+    as_request { reaction.update!(variations: [variation_row(first_id, 0, { '_duration' => '2 h' })]) }
 
     old_row = rows(field_changes(reaction).last[:old_value]).first
     expect(old_row).to include(notes: 'old', changes: '(old format)')
@@ -90,7 +90,7 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
 
   it 'does not share its cache entry with the reaction properties' do
     reaction = create(:reaction)
-    as_request { reaction.update!(name: 'renamed', variations: [variation_row(first_id, 0, '_duration' => '2 h')]) }
+    as_request { reaction.update!(name: 'renamed', variations: [variation_row(first_id, 0, { '_duration' => '2 h' })]) }
     with_log_data = Reaction.with_log_data.find(reaction.id)
 
     Versioning::Serializers::ReactionSerializer.call(with_log_data)
@@ -100,8 +100,8 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
   # The merging of the versions of one request is BaseSerializer's; these check it still yields complete lists.
   it 'keeps a nested removal when the same request edited that value first' do
     temperature = { 'value' => 20, 'unit' => '°C' }
-    variation = variation_row(first_id, 0, 'temperature' => temperature, 'duration' => { 'value' => 1 })
-    without_temperature = variation_row(first_id, 0, 'duration' => { 'value' => 1 })
+    variation = variation_row(first_id, 0, { 'temperature' => temperature, 'duration' => { 'value' => 1 } })
+    without_temperature = variation_row(first_id, 0, { 'duration' => { 'value' => 1 } })
     reaction = create(:reaction, variations: [variation])
     as_request do
       reaction.update!(variations: [variation.deep_merge('data' => { 'temperature' => { 'value' => 25 } })])
@@ -114,8 +114,8 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
   end
 
   it 'applies a removal inside a variation that the same request added' do
-    first = variation_row(first_id, 0, 'duration' => { 'value' => 1 })
-    added = variation_row(second_id, 1, 'duration' => { 'value' => 2 })
+    first = variation_row(first_id, 0, { 'duration' => { 'value' => 1 } })
+    added = variation_row(second_id, 1, { 'duration' => { 'value' => 2 } })
     reaction = create(:reaction, variations: [first])
     as_request do
       reaction.update!(variations: [first, added.deep_merge('data' => { 'temperature' => { 'value' => 20 } })])
@@ -126,8 +126,8 @@ RSpec.describe Versioning::Serializers::ReactionVariationsSerializer do
   end
 
   it 'returns complete previous and updated variations when one is edited and another deleted' do
-    first = variation_row(first_id, 0, 'temperature' => { 'value' => 20, 'unit' => '°C' })
-    second = variation_row(second_id, 1, 'temperature' => { 'value' => 30, 'unit' => '°C' })
+    first = variation_row(first_id, 0, { 'temperature' => { 'value' => 20, 'unit' => '°C' } })
+    second = variation_row(second_id, 1, { 'temperature' => { 'value' => 30, 'unit' => '°C' } })
     edited = first.deep_merge('data' => { 'temperature' => { 'value' => 25 } })
     reaction = create(:reaction, variations: [first, second])
     as_request { reaction.update!(variations: [edited]) }
