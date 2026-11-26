@@ -71,8 +71,18 @@ export default class SamplesFetcher {
 
     return Promise.all(tasks)
       .then(() => AnnotationsFetcher.updateAnnotationsInContainer(sample))
-      .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
-      .then((json) => this.sampleElement(json, sample.id));
+      .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, {
+        body: sample.serialize(),
+        handleResponseSuccess: (response) => {
+          if (!response.ok) throw new Error(`Could not save sample (${response.status})`);
+          return response.json();
+        },
+        handleResponseError: (error) => { throw error; },
+      }))
+      .then((json) => {
+        if (json?.error || !json?.sample?.id) throw new Error('Could not save sample: invalid response');
+        return this.sampleElement(json, sample.id);
+      });
   }
 
   static splitAsSubsamples(params) {
