@@ -21,6 +21,19 @@ const developmentConfig = {
     }
   },
   */
+  devServer: {
+    client: {
+      overlay: {
+        errors: true,
+        warnings: true,
+        // Benign browser notice raised when a ResizeObserver callback (e.g.
+        // reactflow measuring a node whose image just loaded) causes another
+        // resize in the same frame. It is not an exception, but the overlay
+        // reports it as an "Uncaught runtime error".
+        runtimeErrors: (error) => !/ResizeObserver loop/.test(error?.message),
+      },
+    },
+  },
   target: 'web',
   watchOptions: {
     ignored: /node_modules/, // Ignore node_modules directory
