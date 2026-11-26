@@ -178,10 +178,12 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
 
   context 'when the reaction of a split link has variations' do
     let(:new_link) { ReactionsProductSample.create!(reaction: reaction, sample: sample) }
-    let(:key) { sample.id.to_s }
+    # Variations address materials by position (db/schemas/reaction_variations.schema.json).
     let(:variations) do
-      { 'v1' => { 'uuid' => 'v1', 'startingMaterials' => { key => { 'amount' => 1 } },
-                  'products' => { key => { 'yield' => 50 } } } }
+      [{ 'id' => SecureRandom.uuid, 'idx' => 1,
+         'data' => { 'id' => SecureRandom.uuid,
+                     '_starting_materials' => [{ '_amount_value' => 1 }],
+                     '_products' => [{ '_target_amount_value' => 2 }] } }]
     end
 
     before do
@@ -191,10 +193,9 @@ RSpec.describe 'migration 20261013120000: AddUniqueIndexToReactionsSamples' do #
       migration.up
     end
 
-    it "renames the sample's key in the group of the split link only" do
-      stored = reaction.reload[:variations]['v1']
-      expect(stored['products']).to eq(new_link.reload.sample_id.to_s => { 'yield' => 50 })
-      expect(stored['startingMaterials']).to eq(key => { 'amount' => 1 })
+    it 'splits the sample and leaves the variations as they were' do
+      expect(new_link.reload.sample_id).not_to eq(sample.id)
+      expect(reaction.reload[:variations]).to eq(variations)
     end
   end
 
