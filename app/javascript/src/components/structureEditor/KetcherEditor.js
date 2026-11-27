@@ -64,7 +64,6 @@ import {
   canvasIframeRefSetter,
   textNodeStruct,
   textList,
-  isCommonTemplateLoading,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -207,9 +206,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     },
     [EventNames.ADD_ATOM]: async () => {
-      // Skip while a common template is loading — it doesn't move existing atoms, so
-      // images don't need repositioning, and triggering onAddAtom would cause a canvas flash.
-      if (isCommonTemplateLoading) return;
       if (editor && editor.structureDef) {
         await onAddAtom(editor);
       }

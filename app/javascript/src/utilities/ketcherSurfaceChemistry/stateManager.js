@@ -25,10 +25,6 @@ export let allowProcessing = true;
 export let upsertImageCalled = 0;
 // PolymersList line (after "> <PolymersList>") so we can extend it on paste instead of replace
 export let storedPolymersListLine = null;
-// Set true while a common template is being loaded so the ADD_ATOM handler
-// skips onTemplateMove — template loading doesn't move existing atoms, so images don't need
-// repositioning, and triggering onTemplateMove would cause an unnecessary visible canvas flash.
-export let isCommonTemplateLoading = false;
 
 export const FILOStackSetter = async (data) => {
   FILOStack = data;
@@ -109,10 +105,6 @@ export const setBase64TemplateHashSetter = async (data) => {
 
 export const allowProcessingSetter = (data) => {
   allowProcessing = data;
-};
-
-export const isCommonTemplateLoadingSetter = (value) => {
-  isCommonTemplateLoading = value;
 };
 
 export const imageListCopyContainerSetter = (data) => {
@@ -227,7 +219,6 @@ export const resetKetcherStore = () => {
   imageListCopyContainer = [];
   textListCopyContainer = [];
   storedPolymersListLine = null;
-  isCommonTemplateLoading = false;
 };
 
 export const emptyKetcherStore = () => ({

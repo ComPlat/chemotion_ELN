@@ -10,7 +10,8 @@ import {
   Spinner,
 } from 'react-bootstrap';
 import TemplateFetcher from 'src/fetchers/TemplateFetcher';
-import { isCommonTemplateLoadingSetter } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
+import { canvasIframeRef } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const debounce = (func, delay) => {
   let timeoutId;
@@ -20,31 +21,36 @@ const debounce = (func, delay) => {
   };
 };
 
-// Copy the molfile to the system clipboard then auto-paste it into the Ketcher canvas.
-// This avoids the fragment-placement flow: Ketcher treats a clipboard paste as a
-// direct structure drop onto the canvas (no click-to-place required).
+const notify = (message, level) => rootStore.notificationsStore.add({
+  title: 'Common Templates', message, level, position: 'tc', autoDismiss: 6,
+});
+
+// Put the template on Ketcher's paste tool: it follows the mouse pointer and is placed
+// with a click on the canvas — the same flow as a manual Ctrl+V. Browsers ignore
+// script-dispatched Ctrl+V, so the paste tool is activated through the Ketcher API.
+// Ketcher emits its change event only on the placing click, so onAddAtom runs exactly
+// as it does for a manual paste.
 async function loadTemplateIntoKetcher(molfile) {
+  const ketcher = canvasIframeRef?.current?.contentWindow?.ketcher;
   try {
-    isCommonTemplateLoadingSetter(true);
-    await navigator.clipboard.writeText(molfile);
-
-    // Find the Ketcher iframe and dispatch Ctrl+V into it so the structure
-    // is pasted onto the canvas without the user needing to do anything.
-    const iframe = document.querySelector('iframe#ketcher-iframe')
-      || document.querySelector('iframe[src*="ketcher"]')
-      || document.querySelector('iframe');
-
-    if (iframe?.contentWindow) {
-      iframe.contentWindow.focus();
-      const ev = new KeyboardEvent('keydown', {
-        key: 'v', code: 'KeyV', ctrlKey: true, bubbles: true, cancelable: true,
-      });
-      iframe.contentWindow.document.dispatchEvent(ev);
-    }
+    if (!ketcher?.editor || !ketcher?.formatterFactory) throw new Error('Ketcher API not available');
+    const struct = await ketcher.formatterFactory.create('mol').getStructureFromStringAsync(molfile);
+    const frameWindow = canvasIframeRef.current.contentWindow;
+    ketcher.editor.tool('paste', struct);
+    // Ketcher's hotkeys (e.g. Esc to cancel the paste) listen on its hidden clip area,
+    // which a click on the canvas would normally focus.
+    frameWindow.focus();
+    frameWindow.document.querySelector('textarea.cliparea')?.focus();
+    return;
   } catch (e) {
     console.error('Failed to load template into Ketcher:', e);
-  } finally {
-    setTimeout(() => isCommonTemplateLoadingSetter(false), 500);
+  }
+  // Fallback: let the user paste it manually.
+  try {
+    await navigator.clipboard.writeText(molfile);
+    notify('Template copied — click on the canvas and press Ctrl+V to paste it.', 'info');
+  } catch (e) {
+    notify('Could not load the template into the editor.', 'error');
   }
 }
 
