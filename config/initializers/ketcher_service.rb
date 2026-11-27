@@ -33,16 +33,33 @@ ensure
   Rails.logger.info "#{ref} #{config.send(service).desc}"
 end
 
-# Copy uploads/common_templates/instance.json to public/ketcher/common_templates_list.json
-# CommonTemplateExporter::TEMPLATES_INSTANCE
-# source = Rails.root.join('uploads', 'common_templates', 'instance.json')
-# Destination:
-# Remove previous public/json/ketcher_common_templates.json files
+# Sync template names/aliases in uploads/common_templates/instance.json with the default list,
+# then copy it (or the default list if it is absent or not valid JSON) to
+# public/json/ketcher_common_templates.json.
+
+begin
+  require Rails.root.join('lib/tasks/support/ketcher_common_templates_name_sync.rb')
+  KetcherCommonTemplatesNameSync.call
+rescue StandardError => e
+  Rails.logger.warn "Ketcher common templates name sync failed: #{e.message}"
+end
 
 begin
   require Rails.root.join('lib/tasks/support/ketcher_common_templates_exporter.rb')
   source = KetcherCommonTemplatesExporter::TEMPLATES_INSTANCE
-  source = KetcherCommonTemplatesExporter::TEMPLATES_DEFAULT unless File.exist?(source)
+  # The name sync class is loaded by the block above; if that load failed, fall back to the
+  # plain existence check so the copy still happens.
+  instance_usable = if defined?(KetcherCommonTemplatesNameSync)
+                      KetcherCommonTemplatesNameSync.valid_template_file?(source)
+                    else
+                      File.exist?(source)
+                    end
+  unless instance_usable
+    if File.exist?(source)
+      Rails.logger.warn "Ketcher common templates: #{source} is not valid JSON, using the default list"
+    end
+    source = KetcherCommonTemplatesExporter::TEMPLATES_DEFAULT
+  end
   destination = KetcherCommonTemplatesExporter::TEMPLATES_PUBLIC
 
   FileUtils.rm_rf(Dir.glob(destination))

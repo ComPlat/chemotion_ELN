@@ -1,3 +1,31 @@
 .modal-xxxl {
   --bs-modal-width: 90vw;
 }
+
+// Structure editor modal.
+// Cap modal-content so it never exceeds 95vh; hide any residual overflow.
+// width: 100% ensures the outer .modal fills the viewport so margin: auto on
+// .modal-dialog has space to center it (without this, --bs-modal-width: 90vw
+// leaks to the outer container and kills the centering).
+// Controls never scroll because modal-body has overflow: hidden — no flex
+// column is needed. The editor height is set via an explicit calc() on both
+// the wrapper div and iframeHeight so there is no percentage-resolution chain.
+.structure-editor-modal {
+  width: 100% !important;
+  overflow: hidden !important;
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+}
+
+// AppModal caps .modal-body at 70vh and @extends .overflow-y-auto / .pb-4 (emitted with
+// !important), which made the body scroll: the editor alone is calc(95vh - 162px) tall.
+// The compound selector outranks `.app-modal .modal-body`, so these overrides win for
+// every editor (Ketcher, Surface Chemistry, ChemDraw, MarvinJS) rendered in this modal.
+.app-modal.structure-editor-modal .modal-body {
+  max-height: none;
+  overflow: hidden !important;
+  padding: 8px 12px 0 !important;
+}
