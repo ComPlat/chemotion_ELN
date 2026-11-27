@@ -1,11 +1,10 @@
-import Aviator from 'aviator';
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 
+import { aviatorNavigation, researchPlanShowOrNew } from 'src/utilities/routesUtils';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
 import ConfirmModal from 'src/components/common/ConfirmModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
@@ -15,15 +14,13 @@ const MeasurementsList = ({ sample }) => {
   const measurementsStore = context.measurements;
   const sampleIds = [...sample.ancestor_ids, sample.id].filter(a => a);
 
-
   // currently only research plan is supported as source
   const navigateToSource = (measurement) => {
-    const { uri } = Aviator.getCurrentRequest();
-    Aviator.navigate(`${uri}/${measurement.source_type}/${measurement.source_id}`, { silent: true });
-    if (measurement.source_type == 'research_plan') {
+    aviatorNavigation(measurement.source_type, measurement.source_id);
+    if (measurement.source_type === 'research_plan') {
       researchPlanShowOrNew({ params: { research_planID: measurement.source_id } });
     }
-  }
+  };
 
   const handleDeleteConfirmation = (confirm) => {
     if (confirm) {
@@ -34,39 +31,37 @@ const MeasurementsList = ({ sample }) => {
           setMeasurementToDelete(null);
           LoadingActions.stop();
         }
-      )
+      );
     } else {
       setMeasurementToDelete(null);
     }
-  }
+  };
 
-  const renderDeleteButton = (measurement) => {
-    return (
+  const renderDeleteButton = (measurement) => (
       <Button
         variant="danger"
         size="sm"
         key={`Measurement${measurement.id}-DeleteButton`}
         onClick={() => {
-          setMeasurementToDelete(measurement)
+          setMeasurementToDelete(measurement);
         }}
       >
         <i className="fa fa-trash" />
       </Button>
     );
-  }
 
   const renderEntry = (sampleHeader, measurements) => {
-    measurements = measurements.map(measurement => {
+    const measurementList = measurements.map(measurement => {
       let measurementDisplay;
       if (measurement.source_id) {
         measurementDisplay = (
-          <a
+          <Button
             key={`Measurement${measurement.id}-SourceLink`}
             onClick={() => navigateToSource(measurement)}
-            role="button"
+            variant="neat"
           >
             {measurement.description}: {measurement.value}{measurement.unit}
-          </a>
+          </Button>
         );
       } else {
         measurementDisplay = (
@@ -101,13 +96,13 @@ const MeasurementsList = ({ sample }) => {
             </tr>
           </thead>
           <tbody className="table-group-divider">
-            {measurements}
+            {measurementList}
           </tbody>
         </table>
       </div>
     );
-  }
-  
+  };
+
   return (
     <div className="measurementList">
       {sampleIds.map(sampleId => {
@@ -122,11 +117,11 @@ const MeasurementsList = ({ sample }) => {
         showModal={measurementToDelete != null}
         onClick={handleDeleteConfirmation}
         title="Delete Measurement"
-        content={measurementToDelete ? ("Are you sure you want to delete " + measurementToDelete.description + "?") : ""}
+        content={measurementToDelete ? (`Are you sure you want to delete ${  measurementToDelete.description  }?`) : ''}
       />
     </div>
   );
-}
+};
 
 MeasurementsList.propTypes = {
   sample: PropTypes.object.isRequired

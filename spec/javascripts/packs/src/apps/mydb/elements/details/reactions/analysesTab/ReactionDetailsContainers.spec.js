@@ -12,11 +12,13 @@ import Container from 'src/models/Container';
 
 Enzyme.configure({ adapter: new Adapter() });
 
+const renderContainers = (props) => shallow(React.createElement(ReactionDetailsContainers, props));
+
 describe('ReactionDetailsContainers', () => {
   describe('renderAnalysesHint()', () => {
     it('returns hint message with correct text and styling', () => {
       const reaction = Reaction.buildEmpty();
-      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const wrapper = renderContainers({ reaction, readOnly: false });
       const instance = wrapper.instance();
       const hintElement = shallow(instance.renderAnalysesHint());
 
@@ -32,13 +34,13 @@ describe('ReactionDetailsContainers', () => {
   describe('when it does not have any analysis', () => {
     const reaction = Reaction.buildEmpty();
     it('Render without any analysis and readonly', () => {
-      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction: reaction, readOnly: true }));
+      const wrapper = renderContainers({ reaction, readOnly: true });
       expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
       expect(wrapper.find(Button)).toHaveLength(0);
     });
 
     it('Render without any analysis', () => {
-      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction: reaction, readOnly: false }));
+      const wrapper = renderContainers({ reaction, readOnly: false });
       expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
       const button = wrapper.find(Button);
       expect(button.text()).toEqual('Add analysis');
@@ -47,7 +49,7 @@ describe('ReactionDetailsContainers', () => {
     it('displays hint message when container is null', () => {
       const reaction = Reaction.buildEmpty();
       reaction.container = null;
-      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const wrapper = renderContainers({ reaction, readOnly: false });
       const hintText = wrapper.text();
       expect(hintText).toContain('This tab can be used for reaction-related data');
       expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
@@ -56,7 +58,7 @@ describe('ReactionDetailsContainers', () => {
     it('displays hint message when container exists but has no analyses', () => {
       const reaction = Reaction.buildEmpty();
       // Container exists but analyses container is empty
-      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const wrapper = renderContainers({ reaction, readOnly: false });
       const hintText = wrapper.text();
       expect(hintText).toContain('This tab can be used for reaction-related data');
       expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
@@ -79,9 +81,7 @@ describe('ReactionDetailsContainers', () => {
       analysis.is_deleted = true;
       reaction.container.children[0].children.push(analysis);
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsContainers, { reaction: reaction, readOnly: false })
-      );
+      const wrapper = renderContainers({ reaction, readOnly: false });
 
       const deletedHeader = wrapper.find(AccordionHeaderWithButtons).shallow().find('strike');
       expect(deletedHeader.text()).toContain(analysis.name);
@@ -98,9 +98,7 @@ describe('ReactionDetailsContainers', () => {
       const analysis = Container.buildAnalysis();
       reaction.container.children[0].children.push(analysis);
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
-      );
+      const wrapper = renderContainers({ reaction, readOnly: false });
 
       const hintText = wrapper.text();
       expect(hintText).toContain('This tab can be used for reaction-related data');
@@ -114,9 +112,7 @@ describe('ReactionDetailsContainers', () => {
       a2.extended_metadata.index = 0;
       reaction.container.children[0].children.push(a1, a2);
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
-      );
+      const wrapper = renderContainers({ reaction, readOnly: false });
 
       const headers = wrapper.find(AccordionHeaderWithButtons);
       expect(shallow(headers.at(0).prop('children')).text()).toContain('Second');
@@ -127,9 +123,7 @@ describe('ReactionDetailsContainers', () => {
       const analysis = Container.buildAnalysis();
       reaction.container.children[0].children.push(analysis);
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
-      );
+      const wrapper = renderContainers({ reaction, readOnly: false });
 
       wrapper.instance().handleToggleMode('order');
       wrapper.update();
@@ -144,9 +138,7 @@ describe('ReactionDetailsContainers', () => {
       a2.extended_metadata.index = 0;
       reaction.container.children[0].children.push(a1, a2);
 
-      const wrapper = shallow(
-        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
-      );
+      const wrapper = renderContainers({ reaction, readOnly: false });
 
       wrapper.instance().handleToggleMode('order');
       wrapper.update();

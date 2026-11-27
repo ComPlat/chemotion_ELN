@@ -13,7 +13,6 @@ import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
@@ -43,14 +42,13 @@ const adoptSearchResult = (preparedResult) => {
 };
 
 const SearchResult = ({ handleClear }) => {
-  const searchStore = useContext(StoreContext).search;
+  const { searchStore, userStore } = useContext(StoreContext);
   const results = searchStore.searchResultValues;
-  const userState = UserStore.getState();
-  const genericElements = userState.genericEls || [];
+  const genericElements = userStore.genericEls || [];
   const { currentCollection } = UIStore.getState();
 
   const visibleTabs = useMemo(() => {
-    const {profile} = UserStore.getState();
+    const { profile } = userStore;
     if (!profile?.data) return [];
 
     const visible = [];
@@ -64,7 +62,7 @@ const SearchResult = ({ handleClear }) => {
         }
       });
     return visible;
-  }, [results]);
+  }, [results, userStore]);
 
   useEffect(() => {
     if (visibleTabs.length === 0) return;
@@ -298,7 +296,7 @@ const SearchResult = ({ handleClear }) => {
       {resultButtons()}
     </>
   );
-}
+};
 
 export default observer(SearchResult);
 export { adoptSearchResult };

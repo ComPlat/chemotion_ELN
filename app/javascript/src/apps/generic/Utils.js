@@ -5,7 +5,6 @@ import uuid from 'uuid';
 import { filter, cloneDeep } from 'lodash';
 import { Constants } from 'chem-generic-ui';
 import { rootStore } from 'src/stores/mobx/RootStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
@@ -52,16 +51,6 @@ export const allElnElmentsWithLabel = [
   { name: 'sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample' },
 ];
 
-export const allGenericElements = () => {
-  let genericElements = [];
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
-  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-    genericElements = UserStore.getState().genericEls || [];
-  }
-  return genericElements;
-}
-
 export const notification = props =>
   rootStore.notificationsStore.add({
     title: props.title,
@@ -73,8 +62,7 @@ export const notification = props =>
   });
 
 export const GenericDSMisType = () => {
-  const currentUser =
-    (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const currentUser = rootStore.userStore.currentUser || {};
   if (MatrixCheck(currentUser.matrix, `generic${Constants.GENERIC_TYPES.DATASET}`)) {
     return (
       <OverlayTrigger
@@ -100,8 +88,7 @@ export const GenericDSMisType = () => {
 export const renderFlowModal = (generic, isToggle) => {
   let shortLabel = generic.short_label;
   if (!shortLabel) {
-    const segmentKlasses =
-      (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+    const segmentKlasses = rootStore.userStore.segmentKlasses || [];
     shortLabel = segmentKlasses.filter(s => s.id === generic.segment_klass_id);
     shortLabel = shortLabel.length > 0 ? shortLabel[0].label : '';
   }
@@ -115,7 +102,7 @@ export const renderFlowModal = (generic, isToggle) => {
 };
 
 export const segmentsByKlass = name => {
-  const allSegments = UserStore.getState().segmentKlasses || [];
+  const allSegments = rootStore.userStore.segmentKlasses || [];
   return filter(
     allSegments,
     se => (se.element_klass && se.element_klass.name) === name

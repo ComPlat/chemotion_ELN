@@ -7,7 +7,16 @@ module Usecases
         user = User.where(name_abbreviation: params[:username]).or(User.where(email: params[:username])).take
 
         return if user.blank?
-        return unless user.valid_password?(params[:password])
+        # valid_for_authentication? (Devise :lockable) counts failed attempts,
+        # locks the account after too many of them and rejects locked accounts
+        # even when the password is correct.
+        return unless user.valid_for_authentication? { user.valid_password?(params[:password]) }
+
+        by_user(user)
+      end
+
+      def self.by_user(user)
+        return if user.blank?
 
         payload = {
           first_name: user.first_name,
@@ -15,7 +24,7 @@ module Usecases
           last_name: user.last_name,
         }
 
-        JsonWebToken.encode(payload, 2.weeks.from_now)
+        JsonWebToken.encode(payload, 2.weeks.from_now, purpose: :login)
       end
     end
   end

@@ -5,12 +5,10 @@ import {
   Accordion, Button, ButtonGroup, Card, Tooltip, Overlay, OverlayTrigger, Form,
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import Wellplate from 'src/models/Wellplate';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { aviatorNavigation, wellplateShowOrNew } from 'src/utilities/routesUtils';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { AgGridReact } from 'ag-grid-react';
 
@@ -25,10 +23,8 @@ export default class EmbeddedWellplateGenericEl extends Component {
   }
 
   openWellplate() {
-    const { currentCollection, isSync } = UIStore.getState();
     const wellplateID = this.props.wellplate.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
-    Aviator.navigate(uri, { silent: true });
+    aviatorNavigation('wellplate', wellplateID);
     wellplateShowOrNew({ params: { wellplateID } });
   }
 

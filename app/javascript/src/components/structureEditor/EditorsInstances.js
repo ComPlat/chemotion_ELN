@@ -1,6 +1,5 @@
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import { rootStore } from 'src/stores/mobx/RootStore';
@@ -99,7 +98,7 @@ export async function getEditorById(editorId, configs = {}, availableEditors = n
  * @returns {Promise<Object>} A promise that resolves to an object mapping editor IDs to their instances.
  */
 export async function createEditors(_state = {}) {
-  const matriceConfigs = _state.matriceConfigs || UserStore.getState().matriceConfigs || [];
+  const matriceConfigs = _state.matriceConfigs || rootStore.userStore.matriceConfigs || [];
   const availableEditors = UIStore.getState().structureEditors?.editors || {};
 
   const editorPromises = matriceConfigs.map(({ configs }) => {
@@ -127,7 +126,7 @@ export async function createEditors(_state = {}) {
  * @returns {Promise<Object>} The editor instance corresponding to the selected editor ID.
  */
 export const initEditor = async () => {
-  const userProfile = UserStore.getState().profile;
+  const userProfile = rootStore.userStore.profile;
   let eId = userProfile?.data?.default_structure_editor;
   if (!eId || eId === 'ketcher2') eId = 'ketcher';
   return getEditorById(eId);

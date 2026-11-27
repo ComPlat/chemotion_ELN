@@ -10,7 +10,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementItem from 'src/apps/mydb/elements/list/renderers/ElementItem';
 
-function ElementGroupsRenderer({
+const ElementGroupsRenderer = ({
   type,
   getGroupKey,
   getItemKey,
@@ -19,9 +19,15 @@ function ElementGroupsRenderer({
   renderGroupItem,
   getGroupHeaderDragType,
   initialGroupLimit,
-}) {
+}) => {
   const [groupLimits, setGroupLimits] = useState({});
-  useEffect(() => setGroupLimits({}), [elements, getGroupKey]);
+  const [prevElements, setPrevElements] = useState(elements);
+  const [prevGetGroupKey, setPrevGetGroupKey] = useState(() => getGroupKey);
+  if (elements !== prevElements || getGroupKey !== prevGetGroupKey) {
+    setPrevElements(elements);
+    setPrevGetGroupKey(() => getGroupKey);
+    setGroupLimits({});
+  }
 
   const groups = useMemo(() => {
     const groupedElements = {};
@@ -145,7 +151,7 @@ function ElementGroupsRenderer({
       })}
     </div>
   );
-}
+};
 
 ElementGroupsRenderer.propTypes = {
   type: PropTypes.string.isRequired,

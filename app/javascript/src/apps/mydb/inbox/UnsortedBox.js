@@ -10,9 +10,12 @@ import Container from 'src/models/Container';
 import UnsortedDatasetModal from 'src/apps/mydb/inbox/UnsortedDatasetModal';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class UnsortedBox extends React.Component {
+class UnsortedBox extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
 
@@ -95,8 +98,8 @@ export default class UnsortedBox extends React.Component {
 
   sortUnsortedItem = (currentItems) => {
     const type = 'inbox';
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
+    const { profile } = this.context.userStore;
+    const filters = profile?.data?.filters || {};
     const sortColumn = filters[type]?.sort || 'created_at';
 
     switch (sortColumn) {
@@ -327,3 +330,5 @@ UnsortedBox.defaultProps = {
   largerInbox: false,
   unsortedVisible: false,
 };
+
+export default observer(UnsortedBox);

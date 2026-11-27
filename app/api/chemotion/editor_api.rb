@@ -1,17 +1,28 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/DurationArithmetic
-
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
+    EDITOR_TOKEN_EXPIRATION = 1.day
+
     helpers AttachmentHelpers
 
     namespace :editor do
       desc 'get editor config'
-      get :initial do
-        docserver = Rails.configuration.editors&.docserver
-        { installed: (docserver && docserver[:enable]) || false, ext: docserver && docserver[:ext] }
+      get :config do
+        {
+          docserver_api: Rails.configuration.editors.docserver_api,
+          address: Rails.configuration.editors.info[:address],
+          title: Rails.configuration.editors.info[:title],
+          name: Rails.configuration.editors.info[:name],
+          logo: Rails.configuration.editors.info[:logo],
+          mail: Rails.configuration.editors.info[:mail],
+          website: Rails.configuration.editors.info[:website],
+          feedbackurl: Rails.configuration.editors.info[:feedbackurl],
+          callback_server: Rails.configuration.editors.docserver[:callback_server],
+          author_name: current_user.name,
+          author_id: current_user.id,
+        }
       end
 
       route_param :id do
@@ -31,14 +42,16 @@ module Chemotion
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
-            exp: (Time.zone.now + 15.minutes).to_i,
           }
           @attachment.editing_start!
           file_extension = @attachment.editable_document? && @attachment.file_extension
-          token = JsonWebToken.encode(payload)
+          # The token is OnlyOffice's document key and authorises the download and the
+          # save callback. The save callback only arrives once the document is closed,
+          # so the token must outlive a whole editing session.
+          token = JsonWebToken.encode(payload, EDITOR_TOKEN_EXPIRATION.from_now, purpose: :editor)
           only_office_payload = {
             width: '100%',
-            height: '100%',
+            height: '950px',
             type: 'desktop',
             document: {
               att_id: @attachment.id,
@@ -97,5 +110,3 @@ module Chemotion
     end
   end
 end
-
-# rubocop:enable Rails/DurationArithmetic

@@ -11,7 +11,6 @@ import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amoun
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
 import { BiosafetyLevelOptions } from 'src/components/staticDropdownOptions/options';
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 class GeneralProperties extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -23,7 +22,7 @@ class GeneralProperties extends React.Component {
       'Cryopreservation medium', 'Opt. growth temperature', 'Gender', 'Cell type', 'Material Description'
     ];
     const { item } = this.props;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
     if (item.created_by == null) {
       const { cellLineDetailsStore } = this.context;
       const cellLine = cellLineDetailsStore.cellLines(item.id);
@@ -213,8 +212,9 @@ class GeneralProperties extends React.Component {
               </Row>
               <Row className="mb-4">
                 <Col sm={6}>
-                  {this.renderOptionalAttribute('Opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
-                    cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
+                  {this.renderOptionalAttribute(
+                    'Opt. growth temperature', cellLineItem.optimalGrowthTemperature, (e) => {
+                      cellLineDetailsStore.changeOptimalGrowthTemp(cellLineId, Number(e.target.value));
                   })}
                 </Col>
               </Row>

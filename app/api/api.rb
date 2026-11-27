@@ -28,8 +28,9 @@ class API < Grape::API
       @current_user ||= detect_current_user
     end
 
+    # To make the FE/BE split easier, first check for JWT before going into the warden session
     def detect_current_user
-      detect_current_user_from_session || detect_current_user_from_api_token || detect_current_user_from_jwt
+      detect_current_user_from_jwt || detect_current_user_from_api_token || detect_current_user_from_session
     end
 
     def detect_current_user_from_session
@@ -37,11 +38,16 @@ class API < Grape::API
     end
 
     def detect_current_user_from_jwt
-      decoded_token = JsonWebToken.decode(current_token)
+      return unless token_in_header?
+
+      decoded_token = JsonWebToken.decode(current_token, purpose: :login)
       user_id = decoded_token[:user_id]
 
       User.find(user_id)
-    rescue StandardError
+    rescue StandardError => e
+      Rails.logger.debug('Ran into an exception')
+      Rails.logger.debug(e.message)
+      Rails.logger.debug(e.backtrace.join("\n"))
       nil
     end
 
@@ -57,7 +63,7 @@ class API < Grape::API
     end
 
     def current_token
-      request.headers['Authorization'].split.last if token_in_header?
+      request.headers['Authorization'].split.last
     end
 
     def token_in_header?
@@ -130,6 +136,12 @@ class API < Grape::API
 
   before do
     authenticate! unless public_request?
+  end
+
+  # Invalid, expired or wrong-purpose tokens (OnlyOffice key, third party app link, ...)
+  # are an authorisation failure, not a server error.
+  rescue_from Errors::DecodeError, Errors::ExpiredSignature do
+    error!('401 Unauthorized', 401)
   end
 
   # desc: whitelisted tables and columns for advanced_search
@@ -242,7 +254,6 @@ class API < Grape::API
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
   mount Chemotion::CollectionShareAPI
   mount Chemotion::CollectionElementsAPI
-  mount Chemotion::AuthenticationAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

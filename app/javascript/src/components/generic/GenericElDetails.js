@@ -10,7 +10,7 @@ import {
 } from 'react-bootstrap';
 import { cloneDeep, findIndex, merge, unionBy } from 'lodash';
 import { List } from 'immutable';
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { StoreContext, rootStore } from 'src/stores/mobx/RootStore';
 import {
   GenUIProvider, GenInterface, GenToolbar, browseElement
 } from 'chem-generic-ui';
@@ -20,7 +20,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericElDetailsContainers from 'src/components/generic/GenericElDetailsContainers';
 import GenericEl from 'src/models/GenericEl';
 import Attachment from 'src/models/Attachment';
@@ -38,7 +37,7 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
-  const { genericEls = [] } = UserStore.getState();
+  const { genericEls = [] } = rootStore.userStore;
   const elementAction = browseElement(currentCollection, false, type, id, genericEls);
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
@@ -48,7 +47,7 @@ const onNaviClick = (type, id) => {
 const WELLPLATE_SEGMENT_LABEL = 'Wellplates';
 
 const hasWellplateSegment = (element) => {
-  const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  const segmentKlasses = rootStore.userStore.segmentKlasses || [];
   return segmentKlasses.some(
     (klass) => klass.element_klass
       && klass.element_klass.name === element.type

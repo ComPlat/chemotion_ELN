@@ -25,7 +25,6 @@ import {
   ThirdPartyAppButton,
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate, parseDate } from 'src/utilities/timezoneHelper';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 class ResearchPlanDetailsAttachments extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -202,7 +201,7 @@ class ResearchPlanDetailsAttachments extends Component {
       filteredAttachments, sortDirection,
     } = this.state;
     const { researchPlan, onEdit, readOnly } = this.props;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } =  this.context.userStore;
 
     let combinedAttachments = filteredAttachments;
     if (this.context.attachmentNotificationStore) {
@@ -325,7 +324,7 @@ class ResearchPlanDetailsAttachments extends Component {
               </div>
             ))}
             {!readOnly && (
-              <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+              <Alert variant="warning" show={this.context.userStore.isUserQuotaExceeded(filteredAttachments)}>
                 Uploading attachments will fail; User quota
                 {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
                 will be exceeded.

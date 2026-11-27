@@ -227,4 +227,3 @@ jobs:
           minimum-coverage: 57
           artifact-name: code-coverage-report
           github-token: ${{ secrets.GITHUB_TOKEN }}
-

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types, react/no-array-index-key */
 import React, { useContext, useState } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Button, Form, Row, Col, ToggleButton, ButtonGroup,
@@ -537,7 +538,7 @@ const ColoredAccordeonHeaderButton = ({
       {title}
     </Button>
   );
-}
+};
 
 const SecondaryCollapseContent = ({
   children, title, eventKey, error, active, store
@@ -563,11 +564,17 @@ const SecondaryCollapseContent = ({
       </Collapse>
     </div>
   );
-}
+};
 
 const useFormValues = (startValues) => {
   const [form, setForm] = useState(startValues);
   const handleChange = (e, val) => {
+    // reset multiple fields together
+    if (e !== null && typeof e === 'object' && !e.target && val === undefined) {
+      setForm((prevForm) => ({ ...prevForm, ...e }));
+      return;
+    }
+
     const {
       name, value, type, checked
     } = (() => {
@@ -585,25 +592,37 @@ const useFormValues = (startValues) => {
       return {};
     })();
 
-    setForm({
-      ...form,
+    setForm((prevForm) => ({
+      ...prevForm,
       [name]: type === 'checkbox' ? checked : value
-    });
+    }));
   };
 
   return [form, handleChange];
 };
 
+// FormData.append() only accepts strings/Blobs; passing it an array/object
+// (e.g. affiliations_attributes) stringifies it to "[object Object]" instead
+// of the bracketed keys Rails' accepts_nested_attributes_for expects
+const appendFormValue = (formData, key, value) => {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => appendFormValue(formData, `${key}[${index}]`, item));
+  } else if (value !== null && typeof value === 'object') {
+    Object.entries(value).forEach(([subKey, subVal]) => appendFormValue(formData, `${key}[${subKey}]`, subVal));
+  } else {
+    formData.append(key, value ?? '');
+  }
+};
+
 const submitAsForm = ({
   url, method, form, prefix = null
 }) => {
-  const makeKey = (key) => (prefix ? `${prefix}[${key}]` : key);
   const formData = new FormData();
   Object.entries(form).forEach(([key, val]) => {
-    formData.append(makeKey(key), val);
+    appendFormValue(formData, prefix ? `${prefix}[${key}]` : key, val);
   });
   return UsersFetcher.submitAsForm(url, method, formData);
-}
+};
 
 export {
   initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent, useFormValues, submitAsForm,

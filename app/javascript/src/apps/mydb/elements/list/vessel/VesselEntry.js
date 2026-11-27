@@ -2,16 +2,13 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useState } from 'react';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
 import PropTypes from 'prop-types';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
-function VesselEntry({ vesselItems, vesselTemplate }) {
-  const { currentCollection } = UIStore.getState();
+const VesselEntry = ({ vesselItems, vesselTemplate }) => {
   const [showEntries, setShowEntries] = useState(true);
 
   const getBorderStyle = () => (showEntries
@@ -30,16 +27,7 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       console.error('Vessel template ID is missing.');
       return;
     }
-    const uri = `/collection/${currentCollection.id}/vessel_template/${template.id}`;
-    Aviator.navigate(uri, { silent: true });
-
-    elementShowOrNew({
-      type: 'vessel_template',
-      params: {
-        vesselTemplateID: template.id,
-        collectionID: currentCollection.id,
-      },
-    });
+    aviatorNavigation('vessel_template', template.id, true, true);
   };
 
   const findThumbnailAttachment = (vessels) => {
@@ -51,7 +39,7 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
     };
     return vessels.map((vessel) => searchContainer(vessel.vessel_template?.container)).find(Boolean) || null;
   };
-  
+
   const renderNameHeader = () => {
     const thumb = findThumbnailAttachment(vesselItems);
     const imgSrc = thumb ? thumb.thumbnail : null;
@@ -85,7 +73,6 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
     );
   };
 
-
   return (
     <div className="cell-line-group">
       <div className={getBorderStyle()}>
@@ -94,7 +81,7 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       {renderItemEntries()}
     </div>
   );
-}
+};
 
 VesselEntry.propTypes = {
   vesselItems: PropTypes.arrayOf(

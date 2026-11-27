@@ -57,6 +57,14 @@ if (!window.cancelAnimationFrame) {
   };
 }
 
+// jsdom implements MutationObserver, but it lives on window's prototype chain, not as
+// window's own property - the Object.keys(document.defaultView) copy loop above only picks up
+// own enumerable properties, so it's missing from global. Quill (via QuillEditor) references
+// the bare, unqualified `MutationObserver` global directly (not window.MutationObserver).
+if (typeof global.MutationObserver === 'undefined') {
+  global.MutationObserver = window.MutationObserver;
+}
+
 Object.defineProperty(global, 'navigator', {
   value: { userAgent: 'node.js' },
   writable: false,
