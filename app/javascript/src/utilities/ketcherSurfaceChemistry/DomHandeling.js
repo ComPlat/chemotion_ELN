@@ -72,6 +72,11 @@ const addGreenCircleOnCanvasImages = async (imageElements, iframeDocument = null
     const circle = iframeDocument.createElement('div');
     circle.className = '__green-circle-overlay';
     circle.style.position = 'absolute';
+    // Start at the top-left corner until the first hover positions it. Without top/left the
+    // circle sits below #root and makes the Ketcher page 2px taller than the iframe, which
+    // shows a scrollbar until a shape is hovered.
+    circle.style.top = '0px';
+    circle.style.left = '0px';
     circle.style.border = '1px solid rgb(22,119,130)';
     circle.style.borderRadius = '50%';
     circle.style.pointerEvents = 'none';

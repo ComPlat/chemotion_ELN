@@ -21,7 +21,7 @@
 }
 
 // AppModal caps .modal-body at 70vh and @extends .overflow-y-auto / .pb-4 (emitted with
-// !important), which made the body scroll: the editor alone is calc(95vh - 196px) tall.
+// !important), which made the body scroll: the editor alone is calc(95vh - 162px) tall.
 // The compound selector outranks `.app-modal .modal-body`, so these overrides win for
 // every editor (Ketcher, Surface Chemistry, ChemDraw, MarvinJS) rendered in this modal.
 .app-modal.structure-editor-modal .modal-body {

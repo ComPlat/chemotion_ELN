@@ -70,10 +70,9 @@ function EditorSelector({ value, options, onChange }) {
 // Set to false to go back to the EditorSelector dropdown.
 const SHOW_EDITOR_TABS = true;
 
-// Every editor Chemotion can host. Ketcher uses its official logo (shipped with the Ketcher
-// bundle); the others use a monogram badge. Design view: picking an editor that is not
-// configured marks its tab active and shows an "is not available" placeholder over the
-// canvas (Ketcher stays mounted underneath, so switching back keeps the drawing).
+// Look of the editors Chemotion can host. Ketcher uses its official logo (shipped with the
+// Ketcher bundle); the others use a monogram badge. Only editors configured on this instance
+// get a tab.
 const EDITOR_TAB_CATALOG = [
   {
     id: 'ketcher', label: 'Ketcher', badge: 'K', color: '#167782', logo: '/editors/ketcher/standalone/logo.svg',
@@ -101,22 +100,20 @@ EditorTabBadge.propTypes = {
   }).isRequired,
 };
 
-function EditorTabs({
-  value, options, onChange, previewId, onPreview,
-}) {
-  const activeId = previewId || value;
-  const configured = new Map(options.map((o) => [o.value, o]));
-  const extra = options
-    .filter((o) => !EDITOR_TAB_CATALOG.some((c) => c.id === o.value))
-    .map((o) => ({
-      id: o.value, label: displayLabel(o.label), badge: (o.label || '?').charAt(0).toUpperCase(), color: '#6c757d',
-    }));
+function EditorTabs({ value, options, onChange }) {
+  const tabs = options.map((option) => ({
+    id: option.value,
+    label: displayLabel(option.label),
+    badge: (option.label || '?').charAt(0).toUpperCase(),
+    color: '#6c757d',
+    ...EDITOR_TAB_CATALOG.find((c) => c.id === option.value),
+    option,
+  }));
 
   return (
     <div className="editor-tabs" role="tablist" aria-label="Structure editor">
-      {[...EDITOR_TAB_CATALOG, ...extra].map((tab) => {
-        const option = configured.get(tab.id);
-        const active = tab.id === activeId;
+      {tabs.map((tab) => {
+        const active = tab.id === value;
         return (
           <button
             key={tab.id}
@@ -125,15 +122,7 @@ function EditorTabs({
             aria-selected={active}
             title={tab.label}
             className={`editor-tabs__tab${active ? ' editor-tabs__tab--active' : ''}`}
-            onClick={() => {
-              if (active) return;
-              if (option) {
-                onPreview(null);
-                if (tab.id !== value) onChange(option);
-                return;
-              }
-              onPreview(tab); // not configured: show the "not available" placeholder
-            }}
+            onClick={() => !active && onChange(tab.option)}
           >
             <EditorTabBadge tab={tab} />
             <span className="editor-tabs__label">{tab.label}</span>
@@ -148,12 +137,6 @@ EditorTabs.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
-  previewId: PropTypes.string,
-  onPreview: PropTypes.func.isRequired,
-};
-
-EditorTabs.defaultProps = {
-  previewId: null,
 };
 // ----------------------------------------------------------------------------------------
 
@@ -177,24 +160,16 @@ const WarningBox = () => (
 WarningBox.propTypes = {
 };
 
-function EditorControls({
-  editorId, editorOptions, onEditorChange, previewId, onPreview,
-}) {
+function EditorControls({ editorId, editorOptions, onEditorChange }) {
   return (
     editorId && (
       <div className="structure-editor-header-controls">
         {SHOW_EDITOR_TABS ? (
-          <EditorTabs
-            value={editorId}
-            onChange={onEditorChange}
-            options={editorOptions}
-            previewId={previewId}
-            onPreview={onPreview}
-          />
+          <EditorTabs value={editorId} onChange={onEditorChange} options={editorOptions} />
         ) : (
           <EditorSelector value={editorId} onChange={onEditorChange} options={editorOptions} />
         )}
-        {editorId === 'ketcher' && !previewId && (
+        {editorId === 'ketcher' && (
           <CommonTemplatesList />
         )}
       </div>
@@ -206,14 +181,10 @@ EditorControls.propTypes = {
   editorId: PropTypes.string,
   editorOptions: PropTypes.arrayOf(PropTypes.object).isRequired,
   onEditorChange: PropTypes.func.isRequired,
-  previewId: PropTypes.string,
-  onPreview: PropTypes.func,
 };
 
 EditorControls.defaultProps = {
   editorId: null,
-  previewId: null,
-  onPreview: () => {},
 };
 
 function postComponents(components) {
@@ -244,11 +215,9 @@ export default class StructureEditorModal extends React.Component {
       selectedCommonTemplate: null,
       deleteAllowed: true,
       saving: false,
-      unavailableEditor: null, // design view: tab picked for an editor that is not configured
     };
     this.editors = {};
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
-    this.handleUnavailableEditor = (tab) => this.setState({ unavailableEditor: tab });
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
@@ -449,18 +418,11 @@ export default class StructureEditorModal extends React.Component {
   }
 
   renderEditor() {
-    const {
-      editor, showWarning, molfile, unavailableEditor,
-    } = this.state;
+    const { editor, showWarning, molfile } = this.state;
     if (showWarning || !editor || !this.editors[editor?.id]) return null;
 
     return (
-      <div style={{ height: EDITOR_HEIGHT, overflow: 'hidden', position: 'relative' }}>
-        {unavailableEditor && (
-          <div className="structure-editor-unavailable">
-            {`${unavailableEditor.label} is not available`}
-          </div>
-        )}
+      <div style={{ height: EDITOR_HEIGHT, overflow: 'hidden' }}>
         <EditorRenderer
           type={editor?.id}
           editor={this.editors[editor?.id]}
@@ -483,9 +445,7 @@ export default class StructureEditorModal extends React.Component {
     } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
-    const {
-      editor, showWarning, showModal, saving, unavailableEditor,
-    } = this.state;
+    const { editor, showWarning, showModal, saving } = this.state;
 
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
@@ -517,8 +477,6 @@ export default class StructureEditorModal extends React.Component {
             editorId={editor?.id}
             editorOptions={editorOptions}
             onEditorChange={this.handleEditorSelection}
-            previewId={unavailableEditor?.id}
-            onPreview={this.handleUnavailableEditor}
           />
         ) : undefined}
       >

@@ -46,9 +46,15 @@ end
 
 begin
   require Rails.root.join('lib/tasks/support/ketcher_common_templates_exporter.rb')
-  require Rails.root.join('lib/tasks/support/ketcher_common_templates_name_sync.rb')
   source = KetcherCommonTemplatesExporter::TEMPLATES_INSTANCE
-  unless KetcherCommonTemplatesNameSync.valid_template_file?(source)
+  # The name sync class is loaded by the block above; if that load failed, fall back to the
+  # plain existence check so the copy still happens.
+  instance_usable = if defined?(KetcherCommonTemplatesNameSync)
+                      KetcherCommonTemplatesNameSync.valid_template_file?(source)
+                    else
+                      File.exist?(source)
+                    end
+  unless instance_usable
     if File.exist?(source)
       Rails.logger.warn "Ketcher common templates: #{source} is not valid JSON, using the default list"
     end

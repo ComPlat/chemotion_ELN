@@ -87,7 +87,7 @@
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 
-    &:hover:not(:disabled) {
+    &:hover {
       background: rgba(255, 255, 255, 0.7);
     }
 
@@ -96,16 +96,6 @@
       border-color: #ced4da;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       font-weight: 600;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      color: #5f6b76;
-
-      .editor-tabs__badge {
-        filter: grayscale(0.85);
-        opacity: 0.55;
-      }
     }
   }
 
@@ -447,18 +437,4 @@
     justify-content: center;
     padding: 12px 0 4px;
   }
-}
-
-// Design review: placeholder shown over the canvas when a tab for an editor that is not
-// configured is picked. Covers Ketcher without unmounting it.
-.structure-editor-unavailable {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  color: #6c757d;
-  font-size: 18px;
 }
