@@ -1,10 +1,17 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import { describe, it, beforeEach } from 'mocha';
-import { arrangePolymers } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
+import {
+  describe, it, beforeEach, afterEach
+} from 'mocha';
+import { arrangePolymers, onTemplateMove } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
+import { resetStore, latestData } from 'src/components/structureEditor/KetcherEditor';
 import {
   imagesListSetter,
   molsSetter,
+  reloadCanvas,
+  reloadCanvasSetter,
+  imageListCopyContainer,
+  imageListCopyContainerSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 
@@ -203,5 +210,69 @@ describe('canvasOperations — arrangePolymers', () => {
       assert.ok(result.includes(KET_TAGS.polymerIdentifier), 'PolymersList header appended');
       assert.ok(result[result.length - 1].includes('/95/'), `expected the resolved entry: ${result[result.length - 1]}`);
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// onTemplateMove — no canvas data available
+// ─────────────────────────────────────────────────────────────────────────────
+describe('canvasOperations — onTemplateMove with null latestData', () => {
+  // Editor whose getKet() fails the given way; counts setMolecule calls so we can
+  // tell whether the canvas was overwritten.
+  const makeFailingEditor = (getKet) => {
+    const calls = { setMolecule: 0 };
+    const editor = {
+      structureDef: {
+        editor: {
+          getKet,
+          setMolecule: async () => { calls.setMolecule += 1; },
+        },
+      },
+    };
+    return { editor, calls };
+  };
+
+  // fetchKetcherData and the guard log on purpose here; keep the test output clean.
+  const originalConsole = { error: console.error, warn: console.warn };
+
+  beforeEach(() => {
+    resetStore();
+    molsSetter([]);
+    imagesListSetter([]);
+    console.error = () => {};
+    console.warn = () => {};
+  });
+
+  afterEach(() => {
+    console.error = originalConsole.error;
+    console.warn = originalConsole.warn;
+  });
+
+  it('does not throw and leaves the canvas alone when getKet rejects on a fresh editor', async () => {
+    const { editor, calls } = makeFailingEditor(async () => { throw new Error('Ketcher not ready'); });
+    assert.strictEqual(latestData, null);
+
+    await onTemplateMove(editor);
+
+    assert.strictEqual(calls.setMolecule, 0, 'setMolecule must not be called without canvas data');
+  });
+
+  it('clears the pending move state so later events do not keep recentering', async () => {
+    const { editor } = makeFailingEditor(async () => { throw new Error('Ketcher not ready'); });
+    reloadCanvasSetter(true);
+    imageListCopyContainerSetter([{ boundingBox: { x: 0, y: 0, width: 1, height: 1 } }]);
+
+    await onTemplateMove(editor);
+
+    assert.strictEqual(reloadCanvas, false, 'reloadCanvas should be reset');
+    assert.strictEqual(imageListCopyContainer.length, 0, 'imageListCopyContainer should be emptied');
+  });
+
+  it('does not throw and leaves the canvas alone when getKet returns invalid JSON', async () => {
+    const { editor, calls } = makeFailingEditor(async () => 'not-json');
+
+    await onTemplateMove(editor, true, {});
+
+    assert.strictEqual(calls.setMolecule, 0, 'setMolecule must not be called without canvas data');
   });
 });
