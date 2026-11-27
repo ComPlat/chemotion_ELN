@@ -40,7 +40,7 @@ const HeaderDropTarget = ({
       role={clearable ? 'button' : undefined}
       tabIndex={clearable ? 0 : undefined}
       style={{
-        borderColor: canDrop && empty > 0 ? undefined : 'transparent',
+        '--bs-border-color': canDrop && empty > 0 ? undefined : 'transparent',
         cursor: clearable ? 'pointer' : undefined,
       }}
       onClick={clearable ? clear : undefined}
