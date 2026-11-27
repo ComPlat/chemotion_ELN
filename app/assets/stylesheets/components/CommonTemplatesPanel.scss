@@ -15,8 +15,19 @@
   color: #212529;
   white-space: nowrap;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  min-width: 190px; // stays the same size for short names (e.g. "Alanine")
   max-width: 30%;
   margin-left: auto;
+
+  // Mini preview of the selected template: smaller than the text line,
+  // so the button keeps its usual height.
+  &__thumb {
+    width: 20px;
+    height: 16px;
+    max-height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
 
   &:hover {
     background: #f8f9fa;
@@ -48,9 +59,114 @@
   }
 }
 
+// Design review: editor tabs with monogram logos (see EditorTabs in StructureEditorModal.js).
+// Same height as the Common Templates button so the header does not grow.
+.editor-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  min-width: 0;
+  overflow: hidden;
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px 0 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: #212529;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    &--active {
+      background: #fff;
+      border-color: #ced4da;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      font-weight: 600;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      color: #5f6b76;
+
+      .editor-tabs__badge {
+        filter: grayscale(0.85);
+        opacity: 0.55;
+      }
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+
+    // Official logo (icon + wordmark): show only the icon on the left.
+    &--logo {
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+
+      img {
+        width: 20px;
+        height: 20px;
+        object-fit: cover;
+        object-position: left center;
+      }
+    }
+  }
+
+  // Narrow screens: logos only, names stay in the tooltip.
+  @media (max-width: 1280px) {
+    &__tab {
+      padding: 0 4px;
+    }
+
+    &__label {
+      display: none;
+    }
+  }
+}
+
+// Editor picker + Common Templates, placed in the Structure Editor modal header
+// (AppModal headerExtra) so the canvas gets the full body height.
+.structure-editor-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .editor-selector {
   position: relative;
   z-index: 1;
+  // 4 of 12 columns of the modal (.modal-xxxl is 90vw wide → 7.5vw per column)
+  width: 30vw;
+  min-width: 190px;
+  max-width: 50%; // leave room for the Common Templates button on narrow screens
+  flex-shrink: 0;
 
   &__trigger {
     display: inline-flex;
@@ -269,35 +385,30 @@
     gap: 10px;
   }
 
+  // Fixed-height tile: the structure fills it and the name floats over the bottom edge.
   &__card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 7px 6px;
+    position: relative;
+    height: 112px;
+    padding: 0;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    background: #fafafa;
+    background: #fff;
     cursor: pointer;
-    text-align: center;
-    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
 
     &:hover {
       border-color: #167782;
       box-shadow: 0 2px 8px rgba(22, 119, 130, 0.15);
-      background: #f0f9fa;
     }
   }
 
   &__card-img {
-    width: 56px;
-    height: 56px;
+    position: absolute;
+    inset: 6px 6px 22px; // bottom space keeps short structures clear of the name strip
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fff;
-    border-radius: 4px;
-    overflow: hidden;
 
     img {
       width: 100%;
@@ -307,16 +418,28 @@
   }
 
   &__card-placeholder {
-    font-size: 22px;
+    font-size: 26px;
     color: #ccc;
   }
 
   &__card-name {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3px 5px;
+    background: $chemstrap-silicon-active; // same as the modal header
+    color: #212529;
     font-size: 10px;
-    color: #333;
-    line-height: 1.3;
+    line-height: 1.25;
+    text-align: center;
     word-break: break-word;
-    max-width: 100%;
+    // at most two lines; the full name is in the card's title tooltip
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   &__sentinel {
@@ -324,4 +447,18 @@
     justify-content: center;
     padding: 12px 0 4px;
   }
+}
+
+// Design review: placeholder shown over the canvas when a tab for an editor that is not
+// configured is picked. Covers Ketcher without unmounting it.
+.structure-editor-unavailable {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #6c757d;
+  font-size: 18px;
 }

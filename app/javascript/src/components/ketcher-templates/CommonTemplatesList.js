@@ -54,22 +54,68 @@ async function loadTemplateIntoKetcher(molfile) {
   }
 }
 
-const TemplateCard = memo(({ item, onSelect }) => (
-  <button
-    type="button"
-    className="common-templates-panel__card"
-    onClick={() => onSelect(item)}
-    title={item?.name}
-  >
-    <div className="common-templates-panel__card-img">
-      <i className="fa fa-flask common-templates-panel__card-placeholder" />
-    </div>
-    <span className="common-templates-panel__card-name">{item?.name}</span>
-  </button>
-));
+// Thumbnails are drawn in the browser by Ketcher's own renderer (off-canvas: no change
+// events, no iframe resize). Stored icon files can't be used — they are not shipped and
+// half the templates never had one. Cached for the session by template key; requests
+// are queued so Ketcher renders one at a time.
+const thumbnailCache = new Map(); // key -> data URL, or null when rendering failed
+const thumbnailRequests = new Map(); // key -> pending Promise
+let thumbnailQueue = Promise.resolve();
+
+const renderThumbnail = (key, molfile) => {
+  if (thumbnailRequests.has(key)) return thumbnailRequests.get(key);
+  const request = thumbnailQueue.then(async () => {
+    const ketcher = canvasIframeRef?.current?.contentWindow?.ketcher;
+    // Ketcher not ready yet: don't cache, so the next mount retries.
+    if (!ketcher?.generateImage || !molfile) return undefined;
+    try {
+      const blob = await ketcher.generateImage(molfile, { outputFormat: 'svg' });
+      const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(await blob.text())}`;
+      thumbnailCache.set(key, url);
+      return url;
+    } catch (e) {
+      thumbnailCache.set(key, null);
+      return null;
+    }
+  });
+  thumbnailQueue = request.catch(() => {});
+  thumbnailRequests.set(key, request);
+  request.finally(() => thumbnailRequests.delete(key));
+  return request;
+};
+
+const TemplateCard = memo(({ item, onSelect }) => {
+  const [thumbnail, setThumbnail] = useState(() => thumbnailCache.get(item.key));
+
+  useEffect(() => {
+    if (thumbnailCache.has(item.key)) return undefined;
+    let cancelled = false;
+    renderThumbnail(item.key, item.molfile).then((url) => {
+      if (!cancelled && url !== undefined) setThumbnail(url);
+    });
+    return () => { cancelled = true; };
+  }, [item.key, item.molfile]);
+
+  return (
+    <button
+      type="button"
+      className="common-templates-panel__card"
+      onClick={() => onSelect(item)}
+      title={item?.name}
+    >
+      <div className="common-templates-panel__card-img">
+        {thumbnail
+          ? <img src={thumbnail} alt={item?.name} draggable={false} />
+          : <i className="fa fa-flask common-templates-panel__card-placeholder" />}
+      </div>
+      <span className="common-templates-panel__card-name">{item?.name}</span>
+    </button>
+  );
+});
 TemplateCard.displayName = 'TemplateCard';
 TemplateCard.propTypes = {
   item: PropTypes.shape({
+    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     name: PropTypes.string,
     molfile: PropTypes.string,
   }).isRequired,
@@ -97,6 +143,8 @@ const CommonTemplatesList = memo(() => {
   const [showNewOnly, setShowNewOnly] = useState(false);
   const sentinelRef = useRef(null);
   const bodyRef = useRef(null);
+  const panelRef = useRef(null);
+  const triggerRef = useRef(null);
   const toolTip = 'Select a template to load it into the editor.';
 
   useEffect(() => {
@@ -147,6 +195,23 @@ const CommonTemplatesList = memo(() => {
     handleSearch(searchQuery, showNewOnly);
   }, [searchQuery, showNewOnly, handleSearch]);
 
+  // Close the panel on any click outside it: on the page, or inside the Ketcher iframe
+  // (iframe clicks never reach the parent document, so that document is watched too).
+  useEffect(() => {
+    if (!showModal) return undefined;
+    const onPointerDown = (e) => {
+      if (panelRef.current?.contains(e.target) || triggerRef.current?.contains(e.target)) return;
+      setShowModal(false);
+    };
+    const frameDocument = canvasIframeRef?.current?.contentWindow?.document;
+    document.addEventListener('mousedown', onPointerDown, true);
+    frameDocument?.addEventListener('mousedown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown, true);
+      frameDocument?.removeEventListener('mousedown', onPointerDown, true);
+    };
+  }, [showModal]);
+
   // Intercept Escape in capture phase so Bootstrap modal doesn't close first.
   useEffect(() => {
     if (!showModal) return () => {};
@@ -180,6 +245,8 @@ const CommonTemplatesList = memo(() => {
     setShowModal(true);
   };
 
+  // The card was on screen when it was picked, so its thumbnail is normally cached already.
+  const selectedThumbnail = selectedItem ? thumbnailCache.get(selectedItem.key) : null;
   const visibleItems = filteredOptions.slice(0, visibleCount);
   const hasMore = visibleCount < filteredOptions.length;
   const newBadgeClassName = `common-templates-panel__new-badge${
@@ -211,7 +278,7 @@ const CommonTemplatesList = memo(() => {
   // recalculation on the modal's subtree, which would otherwise cause the Ketcher iframe
   // to receive a resize event and redraw its toolbar (visible icon blinking).
   const panel = (
-    <div className="common-templates-panel" style={panelStyle}>
+    <div ref={panelRef} className="common-templates-panel" style={panelStyle}>
       <div className="common-templates-panel__title-bar">
         <strong>Common Templates</strong>
         <button
@@ -292,14 +359,17 @@ const CommonTemplatesList = memo(() => {
   );
 
   return (
-    <div className="col-sm-6 d-flex align-items-center">
+    <div className="d-flex align-items-center ms-auto">
       <OverlayTrigger overlay={<Tooltip id="commontemplates">{toolTip}</Tooltip>}>
         <button
+          ref={triggerRef}
           type="button"
           className="common-templates-trigger"
           onClick={openPanel}
         >
-          <i className="fa fa-th common-templates-trigger__icon" />
+          {selectedThumbnail
+            ? <img className="common-templates-trigger__thumb" src={selectedThumbnail} alt="" draggable={false} />
+            : <i className="fa fa-th common-templates-trigger__icon" />}
           <span className="common-templates-trigger__label">
             {selectedItem ? selectedItem.name : 'Common Templates'}
           </span>

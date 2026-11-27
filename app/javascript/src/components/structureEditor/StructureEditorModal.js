@@ -16,6 +16,13 @@ import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 import Component from 'src/models/Component';
 import uuid from 'uuid';
 
+// Canvas height: 95vh minus the modal header (which holds the editor controls), footer,
+// body padding and dialog margins.
+const EDITOR_HEIGHT = 'calc(95vh - 162px)';
+
+// Editor labels come from config and may be lower case (e.g. "ketcher").
+const displayLabel = (label) => (label ? label.charAt(0).toUpperCase() + label.slice(1) : label);
+
 function EditorSelector({ value, options, onChange }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const ref = React.useRef(null);
@@ -31,14 +38,14 @@ function EditorSelector({ value, options, onChange }) {
   }, [isOpen]);
 
   return (
-    <div ref={ref} className="col-sm-6 editor-selector">
+    <div ref={ref} className="editor-selector">
       <button
         type="button"
         className="editor-selector__trigger"
         onClick={() => setIsOpen((v) => !v)}
       >
         <i className="fa fa-pencil-square-o editor-selector__icon" />
-        <span className="editor-selector__label">{current?.label || 'Editor'}</span>
+        <span className="editor-selector__label">{displayLabel(current?.label) || 'Editor'}</span>
         <i className={`fa fa-chevron-${isOpen ? 'up' : 'down'} editor-selector__caret`} />
       </button>
       {isOpen && (
@@ -50,7 +57,7 @@ function EditorSelector({ value, options, onChange }) {
               className={`editor-selector__item${opt.value === value ? ' editor-selector__item--active' : ''}`}
               onClick={() => { onChange(opt); setIsOpen(false); }}
             >
-              {opt.label}
+              {displayLabel(opt.label)}
             </button>
           ))}
         </div>
@@ -58,6 +65,97 @@ function EditorSelector({ value, options, onChange }) {
     </div>
   );
 }
+
+// ---- Design review: editor tabs -------------------------------------------------------
+// Set to false to go back to the EditorSelector dropdown.
+const SHOW_EDITOR_TABS = true;
+
+// Every editor Chemotion can host. Ketcher uses its official logo (shipped with the Ketcher
+// bundle); the others use a monogram badge. Design view: picking an editor that is not
+// configured marks its tab active and shows an "is not available" placeholder over the
+// canvas (Ketcher stays mounted underneath, so switching back keeps the drawing).
+const EDITOR_TAB_CATALOG = [
+  {
+    id: 'ketcher', label: 'Ketcher', badge: 'K', color: '#167782', logo: '/editors/ketcher/standalone/logo.svg',
+  },
+  { id: 'surfaceChemistry', label: 'Surface Chemistry', badge: 'SC', color: '#7b4bb7' },
+  { id: 'chemdraw', label: 'ChemDraw', badge: 'CD', color: '#c0392b' },
+  { id: 'marvinjs', label: 'MarvinJS', badge: 'M', color: '#d9822b' },
+];
+
+function EditorTabBadge({ tab }) {
+  const [logoFailed, setLogoFailed] = React.useState(false);
+  if (tab.logo && !logoFailed) {
+    return (
+      <span className="editor-tabs__badge editor-tabs__badge--logo">
+        <img src={tab.logo} alt="" draggable={false} onError={() => setLogoFailed(true)} />
+      </span>
+    );
+  }
+  return <span className="editor-tabs__badge" style={{ backgroundColor: tab.color }}>{tab.badge}</span>;
+}
+
+EditorTabBadge.propTypes = {
+  tab: PropTypes.shape({
+    logo: PropTypes.string, badge: PropTypes.string, color: PropTypes.string,
+  }).isRequired,
+};
+
+function EditorTabs({
+  value, options, onChange, previewId, onPreview,
+}) {
+  const activeId = previewId || value;
+  const configured = new Map(options.map((o) => [o.value, o]));
+  const extra = options
+    .filter((o) => !EDITOR_TAB_CATALOG.some((c) => c.id === o.value))
+    .map((o) => ({
+      id: o.value, label: displayLabel(o.label), badge: (o.label || '?').charAt(0).toUpperCase(), color: '#6c757d',
+    }));
+
+  return (
+    <div className="editor-tabs" role="tablist" aria-label="Structure editor">
+      {[...EDITOR_TAB_CATALOG, ...extra].map((tab) => {
+        const option = configured.get(tab.id);
+        const active = tab.id === activeId;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            title={tab.label}
+            className={`editor-tabs__tab${active ? ' editor-tabs__tab--active' : ''}`}
+            onClick={() => {
+              if (active) return;
+              if (option) {
+                onPreview(null);
+                if (tab.id !== value) onChange(option);
+                return;
+              }
+              onPreview(tab); // not configured: show the "not available" placeholder
+            }}
+          >
+            <EditorTabBadge tab={tab} />
+            <span className="editor-tabs__label">{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+EditorTabs.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.object).isRequired,
+  previewId: PropTypes.string,
+  onPreview: PropTypes.func.isRequired,
+};
+
+EditorTabs.defaultProps = {
+  previewId: null,
+};
+// ----------------------------------------------------------------------------------------
 
 EditorSelector.propTypes = {
   value: PropTypes.string.isRequired,
@@ -79,16 +177,24 @@ const WarningBox = () => (
 WarningBox.propTypes = {
 };
 
-function EditorControls({ editorId, editorOptions, onEditorChange }) {
+function EditorControls({
+  editorId, editorOptions, onEditorChange, previewId, onPreview,
+}) {
   return (
     editorId && (
-      <div className="row mb-2">
-        <EditorSelector
-          value={editorId}
-          onChange={onEditorChange}
-          options={editorOptions}
-        />
-        {editorId === 'ketcher' && (
+      <div className="structure-editor-header-controls">
+        {SHOW_EDITOR_TABS ? (
+          <EditorTabs
+            value={editorId}
+            onChange={onEditorChange}
+            options={editorOptions}
+            previewId={previewId}
+            onPreview={onPreview}
+          />
+        ) : (
+          <EditorSelector value={editorId} onChange={onEditorChange} options={editorOptions} />
+        )}
+        {editorId === 'ketcher' && !previewId && (
           <CommonTemplatesList />
         )}
       </div>
@@ -100,10 +206,14 @@ EditorControls.propTypes = {
   editorId: PropTypes.string,
   editorOptions: PropTypes.arrayOf(PropTypes.object).isRequired,
   onEditorChange: PropTypes.func.isRequired,
+  previewId: PropTypes.string,
+  onPreview: PropTypes.func,
 };
 
 EditorControls.defaultProps = {
   editorId: null,
+  previewId: null,
+  onPreview: () => {},
 };
 
 function postComponents(components) {
@@ -134,9 +244,11 @@ export default class StructureEditorModal extends React.Component {
       selectedCommonTemplate: null,
       deleteAllowed: true,
       saving: false,
+      unavailableEditor: null, // design view: tab picked for an editor that is not configured
     };
     this.editors = {};
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
+    this.handleUnavailableEditor = (tab) => this.setState({ unavailableEditor: tab });
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
@@ -298,7 +410,11 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  initializeEditor() {
+  initializeEditor(event) {
+    // React's onLoad bubbles through the component tree (portals included), so any <img>
+    // loading inside the modal — e.g. common template thumbnails — would land here and
+    // reset the canvas to the initial molfile. Only the editor itself loading counts.
+    if (event?.target?.tagName === 'IMG') return;
     const { editor, molfile } = this.state;
     if (editor) {
       editor.structureDef.molfile = molfile;
@@ -333,16 +449,23 @@ export default class StructureEditorModal extends React.Component {
   }
 
   renderEditor() {
-    const { editor, showWarning, molfile } = this.state;
+    const {
+      editor, showWarning, molfile, unavailableEditor,
+    } = this.state;
     if (showWarning || !editor || !this.editors[editor?.id]) return null;
 
     return (
-      <div style={{ height: 'calc(95vh - 196px)', overflow: 'hidden' }}>
+      <div style={{ height: EDITOR_HEIGHT, overflow: 'hidden', position: 'relative' }}>
+        {unavailableEditor && (
+          <div className="structure-editor-unavailable">
+            {`${unavailableEditor.label} is not available`}
+          </div>
+        )}
         <EditorRenderer
           type={editor?.id}
           editor={this.editors[editor?.id]}
           molfile={molfile}
-          iframeHeight="calc(95vh - 196px)"
+          iframeHeight={EDITOR_HEIGHT}
           iframeStyle={{}}
           fnCb={this.updateEditor}
           forwardedRef={this.ketcherRef}
@@ -360,7 +483,9 @@ export default class StructureEditorModal extends React.Component {
     } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
-    const { editor, showWarning, showModal, saving } = this.state;
+    const {
+      editor, showWarning, showModal, saving, unavailableEditor,
+    } = this.state;
 
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
@@ -387,14 +512,16 @@ export default class StructureEditorModal extends React.Component {
         primaryActionDisabled={saving}
         extendedFooter={modalFooter}
         enforceFocus={false}
-      >
-        {!showWarning && (
+        headerExtra={!showWarning ? (
           <EditorControls
             editorId={editor?.id}
             editorOptions={editorOptions}
             onEditorChange={this.handleEditorSelection}
+            previewId={unavailableEditor?.id}
+            onPreview={this.handleUnavailableEditor}
           />
-        )}
+        ) : undefined}
+      >
         {showWarning && (
           <WarningBox />
         )}
