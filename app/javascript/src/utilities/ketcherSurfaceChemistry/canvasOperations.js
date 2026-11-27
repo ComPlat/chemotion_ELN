@@ -775,6 +775,16 @@ const centerPositionCanvas = async (editor) => {
   }
 };
 
+// Reset per-move state and re-layer images; shared by every exit of onTemplateMove after the fetches.
+const finishTemplateMove = async () => {
+  ImagesToBeUpdatedSetter(true); // perform image layer in DOM
+  reloadCanvasSetter(false);
+  deletedAtomsSetter([]);
+  imageListCopyContainerSetter([]);
+  textListCopyContainerSetter([]);
+  await runImageLayering();
+};
+
 const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
   const { syncImagesOnly = false } = options;
@@ -800,6 +810,14 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   // second fetch save and place
   await fetchKetcherData(editor);
 
+  // fetchKetcherData swallows getKet() failures, so latestData can still be null
+  // (fresh editor, or right after resetStore). Skip this sync; the canvas is untouched.
+  if (!latestData?.root) {
+    console.warn('onTemplateMove: no canvas data from Ketcher, skipping sync');
+    await finishTemplateMove();
+    return;
+  }
+
   let imageNodes = [];
   if (syncImagesOnly) {
     imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
@@ -812,12 +830,7 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   // abort rather than overwriting it with an image-only KET Ketcher cannot render.
   const hasMolRefs = imageNodes.some((n) => n.$ref);
   if (!hasMolRefs && molsSnapshot.length > 0 && imageListCopy.length > 0) {
-    ImagesToBeUpdatedSetter(true);
-    reloadCanvasSetter(false);
-    deletedAtomsSetter([]);
-    imageListCopyContainerSetter([]);
-    textListCopyContainerSetter([]);
-    await runImageLayering();
+    await finishTemplateMove();
     return;
   }
 
@@ -832,13 +845,7 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   await applyCanvasDataToEditor(editor, latestData);
   await fetchKetcherData(editor);
 
-  // clear required
-  ImagesToBeUpdatedSetter(true); // perform image layer in DOM
-  reloadCanvasSetter(false);
-  deletedAtomsSetter([]);
-  imageListCopyContainerSetter([]);
-  textListCopyContainerSetter([]);
-  await runImageLayering();
+  await finishTemplateMove();
 };
 
 // The complete processing function
