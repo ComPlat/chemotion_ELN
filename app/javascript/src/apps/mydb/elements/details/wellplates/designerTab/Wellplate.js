@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import WellContainer from 'src/apps/mydb/elements/details/wellplates/designerTab/WellContainer';
 import WellDetails from 'src/apps/mydb/elements/details/wellplates/designerTab/WellDetails';
 import HeaderDropTarget from 'src/apps/mydb/elements/details/wellplates/designerTab/HeaderDropTarget';
-import fillWells from 'src/apps/mydb/elements/details/wellplates/designerTab/fillWells';
+import fillWells, {
+  wellsInLine, clearWells
+} from 'src/apps/mydb/elements/details/wellplates/designerTab/fillWells';
+import ConfirmModal from 'src/components/common/ConfirmModal';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import WellplateModel from 'src/models/Wellplate';
 
 const HorizontalHeaderField = ({ label }) => {
@@ -18,6 +22,12 @@ const VerticalHeaderField = ({ label }) => {
 
 const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
   const [selectedWell, setSelectedWell] = useState(null)
+  const [pendingClear, setPendingClear] = useState(null);
+  const { notifications } = useContext(StoreContext);
+
+  const lineName = (axis, index) => (axis === 'y'
+    ? `row ${WellplateModel.rowLabel(index)}`
+    : `column ${WellplateModel.columnLabel(index)}`);
 
   const swapWells = (firstWell, secondWell) => {
     if (readOnly) { return; }
@@ -45,9 +55,43 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
   }
 
   const fillLine = (sample, axis, index) => {
-    if (readOnly) { return; }
-
     handleWellsChange(fillWells(wellplate.wells, sample, axis, index));
+  };
+
+  const warnFull = (axis, index) => {
+    const name = lineName(axis, index);
+    notifications.add({
+      message: `${name.charAt(0).toUpperCase()}${name.slice(1)} is full, clear it first`,
+      level: 'warning',
+      position: 'tc',
+    });
+  };
+
+  const askClear = (axis, index, count) => setPendingClear({ axis, index, count });
+
+  const clearMessage = ({ axis, index, count }) => `Clear ${count} well${count === 1 ? '' : 's'} `
+    + `in ${lineName(axis, index)}? Their split samples are deleted when you save.`;
+
+  const answerClear = (confirmed) => {
+    if (confirmed) {
+      handleWellsChange(clearWells(wellplate.wells, pendingClear.axis, pendingClear.index));
+    }
+    setPendingClear(null);
+  };
+
+  const headerProps = (axis, index) => {
+    const line = wellsInLine(wellplate.wells, axis, index);
+    const filled = line.filter((well) => well.sample).length;
+    return {
+      axis,
+      index,
+      filled,
+      empty: line.length - filled,
+      onFill: fillLine,
+      onFull: warnFull,
+      onClear: askClear,
+      readOnly,
+    };
   };
 
   const hideDetails = () => {
@@ -79,7 +123,7 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
       let label = WellplateModel.columnLabel(columnIndex);
       const header = <HorizontalHeaderField key={`${label}-header`} label={label} />;
       columnLabels.push(columnIndex === 0 ? header : (
-        <HeaderDropTarget key={`${label}-header`} axis="x" index={columnIndex} onFill={fillLine} readOnly={readOnly}>
+        <HeaderDropTarget key={`${label}-header`} {...headerProps('x', columnIndex)}>
           {header}
         </HeaderDropTarget>
       ))
@@ -89,7 +133,7 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
     // generate remaining rows with leading header field
     for (let rowIndex = 1; rowIndex <= wellplate.height; rowIndex += 1) {
       const row = [
-        <HeaderDropTarget key={`${rowIndex}-vertical-header`} axis="y" index={rowIndex} onFill={fillLine} readOnly={readOnly}>
+        <HeaderDropTarget key={`${rowIndex}-vertical-header`} {...headerProps('y', rowIndex)}>
           <VerticalHeaderField label={WellplateModel.rowLabel(rowIndex)} />
         </HeaderDropTarget>
       ]
@@ -130,6 +174,14 @@ const Wellplate = ({ wellplate, handleWellsChange, readOnly }) => {
           readOnly={readOnly}
         />
       }
+      {pendingClear && (
+        <ConfirmModal
+          showModal
+          title="Clear wells"
+          content={clearMessage(pendingClear)}
+          onClick={answerClear}
+        />
+      )}
     </div>
   )
 }
